@@ -1,6 +1,7 @@
 import { Button } from "~/components/atoms/button/button"
-import routes from "~/lib/routes"
-import { HomePageTitle } from "../home-title"
+import routes from "~/lib/paths"
+import { HomePageTitle } from "../home-title/home-title"
+import { Section } from "../section/section"
 
 const {
   auth: { LOGIN },
@@ -8,7 +9,7 @@ const {
 
 export const HomePageCtaBanner = () => {
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-image text-white">
+    <Section hasBg>
       <div className="px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
@@ -24,6 +25,6 @@ export const HomePageCtaBanner = () => {
           </Button>
         </div>
       </div>
-    </section>
+    </Section>
   )
 }

@@ -1,9 +1,10 @@
-import { HomePageTitle } from "../home-title"
+import { HomePageTitle } from "../home-title/home-title"
+import { Section } from "../section/section"
 import { TestimonialCard } from "./testimonial-card"
 
 export const HomePageTestimonials = () => {
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-white">
+    <Section>
       <div className="px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <HomePageTitle subtitle="Experiências reais de algumas pessoas que participaram dos nossos eventos.">
@@ -40,6 +41,6 @@ export const HomePageTestimonials = () => {
           </div>
         </div>
       </div>
-    </section>
+    </Section>
   )
 }

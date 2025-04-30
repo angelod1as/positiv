@@ -1,11 +1,12 @@
 import Angelo from "~/assets/pictures/angelo.jpg"
 import Julia from "~/assets/pictures/julia.jpg"
-import { HomePageTitle } from "../home-title"
+import { HomePageTitle } from "../home-title/home-title"
+import { Section } from "../section/section"
 import { FounderCard } from "./founder-card"
 
 export const HomePageFounders = () => {
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-white">
+    <Section>
       <div className="px-4 md:px-6 flex flex-col items-center">
         <div className="flex flex-col items-center justify-center space-y-4 text-center max-w-(--breakpoint-lg)">
           <HomePageTitle>Quem faz a Positiv?</HomePageTitle>
@@ -48,6 +49,6 @@ export const HomePageFounders = () => {
           </div>
         </div>
       </div>
-    </section>
+    </Section>
   )
 }

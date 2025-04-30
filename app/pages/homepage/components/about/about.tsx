@@ -1,10 +1,11 @@
 import { HeartIcon, SparklesIcon, UsersIcon } from "lucide-react"
-import { HomePageTitle } from "../home-title"
+import { HomePageTitle } from "../home-title/home-title"
+import { Section } from "../section/section"
 import { AboutCard } from "./about-card"
 
 export const HomePageAbout = () => {
   return (
-    <section className="w-full py-12 md:py-24 lg:py-32 bg-image">
+    <Section hasBg>
       <div className="px-4 md:px-6 flex flex-col items-center">
         <div className="flex flex-col items-center justify-center gap-4 text-center max-w-(--breakpoint-xl)">
           <HomePageTitle>Como assim?</HomePageTitle>
@@ -49,6 +50,6 @@ export const HomePageAbout = () => {
           </div>
         </div>
       </div>
-    </section>
+    </Section>
   )
 }
