@@ -9,9 +9,16 @@ import tseslint from "typescript-eslint"
 export default defineConfig([
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
+  {
+    files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
     plugins: { js, "unused-imports": unusedImports },
     extends: ["js/recommended"],
-    languageOptions: { globals: { ...globals.browser, ...globals.node } },
+  },
+  tseslint.configs.recommended,
+  pluginReact.configs.flat.recommended,
+  {
     rules: {
       "no-console": [
         "error",
@@ -19,6 +26,7 @@ export default defineConfig([
           allow: ["warn", "error", "info"],
         },
       ],
+      "react/jsx-uses-react": "off",
       "react/react-in-jsx-scope": "off",
       "react/no-unescaped-entities": "off",
       "react/self-closing-comp": "error",
@@ -40,8 +48,6 @@ export default defineConfig([
       ],
     },
   },
-  tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended,
   {
     files: ["**/*.css"],
     plugins: { css },
