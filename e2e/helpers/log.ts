@@ -1,3 +1,3 @@
-export default function pwLog(...messages: string[]) {
-  process.stdout.write(messages.join(" "))
+export default function pwLog(...messages: Array<string | undefined>) {
+  process.stdout.write(messages.filter(Boolean).join(" "))
 }
