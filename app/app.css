@@ -1,8 +1,19 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
+  --font-nunito: "Nunito", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-dm: "DM Sans", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  --color-lightgreen: #00ffd3;
+  --color-green: #00dd87;
+  --color-blue: #4a75d2;
+  --color-purple: #bf03c3;
+  --color-red: #b7002d;
+  --color-yellow: #ece010;
 }
 
 html,
@@ -11,5 +22,37 @@ body {
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
+  }
+}
+
+/* Positiv styles */
+@layer base {
+  body,
+  html {
+    @apply font-nunito;
+    /* Override default font-size */
+    font-size: 20px;
+  }
+
+  select,
+  option {
+    @apply font-sans;
+  }
+
+  ol {
+    @apply list-decimal pl-4;
+  }
+
+  ol > li {
+    @apply pl-2;
+  }
+
+  .bg-image {
+    background-image: url("../public/brand/bg.jpg");
+    background-color: var(--color-purple);
+    background-size: cover;
+    background-position: top;
+    background-repeat: no-repeat;
+    @apply text-white;
   }
 }
