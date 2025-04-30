@@ -43,7 +43,7 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
             Próximos Eventos
           </HomePageTitle>
 
-          <div className="flex md:flex-row flex-col gap-8 items-stretch justify-center">
+          <div className="flex lg:flex-row flex-col gap-8 items-stretch justify-center">
             {events.map(
               ({
                 id,
