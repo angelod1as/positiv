@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react"
 import { useNavigation } from "react-router"
 import { cn } from "~/lib/utils"
 
@@ -5,36 +6,36 @@ function GlobalLoading() {
   const navigation = useNavigation()
   const active = navigation.state !== "idle"
 
+  const ref = useRef<HTMLDivElement>(null)
+  const [animationComplete, setAnimationComplete] = useState(true)
+
+  useEffect(() => {
+    if (!ref.current) return
+    if (active) setAnimationComplete(false)
+
+    Promise.allSettled(
+      ref.current.getAnimations().map(({ finished }) => finished),
+    ).then(() => !active && setAnimationComplete(true))
+  }, [active])
+
   return (
     <div
       role="progressbar"
-      aria-valuetext={active ? "Loading" : undefined}
       aria-hidden={!active}
-      className={cn(
-        "pointer-events-none fixed left-0 bottom-0 z-50 p-4 transition-all duration-500 ease-out",
-        active ? "translate-y-0" : "translate-y-full",
-      )}
+      aria-valuetext={active ? "Loading" : undefined}
+      className="fixed inset-x-0 top-0 z-50 h-1 animate-pulse"
     >
-      <svg
-        className="h-7 w-7 animate-spin"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        width="1em"
-        height="1em"
-      >
-        <circle
-          className="stroke-blue-600/25"
-          cx={12}
-          cy={12}
-          r={10}
-          strokeWidth={4}
-        />
-        <path
-          className="fill-blue-600"
-          d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 0 1 4 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
+      <div
+        className={cn(
+          "h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-500 ease-in-out",
+          navigation.state === "idle" &&
+            animationComplete &&
+            "w-0 opacity-0 transition-none",
+          navigation.state === "submitting" && "w-4/12",
+          navigation.state === "loading" && "w-10/12",
+          navigation.state === "idle" && !animationComplete && "w-full",
+        )}
+      />
     </div>
   )
 }
