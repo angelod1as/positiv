@@ -6,7 +6,7 @@ const { HOME } = paths.root
 
 export const Header = () => {
   return (
-    <header className="flex items-center justify-between p-4 fixed top-[.5rem] md:top-[.75rem] z-30 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
+    <header className="flex items-center justify-between p-4 fixed z-30 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
       <div className="text-xl font-bold">
         <Link variant="unstyled" to={HOME}>
           <img

@@ -5,7 +5,7 @@ const BUG_TRACKER_URL = "https://forms.gle/ys6W6W54YTcoBHrJA"
 
 export const Footer = () => {
   return (
-    <footer className="text-xs w-full pb-6 pt-4 bg-gray-100 border">
+    <footer className="text-xs w-full p-3 bg-gray-100 border">
       <div className="px-4 md:px-6">
         <div className="grid grid-cols-1 text-muted-foreground lg:grid-cols-3 items-center gap-4  justify-between text-center">
           <p className="text-muted-foreground">

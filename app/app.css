@@ -19,19 +19,11 @@
   --color-yellow: #ece010;
 }
 
-html,
-body {
-  @apply bg-white text-black;
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
-}
-
 /* Positiv styles */
 @layer base {
   body,
   html {
+    overscroll-behavior: none;
     @apply font-nunito;
     /* Override default font-size */
     font-size: 20px;
@@ -56,6 +48,7 @@ body {
     background-size: cover;
     background-position: top;
     background-repeat: no-repeat;
+    background-attachment: fixed;
     @apply text-white;
   }
 }
