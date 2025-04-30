@@ -3,10 +3,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-nunito: "Nunito", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-dm: "DM Sans", ui-sans-serif, system-ui, sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-nunito:
+    "Nunito", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-dm:
+    "DM Sans", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
   --color-lightgreen: #00ffd3;
   --color-green: #00dd87;
@@ -18,7 +20,7 @@
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
+  @apply bg-white text-black;
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
