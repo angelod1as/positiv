@@ -18,7 +18,6 @@ export const FounderCard: FCC<FounderCardProps> = ({
   pronouns,
   instagram,
 }) => {
-  console.log(image)
   return (
     <div className="flex flex-col items-center space-y-4">
       <img
