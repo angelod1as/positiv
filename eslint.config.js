@@ -16,7 +16,7 @@ export default defineConfig([
     plugins: { js, "unused-imports": unusedImports },
     extends: ["js/recommended"],
   },
-  tseslint.configs.recommended,
+  tseslint.configs.strict,
   pluginReact.configs.flat.recommended,
   {
     rules: {
@@ -30,6 +30,7 @@ export default defineConfig([
       "react/react-in-jsx-scope": "off",
       "react/no-unescaped-entities": "off",
       "react/self-closing-comp": "error",
+      "react/prop-types": "off",
 
       // For unusedImports
       "no-unused-vars": "off",

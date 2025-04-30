@@ -1,0 +1,24 @@
+import clsx from "clsx"
+import React, { type ComponentPropsWithoutRef } from "react"
+import { Link as RouterLink } from "react-router"
+
+type LinkPropsWithoutRef = ComponentPropsWithoutRef<typeof RouterLink>
+
+interface CustomLinkProps extends LinkPropsWithoutRef {
+  variant?: "default" | "unstyled"
+}
+
+// TODO: Implement way of checking if NavLink or Link
+export const Link: React.FC<CustomLinkProps> = ({
+  className,
+  variant = "default",
+  ...props
+}) => {
+  const styles = variant === "unstyled" ? "" : "underline"
+
+  return (
+    <RouterLink className={clsx(styles, className)} {...props}>
+      {props.children}
+    </RouterLink>
+  )
+}
