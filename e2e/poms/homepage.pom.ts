@@ -1,10 +1,11 @@
 import { expect, type Locator, type Page } from "@playwright/test"
-import routes from "~/lib/routes"
+import routes from "~/lib/paths"
 
 export class HomepagePOM {
   readonly page: Page
   readonly title: Locator
-  readonly cta: Locator
+  readonly ctaButton: Locator
+  readonly participationButton: Locator
 
   constructor(page: Page) {
     this.page = page
@@ -12,7 +13,10 @@ export class HomepagePOM {
       name: "evento de gente pelada",
       exact: true,
     })
-    this.cta = page.getByRole("link", { name: "Entrar" })
+    this.ctaButton = page.getByRole("link", { name: "Entrar" })
+    this.participationButton = page
+      .getByRole("link", { name: "Participar" })
+      .first()
   }
 
   async goto() {
@@ -21,6 +25,7 @@ export class HomepagePOM {
 
   async basicElements() {
     await expect(this.title).toBeVisible()
-    await expect(this.cta).toHaveAttribute("href", /entrar/)
+    await expect(this.ctaButton).toHaveAttribute("href", /entrar/)
+    await expect(this.participationButton).toHaveAttribute("href", /entrar/)
   }
 }
