@@ -6,9 +6,11 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router"
+import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import type { Route } from "./+types/root"
 import "./app.css"
-import { GlobalLoading } from "./components/atoms/global-loading/global-loading"
+import { Footer } from "./components/organisms/footer/footer"
+import { Header } from "./components/organisms/header/header"
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -25,7 +27,7 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt">
+    <html lang="pt-BR">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -34,7 +36,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <GlobalLoading />
-        {children}
+        <Header />
+        <div className="min-h-screen flex flex-col">{children}</div>
+        <Footer />
         <ScrollRestoration />
         <Scripts />
       </body>

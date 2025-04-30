@@ -16,6 +16,7 @@ export function meta() {
   ]
 }
 
+// Needs to be clientLoader because getHomepageNextEvents needs new Date()
 export async function clientLoader({}: Route.LoaderArgs) {
   const { supabase } = createClient()
   return await getHomepageNextEvents(supabase)
