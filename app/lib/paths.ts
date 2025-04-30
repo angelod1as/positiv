@@ -35,7 +35,7 @@ const EVENTS = `${DASHBOARD}/eventos` // Rota que redireciona
 const EVENT_VIEW = (id: string) => `${EVENTS}/${id}`
 const EVENT_RULES = (id: string) => `${EVENT_VIEW(id)}/regras`
 
-const routes = {
+const paths = {
   root: {
     HOME,
   },
@@ -75,4 +75,4 @@ const routes = {
   },
 }
 
-export default routes
+export default paths
