@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { useNavigation } from "react-router"
 import { cn } from "~/lib/utils"
 
+// TODO: Is this working?
 function GlobalLoading() {
   const navigation = useNavigation()
   const active = navigation.state !== "idle"
