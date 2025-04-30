@@ -50,6 +50,7 @@ export default defineConfig([
           allow: ["warn", "error", "info"],
         },
       ],
+      "no-empty-pattern": "off",
       "react/jsx-uses-react": "off",
       "react/react-in-jsx-scope": "off",
       "react/no-unescaped-entities": "off",
