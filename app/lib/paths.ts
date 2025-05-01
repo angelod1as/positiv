@@ -9,25 +9,24 @@ const LOGON_CONFIRM = `${LOGON}/confirm`
 ////////
 // PRIVATE
 ////////
-const LOGGED_AREA = "/dentro"
+const DASHBOARD = "/dashboard"
 
 // ACCOUNT
-const ACCOUNT = `${LOGGED_AREA}/conta`
+const ACCOUNT = `${DASHBOARD}/conta`
 const RESET_PASSWORD = `${ACCOUNT}/resetar-senha`
 const BASIC_DATA = `${ACCOUNT}/dados-basicos`
 const CREATE_BASIC_DATA = `${BASIC_DATA}/criar`
 const EDIT_BASIC_DATA = `${BASIC_DATA}`
 
-// ADMIN
-const ADMIN_DASHBOARD = `${LOGGED_AREA}/admin`
+//// ADMIN
+const ADMIN_DASHBOARD = `${DASHBOARD}/admin`
 // ADMIN_EVENTS
 const ADMIN_EVENTS = `${ADMIN_DASHBOARD}/eventos`
 const ADMIN_EVENT_VIEW = (id: string) => `${ADMIN_EVENTS}/${id}`
 const ADMIN_EVENT_CREATE = `${ADMIN_EVENTS}/novo`
 const ADMIN_EVENT_EDIT = (id: string) => `${ADMIN_EVENT_VIEW(id)}/editar`
 
-// USER
-const DASHBOARD = `${LOGGED_AREA}`
+//// USER
 // PROFILE
 const AGREE_TO_TERMS = `${DASHBOARD}/termos`
 // EVENTS
@@ -47,7 +46,7 @@ const paths = {
     LOGON_CONFIRM,
   },
   dash: {
-    ROOT: LOGGED_AREA,
+    DASHBOARD,
     admin: {
       ADMIN_DASHBOARD,
       events: {
