@@ -17,7 +17,14 @@ export const Link: React.FC<CustomLinkProps> = ({
   const styles = variant === "unstyled" ? "" : "underline"
 
   return (
-    <RouterLink className={clsx(styles, className)} {...props}>
+    <RouterLink
+      className={clsx(
+        styles,
+        className,
+        "underline-offset-3 hover:text-purple transition-colors duration-150",
+      )}
+      {...props}
+    >
       {props.children}
     </RouterLink>
   )
