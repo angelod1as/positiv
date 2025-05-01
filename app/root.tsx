@@ -34,10 +34,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="h-screen flex flex-col">
         <GlobalLoading />
         <Header />
-        <div className="min-h-screen flex flex-col">{children}</div>
+        <div className="flex flex-col grow">{children}</div>
         <Footer />
         <ScrollRestoration />
         <Scripts />
@@ -45,6 +45,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     </html>
   )
 }
+
+// TODO: Toast
+// https://www.jacobparis.com/content/remix-form-toast
 
 export default function App() {
   return <Outlet />

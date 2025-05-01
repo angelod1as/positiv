@@ -22,7 +22,7 @@ export async function clientLoader({}: Route.LoaderArgs) {
   return await getHomepageNextEvents(supabase)
 }
 
-export default function Home({ loaderData }: Route.ComponentProps) {
+export default function Homepage({ loaderData }: Route.ComponentProps) {
   const { error, events } = loaderData
   return (
     <div>
