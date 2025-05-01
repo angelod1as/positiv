@@ -6,7 +6,9 @@ import { HomePageHero } from "~/pages/homepage/components/hero/hero"
 import { HomePageNextEvents } from "~/pages/homepage/components/next-events/next-events"
 import { HomePageTestimonials } from "~/pages/homepage/components/testimonials/home-page-testimonials"
 import { getHomepageNextEvents } from "~/pages/homepage/fetch/get-homepage-next-events"
+import type { FCC } from "~types/utils.types"
 import type { Route } from "./+types/homepage"
+import { HomePageNextEventsSkeleton } from "./components/next-events/next-events-skeleton"
 
 // TODO: Meta
 export function meta() {
@@ -16,22 +18,35 @@ export function meta() {
   ]
 }
 
-// Needs to be clientLoader because getHomepageNextEvents needs new Date()
+/* Needs to be clientLoader because getHomepageNextEvents needs new Date() */
 export async function clientLoader({}: Route.LoaderArgs) {
   const { supabase } = createClient()
   return await getHomepageNextEvents(supabase)
 }
 
-export default function Homepage({ loaderData }: Route.ComponentProps) {
-  const { error, events } = loaderData
+/* Wrapper to show Skeleton below */
+const Wrapper: FCC = ({ children }) => {
   return (
     <div>
       <HomePageHero />
-      {!error && <HomePageNextEvents events={events} />}
+      {children}
       <HomePageAbout />
       <HomePageTestimonials />
       <HomePageCtaBanner />
       <HomePageFounders />
     </div>
   )
+}
+
+export function HydrateFallback() {
+  return (
+    <Wrapper>
+      <HomePageNextEventsSkeleton />
+    </Wrapper>
+  )
+}
+
+export default function Homepage({ loaderData }: Route.ComponentProps) {
+  const { error, events } = loaderData
+  return <Wrapper>{!error && <HomePageNextEvents events={events} />}</Wrapper>
 }
