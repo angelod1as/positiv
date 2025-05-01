@@ -1,5 +1,3 @@
-// import { zodResolver } from "@hookform/resolvers/zod" // TODO: remove
-// import { getValidatedFormData, useRemixForm } from "remix-hook-form" // TODO: remove
 import { applySchema } from "composable-functions"
 import { formAction } from "remix-forms"
 import { z } from "zod"
