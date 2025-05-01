@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import {
   isRouteErrorResponse,
   Links,
@@ -25,7 +26,7 @@ export const links: Route.LinksFunction = () => [
   },
 ]
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({ children }: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <head>

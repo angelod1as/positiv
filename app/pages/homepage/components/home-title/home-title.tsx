@@ -1,9 +1,12 @@
 import type { FCC } from "~types/utils.types"
 
-type HomePageTitle = {
+type HomePageTitleProps = {
   subtitle?: string
 }
-export const HomePageTitle: FCC<HomePageTitle> = ({ children, subtitle }) => {
+export const HomePageTitle: FCC<HomePageTitleProps> = ({
+  children,
+  subtitle,
+}) => {
   return (
     <div className="space-y-2 text-center">
       <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight">
