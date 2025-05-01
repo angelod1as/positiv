@@ -1,6 +1,6 @@
-import clsx from "clsx"
 import React, { type ComponentPropsWithoutRef } from "react"
 import { Link as RouterLink } from "react-router"
+import { cn } from "~/lib/utils"
 
 type LinkPropsWithoutRef = ComponentPropsWithoutRef<typeof RouterLink>
 
@@ -18,7 +18,7 @@ export const Link: React.FC<CustomLinkProps> = ({
 
   return (
     <RouterLink
-      className={clsx(
+      className={cn(
         styles,
         className,
         "underline-offset-3 hover:text-purple transition-colors duration-150",

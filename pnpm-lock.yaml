@@ -11,9 +11,6 @@ importers:
       '@hookform/resolvers':
         specifier: ^5.0.1
         version: 5.0.1(react-hook-form@7.56.1(react@19.1.0))
-      '@radix-ui/react-label':
-        specifier: ^2.1.4
-        version: 2.1.4(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@radix-ui/react-slot':
         specifier: ^1.2.0
         version: 1.2.0(@types/react@19.1.2)(react@19.1.0)
@@ -35,6 +32,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      composable-functions:
+        specifier: ^5.0.0
+        version: 5.0.0
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -45,7 +45,7 @@ importers:
         specifier: ^16.5.0
         version: 16.5.0
       isbot:
-        specifier: ^5.1.17
+        specifier: ^5
         version: 5.1.27
       lucide-react:
         specifier: ^0.503.0
@@ -65,9 +65,9 @@ importers:
       react-router:
         specifier: ^7.5.3
         version: 7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      remix-hook-form:
-        specifier: ^7.0.1
-        version: 7.0.1(react-dom@19.1.0(react@19.1.0))(react-hook-form@7.56.1(react@19.1.0))(react-router@7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)
+      remix-forms:
+        specifier: ^3.0.0
+        version: 3.0.0(composable-functions@5.0.0)(react-hook-form@7.56.1(react@19.1.0))(react-router@7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@3.24.3)
       tailwind-merge:
         specifier: ^3.2.0
         version: 3.2.0
@@ -532,6 +532,11 @@ packages:
   '@floating-ui/utils@0.2.9':
     resolution: {integrity: sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==}
 
+  '@hookform/resolvers@2.9.11':
+    resolution: {integrity: sha512-bA3aZ79UgcHj7tFV7RlgThzwSSHZgvfbt2wprldRkYBcMopdMvHyO17Wwp/twcJasNFischFfS7oz8Katz8DdQ==}
+    peerDependencies:
+      react-hook-form: ^7.0.0
+
   '@hookform/resolvers@5.0.1':
     resolution: {integrity: sha512-u/+Jp83luQNx9AdyW2fIPGY6Y7NG68eN2ZW8FOJYL+M0i4s49+refdJdOp/A9n9HFQtQs3HIDHQvX3ZET2o7YA==}
     peerDependencies:
@@ -745,19 +750,6 @@ packages:
       react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
     peerDependenciesMeta:
       '@types/react':
-        optional: true
-
-  '@radix-ui/react-label@2.1.4':
-    resolution: {integrity: sha512-wy3dqizZnZVV4ja0FNnUhIWNwWdoldXrneEyUcVtLYDAt8ovGS4ridtMAOGgXBBIfggL4BOveVWsjXDORdGEQg==}
-    peerDependencies:
-      '@types/react': '*'
-      '@types/react-dom': '*'
-      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
-      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      '@types/react-dom':
         optional: true
 
   '@radix-ui/react-popper@1.2.4':
@@ -1466,6 +1458,9 @@ packages:
   commander@10.0.1:
     resolution: {integrity: sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==}
     engines: {node: '>=14'}
+
+  composable-functions@5.0.0:
+    resolution: {integrity: sha512-CV5r9eXpnombeKTHFP895n++aYIJkmpHrlDXqloF0OUYdrXr7CU008R8tcBjaDBcZHrSwB03W1Lv8T8Ly8C37A==}
 
   compressible@2.0.18:
     resolution: {integrity: sha512-AF3r7P5dWxL8MxyITRMlORQNaOA2IkAFaTr4k7BUumjPtRpGDTZpl0Pb1XCO6JeDCBdp126Cgs9sMxqSjgYyRg==}
@@ -2763,13 +2758,14 @@ packages:
     resolution: {integrity: sha512-dYqgNSZbDwkaJ2ceRd9ojCGjBq+mOm9LmtXnAnEGyHhN/5R7iDW2TRw3h+o/jCFxus3P2LfWIIiwowAjANm7IA==}
     engines: {node: '>= 0.4'}
 
-  remix-hook-form@7.0.1:
-    resolution: {integrity: sha512-1qTeY08f0TVh/jq4OTbJG3lbB5mePe7UmtWXVWoJCGlk9gWRNweupYJ/POuHtyDVCnxNhgbsSi8gd/IhkB7RwA==}
+  remix-forms@3.0.0:
+    resolution: {integrity: sha512-37OG5zPb3C91aZaIeSU1gvrYkxxRwgsWjUEDe5BARmwOjjh3yFMT0L2ZSx+P1lJx5UIstWLt4zL0edBb7WpbIQ==}
     peerDependencies:
-      react: ^18.2.0 || ^19.0.0
-      react-dom: ^18.2.0 || ^19.0.0
-      react-hook-form: ^7.55.0
-      react-router: '>=7.5.0'
+      composable-functions: '>=4'
+      react: '>=16.8'
+      react-hook-form: '>=7.27'
+      react-router: '>=7'
+      zod: '>=3.12'
 
   resolve-from@4.0.0:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
@@ -3683,6 +3679,10 @@ snapshots:
 
   '@floating-ui/utils@0.2.9': {}
 
+  '@hookform/resolvers@2.9.11(react-hook-form@7.56.1(react@19.1.0))':
+    dependencies:
+      react-hook-form: 7.56.1(react@19.1.0)
+
   '@hookform/resolvers@5.0.1(react-hook-form@7.56.1(react@19.1.0))':
     dependencies:
       '@standard-schema/utils': 0.3.0
@@ -3891,15 +3891,6 @@ snapshots:
       react: 19.1.0
     optionalDependencies:
       '@types/react': 19.1.2
-
-  '@radix-ui/react-label@2.1.4(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
-    dependencies:
-      '@radix-ui/react-primitive': 2.1.0(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
-    optionalDependencies:
-      '@types/react': 19.1.2
-      '@types/react-dom': 19.1.2(@types/react@19.1.2)
 
   '@radix-ui/react-popper@1.2.4(@types/react-dom@19.1.2(@types/react@19.1.2))(@types/react@19.1.2)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
@@ -4638,6 +4629,8 @@ snapshots:
   color-name@1.1.4: {}
 
   commander@10.0.1: {}
+
+  composable-functions@5.0.0: {}
 
   compressible@2.0.18:
     dependencies:
@@ -6050,12 +6043,14 @@ snapshots:
       gopd: 1.2.0
       set-function-name: 2.0.2
 
-  remix-hook-form@7.0.1(react-dom@19.1.0(react@19.1.0))(react-hook-form@7.56.1(react@19.1.0))(react-router@7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0):
+  remix-forms@3.0.0(composable-functions@5.0.0)(react-hook-form@7.56.1(react@19.1.0))(react-router@7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@3.24.3):
     dependencies:
+      '@hookform/resolvers': 2.9.11(react-hook-form@7.56.1(react@19.1.0))
+      composable-functions: 5.0.0
       react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
       react-hook-form: 7.56.1(react@19.1.0)
       react-router: 7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      zod: 3.24.3
 
   resolve-from@4.0.0: {}
 

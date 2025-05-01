@@ -1,11 +1,10 @@
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Form, redirect } from "react-router"
-import { getValidatedFormData, useRemixForm } from "remix-hook-form"
+// import { zodResolver } from "@hookform/resolvers/zod" // TODO: remove
+// import { getValidatedFormData, useRemixForm } from "remix-hook-form" // TODO: remove
+import { applySchema } from "composable-functions"
+import { formAction } from "remix-forms"
 import { z } from "zod"
-import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
-import { FormError } from "~/components/forms/form-error/form-error"
-import { FormInput } from "~/components/forms/form-input/form-input"
+import { SchemaForm } from "~/components/forms/schema-form"
 import {
   Card,
   CardContent,
@@ -15,7 +14,6 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import paths from "~/lib/paths"
-import { createClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 import type { Route } from "./+types/login"
 
@@ -24,55 +22,54 @@ const {
   dash: { ROOT },
 } = paths
 
+// export const action = async ({ request }: Route.ActionArgs) => {
+//   const {
+//     errors,
+//     data,
+//     receivedValues: defaultValues,
+//   } = await getValidatedFormData<FormData>(request, resolver)
+//   if (errors) {
+//     // The keys "errors" and "defaultValues" are picked up automatically by useRemixForm
+//     return { errors, defaultValues }
+//   }
+
+//   const { supabase } = createClient(request)
+//   const { error } = await supabase.auth.signInWithPassword(data)
+
+//   if (error) {
+//     if (error.code === "invalid_credentials") {
+//       return {
+//         authError: "Credenciais inválidas",
+//       }
+//     }
+//     return {
+//       authError: error.message,
+//     }
+//   }
+
+//   return redirect(ROOT)
+// }
+
 const schema = z.object({
   email: z.string().email().min(1),
   password: z.string().min(1),
 })
 
-type FormData = z.infer<typeof schema>
-const resolver = zodResolver(schema)
+const mutation = applySchema(schema)(async (values) => {
+  console.log(values)
+})
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  const {
-    errors,
-    data,
-    receivedValues: defaultValues,
-  } = await getValidatedFormData<FormData>(request, resolver)
-  if (errors) {
-    // The keys "errors" and "defaultValues" are picked up automatically by useRemixForm
-    return { errors, defaultValues }
-  }
-
-  const { supabase } = createClient(request)
-  const { error } = await supabase.auth.signInWithPassword(data)
-
-  if (error) {
-    if (error.code === "invalid_credentials") {
-      return {
-        authError: "Credenciais inválidas",
-      }
-    }
-    return {
-      authError: error.message,
-    }
-  }
-
-  return redirect(ROOT)
+  formAction({
+    request,
+    schema,
+    mutation,
+    successPath: ROOT,
+  })
 }
 
 /* REMIX this */
-const Login = ({ actionData }: Route.ComponentProps) => {
-  const {
-    handleSubmit,
-    formState: { errors },
-    register,
-  } = useRemixForm<FormData>({
-    mode: "onSubmit",
-    resolver,
-  })
-
-  const { authError } = actionData || {}
-
+const Login = ({}: Route.ComponentProps) => {
   return (
     <div className={cn("flex flex-col gap-6")}>
       <Card>
@@ -81,7 +78,8 @@ const Login = ({ actionData }: Route.ComponentProps) => {
           <CardDescription>Entre na sua conta com seu e-mail</CardDescription>
         </CardHeader>
         <CardContent>
-          <Form onSubmit={handleSubmit} method="POST">
+          <SchemaForm schema={schema} />
+          {/* <Form onSubmit={handleSubmit} method="POST">
             <div className="flex flex-col gap-6">
               <FormInput<FormData>
                 id="email"
@@ -107,7 +105,7 @@ const Login = ({ actionData }: Route.ComponentProps) => {
               {authError && <FormError>{authError}</FormError>}
               <Button type="submit">Entrar</Button>
             </div>
-          </Form>
+          </Form> */}
         </CardContent>
         <CardFooter>
           <p>

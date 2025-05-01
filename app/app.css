@@ -51,8 +51,31 @@
     background-attachment: fixed;
     @apply text-white;
   }
+
+  label[for] {
+    @apply cursor-pointer;
+  }
+
+  sub,
+  sup {
+    font-size: 60%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+  }
+
+  sup {
+    top: 0;
+    vertical-align: super;
+  }
+
+  sub {
+    bottom: 0;
+    vertical-align: sub;
+  }
 }
 
+/* SHADCN */
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
