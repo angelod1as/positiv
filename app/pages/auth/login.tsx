@@ -14,19 +14,23 @@ import paths from "~/lib/paths"
 import { createClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 
+import { redirect } from "react-router"
 import { SchemaForm } from "~/components/forms/schema-form"
 import type { Route } from "./+types/login"
 
 const {
   auth: { FORGOT_PASSWORD, LOGON },
-  dash: { ROOT },
+  dash: { DASHBOARD },
 } = paths
 
 const contextSchema = z.custom<{ request: Request }>()
 
 const schema = z.object({
-  email: z.string().min(1).email(),
-  password: z.string().min(1),
+  email: z
+    .string()
+    .min(1, "Insira pelo menos um caracter")
+    .email("E-mail inválido"),
+  password: z.string().min(1, "Insira pelo menos um caracter"),
 })
 
 const mutation = applySchema(
@@ -34,27 +38,43 @@ const mutation = applySchema(
   contextSchema,
 )(async (values, context) => {
   const { request } = context
-  const { supabase } = createClient(request)
-  const { error } = await supabase.auth.signInWithPassword(values)
+  const headersToSet = new Headers()
+  const { supabase } = createClient(request, headersToSet)
+  const { error, data } = await supabase.auth.signInWithPassword(values)
 
   if (error) {
     if (error.code === "invalid_credentials") {
+      console.error("Credenciais inválidas")
       throw new Error("Credenciais inválidas")
     }
+    console.error("Credenciais inválidas")
     throw new Error(
       `Erro de autenticação — Código: "${error.code}" — Mensagem: "${error.message}"`,
     )
   }
 
-  return values
+  return data.user
 })
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const headersToSet = new Headers()
+  const { supabase } = createClient(request, headersToSet)
+  const { data, error } = await supabase.auth.getUser()
+  if (data.user) {
+    redirect(DASHBOARD)
+  }
+  if (error && error.name !== "AuthSessionMissingError") {
+    throw new Error(`Erro de autenticação, contate o administrador: ${error}`)
+  }
+  return {}
+}
 
 export const action = async ({ request }: Route.ActionArgs) => {
   return formAction({
     request,
     schema,
     mutation,
-    successPath: ROOT,
+    successPath: DASHBOARD,
     context: { request },
   })
 }

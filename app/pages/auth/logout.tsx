@@ -2,7 +2,8 @@ import { type ActionFunctionArgs, redirect } from "react-router"
 import { createClient } from "~/lib/supabase/server"
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { supabase, headers } = createClient(request)
+  const headersToSet = new Headers()
+  const { supabase, headers } = createClient(request, headersToSet)
   const { error } = await supabase.auth.signOut()
 
   if (error) {

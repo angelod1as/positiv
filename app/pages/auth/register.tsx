@@ -19,7 +19,7 @@ import type { Route } from "./+types/login"
 
 const {
   auth: { FORGOT_PASSWORD, LOGON, LOGIN, LOGON_CALLBACK },
-  dash: { ROOT },
+  dash: { DASHBOARD: ROOT },
 } = paths
 
 const contextSchema = z.custom<{ request: Request }>()
@@ -43,8 +43,9 @@ const mutation = applySchema(
   contextSchema,
 )(async (values, context) => {
   const { request } = context
-  const origin = request.headers.get("origin")
-  const { supabase } = createClient(request)
+  const headersToSet = new Headers()
+
+  const { supabase } = createClient(request, headersToSet)
 
   const { over18, confirmPassword, ...data } = values
 
@@ -52,7 +53,7 @@ const mutation = applySchema(
     ...data,
     // TODO: Is this doable?
     // options: {
-    //   emailRedirectTo: `${origin}${LOGON_CALLBACK}`,
+    //   emailRedirectTo: `${request.headers.get("origin")}${LOGON_CALLBACK}`,
     // },
   })
 
