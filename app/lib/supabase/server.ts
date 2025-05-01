@@ -8,14 +8,11 @@ import type { DBClient } from "~types/utils.types"
 
 const { VITE_SUPABASE_URL = "", VITE_SUPABASE_ANON_KEY = "" } = import.meta.env
 
-export function createClient(
-  request: Request,
-  headers: Headers,
-): {
+export function createClient(request: Request): {
   supabase: DBClient
   headers: Headers
 } {
-  // const headers = new Headers()
+  const headers = new Headers()
 
   const supabase = createServerClient<Database>(
     VITE_SUPABASE_URL,
