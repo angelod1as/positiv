@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import paths from "~/lib/paths"
+import { createClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 import type { Route } from "./+types/login"
 
@@ -20,41 +21,29 @@ const {
   dash: { ROOT },
 } = paths
 
-// export const action = async ({ request }: Route.ActionArgs) => {
-//   const {
-//     errors,
-//     data,
-//     receivedValues: defaultValues,
-//   } = await getValidatedFormData<FormData>(request, resolver)
-//   if (errors) {
-//     // The keys "errors" and "defaultValues" are picked up automatically by useRemixForm
-//     return { errors, defaultValues }
-//   }
-
-//   const { supabase } = createClient(request)
-//   const { error } = await supabase.auth.signInWithPassword(data)
-
-//   if (error) {
-//     if (error.code === "invalid_credentials") {
-//       return {
-//         authError: "Credenciais inválidas",
-//       }
-//     }
-//     return {
-//       authError: error.message,
-//     }
-//   }
-
-//   return redirect(ROOT)
-// }
-
 const schema = z.object({
   email: z.string().email().min(1),
   password: z.string().min(1),
 })
 
-const mutation = applySchema(schema)(async (values) => {
-  console.log(values)
+const contextSchema = z.custom<{ request: Request }>()
+
+const mutation = applySchema(
+  schema,
+  contextSchema,
+)(async (values, context) => {
+  const { request } = context
+  const { supabase } = createClient(request)
+  const { error } = await supabase.auth.signInWithPassword(values)
+
+  if (error) {
+    if (error.code === "invalid_credentials") {
+      throw new Error("Credenciais inválidas")
+    }
+    throw new Error(
+      `Erro de autenticação\nCódigo: ${error.code}\nMensagem:${error.message}`,
+    )
+  }
 })
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -62,6 +51,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     request,
     schema,
     mutation,
+    context: { request },
     successPath: ROOT,
   })
 }
@@ -73,41 +63,28 @@ const Login = ({}: Route.ComponentProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Entrar</CardTitle>
-          <CardDescription>Entre na sua conta com seu e-mail</CardDescription>
+          <CardDescription>
+            <p>Entre na sua conta com seu e-mail</p>
+            <p className="text-sm">
+              Não tem uma conta? <Link to={LOGON}>Inscreva-se</Link>
+            </p>
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <SchemaForm schema={schema} />
-          {/* <Form onSubmit={handleSubmit} method="POST">
-            <div className="flex flex-col gap-6">
-              <FormInput<FormData>
-                id="email"
-                label="E-mail"
-                placeholder="email@exemplo.com"
-                type="email"
-                errors={errors.email}
-                required
-                {...register("email")}
-              />
-              <FormInput<FormData>
-                id="password"
-                label="Senha"
-                placeholder="senha123"
-                type="password"
-                errors={errors.password}
-                companion={
-                  <Link to={FORGOT_PASSWORD}>Esqueci minha senha</Link>
-                }
-                required
-                {...register("password")}
-              />
-              {authError && <FormError>{authError}</FormError>}
-              <Button type="submit">Entrar</Button>
-            </div>
-          </Form> */}
+          <SchemaForm
+            schema={schema}
+            labels={{ password: "Senha", email: "E-mail" }}
+            placeholders={{ email: "email@exemplo.com", password: "senha123" }}
+            inputTypes={{
+              email: "email",
+              password: "password",
+            }}
+            pendingButtonLabel="Entrando..."
+          />
         </CardContent>
         <CardFooter>
-          <p>
-            Não tem uma conta? <Link to={LOGON}>Inscreva-se</Link>
+          <p className="text-muted-foreground text-sm">
+            <Link to={FORGOT_PASSWORD}>Esqueci minha senha</Link>
           </p>
         </CardFooter>
       </Card>
