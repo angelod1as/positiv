@@ -11,7 +11,8 @@
     "test:ui": "pnpm exec playwright test --ui",
     "test:gen": "pnpm exec playwright test codegen",
     "types": "pnpm db:types",
-    "db:types": "./scripts/db-types.sh"
+    "db:types": "./scripts/db-types.sh",
+    "prepare": "husky"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.0",
@@ -49,6 +50,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-unused-imports": "^4.1.4",
     "globals": "^16.0.0",
+    "husky": "^9.1.7",
     "install": "^0.13.0",
     "react-router-devtools": "^1.1.0",
     "tailwindcss": "^4.0.0",
