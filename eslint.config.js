@@ -21,7 +21,7 @@ export default defineConfig([
       "@typescript-eslint/no-unused-vars": "off",
       "unused-imports/no-unused-imports": "error",
       "unused-imports/no-unused-vars": [
-        "warn",
+        "error",
         {
           vars: "all",
           varsIgnorePattern: "^_",
@@ -33,7 +33,23 @@ export default defineConfig([
       ],
     },
   },
-  tseslint.configs.strict,
+  {
+    ...tseslint.configs.strict,
+    rules: {
+      // For unusedImports
+      "unused-imports/no-unused-vars": [
+        "error",
+        {
+          vars: "all",
+          varsIgnorePattern: "^_",
+          args: "after-used",
+          argsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          ignoreRestSiblings: true,
+        },
+      ],
+    },
+  },
   {
     ...pluginReact.configs.flat.recommended,
     settings: {

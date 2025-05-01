@@ -7,7 +7,11 @@ import {
 
 export default [
   index("pages/homepage/homepage.tsx"),
-  layout("pages/auth/layout.tsx", [route("/entrar", "pages/auth/login.tsx")]),
+  layout("pages/auth/layout.tsx", [
+    route("/entrar", "pages/auth/login.tsx"),
+    route("/registrar", "pages/auth/register.tsx"),
+    route("/sair", "pages/auth/logout.tsx"),
+  ]),
 
   // Debug route for Chrome DevTools
   route(
