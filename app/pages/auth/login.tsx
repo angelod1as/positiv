@@ -2,7 +2,6 @@ import { applySchema } from "composable-functions"
 import { formAction } from "remix-forms"
 import { z } from "zod"
 import { Link } from "~/components/atoms/link/link"
-import { SchemaForm } from "~/components/forms/schema-form"
 import {
   Card,
   CardContent,
@@ -14,6 +13,8 @@ import {
 import paths from "~/lib/paths"
 import { createClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
+
+import { SchemaForm } from "~/components/forms/schema-form"
 import type { Route } from "./+types/login"
 
 const {
@@ -21,12 +22,12 @@ const {
   dash: { ROOT },
 } = paths
 
+const contextSchema = z.custom<{ request: Request }>()
+
 const schema = z.object({
-  email: z.string().email().min(1),
+  email: z.string().min(1).email(),
   password: z.string().min(1),
 })
-
-const contextSchema = z.custom<{ request: Request }>()
 
 const mutation = applySchema(
   schema,
@@ -41,22 +42,23 @@ const mutation = applySchema(
       throw new Error("Credenciais inválidas")
     }
     throw new Error(
-      `Erro de autenticação\nCódigo: ${error.code}\nMensagem:${error.message}`,
+      `Erro de autenticação — Código: "${error.code}" — Mensagem: "${error.message}"`,
     )
   }
+
+  return values
 })
 
 export const action = async ({ request }: Route.ActionArgs) => {
-  formAction({
+  return formAction({
     request,
     schema,
     mutation,
-    context: { request },
     successPath: ROOT,
+    context: { request },
   })
 }
 
-/* REMIX this */
 const Login = ({}: Route.ComponentProps) => {
   return (
     <div className={cn("flex flex-col gap-6")}>
