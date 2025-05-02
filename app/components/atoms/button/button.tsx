@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react"
 import {
   Button as ShadButton,
   type ButtonProps as ShadButtonProps,
@@ -6,7 +7,7 @@ import { Link } from "../link/link"
 
 export type ButtonProps = ShadButtonProps & {
   to?: string
-  linkProps?: Omit<React.ComponentProps<typeof Link>, "to">
+  linkProps?: Omit<ComponentProps<typeof Link>, "to">
 }
 
 /** A subset of Shadcn Button that renders a Link if an href is present */

@@ -6,11 +6,12 @@ import globals from "globals"
 import tseslint from "typescript-eslint"
 
 export default defineConfig([
-  globalIgnores(["./.react-router/*"]),
+  globalIgnores(["./.react-router/*", "./build/*"]),
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
+  tseslint.configs.strict,
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
     plugins: { js, "unused-imports": unusedImports },
@@ -20,23 +21,6 @@ export default defineConfig([
       "no-unused-vars": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "unused-imports/no-unused-imports": "error",
-      "unused-imports/no-unused-vars": [
-        "error",
-        {
-          vars: "all",
-          varsIgnorePattern: "^_",
-          args: "after-used",
-          argsIgnorePattern: "^_",
-          caughtErrorsIgnorePattern: "^_",
-          ignoreRestSiblings: true,
-        },
-      ],
-    },
-  },
-  {
-    ...tseslint.configs.strict,
-    rules: {
-      // For unusedImports
       "unused-imports/no-unused-vars": [
         "error",
         {
