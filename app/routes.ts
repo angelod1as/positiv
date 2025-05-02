@@ -21,6 +21,6 @@ export default [
   // Debug route for Chrome DevTools
   route(
     "/.well-known/appspecific/com.chrome.devtools.json",
-    "pages/debug-null/debug-null.tsx",
+    "pages/debug-null/debug-null.ts",
   ),
 ] satisfies RouteConfig
