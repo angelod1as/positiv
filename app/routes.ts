@@ -18,7 +18,12 @@ export default [
     ...prefix("dashboard", [index("pages/dashboard/dashboard-page.tsx")]),
   ]),
 
-  ...prefix("conta", [index("pages/account/account-page.tsx")]),
+  layout("pages/account/layout.tsx", [
+    ...prefix("conta", [
+      index("pages/account/account-page.tsx"),
+      route("/mudar-senha", "pages/account/change-password.tsx"),
+    ]),
+  ]),
 
   // Debug route for Chrome DevTools
   route(

@@ -59,7 +59,7 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
   const { basic_data_filled } = loaderData
 
   return (
-    <div className="self-center flex flex-col h-full max-w-2xl w-full gap-8 mb-12 mx-4">
+    <>
       <h1>Gerenciar conta</h1>
 
       <div className="flex flex-col gap-12 h-full">
@@ -111,7 +111,7 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
           />
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
