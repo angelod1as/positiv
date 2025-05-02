@@ -7,13 +7,13 @@ const {
 } = paths
 
 export const requireUser = async (request: Request) => {
-  const headersToSet = new Headers()
-  const { supabase } = createClient(request, headersToSet)
+  const { supabase } = createClient(request)
 
   const { data } = await supabase.auth.getUser()
-  console.log(`\n\n:DEV data:\n`, data, `\n\n`)
+  // TODO: remove consoles
+  console.info(`\n\n:DEV data:\n`, data, `\n\n`)
   if (!data.user) {
-    console.log("NO USER!")
+    console.info("NO USER!")
     throw redirect(LOGIN)
   }
 

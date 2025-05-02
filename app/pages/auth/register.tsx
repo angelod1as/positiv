@@ -18,7 +18,7 @@ import { SchemaForm } from "~/components/forms/schema-form"
 import type { Route } from "./+types/login"
 
 const {
-  auth: { FORGOT_PASSWORD, LOGON, LOGIN, LOGON_CALLBACK },
+  auth: { LOGIN },
   dash: { DASHBOARD: ROOT },
 } = paths
 
@@ -43,9 +43,7 @@ const mutation = applySchema(
   contextSchema,
 )(async (values, context) => {
   const { request } = context
-  const headersToSet = new Headers()
-
-  const { supabase } = createClient(request, headersToSet)
+  const { supabase } = createClient(request)
 
   const { over18, confirmPassword, ...data } = values
 
