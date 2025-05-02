@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test"
+
 import dotenv from "dotenv"
 import path from "path"
 
@@ -32,6 +33,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
 
+  /* Configure projects for major browsers */
   projects: [
     {
       name: "setup",
@@ -51,7 +53,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "npm run start",
+    command: "pnpm dev",
     url: "http://localhost:5173",
     reuseExistingServer: !process.env.CI,
   },
