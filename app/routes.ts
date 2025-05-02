@@ -22,6 +22,7 @@ export default [
     ...prefix("conta", [
       index("pages/account/account-page.tsx"),
       route("/mudar-senha", "pages/account/change-password.tsx"),
+      route("/dados-basicos", "pages/account/basic-data/basic-data-page.tsx"),
     ]),
   ]),
 
