@@ -15,7 +15,7 @@ import { createClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 
 import { SchemaForm } from "~/components/forms/schema-form"
-import type { Route } from "./+types/login"
+import type { Route } from "./+types/register-page"
 
 const {
   auth: { LOGIN },
@@ -72,7 +72,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   })
 }
 
-const Register = ({}: Route.ComponentProps) => {
+const RegisterPage = ({}: Route.ComponentProps) => {
   return (
     <div className={cn("flex flex-col gap-6")}>
       <Card>
@@ -104,4 +104,4 @@ const Register = ({}: Route.ComponentProps) => {
   )
 }
 
-export default Register
+export default RegisterPage
