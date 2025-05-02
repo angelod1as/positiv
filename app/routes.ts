@@ -18,6 +18,8 @@ export default [
     ...prefix("dashboard", [index("pages/dashboard/dashboard-page.tsx")]),
   ]),
 
+  ...prefix("conta", [index("pages/account/account-page.tsx")]),
+
   // Debug route for Chrome DevTools
   route(
     "/.well-known/appspecific/com.chrome.devtools.json",
