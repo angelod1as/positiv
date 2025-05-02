@@ -16,7 +16,7 @@ import { cn } from "~/lib/utils"
 
 import { redirect } from "react-router"
 import { SchemaForm } from "~/components/forms/schema-form"
-import type { Route } from "./+types/login"
+import type { Route } from "./+types/login-page"
 
 const {
   auth: { FORGOT_PASSWORD, LOGON },
@@ -77,7 +77,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   })
 }
 
-const Login = ({}: Route.ComponentProps) => {
+const LoginPage = ({}: Route.ComponentProps) => {
   return (
     <div className={cn("flex flex-col gap-6")}>
       <Card>
@@ -112,4 +112,4 @@ const Login = ({}: Route.ComponentProps) => {
   )
 }
 
-export default Login
+export default LoginPage
