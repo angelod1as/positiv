@@ -16,7 +16,7 @@ import { cn } from "~/lib/utils"
 
 import { redirect } from "react-router"
 import { SchemaForm } from "~/components/forms/schema-form"
-import type { Route } from "./+types/login"
+import type { Route } from "./+types/login-page"
 
 const {
   auth: { FORGOT_PASSWORD, LOGON },
