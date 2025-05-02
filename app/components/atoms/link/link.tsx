@@ -14,17 +14,13 @@ export const Link: React.FC<CustomLinkProps> = ({
   variant = "default",
   ...props
 }) => {
-  const styles = variant === "unstyled" ? "" : "underline"
+  const styles =
+    variant === "unstyled"
+      ? ""
+      : "underline underline-offset-3 hover:text-purple transition-colors duration-150"
 
   return (
-    <RouterLink
-      className={cn(
-        styles,
-        className,
-        "underline-offset-3 hover:text-purple transition-colors duration-150",
-      )}
-      {...props}
-    >
+    <RouterLink className={cn(styles, className)} {...props}>
       {props.children}
     </RouterLink>
   )

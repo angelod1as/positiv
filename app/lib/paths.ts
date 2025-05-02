@@ -12,8 +12,8 @@ const LOGON_CONFIRM = `${LOGON}/confirm`
 const DASHBOARD = "/dashboard"
 
 // ACCOUNT
-const ACCOUNT = `${DASHBOARD}/conta`
-const RESET_PASSWORD = `${ACCOUNT}/resetar-senha`
+const ACCOUNT = `/conta`
+const RESET_PASSWORD = `${ACCOUNT}/mudar-senha`
 const BASIC_DATA = `${ACCOUNT}/dados-basicos`
 const CREATE_BASIC_DATA = `${BASIC_DATA}/criar`
 const EDIT_BASIC_DATA = `${BASIC_DATA}`

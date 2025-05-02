@@ -9,13 +9,21 @@ import {
 export default [
   index("pages/homepage/homepage.tsx"),
   layout("pages/auth/layout.tsx", [
-    route("/entrar", "pages/auth/login.tsx"),
-    route("/registrar", "pages/auth/register.tsx"),
-    route("/sair", "pages/auth/logout.tsx"),
+    route("/entrar", "pages/auth/login-page.tsx"),
+    route("/registrar", "pages/auth/register-page.tsx"),
+    route("/sair", "pages/auth/logout-page.tsx"),
   ]),
 
   layout("pages/dashboard/layout.tsx", [
-    ...prefix("dashboard", [index("pages/dashboard/dashboard.tsx")]),
+    ...prefix("dashboard", [index("pages/dashboard/dashboard-page.tsx")]),
+  ]),
+
+  layout("pages/account/layout.tsx", [
+    ...prefix("conta", [
+      index("pages/account/account-page.tsx"),
+      route("/mudar-senha", "pages/account/change-password.tsx"),
+      route("/dados-basicos", "pages/account/basic-data/basic-data-page.tsx"),
+    ]),
   ]),
 
   // Debug route for Chrome DevTools
