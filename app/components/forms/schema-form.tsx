@@ -18,6 +18,7 @@ import { RadioGroup } from "./radio-group"
 
 import type { z } from "zod"
 import { CheckboxWithOther } from "./checkbox-with-other"
+import { FormDescription } from "./form-description"
 import { TextArea } from "./text-area"
 
 type FormValues<SchemaType> = Partial<Record<keyof SchemaType, string>>
@@ -30,6 +31,7 @@ type SchemaFormProps<Schema extends FormSchema> =
 
 function SchemaForm<Schema extends FormSchema>({
   descriptions,
+  className,
   ...props
 }: SchemaFormProps<Schema>) {
   return (
@@ -54,16 +56,35 @@ function SchemaForm<Schema extends FormSchema>({
 
           return (
             <Field key={name.toString()} {...props}>
-              {({ Label, SmartInput, options, type, Errors }) => {
+              {({
+                Label,
+                SmartInput,
+                CheckboxWrapper,
+                Checkbox,
+                options,
+                type,
+                Errors,
+              }) => {
+                if (type === "checkbox") {
+                  return (
+                    <div>
+                      <CheckboxWrapper>
+                        <Checkbox />
+                        <Label className="text-muted-foreground" />
+                      </CheckboxWrapper>
+                      <div className="pl-6">
+                        <FormDescription description={descriptions?.[name]} />
+                        <Errors />
+                      </div>
+                    </div>
+                  )
+                }
+
                 return (
                   <>
                     <div>
                       <Label className="text-muted-foreground" />
-                      {descriptions?.[name] && (
-                        <p className="text-xs text-muted-foreground">
-                          {descriptions[name]}
-                        </p>
-                      )}
+                      <FormDescription description={descriptions?.[name]} />
                     </div>
 
                     {type === "textnumber" ? (
