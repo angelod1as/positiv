@@ -14,8 +14,16 @@ export default [
     route("/sair", "pages/auth/logout-page.tsx"),
   ]),
 
-  layout("pages/dashboard/layout.tsx", [
-    ...prefix("dashboard", [index("pages/dashboard/dashboard-page.tsx")]),
+  layout("pages/dashboard/auth-guard-layout.tsx", [
+    ...prefix("dashboard", [
+      index("pages/dashboard/dashboard-page.tsx"),
+      layout("pages/dashboard/agree-to-terms-page/layout.tsx", [
+        route(
+          "/termos",
+          "pages/dashboard/agree-to-terms-page/agree-to-terms-page.tsx",
+        ),
+      ]),
+    ]),
   ]),
 
   layout("pages/account/layout.tsx", [
