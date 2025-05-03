@@ -150,6 +150,14 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
 
   return (
     <>
+      <div>
+        <h1>Dados básicos</h1>
+        <p className="text-muted-foreground">
+          {profile?.basic_data_filled
+            ? "Atualize seus dados"
+            : "Precisamos destes dados básicos para nosso controle interno de pessoas participantes"}
+        </p>
+      </div>
       <SchemaForm
         schema={schema}
         values={profile}
