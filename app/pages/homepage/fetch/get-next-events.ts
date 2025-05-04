@@ -7,28 +7,16 @@ import type {
 } from "~types/entities.types"
 import type { DBClient } from "~types/utils.types"
 
-export type HomePageViewEvent = Pick<
-  ViewEvent,
-  | "id"
-  | "title"
-  | "description"
-  | "emoji"
-  | "starting_time"
-  | "ending_time"
-  | "application_open_time"
-  | "is_applied"
-  | "event_status"
->
-
-type GetHomepageNextEvents = (client: DBClient) => Promise<{
-  events: HomePageViewEvent[] | undefined
+type GetNextEvents = (
+  client: DBClient,
+  limit?: number,
+) => Promise<{
+  events: ViewEvent[] | undefined
   error: PostgrestError | "NO_DATA_ERROR" | undefined | null
   profile: ProfileWithRoles | undefined
 }>
 
-export const getHomepageNextEvents: GetHomepageNextEvents = async (
-  supabase,
-) => {
+export const getNextEvents: GetNextEvents = async (supabase, limit = 3) => {
   const now = new Date().toISOString()
   const profile = await getCurrentProfile(supabase)
 
@@ -40,8 +28,17 @@ export const getHomepageNextEvents: GetHomepageNextEvents = async (
     emoji,
     starting_time,
     ending_time,
-    application_open_time,
     event_status,
+    application_open_time,
+    interview_process_start,
+    location,
+    ticket_price,
+    application_close_time,
+    group_close_date,
+    group_open_date,
+    interview_process_end,
+    payment_end_date,
+    payment_start_date,
     active_applications: event_participants(user_applied_status)
     `,
   )
@@ -54,7 +51,7 @@ export const getHomepageNextEvents: GetHomepageNextEvents = async (
     .gte("starting_time", now)
     .in("event_status", ["Registration Open", "Scheduled"])
     .order("starting_time", { ascending: true })
-    .limit(3)
+    .limit(limit)
 
   const { data, error } = await query
 

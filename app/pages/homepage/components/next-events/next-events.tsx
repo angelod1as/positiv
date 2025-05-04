@@ -12,7 +12,7 @@ import {
 import { formatDateTime } from "~/lib/helpers/format-date"
 import routes from "~/lib/paths"
 import type { EventStatus } from "~types/entities.types"
-import type { HomePageViewEvent } from "../../fetch/get-homepage-next-events"
+import type { HomePageViewEvent } from "../../fetch/get-next-events"
 import { HomePageTitle } from "../home-title/home-title"
 import { Section } from "../section/section"
 import { HomePageNextEventsSkeleton } from "./next-events-skeleton"
