@@ -11,8 +11,7 @@ import {
 } from "~/components/ui/card"
 import { formatDateTime } from "~/lib/helpers/format-date"
 import routes from "~/lib/paths"
-import type { EventStatus } from "~types/entities.types"
-import type { HomePageViewEvent } from "../../fetch/get-next-events"
+import type { EventStatus, ViewEvent } from "~types/entities.types"
 import { HomePageTitle } from "../home-title/home-title"
 import { Section } from "../section/section"
 import { HomePageNextEventsSkeleton } from "./next-events-skeleton"
@@ -25,7 +24,7 @@ const {
 } = routes
 
 type HomePageNextEventsProps = {
-  events: Array<HomePageViewEvent> | undefined
+  events: Array<ViewEvent> | undefined
 }
 export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
   if (!events) {
