@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import paths from "~/lib/paths"
-import { createClient } from "~/lib/supabase/server"
+import { createServerClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 
 import { redirect } from "react-router"
@@ -38,7 +38,7 @@ const mutation = applySchema(
   contextSchema,
 )(async (values, context) => {
   const { request } = context
-  const { supabase } = createClient(request)
+  const { supabase } = createServerClient(request)
   const { error, data } = await supabase.auth.signInWithPassword(values)
 
   if (error) {
@@ -56,7 +56,7 @@ const mutation = applySchema(
 })
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { supabase } = createClient(request)
+  const { supabase } = createServerClient(request)
   const { data, error } = await supabase.auth.getUser()
   if (data.user) {
     redirect(DASHBOARD)

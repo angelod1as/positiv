@@ -4,7 +4,7 @@ import { z, type ZodTypeAny } from "zod"
 import { SchemaForm } from "~/components/forms/schema-form"
 import paths from "~/lib/paths"
 import { getCurrentProfile } from "~/lib/supabase/fetch/get-current-profile"
-import { createClient } from "~/lib/supabase/server"
+import { createServerClient } from "~/lib/supabase/server"
 import type { ProfileWithRoles } from "~types/entities.types"
 import type { DBClient } from "~types/utils.types"
 import type { Route } from "./+types/basic-data-page"
@@ -120,7 +120,7 @@ const mutation = applySchema(
 })
 
 export async function action({ request }: Route.ActionArgs) {
-  const { supabase } = createClient(request)
+  const { supabase } = createServerClient(request)
   const profile = await getCurrentProfile(supabase)
   const isEdit = !!profile
 
@@ -134,7 +134,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ request }: Route.LoaderArgs) {
-  const { supabase } = createClient(request)
+  const { supabase } = createServerClient(request)
   const profile = await getCurrentProfile(supabase)
   return { profile }
 }
