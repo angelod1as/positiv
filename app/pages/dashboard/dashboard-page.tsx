@@ -1,16 +1,16 @@
 import { EventCard } from "~/components/organisms/event-card/event-card"
-import paths from "~/lib/paths"
+// import paths from "~/lib/paths"
 import { createClient as createBrowserClient } from "~/lib/supabase/client"
 import type { ViewEvent } from "~types/entities.types"
 import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 
-const {
-  dash: {
-    participant: { AGREE_TO_TERMS },
-    admin: { ADMIN_DASHBOARD },
-  },
-} = paths
+// const {
+//   dash: {
+//     participant: { AGREE_TO_TERMS },
+//     admin: { ADMIN_DASHBOARD },
+//   },
+// } = paths
 
 const splitEvents = (events: ViewEvent[] | undefined) => {
   const empty: { registrationOpen: ViewEvent[]; scheduled: ViewEvent[] } = {
@@ -30,7 +30,7 @@ const splitEvents = (events: ViewEvent[] | undefined) => {
   }, empty)
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({}: Route.LoaderArgs) {
   // const { supabase } = createClient(request)
   // TODO: Allow this loader to run after Auth is done
   // const profile = await getCurrentProfile(supabase)
