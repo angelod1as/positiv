@@ -25,9 +25,13 @@ type ZObject = Omit<
   | "allow_marketing_email"
   | "is_admin"
   | "roles"
+  // TODO: Missing: gender, orientation, pronouns
+  | "gender"
+  | "orientation"
+  | "pronouns"
 >
 
-const oneCheckMessage = "Escolha pelo menos um"
+// const oneCheckMessage = "Escolha pelo menos um"
 
 const zObject: ZObject = {
   full_name: z.string().min(2).max(255),
@@ -36,17 +40,6 @@ const zObject: ZObject = {
   rg_issuer: z.string().min(2),
   cpf: z.string().min(2),
   date_of_birth: z.coerce.date(),
-  gender: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: oneCheckMessage,
-  }),
-  orientation: z
-    .array(z.string())
-    .refine((value) => value.some((item) => item), {
-      message: oneCheckMessage,
-    }),
-  pronouns: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: oneCheckMessage,
-  }),
   phone: z.coerce.number({
     invalid_type_error: "Você tem certeza que digitou um número?",
   }),
@@ -55,6 +48,19 @@ const zObject: ZObject = {
   }),
   how_came_to_us: z.string().optional(),
   where_lives: z.string().optional(),
+
+  // TODO: Missing: gender, orientation, pronouns
+  // gender: z.array(z.string()).refine((value) => value.some((item) => item), {
+  //   message: oneCheckMessage,
+  // }),
+  // orientation: z
+  //   .array(z.string())
+  //   .refine((value) => value.some((item) => item), {
+  //     message: oneCheckMessage,
+  //   }),
+  // pronouns: z.array(z.string()).refine((value) => value.some((item) => item), {
+  //   message: oneCheckMessage,
+  // }),
 }
 
 export const schema = z
@@ -83,15 +89,20 @@ const mutation = applySchema(
     )
   }
 
-  const { confirm_phone, gender, orientation, pronouns, ...data } = values
+  const {
+    confirm_phone,
+    // gender, orientation, pronouns, // TODO: Missing
+    ...data
+  } = values
 
   const { error: updateError } = await supabase
     .from("profiles")
     .update({
       ...data,
-      gender: gender.filter(Boolean),
-      orientation: orientation.filter(Boolean),
-      pronouns: pronouns.filter(Boolean),
+      // TODO: Missing
+      // gender: gender.filter(Boolean),
+      // orientation: orientation.filter(Boolean),
+      // pronouns: pronouns.filter(Boolean),
       basic_data_filled: true,
     })
     .eq("user_id", user.id)
@@ -128,28 +139,27 @@ export async function loader({ request }: Route.LoaderArgs) {
   return { profile }
 }
 
+// const toOptions = (term: string) => ({
+//   name: term,
+//   value: slugify(term, { lower: true, replacement: "/" }),
+// })
+
 // TODO: Finish with custom checkbox
 const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
   const { profile } = loaderData || {}
-  // const genders = [
-  //   "Mulher cis",
-  //   "Mulher trans",
-  //   "Travesti",
-  //   "Pessoa não binária",
-  //   "Pessoa agênera",
-  //   "Homem trans",
-  //   "Homem cis",
-  // ]
 
-  // const orientations = ["Hétero", "Gay", "Sapatão", "Bi", "Pan", "Demi", "Ace"]
-
-  // const pronouns = ["Ele/dele", "Ela/dela", "Elu/delu", "Ile/dile"]
   return (
     <>
+      <div>
+        <h1>Dados básicos</h1>
+        <p className="text-muted-foreground">
+          {profile?.basic_data_filled
+            ? "Atualize seus dados"
+            : "Precisamos destes dados básicos para nosso controle interno de pessoas participantes"}
+        </p>
+      </div>
       <SchemaForm
         schema={schema}
-        // Descriptions??
-        // Custom Pronouns, Orientation, Gender
         values={profile}
         labels={{
           full_name: "Nome completo",
@@ -162,14 +172,53 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
           cpf: "CPF",
           rg: "RG",
           rg_issuer: "Emissor do RG",
-          pronouns: "Pronomes",
-          orientation: "Orientação",
-          gender: "Gênero",
+          // pronouns: "Pronomes",
+          // orientation: "Orientação",
+          // gender: "Gênero",
         }}
+        // TODO: Missing
+        // options={{
+        //   gender: [
+        //     "Mulher cis",
+        //     "Mulher trans",
+        //     "Travesti",
+        //     "Pessoa não binária",
+        //     "Pessoa agênera",
+        //     "Homem trans",
+        //     "Homem cis",
+        //   ].map(toOptions),
+        //   orientation: [
+        //     "Hétero",
+        //     "Gay",
+        //     "Sapatão",
+        //     "Bi",
+        //     "Pan",
+        //     "Demi",
+        //     "Ace",
+        //   ].map(toOptions),
+        //   pronouns: ["Ele/dele", "Ela/dela", "Elu/delu", "Ile/dile"].map(
+        //     toOptions,
+        //   ),
+        // }}
         inputTypes={{
-          confirm_phone: "number",
-          phone: "number",
+          confirm_phone: "textnumber",
+          phone: "textnumber",
           date_of_birth: "date",
+          // TODO: Should be checkbox with other, no text-input
+          // gender: "checkbox-with-other",
+          // orientation: "checkbox-with-other",
+          // pronouns: "checkbox-with-other",
+        }}
+        descriptions={{
+          social_name: "Como você quer ser chamade?",
+          where_lives: "Nossa dúvida: de onde nosso público vêm?",
+          how_came_to_us: "Qual rede social? Que pessoa indicou?",
+          phone: "Só números, com DDD. Ex: 11955552222",
+          confirm_phone: "Só números, com DDD. Ex: 11955552222",
+          rg_issuer: "Exemplo: SSP/SP",
+          // pronouns: "Pode escolher mais de um",
+          // gender: "Pode escolher mais de um",
+          // orientation: "Pode escolher mais de um",
         }}
       />
     </>

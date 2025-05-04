@@ -5,7 +5,7 @@ import { HomePageFounders } from "~/pages/homepage/components/founders/home-page
 import { HomePageHero } from "~/pages/homepage/components/hero/hero"
 import { HomePageNextEvents } from "~/pages/homepage/components/next-events/next-events"
 import { HomePageTestimonials } from "~/pages/homepage/components/testimonials/home-page-testimonials"
-import { getHomepageNextEvents } from "~/pages/homepage/fetch/get-homepage-next-events"
+import { getNextEvents } from "~/pages/homepage/fetch/get-next-events"
 import type { FCC } from "~types/utils.types"
 import type { Route } from "./+types/homepage"
 import { HomePageNextEventsSkeleton } from "./components/next-events/next-events-skeleton"
@@ -18,10 +18,10 @@ export function meta() {
   ]
 }
 
-/* Needs to be clientLoader because getHomepageNextEvents needs new Date() */
+/* Needs to be clientLoader because getNextEvents needs new Date() */
 export async function clientLoader({}: Route.LoaderArgs) {
   const { supabase } = createClient()
-  return await getHomepageNextEvents(supabase)
+  return await getNextEvents(supabase)
 }
 
 /* Wrapper to show Skeleton below */

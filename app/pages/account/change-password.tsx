@@ -66,11 +66,13 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 const ChangePasswordPage = ({}: Route.ComponentProps) => {
   return (
-    <div className="flex flex-col w-full max-w-md p-4 gap-2 [&>input]:mb-4">
-      <h1 className="text-2xl font-medium">Mudar senha</h1>
-      <p className="text-sm text-foreground/60">
-        Por favor digite sua nova senha abaixo
-      </p>
+    <div className="flex flex-col w-full max-w-md gap-8">
+      <div>
+        <h1>Mudar senha</h1>
+        <p className="text-muted-foreground">
+          Por favor digite sua nova senha abaixo
+        </p>
+      </div>
 
       <SchemaForm
         schema={schema}
