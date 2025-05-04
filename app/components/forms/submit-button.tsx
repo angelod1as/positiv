@@ -1,9 +1,25 @@
-import type { JSX } from "react"
+import type { FC, JSX } from "react"
+import { cn } from "~/lib/utils"
 import { Button } from "../atoms/button/button"
 
-export const SubmitButton = (props: JSX.IntrinsicElements["button"]) => {
+type SubmitButtonProps = JSX.IntrinsicElements["button"] & {
+  alignment: "left" | "center" | "right"
+}
+export const SubmitButton: FC<SubmitButtonProps> = ({
+  alignment,
+  ...props
+}) => {
   return (
-    <div className="flex justify-end">
+    <div
+      className={cn(
+        "flex",
+        {
+          left: "justify-start",
+          center: "justify-center",
+          right: "justify-end",
+        }[alignment],
+      )}
+    >
       <Button {...props} />
     </div>
   )
