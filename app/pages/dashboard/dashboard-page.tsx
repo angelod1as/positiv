@@ -1,6 +1,6 @@
 import { EventCard } from "~/components/organisms/event-card/event-card"
 // import paths from "~/lib/paths"
-import { createClient as createBrowserClient } from "~/lib/supabase/client"
+import { createBrowserClient } from "~/lib/supabase/client"
 import type { ViewEvent } from "~types/entities.types"
 import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"

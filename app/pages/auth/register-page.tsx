@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import paths from "~/lib/paths"
-import { createClient } from "~/lib/supabase/server"
+import { createServerClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 
 import { SchemaForm } from "~/components/forms/schema-form"
@@ -43,7 +43,7 @@ const mutation = applySchema(
   contextSchema,
 )(async (values, context) => {
   const { request } = context
-  const { supabase } = createClient(request)
+  const { supabase } = createServerClient(request)
 
   const { over18, confirmPassword, ...data } = values
 

@@ -3,7 +3,7 @@ import { formAction } from "remix-forms"
 import { z } from "zod"
 import { SchemaForm } from "~/components/forms/schema-form"
 import paths from "~/lib/paths"
-import { createClient } from "~/lib/supabase/server"
+import { createServerClient } from "~/lib/supabase/server"
 import type { Route } from "./+types/change-password"
 
 const contextSchema = z.custom<{ request: Request }>()
@@ -30,7 +30,7 @@ const mutation = applySchema(
   contextSchema,
 )(async (values, context) => {
   const { request } = context
-  const { supabase } = createClient(request)
+  const { supabase } = createServerClient(request)
   const { error } = await supabase.auth.updateUser({
     password: values.password,
   })
