@@ -20,30 +20,12 @@ const {
   },
 } = paths
 
-// TODO: Implement supabase
-// eslint-disable-next-line unused-imports/no-unused-vars
-export async function loader({ request }: Route.LoaderArgs) {
-  // const { supabase } = createClient(request)
-  // const {
-  //   data: { user },
-  // } = await supabase.auth.getUser()
-
-  // if (!user?.id) {
-  //   return redirect(LOGIN)
-  // }
-
-  // const { data } = await supabase
-  //   .from("profiles")
-  //   .select("basic_data_filled")
-  //   .eq("user_id", user.id)
-  //   .single()
-
-  // const { basic_data_filled } = data || {}
-  const basic_data_filled = true
-
-  return { basic_data_filled }
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile } = await getUserContext(request, params)
+  return { basic_data_filled: currentProfile?.basic_data_filled }
 }
 
+// TODO: Not working.
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getUserContext(request, params)
 
