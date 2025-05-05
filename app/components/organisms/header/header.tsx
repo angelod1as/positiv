@@ -1,11 +1,11 @@
 import { HomeIcon, UserIcon } from "lucide-react"
 import type { FC } from "react"
-import { useLoaderData } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
-import type { ProfileWithRoles } from "~/business/auth.server"
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import paths from "~/lib/paths"
+import type { ProfileWithRoles } from "~types/entities.types"
+import type { NullablePartial } from "~types/utils.types"
 
 const {
   root: { HOME },
@@ -16,15 +16,14 @@ const {
   },
 } = paths
 
-type LoaderData = {
-  profile:
-    | Pick<ProfileWithRoles, "social_name" | "full_name" | "email">
-    | undefined
+type HeaderProps = {
+  profile: Pick<
+    NullablePartial<ProfileWithRoles>,
+    "social_name" | "full_name" | "email"
+  > | null
 }
 
-export const Header: FC = () => {
-  const { profile } = useLoaderData<LoaderData>()
-
+export const Header: FC<HeaderProps> = ({ profile }) => {
   const displayName = profile
     ? profile.social_name || profile.full_name || profile.email
     : undefined
