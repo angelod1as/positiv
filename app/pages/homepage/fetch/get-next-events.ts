@@ -1,5 +1,4 @@
 import { PostgrestError } from "@supabase/supabase-js"
-import { getCurrentProfile } from "~/lib/supabase/fetch/get-current-profile"
 import type {
   EventStatus,
   ProfileWithRoles,
@@ -9,16 +8,20 @@ import type { DBClient } from "~types/utils.types"
 
 type GetNextEvents = (
   client: DBClient,
+  profile: ProfileWithRoles | null,
   limit?: number,
 ) => Promise<{
   events: ViewEvent[] | undefined
   error: PostgrestError | "NO_DATA_ERROR" | undefined | null
-  profile: ProfileWithRoles | undefined
+  profile: ProfileWithRoles | null
 }>
 
-export const getNextEvents: GetNextEvents = async (supabase, limit = 3) => {
+export const getNextEvents: GetNextEvents = async (
+  supabase,
+  profile,
+  limit = 3,
+) => {
   const now = new Date().toISOString()
-  const profile = await getCurrentProfile(supabase)
 
   let query = supabase.from("events").select(
     `
@@ -59,7 +62,7 @@ export const getNextEvents: GetNextEvents = async (supabase, limit = 3) => {
     return {
       events: [],
       error,
-      profile: undefined,
+      profile: null,
     }
   }
 
@@ -67,7 +70,7 @@ export const getNextEvents: GetNextEvents = async (supabase, limit = 3) => {
     return {
       events: [],
       error: "NO_DATA_ERROR",
-      profile: undefined,
+      profile: null,
     }
   }
 

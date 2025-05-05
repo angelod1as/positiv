@@ -1,16 +1,16 @@
+import { redirect } from "react-router"
+import { getClientContext, getContext } from "~/business/auth.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
-// import paths from "~/lib/paths"
-import { createBrowserClient } from "~/lib/supabase/client"
+import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/entities.types"
 import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 
-// const {
-//   dash: {
-//     participant: { AGREE_TO_TERMS },
-//     admin: { ADMIN_DASHBOARD },
-//   },
-// } = paths
+const {
+  dash: {
+    participant: { AGREE_TO_TERMS },
+  },
+} = paths
 
 const splitEvents = (events: ViewEvent[] | undefined) => {
   const empty: { registrationOpen: ViewEvent[]; scheduled: ViewEvent[] } = {
@@ -30,19 +30,18 @@ const splitEvents = (events: ViewEvent[] | undefined) => {
   }, empty)
 }
 
-export async function loader({}: Route.LoaderArgs) {
-  // const { supabase } = createClient(request)
-  // TODO: Allow this loader to run after Auth is done
-  // const profile = await getCurrentProfile(supabase)
-  // if (!profile?.basic_data_filled) {
-  //   return redirect(AGREE_TO_TERMS)
-  // }
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile, supabaseHeaders } = await getContext(request, params)
+
+  if (!currentProfile?.basic_data_filled) {
+    return redirect(AGREE_TO_TERMS, { headers: supabaseHeaders })
+  }
 }
 
 /* Needs to be clientLoader because getNextEvents needs new Date() */
 export async function clientLoader({}: Route.LoaderArgs) {
-  const { supabase } = createBrowserClient()
-  const { events, error } = await getNextEvents(supabase)
+  const { supabase, currentProfile } = await getClientContext()
+  const { events, error } = await getNextEvents(supabase, currentProfile)
 
   if (error || !events) {
     return {
