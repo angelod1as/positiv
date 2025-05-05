@@ -1,29 +1,28 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { applySchema } from "composable-functions"
-import { type Params } from "react-router"
+import { redirect, type Params } from "react-router"
 import { z } from "zod"
+import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import type { Database } from "~types/database.types"
-import { loginSchema } from "./auth.common"
 
-/** Extension of User with more data, so, called Profile */
-export type ProfileWithRoles =
-  Database["public"]["Functions"]["get_profile_with_roles"]["Returns"][0]
-
-export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
+const {
+  auth: { LOGIN },
+} = paths
 
 const currentUserSchema = z.object({
   id: z.string(),
-  // ...
 })
 
 const currentProfileSchema = z.object({
   id: z.string(),
+  full_name: z.string().nullable(),
+  social_name: z.string().nullable(),
+  email: z.string().nullable(),
 })
 
-const contextSchema = z.object({
+export const contextSchema = z.object({
   supabase: z.custom<SupabaseClient<Database, "public">>(),
-  headers: z.custom<Headers>(),
+  supabaseHeaders: z.custom<Headers>(),
   currentUser: currentUserSchema.nullable(),
   currentProfile: currentProfileSchema.nullable(),
 })
@@ -37,7 +36,7 @@ export const getContext = async (
 
   const errorProps = {
     supabase,
-    headers: supabaseHeaders,
+    supabaseHeaders,
     currentUser: null,
     currentProfile: null,
   }
@@ -54,8 +53,10 @@ export const getContext = async (
     return errorProps
   }
 
+  const userId = authData.user.id
+
   const { data: profileData, error: profileError } = await supabase
-    .rpc("get_profile_with_roles", { user_id_input: authData.user.id })
+    .rpc("get_profile_with_roles", { user_id_input: userId })
     .single()
 
   if (profileError) {
@@ -70,44 +71,30 @@ export const getContext = async (
 
   return {
     supabase,
-    headers: supabaseHeaders,
-    currentProfile: profileData,
-    currentUser: authData.user,
+    supabaseHeaders,
+    currentProfile: {
+      id: profileData.id,
+      email: profileData.email,
+      full_name: profileData.full_name,
+      social_name: profileData.social_name,
+    },
+    currentUser: {
+      id: userId,
+    },
   }
 }
 
-// const userContextSchema = contextSchema.extend({
-//   currentUser: currentUserSchema,
-// })
-
-// export const getUserContext = async (
-//   request: Request,
-//   params: Params,
-// ): Promise<z.infer<typeof userContextSchema>> => {
-//   const { currentUser, ...context } = await getContext(request, params)
-//   if (!currentUser) {
-//     throw redirect("LOGIN") // TODO: route
-//   }
-//   return { ...context, currentUser }
-// }
-
-export const loginUser = applySchema(
-  loginSchema,
-  contextSchema,
-)(async (values, context) => {
-  const { supabase } = context
-  const { error, data } = await supabase.auth.signInWithPassword(values)
-
-  if (error) {
-    if (error.code === "invalid_credentials") {
-      console.error("Credenciais inválidas")
-      throw new Error("Credenciais inválidas")
-    }
-    console.error("Credenciais inválidas")
-    throw new Error(
-      `Erro de autenticação — Código: "${error.code}" — Mensagem: "${error.message}"`,
-    )
-  }
-
-  return { user: data.user }
+export const userContextSchema = contextSchema.extend({
+  currentUser: currentUserSchema,
 })
+
+export const getUserContext = async (
+  request: Request,
+  params: Params,
+): Promise<z.infer<typeof userContextSchema>> => {
+  const { currentUser, ...context } = await getContext(request, params)
+  if (!currentUser) {
+    throw redirect(LOGIN)
+  }
+  return { ...context, currentUser }
+}
