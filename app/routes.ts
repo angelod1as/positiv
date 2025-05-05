@@ -11,7 +11,6 @@ export default [
   layout("pages/auth/layout.tsx", [
     route("/entrar", "pages/auth/login-page.tsx"),
     route("/registrar", "pages/auth/register-page.tsx"),
-    route("/sair", "pages/auth/logout-page.tsx"),
   ]),
 
   layout("pages/dashboard/auth-guard-layout.tsx", [

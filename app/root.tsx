@@ -29,7 +29,6 @@ export const links: Route.LinksFunction = () => [
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { currentProfile } = await getContext(request, params)
-  // Consumed in Header.tsx via useLoaderData
   return { profile: currentProfile }
 }
 
@@ -44,9 +43,7 @@ export function Layout(props: { children: ReactNode }) {
       </head>
       <body className="h-screen flex flex-col">
         <GlobalLoading />
-        <Header />
-        <div className="flex flex-col grow">{props.children}</div>
-        <Footer />
+        {props.children}
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -57,8 +54,18 @@ export function Layout(props: { children: ReactNode }) {
 // TODO: Toast
 // https://www.jacobparis.com/content/remix-form-toast
 
-export default function App() {
-  return <Outlet />
+export default function App({ loaderData }: Route.ComponentProps) {
+  const { profile } = loaderData
+
+  return (
+    <>
+      <Header profile={profile} />
+      <div className="flex flex-col grow">
+        <Outlet />
+      </div>
+      <Footer />
+    </>
+  )
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
