@@ -16,6 +16,10 @@ export default [
   layout("pages/dashboard/auth-guard-layout.tsx", [
     ...prefix("dashboard", [
       index("pages/dashboard/dashboard-page.tsx"),
+      ...prefix("eventos", [
+        index("pages/events/events-page.tsx"),
+        route(":id", "pages/events/event-page.tsx"), // TODO: Id?
+      ]),
       layout("pages/dashboard/agree-to-terms-page/layout.tsx", [
         route(
           "/termos",
