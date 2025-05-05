@@ -1,9 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { redirect, type Params } from "react-router"
-import { z } from "zod"
+import { z, ZodType } from "zod"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import type { Database } from "~types/database.types"
+import type { ProfileWithRoles } from "~types/entities.types"
 
 const {
   auth: { LOGIN },
@@ -15,10 +16,25 @@ const currentUserSchema = z.object({
 
 const currentProfileSchema = z.object({
   id: z.string(),
-  full_name: z.string().nullable(),
-  social_name: z.string().nullable(),
-  email: z.string().nullable(),
-})
+  email: z.string(),
+  full_name: z.string(),
+  basic_data_filled: z.boolean(),
+  social_name: z.string(),
+  pronouns: z.array(z.string()),
+  rg: z.string(),
+  cpf: z.string(),
+  phone: z.number(),
+  date_of_birth: z.string(),
+  gender: z.array(z.string()),
+  orientation: z.array(z.string()),
+  where_lives: z.string(),
+  how_came_to_us: z.string(),
+  rg_issuer: z.string(),
+  allow_marketing_email: z.boolean(),
+  created_at: z.string(),
+  is_admin: z.boolean(),
+  roles: z.array(z.string()),
+}) satisfies ZodType<ProfileWithRoles>
 
 export const contextSchema = z.object({
   supabase: z.custom<SupabaseClient<Database, "public">>(),
@@ -72,12 +88,7 @@ export const getContext = async (
   return {
     supabase,
     supabaseHeaders,
-    currentProfile: {
-      id: profileData.id,
-      email: profileData.email,
-      full_name: profileData.full_name,
-      social_name: profileData.social_name,
-    },
+    currentProfile: profileData,
     currentUser: {
       id: userId,
     },
