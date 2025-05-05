@@ -24,10 +24,12 @@ const {
 } = paths
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const { currentUser } = await getContext(request, params)
+  const { currentUser, supabaseHeaders } = await getContext(request, params)
 
   if (currentUser) {
-    return redirect(DASHBOARD)
+    return redirect(DASHBOARD, {
+      headers: supabaseHeaders,
+    })
   }
 
   return null
