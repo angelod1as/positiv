@@ -8,4 +8,9 @@ export type FCC<T = unknown> = FC<PropsWithChildren & T>
 export type NonNullableFields<T> = {
   [P in keyof T]: NonNullable<T[P]>
 }
+
+export type NullablePartial<T> = {
+  [P in keyof T]: T[P] | null
+}
+
 export type DBClient = SupabaseClient<Database, "public">

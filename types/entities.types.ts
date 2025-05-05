@@ -1,6 +1,11 @@
 import { z } from "zod"
-import type { Profile } from "~/business/auth.server"
 import type { Database } from "./database.types"
+
+/** Extension of User with more data, so, called Profile */
+export type ProfileWithRoles =
+  Database["public"]["Functions"]["get_profile_with_roles"]["Returns"][0]
+
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 
 /** Events information */
 export type Event = Omit<
