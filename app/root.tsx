@@ -10,6 +10,7 @@ import {
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import type { Route } from "./+types/root"
 import "./app.css"
+import { getContext } from "./business/auth.server"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 
@@ -26,7 +27,13 @@ export const links: Route.LinksFunction = () => [
   },
 ]
 
-export function Layout({ children }: { children: ReactNode }) {
+export async function loader({ params, request }: Route.LoaderArgs) {
+  const { currentProfile } = await getContext(request, params)
+  // Consumed in Header.tsx via useLoaderData
+  return { profile: currentProfile }
+}
+
+export function Layout(props: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
       <head>
@@ -38,7 +45,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <body className="h-screen flex flex-col">
         <GlobalLoading />
         <Header />
-        <div className="flex flex-col grow">{children}</div>
+        <div className="flex flex-col grow">{props.children}</div>
         <Footer />
         <ScrollRestoration />
         <Scripts />
