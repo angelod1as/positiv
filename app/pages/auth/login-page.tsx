@@ -1,6 +1,4 @@
-import { applySchema } from "composable-functions"
 import { formAction } from "remix-forms"
-import { z } from "zod"
 import { Link } from "~/components/atoms/link/link"
 import {
   Card,
@@ -11,10 +9,11 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import paths from "~/lib/paths"
-import { createServerClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 
 import { redirect } from "react-router"
+import { loginSchema } from "~/business/auth.common"
+import { getContext, loginUser } from "~/business/auth.server"
 import { SchemaForm } from "~/components/forms/schema-form"
 import type { Route } from "./+types/login-page"
 
@@ -23,57 +22,30 @@ const {
   dash: { DASHBOARD },
 } = paths
 
-const contextSchema = z.custom<{ request: Request }>()
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
+  const { currentUser } = await getContext(request, params)
 
-const schema = z.object({
-  email: z
-    .string()
-    .min(1, "Insira pelo menos um caracter")
-    .email("E-mail inválido"),
-  password: z.string().min(1, "Insira pelo menos um caracter"),
-})
-
-const mutation = applySchema(
-  schema,
-  contextSchema,
-)(async (values, context) => {
-  const { request } = context
-  const { supabase } = createServerClient(request)
-  const { error, data } = await supabase.auth.signInWithPassword(values)
-
-  if (error) {
-    if (error.code === "invalid_credentials") {
-      console.error("Credenciais inválidas")
-      throw new Error("Credenciais inválidas")
-    }
-    console.error("Credenciais inválidas")
-    throw new Error(
-      `Erro de autenticação — Código: "${error.code}" — Mensagem: "${error.message}"`,
-    )
+  if (currentUser) {
+    return redirect(DASHBOARD)
   }
 
-  return data.user
-})
-
-export const loader = async ({ request }: Route.LoaderArgs) => {
-  const { supabase } = createServerClient(request)
-  const { data, error } = await supabase.auth.getUser()
-  if (data.user) {
-    redirect(DASHBOARD)
-  }
-  if (error && error.name !== "AuthSessionMissingError") {
-    throw new Error(`Erro de autenticação, contate o administrador: ${error}`)
-  }
-  return {}
+  return null
 }
 
-export const action = async ({ request }: Route.ActionArgs) => {
+export const action = async ({ request, params }: Route.ActionArgs) => {
+  const context = await getContext(request, params)
+
   return formAction({
     request,
-    schema,
-    mutation,
-    successPath: DASHBOARD,
-    context: { request },
+    schema: loginSchema,
+    mutation: loginUser,
+    transformResult: (result) => {
+      if (result.success) {
+        throw redirect(DASHBOARD, { headers: context.supabaseHeaders })
+      }
+      return result
+    },
+    context,
   })
 }
 
@@ -92,7 +64,7 @@ const LoginPage = ({}: Route.ComponentProps) => {
         </CardHeader>
         <CardContent>
           <SchemaForm
-            schema={schema}
+            schema={loginSchema}
             labels={{ password: "Senha", email: "E-mail" }}
             placeholders={{ email: "email@exemplo.com", password: "senha123" }}
             inputTypes={{
