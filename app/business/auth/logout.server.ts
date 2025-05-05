@@ -1,6 +1,12 @@
 import { applySchema } from "composable-functions"
+import { redirect } from "react-router"
 import { z } from "zod"
+import paths from "~/lib/paths"
 import { userContextSchema } from "../auth.server"
+
+const {
+  auth: { LOGIN },
+} = paths
 
 export const logoutSchema = z.object({})
 
@@ -12,10 +18,11 @@ export const logoutUser = applySchema(
   const { error } = await supabase.auth.signOut()
 
   if (error) {
+    console.error(error)
     throw new Error(
       `Erro de logout — Código: "${error.code}" — Mensagem: "${error.message}"`,
     )
   }
 
-  return null
+  return redirect(LOGIN)
 })
