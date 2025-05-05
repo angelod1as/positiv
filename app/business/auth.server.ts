@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { redirect, type Params } from "react-router"
 import { z, ZodType } from "zod"
 import paths from "~/lib/paths"
+import { createBrowserClient } from "~/lib/supabase/client"
 import { createServerClient } from "~/lib/supabase/server"
 import type { Database } from "~types/database.types"
 import type { ProfileWithRoles } from "~types/entities.types"
@@ -108,4 +109,59 @@ export const getUserContext = async (
     throw redirect(LOGIN)
   }
   return { ...context, currentUser }
+}
+
+export const clientContextSchema = z.object({
+  supabase: z.custom<SupabaseClient<Database, "public">>(),
+  currentUser: currentUserSchema.nullable(),
+  currentProfile: currentProfileSchema.nullable(),
+})
+
+export const getClientContext = async (): Promise<
+  z.infer<typeof clientContextSchema>
+> => {
+  const { supabase } = createBrowserClient()
+  const { data: authData, error: authError } = await supabase.auth.getUser()
+
+  const errorProps = {
+    supabase,
+    currentUser: null,
+    currentProfile: null,
+  }
+
+  if (authError) {
+    if (!authError.message.includes("Auth session missing!")) {
+      // TODO: Show error toast
+      return errorProps
+    }
+  }
+
+  if (!authData.user) {
+    // TODO: Show error toast
+    return errorProps
+  }
+
+  const userId = authData.user.id
+
+  const { data: profileData, error: profileError } = await supabase
+    .rpc("get_profile_with_roles", { user_id_input: userId })
+    .single()
+
+  if (profileError) {
+    console.error("getCurrentProfile", profileError)
+    return errorProps
+  }
+
+  if (!profileData) {
+    console.error("getCurrentProfile", profileError)
+    return errorProps
+  }
+
+  return {
+    supabase,
+    currentProfile: profileData,
+    currentUser: {
+      id: userId,
+    },
+  }
 }

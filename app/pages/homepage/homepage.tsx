@@ -1,4 +1,4 @@
-import { createBrowserClient } from "~/lib/supabase/client"
+import { getClientContext } from "~/business/auth.server"
 import { HomePageAbout } from "~/pages/homepage/components/about/about"
 import { HomePageCtaBanner } from "~/pages/homepage/components/cta-banner/home-page-cta-banner"
 import { HomePageFounders } from "~/pages/homepage/components/founders/home-page-founders"
@@ -20,8 +20,8 @@ export function meta() {
 
 /* Needs to be clientLoader because getNextEvents needs new Date() */
 export async function clientLoader({}: Route.LoaderArgs) {
-  const { supabase } = createBrowserClient()
-  return await getNextEvents(supabase)
+  const { currentProfile, supabase } = await getClientContext()
+  return await getNextEvents(supabase, currentProfile, 3)
 }
 
 /* Wrapper to show Skeleton below */
