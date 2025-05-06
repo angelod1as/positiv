@@ -1,7 +1,7 @@
 import { Separator } from "@radix-ui/react-separator"
 import { Form, redirect } from "react-router"
 import { formAction } from "remix-forms"
-import { getUserContext } from "~/business/auth.server"
+import { getUserContext } from "~/business/auth/auth.server"
 import { logoutSchema, logoutUser } from "~/business/auth/logout.server"
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"

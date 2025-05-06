@@ -1,5 +1,5 @@
 import { applySchema } from "composable-functions"
-import { contextSchema } from "../auth.server"
+import { contextSchema } from "./auth.server"
 import { loginSchema } from "./common"
 
 // LoginSchema in common.ts

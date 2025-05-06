@@ -10,7 +10,7 @@ import {
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import type { Route } from "./+types/root"
 import "./app.css"
-import { getContext } from "./business/auth.server"
+import { getContext } from "./business/auth/auth.server"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 

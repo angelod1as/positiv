@@ -12,7 +12,7 @@ import paths from "~/lib/paths"
 import { cn } from "~/lib/utils"
 
 import { redirect } from "react-router"
-import { getContext } from "~/business/auth.server"
+import { getContext } from "~/business/auth/auth.server"
 import { loginSchema } from "~/business/auth/common"
 import { loginUser } from "~/business/auth/login.server"
 import { SchemaForm } from "~/components/forms/schema-form"

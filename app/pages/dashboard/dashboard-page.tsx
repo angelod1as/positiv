@@ -1,5 +1,5 @@
 import { redirect } from "react-router"
-import { getClientContext, getContext } from "~/business/auth.server"
+import { getClientContext, getContext } from "~/business/auth/auth.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/entities.types"
