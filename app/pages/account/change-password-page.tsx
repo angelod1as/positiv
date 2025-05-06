@@ -4,7 +4,7 @@ import { z } from "zod"
 import { SchemaForm } from "~/components/forms/schema-form"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
-import type { Route } from "./+types/change-password"
+import type { Route } from "./+types/change-password-page"
 
 const contextSchema = z.custom<{ request: Request }>()
 
