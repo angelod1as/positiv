@@ -1,10 +1,10 @@
-import { createBrowserClient } from "@supabase/ssr"
+import { createBrowserClient as createSupabaseBrowserClient } from "@supabase/ssr"
 import type { Database } from "~types/database.types"
 import type { DBClient } from "~types/utils.types"
 
-export function createClient(): { supabase: DBClient } {
+export function createBrowserClient(): { supabase: DBClient } {
   return {
-    supabase: createBrowserClient<Database>(
+    supabase: createSupabaseBrowserClient<Database>(
       import.meta.env.VITE_SUPABASE_URL,
       import.meta.env.VITE_SUPABASE_ANON_KEY,
     ),

@@ -1,5 +1,8 @@
 import { Separator } from "@radix-ui/react-separator"
 import { Form, redirect } from "react-router"
+import { formAction } from "remix-forms"
+import { getUserContext } from "~/business/auth/auth.server"
+import { logoutSchema, logoutUser } from "~/business/auth/logout.server"
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
@@ -17,36 +20,27 @@ const {
   },
 } = paths
 
-// TODO: Implement supabase
-// eslint-disable-next-line unused-imports/no-unused-vars
-export async function loader({ request }: Route.LoaderArgs) {
-  // const { supabase } = createClient(request)
-  // const {
-  //   data: { user },
-  // } = await supabase.auth.getUser()
-
-  // if (!user?.id) {
-  //   return redirect(LOGIN)
-  // }
-
-  // const { data } = await supabase
-  //   .from("profiles")
-  //   .select("basic_data_filled")
-  //   .eq("user_id", user.id)
-  //   .single()
-
-  // const { basic_data_filled } = data || {}
-  const basic_data_filled = true
-
-  return { basic_data_filled }
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile } = await getUserContext(request, params)
+  return { basic_data_filled: currentProfile?.basic_data_filled }
 }
 
-// TODO: Implement supabase
-// eslint-disable-next-line unused-imports/no-unused-vars
-export async function action({ request }: Route.ActionArgs) {
-  // const { supabase } = createClient(request)
-  // await supabase.auth.signOut()
-  return redirect(LOGIN)
+// TODO: Not working.
+export async function action({ request, params }: Route.ActionArgs) {
+  const context = await getUserContext(request, params)
+
+  return formAction({
+    request,
+    schema: logoutSchema,
+    mutation: logoutUser,
+    transformResult: (result) => {
+      if (result.success) {
+        throw redirect(LOGIN, { headers: context.supabaseHeaders })
+      }
+      return result
+    },
+    context,
+  })
 }
 
 /* TODO: Implement account deletion

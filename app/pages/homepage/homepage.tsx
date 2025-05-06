@@ -1,14 +1,14 @@
-import { createClient } from "~/lib/supabase/client"
+import { getClientContext } from "~/business/auth/auth.client"
 import { HomePageAbout } from "~/pages/homepage/components/about/about"
 import { HomePageCtaBanner } from "~/pages/homepage/components/cta-banner/home-page-cta-banner"
 import { HomePageFounders } from "~/pages/homepage/components/founders/home-page-founders"
 import { HomePageHero } from "~/pages/homepage/components/hero/hero"
 import { HomePageNextEvents } from "~/pages/homepage/components/next-events/next-events"
 import { HomePageTestimonials } from "~/pages/homepage/components/testimonials/home-page-testimonials"
-import { getNextEvents } from "~/pages/homepage/fetch/get-next-events"
 import type { FCC } from "~types/utils.types"
 import type { Route } from "./+types/homepage"
 import { HomePageNextEventsSkeleton } from "./components/next-events/next-events-skeleton"
+import { getNextEvents } from "./fetch/get-next-events"
 
 // TODO: Meta
 export function meta() {
@@ -20,8 +20,8 @@ export function meta() {
 
 /* Needs to be clientLoader because getNextEvents needs new Date() */
 export async function clientLoader({}: Route.LoaderArgs) {
-  const { supabase } = createClient()
-  return await getNextEvents(supabase)
+  const { currentProfile, supabase } = await getClientContext()
+  return await getNextEvents(supabase, currentProfile, 3)
 }
 
 /* Wrapper to show Skeleton below */
