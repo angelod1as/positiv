@@ -2,7 +2,7 @@ import { applySchema } from "composable-functions"
 import { redirect } from "react-router"
 import { z } from "zod"
 import paths from "~/lib/paths"
-import { userContextSchema } from "../auth.server"
+import { userContextSchema } from "./auth.server"
 
 const {
   auth: { LOGIN },
