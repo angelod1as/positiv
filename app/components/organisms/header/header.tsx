@@ -1,10 +1,33 @@
+import { HomeIcon, UserIcon } from "lucide-react"
+import type { FC } from "react"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
+import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import paths from "~/lib/paths"
+import type { ProfileWithRoles } from "~types/entities.types"
+import type { NullablePartial } from "~types/utils.types"
 
-const { HOME } = paths.root
+const {
+  root: { HOME },
+  auth: { LOGIN },
+  dash: {
+    DASHBOARD,
+    account: { ACCOUNT },
+  },
+} = paths
 
-export const Header = () => {
+type HeaderProps = {
+  profile: Pick<
+    NullablePartial<ProfileWithRoles>,
+    "social_name" | "full_name" | "email"
+  > | null
+}
+
+export const Header: FC<HeaderProps> = ({ profile }) => {
+  const displayName = profile
+    ? profile.social_name || profile.full_name || profile.email
+    : undefined
+
   return (
     <header className="flex items-center justify-between p-4 sticky top-0 left-0 z-30 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
       <div className="text-xl font-bold">
@@ -17,8 +40,19 @@ export const Header = () => {
         </Link>
       </div>
       <div className="flex items-center space-x-2">
-        {/* TODO: After setting up login */}
-        {/* <HeaderAccountData /> */}
+        {profile ? (
+          <div className="flex items-center space-x-2">
+            {!!displayName && <p>Olá, {displayName}</p>}
+            <Button asChild variant="outline" title="Dashboard" to={DASHBOARD}>
+              <HomeIcon />
+            </Button>
+            <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
+              <UserIcon />
+            </Button>
+          </div>
+        ) : (
+          <Button to={LOGIN}>Login</Button>
+        )}
       </div>
     </header>
   )

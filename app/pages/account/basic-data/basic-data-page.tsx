@@ -1,15 +1,16 @@
 import { applySchema } from "composable-functions"
+import { redirect } from "react-router"
 import { formAction } from "remix-forms"
 import { z, type ZodTypeAny } from "zod"
+import { getUserContext } from "~/business/auth/auth.server"
 import { SchemaForm } from "~/components/forms/schema-form"
 import paths from "~/lib/paths"
-import { getCurrentProfile } from "~/lib/supabase/fetch/get-current-profile"
-import { createClient } from "~/lib/supabase/server"
 import type { ProfileWithRoles } from "~types/entities.types"
 import type { DBClient } from "~types/utils.types"
 import type { Route } from "./+types/basic-data-page"
 
 const {
+  auth: { LOGIN },
   dash: {
     DASHBOARD,
     account: { ACCOUNT },
@@ -119,23 +120,27 @@ const mutation = applySchema(
   return
 })
 
-export async function action({ request }: Route.ActionArgs) {
-  const { supabase } = createClient(request)
-  const profile = await getCurrentProfile(supabase)
-  const isEdit = !!profile
+export async function action({ request, params }: Route.ActionArgs) {
+  const context = await getUserContext(request, params)
+  const isEdit = !!context.currentProfile
 
   return formAction({
     request,
     schema,
     mutation,
     successPath: isEdit ? ACCOUNT : DASHBOARD,
-    context: { supabase },
+    context,
   })
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-  const { supabase } = createClient(request)
-  const profile = await getCurrentProfile(supabase)
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile: profile, supabaseHeaders } = await getUserContext(
+    request,
+    params,
+  )
+  if (!profile) {
+    throw redirect(LOGIN, { headers: supabaseHeaders })
+  }
   return { profile }
 }
 
