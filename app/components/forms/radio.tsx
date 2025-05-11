@@ -8,11 +8,7 @@ export const Radio = React.forwardRef<
   <input
     ref={ref}
     type={type}
-    className={cn(
-      "h-4 w-4 rounded-full",
-      className,
-      !className && "border-gray-300 text-pink-600 focus:ring-pink-500",
-    )}
+    className={cn("h-4 w-4 rounded-full bg-input/30", className)}
     {...props}
   />
 ))
