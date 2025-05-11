@@ -15,6 +15,7 @@ const DASHBOARD = "/dashboard"
 const ACCOUNT = `/conta`
 const CHANGE_PASSWORD = `${ACCOUNT}/mudar-senha`
 const BASIC_DATA = `${ACCOUNT}/dados-basicos`
+const GENDER_PRONOUNS_ORIENTATION = `${ACCOUNT}/dados-basicos-cont`
 
 //// USER
 // PROFILE
@@ -39,6 +40,7 @@ const paths = {
       ACCOUNT,
       CHANGE_PASSWORD,
       BASIC_DATA,
+      GENDER_PRONOUNS_ORIENTATION,
     },
     participant: {
       DASHBOARD,
