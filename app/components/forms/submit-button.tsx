@@ -6,7 +6,7 @@ type SubmitButtonProps = JSX.IntrinsicElements["button"] & {
   alignment: "left" | "center" | "right"
 }
 export const SubmitButton: FC<SubmitButtonProps> = ({
-  alignment,
+  alignment = "left",
   ...props
 }) => {
   return (
