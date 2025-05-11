@@ -7,18 +7,10 @@ import { genderPronounOrientationSchema } from "~/business/common"
 import { genderPronounsOrientation } from "~/business/participant/basic-data.server"
 import { CheckboxWithOther } from "~/components/forms/checkbox-with-other"
 import { Button } from "~/components/ui/button"
-import paths from "~/lib/paths"
 import type { Route } from "./+types/basic-data-page"
 
 const toOptions = (labels: string[]) =>
   labels.map((label) => ({ label, value: label }))
-
-const {
-  dash: {
-    DASHBOARD,
-    account: { ACCOUNT },
-  },
-} = paths
 
 type FormData = z.infer<typeof genderPronounOrientationSchema>
 
