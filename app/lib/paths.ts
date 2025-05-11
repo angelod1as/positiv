@@ -13,26 +13,14 @@ const DASHBOARD = "/dashboard"
 
 // ACCOUNT
 const ACCOUNT = `/conta`
-const RESET_PASSWORD = `${ACCOUNT}/mudar-senha`
+const CHANGE_PASSWORD = `${ACCOUNT}/mudar-senha`
 const BASIC_DATA = `${ACCOUNT}/dados-basicos`
-const CREATE_BASIC_DATA = `${BASIC_DATA}/criar`
-const EDIT_BASIC_DATA = `${BASIC_DATA}`
-
-//// ADMIN
-const ADMIN_DASHBOARD = `${DASHBOARD}/admin`
-// ADMIN_EVENTS
-const ADMIN_EVENTS = `${ADMIN_DASHBOARD}/eventos`
-const ADMIN_EVENT_VIEW = (id: string) => `${ADMIN_EVENTS}/${id}`
-const ADMIN_EVENT_CREATE = `${ADMIN_EVENTS}/novo`
-const ADMIN_EVENT_EDIT = (id: string) => `${ADMIN_EVENT_VIEW(id)}/editar`
 
 //// USER
 // PROFILE
 const AGREE_TO_TERMS = `${DASHBOARD}/termos`
 // EVENTS
-const EVENTS = `${DASHBOARD}/eventos` // Rota que redireciona
-const EVENT_VIEW = (id: string) => `${EVENTS}/${id}`
-const EVENT_RULES = (id: string) => `${EVENT_VIEW(id)}/regras`
+const EVENT_VIEW = (id: string) => `${DASHBOARD}/${id}`
 
 const paths = {
   root: {
@@ -47,28 +35,16 @@ const paths = {
   },
   dash: {
     DASHBOARD,
-    admin: {
-      ADMIN_DASHBOARD,
-      events: {
-        ADMIN_EVENTS,
-        ADMIN_EVENT_VIEW,
-        ADMIN_EVENT_CREATE,
-        ADMIN_EVENT_EDIT,
-      },
-    },
     account: {
       ACCOUNT,
-      RESET_PASSWORD,
-      basicData: {
-        CREATE: CREATE_BASIC_DATA,
-        EDIT: EDIT_BASIC_DATA,
-      },
+      CHANGE_PASSWORD,
+      BASIC_DATA,
     },
     participant: {
       DASHBOARD,
       AGREE_TO_TERMS,
       events: {
-        EVENT_RULES,
+        EVENT_VIEW,
       },
     },
   },
