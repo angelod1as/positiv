@@ -55,6 +55,4 @@ export class HomepagePOM {
     await this.headerLogin.click()
     await expect(this.page).toHaveURL(/entrar/)
   }
-
-  // TODO: test logged in homepage
 }

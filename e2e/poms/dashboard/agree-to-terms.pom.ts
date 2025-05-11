@@ -12,7 +12,6 @@ export class AgreeToTermsPOM {
 
   constructor(page: Page) {
     this.page = page
-    // TODO: correct locators
     page.locator("label")
     this.title = page.getByRole("heading", { name: "Bem vinde à Positiv!" })
     this.agreeCheckbox = page.locator("label", {

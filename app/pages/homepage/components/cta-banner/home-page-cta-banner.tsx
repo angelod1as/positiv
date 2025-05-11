@@ -19,7 +19,6 @@ export const HomePageCtaBanner = () => {
               lembrade por quando novas inscrições abrirem
             </p>
           </div>
-          {/* TODO: Variant: inverted? */}
           <Button size="lg" variant="secondary" to={LOGIN}>
             Entrar e conferir
           </Button>

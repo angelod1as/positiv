@@ -11,7 +11,6 @@ export class AccountPOM {
 
   constructor(page: Page) {
     this.page = page
-    // TODO: correct locators
     this.editBasicDataButton = page.getByRole("link", {
       name: "Editar dados básicos",
     })
