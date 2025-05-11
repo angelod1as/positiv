@@ -7,6 +7,7 @@ import { genderPronounOrientationSchema } from "~/business/common"
 import { genderPronounsOrientation } from "~/business/participant/basic-data.server"
 import { CheckboxWithOther } from "~/components/forms/checkbox-with-other"
 import { Button } from "~/components/ui/button"
+import { Label } from "~/components/ui/label"
 import type { Route } from "./+types/basic-data-page"
 
 const toOptions = (labels: string[]) =>
@@ -84,51 +85,54 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
       </div>
       <Form onChange={handleChange} onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-6 sm:grid grid-cols-12 sm:gap-4">
-          <CheckboxWithOther
-            control={control}
-            errors={errors}
-            className="col-span-4"
-            name="gender"
-            options={toOptions([
-              "Mulher cis",
-              "Mulher trans",
-              "Travesti",
-              "Pessoa não binária",
-              "Pessoa agênera",
-              "Homem trans",
-              "Homem cis",
-            ])}
-          />
-          <CheckboxWithOther
-            control={control}
-            errors={errors}
-            className="col-span-4"
-            name="orientation"
-            options={toOptions([
-              "Mulher cis",
-              "Mulher trans",
-              "Travesti",
-              "Pessoa não binária",
-              "Pessoa agênera",
-              "Homem trans",
-              "Homem cis",
-            ])}
-          />
-          <CheckboxWithOther
-            control={control}
-            errors={errors}
-            className="col-span-4"
-            name="pronouns"
-            options={toOptions([
-              "Mulher cis",
-              "Mulher trans",
-              "Travesti",
-              "Pessoa não binária",
-              "Pessoa agênera",
-              "Homem trans",
-              "Homem cis",
-            ])}
-          />
+          <div className="flex flex-col col-span-4 gap-4">
+            <Label className="text-muted-foreground">Gênero</Label>
+            <CheckboxWithOther
+              control={control}
+              errors={errors}
+              name="gender"
+              options={toOptions([
+                "Mulher cis",
+                "Mulher trans",
+                "Travesti",
+                "Pessoa não binária",
+                "Pessoa agênera",
+                "Homem trans",
+                "Homem cis",
+              ])}
+            />
+          </div>
+          <div className="flex flex-col col-span-4 gap-4">
+            <Label className="text-muted-foreground">Orientação</Label>
+            <CheckboxWithOther
+              control={control}
+              errors={errors}
+              name="orientation"
+              options={toOptions([
+                "Hétero",
+                "Gay",
+                "Sapatão",
+                "Bi",
+                "Pan",
+                "Demi",
+                "Ace",
+              ])}
+            />
+          </div>
+          <div className="flex flex-col col-span-4 gap-4">
+            <Label className="text-muted-foreground">Pronomes</Label>
+            <CheckboxWithOther
+              control={control}
+              errors={errors}
+              name="pronouns"
+              options={toOptions([
+                "Ele/dele",
+                "Ela/dela",
+                "Elu/delu",
+                "Ile/dile",
+              ])}
+            />
+          </div>
         </div>
         <Button type="submit" className="mt-4">
           Continuar
