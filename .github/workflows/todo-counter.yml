@@ -1,0 +1,80 @@
+name: TODO Counter
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  count_todos:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout base and head branches
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref }}
+          fetch-depth: 0
+
+      - name: Count TODOs in base branch
+        id: count_base
+        run: |
+          # Exclude specific files or directories
+          base_count=$(grep -r --exclude='no-todo-delete.sh' "// TODO:" . | wc -l)
+          echo "base_count=$base_count" >> $GITHUB_ENV
+
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Count TODOs in current PR
+        id: count_pr
+        run: |
+          # Exclude specific files or directories
+          current_count=$(grep -r --exclude='no-todo-delete.sh' "// TODO:" . | wc -l)
+          echo "current_count=$current_count" >> $GITHUB_ENV
+
+      - name: Calculate Delta
+        id: calculate_delta
+        run: |
+          base_count=${{ env.base_count }}
+          current_count=${{ env.current_count }}
+          delta=$((current_count - base_count))
+          if [ "$delta" -gt 0 ]; then
+            delta_sign="+"
+            emoji="👎"
+          elif [ "$delta" -lt 0 ]; then
+            delta_sign=""
+            emoji="👍"
+          else
+            delta_sign=""
+            emoji=""
+          fi
+          abs_delta=$((delta < 0 ? -delta : delta))
+          echo "delta_sign=$delta_sign" >> $GITHUB_ENV
+          echo "abs_delta=$abs_delta" >> $GITHUB_ENV
+          echo "emoji=$emoji" >> $GITHUB_ENV
+
+      - name: Add or Update Comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          NUMBER: ${{ github.event.pull_request.number }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          # Construct the comment body
+          BODY=$(cat <<EOF
+          <!-- TODO-Counter-Comment -->
+          **TODO Delta**
+          ${{ env.emoji }} ${{ env.delta_sign }}${{ env.abs_delta }}
+          (${{ env.base_count }} → ${{ env.current_count }})
+          EOF
+          )
+          # Try to edit the last comment if it exists, otherwise create a new one
+          gh pr comment "$NUMBER" --edit-last --body "$BODY" || gh pr comment "$NUMBER" --body "$BODY"
+        shell: bash
