@@ -1,4 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test"
+import { createMockCredentials } from "e2e/helpers/create-mock-credentials"
+import { createMockUser } from "e2e/setup/create-mock-user"
 import paths from "~/lib/paths"
 
 export class LoginPOM {
@@ -9,16 +11,25 @@ export class LoginPOM {
   readonly passwordError: Locator
   readonly submitButton: Locator
   readonly generalError: Locator
+  readonly headerLoginButton: Locator
 
   constructor(page: Page) {
     this.page = page
-    // TODO: correct locators
-    this.emailInput = page.getByLabel("E-mail")
-    this.emailError = page.getByText("Error?")
-    this.passwordInput = page.getByLabel("Senha")
-    this.passwordError = page.getByText("Error?")
-    this.submitButton = page.getByRole("button", { name: "Entrar" }).first()
-    this.generalError = page.getByText("Error?")
+    this.emailInput = page.getByRole("textbox", { name: "E-mail" })
+    this.emailError = page
+      .locator("#errors-for-email")
+      .filter({ hasText: "Insira pelo menos um caracter" })
+    this.passwordInput = page.getByRole("textbox", { name: "Senha" })
+    this.passwordError = page
+      .locator("#errors-for-password")
+      .filter({ hasText: "Insira pelo menos um caracter" })
+    this.submitButton = page.getByRole("button", { name: "Entrar" })
+    this.generalError = page
+      .getByRole("alert")
+      .filter({ hasText: "Credenciais inválidas" })
+    this.headerLoginButton = page
+      .getByRole("banner")
+      .getByRole("link", { name: "Entrar" })
   }
 
   async goto() {
@@ -29,34 +40,47 @@ export class LoginPOM {
     await expect(this.emailInput).toBeVisible()
     await expect(this.passwordInput).toBeVisible()
     await expect(this.submitButton).toBeVisible()
-  }
-
-  // TODO: correct data from here down
-  async testLogin() {
-    await this.passwordInput.fill("email")
-    await this.passwordInput.fill("password")
-    await this.submitButton.click()
-    await expect(this.page).toHaveURL(/dashboard/)
+    await expect(this.headerLoginButton).not.toBeVisible()
   }
 
   async testInvalidPassword() {
-    await this.passwordInput.fill("email")
-    await this.passwordInput.fill("INVALID-password")
+    await this.emailInput.fill("valid@email.com")
     await this.submitButton.click()
     await expect(this.passwordError).toBeVisible()
   }
 
-  async testInvalidEmail() {
-    await this.passwordInput.fill("INVALID-email")
-    await this.passwordInput.fill("password")
-    await this.submitButton.click()
-    await expect(this.emailError).toBeVisible()
-  }
+  /*
+    Invalid email is not tested because the browser takes care of it
+  */
 
   async testWrongCredentials() {
     await this.passwordInput.fill("WRONG-email")
     await this.passwordInput.fill("WRONG-password")
     await this.submitButton.click()
-    await expect(this.emailError).toBeVisible()
+    await expect(this.generalError).toBeVisible()
+  }
+
+  async doStraightLogin(
+    email: string,
+    password: string,
+    filled: boolean = false,
+  ) {
+    await this.emailInput.fill(email)
+    await this.passwordInput.fill(password)
+    await this.submitButton.click()
+    if (filled) {
+      await this.page.waitForURL(/dashboard$/)
+      await expect(this.page).toHaveURL(/dashboard$/)
+    } else {
+      await this.page.waitForURL(/termos$/)
+      await expect(this.page).toHaveURL(/termos$/)
+    }
+  }
+
+  async doLogin() {
+    const { email, password } = createMockCredentials()
+    await createMockUser(email, password, { admin: false })
+    this.doStraightLogin(email, password)
+    return { email, password }
   }
 }

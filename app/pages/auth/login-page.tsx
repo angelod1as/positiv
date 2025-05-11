@@ -13,8 +13,8 @@ import { cn } from "~/lib/utils"
 
 import { redirect } from "react-router"
 import { getContext } from "~/business/auth/auth.server"
-import { loginSchema } from "~/business/auth/common"
 import { loginUser } from "~/business/auth/login.server"
+import { loginSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/schema-form"
 import type { Route } from "./+types/login-page"
 
@@ -75,6 +75,7 @@ const LoginPage = ({}: Route.ComponentProps) => {
               password: "password",
             }}
             pendingButtonLabel="Entrando..."
+            buttonLabel="Entrar"
           />
         </CardContent>
         <CardFooter>

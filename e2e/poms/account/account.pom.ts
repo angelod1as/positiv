@@ -12,28 +12,30 @@ export class AccountPOM {
   constructor(page: Page) {
     this.page = page
     // TODO: correct locators
-    this.editBasicDataButton = page.getByRole("link", { name: "" })
-    this.fillBasicDataButton = page.getByRole("link", { name: "" })
-    this.changePasswordButton = page.getByRole("link", { name: "" })
-    this.logoutButton = page.getByRole("link", { name: "" })
-    this.deleteAccountButton = page.getByRole("link", { name: "" })
+    this.editBasicDataButton = page.getByRole("link", {
+      name: "Editar dados básicos",
+    })
+    this.fillBasicDataButton = page.getByRole("link", {
+      name: "Preencher dados básicos",
+    })
+    this.changePasswordButton = page.getByRole("link", { name: "Mudar senha" })
+    this.logoutButton = page.getByRole("button", { name: "Deslogar conta" })
+    this.deleteAccountButton = page.getByRole("button", {
+      name: "Apagar conta",
+    })
   }
 
   async goto() {
     await this.page.goto(paths.dash.account.ACCOUNT)
   }
 
-  async testBasicElements(options?: { filledData: boolean }) {
-    const { filledData = true } = options || {}
+  async goToChangePassword() {
+    await this.changePasswordButton.click()
+    await expect(this.page).toHaveURL(/mudar-senha$/)
+  }
 
-    if (filledData) {
-      await expect(this.editBasicDataButton).toBeVisible()
-    } else {
-      await expect(this.fillBasicDataButton).toBeVisible()
-    }
-
-    await expect(this.changePasswordButton).toBeVisible()
-    await expect(this.logoutButton).toBeVisible()
-    await expect(this.deleteAccountButton).toBeVisible()
+  async logout() {
+    await this.logoutButton.click()
+    await expect(this.page).toHaveURL(/entrar$/)
   }
 }

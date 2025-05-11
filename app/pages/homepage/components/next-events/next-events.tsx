@@ -17,9 +17,6 @@ import { Section } from "../section/section"
 import { HomePageNextEventsSkeleton } from "./next-events-skeleton"
 
 const {
-  dash: {
-    participant: { DASHBOARD },
-  },
   auth: { LOGIN },
 } = routes
 
@@ -94,11 +91,7 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
               },
             )}
           </div>
-          <Button
-            to={DASHBOARD}
-            variant="outline"
-            className="flex items-center"
-          >
+          <Button to={LOGIN} variant="outline" className="flex items-center">
             Entre para saber mais <ArrowRightIcon className="ml-2 h-4 w-4" />
           </Button>
         </div>

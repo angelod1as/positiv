@@ -1,6 +1,5 @@
 import { applySchema } from "composable-functions"
-import { contextSchema } from "./auth.server"
-import { loginSchema } from "./common"
+import { contextSchema, loginSchema } from "../common"
 
 // LoginSchema in common.ts
 export const loginUser = applySchema(

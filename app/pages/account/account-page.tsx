@@ -1,8 +1,8 @@
 import { Separator } from "@radix-ui/react-separator"
-import { Form, redirect } from "react-router"
-import { formAction } from "remix-forms"
+import { Form } from "react-router"
+import { getClientContext } from "~/business/auth/auth.client"
 import { getUserContext } from "~/business/auth/auth.server"
-import { logoutSchema, logoutUser } from "~/business/auth/logout.server"
+import { logoutUser } from "~/business/auth/logout.client"
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
@@ -10,12 +10,8 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/account-page"
 
 const {
-  auth: { LOGIN },
   dash: {
-    account: {
-      RESET_PASSWORD,
-      basicData: { EDIT },
-    },
+    account: { CHANGE_PASSWORD, BASIC_DATA },
     participant: { AGREE_TO_TERMS },
   },
 } = paths
@@ -25,22 +21,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { basic_data_filled: currentProfile?.basic_data_filled }
 }
 
-// TODO: Not working.
-export async function action({ request, params }: Route.ActionArgs) {
-  const context = await getUserContext(request, params)
-
-  return formAction({
-    request,
-    schema: logoutSchema,
-    mutation: logoutUser,
-    transformResult: (result) => {
-      if (result.success) {
-        throw redirect(LOGIN, { headers: context.supabaseHeaders })
-      }
-      return result
-    },
-    context,
-  })
+export async function clientAction({}: Route.ClientActionArgs) {
+  const context = await getClientContext()
+  await logoutUser(context)
 }
 
 /* TODO: Implement account deletion
@@ -58,14 +41,16 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
 
       <div className="flex flex-col gap-12 h-full">
         <div className="flex flex-col gap-4">
-          <Button variant="outline" to={RESET_PASSWORD}>
+          <Button variant="outline" to={CHANGE_PASSWORD}>
             Mudar senha
           </Button>
           <Button
             variant="outline"
-            to={basic_data_filled ? EDIT : AGREE_TO_TERMS}
+            to={basic_data_filled ? BASIC_DATA : AGREE_TO_TERMS}
           >
-            Editar dados básicos
+            {basic_data_filled
+              ? "Editar dados básicos"
+              : "Preencher dados básicos"}
           </Button>
         </div>
         <div className="flex flex-col gap-4">
@@ -77,32 +62,24 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
           </Form>
 
           <ConfirmDialog
-            trigger={{ label: "Apagar conta", variant: "destructive" }}
-            dialog={{
-              title: "Apagar conta",
-              description: (
-                <div>
-                  <p>
-                    Esta funcionalidade está em implementação. Entre em contato
-                    conosco para deletar sua conta, através do email{" "}
-                    <Link to="mailto:contato@positivparty.com">
-                      contato@positivparty.com
-                    </Link>
-                  </p>
-                  {/* <p>Você tem certeza que quer apagar sua conta?</p>
-                  <p>
-                    <b>Esta ação é IRREVERSÍVEL.</b>
-                  </p> */}
-                </div>
-              ),
-            }}
-            cancel={{ label: "Cancelar", variant: "outline" }}
-            // confirm={{
-            //   label: "Deletar",
-            //   variant: "destructive",
-            //   targetFn: handleDelete,
-            // }}
-          />
+            title="Apagar conta"
+            description={
+              <div>
+                <p>
+                  Esta funcionalidade está em implementação. Entre em contato
+                  conosco para deletar sua conta, através do email{" "}
+                  <Link to="mailto:contato@positivparty.com">
+                    contato@positivparty.com
+                  </Link>
+                </p>
+              </div>
+            }
+            cancelLabel="Entendi"
+          >
+            <ConfirmDialog.Trigger variant="destructive">
+              Apagar conta
+            </ConfirmDialog.Trigger>
+          </ConfirmDialog>
         </div>
       </div>
     </>

@@ -1,40 +1,54 @@
 import { expect, type Locator, type Page } from "@playwright/test"
 import paths from "~/lib/paths"
 
-// TODO: THIS IS A MOCK PAGE
 export class ChangePasswordPOM {
   readonly page: Page
-  readonly editBasicDataButton: Locator
-  readonly fillBasicDataButton: Locator
-  readonly changePasswordButton: Locator
-  readonly logoutButton: Locator
-  readonly deleteAccountButton: Locator
+  readonly title: Locator
+  readonly newPassword: Locator
+  readonly newPasswordError: Locator
+  readonly confirmPassword: Locator
+  readonly confirmPasswordError: Locator
+  readonly submitButton: Locator
 
   constructor(page: Page) {
     this.page = page
-    // TODO: correct locators
-    this.editBasicDataButton = page.getByRole("link", { name: "" })
-    this.fillBasicDataButton = page.getByRole("link", { name: "" })
-    this.changePasswordButton = page.getByRole("link", { name: "" })
-    this.logoutButton = page.getByRole("link", { name: "" })
-    this.deleteAccountButton = page.getByRole("link", { name: "" })
+
+    this.title = page.getByRole("heading", { name: "Mudar senha", exact: true })
+    this.newPassword = page.getByRole("textbox", { name: "Nova senha" })
+    this.confirmPassword = page.getByRole("textbox", {
+      name: "Confirmar senha",
+    })
+    this.newPasswordError = page.getByText(
+      "A senha precisa ter, no mínimo, 6 caracteres",
+    )
+    this.confirmPasswordError = page.getByText("As senhas não combinam")
+    this.submitButton = page.getByRole("button", { name: "Mudar senha" })
   }
 
   async goto() {
-    await this.page.goto(paths.dash.account.ACCOUNT)
+    await this.page.goto(paths.dash.account.CHANGE_PASSWORD)
   }
 
-  async testBasicElements(options?: { filledData: boolean }) {
-    const { filledData = true } = options || {}
+  async testErrors() {
+    await expect(this.title).toBeVisible()
+    this.submitButton.click()
+    expect(this.newPasswordError).toBeVisible()
 
-    if (filledData) {
-      await expect(this.editBasicDataButton).toBeVisible()
-    } else {
-      await expect(this.fillBasicDataButton).toBeVisible()
-    }
+    this.newPassword.fill("123546")
+    this.submitButton.click()
+    expect(this.confirmPasswordError).toBeVisible()
+  }
 
-    await expect(this.changePasswordButton).toBeVisible()
-    await expect(this.logoutButton).toBeVisible()
-    await expect(this.deleteAccountButton).toBeVisible()
+  async testChangePassword(password: string) {
+    await expect(this.title).toBeVisible()
+
+    await this.newPassword.fill(password)
+    await this.confirmPassword.fill(password)
+
+    await this.submitButton.click()
+
+    await expect(this.newPasswordError).not.toBeVisible()
+    await expect(this.confirmPasswordError).not.toBeVisible()
+    await expect(this.page).toHaveURL(/conta$/)
   }
 }

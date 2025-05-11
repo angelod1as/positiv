@@ -1,19 +1,16 @@
-import { applySchema } from "composable-functions"
 import { redirect } from "react-router"
-import { z } from "zod"
+import type { z } from "zod"
 import paths from "~/lib/paths"
-import { userContextSchema } from "./auth.server"
+import { clientContextSchema } from "./auth.client"
 
 const {
   auth: { LOGIN },
 } = paths
 
-export const logoutSchema = z.object({})
+type Context = z.infer<typeof clientContextSchema>
 
-export const logoutUser = applySchema(
-  logoutSchema,
-  userContextSchema,
-)(async (_values, context) => {
+/* Needs to be called client-side */
+export const logoutUser = async (context: Context) => {
   const { supabase } = context
   const { error } = await supabase.auth.signOut()
 
@@ -25,4 +22,4 @@ export const logoutUser = applySchema(
   }
 
   return redirect(LOGIN)
-})
+}

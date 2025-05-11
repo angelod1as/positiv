@@ -1,41 +1,4 @@
-import { z } from "zod"
-import { SchemaForm } from "~/components/forms/schema-form"
-
-const createSingleSchema = (id: string) =>
-  z.string().refine((val) => val === `${id}-correct-0`, {
-    message: "Ops, você selecionou a resposta errada.",
-  })
-
-const createMultipleSchema = (_id: string, correctLength: number) =>
-  z
-    .array(z.string())
-    .refine((val) => val.length !== 0, {
-      message: "Você precisa escolher pelo menos uma resposta",
-    })
-    .refine((val) => val.length >= correctLength, {
-      message: "Você precisa escolher mais respostas certas...",
-    })
-    .refine((val) => val.every((answer) => answer.includes("-correct-")), {
-      message: "Ops, você selecionou alguma resposta errada.",
-    })
-
-const schema = z.object({
-  "leave-no-trace": createSingleSchema("leave-no-trace"),
-  "no-obligation": createSingleSchema("no-obligation"),
-  "no-privacy-1": createSingleSchema("no-privacy-1"),
-  "no-privacy-2": createSingleSchema("no-privacy-2"),
-  "no-speak-1": createSingleSchema("no-speak-1"),
-  "no-speak-2": createSingleSchema("no-speak-2"),
-  "no-speak-3": createSingleSchema("no-speak-3"),
-  phone: createSingleSchema("phone"),
-  trigger: createSingleSchema("trigger"),
-  "yes-is-yes": createSingleSchema("yes-is-yes"),
-  "not-a-club": createMultipleSchema("not-a-club", 2),
-  "protection-1": createMultipleSchema("protection-1", 2),
-  "protection-2": createMultipleSchema("protection-2", 2),
-})
-
-const rulesFormQuestions = {
+export const rulesFormQuestions = {
   "leave-no-trace": {
     question:
       "Sobre limpeza do ambiente e a responsabilidade dos pertences des participantes, é certo dizer:",
@@ -203,24 +166,3 @@ const rulesFormQuestions = {
     },
   },
 }
-
-const RulesForm = () => {
-  return (
-    <SchemaForm schema={schema}>
-      {({ Errors, Button }) => {
-        console.info(rulesFormQuestions)
-
-        // TODO: randomize fields
-
-        return (
-          <>
-            <Errors />
-            <Button alignment="center" />
-          </>
-        )
-      }}
-    </SchemaForm>
-  )
-}
-
-export default RulesForm

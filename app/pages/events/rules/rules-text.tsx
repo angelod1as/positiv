@@ -22,7 +22,7 @@ export const RulesText = () => {
       <Separator />
 
       <>
-        <h3>🚨 Nenhuma pessoa é obrigada a nada 🚨</h3>
+        <h4>🚨 Nenhuma pessoa é obrigada a nada 🚨</h4>
 
         <p>“Você não é todo mundo”, já dizia minha mãe.</p>
         <p>
@@ -54,9 +54,9 @@ export const RulesText = () => {
       <Separator />
 
       <>
-        <h3>
+        <h4>
           🤫 Você <b>não</b> fala sobre quem vai à Positiv 🤫
-        </h3>
+        </h4>
         <p>
           Um de nossos pilares é a <b>privacidade de nossos participantes</b>.
         </p>
@@ -99,7 +99,7 @@ export const RulesText = () => {
       <Separator />
 
       <>
-        <h3>👍 Apenas SIM é SIM 👍</h3>
+        <h4>👍 Apenas SIM é SIM 👍</h4>
         <p>
           Essa é nossa <b>regra de ouro</b> do rolê.
         </p>
@@ -172,7 +172,7 @@ export const RulesText = () => {
       <Separator />
 
       <>
-        <h3>🥡 A Positiv não é marmitaria 🥡</h3>
+        <h4>🥡 A Positiv não é marmitaria 🥡</h4>
         <p>Nós fazemos uma festa sex- e body-Positiv.</p>
         <p>
           Diferente de uma casa de swing,{" "}
@@ -210,7 +210,7 @@ export const RulesText = () => {
       <Separator />
 
       <>
-        <h3>😷 Proteção e saúde 😷</h3>
+        <h4>😷 Proteção e saúde 😷</h4>
         <p>
           <b>Camisinha sempre e exames atualizados.</b>
         </p>
@@ -284,7 +284,7 @@ export const RulesText = () => {
       <Separator />
 
       <>
-        <h3>📸 Sem celular e sem fotos 📸</h3>
+        <h4>📸 Sem celular e sem fotos 📸</h4>
         <p>
           Usar o celular e tirar fotos nas áreas do evento é{" "}
           <b>expressamente proibido</b>.
@@ -303,7 +303,7 @@ export const RulesText = () => {
       <Separator />
 
       <>
-        <h3>💪 Experiência intensa 💪</h3>
+        <h4>💪 Experiência intensa 💪</h4>
         <p>
           Por mais que nossa mensagem seja de tranquilidade, aceitação e paz,
           sabemos que um evento como o nosso possa ser intenso demais para
@@ -345,7 +345,7 @@ export const RulesText = () => {
       <Separator />
 
       <>
-        <h3>🗑️ Não deixe rastros 🧼🫧</h3>
+        <h4>🗑️ Não deixe rastros 🧼🫧</h4>
         <p>
           Nossa missão é deixar o espaço, no fim da festa, do mesmo jeito que o
           encontramos quando chegamos.
@@ -388,7 +388,7 @@ export const RulesText = () => {
       <Separator />
 
       <>
-        <h3>🕺 Não somos uma balada 🪩</h3>
+        <h4>🕺 Não somos uma balada 🪩</h4>
         <p>
           A palavra "festa" ou "evento" pode confundir algumas pessoas. Não
           somos uma balada — o evento é de dia, tem piscina, não tem música
@@ -400,8 +400,6 @@ export const RulesText = () => {
           que pisca.
         </p>
       </>
-
-      <Separator />
     </>
   )
 }

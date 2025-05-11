@@ -21,7 +21,7 @@ export function meta() {
 /* Needs to be clientLoader because getNextEvents needs new Date() */
 export async function clientLoader({}: Route.LoaderArgs) {
   const { currentProfile, supabase } = await getClientContext()
-  return await getNextEvents(supabase, currentProfile, 3)
+  return await getNextEvents(supabase, currentProfile?.id, 3)
 }
 
 /* Wrapper to show Skeleton below */
