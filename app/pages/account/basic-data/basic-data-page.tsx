@@ -8,20 +8,18 @@ import type { Route } from "./+types/basic-data-page"
 
 const {
   dash: {
-    DASHBOARD,
-    account: { ACCOUNT },
+    account: { GENDER_PRONOUNS_ORIENTATION },
   },
 } = paths
 
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getContext(request, params)
-  const isEdit = !!context.currentProfile
 
   return formAction({
     request,
     schema: basicDataSchema,
     mutation: basicData,
-    successPath: isEdit ? ACCOUNT : DASHBOARD,
+    successPath: GENDER_PRONOUNS_ORIENTATION,
     context,
   })
 }
@@ -31,7 +29,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { profile }
 }
 
-// TODO: Finish with custom checkbox
 const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
   const { profile } = loaderData || {}
 
@@ -68,42 +65,11 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
           cpf: "CPF",
           rg: "RG",
           rg_issuer: "Emissor do RG",
-          // pronouns: "Pronomes",
-          // orientation: "Orientação",
-          // gender: "Gênero",
         }}
-        // TODO: Missing
-        // options={{
-        //   gender: [
-        //     "Mulher cis",
-        //     "Mulher trans",
-        //     "Travesti",
-        //     "Pessoa não binária",
-        //     "Pessoa agênera",
-        //     "Homem trans",
-        //     "Homem cis",
-        //   ].map(toOptions),
-        //   orientation: [
-        //     "Hétero",
-        //     "Gay",
-        //     "Sapatão",
-        //     "Bi",
-        //     "Pan",
-        //     "Demi",
-        //     "Ace",
-        //   ].map(toOptions),
-        //   pronouns: ["Ele/dele", "Ela/dela", "Elu/delu", "Ile/dile"].map(
-        //     toOptions,
-        //   ),
-        // }}
         inputTypes={{
           confirm_phone: "textnumber",
           phone: "textnumber",
           date_of_birth: "date",
-          // TODO: Should be checkbox with other, no text-input
-          // gender: "checkbox-with-other",
-          // orientation: "checkbox-with-other",
-          // pronouns: "checkbox-with-other",
         }}
         descriptions={{
           social_name: "Como você quer ser chamade?",
@@ -112,11 +78,29 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
           phone: "Só números, com DDD. Ex: 11955552222",
           confirm_phone: "Só números, com DDD. Ex: 11955552222",
           rg_issuer: "Exemplo: SSP/SP",
-          // pronouns: "Pode escolher mais de um",
-          // gender: "Pode escolher mais de um",
-          // orientation: "Pode escolher mais de um",
         }}
-      />
+      >
+        {({ Field, Button, Errors }) => {
+          return (
+            <div>
+              <div className="flex flex-col gap-6 sm:grid grid-cols-12 sm:gap-4">
+                <Field name="full_name" className="col-span-5" />
+                <Field name="social_name" className="col-span-4" />
+                <Field name="date_of_birth" className="col-span-3" />
+                <Field name="where_lives" className="col-span-6" />
+                <Field name="how_came_to_us" className="col-span-6" />
+                <Field name="phone" className="col-span-6" />
+                <Field name="confirm_phone" className="col-span-6" />
+                <Field name="cpf" className="col-span-4" />
+                <Field name="rg" className="col-span-4" />
+                <Field name="rg_issuer" className="col-span-4" />
+              </div>
+              <Errors />
+              <Button />
+            </div>
+          )
+        }}
+      </SchemaForm>
     </>
   )
 }
