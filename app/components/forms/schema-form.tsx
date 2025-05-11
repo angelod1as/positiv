@@ -3,23 +3,21 @@ import {
   type FormSchema,
   type SchemaFormProps as RemixFormsSchemaProps,
 } from "remix-forms"
-import { Checkbox } from "./checkbox"
+
+import type { z } from "zod"
+import { Checkbox } from "../ui/checkbox"
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
+import { RadioGroup } from "../ui/radio-group"
+import { TextArea } from "../ui/textarea"
 import { Error } from "./error"
 import { Errors } from "./errors"
 import { Field } from "./field"
-import { Input } from "./input"
-import { Label } from "./label"
+import { FormDescription } from "./form-description"
+import { InputWrapper } from "./input-wrapper"
 import { Radio } from "./radio"
 import { Select } from "./select"
 import { SubmitButton } from "./submit-button"
-
-import { InputWrapper } from "./input-wrapper"
-import { RadioGroup } from "./radio-group"
-
-import type { z } from "zod"
-import { CheckboxWithOther } from "./checkbox-with-other"
-import { FormDescription } from "./form-description"
-import { TextArea } from "./text-area"
 
 type FormValues<SchemaType> = Partial<Record<keyof SchemaType, string>>
 
@@ -46,33 +44,25 @@ function SchemaForm<Schema extends FormSchema>({
         radioComponent={Radio}
         radioGroupComponent={RadioGroup}
         radioWrapperComponent={InputWrapper}
-        checkboxWrapperComponent={InputWrapper}
         checkboxComponent={Checkbox}
         buttonComponent={SubmitButton}
         globalErrorsComponent={Errors}
         errorComponent={Error}
+        buttonLabel="Continuar"
+        pendingButtonLabel="Carregando..."
+        {...props}
         renderField={({ Field, fieldType, ...props }) => {
           const { name } = props
 
           return (
             <Field key={name.toString()} {...props}>
-              {({
-                Label,
-                SmartInput,
-                CheckboxWrapper,
-                Checkbox,
-                options,
-                type,
-                Errors,
-              }) => {
+              {({ Label, SmartInput, Checkbox, type, Errors }) => {
                 if (type === "checkbox") {
                   return (
-                    <div>
-                      <CheckboxWrapper>
-                        <Checkbox />
+                    <div className="flex gap-2 items-start">
+                      <Checkbox />
+                      <div>
                         <Label className="text-muted-foreground" />
-                      </CheckboxWrapper>
-                      <div className="pl-6">
                         <FormDescription description={descriptions?.[name]} />
                         <Errors />
                       </div>
@@ -92,9 +82,6 @@ function SchemaForm<Schema extends FormSchema>({
                         type="number"
                         className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
-                    ) : type === "checkbox-with-other" && options ? (
-                      // TODO: Not working
-                      <CheckboxWithOther name={name.toString()} />
                     ) : (
                       <SmartInput />
                     )}
@@ -106,7 +93,6 @@ function SchemaForm<Schema extends FormSchema>({
             </Field>
           )
         }}
-        {...props}
       />
     </>
   )

@@ -1,11 +1,11 @@
 import { HomeIcon, UserIcon } from "lucide-react"
 import type { FC } from "react"
+import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import paths from "~/lib/paths"
 import type { ProfileWithRoles } from "~types/entities.types"
-import type { NullablePartial } from "~types/utils.types"
 
 const {
   root: { HOME },
@@ -17,13 +17,14 @@ const {
 } = paths
 
 type HeaderProps = {
-  profile: Pick<
-    NullablePartial<ProfileWithRoles>,
-    "social_name" | "full_name" | "email"
-  > | null
+  profile: ProfileWithRoles | null
 }
 
+// TODO: Mobile logged in
 export const Header: FC<HeaderProps> = ({ profile }) => {
+  const { pathname } = useLocation()
+
+  const showButton = pathname !== "/entrar"
   const displayName = profile
     ? profile.social_name || profile.full_name || profile.email
     : undefined
@@ -40,19 +41,25 @@ export const Header: FC<HeaderProps> = ({ profile }) => {
         </Link>
       </div>
       <div className="flex items-center space-x-2">
-        {profile ? (
-          <div className="flex items-center space-x-2">
-            {!!displayName && <p>Olá, {displayName}</p>}
-            <Button asChild variant="outline" title="Dashboard" to={DASHBOARD}>
-              <HomeIcon />
-            </Button>
-            <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
-              <UserIcon />
-            </Button>
-          </div>
-        ) : (
-          <Button to={LOGIN}>Login</Button>
-        )}
+        {showButton &&
+          (profile ? (
+            <div className="flex items-center space-x-2">
+              {!!displayName && <p>Olá, {displayName}</p>}
+              <Button
+                asChild
+                variant="outline"
+                title="Dashboard"
+                to={DASHBOARD}
+              >
+                <HomeIcon />
+              </Button>
+              <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
+                <UserIcon />
+              </Button>
+            </div>
+          ) : (
+            <Button to={LOGIN}>Entrar</Button>
+          ))}
       </div>
     </header>
   )
