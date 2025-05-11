@@ -135,6 +135,7 @@ export const CheckboxWithOther = <TFieldValues extends FieldValues>({
               {isOtherChecked && (
                 <>
                   <Input
+                    data-testid={`outros-${name}`}
                     type="text"
                     className="input"
                     placeholder="Exemplo 1, Exemplo 2"

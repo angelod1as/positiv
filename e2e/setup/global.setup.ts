@@ -3,6 +3,7 @@ import { createMockCredentials } from "e2e/helpers/create-mock-credentials"
 import { participantUserFile } from "e2e/helpers/load-user"
 import pwLog from "e2e/helpers/log"
 import { BasicDataPOM } from "e2e/poms/account/basic-data.pom"
+import { GenderPronounOrientationPOM } from "e2e/poms/account/gender-pronouns-orientation.pom"
 import { LoginPOM } from "e2e/poms/auth/login.pom"
 import { AgreeToTermsPOM } from "e2e/poms/dashboard/agree-to-terms.pom"
 import { createMockUser } from "./create-mock-user"
@@ -22,6 +23,9 @@ test("authenticate as participant", async ({ page }) => {
 
   const basicDataPage = new BasicDataPOM(page)
   await basicDataPage.testFillBasicData()
+
+  const genderPage = new GenderPronounOrientationPOM(page)
+  await genderPage.testFillBasicData()
 
   // End of authentication steps.
   await page.context().storageState({ path: participantUserFile })

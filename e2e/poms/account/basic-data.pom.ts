@@ -31,7 +31,6 @@ export class BasicDataPOM {
 
   constructor(page: Page) {
     this.page = page
-    // TODO: correct locators
 
     this.full_name = page.getByRole("textbox", { name: "Nome completo" })
     this.social_name = page.getByRole("textbox", {
@@ -84,7 +83,7 @@ export class BasicDataPOM {
     await this.where_lives.fill(testParticipant.where_lives)
 
     await this.confirmButton.click()
-    await expect(this.page).toHaveURL(/conta$/)
+    await expect(this.page).toHaveURL(/dados-basicos-cont$/)
   }
 
   async checkPrefilledBasicData() {}
