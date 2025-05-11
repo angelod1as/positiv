@@ -1,6 +1,5 @@
 import { applySchema } from "composable-functions"
 import { formAction } from "remix-forms"
-import { z } from "zod"
 import { Link } from "~/components/atoms/link/link"
 import {
   Card,
@@ -15,6 +14,7 @@ import { createServerClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 
 import { SchemaForm } from "~/components/forms/schema-form"
+import { zod } from "~/lib/helpers/zod"
 import type { Route } from "./+types/register-page"
 
 const {
@@ -22,14 +22,14 @@ const {
   dash: { DASHBOARD: ROOT },
 } = paths
 
-const contextSchema = z.custom<{ request: Request }>()
+const contextSchema = zod.custom<{ request: Request }>()
 
-const schema = z
+const schema = zod
   .object({
-    email: z.string().email("Insira um e-mail válido"),
-    password: z.string().min(8, { message: "A senha é muito curta" }),
-    confirmPassword: z.string(),
-    over18: z.boolean().refine((val) => val, {
+    email: zod.string().email("Insira um e-mail válido"),
+    password: zod.string().min(8, { message: "A senha é muito curta" }),
+    confirmPassword: zod.string(),
+    over18: zod.boolean().refine((val) => val, {
       message: "Você só pode se inscrever se for maior de 18 anos",
     }),
   })

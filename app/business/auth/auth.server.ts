@@ -1,21 +1,12 @@
-import type { SupabaseClient } from "@supabase/supabase-js"
 import { redirect, type Params } from "react-router"
-import { z } from "zod"
+import type { z } from "zod"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
-import type { Database } from "~types/database.types"
-import { currentProfileSchema, currentUserSchema } from "./common"
+import { contextSchema, currentUserSchema } from "../common"
 
 const {
   auth: { LOGIN },
 } = paths
-
-export const contextSchema = z.object({
-  supabase: z.custom<SupabaseClient<Database, "public">>(),
-  supabaseHeaders: z.custom<Headers>(),
-  currentUser: currentUserSchema.nullable(),
-  currentProfile: currentProfileSchema.nullable(),
-})
 
 export const getContext = async (
   request: Request,

@@ -1,9 +1,11 @@
 import { z } from "zod"
+
+import { currentProfileSchema } from "~/business/common"
 import type { Database } from "./database.types"
 
 /** Extension of User with more data, so, called Profile */
-export type ProfileWithRoles =
-  Database["public"]["Functions"]["get_profile_with_roles"]["Returns"][0]
+const _profileWithRoles = currentProfileSchema.nullable()
+export type ProfileWithRoles = z.infer<typeof _profileWithRoles>
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 

@@ -21,7 +21,7 @@ export const HomePageCtaBanner = () => {
           </div>
           {/* TODO: Variant: inverted? */}
           <Button size="lg" variant="secondary" to={LOGIN}>
-            Entrar
+            Entrar e conferir
           </Button>
         </div>
       </div>

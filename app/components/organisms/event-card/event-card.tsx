@@ -1,6 +1,8 @@
 import type { FC } from "react"
+import { useFetcher } from "react-router"
 import { Button } from "~/components/atoms/button/button"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import {
   Card,
   CardContent,
@@ -17,7 +19,7 @@ import { DateStatus } from "./date-status"
 const {
   dash: {
     participant: {
-      events: { EVENT_RULES },
+      events: { EVENT_VIEW },
     },
   },
 } = paths
@@ -27,8 +29,16 @@ export const EventCard: FC<EventCardProps> = ({
   event,
   "data-testid": dataTestId,
 }) => {
-  // const fetcher = useFetcher()
-  // const busy = fetcher.state !== "idle"
+  const fetcher = useFetcher()
+
+  /* Handle Cancel Application */
+  const handleConfirm = async (closeDialog: () => void) => {
+    await fetcher.submit(
+      { cancel: true, eventId: event.id },
+      { method: "POST" },
+    )
+    closeDialog()
+  }
 
   const {
     application_close_time,
@@ -98,32 +108,31 @@ export const EventCard: FC<EventCardProps> = ({
           <div className="flex gap-4 w-full justify-between">
             {/* TODO: Calendar add */}
             {/* <Button data-testid={dataTestId} variant="outline">
-                Adicionar ao Calendário
-              </Button> */}
-            {/* TODO: Turn this into a FORM that will trigger an ACTION on the page */}
-            {/* <ConfirmDialog
-              trigger={{
-                label: isCancelPending ? "Cancelando..." : "Cancelar inscrição",
-                variant: "destructive",
-                disabled: isCancelPending,
-              }}
-              dialog={{
-                title: "Cancelar inscrição",
-                description: "Tem certeza?",
-              }}
-              cancel={{ label: "Voltar", variant: "outline" }}
-              confirm={{
-                label: "Cancelar",
-                variant: "destructive",
-                targetFn: handleCancel,
-                disabled: isCancelPending,
-              }}
-            /> */}
+              Adicionar ao Calendário
+            </Button> */}
+            <fetcher.Form method="post">
+              <ConfirmDialog
+                title="Cancelar inscrição"
+                description={
+                  <div>
+                    <p>Você tem certeza que deseja cancelar sua inscrição?</p>
+                  </div>
+                }
+                confirmLabel="😢 Cancelar"
+                cancelLabel="🎉 Voltar"
+                isLoading={fetcher.state !== "idle"}
+                onConfirm={handleConfirm}
+              >
+                <ConfirmDialog.Trigger variant="destructive">
+                  Cancelar inscrição
+                </ConfirmDialog.Trigger>
+              </ConfirmDialog>
+            </fetcher.Form>
           </div>
         ) : (
           <Button
             data-testid={dataTestId}
-            to={isEventOpen ? EVENT_RULES(id) : ""}
+            to={isEventOpen ? EVENT_VIEW(id) : ""}
             disabled={!isEventOpen}
           >
             {isEventOpen ? "Fazer inscrição" : "Inscreva-se em breve"}

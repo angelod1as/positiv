@@ -1,20 +1,38 @@
 import { SirenIcon } from "lucide-react"
-import { z } from "zod"
+import { formAction } from "remix-forms"
+import { getContext } from "~/business/auth/auth.server"
+import { agreeToTermsSchema } from "~/business/common"
+import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
 import { SchemaForm } from "~/components/forms/schema-form"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
+import paths from "~/lib/paths"
+import type { Route } from "./+types/agree-to-terms-page"
 
-export const schema = z.object({
-  agree: z.boolean().refine((val) => val, {
-    message: "Você só pode continuar se estiver de acordo.",
-  }),
-  commonEmails: z.boolean().refine((val) => val, {
-    message:
-      "Nosso sistema só funciona se você aceitar receber e-mails gerais.",
-  }),
-  mktEmails: z.boolean().optional(),
-})
+const {
+  dash: {
+    account: { BASIC_DATA },
+  },
+} = paths
 
-const AgreeToTermsPage = () => {
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile } = await getContext(request, params)
+  return { mktEmails: currentProfile?.allow_marketing_email }
+}
+
+export async function action({ request, params }: Route.ActionArgs) {
+  const context = await getContext(request, params)
+
+  return formAction({
+    request,
+    schema: agreeToTermsSchema,
+    mutation: agreeToTerms,
+    successPath: BASIC_DATA,
+    context,
+  })
+}
+
+const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
+  const { mktEmails } = loaderData
   return (
     <>
       <h1>Bem vinde à Positiv!</h1>
@@ -88,11 +106,11 @@ const AgreeToTermsPage = () => {
       </p>
 
       <SchemaForm
-        schema={schema}
+        schema={agreeToTermsSchema}
         values={{
           agree: false,
           commonEmails: true,
-          mktEmails: true,
+          mktEmails: mktEmails === undefined ? true : mktEmails,
         }}
         inputTypes={{
           agree: "checkbox",
