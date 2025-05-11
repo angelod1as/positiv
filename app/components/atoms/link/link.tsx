@@ -8,7 +8,6 @@ interface CustomLinkProps extends LinkPropsWithoutRef {
   variant?: "default" | "unstyled"
 }
 
-// TODO: Implement way of checking if NavLink or Link
 export const Link: React.FC<CustomLinkProps> = ({
   className,
   variant = "default",
