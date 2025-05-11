@@ -14,6 +14,7 @@ import { getContext } from "./business/auth/auth.server"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 
+// COMMENT OUT when offline
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
