@@ -1,12 +1,14 @@
 import { applySchema } from "composable-functions"
 import { formAction } from "remix-forms"
-import { z } from "zod"
 import { SchemaForm } from "~/components/forms/schema-form"
+import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import type { Route } from "./+types/change-password-page"
 
-const contextSchema = z.custom<{ request: Request }>()
+// TODO: Protected routes!
+
+const contextSchema = zod.custom<{ request: Request }>()
 
 const {
   dash: {
@@ -14,17 +16,18 @@ const {
   },
 } = paths
 
-const schema = z
+const schema = zod
   .object({
-    password: z.string().min(6, "A senha precisa ter, no mínimo, 6 caracteres"),
-    confirm_password: z.string(),
+    password: zod
+      .string()
+      .min(6, "A senha precisa ter, no mínimo, 6 caracteres"),
+    confirm_password: zod.string(),
   })
   .refine((data) => data.password === data.confirm_password, {
     message: "As senhas não combinam",
     path: ["confirm_password"],
   })
 
-// TODO: Test Supabase
 const mutation = applySchema(
   schema,
   contextSchema,
@@ -45,21 +48,15 @@ const mutation = applySchema(
     )
   }
 
-  // QUESTION: Return undefined === success??
   return
 })
-
-// TODO: Implement AUTH GUARD
-// export const loader = async ({ request }: Route.LoaderArgs) => {
-//   return {}
-// }
 
 export const action = async ({ request }: Route.ActionArgs) => {
   return formAction({
     request,
     schema,
     mutation,
-    successPath: `${ACCOUNT}?toast=ACCOUNT_RESET_SUCCESS`,
+    successPath: ACCOUNT,
     context: { request },
   })
 }

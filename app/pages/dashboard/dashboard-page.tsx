@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from "react"
 import { redirect } from "react-router"
 import { getClientContext } from "~/business/auth/auth.client"
-import { getContext } from "~/business/auth/auth.server"
+import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { EventCardSkeleton } from "~/components/organisms/event-card/event-card-skeleton"
 import paths from "~/lib/paths"
@@ -33,23 +33,15 @@ const splitEvents = (events: ViewEvent[] | undefined) => {
   }, empty)
 }
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const { currentProfile, supabaseHeaders } = await getContext(request, params)
-
-  if (!currentProfile?.basic_data_filled) {
-    return redirect(AGREE_TO_TERMS, { headers: supabaseHeaders })
-  }
-
-  return {
-    registrationOpen: [],
-    scheduled: [],
-  }
-}
-
 /* Needs to be clientLoader because getNextEvents needs new Date() */
 export async function clientLoader({}: Route.LoaderArgs) {
   const { supabase, currentProfile } = await getClientContext()
-  const { events, error } = await getNextEvents(supabase, currentProfile)
+
+  if (!currentProfile?.basic_data_filled) {
+    throw redirect(AGREE_TO_TERMS)
+  }
+
+  const { events, error } = await getNextEvents(supabase, currentProfile.id)
 
   if (error || !events) {
     return {
@@ -61,13 +53,17 @@ export async function clientLoader({}: Route.LoaderArgs) {
   return splitEvents(events)
 }
 
-/* Force hydration on first load */
-clientLoader.hydrate = true as const
+/* Maybe this should be in another route if the EventCard is reused */
+/* Cancel action */
+export async function action({ request, params }: Route.ClientActionArgs) {
+  await cancelApplicationToEvent(request, params)
+}
 
 type WrapperProps = {
   registrationEvents: ReactNode
   scheduledEvents: ReactNode
 }
+
 const Wrapper: FC<WrapperProps> = ({ registrationEvents, scheduledEvents }) => {
   return (
     <div className="px-4 lg:px-8 pb-4 flex flex-col gap-12 ... mb-12 py-8">
