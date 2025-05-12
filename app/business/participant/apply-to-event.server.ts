@@ -53,7 +53,7 @@ export const applyToEvent = async (request: Request, params: Params) => {
       .single()
 
     if (event) {
-      // TODO: does this works being async?
+      // purposefully async
       sendApplicationMail({
         profile: currentProfile,
         event: {
