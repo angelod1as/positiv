@@ -7,7 +7,6 @@ import {
   Text,
 } from "@react-email/components"
 import dotenv from "dotenv"
-import path from "path"
 import { formatDateTime } from "~/lib/helpers/format-date"
 import type {
   EventStatus,
@@ -15,7 +14,7 @@ import type {
   ViewEvent,
 } from "~types/entities.types"
 import { EmailWrapper } from "../common/wrapper"
-dotenv.config({ path: path.resolve(__dirname, ".env.local") })
+dotenv.config()
 
 interface ApplicationMailProps {
   profile: NonNullable<ProfileWithRoles>
