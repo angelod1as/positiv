@@ -9,6 +9,7 @@ const getEnvironment = makeTypedEnvironment(
     NODE_ENV: zod
       .enum(["development", "production", "test"])
       .default("development"),
+    CI: zod.string().optional(),
 
     TEST_USER_ADMIN_EMAIL: zod.string().optional(),
     TEST_USER_PASSWORD: zod.string().optional(),
@@ -29,6 +30,10 @@ const getEnvironment = makeTypedEnvironment(
     CONTENTFUL_MANAGEMENT_TOKEN: zod.string().optional(),
     CONTENTFUL_REVALIDATE_SECRET: zod.string().optional(),
     CONTENTFUL_PREVIEW_SECRET: zod.string().optional(),
+
+    FROM_EMAIL: zod.string().optional(),
+    AWS_ACCESS_KEY_ID: zod.string().optional(),
+    AWS_SECRET_ACCESS_KEY: zod.string().optional(),
   }),
 )
 
