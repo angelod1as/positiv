@@ -7,6 +7,13 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    services:
+      mailhog:
+        image: mailhog/mailhog
+        ports:
+          - 1025:1025
+          - 8025:8025
+
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
