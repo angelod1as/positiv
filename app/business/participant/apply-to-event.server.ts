@@ -1,6 +1,8 @@
 import { redirect, type Params } from "react-router"
 import paths from "~/lib/paths"
+import type { EventStatus } from "~types/entities.types"
 import { getContext } from "../auth/auth.server"
+import { sendApplicationMail } from "./send-application-mail.server"
 
 const {
   dash: { DASHBOARD },
@@ -43,11 +45,24 @@ export const applyToEvent = async (request: Request, params: Params) => {
     throw new Error("Sua inscrição teve um erro, tente novamente. Erro: upsert")
   }
 
-  // TODO: send email
-  // await sendApplicationMailAction({
-  //   profile,
-  //   event,
-  // })
+  if (currentProfile.email) {
+    const { data: event } = await supabase
+      .from("events")
+      .select("*")
+      .eq("id", eventId)
+      .single()
+
+    if (event) {
+      // TODO: does this works being async?
+      sendApplicationMail({
+        profile: currentProfile,
+        event: {
+          ...event,
+          event_status: event.event_status as EventStatus,
+        },
+      })
+    }
+  }
 
   return redirect(DASHBOARD, {
     headers: supabaseHeaders,
