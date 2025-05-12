@@ -35,6 +35,10 @@ export default [
       index("pages/account/account-page.tsx"),
       route("/mudar-senha", "pages/account/change-password-page.tsx"),
       route("/dados-basicos", "pages/account/basic-data/basic-data-page.tsx"),
+      route(
+        "/dados-basicos-cont",
+        "pages/account/basic-data/gender-pronouns-orientation-page.tsx",
+      ),
     ]),
   ]),
 ] satisfies RouteConfig
