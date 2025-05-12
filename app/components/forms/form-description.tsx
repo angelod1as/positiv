@@ -6,7 +6,7 @@ type FormDescriptionProps = {
 export const FormDescription: FC<FormDescriptionProps> = ({ description }) => {
   if (!description) return null
   return (
-    <p className="text-xs text-muted-foreground leading-normal">
+    <p className="mt-1 text-xs text-muted-foreground leading-normal">
       {description}
     </p>
   )

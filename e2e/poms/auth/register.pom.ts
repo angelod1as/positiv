@@ -1,7 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test"
 import paths from "~/lib/paths"
 
-// TODO: THIS IS A MOCK PAGE
 export class RegisterPOM {
   readonly page: Page
   readonly emailInput: Locator
@@ -13,7 +12,6 @@ export class RegisterPOM {
 
   constructor(page: Page) {
     this.page = page
-    // TODO: correct locators
     this.emailInput = page.getByLabel("E-mail")
     this.emailError = page.getByText("Error?")
     this.passwordInput = page.getByLabel("Senha")
@@ -32,7 +30,6 @@ export class RegisterPOM {
     await expect(this.submitButton).toBeVisible()
   }
 
-  // TODO: correct data from here down
   async testLogin() {
     await this.passwordInput.fill("email")
     await this.passwordInput.fill("password")

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { PHONE_REGEXP } from "~/lib/helpers/constants"
 import { zod } from "~/lib/helpers/zod"
 import type { Database } from "~types/database.types"
 
@@ -62,7 +63,6 @@ export const agreeToTermsSchema = zod.object({
 })
 
 /* BASIC DATA */
-
 export const basicDataSchema = zod
   .object({
     full_name: zod.string().min(2).max(255),
@@ -70,33 +70,48 @@ export const basicDataSchema = zod
     rg: zod.string().min(2),
     rg_issuer: zod.string().min(2),
     cpf: zod.string().min(2),
-    date_of_birth: zod.coerce.date({
-      invalid_type_error: "Data inválida",
-      required_error: "Obrigatório",
-    }),
-    phone: zod.coerce.number({
-      invalid_type_error: "Você tem certeza que digitou um número?",
-    }),
-    confirm_phone: zod.coerce.number({
-      invalid_type_error: "Você tem certeza que digitou um número?",
-    }),
+    date_of_birth: zod.string({ message: "Obrigatório" }).pipe(
+      zod.coerce.date({
+        invalid_type_error: "Data inválida",
+        required_error: "Obrigatório",
+      }),
+    ),
+    phone: zod.coerce
+      .number({
+        invalid_type_error: "Você tem certeza que digitou um número?",
+      })
+      .refine((value) => PHONE_REGEXP.test(value.toString()), {
+        message: "Número inválido",
+      }),
+    confirm_phone: zod.coerce
+      .number({
+        invalid_type_error: "Você tem certeza que digitou um número?",
+      })
+      .refine((value) => PHONE_REGEXP.test(value.toString()), {
+        message: "Número inválido",
+      }),
     how_came_to_us: zod.string().optional(),
     where_lives: zod.string().optional(),
-
-    // TODO: Missing: gender, orientation, pronouns
-    // gender: zod.array(zod.string()).refine((value) => value.some((item) => item), {
-    //   message: oneCheckMessage,
-    // }),
-    // orientation: z
-    //   .array(zod.string())
-    //   .refine((value) => value.some((item) => item), {
-    //     message: oneCheckMessage,
-    //   }),
-    // pronouns: zod.array(zod.string()).refine((value) => value.some((item) => item), {
-    //   message: oneCheckMessage,
-    // }),
   })
   .refine((data) => data.phone === data.confirm_phone, {
     message: "Os números de telefone são diferentes",
     path: ["phone"],
   })
+
+export const genderPronounOrientationSchema = zod.object({
+  gender: zod
+    .array(zod.string())
+    .refine((value) => value.some((item) => item), {
+      message: "Você precisa escolher pelo menos um",
+    }),
+  orientation: zod
+    .array(zod.string())
+    .refine((value) => value.some((item) => item), {
+      message: "Você precisa escolher pelo menos um",
+    }),
+  pronouns: zod
+    .array(zod.string())
+    .refine((value) => value.some((item) => item), {
+      message: "Você precisa escolher pelo menos um",
+    }),
+})

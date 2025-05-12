@@ -74,7 +74,6 @@ function SchemaForm<Schema extends FormSchema>({
                   <>
                     <div>
                       <Label className="text-muted-foreground" />
-                      <FormDescription description={descriptions?.[name]} />
                     </div>
 
                     {type === "textnumber" ? (
@@ -85,6 +84,7 @@ function SchemaForm<Schema extends FormSchema>({
                     ) : (
                       <SmartInput />
                     )}
+                    <FormDescription description={descriptions?.[name]} />
 
                     <Errors />
                   </>
