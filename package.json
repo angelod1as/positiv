@@ -12,6 +12,7 @@
     "test:gen": "pnpm exec playwright test codegen",
     "types": "pnpm db:types",
     "db:types": "./scripts/db-types.sh",
+    "email:test": "./scripts/testmail.sh",
     "prepare": "husky"
   },
   "dependencies": {
