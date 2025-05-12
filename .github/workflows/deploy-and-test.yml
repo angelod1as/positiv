@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  supabase-staging:
+  deploy:
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -24,10 +24,10 @@ jobs:
           version: latest
       - name: Start Supabase local development setup
         run: supabase db start
-      - name: Verify generated types are checked in
+      - name: Verify generated types match Postgres schema
         run: |
-          supabase gen typescript --local > types.gen.ts
-          if ! git diff --ignore-space-at-eol --exit-code --quiet types.gen.ts; then
+          supabase gen types typescript --local > schema.gen.ts
+          if ! git diff --ignore-space-at-eol --exit-code --quiet schema.gen.ts; then
             echo "Detected uncommitted changes after build. See status below:"
             git diff
             exit 1
@@ -39,7 +39,7 @@ jobs:
       - name: Push DB
         run: supabase db push
 
-  playwright:
+  test:
     runs-on: ubuntu-latest
     needs: supabase-staging
     timeout-minutes: 60
