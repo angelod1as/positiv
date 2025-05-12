@@ -1,7 +1,7 @@
 import * as aws from "@aws-sdk/client-ses"
 import { defaultProvider } from "@aws-sdk/credential-provider-node"
 import nodemailer from "nodemailer"
-import { isProd } from "../helpers/is-prod"
+import { isProd } from "../helpers/is-prod.server"
 
 export function getEmailTransport() {
   const prod = isProd()

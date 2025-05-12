@@ -43,6 +43,7 @@ export const contextSchema = zod.object({
   supabaseHeaders: zod.custom<Headers>(),
   currentUser: currentUserSchema.nullable(),
   currentProfile: currentProfileSchema.nullable(),
+  isProd: zod.boolean().optional(),
 })
 
 export const userContextSchema = contextSchema.extend({
