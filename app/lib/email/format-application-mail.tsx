@@ -5,7 +5,7 @@ import type { ProfileWithRoles, ViewEvent } from "~types/entities.types"
 import Email from "./templates/emails/application-email"
 
 export const formatApplicationMail = async (
-  profile: ProfileWithRoles,
+  profile: NonNullable<ProfileWithRoles>,
   event: ViewEvent,
 ) => {
   const html = await render(<Email profile={profile} event={event} />)
