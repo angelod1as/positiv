@@ -1,5 +1,6 @@
 import { redirect, type Params } from "react-router"
 import type { z } from "zod"
+import { isProd } from "~/lib/helpers/is-prod.server"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import { contextSchema, currentUserSchema } from "../common"
@@ -50,6 +51,8 @@ export const getContext = async (
     return errorProps
   }
 
+  const prod = isProd()
+
   return {
     supabase,
     supabaseHeaders,
@@ -57,6 +60,7 @@ export const getContext = async (
     currentUser: {
       id: userId,
     },
+    isProd: prod,
   }
 }
 

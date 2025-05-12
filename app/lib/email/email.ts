@@ -1,8 +1,9 @@
 import Mail from "nodemailer/lib/mailer"
-import { isCI } from "../helpers/is-prod"
+import { env } from "~/env.server"
+import { isCI } from "../helpers/is-prod.server"
 import { getEmailTransport } from "./get-email-transport"
 
-const fromEmail = process.env.FROM_EMAIL
+const fromEmail = env().fromEmail
 
 export interface MailOptions extends Omit<Mail.Options, "from"> {
   to: NonNullable<Mail.Options["to"]>

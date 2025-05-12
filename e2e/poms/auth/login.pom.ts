@@ -65,6 +65,7 @@ export class LoginPOM {
     password: string,
     filled: boolean = false,
   ) {
+    await this.page.waitForLoadState("domcontentloaded")
     await this.emailInput.fill(email)
     await this.passwordInput.fill(password)
     await this.submitButton.click()
