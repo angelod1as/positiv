@@ -29,8 +29,8 @@ export const links: Route.LinksFunction = () => [
 ]
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const { currentProfile } = await getContext(request, params)
-  return { profile: currentProfile }
+  const { currentProfile, isProd } = await getContext(request, params)
+  return { profile: currentProfile, isProd }
 }
 
 export function Layout(props: { children: ReactNode }) {
@@ -56,11 +56,11 @@ export function Layout(props: { children: ReactNode }) {
 // https://www.jacobparis.com/content/remix-form-toast
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { profile } = loaderData
+  const { profile, isProd } = loaderData
 
   return (
     <>
-      <Header profile={profile} />
+      <Header profile={profile} isProd={isProd} />
       <div className="flex flex-col grow">
         <Outlet />
       </div>
