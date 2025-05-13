@@ -2,14 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { dataWithError } from "remix-toast"
 import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
-import paths from "~/lib/paths"
 import { createBrowserClient } from "~/lib/supabase/client"
 import type { Database } from "~types/database.types"
 import { currentProfileSchema, currentUserSchema } from "../common"
-
-const {
-  root: { HOME },
-} = paths
 
 export const clientContextSchema = zod.object({
   supabase: zod.custom<SupabaseClient<Database, "public">>(),
