@@ -56,11 +56,11 @@ export function Layout(props: { children: ReactNode }) {
 // https://www.jacobparis.com/content/remix-form-toast
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { profile, isProd } = loaderData
+  const { profile } = loaderData
 
   return (
     <>
-      <Header profile={profile} isProd={isProd} />
+      <Header profile={profile} />
       <div className="flex flex-col grow">
         <Outlet />
       </div>
