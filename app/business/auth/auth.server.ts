@@ -22,7 +22,7 @@ const {
   root: { HOME },
   auth: { LOGIN, LOGON_CALLBACK },
   dash: {
-    account: { CHANGE_PASSWORD, ACCOUNT },
+    account: { CHANGE_PASSWORD },
   },
 } = paths
 
