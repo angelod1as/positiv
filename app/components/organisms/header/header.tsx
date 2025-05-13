@@ -18,11 +18,10 @@ const {
 
 type HeaderProps = {
   profile: ProfileWithRoles | null
-  isProd?: boolean
 }
 
 // TODO: Mobile logged in
-export const Header: FC<HeaderProps> = ({ profile, isProd }) => {
+export const Header: FC<HeaderProps> = ({ profile }) => {
   const { pathname } = useLocation()
 
   const showButton = pathname !== "/entrar"
@@ -58,8 +57,6 @@ export const Header: FC<HeaderProps> = ({ profile, isProd }) => {
                 <UserIcon />
               </Button>
             </div>
-          ) : isProd ? (
-            ""
           ) : (
             <Button to={LOGIN}>Entrar</Button>
           ))}
