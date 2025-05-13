@@ -19,7 +19,6 @@ export default [
 
   ...prefix("dashboard", [
     index("pages/dashboard/dashboard-page.tsx"),
-
     layout("pages/events/layout.tsx", [
       route(":id", "pages/events/rules-page.tsx"),
     ]),

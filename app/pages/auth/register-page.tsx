@@ -1,4 +1,3 @@
-import { applySchema } from "composable-functions"
 import { formAction } from "remix-forms"
 import { Link } from "~/components/atoms/link/link"
 import {
@@ -10,12 +9,12 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import paths from "~/lib/paths"
-import { createServerClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 
 import { redirectWithSuccess } from "remix-toast"
+import { getContext, registerUser } from "~/business/auth/auth.server"
+import { registerUserSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/schema-form"
-import { zod } from "~/lib/helpers/zod"
 import type { Route } from "./+types/register-page"
 
 const {
@@ -23,52 +22,13 @@ const {
   dash: { DASHBOARD: ROOT },
 } = paths
 
-const contextSchema = zod.custom<{ request: Request }>()
+export const action = async ({ request, params }: Route.ActionArgs) => {
+  const context = await getContext(request, params)
 
-const schema = zod
-  .object({
-    email: zod.string().email("Insira um e-mail válido"),
-    password: zod.string().min(8, { message: "A senha é muito curta" }),
-    confirmPassword: zod.string(),
-    over18: zod.boolean().refine((val) => val, {
-      message: "Você só pode se inscrever se for maior de 18 anos",
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "As senhas não são iguais",
-    path: ["confirmPassword"],
-  })
-
-const mutation = applySchema(
-  schema,
-  contextSchema,
-)(async (values, context) => {
-  const { request } = context
-  const { supabase } = createServerClient(request)
-
-  const { over18, confirmPassword, ...data } = values
-
-  const { error } = await supabase.auth.signUp({
-    ...data,
-    // TODO: Is this doable?
-    // options: {
-    //   emailRedirectTo: `${request.headers.get("origin")}${LOGON_CALLBACK}`,
-    // },
-  })
-
-  if (error) {
-    throw new Error(`Ops, ocorreu um erro. Erro: ${error}`)
-  }
-
-  return values
-})
-
-// TODO: Move to server file
-export const action = async ({ request }: Route.ActionArgs) => {
   return formAction({
     request,
-    schema,
-    mutation,
+    schema: registerUserSchema,
+    mutation: registerUser,
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(ROOT, {
@@ -78,7 +38,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
       }
       return result
     },
-    context: { request },
+    context,
   })
 }
 
@@ -94,7 +54,7 @@ const RegisterPage = ({}: Route.ComponentProps) => {
         </CardHeader>
         <CardContent>
           <SchemaForm
-            schema={schema}
+            schema={registerUserSchema}
             labels={{ password: "Senha", email: "E-mail" }}
             placeholders={{ email: "email@exemplo.com", password: "senha123" }}
             inputTypes={{
