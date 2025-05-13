@@ -1,5 +1,6 @@
 import { applySchema } from "composable-functions"
-import { redirect, type Params } from "react-router"
+import { type Params } from "react-router"
+import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { isProd } from "~/lib/helpers/is-prod.server"
 import paths from "~/lib/paths"
@@ -12,6 +13,7 @@ import {
 } from "../common"
 
 const {
+  root: { HOME },
   auth: { LOGIN, LOGON_CALLBACK },
   dash: {
     account: { CHANGE_PASSWORD },
@@ -86,7 +88,10 @@ export const getUserContext = async (
 ): Promise<z.infer<typeof userContextSchema>> => {
   const { currentUser, ...context } = await getContext(request, params)
   if (!currentUser) {
-    throw redirect(LOGIN)
+    throw await redirectWithError(
+      LOGIN,
+      "Você precisa estar logade para continuar",
+    )
   }
   return { ...context, currentUser }
 }
@@ -130,3 +135,17 @@ export const forgotPassword = applySchema(
 
   return { success: true }
 })
+
+export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
+  const { supabase } = context
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    console.error(error)
+    throw new Error(
+      `Erro de logout — Código: "${error.code}" — Mensagem: "${error.message}"`,
+    )
+  }
+
+  return redirectWithSuccess(HOME, "Você deslogou com sucesso")
+}

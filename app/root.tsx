@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from "react"
+
 import {
   data,
   isRouteErrorResponse,
@@ -8,6 +9,8 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router"
+import { toast as notify, Toaster } from "sonner"
+
 import { getToast } from "remix-toast"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import type { Route } from "./+types/root"
@@ -17,18 +20,18 @@ import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 
 // COMMENT OUT when offline
-export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap",
-  },
-]
+// export const links: Route.LinksFunction = () => [
+//   { rel: "preconnect", href: "https://fonts.googleapis.com" },
+//   {
+//     rel: "preconnect",
+//     href: "https://fonts.gstatic.com",
+//     crossOrigin: "anonymous",
+//   },
+//   {
+//     rel: "stylesheet",
+//     href: "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap",
+//   },
+// ]
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { currentProfile, isProd } = await getContext(request, params)
@@ -51,6 +54,7 @@ export function Layout(props: { children: ReactNode }) {
         {props.children}
         <ScrollRestoration />
         <Scripts />
+        <Toaster />
       </body>
     </html>
   )
@@ -60,10 +64,29 @@ export default function App({ loaderData }: Route.ComponentProps) {
   const { profile, toast } = loaderData
 
   useEffect(() => {
-    if (toast) {
-      // Call your toast function here
-      alert(toast.message)
+    if (toast?.type) {
+      notify(toast.message, {
+        ...toast,
+        closeButton:
+          toast.closeButton ?? (toast.duration ? toast.duration > 5000 : false),
+      })
     }
+    // switch (toast?.type) {
+    //   case "error":
+    //     notify(toast.message, props)
+    //     break
+    //   case "info":
+    //     notify.info(toast.message)
+    //     break
+    //   case "warning":
+    //     notify.warning(toast.message)
+    //     break
+    //   case "success":
+    //     notify.success(toast.message)
+    //     break
+    //   default:
+    //     break
+    // }
   }, [toast])
 
   return (

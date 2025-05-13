@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from "react"
-import { redirect } from "react-router"
+import { redirectWithInfo } from "remix-toast"
 import { getClientContext } from "~/business/auth/auth.client"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
@@ -38,7 +38,10 @@ export async function clientLoader({}: Route.LoaderArgs) {
   const { supabase, currentProfile } = await getClientContext()
 
   if (!currentProfile?.basic_data_filled) {
-    throw redirect(AGREE_TO_TERMS)
+    throw await redirectWithInfo(
+      AGREE_TO_TERMS,
+      "Você precisa aceitar os termos antes de continuar",
+    )
   }
 
   const { events, error } = await getNextEvents(supabase, currentProfile.id)

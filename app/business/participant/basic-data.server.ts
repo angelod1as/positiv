@@ -1,5 +1,5 @@
 import { applySchema } from "composable-functions"
-import { redirect } from "react-router"
+import { redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import paths from "~/lib/paths"
@@ -93,7 +93,7 @@ export const genderPronounsOrientation = async ({
     )
   }
 
-  return redirect(DASHBOARD, {
+  return redirectWithSuccess(DASHBOARD, "Dados salvos com sucesso", {
     headers: supabaseHeaders,
   })
 }

@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { redirect } from "react-router"
 import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
@@ -8,7 +7,7 @@ import type { Database } from "~types/database.types"
 import { currentProfileSchema, currentUserSchema } from "../common"
 
 const {
-  auth: { LOGIN },
+  root: { HOME },
 } = paths
 
 export const clientContextSchema = zod.object({
@@ -64,21 +63,4 @@ export const getClientContext = async (): Promise<
       id: userId,
     },
   }
-}
-
-/* Needs to be called client-side */
-export const logoutUser = async (
-  context: z.infer<typeof clientContextSchema>,
-) => {
-  const { supabase } = context
-  const { error } = await supabase.auth.signOut()
-
-  if (error) {
-    console.error(error)
-    throw new Error(
-      `Erro de logout — Código: "${error.code}" — Mensagem: "${error.message}"`,
-    )
-  }
-
-  return redirect(LOGIN)
 }
