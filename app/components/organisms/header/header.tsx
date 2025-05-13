@@ -20,7 +20,6 @@ type HeaderProps = {
   profile: ProfileWithRoles | null
 }
 
-// TODO: Mobile logged in
 export const Header: FC<HeaderProps> = ({ profile }) => {
   const { pathname } = useLocation()
 

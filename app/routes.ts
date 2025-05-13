@@ -20,14 +20,6 @@ export default [
   ...prefix("dashboard", [
     index("pages/dashboard/dashboard-page.tsx"),
 
-    layout("pages/dashboard/agree-to-terms-page/layout.tsx", [
-      // TODO: change this route
-      route(
-        "/termos",
-        "pages/dashboard/agree-to-terms-page/agree-to-terms-page.tsx",
-      ),
-    ]),
-
     layout("pages/events/layout.tsx", [
       route(":id", "pages/events/rules-page.tsx"),
     ]),
@@ -36,6 +28,10 @@ export default [
   layout("pages/account/layout.tsx", [
     ...prefix("conta", [
       index("pages/account/account-page.tsx"),
+      route(
+        "/termos",
+        "pages/dashboard/agree-to-terms-page/agree-to-terms-page.tsx",
+      ),
       route("/mudar-senha", "pages/account/change-password-page.tsx"),
       route("/dados-basicos", "pages/account/basic-data/basic-data-page.tsx"),
       route(

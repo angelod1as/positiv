@@ -62,6 +62,7 @@ const mutation = applySchema(
   return values
 })
 
+// TODO: Move to server file
 export const action = async ({ request }: Route.ActionArgs) => {
   return formAction({
     request,
