@@ -61,7 +61,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <Header profile={profile} />
-      <div className="flex flex-col grow">
+      <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
       <Footer />

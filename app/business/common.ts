@@ -13,6 +13,13 @@ export const loginSchema = zod.object({
   password: zod.string().min(1, "Insira pelo menos um caracter"),
 })
 
+export const forgotPasswordSchema = zod.object({
+  email: zod
+    .string()
+    .min(1, "Insira pelo menos um caracter")
+    .email("E-mail inválido"),
+})
+
 export const currentUserSchema = zod.object({
   id: zod.string(),
 })
@@ -44,6 +51,7 @@ export const contextSchema = zod.object({
   currentUser: currentUserSchema.nullable(),
   currentProfile: currentProfileSchema.nullable(),
   isProd: zod.boolean().optional(),
+  host: zod.string().nullable(),
 })
 
 export const userContextSchema = contextSchema.extend({

@@ -30,7 +30,7 @@ export const Header: FC<HeaderProps> = ({ profile }) => {
     : undefined
 
   return (
-    <header className="flex items-center justify-between p-4 sticky top-0 left-0 z-30 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
+    <header className="flex items-center justify-between p-4 fixed top-0 left-0 z-30 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
       <div className="text-xl font-bold">
         <Link variant="unstyled" to={HOME}>
           <img
@@ -44,7 +44,9 @@ export const Header: FC<HeaderProps> = ({ profile }) => {
         {showButton &&
           (profile ? (
             <div className="flex items-center space-x-2">
-              {!!displayName && <p>Olá, {displayName}</p>}
+              {!!displayName && (
+                <p className="hidden sm:block">Olá, {displayName}</p>
+              )}
               <Button
                 asChild
                 variant="outline"
