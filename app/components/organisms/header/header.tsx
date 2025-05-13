@@ -44,7 +44,9 @@ export const Header: FC<HeaderProps> = ({ profile }) => {
         {showButton &&
           (profile ? (
             <div className="flex items-center space-x-2">
-              {!!displayName && <p>Olá, {displayName}</p>}
+              {!!displayName && (
+                <p className="hidden sm:block">Olá, {displayName}</p>
+              )}
               <Button
                 asChild
                 variant="outline"
