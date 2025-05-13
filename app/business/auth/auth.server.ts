@@ -15,6 +15,7 @@ import {
   currentUserSchema,
   forgotPasswordSchema,
   loginSchema,
+  registerUserSchema,
 } from "../common"
 
 const {
@@ -177,4 +178,26 @@ export const changePassword = applySchema(
   }
 
   return {}
+})
+
+export const registerUser = applySchema(
+  registerUserSchema,
+  contextSchema,
+)(async (values, context) => {
+  const { supabase, host } = context
+
+  const { over18, confirmPassword, ...data } = values
+
+  const { error } = await supabase.auth.signUp({
+    ...data,
+    options: {
+      emailRedirectTo: `${host}/${LOGON_CALLBACK}`,
+    },
+  })
+
+  if (error) {
+    throw new Error(`Ops, ocorreu um erro. Erro: ${error}`)
+  }
+
+  return values
 })
