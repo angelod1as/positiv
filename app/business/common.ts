@@ -51,6 +51,7 @@ export const contextSchema = zod.object({
   currentUser: currentUserSchema.nullable(),
   currentProfile: currentProfileSchema.nullable(),
   isProd: zod.boolean().optional(),
+  host: zod.string().nullable(),
 })
 
 export const userContextSchema = contextSchema.extend({

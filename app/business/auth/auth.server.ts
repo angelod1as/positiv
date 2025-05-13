@@ -4,17 +4,26 @@ import type { z } from "zod"
 import { isProd } from "~/lib/helpers/is-prod.server"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
-import { contextSchema, currentUserSchema, loginSchema } from "../common"
-import type { clientContextSchema } from "./auth.client"
+import {
+  contextSchema,
+  currentUserSchema,
+  forgotPasswordSchema,
+  loginSchema,
+} from "../common"
 
 const {
-  auth: { LOGIN },
+  root: { HOME },
+  auth: { LOGIN, LOGON_CALLBACK },
+  dash: {
+    account: { CHANGE_PASSWORD },
+  },
 } = paths
 
 export const getContext = async (
   request: Request,
   _params: Params,
 ): Promise<z.infer<typeof contextSchema>> => {
+  const host = request.headers.get("host")
   const { supabase, headers: supabaseHeaders } = createServerClient(request)
   const { data: authData, error: authError } = await supabase.auth.getUser()
 
@@ -23,6 +32,7 @@ export const getContext = async (
     supabaseHeaders,
     currentUser: null,
     currentProfile: null,
+    host,
   }
 
   if (authError) {
@@ -63,6 +73,7 @@ export const getContext = async (
       id: userId,
     },
     isProd: prod,
+    host,
   }
 }
 
@@ -100,19 +111,23 @@ export const loginUser = applySchema(
   return { user: data.user }
 })
 
-/* Needs to be called client-side */
-export const logoutUser = async (
-  context: z.infer<typeof clientContextSchema>,
-) => {
-  const { supabase } = context
-  const { error } = await supabase.auth.signOut()
+export const forgotPassword = applySchema(
+  forgotPasswordSchema,
+  contextSchema,
+)(async (values, context) => {
+  const { email } = values
+  const { supabase, host } = context
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${host}${LOGON_CALLBACK}?redirect_to=${CHANGE_PASSWORD}`,
+  })
 
   if (error) {
-    console.error(error)
+    console.error("Password Reset Error", error)
     throw new Error(
-      `Erro de logout — Código: "${error.code}" — Mensagem: "${error.message}"`,
+      "Algo deu errado com sua requisição, contate o administrador",
     )
   }
 
-  return redirect(LOGIN)
-}
+  return { success: true }
+})

@@ -10,7 +10,10 @@ export default [
   index("pages/homepage/homepage.tsx"),
 
   layout("pages/auth/layout.tsx", [
-    route("/entrar", "pages/auth/login-page.tsx"),
+    ...prefix("/entrar", [
+      index("pages/auth/login-page.tsx"),
+      route("/esqueci", "pages/auth/forgot-password-page.tsx"),
+    ]),
     route("/registrar", "pages/auth/register-page.tsx"),
   ]),
 
