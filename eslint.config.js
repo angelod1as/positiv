@@ -6,7 +6,7 @@ import globals from "globals"
 import tseslint from "typescript-eslint"
 
 export default defineConfig([
-  globalIgnores(["./.react-router/*", "./build/*"]),
+  globalIgnores(["./.react-router/*", "./build/*", "./playwright-report/*"]),
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
