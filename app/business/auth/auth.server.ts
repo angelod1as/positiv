@@ -12,7 +12,6 @@ import {
 } from "../common"
 
 const {
-  root: { HOME },
   auth: { LOGIN, LOGON_CALLBACK },
   dash: {
     account: { CHANGE_PASSWORD },
