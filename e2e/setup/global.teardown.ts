@@ -43,15 +43,15 @@ test("delete database items", async () => {
   }
 
   // Delete users from auth
-  mockUserIds.forEach(async (id) => {
+  for (const id of mockUserIds) {
     try {
       await supabase.auth.admin.deleteUser(id)
     } catch (error) {
       console.error(`\n\n:user error:\n`, error, `\n\n`)
     }
-  })
+  }
 
-  // Delete E2E events
+  // TODO: Delete E2E events
   // TBD!
 
   // try {
