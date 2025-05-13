@@ -13,6 +13,7 @@ import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import { cn } from "~/lib/utils"
 
+import { redirectWithSuccess } from "remix-toast"
 import { SchemaForm } from "~/components/forms/schema-form"
 import { zod } from "~/lib/helpers/zod"
 import type { Route } from "./+types/register-page"
@@ -68,7 +69,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
     request,
     schema,
     mutation,
-    successPath: ROOT,
+    transformResult: async (result) => {
+      if (result.success) {
+        throw await redirectWithSuccess(ROOT, {
+          message: "Um link chegará em seu e-mail, veja lá!",
+          duration: 10_000,
+        })
+      }
+      return result
+    },
     context: { request },
   })
 }

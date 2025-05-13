@@ -10,6 +10,7 @@ import { isProd } from "~/lib/helpers/is-prod.server"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import {
+  changePasswordSchema,
   contextSchema,
   currentUserSchema,
   forgotPasswordSchema,
@@ -20,7 +21,7 @@ const {
   root: { HOME },
   auth: { LOGIN, LOGON_CALLBACK },
   dash: {
-    account: { CHANGE_PASSWORD },
+    account: { CHANGE_PASSWORD, ACCOUNT },
   },
 } = paths
 
@@ -141,6 +142,7 @@ export const forgotPassword = applySchema(
   return { success: true }
 })
 
+// Not a applySchema purposefully
 export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
   const { supabase } = context
   const { error } = await supabase.auth.signOut()
@@ -154,3 +156,25 @@ export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
 
   return redirectWithSuccess(HOME, "Você deslogou com sucesso")
 }
+
+export const changePassword = applySchema(
+  changePasswordSchema,
+  contextSchema,
+)(async (values, context) => {
+  const { supabase } = context
+  const { error } = await supabase.auth.updateUser({
+    password: values.password,
+  })
+
+  if (error) {
+    if (error.code === "same_password") {
+      throw new Error("Será que essa não era a sua senha? Tente outra.")
+    }
+    console.error(error)
+    throw new Error(
+      "Não conseguimos resetar sua senha. Entre em contato com o administrador",
+    )
+  }
+
+  return {}
+})

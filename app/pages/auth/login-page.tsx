@@ -50,7 +50,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
             message: "Bem vinde!",
             description:
               "Nosso sistema ainda está em desenvolvimento. Nos ajude reportando bugs! Link no pé da página",
-            duration: Infinity,
+            duration: 10_000,
             closeButton: true,
           },
           {
