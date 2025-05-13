@@ -15,7 +15,7 @@ const Layout = () => {
           <img src={PositivWhite} alt="Positiv Logo" width={300} />
         </Link>
       </div>
-      <div className="flex flex-col gap-4 p-6 md:p-10">
+      <div className="flex flex-col gap-4">
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
             <Outlet />
