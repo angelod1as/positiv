@@ -1,14 +1,14 @@
-import { applySchema } from "composable-functions"
 import { formAction } from "remix-forms"
+import { redirectWithSuccess } from "remix-toast"
+import {
+  changePassword,
+  getContext,
+  getUserContext,
+} from "~/business/auth/auth.server"
+import { changePasswordSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/schema-form"
-import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
-import { createServerClient } from "~/lib/supabase/server"
 import type { Route } from "./+types/change-password-page"
-
-// TODO: Protected routes!
-
-const contextSchema = zod.custom<{ request: Request }>()
 
 const {
   dash: {
@@ -16,49 +16,30 @@ const {
   },
 } = paths
 
-const schema = zod
-  .object({
-    password: zod
-      .string()
-      .min(6, "A senha precisa ter, no mínimo, 6 caracteres"),
-    confirm_password: zod.string(),
-  })
-  .refine((data) => data.password === data.confirm_password, {
-    message: "As senhas não combinam",
-    path: ["confirm_password"],
-  })
+export const action = async ({ request, params }: Route.ActionArgs) => {
+  const context = await getContext(request, params)
 
-const mutation = applySchema(
-  schema,
-  contextSchema,
-)(async (values, context) => {
-  const { request } = context
-  const { supabase } = createServerClient(request)
-  const { error } = await supabase.auth.updateUser({
-    password: values.password,
-  })
-
-  if (error) {
-    if (error.code === "same_password") {
-      throw new Error("Será que essa não era a sua senha? Tente outra.")
-    }
-    console.error(error)
-    throw new Error(
-      "Não conseguimos resetar sua senha. Entre em contato com o administrador",
-    )
-  }
-
-  return
-})
-
-export const action = async ({ request }: Route.ActionArgs) => {
   return formAction({
     request,
-    schema,
-    mutation,
-    successPath: ACCOUNT,
-    context: { request },
+    schema: changePasswordSchema,
+    mutation: changePassword,
+    transformResult: async (result) => {
+      if (result.success) {
+        throw await redirectWithSuccess(ACCOUNT, {
+          message: "Um link chegará em seu e-mail, veja lá!",
+          duration: 10_000,
+        })
+      }
+      return result
+    },
+    context,
   })
+}
+
+export async function loader({ request, params }: Route.LoaderArgs) {
+  // Protect route
+  await getUserContext(request, params)
+  return {}
 }
 
 const ChangePasswordPage = ({}: Route.ComponentProps) => {
@@ -72,7 +53,7 @@ const ChangePasswordPage = ({}: Route.ComponentProps) => {
       </div>
 
       <SchemaForm
-        schema={schema}
+        schema={changePasswordSchema}
         labels={{ password: "Nova senha", confirm_password: "Confirmar senha" }}
         placeholders={{ password: "senha123", confirm_password: "senha123" }}
         inputTypes={{

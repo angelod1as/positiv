@@ -24,6 +24,18 @@ export const currentUserSchema = zod.object({
   id: zod.string(),
 })
 
+export const changePasswordSchema = zod
+  .object({
+    password: zod
+      .string()
+      .min(6, "A senha precisa ter, no mínimo, 6 caracteres"),
+    confirm_password: zod.string(),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "As senhas não combinam",
+    path: ["confirm_password"],
+  })
+
 export const currentProfileSchema = zod.object({
   id: zod.string(),
   email: zod.string().nullish(),
