@@ -116,6 +116,9 @@ importers:
       remix-forms:
         specifier: ^3.0.0
         version: 3.0.0(composable-functions@5.0.0)(react-hook-form@7.56.1(react@19.1.0))(react-router@7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@3.24.3)
+      remix-toast:
+        specifier: ^3.1.0
+        version: 3.1.0(react-router@7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
       slugify:
         specifier: ^1.6.6
         version: 1.6.6
@@ -3565,6 +3568,11 @@ packages:
       react-hook-form: '>=7.27'
       react-router: '>=7'
       zod: '>=3.12'
+
+  remix-toast@3.1.0:
+    resolution: {integrity: sha512-qCXyoGt2aoYUQal9P3B+w5LkQ4dGnftH1Kk4Txeb5dmBp03YEdrKOETnQDklmvPSpSDyGYyxkC7L4JqzDlrwRw==}
+    peerDependencies:
+      react-router: '>=7.5.0'
 
   require-from-string@2.0.2:
     resolution: {integrity: sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==}
@@ -7938,6 +7946,11 @@ snapshots:
       composable-functions: 5.0.0
       react: 19.1.0
       react-hook-form: 7.56.1(react@19.1.0)
+      react-router: 7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      zod: 3.24.3
+
+  remix-toast@3.1.0(react-router@7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)):
+    dependencies:
       react-router: 7.5.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       zod: 3.24.3
 

@@ -1,5 +1,6 @@
-import type { ReactNode } from "react"
+import { useEffect, type ReactNode } from "react"
 import {
+  data,
   isRouteErrorResponse,
   Links,
   Meta,
@@ -7,6 +8,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router"
+import { getToast } from "remix-toast"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import type { Route } from "./+types/root"
 import "./app.css"
@@ -30,7 +32,9 @@ export const links: Route.LinksFunction = () => [
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { currentProfile, isProd } = await getContext(request, params)
-  return { profile: currentProfile, isProd }
+  const { toast, headers } = await getToast(request)
+
+  return data({ profile: currentProfile, isProd, toast }, { headers })
 }
 
 export function Layout(props: { children: ReactNode }) {
@@ -52,11 +56,15 @@ export function Layout(props: { children: ReactNode }) {
   )
 }
 
-// TODO: Toast
-// https://www.jacobparis.com/content/remix-form-toast
-
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { profile } = loaderData
+  const { profile, toast } = loaderData
+
+  useEffect(() => {
+    if (toast) {
+      // Call your toast function here
+      alert(toast.message)
+    }
+  }, [toast])
 
   return (
     <>
