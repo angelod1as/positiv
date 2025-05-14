@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test"
 import paths from "~/lib/paths"
+import { HomepagePOM } from "../homepage.pom"
 
 export class AccountPOM {
   readonly page: Page
@@ -35,6 +36,7 @@ export class AccountPOM {
 
   async logout() {
     await this.logoutButton.click()
-    await expect(this.page).toHaveURL(/entrar$/)
+    const homepage = new HomepagePOM(this.page)
+    await homepage.assertHomepage()
   }
 }
