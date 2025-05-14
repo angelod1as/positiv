@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from "@playwright/test"
 import { EVENT_PAGE_REGEXP } from "~/lib/helpers/constants"
 import paths from "~/lib/paths"
 import { rulesFormQuestions } from "~/pages/events/rules/rules-form/rules-questions"
+import { MailhogPOM } from "../mailhog/mailhog.pom"
 
 export class RulesPOM {
   readonly page: Page
@@ -182,5 +183,12 @@ export class RulesPOM {
     await this.applyButton.click()
     await expect(this.dialog).toBeVisible()
     await this.dialogConfirm.click()
+  }
+
+  async checkApplicationEmail() {
+    const mailHogPage = new MailhogPOM(await this.page.context().newPage())
+    await mailHogPage.goto()
+    await mailHogPage.testBasicElements()
+    await mailHogPage.testApplicationEmail()
   }
 }
