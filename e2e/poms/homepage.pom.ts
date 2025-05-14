@@ -33,6 +33,11 @@ export class HomepagePOM {
     await this.page.goto(routes.root.HOME)
   }
 
+  // Alternative to toHaveUrl
+  async assertHomepage() {
+    await expect(this.title).toBeVisible()
+  }
+
   async testBasicElements() {
     await this.goto()
     await expect(this.title).toBeVisible()

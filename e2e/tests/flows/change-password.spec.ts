@@ -34,5 +34,6 @@ test("Change password", async ({ page }) => {
 
   await accountPage.logout()
 
+  await loginPage.goto()
   await loginPage.doStraightLogin(email, newPassword, true)
 })
