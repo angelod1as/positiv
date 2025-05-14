@@ -1,4 +1,5 @@
-import { redirect, type Params } from "react-router"
+import { type Params } from "react-router"
+import { redirectWithSuccess } from "remix-toast"
 import paths from "~/lib/paths"
 import type { EventStatus } from "~types/entities.types"
 import { getContext } from "../auth/auth.server"
@@ -64,7 +65,15 @@ export const applyToEvent = async (request: Request, params: Params) => {
     }
   }
 
-  return redirect(DASHBOARD, {
-    headers: supabaseHeaders,
-  })
+  return redirectWithSuccess(
+    DASHBOARD,
+    {
+      message: "Inscrição efetuada com sucesso",
+      description: "Você receberá as informações do evento em seu email",
+      duration: 3000,
+    },
+    {
+      headers: supabaseHeaders,
+    },
+  )
 }

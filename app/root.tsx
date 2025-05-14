@@ -1,5 +1,7 @@
-import type { ReactNode } from "react"
+import { useEffect, type ReactNode } from "react"
+
 import {
+  data,
   isRouteErrorResponse,
   Links,
   Meta,
@@ -7,6 +9,9 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router"
+import { toast as notify, Toaster } from "sonner"
+
+import { getToast } from "remix-toast"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import type { Route } from "./+types/root"
 import "./app.css"
@@ -30,7 +35,9 @@ export const links: Route.LinksFunction = () => [
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   const { currentProfile, isProd } = await getContext(request, params)
-  return { profile: currentProfile, isProd }
+  const { toast, headers } = await getToast(request)
+
+  return data({ profile: currentProfile, isProd, toast }, { headers })
 }
 
 export function Layout(props: { children: ReactNode }) {
@@ -47,16 +54,24 @@ export function Layout(props: { children: ReactNode }) {
         {props.children}
         <ScrollRestoration />
         <Scripts />
+        <Toaster />
       </body>
     </html>
   )
 }
 
-// TODO: Toast
-// https://www.jacobparis.com/content/remix-form-toast
-
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { profile } = loaderData
+  const { profile, toast } = loaderData
+
+  useEffect(() => {
+    if (toast?.type) {
+      notify(toast.message, {
+        ...toast,
+        closeButton:
+          toast.closeButton ?? (toast.duration ? toast.duration > 5000 : false),
+      })
+    }
+  }, [toast])
 
   return (
     <>

@@ -1,4 +1,5 @@
 import { formAction } from "remix-forms"
+import { redirectWithSuccess } from "remix-toast"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { basicDataSchema } from "~/business/common"
 import { basicData } from "~/business/participant/basic-data.server"
@@ -19,7 +20,14 @@ export async function action({ request, params }: Route.ActionArgs) {
     request,
     schema: basicDataSchema,
     mutation: basicData,
-    successPath: GENDER_PRONOUNS_ORIENTATION,
+    transformResult: async (result) => {
+      if (result.success) {
+        throw await redirectWithSuccess(GENDER_PRONOUNS_ORIENTATION, {
+          message: "Dados salvos com sucesso!",
+        })
+      }
+      return result
+    },
     context,
   })
 }

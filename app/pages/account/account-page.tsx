@@ -1,7 +1,10 @@
 import { Separator } from "@radix-ui/react-separator"
 import { Form } from "react-router"
-import { getClientContext, logoutUser } from "~/business/auth/auth.client"
-import { getUserContext } from "~/business/auth/auth.server"
+import {
+  getContext,
+  getUserContext,
+  logoutUser,
+} from "~/business/auth/auth.server"
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
@@ -20,9 +23,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { basic_data_filled: currentProfile?.basic_data_filled }
 }
 
-export async function clientAction({}: Route.ClientActionArgs) {
-  const context = await getClientContext()
-  await logoutUser(context)
+export async function action({ params, request }: Route.ActionArgs) {
+  const context = await getContext(request, params)
+  return await logoutUser(context)
 }
 
 /* TODO: Implement account deletion

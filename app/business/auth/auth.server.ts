@@ -1,17 +1,25 @@
 import { applySchema } from "composable-functions"
-import { redirect, type Params } from "react-router"
+import { type Params } from "react-router"
+import {
+  dataWithError,
+  redirectWithError,
+  redirectWithSuccess,
+} from "remix-toast"
 import type { z } from "zod"
 import { isProd } from "~/lib/helpers/is-prod.server"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import {
+  changePasswordSchema,
   contextSchema,
   currentUserSchema,
   forgotPasswordSchema,
   loginSchema,
+  registerUserSchema,
 } from "../common"
 
 const {
+  root: { HOME },
   auth: { LOGIN, LOGON_CALLBACK },
   dash: {
     account: { CHANGE_PASSWORD },
@@ -36,13 +44,14 @@ export const getContext = async (
 
   if (authError) {
     if (!authError.message.includes("Auth session missing!")) {
-      // TODO: Show error toast
-      return errorProps
+      throw await dataWithError(
+        errorProps,
+        "Houve um erro com sua autenticação, tente novamente mais tarde",
+      )
     }
   }
 
   if (!authData.user) {
-    // TODO: Show error toast
     return errorProps
   }
 
@@ -86,7 +95,10 @@ export const getUserContext = async (
 ): Promise<z.infer<typeof userContextSchema>> => {
   const { currentUser, ...context } = await getContext(request, params)
   if (!currentUser) {
-    throw redirect(LOGIN)
+    throw await redirectWithError(
+      LOGIN,
+      "Você precisa estar logade para continuar",
+    )
   }
   return { ...context, currentUser }
 }
@@ -129,4 +141,63 @@ export const forgotPassword = applySchema(
   }
 
   return { success: true }
+})
+
+// Not a applySchema purposefully
+export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
+  const { supabase } = context
+  const { error } = await supabase.auth.signOut()
+
+  if (error) {
+    console.error(error)
+    throw new Error(
+      `Erro de logout — Código: "${error.code}" — Mensagem: "${error.message}"`,
+    )
+  }
+
+  return redirectWithSuccess(HOME, "Você deslogou com sucesso")
+}
+
+export const changePassword = applySchema(
+  changePasswordSchema,
+  contextSchema,
+)(async (values, context) => {
+  const { supabase } = context
+  const { error } = await supabase.auth.updateUser({
+    password: values.password,
+  })
+
+  if (error) {
+    if (error.code === "same_password") {
+      throw new Error("Será que essa não era a sua senha? Tente outra.")
+    }
+    console.error(error)
+    throw new Error(
+      "Não conseguimos resetar sua senha. Entre em contato com o administrador",
+    )
+  }
+
+  return {}
+})
+
+export const registerUser = applySchema(
+  registerUserSchema,
+  contextSchema,
+)(async (values, context) => {
+  const { supabase, host } = context
+
+  const { over18, confirmPassword, ...data } = values
+
+  const { error } = await supabase.auth.signUp({
+    ...data,
+    options: {
+      emailRedirectTo: `${host}/${LOGON_CALLBACK}`,
+    },
+  })
+
+  if (error) {
+    throw new Error(`Ops, ocorreu um erro. Erro: ${error}`)
+  }
+
+  return values
 })

@@ -10,11 +10,14 @@ import type { Route } from "./+types/homepage"
 import { HomePageNextEventsSkeleton } from "./components/next-events/next-events-skeleton"
 import { getNextEvents } from "./fetch/get-next-events"
 
-// TODO: Meta
 export function meta() {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Positiv Party" },
+    {
+      name: "description",
+      content:
+        "Eventos para amantes de saliências não-mono, curioses com o mundo da suruba, e quem quer explorar a própria sexualidade",
+    },
   ]
 }
 
