@@ -1,7 +1,7 @@
 import { SirenIcon } from "lucide-react"
 import { formAction } from "remix-forms"
 import { redirectWithSuccess } from "remix-toast"
-import { getContext } from "~/business/auth/auth.server"
+import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { agreeToTermsSchema } from "~/business/common"
 import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
 import { SchemaForm } from "~/components/forms/schema-form"
@@ -16,7 +16,7 @@ const {
 } = paths
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { currentProfile } = await getContext(request, params)
+  const { currentProfile } = await getUserContext(request, params)
   return { mktEmails: currentProfile?.allow_marketing_email }
 }
 
