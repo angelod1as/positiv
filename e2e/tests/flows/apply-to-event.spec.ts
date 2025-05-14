@@ -13,6 +13,7 @@ test("Apply to event", async ({ page }) => {
   const rulesPage = new RulesPOM(page)
   await rulesPage.fillRulesForm()
   await rulesPage.confirmApplication()
+  await rulesPage.checkApplicationEmail()
 
   await dashboard.cancelApplication()
 })

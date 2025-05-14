@@ -1,11 +1,25 @@
-import { expect, type Page } from "@playwright/test"
+import { expect, type Locator, type Page } from "@playwright/test"
 
 /* This POM is made for testing the transaction emails */
 export class MailhogPOM {
   readonly page: Page
+  readonly headerLink: Locator
+  readonly eventMail: {
+    subject: Locator
+    heading: Locator
+  }
 
   constructor(page: Page) {
     this.page = page
+    this.headerLink = this.page.getByRole("link", { name: "MailHog" })
+    this.eventMail = {
+      subject: this.page.getByText("Você se inscreveu no evento").first(),
+      heading: this.page
+        .locator("#preview-html")
+        .contentFrame()
+        .getByRole("heading", { name: "Nos vemos em breve!" })
+        .first(),
+    }
   }
 
   async goto() {
@@ -13,16 +27,14 @@ export class MailhogPOM {
   }
 
   async testBasicElements() {
-    await expect(this.page.getByRole("link", { name: "MailHog" })).toBeVisible()
+    await expect(this.headerLink).toBeVisible()
   }
 
   async testApplicationEmail() {
-    const subject = this.page.getByText("Você se inscreveu no evento")
+    const { subject, heading } = this.eventMail
     await expect(subject).toBeVisible()
 
     await subject.click()
-    await expect(
-      this.page.getByRole("heading", { name: "Nos vemos em breve!" }),
-    ).toBeVisible()
+    await expect(heading).toBeVisible()
   }
 }
