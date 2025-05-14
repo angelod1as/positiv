@@ -12,6 +12,7 @@ import paths from "~/lib/paths"
 import { cn } from "~/lib/utils"
 
 import { redirect } from "react-router"
+import { redirectWithSuccess } from "remix-toast"
 import { getContext, loginUser } from "~/business/auth/auth.server"
 import { loginSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/schema-form"
@@ -41,9 +42,21 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     request,
     schema: loginSchema,
     mutation: loginUser,
-    transformResult: (result) => {
+    transformResult: async (result) => {
       if (result.success) {
-        throw redirect(DASHBOARD, { headers: context.supabaseHeaders })
+        throw await redirectWithSuccess(
+          DASHBOARD,
+          {
+            message: "Bem vinde!",
+            description:
+              "Nosso sistema ainda está em desenvolvimento. Nos ajude reportando bugs! Link no pé da página",
+            duration: 10_000,
+            closeButton: true,
+          },
+          {
+            headers: context.supabaseHeaders,
+          },
+        )
       }
       return result
     },

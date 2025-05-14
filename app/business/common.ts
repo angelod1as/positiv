@@ -24,6 +24,32 @@ export const currentUserSchema = zod.object({
   id: zod.string(),
 })
 
+export const changePasswordSchema = zod
+  .object({
+    password: zod
+      .string()
+      .min(6, "A senha precisa ter, no mínimo, 6 caracteres"),
+    confirm_password: zod.string(),
+  })
+  .refine((data) => data.password === data.confirm_password, {
+    message: "As senhas não combinam",
+    path: ["confirm_password"],
+  })
+
+export const registerUserSchema = zod
+  .object({
+    email: zod.string().email("Insira um e-mail válido"),
+    password: zod.string().min(8, { message: "A senha é muito curta" }),
+    confirmPassword: zod.string(),
+    over18: zod.boolean().refine((val) => val, {
+      message: "Você só pode se inscrever se for maior de 18 anos",
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "As senhas não são iguais",
+    path: ["confirmPassword"],
+  })
+
 export const currentProfileSchema = zod.object({
   id: zod.string(),
   email: zod.string().nullish(),

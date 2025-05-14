@@ -1,5 +1,6 @@
 import { SirenIcon } from "lucide-react"
 import { formAction } from "remix-forms"
+import { redirectWithSuccess } from "remix-toast"
 import { getContext } from "~/business/auth/auth.server"
 import { agreeToTermsSchema } from "~/business/common"
 import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
@@ -26,7 +27,18 @@ export async function action({ request, params }: Route.ActionArgs) {
     request,
     schema: agreeToTermsSchema,
     mutation: agreeToTerms,
-    successPath: BASIC_DATA,
+    transformResult: async (result) => {
+      if (result.success) {
+        throw await redirectWithSuccess(
+          BASIC_DATA,
+          "Escolhas salvas com sucesso",
+          {
+            headers: context.supabaseHeaders,
+          },
+        )
+      }
+      return result
+    },
     context,
   })
 }
