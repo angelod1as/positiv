@@ -71,22 +71,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
           toast.closeButton ?? (toast.duration ? toast.duration > 5000 : false),
       })
     }
-    // switch (toast?.type) {
-    //   case "error":
-    //     notify(toast.message, props)
-    //     break
-    //   case "info":
-    //     notify.info(toast.message)
-    //     break
-    //   case "warning":
-    //     notify.warning(toast.message)
-    //     break
-    //   case "success":
-    //     notify.success(toast.message)
-    //     break
-    //   default:
-    //     break
-    // }
   }, [toast])
 
   return (
