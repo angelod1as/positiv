@@ -5,7 +5,6 @@ import { isProd } from "../helpers/is-prod.server"
 
 export function getEmailTransport() {
   const prod = isProd()
-  console.log(`\n\n:DEV prod:\n`, prod, `\n\n`)
 
   if (prod) {
     const ses = new aws.SES({
