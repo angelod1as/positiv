@@ -63,6 +63,7 @@ export class RulesPOM {
       .getByTestId("question")
       .first()
       .getByText("Obrigatório")
+      .first()
 
     const sampleRadio = this.page.locator('div[data-testid="question"]', {
       hasText:
