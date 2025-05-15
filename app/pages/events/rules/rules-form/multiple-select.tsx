@@ -46,7 +46,7 @@ export const MultipleSelect: FC<MultipleSelectProps> = ({
               </div>
             )
           })}
-          {error && <Error>{error}</Error>}
+          {error && <Error name={name}>{error}</Error>}
         </div>
       )}
     />
