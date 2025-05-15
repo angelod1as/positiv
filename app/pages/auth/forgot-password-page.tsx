@@ -29,7 +29,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(LOGIN, {
-          message: "Um link chegará em seu e-mail, veja lá!",
+          message:
+            "Se você tiver uma conta com essas credenciais, veja seu email; um link estará lá te esperando!",
           duration: 10_000,
         })
       }
