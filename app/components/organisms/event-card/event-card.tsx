@@ -1,3 +1,4 @@
+import { DialogClose } from "@radix-ui/react-dialog"
 import type { FC } from "react"
 import { useFetcher } from "react-router"
 import { Button } from "~/components/atoms/button/button"
@@ -11,7 +12,16 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog"
 import { formatDate } from "~/lib/helpers/format-date"
+import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calendar-link"
 import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/entities.types"
 import { DateStatus } from "./date-status"
@@ -35,7 +45,7 @@ export const EventCard: FC<EventCardProps> = ({
   /* Handle Cancel Application */
   const handleConfirm = async (closeDialog: () => void) => {
     await fetcher.submit(
-      { cancel: true, eventId: event.id, intent: "cancel" },
+      { cancel: true, eventId: event.id },
       { method: "POST" },
     )
     closeDialog()
@@ -63,6 +73,7 @@ export const EventCard: FC<EventCardProps> = ({
   } = event
 
   const isEventOpen = event_status === "Registration Open"
+  const googleLink = generateGoogleCalendarLink(event)
 
   return (
     <Card className="flex flex-col flex-1" data-testid={dataTestId}>
@@ -106,16 +117,39 @@ export const EventCard: FC<EventCardProps> = ({
       </CardContent>
       <CardFooter>
         {is_applied ? (
-          <div className="flex gap-4 w-full justify-between">
-            <fetcher.Form method="post">
-              <Button
-                variant="outline"
-                to={DOWNLOAD_CALENDAR("1")}
-                linkProps={{ reloadDocument: true }}
-              >
-                Adicionar ao Calendário
-              </Button>
-            </fetcher.Form>
+          <div className="flex gap-4 w-full">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">Adicionar ao Calendário</Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-sm sm:max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Adicionar ao calendário</DialogTitle>
+                </DialogHeader>
+                <DialogFooter className="flex flex-col sm:justify-between">
+                  {googleLink && (
+                    <DialogClose asChild>
+                      <Button
+                        variant="outline"
+                        to={googleLink}
+                        linkProps={{ target: "_blank" }}
+                      >
+                        Google Calendar
+                      </Button>
+                    </DialogClose>
+                  )}
+                  <DialogClose asChild>
+                    <Button
+                      variant="outline"
+                      to={DOWNLOAD_CALENDAR(event.id)}
+                      linkProps={{ reloadDocument: true }}
+                    >
+                      Baixar arquivo iCal
+                    </Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             <fetcher.Form method="post">
               <ConfirmDialog
