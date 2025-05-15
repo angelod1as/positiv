@@ -84,7 +84,7 @@ export class DashboardPOM {
   async testAppliedButtons() {
     await expect(this.applySoonButton).toBeDisabled()
     await expect(this.cancelButton).toBeVisible()
-    this.cancelButton.click()
+    await this.cancelButton.click()
     await expect(this.cancelDialog).toBeVisible()
     await expect(this.dialogCancelApplication).toBeVisible()
     await expect(this.dialogGoBack).toBeVisible()
@@ -92,8 +92,8 @@ export class DashboardPOM {
 
   async goToEventApplication() {
     await this.applyButton.click()
-    this.page.waitForURL(this.eventPageUrlRegex)
-    expect(this.page).toHaveURL(this.eventPageUrlRegex)
+    await this.page.waitForURL(this.eventPageUrlRegex)
+    await expect(this.page).toHaveURL(this.eventPageUrlRegex)
   }
 
   async testDownloadCalendar() {
@@ -107,7 +107,7 @@ export class DashboardPOM {
     )
     await this.calendarDownloadButton.click()
     const download = await downloadPromise
-    expect(download.suggestedFilename()).toBe("calendar.ics")
+    await expect(download.suggestedFilename()).toBe("calendar.ics")
     await expect(this.calendarDialog).not.toBeVisible()
   }
 
