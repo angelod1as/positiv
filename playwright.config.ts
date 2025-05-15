@@ -36,6 +36,11 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
+      name: "watch-for-mailhog",
+      testMatch: "**/mailhog.setup.ts",
+    },
+    {
+      dependencies: ["watch-for-mailhog"],
       name: "setup",
       testMatch: "**/global.setup.ts",
       teardown: "teardown",

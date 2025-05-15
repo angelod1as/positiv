@@ -62,7 +62,7 @@ export class RulesPOM {
     this.requiredError = this.page
       .getByTestId("question")
       .first()
-      .getByText("Obrigatório")
+      .getByText("Obrigatório", { exact: true })
       .first()
 
     const sampleRadio = this.page.locator('div[data-testid="question"]', {
@@ -146,6 +146,10 @@ export class RulesPOM {
     await this.selection.correctSecond.click()
     await this.applyButton.click()
     await expect(this.selection.oneIncorrectSelectionError).toBeVisible()
+
+    await this.selection.correctFirst.click()
+    await this.selection.incorrectFirst.click()
+    await this.selection.correctSecond.click()
   }
 
   async fillRulesForm() {
@@ -173,6 +177,11 @@ export class RulesPOM {
         }
       }
     }
+    expect(this.radio.error.first()).not.toBeVisible()
+    expect(this.selection.almostAllSelectionError.first()).not.toBeVisible()
+    expect(this.selection.oneIncorrectSelectionError.first()).not.toBeVisible()
+    expect(this.selection.wrongSelectionError.first()).not.toBeVisible()
+
     await this.applyButton.click()
   }
 

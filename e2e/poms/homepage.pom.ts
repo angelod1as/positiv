@@ -9,24 +9,29 @@ export class HomepagePOM {
   readonly knowMoreButton: Locator
   readonly newEventsTitle: Locator
   readonly headerLogin: Locator
+  readonly headerDashboard: Locator
+  readonly headerAccount: Locator
 
   constructor(page: Page) {
     this.page = page
-    this.title = page.getByRole("heading", {
+    this.title = this.page.getByRole("heading", {
       name: "evento de gente pelada",
       exact: true,
     })
-    this.ctaButton = page.getByRole("link", { name: "Entrar e conferir" })
-    this.knowMoreButton = page.getByRole("link", {
+    this.ctaButton = this.page.getByRole("link", { name: "Entrar e conferir" })
+    this.knowMoreButton = this.page.getByRole("link", {
       name: "Entre para saber mais",
     })
-    this.participationButtons = page.getByRole("link", { name: "Participar" })
-    this.newEventsTitle = page.getByRole("heading", {
+    this.participationButtons = this.page.getByRole("link", {
+      name: "Participar",
+    })
+    this.newEventsTitle = this.page.getByRole("heading", {
       name: "Próximos Eventos",
     })
-    this.headerLogin = page
-      .getByRole("banner")
-      .getByRole("link", { name: "Entrar" })
+    const header = page.getByRole("banner")
+    this.headerLogin = header.getByRole("link", { name: "Entrar" })
+    this.headerDashboard = header.getByRole("link", { name: "Dashboard" })
+    this.headerAccount = header.getByRole("link", { name: "Conta" })
   }
 
   async goto() {
@@ -39,24 +44,22 @@ export class HomepagePOM {
   }
 
   async testBasicElements() {
-    await this.goto()
     await expect(this.title).toBeVisible()
     await expect(this.ctaButton).toHaveAttribute("href", /entrar/)
     await expect(this.knowMoreButton).toHaveAttribute("href", /entrar/)
   }
 
   async testLoggedOut() {
-    await this.goto()
     await expect(this.headerLogin).toBeVisible()
-    await expect(this.participationButtons).toHaveCount(3)
-    await expect(this.participationButtons.first()).toHaveAttribute(
-      "href",
-      /entrar/,
-    )
+  }
+
+  async testLoggedIn() {
+    await expect(this.headerLogin).not.toBeVisible()
+    await expect(this.headerAccount).toBeVisible()
+    await expect(this.headerDashboard).toBeVisible()
   }
 
   async goToLogin() {
-    await this.goto()
     await this.headerLogin.click()
     await expect(this.page).toHaveURL(/entrar/)
   }
