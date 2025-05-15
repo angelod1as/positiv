@@ -19,6 +19,7 @@ import { DateStatus } from "./date-status"
 const {
   dash: {
     participant: {
+      DOWNLOAD_CALENDAR,
       events: { EVENT_VIEW },
     },
   },
@@ -34,7 +35,7 @@ export const EventCard: FC<EventCardProps> = ({
   /* Handle Cancel Application */
   const handleConfirm = async (closeDialog: () => void) => {
     await fetcher.submit(
-      { cancel: true, eventId: event.id },
+      { cancel: true, eventId: event.id, intent: "cancel" },
       { method: "POST" },
     )
     closeDialog()
@@ -106,10 +107,16 @@ export const EventCard: FC<EventCardProps> = ({
       <CardFooter>
         {is_applied ? (
           <div className="flex gap-4 w-full justify-between">
-            {/* TODO: Calendar add */}
-            {/* <Button data-testid={dataTestId} variant="outline">
-              Adicionar ao Calendário
-            </Button> */}
+            <fetcher.Form method="post">
+              <Button
+                variant="outline"
+                to={DOWNLOAD_CALENDAR("1")}
+                linkProps={{ reloadDocument: true }}
+              >
+                Adicionar ao Calendário
+              </Button>
+            </fetcher.Form>
+
             <fetcher.Form method="post">
               <ConfirmDialog
                 title="Cancelar inscrição"
