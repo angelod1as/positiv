@@ -9,6 +9,7 @@ import {
 export default [
   index("pages/homepage/homepage.tsx"),
   route("/auth/confirm", "pages/auth/confirm.tsx"),
+  route("/testmail", "pages/test-mail.tsx"),
 
   layout("pages/auth/layout.tsx", [
     ...prefix("/entrar", [
