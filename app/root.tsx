@@ -50,11 +50,11 @@ export function Layout(props: { children: ReactNode }) {
         <Links />
       </head>
       <body className="h-screen flex flex-col">
+        <Toaster richColors />
         <GlobalLoading />
         {props.children}
         <ScrollRestoration />
         <Scripts />
-        <Toaster />
       </body>
     </html>
   )
