@@ -52,15 +52,24 @@ export class GenderPronounOrientationPOM {
   }
 
   async testFillBasicData() {
+    expect(this.gender1Checkbox).not.toBeChecked()
     await this.gender1Checkbox.click()
+    expect(this.orientation1Checkbox).not.toBeChecked()
     await this.orientation1Checkbox.click()
+    expect(this.orientation2Checkbox).not.toBeChecked()
     await this.orientation2Checkbox.click()
+    expect(this.pronouns1Checkbox).not.toBeChecked()
     await this.pronouns1Checkbox.click()
+    expect(this.othersCheckbox).not.toBeChecked()
     await this.othersCheckbox.click()
+    await expect(this.otherInput).toBeVisible()
+    await expect(this.otherInput).toBeAttached()
     await this.otherInput.fill("This, That")
     await this.confirmButton.click()
+    await this.page.waitForURL(/dashboard$/)
     await expect(this.page).toHaveURL(/dashboard$/)
   }
 
+  // TODO: check prefilled basic data
   async checkPrefilledBasicData() {}
 }

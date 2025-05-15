@@ -11,6 +11,7 @@ test("Apply to event", async ({ page }) => {
   await dashboard.goToEventApplication()
 
   const rulesPage = new RulesPOM(page)
+  await rulesPage.testRulesFormErrors()
   await rulesPage.fillRulesForm()
   await rulesPage.confirmApplication()
   await rulesPage.checkApplicationEmail()

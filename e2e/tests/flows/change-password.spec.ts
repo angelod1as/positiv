@@ -9,6 +9,7 @@ import { HomepagePOM } from "e2e/poms/homepage.pom"
 
 test("Change password", async ({ page }) => {
   const homepage = new HomepagePOM(page)
+  await homepage.goto()
   await homepage.goToLogin()
 
   const loginPage = new LoginPOM(page)
