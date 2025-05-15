@@ -56,10 +56,13 @@ export async function clientLoader({}: Route.LoaderArgs) {
   return splitEvents(events)
 }
 
-/* Maybe this should be in another route if the EventCard is reused */
-/* Cancel action */
 export async function action({ request, params }: Route.ClientActionArgs) {
-  await cancelApplicationToEvent(request, params)
+  const formData = await request.formData()
+  const intent = formData.get("intent")
+
+  if (intent === "cancel") {
+    return await cancelApplicationToEvent(request, params)
+  }
 }
 
 type WrapperProps = {
