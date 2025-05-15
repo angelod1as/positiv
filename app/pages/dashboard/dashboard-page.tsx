@@ -57,12 +57,7 @@ export async function clientLoader({}: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ClientActionArgs) {
-  const formData = await request.formData()
-  const intent = formData.get("intent")
-
-  if (intent === "cancel") {
-    return await cancelApplicationToEvent(request, params)
-  }
+  return await cancelApplicationToEvent(request, params)
 }
 
 type WrapperProps = {

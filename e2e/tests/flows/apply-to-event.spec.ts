@@ -16,5 +16,6 @@ test("Apply to event", async ({ page }) => {
   await rulesPage.confirmApplication()
   await rulesPage.checkApplicationEmail()
 
+  await dashboard.testDownloadCalendar()
   await dashboard.cancelApplication()
 })
