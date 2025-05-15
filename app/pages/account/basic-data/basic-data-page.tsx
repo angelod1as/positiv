@@ -99,6 +99,10 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
                 <Field name="how_came_to_us" className="col-span-6" />
                 <Field name="phone" className="col-span-6" />
                 <Field name="confirm_phone" className="col-span-6" />
+                <p className="col-span-12 mt-4 text-muted-foreground text-sm">
+                  Os dados abaixo serão utilizados para controle de entrada nos
+                  locais dos eventos:
+                </p>
                 <Field name="cpf" className="col-span-4" />
                 <Field name="rg" className="col-span-4" />
                 <Field name="rg_issuer" className="col-span-4" />
