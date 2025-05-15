@@ -1,5 +1,5 @@
 import { applySchema } from "composable-functions"
-import { type Params } from "react-router"
+import { redirect, type Params } from "react-router"
 import {
   dataWithError,
   redirectWithError,
@@ -14,6 +14,7 @@ import {
   contextSchema,
   currentUserSchema,
   forgotPasswordSchema,
+  getSupabaseSchema,
   loginSchema,
   registerUserSchema,
 } from "../common"
@@ -26,12 +27,21 @@ const {
   },
 } = paths
 
-export const getContext = async (
+export const getSupabase = async (
   request: Request,
   _params: Params,
-): Promise<z.infer<typeof contextSchema>> => {
-  const host = request.headers.get("host")
+): Promise<z.infer<typeof getSupabaseSchema>> => {
   const { supabase, headers: supabaseHeaders } = createServerClient(request)
+  return { supabaseHeaders, supabase }
+}
+
+export const getContext = async (
+  request: Request,
+  params: Params,
+): Promise<z.infer<typeof contextSchema>> => {
+  const { supabase, supabaseHeaders } = await getSupabase(request, params)
+  const host = request.headers.get("host")
+
   const { data: authData, error: authError } = await supabase.auth.getUser()
 
   const errorProps = {
@@ -122,6 +132,32 @@ export const loginUser = applySchema(
   return { user: data.user }
 })
 
+export const getUserCodeContext = async (request: Request, params: Params) => {
+  const requestUrl = new URL(request.url)
+  const code = requestUrl.searchParams.get("code")
+  if (!code) {
+    throw await redirectWithError(
+      HOME,
+      "O link não continha o código necessário para mudar sua senha",
+    )
+  }
+
+  const { supabase, supabaseHeaders } = await getSupabase(request, params)
+
+  const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+  if (error) {
+    if (error.code === "invalid_credentials") {
+      throw new Error("Credenciais inválidas")
+    }
+    throw new Error(
+      `Erro de autenticação — Código: "${error.code}" — Mensagem: "${error.message}"`,
+    )
+  }
+
+  return redirect(CHANGE_PASSWORD, { headers: supabaseHeaders })
+}
+
 export const forgotPassword = applySchema(
   forgotPasswordSchema,
   contextSchema,
@@ -130,7 +166,7 @@ export const forgotPassword = applySchema(
   const { supabase, host } = context
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${host}${LOGON_CALLBACK}?redirect_to=${CHANGE_PASSWORD}`,
+    redirectTo: `${host}auth/confirm`,
   })
 
   if (error) {

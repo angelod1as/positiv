@@ -71,9 +71,12 @@ export const currentProfileSchema = zod.object({
   is_admin: zod.boolean(),
 })
 
-export const contextSchema = zod.object({
+export const getSupabaseSchema = zod.object({
   supabase: zod.custom<SupabaseClient<Database, "public">>(),
   supabaseHeaders: zod.custom<Headers>(),
+})
+
+export const contextSchema = getSupabaseSchema.extend({
   currentUser: currentUserSchema.nullable(),
   currentProfile: currentProfileSchema.nullable(),
   isProd: zod.boolean().optional(),
