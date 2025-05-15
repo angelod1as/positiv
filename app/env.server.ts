@@ -32,7 +32,6 @@ const getEnvironment = makeTypedEnvironment(
     CONTENTFUL_REVALIDATE_SECRET: zod.string().optional(),
     CONTENTFUL_PREVIEW_SECRET: zod.string().optional(),
 
-    FROM_EMAIL: zod.string().optional(),
     AWS_ACCESS_KEY_ID: zod.string().optional(),
     AWS_SECRET_ACCESS_KEY: zod.string().optional(),
   }),
