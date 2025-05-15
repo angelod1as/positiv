@@ -10,6 +10,8 @@ const LOGON_CONFIRM = `${LOGON}/confirm`
 // PRIVATE
 ////////
 const DASHBOARD = "/dashboard"
+const DOWNLOAD_CALENDAR = (eventId: string) =>
+  `${DASHBOARD}/download-calendar/${eventId}`
 
 // ACCOUNT
 const ACCOUNT = `/conta`
@@ -44,6 +46,7 @@ const paths = {
     },
     participant: {
       DASHBOARD,
+      DOWNLOAD_CALENDAR,
       AGREE_TO_TERMS,
       events: {
         EVENT_VIEW,
