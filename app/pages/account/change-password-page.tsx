@@ -37,7 +37,6 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  // Protect route
   await getUserContext(request, params)
   return {}
 }
