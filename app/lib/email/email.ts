@@ -14,6 +14,15 @@ export interface MailOptions extends Omit<Mail.Options, "from"> {
 export const sendMail = async (mailOptions: MailOptions): Promise<void> => {
   const transport = getEmailTransport()
 
+  console.log(
+    `\n\n:DEV mailOptions:\n`,
+    "fromEmail",
+    fromEmail,
+    "\n",
+    "mailOptions",
+    mailOptions,
+    `\n\n`,
+  )
   transport.sendMail(
     {
       from: fromEmail,
@@ -24,6 +33,7 @@ export const sendMail = async (mailOptions: MailOptions): Promise<void> => {
       // info - for debugging
     ) => {
       if (err) {
+        console.error("transport.sendMail error")
         console.error(err)
         return
       }
