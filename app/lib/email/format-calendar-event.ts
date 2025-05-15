@@ -1,9 +1,6 @@
 import ical, { ICalCalendarMethod } from "ical-generator"
-import { env } from "~/env.server"
 import type { ViewEvent } from "~types/entities.types"
-import { POSITIV_URL } from "../helpers/constants"
-
-const fromEmail = env().fromEmail
+import { POSITIV_EMAIL, POSITIV_URL } from "../helpers/constants"
 
 export const formatCalendarEvent = async (event: ViewEvent) => {
   const { starting_time, ending_time, location, title, emoji } = event
@@ -23,7 +20,7 @@ export const formatCalendarEvent = async (event: ViewEvent) => {
     location,
     organizer: {
       name: "Positiv Party",
-      email: fromEmail,
+      email: POSITIV_EMAIL,
     },
     url: POSITIV_URL,
   })
