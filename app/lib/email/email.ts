@@ -1,9 +1,6 @@
 import Mail from "nodemailer/lib/mailer"
-import { env } from "~/env.server"
-import { isCI } from "../helpers/is-prod.server"
+import { POSITIV_EMAIL } from "../helpers/constants"
 import { getEmailTransport } from "./get-email-transport"
-
-const fromEmail = env().fromEmail
 
 export interface MailOptions extends Omit<Mail.Options, "from"> {
   to: NonNullable<Mail.Options["to"]>
@@ -13,13 +10,11 @@ export interface MailOptions extends Omit<Mail.Options, "from"> {
 }
 
 export const sendMail = async (mailOptions: MailOptions): Promise<void> => {
-  if (isCI()) return
-
   const transport = getEmailTransport()
 
   transport.sendMail(
     {
-      from: fromEmail,
+      from: POSITIV_EMAIL,
       ...mailOptions,
     },
     (
@@ -27,6 +22,8 @@ export const sendMail = async (mailOptions: MailOptions): Promise<void> => {
       // info - for debugging
     ) => {
       if (err) {
+        console.error("transport.sendMail error")
+        console.error("mailOptions", mailOptions)
         console.error(err)
         return
       }

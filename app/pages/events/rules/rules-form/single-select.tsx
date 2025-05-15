@@ -40,7 +40,7 @@ export const SingleSelect: FC<SingleSelectProps> = ({
             )
           })}
         </RadioGroup>
-        {error && <Error>{error}</Error>}
+        {error && <Error name={name}>{error}</Error>}
       </div>
     )}
   />

@@ -1,5 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMemo, type Dispatch, type FC, type SetStateAction } from "react"
+import {
+  useEffect,
+  useMemo,
+  type Dispatch,
+  type FC,
+  type SetStateAction,
+} from "react"
 import { useForm } from "react-hook-form"
 import { Form } from "react-router"
 import type { z } from "zod"
@@ -36,6 +42,16 @@ export const RulesForm: FC<RulesFormProps> = ({ setIsDialogOpen }) => {
   const handleChange = () => {
     clearErrors()
   }
+
+  useEffect(() => {
+    const errorKeys = Object.keys(errors)
+    if (!errorKeys || errorKeys.length > 0) return
+
+    const errorElement = document.querySelector(`div[data-name]`)
+    if (errorElement) {
+      errorElement.scrollIntoView({ behavior: "smooth", block: "center" })
+    }
+  }, [errors])
 
   return (
     <Form
