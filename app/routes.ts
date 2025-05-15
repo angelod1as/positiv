@@ -23,6 +23,11 @@ export default [
     layout("pages/events/layout.tsx", [
       route(":id", "pages/events/rules-page.tsx"),
     ]),
+
+    route(
+      "/download-calendar/:eventId",
+      "pages/dashboard/download-calendar.route.tsx",
+    ),
   ]),
 
   layout("pages/account/layout.tsx", [

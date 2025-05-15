@@ -9,10 +9,14 @@ export class DashboardPOM {
   readonly applySoonButton: Locator
   readonly applyButton: Locator
   readonly cancelButton: Locator
-  readonly dialog: Locator
+  readonly cancelDialog: Locator
   readonly dialogCancelApplication: Locator
   readonly dialogGoBack: Locator
   readonly eventPageUrlRegex: RegExp
+  readonly addToCalendarButton: Locator
+  readonly calendarDialog: Locator
+  readonly calendarGoogleButton: Locator
+  readonly calendarDownloadButton: Locator
 
   constructor(page: Page) {
     this.page = page
@@ -36,7 +40,7 @@ export class DashboardPOM {
       .first()
 
     // Dialog
-    this.dialog = this.page.getByRole("alertdialog", {
+    this.cancelDialog = this.page.getByRole("alertdialog", {
       name: "Cancelar inscrição",
     })
     this.dialogGoBack = this.page.getByRole("button", { name: "🎉 Voltar" })
@@ -44,6 +48,18 @@ export class DashboardPOM {
       name: "😢 Cancelar",
     })
     this.eventPageUrlRegex = EVENT_PAGE_REGEXP
+
+    // Calendar Dialog
+    this.addToCalendarButton = this.page
+      .getByRole("button", { name: "Adicionar ao Calendário" })
+      .first()
+    this.calendarDialog = this.page.getByRole("dialog")
+    this.calendarGoogleButton = this.page.getByRole("link", {
+      name: "Google Calendar",
+    })
+    this.calendarDownloadButton = this.page.getByRole("link", {
+      name: "Baixar arquivo iCal",
+    })
   }
 
   async goto() {
@@ -68,24 +84,39 @@ export class DashboardPOM {
   async testAppliedButtons() {
     await expect(this.applySoonButton).toBeDisabled()
     await expect(this.cancelButton).toBeVisible()
-    this.cancelButton.click()
-    await expect(this.dialog).toBeVisible()
+    await this.cancelButton.click()
+    await expect(this.cancelDialog).toBeVisible()
     await expect(this.dialogCancelApplication).toBeVisible()
     await expect(this.dialogGoBack).toBeVisible()
   }
 
   async goToEventApplication() {
     await this.applyButton.click()
-    this.page.waitForURL(this.eventPageUrlRegex)
-    expect(this.page).toHaveURL(this.eventPageUrlRegex)
+    await this.page.waitForURL(this.eventPageUrlRegex)
+    await expect(this.page).toHaveURL(this.eventPageUrlRegex)
+  }
+
+  async testDownloadCalendar() {
+    const downloadPromise = this.page.waitForEvent("download")
+
+    await this.addToCalendarButton.click()
+    await expect(this.calendarDialog).toBeVisible()
+    await expect(this.calendarGoogleButton).toHaveAttribute(
+      "href",
+      /calendar.google.com/,
+    )
+    await this.calendarDownloadButton.click()
+    const download = await downloadPromise
+    await expect(download.suggestedFilename()).toBe("calendar.ics")
+    await expect(this.calendarDialog).not.toBeVisible()
   }
 
   async cancelApplication() {
-    this.cancelButton.click()
-    await expect(this.dialog).toBeVisible()
+    await this.cancelButton.click()
+    await expect(this.cancelDialog).toBeVisible()
     await expect(this.dialogCancelApplication).toBeVisible()
     await this.dialogCancelApplication.click()
-    await expect(this.dialog).not.toBeVisible()
+    await expect(this.cancelDialog).not.toBeVisible()
     await expect(this.applyButton).toHaveAttribute(
       "href",
       this.eventPageUrlRegex,
