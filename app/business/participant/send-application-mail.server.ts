@@ -1,5 +1,5 @@
+import { formatCalendarEvent } from "~/business/participant/format-calendar-event.server"
 import { formatApplicationMail } from "~/lib/email/format-application-mail"
-import { formatCalendarEvent } from "~/lib/email/format-calendar-event"
 import type { ProfileWithRoles, ViewEvent } from "~types/entities.types"
 
 import { type MailOptions, sendMail } from "~/lib/email/email"
