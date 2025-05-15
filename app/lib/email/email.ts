@@ -1,3 +1,4 @@
+import pwLog from "e2e/helpers/log"
 import Mail from "nodemailer/lib/mailer"
 import { env } from "~/env.server"
 import { getEmailTransport } from "./get-email-transport"
@@ -14,15 +15,16 @@ export interface MailOptions extends Omit<Mail.Options, "from"> {
 export const sendMail = async (mailOptions: MailOptions): Promise<void> => {
   const transport = getEmailTransport()
 
-  console.log(
+  pwLog(
     `\n\n:DEV mailOptions:\n`,
     "fromEmail",
     fromEmail,
     "\n",
     "mailOptions",
-    mailOptions,
+    mailOptions.toString(),
     `\n\n`,
   )
+
   transport.sendMail(
     {
       from: fromEmail,
@@ -34,6 +36,8 @@ export const sendMail = async (mailOptions: MailOptions): Promise<void> => {
     ) => {
       if (err) {
         console.error("transport.sendMail error")
+        console.error("fromEmail", fromEmail)
+        console.error("mailOptions", mailOptions)
         console.error(err)
         return
       }
