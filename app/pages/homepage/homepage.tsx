@@ -10,17 +10,6 @@ import type { Route } from "./+types/homepage"
 import { HomePageNextEventsSkeleton } from "./components/next-events/next-events-skeleton"
 import { getNextEvents } from "./fetch/get-next-events"
 
-export function meta() {
-  return [
-    { title: "Positiv Party" },
-    {
-      name: "description",
-      content:
-        "Eventos para amantes de saliências não-mono, curioses com o mundo da suruba, e quem quer explorar a própria sexualidade",
-    },
-  ]
-}
-
 /* Needs to be clientLoader because getNextEvents needs new Date() */
 export async function clientLoader({}: Route.LoaderArgs) {
   const { currentProfile, supabase } = await getClientContext()
