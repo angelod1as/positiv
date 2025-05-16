@@ -12,7 +12,7 @@ import type { Route } from "./+types/event"
 
 const {
   admin: {
-    events: { ADMIN_EVENT },
+    events: { ADMIN_EDIT_EVENT },
   },
 } = paths
 
@@ -31,7 +31,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(
-          ADMIN_EVENT(result.data),
+          ADMIN_EDIT_EVENT(result.data),
           "Evento criado com sucesso",
         )
       }

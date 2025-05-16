@@ -1,4 +1,5 @@
 import { zod } from "~/lib/helpers/zod"
+import { userContextSchema } from "../common"
 
 const messages = {
   min2: "mínimo de 2 caracters",
@@ -41,4 +42,30 @@ export const eventFormSchema = zod.object({
   group_close_date: datetime,
   payment_end_date: datetime,
   payment_start_date: datetime,
+})
+
+export const eventSchema = zod.object({
+  id: zod.string(),
+  title: zod.string().nullish(),
+  description: zod.string().nullish(),
+  emoji: zod.string().nullish(),
+  location: zod.string().nullish(),
+
+  ticket_price: zod.coerce.number().nullish(),
+  total_spots: zod.coerce.number().nullish(),
+
+  starting_time: datetime.nullish(),
+  ending_time: datetime.nullish(),
+  application_close_time: datetime.nullish(),
+  application_open_time: datetime.nullish(),
+  interview_process_end: datetime.nullish(),
+  interview_process_start: datetime.nullish(),
+  group_open_date: datetime.nullish(),
+  group_close_date: datetime.nullish(),
+  payment_end_date: datetime.nullish(),
+  payment_start_date: datetime.nullish(),
+})
+
+export const adminContextSchema = userContextSchema.extend({
+  events: zod.array(eventSchema),
 })

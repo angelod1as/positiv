@@ -1,15 +1,39 @@
 import { applySchema } from "composable-functions"
 import type { Params } from "react-router"
-import { redirectWithError } from "remix-toast"
+import { dataWithError, redirectWithError } from "remix-toast"
+import type { z } from "zod"
 import paths from "~/lib/paths"
 import type { Event } from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import { userContextSchema } from "../common"
-import { eventFormSchema } from "./common"
+import { adminContextSchema, eventFormSchema } from "./common"
 
 const {
   admin: { ADMIN_DASHBOARD },
 } = paths
+
+export const getAdminContext = async (
+  request: Request,
+  params: Params,
+): Promise<z.infer<typeof adminContextSchema>> => {
+  const context = await getUserContext(request, params)
+  const { error, data } = await context.supabase.from("events").select("*")
+
+  if (error) {
+    throw await dataWithError(
+      ADMIN_DASHBOARD,
+      "Ocorreu um erro ao buscar eventos",
+    )
+  }
+
+  if (data.length === 0) {
+    throw await dataWithError(ADMIN_DASHBOARD, "Nenhum evento encontrado")
+  }
+
+  const events = data
+
+  return { ...context, events }
+}
 
 export const getAdminEventById = async (request: Request, params: Params) => {
   const { supabase } = await getUserContext(request, params)
