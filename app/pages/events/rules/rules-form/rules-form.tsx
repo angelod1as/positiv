@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form"
 import { Form } from "react-router"
 import type { z } from "zod"
 import { Button } from "~/components/atoms/button/button"
+import { Error } from "~/components/forms/error"
 import { zod } from "~/lib/helpers/zod"
 import { MultipleSelect } from "./multiple-select"
 import { rulesFormSchema } from "./rules-form-schema"
@@ -53,6 +54,8 @@ export const RulesForm: FC<RulesFormProps> = ({ setIsDialogOpen }) => {
     }
   }, [errors])
 
+  const hasErrors = Object.keys(errors).length > 0
+
   return (
     <Form
       onChange={handleChange}
@@ -89,6 +92,7 @@ export const RulesForm: FC<RulesFormProps> = ({ setIsDialogOpen }) => {
         )
       })}
 
+      {hasErrors && <Error>Há erros nas suas respostas</Error>}
       <Button type="submit">Inscrever-se</Button>
     </Form>
   )
