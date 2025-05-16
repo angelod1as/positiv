@@ -12,11 +12,11 @@ import { createServerClient } from "~/lib/supabase/server"
 import {
   changePasswordSchema,
   contextSchema,
-  currentUserSchema,
   forgotPasswordSchema,
   getSupabaseSchema,
   loginSchema,
   registerUserSchema,
+  userContextSchema,
 } from "../common"
 
 const {
@@ -94,10 +94,6 @@ export const getContext = async (
     host,
   }
 }
-
-export const userContextSchema = contextSchema.extend({
-  currentUser: currentUserSchema,
-})
 
 export const getUserContext = async (
   request: Request,
