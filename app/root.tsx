@@ -36,8 +36,14 @@ export const links: Route.LinksFunction = () => [
 export function meta({}: Route.MetaArgs) {
   return [
     { title: "Positiv Party" },
+    { property: "og:title", content: "Positiv Party" },
     {
       name: "description",
+      content:
+        "Eventos para amantes de saliências não-mono, curioses com o mundo da suruba, e quem quer explorar a própria sexualidade",
+    },
+    {
+      property: "og:description",
       content:
         "Eventos para amantes de saliências não-mono, curioses com o mundo da suruba, e quem quer explorar a própria sexualidade",
     },
@@ -62,6 +68,12 @@ export function meta({}: Route.MetaArgs) {
       rel: "manifest",
       sizes: "180x180",
       href: "/site.webmanifest",
+    },
+    { property: "og:type", content: "website" },
+    { property: "og:url", content: "https://www.positivparty.com/" },
+    {
+      property: "og:image",
+      content: "https://www.positivparty.com/social.jpg",
     },
   ]
 }
