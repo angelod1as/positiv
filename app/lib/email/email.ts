@@ -1,4 +1,4 @@
-import Mail from "nodemailer/lib/mailer"
+import type Mail from "nodemailer/lib/mailer"
 import { POSITIV_EMAIL } from "../helpers/constants"
 import { getEmailTransport } from "./get-email-transport"
 

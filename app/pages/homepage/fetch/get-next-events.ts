@@ -1,4 +1,4 @@
-import { PostgrestError } from "@supabase/supabase-js"
+import { type PostgrestError } from "@supabase/supabase-js"
 import type { EventStatus, ViewEvent } from "~types/entities.types"
 import type { DBClient } from "~types/utils.types"
 
