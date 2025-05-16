@@ -1,5 +1,5 @@
+import { SpeedInsights } from "@vercel/speed-insights/remix"
 import { useEffect, type ReactNode } from "react"
-
 import {
   data,
   isRouteErrorResponse,
@@ -101,6 +101,7 @@ export function Layout(props: { children: ReactNode }) {
         {props.children}
         <ScrollRestoration />
         <Scripts />
+        <SpeedInsights />
       </body>
     </html>
   )
