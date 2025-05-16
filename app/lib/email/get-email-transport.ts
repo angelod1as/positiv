@@ -1,21 +1,29 @@
-import * as aws from "@aws-sdk/client-ses"
-import { defaultProvider } from "@aws-sdk/credential-provider-node"
+import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
 import nodemailer from "nodemailer"
+import { env } from "~/env.server"
 import { isProd } from "../helpers/is-prod.server"
+
+const { awsAccessKeyId, awsSecretAccessKey } = env()
 
 export function getEmailTransport() {
   const prod = isProd()
 
   if (prod) {
-    const ses = new aws.SES({
-      apiVersion: "2010-12-01",
+    if (!awsAccessKeyId || !awsSecretAccessKey) {
+      throw new Error("Credentials not found")
+    }
+
+    const sesClient = new SESv2Client({
       region: "sa-east-1",
-      credentials: defaultProvider(),
+      credentials: {
+        accessKeyId: awsAccessKeyId,
+        secretAccessKey: awsSecretAccessKey,
+      },
     })
 
     return nodemailer.createTransport({
-      SES: { ses, aws },
-      sendingRate: 1, // max 1 messages/second
+      SES: { sesClient, SendEmailCommand },
+      sendingRate: 1, // max 1 messages/second — dunno if it works
       maxConnections: 1,
     })
   }
