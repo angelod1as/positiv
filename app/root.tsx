@@ -1,4 +1,4 @@
-import { SpeedInsights } from "@vercel/speed-insights/remix"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 import { useEffect, type ReactNode } from "react"
 import {
   data,
