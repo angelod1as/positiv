@@ -2,6 +2,7 @@ import { addDays } from "date-fns/addDays"
 import { format } from "date-fns/format"
 import { setHours } from "date-fns/setHours"
 import { setMinutes } from "date-fns/setMinutes"
+import { dateTimeFormat } from "~/lib/utils"
 
 const dayOffsets = {
   ending_time: 0,
@@ -47,7 +48,7 @@ export const calculateDerivedDates = (
         value = setHours(value, 22)
         break
     }
-    calculatedDates[key] = format(value, "yyyy-MM-dd'T'hh:mm")
+    calculatedDates[key] = format(value, dateTimeFormat)
   }
 
   return calculatedDates

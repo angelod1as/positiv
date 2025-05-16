@@ -3,6 +3,7 @@ import type { z } from "zod"
 import { eventFormSchema } from "~/business/admin/common"
 import { Button } from "~/components/atoms/button/button"
 import { Separator } from "~/components/ui/separator"
+import { dbValuesToFormSchema } from "~/lib/helpers/db-values-to-form-schema"
 import type { Event } from "~types/entities.types"
 import { SchemaForm } from "../schema-form"
 import { calculateDerivedDates } from "./calculate-derived-dates"
@@ -12,11 +13,13 @@ type EventFormProps = {
 }
 
 export const EventForm: FC<EventFormProps> = ({ event }) => {
+  const formattedDateEvent = event?.id ? dbValuesToFormSchema(event) : event
+
   return (
     <div>
       <SchemaForm
         schema={eventFormSchema}
-        values={event}
+        values={formattedDateEvent}
         hiddenFields={["id"]}
         labels={{
           title: "Nome da festa",
