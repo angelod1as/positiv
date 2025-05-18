@@ -10,10 +10,16 @@ INSERT INTO public.events (
     description,
     emoji,
     event_status,
-    starting_time,
-    ending_time,
-    application_open_time,
-    application_close_time,
+    time_event_start,
+    time_event_end,
+    time_application_start,
+    time_application_end,
+    time_interviews_start,
+    time_interviews_end,
+    time_group_start,
+    time_group_end,
+    time_payment_start,
+    time_payment_end,
     ticket_price,
     total_spots
 )
@@ -25,10 +31,16 @@ VALUES
     'Vestibulum nulla orci, ullamcorper et vehicula in, placerat vel tortor. Praesent fermentum elit a tortor pellentesque, eget luctus turpis laoreet. Nunc pharetra, urna viverra porttitor pharetra, nisl sapien molestie ante, quis blandit arcu urna non metus',            -- description
     '📓',                                               -- emoji
     'Draft',                                            -- event_status
-    now() + interval '1 month',                         -- starting_time
-    now() + interval '1 month' + interval '2 hours',    -- ending_time
-    now() + interval '3 weeks',                         -- application_open_time
-    now() + interval '4 weeks',                         -- application_close_time
+    now() + interval '1 month',                         -- time_event_start
+    now() + interval '1 month' + interval '2 hours',    -- time_event_end
+    now() + interval '3 weeks',                         -- time_application_start
+    now() + interval '4 weeks',                         -- time_application_end
+    now() + interval '3 weeks' - interval '21 days',    -- time_interviews_start
+    now() + interval '1 month' + interval '2 hours',    -- time_interviews_end
+    now() + interval '1 month' - interval '7 days',     -- time_group_start
+    now() + interval '1 month' + interval '30 days',    -- time_group_end
+    now() + interval '1 month' - interval '21 days',    -- time_payment_start
+    now() + interval '1 month' - interval '9 days',     -- time_payment_end
     110.00,                                             -- ticket_price
     100                                                 -- total_spots
 ),
@@ -39,10 +51,16 @@ VALUES
     'Mauris rutrum sem a enim viverra hendrerit. Aenean mattis odio nec felis vulputate, eget tristique dolor blandit.',                                                -- description
     '📅',                                                     -- emoji
     'Scheduled',                                              -- event_status
-    now() + interval '2 months',                              -- starting_time
-    now() + interval '2 months' + interval '3 hours',         -- ending_time
-    now() + interval '1 month',                              -- application_open_time
-    now() + interval '1 month' + interval '3 hours',         -- application_close_time
+    now() + interval '2 months',                              -- time_event_start
+    now() + interval '2 months' + interval '3 hours',         -- time_event_end
+    now() + interval '1 month',                              -- time_application_start
+    now() + interval '1 month' + interval '3 hours',         -- time_application_end
+    now() + interval '1 month' - interval '21 days',          -- time_interviews_start
+    now() + interval '2 months' + interval '3 hours',         -- time_interviews_end
+    now() + interval '2 months' - interval '7 days',          -- time_group_start
+    now() + interval '2 months' + interval '30 days',         -- time_group_end
+    now() + interval '2 months' - interval '21 days',         -- time_payment_start
+    now() + interval '2 months' - interval '9 days',          -- time_payment_end
     10.00,                                                    -- ticket_price
     50                                                        -- total_spots
 ),
@@ -53,10 +71,16 @@ VALUES
     'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Sed vel lorem eu urna pretium vehicula non at urna. ', -- description
     '🤗',                     -- emoji
     'Registration Open',     -- event_status
-    now() + interval '3 months', -- starting_time
-    now() + interval '3 months' + interval '4 hours', -- ending_time
-    now() - interval '1 week', -- application_open_time
-    now() + interval '2 months', -- application_close_time
+    now() + interval '3 months', -- time_event_start
+    now() + interval '3 months' + interval '4 hours', -- time_event_end
+    now() - interval '1 week', -- time_application_start
+    now() + interval '2 months', -- time_application_end
+    now() + interval '2 months' - interval '21 days',  -- time_interviews_start
+    now() + interval '3 months' + interval '4 hours',   -- time_interviews_end
+    now() + interval '3 months' - interval '7 days',   -- time_group_start
+    now() + interval '3 months' + interval '30 days',  -- time_group_end
+    now() + interval '3 months' - interval '21 days',  -- time_payment_start
+    now() + interval '3 months' - interval '9 days',   -- time_payment_end
     25.00,                   -- ticket_price
     200                      -- total_spots
 ),
@@ -67,10 +91,16 @@ VALUES
     'ivamus nec ante eget urna volutpat feugiat. Curabitur nulla sapien, pulvinar a cursus accumsan, mollis vitae odio. Nulla ac metus eget risus posuere auctor. ', -- description
     '😓',                     -- emoji
     'Registration Closed',   -- event_status
-    now() + interval '4 months', -- starting_time
-    now() + interval '4 months' + interval '1 hour', -- ending_time
-    now() - interval '2 months', -- application_open_time
-    now() - interval '1 week', -- application_close_time
+    now() + interval '4 months', -- time_event_start
+    now() + interval '4 months' + interval '1 hour', -- time_event_end
+    now() - interval '2 months', -- time_application_start
+    now() - interval '1 week', -- time_application_end
+    now() - interval '1 week' - interval '21 days',  -- time_interviews_start
+    now() + interval '4 months' + interval '1 hour', -- time_interviews_end
+    now() + interval '4 months' - interval '7 days', -- time_group_start
+    now() + interval '4 months' + interval '30 days', -- time_group_end
+    now() + interval '4 months' - interval '21 days', -- time_payment_start
+    now() + interval '4 months' - interval '9 days',  -- time_payment_end
     15.00,                   -- ticket_price
     150                      -- total_spots
 ),
@@ -81,10 +111,16 @@ VALUES
     'Aviso: O Evento Cancelado 1 foi cancelado.', -- description
     '',                      -- emoji
     'Cancelled',             -- event_status
-    now() - interval '1 hour', -- starting_time
-    now() + interval '2 hours', -- ending_time
-    now() - interval '1 month', -- application_open_time
-    now() - interval '2 days', -- application_close_time
+    now() - interval '1 hour', -- time_event_start
+    now() + interval '2 hours', -- time_event_end
+    now() - interval '1 month', -- time_application_start
+    now() - interval '2 days', -- time_application_end
+    now() - interval '2 days' - interval '21 days',  -- time_interviews_start
+    now() + interval '2 hours',                      -- time_interviews_end
+    now() - interval '1 hour' - interval '7 days',   -- time_group_start
+    now() - interval '1 hour' + interval '30 days',  -- time_group_end
+    now() - interval '1 hour' - interval '21 days',  -- time_payment_start
+    now() - interval '1 hour' - interval '9 days',   -- time_payment_end
     90.00,                    -- ticket_price
     75                       -- total_spots
 ),
@@ -95,10 +131,16 @@ VALUES
     'Resumo e resultados do Evento Concluído 1.', -- description
     '🥳',                     -- emoji
     'Completed',             -- event_status
-    now() - interval '1 month', -- starting_time
-    now() - interval '1 month' + interval '3 hours', -- ending_time
-    now() - interval '3 months', -- application_open_time
-    now() - interval '2 months', -- application_close_time
+    now() - interval '1 month', -- time_event_start
+    now() - interval '1 month' + interval '3 hours', -- time_event_end
+    now() - interval '3 months', -- time_application_start
+    now() - interval '2 months', -- time_application_end
+    now() - interval '2 months' - interval '21 days',  -- time_interviews_start
+    now() - interval '1 month' + interval '3 hours',   -- time_interviews_end
+    now() - interval '1 month' - interval '7 days',    -- time_group_start
+    now() - interval '1 month' + interval '30 days',   -- time_group_end
+    now() - interval '1 month' - interval '21 days',   -- time_payment_start
+    now() - interval '1 month' - interval '9 days',    -- time_payment_end
     50.00,                   -- ticket_price
     120                      -- total_spots
 ),
@@ -109,10 +151,16 @@ VALUES
     'Aviso: O Evento Cancelado 2 foi cancelado.', -- description
     '🙅‍♂️',                     -- emoji
     'Cancelled',             -- event_status
-    now() + interval '6 months', -- starting_time
-    now() + interval '6 months' + interval '2 hours', -- ending_time
-    now() + interval '1 week', -- application_open_time
-    now() + interval '1 month', -- application_close_time
+    now() + interval '6 months', -- time_event_start
+    now() + interval '6 months' + interval '2 hours', -- time_event_end
+    now() + interval '1 week', -- time_application_start
+    now() + interval '1 month', -- time_application_end
+    now() + interval '1 month' - interval '21 days',   -- time_interviews_start
+    now() + interval '6 months' + interval '2 hours',  -- time_interviews_end
+    now() + interval '6 months' - interval '7 days',   -- time_group_start
+    now() + interval '6 months' + interval '30 days',  -- time_group_end
+    now() + interval '6 months' - interval '21 days',  -- time_payment_start
+    now() + interval '6 months' - interval '9 days',   -- time_payment_end
     90.00,                    -- ticket_price
     30                       -- total_spots
 ),
@@ -123,10 +171,16 @@ VALUES
     'Prepare-se para o Evento Agendado 2! Marque em seus calendários!', -- description
     '🙏',                     -- emoji
     'Scheduled',             -- event_status
-    now() + interval '7 months', -- starting_time
-    now() + interval '7 months' + interval '1 hour', -- ending_time
-    now() + interval '6 months', -- application_open_time
-    now() + interval '6 months' + interval '2 weeks', -- application_close_time
+    now() + interval '7 months', -- time_event_start
+    now() + interval '7 months' + interval '1 hour', -- time_event_end
+    now() + interval '6 months', -- time_application_start
+    now() + interval '6 months' + interval '2 weeks', -- time_application_end
+    now() + interval '6 months' + interval '2 weeks' - interval '21 days',  -- time_interviews_start
+    now() + interval '7 months' + interval '1 hour',   -- time_interviews_end
+    now() + interval '7 months' - interval '7 days',   -- time_group_start
+    now() + interval '7 months' + interval '30 days',  -- time_group_end
+    now() + interval '7 months' - interval '21 days',  -- time_payment_start
+    now() + interval '7 months' - interval '9 days',   -- time_payment_end
     5.00,                    -- ticket_price
     80                       -- total_spots
 );
