@@ -8,7 +8,7 @@ import { eventFormSchema } from "~/business/admin/common"
 import { getUserContext } from "~/business/auth/auth.server"
 import { EventForm } from "~/components/forms/admin/event-form"
 import paths from "~/lib/paths"
-import type { Route } from "./+types/event"
+import type { Route } from "./+types/create-edit-event"
 
 const {
   admin: {
@@ -41,7 +41,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   })
 }
 
-const AdminEvent = ({ loaderData }: Route.ComponentProps) => {
+const AdminCreateEditEvent = ({ loaderData }: Route.ComponentProps) => {
   const { event } = loaderData
   return (
     <>
@@ -52,4 +52,4 @@ const AdminEvent = ({ loaderData }: Route.ComponentProps) => {
   )
 }
 
-export default AdminEvent
+export default AdminCreateEditEvent

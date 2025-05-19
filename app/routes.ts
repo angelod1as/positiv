@@ -39,7 +39,9 @@ export default [
     layout("pages/admin/layout.tsx", [index("pages/admin/dashboard-page.tsx")]),
     ...prefix("eventos", [
       layout("pages/admin/events/layout.tsx", [
-        route("/novo/:id?", "pages/admin/events/event.tsx"),
+        index("pages/admin/events/events.tsx"),
+        route("/:id?", "pages/admin/events/view-event.tsx"),
+        route("/novo/:id?", "pages/admin/events/create-edit-event.tsx"),
       ]),
     ]),
   ]),
