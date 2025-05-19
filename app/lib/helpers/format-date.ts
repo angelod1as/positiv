@@ -1,58 +1,36 @@
-import { format } from "date-fns"
+import { parseISO } from "date-fns"
 import { formatInTimeZone } from "date-fns-tz"
 import { ptBR } from "date-fns/locale"
 
-// Format date to Brazilian format (short month)
-type FormatDate = (
-  props: Intl.DateTimeFormatOptions & {
-    date: string | null
-  },
-) => string | undefined
-
-// TODO: Refactor this for more uses. See the function below.
-export const formatDate: FormatDate = ({ date, month }) => {
-  if (!date) return undefined
-
-  const dateObj = new Date(date)
-  const currentYear = new Date().getFullYear()
-  const dateYear = dateObj.getFullYear()
-
-  const options: Intl.DateTimeFormatOptions = {
-    day: "numeric",
-    month: month || "short",
-  }
-
-  if (dateYear > currentYear) {
-    options.year = "2-digit" // Add year if it's a future year
-  }
-
-  return dateObj.toLocaleDateString("pt-BR", options)
-}
+type DateLengthOption = "long" | "short"
 
 export function formatDateTime(
   dateString: string | null,
-  options?: { showMinutes?: boolean },
-) {
-  if (!dateString) return { date: undefined, time: undefined }
+  lengthOption: DateLengthOption = "long",
+  withHours: boolean = false,
+): string | undefined {
+  if (!dateString) return undefined
 
-  // Define the IANA time zone for GMT-3
   const timeZone = "America/Sao_Paulo"
+  const date = parseISO(dateString)
 
-  // Convert the date string to a Date object in the specified time zone
-  const date = new Date(dateString)
+  let formatPattern: string
 
-  // Format the date in Portuguese (Brazil) locale
-  const formattedDate = format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-
-  // Format the time in the specified time zone
-  const formattedTime = formatInTimeZone(
-    date,
-    timeZone,
-    `HH'h'${options?.showMinutes ? "mm" : ""}`,
-  )
-
-  return {
-    date: formattedDate,
-    time: formattedTime,
+  switch (lengthOption) {
+    case "short":
+      formatPattern = "dd MMM. yy"
+      break
+    case "long":
+    default:
+      formatPattern = "dd 'de' MMMM 'de' yyyy"
+      break
   }
+
+  // Append the hour format if withHours is true
+  if (withHours) {
+    formatPattern += ", HH'h'"
+  }
+
+  // Format the date in the specified time zone and locale
+  return formatInTimeZone(date, timeZone, formatPattern, { locale: ptBR })
 }

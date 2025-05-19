@@ -6,7 +6,7 @@ import type { Route } from "./+types/events"
 
 const {
   admin: {
-    events: { ADMIN_CREATE_EVENT, ADMIN_EVENT },
+    events: { ADMIN_CREATE_EVENT, ADMIN_VIEW_EVENT },
   },
 } = paths
 
@@ -35,7 +35,7 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
           const date = new Date(time_event_start)
           return (
             <li key={id}>
-              <Button to={ADMIN_EVENT(id)} variant="outline">
+              <Button to={ADMIN_VIEW_EVENT(id)} variant="outline">
                 +
               </Button>{" "}
               {format(date, "dd-MM-yyyy")} - {title}
