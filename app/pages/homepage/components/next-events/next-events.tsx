@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
-import { formatDateTime } from "~/lib/helpers/format-date"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import routes from "~/lib/paths"
 import type { EventStatus, ViewEvent } from "~types/entities.types"
 import { HomePageTitle } from "../home-title/home-title"
@@ -43,20 +43,20 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
             {events.map(
               ({
                 id,
-                application_open_time,
+                time_application_start,
                 event_status,
                 description,
                 emoji,
-                starting_time,
-                ending_time,
+                time_event_start,
+                time_event_end,
                 title,
               }) => {
                 const { date, time: startingTime } =
-                  formatDateTime(starting_time)
-                const { time: endingTime } = formatDateTime(ending_time, {
-                  showMinutes: true,
-                })
-                const { date: openDate } = formatDateTime(application_open_time)
+                  formatDateTime(time_event_start)
+                const { time: endingTime } = formatDateTime(time_event_end)
+                const { date: openDate } = formatDateTime(
+                  time_application_start,
+                )
 
                 const status = event_status as EventStatus
                 const isOpen = status === "Registration Open"

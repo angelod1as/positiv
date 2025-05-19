@@ -7,6 +7,7 @@ import {
 } from "@react-router/dev/routes"
 
 export default [
+  // PUBLIC
   index("pages/homepage/homepage.tsx"),
   route("/auth/confirm", "pages/auth/confirm.tsx"),
 
@@ -18,8 +19,11 @@ export default [
     route("/registrar", "pages/auth/register-page.tsx"),
   ]),
 
+  // PRIVATE
   ...prefix("dashboard", [
-    index("pages/dashboard/dashboard-page.tsx"),
+    layout("pages/dashboard/layout.tsx", [
+      index("pages/dashboard/dashboard-page.tsx"),
+    ]),
     layout("pages/events/layout.tsx", [
       route(":id", "pages/events/rules-page.tsx"),
     ]),
@@ -30,6 +34,19 @@ export default [
     ),
   ]),
 
+  // ADMIN
+  ...prefix("admin", [
+    layout("pages/admin/layout.tsx", [index("pages/admin/dashboard-page.tsx")]),
+    ...prefix("eventos", [
+      layout("pages/admin/events/layout.tsx", [
+        index("pages/admin/events/events.tsx"),
+        route("/:id?", "pages/admin/events/view-event.tsx"),
+        route("/novo/:id?", "pages/admin/events/create-edit-event.tsx"),
+      ]),
+    ]),
+  ]),
+
+  // COMMON
   layout("pages/account/layout.tsx", [
     ...prefix("conta", [
       index("pages/account/account-page.tsx"),

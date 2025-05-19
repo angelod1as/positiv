@@ -2,23 +2,23 @@ import { startOfDay } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
 import { useMemo, type FC } from "react"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
-import { formatDate } from "~/lib/helpers/format-date"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { eventPropNameMap } from "~/lib/helpers/propMaps"
 import type { ViewEvent } from "~types/entities.types"
 
 type ViewEventKey = keyof ViewEvent
 type DateProperties = Pick<
   ViewEvent,
-  | "application_close_time"
-  | "application_open_time"
-  | "ending_time"
-  | "group_close_date"
-  | "group_open_date"
-  | "interview_process_end"
-  | "interview_process_start"
-  | "payment_end_date"
-  | "payment_start_date"
-  | "starting_time"
+  | "time_application_end"
+  | "time_application_start"
+  | "time_event_end"
+  | "time_group_end"
+  | "time_group_start"
+  | "time_interviews_end"
+  | "time_interviews_start"
+  | "time_payment_start"
+  | "time_payment_end"
+  | "time_event_start"
 >
 
 type ValidDateItem = {
@@ -75,11 +75,11 @@ const buildNextStep = (
   )
 
   const formattedCurrent = currentItem
-    ? `${formatDate({ date: currentItem.value.toISOString() })} - ${eventPropNameMap(currentItem.label)}`
+    ? `${formatDateTime(currentItem.value.toISOString()).full} - ${eventPropNameMap(currentItem.label)}`
     : ""
 
   const formattedNext = nextItem
-    ? `${formatDate({ date: nextItem.value.toISOString() })} - ${eventPropNameMap(nextItem.label)}`
+    ? `${formatDateTime(nextItem.value.toISOString()).full} - ${eventPropNameMap(nextItem.label)}`
     : ""
 
   return {
