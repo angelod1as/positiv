@@ -2,7 +2,7 @@ import { startOfDay } from "date-fns"
 import { toZonedTime } from "date-fns-tz"
 import { useMemo, type FC } from "react"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
-import { formatDate } from "~/lib/helpers/format-date"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { eventPropNameMap } from "~/lib/helpers/propMaps"
 import type { ViewEvent } from "~types/entities.types"
 
@@ -75,11 +75,11 @@ const buildNextStep = (
   )
 
   const formattedCurrent = currentItem
-    ? `${formatDate({ date: currentItem.value.toISOString() })} - ${eventPropNameMap(currentItem.label)}`
+    ? `${formatDateTime(currentItem.value.toISOString()).full} - ${eventPropNameMap(currentItem.label)}`
     : ""
 
   const formattedNext = nextItem
-    ? `${formatDate({ date: nextItem.value.toISOString() })} - ${eventPropNameMap(nextItem.label)}`
+    ? `${formatDateTime(nextItem.value.toISOString()).full} - ${eventPropNameMap(nextItem.label)}`
     : ""
 
   return {

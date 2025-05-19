@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
-import { formatDateTime } from "~/lib/helpers/format-date"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import routes from "~/lib/paths"
 import type { EventStatus, ViewEvent } from "~types/entities.types"
 import { HomePageTitle } from "../home-title/home-title"
@@ -53,9 +53,7 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
               }) => {
                 const { date, time: startingTime } =
                   formatDateTime(time_event_start)
-                const { time: endingTime } = formatDateTime(time_event_end, {
-                  showMinutes: true,
-                })
+                const { time: endingTime } = formatDateTime(time_event_end)
                 const { date: openDate } = formatDateTime(
                   time_application_start,
                 )

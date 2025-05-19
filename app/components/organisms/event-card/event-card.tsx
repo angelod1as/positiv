@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog"
-import { formatDate } from "~/lib/helpers/format-date"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calendar-link"
 import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/entities.types"
@@ -85,7 +85,7 @@ export const EventCard: FC<EventCardProps> = ({
             </div>
             <div>
               <p className="font-bold text-muted-foreground">
-                {formatDate({ date: time_event_start })}
+                {formatDateTime(time_event_start).full}
               </p>
               <h3>{title}</h3>
             </div>
