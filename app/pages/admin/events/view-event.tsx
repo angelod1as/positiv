@@ -1,7 +1,7 @@
 import { redirectWithError } from "remix-toast"
 import { getAdminEventById } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
-import { formatDateTime } from "~/lib/helpers/format-date"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { eventPropNameMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event"
@@ -52,7 +52,7 @@ const AdminViewEvent = ({ loaderData }: Route.ComponentProps) => {
       </h1>
       <Button to={ADMIN_EDIT_EVENT(id)}>Editar</Button>
       <p className="font-bold">
-        Data: {formatDateTime(time_event_start, "long", true)}
+        Data: {formatDateTime(time_event_start, "long").full}
       </p>
       <div className="flex flex-col gap-2">
         <h2>Dados gerais</h2>
@@ -85,28 +85,28 @@ const AdminViewEvent = ({ loaderData }: Route.ComponentProps) => {
           <tbody>
             <tr>
               <td className="font-bold">Inscrições</td>
-              <td>{formatDateTime(time_application_start)}</td>
-              <td>{formatDateTime(time_application_end)}</td>
+              <td>{formatDateTime(time_application_start).date}</td>
+              <td>{formatDateTime(time_application_end).date}</td>
             </tr>
             <tr>
               <td className="font-bold">Entrevistas</td>
-              <td>{formatDateTime(time_interviews_start)}</td>
-              <td>{formatDateTime(time_interviews_end)}</td>
+              <td>{formatDateTime(time_interviews_start).date}</td>
+              <td>{formatDateTime(time_interviews_end).date}</td>
             </tr>
             <tr>
               <td className="font-bold">Pagamento</td>
-              <td>{formatDateTime(time_payment_start)}</td>
-              <td>{formatDateTime(time_payment_end)}</td>
+              <td>{formatDateTime(time_payment_start).date}</td>
+              <td>{formatDateTime(time_payment_end).date}</td>
             </tr>
             <tr>
               <td className="font-bold">Grupo</td>
-              <td>{formatDateTime(time_group_start)}</td>
-              <td>{formatDateTime(time_group_end)}</td>
+              <td>{formatDateTime(time_group_start).date}</td>
+              <td>{formatDateTime(time_group_end).date}</td>
             </tr>
             <tr>
               <td className="font-bold">Evento</td>
-              <td>{formatDateTime(time_event_start)}</td>
-              <td>{formatDateTime(time_event_end)}</td>
+              <td>{formatDateTime(time_event_start).date}</td>
+              <td>{formatDateTime(time_event_end).date}</td>
             </tr>
           </tbody>
         </table>

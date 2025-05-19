@@ -7,7 +7,7 @@ import {
   Text,
 } from "@react-email/components"
 import dotenv from "dotenv"
-import { formatDateTime } from "~/lib/helpers/format-date"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type {
   EventStatus,
   ProfileWithRoles,
