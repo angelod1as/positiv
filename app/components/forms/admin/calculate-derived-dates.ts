@@ -2,18 +2,31 @@ import { addDays } from "date-fns/addDays"
 import { format } from "date-fns/format"
 import { setHours } from "date-fns/setHours"
 import { setMinutes } from "date-fns/setMinutes"
+import type { eventFormSchema } from "~/business/admin/common"
 import { dateTimeFormat } from "~/lib/utils"
 
-const dayOffsets = {
-  ending_time: 0,
-  application_open_time: -30,
-  application_close_time: -23,
-  interview_process_start: -21,
-  interview_process_end: -9,
-  group_open_date: -7,
-  group_close_date: 30,
-  payment_start_date: -21,
-  payment_end_date: -9,
+type DayOffsets = keyof Omit<
+  (typeof eventFormSchema)["shape"],
+  | "id"
+  | "title"
+  | "description"
+  | "emoji"
+  | "location"
+  | "ticket_price"
+  | "total_spots"
+>
+
+const dayOffsets: Record<DayOffsets, number> = {
+  time_event_start: 0,
+  time_event_end: 0,
+  time_application_start: -30,
+  time_application_end: -23,
+  time_interviews_start: -21,
+  time_interviews_end: -9,
+  time_group_start: -7,
+  time_group_end: 30,
+  time_payment_end: -21,
+  time_payment_start: -9,
 }
 
 export type PickedDay = keyof typeof dayOffsets
@@ -31,20 +44,22 @@ export const calculateDerivedDates = (
     let value = addDays(startingTimeDate, offset)
 
     switch (key) {
-      case "ending_time":
+      case "time_event_start":
+        break
+      case "time_event_end":
         value = setHours(value, 23)
         value = setMinutes(value, 59)
         break
-      case "application_open_time":
-      case "group_open_date":
-      case "interview_process_start":
-      case "payment_start_date":
+      case "time_application_start":
+      case "time_group_start":
+      case "time_interviews_start":
+      case "time_payment_end":
         value = setHours(value, 8)
         break
-      case "application_close_time":
-      case "group_close_date":
-      case "interview_process_end":
-      case "payment_end_date":
+      case "time_application_end":
+      case "time_group_end":
+      case "time_interviews_end":
+      case "time_payment_start":
         value = setHours(value, 22)
         break
     }

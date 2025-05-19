@@ -22,7 +22,7 @@ interface ApplicationMailProps {
 }
 
 const ApplicationMail = ({ profile, event }: ApplicationMailProps) => {
-  const { date, time } = formatDateTime(event.starting_time)
+  const { date, time } = formatDateTime(event.time_event_start)
   const details = [
     ["Evento", `${event.emoji} ${event.title}`],
     ["Local", `${event.location}`],
@@ -93,18 +93,18 @@ ApplicationMail.PreviewProps = {
     description: "Quentão, pipoca e fogueira!",
     emoji: "🔥",
     event_status: "Registration Open" as EventStatus,
-    application_open_time: "2030-01-01T00:00:00.000Z",
-    application_close_time: "2030-01-01T10:00:00.000Z",
-    starting_time: "2030-02-01T00:00:00.000Z",
-    ending_time: "2030-02-01T10:00:00.000Z",
+    time_application_start: "2030-01-01T00:00:00.000Z",
+    time_application_end: "2030-01-01T10:00:00.000Z",
+    time_event_start: "2030-02-01T00:00:00.000Z",
+    time_event_end: "2030-02-01T10:00:00.000Z",
     location: "Motel Internet",
     ticket_price: 200,
-    group_open_date: "2030-01-12T00:00:00.000Z",
-    group_close_date: "2030-01-13T00:00:00.000Z",
-    interview_process_start: "2030-01-07T00:00:00.000Z",
-    interview_process_end: "2030-01-08T00:00:00.000Z",
-    payment_start_date: "2030-01-10T00:00:00.000Z",
-    payment_end_date: "2030-01-11T00:00:00.000Z",
+    time_group_start: "2030-01-12T00:00:00.000Z",
+    time_group_end: "2030-01-13T00:00:00.000Z",
+    time_interviews_start: "2030-01-07T00:00:00.000Z",
+    time_interviews_end: "2030-01-08T00:00:00.000Z",
+    time_payment_end: "2030-01-10T00:00:00.000Z",
+    time_payment_start: "2030-01-11T00:00:00.000Z",
   },
   profile: {
     id: "f93ea183-7a0e-4ed6-b248-f08516c965ad",

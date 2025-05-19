@@ -9,16 +9,16 @@ import type { ViewEvent } from "~types/entities.types"
 type ViewEventKey = keyof ViewEvent
 type DateProperties = Pick<
   ViewEvent,
-  | "application_close_time"
-  | "application_open_time"
-  | "ending_time"
-  | "group_close_date"
-  | "group_open_date"
-  | "interview_process_end"
-  | "interview_process_start"
-  | "payment_end_date"
-  | "payment_start_date"
-  | "starting_time"
+  | "time_application_end"
+  | "time_application_start"
+  | "time_event_end"
+  | "time_group_end"
+  | "time_group_start"
+  | "time_interviews_end"
+  | "time_interviews_start"
+  | "time_payment_start"
+  | "time_payment_end"
+  | "time_event_start"
 >
 
 type ValidDateItem = {
