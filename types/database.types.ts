@@ -62,65 +62,65 @@ export type Database = {
       }
       events: {
         Row: {
-          time_application_end: string | null
-          time_application_start: string | null
           created_at: string
           description: string | null
           emoji: string | null
-          time_event_end: string | null
           event_status: string
+          id: string
+          location: string | null
+          ticket_price: number | null
+          time_application_end: string | null
+          time_application_start: string | null
+          time_event_end: string | null
+          time_event_start: string | null
           time_group_end: string | null
           time_group_start: string | null
-          id: string
           time_interviews_end: string | null
           time_interviews_start: string | null
-          location: string | null
-          time_payment_start: string | null
           time_payment_end: string | null
-          time_event_start: string | null
-          ticket_price: number | null
+          time_payment_start: string | null
           title: string | null
           total_spots: number | null
         }
         Insert: {
-          time_application_end?: string | null
-          time_application_start?: string | null
           created_at?: string
           description?: string | null
           emoji?: string | null
-          time_event_end?: string | null
           event_status?: string
+          id?: string
+          location?: string | null
+          ticket_price?: number | null
+          time_application_end?: string | null
+          time_application_start?: string | null
+          time_event_end?: string | null
+          time_event_start?: string | null
           time_group_end?: string | null
           time_group_start?: string | null
-          id?: string
           time_interviews_end?: string | null
           time_interviews_start?: string | null
-          location?: string | null
-          time_payment_start?: string | null
           time_payment_end?: string | null
-          time_event_start?: string | null
-          ticket_price?: number | null
+          time_payment_start?: string | null
           title?: string | null
           total_spots?: number | null
         }
         Update: {
-          time_application_end?: string | null
-          time_application_start?: string | null
           created_at?: string
           description?: string | null
           emoji?: string | null
-          time_event_end?: string | null
           event_status?: string
+          id?: string
+          location?: string | null
+          ticket_price?: number | null
+          time_application_end?: string | null
+          time_application_start?: string | null
+          time_event_end?: string | null
+          time_event_start?: string | null
           time_group_end?: string | null
           time_group_start?: string | null
-          id?: string
           time_interviews_end?: string | null
           time_interviews_start?: string | null
-          location?: string | null
-          time_payment_start?: string | null
           time_payment_end?: string | null
-          time_event_start?: string | null
-          ticket_price?: number | null
+          time_payment_start?: string | null
           title?: string | null
           total_spots?: number | null
         }
@@ -368,3 +368,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
