@@ -5,8 +5,11 @@ import type { z } from "zod"
 import paths from "~/lib/paths"
 import type { Event } from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
-import { userContextSchema } from "../common"
-import { adminContextSchema, eventFormSchema } from "./common"
+import {
+  adminContextSchema,
+  createOrUpdateEventSchema,
+  eventFormSchema,
+} from "./common"
 
 const {
   admin: { ADMIN_DASHBOARD },
@@ -54,13 +57,16 @@ export const getAdminEventById = async (request: Request, params: Params) => {
 
 export const createOrUpdateEvent = applySchema(
   eventFormSchema,
-  userContextSchema,
+  createOrUpdateEventSchema,
 )(async (values, context) => {
-  const { supabase } = context
+  const { supabase, eventId } = context
 
   const { error, data } = await supabase
     .from("events")
-    .upsert(values)
+    .upsert({
+      ...values,
+      id: eventId,
+    })
     .select("id")
     .single()
 

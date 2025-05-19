@@ -2,17 +2,17 @@ import { formAction } from "remix-forms"
 import { redirectWithSuccess } from "remix-toast"
 import {
   createOrUpdateEvent,
+  getAdminContext,
   getAdminEventById,
 } from "~/business/admin/admin.server"
 import { eventFormSchema } from "~/business/admin/common"
-import { getUserContext } from "~/business/auth/auth.server"
 import { EventForm } from "~/components/forms/admin/event-form"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/create-edit-event"
 
 const {
   admin: {
-    events: { ADMIN_EDIT_EVENT },
+    events: { ADMIN_VIEW_EVENT },
   },
 } = paths
 
@@ -23,7 +23,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-  const context = await getUserContext(request, params)
+  const context = await getAdminContext(request, params)
+  const eventId = params.id
   return formAction({
     request,
     schema: eventFormSchema,
@@ -31,13 +32,13 @@ export async function action({ request, params }: Route.ActionArgs) {
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(
-          ADMIN_EDIT_EVENT(result.data),
-          "Evento criado com sucesso",
+          ADMIN_VIEW_EVENT(result.data),
+          `Evento ${eventId ? "atualizado" : "criado"} com sucesso`,
         )
       }
       return result
     },
-    context,
+    context: { ...context, eventId },
   })
 }
 

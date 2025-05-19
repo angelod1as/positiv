@@ -45,6 +45,7 @@ export const calculateDerivedDates = (
 
     switch (key) {
       case "time_event_start":
+        value = startingTimeDate
         break
       case "time_event_end":
         value = setHours(value, 23)
