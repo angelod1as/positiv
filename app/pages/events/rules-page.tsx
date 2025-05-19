@@ -1,7 +1,5 @@
 import { useState } from "react"
-import { useNavigation, useSubmit } from "react-router"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
-import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import {
   Card,
   CardContent,
@@ -11,6 +9,7 @@ import {
 } from "~/components/ui/card"
 import type { FCC } from "~types/utils.types"
 import type { Route } from "./+types/rules-page"
+import { RulesDialog } from "./rules-dialog"
 import { RulesForm } from "./rules/rules-form/rules-form"
 import { RulesText } from "./rules/rules-text"
 
@@ -50,42 +49,13 @@ export function HydrateFallback() {
 
 const RulesPage = ({}: Route.ComponentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const submit = useSubmit()
-  const { state } = useNavigation()
-  const isSubmitting = state === "submitting"
-
-  const handleSubmit = () => {
-    submit(
-      { confirmed: true, application_date: new Date().toISOString() },
-      {
-        method: "POST",
-      },
-    )
-  }
 
   return (
     <Wrapper>
       <RulesForm setIsDialogOpen={setIsDialogOpen} />
-      <ConfirmDialog
-        title="Confirmar inscrição"
-        description={
-          <div>
-            <p>
-              Você acertou tudo! Agora só falta clicar nesse botãozinho abaixo e
-              confirmar sua inscrição.
-            </p>
-            <p>
-              Você vai receber um email com os dados do evento, salve na sua
-              agenda!
-            </p>
-          </div>
-        }
-        confirmLabel="🎉 Confirmar!"
-        cancelLabel="😢 Cancelar"
-        onConfirm={handleSubmit}
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        isLoading={isSubmitting}
+      <RulesDialog
+        isDialogOpen={isDialogOpen}
+        setIsDialogOpen={setIsDialogOpen}
       />
     </Wrapper>
   )
