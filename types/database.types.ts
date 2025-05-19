@@ -16,6 +16,7 @@ export type Database = {
           created_at: string
           event_id: string
           id: string
+          notes: string | null
           payment: number | null
           process_status: string
           profile_id: string | null
@@ -27,6 +28,7 @@ export type Database = {
           created_at?: string
           event_id: string
           id?: string
+          notes?: string | null
           payment?: number | null
           process_status?: string
           profile_id?: string | null
@@ -38,6 +40,7 @@ export type Database = {
           created_at?: string
           event_id?: string
           id?: string
+          notes?: string | null
           payment?: number | null
           process_status?: string
           profile_id?: string | null
