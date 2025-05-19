@@ -12,6 +12,8 @@ const {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { events } = await getAdminContext(request, params)
+  if (!events) return { events: undefined }
+
   const sorted = events.sort((a, b) => {
     const startA = a.time_event_start
     const startB = b.time_event_start
@@ -30,7 +32,7 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
     <>
       <Button to={ADMIN_CREATE_EVENT}>Criar novo evento</Button>
       <ul>
-        {events.map(({ time_event_start, id, title }) => {
+        {events?.map(({ time_event_start, id, title }) => {
           if (!time_event_start) return
           const date = new Date(time_event_start)
           return (
