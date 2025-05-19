@@ -39,7 +39,7 @@ BEGIN
     -- ### Seed public.event_participants ###
     -- Insert specific participation records using the retrieved IDs
 
-    INSERT INTO public.event_participants (profile_id, event_id, user_applied_status, process_status, application_date, cancellation_date, payment)
+    INSERT INTO public.event_participants (profile_id, event_id, user_applied_status, process_status, application_date, cancellation_date, payment, notes)
     VALUES
     -- Admin's Participations (Example Scenarios)
     (
@@ -49,7 +49,8 @@ BEGIN
         'confirmed',                   -- process_status: Confirmed
         now() - interval '2 months',   -- application_date
         NULL,                          -- cancellation_date
-        20.00                          -- payment (below price example)
+        20.00,                         -- payment (below price example)
+        'Sample notes'                 -- notes
     ),
     (
         admin_profile_id,              -- profile_id: Admin
@@ -58,7 +59,8 @@ BEGIN
         'attended',                    -- process_status: Attended
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
-        NULL                           -- payment (or lookup price and set paid value)
+        NULL,                          -- payment (or lookup price and set paid value)
+        NULL                           -- notes
     ),
     (
         admin_profile_id,              -- profile_id: Admin
@@ -67,7 +69,8 @@ BEGIN
         'cancelled_by_admin',          -- process_status: Cancelled by admin
         now() - interval '3 months',   -- application_date
         now() - interval '1 month',    -- cancellation_date
-        NULL                           -- payment
+        NULL,                          -- payment
+        NULL                           -- notes
     ),
 
     -- User1's Participations (Example Scenarios)
@@ -78,7 +81,8 @@ BEGIN
         'applied',                     -- process_status: Applied (not yet confirmed)
         now() - interval '1 day',      -- application_date
         NULL,                          -- cancellation_date
-        NULL                           -- payment (not paid yet)
+        NULL,                          -- payment (not paid yet)
+        NULL                           -- notes
     ),
     (
         user1_profile_id,              -- profile_id: User1
@@ -87,16 +91,18 @@ BEGIN
         'confirmed',                   -- process_status: Confirmed
         now() - interval '1 month',    -- application_date
         NULL,                          -- cancellation_date
-        15.00                          -- payment (matches price example)
+        15.00,                         -- payment (matches price example)
+        NULL                           -- notes
     ),
-     (
+    (
         user1_profile_id,              -- profile_id: User1
         event_id_scheduled_1,          -- event_id: Scheduled Event 1
         FALSE,                         -- user_applied_status: Added by admin
         'applied',                     -- process_status: Applied
         now() - interval '1 week',     -- application_date
         NULL,                          -- cancellation_date
-        NULL                           -- payment
+        NULL,                          -- payment
+        NULL                           -- notes
     ),
 
 
@@ -108,7 +114,8 @@ BEGIN
         'applied',                     -- process_status: Applied
         now() - interval '2 days',     -- application_date
         NULL,                          -- cancellation_date
-        NULL                           -- payment
+        NULL,                          -- payment
+        NULL                           -- notes
     );
 
     -- Add more blocks to the VALUES clause for other users or more participations
