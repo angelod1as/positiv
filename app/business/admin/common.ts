@@ -68,8 +68,16 @@ export const eventSchema = zod.object({
 
 export const adminContextSchema = userContextSchema.extend({
   events: zod.array(eventSchema),
+  eventId: zod.string().optional(),
 })
 
-export const createOrUpdateEventSchema = adminContextSchema.extend({
-  eventId: zod.string().optional(),
+export const updateEventStatusSchema = zod.object({
+  event_status: zod.enum([
+    "Draft",
+    "Completed",
+    "Cancelled",
+    "Scheduled",
+    "Registration Closed",
+    "Registration Open",
+  ]),
 })

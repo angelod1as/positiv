@@ -1,8 +1,17 @@
+import { useEffect } from "react"
+import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
-import { getAdminEventById } from "~/business/admin/admin.server"
+import { toast } from "sonner"
+import {
+  getAdminContext,
+  getAdminEventById,
+  updateEventStatus,
+} from "~/business/admin/admin.server"
+import { updateEventStatusSchema } from "~/business/admin/common"
 import { Button } from "~/components/atoms/button/button"
+import { SchemaForm } from "~/components/forms/schema-form"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import { eventPropNameMap } from "~/lib/helpers/propMaps"
+import { eventPropNameMap, eventStatusMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event"
 
@@ -13,6 +22,17 @@ const {
   },
 } = paths
 
+export async function action({ request, params }: Route.ActionArgs) {
+  const context = await getAdminContext(request, params)
+
+  return formAction({
+    request,
+    schema: updateEventStatusSchema,
+    mutation: updateEventStatus,
+    context: { ...context, eventId: params.id },
+  })
+}
+
 export async function loader({ params, request }: Route.LoaderArgs) {
   const event = await getAdminEventById(request, params)
   if (!event) {
@@ -21,8 +41,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   return { event }
 }
 
-const AdminViewEvent = ({ loaderData }: Route.ComponentProps) => {
+const AdminViewEvent = ({ loaderData, actionData }: Route.ComponentProps) => {
   const { event } = loaderData
+
+  useEffect(() => {
+    if (actionData?.success) {
+      toast.success("Salvo com sucesso")
+    }
+  }, [actionData])
 
   const {
     id,
@@ -54,13 +80,36 @@ const AdminViewEvent = ({ loaderData }: Route.ComponentProps) => {
       <p className="font-bold">
         Data: {formatDateTime(time_event_start, "long").full}
       </p>
+      <SchemaForm
+        schema={updateEventStatusSchema}
+        labels={{ event_status: "Status do evento" }}
+        values={{
+          event_status,
+        }}
+        mode="onChange"
+        options={{
+          event_status: [
+            { value: "Draft", name: eventStatusMap("Draft") },
+            { value: "Completed", name: eventStatusMap("Completed") },
+            { value: "Cancelled", name: eventStatusMap("Cancelled") },
+            { value: "Scheduled", name: eventStatusMap("Scheduled") },
+            {
+              value: "Registration Closed",
+              name: eventStatusMap("Registration Closed"),
+            },
+            {
+              value: "Registration Open",
+              name: eventStatusMap("Registration Open"),
+            },
+          ],
+        }}
+      >
+        {({ Field, submit }) => <Field name="event_status" onChange={submit} />}
+      </SchemaForm>
       <div className="flex flex-col gap-2">
         <h2>Dados gerais</h2>
         <p>
           {eventPropNameMap("description")}: {description}
-        </p>
-        <p>
-          {eventPropNameMap("event_status")}: {event_status}
         </p>
         <p>
           {eventPropNameMap("location")}: {location}
