@@ -30,7 +30,7 @@ const EVENT_VIEW = (id: string) => `${DASHBOARD}/${id}`
 const ADMIN_DASHBOARD = "/admin"
 // EVENTS
 const ADMIN_EVENTS = `${ADMIN_DASHBOARD}/eventos`
-const ADMIN_EVENT = (id: string) => `${ADMIN_EVENTS}/${id}`
+const ADMIN_VIEW_EVENT = (id: string) => `${ADMIN_EVENTS}/${id}`
 const ADMIN_EDIT_EVENT = (id: string) => `${ADMIN_EVENTS}/novo/${id}`
 const ADMIN_CREATE_EVENT = `${ADMIN_EVENTS}/novo`
 
@@ -42,7 +42,7 @@ const paths = {
     ADMIN_DASHBOARD,
     events: {
       ADMIN_EDIT_EVENT,
-      ADMIN_EVENT,
+      ADMIN_VIEW_EVENT,
       ADMIN_EVENTS,
       ADMIN_CREATE_EVENT,
     },
