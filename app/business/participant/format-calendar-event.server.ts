@@ -3,14 +3,14 @@ import type { Event, ViewEvent } from "~types/entities.types"
 import { POSITIV_EMAIL, POSITIV_URL } from "../../lib/helpers/constants"
 
 export const formatCalendarEvent = async (event: ViewEvent | Event) => {
-  const { starting_time, ending_time, location, title, emoji } = event
-  if (!starting_time || !ending_time || !title || !location) return
+  const { time_event_start, time_event_end, location, title, emoji } = event
+  if (!time_event_start || !time_event_end || !title || !location) return
 
   const calendar = ical({ name: "convite" })
   calendar.method(ICalCalendarMethod.REQUEST)
 
-  const startTime = new Date(starting_time)
-  const endTime = new Date(ending_time)
+  const startTime = new Date(time_event_start)
+  const endTime = new Date(time_event_end)
 
   const calendarEvent = calendar.createEvent({
     timezone: "America/Sao_Paulo",

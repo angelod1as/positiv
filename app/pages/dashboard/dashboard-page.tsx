@@ -67,7 +67,7 @@ type WrapperProps = {
 
 const Wrapper: FC<WrapperProps> = ({ registrationEvents, scheduledEvents }) => {
   return (
-    <div className="px-4 lg:px-8 pb-4 flex flex-col gap-12 ... mb-12 py-8">
+    <>
       <div className="flex flex-col gap-4">
         <h2>Inscrições abertas</h2>
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
@@ -81,7 +81,7 @@ const Wrapper: FC<WrapperProps> = ({ registrationEvents, scheduledEvents }) => {
           {scheduledEvents}
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

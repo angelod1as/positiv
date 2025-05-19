@@ -2,11 +2,11 @@ import type { ViewEvent } from "~types/entities.types"
 import { POSITIV_URL } from "./constants"
 
 export const generateGoogleCalendarLink = (event: ViewEvent) => {
-  const { starting_time, ending_time, location, title, emoji } = event
-  if (!starting_time || !ending_time || !title || !location) return
+  const { time_event_start, time_event_end, location, title, emoji } = event
+  if (!time_event_start || !time_event_end || !title || !location) return
 
-  const startTime = new Date(starting_time).toISOString()
-  const endTime = new Date(ending_time).toISOString()
+  const startTime = new Date(time_event_start).toISOString()
+  const endTime = new Date(time_event_end).toISOString()
 
   const root = new URL("https://calendar.google.com/calendar/render")
   root.searchParams.set("action", "TEMPLATE")

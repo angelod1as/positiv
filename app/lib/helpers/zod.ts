@@ -11,6 +11,11 @@ const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
       }
     case z.ZodIssueCode.invalid_arguments:
       return { message: "Argumentos inválidos" }
+    case z.ZodIssueCode.invalid_string:
+      if (issue.validation === "datetime") {
+        return { message: "Formato de data inválido" }
+      }
+      return { message: "Formato inválido" }
     case z.ZodIssueCode.invalid_date:
       return { message: "Data inválida" }
     case z.ZodIssueCode.too_big:

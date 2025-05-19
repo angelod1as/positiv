@@ -1,4 +1,4 @@
-import { HomeIcon, UserIcon } from "lucide-react"
+import { HomeIcon, Table2Icon, UserIcon } from "lucide-react"
 import type { FC } from "react"
 import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
@@ -14,6 +14,7 @@ const {
     DASHBOARD,
     account: { ACCOUNT },
   },
+  admin: { ADMIN_DASHBOARD },
 } = paths
 
 type HeaderProps = {
@@ -27,6 +28,7 @@ export const Header: FC<HeaderProps> = ({ profile }) => {
   const displayName = profile
     ? profile.social_name || profile.full_name || profile.email
     : undefined
+  const isAdmin = profile?.is_admin
 
   return (
     <header className="flex items-center justify-between p-4 fixed top-0 left-0 z-30 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
@@ -54,6 +56,16 @@ export const Header: FC<HeaderProps> = ({ profile }) => {
               >
                 <HomeIcon />
               </Button>
+              {isAdmin && (
+                <Button
+                  asChild
+                  variant="outline"
+                  title="Dashboard"
+                  to={ADMIN_DASHBOARD}
+                >
+                  <Table2Icon />
+                </Button>
+              )}
               <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
                 <UserIcon />
               </Button>

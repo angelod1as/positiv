@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog"
-import { formatDate } from "~/lib/helpers/format-date"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calendar-link"
 import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/entities.types"
@@ -52,21 +52,21 @@ export const EventCard: FC<EventCardProps> = ({
   }
 
   const {
-    application_close_time,
-    application_open_time,
+    time_application_end,
+    time_application_start,
     description,
     emoji,
-    ending_time,
+    time_event_end,
     event_status,
-    group_close_date,
-    group_open_date,
+    time_group_end,
+    time_group_start,
     id,
-    interview_process_end,
-    interview_process_start,
+    time_interviews_end,
+    time_interviews_start,
     location,
-    payment_end_date,
-    payment_start_date,
-    starting_time,
+    time_payment_start,
+    time_payment_end,
+    time_event_start,
     ticket_price,
     title,
     is_applied,
@@ -85,7 +85,7 @@ export const EventCard: FC<EventCardProps> = ({
             </div>
             <div>
               <p className="font-bold text-muted-foreground">
-                {formatDate({ date: starting_time })}
+                {formatDateTime(time_event_start).full}
               </p>
               <h3>{title}</h3>
             </div>
@@ -102,16 +102,16 @@ export const EventCard: FC<EventCardProps> = ({
             {location && <DataPair pair={["Local", location]} />}
           </div>
           <DateStatus
-            application_close_time={application_close_time}
-            application_open_time={application_open_time}
-            ending_time={ending_time}
-            group_close_date={group_close_date}
-            group_open_date={group_open_date}
-            interview_process_end={interview_process_end}
-            interview_process_start={interview_process_start}
-            payment_end_date={payment_end_date}
-            payment_start_date={payment_start_date}
-            starting_time={starting_time}
+            time_application_end={time_application_end}
+            time_application_start={time_application_start}
+            time_event_end={time_event_end}
+            time_group_end={time_group_end}
+            time_group_start={time_group_start}
+            time_interviews_end={time_interviews_end}
+            time_interviews_start={time_interviews_start}
+            time_payment_start={time_payment_start}
+            time_payment_end={time_payment_end}
+            time_event_start={time_event_start}
           />
         </div>
       </CardContent>
