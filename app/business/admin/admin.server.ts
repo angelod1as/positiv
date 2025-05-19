@@ -29,10 +29,6 @@ export const getAdminContext = async (
     )
   }
 
-  if (data.length === 0) {
-    throw await dataWithError(ADMIN_DASHBOARD, "Nenhum evento encontrado")
-  }
-
   const events = data
 
   return { ...context, events }
