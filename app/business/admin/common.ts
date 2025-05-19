@@ -32,16 +32,16 @@ export const eventFormSchema = zod.object({
   ticket_price: zod.coerce.number().min(1, messages.min1num),
   total_spots: zod.coerce.number().min(1, messages.min1num),
 
-  starting_time: datetime,
-  ending_time: datetime,
-  application_close_time: datetime,
-  application_open_time: datetime,
-  interview_process_end: datetime,
-  interview_process_start: datetime,
-  group_open_date: datetime,
-  group_close_date: datetime,
-  payment_end_date: datetime,
-  payment_start_date: datetime,
+  time_event_start: datetime,
+  time_event_end: datetime,
+  time_application_end: datetime,
+  time_application_start: datetime,
+  time_interviews_end: datetime,
+  time_interviews_start: datetime,
+  time_group_start: datetime,
+  time_group_end: datetime,
+  time_payment_start: datetime,
+  time_payment_end: datetime,
 })
 
 export const eventSchema = zod.object({
@@ -54,16 +54,16 @@ export const eventSchema = zod.object({
   ticket_price: zod.coerce.number().nullish(),
   total_spots: zod.coerce.number().nullish(),
 
-  starting_time: datetime.nullish(),
-  ending_time: datetime.nullish(),
-  application_close_time: datetime.nullish(),
-  application_open_time: datetime.nullish(),
-  interview_process_end: datetime.nullish(),
-  interview_process_start: datetime.nullish(),
-  group_open_date: datetime.nullish(),
-  group_close_date: datetime.nullish(),
-  payment_end_date: datetime.nullish(),
-  payment_start_date: datetime.nullish(),
+  time_event_start: datetime.nullish(),
+  time_event_end: datetime.nullish(),
+  time_application_end: datetime.nullish(),
+  time_application_start: datetime.nullish(),
+  time_interviews_end: datetime.nullish(),
+  time_interviews_start: datetime.nullish(),
+  time_group_start: datetime.nullish(),
+  time_group_end: datetime.nullish(),
+  time_payment_start: datetime.nullish(),
+  time_payment_end: datetime.nullish(),
 })
 
 export const adminContextSchema = userContextSchema.extend({

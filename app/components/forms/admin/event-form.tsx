@@ -28,31 +28,31 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           location: "Local",
           ticket_price: "Valor",
           total_spots: "Lotação",
-          starting_time: "Início do evento",
-          ending_time: "Fim do evento",
-          application_open_time: "Abertura",
-          application_close_time: "Encerramento",
-          interview_process_start: "Abertura",
-          interview_process_end: "Encerramento",
-          group_open_date: "Início",
-          group_close_date: "Encerramento",
-          payment_start_date: "Início",
-          payment_end_date: "Encerramento",
+          time_event_start: "Início do evento",
+          time_event_end: "Fim do evento",
+          time_application_start: "Abertura",
+          time_application_end: "Encerramento",
+          time_interviews_start: "Abertura",
+          time_interviews_end: "Encerramento",
+          time_group_start: "Início",
+          time_group_end: "Encerramento",
+          time_payment_end: "Início",
+          time_payment_start: "Encerramento",
         }}
         multiline={["description"]}
         inputTypes={{
           ticket_price: "textnumber",
           total_spots: "textnumber",
-          starting_time: "datetime-local",
-          ending_time: "datetime-local",
-          application_open_time: "datetime-local",
-          application_close_time: "datetime-local",
-          interview_process_start: "datetime-local",
-          interview_process_end: "datetime-local",
-          group_open_date: "datetime-local",
-          group_close_date: "datetime-local",
-          payment_start_date: "datetime-local",
-          payment_end_date: "datetime-local",
+          time_event_start: "datetime-local",
+          time_event_end: "datetime-local",
+          time_application_start: "datetime-local",
+          time_application_end: "datetime-local",
+          time_interviews_start: "datetime-local",
+          time_interviews_end: "datetime-local",
+          time_group_start: "datetime-local",
+          time_group_end: "datetime-local",
+          time_payment_end: "datetime-local",
+          time_payment_start: "datetime-local",
         }}
         descriptions={{
           description: "Use uma frase divertida!",
@@ -76,10 +76,10 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
         }) => {
           const handleDates = () => {
             clearErrors()
-            const startingTime = getValues("starting_time")
+            const startingTime = getValues("time_event_start")
 
             if (!startingTime) {
-              setError("starting_time", {
+              setError("time_event_start", {
                 message: "Você deve preencher a data de início",
                 type: "value",
               })
@@ -136,42 +136,42 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                 </div>
 
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="starting_time" />
+                  <Field name="time_event_start" />
                 </div>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="ending_time" />
+                  <Field name="time_event_end" />
                 </div>
 
                 <h6 className="pt-4 col-span-12">Inscrições</h6>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="application_open_time" />
+                  <Field name="time_application_start" />
                 </div>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="application_close_time" />
+                  <Field name="time_application_end" />
                 </div>
 
                 <h6 className="pt-4 col-span-12">Entrevistas</h6>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="interview_process_start" />
+                  <Field name="time_interviews_start" />
                 </div>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="interview_process_end" />
+                  <Field name="time_interviews_end" />
                 </div>
 
                 <h6 className="pt-4 col-span-12">Grupo</h6>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="group_open_date" />
+                  <Field name="time_group_start" />
                 </div>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="group_close_date" />
+                  <Field name="time_group_end" />
                 </div>
 
                 <h6 className="pt-4 col-span-12">Pagamentos</h6>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="payment_start_date" />
+                  <Field name="time_payment_end" />
                 </div>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="payment_end_date" />
+                  <Field name="time_payment_start" />
                 </div>
               </div>
               <Errors />

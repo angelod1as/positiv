@@ -24,19 +24,19 @@ export const getNextEvents: GetNextEvents = async (
     title,
     description,
     emoji,
-    starting_time,
-    ending_time,
+    time_event_start,
+    time_event_end,
     event_status,
-    application_open_time,
-    interview_process_start,
+    time_application_start,
+    time_interviews_start,
     location,
     ticket_price,
-    application_close_time,
-    group_close_date,
-    group_open_date,
-    interview_process_end,
-    payment_end_date,
-    payment_start_date,
+    time_application_end,
+    time_group_end,
+    time_group_start,
+    time_interviews_end,
+    time_payment_start,
+    time_payment_end,
     active_applications: event_participants(user_applied_status)
     `,
   )
@@ -46,9 +46,9 @@ export const getNextEvents: GetNextEvents = async (
   }
 
   query = query
-    .gte("starting_time", now)
+    .gte("time_event_start", now)
     .in("event_status", ["Registration Open", "Scheduled"])
-    .order("starting_time", { ascending: true })
+    .order("time_event_start", { ascending: true })
     .limit(limit)
 
   const { data, error } = await query
