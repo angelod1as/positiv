@@ -12,4 +12,4 @@ export const sleep = (time: number) =>
 export const dateRegex =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?$/
 
-export const dateTimeFormat = "yyyy-MM-dd'T'hh:mm"
+export const dateTimeFormat = "yyyy-MM-dd'T'HH:mm"
