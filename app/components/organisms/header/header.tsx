@@ -52,10 +52,20 @@ export const Header: FC<HeaderProps> = ({ profile }) => {
                 asChild
                 variant="outline"
                 title="Dashboard"
-                to={isAdmin ? ADMIN_DASHBOARD : DASHBOARD}
+                to={DASHBOARD}
               >
-                {isAdmin ? <Table2Icon /> : <HomeIcon />}
+                <HomeIcon />
               </Button>
+              {isAdmin && (
+                <Button
+                  asChild
+                  variant="outline"
+                  title="Dashboard"
+                  to={ADMIN_DASHBOARD}
+                >
+                  <Table2Icon />
+                </Button>
+              )}
               <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
                 <UserIcon />
               </Button>
