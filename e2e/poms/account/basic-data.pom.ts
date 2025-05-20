@@ -70,7 +70,6 @@ export class BasicDataPOM {
   }
 
   async testFillBasicData() {
-    await this.goto()
     await this.full_name.fill(testParticipant.full_name)
     await this.social_name.fill(testParticipant.social_name)
     await this.rg.fill(testParticipant.rg)
