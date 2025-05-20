@@ -1,5 +1,9 @@
 -- Migration: Create on_auth_user_created trigger
 
+-- Grant necessary privileges to the user, replace 'your_user' with the actual database user
+GRANT ALL PRIVILEGES ON TABLE auth.users TO postgres;
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO postgres;
+
 -- This trigger fires after a new user is inserted into auth.users
 -- and executes the public.create_profile_on_signup function
 -- to automatically create a corresponding profile row.
