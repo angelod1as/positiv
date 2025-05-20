@@ -17,7 +17,7 @@ export class MailhogPOM {
       heading: this.page
         .locator("#preview-html")
         .contentFrame()
-        .getByRole("heading", { name: "Nos vemos em breve!" })
+        .getByRole("heading", { name: "Sua inscrição foi recebida" })
         .first(),
     }
   }

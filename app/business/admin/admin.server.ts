@@ -99,7 +99,6 @@ export const updateEventStatus = applySchema(
     .eq("id", eventId)
 
   if (error) {
-    console.error(`\n\n:DEV error:\n`, error, `\n\n`)
     throw await dataWithError(
       null,
       "Ocorreu um erro ao atualizar o evento. Erro: event update",
