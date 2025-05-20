@@ -36,7 +36,7 @@ const ApplicationMail = ({ profile, event }: ApplicationMailProps) => {
       previewText="Veja as informações do evento que você se inscreveu"
     >
       <Heading as="h1" className="text-center">
-        Nos vemos em breve!
+        Sua inscrição foi recebida
       </Heading>
       <Text>
         {profile.social_name ? profile.social_name : profile.full_name}, você se
