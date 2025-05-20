@@ -54,13 +54,13 @@ export const calculateDerivedDates = (
       case "time_application_start":
       case "time_group_start":
       case "time_interviews_start":
-      case "time_payment_end":
+      case "time_payment_start":
         value = setHours(value, 8)
         break
       case "time_application_end":
       case "time_group_end":
       case "time_interviews_end":
-      case "time_payment_start":
+      case "time_payment_end":
         value = setHours(value, 22)
         break
     }
