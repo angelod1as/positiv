@@ -2,6 +2,7 @@ import { applySchema } from "composable-functions"
 import type { Params } from "react-router"
 import { dataWithError, redirectWithError } from "remix-toast"
 import type { z } from "zod"
+import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
 import type { Event } from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
@@ -61,10 +62,12 @@ export const createOrUpdateEvent = applySchema(
 )(async (values, context) => {
   const { supabase, eventId } = context
 
+  const parsedValues = schemaValuesToDB(values)
+
   const { error, data } = await supabase
     .from("events")
     .upsert({
-      ...values,
+      ...parsedValues,
       id: eventId,
     })
     .select("id")
@@ -86,10 +89,12 @@ export const updateEventStatus = applySchema(
   const { supabase, eventId } = context
   if (!eventId) return null
 
+  const parsedValues = schemaValuesToDB(values)
+
   const { error, data } = await supabase
     .from("events")
     .update({
-      ...values,
+      ...parsedValues,
     })
     .eq("id", eventId)
 
