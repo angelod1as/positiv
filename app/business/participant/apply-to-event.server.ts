@@ -49,7 +49,7 @@ export const applyToEvent = async (request: Request, params: Params) => {
     event_id: eventId,
     profile_id: profileId,
     application_date: dateToString(values.applicationDate),
-    notes: values.notes,
+    notes: values.notes, // supabase sanitizes automatically
     user_applied_status: true,
   })
 
