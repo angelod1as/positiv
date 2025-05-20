@@ -39,6 +39,11 @@ export function HydrateFallback() {
 }
 
 export default function Homepage({ loaderData }: Route.ComponentProps) {
+  const shouldShowEvents = false
   const { error, events } = loaderData
-  return <Wrapper>{!error && <HomePageNextEvents events={events} />}</Wrapper>
+  return (
+    <Wrapper>
+      {!error && shouldShowEvents && <HomePageNextEvents events={events} />}
+    </Wrapper>
+  )
 }
