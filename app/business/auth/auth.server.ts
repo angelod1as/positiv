@@ -47,9 +47,9 @@ export const getContext = async (
   const errorProps = {
     supabase,
     supabaseHeaders,
+    host,
     currentUser: null,
     currentProfile: null,
-    host,
   }
 
   if (authError) {
@@ -62,34 +62,49 @@ export const getContext = async (
   }
 
   if (!authData.user) {
-    return errorProps
+    return {
+      ...errorProps,
+      currentUser: null,
+      currentProfile: null,
+    }
   }
 
-  const userId = authData.user.id
+  const { id: userId, email } = authData.user
+  const currentUser = { id: userId, email }
 
   const { data: profileData, error: profileError } = await supabase
     .rpc("get_profile_with_roles", { user_id_input: userId })
     .single()
 
   if (profileError) {
-    console.error("getCurrentProfile", profileError)
-    return errorProps
+    if (profileError.details !== "The result contains 0 rows") {
+      console.error("getCurrentProfile", profileError)
+    }
+
+    return {
+      ...errorProps,
+      currentUser,
+      currentProfile: null,
+    }
   }
 
   if (!profileData) {
-    console.error("getCurrentProfile", profileError)
-    return errorProps
+    return {
+      ...errorProps,
+      currentUser,
+      currentProfile: null,
+    }
   }
+
+  const currentProfile = profileData
 
   const prod = isProd()
 
   return {
     supabase,
     supabaseHeaders,
-    currentProfile: profileData,
-    currentUser: {
-      id: userId,
-    },
+    currentProfile,
+    currentUser,
     isProd: prod,
     host,
   }

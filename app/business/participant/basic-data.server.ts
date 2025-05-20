@@ -1,7 +1,8 @@
 import { applySchema } from "composable-functions"
-import { redirectWithSuccess } from "remix-toast"
+import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { dateToString } from "~/lib/helpers/date-to-string"
+import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
 import {
   basicDataSchema,
@@ -9,31 +10,34 @@ import {
   genderPronounOrientationSchema,
 } from "../common"
 
+const {
+  auth: { LOGIN },
+} = paths
+
 export const basicData = applySchema(
   basicDataSchema,
   contextSchema,
 )(async (values, context) => {
-  const { supabase, currentProfile } = context
-
-  if (!currentProfile) {
-    throw new Error("Erro ao buscar usuário")
+  const { supabase, currentProfile, currentUser } = context
+  const parsedValues = schemaValuesToDB(values)
+  if (!currentUser || !currentUser.email) {
+    throw await redirectWithError(LOGIN, "Ocorreu um erro com sua autenticação")
   }
 
-  const { confirm_phone, ...data } = values
+  const { confirm_phone, ...data } = parsedValues
 
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({
-      ...data,
-      date_of_birth: dateToString(data.date_of_birth),
-    })
-    .eq("id", currentProfile.id)
-    .single()
+  const { error: upsertError } = await supabase.from("profiles").upsert({
+    ...data,
+    date_of_birth: dateToString(data.date_of_birth),
+    user_id: currentUser.id,
+    email: currentUser.email,
+    id: currentProfile?.id,
+  })
 
-  if (updateError) {
-    const { code, message } = updateError || {}
+  if (upsertError) {
+    const { code, message } = upsertError || {}
     throw new Error(
-      `Erro atualizando o usuário — Código: "${code}" — Mensagem: "${message}"`,
+      `Erro atualizando o perfil — Código: "${code}" — Mensagem: "${message}"`,
     )
   }
 
@@ -46,7 +50,10 @@ type GenderPronounsOrientationProps = {
 }
 
 const {
-  dash: { DASHBOARD },
+  dash: {
+    DASHBOARD,
+    account: { GENDER_PRONOUNS_ORIENTATION, BASIC_DATA },
+  },
 } = paths
 
 export const genderPronounsOrientation = async ({
@@ -62,7 +69,10 @@ export const genderPronounsOrientation = async ({
   const formValidation = genderPronounOrientationSchema.safeParse(formData)
 
   if (!formValidation.success) {
-    throw new Error("Algo deu errado com seu formulário, tente de novo.")
+    throw await redirectWithError(
+      GENDER_PRONOUNS_ORIENTATION,
+      "Algo deu errado com seu formulário, tente de novo.",
+    )
   }
 
   const basicValidation = basicDataSchema.safeParse({
@@ -71,8 +81,9 @@ export const genderPronounsOrientation = async ({
   })
 
   if (!basicValidation.success) {
-    throw new Error(
-      "Parece que há algo faltando no formulário anterior, retorne.",
+    throw await redirectWithError(
+      BASIC_DATA,
+      "Parece que há algo faltando neste formulário, tente novamente.",
     )
   }
 
