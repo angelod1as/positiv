@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Any is necessary in this file
 
-import { formatISO, parse } from "date-fns"
-import { fromZonedTime, toZonedTime } from "date-fns-tz"
+import { formatISO } from "date-fns"
+import { fromZonedTime } from "date-fns-tz"
 import { format } from "date-fns/format"
 import type { EventStatus } from "~types/entities.types"
 import { dateRegex, dateTimeFormat } from "../utils"
@@ -38,17 +38,16 @@ export function dbValuesToFormSchema<
 export function schemaValuesToDB<
   T extends Record<string, any>,
   K extends Transform<T>,
->(obj: T, timeZone: string = "America/Sao_Paulo"): K {
-  const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/ // Adjust this regex if needed
+>(obj: T): K {
+  const dateRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
 
   return Object.entries(obj).reduce((acc, [key, value]) => {
     if (value === undefined) {
       ;(acc as any)[key] = null
     } else if (typeof value === "string" && dateRegex.test(value)) {
-      const parsedDate = parse(value, dateTimeFormat, new Date())
-      const zonedDate = toZonedTime(parsedDate, timeZone)
-      const utcDate = fromZonedTime(zonedDate, timeZone)
-      ;(acc as any)[key] = formatISO(utcDate)
+      const date = new Date(value)
+      const utcDate = fromZonedTime(date, "America/Sao_Paulo")
+      ;(acc as any)[key] = formatISO(utcDate, { format: "extended" })
     } else {
       ;(acc as any)[key] = value
     }
