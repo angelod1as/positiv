@@ -118,11 +118,11 @@ export const rulesFormQuestions = {
     question: '"O uso de camisinha é opcional durante a festa."',
     answers: {
       correct: [
-        "a afirmação está incorreta, o uso de camisinha interna ou externa, é obrigatório",
-        "a afirmação está incorreta e até mesmo casais que não usam camisinha fora da festa são obrigados a usar durante a festa",
+        "A afirmação está incorreta, o uso de camisinha interna ou externa, é obrigatório",
+        "A afirmação está incorreta e até mesmo casais que não usam camisinha fora da festa são obrigados a usar durante a festa",
       ],
       incorrect: [
-        "a afirmação está correta, porque todes são obrigades a enviar exames de ISTs para os organizadores",
+        "A afirmação está correta, porque todes são obrigades a enviar exames de ISTs para os organizadores",
       ],
     },
   },
@@ -130,11 +130,11 @@ export const rulesFormQuestions = {
     question: "Quais afirmações estão corretas?",
     answers: {
       correct: [
-        "a Positiv não pede que seus participantes enviem resultados de exames de IST para a organização, mas prega que todes façam regularmente seus acompanhamentos, porque assumimos riscos em frequentar festas como a Positiv",
-        "para interações com mãos e bocas, a Positiv recomenda fortemente que sejam usadas luvas, dental dams e/ou camisinhas.",
+        "A Positiv não pede que seus participantes enviem resultados de exames de IST para a organização, mas prega que todes façam regularmente seus acompanhamentos, porque assumimos riscos em frequentar festas como a Positiv",
+        "Para interações com mãos e bocas, a Positiv recomenda fortemente que sejam usadas luvas, dental dams e/ou camisinhas.",
       ],
       incorrect: [
-        "nossas regras preveem que, caso uma camisinha escape, fure ou rasgue, que es envolvides não sejam avisades, afinal, é de responsabilidade apenas de quem está usando a camisinha",
+        "Nossas regras preveem que, caso uma camisinha escape, fure ou rasgue, que es envolvides não sejam avisades, afinal, é de responsabilidade apenas de quem está usando a camisinha",
         "A Positiv é 100% segura e é impossível contrair uma IST durante o evento.",
       ],
     },
