@@ -19,16 +19,18 @@ const {
 
 type HeaderProps = {
   profile: ProfileWithRoles | null
+  userEmail?: string | null
 }
 
-export const Header: FC<HeaderProps> = ({ profile }) => {
+export const Header: FC<HeaderProps> = ({ profile, userEmail }) => {
   const { pathname } = useLocation()
 
   const showButton = pathname !== "/entrar"
   const displayName = profile
     ? profile.social_name || profile.full_name || profile.email
-    : undefined
+    : userEmail || undefined
   const isAdmin = profile?.is_admin
+  const showButtons = profile || userEmail
 
   return (
     <header className="flex items-center justify-between p-4 fixed top-0 left-0 z-30 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
@@ -43,7 +45,7 @@ export const Header: FC<HeaderProps> = ({ profile }) => {
       </div>
       <div className="flex items-center space-x-2">
         {showButton &&
-          (profile ? (
+          (showButtons ? (
             <div className="flex items-center space-x-2">
               {!!displayName && (
                 <p className="hidden sm:block">Olá, {displayName}</p>
