@@ -31,7 +31,7 @@
 
   select,
   option {
-    @apply font-sans;
+    @apply font-nunito;
   }
 
   ol {
@@ -111,7 +111,7 @@
   }
 
   p {
-    @apply leading-6 font-sans;
+    @apply leading-6 font-nunito;
   }
 
   .text-content {
