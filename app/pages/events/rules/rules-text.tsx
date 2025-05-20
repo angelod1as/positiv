@@ -215,16 +215,13 @@ export const RulesText = () => {
           <b>Camisinha sempre e exames atualizados.</b>
         </p>
         <p>
-          Recomendamos o uso de preservativos para <u>qualquer</u> interação
+          Recomendamos o uso de preservativos para <b>qualquer</b> interação
           sexual.
         </p>
         <p>
           Nas interações pênis/vagina e pênis/ânus — indepentente dos materiais
-          —, a camisinha é completamente{" "}
-          <strong>
-            <u>obrigatória</u>
-          </strong>{" "}
-          e <strong>não tem conversa</strong> — qualquer problema com essa regra
+          —, a camisinha é completamente <strong>obrigatória</strong> e{" "}
+          <strong>não tem conversa</strong> — qualquer problema com essa regra
           pode incorrer em ações legais (isso, polícia te levando seminu do
           motel porque você tirou a camisinha durante a transa).
         </p>
