@@ -31,19 +31,28 @@ export const RulesDialog: FC<RulesDialogProps> = ({
     <ConfirmDialog
       title="Confirmar inscrição"
       description={
-        <div>
-          <p>
-            Você acertou tudo! Agora só falta clicar nesse botãozinho abaixo e
-            confirmar sua inscrição.
-          </p>
-          <p>
-            Você vai receber um email com os dados do evento, salve na sua
-            agenda!
-          </p>
-          <TextArea
-            value={notes}
-            onChange={(val) => setNotes(val.target.value)}
-          />
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <p>
+              Se você tiver alguma nota ou comentário que gostaria que as
+              pessoas administradoras soubessem, escreva-as abaixo:
+            </p>
+            <TextArea
+              value={notes}
+              onChange={(val) => setNotes(val.target.value)}
+              placeholder="O que quer que a gente saiba?"
+            />
+          </div>
+          <div>
+            <p>
+              Você acertou tudo! Agora só falta clicar nesse botãozinho abaixo e
+              confirmar sua inscrição.
+            </p>
+            <p>
+              Você vai receber um email com os dados do evento, salve na sua
+              agenda!
+            </p>
+          </div>
         </div>
       }
       confirmLabel="🎉 Confirmar!"

@@ -153,3 +153,9 @@ export const genderPronounOrientationSchema = zod.object({
       message: "Você precisa escolher pelo menos um",
     }),
 })
+
+export const applyToEventSchema = zod.object({
+  applicationDate: zod.date(),
+  confirmed: zod.boolean(),
+  notes: zod.string().optional(),
+})
