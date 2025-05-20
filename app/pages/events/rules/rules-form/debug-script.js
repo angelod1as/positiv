@@ -67,16 +67,16 @@ let rulesFormQuestions = {
   "protection-1": {
     answers: {
       correct: [
-        "a afirmação está incorreta, o uso de camisinha interna ou externa, é obrigatório",
-        "a afirmação está incorreta e até mesmo casais que não usam camisinha fora da festa são obrigados a usar durante a festa",
+        "A afirmação está incorreta, o uso de camisinha interna ou externa, é obrigatório",
+        "A afirmação está incorreta e até mesmo casais que não usam camisinha fora da festa são obrigados a usar durante a festa",
       ],
     },
   },
   "protection-2": {
     answers: {
       correct: [
-        "a Positiv não pede que seus participantes enviem resultados de exames de IST para a organização, mas prega que todes façam regularmente seus acompanhamentos, porque assumimos riscos em frequentar festas como a Positiv",
-        "para interações com mãos e bocas, a Positiv recomenda fortemente que sejam usadas luvas, dental dams e/ou camisinhas.",
+        "A Positiv não pede que seus participantes enviem resultados de exames de IST para a organização, mas prega que todes façam regularmente seus acompanhamentos, porque assumimos riscos em frequentar festas como a Positiv",
+        "Para interações com mãos e bocas, a Positiv recomenda fortemente que sejam usadas luvas, dental dams e/ou camisinhas.",
       ],
     },
   },
