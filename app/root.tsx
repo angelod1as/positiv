@@ -16,8 +16,10 @@ import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
+import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
+import { POSITIV_EMAIL } from "./lib/helpers/constants"
 
 // COMMENT OUT when offline
 export const links: Route.LinksFunction = () => [
@@ -79,10 +81,15 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const { currentProfile, isProd } = await getContext(request, params)
-  const { toast, headers } = await getToast(request)
+  try {
+    const { currentProfile, isProd } = await getContext(request, params)
+    const { toast, headers } = await getToast(request)
 
-  return data({ profile: currentProfile, isProd, toast }, { headers })
+    return data({ profile: currentProfile, isProd, toast }, { headers })
+  } catch (error) {
+    console.error(error)
+    return { profile: null, toast: null }
+  }
 }
 
 export function Layout(props: { children: ReactNode }) {
@@ -96,7 +103,7 @@ export function Layout(props: { children: ReactNode }) {
         <Links />
       </head>
       <body className="h-screen flex flex-col">
-        <Toaster richColors />
+        <Toaster richColors position="top-center" />
         <GlobalLoading />
         {props.children}
         <ScrollRestoration />
@@ -133,29 +140,51 @@ export default function App({ loaderData }: Route.ComponentProps) {
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   let message = "Oops!"
-  let details = "An unexpected error occurred."
+  let details = (
+    <>
+      <p>Um erro ocorreu. Isso é frustrante, nós sabemos.</p>
+      <p>
+        Avise-nos pelo <Link to={`mailto:${POSITIV_EMAIL}`}>email</Link> com as
+        informações:
+      </p>
+      <ul>
+        <li>Navegador (Chrome, Firefox, Safari, etc)</li>
+        <li>Sistema operacional (iOS, Android, macOS, Windows)</li>
+        <li>
+          Um breve relato do que você tentou fazer (qual página, qual botão,
+          etc)
+        </li>
+      </ul>
+    </>
+  )
   let stack: string | undefined
 
   if (isRouteErrorResponse(error)) {
     message = error.status === 404 ? "404" : "Error"
     details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details
+      error.status === 404 ? (
+        <p>Página não encontrada.</p>
+      ) : (
+        <p>{error.statusText || details}</p>
+      )
   } else if (import.meta.env.DEV && error && error instanceof Error) {
-    details = error.message
+    details = <p>{error.message}</p>
     stack = error.stack
   }
 
   return (
-    <main className="pt-16 p-4 container mx-auto">
-      <h1>{message}</h1>
-      <p>{details}</p>
-      {stack && (
-        <pre className="w-full p-4 overflow-x-auto">
-          <code>{stack}</code>
-        </pre>
-      )}
-    </main>
+    <div className="flex flex-col grow mt-16">
+      <Header profile={null} />
+      <main className="grow flex flex-col justify-center items-center">
+        <h1>{message}</h1>
+        <div>{details}</div>
+        {stack && (
+          <pre className="w-full p-4 overflow-x-auto">
+            <code>{stack}</code>
+          </pre>
+        )}
+      </main>
+      <Footer />
+    </div>
   )
 }
