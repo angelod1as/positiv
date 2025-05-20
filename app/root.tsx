@@ -147,7 +147,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         Avise-nos pelo <Link to={`mailto:${POSITIV_EMAIL}`}>email</Link> com as
         informações:
       </p>
-      <ul>
+      <ul className="list-disc">
         <li>Navegador (Chrome, Firefox, Safari, etc)</li>
         <li>Sistema operacional (iOS, Android, macOS, Windows)</li>
         <li>
@@ -176,13 +176,15 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <div className="flex flex-col grow mt-16">
       <Header profile={null} />
       <main className="grow flex flex-col justify-center items-center">
-        <h1>{message}</h1>
-        <div>{details}</div>
-        {stack && (
-          <pre className="w-full p-4 overflow-x-auto">
-            <code>{stack}</code>
-          </pre>
-        )}
+        <div className="max-w-2xl">
+          <h1>{message}</h1>
+          <div>{details}</div>
+          {stack && (
+            <pre className="w-full p-4 overflow-x-auto">
+              <code>{stack}</code>
+            </pre>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
