@@ -168,10 +168,10 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
 
                 <h6 className="pt-4 col-span-12">Pagamentos</h6>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_payment_end" />
+                  <Field name="time_payment_start" />
                 </div>
                 <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_payment_start" />
+                  <Field name="time_payment_end" />
                 </div>
               </div>
               <Errors />
