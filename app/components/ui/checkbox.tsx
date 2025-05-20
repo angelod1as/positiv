@@ -7,7 +7,7 @@ export const Checkbox = React.forwardRef<
   React.JSX.IntrinsicElements["input"]
 >(({ className, checked, onChange, ...props }, ref) => {
   return (
-    <label className="relative inline-flex items-center cursor-pointer">
+    <label className="relative inline-flex items-start mt-[2px] cursor-pointer">
       <input
         ref={ref}
         type="checkbox"
