@@ -36,8 +36,8 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           time_interviews_end: "Encerramento",
           time_group_start: "Início",
           time_group_end: "Encerramento",
-          time_payment_end: "Início",
-          time_payment_start: "Encerramento",
+          time_payment_start: "Início",
+          time_payment_end: "Encerramento",
         }}
         multiline={["description"]}
         inputTypes={{
