@@ -5,6 +5,9 @@
 -- which can cause login/signup errors due to driver issues with NULL strings.
 -- Includes all commonly affected string columns.
 
+ALTER TABLE auth.users OWNER TO postgres;
+GRANT ALL PRIVILEGES ON TABLE auth.users TO postgres;
+
 -- Use a transaction block for atomicity
 BEGIN;
 
