@@ -82,13 +82,16 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   try {
-    const { currentProfile, isProd } = await getContext(request, params)
+    const { currentProfile, isProd, currentUser } = await getContext(
+      request,
+      params,
+    )
     const { toast, headers } = await getToast(request)
 
-    return data({ profile: currentProfile, isProd, toast }, { headers })
+    return data({ currentUser, currentProfile, isProd, toast }, { headers })
   } catch (error) {
     console.error(error)
-    return { profile: null, toast: null }
+    return { currentUser: null, currentProfile: null, toast: null }
   }
 }
 
@@ -115,7 +118,7 @@ export function Layout(props: { children: ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { profile, toast } = loaderData
+  const { currentUser, currentProfile, toast } = loaderData
 
   useEffect(() => {
     if (toast?.type) {
@@ -129,7 +132,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Header profile={profile} />
+      <Header profile={currentProfile} userEmail={currentUser?.email} />
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
