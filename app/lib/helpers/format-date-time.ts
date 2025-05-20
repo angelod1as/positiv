@@ -34,11 +34,9 @@ export function formatDateTime(
   const formattedDate = formatInTimeZone(date, timeZone, datePattern, {
     locale: ptBR,
   })
-  console.info(`\n\n:DEV formattedDate:\n`, formattedDate, `\n\n`)
   const formattedTime = formatInTimeZone(date, timeZone, timePattern, {
     locale: ptBR,
   })
-  console.info(`\n\n:DEV formattedTime:\n`, formattedTime, `\n\n`)
   const fullDateTime = `${formattedDate}, às ${formattedTime}`
 
   return {
