@@ -1,4 +1,5 @@
 import { format } from "date-fns"
+import { EyeIcon } from "lucide-react"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
 import paths from "~/lib/paths"
@@ -38,7 +39,7 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
           return (
             <li key={id}>
               <Button to={ADMIN_VIEW_EVENT(id)} variant="outline">
-                +
+                <EyeIcon />
               </Button>{" "}
               {format(date, "dd-MM-yyyy")} - {title}
             </li>

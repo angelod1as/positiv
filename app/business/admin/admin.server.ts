@@ -7,8 +7,8 @@ import type { Event } from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,
-  createOrUpdateEventSchema,
   eventFormSchema,
+  updateEventStatusSchema,
 } from "./common"
 
 const {
@@ -51,9 +51,13 @@ export const getAdminEventById = async (request: Request, params: Params) => {
   return data as Event
 }
 
+///////
+// ACTIONS
+//////
+
 export const createOrUpdateEvent = applySchema(
   eventFormSchema,
-  createOrUpdateEventSchema,
+  adminContextSchema,
 )(async (values, context) => {
   const { supabase, eventId } = context
 
@@ -73,4 +77,29 @@ export const createOrUpdateEvent = applySchema(
   }
 
   return data.id
+})
+
+export const updateEventStatus = applySchema(
+  updateEventStatusSchema,
+  adminContextSchema,
+)(async (values, context) => {
+  const { supabase, eventId } = context
+  if (!eventId) return null
+
+  const { error, data } = await supabase
+    .from("events")
+    .update({
+      ...values,
+    })
+    .eq("id", eventId)
+
+  if (error) {
+    console.error(`\n\n:DEV error:\n`, error, `\n\n`)
+    throw await dataWithError(
+      null,
+      "Ocorreu um erro ao atualizar o evento. Erro: event update",
+    )
+  }
+
+  return data
 })
