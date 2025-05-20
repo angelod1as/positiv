@@ -117,7 +117,7 @@ export const EventCard: FC<EventCardProps> = ({
       </CardContent>
       <CardFooter>
         {is_applied ? (
-          <div className="flex gap-4 w-full">
+          <div className="flex flex-col sm:flex-row gap-4 w-full">
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="outline">Adicionar ao Calendário</Button>
@@ -164,7 +164,7 @@ export const EventCard: FC<EventCardProps> = ({
                 isLoading={fetcher.state !== "idle"}
                 onConfirm={handleConfirm}
               >
-                <ConfirmDialog.Trigger variant="destructive">
+                <ConfirmDialog.Trigger variant="destructive" className="w-full">
                   Cancelar inscrição
                 </ConfirmDialog.Trigger>
               </ConfirmDialog>

@@ -27,7 +27,7 @@ function GlobalLoading() {
     >
       <div
         className={cn(
-          "h-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all duration-500 ease-in-out",
+          "h-full bg-gradient-to-r from-green via-purple to-yellow transition-all duration-500 ease-in-out",
           navigation.state === "idle" &&
             animationComplete &&
             "w-0 opacity-0 transition-none",
