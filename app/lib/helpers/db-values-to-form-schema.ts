@@ -2,7 +2,7 @@
 // Any is necessary in this file
 
 import { formatISO } from "date-fns"
-import { fromZonedTime, toZonedTime } from "date-fns-tz"
+import { fromZonedTime } from "date-fns-tz"
 import { format } from "date-fns/format"
 import type { EventStatus } from "~types/entities.types"
 import { dateRegex, dateTimeFormat } from "../utils"
@@ -45,11 +45,9 @@ export function schemaValuesToDB<
     if (value === undefined) {
       ;(acc as any)[key] = null
     } else if (typeof value === "string" && dateRegex.test(value)) {
-      const timeZone = "America/Sao_Paulo"
       const date = new Date(value)
-      const zonedDate = toZonedTime(date, timeZone)
-      const utcDate = fromZonedTime(zonedDate, timeZone)
-      ;(acc as any)[key] = formatISO(utcDate)
+      const utcDate = fromZonedTime(date, "America/Sao_Paulo")
+      ;(acc as any)[key] = formatISO(utcDate, { format: "extended" })
     } else {
       ;(acc as any)[key] = value
     }
