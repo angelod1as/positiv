@@ -1,5 +1,5 @@
 import { applySchema } from "composable-functions"
-import { redirectWithSuccess } from "remix-toast"
+import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import paths from "~/lib/paths"
@@ -46,7 +46,10 @@ type GenderPronounsOrientationProps = {
 }
 
 const {
-  dash: { DASHBOARD },
+  dash: {
+    DASHBOARD,
+    account: { GENDER_PRONOUNS_ORIENTATION, BASIC_DATA },
+  },
 } = paths
 
 export const genderPronounsOrientation = async ({
@@ -62,7 +65,10 @@ export const genderPronounsOrientation = async ({
   const formValidation = genderPronounOrientationSchema.safeParse(formData)
 
   if (!formValidation.success) {
-    throw new Error("Algo deu errado com seu formulário, tente de novo.")
+    throw await redirectWithError(
+      GENDER_PRONOUNS_ORIENTATION,
+      "Algo deu errado com seu formulário, tente de novo.",
+    )
   }
 
   const basicValidation = basicDataSchema.safeParse({
@@ -71,8 +77,9 @@ export const genderPronounsOrientation = async ({
   })
 
   if (!basicValidation.success) {
-    throw new Error(
-      "Parece que há algo faltando no formulário anterior, retorne.",
+    throw await redirectWithError(
+      BASIC_DATA,
+      "Parece que há algo faltando neste formulário, tente novamente.",
     )
   }
 
