@@ -25,8 +25,8 @@ const dayOffsets: Record<DayOffsets, number> = {
   time_interviews_end: -9,
   time_group_start: -7,
   time_group_end: 30,
-  time_payment_end: -21,
-  time_payment_start: -9,
+  time_payment_start: -21,
+  time_payment_end: -9,
 }
 
 export type PickedDay = keyof typeof dayOffsets
