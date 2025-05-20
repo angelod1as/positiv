@@ -22,6 +22,7 @@ export const forgotPasswordSchema = zod.object({
 
 export const currentUserSchema = zod.object({
   id: zod.string(),
+  email: zod.string().optional(),
 })
 
 export const changePasswordSchema = zod

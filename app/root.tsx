@@ -82,13 +82,16 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   try {
-    const { currentProfile, isProd } = await getContext(request, params)
+    const { currentProfile, isProd, currentUser } = await getContext(
+      request,
+      params,
+    )
     const { toast, headers } = await getToast(request)
 
-    return data({ profile: currentProfile, isProd, toast }, { headers })
+    return data({ currentUser, currentProfile, isProd, toast }, { headers })
   } catch (error) {
     console.error(error)
-    return { profile: null, toast: null }
+    return { currentUser: null, currentProfile: null, toast: null }
   }
 }
 
@@ -98,7 +101,6 @@ export function Layout(props: { children: ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-
         <Meta />
         <Links />
       </head>
@@ -115,7 +117,7 @@ export function Layout(props: { children: ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { profile, toast } = loaderData
+  const { currentUser, currentProfile, toast } = loaderData
 
   useEffect(() => {
     if (toast?.type) {
@@ -129,7 +131,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Header profile={profile} />
+      <Header profile={currentProfile} userEmail={currentUser?.email} />
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
@@ -147,7 +149,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         Avise-nos pelo <Link to={`mailto:${POSITIV_EMAIL}`}>email</Link> com as
         informações:
       </p>
-      <ul>
+      <ul className="list-disc">
         <li>Navegador (Chrome, Firefox, Safari, etc)</li>
         <li>Sistema operacional (iOS, Android, macOS, Windows)</li>
         <li>
@@ -176,13 +178,15 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <div className="flex flex-col grow mt-16">
       <Header profile={null} />
       <main className="grow flex flex-col justify-center items-center">
-        <h1>{message}</h1>
-        <div>{details}</div>
-        {stack && (
-          <pre className="w-full p-4 overflow-x-auto">
-            <code>{stack}</code>
-          </pre>
-        )}
+        <div className="max-w-2xl">
+          <h1>{message}</h1>
+          <div>{details}</div>
+          {stack && (
+            <pre className="w-full p-4 overflow-x-auto">
+              <code>{stack}</code>
+            </pre>
+          )}
+        </div>
       </main>
       <Footer />
     </div>
