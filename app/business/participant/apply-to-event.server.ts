@@ -1,8 +1,10 @@
 import { type Params } from "react-router"
 import { redirectWithSuccess } from "remix-toast"
+import { dateToString } from "~/lib/helpers/date-to-string"
 import paths from "~/lib/paths"
 import type { EventStatus } from "~types/entities.types"
 import { getContext } from "../auth/auth.server"
+import { applyToEventSchema } from "../common"
 import { sendApplicationMail } from "./send-application-mail.server"
 
 const {
@@ -14,18 +16,26 @@ export const applyToEvent = async (request: Request, params: Params) => {
     request,
     params,
   )
+
   const eventId = params.id
   const formData = await request.formData()
-  const confirmedRaw = formData.get("confirmed")
   const applicationDateRaw = formData.get("application_date")
-  const applicationDate = applicationDateRaw?.toString()
-  const confirmed = Boolean(confirmedRaw)
+  const confirmedRaw = formData.get("confirmed")
+  const notesRaw = formData.get("notes")
 
-  if (!confirmed || !currentProfile || !eventId) {
+  const parsedData = applyToEventSchema.safeParse({
+    applicationDate: new Date(applicationDateRaw?.toString() || ""),
+    confirmed: Boolean(confirmedRaw),
+    notes: notesRaw?.toString(),
+  })
+
+  if (!parsedData.success || !currentProfile || !eventId) {
     throw new Error("Oops, algo deu errado na sua inscrição. Tente mais tarde.")
   }
 
   const profileId = currentProfile.id
+
+  const { data: values } = parsedData
 
   const { data } = await supabase
     .from("event_participants")
@@ -38,7 +48,8 @@ export const applyToEvent = async (request: Request, params: Params) => {
     id: data?.id,
     event_id: eventId,
     profile_id: profileId,
-    application_date: applicationDate,
+    application_date: dateToString(values.applicationDate),
+    notes: values.notes, // supabase sanitizes automatically
     user_applied_status: true,
   })
 
