@@ -82,7 +82,8 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
         descriptions={{
           social_name: "Como você quer ser chamade?",
           where_lives: "Nossa dúvida: de onde nosso público vêm?",
-          how_came_to_us: "Qual rede social? Que pessoa indicou?",
+          how_came_to_us:
+            "Nos diga o nome de quem te indicou ou se você nos viu em alguma rede social",
           phone: "Só números, com DDD. Ex: 11955552222",
           confirm_phone: "Só números, com DDD. Ex: 11955552222",
           rg_issuer: "Exemplo: SSP/SP",
