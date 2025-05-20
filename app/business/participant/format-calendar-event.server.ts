@@ -17,7 +17,8 @@ export const formatCalendarEvent = async (event: ViewEvent | Event) => {
     start: startTime,
     end: endTime,
     summary: `${emoji} ${title}`,
-    description: "Mais um delicioso evento Positiv para você!",
+    description:
+      "Você ainda não foi aprovade, hein! Mas já guarde na sua agenda esse delicioso evento Positiv para não esquecer!",
     location,
     organizer: {
       name: "Positiv Party",
