@@ -22,7 +22,6 @@ type HeaderProps = {
 }
 
 export const Header: FC<HeaderProps> = ({ profile }) => {
-  const shouldShowLogin = false
   const { pathname } = useLocation()
 
   const showButton = pathname !== "/entrar"
@@ -43,41 +42,37 @@ export const Header: FC<HeaderProps> = ({ profile }) => {
         </Link>
       </div>
       <div className="flex items-center space-x-2">
-        {shouldShowLogin && (
-          <>
-            {showButton &&
-              (profile ? (
-                <div className="flex items-center space-x-2">
-                  {!!displayName && (
-                    <p className="hidden sm:block">Olá, {displayName}</p>
-                  )}
-                  <Button
-                    asChild
-                    variant="outline"
-                    title="Dashboard"
-                    to={DASHBOARD}
-                  >
-                    <HomeIcon />
-                  </Button>
-                  {isAdmin && (
-                    <Button
-                      asChild
-                      variant="outline"
-                      title="Dashboard"
-                      to={ADMIN_DASHBOARD}
-                    >
-                      <Table2Icon />
-                    </Button>
-                  )}
-                  <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
-                    <UserIcon />
-                  </Button>
-                </div>
-              ) : (
-                <Button to={LOGIN}>Entrar</Button>
-              ))}
-          </>
-        )}
+        {showButton &&
+          (profile ? (
+            <div className="flex items-center space-x-2">
+              {!!displayName && (
+                <p className="hidden sm:block">Olá, {displayName}</p>
+              )}
+              <Button
+                asChild
+                variant="outline"
+                title="Dashboard"
+                to={DASHBOARD}
+              >
+                <HomeIcon />
+              </Button>
+              {isAdmin && (
+                <Button
+                  asChild
+                  variant="outline"
+                  title="Dashboard"
+                  to={ADMIN_DASHBOARD}
+                >
+                  <Table2Icon />
+                </Button>
+              )}
+              <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
+                <UserIcon />
+              </Button>
+            </div>
+          ) : (
+            <Button to={LOGIN}>Entrar</Button>
+          ))}
       </div>
     </header>
   )
