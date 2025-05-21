@@ -49,7 +49,10 @@ const RegisterPage = ({}: Route.ComponentProps) => {
         <CardHeader>
           <CardTitle className="text-2xl">Inscreva-se</CardTitle>
           <CardDescription>
-            <p>Você está quase lá!</p>
+            <p>
+              Depois de se cadastrar, uma mensagem de confirmação vai chegar em
+              seu email.
+            </p>
           </CardDescription>
         </CardHeader>
         <CardContent>

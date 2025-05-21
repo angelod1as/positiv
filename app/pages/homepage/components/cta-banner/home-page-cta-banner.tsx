@@ -5,9 +5,10 @@ import { Section } from "../section/section"
 
 const {
   auth: { LOGIN },
+  dash: { DASHBOARD },
 } = routes
 
-export const HomePageCtaBanner = () => {
+export const HomePageCtaBanner = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
   return (
     <Section hasBg>
       <div className="px-4 md:px-6">
@@ -19,9 +20,15 @@ export const HomePageCtaBanner = () => {
               lembrade por quando novas inscrições abrirem
             </p>
           </div>
-          <Button size="lg" variant="secondary" to={LOGIN}>
-            Entrar e conferir
-          </Button>
+          {isLoggedIn ? (
+            <Button size="lg" variant="secondary" to={DASHBOARD}>
+              Veja os eventos
+            </Button>
+          ) : (
+            <Button size="lg" variant="secondary" to={LOGIN}>
+              Entrar e conferir
+            </Button>
+          )}
         </div>
       </div>
     </Section>
