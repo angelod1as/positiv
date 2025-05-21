@@ -105,7 +105,7 @@ export const agreeToTermsSchema = zod.object({
 export const basicDataSchema = zod
   .object({
     full_name: zod.string().min(2).max(255),
-    social_name: zod.string().min(2).max(255).optional(),
+    social_name: zod.string().min(2).max(255).nullish(),
     rg: zod.string().min(2),
     rg_issuer: zod.string().min(2),
     cpf: zod.string().min(2),
