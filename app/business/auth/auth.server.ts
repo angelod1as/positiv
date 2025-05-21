@@ -135,6 +135,11 @@ export const loginUser = applySchema(
     if (error.code === "invalid_credentials") {
       throw new Error("Credenciais inválidas")
     }
+    if (error.code === "email_not_confirmed") {
+      throw new Error(
+        "Você precisa confirmar suas credenciais. Confira seu e-mail!",
+      )
+    }
     throw new Error(
       `Erro de autenticação — Código: "${error.code}" — Mensagem: "${error.message}"`,
     )
