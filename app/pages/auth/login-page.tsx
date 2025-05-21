@@ -19,7 +19,7 @@ import { SchemaForm } from "~/components/forms/schema-form"
 import type { Route } from "./+types/login-page"
 
 const {
-  auth: { FORGOT_PASSWORD, LOGON },
+  auth: { FORGOT_PASSWORD, LOGON, LOGIN },
   dash: { DASHBOARD },
 } = paths
 
@@ -45,7 +45,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(
-          DASHBOARD,
+          LOGIN,
           {
             message: "Bem vinde!",
             description:
@@ -73,7 +73,9 @@ const LoginPage = ({}: Route.ComponentProps) => {
           <CardDescription>
             <p>Entre na sua conta com seu e-mail</p>
             <p className="text-sm">
-              Não tem uma conta? <Link to={LOGON}>Inscreva-se</Link>
+              <b>
+                Não tem uma conta? <Link to={LOGON}>Inscreva-se</Link>
+              </b>
             </p>
           </CardDescription>
         </CardHeader>

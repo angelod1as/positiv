@@ -1,4 +1,4 @@
-import { HomeIcon, Table2Icon, UserIcon } from "lucide-react"
+import { CalendarIcon, Table2Icon, UserIcon } from "lucide-react"
 import type { FC } from "react"
 import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
@@ -56,7 +56,7 @@ export const Header: FC<HeaderProps> = ({ profile, userEmail }) => {
                 title="Dashboard"
                 to={DASHBOARD}
               >
-                <HomeIcon />
+                <CalendarIcon />
               </Button>
               {isAdmin && (
                 <Button
