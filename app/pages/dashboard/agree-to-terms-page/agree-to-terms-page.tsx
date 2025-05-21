@@ -67,12 +67,12 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
       </p>
 
       <p>
-        "Ah, sou uma pessoa cis hétero e não mono, posso ir?" Existem muitos de
+        "Ah, sou uma pessoa cis hétero e não mono, posso ir?" Existem muitos
         espaços pensados para pessoas cis hétero e realmente queremos construir
-        um coletivo que não seja cisheteronormativo. Portanto, se for uma pessoa
-        cis hétero, as chances de você ser selecionade para participar são
-        baixas. E, por favor, não minta sobre sua identidade ou orientação
-        sexual.
+        uma experiência coletiva que não seja cisheteronormativa. Portanto, se
+        for uma pessoa cis hétero, as chances de você ser selecionade para
+        participar são baixas. E, por favor, não minta sobre sua identidade ou
+        orientação sexual.
       </p>
 
       <p>
