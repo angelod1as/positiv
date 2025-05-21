@@ -5,40 +5,44 @@ import { HomePageFounders } from "~/pages/homepage/components/founders/home-page
 import { HomePageHero } from "~/pages/homepage/components/hero/hero"
 import { HomePageNextEvents } from "~/pages/homepage/components/next-events/next-events"
 import { HomePageTestimonials } from "~/pages/homepage/components/testimonials/home-page-testimonials"
-import type { FCC } from "~types/utils.types"
 import type { Route } from "./+types/homepage"
 import { HomePageNextEventsSkeleton } from "./components/next-events/next-events-skeleton"
 import { getNextEvents } from "./fetch/get-next-events"
 
 /* Needs to be clientLoader because getNextEvents needs new Date() */
 export async function clientLoader({}: Route.LoaderArgs) {
-  const { currentProfile, supabase } = await getClientContext()
-  return await getNextEvents(supabase, currentProfile?.id, 3)
+  const { currentUser, currentProfile, supabase } = await getClientContext()
+  const isLoggedIn = !!currentUser?.id
+  const { error, events } = await getNextEvents(supabase, currentProfile?.id, 3)
+  if (error || !events) {
+    return { events: undefined, isLoggedIn }
+  }
+  return { events, isLoggedIn }
 }
 
-/* Wrapper to show Skeleton below */
-const Wrapper: FCC = ({ children }) => {
+export function HydrateFallback() {
   return (
     <div>
       <HomePageHero />
-      {children}
+      <HomePageNextEventsSkeleton />
       <HomePageAbout />
       <HomePageTestimonials />
-      <HomePageCtaBanner />
+      <HomePageCtaBanner isLoggedIn={false} />
       <HomePageFounders />
     </div>
   )
 }
 
-export function HydrateFallback() {
-  return (
-    <Wrapper>
-      <HomePageNextEventsSkeleton />
-    </Wrapper>
-  )
-}
-
 export default function Homepage({ loaderData }: Route.ComponentProps) {
-  const { error, events } = loaderData
-  return <Wrapper>{!error && <HomePageNextEvents events={events} />}</Wrapper>
+  const { events, isLoggedIn } = loaderData
+  return (
+    <div>
+      <HomePageHero />
+      <HomePageNextEvents events={events} />
+      <HomePageAbout />
+      <HomePageTestimonials />
+      <HomePageCtaBanner isLoggedIn={isLoggedIn} />
+      <HomePageFounders />
+    </div>
+  )
 }
