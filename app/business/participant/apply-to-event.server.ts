@@ -80,7 +80,8 @@ export const applyToEvent = async (request: Request, params: Params) => {
     DASHBOARD,
     {
       message: "Inscrição efetuada com sucesso",
-      description: "Você receberá as informações do evento em seu email",
+      description:
+        "Você receberá as informações do evento em seu email (pode demorar uns minutos)",
       duration: 3000,
     },
     {
