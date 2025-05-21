@@ -15,7 +15,7 @@ export const HomePageFounders = () => {
               image={Julia}
               name="Julia Fernandez"
               alt=""
-              pronouns="ela/dela"
+              pronouns="todos os pronomes"
               instagram="ju.z.fernandez"
             >
               <p>
