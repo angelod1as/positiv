@@ -26,7 +26,18 @@ export default [
         index("pages/dashboard/dashboard-page.tsx"),
       ]),
       layout("pages/events/layout.tsx", [
-        route(":id", "pages/events/rules-page.tsx"),
+        // Root
+        route(":id/", "pages/events/event.tsx"),
+        // Step 1
+        route(
+          ":id/regras",
+          "pages/events/application/rules/event-rules-page.tsx",
+        ),
+        // Step 2
+        route(
+          ":id/dados",
+          "pages/events/application/user-data/event-user-data.tsx",
+        ),
       ]),
 
       route(

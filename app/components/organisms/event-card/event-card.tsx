@@ -28,10 +28,8 @@ import { DateStatus } from "./date-status"
 
 const {
   dash: {
-    participant: {
-      DOWNLOAD_CALENDAR,
-      events: { EVENT_VIEW },
-    },
+    participant: { DOWNLOAD_CALENDAR },
+    events: { EVENT_VIEW },
   },
 } = paths
 
