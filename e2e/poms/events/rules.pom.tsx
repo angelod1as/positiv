@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test"
 import { EVENT_PAGE_REGEXP } from "~/lib/helpers/constants"
 import paths from "~/lib/paths"
-import { rulesFormQuestions } from "~/pages/events/rules/rules-form/rules-questions"
+import { rulesFormQuestions } from "~/pages/events/application/rules/rules-form/rules-questions"
 import { MailhogPOM } from "../mailhog/mailhog.pom"
 
 export class RulesPOM {
@@ -107,7 +107,7 @@ export class RulesPOM {
   }
 
   async goto(eventId: string) {
-    await this.page.goto(paths.dash.participant.events.EVENT_VIEW(eventId))
+    await this.page.goto(paths.dash.events.EVENT_VIEW(eventId))
   }
 
   async testBasicElements() {
