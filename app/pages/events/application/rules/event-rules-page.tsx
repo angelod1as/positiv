@@ -1,5 +1,11 @@
-import { useState } from "react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useMemo } from "react"
+import { useForm } from "react-hook-form"
+import { Form } from "react-router"
+import type { z } from "zod"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
+import { Button } from "~/components/atoms/button/button"
+import { Error } from "~/components/forms/error"
 import {
   Card,
   CardContent,
@@ -7,10 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { zod } from "~/lib/helpers/zod"
 import type { FCC } from "~types/utils.types"
-import { RulesDialog } from "../rules-dialog"
 import type { Route } from "./+types/event-rules-page"
-import { RulesForm } from "./rules-form"
+import { MultipleSelect } from "./rules-form/multiple-select"
+import { rulesFormSchema } from "./rules-form/rules-form-schema"
+import { shuffleQuestions } from "./rules-form/shuffle-questions"
+import { SingleSelect } from "./rules-form/single-select"
 import { RulesText } from "./rules-text"
 
 // Empty client-loader to force Client Side Rendering only
@@ -47,16 +56,74 @@ export function HydrateFallback() {
   )
 }
 
+const validationSchema = zod.object(rulesFormSchema)
+export type RulesFormData = z.infer<typeof validationSchema>
+
 const EventRulesPage = ({}: Route.ComponentProps) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    clearErrors,
+  } = useForm<RulesFormData>({
+    reValidateMode: "onSubmit",
+    mode: "onSubmit",
+    resolver: zodResolver(validationSchema),
+    shouldFocusError: true,
+  })
+
+  const shuffledQuestions = useMemo(shuffleQuestions, [])
+
+  const onSubmit = () => {
+    // setIsDialogOpen(true)
+  }
+
+  const handleChange = () => {
+    clearErrors()
+  }
+
+  const hasErrors = Object.keys(errors).length > 0
 
   return (
     <Wrapper>
-      <RulesForm setIsDialogOpen={setIsDialogOpen} />
-      <RulesDialog
-        isDialogOpen={isDialogOpen}
-        setIsDialogOpen={setIsDialogOpen}
-      />
+      <Form
+        onChange={handleChange}
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-12"
+      >
+        {shuffledQuestions.map(({ name, question, answers, correct }) => {
+          const errorMsg = errors[name]?.message?.toString()
+          return (
+            <div
+              key={name}
+              className="font-bold text-base flex flex-col gap-4"
+              data-testid="question"
+            >
+              <p>{question}</p>
+              {correct.length === 1 ? (
+                <SingleSelect
+                  name={name}
+                  key={name}
+                  control={control}
+                  answers={answers}
+                  error={errorMsg}
+                />
+              ) : (
+                <MultipleSelect
+                  key={name}
+                  name={name}
+                  control={control}
+                  answers={answers}
+                  error={errorMsg}
+                />
+              )}
+            </div>
+          )
+        })}
+
+        {hasErrors && <Error>Há erros nas suas respostas</Error>}
+        <Button type="submit">Inscrever-se</Button>
+      </Form>
     </Wrapper>
   )
 }
