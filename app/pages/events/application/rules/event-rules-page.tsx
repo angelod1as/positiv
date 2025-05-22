@@ -1,9 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMemo } from "react"
 import { useForm } from "react-hook-form"
-import { Form } from "react-router"
+import { Form, redirect } from "react-router"
 import type { z } from "zod"
-import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/error"
 import {
@@ -14,6 +13,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import { zod } from "~/lib/helpers/zod"
+import paths from "~/lib/paths"
 import type { FCC } from "~types/utils.types"
 import type { Route } from "./+types/event-rules-page"
 import { MultipleSelect } from "./rules-form/multiple-select"
@@ -22,12 +22,20 @@ import { shuffleQuestions } from "./rules-form/shuffle-questions"
 import { SingleSelect } from "./rules-form/single-select"
 import { RulesText } from "./rules-text"
 
-// Empty client-loader to force Client Side Rendering only
-// otherwise the random form gives a hydration error
-export async function clientLoader({}: Route.ClientLoaderArgs) {}
+const {
+  dash: {
+    DASHBOARD,
+    events: { EVENT_DATA },
+  },
+} = paths
 
-export async function action({ request, params }: Route.ActionArgs) {
-  return await applyToEvent(request, params)
+// Needs to be clientLoader, otherwise the random form loads with Hydration Error
+export async function clientLoader({ params }: Route.ClientLoaderArgs) {
+  if (!params.id) return redirect(DASHBOARD)
+}
+
+export async function action({ params }: Route.ActionArgs) {
+  return redirect(EVENT_DATA(params.id))
 }
 
 const Wrapper: FCC = ({ children }) => (
@@ -62,7 +70,6 @@ export type RulesFormData = z.infer<typeof validationSchema>
 const EventRulesPage = ({}: Route.ComponentProps) => {
   const {
     control,
-    handleSubmit,
     formState: { errors },
     clearErrors,
   } = useForm<RulesFormData>({
@@ -74,10 +81,6 @@ const EventRulesPage = ({}: Route.ComponentProps) => {
 
   const shuffledQuestions = useMemo(shuffleQuestions, [])
 
-  const onSubmit = () => {
-    // setIsDialogOpen(true)
-  }
-
   const handleChange = () => {
     clearErrors()
   }
@@ -87,8 +90,8 @@ const EventRulesPage = ({}: Route.ComponentProps) => {
   return (
     <Wrapper>
       <Form
+        method="POST"
         onChange={handleChange}
-        onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col gap-12"
       >
         {shuffledQuestions.map(({ name, question, answers, correct }) => {
