@@ -12,39 +12,48 @@ export type Database = {
       event_participants: {
         Row: {
           application_date: string
+          bond: string | null
           cancellation_date: string | null
+          companions: string | null
           created_at: string
           event_id: string
           id: string
+          is_user_applied: boolean
           notes: string | null
           payment: number | null
           process_status: string
           profile_id: string | null
-          is_user_applied: boolean
+          referrals: string | null
         }
         Insert: {
           application_date?: string
+          bond?: string | null
           cancellation_date?: string | null
+          companions?: string | null
           created_at?: string
           event_id: string
           id?: string
+          is_user_applied?: boolean
           notes?: string | null
           payment?: number | null
           process_status?: string
           profile_id?: string | null
-          is_user_applied?: boolean
+          referrals?: string | null
         }
         Update: {
           application_date?: string
+          bond?: string | null
           cancellation_date?: string | null
+          companions?: string | null
           created_at?: string
           event_id?: string
           id?: string
+          is_user_applied?: boolean
           notes?: string | null
           payment?: number | null
           process_status?: string
           profile_id?: string | null
-          is_user_applied?: boolean
+          referrals?: string | null
         }
         Relationships: [
           {
@@ -371,3 +380,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
