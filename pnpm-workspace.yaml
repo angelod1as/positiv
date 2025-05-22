@@ -1,4 +1,4 @@
 onlyBuiltDependencies:
   - '@vercel/speed-insights'
 patchedDependencies:
-  remix-forms: patches/remix-forms.patch
+  remix-forms@3.1.0: patches/remix-forms@3.1.0.patch
