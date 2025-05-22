@@ -1,6 +1,7 @@
 import { createCookieSessionStorage } from "react-router"
+import { env } from "~/env.server"
 
-type SessionData = {
+type RulesSessionData = {
   rulesCorrect: boolean
 }
 
@@ -8,20 +9,19 @@ type SessionFlashData = {
   error: string
 }
 
-// TODO: understand this better and change the settings
-const { getSession, commitSession, destroySession } =
-  createCookieSessionStorage<SessionData, SessionFlashData>({
-    cookie: {
-      name: "__session",
-      // all of these are optional
-      // domain: "reactrouter.com",
-      httpOnly: true,
-      maxAge: 60,
-      path: "/",
-      sameSite: "lax",
-      secrets: ["s3cret1"],
-      secure: true,
-    },
-  })
+const { cookieSecret } = env()
 
-export { commitSession, destroySession, getSession }
+export const rulesSessionStorage = createCookieSessionStorage<
+  RulesSessionData,
+  SessionFlashData
+>({
+  cookie: {
+    name: "__session_rules",
+    httpOnly: true,
+    maxAge: 60 * 30, // 30 minutes
+    path: "/",
+    sameSite: "lax",
+    secure: true,
+    secrets: [cookieSecret || ""],
+  },
+})
