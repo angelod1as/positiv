@@ -8,10 +8,10 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import type { FCC } from "~types/utils.types"
-import type { Route } from "./+types/rules-page"
-import { RulesDialog } from "./rules-dialog"
-import { RulesForm } from "./rules/rules-form/rules-form"
-import { RulesText } from "./rules/rules-text"
+import { RulesDialog } from "../rules-dialog"
+import type { Route } from "./+types/event-rules-page"
+import { RulesForm } from "./rules-form"
+import { RulesText } from "./rules-text"
 
 // Empty client-loader to force Client Side Rendering only
 // otherwise the random form gives a hydration error
@@ -47,7 +47,7 @@ export function HydrateFallback() {
   )
 }
 
-const RulesPage = ({}: Route.ComponentProps) => {
+const EventRulesPage = ({}: Route.ComponentProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   return (
@@ -61,4 +61,4 @@ const RulesPage = ({}: Route.ComponentProps) => {
   )
 }
 
-export default RulesPage
+export default EventRulesPage

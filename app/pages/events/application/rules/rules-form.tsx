@@ -12,10 +12,10 @@ import type { z } from "zod"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/error"
 import { zod } from "~/lib/helpers/zod"
-import { MultipleSelect } from "./multiple-select"
-import { rulesFormSchema } from "./rules-form-schema"
-import { shuffleQuestions } from "./shuffle-questions"
-import { SingleSelect } from "./single-select"
+import { MultipleSelect } from "./rules-form/multiple-select"
+import { rulesFormSchema } from "./rules-form/rules-form-schema"
+import { shuffleQuestions } from "./rules-form/shuffle-questions"
+import { SingleSelect } from "./rules-form/single-select"
 
 const validationSchema = zod.object(rulesFormSchema)
 export type RulesFormData = z.infer<typeof validationSchema>

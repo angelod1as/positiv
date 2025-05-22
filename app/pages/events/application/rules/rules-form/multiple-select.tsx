@@ -3,7 +3,7 @@ import { Controller, type Control } from "react-hook-form"
 import { Error } from "~/components/forms/error"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Label } from "~/components/ui/label"
-import type { RulesFormData } from "./rules-form"
+import type { RulesFormData } from "../rules-form"
 
 type MultipleSelectProps = {
   name: string
