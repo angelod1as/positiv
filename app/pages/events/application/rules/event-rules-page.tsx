@@ -3,7 +3,7 @@ import { useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { Form, redirect } from "react-router"
 import type { z } from "zod"
-import { commitSession, getSession } from "~/business/session.server"
+import { rulesSessionStorage } from "~/business/session.server"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/error"
 import {
@@ -33,6 +33,7 @@ const {
 export async function clientLoader({}: Route.ClientLoaderArgs) {}
 
 export async function action({ request, params }: Route.ActionArgs) {
+  const { commitSession, getSession } = rulesSessionStorage
   const session = await getSession(request.headers.get("Cookie"))
   session.set("rulesCorrect", true)
   return redirect(EVENT_DATA(params.id), {
