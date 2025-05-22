@@ -39,13 +39,13 @@ BEGIN
     -- ### Seed public.event_participants ###
     -- Insert specific participation records using the retrieved IDs
 
-    INSERT INTO public.event_participants (profile_id, event_id, user_applied_status, process_status, application_date, cancellation_date, payment, notes)
+    INSERT INTO public.event_participants (profile_id, event_id, is_user_applied, process_status, application_date, cancellation_date, payment, notes)
     VALUES
     -- Admin's Participations (Example Scenarios)
     (
         admin_profile_id,              -- profile_id: Admin
         event_id_reg_open_1,           -- event_id: Registration Open
-        TRUE,                          -- user_applied_status: Applied by user
+        TRUE,                          -- is_user_applied: Applied by user
         'confirmed',                   -- process_status: Confirmed
         now() - interval '2 months',   -- application_date
         NULL,                          -- cancellation_date
@@ -55,7 +55,7 @@ BEGIN
     (
         admin_profile_id,              -- profile_id: Admin
         event_id_completed_1,          -- event_id: Completed *** USING COMPLETED EVENT ***
-        TRUE,                          -- user_applied_status: Applied by user
+        TRUE,                          -- is_user_applied: Applied by user
         'attended',                    -- process_status: Attended
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
@@ -65,7 +65,7 @@ BEGIN
     (
         admin_profile_id,              -- profile_id: Admin
         event_id_cancelled_1,          -- event_id: Cancelled
-        FALSE,                         -- user_applied_status: Added by admin
+        FALSE,                         -- is_user_applied: Added by admin
         'cancelled_by_admin',          -- process_status: Cancelled by admin
         now() - interval '3 months',   -- application_date
         now() - interval '1 month',    -- cancellation_date
@@ -77,7 +77,7 @@ BEGIN
     (
         user1_profile_id,              -- profile_id: User1
         event_id_reg_open_1,           -- event_id: Registration Open (same event as admin example)
-        TRUE,                          -- user_applied_status: Applied by user
+        TRUE,                          -- is_user_applied: Applied by user
         'applied',                     -- process_status: Applied (not yet confirmed)
         now() - interval '1 day',      -- application_date
         NULL,                          -- cancellation_date
@@ -87,7 +87,7 @@ BEGIN
     (
         user1_profile_id,              -- profile_id: User1
         event_id_reg_closed_1,         -- event_id: Registration Closed
-        TRUE,                          -- user_applied_status: Applied by user
+        TRUE,                          -- is_user_applied: Applied by user
         'confirmed',                   -- process_status: Confirmed
         now() - interval '1 month',    -- application_date
         NULL,                          -- cancellation_date
@@ -97,7 +97,7 @@ BEGIN
     (
         user1_profile_id,              -- profile_id: User1
         event_id_scheduled_1,          -- event_id: Scheduled Event 1
-        FALSE,                         -- user_applied_status: Added by admin
+        FALSE,                         -- is_user_applied: Added by admin
         'applied',                     -- process_status: Applied
         now() - interval '1 week',     -- application_date
         NULL,                          -- cancellation_date
@@ -110,7 +110,7 @@ BEGIN
     (
         user2_profile_id,              -- profile_id: User2
         event_id_reg_open_1,           -- event_id: Registration Open (another participation in this event)
-        TRUE,                          -- user_applied_status: Applied by user
+        TRUE,                          -- is_user_applied: Applied by user
         'applied',                     -- process_status: Applied
         now() - interval '2 days',     -- application_date
         NULL,                          -- cancellation_date
