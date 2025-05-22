@@ -37,7 +37,7 @@ export const getNextEvents: GetNextEvents = async (
     time_interviews_end,
     time_payment_start,
     time_payment_end,
-    active_applications: event_participants(user_applied_status)
+    active_applications: event_participants(is_user_applied)
     `,
   )
 
@@ -76,7 +76,7 @@ export const getNextEvents: GetNextEvents = async (
         event_status: event.event_status as EventStatus,
         is_applied:
           event.active_applications.length > 0 &&
-          event.active_applications[0].user_applied_status,
+          event.active_applications[0].is_user_applied,
         active_applications: [],
       }
     })
