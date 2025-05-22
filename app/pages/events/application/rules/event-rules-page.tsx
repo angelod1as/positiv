@@ -3,6 +3,7 @@ import { useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { Form, redirect } from "react-router"
 import type { z } from "zod"
+import { commitSession, getSession } from "~/business/session.server"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/error"
 import {
@@ -24,18 +25,21 @@ import { RulesText } from "./rules-text"
 
 const {
   dash: {
-    DASHBOARD,
     events: { EVENT_DATA },
   },
 } = paths
 
-// Needs to be clientLoader, otherwise the random form loads with Hydration Error
-export async function clientLoader({ params }: Route.ClientLoaderArgs) {
-  if (!params.id) return redirect(DASHBOARD)
-}
+// This clientLoader is needed, otherwise the random form loads with Hydration Error
+export async function clientLoader({}: Route.ClientLoaderArgs) {}
 
-export async function action({ params }: Route.ActionArgs) {
-  return redirect(EVENT_DATA(params.id))
+export async function action({ request, params }: Route.ActionArgs) {
+  const session = await getSession(request.headers.get("Cookie"))
+  session.set("rulesCorrect", true)
+  return redirect(EVENT_DATA(params.id), {
+    headers: {
+      "Set-Cookie": await commitSession(session),
+    },
+  })
 }
 
 const Wrapper: FCC = ({ children }) => (
