@@ -50,7 +50,7 @@ export const applyToEvent = async (request: Request, params: Params) => {
     profile_id: profileId,
     application_date: dateToString(values.applicationDate),
     notes: values.notes, // supabase sanitizes automatically
-    user_applied_status: true,
+    is_user_applied: true,
   })
 
   if (error) {
