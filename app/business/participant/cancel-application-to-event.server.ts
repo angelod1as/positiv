@@ -23,12 +23,12 @@ export const cancelApplicationToEvent = async (
   const { error } = await supabase
     .from("event_participants")
     .update({
-      user_applied_status: false,
+      is_user_applied: false,
       cancellation_date: dateToString(new Date()),
     })
     .eq("event_id", eventId)
     .eq("profile_id", profileId)
-    .eq("user_applied_status", true)
+    .eq("is_user_applied", true)
 
   if (error) {
     throw new Error(

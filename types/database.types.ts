@@ -20,7 +20,7 @@ export type Database = {
           payment: number | null
           process_status: string
           profile_id: string | null
-          user_applied_status: boolean
+          is_user_applied: boolean
         }
         Insert: {
           application_date?: string
@@ -32,7 +32,7 @@ export type Database = {
           payment?: number | null
           process_status?: string
           profile_id?: string | null
-          user_applied_status?: boolean
+          is_user_applied?: boolean
         }
         Update: {
           application_date?: string
@@ -44,7 +44,7 @@ export type Database = {
           payment?: number | null
           process_status?: string
           profile_id?: string | null
-          user_applied_status?: boolean
+          is_user_applied?: boolean
         }
         Relationships: [
           {
@@ -371,4 +371,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
