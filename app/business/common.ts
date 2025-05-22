@@ -157,6 +157,5 @@ export const genderPronounOrientationSchema = zod.object({
 
 export const applyToEventSchema = zod.object({
   applicationDate: zod.date(),
-  confirmed: zod.boolean(),
   notes: zod.string().optional(),
 })
