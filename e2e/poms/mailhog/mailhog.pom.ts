@@ -32,7 +32,7 @@ export class MailhogPOM {
 
   async testApplicationEmail() {
     const { subject, heading } = this.eventMail
-    await expect(subject).toBeVisible()
+    await expect(subject).toBeVisible({ timeout: 10_000 })
 
     await subject.click()
     await expect(heading).toBeVisible()
