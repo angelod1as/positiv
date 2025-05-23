@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMemo } from "react"
-import { useForm } from "react-hook-form"
-import { Form, redirect } from "react-router"
+import { useForm, type SubmitHandler } from "react-hook-form"
+import { Form, redirect, useSubmit } from "react-router"
 import type { z } from "zod"
 import { rulesSessionStorage } from "~/business/session.server"
 import { Button } from "~/components/atoms/button/button"
@@ -73,9 +73,11 @@ const validationSchema = zod.object(rulesFormSchema)
 export type RulesFormData = z.infer<typeof validationSchema>
 
 const EventRulesPage = ({}: Route.ComponentProps) => {
+  const submit = useSubmit()
   const {
     control,
     formState: { errors },
+    handleSubmit,
     clearErrors,
   } = useForm<RulesFormData>({
     reValidateMode: "onSubmit",
@@ -83,6 +85,11 @@ const EventRulesPage = ({}: Route.ComponentProps) => {
     resolver: zodResolver(validationSchema),
     shouldFocusError: true,
   })
+
+  const onSubmit: SubmitHandler<z.infer<typeof validationSchema>> = (data) =>
+    submit(data, {
+      method: "POST",
+    })
 
   const shuffledQuestions = useMemo(shuffleQuestions, [])
 
@@ -97,6 +104,7 @@ const EventRulesPage = ({}: Route.ComponentProps) => {
       <Form
         method="POST"
         onChange={handleChange}
+        onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col gap-12"
       >
         {shuffledQuestions.map(({ name, question, answers, correct }) => {
@@ -130,7 +138,7 @@ const EventRulesPage = ({}: Route.ComponentProps) => {
         })}
 
         {hasErrors && <Error>Há erros nas suas respostas</Error>}
-        <Button type="submit">Inscrever-se</Button>
+        <Button type="submit">Continuar</Button>
       </Form>
     </Wrapper>
   )
