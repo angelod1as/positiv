@@ -1,19 +1,14 @@
 import { applySchema } from "composable-functions"
 import { dateToString } from "~/lib/helpers/date-to-string"
-import paths from "~/lib/paths"
 import type { EventStatus } from "~types/entities.types"
 import { applyToEventSchema, userContextSchema } from "../common"
 import { sendApplicationMail } from "./send-application-mail.server"
-
-const {
-  dash: { DASHBOARD },
-} = paths
 
 export const applyToEvent = applySchema(
   applyToEventSchema,
   userContextSchema,
 )(async (allValues, context) => {
-  const { supabase, currentProfile, supabaseHeaders } = context
+  const { supabase, currentProfile } = context
   const { eventId, applicationDate, ...values } = allValues
 
   if (!currentProfile || !eventId) {
