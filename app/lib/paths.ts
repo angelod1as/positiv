@@ -25,6 +25,8 @@ const AGREE_TO_TERMS = `${ACCOUNT}/termos`
 //// USER
 // EVENTS
 const EVENT_VIEW = (id: string) => `${DASHBOARD}/${id}`
+const EVENT_RULES = (id: string) => `${EVENT_VIEW(id)}/regras`
+const EVENT_DATA = (id: string) => `${EVENT_VIEW(id)}/dados`
 
 //// ADMIN
 const ADMIN_DASHBOARD = "/admin"
@@ -62,13 +64,15 @@ const paths = {
       BASIC_DATA,
       GENDER_PRONOUNS_ORIENTATION,
     },
+    events: {
+      EVENT_VIEW,
+      EVENT_RULES,
+      EVENT_DATA,
+    },
     participant: {
       DASHBOARD,
       DOWNLOAD_CALENDAR,
       AGREE_TO_TERMS,
-      events: {
-        EVENT_VIEW,
-      },
     },
   },
 }

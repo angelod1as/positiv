@@ -156,7 +156,12 @@ export const genderPronounOrientationSchema = zod.object({
 })
 
 export const applyToEventSchema = zod.object({
-  applicationDate: zod.date(),
-  confirmed: zod.boolean(),
+  applicationDate: zod.coerce.date(),
+  eventId: zod.string(),
+  referrals: zod.string().optional(),
+  companions: zod.string().optional(),
+  bond: zod
+    .enum(["Só vou acompanhade.", "Posso ir sozinhe."])
+    .default("Posso ir sozinhe."),
   notes: zod.string().optional(),
 })
