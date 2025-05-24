@@ -1,41 +1,21 @@
-import { type Params } from "react-router"
-import { redirectWithSuccess } from "remix-toast"
+import { applySchema } from "composable-functions"
 import { dateToString } from "~/lib/helpers/date-to-string"
-import paths from "~/lib/paths"
 import type { EventStatus } from "~types/entities.types"
-import { getContext } from "../auth/auth.server"
-import { applyToEventSchema } from "../common"
+import { applyToEventSchema, userContextSchema } from "../common"
 import { sendApplicationMail } from "./send-application-mail.server"
 
-const {
-  dash: { DASHBOARD },
-} = paths
+export const applyToEvent = applySchema(
+  applyToEventSchema,
+  userContextSchema,
+)(async (allValues, context) => {
+  const { supabase, currentProfile } = context
+  const { eventId, applicationDate, ...values } = allValues
 
-export const applyToEvent = async (request: Request, params: Params) => {
-  const { currentProfile, supabase, supabaseHeaders } = await getContext(
-    request,
-    params,
-  )
-
-  const eventId = params.id
-  const formData = await request.formData()
-  const applicationDateRaw = formData.get("application_date")
-  const confirmedRaw = formData.get("confirmed")
-  const notesRaw = formData.get("notes")
-
-  const parsedData = applyToEventSchema.safeParse({
-    applicationDate: new Date(applicationDateRaw?.toString() || ""),
-    confirmed: Boolean(confirmedRaw),
-    notes: notesRaw?.toString(),
-  })
-
-  if (!parsedData.success || !currentProfile || !eventId) {
+  if (!currentProfile || !eventId) {
     throw new Error("Oops, algo deu errado na sua inscrição. Tente mais tarde.")
   }
 
   const profileId = currentProfile.id
-
-  const { data: values } = parsedData
 
   const { data } = await supabase
     .from("event_participants")
@@ -48,8 +28,8 @@ export const applyToEvent = async (request: Request, params: Params) => {
     id: data?.id,
     event_id: eventId,
     profile_id: profileId,
-    application_date: dateToString(values.applicationDate),
-    notes: values.notes, // supabase sanitizes automatically
+    application_date: dateToString(applicationDate),
+    ...values, // Supabase sanitizes automatically
     is_user_applied: true,
   })
 
@@ -76,16 +56,5 @@ export const applyToEvent = async (request: Request, params: Params) => {
     }
   }
 
-  return redirectWithSuccess(
-    DASHBOARD,
-    {
-      message: "Inscrição efetuada com sucesso",
-      description:
-        "Você receberá as informações do evento em seu email (pode demorar uns minutos)",
-      duration: 3000,
-    },
-    {
-      headers: supabaseHeaders,
-    },
-  )
-}
+  return
+})

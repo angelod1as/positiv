@@ -5,9 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  remix-forms:
-    hash: 89dee95f210c3da0136dcb01102baac4f60bbbd5142d5da5f7ae94f0cba16831
-    path: patches/remix-forms.patch
+  remix-forms@3.1.0:
+    hash: efcb51e8251cbbd8bcd9a80fa46c6ca536e572db71600882a3edbc9abd1b03e7
+    path: patches/remix-forms@3.1.0.patch
 
 importers:
 
@@ -125,8 +125,8 @@ importers:
         specifier: ^7.6.0
         version: 7.6.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       remix-forms:
-        specifier: ^3.0.1
-        version: 3.0.1(patch_hash=89dee95f210c3da0136dcb01102baac4f60bbbd5142d5da5f7ae94f0cba16831)(composable-functions@5.0.0)(react-hook-form@7.56.1(react@19.1.0))(react-router@7.6.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@3.24.3)
+        specifier: ^3.1.0
+        version: 3.1.0(patch_hash=efcb51e8251cbbd8bcd9a80fa46c6ca536e572db71600882a3edbc9abd1b03e7)(composable-functions@5.0.0)(react-hook-form@7.56.1(react@19.1.0))(react-router@7.6.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@3.24.3)
       remix-toast:
         specifier: ^3.1.0
         version: 3.1.0(react-router@7.6.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -3698,8 +3698,8 @@ packages:
     resolution: {integrity: sha512-dYqgNSZbDwkaJ2ceRd9ojCGjBq+mOm9LmtXnAnEGyHhN/5R7iDW2TRw3h+o/jCFxus3P2LfWIIiwowAjANm7IA==}
     engines: {node: '>= 0.4'}
 
-  remix-forms@3.0.1:
-    resolution: {integrity: sha512-T+uX8pNDsbIvWSI36zP/2HUAtD9U7L/0JdvUtXlXc8CjhFH8VISmFJjqfQ0vk9oW8dpoofqPIdPChAcFMNYhrw==}
+  remix-forms@3.1.0:
+    resolution: {integrity: sha512-E6YG7nfyWFIJ7ARG3X441Jr74psNqBwxsrRuW2nUQNsvqeAB2ovM+2bP+tJxK3wHPM6W/A5pkVWaNwcJGTsmwQ==}
     peerDependencies:
       composable-functions: '>=4'
       react: '>=16.8'
@@ -8400,7 +8400,7 @@ snapshots:
       gopd: 1.2.0
       set-function-name: 2.0.2
 
-  remix-forms@3.0.1(patch_hash=89dee95f210c3da0136dcb01102baac4f60bbbd5142d5da5f7ae94f0cba16831)(composable-functions@5.0.0)(react-hook-form@7.56.1(react@19.1.0))(react-router@7.6.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@3.24.3):
+  remix-forms@3.1.0(patch_hash=efcb51e8251cbbd8bcd9a80fa46c6ca536e572db71600882a3edbc9abd1b03e7)(composable-functions@5.0.0)(react-hook-form@7.56.1(react@19.1.0))(react-router@7.6.0(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@3.24.3):
     dependencies:
       '@hookform/resolvers': 2.9.11(react-hook-form@7.56.1(react@19.1.0))
       composable-functions: 5.0.0

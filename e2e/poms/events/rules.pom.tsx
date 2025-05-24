@@ -1,8 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test"
 import { EVENT_PAGE_REGEXP } from "~/lib/helpers/constants"
 import paths from "~/lib/paths"
-import { rulesFormQuestions } from "~/pages/events/rules/rules-form/rules-questions"
-import { MailhogPOM } from "../mailhog/mailhog.pom"
+import { rulesFormQuestions } from "~/pages/events/application/rules/rules-form/rules-questions"
 
 export class RulesPOM {
   readonly page: Page
@@ -11,11 +10,8 @@ export class RulesPOM {
   readonly textContent: Locator
   readonly testTitle: Locator
   readonly sampleQuestion: Locator
-  readonly applyButton: Locator
   readonly requiredError: Locator
-  readonly dialog: Locator
-  readonly dialogCancel: Locator
-  readonly dialogConfirm: Locator
+  readonly continueButton: Locator
   readonly radio: {
     question: Locator
     wrong: Locator
@@ -47,17 +43,8 @@ export class RulesPOM {
       .getByText("Quais afirmações estão corretas?")
       .first()
     this.textContent = this.page.getByText("Vamos ao que interessa:")
-    this.applyButton = this.page.getByRole("button", { name: "Inscrever-se" })
 
-    // Dialog
-    this.dialog = this.page.getByRole("alertdialog", {
-      name: "Confirmar inscrição",
-    })
-    this.dialogCancel = this.page.getByRole("button", { name: "😢 Cancelar" })
-    this.dialogConfirm = this.page.getByRole("button", {
-      name: "🎉 Confirmar!",
-    })
-
+    this.continueButton = this.page.getByRole("button", { name: "Continuar" })
     // Errors
     this.requiredError = this.page
       .getByTestId("question")
@@ -107,7 +94,7 @@ export class RulesPOM {
   }
 
   async goto(eventId: string) {
-    await this.page.goto(paths.dash.participant.events.EVENT_VIEW(eventId))
+    await this.page.goto(paths.dash.events.EVENT_VIEW(eventId))
   }
 
   async testBasicElements() {
@@ -115,36 +102,36 @@ export class RulesPOM {
     await expect(this.textContent).toBeVisible()
     await expect(this.testTitle).toBeVisible()
     await expect(this.sampleQuestion).toBeVisible()
-    await expect(this.applyButton).toBeVisible()
+    await expect(this.continueButton).toBeVisible()
   }
 
   async testRulesFormErrors() {
-    await this.applyButton.click()
+    await this.continueButton.click()
     await expect(this.requiredError).toBeVisible()
 
     await expect(this.radio.question).toBeVisible()
     await this.radio.wrong.click()
     await expect(this.requiredError).not.toBeVisible()
-    await this.applyButton.click()
+    await this.continueButton.click()
     await expect(this.radio.error).toBeVisible()
 
     await this.radio.correct.click()
-    await this.applyButton.click()
+    await this.continueButton.click()
     await expect(this.radio.error).not.toBeVisible()
 
     await expect(this.selection.question).toBeVisible()
     await this.selection.incorrectFirst.click()
-    await this.applyButton.click()
+    await this.continueButton.click()
     await expect(this.selection.wrongSelectionError).toBeVisible()
 
     await this.selection.incorrectFirst.click()
     await this.selection.correctFirst.click()
-    await this.applyButton.click()
+    await this.continueButton.click()
     await expect(this.selection.almostAllSelectionError).toBeVisible()
 
     await this.selection.incorrectFirst.click()
     await this.selection.correctSecond.click()
-    await this.applyButton.click()
+    await this.continueButton.click()
     await expect(this.selection.oneIncorrectSelectionError).toBeVisible()
 
     await this.selection.correctFirst.click()
@@ -181,24 +168,9 @@ export class RulesPOM {
     expect(this.selection.almostAllSelectionError.first()).not.toBeVisible()
     expect(this.selection.oneIncorrectSelectionError.first()).not.toBeVisible()
     expect(this.selection.wrongSelectionError.first()).not.toBeVisible()
-
-    await this.applyButton.click()
   }
 
-  async confirmApplication() {
-    await expect(this.dialog).toBeVisible()
-    await this.dialogCancel.click()
-    await expect(this.dialog).not.toBeVisible()
-
-    await this.applyButton.click()
-    await expect(this.dialog).toBeVisible()
-    await this.dialogConfirm.click()
-  }
-
-  async checkApplicationEmail() {
-    const mailHogPage = new MailhogPOM(await this.page.context().newPage())
-    await mailHogPage.goto()
-    await mailHogPage.testBasicElements()
-    await mailHogPage.testApplicationEmail()
+  async continue() {
+    await this.continueButton.click()
   }
 }
