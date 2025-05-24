@@ -18,7 +18,7 @@ import type { Route } from "./+types/view-event"
 const {
   admin: {
     ADMIN_DASHBOARD,
-    events: { ADMIN_EDIT_EVENT },
+    events: { ADMIN_EDIT_EVENT, ADMIN_DOWNLOAD_EVENT },
   },
 } = paths
 
@@ -77,6 +77,7 @@ const AdminViewEvent = ({ loaderData, actionData }: Route.ComponentProps) => {
         {emoji} {title}
       </h1>
       <Button to={ADMIN_EDIT_EVENT(id)}>Editar</Button>
+      <Button to={ADMIN_DOWNLOAD_EVENT(id)}>Baixar dados</Button>
       <p className="font-bold">
         Data: {formatDateTime(time_event_start, "long").full}
       </p>
