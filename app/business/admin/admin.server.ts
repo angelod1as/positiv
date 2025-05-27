@@ -1,6 +1,6 @@
 import { applySchema } from "composable-functions"
 import type { Params } from "react-router"
-import { dataWithError, redirectWithError } from "remix-toast"
+import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
@@ -13,7 +13,10 @@ import {
 } from "./common"
 
 const {
-  admin: { ADMIN_DASHBOARD },
+  admin: {
+    ADMIN_DASHBOARD,
+    events: { ADMIN_VIEW_EVENT },
+  },
 } = paths
 
 export const getAdminContext = async (
@@ -24,7 +27,7 @@ export const getAdminContext = async (
   const { error, data } = await context.supabase.from("events").select("*")
 
   if (error) {
-    throw await dataWithError(
+    throw await redirectWithError(
       ADMIN_DASHBOARD,
       "Ocorreu um erro ao buscar eventos",
     )
@@ -99,8 +102,8 @@ export const updateEventStatus = applySchema(
     .eq("id", eventId)
 
   if (error) {
-    throw await dataWithError(
-      null,
+    throw await redirectWithError(
+      ADMIN_VIEW_EVENT(eventId),
       "Ocorreu um erro ao atualizar o evento. Erro: event update",
     )
   }
