@@ -1,10 +1,6 @@
 import { applySchema } from "composable-functions"
 import { redirect, type Params } from "react-router"
-import {
-  dataWithError,
-  redirectWithError,
-  redirectWithSuccess,
-} from "remix-toast"
+import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { isProd } from "~/lib/helpers/is-prod.server"
 import paths from "~/lib/paths"
@@ -23,6 +19,7 @@ const {
   root: { HOME },
   auth: { LOGIN, LOGON_CALLBACK },
   dash: {
+    DASHBOARD,
     account: { CHANGE_PASSWORD },
   },
 } = paths
@@ -54,8 +51,9 @@ export const getContext = async (
 
   if (authError) {
     if (!authError.message.includes("Auth session missing!")) {
-      throw await dataWithError(
-        errorProps,
+      console.error("AUTH error", errorProps)
+      throw await redirectWithError(
+        DASHBOARD,
         "Houve um erro com sua autenticação, tente novamente mais tarde",
       )
     }
