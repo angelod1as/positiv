@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useMemo } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
 import { Form, redirect, useSubmit } from "react-router"
+import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { rulesSessionStorage } from "~/business/session.server"
 import { Button } from "~/components/atoms/button/button"
@@ -25,7 +26,7 @@ import { RulesText } from "./rules-text"
 
 const {
   dash: {
-    events: { EVENT_DATA },
+    events: { EVENT_DATA, EVENT_RULES },
   },
 } = paths
 
@@ -34,13 +35,21 @@ export async function clientLoader({}: Route.ClientLoaderArgs) {}
 
 export async function action({ request, params }: Route.ActionArgs) {
   const { commitSession, getSession } = rulesSessionStorage
-  const session = await getSession(request.headers.get("Cookie"))
-  session.set("rulesCorrect", true)
-  return redirect(EVENT_DATA(params.id), {
-    headers: {
-      "Set-Cookie": await commitSession(session),
-    },
-  })
+  try {
+    const session = await getSession(request.headers.get("Cookie"))
+    session.set("rulesCorrect", true)
+    return redirect(EVENT_DATA(params.id), {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    })
+  } catch (error) {
+    console.error("event-page-rules action", error)
+    return redirectWithError(
+      EVENT_RULES(params.id),
+      "Houve um erro no sistema, tente novamente mais tarde",
+    )
+  }
 }
 
 const Wrapper: FCC = ({ children }) => (
