@@ -2,6 +2,7 @@ import { redirectWithError } from "remix-toast"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
 import { downloadXLSX } from "~/lib/helpers/download-xlsx"
+import { mapToString } from "~/lib/helpers/map-string-array-to-string"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/download-data"
 
@@ -60,28 +61,30 @@ const AdminDownloadEventParticipants = ({
   const { participants } = loaderData
 
   const handleDownloadAll = async () => {
-    const xlsxData = participants.map((participant) => ({
-      "Nome Completo": participant.full_name,
-      "Nome Social": participant.social_name,
-      Pronomes: participant.pronouns,
-      "E-mail": participant.email,
-      RG: participant.rg,
-      "Emissor do RG": participant.rg_issuer,
-      CPF: participant.cpf,
-      Telefone: participant.phone,
-      Whatsapp: participant.phone && `https://wa.me/55${participant.phone}`,
-      "Data de Nascimento": participant.date_of_birth,
-      Gênero: participant.gender,
-      Orientação: participant.orientation,
-      "Onde mora": participant.where_lives,
-      "Como veio à nós": participant.how_came_to_us,
-      "Status no processo": participant.process_status,
-      "Valor pago": participant.payment,
-      Notas: participant.notes,
-      Indicações: participant.referrals,
-      "Vai acompanhade?": participant.companions,
-      "Pode ir só?": participant.bond,
-    }))
+    const xlsxData = participants.map(mapToString).map((participant) => {
+      return {
+        "Nome Completo": participant.full_name,
+        "Nome Social": participant.social_name,
+        Pronomes: participant.pronouns,
+        "E-mail": participant.email,
+        RG: participant.rg,
+        "Emissor do RG": participant.rg_issuer,
+        CPF: participant.cpf,
+        Telefone: participant.phone,
+        Whatsapp: participant.phone && `https://wa.me/55${participant.phone}`,
+        "Data de Nascimento": participant.date_of_birth,
+        Gênero: participant.gender,
+        Orientação: participant.orientation,
+        "Onde mora": participant.where_lives,
+        "Como veio à nós": participant.how_came_to_us,
+        "Status no processo": participant.process_status,
+        "Valor pago": participant.payment,
+        Notas: participant.notes,
+        Indicações: participant.referrals,
+        "Vai acompanhade?": participant.companions,
+        "Pode ir só?": participant.bond,
+      }
+    })
     downloadXLSX(xlsxData)
     // toast.success("Documento baixado com sucesso")
   }
