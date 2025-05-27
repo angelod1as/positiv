@@ -141,6 +141,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  console.error("ERROR BOUNDARY", error)
   let message = "Oops!"
   let details = (
     <>
