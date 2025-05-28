@@ -7,10 +7,10 @@ import {
 } from "remix-forms"
 
 import type { z } from "zod"
-import { Checkbox } from "../ui/checkbox"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
 import { RadioGroup } from "../ui/radio-group"
+import SchemaFormCheckbox from "../ui/schema-form-checkbox"
 import { TextArea } from "../ui/textarea"
 import { Error } from "./error"
 import { Errors } from "./errors"
@@ -46,7 +46,7 @@ function SchemaForm<Schema extends FormSchema>({
         radioComponent={Radio}
         radioGroupComponent={RadioGroup}
         radioWrapperComponent={InputWrapper}
-        checkboxComponent={Checkbox}
+        checkboxComponent={SchemaFormCheckbox}
         buttonComponent={SubmitButton}
         globalErrorsComponent={Errors}
         errorComponent={Error}
