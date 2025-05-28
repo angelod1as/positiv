@@ -21,7 +21,6 @@ const getEnvironment = makeTypedEnvironment(
     SUPABASE_SERVICE_ROLE_KEY: zod.string().optional(),
     SUPABASE_PROJECT_ID: zod.string().optional(),
     SUPABASE_DB_PASSWORD: zod.string().optional(),
-    DATABASE_URL: zod.string().optional(),
 
     // unused:
     CONTENTFUL_ENVIRONMENT: zod.string().optional(),
