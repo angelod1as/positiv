@@ -1,7 +1,8 @@
 import { getAdminContext } from "~/business/admin/admin.server"
 import { Separator } from "~/components/ui/separator"
+import type { Event } from "~types/entities.types"
 import type { Route } from "./+types/dashboard-page"
-import AdminDashboardEventsTable from "./admin-dashboard-events-table"
+import { AdminDashboardEventsTable } from "./events-table/admin-dashboard-events-table"
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { events } = await getAdminContext(request, params)
@@ -16,7 +17,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
     return new Date(startA).getTime() - new Date(startB).getTime()
   })
-  return { events: sorted }
+  return { events: sorted as Event[] }
 }
 
 const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
@@ -28,7 +29,11 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
       <div>
         <h2>Eventos</h2>
 
-        <AdminDashboardEventsTable events={events} />
+        {events ? (
+          <AdminDashboardEventsTable events={events} />
+        ) : (
+          "Nenhum evento encontrado"
+        )}
       </div>
       <Separator />
       <div>
