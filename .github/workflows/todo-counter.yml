@@ -17,8 +17,8 @@ jobs:
       - name: Extract TODOs in base branch
         id: extract_base
         run: |
-          # Extract TODOs with file and line info from base branch
-          grep -rn --exclude='no-todo-delete.sh' "// TODO:" . > base_todos.txt || true
+          # Extract TODOs with file and line info from base branch, excluding workflow files
+          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > base_todos.txt || true
           base_count=$(wc -l < base_todos.txt)
           echo "base_count=$base_count" >> $GITHUB_ENV
       - name: Checkout PR branch
@@ -29,8 +29,8 @@ jobs:
       - name: Extract TODOs in current PR
         id: extract_pr
         run: |
-          # Extract TODOs with file and line info from PR branch
-          grep -rn --exclude='no-todo-delete.sh' "// TODO:" . > current_todos.txt || true
+          # Extract TODOs with file and line info from PR branch, excluding workflow files
+          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > current_todos.txt || true
           current_count=$(wc -l < current_todos.txt)
           echo "current_count=$current_count" >> $GITHUB_ENV
       - name: Calculate Delta and Extract Changes
@@ -40,9 +40,9 @@ jobs:
           current_count=${{ env.current_count }}
           delta=$((current_count - base_count))
 
-          # Create normalized TODO lists (remove line numbers for comparison)
-          sed 's/:[0-9]*:/ /' base_todos.txt | sort > base_normalized.txt
-          sed 's/:[0-9]*:/ /' current_todos.txt | sort > current_normalized.txt
+          # Create lists with just the TODO content (file:TODO_text) for accurate comparison
+          sed 's/:/ /' base_todos.txt | sed 's/\([^:]*\):[0-9]* *\/\/ TODO: */\1: /' | sort > base_normalized.txt
+          sed 's/:/ /' current_todos.txt | sed 's/\([^:]*\):[0-9]* *\/\/ TODO: */\1: /' | sort > current_normalized.txt
 
           # Find new TODOs (in current but not in base)
           comm -13 base_normalized.txt current_normalized.txt > new_todos.txt
@@ -55,9 +55,11 @@ jobs:
           if [ -s new_todos.txt ]; then
             new_todos_formatted="**New:**"$'\n'
             while IFS= read -r line; do
-              # Extract just the TODO text after "// TODO:"
-              todo_text=$(echo "$line" | sed 's/.*\/\/ TODO: *//')
-              new_todos_formatted+="- TODO: $todo_text"$'\n'
+              # Extract just the TODO text after the filename and colon
+              todo_text=$(echo "$line" | sed 's/[^:]*: *//')
+              if [ -n "$todo_text" ]; then
+                new_todos_formatted+="- TODO: $todo_text"$'\n'
+              fi
             done < new_todos.txt
           fi
 
@@ -66,9 +68,11 @@ jobs:
           if [ -s removed_todos.txt ]; then
             removed_todos_formatted="**Removed:**"$'\n'
             while IFS= read -r line; do
-              # Extract just the TODO text after "// TODO:"
-              todo_text=$(echo "$line" | sed 's/.*\/\/ TODO: *//')
-              removed_todos_formatted+="- TODO: $todo_text"$'\n'
+              # Extract just the TODO text after the filename and colon
+              todo_text=$(echo "$line" | sed 's/[^:]*: *//')
+              if [ -n "$todo_text" ]; then
+                removed_todos_formatted+="- TODO: $todo_text"$'\n'
+              fi
             done < removed_todos.txt
           fi
 
