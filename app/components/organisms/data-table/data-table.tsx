@@ -33,7 +33,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   filterBy: string
-  context: Record<string, string>
+  context?: Record<string, string>
 }
 
 export function DataTable<TData, TValue>({
