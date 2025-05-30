@@ -56,8 +56,12 @@ jobs:
           if [ -s new_todos_raw.txt ]; then
             new_todos_formatted="**New:**"$'\n'
             while IFS= read -r line; do
-              if [ -n "$line" ]; then
-                new_todos_formatted+="- TODO: $line"$'\n'
+              # Extract filename and TODO content
+              parts=(${line//:/ })
+              filename="${parts[0]}"
+              todo_content="${parts[@]:1}"
+              if [ -n "$todo_content" ]; then
+                new_todos_formatted+="- $filename: TODO: $todo_content"$'\n'
               fi
             done < new_todos_raw.txt
           fi
@@ -67,8 +71,12 @@ jobs:
           if [ -s removed_todos_raw.txt ]; then
             removed_todos_formatted="**Removed:**"$'\n'
             while IFS= read -r line; do
-              if [ -n "$line" ]; then
-                removed_todos_formatted+="- TODO: $line"$'\n'
+              # Extract filename and TODO content
+              parts=(${line//:/ })
+              filename="${parts[0]}"
+              todo_content="${parts[@]:1}"
+              if [ -n "$todo_content" ]; then
+                removed_todos_formatted+="- $filename: TODO: $todo_content"$'\n'
               fi
             done < removed_todos_raw.txt
           fi
