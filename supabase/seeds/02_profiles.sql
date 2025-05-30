@@ -22,86 +22,100 @@ SELECT
     usr.email, -- Include email since it is not nullable
     CASE usr.email
         WHEN 'admin@example.com' THEN 'Master User Full Name'
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN 'User One Full Name'
         WHEN 'user2@example.com' THEN 'User Two Full Name'
+        WHEN 'user4@example.com' THEN null
         ELSE split_part(usr.email, '@', 1) || ' Full Name'
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN true
-        WHEN 'user1@example.com' THEN false
+        WHEN 'user1@example.com' THEN true
         WHEN 'user2@example.com' THEN true
+        WHEN 'user4@example.com' THEN false
         ELSE false
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN 'Master'
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN 'User One'
         WHEN 'user2@example.com' THEN 'User Two'
+        WHEN 'user4@example.com' THEN null
         ELSE split_part(usr.email, '@', 1)
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN ARRAY['elu/delu']::text []
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN ARRAY['ele/dele']::text []
         WHEN 'user2@example.com' THEN ARRAY['ela/dela']::text []
+        WHEN 'user4@example.com' THEN null
         ELSE ARRAY['ele/dele', 'ela/dela']::text []
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN '123456789'
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN '111111111'
         WHEN 'user2@example.com' THEN '987654321'
+        WHEN 'user4@example.com' THEN null
         ELSE null
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN '98765432100'
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN '11111111111'
         WHEN 'user2@example.com' THEN '12345678999'
+        WHEN 'user4@example.com' THEN null
         ELSE null
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN 11987654321
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN 11123456789
         WHEN 'user2@example.com' THEN 21912345678
+        WHEN 'user4@example.com' THEN null
         ELSE null
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN '1990-05-15'::date
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN '1980-01-01'::date
         WHEN 'user2@example.com' THEN '1995-10-20'::date
+        WHEN 'user4@example.com' THEN null
         ELSE null
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN ARRAY['Pessoa agênera']::text []
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN ARRAY['Homem cis']::text []
         WHEN 'user2@example.com' THEN ARRAY['Mulher cis']::text []
+        WHEN 'user4@example.com' THEN null
         ELSE null
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN ARRAY['Pan']::text []
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN ARRAY['Hétero']::text []
         WHEN 'user2@example.com' THEN ARRAY['Hétero']::text []
+        WHEN 'user4@example.com' THEN null
         ELSE null
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN 'São Paulo, SP'
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN 'Curitiba, PR'
         WHEN 'user2@example.com' THEN 'Rio de Janeiro, RJ'
+        WHEN 'user4@example.com' THEN null
         ELSE null
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN 'Seeded by Supabase'
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN 'Referred by Colleague'
         WHEN 'user2@example.com' THEN 'Referred by Friend'
+        WHEN 'user4@example.com' THEN null
         ELSE null
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN 'SSP/SP'
-        WHEN 'user1@example.com' THEN null
+        WHEN 'user1@example.com' THEN 'SSP/PR'
         WHEN 'user2@example.com' THEN 'SSP/RJ'
+        WHEN 'user4@example.com' THEN null
         ELSE null
     END,
     CASE usr.email
         WHEN 'admin@example.com' THEN true
-        WHEN 'user1@example.com' THEN false
+        WHEN 'user1@example.com' THEN true
         WHEN 'user2@example.com' THEN true
+        WHEN 'user4@example.com' THEN false
         ELSE false
     END
 FROM auth.users AS usr
