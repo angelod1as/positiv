@@ -1,50 +1,83 @@
 name: TODO Counter
-
 on:
   pull_request:
     types: [opened, synchronize]
-
 permissions:
   pull-requests: write
   contents: read
-
 jobs:
   count_todos:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout base and head branches
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
           fetch-depth: 0
-
-      - name: Count TODOs in base branch
-        id: count_base
+      - name: Extract TODOs in base branch
+        id: extract_base
         run: |
-          # Exclude specific files or directories
-          base_count=$(grep -r --exclude='no-todo-delete.sh' "// TODO:" . | wc -l)
+          # Extract TODOs with file and line info from base branch, excluding workflow files
+          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > base_todos.txt || true
+          base_count=$(wc -l < base_todos.txt)
           echo "base_count=$base_count" >> $GITHUB_ENV
-
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-
-      - name: Count TODOs in current PR
-        id: count_pr
+      - name: Extract TODOs in current PR
+        id: extract_pr
         run: |
-          # Exclude specific files or directories
-          current_count=$(grep -r --exclude='no-todo-delete.sh' "// TODO:" . | wc -l)
+          # Extract TODOs with file and line info from PR branch, excluding workflow files
+          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > current_todos.txt || true
+          current_count=$(wc -l < current_todos.txt)
           echo "current_count=$current_count" >> $GITHUB_ENV
-
-      - name: Calculate Delta
+      - name: Calculate Delta and Extract Changes
         id: calculate_delta
         run: |
           base_count=${{ env.base_count }}
           current_count=${{ env.current_count }}
           delta=$((current_count - base_count))
+
+          # Create normalized TODO lists by extracting filename + TODO content
+          # Format: filename:TODO_content
+          awk -F: '{print $1":"$NF}' base_todos.txt | sed 's|// TODO: *||' | sort > base_normalized.txt
+          awk -F: '{print $1":"$NF}' current_todos.txt | sed 's|// TODO: *||' | sort > current_normalized.txt
+
+          # Find new TODOs (in current but not in base)
+          comm -13 base_normalized.txt current_normalized.txt > new_todos.txt
+
+          # Find removed TODOs (in base but not in current)
+          comm -23 base_normalized.txt current_normalized.txt > removed_todos.txt
+
+          # Format new TODOs
+          new_todos_formatted=""
+          if [ -s new_todos.txt ]; then
+            new_todos_formatted="**New:**"$'\n'
+            while IFS= read -r line; do
+              # Extract just the TODO text after the colon
+              todo_text=$(echo "$line" | cut -d: -f2-)
+              if [ -n "$todo_text" ]; then
+                new_todos_formatted+="- TODO: $todo_text"$'\n'
+              fi
+            done < new_todos.txt
+          fi
+
+          # Format removed TODOs
+          removed_todos_formatted=""
+          if [ -s removed_todos.txt ]; then
+            removed_todos_formatted="**Removed:**"$'\n'
+            while IFS= read -r line; do
+              # Extract just the TODO text after the filename and colon
+              todo_text=$(echo "$line" | sed 's/[^:]*: *//')
+              if [ -n "$todo_text" ]; then
+                removed_todos_formatted+="- TODO: $todo_text"$'\n'
+              fi
+            done < removed_todos.txt
+          fi
+
+          # Set emoji and delta sign
           if [ "$delta" -gt 0 ]; then
             delta_sign="+"
             emoji="👎"
@@ -55,11 +88,24 @@ jobs:
             delta_sign=""
             emoji=""
           fi
+
           abs_delta=$((delta < 0 ? -delta : delta))
           echo "delta_sign=$delta_sign" >> $GITHUB_ENV
           echo "abs_delta=$abs_delta" >> $GITHUB_ENV
           echo "emoji=$emoji" >> $GITHUB_ENV
 
+          # Save formatted TODOs to environment (handle multiline)
+          {
+            echo 'NEW_TODOS<<EOF'
+            echo "$new_todos_formatted"
+            echo 'EOF'
+          } >> $GITHUB_ENV
+
+          {
+            echo 'REMOVED_TODOS<<EOF'
+            echo "$removed_todos_formatted"
+            echo 'EOF'
+          } >> $GITHUB_ENV
       - name: Add or Update Comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -73,6 +119,8 @@ jobs:
           **TODO Delta**
           ${{ env.emoji }} ${{ env.delta_sign }}${{ env.abs_delta }}
           (${{ env.base_count }} → ${{ env.current_count }})
+
+          ${{ env.NEW_TODOS }}${{ env.REMOVED_TODOS }}
           EOF
           )
           # Try to edit the last comment if it exists, otherwise create a new one
