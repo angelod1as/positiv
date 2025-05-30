@@ -26,18 +26,21 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table"
+import type { TableMeta } from "~types/table.types"
 import { DataTablePagination } from "./pagination"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   filterBy: string
+  context: Record<string, string>
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   filterBy,
+  context,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
@@ -65,13 +68,14 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
     },
+    meta: context,
   })
 
   return (
     <div>
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filtrar por título..."
+          placeholder={`Filtrar por ${filterBy.toLowerCase()}...`}
           value={(table.getColumn(filterBy)?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn(filterBy)?.setFilterValue(event.target.value)
@@ -111,8 +115,10 @@ export function DataTable<TData, TValue>({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
+                  const { className } =
+                    (header.column.columnDef.meta as TableMeta) || {}
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead key={header.id} className={className}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -132,14 +138,18 @@ export function DataTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const { className } =
+                      (cell.column.columnDef.meta as TableMeta) || {}
+                    return (
+                      <TableCell key={cell.id} className={className}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    )
+                  })}
                 </TableRow>
               ))
             ) : (
