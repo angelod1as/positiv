@@ -1,7 +1,9 @@
-import { applySchema } from "composable-functions"
+import { applySchema, composable } from "composable-functions"
+import { sql } from "kysely"
 import type { Params } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
+import { kysely } from "~/kysely"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
 import type { Event } from "~types/entities.types"
@@ -39,7 +41,7 @@ export const getAdminContext = async (
 }
 
 export const getAdminEventById = async (request: Request, params: Params) => {
-  const { supabase } = await getUserContext(request, params)
+  const { supabase } = await getAdminContext(request, params)
   const eventId = params.id
   if (!eventId) return undefined
 
@@ -54,6 +56,71 @@ export const getAdminEventById = async (request: Request, params: Params) => {
 
   return data as Event
 }
+
+export type ParticipantWithExtraData = {
+  id: string
+  full_name: string | null
+  social_name: string | null
+  pronouns: string[] | null
+  gender: string[] | null
+  orientation: string[] | null
+  phone: number | null
+  process_status: string
+  is_veteran: boolean | null
+  is_social_spot: boolean | null
+  was_admin_skipped_last_event: boolean
+  payment: number | null
+}
+
+export const getAdminParticipantsWithExtraDataById = composable(
+  async (eventId: string) => {
+    // Main query to get participants information along with if they were skipped in the last event
+    const participantsWithExtraData = await kysely
+      .selectFrom("event_participants as current_ep")
+      .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
+      .leftJoin(
+        (eb) =>
+          eb
+            .selectFrom("event_participants as ep")
+            .innerJoin("events as e", "ep.event_id", "e.id")
+            .select([
+              "ep.profile_id",
+              "ep.process_status",
+              sql<number>`row_number() over (
+          partition by ep.profile_id
+          order by e.time_event_start desc
+        )`.as("rn"),
+            ])
+            .where("ep.is_user_applied", "=", true)
+            .as("ranked_events"),
+        (join) =>
+          join
+            .onRef("ranked_events.profile_id", "=", "current_ep.profile_id")
+            .on("ranked_events.rn", "=", 2),
+      )
+      .select([
+        "p.id",
+        "p.full_name",
+        "p.social_name",
+        "p.pronouns",
+        "p.phone",
+        "p.gender",
+        "p.orientation",
+        "p.is_veteran",
+        "current_ep.payment",
+        "current_ep.process_status",
+        "current_ep.is_social_spot",
+        sql<boolean>`ranked_events.process_status = 'skipped'`.as(
+          "was_admin_skipped_last_event",
+        ),
+      ])
+      .where("current_ep.event_id", "=", eventId)
+      .where("current_ep.is_user_applied", "=", true)
+      .execute()
+
+    return participantsWithExtraData
+  },
+)
 
 ///////
 // ACTIONS
