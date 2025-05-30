@@ -20,7 +20,9 @@ jobs:
         id: find-todos-pr
         run: |
           # Find all TODOs in the PR excluding scripts and .github folders
-          find . -type f -not -path "./scripts/*" -not -path "./.github/*" -exec grep -l "// TODO: " {} \; | xargs grep -n "// TODO: " > pr_todos.txt || true
+          find . -type f -not -path "./scripts/*" -not -path "./.github/*" -exec grep -l "// TODO: " {} \; | while read file; do
+            grep -n "// TODO: " "$file" | awk -v file="$file" '{print file ":" $0}'
+          done > pr_todos.txt || true
           cat pr_todos.txt || echo "No TODOs found in PR"
 
       - name: Checkout main
@@ -33,40 +35,75 @@ jobs:
         id: find-todos-main
         run: |
           # Find all TODOs in main excluding scripts and .github folders
-          find . -type f -not -path "./scripts/*" -not -path "./.github/*" -exec grep -l "// TODO: " {} \; | xargs grep -n "// TODO: " > main_todos.txt || true
+          find . -type f -not -path "./scripts/*" -not -path "./.github/*" -exec grep -l "// TODO: " {} \; | while read file; do
+            grep -n "// TODO: " "$file" | awk -v file="$file" '{print file ":" $0}'
+          done > main_todos.txt || true
           cat main_todos.txt || echo "No TODOs found in main"
 
       - name: Compare TODOs
         id: compare-todos
         run: |
-          # Create files with just the content for easier comparison
+          # Create normalized files for comparison
           echo "Preparing comparison files..."
 
-          # Process PR TODOs
+          # Process PR TODOs - normalize format for comparison
           if [ -s pr_todos.txt ]; then
+            cat pr_todos.txt | sed 's/:.*//' | sort | uniq > pr_files.txt
+            for file in $(cat pr_files.txt); do
+              grep "^$file:" pr_todos.txt | sed "s|^$file:[0-9]*:|$file:|" | sort > "pr_${file//\//_}.txt"
+            done
             cat pr_todos.txt | sort > pr_todos_sorted.txt
           else
             touch pr_todos_sorted.txt
+            touch pr_files.txt
           fi
 
-          # Process main TODOs
+          # Process main TODOs - normalize format for comparison
           if [ -s main_todos.txt ]; then
+            cat main_todos.txt | sed 's/:.*//' | sort | uniq > main_files.txt
+            for file in $(cat main_files.txt); do
+              grep "^$file:" main_todos.txt | sed "s|^$file:[0-9]*:|$file:|" | sort > "main_${file//\//_}.txt"
+            done
             cat main_todos.txt | sort > main_todos_sorted.txt
           else
             touch main_todos_sorted.txt
+            touch main_files.txt
           fi
 
-          # Find new TODOs (in PR but not in main)
-          comm -23 pr_todos_sorted.txt main_todos_sorted.txt > new_todos.txt
+          # Create empty files for new and removed TODOs
+          > new_todos.txt
+          > removed_todos.txt
 
-          # Find removed TODOs (in main but not in PR)
-          comm -13 pr_todos_sorted.txt main_todos_sorted.txt > removed_todos.txt
+          # Compare TODOs file by file to handle line number changes
+          cat pr_files.txt main_files.txt | sort | uniq > all_files.txt
+
+          for file in $(cat all_files.txt); do
+            PR_FILE="pr_${file//\//_}.txt"
+            MAIN_FILE="main_${file//\//_}.txt"
+
+            # Create empty files if they don't exist
+            touch "$PR_FILE" "$MAIN_FILE"
+
+            # Extract TODO content without line numbers for comparison
+            cat "$PR_FILE" 2>/dev/null | sed 's/.*\/\/ TODO: /\/\/ TODO: /' | sort > "pr_content_${file//\//_}.txt" || touch "pr_content_${file//\//_}.txt"
+            cat "$MAIN_FILE" 2>/dev/null | sed 's/.*\/\/ TODO: /\/\/ TODO: /' | sort > "main_content_${file//\//_}.txt" || touch "main_content_${file//\//_}.txt"
+
+            # Find new TODOs (in PR but not in main)
+            comm -23 "pr_content_${file//\//_}.txt" "main_content_${file//\//_}.txt" | while read todo; do
+              grep -F "$todo" "$PR_FILE" >> new_todos.txt
+            done
+
+            # Find removed TODOs (in main but not in PR)
+            comm -13 "pr_content_${file//\//_}.txt" "main_content_${file//\//_}.txt" | while read todo; do
+              grep -F "$todo" "$MAIN_FILE" >> removed_todos.txt
+            done
+          done
 
           # Count TODOs
-          PR_COUNT=$(wc -l < pr_todos_sorted.txt | tr -d ' ')
-          MAIN_COUNT=$(wc -l < main_todos_sorted.txt | tr -d ' ')
-          NEW_COUNT=$(wc -l < new_todos.txt | tr -d ' ')
-          REMOVED_COUNT=$(wc -l < removed_todos.txt | tr -d ' ')
+          PR_COUNT=$(cat pr_content_*.txt 2>/dev/null | wc -l | tr -d ' ' || echo 0)
+          MAIN_COUNT=$(cat main_content_*.txt 2>/dev/null | wc -l | tr -d ' ' || echo 0)
+          NEW_COUNT=$(cat new_todos.txt | wc -l | tr -d ' ')
+          REMOVED_COUNT=$(cat removed_todos.txt | wc -l | tr -d ' ')
 
           # Calculate delta
           DELTA=$((PR_COUNT - MAIN_COUNT))
@@ -83,6 +120,8 @@ jobs:
             echo "TODO Delta: +$DELTA :thumbsdown:" >> $GITHUB_ENV
             echo "## New" >> $GITHUB_ENV
             while IFS= read -r line; do
+              FILE=$(echo "$line" | cut -d':' -f1)
+              LINE_NUM=$(echo "$line" | cut -d':' -f2)
               TODO_CONTENT=$(echo "$line" | sed 's/.*\/\/ TODO: /- TODO: /')
               echo "$TODO_CONTENT" >> $GITHUB_ENV
             done < new_todos.txt
@@ -93,6 +132,8 @@ jobs:
             echo "TODO Delta: $DELTA :thumbsup:" >> $GITHUB_ENV
             echo "## Removed" >> $GITHUB_ENV
             while IFS= read -r line; do
+              FILE=$(echo "$line" | cut -d':' -f1)
+              LINE_NUM=$(echo "$line" | cut -d':' -f2)
               TODO_CONTENT=$(echo "$line" | sed 's/.*\/\/ TODO: /- TODO: /')
               echo "$TODO_CONTENT" >> $GITHUB_ENV
             done < removed_todos.txt
@@ -105,6 +146,8 @@ jobs:
             if [ $NEW_COUNT -gt 0 ]; then
               echo "## New" >> $GITHUB_ENV
               while IFS= read -r line; do
+                FILE=$(echo "$line" | cut -d':' -f1)
+                LINE_NUM=$(echo "$line" | cut -d':' -f2)
                 TODO_CONTENT=$(echo "$line" | sed 's/.*\/\/ TODO: /- TODO: /')
                 echo "$TODO_CONTENT" >> $GITHUB_ENV
               done < new_todos.txt
@@ -113,6 +156,8 @@ jobs:
             if [ $REMOVED_COUNT -gt 0 ]; then
               echo "## Removed" >> $GITHUB_ENV
               while IFS= read -r line; do
+                FILE=$(echo "$line" | cut -d':' -f1)
+                LINE_NUM=$(echo "$line" | cut -d':' -f2)
                 TODO_CONTENT=$(echo "$line" | sed 's/.*\/\/ TODO: /- TODO: /')
                 echo "$TODO_CONTENT" >> $GITHUB_ENV
               done < removed_todos.txt
