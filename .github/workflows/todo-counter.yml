@@ -40,9 +40,14 @@ jobs:
       - name: Determine TODO Changes
         id: determine_changes
         run: |
+          # Ensure both files exist
           touch base_todos.txt pr_todos.txt
+
+          # Determine the new TODOs
           new_todos=$(comm -13 <(sort base_todos.txt) <(sort pr_todos.txt) || true)
-          echo "new_todos=$(echo "$new_todos" | tr '\n' ' ')" >> $GITHUB_ENV
+
+          # Save the new TODOs as a single line separated by newlines
+          echo "new_todos=$(echo "$new_todos" | sed ':a;N;$!ba;s/\n/\\n/g')" >> $GITHUB_ENV
 
       - name: Calculate Delta
         id: calculate_delta
@@ -64,30 +69,33 @@ jobs:
           echo "delta_sign=$delta_sign" >> $GITHUB_ENV
           echo "abs_delta=$abs_delta" >> $GITHUB_ENV
           echo "emoji=$emoji" >> $GITHUB_ENV
+          echo "base_count=$base_count" >> $GITHUB_ENV
+          echo "pr_count=$pr_count" >> $GITHUB_ENV
 
       - name: Add or Update Comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number }}
-          NEW_TODOS: ${{ env.new_todos }}
+          NEW_TODOS: ${{ fromJson(env.new_todos) }}
           DELTA_SIGN: ${{ env.delta_sign }}
           ABS_DELTA: ${{ env.abs_delta }}
           EMOJI: ${{ env.emoji }}
+          BASE_COUNT: ${{ env.base_count }}
+          PR_COUNT: ${{ env.pr_count }}
         run: |
           # Construct the comment body with formatted TODOs
           BODY=$(cat <<EOF
           <!-- TODO-Counter-Comment -->
           **TODO Delta**
-          ${{ env.EMOJI }} ${{ env.DELTA_SIGN }}${{ env.ABS_DELTA }}
-          (${{ env.base_count }} → ${{ env.current_count }})
+          $EMOJI $DELTA_SIGN$ABS_DELTA
+          ($BASE_COUNT → $PR_COUNT)
 
           **TODO Changes**
 
           $(if [ ! -z "$NEW_TODOS" ]; then
             echo "new:";
             echo "$NEW_TODOS" | tr ' ' '\n' | sed -e 's/^/- /';
-            echo "";
           fi)
           EOF
           )
