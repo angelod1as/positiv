@@ -22,9 +22,7 @@ jobs:
       - name: List TODOs in base branch
         id: list_base
         run: |
-          # Create base_todos.txt if it doesn't exist
           touch base_todos.txt
-          # Find TODOs and store them in a file
           grep -r --exclude='no-todo-delete.sh' "// TODO:" . > base_todos.txt || true
 
       - name: Checkout PR branch
@@ -36,23 +34,36 @@ jobs:
       - name: List TODOs in PR branch
         id: list_pr
         run: |
-          # Create pr_todos.txt if it doesn't exist
           touch pr_todos.txt
-          # Find TODOs and store them in another file
           grep -r --exclude='no-todo-delete.sh' "// TODO:" . > pr_todos.txt || true
 
       - name: Determine TODO Changes
         id: determine_changes
         run: |
-          # Ensure both files exist
           touch base_todos.txt pr_todos.txt
-
-          # Determine the new and removed TODOs
           new_todos=$(comm -13 <(sort base_todos.txt) <(sort pr_todos.txt) || true)
-          removed_todos=$(comm -23 <(sort base_todos.txt) <(sort pr_todos.txt) || true)
-
           echo "new_todos=$(echo "$new_todos" | tr '\n' ' ')" >> $GITHUB_ENV
-          echo "removed_todos=$(echo "$removed_todos" | tr '\n' ' ')" >> $GITHUB_ENV
+
+      - name: Calculate Delta
+        id: calculate_delta
+        run: |
+          base_count=$(wc -l < base_todos.txt)
+          pr_count=$(wc -l < pr_todos.txt)
+          delta=$((pr_count - base_count))
+          if [ "$delta" -gt 0 ]; then
+            delta_sign="+"
+            emoji="👎"
+          elif [ "$delta" -lt 0 ]; then
+            delta_sign=""
+            emoji="👍"
+          else
+            delta_sign=""
+            emoji=""
+          fi
+          abs_delta=$((delta < 0 ? -delta : delta))
+          echo "delta_sign=$delta_sign" >> $GITHUB_ENV
+          echo "abs_delta=$abs_delta" >> $GITHUB_ENV
+          echo "emoji=$emoji" >> $GITHUB_ENV
 
       - name: Add or Update Comment
         env:
@@ -60,16 +71,24 @@ jobs:
           GH_REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number }}
           NEW_TODOS: ${{ env.new_todos }}
-          REMOVED_TODOS: ${{ env.removed_todos }}
+          DELTA_SIGN: ${{ env.delta_sign }}
+          ABS_DELTA: ${{ env.abs_delta }}
+          EMOJI: ${{ env.emoji }}
         run: |
-          # Construct the comment body
+          # Construct the comment body with formatted TODOs
           BODY=$(cat <<EOF
           <!-- TODO-Counter-Comment -->
+          **TODO Delta**
+          ${{ env.EMOJI }} ${{ env.DELTA_SIGN }}${{ env.ABS_DELTA }}
+          (${{ env.base_count }} → ${{ env.current_count }})
+
           **TODO Changes**
 
-          $(if [ ! -z "$NEW_TODOS" ]; then echo "new:"; echo "$NEW_TODOS" | tr ' ' '\n' | sed 's/^/- /'; echo ""; fi)
-
-          $(if [ ! -z "$REMOVED_TODOS" ]; then echo "removed:"; echo "$REMOVED_TODOS" | tr ' ' '\n' | sed 's/^/- /'; echo ""; fi)
+          $(if [ ! -z "$NEW_TODOS" ]; then
+            echo "new:";
+            echo "$NEW_TODOS" | tr ' ' '\n' | sed -e 's/^/- /';
+            echo "";
+          fi)
           EOF
           )
 
@@ -77,8 +96,10 @@ jobs:
           comment_id=$(gh api repos/$GH_REPO/issues/$NUMBER/comments --jq ".[] | select(.body | contains(\"<!-- TODO-Counter-Comment -->\")) | .id")
 
           if [ -n "$comment_id" ]; then
+            # Update the existing comment
             gh api repos/$GH_REPO/issues/comments/$comment_id -X PATCH -f body="$BODY"
           else
+            # Create a new comment if not found
             gh pr comment "$NUMBER" --body "$BODY"
           fi
         shell: bash
