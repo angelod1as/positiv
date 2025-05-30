@@ -95,7 +95,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
 }
 
-// TODO: This is a MOCK to test the todo action. Should be removed in a second PR.
 export function Layout(props: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
@@ -117,6 +116,7 @@ export function Layout(props: { children: ReactNode }) {
   )
 }
 
+// TODO: This is a NEW TOD to test the todo action.
 export default function App({ loaderData }: Route.ComponentProps) {
   const { currentUser, currentProfile, toast } = loaderData
 
