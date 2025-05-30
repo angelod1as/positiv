@@ -15,12 +15,12 @@ import { cn } from "~/lib/utils"
 interface DataTableColumnHeaderProps<TData, TValue>
   extends HTMLAttributes<HTMLDivElement> {
   column: Column<TData, TValue>
-  title: string
+  title?: string
 }
 
 export function DataTableColumnHeader<TData, TValue>({
   column,
-  title,
+  title = column.id,
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (!column.getCanSort()) {
