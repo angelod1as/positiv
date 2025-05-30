@@ -72,14 +72,19 @@ export default [
       ]),
       ...prefix("eventos", [
         layout("pages/admin/events/layout.tsx", [
-          // Eventos
-          index("pages/admin/events/events.tsx"),
-          // Evento
+          // Eventos (redirect)
+          index("pages/admin/events-page.tsx"),
+          // Ver evento
           route("/:id?", "pages/admin/events/view-event.tsx"),
           // Criar ou Editar
           route("/novo/:id?", "pages/admin/events/create-edit-event.tsx"),
-          // Baixar
+          // Baixar dados
           route("/:id/baixar", "pages/admin/events/download-data.tsx"),
+          // Ver participantes
+          route(
+            "/:id/participantes",
+            "pages/admin/events/view-event-participants.tsx",
+          ),
         ]),
       ]),
     ]),
