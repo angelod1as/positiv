@@ -23,8 +23,8 @@ jobs:
         id: extract_base_todos
         run: |
           cd base
-          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > base_todos.txt
-          base_todos=$(cat base_todos.txt)
+          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > ../base_todos.txt
+          base_todos=$(cat ../base_todos.txt)
           echo "BASE_TODOS<<EOF" >> $GITHUB_ENV
           echo "$base_todos" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
@@ -43,8 +43,8 @@ jobs:
         id: extract_head_todos
         run: |
           cd head
-          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > head_todos.txt
-          head_todos=$(cat head_todos.txt)
+          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > ../head_todos.txt
+          head_todos=$(cat ../head_todos.txt)
           echo "HEAD_TODOS<<EOF" >> $GITHUB_ENV
           echo "$head_todos" >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
