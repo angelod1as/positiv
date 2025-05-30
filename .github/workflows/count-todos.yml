@@ -1,0 +1,145 @@
+name: Count TODOs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  count-todos:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout PR
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Find TODOs in PR
+        id: find-todos-pr
+        run: |
+          # Find all TODOs in the PR excluding scripts and .github folders
+          find . -type f -not -path "./scripts/*" -not -path "./.github/*" -exec grep -l "// TODO: " {} \; | xargs grep -n "// TODO: " > pr_todos.txt || true
+          cat pr_todos.txt || echo "No TODOs found in PR"
+
+      - name: Checkout main
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: 0
+
+      - name: Find TODOs in main
+        id: find-todos-main
+        run: |
+          # Find all TODOs in main excluding scripts and .github folders
+          find . -type f -not -path "./scripts/*" -not -path "./.github/*" -exec grep -l "// TODO: " {} \; | xargs grep -n "// TODO: " > main_todos.txt || true
+          cat main_todos.txt || echo "No TODOs found in main"
+
+      - name: Compare TODOs
+        id: compare-todos
+        run: |
+          # Create files with just the content for easier comparison
+          echo "Preparing comparison files..."
+
+          # Process PR TODOs
+          if [ -s pr_todos.txt ]; then
+            cat pr_todos.txt | sort > pr_todos_sorted.txt
+          else
+            touch pr_todos_sorted.txt
+          fi
+
+          # Process main TODOs
+          if [ -s main_todos.txt ]; then
+            cat main_todos.txt | sort > main_todos_sorted.txt
+          else
+            touch main_todos_sorted.txt
+          fi
+
+          # Find new TODOs (in PR but not in main)
+          comm -23 pr_todos_sorted.txt main_todos_sorted.txt > new_todos.txt
+
+          # Find removed TODOs (in main but not in PR)
+          comm -13 pr_todos_sorted.txt main_todos_sorted.txt > removed_todos.txt
+
+          # Count TODOs
+          PR_COUNT=$(wc -l < pr_todos_sorted.txt | tr -d ' ')
+          MAIN_COUNT=$(wc -l < main_todos_sorted.txt | tr -d ' ')
+          NEW_COUNT=$(wc -l < new_todos.txt | tr -d ' ')
+          REMOVED_COUNT=$(wc -l < removed_todos.txt | tr -d ' ')
+
+          # Calculate delta
+          DELTA=$((PR_COUNT - MAIN_COUNT))
+
+          # Prepare comment
+          if [ $DELTA -eq 0 ] && [ $NEW_COUNT -eq 0 ] && [ $REMOVED_COUNT -eq 0 ]; then
+            # No changes
+            echo "COMMENT<<EOF" >> $GITHUB_ENV
+            echo "TODO Delta: 0 :smile:" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          elif [ $DELTA -gt 0 ]; then
+            # More TODOs in PR
+            echo "COMMENT<<EOF" >> $GITHUB_ENV
+            echo "TODO Delta: +$DELTA :thumbsdown:" >> $GITHUB_ENV
+            echo "## New" >> $GITHUB_ENV
+            while IFS= read -r line; do
+              TODO_CONTENT=$(echo "$line" | sed 's/.*\/\/ TODO: /- TODO: /')
+              echo "$TODO_CONTENT" >> $GITHUB_ENV
+            done < new_todos.txt
+            echo "EOF" >> $GITHUB_ENV
+          elif [ $DELTA -lt 0 ]; then
+            # Fewer TODOs in PR
+            echo "COMMENT<<EOF" >> $GITHUB_ENV
+            echo "TODO Delta: $DELTA :thumbsup:" >> $GITHUB_ENV
+            echo "## Removed" >> $GITHUB_ENV
+            while IFS= read -r line; do
+              TODO_CONTENT=$(echo "$line" | sed 's/.*\/\/ TODO: /- TODO: /')
+              echo "$TODO_CONTENT" >> $GITHUB_ENV
+            done < removed_todos.txt
+            echo "EOF" >> $GITHUB_ENV
+          else
+            # Same count but different TODOs
+            echo "COMMENT<<EOF" >> $GITHUB_ENV
+            echo "TODO Delta: 0 :smile:" >> $GITHUB_ENV
+
+            if [ $NEW_COUNT -gt 0 ]; then
+              echo "## New" >> $GITHUB_ENV
+              while IFS= read -r line; do
+                TODO_CONTENT=$(echo "$line" | sed 's/.*\/\/ TODO: /- TODO: /')
+                echo "$TODO_CONTENT" >> $GITHUB_ENV
+              done < new_todos.txt
+            fi
+
+            if [ $REMOVED_COUNT -gt 0 ]; then
+              echo "## Removed" >> $GITHUB_ENV
+              while IFS= read -r line; do
+                TODO_CONTENT=$(echo "$line" | sed 's/.*\/\/ TODO: /- TODO: /')
+                echo "$TODO_CONTENT" >> $GITHUB_ENV
+              done < removed_todos.txt
+            fi
+
+            echo "EOF" >> $GITHUB_ENV
+          fi
+
+          # Output summary for debugging
+          echo "PR TODOs: $PR_COUNT"
+          echo "Main TODOs: $MAIN_COUNT"
+          echo "New TODOs: $NEW_COUNT"
+          echo "Removed TODOs: $REMOVED_COUNT"
+          echo "Delta: $DELTA"
+
+      - name: Find Comment
+        uses: peter-evans/find-comment@v2
+        id: find-comment
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: 'TODO Delta:'
+
+      - name: Create or Update Comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ env.COMMENT }}
+          edit-mode: replace
