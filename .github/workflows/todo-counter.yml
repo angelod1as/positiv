@@ -40,9 +40,10 @@ jobs:
           current_count=${{ env.current_count }}
           delta=$((current_count - base_count))
 
-          # Create lists with just the TODO content (file:TODO_text) for accurate comparison
-          sed 's/:/ /' base_todos.txt | sed 's/\([^:]*\):[0-9]* *\/\/ TODO: */\1: /' | sort > base_normalized.txt
-          sed 's/:/ /' current_todos.txt | sed 's/\([^:]*\):[0-9]* *\/\/ TODO: */\1: /' | sort > current_normalized.txt
+          # Create normalized TODO lists by extracting filename + TODO content
+          # Format: filename:TODO_content
+          awk -F: '{print $1":"$NF}' base_todos.txt | sed 's|// TODO: *||' | sort > base_normalized.txt
+          awk -F: '{print $1":"$NF}' current_todos.txt | sed 's|// TODO: *||' | sort > current_normalized.txt
 
           # Find new TODOs (in current but not in base)
           comm -13 base_normalized.txt current_normalized.txt > new_todos.txt
@@ -55,8 +56,8 @@ jobs:
           if [ -s new_todos.txt ]; then
             new_todos_formatted="**New:**"$'\n'
             while IFS= read -r line; do
-              # Extract just the TODO text after the filename and colon
-              todo_text=$(echo "$line" | sed 's/[^:]*: *//')
+              # Extract just the TODO text after the colon
+              todo_text=$(echo "$line" | cut -d: -f2-)
               if [ -n "$todo_text" ]; then
                 new_todos_formatted+="- TODO: $todo_text"$'\n'
               fi
