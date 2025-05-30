@@ -1,4 +1,4 @@
-name: TODO Delta Reporter
+name: TODO Counter
 
 on:
   pull_request:
@@ -9,112 +9,42 @@ permissions:
   contents: read
 
 jobs:
-  report_todo_changes:
+  count_todos:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout base branch
+      - name: Checkout base and head branches
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
           fetch-depth: 0
-          path: base
 
-      - name: Extract TODOs from base branch
-        id: extract_base_todos
+      - name: Count TODOs in base branch
+        id: count_base
         run: |
-          cd base
-          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > ../base_todos.txt
-          base_todos=$(cat ../base_todos.txt)
-          echo "BASE_TODOS<<EOF" >> $GITHUB_ENV
-          echo "$base_todos" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          base_count=$(wc -l <<< "$base_todos")
+          # Exclude specific files or directories
+          base_count=$(grep -r --exclude='no-todo-delete.sh' "// TODO:" . | wc -l)
           echo "base_count=$base_count" >> $GITHUB_ENV
-          cd ..
 
-      - name: Checkout head branch
+      - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-          path: head
 
-      - name: Extract TODOs from head branch
-        id: extract_head_todos
+      - name: Count TODOs in current PR
+        id: count_pr
         run: |
-          cd head
-          grep -rn --exclude='no-todo-delete.sh' --exclude-dir='.github' "// TODO:" . > ../head_todos.txt
-          head_todos=$(cat ../head_todos.txt)
-          echo "HEAD_TODOS<<EOF" >> $GITHUB_ENV
-          echo "$head_todos" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-          current_count=$(wc -l <<< "$head_todos")
+          # Exclude specific files or directories
+          current_count=$(grep -r --exclude='no-todo-delete.sh' "// TODO:" . | wc -l)
           echo "current_count=$current_count" >> $GITHUB_ENV
-          cd ..
 
-      - name: Analyze TODO Changes
-        id: analyze_changes
+      - name: Calculate Delta
+        id: calculate_delta
         run: |
-          base_todos_array=(${{ env.BASE_TODOS }})
-          head_todos_array=(${{ env.HEAD_TODOS }})
-
-          new_todos=()
-          removed_todos=()
-
-          # Find new TODOs
-          for head_todo in "${head_todos_array[@]}"; do
-            found=false
-            for base_todo in "${base_todos_array[@]}"; do
-              if [ "$head_todo" = "$base_todo" ]; then
-                found=true
-                break
-              fi
-            done
-            if [ ! "$found" ]; then
-              new_todos+=("$head_todo")
-            fi
-          done
-
-          # Find removed TODOs
-          for base_todo in "${base_todos_array[@]}"; do
-            found=false
-            for head_todo in "${head_todos_array[@]}"; do
-              if [ "$base_todo" = "$head_todo" ]; then
-                found=true
-                break
-              fi
-            done
-            if [ ! "$found" ]; then
-              removed_todos+=("$base_todo")
-            fi
-          done
-
-          delta=$(( ${#head_todos_array[@]} - ${#base_todos_array[@]} ))
-          echo "delta=$delta" >> $GITHUB_ENV
-
-          new_todos_formatted=""
-          if [ ${#new_todos[@]} -gt 0 ]; then
-            new_todos_formatted="**New TODOs:**"$'\n'
-            for todo in "${new_todos[@]}"; do
-              new_todos_formatted+="- $todo"$'\n'
-            done
-          fi
-          echo "NEW_TODOS_FORMATTED<<EOF" >> $GITHUB_ENV
-          echo "$new_todos_formatted" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-          removed_todos_formatted=""
-          if [ ${#removed_todos[@]} -gt 0 ]; then
-            removed_todos_formatted="**Removed TODOs:**"$'\n'
-            for todo in "${removed_todos[@]}"; do
-              removed_todos_formatted+="- $todo"$'\n'
-            done
-          fi
-          echo "REMOVED_TODOS_FORMATTED<<EOF" >> $GITHUB_ENV
-          echo "$removed_todos_formatted" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
-          # Set emoji and delta sign
+          base_count=${{ env.base_count }}
+          current_count=${{ env.current_count }}
+          delta=$((current_count - base_count))
           if [ "$delta" -gt 0 ]; then
             delta_sign="+"
             emoji="👎"
@@ -137,14 +67,14 @@ jobs:
           NUMBER: ${{ github.event.pull_request.number }}
           ACTOR: ${{ github.actor }}
         run: |
+          # Construct the comment body
           BODY=$(cat <<EOF
+          <!-- TODO-Counter-Comment -->
           **TODO Delta**
           ${{ env.emoji }} ${{ env.delta_sign }}${{ env.abs_delta }}
           (${{ env.base_count }} → ${{ env.current_count }})
-
-          ${{ env.NEW_TODOS_FORMATTED }}
-          ${{ env.REMOVED_TODOS_FORMATTED }}
           EOF
           )
+          # Try to edit the last comment if it exists, otherwise create a new one
           gh pr comment "$NUMBER" --edit-last --body "$BODY" || gh pr comment "$NUMBER" --body "$BODY"
         shell: bash
