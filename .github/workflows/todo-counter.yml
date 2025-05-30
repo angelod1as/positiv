@@ -13,18 +13,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout base and head branches
+      - name: Checkout base branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
           fetch-depth: 0
 
-      - name: Count TODOs in base branch
-        id: count_base
+      - name: List TODOs in base branch
+        id: list_base
         run: |
-          # Exclude specific files or directories
-          base_count=$(grep -r --exclude='no-todo-delete.sh' "// TODO:" . | wc -l)
-          echo "base_count=$base_count" >> $GITHUB_ENV
+          grep -r --exclude='no-todo-delete.sh' "// TODO:" . > base_todos.txt || true
 
       - name: Checkout PR branch
         uses: actions/checkout@v4
@@ -32,49 +30,47 @@ jobs:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
 
-      - name: Count TODOs in current PR
-        id: count_pr
+      - name: List TODOs in PR branch
+        id: list_pr
         run: |
-          # Exclude specific files or directories
-          current_count=$(grep -r --exclude='no-todo-delete.sh' "// TODO:" . | wc -l)
-          echo "current_count=$current_count" >> $GITHUB_ENV
+          grep -r --exclude='no-todo-delete.sh' "// TODO:" . > pr_todos.txt || true
 
-      - name: Calculate Delta
-        id: calculate_delta
+      - name: Determine TODO Changes
+        id: determine_changes
         run: |
-          base_count=${{ env.base_count }}
-          current_count=${{ env.current_count }}
-          delta=$((current_count - base_count))
-          if [ "$delta" -gt 0 ]; then
-            delta_sign="+"
-            emoji="👎"
-          elif [ "$delta" -lt 0 ]; then
-            delta_sign=""
-            emoji="👍"
-          else
-            delta_sign=""
-            emoji=""
-          fi
-          abs_delta=$((delta < 0 ? -delta : delta))
-          echo "delta_sign=$delta_sign" >> $GITHUB_ENV
-          echo "abs_delta=$abs_delta" >> $GITHUB_ENV
-          echo "emoji=$emoji" >> $GITHUB_ENV
+          new_todos=$(comm -13 <(sort base_todos.txt) <(sort pr_todos.txt))
+          removed_todos=$(comm -23 <(sort base_todos.txt) <(sort pr_todos.txt))
+
+          echo "new_todos=$new_todos" >> $GITHUB_ENV
+          echo "removed_todos=$removed_todos" >> $GITHUB_ENV
 
       - name: Add or Update Comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number }}
-          ACTOR: ${{ github.actor }}
+          NEW_TODOS: ${{ env.new_todos }}
+          REMOVED_TODOS: ${{ env.removed_todos }}
         run: |
           # Construct the comment body
           BODY=$(cat <<EOF
           <!-- TODO-Counter-Comment -->
-          **TODO Delta**
-          ${{ env.emoji }} ${{ env.delta_sign }}${{ env.abs_delta }}
-          (${{ env.base_count }} → ${{ env.current_count }})
+          **TODO Changes**
+
+          $(if [ ! -z "$NEW_TODOS" ]; then echo "new:"; echo "$NEW_TODOS" | sed 's/^/- /'; echo ""; fi)
+
+          $(if [ ! -z "$REMOVED_TODOS" ]; then echo "removed:"; echo "$REMOVED_TODOS" | sed 's/^/- /'; echo ""; fi)
           EOF
           )
-          # Try to edit the last comment if it exists, otherwise create a new one
-          gh pr comment "$NUMBER" --edit-last --body "$BODY" || gh pr comment "$NUMBER" --body "$BODY"
+
+          # Find the existing comment ID
+          comment_id=$(gh api repos/$GH_REPO/issues/$NUMBER/comments --jq ".[] | select(.body | contains(\"<!-- TODO-Counter-Comment -->\")) | .id")
+
+          if [ -n "$comment_id" ]; then
+            # Update the existing comment
+            gh api repos/$GH_REPO/issues/comments/$comment_id -X PATCH -f body="$BODY"
+          else
+            # Create a new comment if not found
+            gh pr comment "$NUMBER" --body "$BODY"
+          fi
         shell: bash
