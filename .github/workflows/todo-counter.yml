@@ -1,60 +1,78 @@
 name: TODO Counter
-
 on:
   pull_request:
     types: [opened, synchronize]
-
 permissions:
   pull-requests: write
   contents: read
-
 jobs:
   count_todos:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout base branch
+      - name: Checkout base and head branches
         uses: actions/checkout@v4
         with:
           ref: ${{ github.base_ref }}
           fetch-depth: 0
-
-      - name: List TODOs in base branch
-        id: list_base
+      - name: Extract TODOs in base branch
+        id: extract_base
         run: |
-          touch base_todos.txt
-          grep -r --exclude='no-todo-delete.sh' "// TODO:" . > base_todos.txt || true
-
+          # Extract TODOs with file and line info from base branch
+          grep -rn --exclude='no-todo-delete.sh' "// TODO:" . > base_todos.txt || true
+          base_count=$(wc -l < base_todos.txt)
+          echo "base_count=$base_count" >> $GITHUB_ENV
       - name: Checkout PR branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-
-      - name: List TODOs in PR branch
-        id: list_pr
+      - name: Extract TODOs in current PR
+        id: extract_pr
         run: |
-          touch pr_todos.txt
-          grep -r --exclude='no-todo-delete.sh' "// TODO:" . > pr_todos.txt || true
-
-      - name: Determine TODO Changes
-        id: determine_changes
-        run: |
-          # Ensure both files exist
-          touch base_todos.txt pr_todos.txt
-
-          # Determine the new TODOs
-          new_todos=$(comm -13 <(sort base_todos.txt) <(sort pr_todos.txt) || true)
-
-          # Save the new TODOs as a single line separated by newlines
-          echo "new_todos=$(echo "$new_todos" | sed ':a;N;$!ba;s/\n/\\n/g')" >> $GITHUB_ENV
-
-      - name: Calculate Delta
+          # Extract TODOs with file and line info from PR branch
+          grep -rn --exclude='no-todo-delete.sh' "// TODO:" . > current_todos.txt || true
+          current_count=$(wc -l < current_todos.txt)
+          echo "current_count=$current_count" >> $GITHUB_ENV
+      - name: Calculate Delta and Extract Changes
         id: calculate_delta
         run: |
-          base_count=$(wc -l < base_todos.txt)
-          pr_count=$(wc -l < pr_todos.txt)
-          delta=$((pr_count - base_count))
+          base_count=${{ env.base_count }}
+          current_count=${{ env.current_count }}
+          delta=$((current_count - base_count))
+
+          # Create normalized TODO lists (remove line numbers for comparison)
+          sed 's/:[0-9]*:/ /' base_todos.txt | sort > base_normalized.txt
+          sed 's/:[0-9]*:/ /' current_todos.txt | sort > current_normalized.txt
+
+          # Find new TODOs (in current but not in base)
+          comm -13 base_normalized.txt current_normalized.txt > new_todos.txt
+
+          # Find removed TODOs (in base but not in current)
+          comm -23 base_normalized.txt current_normalized.txt > removed_todos.txt
+
+          # Format new TODOs
+          new_todos_formatted=""
+          if [ -s new_todos.txt ]; then
+            new_todos_formatted="**New:**"$'\n'
+            while IFS= read -r line; do
+              # Extract just the TODO text after "// TODO:"
+              todo_text=$(echo "$line" | sed 's/.*\/\/ TODO: *//')
+              new_todos_formatted+="- TODO: $todo_text"$'\n'
+            done < new_todos.txt
+          fi
+
+          # Format removed TODOs
+          removed_todos_formatted=""
+          if [ -s removed_todos.txt ]; then
+            removed_todos_formatted="**Removed:**"$'\n'
+            while IFS= read -r line; do
+              # Extract just the TODO text after "// TODO:"
+              todo_text=$(echo "$line" | sed 's/.*\/\/ TODO: *//')
+              removed_todos_formatted+="- TODO: $todo_text"$'\n'
+            done < removed_todos.txt
+          fi
+
+          # Set emoji and delta sign
           if [ "$delta" -gt 0 ]; then
             delta_sign="+"
             emoji="👎"
@@ -65,49 +83,41 @@ jobs:
             delta_sign=""
             emoji=""
           fi
+
           abs_delta=$((delta < 0 ? -delta : delta))
           echo "delta_sign=$delta_sign" >> $GITHUB_ENV
           echo "abs_delta=$abs_delta" >> $GITHUB_ENV
           echo "emoji=$emoji" >> $GITHUB_ENV
-          echo "base_count=$base_count" >> $GITHUB_ENV
-          echo "pr_count=$pr_count" >> $GITHUB_ENV
 
+          # Save formatted TODOs to environment (handle multiline)
+          {
+            echo 'NEW_TODOS<<EOF'
+            echo "$new_todos_formatted"
+            echo 'EOF'
+          } >> $GITHUB_ENV
+
+          {
+            echo 'REMOVED_TODOS<<EOF'
+            echo "$removed_todos_formatted"
+            echo 'EOF'
+          } >> $GITHUB_ENV
       - name: Add or Update Comment
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           NUMBER: ${{ github.event.pull_request.number }}
-          NEW_TODOS: ${{ fromJson(env.new_todos) }}
-          DELTA_SIGN: ${{ env.delta_sign }}
-          ABS_DELTA: ${{ env.abs_delta }}
-          EMOJI: ${{ env.emoji }}
-          BASE_COUNT: ${{ env.base_count }}
-          PR_COUNT: ${{ env.pr_count }}
+          ACTOR: ${{ github.actor }}
         run: |
-          # Construct the comment body with formatted TODOs
+          # Construct the comment body
           BODY=$(cat <<EOF
           <!-- TODO-Counter-Comment -->
           **TODO Delta**
-          $EMOJI $DELTA_SIGN$ABS_DELTA
-          ($BASE_COUNT → $PR_COUNT)
+          ${{ env.emoji }} ${{ env.delta_sign }}${{ env.abs_delta }}
+          (${{ env.base_count }} → ${{ env.current_count }})
 
-          **TODO Changes**
-
-          $(if [ ! -z "$NEW_TODOS" ]; then
-            echo "new:";
-            echo "$NEW_TODOS" | tr ' ' '\n' | sed -e 's/^/- /';
-          fi)
+          ${{ env.NEW_TODOS }}${{ env.REMOVED_TODOS }}
           EOF
           )
-
-          # Find the existing comment ID
-          comment_id=$(gh api repos/$GH_REPO/issues/$NUMBER/comments --jq ".[] | select(.body | contains(\"<!-- TODO-Counter-Comment -->\")) | .id")
-
-          if [ -n "$comment_id" ]; then
-            # Update the existing comment
-            gh api repos/$GH_REPO/issues/comments/$comment_id -X PATCH -f body="$BODY"
-          else
-            # Create a new comment if not found
-            gh pr comment "$NUMBER" --body "$BODY"
-          fi
+          # Try to edit the last comment if it exists, otherwise create a new one
+          gh pr comment "$NUMBER" --edit-last --body "$BODY" || gh pr comment "$NUMBER" --body "$BODY"
         shell: bash
