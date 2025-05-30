@@ -18,6 +18,7 @@ export type Database = {
           created_at: string
           event_id: string
           id: string
+          is_social_spot: boolean | null
           is_user_applied: boolean
           notes: string | null
           payment: number | null
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string
           event_id: string
           id?: string
+          is_social_spot?: boolean | null
           is_user_applied?: boolean
           notes?: string | null
           payment?: number | null
@@ -48,6 +50,7 @@ export type Database = {
           created_at?: string
           event_id?: string
           id?: string
+          is_social_spot?: boolean | null
           is_user_applied?: boolean
           notes?: string | null
           payment?: number | null
@@ -150,6 +153,7 @@ export type Database = {
           gender: string[] | null
           how_came_to_us: string | null
           id: string
+          is_veteran: boolean | null
           orientation: string[] | null
           phone: number | null
           pronouns: string[] | null
@@ -170,6 +174,7 @@ export type Database = {
           gender?: string[] | null
           how_came_to_us?: string | null
           id?: string
+          is_veteran?: boolean | null
           orientation?: string[] | null
           phone?: number | null
           pronouns?: string[] | null
@@ -190,6 +195,7 @@ export type Database = {
           gender?: string[] | null
           how_came_to_us?: string | null
           id?: string
+          is_veteran?: boolean | null
           orientation?: string[] | null
           phone?: number | null
           pronouns?: string[] | null

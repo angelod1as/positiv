@@ -1,12 +1,12 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import { EyeIcon, PencilIcon, UsersIcon } from "lucide-react"
 import { Button } from "~/components/atoms/button/button"
-import { Checkbox } from "~/components/ui/checkbox"
+import { DataTableColumnHeader } from "~/components/organisms/data-table/column-header"
+import { selectionBox } from "~/components/organisms/data-table/selection-box"
 
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 import type { Event } from "~types/entities.types"
-import { DataTableColumnHeader } from "./column-header"
 
 const {
   admin: {
@@ -15,34 +15,7 @@ const {
 } = paths
 
 export const adminDashboardEventsTableColumns: ColumnDef<Event>[] = [
-  {
-    id: "Seleção",
-    header: ({ table }) => {
-      return (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
-          onChange={(event) =>
-            table.toggleAllPageRowsSelected(!!event.target.checked)
-          }
-          aria-label="Select all"
-        />
-      )
-    },
-    cell: ({ row }) => (
-      <Checkbox
-        checked={row.getIsSelected()}
-        onChange={(event) => {
-          return row.toggleSelected(!!event.target.checked)
-        }}
-        aria-label="Select row"
-      />
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
+  selectionBox(),
   {
     id: "Título",
     accessorKey: "title",
