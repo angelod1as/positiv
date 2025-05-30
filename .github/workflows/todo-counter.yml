@@ -46,35 +46,31 @@ jobs:
           awk -F: '{print $1":"$NF}' current_todos.txt | sed 's|// TODO: *||' | sort > current_normalized.txt
 
           # Find new TODOs (in current but not in base)
-          comm -13 base_normalized.txt current_normalized.txt > new_todos.txt
+          comm -13 base_normalized.txt current_normalized.txt > new_todos_raw.txt
 
           # Find removed TODOs (in base but not in current)
-          comm -23 base_normalized.txt current_normalized.txt > removed_todos.txt
+          comm -23 base_normalized.txt current_normalized.txt > removed_todos_raw.txt
 
           # Format new TODOs
           new_todos_formatted=""
-          if [ -s new_todos.txt ]; then
+          if [ -s new_todos_raw.txt ]; then
             new_todos_formatted="**New:**"$'\n'
             while IFS= read -r line; do
-              # Extract just the TODO text after the colon
-              todo_text=$(echo "$line" | cut -d: -f2-)
-              if [ -n "$todo_text" ]; then
-                new_todos_formatted+="- TODO: $todo_text"$'\n'
+              if [ -n "$line" ]; then
+                new_todos_formatted+="- TODO: $line"$'\n'
               fi
-            done < new_todos.txt
+            done < new_todos_raw.txt
           fi
 
           # Format removed TODOs
           removed_todos_formatted=""
-          if [ -s removed_todos.txt ]; then
+          if [ -s removed_todos_raw.txt ]; then
             removed_todos_formatted="**Removed:**"$'\n'
             while IFS= read -r line; do
-              # Extract just the TODO text after the filename and colon
-              todo_text=$(echo "$line" | sed 's/[^:]*: *//')
-              if [ -n "$todo_text" ]; then
-                removed_todos_formatted+="- TODO: $todo_text"$'\n'
+              if [ -n "$line" ]; then
+                removed_todos_formatted+="- TODO: $line"$'\n'
               fi
-            done < removed_todos.txt
+            done < removed_todos_raw.txt
           fi
 
           # Set emoji and delta sign
@@ -115,7 +111,6 @@ jobs:
         run: |
           # Construct the comment body
           BODY=$(cat <<EOF
-          <!-- TODO-Counter-Comment -->
           **TODO Delta**
           ${{ env.emoji }} ${{ env.delta_sign }}${{ env.abs_delta }}
           (${{ env.base_count }} → ${{ env.current_count }})
