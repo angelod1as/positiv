@@ -95,6 +95,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
 }
 
+// TODO: This is a MOCK to test the todo action. Should be removed in a second PR.
 export function Layout(props: { children: ReactNode }) {
   return (
     <html lang="pt-BR">
