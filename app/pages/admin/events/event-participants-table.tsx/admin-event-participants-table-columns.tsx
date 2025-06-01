@@ -48,19 +48,22 @@ const makeHeader = (ctx: HeaderCtx) => {
 
 const makeCheckbox = (ctx: Ctx) => {
   const value = ctx.getValue() as boolean
-  const { row, column } = ctx
+  const { row } = ctx
   const participantId = row.original.id
+  const isVeteran = row.original.is_veteran
+  const columnDef = ctx.column.columnDef
+  const accessorKey =
+    "accessorKey" in columnDef ? columnDef.accessorKey : undefined
+
+  if (typeof value !== "boolean" || !accessorKey) return value
+
   // TODO: is there a better way?
-  const property =
-    column.id === "Veterane?"
-      ? "is_veteran"
-      : column.id === "Vaga Social?"
-        ? "is_social_spot"
-        : "was_admin_skipped_last_event"
+  const property = accessorKey
 
   const fetcher = useFetcher()
 
-  if (typeof value !== "boolean") return value
+  if (property === "was_admin_skipped_last_event" && !isVeteran)
+    return <Checkbox disabled />
 
   return (
     <Checkbox
