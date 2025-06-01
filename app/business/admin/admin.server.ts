@@ -177,3 +177,31 @@ export const updateEventStatus = applySchema(
 
   return data
 })
+
+export const updateParticipantProperty = composable(
+  async (
+    eventId: string,
+    participantId: string,
+    property: "is_veteran" | "is_social_spot" | "was_admin_skipped_last_event",
+    value: boolean,
+  ) => {
+    if (property === "is_veteran") {
+      const result = await kysely
+        .updateTable("profiles")
+        .set({ [property]: value })
+        .where("id", "=", participantId)
+        .execute()
+
+      return result.length > 0
+    }
+
+    const result = await kysely
+      .updateTable("event_participants")
+      .set({ [property]: value })
+      .where("event_id", "=", eventId)
+      .where("profile_id", "=", participantId)
+      .execute()
+
+    return result.length > 0
+  },
+)
