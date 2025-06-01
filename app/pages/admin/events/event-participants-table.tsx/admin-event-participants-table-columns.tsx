@@ -1,10 +1,15 @@
-import type { ColumnDef } from "@tanstack/react-table"
+import type {
+  CellContext,
+  ColumnDef,
+  HeaderContext,
+} from "@tanstack/react-table"
 import { EyeIcon } from "lucide-react"
 import WhatsappIcon from "~/assets/social/whatsapp.svg"
 import type { ParticipantWithExtraData } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
 import { DataTableColumnHeader } from "~/components/organisms/data-table/column-header"
 import { selectionBox } from "~/components/organisms/data-table/selection-box"
+import { Checkbox } from "~/components/ui/checkbox"
 import { phoneToWhatsappLink } from "~/lib/helpers/phone-to-whatsapp-link"
 
 import paths from "~/lib/paths"
@@ -16,11 +21,17 @@ const {
   },
 } = paths
 
-const joinArray = (array: unknown) =>
-  Array.isArray(array) ? array.join(", ") : array
+type Ctx = CellContext<ParticipantWithExtraData, unknown>
+type HeaderCtx = HeaderContext<ParticipantWithExtraData, unknown>
 
-const phoneToButton = (phone: unknown) => {
-  const link = phoneToWhatsappLink(phone)
+const joinArray = (ctx: Ctx) => {
+  const value = ctx.getValue()
+  return Array.isArray(value) ? value.join(", ") : value
+}
+
+const phoneToButton = (ctx: Ctx) => {
+  const value = ctx.getValue()
+  const link = phoneToWhatsappLink(value)
   if (!link) return null
   return (
     <Button to={link} variant="outline" linkProps={{ target: "_blank" }}>
@@ -29,69 +40,82 @@ const phoneToButton = (phone: unknown) => {
   )
 }
 
+const makeHeader = (ctx: HeaderCtx) => {
+  const column = ctx.column
+  return <DataTableColumnHeader column={column} />
+}
+
+const makeCheckbox = (ctx: Ctx) => {
+  const value = ctx.getValue()
+  if (typeof value === "boolean") return <Checkbox checked={value} />
+  return value
+}
+
 export const adminEventParticipantsTableColumns: ColumnDef<ParticipantWithExtraData>[] =
   [
     selectionBox(),
     {
       id: "Nome",
       accessorKey: "full_name",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: makeHeader,
     },
     {
       id: "Nome social",
       accessorKey: "social_name",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: makeHeader,
     },
     {
       id: "Pronomes",
       accessorKey: "pronouns",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
-      cell: ({ cell }) => joinArray(cell.getValue()),
+      header: makeHeader,
+      cell: joinArray,
     },
     {
       id: "Gênero",
       accessorKey: "gender",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
-      cell: ({ cell }) => joinArray(cell.getValue()),
+      header: makeHeader,
+      cell: joinArray,
     },
     {
       id: "Orientação",
       accessorKey: "orientation",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
-      cell: ({ cell }) => joinArray(cell.getValue()),
+      header: makeHeader,
+      cell: joinArray,
     },
     {
       id: "Whatsapp",
       accessorKey: "phone",
-      // TODO: whatsapp link
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
-      cell: ({ cell }) => phoneToButton(cell.getValue()),
+      header: makeHeader,
+      cell: phoneToButton,
       enableSorting: false,
     },
     {
       id: "Status",
       accessorKey: "process_status",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: makeHeader,
     },
     {
       id: "Pagamento",
       accessorKey: "payment",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: makeHeader,
     },
     {
       id: "Veterane?",
       accessorKey: "is_veteran",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: makeHeader,
+      cell: makeCheckbox,
     },
     {
       id: "Vaga Social?",
       accessorKey: "is_social_spot",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: makeHeader,
+      cell: makeCheckbox,
     },
     {
       id: "Foi rodízio?",
       accessorKey: "was_admin_skipped_last_event",
-      header: ({ column }) => <DataTableColumnHeader column={column} />,
+      header: makeHeader,
+      cell: makeCheckbox,
     },
     {
       id: "Ações",
