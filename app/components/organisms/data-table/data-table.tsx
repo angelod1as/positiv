@@ -26,14 +26,14 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table"
-import type { TableMeta } from "~types/table.types"
+import type { TableMeta } from "~/types/table.types"
 import { DataTablePagination } from "./pagination"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   filterBy: string
-  context?: Record<string, string>
+  context?: Record<string, unknown>
 }
 
 export function DataTable<TData, TValue>({
