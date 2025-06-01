@@ -12,8 +12,9 @@ import { selectionBox } from "~/components/organisms/data-table/selection-box"
 import { Checkbox } from "~/components/ui/checkbox"
 import { phoneToWhatsappLink } from "~/lib/helpers/phone-to-whatsapp-link"
 
+import { useFetcher } from "react-router"
 import paths from "~/lib/paths"
-import type { TableMeta } from "~types/table.types"
+import type { TableMeta } from "~/types/table.types"
 
 const {
   admin: {
@@ -46,9 +47,36 @@ const makeHeader = (ctx: HeaderCtx) => {
 }
 
 const makeCheckbox = (ctx: Ctx) => {
-  const value = ctx.getValue()
-  if (typeof value === "boolean") return <Checkbox checked={value} />
-  return value
+  const value = ctx.getValue() as boolean
+  const { row, column } = ctx
+  const participantId = row.original.id
+  // TODO: is there a better way?
+  const property =
+    column.id === "Veterane?"
+      ? "is_veteran"
+      : column.id === "Vaga Social?"
+        ? "is_social_spot"
+        : "was_admin_skipped_last_event"
+
+  const fetcher = useFetcher()
+
+  if (typeof value !== "boolean") return value
+
+  return (
+    <Checkbox
+      checked={value}
+      onChange={(e) => {
+        fetcher.submit(
+          {
+            participantId,
+            property,
+            value: e.target.checked.toString(),
+          },
+          { method: "POST" },
+        )
+      }}
+    />
+  )
 }
 
 export const adminEventParticipantsTableColumns: ColumnDef<ParticipantWithExtraData>[] =
