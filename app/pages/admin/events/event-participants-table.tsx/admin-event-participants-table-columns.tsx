@@ -1,9 +1,11 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import { EyeIcon } from "lucide-react"
+import WhatsappIcon from "~/assets/social/whatsapp.svg"
 import type { ParticipantWithExtraData } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
 import { DataTableColumnHeader } from "~/components/organisms/data-table/column-header"
 import { selectionBox } from "~/components/organisms/data-table/selection-box"
+import { phoneToWhatsappLink } from "~/lib/helpers/phone-to-whatsapp-link"
 
 import paths from "~/lib/paths"
 import type { TableMeta } from "~types/table.types"
@@ -13,6 +15,19 @@ const {
     events: { ADMIN_EVENT_VIEW_PARTICIPANT },
   },
 } = paths
+
+const joinArray = (array: unknown) =>
+  Array.isArray(array) ? array.join(", ") : array
+
+const phoneToButton = (phone: unknown) => {
+  const link = phoneToWhatsappLink(phone)
+  if (!link) return null
+  return (
+    <Button to={link} variant="outline" linkProps={{ target: "_blank" }}>
+      <img src={WhatsappIcon} alt="Whatsapp" width={20} />
+    </Button>
+  )
+}
 
 export const adminEventParticipantsTableColumns: ColumnDef<ParticipantWithExtraData>[] =
   [
@@ -31,22 +46,27 @@ export const adminEventParticipantsTableColumns: ColumnDef<ParticipantWithExtraD
       id: "Pronomes",
       accessorKey: "pronouns",
       header: ({ column }) => <DataTableColumnHeader column={column} />,
+      cell: ({ cell }) => joinArray(cell.getValue()),
     },
     {
       id: "Gênero",
       accessorKey: "gender",
       header: ({ column }) => <DataTableColumnHeader column={column} />,
+      cell: ({ cell }) => joinArray(cell.getValue()),
     },
     {
       id: "Orientação",
       accessorKey: "orientation",
       header: ({ column }) => <DataTableColumnHeader column={column} />,
+      cell: ({ cell }) => joinArray(cell.getValue()),
     },
     {
       id: "Whatsapp",
       accessorKey: "phone",
       // TODO: whatsapp link
       header: ({ column }) => <DataTableColumnHeader column={column} />,
+      cell: ({ cell }) => phoneToButton(cell.getValue()),
+      enableSorting: false,
     },
     {
       id: "Status",
