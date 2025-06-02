@@ -8,6 +8,7 @@ import {
 } from "~/business/admin/admin.server"
 import { updateParticipantPropertySchema } from "~/business/admin/common"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { parseStringValue } from "~/lib/helpers/parse-string-value"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participants"
 import { AdminEventParticipantsTable } from "./event-participants-table.tsx/admin-event-participants-table"
@@ -29,7 +30,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   const rawData = {
     participantId: formData.get("participantId")?.toString() || "",
     property: formData.get("property")?.toString() || "",
-    value: formData.get("value") === "true",
+    value: parseStringValue(formData.get("value")?.toString() || ""),
   }
 
   const validation = updateParticipantPropertySchema.safeParse(rawData)
@@ -82,6 +83,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   return { event, participants: participantsResponse.data }
 }
 
+// TODO: ERROR HANDLING ON SUBMIT
 const AdminViewEventParticipants = ({ loaderData }: Route.ComponentProps) => {
   const { event, participants, errors } = loaderData
 
