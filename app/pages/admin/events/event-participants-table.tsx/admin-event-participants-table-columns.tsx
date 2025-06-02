@@ -15,6 +15,7 @@ import { phoneToWhatsappLink } from "~/lib/helpers/phone-to-whatsapp-link"
 import { useState } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
+import { numberBox } from "~/components/organisms/data-table/number-box"
 import { useDebounceFunction } from "~/hooks/use-debounce"
 import paths from "~/lib/paths"
 import type { TableMeta } from "~/types/table.types"
@@ -58,13 +59,12 @@ const makeCheckbox = (ctx: Ctx) => {
   const accessorKey =
     "accessorKey" in columnDef ? columnDef.accessorKey : undefined
 
-  if (typeof initialValue !== "boolean" || !accessorKey) return initialValue
+  if (!accessorKey) return null
 
-  // TODO: is there a better way?
   const property = accessorKey
 
   // Use local state for immediate UI updates
-  const [checked, setChecked] = useState(initialValue)
+  const [checked, setChecked] = useState(!!initialValue)
 
   const fetcher = useFetcher()
 
@@ -103,6 +103,7 @@ const makeCheckbox = (ctx: Ctx) => {
 
 export const adminEventParticipantsTableColumns: ColumnDef<ParticipantWithExtraData>[] =
   [
+    numberBox(),
     selectionBox(),
     {
       id: "Nome",
