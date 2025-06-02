@@ -177,3 +177,74 @@ export const updateEventStatus = applySchema(
 
   return data
 })
+
+export const updateParticipantProperty = composable(
+  async (
+    eventId: string,
+    participantId: string,
+    property: "is_veteran" | "is_social_spot" | "was_admin_skipped_last_event",
+    value: boolean,
+  ) => {
+    if (property === "is_veteran") {
+      // Update is_veteran in profiles table
+      const result = await kysely
+        .updateTable("profiles")
+        .set({ [property]: value })
+        .where("id", "=", participantId)
+        .execute()
+
+      return result.length > 0
+    } else if (property === "is_social_spot") {
+      // Update is_social_spot in event_participants table
+      const result = await kysely
+        .updateTable("event_participants")
+        .set({ [property]: value })
+        .where("event_id", "=", eventId)
+        .where("profile_id", "=", participantId)
+        .execute()
+
+      return result.length > 0
+    } else if (property === "was_admin_skipped_last_event") {
+      // For was_admin_skipped_last_event, we need to find the previous event
+      // and update its process_status to 'skipped' or not
+
+      // First, get the current event's start time
+      const currentEvent = await kysely
+        .selectFrom("events")
+        .select("time_event_start")
+        .where("id", "=", eventId)
+        .executeTakeFirst()
+
+      if (!currentEvent) {
+        return false
+      }
+
+      // Find the previous event for this participant
+      const previousEvent = await kysely
+        .selectFrom("event_participants as ep")
+        .innerJoin("events as e", "ep.event_id", "e.id")
+        .select(["ep.id", "ep.process_status"])
+        .where("ep.profile_id", "=", participantId)
+        .where("ep.is_user_applied", "=", true)
+        .where("e.time_event_start", "<", currentEvent.time_event_start)
+        .orderBy("e.time_event_start", "desc")
+        .limit(1)
+        .executeTakeFirst()
+
+      if (!previousEvent) {
+        return false
+      }
+
+      // Update the process_status of the previous event
+      const result = await kysely
+        .updateTable("event_participants")
+        .set({ process_status: value ? "skipped" : "approved" })
+        .where("id", "=", previousEvent.id)
+        .execute()
+
+      return result.length > 0
+    }
+
+    return false
+  },
+)
