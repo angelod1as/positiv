@@ -81,3 +81,13 @@ export const updateEventStatusSchema = zod.object({
     "Registration Open",
   ]),
 })
+
+export const updateParticipantPropertySchema = zod.object({
+  participantId: zod.string(),
+  property: zod.enum([
+    "is_veteran",
+    "is_social_spot",
+    "was_admin_skipped_last_event",
+  ]),
+  value: zod.boolean(),
+})
