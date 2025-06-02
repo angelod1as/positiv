@@ -1,4 +1,5 @@
 import { redirectWithError } from "remix-toast"
+import { toast } from "sonner"
 import {
   getAdminContext,
   getAdminEventById,
@@ -70,7 +71,11 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     event.id,
   )
 
-  if (!participantsResponse.success || !participantsResponse.data) {
+  if (!participantsResponse.success) {
+    return { event, participants: [], errors: participantsResponse.errors }
+  }
+
+  if (!participantsResponse.data) {
     return { event, participants: [] }
   }
 
@@ -78,7 +83,22 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 }
 
 const AdminViewEventParticipants = ({ loaderData }: Route.ComponentProps) => {
-  const { event, participants } = loaderData
+  const { event, participants, errors } = loaderData
+
+  if (errors) {
+    errors.forEach((error) => {
+      console.error(error)
+      toast.error(
+        <>
+          <p>Ocorreu um erro: {error.name}</p>
+        </>,
+        {
+          id: error.name,
+        },
+      )
+    })
+  }
+
   return (
     <div>
       <h1>Participantes</h1>
@@ -86,10 +106,16 @@ const AdminViewEventParticipants = ({ loaderData }: Route.ComponentProps) => {
         {event.emoji} {event.title} -{" "}
         {formatDateTime(event.time_event_start).date}
       </p>
-      <AdminEventParticipantsTable
-        participants={participants}
-        eventId={event.id}
-      />
+      {errors ? (
+        <div>
+          <p>Ocorreu um erro, contate o administrador.</p>
+        </div>
+      ) : (
+        <AdminEventParticipantsTable
+          participants={participants}
+          eventId={event.id}
+        />
+      )}
     </div>
   )
 }
