@@ -6,6 +6,7 @@ import {
   updateParticipantProperty,
 } from "~/business/admin/admin.server"
 import { updateParticipantPropertySchema } from "~/business/admin/common"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participants"
 import { AdminEventParticipantsTable } from "./event-participants-table.tsx/admin-event-participants-table"
@@ -64,6 +65,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   if (!event) {
     throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
   }
+
   const participantsResponse = await getAdminParticipantsWithExtraDataById(
     event.id,
   )
@@ -80,6 +82,10 @@ const AdminViewEventParticipants = ({ loaderData }: Route.ComponentProps) => {
   return (
     <div>
       <h1>Participantes</h1>
+      <p>
+        {event.emoji} {event.title} -{" "}
+        {formatDateTime(event.time_event_start).date}
+      </p>
       <AdminEventParticipantsTable
         participants={participants}
         eventId={event.id}
