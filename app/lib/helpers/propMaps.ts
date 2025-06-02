@@ -1,4 +1,8 @@
-import type { Event, EventStatus } from "~types/entities.types"
+import type {
+  Event,
+  EventStatus,
+  ParticipantProcessStatus,
+} from "~types/entities.types"
 
 export const eventPropNameMap = (property: keyof Event) => {
   return {
@@ -36,5 +40,20 @@ export const eventStatusMap = (event_status: EventStatus) => {
       Completed: "Finalizado",
       "Already Applied": "Já inscrite",
     }[event_status] || ""
+  )
+}
+
+export const participantProcessStatusPropMap = (
+  process_status: ParticipantProcessStatus,
+) => {
+  return (
+    {
+      applied: "Inscrite",
+      talking: "Conversando",
+      sent_payment_data: "Dados de pagto enviados",
+      paid: "Pago",
+      sent_rules: "Regras enviadas",
+      think_better: "Pensar melhor",
+    }[process_status] || ""
   )
 }
