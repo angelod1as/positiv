@@ -2,6 +2,7 @@ import type { CellContext } from "@tanstack/react-table"
 import { useState } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
+import { Select } from "~/components/forms/select"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { useDebounceFunction } from "~/hooks/use-debounce"
@@ -19,7 +20,12 @@ export const makeInput = <TCtx,>(
   ctx: CellContext<TCtx, unknown>,
   options: MakeInputOptions,
 ) => {
-  const { type = "text", disabled = false } = options
+  const {
+    type = "text",
+    disabled = false,
+    selectOptions,
+    submitObject,
+  } = options
 
   const initialValue = ctx.getValue()
   const columnDef = ctx.column.columnDef
@@ -43,7 +49,7 @@ export const makeInput = <TCtx,>(
     (newValue: string | boolean) => {
       fetcher.submit(
         {
-          ...options.submitObject,
+          ...submitObject,
           property,
           value: newValue.toString(),
         },
@@ -71,25 +77,26 @@ export const makeInput = <TCtx,>(
     )
   }
 
-  // // Select rendering
-  // if (type === 'select') {
-  //   return (
-  //     <Select
-  //       value={value as string}
-  //       disabled={disabled}
-  //       onChange={(newValue) => {
-  //         setValue(newValue)
-  //         debouncedSubmit(newValue)
-  //       }}
-  //     >
-  //       {selectOptions.map(option => (
-  //         <SelectOption key={option.value} value={option.value}>
-  //           {option.label}
-  //         </SelectOption>
-  //       ))}
-  //     </Select>
-  //   )
-  // }
+  // Select rendering
+  if (type === "select" && selectOptions) {
+    return (
+      <Select
+        className="w-auto"
+        value={value as string}
+        disabled={disabled}
+        onChange={(newValue) => {
+          setValue(newValue.target.value)
+          debouncedSubmit(newValue.target.value)
+        }}
+      >
+        {selectOptions?.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </Select>
+    )
+  }
 
   // Text input rendering (default)
   return (
