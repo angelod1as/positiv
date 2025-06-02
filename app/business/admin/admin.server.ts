@@ -75,6 +75,7 @@ export type ParticipantWithExtraData = {
 export const getAdminParticipantsWithExtraDataById = composable(
   async (eventId: string) => {
     // Main query to get participants information along with if they were skipped in the last event
+
     const participantsWithExtraData = await kysely
       .selectFrom("event_participants as current_ep")
       .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
@@ -87,9 +88,9 @@ export const getAdminParticipantsWithExtraDataById = composable(
               "ep.profile_id",
               "ep.process_status",
               sql<number>`row_number() over (
-          partition by ep.profile_id
-          order by e.time_event_start desc
-        )`.as("rn"),
+            partition by ep.profile_id
+            order by e.time_event_start desc
+          )`.as("rn"),
             ])
             .where("ep.is_user_applied", "=", true)
             .as("ranked_events"),
