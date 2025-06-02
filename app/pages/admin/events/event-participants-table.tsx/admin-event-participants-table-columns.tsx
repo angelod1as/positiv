@@ -9,13 +9,10 @@ import type { ParticipantWithExtraData } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
 import { DataTableColumnHeader } from "~/components/organisms/data-table/column-header"
 import { selectionBox } from "~/components/organisms/data-table/selection-box"
-import { Checkbox } from "~/components/ui/checkbox"
 import { phoneToWhatsappLink } from "~/lib/helpers/phone-to-whatsapp-link"
 
-import { useState } from "react"
-import { useFetcher } from "react-router"
-import { toast } from "sonner"
-import { useDebounceFunction } from "~/hooks/use-debounce"
+import { makeInput } from "~/components/organisms/data-table/make-input"
+import { numberBox } from "~/components/organisms/data-table/number-box"
 import paths from "~/lib/paths"
 import type { TableMeta } from "~/types/table.types"
 
@@ -49,60 +46,15 @@ const makeHeader = (ctx: HeaderCtx) => {
   return <DataTableColumnHeader column={column} />
 }
 
-const makeCheckbox = (ctx: Ctx) => {
-  const initialValue = ctx.getValue() as boolean
-  const { row } = ctx
-  const participantId = row.original.id
-  const isVeteran = row.original.is_veteran
-  const columnDef = ctx.column.columnDef
-  const accessorKey =
-    "accessorKey" in columnDef ? columnDef.accessorKey : undefined
-
-  if (typeof initialValue !== "boolean" || !accessorKey) return initialValue
-
-  // TODO: is there a better way?
-  const property = accessorKey
-
-  // Use local state for immediate UI updates
-  const [checked, setChecked] = useState(initialValue)
-
-  const fetcher = useFetcher()
-
-  // Use our debounce hook to debounce only the form submission
-  const debouncedSubmit = useDebounceFunction(
-    (newValue: boolean) => {
-      toast.success("Atualização efetuada com sucesso")
-      fetcher.submit(
-        {
-          participantId,
-          property,
-          value: newValue.toString(),
-        },
-        { method: "POST" },
-      )
-    },
-    500, // 500ms debounce delay
-  )
-
-  if (property === "was_admin_skipped_last_event" && !isVeteran)
-    return <Checkbox disabled />
-
-  return (
-    <Checkbox
-      checked={checked}
-      onChange={(e) => {
-        // Update UI immediately
-        setChecked(e.target.checked)
-
-        // Debounce the server submission
-        debouncedSubmit(e.target.checked)
-      }}
-    />
-  )
+const makeSubmitObj = (ctx: CellContext<ParticipantWithExtraData, unknown>) => {
+  return {
+    participantId: ctx.row.original.id,
+  }
 }
 
 export const adminEventParticipantsTableColumns: ColumnDef<ParticipantWithExtraData>[] =
   [
+    numberBox(),
     selectionBox(),
     {
       id: "Nome",
@@ -148,24 +100,28 @@ export const adminEventParticipantsTableColumns: ColumnDef<ParticipantWithExtraD
       id: "Pagamento",
       accessorKey: "payment",
       header: makeHeader,
+      cell: (ctx) => makeInput(ctx, { submitObject: makeSubmitObj(ctx) }),
     },
     {
       id: "Veterane?",
       accessorKey: "is_veteran",
       header: makeHeader,
-      cell: makeCheckbox,
+      cell: (ctx) =>
+        makeInput(ctx, { submitObject: makeSubmitObj(ctx), type: "checkbox" }),
     },
     {
       id: "Vaga Social?",
       accessorKey: "is_social_spot",
       header: makeHeader,
-      cell: makeCheckbox,
+      cell: (ctx) =>
+        makeInput(ctx, { submitObject: makeSubmitObj(ctx), type: "checkbox" }),
     },
     {
       id: "Foi rodízio?",
       accessorKey: "was_admin_skipped_last_event",
       header: makeHeader,
-      cell: makeCheckbox,
+      cell: (ctx) =>
+        makeInput(ctx, { submitObject: makeSubmitObj(ctx), type: "checkbox" }),
     },
     {
       id: "Ações",
