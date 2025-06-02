@@ -1,5 +1,6 @@
 import js from "@eslint/js"
 import pluginReact from "eslint-plugin-react"
+import reactRefresh from "eslint-plugin-react-refresh"
 import unusedImports from "eslint-plugin-unused-imports"
 import { defineConfig, globalIgnores } from "eslint/config"
 import globals from "globals"
@@ -7,6 +8,25 @@ import tseslint from "typescript-eslint"
 
 export default defineConfig([
   globalIgnores(["./.react-router/*", "./build/*", "./playwright-report/*"]),
+  reactRefresh.configs.vite,
+  {
+    rules: {
+      "react-refresh/only-export-components": [
+        "error",
+        {
+          allowExportNames: [
+            "meta",
+            "links",
+            "headers",
+            "loader",
+            "action",
+            "clientLoader",
+            "clientAction",
+          ],
+        },
+      ],
+    },
+  },
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
