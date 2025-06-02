@@ -1,11 +1,11 @@
 import { Outlet } from "react-router"
-import { CenteredLayout } from "~/components/layouts/centered-layout"
+import { FullLayout } from "~/components/layouts/full-layout"
 
 const Layout = () => {
   return (
-    <CenteredLayout>
+    <FullLayout>
       <Outlet />
-    </CenteredLayout>
+    </FullLayout>
   )
 }
 
