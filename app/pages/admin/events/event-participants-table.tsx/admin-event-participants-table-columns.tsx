@@ -13,8 +13,10 @@ import { phoneToWhatsappLink } from "~/lib/helpers/phone-to-whatsapp-link"
 
 import { makeInput } from "~/components/organisms/data-table/make-input"
 import { numberBox } from "~/components/organisms/data-table/number-box"
+import { participantProcessStatusPropMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
 import type { TableMeta } from "~/types/table.types"
+import { participantProcessStatus } from "~types/entities.types"
 
 const {
   admin: {
@@ -95,12 +97,22 @@ export const adminEventParticipantsTableColumns: ColumnDef<ParticipantWithExtraD
       id: "Status",
       accessorKey: "process_status",
       header: makeHeader,
+      cell: (ctx) =>
+        makeInput(ctx, {
+          submitObject: makeSubmitObj(ctx),
+          type: "select",
+          selectOptions: participantProcessStatus.map((status) => ({
+            label: participantProcessStatusPropMap(status),
+            value: status,
+          })),
+        }),
     },
     {
       id: "Pagamento",
       accessorKey: "payment",
       header: makeHeader,
-      cell: (ctx) => makeInput(ctx, { submitObject: makeSubmitObj(ctx) }),
+      cell: (ctx) =>
+        makeInput(ctx, { submitObject: makeSubmitObj(ctx), type: "money" }),
     },
     {
       id: "Veterane?",

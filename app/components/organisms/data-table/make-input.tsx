@@ -2,11 +2,12 @@ import type { CellContext } from "@tanstack/react-table"
 import { useState } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
+import { Select } from "~/components/forms/select"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { useDebounceFunction } from "~/hooks/use-debounce"
 
-type InputType = "text" | "checkbox" | "select"
+type InputType = "text" | "checkbox" | "select" | "money"
 
 interface MakeInputOptions {
   type?: InputType
@@ -19,7 +20,12 @@ export const makeInput = <TCtx,>(
   ctx: CellContext<TCtx, unknown>,
   options: MakeInputOptions,
 ) => {
-  const { type = "text", disabled = false } = options
+  const {
+    type = "text",
+    disabled = false,
+    selectOptions,
+    submitObject,
+  } = options
 
   const initialValue = ctx.getValue()
   const columnDef = ctx.column.columnDef
@@ -43,7 +49,7 @@ export const makeInput = <TCtx,>(
     (newValue: string | boolean) => {
       fetcher.submit(
         {
-          ...options.submitObject,
+          ...submitObject,
           property,
           value: newValue.toString(),
         },
@@ -60,6 +66,7 @@ export const makeInput = <TCtx,>(
   if (type === "checkbox") {
     return (
       <Checkbox
+        className="self-center"
         checked={value as boolean}
         disabled={disabled}
         onChange={(e) => {
@@ -71,25 +78,43 @@ export const makeInput = <TCtx,>(
     )
   }
 
-  // // Select rendering
-  // if (type === 'select') {
-  //   return (
-  //     <Select
-  //       value={value as string}
-  //       disabled={disabled}
-  //       onChange={(newValue) => {
-  //         setValue(newValue)
-  //         debouncedSubmit(newValue)
-  //       }}
-  //     >
-  //       {selectOptions.map(option => (
-  //         <SelectOption key={option.value} value={option.value}>
-  //           {option.label}
-  //         </SelectOption>
-  //       ))}
-  //     </Select>
-  //   )
-  // }
+  // Select rendering
+  if (type === "select" && selectOptions) {
+    return (
+      <Select
+        className="w-auto"
+        value={value as string}
+        disabled={disabled}
+        onChange={(newValue) => {
+          setValue(newValue.target.value)
+          debouncedSubmit(newValue.target.value)
+        }}
+      >
+        {selectOptions?.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </Select>
+    )
+  }
+
+  if (type === "money") {
+    return (
+      <div className="flex gap-1 justify-center items-center">
+        <span className="text-xs text-muted-foreground">R$</span>
+        <Input
+          value={value as string}
+          disabled={disabled}
+          onChange={(e) => {
+            const newValue = e.target.value
+            setValue(newValue)
+            debouncedSubmit(newValue)
+          }}
+        />
+      </div>
+    )
+  }
 
   // Text input rendering (default)
   return (
