@@ -7,7 +7,7 @@ import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { useDebounceFunction } from "~/hooks/use-debounce"
 
-type InputType = "text" | "checkbox" | "select"
+type InputType = "text" | "checkbox" | "select" | "money"
 
 interface MakeInputOptions {
   type?: InputType
@@ -66,6 +66,7 @@ export const makeInput = <TCtx,>(
   if (type === "checkbox") {
     return (
       <Checkbox
+        className="self-center"
         checked={value as boolean}
         disabled={disabled}
         onChange={(e) => {
@@ -95,6 +96,23 @@ export const makeInput = <TCtx,>(
           </option>
         ))}
       </Select>
+    )
+  }
+
+  if (type === "money") {
+    return (
+      <div className="flex gap-1 justify-center items-center">
+        <span className="text-xs text-muted-foreground">R$</span>
+        <Input
+          value={value as string}
+          disabled={disabled}
+          onChange={(e) => {
+            const newValue = e.target.value
+            setValue(newValue)
+            debouncedSubmit(newValue)
+          }}
+        />
+      </div>
     )
   }
 

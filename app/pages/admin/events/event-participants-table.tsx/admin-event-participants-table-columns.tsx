@@ -111,7 +111,8 @@ export const adminEventParticipantsTableColumns: ColumnDef<ParticipantWithExtraD
       id: "Pagamento",
       accessorKey: "payment",
       header: makeHeader,
-      cell: (ctx) => makeInput(ctx, { submitObject: makeSubmitObj(ctx) }),
+      cell: (ctx) =>
+        makeInput(ctx, { submitObject: makeSubmitObj(ctx), type: "money" }),
     },
     {
       id: "Veterane?",
