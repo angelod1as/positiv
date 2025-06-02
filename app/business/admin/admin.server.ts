@@ -12,6 +12,7 @@ import {
   adminContextSchema,
   eventFormSchema,
   updateEventStatusSchema,
+  updateParticipantPropertySchema,
 } from "./common"
 
 const {
@@ -183,7 +184,7 @@ export const updateParticipantProperty = composable(
   async (
     eventId: string,
     participantId: string,
-    property: string,
+    property: z.infer<typeof updateParticipantPropertySchema>["property"],
     value: boolean | number | string,
   ) => {
     const updateProfiles = async () => {
@@ -260,6 +261,12 @@ export const updateParticipantProperty = composable(
 
     if (typeof value === "number") {
       return await updateEventParticipants()
+    }
+
+    if (typeof value === "string") {
+      if (property === "process_status") {
+        return await updateEventParticipants()
+      }
     }
 
     return false
