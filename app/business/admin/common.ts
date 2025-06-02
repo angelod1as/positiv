@@ -88,6 +88,8 @@ export const updateParticipantPropertySchema = zod.object({
     "is_veteran",
     "is_social_spot",
     "was_admin_skipped_last_event",
+    "payment",
+    "process_status",
   ]),
-  value: zod.boolean(),
+  value: zod.union([zod.boolean(), zod.string(), zod.number()]),
 })
