@@ -41,7 +41,11 @@ export const getAdminContext = async (
   return { ...context, events }
 }
 
-export const getAdminEventById = async (request: Request, params: Params) => {
+// TODO: Remove
+export const getSupabaseAdminEventById = async (
+  request: Request,
+  params: Params,
+) => {
   const { supabase } = await getAdminContext(request, params)
   const eventId = params.id
   if (!eventId) return undefined
@@ -121,6 +125,39 @@ export const getAdminParticipantsWithExtraDataById = composable(
       .execute()
 
     return participantsWithExtraData
+  },
+)
+
+export const getAdminProfileById = composable(
+  async ({ profileId }: { profileId: string }) => {
+    return await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profileId)
+      .executeTakeFirstOrThrow()
+  },
+)
+
+export const getEventParticipantHistoryById = composable(
+  async ({ profileId, eventId }: { profileId: string; eventId: string }) => {
+    return await kysely
+      .selectFrom("event_participants")
+      .innerJoin("events", "event_id", "event_participants.event_id")
+      .selectAll("event_participants")
+      .select(["events.emoji", "events.title"])
+      .where("event_id", "=", eventId)
+      .where("profile_id", "=", profileId)
+      .execute()
+  },
+)
+
+export const getAdminEventById = composable(
+  async ({ eventId }: { eventId: string }) => {
+    return await kysely
+      .selectFrom("events")
+      .selectAll()
+      .where("id", "=", eventId)
+      .executeTakeFirstOrThrow()
   },
 )
 
