@@ -1,7 +1,7 @@
 import type { FC } from "react"
 import { Form, useForm } from "react-hook-form"
 import type { ParticipantWithExtraData } from "~/business/admin/admin.server"
-import { DataTable } from "~/components/organisms/data-table/data-table"
+import { DataTable } from "~/components/organisms/old-data-table/data-table"
 import { adminEventParticipantsTableColumns } from "./admin-event-participants-table-columns"
 
 type AdminEventParticipantsTableProps = {
