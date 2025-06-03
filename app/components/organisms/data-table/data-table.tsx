@@ -1,171 +1,97 @@
+import { EyeIcon, PencilIcon, UsersIcon } from "lucide-react"
+import { Column } from "primereact/column"
 import {
-  type ColumnDef,
-  type ColumnFiltersState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getSortedRowModel,
-  type SortingState,
-  useReactTable,
-  type VisibilityState,
-} from "@tanstack/react-table"
+  DataTable as PrimeDataTable,
+  type DataTableValueArray,
+} from "primereact/datatable"
 import { useState } from "react"
-import { Button } from "~/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "~/components/ui/dropdown-menu"
-import { Input } from "~/components/ui/input"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "~/components/ui/table"
-import type { TableMeta } from "~/types/table.types"
-import { DataTablePagination } from "./pagination"
+import { Button } from "~/components/atoms/button/button"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
+import paths from "~/lib/paths"
+import type { Event } from "~types/entities.types"
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-  filterBy: string
-  context?: Record<string, unknown>
+const {
+  admin: {
+    events: { ADMIN_VIEW_EVENT, ADMIN_EDIT_EVENT, ADMIN_EVENT_PARTICIPANTS },
+  },
+} = paths
+
+const columns: Array<{
+  field: keyof Event
+  header: string
+  transform?: (value: Event) => string
+}> = [
+  { field: "id", header: "Id" },
+  { field: "title", header: "Title" },
+  {
+    field: "time_event_start",
+    header: "Data de início",
+    transform: (value) => {
+      return formatDateTime(value.time_event_start).full || ""
+    },
+  },
+]
+
+const buttons = (value: Event) => {
+  const eventId = value.id
+  return (
+    <div className="flex gap-2 justify-self-end">
+      <Button to={ADMIN_EVENT_PARTICIPANTS(eventId)} variant="outline">
+        <UsersIcon />
+      </Button>
+      <Button to={ADMIN_VIEW_EVENT(eventId)} variant="outline">
+        <EyeIcon />
+      </Button>
+      <Button to={ADMIN_EDIT_EVENT(eventId)} variant="outline">
+        <PencilIcon />
+      </Button>
+    </div>
+  )
 }
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-  filterBy,
-  context,
-}: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = useState({})
-
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    initialState: {
-      pagination: {
-        pageSize: 150,
-      },
-    },
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-    meta: context,
-  })
+type DataTableProps<T> = {
+  values: T[]
+}
+export const DataTable = <T extends DataTableValueArray[number]>({
+  values,
+}: DataTableProps<T>) => {
+  const [selection, setSelection] = useState<T[]>([])
 
   return (
-    <div>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder={`Filtrar por ${filterBy.toLowerCase()}...`}
-          value={(table.getColumn(filterBy)?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn(filterBy)?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
+    <PrimeDataTable
+      value={values}
+      scrollable
+      scrollHeight="400px"
+      stripedRows
+      paginator
+      rows={150}
+      tableStyle={{ minWidth: "50rem" }}
+      sortMode="multiple"
+      removableSort
+      sortField="time_event_start"
+      sortOrder={-1}
+      selection={selection}
+      onSelectionChange={(e) => setSelection(e.value)}
+      selectionMode="checkbox"
+      dataKey="id"
+      resizableColumns
+      columnResizeMode="fit"
+      stateStorage="session"
+      stateKey="dt-state-admin-events"
+      emptyMessage="Nenhum evento encontrado"
+    >
+      <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} />
+
+      {columns.map((col) => (
+        <Column
+          key={col.field}
+          field={col.field}
+          header={col.header}
+          sortable
+          body={col.transform ? col.transform : undefined}
         />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Colunas
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                )
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  const { className } =
-                    (header.column.columnDef.meta as TableMeta) || {}
-                  return (
-                    <TableHead key={header.id} className={className}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  )
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const { className } =
-                      (cell.column.columnDef.meta as TableMeta) || {}
-                    return (
-                      <TableCell key={cell.id} className={className}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    )
-                  })}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  Sem resultados.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <DataTablePagination table={table} />
-      </div>
-    </div>
+      ))}
+      <Column body={buttons} />
+    </PrimeDataTable>
   )
 }
