@@ -1,8 +1,8 @@
 import type { ColumnDef } from "@tanstack/react-table"
 import { EyeIcon, PencilIcon, UsersIcon } from "lucide-react"
 import { Button } from "~/components/atoms/button/button"
-import { DataTableColumnHeader } from "~/components/organisms/data-table/column-header"
-import { selectionBox } from "~/components/organisms/data-table/selection-box"
+import { DataTableColumnHeader } from "~/components/organisms/old-data-table/column-header"
+import { selectionBox } from "~/components/organisms/old-data-table/selection-box"
 
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
