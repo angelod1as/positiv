@@ -5,7 +5,11 @@ import {
   getAdminProfileById,
   getEventParticipantHistoryById,
 } from "~/business/admin/admin.server"
+import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { eventParticipantPropMap, profilePropMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
+import type { Database } from "~types/kysely.types"
 import type { Route } from "./+types/view-event-participant"
 
 const {
@@ -43,7 +47,11 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const [participant, participantHistory, event] = result.data
 
-  return { participant, participantHistory, event }
+  return {
+    participant,
+    participantHistory,
+    event,
+  }
 }
 
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
@@ -60,6 +68,56 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
           </p>
         </div>
         <div>{/* TODO: Edit Buttons */}</div>
+      </div>
+      <h2>Dados básicos</h2>
+      <div>
+        {Object.keys(participant).map((key) => {
+          const pKey = key as keyof Database["profiles"]
+          const label = profilePropMap(pKey)
+          const value = participant[pKey]
+          const dateValue =
+            typeof value === "object"
+              ? formatDateTime(
+                  (participant.date_of_birth as unknown as Date).toISOString(),
+                ).date
+              : undefined
+          return <DataPair key={key} pair={[label, dateValue || value]} />
+        })}
+      </div>
+      <h2>Neste evento</h2>
+      {event.id}
+      <div />
+      <h2>Histórico anterior</h2>
+      <div className="flex flex-col gap-4">
+        {participantHistory.map(
+          ({ event_emoji, event_title, ...pastEvent }) => {
+            return (
+              <>
+                <div>
+                  <h3>
+                    {event_emoji} {event_title}
+                  </h3>
+                  {Object.keys(pastEvent).map((key) => {
+                    const pKey = key as keyof Database["event_participants"]
+                    const label = eventParticipantPropMap(pKey)
+                    const value = pastEvent[pKey]
+                    const dateValue =
+                      typeof value === "object"
+                        ? formatDateTime(
+                            (
+                              participant.date_of_birth as unknown as Date
+                            ).toISOString(),
+                          ).date
+                        : undefined
+                    return (
+                      <DataPair key={key} pair={[label, dateValue || value]} />
+                    )
+                  })}
+                </div>
+              </>
+            )
+          },
+        )}
       </div>
     </>
   )
