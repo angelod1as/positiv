@@ -139,14 +139,15 @@ export const getAdminProfileById = composable(
 )
 
 export const getEventParticipantHistoryById = composable(
-  async ({ profileId, eventId }: { profileId: string; eventId: string }) => {
+  async ({ profileId }: { profileId: string }) => {
     return await kysely
       .selectFrom("event_participants")
-      .innerJoin("events", "event_id", "event_participants.event_id")
+      .innerJoin("events", "events.id", "event_participants.event_id")
       .selectAll("event_participants")
-      .select(["events.emoji", "events.title"])
-      .where("event_id", "=", eventId)
-      .where("profile_id", "=", profileId)
+      .select(["events.title as event_title", "events.emoji as event_emoji"])
+      .where("event_participants.profile_id", "=", profileId)
+      .where("is_user_applied", "=", true)
+      .orderBy("events.time_event_start", "desc")
       .execute()
   },
 )
