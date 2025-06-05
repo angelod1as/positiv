@@ -47,11 +47,7 @@ export const getNextEvents: GetNextEvents = async (
 
   query = query
     .gte("time_event_start", now)
-    .in("event_status", [
-      "Registration Open",
-      "Scheduled",
-      "Registration Closed",
-    ])
+    .in("event_status", ["Registration Open", "Scheduled"])
     .order("time_event_start", { ascending: true })
     .limit(limit)
 

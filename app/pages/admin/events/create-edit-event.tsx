@@ -3,7 +3,7 @@ import { redirectWithSuccess } from "remix-toast"
 import {
   createOrUpdateEvent,
   getAdminContext,
-  getSupabaseAdminEventById,
+  getAdminEventById,
 } from "~/business/admin/admin.server"
 import { eventFormSchema } from "~/business/admin/common"
 import { EventForm } from "~/components/forms/admin/event-form"
@@ -18,7 +18,7 @@ const {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!params.id) return { event: undefined }
-  const event = await getSupabaseAdminEventById(request, params)
+  const event = await getAdminEventById(request, params)
   return { event }
 }
 
