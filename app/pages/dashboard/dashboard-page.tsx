@@ -16,9 +16,14 @@ const {
 } = paths
 
 const splitEvents = (events: ViewEvent[] | undefined) => {
-  const empty: { registrationOpen: ViewEvent[]; scheduled: ViewEvent[] } = {
+  const empty: {
+    registrationOpen: ViewEvent[]
+    scheduled: ViewEvent[]
+    registrationClosed: ViewEvent[]
+  } = {
     registrationOpen: [],
     scheduled: [],
+    registrationClosed: [],
   }
 
   if (!events || events.length < 1) return empty
@@ -26,6 +31,8 @@ const splitEvents = (events: ViewEvent[] | undefined) => {
   return events.reduce((acc, event) => {
     if (event.event_status === "Registration Open") {
       acc.registrationOpen.push(event)
+    } else if (event.event_status === "Registration Closed") {
+      acc.registrationClosed.push(event)
     } else {
       acc.scheduled.push(event)
     }
@@ -49,7 +56,8 @@ export async function clientLoader({}: Route.LoaderArgs) {
   if (error || !events) {
     return {
       registrationOpen: [],
-      scheduled: [],
+      scheduled: undefined,
+      registrationClosed: undefined,
     }
   }
 
@@ -61,26 +69,42 @@ export async function action({ request, params }: Route.ClientActionArgs) {
 }
 
 type WrapperProps = {
-  registrationEvents: ReactNode
+  openRegistrationEvents: ReactNode
   scheduledEvents: ReactNode
+  closedRegistrationEvents: ReactNode
 }
 
-const Wrapper: FC<WrapperProps> = ({ registrationEvents, scheduledEvents }) => {
+const Wrapper: FC<WrapperProps> = ({
+  openRegistrationEvents,
+  scheduledEvents,
+  closedRegistrationEvents,
+}) => {
   return (
     <>
       <div className="flex flex-col gap-4">
         <h2>Inscrições abertas</h2>
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
-          {registrationEvents}
+          {openRegistrationEvents}
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
-        <h2>Eventos agendados</h2>
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
-          {scheduledEvents}
+      {closedRegistrationEvents && (
+        <div className="flex flex-col gap-4">
+          <h2>Inscrições encerradas</h2>
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
+            {closedRegistrationEvents}
+          </div>
         </div>
-      </div>
+      )}
+
+      {scheduledEvents && (
+        <div className="flex flex-col gap-4">
+          <h2>Eventos agendados</h2>
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
+            {scheduledEvents}
+          </div>
+        </div>
+      )}
     </>
   )
 }
@@ -88,18 +112,19 @@ const Wrapper: FC<WrapperProps> = ({ registrationEvents, scheduledEvents }) => {
 export const HydrateFallback = () => {
   return (
     <Wrapper
-      registrationEvents={<EventCardSkeleton />}
-      scheduledEvents={<EventCardSkeleton />}
+      openRegistrationEvents={<EventCardSkeleton />}
+      scheduledEvents={undefined}
+      closedRegistrationEvents={undefined}
     />
   )
 }
 
 const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
-  const { registrationOpen, scheduled } = loaderData
+  const { registrationOpen, registrationClosed, scheduled } = loaderData
 
   return (
     <Wrapper
-      registrationEvents={
+      openRegistrationEvents={
         registrationOpen.length ? (
           registrationOpen.map((event) => (
             <EventCard
@@ -112,18 +137,25 @@ const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
           <p>Nenhum evento com inscrições abertas</p>
         )
       }
+      closedRegistrationEvents={
+        !!registrationClosed?.length &&
+        registrationClosed.map((event) => (
+          <EventCard
+            data-testid="event-card-closed"
+            key={event.id}
+            event={event}
+          />
+        ))
+      }
       scheduledEvents={
-        scheduled.length ? (
-          scheduled.map((event) => (
-            <EventCard
-              data-testid="event-card-scheduled"
-              key={event.id}
-              event={event}
-            />
-          ))
-        ) : (
-          <p>Nenhum evento encontrado</p>
-        )
+        !!scheduled?.length &&
+        scheduled.map((event) => (
+          <EventCard
+            data-testid="event-card-scheduled"
+            key={event.id}
+            event={event}
+          />
+        ))
       }
     />
   )
