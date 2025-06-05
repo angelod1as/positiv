@@ -1,5 +1,4 @@
 onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
   - '@vercel/speed-insights'
   - supabase
 patchedDependencies:
