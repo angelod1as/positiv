@@ -119,7 +119,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
 
   return (
     <Button data-testid={dataTestId} disabled={true}>
-      Inscreva-se em breve
+      Inscrições em breve
     </Button>
   )
 }
