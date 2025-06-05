@@ -116,7 +116,6 @@ export function Layout(props: { children: ReactNode }) {
   )
 }
 
-// TODO: This is a NEW TOD to test the todo action.
 export default function App({ loaderData }: Route.ComponentProps) {
   const { currentUser, currentProfile, toast } = loaderData
 

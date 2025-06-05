@@ -2,7 +2,34 @@ import type {
   Event,
   EventStatus,
   ParticipantProcessStatus,
+  Profile,
 } from "~types/entities.types"
+import type { Database } from "~types/kysely.types"
+
+export const profilePropMap = (property: keyof Profile) => {
+  return {
+    allow_marketing_email: "Autorizou email marketing?",
+    basic_data_filled: "Dados básico preenchidos?",
+    cpf: "CPF",
+    created_at: "Criado em",
+    date_of_birth: "Data de nascimento",
+    email: "E-mail",
+    full_name: "Nome completo",
+    social_name: "Nome social ou apelido",
+    where_lives: "Em que cidade você mora?",
+    how_came_to_us: "Como chegou até nós?",
+    phone: "Whatsapp",
+    confirm_phone: "Confirme seu whatsapp",
+    rg: "RG",
+    rg_issuer: "Emissor do RG",
+    gender: "Gênero",
+    id: "Id de perfil",
+    is_veteran: "É veterane?",
+    orientation: "Orientação",
+    pronouns: "Pronomes",
+    user_id: "Id de usuárie",
+  }[property]
+}
 
 export const eventPropNameMap = (property: keyof Event) => {
   return {
@@ -26,6 +53,29 @@ export const eventPropNameMap = (property: keyof Event) => {
     title: "Nome",
     total_spots: "Lotação",
     is_applied: "Inscrite",
+  }[property]
+}
+
+export const eventParticipantPropMap = (
+  property: keyof Database["event_participants"],
+) => {
+  return {
+    id: "Id",
+    profile_id: "Id do perfil",
+    event_id: "Id do evento",
+    is_user_applied: "Inscrite?",
+    payment: "Pagamento",
+    process_status: "Status",
+    application_date: "Data de inscrição",
+    cancellation_date: "Data de cancelamento",
+    created_at: "Criado em",
+    notes: "Notas",
+    referrals: "Indicações",
+    companions: "Vai acompanhade?",
+    bond: "Pode ir só?",
+    is_social_spot: "É vaga social?",
+    emoji: "Emoji",
+    title: "Título",
   }[property]
 }
 
