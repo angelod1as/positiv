@@ -8,6 +8,7 @@ export class DashboardPOM {
   readonly scheduledEventsSection: Locator
   readonly applySoonButton: Locator
   readonly applyButton: Locator
+  readonly closedButton: Locator
   readonly cancelButton: Locator
   readonly cancelDialog: Locator
   readonly dialogCancelApplication: Locator
@@ -32,6 +33,9 @@ export class DashboardPOM {
       .first()
     this.applyButton = this.page
       .getByRole("link", { name: "Fazer inscrição" })
+      .first()
+    this.closedButton = this.page
+      .getByRole("link", { name: "Inscrições encerradas" })
       .first()
 
     // Applied user
@@ -71,6 +75,7 @@ export class DashboardPOM {
     await expect(this.scheduledEventsSection).toBeVisible()
     await expect(this.applyButton).toBeVisible()
     await expect(this.applySoonButton).toBeVisible()
+    await expect(this.closedButton).toBeVisible()
   }
 
   async testNotAppliedButtons() {
@@ -83,6 +88,7 @@ export class DashboardPOM {
 
   async testAppliedButtons() {
     await expect(this.applySoonButton).toBeDisabled()
+    await expect(this.closedButton).toBeDisabled()
     await expect(this.cancelButton).toBeVisible()
     await this.cancelButton.click()
     await expect(this.cancelDialog).toBeVisible()
