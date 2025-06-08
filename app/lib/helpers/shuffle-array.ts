@@ -1,5 +1,3 @@
-"use client"
-
 /* Randomize array in-place using Durstenfeld shuffle algorithm */
 export function shuffleArray<T>(original: Array<T>): Array<T> {
   const array = original.slice(0)

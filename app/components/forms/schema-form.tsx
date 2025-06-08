@@ -1,5 +1,3 @@
-"use client"
-
 import {
   SchemaForm as BaseForm,
   type FormSchema,
