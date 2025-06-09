@@ -1,11 +1,12 @@
 import { EyeIcon, PencilIcon, UsersIcon } from "lucide-react"
-import { FilterMatchMode } from "primereact/api"
+import { FilterMatchMode, FilterService } from "primereact/api"
 import { Column } from "primereact/column"
 import { DataTable, type DataTableFilterMeta } from "primereact/datatable"
 import { InputText } from "primereact/inputtext"
 import { useState, type ChangeEvent, type FC } from "react"
 import { Button } from "~/components/atoms/button/button"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { eventPropNameMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
 import type { Event } from "~types/entities.types"
 
@@ -15,16 +16,28 @@ const {
   },
 } = paths
 
+// TODO: Implement date filtering
+FilterService.register("custom_time_event_start", (_value, _filters) => {
+  // const [from, to] = filters ?? [null, null];
+  // if (from === null && to === null) return true;
+  // if (from !== null && to === null) return from <= value;
+  // if (from === null && to !== null) return value <= to;
+  // return from <= value && value <= to;
+  return true
+})
+
 type AdminDashboardEventsTableProps = {
   events: Event[]
 }
 export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
-  events,
+  events: dbEvents,
 }) => {
   const [selection, setSelection] = useState<Event[]>([])
+  const [events, setEvents] = useState(dbEvents)
 
   const [filters, setFilters] = useState<DataTableFilterMeta>({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    time_event_start: { value: null, matchMode: FilterMatchMode.CUSTOM },
   })
 
   const [globalFilterValue, setGlobalFilterValue] = useState("")
@@ -52,6 +65,19 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
     )
   }
 
+  //// See top todo
+  // const dateRowFilterTemplate = (
+  //   options: ColumnFilterElementTemplateOptions,
+  // ) => {
+  //   return (
+  //     <Input
+  //       type="date"
+  //       value={options.value || ""}
+  //       onChange={(e) => options.filterApplyCallback(e.target.value)}
+  //     />
+  //   )
+  // }
+
   return (
     <DataTable
       value={events}
@@ -61,8 +87,9 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
       emptyMessage="Nenhum evento encontrado"
       // Filters
       filters={filters}
-      filterDisplay="row"
+      // filterDisplay="menu"
       onFilter={(e) => setFilters(e.filters)}
+      globalFilterFields={["title"]}
       header={renderHeader}
       // Session
       // TODO: After fixing
@@ -75,6 +102,7 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
       // Sorting
       sortField="time_event_start"
       sortOrder={-1}
+      removableSort
       // Selection
       selection={selection}
       onSelectionChange={(e) => setSelection(e.value)}
@@ -82,14 +110,34 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
       // Resize
       resizableColumns
       columnResizeMode="fit"
+      // Reorder
+      reorderableColumns
+      onRowReorder={(e) => setEvents(e.value)}
     >
-      <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} />
+      <Column
+        selectionMode="multiple"
+        headerStyle={{ width: "3rem" }}
+        alignFrozen="left"
+      />
       <Column field="id" header="id" hidden={true} />
-      <Column field="title" header="Título" alignFrozen="left" frozen={true} />
+      <Column
+        field="title"
+        header={eventPropNameMap("title")}
+        alignFrozen="left"
+        sortable
+        frozen={true}
+      />
       <Column
         field="time_event_start"
-        header="Data de início"
+        header={eventPropNameMap("time_event_start")}
         body={(value) => formatDateTime(value.time_event_start).full}
+        sortable
+        //// See top todo
+        // filter
+        // filterElement={dateRowFilterTemplate}
+        showFilterMatchModes={false}
+        filterType="date"
+        dataType="date"
       />
 
       {/* Buttons */}
