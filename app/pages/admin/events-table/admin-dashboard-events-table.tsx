@@ -123,8 +123,8 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
       header={renderHeader}
       // Session
       // TODO: After fixing
-      // stateStorage="session"
-      // stateKey="dt-state-admin-events"
+      stateStorage="session"
+      stateKey="dt-state-admin-events"
       // Scroll
       scrollable
       scrollHeight="400"
