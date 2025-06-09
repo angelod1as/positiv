@@ -122,7 +122,6 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
       globalFilterFields={["title"]}
       header={renderHeader}
       // Session
-      // TODO: After fixing
       stateStorage="session"
       stateKey="dt-state-admin-events"
       // Scroll
