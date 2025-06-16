@@ -2,7 +2,7 @@ name: Prevent Supabase Inactivity
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Runs at midnight every Sunday
+    - cron: '0 0 * * *'  # Runs at midnight every Sunday
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
