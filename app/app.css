@@ -256,6 +256,21 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .centered-layout {
+    ul > li {
+      &:before {
+        @apply pr-[5px] content-["\219D"];
+      }
+      & > ul > li {
+        @apply ml-3;
+
+        &:before {
+          @apply pr-[5px] text-xs content-["\2937"];
+        }
+      }
+    }
+  }
 }
 
 /* Table */
