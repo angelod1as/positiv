@@ -2,7 +2,7 @@ name: Prevent Supabase Inactivity
 
 on:
   schedule:
-    - cron: '0 0 * * 0'  # Runs at midnight every Sunday
+    - cron: '0 0 * * *'  # Runs at midnight every day
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
@@ -16,12 +16,12 @@ jobs:
     steps:
       - name: Make an API request to Staging Supabase
         run: |
-          curl -X GET "${{ env.STAGING_SUPABASE_URL }}/rest/v1/" \
+          curl --fsS -X GET "${{ env.STAGING_SUPABASE_URL }}/rest/v1/" \
           -H "apikey: ${{ env.STAGING_SUPABASE_ANON_KEY }}" \
           -H "Authorization: Bearer ${{ env.STAGING_SUPABASE_ANON_KEY }}"
 
       - name: Make an API request to Production Supabase
         run: |
-          curl -X GET "${{ env.PRODUCTION_SUPABASE_URL }}/rest/v1/" \
+          curl --fsS -X GET "${{ env.PRODUCTION_SUPABASE_URL }}/rest/v1/" \
           -H "apikey: ${{ env.PRODUCTION_SUPABASE_ANON_KEY }}" \
           -H "Authorization: Bearer ${{ env.PRODUCTION_SUPABASE_ANON_KEY }}"
