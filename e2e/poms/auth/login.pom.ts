@@ -73,8 +73,8 @@ export class LoginPOM {
       await this.page.waitForURL(/dashboard$/)
       await expect(this.page).toHaveURL(/dashboard$/)
     } else {
-      await this.page.waitForURL(/termos$/)
-      await expect(this.page).toHaveURL(/termos$/)
+      await this.page.waitForURL(/termos-e-condicoes$/)
+      await expect(this.page).toHaveURL(/termos-e-condicoes$/)
     }
   }
 
