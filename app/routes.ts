@@ -17,6 +17,8 @@ export default [
       route("/esqueci", "pages/auth/forgot-password-page.tsx"),
     ]),
     route("/registrar", "pages/auth/register-page.tsx"),
+
+    route("/email", "pages/redirect/email-redirect-page.tsx"),
   ]),
 
   // PRIVATE
