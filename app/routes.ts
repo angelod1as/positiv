@@ -51,7 +51,7 @@ export default [
       ...prefix("conta", [
         index("pages/account/account-page.tsx"),
         route(
-          "/termos",
+          "/termos-e-condicoes",
           "pages/dashboard/agree-to-terms-page/agree-to-terms-page.tsx",
         ),
         route("/mudar-senha", "pages/account/change-password-page.tsx"),
