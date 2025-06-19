@@ -51,7 +51,7 @@ export async function clientLoader({}: Route.LoaderArgs) {
     )
   }
 
-  const { events, error } = await getNextEvents(supabase, currentProfile.id)
+  const { events, error } = await getNextEvents(supabase, currentProfile.id, 12)
 
   if (error || !events) {
     return {
