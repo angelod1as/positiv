@@ -13,7 +13,12 @@ import { getNextEvents } from "./fetch/get-next-events"
 export async function clientLoader({}: Route.LoaderArgs) {
   const { currentUser, currentProfile, supabase } = await getClientContext()
   const isLoggedIn = !!currentUser?.id
-  const { error, events } = await getNextEvents(supabase, currentProfile?.id, 3)
+  const { error, events } = await getNextEvents(
+    supabase,
+    currentProfile?.id,
+    3,
+    true,
+  )
   if (error || !events) {
     return { events: undefined, isLoggedIn }
   }
