@@ -6,6 +6,7 @@ type GetNextEvents = (
   client: DBClient,
   profileId: string | undefined,
   limit?: number,
+  isHomepage?: boolean,
 ) => Promise<{
   events: ViewEvent[] | undefined
   error: PostgrestError | "NO_DATA_ERROR" | undefined | null
@@ -15,6 +16,7 @@ export const getNextEvents: GetNextEvents = async (
   supabase,
   profileId,
   limit = 3,
+  isHomepage = false,
 ) => {
   const now = new Date().toISOString()
 
@@ -47,11 +49,12 @@ export const getNextEvents: GetNextEvents = async (
 
   query = query
     .gte("time_event_start", now)
-    .in("event_status", [
-      "Registration Open",
-      "Scheduled",
-      "Registration Closed",
-    ])
+    .in(
+      "event_status",
+      isHomepage
+        ? ["Registration Open", "Scheduled"]
+        : ["Registration Open", "Scheduled", "Registration Closed"],
+    )
     .order("time_event_start", { ascending: true })
     .limit(limit)
 
