@@ -161,12 +161,10 @@ export const updateEventStatus = applySchema(
   const { supabase, eventId } = context
   if (!eventId) return null
 
-  const parsedValues = schemaValuesToDB(values)
-
   const { error, data } = await supabase
     .from("events")
     .update({
-      ...parsedValues,
+      ...values,
     })
     .eq("id", eventId)
 
