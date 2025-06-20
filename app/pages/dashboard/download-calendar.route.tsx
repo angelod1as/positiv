@@ -2,7 +2,6 @@ import { redirectWithError } from "remix-toast"
 import { getContext } from "~/business/auth/auth.server"
 import { formatCalendarEvent } from "~/business/participant/format-calendar-event.server"
 import paths from "~/lib/paths"
-import type { EventStatus } from "~types/entities.types"
 import type { Route } from "./+types/download-calendar.route"
 
 const {
@@ -26,7 +25,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const calendar = await formatCalendarEvent({
     ...data,
-    event_status: data.event_status as EventStatus,
+    event_status: data.event_status,
   })
 
   if (!calendar) {
