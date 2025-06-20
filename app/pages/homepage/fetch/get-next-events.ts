@@ -1,109 +1,67 @@
-import { type PostgrestError } from "@supabase/supabase-js"
+import { composable, type Composable } from "composable-functions"
+import { kysely } from "~/kysely"
 import type { EventStatus, ViewEvent } from "~types/entities.types"
-import type { DBClient } from "~types/utils.types"
 
-type GetNextEvents = (
-  client: DBClient,
-  profileId: string | undefined,
-  limit?: number,
-  isHomepage?: boolean,
-) => Promise<{
-  events: ViewEvent[] | undefined
-  error: PostgrestError | "NO_DATA_ERROR" | undefined | null
-}>
+type FetchNextEvents = Composable<
+  (
+    profileId: string | undefined,
+    limit?: number,
+    isHomepage?: boolean,
+  ) => ViewEvent[]
+>
 
-export const getNextEvents: GetNextEvents = async (
-  supabase,
-  profileId,
-  limit = 3,
-  isHomepage = false,
-) => {
-  const now = new Date().toISOString()
+export const getNextEvents: FetchNextEvents = composable(
+  async (profileId, limit = 3, isHomepage = false) => {
+    const now = new Date().toISOString()
 
-  let query = supabase.from("events").select(
-    `
-    id,
-    title,
-    description,
-    emoji,
-    time_event_start,
-    time_event_end,
-    event_status,
-    time_application_start,
-    time_interviews_start,
-    location,
-    ticket_price,
-    time_application_end,
-    time_group_end,
-    time_group_start,
-    time_interviews_end,
-    time_payment_start,
-    time_payment_end,
-    active_applications: event_participants(is_user_applied)
-    `,
-  )
+    let query = kysely.selectFrom("events").selectAll("events")
 
-  if (profileId) {
-    query = query.eq("event_participants.profile_id", profileId)
-  }
-
-  query = query
-    .gte("time_event_start", now)
-    .in(
-      "event_status",
-      isHomepage
-        ? ["Registration Open", "Scheduled"]
-        : ["Registration Open", "Scheduled", "Registration Closed"],
-    )
-    .order("time_event_start", { ascending: true })
-    .limit(limit)
-
-  const { data, error } = await query
-
-  if (error) {
-    return {
-      events: [],
-      error,
-      profile: null,
+    if (profileId) {
+      query = query.select((eb) => [
+        eb
+          .exists(
+            eb
+              .selectFrom("event_participants")
+              .select("event_participants.event_id")
+              .whereRef("event_participants.event_id", "=", "events.id")
+              .where("event_participants.profile_id", "=", profileId),
+          )
+          .as("is_applied"),
+        eb
+          .exists(
+            eb
+              .selectFrom("event_reminders")
+              .select("event_reminders.event_id")
+              .whereRef("event_reminders.event_id", "=", "events.id")
+              .where("event_reminders.profile_id", "=", profileId),
+          )
+          .as("is_set_reminder"),
+      ])
     }
-  }
 
-  if (!data || data.length < 1) {
-    return {
-      events: [],
-      error: "NO_DATA_ERROR",
-      profile: null,
-    }
-  }
+    const homepageStatus: EventStatus[] = ["Registration Open", "Scheduled"]
+    const dashboardStatus: EventStatus[] = [
+      "Registration Open",
+      "Scheduled",
+      "Registration Closed",
+    ]
 
-  if (profileId) {
-    const events = data.map((event) => {
-      return {
-        ...event,
-        event_status: event.event_status as EventStatus,
-        is_applied:
-          event.active_applications.length > 0 &&
-          event.active_applications[0].is_user_applied,
-        active_applications: [],
-      }
-    })
+    query = query
+      .where("events.time_event_start", ">=", now)
+      .where(
+        "events.event_status",
+        "in",
+        isHomepage ? homepageStatus : dashboardStatus,
+      )
+      .orderBy("events.time_event_start", "asc")
+      .limit(limit)
 
-    return {
-      events,
-      error: undefined,
-      profileId,
-    }
-  }
+    const data = await query.execute()
 
-  const events = data.map((event) => ({
-    ...event,
-    event_status: event.event_status as EventStatus,
-    is_applied: false,
-    active_applications: [],
-  }))
-
-  return {
-    events,
-    error: undefined,
-  }
-}
+    return data.map((item) => ({
+      ...item,
+      event_status: item.event_status,
+      active_applications: [],
+    }))
+  },
+)
