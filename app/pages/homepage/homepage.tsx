@@ -25,7 +25,11 @@ export default function Homepage({ loaderData }: Route.ComponentProps) {
   return (
     <div>
       <HomePageHero />
-      {events && events?.length > 0 && <HomePageNextEvents events={events} />}
+      {events && events?.length > 0 ? (
+        <HomePageNextEvents events={events} />
+      ) : (
+        <div>NO NEW EVENTS????</div>
+      )}
       <HomePageAbout />
       <HomePageTestimonials />
       <HomePageCtaBanner isLoggedIn={isLoggedIn} />
