@@ -25,7 +25,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 export default function Homepage({ loaderData }: Route.ComponentProps) {
   const { events, isLoggedIn, result } = loaderData
   console.log(`\n\n:DEV result FRONT:\n`, result, `\n\n`)
-  console.log(`\n\n:DEV result FRONT:\n`, result.errors, `\n\n`)
+  console.log(`\n\n:DEV result FRONT:\n`, JSON.stringify(result.errors), `\n\n`)
 
   return (
     <div>
