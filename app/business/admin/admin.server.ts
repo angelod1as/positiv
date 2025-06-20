@@ -407,7 +407,7 @@ export const sendEventReminders = applySchema(sendEventRemindersSchema)(async (
       if (result.status === "rejected") {
         console.error(`Batch ${index + 1}/${total} failed:`, result.reason)
       } else {
-        console.info(`Email batch ${index + 1}/${total} succesful.`)
+        console.info(`Email batch ${index + 1}/${total} successful.`)
       }
     })
   })
