@@ -1,6 +1,5 @@
 import { applySchema } from "composable-functions"
 import { dateToString } from "~/lib/helpers/date-to-string"
-import type { EventStatus } from "~types/entities.types"
 import { applyToEventSchema, userContextSchema } from "../common"
 import { sendApplicationMail } from "./send-application-mail.server"
 
