@@ -4,22 +4,26 @@ import type { Params } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { kysely } from "~/kysely"
+import { formatReminderMail } from "~/lib/email/format-reminder-mail"
+import {
+  sendSingleEmail,
+  type MailOptions,
+} from "~/lib/email/send-single-email"
+import { chunkArray } from "~/lib/helpers/chunk-array"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
-import type { Event } from "~types/entities.types"
+import type { Profile } from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,
   eventFormSchema,
+  sendEventRemindersSchema,
   updateEventStatusSchema,
   updateParticipantPropertySchema,
 } from "./common"
 
 const {
-  admin: {
-    ADMIN_DASHBOARD,
-    events: { ADMIN_VIEW_EVENT },
-  },
+  admin: { ADMIN_DASHBOARD },
 } = paths
 
 export const getAdminContext = async (
@@ -41,22 +45,15 @@ export const getAdminContext = async (
   return { ...context, events }
 }
 
-export const getAdminEventById = async (request: Request, params: Params) => {
-  const { supabase } = await getAdminContext(request, params)
-  const eventId = params.id
-  if (!eventId) return undefined
+export const getAdminEventById = composable(async (eventId: string) => {
+  const result = await kysely
+    .selectFrom("events")
+    .selectAll()
+    .where("id", "=", eventId)
+    .executeTakeFirstOrThrow()
 
-  const { error, data } = await supabase
-    .from("events")
-    .select("*")
-    .eq("id", eventId)
-    .single()
-  if (error || !data) {
-    throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
-  }
-
-  return data as Event
-}
+  return result
+})
 
 export type ParticipantWithExtraData = {
   id: string
@@ -158,26 +155,18 @@ export const updateEventStatus = applySchema(
   updateEventStatusSchema,
   adminContextSchema,
 )(async (values, context) => {
-  const { supabase, eventId } = context
+  const { eventId } = context
   if (!eventId) return null
 
-  const parsedValues = schemaValuesToDB(values)
-
-  const { error, data } = await supabase
-    .from("events")
-    .update({
-      ...parsedValues,
+  const result = await kysely
+    .updateTable("events")
+    .set({
+      event_status: values.event_status,
     })
-    .eq("id", eventId)
+    .where("id", "=", eventId)
+    .execute()
 
-  if (error) {
-    throw await redirectWithError(
-      ADMIN_VIEW_EVENT(eventId),
-      "Ocorreu um erro ao atualizar o evento. Erro: event update",
-    )
-  }
-
-  return data
+  return result.length > 0
 })
 
 export const updateParticipantProperty = composable(
@@ -272,3 +261,114 @@ export const updateParticipantProperty = composable(
     return false
   },
 )
+
+const getEventRemindersByEventId = composable(
+  async (eventId: string) =>
+    await kysely
+      .selectFrom("event_reminders")
+      .select("profile_id")
+      .where("event_id", "=", eventId)
+      .where("email_sent", "=", false)
+      .execute(),
+)
+
+type SendBatchEventReminderEmail = {
+  emails: string[]
+  eventId: string
+}
+const sendBatchEventReminderEmail = composable(
+  async ({ emails, eventId }: SendBatchEventReminderEmail) => {
+    const eventResult = await getAdminEventById(eventId)
+
+    if (!eventResult.success) {
+      throw new Error(`Erro: eventResult > ${eventResult.errors.join("; ")}`)
+    }
+
+    const event = eventResult.data
+
+    const { html, text } = await formatReminderMail(event)
+
+    const options: MailOptions = {
+      to: emails,
+      subject: `Inscrições abertas para o evento ${event.emoji} ${event.title}`,
+      text: text,
+      html: html,
+    }
+
+    try {
+      await sendSingleEmail(options)
+      return true
+    } catch (error) {
+      console.error("REMINDER MAIL ERROR", error)
+      return false
+    }
+  },
+)
+
+export const getEmailsByIds = composable(
+  async (profileIds: Array<Profile["id"]>) => {
+    if (!profileIds) return []
+    return await kysely
+      .selectFrom("profiles")
+      .select("email")
+      .where("id", "in", profileIds)
+      .execute()
+  },
+)
+
+export const sendEventReminders = applySchema(sendEventRemindersSchema)(async (
+  values,
+) => {
+  const { intent: _intent, event_id, event_status } = values
+  if (!event_id) {
+    throw new Error("O id de evento é obrigatório, fale com o administrador")
+  }
+  if (event_status !== "Registration Open") {
+    throw new Error(
+      "O evento deve estar com o status de 'Inscrições Abertas', fale com o administrador",
+    )
+  }
+
+  const remindersResult = await getEventRemindersByEventId(event_id)
+
+  if (!remindersResult.success) {
+    throw new Error(`Erro: reminders > ${remindersResult.errors.join("; ")}`)
+  }
+
+  const reminders = remindersResult.data
+
+  if (!reminders || reminders.length === 0) {
+    console.info("No reminders found")
+    return
+  }
+
+  const profileIds = reminders.map((item) => item.profile_id)
+
+  const emailsResult = await getEmailsByIds(profileIds)
+
+  if (!emailsResult.success) {
+    const message = `Erro: emailsResult > ${emailsResult.errors.join("; ")}`
+    console.error(message)
+    throw new Error(message)
+  }
+
+  const emails = emailsResult.data.map((item) => item.email)
+  const emailGroups = chunkArray(emails)
+
+  const sendPromises = emailGroups.map((emails) => {
+    return sendBatchEventReminderEmail({ emails, eventId: event_id })
+  })
+
+  Promise.allSettled(sendPromises).then((results) => {
+    results.forEach((result, index, array) => {
+      const total = array.length
+      if (result.status === "rejected") {
+        console.error(`Batch ${index + 1}/${total} failed:`, result.reason)
+      } else {
+        console.info(`Email batch ${index + 1}/${total} succesful.`)
+      }
+    })
+  })
+
+  return
+})

@@ -1,4 +1,5 @@
 import { zod } from "~/lib/helpers/zod"
+import type { EventStatus } from "~types/entities.types"
 import { userContextSchema } from "../common"
 
 const messages = {
@@ -72,14 +73,8 @@ export const adminContextSchema = userContextSchema.extend({
 })
 
 export const updateEventStatusSchema = zod.object({
-  event_status: zod.enum([
-    "Draft",
-    "Completed",
-    "Cancelled",
-    "Scheduled",
-    "Registration Closed",
-    "Registration Open",
-  ]),
+  intent: zod.string(),
+  event_status: zod.custom<EventStatus>(),
 })
 
 export const updateParticipantPropertySchema = zod.object({
@@ -92,4 +87,10 @@ export const updateParticipantPropertySchema = zod.object({
     "process_status",
   ]),
   value: zod.union([zod.boolean(), zod.string(), zod.number()]),
+})
+
+export const sendEventRemindersSchema = zod.object({
+  intent: zod.string(),
+  event_id: zod.string(),
+  event_status: zod.custom<EventStatus>(),
 })
