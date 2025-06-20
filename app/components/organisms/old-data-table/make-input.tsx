@@ -1,5 +1,5 @@
 import type { CellContext } from "@tanstack/react-table"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { Select } from "~/components/forms/select"
@@ -43,6 +43,13 @@ export const makeInput = <TCtx,>(
   })
 
   const fetcher = useFetcher()
+
+  useEffect(() => {
+    if (fetcher.data?.error) {
+      toast.error(fetcher.data.error)
+      console.error(fetcher.data.error)
+    }
+  }, [fetcher.data])
 
   // Use our debounce hook to debounce only the form submission
   const debouncedSubmit = useDebounceFunction(
