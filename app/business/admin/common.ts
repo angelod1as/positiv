@@ -88,3 +88,9 @@ export const updateParticipantPropertySchema = zod.object({
   ]),
   value: zod.union([zod.boolean(), zod.string(), zod.number()]),
 })
+
+export const sendEventRemindersSchema = zod.object({
+  intent: zod.string(),
+  event_id: zod.string(),
+  event_status: zod.custom<EventStatus>(),
+})
