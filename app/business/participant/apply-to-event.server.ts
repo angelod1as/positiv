@@ -50,7 +50,7 @@ export const applyToEvent = applySchema(
         profile: currentProfile,
         event: {
           ...event,
-          event_status: event.event_status as EventStatus,
+          event_status: event.event_status,
         },
       })
     }
