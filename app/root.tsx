@@ -158,10 +158,6 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           etc)
         </li>
       </ul>
-      <p>Envie isso para o administrador:</p>
-      <textarea name="error" id="error" contentEditable={false}>
-        {JSON.stringify(error)}
-      </textarea>
     </>
   )
   let stack: string | undefined
