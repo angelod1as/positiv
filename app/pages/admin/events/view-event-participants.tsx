@@ -2,8 +2,8 @@ import { redirectWithError } from "remix-toast"
 import { toast } from "sonner"
 import {
   getAdminContext,
+  getAdminEventById,
   getAdminParticipantsWithExtraDataById,
-  getSupabaseAdminEventById,
   updateParticipantProperty,
 } from "~/business/admin/admin.server"
 import { updateParticipantPropertySchema } from "~/business/admin/common"
@@ -62,11 +62,13 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const event = await getSupabaseAdminEventById(request, params)
-  if (!event) {
+export async function loader({ params }: Route.LoaderArgs) {
+  const result = await getAdminEventById({ eventId: params.id })
+  if (!result.success) {
     throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
   }
+
+  const event = result.data
 
   const participantsResponse = await getAdminParticipantsWithExtraDataById(
     event.id,

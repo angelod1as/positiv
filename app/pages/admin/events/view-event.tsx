@@ -1,15 +1,22 @@
 import { useEffect } from "react"
+import { useFetcher } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
 import { toast } from "sonner"
 import {
   getAdminContext,
-  getSupabaseAdminEventById,
+  getAdminEventById,
+  sendEventReminders,
   updateEventStatus,
 } from "~/business/admin/admin.server"
-import { updateEventStatusSchema } from "~/business/admin/common"
+import {
+  sendEventRemindersSchema,
+  updateEventStatusSchema,
+} from "~/business/admin/common"
 import { Button } from "~/components/atoms/button/button"
 import { SchemaForm } from "~/components/forms/schema-form"
+import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
+import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { eventPropNameMap, eventStatusMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
@@ -24,31 +31,86 @@ const {
 
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getAdminContext(request, params)
+  const formData = await request.clone().formData()
+  const intent = formData.get("intent")
 
-  return formAction({
-    request,
-    schema: updateEventStatusSchema,
-    mutation: updateEventStatus,
-    context: { ...context, eventId: params.id },
-  })
+  if (intent === "send-reminders") {
+    return await formAction({
+      request,
+      mutation: sendEventReminders,
+      schema: sendEventRemindersSchema,
+      transformResult: (result) => ({ ...result, intent }),
+    })
+  }
+
+  if (intent === "update-event-status") {
+    return await formAction({
+      request,
+      schema: updateEventStatusSchema,
+      mutation: updateEventStatus,
+      context: { ...context, eventId: params.id },
+      transformResult: (result) => ({ ...result, intent }),
+    })
+  }
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const event = await getSupabaseAdminEventById(request, params)
-  if (!event) {
+export async function loader({ params }: Route.LoaderArgs) {
+  if (!params.id) {
     throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
   }
-  return { event }
+  const result = await getAdminEventById({ eventId: params.id })
+  if (!result.success) {
+    throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
+  }
+
+  const event = {
+    ...result.data,
+    event_status: result.data.event_status,
+  }
+
+  const { isOpen, isScheduled } = checkEventStatus(event.event_status)
+
+  const reminderCount = isScheduled || isOpen ? 1 : null
+
+  return { event, reminderCount }
 }
 
-const AdminViewEvent = ({ loaderData, actionData }: Route.ComponentProps) => {
-  const { event } = loaderData
+type FetcherData =
+  | {
+      success: boolean
+      intent: "send-reminders" | "update-event-status"
+      errors?: Record<"_global", string[]>
+    }
+  | undefined
+
+const sendToast = (fetcherData: FetcherData) => {
+  if (!fetcherData) {
+    return
+  }
+
+  if (!fetcherData.success) {
+    return toast.error(
+      `Houve um erro: ${fetcherData?.errors?._global?.join("; ")}`,
+    )
+  }
+
+  if (fetcherData.intent === "send-reminders") {
+    return toast.success("E-mails colocados na fila de envio com sucesso")
+  }
+
+  if (fetcherData.intent === "update-event-status") {
+    return toast.success("E-mails colocados na fila de envio com sucesso")
+  }
+}
+
+const AdminViewEvent = ({ loaderData }: Route.ComponentProps) => {
+  const fetcher = useFetcher<FetcherData>()
 
   useEffect(() => {
-    if (actionData?.success) {
-      toast.success("Salvo com sucesso")
-    }
-  }, [actionData])
+    sendToast(fetcher.data)
+  }, [fetcher.data])
+
+  const { event, reminderCount } = loaderData
 
   const {
     id,
@@ -71,20 +133,62 @@ const AdminViewEvent = ({ loaderData, actionData }: Route.ComponentProps) => {
     time_payment_start,
   } = event
 
+  const handleSendReminders = (closeDialog: () => void) => {
+    fetcher.submit(
+      { intent: "send-reminders", event_status, event_id: id },
+      { method: "post" },
+    )
+    closeDialog()
+  }
+
+  const { isOpen } = checkEventStatus(event_status)
+
   return (
     <>
       <h1>
         {emoji} {title}
       </h1>
-      <Button to={ADMIN_EDIT_EVENT(id)}>Editar</Button>
-      <Button to={ADMIN_DOWNLOAD_EVENT(id)}>Baixar dados</Button>
+      <div className="flex gap-2 mb-4 items-center">
+        <Button to={ADMIN_EDIT_EVENT(id)}>Editar</Button>
+        <Button to={ADMIN_DOWNLOAD_EVENT(id)}>Baixar dados</Button>
+
+        {reminderCount && !isOpen && <p>Lembretes: {reminderCount}</p>}
+
+        {isOpen && (
+          <fetcher.Form method="post">
+            <ConfirmDialog
+              title="Enviar emails de lembrete?"
+              description={
+                <div>
+                  <p>
+                    Enviar e-mails para todes que pediram para serem lembrades?
+                  </p>
+                </div>
+              }
+              confirmLabel="📨 Enviar"
+              cancelLabel="Cancelar"
+              isLoading={fetcher.state !== "idle"}
+              onConfirm={handleSendReminders}
+            >
+              <ConfirmDialog.Trigger variant="outline" className="w-full">
+                Enviar {reminderCount} email{reminderCount !== 1 ? "s" : ""} de
+                lembrete
+              </ConfirmDialog.Trigger>
+            </ConfirmDialog>
+          </fetcher.Form>
+        )}
+      </div>
+
       <p className="font-bold">
         Data: {formatDateTime(time_event_start, "long").full}
       </p>
       <SchemaForm
         schema={updateEventStatusSchema}
+        fetcher={fetcher}
         labels={{ event_status: "Status do evento" }}
+        hiddenFields={["intent"]}
         values={{
+          intent: "update-event-status",
           event_status,
         }}
         mode="onChange"
@@ -105,7 +209,14 @@ const AdminViewEvent = ({ loaderData, actionData }: Route.ComponentProps) => {
           ],
         }}
       >
-        {({ Field, submit }) => <Field name="event_status" onChange={submit} />}
+        {({ Field, submit }) => {
+          return (
+            <>
+              <Field name="intent" hidden />
+              <Field name="event_status" onChange={submit} />
+            </>
+          )
+        }}
       </SchemaForm>
       <div className="flex flex-col gap-2">
         <h2>Dados gerais</h2>
