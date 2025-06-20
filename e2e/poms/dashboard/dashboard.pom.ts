@@ -6,7 +6,7 @@ export class DashboardPOM {
   readonly page: Page
   readonly registrationOpenEventsSection: Locator
   readonly scheduledEventsSection: Locator
-  readonly applySoonButton: Locator
+  readonly remindMeButton: Locator
   readonly applyButton: Locator
   readonly closedButton: Locator
   readonly cancelButton: Locator
@@ -28,8 +28,8 @@ export class DashboardPOM {
     this.scheduledEventsSection = this.page.getByRole("heading", {
       name: "Eventos agendados",
     })
-    this.applySoonButton = this.page
-      .getByRole("button", { name: "Inscreva-se em breve" })
+    this.remindMeButton = this.page
+      .getByRole("button", { name: "Me avise quando as inscrições abrirem" })
       .first()
     this.applyButton = this.page
       .getByRole("link", { name: "Fazer inscrição" })
@@ -74,12 +74,12 @@ export class DashboardPOM {
     await expect(this.registrationOpenEventsSection).toBeVisible()
     await expect(this.scheduledEventsSection).toBeVisible()
     await expect(this.applyButton).toBeVisible()
-    await expect(this.applySoonButton).toBeVisible()
+    await expect(this.remindMeButton).toBeVisible()
     await expect(this.closedButton).toBeVisible()
   }
 
   async testNotAppliedButtons() {
-    await expect(this.applySoonButton).toBeDisabled()
+    await expect(this.remindMeButton).toBeVisible()
     await expect(this.applyButton).toHaveAttribute(
       "href",
       this.eventPageUrlRegex,
@@ -87,7 +87,7 @@ export class DashboardPOM {
   }
 
   async testAppliedButtons() {
-    await expect(this.applySoonButton).toBeDisabled()
+    await expect(this.remindMeButton).toBeVisible()
     await expect(this.closedButton).toBeDisabled()
     await expect(this.cancelButton).toBeVisible()
     await this.cancelButton.click()
