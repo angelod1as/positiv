@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from "react"
 import { redirectWithInfo } from "remix-toast"
-import { getUserContext } from "~/business/auth/auth.server"
+import { getContext } from "~/business/auth/auth.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import {
   addUserToReminderList,
@@ -46,7 +46,7 @@ const splitEvents = (events: ViewEvent[] | undefined) => {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { currentProfile } = await getUserContext(request, params)
+  const { currentProfile } = await getContext(request, params)
 
   if (!currentProfile?.basic_data_filled) {
     throw await redirectWithInfo(
