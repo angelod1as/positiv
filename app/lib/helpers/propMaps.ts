@@ -39,7 +39,6 @@ export const eventStatusMap = (event_status: EventStatus) => {
       "Registration Closed": "Inscrições encerradas",
       Cancelled: "Cancelado",
       Completed: "Finalizado",
-      "Already Applied": "Já inscrite",
     }[event_status] || ""
   )
 }
