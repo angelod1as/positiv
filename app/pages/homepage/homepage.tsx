@@ -1,4 +1,5 @@
 import { getContext } from "~/business/auth/auth.server"
+import { env } from "~/env.server"
 import { HomePageAbout } from "~/pages/homepage/components/about/about"
 import { HomePageCtaBanner } from "~/pages/homepage/components/cta-banner/home-page-cta-banner"
 import { HomePageFounders } from "~/pages/homepage/components/founders/home-page-founders"
@@ -12,18 +13,22 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const { currentUser, currentProfile } = await getContext(request, params)
   const isLoggedIn = !!currentUser?.id
   const result = await getNextEvents(currentProfile?.id, 3, true)
-  console.log(`\n\n:DEV result:\n`, result, `\n\n`)
-  console.log(`\n\n:DEV result:\n`, result.errors, `\n\n`)
 
   if (!result.success) {
     return { events: undefined, isLoggedIn, result }
   }
+  const { supabaseConnectUrl } = env()
 
-  return { events: result.data, isLoggedIn, result }
+  return { events: result.data, isLoggedIn, result, supabaseConnectUrl }
 }
 
 export default function Homepage({ loaderData }: Route.ComponentProps) {
-  const { events, isLoggedIn, result } = loaderData
+  const { events, isLoggedIn, result, supabaseConnectUrl } = loaderData
+  console.log(
+    `\n\n:DEV supabaseConnectUrl FRONT:\n`,
+    supabaseConnectUrl,
+    `\n\n`,
+  )
   console.log(`\n\n:DEV result FRONT:\n`, result, `\n\n`)
   result.errors.forEach((item) => console.log(`ERROR`, item))
 
