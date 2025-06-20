@@ -1,4 +1,5 @@
 import { getContext } from "~/business/auth/auth.server"
+import { env } from "~/env.server"
 import { HomePageAbout } from "~/pages/homepage/components/about/about"
 import { HomePageCtaBanner } from "~/pages/homepage/components/cta-banner/home-page-cta-banner"
 import { HomePageFounders } from "~/pages/homepage/components/founders/home-page-founders"
@@ -15,15 +16,18 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   console.log(`\n\n:DEV result:\n`, result, `\n\n`)
 
   if (!result.success) {
-    return { events: undefined, isLoggedIn }
+    return { events: undefined, isLoggedIn, result }
   }
 
-  return { events: result.data, isLoggedIn }
+  const { supabaseConnectUrl } = env()
+
+  return { events: result.data, isLoggedIn, supabaseConnectUrl, result }
 }
 
 export default function Homepage({ loaderData }: Route.ComponentProps) {
-  const { events, isLoggedIn } = loaderData
-  console.log(`\n\n:DEV events FRONT:\n`, events, `\n\n`)
+  const { events, isLoggedIn, supabaseConnectUrl, result } = loaderData
+  console.log(`\n\n:DEV result FRONT:\n`, result, `\n\n`)
+  console.log(`\n\n:DEV events FRONT:\n`, events, supabaseConnectUrl, `\n\n`)
 
   return (
     <div>
