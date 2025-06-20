@@ -90,7 +90,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
     return data({ currentUser, currentProfile, isProd, toast }, { headers })
   } catch (error) {
-    console.error(error)
+    console.error("Root loader error", error)
     return { currentUser: null, currentProfile: null, toast: null }
   }
 }
@@ -158,6 +158,10 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           etc)
         </li>
       </ul>
+      <p>Envie isso para o administrador:</p>
+      <textarea name="error" id="error" contentEditable={false}>
+        {JSON.stringify(error)}
+      </textarea>
     </>
   )
   let stack: string | undefined
