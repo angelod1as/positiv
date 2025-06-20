@@ -57,13 +57,15 @@ jobs:
         run: npm install -g pnpm && pnpm install
       - name: Install Playwright Browsers
         run: pnpm exec playwright install chromium --with-deps
+      - name: test vars
+        run: echo ${{ secrets.STAGING_SUPABASE_CONNECT_URL }}
       - name: Run Playwright tests
         run: pnpm exec playwright test
         env:
           VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_CONNECT_URL=: ${{ secrets.STAGING_SUPABASE_CONNECT_URL }}
+          SUPABASE_CONNECT_URL: ${{ secrets.STAGING_SUPABASE_CONNECT_URL }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
           TEST_USER_ADMIN_EMAIL: ${{ secrets.TEST_USER_ADMIN_EMAIL }}
           COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
