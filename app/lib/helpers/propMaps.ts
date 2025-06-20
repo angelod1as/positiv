@@ -53,6 +53,7 @@ export const eventPropNameMap = (property: keyof Event) => {
     title: "Nome",
     total_spots: "Lotação",
     is_applied: "Inscrite",
+    is_set_reminder: "Lembrete ativado",
   }[property]
 }
 
