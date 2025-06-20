@@ -16,10 +16,16 @@ const {
   },
 } = paths
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  if (!params.id) return { event: undefined }
-  const event = await getAdminEventById(request, params)
-  return { event }
+export async function loader({ params }: Route.LoaderArgs) {
+  const eventId = params.id
+  if (!eventId) return { event: undefined }
+  const result = await getAdminEventById(eventId)
+
+  if (!result.success) {
+    return { event: undefined }
+  }
+
+  return { event: result.data }
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
