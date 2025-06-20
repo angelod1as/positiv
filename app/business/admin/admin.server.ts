@@ -307,7 +307,7 @@ const sendBatchEventReminderEmail = composable(
 
 export const getEmailsByIds = composable(
   async (profileIds: Array<Profile["id"]>) => {
-    if (!profileIds) return []
+    if (!profileIds || profileIds.length === 0) return []
     return await kysely
       .selectFrom("profiles")
       .select("email")
