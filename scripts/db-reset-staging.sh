@@ -3,4 +3,4 @@
 
 source .env
 
-supabase db reset --db-url $STAGING_CONNECT_URL
+supabase db reset --db-url $STAGING_SUPABASE_CONNECT_URL
