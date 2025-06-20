@@ -401,7 +401,7 @@ export const sendEventReminders = applySchema(sendEventRemindersSchema)(async (
     return sendBatchEventReminderEmail({ emails, eventId: event_id })
   })
 
-  Promise.allSettled(sendPromises).then((results) => {
+  await Promise.allSettled(sendPromises).then((results) => {
     results.forEach((result, index, array) => {
       const total = array.length
       if (result.status === "rejected") {
