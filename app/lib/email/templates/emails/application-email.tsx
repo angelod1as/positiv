@@ -8,11 +8,7 @@ import {
 } from "@react-email/components"
 import dotenv from "dotenv"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type {
-  EventStatus,
-  ProfileWithRoles,
-  ViewEvent,
-} from "~types/entities.types"
+import type { ProfileWithRoles, ViewEvent } from "~types/entities.types"
 import { EmailWrapper } from "../common/wrapper"
 dotenv.config()
 
@@ -92,7 +88,7 @@ ApplicationMail.PreviewProps = {
     title: "Rapa do Tacho",
     description: "Quentão, pipoca e fogueira!",
     emoji: "🔥",
-    event_status: "Registration Open" as EventStatus,
+    event_status: "Registration Open",
     time_application_start: "2030-01-01T00:00:00.000Z",
     time_application_end: "2030-01-01T10:00:00.000Z",
     time_event_start: "2030-02-01T00:00:00.000Z",

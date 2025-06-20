@@ -16,6 +16,7 @@ export type Event = Omit<
 > & {
   event_status: EventStatus
   is_applied?: boolean
+  is_set_reminder?: boolean
 }
 
 /** Participant information */
@@ -28,15 +29,7 @@ export type Participant = Profile &
   }
 
 /** Event Status */
-export type EventStatus =
-  | "Draft"
-  | "Completed"
-  | "Cancelled"
-  | "Scheduled"
-  | "Registration Closed"
-  | "Registration Open"
-  // When the user has already applied:
-  | "Already Applied"
+export type EventStatus = Database["public"]["Enums"]["event_status"]
 
 /** Limited event information */
 export type ViewEvent = Pick<
@@ -60,6 +53,7 @@ export type ViewEvent = Pick<
 > & {
   event_status: EventStatus
   is_applied?: boolean
+  is_set_reminder?: boolean
 }
 
 //////////
