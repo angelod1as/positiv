@@ -1,6 +1,5 @@
 import { applySchema } from "composable-functions"
 import { dateToString } from "~/lib/helpers/date-to-string"
-import type { EventStatus } from "~types/entities.types"
 import { applyToEventSchema, userContextSchema } from "../common"
 import { sendApplicationMail } from "./send-application-mail.server"
 
@@ -50,7 +49,7 @@ export const applyToEvent = applySchema(
         profile: currentProfile,
         event: {
           ...event,
-          event_status: event.event_status as EventStatus,
+          event_status: event.event_status,
         },
       })
     }

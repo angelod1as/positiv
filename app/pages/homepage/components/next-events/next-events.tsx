@@ -11,23 +11,18 @@ import {
 } from "~/components/ui/card"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import routes from "~/lib/paths"
-import type { EventStatus, ViewEvent } from "~types/entities.types"
+import type { ViewEvent } from "~types/entities.types"
 import { HomePageTitle } from "../home-title/home-title"
 import { Section } from "../section/section"
-import { HomePageNextEventsSkeleton } from "./next-events-skeleton"
 
 const {
   auth: { LOGIN },
 } = routes
 
 type HomePageNextEventsProps = {
-  events: Array<ViewEvent> | undefined
+  events: Array<ViewEvent>
 }
 export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
-  if (!events) {
-    return <HomePageNextEventsSkeleton />
-  }
-
   return (
     <Section>
       <div className="px-4 md:px-6">
@@ -50,6 +45,7 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                 time_event_start,
                 time_event_end,
                 title,
+                is_applied,
               }) => {
                 const { date, time: startingTime } =
                   formatDateTime(time_event_start)
@@ -58,11 +54,13 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                   time_application_start,
                 )
 
-                const status = event_status as EventStatus
-                const isOpen = status === "Registration Open"
+                const isOpen = event_status === "Registration Open"
 
                 return (
-                  <Card className="flex flex-col text-center flex-1" key={id}>
+                  <Card
+                    className="flex flex-col text-center flex-1 max-w-md"
+                    key={id}
+                  >
                     <CardHeader>
                       <div className="text-6xl mb-4">{emoji}</div>
                       <CardTitle>{title}</CardTitle>
@@ -84,7 +82,13 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                           <br /> {openDate}
                         </p>
                       )}
-                      <Button to={LOGIN}>Participar</Button>
+                      {is_applied ? (
+                        <Button variant="outline" to={LOGIN}>
+                          Já inscrite!
+                        </Button>
+                      ) : (
+                        <Button to={LOGIN}>Participar</Button>
+                      )}
                     </CardFooter>
                   </Card>
                 )

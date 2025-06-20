@@ -1,5 +1,4 @@
 import { getContext } from "~/business/auth/auth.server"
-import { env } from "~/env.server"
 import { HomePageAbout } from "~/pages/homepage/components/about/about"
 import { HomePageCtaBanner } from "~/pages/homepage/components/cta-banner/home-page-cta-banner"
 import { HomePageFounders } from "~/pages/homepage/components/founders/home-page-founders"
@@ -15,11 +14,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const result = await getNextEvents(currentProfile?.id, 3, true)
 
   if (!result.success) {
-    return { events: undefined, isLoggedIn, result }
+    return { events: undefined, isLoggedIn }
   }
-  const { supabaseConnectUrl } = env()
 
-  return { events: result.data, isLoggedIn, result, supabaseConnectUrl }
+  return { events: result.data, isLoggedIn }
 }
 
 export default function Homepage({ loaderData }: Route.ComponentProps) {
