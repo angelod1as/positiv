@@ -4,6 +4,7 @@ import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { isProd } from "~/lib/helpers/is-prod.server"
 import paths from "~/lib/paths"
+import { handleAuthError } from "~/lib/supabase/handle-auth-error"
 import { createServerClient } from "~/lib/supabase/server"
 import {
   changePasswordSchema,
@@ -19,11 +20,11 @@ const {
   root: { HOME },
   auth: { LOGIN, LOGON_CALLBACK },
   dash: {
-    DASHBOARD,
     account: { CHANGE_PASSWORD },
   },
 } = paths
 
+// TODO: COMPOSABLE
 export const getSupabase = async (
   request: Request,
   _params: Params,
@@ -50,12 +51,10 @@ export const getContext = async (
   }
 
   if (authError) {
-    if (!authError.message.includes("Auth session missing!")) {
-      console.error("AUTH error", errorProps)
-      throw await redirectWithError(
-        DASHBOARD,
-        "Houve um erro com sua autenticação, tente novamente mais tarde",
-      )
+    return {
+      ...(await handleAuthError(authError, supabase)),
+      supabaseHeaders,
+      host,
     }
   }
 

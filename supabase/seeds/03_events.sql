@@ -24,7 +24,7 @@ INSERT INTO public.events (
     total_spots
 )
 VALUES
--- Event 1: Draft
+-- Draft
 (
     'Evento Rascunho',                                    -- title
     'Suíte Nagoya, Motel Harmony',                      -- location
@@ -44,7 +44,7 @@ VALUES
     110.00,                                             -- ticket_price
     100                                                 -- total_spots
 ),
--- Event 2: Scheduled
+-- Scheduled
 (
     'Evento Agendado 1',                                      -- title
     'Suíte Nagoya, Motel Harmony',                            -- location
@@ -64,7 +64,26 @@ VALUES
     10.00,                                                    -- ticket_price
     50                                                        -- total_spots
 ),
--- Event 3: Registration Open
+-- Registration Open
+(
+    'Evento Com Inscrições Abertas 2', -- title
+    'Suíte Nagoya, Motel Harmony', -- location
+    'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Sed vel lorem eu urna pretium vehicula non at urna. ', -- description
+    '🙆',                     -- emoji
+    'Registration Open',     -- event_status
+    now() + interval '4 months', -- time_event_start
+    now() + interval '4 months' + interval '4 hours', -- time_event_end
+    now() - interval '2 week', -- time_application_start
+    now() + interval '3 months', -- time_application_end
+    now() + interval '3 months' - interval '21 days',  -- time_interviews_start
+    now() + interval '4 months' + interval '4 hours',   -- time_interviews_end
+    now() + interval '4 months' - interval '7 days',   -- time_group_start
+    now() + interval '4 months' + interval '30 days',  -- time_group_end
+    now() + interval '4 months' - interval '21 days',  -- time_payment_start
+    now() + interval '4 months' - interval '9 days',   -- time_payment_end
+    25.00,                   -- ticket_price
+    200                      -- total_spots
+),
 (
     'Evento Com Inscrições Abertas 1', -- title
     'Suíte Nagoya, Motel Harmony', -- location
@@ -84,7 +103,7 @@ VALUES
     25.00,                   -- ticket_price
     200                      -- total_spots
 ),
--- Event 4: Registration Closed
+-- Registration Closed
 (
     'Evento Com Inscrições Fechadas 1', -- title
     'Suíte Nagoya, Motel Harmony', -- location
@@ -104,7 +123,7 @@ VALUES
     15.00,                   -- ticket_price
     150                      -- total_spots
 ),
--- Event 5: Cancelled
+-- Cancelled
 (
     'Evento Cancelado 1',     -- title
     'Suíte Nagoya, Motel Harmony', -- location
@@ -124,7 +143,7 @@ VALUES
     90.00,                    -- ticket_price
     75                       -- total_spots
 ),
--- Event 6: Completed
+-- Completed
 (
     'Evento Concluído 1',     -- title
     'Suíte Nagoya, Motel Harmony', -- location
@@ -144,7 +163,7 @@ VALUES
     50.00,                   -- ticket_price
     120                      -- total_spots
 ),
--- Event 7: Cancelled
+-- Cancelled
 (
     'Evento Cancelado 2',     -- title
     'Suíte Nagoya, Motel Harmony', -- location
@@ -164,7 +183,7 @@ VALUES
     90.00,                    -- ticket_price
     30                       -- total_spots
 ),
--- Event 8: Scheduled
+-- Scheduled
 (
     'Evento Agendado 2',     -- title
     'Suíte Nagoya, Motel Harmony', -- location

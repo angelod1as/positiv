@@ -2,7 +2,10 @@ import { formatCalendarEvent } from "~/business/participant/format-calendar-even
 import { formatApplicationMail } from "~/lib/email/format-application-mail"
 import type { ProfileWithRoles, ViewEvent } from "~types/entities.types"
 
-import { type MailOptions, sendMail } from "~/lib/email/email"
+import {
+  type MailOptions,
+  sendSingleEmail,
+} from "~/lib/email/send-single-email"
 
 type sendApplicationMailProps = {
   event: ViewEvent
@@ -26,7 +29,7 @@ export const sendApplicationMail = async ({
   }
 
   try {
-    await sendMail(options)
+    await sendSingleEmail(options)
   } catch (error) {
     console.error("MAIL ERROR", error)
   }
