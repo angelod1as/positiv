@@ -9,7 +9,7 @@ export interface MailOptions extends Omit<Mail.Options, "from"> {
   html: NonNullable<Mail.Options["html"]>
 }
 
-export const sendMail = async (mailOptions: MailOptions): Promise<void> => {
+export const sendEmail = async (mailOptions: MailOptions): Promise<void> => {
   const transport = getEmailTransport()
 
   transport.sendMail(
@@ -18,13 +18,12 @@ export const sendMail = async (mailOptions: MailOptions): Promise<void> => {
       ...mailOptions,
     },
     (
-      err,
+      error,
       // info - for debugging
     ) => {
-      if (err) {
-        console.error("transport.sendMail error")
-        console.error("mailOptions", mailOptions)
-        console.error(err)
+      if (error) {
+        console.error("\ntransport.sendMail error", error, "\n")
+        console.error("\nmailOptions", mailOptions, "\n")
         return
       }
     },

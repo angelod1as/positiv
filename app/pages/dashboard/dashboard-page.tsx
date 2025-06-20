@@ -2,8 +2,12 @@ import type { FC, ReactNode } from "react"
 import { redirectWithInfo } from "remix-toast"
 import { getContext } from "~/business/auth/auth.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
+import {
+  addUserToReminderList,
+  removeUserFromReminderList,
+} from "~/business/participant/manage-reminder-list"
 import { EventCard } from "~/components/organisms/event-card/event-card"
-import { EventCardSkeleton } from "~/components/organisms/event-card/event-card-skeleton"
+import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/entities.types"
 import { getNextEvents } from "../homepage/fetch/get-next-events"
@@ -29,9 +33,10 @@ const splitEvents = (events: ViewEvent[] | undefined) => {
   if (!events || events.length < 1) return empty
 
   return events.reduce((acc, event) => {
-    if (event.event_status === "Registration Open") {
+    const { isOpen, isClosed } = checkEventStatus(event.event_status)
+    if (isOpen) {
       acc.registrationOpen.push(event)
-    } else if (event.event_status === "Registration Closed") {
+    } else if (isClosed) {
       acc.registrationClosed.push(event)
     } else {
       acc.scheduled.push(event)
@@ -65,7 +70,39 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ClientActionArgs) {
-  return await cancelApplicationToEvent(request, params)
+  const formData = await request.clone().formData()
+  const fetchId = formData.get("fetchId")?.toString()
+
+  if (fetchId === "handleConfirmCancel") {
+    // TODO: Composable
+    await cancelApplicationToEvent(request, params)
+    return
+  }
+
+  if (fetchId === "handleAddReminder") {
+    const result = await addUserToReminderList(request, params)
+    if (!result.success) {
+      console.error(result.errors)
+      return {
+        error:
+          "Um erro ocorreu ao adicionar o seu lembrete, contate o administrador.",
+      }
+    }
+    return
+  }
+
+  if (fetchId === "handleRemoveReminder") {
+    const result = await removeUserFromReminderList(request, params)
+    if (!result.success) {
+      return {
+        error:
+          "Um erro ocorreu ao remover o seu lembrete, contate o administrador.",
+      }
+    }
+    return
+  }
+
+  return
 }
 
 type WrapperProps = {
@@ -106,16 +143,6 @@ const Wrapper: FC<WrapperProps> = ({
         </div>
       )}
     </>
-  )
-}
-
-export const HydrateFallback = () => {
-  return (
-    <Wrapper
-      openRegistrationEvents={<EventCardSkeleton />}
-      scheduledEvents={undefined}
-      closedRegistrationEvents={undefined}
-    />
   )
 }
 

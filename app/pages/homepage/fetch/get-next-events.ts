@@ -1,7 +1,6 @@
 import { composable, type Composable } from "composable-functions"
 import { kysely } from "~/kysely"
-import type { Database } from "~types/database.types"
-import type { ViewEvent } from "~types/entities.types"
+import type { EventStatus, ViewEvent } from "~types/entities.types"
 
 type GetNextEvents = Composable<
   (
@@ -28,21 +27,18 @@ export const getNextEvents: GetNextEvents = composable(
               .where("event_participants.profile_id", "=", profileId),
           )
           .as("is_applied"),
-        // TODO: For a future PR
-        // TODO: From the AI: The query uses EXISTS subquery for checking user applications which could be inefficient for large datasets. Consider using LEFT JOIN with proper indexing instead.
-        // eb
-        //   .exists(
-        //     eb
-        //       .selectFrom("event_reminders")
-        //       .select("event_reminders.event_id")
-        //       .whereRef("event_reminders.event_id", "=", "events.id")
-        //       .where("event_reminders.profile_id", "=", profileId),
-        //   )
-        //   .as("is_set_reminder"),
+        eb
+          .exists(
+            eb
+              .selectFrom("event_reminders")
+              .select("event_reminders.event_id")
+              .whereRef("event_reminders.event_id", "=", "events.id")
+              .where("event_reminders.profile_id", "=", profileId),
+          )
+          .as("is_set_reminder"),
       ])
     }
 
-    type EventStatus = Database["public"]["Enums"]["event_status"]
     const homepageStatus: EventStatus[] = ["Registration Open", "Scheduled"]
     const dashboardStatus: EventStatus[] = [
       "Registration Open",
@@ -50,6 +46,15 @@ export const getNextEvents: GetNextEvents = composable(
       "Registration Closed",
     ]
 
+    query = query
+      .where("events.time_event_start", ">=", now)
+      .where(
+        "events.event_status",
+        "in",
+        isHomepage ? homepageStatus : dashboardStatus,
+      )
+      .orderBy("events.time_event_start", "asc")
+      .limit(limit)
     query = query
       .where("events.time_event_start", ">=", now)
       .where(
