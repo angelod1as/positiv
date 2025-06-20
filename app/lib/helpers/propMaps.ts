@@ -26,6 +26,7 @@ export const eventPropNameMap = (property: keyof Event) => {
     title: "Nome",
     total_spots: "Lotação",
     is_applied: "Inscrite",
+    is_set_reminder: "Lembrete registrado",
   }[property]
 }
 
@@ -38,7 +39,6 @@ export const eventStatusMap = (event_status: EventStatus) => {
       "Registration Closed": "Inscrições encerradas",
       Cancelled: "Cancelado",
       Completed: "Finalizado",
-      "Already Applied": "Já inscrite",
     }[event_status] || ""
   )
 }
