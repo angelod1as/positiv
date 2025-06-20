@@ -13,6 +13,7 @@ type FetchNextEvents = Composable<
 export const getNextEvents: FetchNextEvents = composable(
   async (profileId, limit = 3, isHomepage = false) => {
     const now = new Date().toISOString()
+    console.log(`\n\n:DEV now:\n`, now, `\n\n`)
 
     let query = kysely.selectFrom("events").selectAll("events")
 
@@ -57,6 +58,7 @@ export const getNextEvents: FetchNextEvents = composable(
       .limit(limit)
 
     const data = await query.execute()
+    console.log(`\n\n:DEV data:\n`, data, `\n\n`)
 
     return data.map((item) => ({
       ...item,
