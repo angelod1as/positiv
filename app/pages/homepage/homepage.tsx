@@ -12,6 +12,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const { currentUser, currentProfile } = await getContext(request, params)
   const isLoggedIn = !!currentUser?.id
   const result = await getNextEvents(currentProfile?.id, 3, true)
+  console.log(`\n\n:DEV result:\n`, result, `\n\n`)
 
   if (!result.success) {
     return { events: undefined, isLoggedIn }
@@ -22,6 +23,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 export default function Homepage({ loaderData }: Route.ComponentProps) {
   const { events, isLoggedIn } = loaderData
+  console.log(`\n\n:DEV events front:\n`, events, `\n\n`)
+
   return (
     <div>
       <HomePageHero />
