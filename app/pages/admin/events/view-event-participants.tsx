@@ -62,11 +62,13 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const event = await getAdminEventById(request, params)
-  if (!event) {
+export async function loader({ params }: Route.LoaderArgs) {
+  const result = await getAdminEventById(params.id)
+  if (!result.success) {
     throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
   }
+
+  const event = result.data
 
   const participantsResponse = await getAdminParticipantsWithExtraDataById(
     event.id,
