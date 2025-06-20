@@ -29,6 +29,7 @@ export const getNextEvents: GetNextEvents = composable(
           )
           .as("is_applied"),
         // TODO: For a future PR
+        // TODO: From the AI: The query uses EXISTS subquery for checking user applications which could be inefficient for large datasets. Consider using LEFT JOIN with proper indexing instead.
         // eb
         //   .exists(
         //     eb
@@ -61,10 +62,6 @@ export const getNextEvents: GetNextEvents = composable(
 
     const data = await query.execute()
 
-    return data.map((item) => ({
-      ...item,
-      event_status: item.event_status,
-      active_applications: [],
-    }))
+    return data
   },
 )
