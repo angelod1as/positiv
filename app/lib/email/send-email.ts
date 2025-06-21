@@ -4,7 +4,7 @@ import { POSITIV_EMAIL } from "../helpers/constants"
 import { getEmailTransport } from "./get-email-transport"
 
 export interface MailOptions extends Omit<Mail.Options, "from"> {
-  to: NonNullable<Mail.Options["to"]>
+  to?: NonNullable<Mail.Options["to"]>
   subject: NonNullable<Mail.Options["subject"]>
   text: NonNullable<Mail.Options["text"]>
   html: NonNullable<Mail.Options["html"]>
