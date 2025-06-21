@@ -22,11 +22,11 @@ test("Apply to event", async ({ page }) => {
   await userDataPage.fillUserDataForm()
   await userDataPage.applyToEvent()
 
+  await dashboard.testDownloadCalendar()
+  await dashboard.cancelApplication()
+
   const mailHogPage = new MailhogPOM(await page.context().newPage())
   await mailHogPage.goto()
   await mailHogPage.testBasicElements()
   await mailHogPage.testApplicationEmail()
-
-  await dashboard.testDownloadCalendar()
-  await dashboard.cancelApplication()
 })

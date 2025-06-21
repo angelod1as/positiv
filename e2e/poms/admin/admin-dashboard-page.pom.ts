@@ -49,7 +49,7 @@ export class AdminDashboardPOM {
       row: this.page.getByText("Evento Com Inscrições Abertas 1"),
       title: this.page.getByText("🤗 Evento Com Inscrições Abertas 1").first(),
       sendReminderButton: this.page.getByRole("button", {
-        name: "Enviar 1 email de lembrete",
+        name: "Enviar 9 emails de lembrete",
       }),
     }
     this.dialogSendEmails = this.page.getByRole("alertdialog", {
@@ -95,5 +95,6 @@ export class AdminDashboardPOM {
     await this.registrationOpenEvent.sendReminderButton.click()
     await expect(this.dialogSendEmails).toBeVisible()
     await this.dialogSendEmailsButton.click()
+    await expect(this.dialogSendEmailsButton).not.toBeVisible()
   }
 }
