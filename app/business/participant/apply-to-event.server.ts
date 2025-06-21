@@ -44,8 +44,7 @@ export const applyToEvent = applySchema(
       .single()
 
     if (event) {
-      // purposefully async
-      sendApplicationMail({
+      await sendApplicationMail({
         profile: currentProfile,
         event: {
           ...event,
