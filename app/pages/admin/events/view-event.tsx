@@ -122,7 +122,7 @@ const AdminViewEvent = ({ loaderData }: Route.ComponentProps) => {
     sendToast(fetcher.data)
   }, [fetcher.data])
 
-  const { event, reminderCount } = loaderData
+  const { event, reminderCount = 0 } = loaderData
 
   const {
     id,
@@ -164,31 +164,34 @@ const AdminViewEvent = ({ loaderData }: Route.ComponentProps) => {
         <Button to={ADMIN_EDIT_EVENT(id)}>Editar</Button>
         <Button to={ADMIN_DOWNLOAD_EVENT(id)}>Baixar dados</Button>
 
-        {reminderCount && !isOpen && <p>Lembretes: {reminderCount}</p>}
-
-        {isOpen && reminderCount && (
-          <fetcher.Form method="post">
-            <ConfirmDialog
-              title="Enviar emails de lembrete?"
-              description={
-                <div>
-                  <p>
-                    Enviar e-mails para todes que pediram para serem lembrades?
-                  </p>
-                </div>
-              }
-              confirmLabel="📨 Enviar"
-              cancelLabel="Cancelar"
-              isLoading={fetcher.state !== "idle"}
-              onConfirm={handleSendReminders}
-            >
-              <ConfirmDialog.Trigger variant="outline" className="w-full">
-                Enviar {reminderCount} email{reminderCount !== 1 ? "s" : ""} de
-                lembrete
-              </ConfirmDialog.Trigger>
-            </ConfirmDialog>
-          </fetcher.Form>
-        )}
+        {reminderCount > 0 ? (
+          isOpen ? (
+            <fetcher.Form method="post">
+              <ConfirmDialog
+                title="Enviar emails de lembrete?"
+                description={
+                  <div>
+                    <p>
+                      Enviar e-mails para todes que pediram para serem
+                      lembrades?
+                    </p>
+                  </div>
+                }
+                confirmLabel="📨 Enviar"
+                cancelLabel="Cancelar"
+                isLoading={fetcher.state !== "idle"}
+                onConfirm={handleSendReminders}
+              >
+                <ConfirmDialog.Trigger variant="outline" className="w-full">
+                  Enviar {reminderCount} email{reminderCount !== 1 ? "s" : ""}{" "}
+                  de lembrete
+                </ConfirmDialog.Trigger>
+              </ConfirmDialog>
+            </fetcher.Form>
+          ) : (
+            <p>Lembretes: {reminderCount}</p>
+          )
+        ) : null}
       </div>
 
       <p className="font-bold">
