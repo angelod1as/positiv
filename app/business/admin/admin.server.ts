@@ -311,7 +311,7 @@ export const getEmailsByIds = composable(
     if (!profileIds || profileIds.length === 0) return []
     return await kysely
       .selectFrom("profiles")
-      .select("email")
+      .select(["email", "id"])
       .where("id", "in", profileIds)
       .execute()
   },
@@ -353,14 +353,15 @@ export const sendEventReminders = applySchema(sendEventRemindersSchema)(async (
     throw new Error(message)
   }
 
-  const emails = emailsResult.data.map((item) => item.email)
-  const emailGroups = chunkArray(emails)
+  const emailsWithProfileIds = emailsResult.data
 
-  const sendPromises = emailGroups.map((emails) => {
+  const emailGroups = chunkArray(emailsWithProfileIds)
+
+  const sendPromises = emailGroups.map((group) => {
     return sendBatchEventReminderEmail({
-      emails,
+      emails: group.map((item) => item.email),
       eventId: event_id,
-      profileIds,
+      profileIds: group.map((item) => item.id),
     })
   })
 
