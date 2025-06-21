@@ -10,6 +10,7 @@ export class HomepagePOM {
   readonly newEventsTitle: Locator
   readonly headerLogin: Locator
   readonly headerDashboard: Locator
+  readonly headerAdminArea: Locator
   readonly headerAccount: Locator
 
   constructor(page: Page) {
@@ -31,7 +32,10 @@ export class HomepagePOM {
     const header = page.getByRole("banner")
     this.headerLogin = header.getByRole("link", { name: "Entrar" })
     this.headerDashboard = header.getByRole("link", { name: "Dashboard" })
-    this.headerAccount = header.getByRole("link", { name: "Conta" })
+    this.headerAdminArea = header
+      .getByRole("link", { name: "Área Admin" })
+      .first()
+    this.headerAccount = header.getByRole("link", { name: "Conta" }).first()
   }
 
   async goto() {
@@ -57,6 +61,11 @@ export class HomepagePOM {
     await expect(this.headerLogin).not.toBeVisible()
     await expect(this.headerAccount).toBeVisible()
     await expect(this.headerDashboard).toBeVisible()
+  }
+
+  async testAdminLoggedIn() {
+    this.testLoggedIn()
+    await expect(this.headerAdminArea).toBeVisible()
   }
 
   async goToLogin() {
