@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import {
   getAdminContext,
   getAdminEventById,
+  getAdminReminderCountByEventId,
   sendEventReminders,
   updateEventStatus,
 } from "~/business/admin/admin.server"
@@ -55,10 +56,11 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export async function loader({ params }: Route.LoaderArgs) {
-  if (!params.id) {
+  const eventId = params.id
+  if (!eventId) {
     throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
   }
-  const result = await getAdminEventById(params.id)
+  const result = await getAdminEventById(eventId)
   if (!result.success) {
     throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
   }
@@ -70,7 +72,17 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const { isOpen, isScheduled } = checkEventStatus(event.event_status)
 
-  const reminderCount = isScheduled || isOpen ? 1 : null
+  const reminderCountResult = await getAdminReminderCountByEventId({
+    eventId,
+    isScheduled,
+    isOpen,
+  })
+
+  if (!reminderCountResult?.success) {
+    return { event, reminderCount: 0 }
+  }
+
+  const reminderCount = reminderCountResult.data
 
   return { event, reminderCount }
 }
@@ -154,7 +166,7 @@ const AdminViewEvent = ({ loaderData }: Route.ComponentProps) => {
 
         {reminderCount && !isOpen && <p>Lembretes: {reminderCount}</p>}
 
-        {isOpen && (
+        {isOpen && reminderCount && (
           <fetcher.Form method="post">
             <ConfirmDialog
               title="Enviar emails de lembrete?"
