@@ -55,15 +55,6 @@ export const getNextEvents: GetNextEvents = composable(
       )
       .orderBy("events.time_event_start", "asc")
       .limit(limit)
-    query = query
-      .where("events.time_event_start", ">=", now)
-      .where(
-        "events.event_status",
-        "in",
-        isHomepage ? homepageStatus : dashboardStatus,
-      )
-      .orderBy("events.time_event_start", "asc")
-      .limit(limit)
 
     const data = await query.execute()
 
