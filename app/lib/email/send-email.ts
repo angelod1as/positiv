@@ -14,21 +14,23 @@ export const sendEmail = composable(
   async (mailOptions: MailOptions): Promise<void> => {
     const transport = getEmailTransport()
 
-    transport.sendMail(
-      {
-        from: POSITIV_EMAIL,
-        ...mailOptions,
-      },
-      (
-        error,
-        // info - for debugging
-      ) => {
-        if (error) {
-          console.error("\ntransport.sendMail error", error, "\n")
-          console.error("\nmailOptions", mailOptions, "\n")
-          throw new Error("transport.sendMail error")
-        }
-      },
-    )
+    return new Promise((resolve, reject) => {
+      transport.sendMail(
+        {
+          from: POSITIV_EMAIL,
+          ...mailOptions,
+        },
+        (error, info) => {
+          if (error) {
+            console.error("\ntransport.sendMail error", error, "\n")
+            console.error("\ninfo", info, "\n")
+            console.error("\nmailOptions", mailOptions, "\n")
+            reject(new Error("transport.sendMail error"))
+          } else {
+            resolve()
+          }
+        },
+      )
+    })
   },
 )
