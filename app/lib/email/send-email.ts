@@ -1,3 +1,4 @@
+import { composable } from "composable-functions"
 import type Mail from "nodemailer/lib/mailer"
 import { POSITIV_EMAIL } from "../helpers/constants"
 import { getEmailTransport } from "./get-email-transport"
@@ -9,23 +10,25 @@ export interface MailOptions extends Omit<Mail.Options, "from"> {
   html: NonNullable<Mail.Options["html"]>
 }
 
-export const sendEmail = async (mailOptions: MailOptions): Promise<void> => {
-  const transport = getEmailTransport()
+export const sendEmail = composable(
+  async (mailOptions: MailOptions): Promise<void> => {
+    const transport = getEmailTransport()
 
-  transport.sendMail(
-    {
-      from: POSITIV_EMAIL,
-      ...mailOptions,
-    },
-    (
-      error,
-      // info - for debugging
-    ) => {
-      if (error) {
-        console.error("\ntransport.sendMail error", error, "\n")
-        console.error("\nmailOptions", mailOptions, "\n")
-        return
-      }
-    },
-  )
-}
+    transport.sendMail(
+      {
+        from: POSITIV_EMAIL,
+        ...mailOptions,
+      },
+      (
+        error,
+        // info - for debugging
+      ) => {
+        if (error) {
+          console.error("\ntransport.sendMail error", error, "\n")
+          console.error("\nmailOptions", mailOptions, "\n")
+          throw new Error("transport.sendMail error")
+        }
+      },
+    )
+  },
+)
