@@ -41,7 +41,7 @@ const ReminderEmail = ({ event }: ReminderEmailProps) => {
       previewText="As inscrições para o evento que você pediu para ser lembrado estão abertas!"
     >
       <Heading as="h1" className="text-center">
-        Inscrições Abertas!
+        Inscrições abertas!
       </Heading>
       <Text>
         Surpresa! As inscrições para o evento{" "}

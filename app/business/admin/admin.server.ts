@@ -271,10 +271,11 @@ const getEventRemindersByEventId = composable(
 
 type SendBatchEventReminderEmail = {
   emails: string[]
+  profileIds: string[]
   eventId: string
 }
 const sendBatchEventReminderEmail = composable(
-  async ({ emails, eventId }: SendBatchEventReminderEmail) => {
+  async ({ emails, eventId, profileIds }: SendBatchEventReminderEmail) => {
     const eventResult = await getAdminEventById(eventId)
 
     if (!eventResult.success) {
@@ -286,19 +287,22 @@ const sendBatchEventReminderEmail = composable(
     const { html, text } = await formatReminderMail(event)
 
     const options: MailOptions = {
-      to: emails,
+      bcc: emails,
       subject: `Inscrições abertas para o evento ${event.emoji} ${event.title}`,
       text: text,
       html: html,
     }
 
-    try {
-      await sendEmail(options)
-      return true
-    } catch (error) {
-      console.error("REMINDER MAIL ERROR", error)
+    const result = await sendEmail(options)
+
+    if (!result.success) {
+      console.error("REMINDER MAIL ERROR", result.errors)
       return false
     }
+
+    await markEmailsAsSent(profileIds)
+
+    return true
   },
 )
 
@@ -353,7 +357,11 @@ export const sendEventReminders = applySchema(sendEventRemindersSchema)(async (
   const emailGroups = chunkArray(emails)
 
   const sendPromises = emailGroups.map((emails) => {
-    return sendBatchEventReminderEmail({ emails, eventId: event_id })
+    return sendBatchEventReminderEmail({
+      emails,
+      eventId: event_id,
+      profileIds,
+    })
   })
 
   await Promise.allSettled(sendPromises).then((results) => {
@@ -369,3 +377,41 @@ export const sendEventReminders = applySchema(sendEventRemindersSchema)(async (
 
   return
 })
+
+export const markEmailsAsSent = composable(async (profileIds: string[]) => {
+  return await kysely
+    .updateTable("event_reminders")
+    .set({
+      email_sent: true,
+      email_sent_date: new Date().toISOString(),
+    })
+    .where("profile_id", "in", profileIds)
+    .execute()
+})
+
+export const getAdminReminderCountByEventId = composable(
+  async ({
+    eventId,
+    isScheduled,
+    isOpen,
+  }: {
+    eventId: string
+    isScheduled: boolean
+    isOpen: boolean
+  }) => {
+    if (!isScheduled && !isOpen) return 0
+
+    const result = await kysely
+      .selectFrom("event_reminders")
+      .select((eb) =>
+        eb.fn
+          .count<number>("event_id")
+          .filterWhere("event_id", "=", eventId)
+          .filterWhere("email_sent", "=", false)
+          .as("count"),
+      )
+      .executeTakeFirstOrThrow()
+
+    return Number(result.count)
+  },
+)
