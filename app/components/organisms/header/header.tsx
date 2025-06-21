@@ -62,7 +62,7 @@ export const Header: FC<HeaderProps> = ({ profile, userEmail }) => {
                 <Button
                   asChild
                   variant="outline"
-                  title="Dashboard"
+                  title="Área Admin"
                   to={ADMIN_DASHBOARD}
                 >
                   <Table2Icon />
