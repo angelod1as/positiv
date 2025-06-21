@@ -25,9 +25,11 @@ export const sendApplicationMail = async ({
     icalEvent: icalEvent?.toString(),
   }
 
-  try {
-    await sendEmail(options)
-  } catch (error) {
-    console.error("MAIL ERROR", error)
+  const result = await sendEmail(options)
+
+  if (!result.success) {
+    throw new Error("Erro no envio do email de confirmação")
   }
+
+  return true
 }
