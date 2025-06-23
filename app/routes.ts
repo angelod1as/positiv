@@ -87,6 +87,11 @@ export default [
             "/:id/participantes",
             "pages/admin/events/view-event-participants.tsx",
           ),
+          // See participant in relation to event
+          route(
+            "/:eventId/participantes/:participantId",
+            "pages/admin/events/view-event-participant.tsx",
+          ),
         ]),
       ]),
     ]),
