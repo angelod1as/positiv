@@ -54,6 +54,7 @@
     "nodemailer": "^7.0.3",
     "pg": "^8.16.0",
     "prettier": "^3.5.3",
+    "primereact": "^10.9.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.1",
