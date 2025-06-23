@@ -1,20 +1,12 @@
-import {
-  EyeIcon,
-  MaximizeIcon,
-  MinimizeIcon,
-  PencilIcon,
-  UsersIcon,
-} from "lucide-react"
-import { FilterMatchMode, FilterService } from "primereact/api"
+import { DataTable } from "components/organisms/data-table"
+import { EyeIcon, PencilIcon, UsersIcon } from "lucide-react"
+import { FilterMatchMode } from "primereact/api"
 import {
   Column,
   type ColumnFilterElementTemplateOptions,
 } from "primereact/column"
-import { DataTable, type DataTableFilterMeta } from "primereact/datatable"
 import { Dropdown } from "primereact/dropdown"
-import { InputText } from "primereact/inputtext"
-import { useState, type ChangeEvent, type FC } from "react"
-import { Button } from "~/components/atoms/button/button"
+import { type FC } from "react"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { eventPropNameMap, eventStatusMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
@@ -26,160 +18,65 @@ const {
   },
 } = paths
 
-// TODO: Implement date filtering
-FilterService.register("custom_time_event_start", (_value, _filters) => {
-  // const [from, to] = filters ?? [null, null];
-  // if (from === null && to === null) return true;
-  // if (from !== null && to === null) return from <= value;
-  // if (from === null && to !== null) return value <= to;
-  // return from <= value && value <= to;
-  return true
-})
+const statusFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
+  return (
+    <Dropdown
+      value={options.value}
+      options={[
+        "Draft",
+        "Scheduled",
+        "Registration Open",
+        "Registration Closed",
+        "Cancelled",
+        "Completed",
+      ].map((status) => ({
+        label: eventStatusMap(status as EventStatus),
+        value: status,
+      }))}
+      onChange={(e) => options.filterCallback(e.value, options.index)}
+      placeholder="Selecione"
+      className="p-column-filter"
+      showClear
+    />
+  )
+}
 
 type AdminDashboardEventsTableProps = {
   events: Event[]
 }
 export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
-  events: dbEvents,
+  events,
 }) => {
-  const [selection, setSelection] = useState<Event[]>([])
-  const [events, setEvents] = useState(dbEvents)
-  const [isMaximized, setIsMaximized] = useState(false)
-
-  const [filters, setFilters] = useState<DataTableFilterMeta>({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    time_event_start: { value: null, matchMode: FilterMatchMode.CUSTOM },
-    event_status: { value: null, matchMode: FilterMatchMode.EQUALS },
-  })
-
-  const [globalFilterValue, setGlobalFilterValue] = useState("")
-
-  const onGlobalFilterChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    const stateFilters = { ...filters }
-
-    if ("value" in stateFilters["global"]) {
-      stateFilters["global"].value = value
-      setFilters(stateFilters)
-      setGlobalFilterValue(value)
-    }
-  }
-
-  const renderHeader = () => {
-    return (
-      <div className="flex justify-between items-center">
-        <InputText
-          value={globalFilterValue}
-          onChange={onGlobalFilterChange}
-          placeholder="Buscar..."
-        />
-        {isMaximized ? (
-          <Button
-            variant="outline"
-            onClick={toggleMaximized}
-            title="Maximizar tabela"
-          >
-            <MinimizeIcon />
-          </Button>
-        ) : (
-          <Button
-            variant="outline"
-            onClick={toggleMaximized}
-            title="Minimizar tabela"
-          >
-            <MaximizeIcon />
-          </Button>
-        )}
-      </div>
-    )
-  }
-
-  //// See top todo
-  // const dateRowFilterTemplate = (
-  //   options: ColumnFilterElementTemplateOptions,
-  // ) => {
-  //   return (
-  //     <Input
-  //       type="date"
-  //       value={options.value || ""}
-  //       onChange={(e) => options.filterApplyCallback(e.target.value)}
-  //     />
-  //   )
-  // }
-
-  const statusFilterTemplate = (
-    options: ColumnFilterElementTemplateOptions,
-  ) => {
-    return (
-      <Dropdown
-        value={options.value}
-        options={[
-          "Draft",
-          "Scheduled",
-          "Registration Open",
-          "Registration Closed",
-          "Cancelled",
-          "Completed",
-        ].map((status) => ({
-          label: eventStatusMap(status as EventStatus),
-          value: status,
-        }))}
-        onChange={(e) => options.filterCallback(e.value, options.index)}
-        placeholder="Selecione"
-        className="p-column-filter"
-        showClear
-      />
-    )
-  }
-
-  const toggleMaximized = () => {
-    setIsMaximized((state) => !state)
-  }
-
   return (
     <DataTable
+      id="admin-events"
       value={events}
-      paginator
-      className={isMaximized ? "maximized-table" : ""}
-      rows={150}
-      dataKey="id"
-      emptyMessage="Nenhum evento encontrado"
-      // Filters
-      filters={filters}
-      filterDisplay="menu"
-      onFilter={(e) => setFilters(e.filters)}
-      globalFilterFields={["title"]}
-      header={renderHeader}
-      // Session
-      stateStorage="session"
-      stateKey="dt-state-admin-events"
-      // Scroll
-      scrollable
-      scrollHeight="flex"
-      stripedRows
-      // Sorting
-      sortField="time_event_start"
-      sortOrder={1}
-      removableSort
-      rowHover
-      // Selection
-      // selection={selection}
-      // onSelectionChange={(e) => setSelection(e.value)}
-      // selectionMode="checkbox"
-      // // Resize
-      // resizableColumns
-      // columnResizeMode="fit"
-      // // Reorder
-      // reorderableColumns
-      // onRowReorder={(e) => setEvents(e.value)}
+      filters={{
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        time_event_start: { value: null, matchMode: FilterMatchMode.CUSTOM },
+        event_status: { value: null, matchMode: FilterMatchMode.EQUALS },
+      }}
+      buttons={[
+        {
+          Icon: UsersIcon,
+          to: ADMIN_EVENT_PARTICIPANTS,
+          title: "Ver participantes",
+          key: "id",
+        },
+        {
+          Icon: EyeIcon,
+          to: ADMIN_VIEW_EVENT,
+          title: "Ver participantes",
+          key: "id",
+        },
+        {
+          Icon: PencilIcon,
+          to: ADMIN_EDIT_EVENT,
+          title: "Ver participantes",
+          key: "id",
+        },
+      ]}
     >
-      {/* Selection Column */}
-      {/* <Column
-        selectionMode="multiple"
-        headerStyle={{ width: "3rem" }}
-        alignFrozen="left"
-      /> */}
-      <Column field="id" header="id" hidden={true} />
       <Column
         field="title"
         header={eventPropNameMap("title")}
@@ -200,32 +97,11 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
         header={eventPropNameMap("time_event_start")}
         body={(value) => formatDateTime(value.time_event_start).full}
         sortable
-        //// See top todo
         // filter
         // filterElement={dateRowFilterTemplate}
         showFilterMatchModes={false}
         filterType="date"
         dataType="date"
-      />
-
-      {/* Buttons */}
-      <Column
-        body={(value: Event) => {
-          const eventId = value.id
-          return (
-            <div className="flex gap-2 justify-self-end">
-              <Button to={ADMIN_EVENT_PARTICIPANTS(eventId)} variant="outline">
-                <UsersIcon />
-              </Button>
-              <Button to={ADMIN_VIEW_EVENT(eventId)} variant="outline">
-                <EyeIcon />
-              </Button>
-              <Button to={ADMIN_EDIT_EVENT(eventId)} variant="outline">
-                <PencilIcon />
-              </Button>
-            </div>
-          )
-        }}
       />
     </DataTable>
   )

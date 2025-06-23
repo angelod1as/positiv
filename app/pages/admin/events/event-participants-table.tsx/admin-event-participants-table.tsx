@@ -1,6 +1,6 @@
+import { DataTable } from "components/organisms/data-table"
 import { EyeIcon } from "lucide-react"
 import { Column } from "primereact/column"
-import { DataTable } from "primereact/datatable"
 import type { FC } from "react"
 import WhatsappIcon from "~/assets/social/whatsapp.svg"
 import type { ParticipantWithExtraData } from "~/business/admin/admin.server"
@@ -50,53 +50,24 @@ const booleanBodyTemplate = (
   return <Checkbox checked={Boolean(value)} disabled />
 }
 
-const buildButtons = (values: ParticipantWithExtraData, eventId: string) => {
-  const participantId = values.id
-  return (
-    <div className="flex gap-2 justify-self-end">
-      <Button
-        to={ADMIN_EVENT_VIEW_PARTICIPANT(eventId, participantId)}
-        variant="outline"
-      >
-        <EyeIcon />
-      </Button>
-    </div>
-  )
-}
-
 export const AdminEventParticipantsTable: FC<
   AdminEventParticipantsTableProps
 > = ({ participants, eventId }) => {
   return (
     <DataTable
       value={participants}
-      paginator
-      rows={150}
-      dataKey="id"
-      emptyMessage="Nenhum evento encontrado"
-      // Filters
-      // filters={filters}
-      // filterDisplay="row"
-      // onFilter={(e) => setFilters(e.filters)}
-      // header={renderHeader}
-      // Session
-      // TODO: After fixing
-      // stateStorage="session"
-      // stateKey="dt-state-admin-events"
-      // Scroll
-      scrollable
-      scrollHeight="400"
-      stripedRows
-      // Sorting
+      id="participants"
       sortField="time_event_start"
-      sortOrder={-1}
-      // Selection
-      // selection={selection}
-      // onSelectionChange={(e) => setSelection(e.value)}
-      // selectionMode="checkbox"
-      // Resize
-      resizableColumns
-      columnResizeMode="fit"
+      buttons={[
+        {
+          Icon: EyeIcon,
+          to(id) {
+            return ADMIN_EVENT_VIEW_PARTICIPANT(eventId, id)
+          },
+          title: "Ver participante",
+          key: "id",
+        },
+      ]}
     >
       <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} />
 
@@ -148,13 +119,6 @@ export const AdminEventParticipantsTable: FC<
         body={(values) =>
           booleanBodyTemplate(values, "was_admin_skipped_last_event")
         }
-      />
-      {/* Buttons */}
-      <Column
-        header="Ver"
-        body={(values) => buildButtons(values, eventId)}
-        frozen={true}
-        alignFrozen="right"
       />
     </DataTable>
   )
