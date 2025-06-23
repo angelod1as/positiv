@@ -1,4 +1,10 @@
-import { EyeIcon, PencilIcon, UsersIcon } from "lucide-react"
+import {
+  EyeIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+  PencilIcon,
+  UsersIcon,
+} from "lucide-react"
 import { FilterMatchMode, FilterService } from "primereact/api"
 import {
   Column,
@@ -38,7 +44,6 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
 }) => {
   const [selection, setSelection] = useState<Event[]>([])
   const [events, setEvents] = useState(dbEvents)
-  // TODO: STOPPED HERE
   const [isMaximized, setIsMaximized] = useState(false)
 
   const [filters, setFilters] = useState<DataTableFilterMeta>({
@@ -62,13 +67,29 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
 
   const renderHeader = () => {
     return (
-      <div className="flex justify-content-end">
+      <div className="flex justify-between items-center">
         <InputText
           value={globalFilterValue}
           onChange={onGlobalFilterChange}
           placeholder="Buscar..."
         />
-        <Button onClick={toggleMaximized}>Maximize!</Button>
+        {isMaximized ? (
+          <Button
+            variant="outline"
+            onClick={toggleMaximized}
+            title="Maximizar tabela"
+          >
+            <MinimizeIcon />
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={toggleMaximized}
+            title="Minimizar tabela"
+          >
+            <MaximizeIcon />
+          </Button>
+        )}
       </div>
     )
   }
@@ -116,99 +137,96 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
   }
 
   return (
-    <>
-      <DataTable
-        value={events}
-        paginator
-        className={isMaximized ? "" : ""}
-        rows={150}
-        dataKey="id"
-        emptyMessage="Nenhum evento encontrado"
-        // Filters
-        filters={filters}
-        filterDisplay="menu"
-        onFilter={(e) => setFilters(e.filters)}
-        globalFilterFields={["title"]}
-        header={renderHeader}
-        // Session
-        stateStorage="session"
-        stateKey="dt-state-admin-events"
-        // Scroll
-        scrollable
-        // scrollHeight="100"
-        stripedRows
-        // Sorting
-        sortField="time_event_start"
-        sortOrder={1}
-        removableSort
-        // Selection
-        selection={selection}
-        onSelectionChange={(e) => setSelection(e.value)}
-        selectionMode="checkbox"
-        // Resize
-        resizableColumns
-        columnResizeMode="fit"
-        // Reorder
-        reorderableColumns
-        onRowReorder={(e) => setEvents(e.value)}
-      >
-        <Column
-          selectionMode="multiple"
-          headerStyle={{ width: "3rem" }}
-          alignFrozen="left"
-        />
-        <Column field="id" header="id" hidden={true} />
-        <Column
-          field="title"
-          header={eventPropNameMap("title")}
-          alignFrozen="left"
-          sortable
-          frozen={true}
-        />
-        <Column
-          field="event_status"
-          header={eventPropNameMap("event_status")}
-          body={(value) => eventStatusMap(value.event_status)}
-          filter
-          filterElement={statusFilterTemplate}
-          showFilterMatchModes={false}
-        />
-        <Column
-          field="time_event_start"
-          header={eventPropNameMap("time_event_start")}
-          body={(value) => formatDateTime(value.time_event_start).full}
-          sortable
-          //// See top todo
-          // filter
-          // filterElement={dateRowFilterTemplate}
-          showFilterMatchModes={false}
-          filterType="date"
-          dataType="date"
-        />
+    <DataTable
+      value={events}
+      paginator
+      className={isMaximized ? "maximized-table" : ""}
+      rows={150}
+      dataKey="id"
+      emptyMessage="Nenhum evento encontrado"
+      // Filters
+      filters={filters}
+      filterDisplay="menu"
+      onFilter={(e) => setFilters(e.filters)}
+      globalFilterFields={["title"]}
+      header={renderHeader}
+      // Session
+      stateStorage="session"
+      stateKey="dt-state-admin-events"
+      // Scroll
+      scrollable
+      scrollHeight="flex"
+      stripedRows
+      // Sorting
+      sortField="time_event_start"
+      sortOrder={1}
+      removableSort
+      rowHover
+      // Selection
+      // selection={selection}
+      // onSelectionChange={(e) => setSelection(e.value)}
+      // selectionMode="checkbox"
+      // // Resize
+      // resizableColumns
+      // columnResizeMode="fit"
+      // // Reorder
+      // reorderableColumns
+      // onRowReorder={(e) => setEvents(e.value)}
+    >
+      {/* Selection Column */}
+      {/* <Column
+        selectionMode="multiple"
+        headerStyle={{ width: "3rem" }}
+        alignFrozen="left"
+      /> */}
+      <Column field="id" header="id" hidden={true} />
+      <Column
+        field="title"
+        header={eventPropNameMap("title")}
+        alignFrozen="left"
+        sortable
+        frozen={true}
+      />
+      <Column
+        field="event_status"
+        header={eventPropNameMap("event_status")}
+        body={(value) => eventStatusMap(value.event_status)}
+        filter
+        filterElement={statusFilterTemplate}
+        showFilterMatchModes={false}
+      />
+      <Column
+        field="time_event_start"
+        header={eventPropNameMap("time_event_start")}
+        body={(value) => formatDateTime(value.time_event_start).full}
+        sortable
+        //// See top todo
+        // filter
+        // filterElement={dateRowFilterTemplate}
+        showFilterMatchModes={false}
+        filterType="date"
+        dataType="date"
+      />
 
-        {/* Buttons */}
-        <Column
-          body={(value: Event) => {
-            const eventId = value.id
-            return (
-              <div className="flex gap-2 justify-self-end">
-                <Button
-                  to={ADMIN_EVENT_PARTICIPANTS(eventId)}
-                  variant="outline"
-                >
-                  <UsersIcon />
-                </Button>
-                <Button to={ADMIN_VIEW_EVENT(eventId)} variant="outline">
-                  <EyeIcon />
-                </Button>
-                <Button to={ADMIN_EDIT_EVENT(eventId)} variant="outline">
-                  <PencilIcon />
-                </Button>
-              </div>
-            )
-          }}
-        />
-      </DataTable>
-    </>
+      {/* Buttons */}
+      <Column
+        body={(value: Event) => {
+          const eventId = value.id
+          return (
+            <div className="flex gap-2 justify-self-end">
+              <Button to={ADMIN_EVENT_PARTICIPANTS(eventId)} variant="outline">
+                <UsersIcon />
+              </Button>
+              <Button to={ADMIN_VIEW_EVENT(eventId)} variant="outline">
+                <EyeIcon />
+              </Button>
+              <Button to={ADMIN_EDIT_EVENT(eventId)} variant="outline">
+                <PencilIcon />
+              </Button>
+            </div>
+          )
+        }}
+      />
+    </DataTable>
   )
 }
