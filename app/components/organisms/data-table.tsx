@@ -187,7 +187,7 @@ export function DataTable<T extends DataTableValue>({
                   return (
                     <Button
                       to={typeof to === "function" ? key && to(value[key]) : to}
-                      key="title"
+                      key={title}
                       aria-label={title}
                       variant="outline"
                     >
