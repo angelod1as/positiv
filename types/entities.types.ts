@@ -10,11 +10,7 @@ export type ProfileWithRoles = z.infer<typeof _profileWithRoles>
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 
 /** Events information */
-export type Event = Omit<
-  Database["public"]["Tables"]["events"]["Row"],
-  "event_status"
-> & {
-  event_status: EventStatus
+export type Event = Database["public"]["Tables"]["events"]["Row"] & {
   is_applied?: boolean
   is_set_reminder?: boolean
 }
@@ -55,6 +51,16 @@ export type ViewEvent = Pick<
   is_applied?: boolean
   is_set_reminder?: boolean
 }
+
+/** Newsletter information */
+export type Newsletter = Database["public"]["Tables"]["newsletters"]["Row"]
+
+/** Newsletter status enum */
+export type NewsletterStatus = Database["public"]["Enums"]["newsletter_status"]
+
+/** Newsletter audience enum */
+export type NewsletterAudience =
+  Database["public"]["Enums"]["newsletter_audience"]
 
 //////////
 // Participant Process Status

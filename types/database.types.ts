@@ -183,6 +183,36 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletters: {
+        Row: {
+          audience: Database["public"]["Enums"]["newsletter_audience"]
+          content: string
+          created_at: string
+          id: string
+          sent_at: string | null
+          status: Database["public"]["Enums"]["newsletter_status"]
+          subject: string
+        }
+        Insert: {
+          audience?: Database["public"]["Enums"]["newsletter_audience"]
+          content: string
+          created_at?: string
+          id?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["newsletter_status"]
+          subject: string
+        }
+        Update: {
+          audience?: Database["public"]["Enums"]["newsletter_audience"]
+          content?: string
+          created_at?: string
+          id?: string
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["newsletter_status"]
+          subject?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           allow_marketing_email: boolean | null
@@ -317,6 +347,8 @@ export type Database = {
         | "Scheduled"
         | "Registration Closed"
         | "Registration Open"
+      newsletter_audience: "all_participants" | "past_participants"
+      newsletter_status: "draft" | "sent"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -440,6 +472,8 @@ export const Constants = {
         "Registration Closed",
         "Registration Open",
       ],
+      newsletter_audience: ["all_participants", "past_participants"],
+      newsletter_status: ["draft", "sent"],
     },
   },
 } as const
