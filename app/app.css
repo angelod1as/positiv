@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* For PrimeReact DataTable */
+@layer primereact;
+@import "primereact/resources/themes/lara-light-indigo/theme.css"
+  layer(primereact);
+/* End PrimeReact DataTable */
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {
@@ -263,6 +269,11 @@
           @apply pr-[5px] text-xs content-["\2937"];
         }
       }
+    }
+
+    /* Data Table */
+    .maximized-table {
+      @apply !absolute top-0 left-0 z-50 w-full;
     }
   }
 }

@@ -19,7 +19,7 @@ const {
 export async function loader({ params }: Route.LoaderArgs) {
   const eventId = params.id
   if (!eventId) return { event: undefined }
-  const result = await getAdminEventById(eventId)
+  const result = await getAdminEventById({ eventId })
 
   if (!result.success) {
     return { event: undefined }
