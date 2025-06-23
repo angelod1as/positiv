@@ -1,3 +1,4 @@
+import { parseISO } from "date-fns"
 import { formatInTimeZone } from "date-fns-tz"
 import { ptBR } from "date-fns/locale"
 
@@ -15,6 +16,7 @@ export function formatDateTime(
   if (!dateString) return { full: undefined, date: undefined, time: undefined }
 
   const timeZone = "America/Sao_Paulo"
+  const date = parseISO(dateString)
 
   let datePattern: string
   const timePattern = "HH'h'"
@@ -29,10 +31,10 @@ export function formatDateTime(
       break
   }
 
-  const formattedDate = formatInTimeZone(dateString, timeZone, datePattern, {
+  const formattedDate = formatInTimeZone(date, timeZone, datePattern, {
     locale: ptBR,
   })
-  const formattedTime = formatInTimeZone(dateString, timeZone, timePattern, {
+  const formattedTime = formatInTimeZone(date, timeZone, timePattern, {
     locale: ptBR,
   })
   const fullDateTime = `${formattedDate}, às ${formattedTime}`

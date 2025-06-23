@@ -26,8 +26,8 @@ export async function createMockUser(
 
     if (admin) {
       const { error: roleError } = await supabaseAdmin.rpc("add_user_role", {
-        p_user_id: newUser.id,
-        p_role_name: "admin",
+        user_id: newUser.id,
+        role_name: "admin",
       })
 
       if (roleError) {

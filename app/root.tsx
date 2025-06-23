@@ -90,7 +90,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
     return data({ currentUser, currentProfile, isProd, toast }, { headers })
   } catch (error) {
-    console.error("Root loader error", error)
+    console.error(error)
     return { currentUser: null, currentProfile: null, toast: null }
   }
 }

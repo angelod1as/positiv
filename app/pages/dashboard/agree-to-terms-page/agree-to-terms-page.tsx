@@ -48,6 +48,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
   return (
     <>
       <h1>Bem vinde à Positiv!</h1>
+
       <Alert variant="destructive">
         <SirenIcon className="h-4 w-4" />
         <AlertTitle>Tem que ler tudo!</AlertTitle>
@@ -56,7 +57,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
           passaria em nossa entrevista
         </AlertDescription>
       </Alert>
-      <h2>O que é a Positiv?</h2>
+
       <p>
         A Positiv é idealizada por Ju e Angelo para ser um local de segurança,
         acolhimento e pertencimento, onde pessoas de todas as identidades de
@@ -64,6 +65,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         se assim quiserem. É um evento apenas para gente maior de 18 anos,
         pensado, especificamente para pessoas não-monogâmicas e LGBTQIA+.
       </p>
+
       <p>
         "Ah, sou uma pessoa cis hétero e não mono, posso ir?" Existem muitos
         espaços pensados para pessoas cis hétero e realmente queremos construir
@@ -72,6 +74,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         participar são baixas. E, por favor, não minta sobre sua identidade ou
         orientação sexual.
       </p>
+
       <p>
         Costumamos dizer que nosso evento é, também, uma suruba, mas o foco
         principal não é o sexo. É um encontro entre amigos como outro qualquer,
@@ -80,6 +83,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         um evento onde tudo o que for consentido pode acontecer, inclusive,
         nada.
       </p>
+
       <p>
         É importante você saber que realizamos a Positiv em uma suíte de motel
         de três andares (tem muita escada), perto da Raposo Tavares e ajudamos
@@ -87,7 +91,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         prato de comida para compartilhar com todes e também levar suas próprias
         bebidas ou comprar diretamente do motel.
       </p>
-      <h2>Próximos passos</h2>
+
       <p>
         Se você sente que tem aderência com nossa proposta, saiba que, para ir à
         Positiv, é necessário:
@@ -109,43 +113,8 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         </li>
       </ol>
       <p>
-        <b>
-          Em qualquer um dos passos do processo, sua participação pode ser
-          cancelada, caso sua conduta não corresponda com o que nós pregamos.
-        </b>
-      </p>
-      <h2>Política de reembolso</h2>
-      <p>
-        Nossa política é simples: ao confirmarmos o número de participantes,
-        pedimos o pagamento em até 15 dias antes do evento. Após o pagamento ser
-        efetuado, seu lugar está garantido e você será adicionado no grupo do
-        Whatsapp do evento.
-      </p>
-      <p>
-        Se você precisar cancelar sua presença, temos regras específicas para
-        reembolso:
-      </p>
-
-      <ul>
-        <li>
-          Mais que 5 dias antes do evento:
-          <ul>
-            <li>Devolvemos 50% do valor.</li>
-            <li>Os 50% retidos servem como taxa de administração e sinal.</li>
-          </ul>
-        </li>
-        <li>
-          5 dias antes do evento:
-          <ul>
-            <li>Não há reembolso.</li>
-          </ul>
-        </li>
-      </ul>
-
-      <p>
-        Lembrando que calculamos a data a partir do pedido de reembolso — não
-        esqueça de nos contatar. Qualquer valor extra doado para vagas sociais
-        não será reembolsado, afinal, ele pode já ter sido usado.
+        Em qualquer um dos passos do processo, sua participação pode ser
+        cancelada, caso sua conduta não corresponda com o que nós pregamos.
       </p>
 
       <SchemaForm

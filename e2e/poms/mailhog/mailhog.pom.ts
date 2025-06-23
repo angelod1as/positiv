@@ -8,10 +8,6 @@ export class MailhogPOM {
     subject: Locator
     heading: Locator
   }
-  readonly reminderEmail: {
-    subject: Locator
-    heading: Locator
-  }
 
   constructor(page: Page) {
     this.page = page
@@ -22,18 +18,6 @@ export class MailhogPOM {
         .locator("#preview-html")
         .contentFrame()
         .getByRole("heading", { name: "Sua inscrição foi recebida" })
-        .first(),
-    }
-    this.reminderEmail = {
-      subject: this.page
-        .getByText(
-          "Inscrições abertas para o evento 🤗 Evento Com Inscrições Abertas 1",
-        )
-        .first(),
-      heading: this.page
-        .locator("#preview-html")
-        .contentFrame()
-        .getByRole("heading", { name: "Inscrições abertas!" })
         .first(),
     }
   }
@@ -49,13 +33,7 @@ export class MailhogPOM {
   async testApplicationEmail() {
     const { subject, heading } = this.eventMail
     await expect(subject).toBeVisible({ timeout: 10_000 })
-    await subject.click()
-    await expect(heading).toBeVisible()
-  }
 
-  async testReminderEmail() {
-    const { subject, heading } = this.reminderEmail
-    await expect(subject).toBeVisible({ timeout: 10_000 })
     await subject.click()
     await expect(heading).toBeVisible()
   }

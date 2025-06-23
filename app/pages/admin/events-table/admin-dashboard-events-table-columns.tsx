@@ -43,25 +43,13 @@ export const adminDashboardEventsTableColumns: ColumnDef<Event>[] = [
       const eventId = cell.getValue() as string
       return (
         <div className="flex gap-2 justify-self-end">
-          <Button
-            to={ADMIN_EVENT_PARTICIPANTS(eventId)}
-            variant="outline"
-            aria-label="Ver participantes"
-          >
+          <Button to={ADMIN_EVENT_PARTICIPANTS(eventId)} variant="outline">
             <UsersIcon />
           </Button>
-          <Button
-            to={ADMIN_VIEW_EVENT(eventId)}
-            variant="outline"
-            aria-label="Ver evento"
-          >
+          <Button to={ADMIN_VIEW_EVENT(eventId)} variant="outline">
             <EyeIcon />
           </Button>
-          <Button
-            to={ADMIN_EDIT_EVENT(eventId)}
-            variant="outline"
-            aria-label="Editar evento"
-          >
+          <Button to={ADMIN_EDIT_EVENT(eventId)} variant="outline">
             <PencilIcon />
           </Button>
         </div>

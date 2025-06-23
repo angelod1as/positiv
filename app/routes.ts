@@ -17,8 +17,6 @@ export default [
       route("/esqueci", "pages/auth/forgot-password-page.tsx"),
     ]),
     route("/registrar", "pages/auth/register-page.tsx"),
-
-    route("/email", "pages/redirect/email-redirect-page.tsx"),
   ]),
 
   // PRIVATE
@@ -53,7 +51,7 @@ export default [
       ...prefix("conta", [
         index("pages/account/account-page.tsx"),
         route(
-          "/termos-e-condicoes",
+          "/termos",
           "pages/dashboard/agree-to-terms-page/agree-to-terms-page.tsx",
         ),
         route("/mudar-senha", "pages/account/change-password-page.tsx"),

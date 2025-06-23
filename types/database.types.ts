@@ -75,54 +75,12 @@ export type Database = {
           },
         ]
       }
-      event_reminders: {
-        Row: {
-          created_at: string
-          email_sent: boolean
-          email_sent_date: string | null
-          event_id: string
-          id: string
-          profile_id: string
-        }
-        Insert: {
-          created_at?: string
-          email_sent?: boolean
-          email_sent_date?: string | null
-          event_id: string
-          id?: string
-          profile_id: string
-        }
-        Update: {
-          created_at?: string
-          email_sent?: boolean
-          email_sent_date?: string | null
-          event_id?: string
-          id?: string
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_reminders_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_reminders_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       events: {
         Row: {
           created_at: string
           description: string | null
           emoji: string | null
-          event_status: Database["public"]["Enums"]["event_status"]
+          event_status: string
           id: string
           location: string | null
           ticket_price: number | null
@@ -143,7 +101,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           emoji?: string | null
-          event_status?: Database["public"]["Enums"]["event_status"]
+          event_status?: string
           id?: string
           location?: string | null
           ticket_price?: number | null
@@ -164,7 +122,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           emoji?: string | null
-          event_status?: Database["public"]["Enums"]["event_status"]
+          event_status?: string
           id?: string
           location?: string | null
           ticket_price?: number | null
@@ -273,7 +231,7 @@ export type Database = {
     }
     Functions: {
       add_user_role: {
-        Args: { p_user_id: string; p_role_name: string }
+        Args: { user_id: string; role_name: string }
         Returns: undefined
       }
       get_admin_user_ids: {
@@ -310,13 +268,7 @@ export type Database = {
       }
     }
     Enums: {
-      event_status:
-        | "Draft"
-        | "Completed"
-        | "Cancelled"
-        | "Scheduled"
-        | "Registration Closed"
-        | "Registration Open"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -431,16 +383,7 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      event_status: [
-        "Draft",
-        "Completed",
-        "Cancelled",
-        "Scheduled",
-        "Registration Closed",
-        "Registration Open",
-      ],
-    },
+    Enums: {},
   },
 } as const
 

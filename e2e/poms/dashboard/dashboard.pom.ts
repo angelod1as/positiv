@@ -6,26 +6,18 @@ export class DashboardPOM {
   readonly page: Page
   readonly registrationOpenEventsSection: Locator
   readonly scheduledEventsSection: Locator
-  readonly remindMeButton: Locator
+  readonly applySoonButton: Locator
   readonly applyButton: Locator
   readonly closedButton: Locator
-  // Cancel
   readonly cancelButton: Locator
-  readonly dialogCancel: Locator
-  readonly dialogCancelApplicationButton: Locator
-  readonly dialogCancelApplicationGoBackButton: Locator
+  readonly cancelDialog: Locator
+  readonly dialogCancelApplication: Locator
+  readonly dialogGoBack: Locator
   readonly eventPageUrlRegex: RegExp
-  // Calendar
   readonly addToCalendarButton: Locator
-  readonly dialogCalendar: Locator
-  readonly dialogCalendarGoogleButton: Locator
-  readonly dialogCalendarDownloadButton: Locator
-  // RemindMe
-  readonly dialogRemindMe: Locator
-  readonly dialogRemindMeConfirmButton: Locator
-  readonly cancelRemindMeButton: Locator
-  readonly dialogCancelRemindMe: Locator
-  readonly dialogCancelRemindMeConfirmButton: Locator
+  readonly calendarDialog: Locator
+  readonly calendarGoogleButton: Locator
+  readonly calendarDownloadButton: Locator
 
   constructor(page: Page) {
     this.page = page
@@ -36,6 +28,9 @@ export class DashboardPOM {
     this.scheduledEventsSection = this.page.getByRole("heading", {
       name: "Eventos agendados",
     })
+    this.applySoonButton = this.page
+      .getByRole("button", { name: "Inscreva-se em breve" })
+      .first()
     this.applyButton = this.page
       .getByRole("link", { name: "Fazer inscrição" })
       .first()
@@ -49,13 +44,11 @@ export class DashboardPOM {
       .first()
 
     // Dialog
-    this.dialogCancel = this.page.getByRole("alertdialog", {
+    this.cancelDialog = this.page.getByRole("alertdialog", {
       name: "Cancelar inscrição",
     })
-    this.dialogCancelApplicationGoBackButton = this.page.getByRole("button", {
-      name: "🎉 Voltar",
-    })
-    this.dialogCancelApplicationButton = this.page.getByRole("button", {
+    this.dialogGoBack = this.page.getByRole("button", { name: "🎉 Voltar" })
+    this.dialogCancelApplication = this.page.getByRole("button", {
       name: "😢 Cancelar",
     })
     this.eventPageUrlRegex = EVENT_PAGE_REGEXP
@@ -64,32 +57,12 @@ export class DashboardPOM {
     this.addToCalendarButton = this.page
       .getByRole("button", { name: "Adicionar ao Calendário" })
       .first()
-    this.dialogCalendar = this.page.getByRole("dialog")
-    this.dialogCalendarGoogleButton = this.page.getByRole("link", {
+    this.calendarDialog = this.page.getByRole("dialog")
+    this.calendarGoogleButton = this.page.getByRole("link", {
       name: "Google Calendar",
     })
-    this.dialogCalendarDownloadButton = this.page.getByRole("link", {
+    this.calendarDownloadButton = this.page.getByRole("link", {
       name: "Baixar arquivo iCal",
-    })
-
-    // RemindMe Dialog
-    this.remindMeButton = this.page
-      .getByRole("button", { name: "Me avise quando as inscrições abrirem" })
-      .first()
-    this.dialogRemindMe = this.page.getByRole("alertdialog", {
-      name: "Receber um lembrete",
-    })
-    this.dialogRemindMeConfirmButton = this.page.getByRole("button", {
-      name: "📅 Lembre-me!",
-    })
-    this.cancelRemindMeButton = this.page
-      .getByRole("button", { name: "Cancelar aviso" })
-      .first()
-    this.dialogCancelRemindMe = this.page.getByRole("alertdialog", {
-      name: "Cancelar lembrete",
-    })
-    this.dialogCancelRemindMeConfirmButton = this.page.getByRole("button", {
-      name: "😢 Cancelar",
     })
   }
 
@@ -101,12 +74,12 @@ export class DashboardPOM {
     await expect(this.registrationOpenEventsSection).toBeVisible()
     await expect(this.scheduledEventsSection).toBeVisible()
     await expect(this.applyButton).toBeVisible()
-    await expect(this.remindMeButton).toBeVisible()
+    await expect(this.applySoonButton).toBeVisible()
     await expect(this.closedButton).toBeVisible()
   }
 
   async testNotAppliedButtons() {
-    await expect(this.remindMeButton).toBeVisible()
+    await expect(this.applySoonButton).toBeDisabled()
     await expect(this.applyButton).toHaveAttribute(
       "href",
       this.eventPageUrlRegex,
@@ -114,13 +87,13 @@ export class DashboardPOM {
   }
 
   async testAppliedButtons() {
-    await expect(this.remindMeButton).toBeVisible()
+    await expect(this.applySoonButton).toBeDisabled()
     await expect(this.closedButton).toBeDisabled()
     await expect(this.cancelButton).toBeVisible()
     await this.cancelButton.click()
-    await expect(this.dialogCancel).toBeVisible()
-    await expect(this.dialogCancelApplicationButton).toBeVisible()
-    await expect(this.dialogCancelApplicationGoBackButton).toBeVisible()
+    await expect(this.cancelDialog).toBeVisible()
+    await expect(this.dialogCancelApplication).toBeVisible()
+    await expect(this.dialogGoBack).toBeVisible()
   }
 
   async goToEventApplication() {
@@ -133,42 +106,26 @@ export class DashboardPOM {
     const downloadPromise = this.page.waitForEvent("download")
 
     await this.addToCalendarButton.click()
-    await expect(this.dialogCalendar).toBeVisible()
-    await expect(this.dialogCalendarGoogleButton).toHaveAttribute(
+    await expect(this.calendarDialog).toBeVisible()
+    await expect(this.calendarGoogleButton).toHaveAttribute(
       "href",
       /calendar.google.com/,
     )
-    await this.dialogCalendarDownloadButton.click()
+    await this.calendarDownloadButton.click()
     const download = await downloadPromise
     await expect(download.suggestedFilename()).toBe("calendar.ics")
-    await expect(this.dialogCalendar).not.toBeVisible()
+    await expect(this.calendarDialog).not.toBeVisible()
   }
 
   async cancelApplication() {
     await this.cancelButton.click()
-    await expect(this.dialogCancel).toBeVisible()
-    await expect(this.dialogCancelApplicationButton).toBeVisible()
-    await this.dialogCancelApplicationButton.click()
-    await expect(this.dialogCancel).not.toBeVisible()
+    await expect(this.cancelDialog).toBeVisible()
+    await expect(this.dialogCancelApplication).toBeVisible()
+    await this.dialogCancelApplication.click()
+    await expect(this.cancelDialog).not.toBeVisible()
     await expect(this.applyButton).toHaveAttribute(
       "href",
       this.eventPageUrlRegex,
     )
-  }
-
-  async testRemindMeFunction() {
-    await this.remindMeButton.click()
-    await expect(this.dialogRemindMe).toBeVisible()
-    await expect(this.dialogRemindMeConfirmButton).toBeVisible()
-    await this.dialogRemindMeConfirmButton.click()
-    await expect(this.cancelRemindMeButton).toBeVisible()
-  }
-
-  async testCancelRemindMeFunction() {
-    await this.cancelRemindMeButton.click()
-    await expect(this.dialogCancelRemindMe).toBeVisible()
-    await expect(this.dialogCancelRemindMeConfirmButton).toBeVisible()
-    await this.dialogCancelRemindMeConfirmButton.click()
-    await expect(this.remindMeButton).toBeVisible()
   }
 }

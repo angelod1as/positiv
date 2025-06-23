@@ -46,20 +46,14 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
           <Button variant="outline" to={CHANGE_PASSWORD}>
             Mudar senha
           </Button>
-          {basic_data_filled ? (
-            <>
-              <Button variant="outline" to={BASIC_DATA}>
-                Editar dados básicos
-              </Button>
-              <Button variant="outline" to={AGREE_TO_TERMS}>
-                Termos e condições
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline" to={AGREE_TO_TERMS}>
-              Preencher dados básicos
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            to={basic_data_filled ? BASIC_DATA : AGREE_TO_TERMS}
+          >
+            {basic_data_filled
+              ? "Editar dados básicos"
+              : "Preencher dados básicos"}
+          </Button>
         </div>
         <div className="flex flex-col gap-4">
           <Separator />

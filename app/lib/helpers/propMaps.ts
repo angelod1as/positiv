@@ -53,7 +53,29 @@ export const eventPropNameMap = (property: keyof Event) => {
     title: "Nome",
     total_spots: "Lotação",
     is_applied: "Inscrite",
-    is_set_reminder: "Lembrete ativado",
+  }[property]
+}
+
+export const eventParticipantPropMap = (
+  property: keyof Database["event_participants"],
+) => {
+  return {
+    id: "Id",
+    profile_id: "Id do perfil",
+    event_id: "Id do evento",
+    is_user_applied: "Inscrite?",
+    payment: "Pagamento",
+    process_status: "Status",
+    application_date: "Data de inscrição",
+    cancellation_date: "Data de cancelamento",
+    created_at: "Criado em",
+    notes: "Notas",
+    referrals: "Indicações",
+    companions: "Vai acompanhade?",
+    bond: "Pode ir só?",
+    is_social_spot: "É vaga social?",
+    emoji: "Emoji",
+    title: "Título",
   }[property]
 }
 
@@ -89,6 +111,7 @@ export const eventStatusMap = (event_status: EventStatus) => {
       "Registration Closed": "Inscrições encerradas",
       Cancelled: "Cancelado",
       Completed: "Finalizado",
+      "Already Applied": "Já inscrite",
     }[event_status] || ""
   )
 }

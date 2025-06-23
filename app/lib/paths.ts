@@ -20,7 +20,7 @@ const ACCOUNT = `/conta`
 const CHANGE_PASSWORD = `${ACCOUNT}/mudar-senha`
 const BASIC_DATA = `${ACCOUNT}/dados-basicos`
 const GENDER_PRONOUNS_ORIENTATION = `${ACCOUNT}/dados-basicos-cont`
-const AGREE_TO_TERMS = `${ACCOUNT}/termos-e-condicoes`
+const AGREE_TO_TERMS = `${ACCOUNT}/termos`
 
 //// USER
 // EVENTS

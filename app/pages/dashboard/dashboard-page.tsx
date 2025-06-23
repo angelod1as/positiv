@@ -1,13 +1,9 @@
 import type { FC, ReactNode } from "react"
 import { redirectWithInfo } from "remix-toast"
-import { getContext } from "~/business/auth/auth.server"
+import { getClientContext } from "~/business/auth/auth.client"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
-import {
-  addUserToReminderList,
-  removeUserFromReminderList,
-} from "~/business/participant/manage-reminder-list"
 import { EventCard } from "~/components/organisms/event-card/event-card"
-import { checkEventStatus } from "~/lib/helpers/check-event-status"
+import { EventCardSkeleton } from "~/components/organisms/event-card/event-card-skeleton"
 import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/entities.types"
 import { getNextEvents } from "../homepage/fetch/get-next-events"
@@ -33,10 +29,9 @@ const splitEvents = (events: ViewEvent[] | undefined) => {
   if (!events || events.length < 1) return empty
 
   return events.reduce((acc, event) => {
-    const { isOpen, isClosed } = checkEventStatus(event.event_status)
-    if (isOpen) {
+    if (event.event_status === "Registration Open") {
       acc.registrationOpen.push(event)
-    } else if (isClosed) {
+    } else if (event.event_status === "Registration Closed") {
       acc.registrationClosed.push(event)
     } else {
       acc.scheduled.push(event)
@@ -45,8 +40,9 @@ const splitEvents = (events: ViewEvent[] | undefined) => {
   }, empty)
 }
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const { currentProfile } = await getContext(request, params)
+/* Needs to be clientLoader because getNextEvents needs new Date() */
+export async function clientLoader({}: Route.LoaderArgs) {
+  const { supabase, currentProfile } = await getClientContext()
 
   if (!currentProfile?.basic_data_filled) {
     throw await redirectWithInfo(
@@ -55,54 +51,21 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
 
-  const result = await getNextEvents(currentProfile.id, 12)
+  const { events, error } = await getNextEvents(supabase, currentProfile.id)
 
-  if (!result.success) {
+  if (error || !events) {
     return {
-      error: result.errors,
       registrationOpen: [],
       scheduled: undefined,
       registrationClosed: undefined,
     }
   }
 
-  return splitEvents(result.data)
+  return splitEvents(events)
 }
 
 export async function action({ request, params }: Route.ClientActionArgs) {
-  const formData = await request.clone().formData()
-  const fetchId = formData.get("fetchId")?.toString()
-
-  if (fetchId === "handleConfirmCancel") {
-    // TODO: Composable
-    await cancelApplicationToEvent(request, params)
-    return
-  }
-
-  if (fetchId === "handleAddReminder") {
-    const result = await addUserToReminderList(request, params)
-    if (!result.success) {
-      console.error(result.errors)
-      return {
-        error:
-          "Um erro ocorreu ao adicionar o seu lembrete, contate o administrador.",
-      }
-    }
-    return
-  }
-
-  if (fetchId === "handleRemoveReminder") {
-    const result = await removeUserFromReminderList(request, params)
-    if (!result.success) {
-      return {
-        error:
-          "Um erro ocorreu ao remover o seu lembrete, contate o administrador.",
-      }
-    }
-    return
-  }
-
-  return
+  return await cancelApplicationToEvent(request, params)
 }
 
 type WrapperProps = {
@@ -143,6 +106,16 @@ const Wrapper: FC<WrapperProps> = ({
         </div>
       )}
     </>
+  )
+}
+
+export const HydrateFallback = () => {
+  return (
+    <Wrapper
+      openRegistrationEvents={<EventCardSkeleton />}
+      scheduledEvents={undefined}
+      closedRegistrationEvents={undefined}
+    />
   )
 }
 

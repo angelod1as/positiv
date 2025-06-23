@@ -4,23 +4,22 @@ import type { Params } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { kysely } from "~/kysely"
-import { formatReminderMail } from "~/lib/email/format-reminder-mail"
-import { sendEmail, type MailOptions } from "~/lib/email/send-email"
-import { chunkArray } from "~/lib/helpers/chunk-array"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
-import type { Profile } from "~types/entities.types"
+import type { Event } from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,
   eventFormSchema,
-  sendEventRemindersSchema,
   updateEventStatusSchema,
   updateParticipantPropertySchema,
 } from "./common"
 
 const {
-  admin: { ADMIN_DASHBOARD },
+  admin: {
+    ADMIN_DASHBOARD,
+    events: { ADMIN_VIEW_EVENT },
+  },
 } = paths
 
 export const getAdminContext = async (
@@ -197,18 +196,26 @@ export const updateEventStatus = applySchema(
   updateEventStatusSchema,
   adminContextSchema,
 )(async (values, context) => {
-  const { eventId } = context
+  const { supabase, eventId } = context
   if (!eventId) return null
 
-  const result = await kysely
-    .updateTable("events")
-    .set({
-      event_status: values.event_status,
-    })
-    .where("id", "=", eventId)
-    .execute()
+  const parsedValues = schemaValuesToDB(values)
 
-  return result.length > 0
+  const { error, data } = await supabase
+    .from("events")
+    .update({
+      ...parsedValues,
+    })
+    .eq("id", eventId)
+
+  if (error) {
+    throw await redirectWithError(
+      ADMIN_VIEW_EVENT(eventId),
+      "Ocorreu um erro ao atualizar o evento. Erro: event update",
+    )
+  }
+
+  return data
 })
 
 export const updateParticipantProperty = composable(
@@ -301,163 +308,5 @@ export const updateParticipantProperty = composable(
     }
 
     return false
-  },
-)
-
-const getEventRemindersByEventId = composable(
-  async (eventId: string) =>
-    await kysely
-      .selectFrom("event_reminders")
-      .select("profile_id")
-      .where("event_id", "=", eventId)
-      .where("email_sent", "=", false)
-      .execute(),
-)
-
-type SendBatchEventReminderEmail = {
-  emails: string[]
-  profileIds: string[]
-  eventId: string
-}
-const sendBatchEventReminderEmail = composable(
-  async ({ emails, eventId, profileIds }: SendBatchEventReminderEmail) => {
-    const eventResult = await getAdminEventById(eventId)
-
-    if (!eventResult.success) {
-      throw new Error(`Erro: eventResult > ${eventResult.errors.join("; ")}`)
-    }
-
-    const event = eventResult.data
-
-    const { html, text } = await formatReminderMail(event)
-
-    const options: MailOptions = {
-      bcc: emails,
-      subject: `Inscrições abertas para o evento ${event.emoji} ${event.title}`,
-      text: text,
-      html: html,
-    }
-
-    const result = await sendEmail(options)
-
-    if (!result.success) {
-      console.error("REMINDER MAIL ERROR", result.errors)
-      return false
-    }
-
-    await markEmailsAsSent(profileIds)
-
-    return true
-  },
-)
-
-export const getEmailsByIds = composable(
-  async (profileIds: Array<Profile["id"]>) => {
-    if (!profileIds || profileIds.length === 0) return []
-    return await kysely
-      .selectFrom("profiles")
-      .select(["email", "id"])
-      .where("id", "in", profileIds)
-      .execute()
-  },
-)
-
-export const sendEventReminders = applySchema(sendEventRemindersSchema)(async (
-  values,
-) => {
-  const { intent: _intent, event_id, event_status } = values
-  if (!event_id) {
-    throw new Error("O id de evento é obrigatório, fale com o administrador")
-  }
-  if (event_status !== "Registration Open") {
-    throw new Error(
-      "O evento deve estar com o status de 'Inscrições Abertas', fale com o administrador",
-    )
-  }
-
-  const remindersResult = await getEventRemindersByEventId(event_id)
-
-  if (!remindersResult.success) {
-    throw new Error(`Erro: reminders > ${remindersResult.errors.join("; ")}`)
-  }
-
-  const reminders = remindersResult.data
-
-  if (!reminders || reminders.length === 0) {
-    console.info("No reminders found")
-    return
-  }
-
-  const profileIds = reminders.map((item) => item.profile_id)
-
-  const emailsResult = await getEmailsByIds(profileIds)
-
-  if (!emailsResult.success) {
-    const message = `Erro: emailsResult > ${emailsResult.errors.join("; ")}`
-    console.error(message)
-    throw new Error(message)
-  }
-
-  const emailsWithProfileIds = emailsResult.data
-
-  const emailGroups = chunkArray(emailsWithProfileIds)
-
-  const sendPromises = emailGroups.map((group) => {
-    return sendBatchEventReminderEmail({
-      emails: group.map((item) => item.email),
-      eventId: event_id,
-      profileIds: group.map((item) => item.id),
-    })
-  })
-
-  await Promise.allSettled(sendPromises).then((results) => {
-    results.forEach((result, index, array) => {
-      const total = array.length
-      if (result.status === "rejected") {
-        console.error(`Batch ${index + 1}/${total} failed:`, result.reason)
-      } else {
-        console.info(`Email batch ${index + 1}/${total} successful.`)
-      }
-    })
-  })
-
-  return
-})
-
-export const markEmailsAsSent = composable(async (profileIds: string[]) => {
-  return await kysely
-    .updateTable("event_reminders")
-    .set({
-      email_sent: true,
-      email_sent_date: new Date().toISOString(),
-    })
-    .where("profile_id", "in", profileIds)
-    .execute()
-})
-
-export const getAdminReminderCountByEventId = composable(
-  async ({
-    eventId,
-    isScheduled,
-    isOpen,
-  }: {
-    eventId: string
-    isScheduled: boolean
-    isOpen: boolean
-  }) => {
-    if (!isScheduled && !isOpen) return 0
-
-    const result = await kysely
-      .selectFrom("event_reminders")
-      .select((eb) =>
-        eb.fn
-          .count<number>("event_id")
-          .filterWhere("event_id", "=", eventId)
-          .filterWhere("email_sent", "=", false)
-          .as("count"),
-      )
-      .executeTakeFirstOrThrow()
-
-    return Number(result.count)
   },
 )

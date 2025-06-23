@@ -2,7 +2,7 @@ import { formatCalendarEvent } from "~/business/participant/format-calendar-even
 import { formatApplicationMail } from "~/lib/email/format-application-mail"
 import type { ProfileWithRoles, ViewEvent } from "~types/entities.types"
 
-import { type MailOptions, sendEmail } from "~/lib/email/send-email"
+import { type MailOptions, sendMail } from "~/lib/email/email"
 
 type sendApplicationMailProps = {
   event: ViewEvent
@@ -25,11 +25,9 @@ export const sendApplicationMail = async ({
     icalEvent: icalEvent?.toString(),
   }
 
-  const result = await sendEmail(options)
-
-  if (!result.success) {
-    throw new Error("Erro no envio do email de confirmação")
+  try {
+    await sendMail(options)
+  } catch (error) {
+    console.error("MAIL ERROR", error)
   }
-
-  return true
 }

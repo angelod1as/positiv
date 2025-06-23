@@ -1,7 +1,7 @@
 import { Img, Section } from "@react-email/components"
 import { POSITIV_URL } from "~/lib/helpers/constants"
 
-const logo = `${POSITIV_URL}positiv-logo-colors.png`
+const logo = `${POSITIV_URL}brand/positiv-logo-colors.png`
 
 export const EmailHeader = () => {
   return (
