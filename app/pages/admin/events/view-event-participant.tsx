@@ -75,13 +75,12 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
           const pKey = key as keyof Database["profiles"]
           const label = profilePropMap(pKey)
           const value = participant[pKey]
-          const dateValue =
-            typeof value === "object"
-              ? formatDateTime(
-                  (participant.date_of_birth as unknown as Date).toISOString(),
-                ).date
-              : undefined
-          return <DataPair key={key} pair={[label, dateValue || value]} />
+          if (value && typeof value === "object" && !Array.isArray(value)) {
+            const dateValue = formatDateTime((value as Date).toISOString()).date
+            return <DataPair key={key} pair={[label, dateValue]} />
+          }
+
+          return <DataPair key={key} pair={[label, value]} />
         })}
       </div>
       <h2>Neste evento</h2>
@@ -92,29 +91,27 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
         {participantHistory.map(
           ({ event_emoji, event_title, ...pastEvent }) => {
             return (
-              <>
-                <div>
-                  <h3>
-                    {event_emoji} {event_title}
-                  </h3>
-                  {Object.keys(pastEvent).map((key) => {
-                    const pKey = key as keyof Database["event_participants"]
-                    const label = eventParticipantPropMap(pKey)
-                    const value = pastEvent[pKey]
-                    const dateValue =
-                      typeof value === "object"
-                        ? formatDateTime(
-                            (
-                              participant.date_of_birth as unknown as Date
-                            ).toISOString(),
-                          ).date
-                        : undefined
-                    return (
-                      <DataPair key={key} pair={[label, dateValue || value]} />
-                    )
-                  })}
-                </div>
-              </>
+              <div key={pastEvent.id}>
+                <h3>
+                  {event_emoji} {event_title}
+                </h3>
+                {Object.keys(pastEvent).map((key) => {
+                  const pKey = key as keyof Database["event_participants"]
+                  const label = eventParticipantPropMap(pKey)
+                  const value = pastEvent[pKey]
+                  const dateValue =
+                    typeof value === "object"
+                      ? formatDateTime(
+                          (
+                            participant.date_of_birth as unknown as Date
+                          ).toISOString(),
+                        ).date
+                      : undefined
+                  return (
+                    <DataPair key={key} pair={[label, dateValue || value]} />
+                  )
+                })}
+              </div>
             )
           },
         )}
