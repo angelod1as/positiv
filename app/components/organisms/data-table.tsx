@@ -183,7 +183,7 @@ export function DataTable<T extends DataTableValue>({
           body={(value: T) => {
             return (
               <div className="flex gap-2 justify-self-end">
-                {buttons.map(({ Icon, title, to, key }) => {
+                {buttons.map(({ Icon, title, to, key = "id" }) => {
                   return (
                     <Button
                       to={typeof to === "function" ? key && to(value[key]) : to}
