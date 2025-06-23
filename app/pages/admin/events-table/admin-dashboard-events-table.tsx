@@ -66,13 +66,13 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
         {
           Icon: EyeIcon,
           to: ADMIN_VIEW_EVENT,
-          title: "Ver participantes",
+          title: "Ver evento",
           key: "id",
         },
         {
           Icon: PencilIcon,
           to: ADMIN_EDIT_EVENT,
-          title: "Ver participantes",
+          title: "Editar evento",
           key: "id",
         },
       ]}
