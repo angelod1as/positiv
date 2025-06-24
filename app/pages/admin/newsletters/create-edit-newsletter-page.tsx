@@ -1,8 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import { Form, useSubmit } from "react-router"
+import { formAction } from "remix-forms"
+import { redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import {
+  createOrUpdateNewsletter,
   getAdminContext,
   getNewsletterById,
 } from "~/business/admin/admin.server"
@@ -14,7 +17,7 @@ import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import paths from "~/lib/paths"
-import type { Route } from "./+types/create-edit-newsletter"
+import type { Route } from "./+types/create-edit-newsletter-page"
 
 const {
   admin: {
@@ -35,22 +38,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-  console.log("action")
-  console.log(await request.formData())
-  // return formAction({
-  //   request,
-  //   schema: newsletterFormSchema,
-  //   mutation: createOrUpdateNewsletter,
-  //   transformResult: async (result) => {
-  //     if (result.success) {
-  //       throw await redirectWithSuccess(
-  //         ADMIN_VIEW_NEWSLETTER(result.data),
-  //         `Newsletter ${params.id ? "atualizada" : "criada"} com sucesso`,
-  //       )
-  //     }
-  //     return result
-  //   },
-  // })
+  return formAction({
+    request,
+    schema: newsletterFormSchema,
+    mutation: createOrUpdateNewsletter,
+    transformResult: async (result) => {
+      if (result.success) {
+        throw await redirectWithSuccess(
+          ADMIN_VIEW_NEWSLETTER(result.data),
+          `Newsletter ${params.id ? "atualizada" : "criada"} com sucesso`,
+        )
+      }
+      return result
+    },
+  })
 }
 
 type FormData = z.infer<typeof newsletterFormSchema>
