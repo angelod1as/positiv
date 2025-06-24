@@ -12,10 +12,10 @@ import { Label } from "../ui/label"
 import { RadioGroup } from "../ui/radio-group"
 import SchemaFormCheckbox from "../ui/schema-form-checkbox"
 import { TextArea } from "../ui/textarea"
-import { Error } from "./error"
 import { Errors } from "./errors"
 import { Field } from "./field"
 import { FormDescription } from "./form-description"
+import { FormError } from "./form-error"
 import { InputWrapper } from "./input-wrapper"
 import { Radio } from "./radio"
 import { Select } from "./select"
@@ -49,7 +49,7 @@ function SchemaForm<Schema extends FormSchema>({
         checkboxComponent={SchemaFormCheckbox}
         buttonComponent={SubmitButton}
         globalErrorsComponent={Errors}
-        errorComponent={Error}
+        errorComponent={FormError}
         buttonLabel="Continuar"
         pendingButtonLabel="Carregando..."
         {...props}

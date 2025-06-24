@@ -6,7 +6,7 @@ import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { rulesSessionStorage } from "~/business/session.server"
 import { Button } from "~/components/atoms/button/button"
-import { Error } from "~/components/forms/error"
+import { FormError } from "~/components/forms/form-error"
 import {
   Card,
   CardContent,
@@ -146,7 +146,7 @@ const EventRulesPage = ({}: Route.ComponentProps) => {
           )
         })}
 
-        {hasErrors && <Error>Há erros nas suas respostas</Error>}
+        {hasErrors && <FormError>Há erros nas suas respostas</FormError>}
         <Button type="submit">Continuar</Button>
       </Form>
     </Wrapper>

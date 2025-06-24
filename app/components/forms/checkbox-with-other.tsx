@@ -10,8 +10,8 @@ import { cn } from "~/lib/utils"
 import { Checkbox } from "../ui/checkbox"
 import { Input } from "../ui/input"
 import { Label } from "../ui/label"
-import { Error } from "./error"
 import { FormDescription } from "./form-description"
+import { FormError } from "./form-error"
 
 type Option = { label: string; value: string }
 
@@ -146,7 +146,7 @@ export const CheckboxWithOther = <TFieldValues extends FieldValues>({
                 </>
               )}
             </div>
-            {fieldError && <Error>{errorMessage}</Error>}
+            {fieldError && <FormError>{errorMessage}</FormError>}
           </div>
         )
       }}

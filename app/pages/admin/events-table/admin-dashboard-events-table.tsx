@@ -10,7 +10,7 @@ import { DataTable } from "~/components/organisms/data-table"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { eventPropNameMap, eventStatusMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
-import type { Event, EventStatus } from "~types/entities.types"
+import type { EventStatus, ViewEvent } from "~types/entities.types"
 
 const {
   admin: {
@@ -42,7 +42,7 @@ const statusFilterTemplate = (options: ColumnFilterElementTemplateOptions) => {
 }
 
 type AdminDashboardEventsTableProps = {
-  events: Event[]
+  events: ViewEvent[]
 }
 export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
   events,

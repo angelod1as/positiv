@@ -1,6 +1,6 @@
 import type { JSX } from "react"
 
-export const Error = (
+export const FormError = (
   props: JSX.IntrinsicElements["div"] & { name?: string },
 ) => {
   const { name, ...rest } = props
