@@ -94,6 +94,19 @@ export default [
           ),
         ]),
       ]),
+      ...prefix("newsletters", [
+        layout("pages/admin/newsletters/layout.tsx", [
+          // Newsletters
+          index("pages/admin/newsletters/newsletters-page.tsx"),
+          // Create or edit newsletter
+          route(
+            "/nova/:id?",
+            "pages/admin/newsletters/create-edit-newsletter-page.tsx",
+          ),
+          // View newsletter and send
+          route("/:id", "pages/admin/newsletters/view-newsletter.tsx"),
+        ]),
+      ]),
     ]),
   ]),
 ] satisfies RouteConfig
