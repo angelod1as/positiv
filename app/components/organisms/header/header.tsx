@@ -1,4 +1,4 @@
-import { CalendarIcon, Table2Icon, UserIcon } from "lucide-react"
+import { CalendarIcon, MailIcon, Table2Icon, UserIcon } from "lucide-react"
 import type { FC } from "react"
 import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
@@ -14,7 +14,10 @@ const {
     DASHBOARD,
     account: { ACCOUNT },
   },
-  admin: { ADMIN_DASHBOARD },
+  admin: {
+    ADMIN_DASHBOARD,
+    newsletters: { ADMIN_NEWSLETTERS },
+  },
 } = paths
 
 type HeaderProps = {
@@ -59,14 +62,24 @@ export const Header: FC<HeaderProps> = ({ profile, userEmail }) => {
                 <CalendarIcon />
               </Button>
               {isAdmin && (
-                <Button
-                  asChild
-                  variant="outline"
-                  title="Área Admin"
-                  to={ADMIN_DASHBOARD}
-                >
-                  <Table2Icon />
-                </Button>
+                <>
+                  <Button
+                    asChild
+                    variant="outline"
+                    title="Área Admin"
+                    to={ADMIN_DASHBOARD}
+                  >
+                    <Table2Icon />
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    title="Área Newsletter"
+                    to={ADMIN_NEWSLETTERS}
+                  >
+                    <MailIcon />
+                  </Button>
+                </>
               )}
               <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
                 <UserIcon />
