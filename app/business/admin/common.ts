@@ -68,7 +68,6 @@ export const eventSchema = zod.object({
 })
 
 export const adminContextSchema = userContextSchema.extend({
-  events: zod.array(eventSchema),
   eventId: zod.string().optional(),
 })
 
@@ -93,4 +92,20 @@ export const sendEventRemindersSchema = zod.object({
   intent: zod.string(),
   event_id: zod.string(),
   event_status: zod.custom<EventStatus>(),
+})
+
+/** Newsletter form schema */
+export const newsletterFormSchema = zod.object({
+  id: zod.string().optional(),
+  subject: zod.string().min(1, messages.min1).max(255, messages.max255),
+  audience: zod.enum(["all_participants", "past_participants"]),
+  content: zod.string().min(1, messages.min1),
+})
+
+/** Schema for sending a newsletter */
+export const sendNewsletterSchema = newsletterFormSchema.extend({
+  id: zod.string(),
+  created_at: zod.string(),
+  sent_at: zod.string().optional(),
+  status: zod.enum(["draft", "sent"]),
 })

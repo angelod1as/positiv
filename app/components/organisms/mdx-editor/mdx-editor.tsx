@@ -122,8 +122,8 @@ export default function MdxEditor({
           ref={editorRef}
           markdown={editorMarkdown}
           onChange={handleChange}
-          contentEditableClassName="min-h-[400px]"
-          plugins={mdxEditorPlugins}
+          contentEditableClassName="prose max-w-full font-sans min-h-[400px]"
+          plugins={mdxEditorPlugins(editorMarkdown)}
         />
       </div>
       {errors && <FormError>{errors}</FormError>}

@@ -4,23 +4,26 @@ import type { Params } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { kysely } from "~/kysely"
+import { formatNewsletterMail } from "~/lib/email/format-newsletter-mail"
 import { formatReminderMail } from "~/lib/email/format-reminder-mail"
 import { sendEmail, type MailOptions } from "~/lib/email/send-email"
 import { chunkArray } from "~/lib/helpers/chunk-array"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
-import type { Profile } from "~types/entities.types"
+import type { NewsletterAudience, Profile } from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,
   eventFormSchema,
+  newsletterFormSchema,
   sendEventRemindersSchema,
+  sendNewsletterSchema,
   updateEventStatusSchema,
   updateParticipantPropertySchema,
 } from "./common"
 
 const {
-  admin: { ADMIN_DASHBOARD },
+  root: { HOME },
 } = paths
 
 export const getAdminContext = async (
@@ -28,18 +31,15 @@ export const getAdminContext = async (
   params: Params,
 ): Promise<z.infer<typeof adminContextSchema>> => {
   const context = await getUserContext(request, params)
-  const { error, data } = await context.supabase.from("events").select("*")
 
-  if (error) {
-    throw await redirectWithError(
-      ADMIN_DASHBOARD,
-      "Ocorreu um erro ao buscar eventos",
+  if (!context.currentProfile?.is_admin) {
+    throw redirectWithError(
+      HOME,
+      "Você precisa ser administrador para ver esta página",
     )
   }
 
-  const events = data
-
-  return { ...context, events }
+  return { ...context }
 }
 
 export const getAdminEventById = composable(
@@ -440,3 +440,85 @@ export const getAdminReminderCountByEventId = composable(
     return Number(result.count)
   },
 )
+
+/**
+ * Retrieve emails for a given newsletter audience
+ */
+export const getAllEmailsForAudience = composable(
+  async (audience: NewsletterAudience) => {
+    if (audience === "all_participants") {
+      return await kysely
+        .selectFrom("profiles")
+        .select(["email", "id"])
+        .execute()
+    }
+    const participants = await kysely
+      .selectFrom("event_participants as ep")
+      .innerJoin("profiles as p", "ep.profile_id", "p.id")
+      .select(["p.email", "p.id"])
+      .execute()
+    const unique: Array<{ email: string; id: string }> = []
+    participants.forEach((r) => {
+      if (!unique.find((u) => u.id === r.id)) unique.push(r)
+    })
+    return unique
+  },
+)
+
+/**
+ * Newsletter operations
+ */
+export const getAllNewsletters = composable(
+  async () => await kysely.selectFrom("newsletters").selectAll().execute(),
+)
+
+export const getNewsletterById = composable(
+  async (newsletterId: string) =>
+    await kysely
+      .selectFrom("newsletters")
+      .selectAll()
+      .where("id", "=", newsletterId)
+      .executeTakeFirstOrThrow(),
+)
+
+export const createOrUpdateNewsletter = applySchema(newsletterFormSchema)(
+  async (values: z.infer<typeof newsletterFormSchema>) => {
+    const { id, subject, audience, content } = values
+    if (id) {
+      await kysely
+        .updateTable("newsletters")
+        .set({ subject, audience, content })
+        .where("id", "=", id)
+        .execute()
+      return id
+    }
+    const result = await kysely
+      .insertInto("newsletters")
+      .values({ subject, audience, content })
+      .returning("id")
+      .executeTakeFirstOrThrow()
+    return result.id
+  },
+)
+
+export const sendNewsletter = applySchema(sendNewsletterSchema)(async (
+  newsletter,
+) => {
+  if (!newsletter || !newsletter.id) throw new Error("Newsletter not found")
+  const { html, text } = await formatNewsletterMail(newsletter)
+  const options: MailOptions = {
+    bcc: (await getAllEmailsForAudience(newsletter.audience)).map(
+      (e) => e.email,
+    ),
+    subject: newsletter.subject,
+    text,
+    html,
+  }
+  await sendEmail(options)
+  await kysely
+    .updateTable("newsletters")
+    .set({ status: "sent", sent_at: new Date().toISOString() })
+    .where("id", "=", newsletter_id)
+    .execute()
+  return newsletter_id
+})

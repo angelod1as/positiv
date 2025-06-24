@@ -1,9 +1,14 @@
 import {
+  AdmonitionDirectiveDescriptor,
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
+  codeBlockPlugin,
+  CodeMirrorEditor,
+  codeMirrorPlugin,
   CreateLink,
   diffSourcePlugin,
   DiffSourceToggleWrapper,
+  directivesPlugin,
   frontmatterPlugin,
   headingsPlugin,
   imagePlugin,
@@ -22,27 +27,36 @@ import {
   UndoRedo,
 } from "@mdxeditor/editor"
 
-export const mdxEditorPlugins = [
+export const mdxEditorPlugins = (diffMarkdown: string) => [
+  toolbarPlugin({ toolbarContents: () => mdxEditorToolbarContents }),
   listsPlugin(),
   quotePlugin(),
-  headingsPlugin({ allowedHeadingLevels: [1, 2, 3] }),
+  headingsPlugin(),
   linkPlugin(),
   linkDialogPlugin(),
-  imagePlugin({}),
+  imagePlugin(),
   tablePlugin(),
   thematicBreakPlugin(),
   frontmatterPlugin(),
+  codeBlockPlugin({
+    codeBlockEditorDescriptors: [
+      { priority: -10, match: (_) => true, Editor: CodeMirrorEditor },
+    ],
+  }),
+  codeMirrorPlugin({
+    codeBlockLanguages: {
+      js: "JavaScript",
+      css: "CSS",
+      txt: "text",
+      tsx: "TypeScript",
+      markdown: "markdown",
+      null: "text",
+    },
+  }),
+  directivesPlugin({ directiveDescriptors: [AdmonitionDirectiveDescriptor] }),
+  diffSourcePlugin({ viewMode: "rich-text", diffMarkdown }),
   markdownShortcutPlugin(),
-  diffSourcePlugin({
-    viewMode: "rich-text",
-    readOnlyDiff: true,
-  }),
-  toolbarPlugin({
-    toolbarClassName: "",
-    toolbarContents: () => mdxEditorToolbarContents,
-  }),
 ]
-
 export const mdxEditorToolbarContents = (
   <DiffSourceToggleWrapper>
     <UndoRedo />
