@@ -1,23 +1,24 @@
-import { getAdminContext } from "~/business/admin/admin.server"
-import { Separator } from "~/components/ui/separator"
-import type { Event } from "~types/entities.types"
+import type { ViewEvent } from "~types/entities.types"
+import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 import { AdminDashboardEventsTable } from "./events-table/admin-dashboard-events-table"
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const { events } = await getAdminContext(request, params)
-  if (!events) return { events: undefined }
+const sortEvents = (a: ViewEvent, b: ViewEvent) => {
+  const startA = a.time_event_start
+  const startB = b.time_event_start
+  if (!startA || !startB) {
+    return -1
+  }
 
-  const sorted = events.sort((a, b) => {
-    const startA = a.time_event_start
-    const startB = b.time_event_start
-    if (!startA || !startB) {
-      return -1
-    }
+  return new Date(startA).getTime() - new Date(startB).getTime()
+}
 
-    return new Date(startA).getTime() - new Date(startB).getTime()
-  })
-  return { events: sorted as Event[] }
+export async function loader({}: Route.LoaderArgs) {
+  const eventsResult = await getNextEvents(undefined, 12)
+
+  const events = eventsResult.success ? eventsResult.data.sort(sortEvents) : []
+
+  return { events }
 }
 
 const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
@@ -29,15 +30,11 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
       <div>
         <h2>Eventos</h2>
 
-        {events ? (
+        {events.length > 0 ? (
           <AdminDashboardEventsTable events={events} />
         ) : (
           "Nenhum evento encontrado"
         )}
-      </div>
-      <Separator />
-      <div>
-        <h2>Participantes (em breve)</h2>
       </div>
     </>
   )
