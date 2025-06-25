@@ -107,3 +107,12 @@ export const participantProcessStatusPropMap = (
     }[process_status] || ""
   )
 }
+
+export const newsletterStatusPropMap = (status: string) => {
+  return (
+    {
+      draft: "Rascunho",
+      sent: "Enviado",
+    }[status] || ""
+  )
+}
