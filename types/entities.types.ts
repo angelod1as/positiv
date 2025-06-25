@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 import { currentProfileSchema } from "~/business/common"
+import type { GENDERS, ORIENTATIONS, PRONOUNS } from "~/lib/helpers/constants"
 import type { Database } from "./database.types"
 
 /** Extension of User with more data, so, called Profile */
@@ -60,7 +61,7 @@ export type ViewEvent = Pick<
 // Participant Process Status
 //////////
 
-export const participantProcessStatus = [
+const participantProcessStatus = [
   "applied",
   "talking",
   "sent_payment_data",
@@ -86,3 +87,9 @@ export const participantProcessStatusMap: Record<
   sent_rules: "Regras enviadas",
   sent_payment_data: "Dados de pagto enviados",
 }
+
+/////
+
+export type Genders = (typeof GENDERS)[number]
+export type Orientations = (typeof ORIENTATIONS)[number]
+export type Pronouns = (typeof PRONOUNS)[number]
