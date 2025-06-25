@@ -2,7 +2,7 @@ import { applySchema } from "composable-functions"
 import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
-import { isProd } from "~/lib/helpers/is-prod.server"
+import { env } from "~/env.server"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import {
@@ -36,6 +36,8 @@ export const getContext = async (
   request: Request,
   params: Params,
 ): Promise<z.infer<typeof contextSchema>> => {
+  const { isProd } = env()
+
   const { supabase, supabaseHeaders } = await getSupabase(request, params)
   const host = request.headers.get("host")
 
@@ -47,6 +49,7 @@ export const getContext = async (
     host,
     currentUser: null,
     currentProfile: null,
+    isProd: Boolean(isProd),
   }
 
   if (authError) {
@@ -96,14 +99,12 @@ export const getContext = async (
 
   const currentProfile = profileData
 
-  const prod = isProd()
-
   return {
     supabase,
     supabaseHeaders,
     currentProfile,
     currentUser,
-    isProd: prod,
+    isProd: Boolean(isProd),
     host,
   }
 }
