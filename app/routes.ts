@@ -77,7 +77,10 @@ export default [
           // Eventos (redirect)
           index("pages/admin/events-page.tsx"),
           // Ver evento
-          route("/:id?", "pages/admin/events/view-event.tsx"),
+          route(
+            "/:id?",
+            "pages/admin/events/view-event-page/view-event-page.tsx",
+          ),
           // Criar ou Editar
           route("/novo/:id?", "pages/admin/events/create-edit-event.tsx"),
           // Baixar dados

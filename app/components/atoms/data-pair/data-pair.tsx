@@ -2,9 +2,10 @@ import type { FC } from "react"
 
 type DataPairProps = {
   pair: [string, string | boolean | number | null | undefined | string[]]
+  suffix?: string
 }
 
-export const DataPair: FC<DataPairProps> = ({ pair }) => {
+export const DataPair: FC<DataPairProps> = ({ pair, suffix = false }) => {
   // Passes boolean values
   if (pair[1] === null || pair[1] === undefined) return null
   const label = pair[0]
@@ -14,6 +15,7 @@ export const DataPair: FC<DataPairProps> = ({ pair }) => {
     <p>
       <span className="font-bold">{label}:</span>{" "}
       {typeof value === "boolean" ? (value ? "Sim" : "Não") : value}
+      {suffix}
     </p>
   )
 }
