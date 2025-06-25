@@ -111,7 +111,7 @@ const sendToast = (fetcherData: FetcherData) => {
   }
 
   if (fetcherData.intent === "update-event-status") {
-    return toast.success("E-mails colocados na fila de envio com sucesso")
+    return toast.success("Status atualizado com sucesso")
   }
 }
 
