@@ -20,9 +20,10 @@ const {
 type HeaderProps = {
   profile: ProfileWithRoles | null
   userEmail?: string | null
+  isProd?: boolean
 }
 
-export const Header: FC<HeaderProps> = ({ profile, userEmail }) => {
+export const Header: FC<HeaderProps> = ({ profile, userEmail, isProd }) => {
   const { pathname } = useLocation()
 
   const showButton = pathname !== "/entrar"
@@ -33,49 +34,56 @@ export const Header: FC<HeaderProps> = ({ profile, userEmail }) => {
   const showButtons = profile || userEmail
 
   return (
-    <header className="flex items-center justify-between p-4 fixed top-0 left-0 z-30 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
-      <div className="text-xl font-bold">
-        <Link variant="unstyled" to={HOME}>
-          <img
-            alt="Logo Positiv"
-            src={PositivLogo}
-            className="w-auto px-2 py-1 rounded-lg max-h-8"
-          />
-        </Link>
-      </div>
-      <div className="flex items-center space-x-2">
-        {showButton &&
-          (showButtons ? (
-            <div className="flex items-center space-x-2">
-              {!!displayName && (
-                <p className="hidden sm:block">Olá, {displayName}</p>
-              )}
-              <Button
-                asChild
-                variant="outline"
-                title="Dashboard"
-                to={DASHBOARD}
-              >
-                <CalendarIcon />
-              </Button>
-              {isAdmin && (
+    <>
+      {isProd && (
+        <div className="bg-red-400 fixed top-0 left-0 z-50 w-full text-center font-bold">
+          PRODUCTION DATABASE
+        </div>
+      )}
+      <header className="flex items-center justify-between p-4 fixed top-0 left-0 z-30 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
+        <div className="text-xl font-bold">
+          <Link variant="unstyled" to={HOME}>
+            <img
+              alt="Logo Positiv"
+              src={PositivLogo}
+              className="w-auto px-2 py-1 rounded-lg max-h-8"
+            />
+          </Link>
+        </div>
+        <div className="flex items-center space-x-2">
+          {showButton &&
+            (showButtons ? (
+              <div className="flex items-center space-x-2">
+                {!!displayName && (
+                  <p className="hidden sm:block">Olá, {displayName}</p>
+                )}
                 <Button
                   asChild
                   variant="outline"
-                  title="Área Admin"
-                  to={ADMIN_DASHBOARD}
+                  title="Dashboard"
+                  to={DASHBOARD}
                 >
-                  <Table2Icon />
+                  <CalendarIcon />
                 </Button>
-              )}
-              <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
-                <UserIcon />
-              </Button>
-            </div>
-          ) : (
-            <Button to={LOGIN}>Entrar</Button>
-          ))}
-      </div>
-    </header>
+                {isAdmin && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    title="Área Admin"
+                    to={ADMIN_DASHBOARD}
+                  >
+                    <Table2Icon />
+                  </Button>
+                )}
+                <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
+                  <UserIcon />
+                </Button>
+              </div>
+            ) : (
+              <Button to={LOGIN}>Entrar</Button>
+            ))}
+        </div>
+      </header>
+    </>
   )
 }
