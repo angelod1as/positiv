@@ -70,6 +70,7 @@ export const currentProfileSchema = zod.object({
   allow_marketing_email: zod.boolean().nullish(),
   created_at: zod.string(),
   is_admin: zod.boolean(),
+  is_veteran: zod.boolean(),
 })
 
 export const getSupabaseSchema = zod.object({
