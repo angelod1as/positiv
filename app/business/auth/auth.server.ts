@@ -49,7 +49,7 @@ export const getContext = async (
     host,
     currentUser: null,
     currentProfile: null,
-    isProd: Boolean(isProd),
+    isProd: isProd === "true",
   }
 
   if (authError) {
@@ -104,7 +104,7 @@ export const getContext = async (
     supabaseHeaders,
     currentProfile,
     currentUser,
-    isProd: Boolean(isProd),
+    isProd: isProd === "true",
     host,
   }
 }
