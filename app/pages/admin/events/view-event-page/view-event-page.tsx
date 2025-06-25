@@ -21,6 +21,7 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-page"
 import { Buttons } from "./buttons"
 import { DatesAndTimes } from "./dates-and-times"
+import { DemographicsData } from "./demographics"
 import { EventStatusForm } from "./event-status-form"
 import { GeneralData } from "./general-data"
 import { sendToast } from "./send-toast"
@@ -75,31 +76,30 @@ export async function loader({ params }: Route.LoaderArgs) {
   if (!result.success) {
     throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
   }
-  const event = {
-    ...result.data,
-    event_status: result.data.event_status,
-  }
+  const event = result.data
+
   const { isOpen, isScheduled } = checkEventStatus(event.event_status)
 
-  const reminderCountPromise = getAdminReminderCountByEventId({
-    eventId,
-    isScheduled,
-    isOpen,
-  })
-  const demographicsPromise = getEventDemographicsById({ eventId })
-
-  const [reminderCountResult] = await Promise.all([
-    reminderCountPromise,
-    demographicsPromise,
+  const [reminderCountResult, demographicsResult] = await Promise.all([
+    getAdminReminderCountByEventId({
+      eventId,
+      isScheduled,
+      isOpen,
+    }),
+    event.event_status === "Completed"
+      ? getEventDemographicsById({ eventId })
+      : undefined,
   ])
 
-  if (!reminderCountResult?.success) {
-    return { event, reminderCount: 0 }
+  return {
+    event,
+    reminderCount: reminderCountResult.success
+      ? reminderCountResult.data
+      : undefined,
+    demographics: demographicsResult?.success
+      ? demographicsResult.data
+      : undefined,
   }
-
-  const reminderCount = reminderCountResult.data
-
-  return { event, reminderCount }
 }
 
 const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
@@ -109,7 +109,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     sendToast(fetcher.data)
   }, [fetcher.data])
 
-  const { event, reminderCount = 0 } = loaderData
+  const { event, reminderCount = 0, demographics } = loaderData
 
   const { title, emoji, time_event_start } = event
 
@@ -125,6 +125,8 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       </p>
 
       <EventStatusForm {...event} fetcher={fetcher} />
+
+      {demographics && <DemographicsData demographics={demographics} />}
 
       <GeneralData {...event} />
       <DatesAndTimes {...event} />
