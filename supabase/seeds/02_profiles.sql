@@ -1,7 +1,7 @@
--- Insert profiles for each user in auth.users
+-- Updated: Insert profiles for each user in auth.users with all fields filled
 INSERT INTO public.profiles (
-    user_id,        -- Foreign key to auth.users
-    email,          -- Email must be included as it's not nullable
+    user_id,
+    email,
     full_name,
     basic_data_filled,
     social_name,
@@ -15,107 +15,116 @@ INSERT INTO public.profiles (
     where_lives,
     how_came_to_us,
     rg_issuer,
-    allow_marketing_email
+    allow_marketing_email,
+    is_veteran
 )
 SELECT
-    usr.id,  -- Link the profile to the user ID
-    usr.email, -- Include email since it is not nullable
+    usr.id,
+    usr.email,
+    -- full_name
     CASE usr.email
         WHEN 'admin@example.com' THEN 'Master User Full Name'
         WHEN 'user1@example.com' THEN 'User One Full Name'
         WHEN 'user2@example.com' THEN 'User Two Full Name'
-        WHEN 'user4@example.com' THEN null
-        ELSE split_part(usr.email, '@', 1) || ' Full Name'
+        WHEN 'user3@example.com' THEN 'User Three Full Name'
+        WHEN 'user4@example.com' THEN 'User Four Full Name'
+        WHEN 'user5@example.com' THEN 'User Five Full Name'
+        WHEN 'user6@example.com' THEN 'User Six Full Name'
+        WHEN 'user7@example.com' THEN 'User Seven Full Name'
+        WHEN 'user8@example.com' THEN 'User Eight Full Name'
+        WHEN 'user9@example.com' THEN 'User Nine Full Name'
     END,
-    CASE usr.email
-        WHEN 'admin@example.com' THEN true
-        WHEN 'user1@example.com' THEN true
-        WHEN 'user2@example.com' THEN true
-        WHEN 'user4@example.com' THEN false
-        ELSE false
-    END,
+    -- basic_data_filled
+    true,
+    -- social_name
     CASE usr.email
         WHEN 'admin@example.com' THEN 'Master'
-        WHEN 'user1@example.com' THEN 'User One'
-        WHEN 'user2@example.com' THEN 'User Two'
-        WHEN 'user4@example.com' THEN null
         ELSE split_part(usr.email, '@', 1)
     END,
+    -- pronouns
     CASE usr.email
         WHEN 'admin@example.com' THEN ARRAY['elu/delu']::text []
         WHEN 'user1@example.com' THEN ARRAY['ele/dele']::text []
         WHEN 'user2@example.com' THEN ARRAY['ela/dela']::text []
-        WHEN 'user4@example.com' THEN null
-        ELSE ARRAY['ele/dele', 'ela/dela']::text []
+        WHEN 'user3@example.com' THEN ARRAY['ele/dele']::text []
+        WHEN 'user4@example.com' THEN ARRAY['ela/dela']::text []
+        WHEN 'user5@example.com' THEN ARRAY['ele/dele']::text []
+        WHEN 'user6@example.com' THEN ARRAY['ela/dela']::text []
+        WHEN 'user7@example.com' THEN ARRAY['ele/dele']::text []
+        WHEN 'user8@example.com' THEN ARRAY['ela/dela']::text []
+        WHEN 'user9@example.com' THEN ARRAY['ele/dele']::text []
     END,
-    CASE usr.email
-        WHEN 'admin@example.com' THEN '123456789'
-        WHEN 'user1@example.com' THEN '111111111'
-        WHEN 'user2@example.com' THEN '987654321'
-        WHEN 'user4@example.com' THEN null
-        ELSE null
-    END,
-    CASE usr.email
-        WHEN 'admin@example.com' THEN '98765432100'
-        WHEN 'user1@example.com' THEN '11111111111'
-        WHEN 'user2@example.com' THEN '12345678999'
-        WHEN 'user4@example.com' THEN null
-        ELSE null
-    END,
-    CASE usr.email
-        WHEN 'admin@example.com' THEN 11987654321
-        WHEN 'user1@example.com' THEN 11123456789
-        WHEN 'user2@example.com' THEN 21912345678
-        WHEN 'user4@example.com' THEN null
-        ELSE null
-    END,
+    -- rg
+    '000000000',
+    -- cpf
+    '00000000000',
+    -- phone
+    11999999999,
+    -- date_of_birth
     CASE usr.email
         WHEN 'admin@example.com' THEN '1990-05-15'::date
         WHEN 'user1@example.com' THEN '1980-01-01'::date
         WHEN 'user2@example.com' THEN '1995-10-20'::date
-        WHEN 'user4@example.com' THEN null
-        ELSE null
+        WHEN 'user3@example.com' THEN '1992-03-10'::date
+        WHEN 'user4@example.com' THEN '1993-04-11'::date
+        WHEN 'user5@example.com' THEN '1994-05-12'::date
+        WHEN 'user6@example.com' THEN '1995-06-13'::date
+        WHEN 'user7@example.com' THEN '1996-07-14'::date
+        WHEN 'user8@example.com' THEN '1997-08-15'::date
+        WHEN 'user9@example.com' THEN '1998-09-16'::date
     END,
+    -- gender
     CASE usr.email
         WHEN 'admin@example.com' THEN ARRAY['Pessoa agênera']::text []
         WHEN 'user1@example.com' THEN ARRAY['Homem cis']::text []
         WHEN 'user2@example.com' THEN ARRAY['Mulher cis']::text []
-        WHEN 'user4@example.com' THEN null
-        ELSE null
+        WHEN 'user3@example.com' THEN ARRAY['Homem trans']::text []
+        WHEN 'user4@example.com' THEN ARRAY['Mulher trans']::text []
+        WHEN 'user5@example.com' THEN ARRAY['Homem cis']::text []
+        WHEN 'user6@example.com' THEN ARRAY['Mulher cis']::text []
+        WHEN 'user7@example.com' THEN ARRAY['Homem cis']::text []
+        WHEN 'user8@example.com' THEN ARRAY['Mulher cis']::text []
+        WHEN 'user9@example.com' THEN ARRAY['Homem cis']::text []
     END,
+    -- orientation
     CASE usr.email
         WHEN 'admin@example.com' THEN ARRAY['Pan']::text []
         WHEN 'user1@example.com' THEN ARRAY['Hétero']::text []
         WHEN 'user2@example.com' THEN ARRAY['Hétero']::text []
-        WHEN 'user4@example.com' THEN null
-        ELSE null
+        WHEN 'user3@example.com' THEN ARRAY['Gay']::text []
+        WHEN 'user4@example.com' THEN ARRAY['Lésbica']::text []
+        WHEN 'user5@example.com' THEN ARRAY['Bissexual']::text []
+        WHEN 'user6@example.com' THEN ARRAY['Hétero']::text []
+        WHEN 'user7@example.com' THEN ARRAY['Hétero']::text []
+        WHEN 'user8@example.com' THEN ARRAY['Bissexual']::text []
+        WHEN 'user9@example.com' THEN ARRAY['Hétero']::text []
     END,
+    -- where_lives
     CASE usr.email
         WHEN 'admin@example.com' THEN 'São Paulo, SP'
         WHEN 'user1@example.com' THEN 'Curitiba, PR'
         WHEN 'user2@example.com' THEN 'Rio de Janeiro, RJ'
-        WHEN 'user4@example.com' THEN null
-        ELSE null
+        WHEN 'user3@example.com' THEN 'Belo Horizonte, MG'
+        WHEN 'user4@example.com' THEN 'Porto Alegre, RS'
+        WHEN 'user5@example.com' THEN 'Recife, PE'
+        WHEN 'user6@example.com' THEN 'Salvador, BA'
+        WHEN 'user7@example.com' THEN 'Fortaleza, CE'
+        WHEN 'user8@example.com' THEN 'Brasília, DF'
+        WHEN 'user9@example.com' THEN 'Manaus, AM'
     END,
-    CASE usr.email
-        WHEN 'admin@example.com' THEN 'Seeded by Supabase'
-        WHEN 'user1@example.com' THEN 'Referred by Colleague'
-        WHEN 'user2@example.com' THEN 'Referred by Friend'
-        WHEN 'user4@example.com' THEN null
-        ELSE null
-    END,
-    CASE usr.email
-        WHEN 'admin@example.com' THEN 'SSP/SP'
-        WHEN 'user1@example.com' THEN 'SSP/PR'
-        WHEN 'user2@example.com' THEN 'SSP/RJ'
-        WHEN 'user4@example.com' THEN null
-        ELSE null
-    END,
+    -- how_came_to_us
+    'Seeded by Supabase',
+    -- rg_issuer
+    'SSP/SP',
+    -- allow_marketing_email
+    true,
+    -- is_veteran (set true for admin, user1, user3, user4, user5; others false)
     CASE usr.email
         WHEN 'admin@example.com' THEN true
         WHEN 'user1@example.com' THEN true
-        WHEN 'user2@example.com' THEN true
-        WHEN 'user4@example.com' THEN false
+        WHEN 'user3@example.com' THEN true
+        WHEN 'user4@example.com' THEN true
+        WHEN 'user5@example.com' THEN true
         ELSE false
     END
 FROM auth.users AS usr
@@ -131,7 +140,7 @@ WHERE usr.email IN (
         'user8@example.com',
         'user9@example.com'
     )
-ON CONFLICT (user_id) DO NOTHING; -- Prevent duplicate profile assignments
+ON CONFLICT (user_id) DO NOTHING;
 
 -- Seed public.user_roles
 -- Assign the 'admin' role to the admin user
