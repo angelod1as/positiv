@@ -2,7 +2,8 @@ import test from "@playwright/test"
 import pwLog from "e2e/helpers/log"
 import { createSupabaseTestClient } from "./create-supabase-client"
 
-test("delete database items", async () => {
+test("delete database items", async ({ page }) => {
+  await page.close()
   pwLog("Deleting test database items...")
 
   const supabase = await createSupabaseTestClient()
