@@ -6,11 +6,13 @@ import {
   classifySingleOrientation,
 } from "./demographics-utils"
 
+// --- Type Definitions ---
+
 type DemographicRow = {
   date_of_birth: string | null
-  gender: Array<Genders | string> | null // Can include custom strings
+  gender: Array<Genders | string> | null
   is_veteran: boolean | null
-  orientation: Array<Orientations | string> | null // Can include custom strings
+  orientation: Array<Orientations | string> | null
   where_lives?: string | null
 }
 
@@ -19,27 +21,7 @@ type OtherCategoryData = {
   values?: string[]
 }
 
-type VeteranCounts = {
-  yes: number
-  no: number
-}
-
-type GenderCounts = {
-  cis: number
-  trans: number
-  agender: number
-  other: { count: number; others: string[] }
-}
-
-type OrientationCounts = {
-  straight: number
-  homo: number
-  biPan: number
-  aceDemi: number
-  other: { count: number; others: string[] }
-}
-
-export type Demographics = {
+type Demographics = {
   total: number
   veteran: { yes: number; no: number }
   gender: {
@@ -58,151 +40,85 @@ export type Demographics = {
   age: { average: number | null; min: number | null; max: number | null }
 }
 
-type CategoryCount = {
-  count: number
-  others?: string[]
+// --- Aggregation Helpers ---
+
+function countVeterans(rows: DemographicRow[]) {
+  return rows.reduce(
+    (acc, row) => {
+      if (row.is_veteran) acc.yes++
+      else acc.no++
+      return acc
+    },
+    { yes: 0, no: 0 },
+  )
 }
 
-type CountsObjectWithOthers = {
-  [key: string]: number | CategoryCount
-}
-
-type PercentagesObjectWithOthers<T extends CountsObjectWithOthers> = {
-  [K in keyof T]: T[K] extends number
-    ? number
-    : {
-        percentage: number
-        values?: string[]
-      }
-}
-
-const calculateAllPercentages = <T extends CountsObjectWithOthers>(
-  counts: T,
-  totalRows: number,
-): PercentagesObjectWithOthers<T> => {
-  const result = {} as PercentagesObjectWithOthers<T>
-
-  for (const [key, value] of Object.entries(counts)) {
-    if (typeof value === "number") {
-      const percentage =
-        totalRows !== 0 ? parseFloat(((value / totalRows) * 100).toFixed(2)) : 0
-      result[key as keyof T] =
-        percentage as PercentagesObjectWithOthers<T>[typeof key]
-    } else if (
-      typeof value === "object" &&
-      value !== null &&
-      "count" in value
-    ) {
-      const categoryValue = value as CategoryCount
-
-      const percentage =
-        totalRows !== 0
-          ? parseFloat(((categoryValue.count / totalRows) * 100).toFixed(2))
-          : 0
-
-      result[key as keyof T] = {
-        percentage: percentage,
-        values: categoryValue.others,
-      } as PercentagesObjectWithOthers<T>[typeof key]
-    }
-  }
-
-  return result
-}
-
-const getInitialVeteranCounts = (): VeteranCounts => ({ yes: 0, no: 0 })
-
-const getInitialGenderCounts = (): GenderCounts => ({
-  cis: 0,
-  trans: 0,
-  agender: 0,
-  other: { count: 0, others: [] },
-})
-
-const getInitialOrientationCounts = (): OrientationCounts => ({
-  straight: 0,
-  homo: 0,
-  biPan: 0,
-  aceDemi: 0,
-  other: { count: 0, others: [] },
-})
-
-const aggregateVeteranCounts = (acc: VeteranCounts, row: DemographicRow) => {
-  if (row.is_veteran) {
-    acc.yes++
-  } else {
-    acc.no++
-  }
-  return acc
-}
-
-const aggregateGenderCounts = (acc: GenderCounts, row: DemographicRow) => {
-  if (row.gender && row.gender.length > 0) {
-    const genderValue = row.gender[0]
-    const primaryGenderClassification = classifySingleGender(genderValue)
-
-    if (primaryGenderClassification === "other") {
-      acc.other.count++
-      acc.other.others.push(genderValue)
-    } else {
-      acc[primaryGenderClassification]++
-    }
-  } else {
-    acc.other.count++
-    acc.other.others.push("Not Provided")
-  }
-  return acc
-}
-
-const aggregateOrientationCounts = (
-  acc: OrientationCounts,
-  row: DemographicRow,
-) => {
-  if (row.orientation && row.orientation.length > 0) {
-    let hasPrimaryClassification = false
-    const collectedOtherOriginals: string[] = []
-
-    for (const o of row.orientation) {
-      const classifications = classifySingleOrientation(o)
-
-      for (const c of classifications) {
-        if (c === "biPan") {
-          acc.biPan++
-          hasPrimaryClassification = true
-        } else if (c === "homo") {
-          acc.homo++
-          hasPrimaryClassification = true
-        } else if (c === "straight") {
-          acc.straight++
-          hasPrimaryClassification = true
-        } else if (c === "aceDemi") {
-          acc.aceDemi++
-        } else if (c === "other") {
-          collectedOtherOriginals.push(o)
+function countGenders(rows: DemographicRow[]) {
+  return rows.reduce(
+    (acc, row) => {
+      const gender = row.gender && row.gender[0]
+      if (gender) {
+        const type = classifySingleGender(gender)
+        if (type === "other") {
+          acc.other.count++
+          acc.other.others.push(gender)
+        } else {
+          acc[type]++
         }
+      } else {
+        acc.other.count++
+        acc.other.others.push("Not Provided")
       }
-    }
-
-    if (!hasPrimaryClassification && collectedOtherOriginals.length > 0) {
-      acc.other.count++
-      acc.other.others.push(...collectedOtherOriginals)
-    } else if (
-      !hasPrimaryClassification &&
-      acc.aceDemi === 0 &&
-      collectedOtherOriginals.length === 0
-    ) {
-      acc.other.count++
-      acc.other.others.push("Unclassified/Multiple Not Primary")
-    }
-  } else {
-    acc.other.count++
-    acc.other.others.push("Not Provided")
-  }
-  return acc
+      return acc
+    },
+    { cis: 0, trans: 0, agender: 0, other: { count: 0, others: [] as string[] } },
+  )
 }
 
-const extractAges = (rows: DemographicRow[]): number[] => {
-  return rows.flatMap((row) => {
+function countOrientations(rows: DemographicRow[]) {
+  return rows.reduce(
+    (acc, row) => {
+      if (row.orientation && row.orientation.length > 0) {
+        let hasPrimary = false
+        const others: string[] = []
+        for (const o of row.orientation) {
+          const types = classifySingleOrientation(o)
+          for (const t of types) {
+            if (["biPan", "homo", "straight"].includes(t)) {
+              acc[t]++
+              hasPrimary = true
+            } else if (t === "aceDemi") {
+              acc.aceDemi++
+            } else if (t === "other") {
+              others.push(o)
+            }
+          }
+        }
+        if (!hasPrimary && others.length > 0) {
+          acc.other.count++
+          acc.other.others.push(...others)
+        } else if (!hasPrimary && acc.aceDemi === 0 && others.length === 0) {
+          acc.other.count++
+          acc.other.others.push("Unclassified/Multiple Not Primary")
+        }
+      } else {
+        acc.other.count++
+        acc.other.others.push("Not Provided")
+      }
+      return acc
+    },
+    {
+      straight: 0,
+      homo: 0,
+      biPan: 0,
+      aceDemi: 0,
+      other: { count: 0, others: [] as string[] },
+    },
+  )
+}
+
+function extractAges(rows: DemographicRow[]): number[] {
+  return rows.flatMap(row => {
     if (row.date_of_birth) {
       const age = calculateAge(row.date_of_birth)
       return age !== null ? [age] : []
@@ -211,44 +127,53 @@ const extractAges = (rows: DemographicRow[]): number[] => {
   })
 }
 
+// --- Percentage Calculation ---
+
+type CategoryCount = { count: number; others?: string[] }
+type CountsWithOthers = { [key: string]: number | CategoryCount }
+type PercentagesWithOthers<T extends CountsWithOthers> = {
+  [K in keyof T]: T[K] extends number
+    ? number
+    : { percentage: number; values?: string[] }
+}
+
+function calculatePercentages<T extends CountsWithOthers>(
+  counts: T,
+  total: number,
+): PercentagesWithOthers<T> {
+  const result = {} as PercentagesWithOthers<T>
+  for (const [key, value] of Object.entries(counts)) {
+    if (typeof value === "number") {
+      result[key as keyof T] = total ? parseFloat(((value / total) * 100).toFixed(2)) : 0 as any
+    } else if (value && typeof value === "object" && "count" in value) {
+      const v = value as CategoryCount
+      result[key as keyof T] = {
+        percentage: total ? parseFloat(((v.count / total) * 100).toFixed(2)) : 0,
+        values: v.others,
+      } as any
+    }
+  }
+  return result
+}
+
+// --- Main Demographics Calculation ---
+
 export function calculateDemographics(rows: DemographicRow[]): Demographics {
-  const totalRows = rows.length
-
-  const veteranCounts = rows.reduce(
-    aggregateVeteranCounts,
-    getInitialVeteranCounts(),
-  )
-  const genderCounts = rows.reduce(
-    aggregateGenderCounts,
-    getInitialGenderCounts(),
-  )
-  const orientationCounts = rows.reduce(
-    aggregateOrientationCounts,
-    getInitialOrientationCounts(),
-  )
-
+  const total = rows.length
+  const veteranCounts = countVeterans(rows)
+  const genderCounts = countGenders(rows)
+  const orientationCounts = countOrientations(rows)
   const ages = extractAges(rows)
 
-  const veteranPercentages = calculateAllPercentages(veteranCounts, totalRows)
-  const genderPercentages = calculateAllPercentages(genderCounts, totalRows)
-  const orientationPercentages = calculateAllPercentages(
-    orientationCounts,
-    totalRows,
-  )
-
-  const avgAge = calculateAverage(ages)
-  const minAge = ages.length ? Math.min(...ages) : null
-  const maxAge = ages.length ? Math.max(...ages) : null
-
   return {
-    total: totalRows,
-    veteran: veteranPercentages,
-    gender: genderPercentages,
-    orientation: orientationPercentages,
+    total,
+    veteran: calculatePercentages(veteranCounts, total),
+    gender: calculatePercentages(genderCounts, total),
+    orientation: calculatePercentages(orientationCounts, total),
     age: {
-      average: avgAge,
-      min: minAge,
-      max: maxAge,
+      average: calculateAverage(ages),
+      min: ages.length ? Math.min(...ages) : null,
+      max: ages.length ? Math.max(...ages) : null,
     },
   }
 }
