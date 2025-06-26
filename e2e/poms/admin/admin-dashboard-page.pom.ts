@@ -23,10 +23,12 @@ export class AdminDashboardPOM {
   }
   readonly dialogSendEmails: Locator
   readonly dialogSendEmailsButton: Locator
+  readonly waitForPage: Promise<void>
 
   constructor(page: Page) {
     this.page = page
     this.title = this.page.getByText("Visão geral")
+    this.waitForPage = this.page.waitForLoadState("domcontentloaded")
     this.draftEvent = {
       viewEventButton: this.page
         .getByRole("row", { name: /Evento Rascunho/ })
@@ -65,6 +67,7 @@ export class AdminDashboardPOM {
   }
 
   async testBasicElements() {
+    await this.waitForPage
     await expect(this.title).toBeVisible()
     await expect(this.scheduledEvent.row).toBeVisible()
     await expect(this.draftEvent.row).toBeVisible()
@@ -74,15 +77,18 @@ export class AdminDashboardPOM {
   async testRemindMeEmails() {
     // Draft
     await this.draftEvent.viewEventButton.click()
+    await this.waitForPage
     await expect(this.draftEvent.title).toBeVisible()
     await expect(this.scheduledEvent.reminderWarning).not.toBeVisible()
     await expect(
       this.registrationOpenEvent.sendReminderButton,
     ).not.toBeVisible()
     await this.page.goBack()
+    await this.waitForPage
 
     // Scheduled
     await this.scheduledEvent.viewEventButton.click()
+    await this.waitForPage
     await expect(this.scheduledEvent.reminderWarning).toBeVisible()
     await expect(
       this.registrationOpenEvent.sendReminderButton,
@@ -95,6 +101,7 @@ export class AdminDashboardPOM {
     await this.registrationOpenEvent.sendReminderButton.click()
     await expect(this.dialogSendEmails).toBeVisible()
     await this.dialogSendEmailsButton.click()
+    await this.waitForPage
     await expect(this.dialogSendEmailsButton).not.toBeVisible()
   }
 }

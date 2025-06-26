@@ -6,6 +6,7 @@ import { UserDataPOM } from "e2e/poms/events/user-data.pom"
 import { MailhogPOM } from "e2e/poms/mailhog/mailhog.pom"
 
 loadUser("participant")
+
 test("Apply to event", async ({ page }) => {
   const dashboard = new DashboardPOM(page)
   await dashboard.goto()
