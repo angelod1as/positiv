@@ -37,7 +37,7 @@ export const DemographicsData: FC<DemographicsProps> = ({
           <DataPair suffix="%" pair={["Bi/Pan", orientation.biPan]} />
           <DataPair suffix="%" pair={["Homo", orientation.homo]} />
           <DataPair suffix="%" pair={["Ace/Demi", orientation.aceDemi]} />
-          {!!gender.other.percentage && (
+          {!!orientation.other.percentage && (
             <>
               <DataPair
                 suffix="%"
