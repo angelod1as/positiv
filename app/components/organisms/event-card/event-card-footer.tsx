@@ -1,25 +1,16 @@
-import { DialogClose } from "@radix-ui/react-dialog"
 import { useEffect, type FC } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { Button } from "~/components/atoms/button/button"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import paths from "~/lib/paths"
 import type { EventStatus } from "~types/entities.types"
 
 const {
   dash: {
-    participant: { DOWNLOAD_CALENDAR },
+    // participant: { DOWNLOAD_CALENDAR },
     events: { EVENT_VIEW },
   },
 } = paths
@@ -35,7 +26,7 @@ type EventCardFooterProps = {
 export const EventCardFooter: FC<EventCardFooterProps> = ({
   is_applied,
   event_status,
-  googleLink,
+  // googleLink,
   eventId,
   dataTestId,
   is_set_reminder,
@@ -130,7 +121,8 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   if (is_applied) {
     return (
       <div className="flex flex-col sm:flex-row gap-4 w-full">
-        <Dialog>
+        {/* TODO: Fix dates & times */}
+        {/* <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline">Adicionar ao Calendário</Button>
           </DialogTrigger>
@@ -161,7 +153,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
               </DialogClose>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
 
         <fetcher.Form method="post">
           <ConfirmDialog
