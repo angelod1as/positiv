@@ -6,8 +6,6 @@ import {
   classifySingleOrientation,
 } from "./demographics-utils"
 
-// --- Type Definitions ---
-
 type DemographicRow = {
   date_of_birth: string | null
   gender: Array<Genders | string> | null
@@ -40,8 +38,6 @@ type Demographics = {
   age: { average: number | null; min: number | null; max: number | null }
 }
 
-// --- Aggregation Helpers ---
-
 function countVeterans(rows: DemographicRow[]) {
   return rows.reduce(
     (acc, row) => {
@@ -54,9 +50,14 @@ function countVeterans(rows: DemographicRow[]) {
 }
 
 function countGenders(rows: DemographicRow[]) {
-  return rows.reduce(
+  return rows.reduce<{
+    cis: number
+    trans: number
+    agender: number
+    other: { count: number; others: string[] }
+  }>(
     (acc, row) => {
-      const gender = row.gender && row.gender[0]
+      const gender = row.gender?.[0]
       if (gender) {
         const type = classifySingleGender(gender)
         if (type === "other") {
@@ -71,20 +72,26 @@ function countGenders(rows: DemographicRow[]) {
       }
       return acc
     },
-    { cis: 0, trans: 0, agender: 0, other: { count: 0, others: [] as string[] } },
+    { cis: 0, trans: 0, agender: 0, other: { count: 0, others: [] } },
   )
 }
 
 function countOrientations(rows: DemographicRow[]) {
-  return rows.reduce(
+  return rows.reduce<{
+    straight: number
+    homo: number
+    biPan: number
+    aceDemi: number
+    other: { count: number; others: string[] }
+  }>(
     (acc, row) => {
-      if (row.orientation && row.orientation.length > 0) {
+      if (row.orientation?.length) {
         let hasPrimary = false
         const others: string[] = []
         for (const o of row.orientation) {
           const types = classifySingleOrientation(o)
           for (const t of types) {
-            if (["biPan", "homo", "straight"].includes(t)) {
+            if (t === "biPan" || t === "homo" || t === "straight") {
               acc[t]++
               hasPrimary = true
             } else if (t === "aceDemi") {
@@ -112,13 +119,13 @@ function countOrientations(rows: DemographicRow[]) {
       homo: 0,
       biPan: 0,
       aceDemi: 0,
-      other: { count: 0, others: [] as string[] },
+      other: { count: 0, others: [] },
     },
   )
 }
 
 function extractAges(rows: DemographicRow[]): number[] {
-  return rows.flatMap(row => {
+  return rows.flatMap((row) => {
     if (row.date_of_birth) {
       const age = calculateAge(row.date_of_birth)
       return age !== null ? [age] : []
@@ -127,36 +134,61 @@ function extractAges(rows: DemographicRow[]): number[] {
   })
 }
 
-// --- Percentage Calculation ---
-
-type CategoryCount = { count: number; others?: string[] }
-type CountsWithOthers = { [key: string]: number | CategoryCount }
-type PercentagesWithOthers<T extends CountsWithOthers> = {
-  [K in keyof T]: T[K] extends number
-    ? number
-    : { percentage: number; values?: string[] }
-}
-
-function calculatePercentages<T extends CountsWithOthers>(
-  counts: T,
+function calculateVeteranPercentages(
+  counts: { yes: number; no: number },
   total: number,
-): PercentagesWithOthers<T> {
-  const result = {} as PercentagesWithOthers<T>
-  for (const [key, value] of Object.entries(counts)) {
-    if (typeof value === "number") {
-      result[key as keyof T] = total ? parseFloat(((value / total) * 100).toFixed(2)) : 0 as any
-    } else if (value && typeof value === "object" && "count" in value) {
-      const v = value as CategoryCount
-      result[key as keyof T] = {
-        percentage: total ? parseFloat(((v.count / total) * 100).toFixed(2)) : 0,
-        values: v.others,
-      } as any
-    }
+): Demographics["veteran"] {
+  return {
+    yes: total > 0 ? parseFloat(((counts.yes / total) * 100).toFixed(2)) : 0,
+    no: total > 0 ? parseFloat(((counts.no / total) * 100).toFixed(2)) : 0,
   }
-  return result
 }
 
-// --- Main Demographics Calculation ---
+function calculatePercentage(count: number, total: number): number {
+  return total > 0 ? parseFloat(((count / total) * 100).toFixed(2)) : 0
+}
+
+function calculateGenderPercentages(
+  counts: {
+    cis: number
+    trans: number
+    agender: number
+    other: { count: number; others: string[] }
+  },
+  total: number,
+): Demographics["gender"] {
+  return {
+    cis: calculatePercentage(counts.cis, total),
+    trans: calculatePercentage(counts.trans, total),
+    agender: calculatePercentage(counts.agender, total),
+    other: {
+      percentage: calculatePercentage(counts.other.count, total),
+      values: counts.other.others,
+    },
+  }
+}
+
+function calculateOrientationPercentages(
+  counts: {
+    straight: number
+    homo: number
+    biPan: number
+    aceDemi: number
+    other: { count: number; others: string[] }
+  },
+  total: number,
+): Demographics["orientation"] {
+  return {
+    straight: calculatePercentage(counts.straight, total),
+    homo: calculatePercentage(counts.homo, total),
+    biPan: calculatePercentage(counts.biPan, total),
+    aceDemi: calculatePercentage(counts.aceDemi, total),
+    other: {
+      percentage: calculatePercentage(counts.other.count, total),
+      values: counts.other.others,
+    },
+  }
+}
 
 export function calculateDemographics(rows: DemographicRow[]): Demographics {
   const total = rows.length
@@ -167,9 +199,9 @@ export function calculateDemographics(rows: DemographicRow[]): Demographics {
 
   return {
     total,
-    veteran: calculatePercentages(veteranCounts, total),
-    gender: calculatePercentages(genderCounts, total),
-    orientation: calculatePercentages(orientationCounts, total),
+    veteran: calculateVeteranPercentages(veteranCounts, total),
+    gender: calculateGenderPercentages(genderCounts, total),
+    orientation: calculateOrientationPercentages(orientationCounts, total),
     age: {
       average: calculateAverage(ages),
       min: ages.length ? Math.min(...ages) : null,

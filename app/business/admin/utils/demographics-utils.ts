@@ -1,7 +1,5 @@
 import { GENDERS } from "~/lib/helpers/constants"
 
-// --- Gender Classification Helpers ---
-
 function isCisGender(gender: string): boolean {
   const lower = gender.toLowerCase()
   return (
@@ -26,19 +24,18 @@ function isAgender(gender: string): boolean {
   return /\bag[êe]nero\b|\bagender\b|\bagênera\b/i.test(lower)
 }
 
-/**
- * Classifies a single gender string into a category.
- */
-export function classifySingleGender(
-  genderString: string,
-): "cis" | "trans" | "agender" | "other" {
-  if (isCisGender(genderString)) return "cis"
-  if (isTransGender(genderString)) return "trans"
-  if (isAgender(genderString)) return "agender"
+export function classifySingleGender(genderString: string): "cis" | "trans" | "agender" | "other" {
+  if (isCisGender(genderString)) {
+    return "cis"
+  }
+  if (isTransGender(genderString)) {
+    return "trans"
+  }
+  if (isAgender(genderString)) {
+    return "agender"
+  }
   return "other"
 }
-
-// --- Orientation Classification Helpers ---
 
 function isBiPan(orientation: string): boolean {
   const lower = orientation.toLowerCase()
@@ -74,53 +71,62 @@ function isAceDemi(orientation: string): boolean {
   return lower === "ace" || lower === "demi" || /\bace\b|\bdemi\b/i.test(lower)
 }
 
-/**
- * Classifies a single orientation string into one or more categories.
- */
 export function classifySingleOrientation(
   orientationString: string,
 ): ("straight" | "homo" | "biPan" | "aceDemi" | "other")[] {
   const result: ("straight" | "homo" | "biPan" | "aceDemi" | "other")[] = []
-  if (isBiPan(orientationString)) result.push("biPan")
-  if (isHomo(orientationString) && !result.includes("biPan")) result.push("homo")
-  if (isStraight(orientationString) && !result.some(c => ["biPan", "homo"].includes(c))) result.push("straight")
-  if (isAceDemi(orientationString)) result.push("aceDemi")
-  if (result.length === 0) result.push("other")
-  // Special case: only aceDemi, no primary
+  if (isBiPan(orientationString)) {
+    result.push("biPan")
+  }
+  if (isHomo(orientationString) && !result.includes("biPan")) {
+    result.push("homo")
+  }
+  if (
+    isStraight(orientationString) &&
+    !result.some(c => c === "biPan" || c === "homo")
+  ) {
+    result.push("straight")
+  }
+  if (isAceDemi(orientationString)) {
+    result.push("aceDemi")
+  }
+  if (result.length === 0) {
+    result.push("other")
+  }
   if (
     result.length === 1 &&
     result[0] === "aceDemi" &&
-    !result.some(c => ["straight", "homo", "biPan"].includes(c))
+    !result.some(c => c === "biPan" || c === "homo" || c === "straight")
   ) {
     result.unshift("other")
   }
-  // Remove 'other' if other categories exist
-  const unique = [...new Set(result)]
-  if (unique.length > 1 && unique.includes("other")) {
-    return unique.filter(c => c !== "other")
-  }
-  return unique
+  const uniqueResult = [...new Set(result)]
+  return uniqueResult.length > 1 && uniqueResult.includes("other")
+    ? uniqueResult.filter(c => c !== "other")
+    : uniqueResult
 }
 
-// --- Age and Average Calculation ---
-
-/**
- * Calculates age from a date of birth string (YYYY-MM-DD).
- */
 export function calculateAge(dateOfBirthString: string): number | null {
   const dob = new Date(dateOfBirthString)
-  if (isNaN(dob.getTime())) return null
+  if (isNaN(dob.getTime())) {
+    return null
+  }
   const now = new Date()
   let age = now.getFullYear() - dob.getFullYear()
-  const m = now.getMonth() - dob.getMonth()
-  if (m < 0 || (m === 0 && now.getDate() < dob.getDate())) age--
+  const monthDifference = now.getMonth() - dob.getMonth()
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && now.getDate() < dob.getDate())
+  ) {
+    age--
+  }
   return age
 }
 
-/**
- * Calculates the integer average of an array of numbers, or null if empty.
- */
 export function calculateAverage(numbers: number[]): number | null {
-  if (numbers.length === 0) return null
-  return Math.floor(numbers.reduce((sum, num) => sum + num, 0) / numbers.length)
+  if (numbers.length === 0) {
+    return null
+  }
+  const sum = numbers.reduce((total, value) => total + value, 0)
+  return Math.floor(sum / numbers.length)
 }
