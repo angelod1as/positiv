@@ -24,7 +24,8 @@ export const getNextEvents: GetNextEvents = composable(
               .selectFrom("event_participants")
               .select("event_participants.event_id")
               .whereRef("event_participants.event_id", "=", "events.id")
-              .where("event_participants.profile_id", "=", profileId),
+              .where("event_participants.profile_id", "=", profileId)
+              .where("is_user_applied", "=", true),
           )
           .as("is_applied"),
         eb
