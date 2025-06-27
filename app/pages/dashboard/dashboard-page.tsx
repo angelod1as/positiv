@@ -72,10 +72,23 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 export async function action({ request, params }: Route.ClientActionArgs) {
   const formData = await request.clone().formData()
   const fetchId = formData.get("fetchId")?.toString()
+  const eventId = formData.get("eventId")?.toString()
 
   if (fetchId === "handleConfirmCancel") {
-    // TODO: Composable
-    await cancelApplicationToEvent(request, params)
+    const { currentProfile } = await getContext(request, params)
+
+    const result = await cancelApplicationToEvent({
+      eventId,
+      profileId: currentProfile?.id,
+    })
+
+    if (!result.success) {
+      // TODO: Fix "DataWithError". There MUST be a way!!! (Or return "toast" here)
+      throw new Error(
+        "Ops, seu cancelamento deu errado. Comunique o administrador.",
+      )
+    }
+
     return
   }
 
