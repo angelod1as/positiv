@@ -1,38 +1,23 @@
-import { type Params } from "react-router"
+import { composable } from "composable-functions"
+import { kysely } from "~/kysely"
 import { dateToString } from "~/lib/helpers/date-to-string"
-import { getContext } from "../auth/auth.server"
 
-export const cancelApplicationToEvent = async (
-  request: Request,
-  params: Params,
-) => {
-  const { currentProfile, supabase } = await getContext(request, params)
+type CancelApplicationToEventProps = { profileId?: string; eventId?: string }
+export const cancelApplicationToEvent = composable(
+  async ({ profileId, eventId }: CancelApplicationToEventProps) => {
+    if (!profileId || !eventId) {
+      throw new Error("Algo deu errado no seu cancelamento. Tente mais tarde.")
+    }
 
-  const formData = await request.formData()
-  const cancelRaw = formData.get("cancel")
-  const eventIdRaw = formData.get("eventId")
-  const eventId = eventIdRaw?.toString()
-  const cancel = Boolean(cancelRaw)
-
-  if (!cancel || !currentProfile || !eventId) {
-    throw new Error("Algo deu errado no seu cancelamento. Tente mais tarde.")
-  }
-
-  const profileId = currentProfile.id
-
-  const { error } = await supabase
-    .from("event_participants")
-    .update({
-      is_user_applied: false,
-      cancellation_date: dateToString(new Date()),
-    })
-    .eq("event_id", eventId)
-    .eq("profile_id", profileId)
-    .eq("is_user_applied", true)
-
-  if (error) {
-    throw new Error(
-      "Seu cancelamento teve um erro, tente novamente. Erro: update",
-    )
-  }
-}
+    return await kysely
+      .updateTable("event_participants")
+      .set({
+        is_user_applied: false,
+        cancellation_date: dateToString(new Date()),
+      })
+      .where("event_id", "=", eventId)
+      .where("profile_id", "=", profileId)
+      .where("is_user_applied", "=", true)
+      .execute()
+  },
+)
