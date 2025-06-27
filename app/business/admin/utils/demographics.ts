@@ -19,7 +19,7 @@ type OtherCategoryData = {
   values?: string[]
 }
 
-type Demographics = {
+export type Demographics = {
   total: number
   veteran: { yes: number; no: number }
   gender: {
