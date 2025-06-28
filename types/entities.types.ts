@@ -26,6 +26,7 @@ export type Participant = Profile &
     Database["public"]["Tables"]["event_participants"]["Row"],
     "process_status"
   > & {
+    // TODO: Should be ENUM
     process_status: ParticipantProcessStatus
   }
 
