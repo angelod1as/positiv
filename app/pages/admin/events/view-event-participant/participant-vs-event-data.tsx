@@ -38,7 +38,12 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
           <SchemaForm
             schema={ParticipantVsEventSchema}
             buttonLabel="Salvar"
-            values={eventParticipant}
+            hiddenFields={["intent", "event_id", "profile_id"]}
+            values={{
+              ...eventParticipant,
+              intent: "participant-vs-event-schema",
+              payment: Number(eventParticipant.payment),
+            }}
             inputTypes={{
               is_social_spot: "checkbox",
               payment: "number",
