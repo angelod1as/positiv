@@ -1,7 +1,14 @@
 import type { FC } from "react"
+import { ParticipantVsEventSchema } from "~/business/admin/common"
+import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import { SchemaForm } from "~/components/forms/schema-form"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import { eventParticipantPropMap } from "~/lib/helpers/propMaps"
-import type { ParticipantVsEvent } from "~types/entities.types"
+import {
+  eventParticipantPropMap,
+  processStatusOptions,
+} from "~/lib/helpers/propMaps"
+import { type ParticipantVsEvent } from "~types/entities.types"
+import type { Database } from "~types/kysely.types"
 
 type ParticipantVsEventDataProps = {
   eventParticipant: ParticipantVsEvent
@@ -9,54 +16,70 @@ type ParticipantVsEventDataProps = {
 export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   eventParticipant,
 }) => {
-  const {
-    application_date,
-    bond,
-    companions,
-    is_social_spot,
-    is_user_applied,
-    notes,
-    payment,
-    process_status,
-    referrals,
-  } = eventParticipant
+  const { application_date, bond, companions, notes, referrals } =
+    eventParticipant
+
+  const labels = Object.keys(eventParticipant).reduce((acc, curr) => {
+    return {
+      ...acc,
+      [curr]: eventParticipantPropMap(
+        curr as keyof Database["event_participants"],
+      ),
+    }
+  }, {})
+
   return (
     <>
       <h2>Neste evento</h2>
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <h3>Administração</h3>
 
-      <div>
-        <p>
-          {eventParticipantPropMap("is_user_applied")}:{" "}
-          {is_user_applied ? "Sim" : "Não"}
-        </p>
-        <p>
-          {eventParticipantPropMap("application_date")}:{" "}
-          {formatDateTime(application_date).full}
-        </p>
-        <p>
-          {eventParticipantPropMap("bond")}: {bond || "não respondeu"}
-        </p>
-        <p>
-          {eventParticipantPropMap("companions")}:{" "}
-          {companions || "não respondeu"}
-        </p>
-        <p>
-          {eventParticipantPropMap("is_social_spot")}:{" "}
-          {is_social_spot ? "Sim" : "Não"}
-        </p>
-        <p>
-          {eventParticipantPropMap("notes")}: {notes || "não respondeu"}
-        </p>
-        <p>
-          {eventParticipantPropMap("payment")}: {payment || "não respondeu"}
-        </p>
-        <p>
-          {eventParticipantPropMap("process_status")}:{" "}
-          {process_status || "não respondeu"}
-        </p>
-        <p>
-          {eventParticipantPropMap("referrals")}: {referrals || "não respondeu"}
-        </p>
+          <SchemaForm
+            schema={ParticipantVsEventSchema}
+            buttonLabel="Salvar"
+            values={eventParticipant}
+            inputTypes={{
+              is_social_spot: "checkbox",
+              payment: "number",
+            }}
+            options={{
+              process_status: processStatusOptions,
+            }}
+            labels={labels}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <h3>Respostas</h3>
+          <DataPair
+            pair={[
+              eventParticipantPropMap("application_date"),
+              formatDateTime(application_date).full,
+            ]}
+          />
+          <DataPair
+            pair={[eventParticipantPropMap("bond"), bond || "não respondeu"]}
+          />
+          <DataPair
+            pair={[
+              eventParticipantPropMap("companions"),
+              companions || "não respondeu",
+            ]}
+          />
+          <DataPair
+            pair={[
+              `${eventParticipantPropMap("notes")} (Participante)`,
+              notes || "não respondeu",
+            ]}
+          />
+          <DataPair
+            pair={[
+              eventParticipantPropMap("referrals"),
+              referrals || "não respondeu",
+            ]}
+          />
+        </div>
       </div>
     </>
   )

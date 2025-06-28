@@ -21,7 +21,10 @@ export const DataPair: FC<DataPairProps> = ({
 
   return (
     <p className={cn(top && "flex flex-col", className)}>
-      <span className="font-bold">{label}:</span>{" "}
+      <span className="font-bold">
+        {label}
+        {label.includes("?") ? "" : ":"}
+      </span>{" "}
       {typeof value === "boolean" ? (value ? "Sim" : "Não") : value}
       {suffix}
     </p>

@@ -67,12 +67,21 @@ export type ViewEvent = Pick<
 //////////
 
 const participantProcessStatus = [
+  // Golden Path
   "applied",
   "talking",
   "sent_payment_data",
   "paid",
   "sent_rules",
+  // If not sure
   "think_better",
+  // Skipped this event
+  "skipped",
+  // Succesfully attended
+  "attended",
+  // Did not attend (see admin notes)
+  "not-attended",
+  "rejected",
 ] as const
 
 export const participantProcessStatusEnum = z.enum(participantProcessStatus)
@@ -80,18 +89,6 @@ export const participantProcessStatusEnum = z.enum(participantProcessStatus)
 export type ParticipantProcessStatus = z.infer<
   typeof participantProcessStatusEnum
 >
-
-export const participantProcessStatusMap: Record<
-  ParticipantProcessStatus,
-  string
-> = {
-  applied: "Inscrite",
-  paid: "Pago",
-  talking: "Conversando",
-  think_better: "Pensar melhor",
-  sent_rules: "Regras enviadas",
-  sent_payment_data: "Dados de pagto enviados",
-}
 
 /////
 
