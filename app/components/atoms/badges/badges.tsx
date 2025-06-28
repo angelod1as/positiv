@@ -4,7 +4,7 @@ export const VeteranBadge = () => <Badge variant="veteran">Veterane</Badge>
 
 export const RookieBadge = () => <Badge variant="rookie">Novate</Badge>
 
-export const PronoumsBadge = ({ pronouns }: { pronouns: string[] | null }) =>
+export const PronounsBadge = ({ pronouns }: { pronouns: string[] | null }) =>
   pronouns?.length ? (
     <Badge variant="pronouns">{pronouns.join(", ")}</Badge>
   ) : null
