@@ -3,7 +3,7 @@ import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
   GenderBadge,
   OrientationBadge,
-  PronoumsBadge,
+  PronounsBadge,
   RookieBadge,
   VeteranBadge,
 } from "~/components/atoms/badges/badges"
@@ -58,7 +58,7 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
           </h3>
           <div className="space-x-2">
             {is_veteran ? <VeteranBadge /> : <RookieBadge />}
-            <PronoumsBadge pronouns={pronouns} />
+            <PronounsBadge pronouns={pronouns} />
             <GenderBadge gender={gender} />
             <OrientationBadge orientation={orientation} />
           </div>

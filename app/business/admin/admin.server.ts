@@ -59,7 +59,7 @@ export const getAdminEventById = composable(
 )
 
 export type ProfileWithExtraData = Profile &
-  Pick<EventParticipant, "process_status" | "is_social_spot" | "payment"> & {
+  EventParticipant & {
     was_admin_skipped_last_event: boolean
   }
 
@@ -88,10 +88,8 @@ const profilesWithExtraDataQuery = kysely
         .on("ranked_events.rn", "=", 2),
   )
   .selectAll("p")
+  .selectAll("current_ep")
   .select([
-    "current_ep.payment",
-    "current_ep.process_status",
-    "current_ep.is_social_spot",
     sql<boolean>`ranked_events.process_status = 'skipped'`.as(
       "was_admin_skipped_last_event",
     ),
