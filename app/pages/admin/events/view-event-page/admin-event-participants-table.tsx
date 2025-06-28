@@ -3,7 +3,7 @@ import { Column } from "primereact/column"
 import type { FC } from "react"
 import type { ParticipantWithExtraData } from "~/business/admin/admin.server"
 import { DataTable } from "~/components/organisms/data-table"
-import { phoneToButton } from "~/lib/helpers/phone-to-button"
+import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import paths from "~/lib/paths"
 
 const {
@@ -96,7 +96,7 @@ export const AdminEventParticipantsTable: FC<
       <Column
         field="phone"
         header="Whatsapp"
-        body={(values) => phoneToButton(values.phone)}
+        body={(values) => <PhoneButton phone={values.phone} />}
         sortable={false}
       />
 
