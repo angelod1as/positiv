@@ -5,7 +5,6 @@ import WhatsappIcon from "~/assets/social/whatsapp.svg"
 import type { ParticipantWithExtraData } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
 import { DataTable } from "~/components/organisms/data-table"
-import { Checkbox } from "~/components/ui/checkbox"
 import { phoneToWhatsappLink } from "~/lib/helpers/phone-to-whatsapp-link"
 import paths from "~/lib/paths"
 
@@ -42,22 +41,42 @@ const phoneToButton = (
   )
 }
 
-const booleanBodyTemplate = (
-  values: ParticipantWithExtraData,
-  prop: keyof ParticipantWithExtraData,
-) => {
-  const value = values[prop]
-  return <Checkbox checked={Boolean(value)} disabled />
+// const booleanBodyTemplate = (
+//   values: ParticipantWithExtraData,
+//   prop: keyof ParticipantWithExtraData,
+// ) => {
+//   const value = values[prop]
+//   return <Checkbox checked={Boolean(value)} disabled />
+// }
+
+const isParticipantAccepted = (participant: ParticipantWithExtraData) => {
+  return ["sent_payment_data", "paid", "sent_rules"].includes(
+    participant.process_status,
+  )
 }
 
 export const AdminEventParticipantsTable: FC<
   AdminEventParticipantsTableProps
 > = ({ participants, eventId }) => {
+  const accepted = participants.filter(isParticipantAccepted)
   return (
     <DataTable
       value={participants}
       id="participants"
       sortField="time_event_start"
+      header={{
+        title: "Inscrições",
+        numbers: (
+          <>
+            <p>
+              <b>{participants.length}</b> inscrites
+            </p>
+            <p>
+              <b>{accepted.length}</b> aceites
+            </p>
+          </>
+        ),
+      }}
       buttons={[
         {
           Icon: EyeIcon,
@@ -100,7 +119,7 @@ export const AdminEventParticipantsTable: FC<
       {/* TODO: Make editable */}
       <Column field="process_status" header="Status" />
       <Column field="payment" header="Pagamento" />
-      <Column
+      {/* <Column
         field="is_veteran"
         header="Veterane?"
         dataType="boolean"
@@ -119,7 +138,7 @@ export const AdminEventParticipantsTable: FC<
         body={(values) =>
           booleanBodyTemplate(values, "was_admin_skipped_last_event")
         }
-      />
+      /> */}
     </DataTable>
   )
 }

@@ -1,4 +1,4 @@
-import { EyeIcon, PencilIcon, UsersIcon } from "lucide-react"
+import { EyeIcon, PencilIcon } from "lucide-react"
 import { FilterMatchMode } from "primereact/api"
 import {
   Column,
@@ -14,7 +14,7 @@ import type { Event, EventStatus } from "~types/entities.types"
 
 const {
   admin: {
-    events: { ADMIN_VIEW_EVENT, ADMIN_EDIT_EVENT, ADMIN_EVENT_PARTICIPANTS },
+    events: { ADMIN_VIEW_EVENT, ADMIN_EDIT_EVENT },
   },
 } = paths
 
@@ -57,11 +57,6 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
         event_status: { value: null, matchMode: FilterMatchMode.EQUALS },
       }}
       buttons={[
-        {
-          Icon: UsersIcon,
-          to: ADMIN_EVENT_PARTICIPANTS,
-          title: "Ver participantes",
-        },
         {
           Icon: EyeIcon,
           to: ADMIN_VIEW_EVENT,
