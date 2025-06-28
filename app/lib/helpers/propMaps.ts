@@ -75,6 +75,7 @@ export const eventParticipantPropMap = (
     companions: "Vai acompanhade?",
     bond: "Pode ir só?",
     is_social_spot: "É vaga social?",
+    is_staff_spot: "É vaga de staff?",
     emoji: "Emoji",
     title: "Título",
   }[property]
