@@ -8,9 +8,10 @@ import { genderPronounsOrientation } from "~/business/participant/basic-data.ser
 import { CheckboxWithOther } from "~/components/forms/checkbox-with-other"
 import { Button } from "~/components/ui/button"
 import { Label } from "~/components/ui/label"
+import { GENDERS, ORIENTATIONS, PRONOUNS } from "~/lib/helpers/constants"
 import type { Route } from "./+types/basic-data-page"
 
-const toOptions = (labels: string[]) =>
+const toOptions = (labels: readonly string[]) =>
   labels.map((label) => ({ label, value: label }))
 
 type FormData = z.infer<typeof genderPronounOrientationSchema>
@@ -91,15 +92,7 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
               control={control}
               errors={errors}
               name="gender"
-              options={toOptions([
-                "Mulher cis",
-                "Mulher trans",
-                "Travesti",
-                "Pessoa não binária",
-                "Pessoa agênera",
-                "Homem trans",
-                "Homem cis",
-              ])}
+              options={toOptions(GENDERS)}
             />
           </div>
           <div className="flex flex-col col-span-4 gap-4">
@@ -108,15 +101,7 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
               control={control}
               errors={errors}
               name="orientation"
-              options={toOptions([
-                "Hétero",
-                "Gay",
-                "Sapatão",
-                "Bi",
-                "Pan",
-                "Demi",
-                "Ace",
-              ])}
+              options={toOptions(ORIENTATIONS)}
             />
           </div>
           <div className="flex flex-col col-span-4 gap-4">
@@ -125,12 +110,7 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
               control={control}
               errors={errors}
               name="pronouns"
-              options={toOptions([
-                "Ele/dele",
-                "Ela/dela",
-                "Elu/delu",
-                "Ile/dile",
-              ])}
+              options={toOptions(PRONOUNS)}
             />
           </div>
         </div>
