@@ -270,10 +270,13 @@
         }
       }
     }
+  }
 
-    /* Data Table */
-    .maximized-table {
-      @apply !absolute top-0 left-0 z-50 w-full;
-    }
+  /* Data Table */
+  body:has(.maximized-table) {
+    @apply overflow-hidden;
+  }
+  .maximized-table {
+    @apply !fixed top-0 left-0 z-50 w-full h-full bg-white;
   }
 }
