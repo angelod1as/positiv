@@ -1,8 +1,12 @@
 import { z } from "zod"
 
+import type { Selectable } from "kysely"
 import { currentProfileSchema } from "~/business/common"
 import type { GENDERS, ORIENTATIONS, PRONOUNS } from "~/lib/helpers/constants"
 import type { Database } from "./database.types"
+
+// TODO: selectable, insertable, updateable types
+// https://kysely.dev/docs/getting-started
 
 /** Extension of User with more data, so, called Profile */
 const _profileWithRoles = currentProfileSchema.nullable()
@@ -26,6 +30,7 @@ export type Participant = Profile &
     Database["public"]["Tables"]["event_participants"]["Row"],
     "process_status"
   > & {
+    // TODO: Should be ENUM
     process_status: ParticipantProcessStatus
   }
 
@@ -62,12 +67,21 @@ export type ViewEvent = Pick<
 //////////
 
 const participantProcessStatus = [
+  // Golden Path
   "applied",
   "talking",
   "sent_payment_data",
   "paid",
   "sent_rules",
+  // If not sure
   "think_better",
+  // Skipped this event
+  "skipped",
+  // Succesfully attended
+  "attended",
+  // Did not attend (see admin notes)
+  "not-attended",
+  "rejected",
 ] as const
 
 export const participantProcessStatusEnum = z.enum(participantProcessStatus)
@@ -76,20 +90,20 @@ export type ParticipantProcessStatus = z.infer<
   typeof participantProcessStatusEnum
 >
 
-export const participantProcessStatusMap: Record<
-  ParticipantProcessStatus,
-  string
-> = {
-  applied: "Inscrite",
-  paid: "Pago",
-  talking: "Conversando",
-  think_better: "Pensar melhor",
-  sent_rules: "Regras enviadas",
-  sent_payment_data: "Dados de pagto enviados",
-}
-
 /////
 
 export type Genders = (typeof GENDERS)[number]
 export type Orientations = (typeof ORIENTATIONS)[number]
 export type Pronouns = (typeof PRONOUNS)[number]
+
+/////
+// Kysely helpers
+
+export type EventParticipant = Selectable<
+  Database["public"]["Tables"]["event_participants"]["Row"]
+>
+
+export type ParticipantVsEvent = EventParticipant & {
+  event_title: Event["title"]
+  event_emoji: Event["emoji"]
+}

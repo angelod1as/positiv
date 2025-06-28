@@ -1,3 +1,4 @@
+import { collect, inputFromForm } from "composable-functions"
 import { useEffect } from "react"
 import { useFetcher } from "react-router"
 import { formAction } from "remix-forms"
@@ -5,6 +6,7 @@ import { redirectWithError } from "remix-toast"
 import {
   getAdminContext,
   getAdminEventById,
+  getAdminParticipantsWithExtraDataById,
   getAdminReminderCountByEventId,
   getEventDemographicsById,
   sendEventReminders,
@@ -16,9 +18,9 @@ import {
 } from "~/business/admin/common"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import { getFormData } from "~/lib/helpers/get-form-data"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-page"
+import { AdminEventParticipantsTable } from "./admin-event-participants-table"
 import { Buttons } from "./buttons"
 import { DatesAndTimes } from "./dates-and-times"
 import { DemographicsData } from "./demographics"
@@ -41,10 +43,8 @@ export type FetcherData =
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getAdminContext(request, params)
-  const { intent } = await getFormData({
-    request,
-    values: ["intent"],
-  })
+
+  const { intent } = await inputFromForm(request)
 
   if (intent === "send-reminders") {
     return await formAction({
@@ -80,25 +80,34 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const { isOpen, isScheduled } = checkEventStatus(event.event_status)
 
-  const [reminderCountResult, demographicsResult] = await Promise.all([
-    getAdminReminderCountByEventId({
-      eventId,
-      isScheduled,
-      isOpen,
-    }),
+  const eventDemographics =
     event.event_status === "Completed"
-      ? getEventDemographicsById({ eventId })
-      : undefined,
-  ])
+      ? getEventDemographicsById
+      : () => {
+          return
+        }
+
+  const resultCollect = await collect({
+    participants: getAdminParticipantsWithExtraDataById,
+    reminderCount: getAdminReminderCountByEventId,
+    demographics: eventDemographics,
+  })({
+    eventId,
+    isScheduled,
+    isOpen,
+  })
+
+  if (!resultCollect.success) {
+    return { event, reminderCount: 0, participants: [] }
+  }
+
+  const { participants, reminderCount, demographics } = resultCollect.data
 
   return {
     event,
-    reminderCount: reminderCountResult.success
-      ? reminderCountResult.data
-      : undefined,
-    demographics: demographicsResult?.success
-      ? demographicsResult.data
-      : undefined,
+    reminderCount,
+    participants,
+    demographics,
   }
 }
 
@@ -109,7 +118,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     sendToast(fetcher.data)
   }, [fetcher.data])
 
-  const { event, reminderCount = 0, demographics } = loaderData
+  const { event, reminderCount, participants, demographics } = loaderData
 
   const { title, emoji, time_event_start } = event
 
@@ -127,6 +136,13 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       <EventStatusForm {...event} fetcher={fetcher} />
 
       {demographics && <DemographicsData demographics={demographics} />}
+
+      <div className="max-h-[600px]">
+        <AdminEventParticipantsTable
+          participants={participants}
+          eventId={event.id}
+        />
+      </div>
 
       <GeneralData {...event} />
       <DatesAndTimes {...event} />

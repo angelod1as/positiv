@@ -176,8 +176,10 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     details =
       error.status === 404 ? (
         <p>Página não encontrada.</p>
+      ) : error.statusText ? (
+        <p>{error.statusText}</p>
       ) : (
-        <p>{error.statusText || details}</p>
+        details
       )
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = <p>{error.message}</p>
