@@ -1,4 +1,5 @@
 import { type FC } from "react"
+import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
   GenderBadge,
   OrientationBadge,
@@ -10,7 +11,6 @@ import { DataPair } from "~/components/atoms/data-pair/data-pair"
 
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import { profilePropMap } from "~/lib/helpers/propMaps"
-import type { Profile } from "~types/entities.types"
 
 const getAge = (date_of_birth: string | null) => {
   if (!date_of_birth) return ""
@@ -26,7 +26,7 @@ const getAge = (date_of_birth: string | null) => {
   return age
 }
 
-type BasicDataProps = { profile: Profile }
+type BasicDataProps = { profile: ProfileWithExtraData }
 export const BasicData: FC<BasicDataProps> = ({ profile }) => {
   const {
     full_name,
@@ -43,6 +43,7 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
     rg_issuer,
     social_name,
     where_lives,
+    was_admin_skipped_last_event,
   } = profile
 
   return (
@@ -61,6 +62,12 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
             <GenderBadge gender={gender} />
             <OrientationBadge orientation={orientation} />
           </div>
+          {was_admin_skipped_last_event && (
+            <div className="mt-2">
+              Essa pessoa <b className="text-red-600">participou do rodízio</b>{" "}
+              no último evento
+            </div>
+          )}
         </div>
         <div>
           <DataPair top pair={[profilePropMap("email"), email]} />
