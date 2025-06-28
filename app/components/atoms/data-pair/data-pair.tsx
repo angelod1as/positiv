@@ -5,7 +5,7 @@ type DataPairProps = {
   suffix?: string
 }
 
-export const DataPair: FC<DataPairProps> = ({ pair, suffix = false }) => {
+export const DataPair: FC<DataPairProps> = ({ pair, suffix = "" }) => {
   // Passes boolean values
   if (pair[1] === null || pair[1] === undefined) return null
   const label = pair[0]
