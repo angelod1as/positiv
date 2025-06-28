@@ -1,6 +1,14 @@
 import { type FC } from "react"
+import {
+  GenderBadge,
+  OrientationBadge,
+  PronoumsBadge,
+  RookieBadge,
+  VeteranBadge,
+} from "~/components/atoms/badges/badges"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
-import { phoneToButton } from "~/lib/helpers/phone-to-button"
+
+import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import { profilePropMap } from "~/lib/helpers/propMaps"
 import type { Profile } from "~types/entities.types"
 
@@ -41,22 +49,25 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
     <>
       <h2>Dados básicos</h2>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <h3>
+      <div className="grid md:grid-cols-4 gap-4 [&>div]:space-y-2">
+        <div className="col-span-2">
+          <h3 className="space-x-2">
+            <PhoneButton phone={phone} />
             <b>{social_name}</b> ({full_name}), {getAge(date_of_birth)}
           </h3>
-          <p>{is_veteran ? "Veterane" : "Novate"}</p>
-          <p>
-            {gender?.join(", ")}; {pronouns?.join(", ")};{" "}
-            {orientation?.join(", ")}{" "}
-          </p>
-          <div>{phoneToButton(phone)}</div>
+          <div className="space-x-2">
+            {is_veteran ? <VeteranBadge /> : <RookieBadge />}
+            <PronoumsBadge pronouns={pronouns} />
+            <GenderBadge gender={gender} />
+            <OrientationBadge orientation={orientation} />
+          </div>
         </div>
-        <div className="space-y-2">
+        <div>
           <DataPair top pair={[profilePropMap("email"), email]} />
           <DataPair top pair={[profilePropMap("rg"), `${rg} ${rg_issuer}`]} />
           <DataPair top pair={[profilePropMap("cpf"), cpf]} />
+        </div>
+        <div>
           <DataPair top pair={[profilePropMap("where_lives"), where_lives]} />
           <DataPair
             top
