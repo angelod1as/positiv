@@ -19,6 +19,7 @@ export type Database = {
           event_id: string
           id: string
           is_social_spot: boolean | null
+          is_staff_spot: boolean | null
           is_user_applied: boolean
           notes: string | null
           payment: number | null
@@ -35,6 +36,7 @@ export type Database = {
           event_id: string
           id?: string
           is_social_spot?: boolean | null
+          is_staff_spot?: boolean | null
           is_user_applied?: boolean
           notes?: string | null
           payment?: number | null
@@ -51,6 +53,7 @@ export type Database = {
           event_id?: string
           id?: string
           is_social_spot?: boolean | null
+          is_staff_spot?: boolean | null
           is_user_applied?: boolean
           notes?: string | null
           payment?: number | null

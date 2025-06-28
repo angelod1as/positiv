@@ -46,13 +46,37 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             }}
             inputTypes={{
               is_social_spot: "checkbox",
+              is_staff_spot: "checkbox",
               payment: "number",
             }}
             options={{
               process_status: processStatusOptions,
             }}
             labels={labels}
-          />
+          >
+            {({ Field, Errors, Error, Button }) => {
+              return (
+                <>
+                  {/* Hidden */}
+                  <Field name="intent" hidden />
+                  <Field name="event_id" hidden />
+                  <Field name="profile_id" hidden />
+
+                  <div className="space-y-2">
+                    <Field name="process_status" />
+                    <Field name="payment" />
+                    <div className="flex gap-2">
+                      <Field name="is_social_spot" />
+                      <Field name="is_staff_spot" />
+                    </div>
+                    <Error />
+                    <Errors />
+                    <Button />
+                  </div>
+                </>
+              )
+            }}
+          </SchemaForm>
         </div>
 
         <div className="space-y-2">
