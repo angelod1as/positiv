@@ -18,6 +18,7 @@ import {
   updateEventStatusSchema,
   updateParticipantPropertySchema,
 } from "./common"
+import { calculateDemographics } from "./utils/demographics"
 
 const {
   admin: { ADMIN_DASHBOARD },
@@ -438,5 +439,28 @@ export const getAdminReminderCountByEventId = composable(
       .executeTakeFirstOrThrow()
 
     return Number(result.count)
+  },
+)
+
+export const getEventDemographicsById = composable(
+  async ({ eventId }: { eventId: string }) => {
+    const baseQuery = kysely
+      .selectFrom("event_participants")
+      .where("event_participants.event_id", "=", eventId)
+      .where("process_status", "=", "attended")
+
+    const result = await baseQuery
+      .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+      .select([
+        "profiles.date_of_birth",
+        "profiles.gender",
+        "profiles.is_veteran",
+        "profiles.orientation",
+        "profiles.where_lives",
+      ])
+      .execute()
+
+    const demographics = calculateDemographics(result)
+    return demographics
   },
 )
