@@ -82,16 +82,21 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   try {
-    const { currentProfile, isProd, currentUser } = await getContext(
+    const { currentProfile, currentUser, isProd } = await getContext(
       request,
       params,
     )
     const { toast, headers } = await getToast(request)
 
-    return data({ currentUser, currentProfile, isProd, toast }, { headers })
+    return data({ currentUser, currentProfile, toast, isProd }, { headers })
   } catch (error) {
     console.error("Root loader error", error)
-    return { currentUser: null, currentProfile: null, toast: null }
+    return {
+      currentUser: null,
+      currentProfile: null,
+      toast: null,
+      isProd: null,
+    }
   }
 }
 
@@ -117,7 +122,7 @@ export function Layout(props: { children: ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { currentUser, currentProfile, toast } = loaderData
+  const { currentUser, currentProfile, toast, isProd } = loaderData
 
   useEffect(() => {
     if (toast?.type) {
@@ -131,7 +136,11 @@ export default function App({ loaderData }: Route.ComponentProps) {
 
   return (
     <>
-      <Header profile={currentProfile} userEmail={currentUser?.email} />
+      <Header
+        isProd={Boolean(isProd)}
+        profile={currentProfile}
+        userEmail={currentUser?.email}
+      />
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
