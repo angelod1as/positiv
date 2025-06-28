@@ -10,14 +10,14 @@ DECLARE
     admin_profile_id uuid;
     user1_profile_id uuid;
     user2_profile_id uuid;
-    user3_profile_id uuid; -- Added for skipped scenarios
-    user4_profile_id uuid; -- New: For "not-attended" and "rejected" scenarios
+    user3_profile_id uuid;
+    user4_profile_id uuid;
 
     -- Declare variables for specific event IDs (based on title or status+index)
     event_id_reg_open_1 uuid;
     event_id_reg_closed_1 uuid;
     event_id_cancelled_1 uuid;
-    event_id_completed_1 uuid; -- Use this one for the 'attended' scenario
+    event_id_completed_1 uuid;
     event_id_scheduled_1 uuid;
 
 BEGIN
@@ -26,7 +26,7 @@ BEGIN
     SELECT p.id INTO user1_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user1@example.com';
     SELECT p.id INTO user2_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user2@example.com';
     SELECT p.id INTO user3_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user3@example.com';
-    SELECT p.id INTO user4_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user4@example.com'; -- New user for new statuses
+    SELECT p.id INTO user4_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user4@example.com';
 
     -- Retrieve specific event IDs based on titles or statuses (from 03_events.sql)
     SELECT id INTO event_id_reg_open_1   FROM public.events WHERE title = 'Evento Com Inscrições Abertas 1';
@@ -38,7 +38,7 @@ BEGIN
     -- ### Seed public.event_participants ###
     -- Insert specific participation records using the retrieved IDs
 
-    INSERT INTO public.event_participants (profile_id, event_id, is_user_applied, process_status, application_date, cancellation_date, payment, notes)
+    INSERT INTO public.event_participants (profile_id, event_id, is_user_applied, process_status, application_date, cancellation_date, payment, notes, is_social_spot, is_staff_spot, admin_general_notes)
     VALUES
     -- Admin's Participations (Example Scenarios)
     (
@@ -49,7 +49,10 @@ BEGIN
         now() - interval '2 months',   -- application_date
         NULL,                          -- cancellation_date
         20.00,                         -- payment (below price example)
-        'Admin paid for this participation' -- notes
+        'Admin paid for this participation', -- notes
+        FALSE,                          -- Is Social Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         admin_profile_id,              -- profile_id: Admin
@@ -59,7 +62,10 @@ BEGIN
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        NULL                           -- notes
+        NULL,                           -- notes
+        FALSE,                          -- Is Social Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         admin_profile_id,              -- profile_id: Admin
@@ -69,7 +75,10 @@ BEGIN
         now() - interval '3 months',   -- application_date
         now() - interval '1 month',    -- cancellation_date
         NULL,                          -- payment
-        'Rejected by admin due to event cancellation' -- notes
+        'Rejected by admin due to event cancellation', -- notes
+        FALSE,                          -- Is Social Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
 
     -- User1's Participations (Example Scenarios)
@@ -81,7 +90,10 @@ BEGIN
         now() - interval '1 day',      -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment (not paid yet)
-        NULL                           -- notes
+        NULL,                           -- notes
+        FALSE,                          -- Is Social Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user1_profile_id,              -- profile_id: User1
@@ -91,7 +103,10 @@ BEGIN
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment (no payment since skipped)
-        'Admin decision: capacity issues' -- notes explaining why skipped
+        NULL,
+        FALSE,                          -- Is Social Spot
+        TRUE,                           -- Is Staff Spot
+        'Admin notes here... why skipped and all...'                            -- admin_general_notes
     ),
     (
         user1_profile_id,              -- profile_id: User1
@@ -101,7 +116,10 @@ BEGIN
         now() - interval '1 month',    -- application_date
         NULL,                          -- cancellation_date
         15.00,                         -- payment (matches price example)
-        'User paid for this closed event' -- notes
+        'User paid for this closed event', -- notes
+        FALSE,                          -- Is Social Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
 
     -- User2's Participations (Testing multiple skips)
@@ -113,7 +131,10 @@ BEGIN
         now() - interval '2 days',     -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        'Admin talking to user about participation' -- notes
+        'Admin talking to user about participation', -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user2_profile_id,              -- profile_id: User2
@@ -123,7 +144,10 @@ BEGIN
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        'Admin decision: behavioral concerns' -- notes
+        'Admin decision: behavioral concerns', -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user2_profile_id,              -- profile_id: User2
@@ -133,7 +157,10 @@ BEGIN
         now() - interval '6 months',   -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        'Admin decision: no-show history' -- notes
+        'Admin decision: no-show history', -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
 
     -- User3's Participations (Control case - good participant)
@@ -145,7 +172,10 @@ BEGIN
         now() - interval '3 days',     -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        'User sent payment details'    -- notes
+        'User sent payment details'    , -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user3_profile_id,              -- profile_id: User3
@@ -155,7 +185,10 @@ BEGIN
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
         25.00,                         -- payment
-        'Great participant!'           -- notes
+        'Great participant!'           , -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user3_profile_id,              -- profile_id: User3
@@ -165,7 +198,10 @@ BEGIN
         now() - interval '6 months',   -- application_date
         NULL,                          -- cancellation_date
         20.00,                         -- payment
-        NULL                           -- notes
+        NULL                           , -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
 
     -- User4's Participations (New scenarios for 'not-attended' and 'rejected')
@@ -177,7 +213,10 @@ BEGIN
         now() - interval '5 days',     -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        'User considering participation' -- notes
+        'User considering participation', -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user4_profile_id,              -- profile_id: User4
@@ -187,7 +226,10 @@ BEGIN
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        'User applied but did not show up' -- notes
+        'User applied but did not show up', -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user4_profile_id,              -- profile_id: User4
@@ -197,7 +239,10 @@ BEGIN
         now() - interval '2 months',   -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        'Application rejected by admin due to criteria mismatch' -- notes
+        'Application rejected by admin due to criteria mismatch', -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user4_profile_id,              -- profile_id: User4
@@ -207,7 +252,10 @@ BEGIN
         now() - interval '7 months',   -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        'Admin sent participation rules to user' -- notes
+        'Admin sent participation rules to user', -- notes
+        FALSE,                          -- Is Social Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     );
 
     -- Summary of test scenarios created:

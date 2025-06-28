@@ -101,5 +101,7 @@ export const ParticipantVsEventSchema = zod.object({
   intent: zod.literal("participant-vs-event-schema"),
   process_status: zod.string(),
   is_social_spot: zod.boolean(),
+  is_staff_spot: zod.boolean(),
   payment: zod.coerce.number(),
+  admin_general_notes: zod.string(),
 })
