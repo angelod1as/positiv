@@ -1,7 +1,7 @@
 import { EyeIcon } from "lucide-react"
 import { Column } from "primereact/column"
 import type { FC } from "react"
-import type { ParticipantWithExtraData } from "~/business/admin/admin.server"
+import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { DataTable } from "~/components/organisms/data-table"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import paths from "~/lib/paths"
@@ -13,13 +13,13 @@ const {
 } = paths
 
 type AdminEventParticipantsTableProps = {
-  participants: ParticipantWithExtraData[]
+  participants: ProfileWithExtraData[]
   eventId: string
 }
 
 const joinArray = (
-  values: ParticipantWithExtraData,
-  prop: keyof ParticipantWithExtraData,
+  values: ProfileWithExtraData,
+  prop: keyof ProfileWithExtraData,
 ) => {
   const value = values[prop]
   return Array.isArray(value) ? value.join(", ") : value
@@ -33,7 +33,7 @@ const joinArray = (
 //   return <Checkbox checked={Boolean(value)} disabled />
 // }
 
-const isParticipantAccepted = (participant: ParticipantWithExtraData) => {
+const isParticipantAccepted = (participant: ProfileWithExtraData) => {
   return ["sent_payment_data", "paid", "sent_rules"].includes(
     participant.process_status,
   )
