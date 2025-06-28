@@ -85,12 +85,7 @@ export default [
           route("/novo/:id?", "pages/admin/events/create-edit-event.tsx"),
           // Baixar dados
           route("/:id/baixar", "pages/admin/events/download-data.tsx"),
-          // Ver participantes
-          route(
-            "/:id/participantes",
-            "pages/admin/events/view-event-participants.tsx",
-          ),
-          // See participant in relation to event
+          // Participante vs Evento
           route(
             "/:eventId/participantes/:participantId",
             "pages/admin/events/view-event-participant.tsx",

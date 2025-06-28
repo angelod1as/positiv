@@ -14,7 +14,7 @@ import type { Route } from "./+types/view-event-participant"
 
 const {
   admin: {
-    events: { ADMIN_EVENTS, ADMIN_EVENT_PARTICIPANTS },
+    events: { ADMIN_EVENTS, ADMIN_VIEW_EVENT },
   },
 } = paths
 
@@ -27,7 +27,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   if (!participantId) {
     return redirectWithError(
       "Participante não encontrade",
-      ADMIN_EVENT_PARTICIPANTS(eventId),
+      ADMIN_VIEW_EVENT(eventId),
     )
   }
 

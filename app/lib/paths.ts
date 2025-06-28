@@ -36,8 +36,6 @@ const ADMIN_VIEW_EVENT = (id: string) => `${ADMIN_EVENTS}/${id}`
 const ADMIN_EDIT_EVENT = (id: string) => `${ADMIN_EVENTS}/novo/${id}`
 const ADMIN_DOWNLOAD_EVENT = (id: string) => `${ADMIN_EVENTS}/${id}/baixar`
 const ADMIN_CREATE_EVENT = `${ADMIN_EVENTS}/novo`
-const ADMIN_EVENT_PARTICIPANTS = (id: string) =>
-  `${ADMIN_EVENTS}/${id}/participantes`
 const ADMIN_EVENT_VIEW_PARTICIPANT = (eventId: string, participantId: string) =>
   `${ADMIN_EVENTS}/${eventId}/participantes/${participantId}`
 
@@ -53,7 +51,6 @@ const paths = {
       ADMIN_DOWNLOAD_EVENT,
       ADMIN_EVENTS,
       ADMIN_CREATE_EVENT,
-      ADMIN_EVENT_PARTICIPANTS,
       ADMIN_EVENT_VIEW_PARTICIPANT,
     },
   },
