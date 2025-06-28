@@ -1,11 +1,9 @@
 import { EyeIcon } from "lucide-react"
 import { Column } from "primereact/column"
 import type { FC } from "react"
-import WhatsappIcon from "~/assets/social/whatsapp.svg"
 import type { ParticipantWithExtraData } from "~/business/admin/admin.server"
-import { Button } from "~/components/atoms/button/button"
 import { DataTable } from "~/components/organisms/data-table"
-import { phoneToWhatsappLink } from "~/lib/helpers/phone-to-whatsapp-link"
+import { phoneToButton } from "~/lib/helpers/phone-to-button"
 import paths from "~/lib/paths"
 
 const {
@@ -25,20 +23,6 @@ const joinArray = (
 ) => {
   const value = values[prop]
   return Array.isArray(value) ? value.join(", ") : value
-}
-
-const phoneToButton = (
-  values: ParticipantWithExtraData,
-  prop: keyof ParticipantWithExtraData,
-) => {
-  const value = values[prop]
-  const link = phoneToWhatsappLink(value)
-  if (!link) return null
-  return (
-    <Button to={link} variant="outline" linkProps={{ target: "_blank" }}>
-      <img src={WhatsappIcon} alt="Whatsapp" width={20} />
-    </Button>
-  )
 }
 
 // const booleanBodyTemplate = (
@@ -112,7 +96,7 @@ export const AdminEventParticipantsTable: FC<
       <Column
         field="phone"
         header="Whatsapp"
-        body={(values) => phoneToButton(values, "phone")}
+        body={(values) => phoneToButton(values.phone)}
         sortable={false}
       />
 
