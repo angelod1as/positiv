@@ -9,11 +9,12 @@ import { sendEmail, type MailOptions } from "~/lib/email/send-email"
 import { chunkArray } from "~/lib/helpers/chunk-array"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
-import type { Profile } from "~types/entities.types"
+import type { ParticipantVsEvent, Profile } from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,
   eventFormSchema,
+  ParticipantVsEventSchema,
   sendEventRemindersSchema,
   updateEventStatusSchema,
   updateParticipantPropertySchema,
@@ -57,10 +58,11 @@ export type ParticipantWithExtraData = {
   id: string
   full_name: string | null
   social_name: string | null
-  pronouns: string[] | null
-  gender: string[] | null
-  orientation: string[] | null
+  pronouns: Array<string> | null
+  gender: Array<string> | null
+  orientation: Array<string> | null
   phone: number | null
+  // TODO: Should be ENUM
   process_status: string
   is_veteran: boolean | null
   is_social_spot: boolean | null
@@ -69,7 +71,7 @@ export type ParticipantWithExtraData = {
 }
 
 export const getAdminParticipantsWithExtraDataById = composable(
-  async (eventId: string) => {
+  async ({ eventId }: { eventId: string }) => {
     // Main query to get participants information along with if they were skipped in the last event
 
     const participantsWithExtraData = await kysely
@@ -130,7 +132,11 @@ export const getAdminProfileById = composable(
 )
 
 export const getEventParticipantHistoryById = composable(
-  async ({ profileId }: { profileId: string }) => {
+  async ({
+    profileId,
+  }: {
+    profileId: string
+  }): Promise<Array<ParticipantVsEvent>> => {
     return await kysely
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
@@ -295,8 +301,8 @@ const getEventRemindersByEventId = composable(
 )
 
 type SendBatchEventReminderEmail = {
-  emails: string[]
-  profileIds: string[]
+  emails: Array<string>
+  profileIds: Array<string>
   eventId: string
 }
 const sendBatchEventReminderEmail = composable(
@@ -404,16 +410,18 @@ export const sendEventReminders = applySchema(sendEventRemindersSchema)(async (
   return
 })
 
-export const markEmailsAsSent = composable(async (profileIds: string[]) => {
-  return await kysely
-    .updateTable("event_reminders")
-    .set({
-      email_sent: true,
-      email_sent_date: new Date().toISOString(),
-    })
-    .where("profile_id", "in", profileIds)
-    .execute()
-})
+export const markEmailsAsSent = composable(
+  async (profileIds: Array<string>) => {
+    return await kysely
+      .updateTable("event_reminders")
+      .set({
+        email_sent: true,
+        email_sent_date: new Date().toISOString(),
+      })
+      .where("profile_id", "in", profileIds)
+      .execute()
+  },
+)
 
 export const getAdminReminderCountByEventId = composable(
   async ({
@@ -462,5 +470,18 @@ export const getEventDemographicsById = composable(
 
     const demographics = calculateDemographics(result)
     return demographics
+  },
+)
+
+export const UpdateParticipantVsEvent = applySchema(ParticipantVsEventSchema)(
+  async (formData) => {
+    const { intent, event_id, profile_id, ...data } = formData
+
+    return await kysely
+      .updateTable("event_participants")
+      .where("event_id", "=", event_id)
+      .where("profile_id", "=", profile_id)
+      .set(data)
+      .execute()
   },
 )

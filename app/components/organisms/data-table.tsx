@@ -22,13 +22,18 @@ type buttonProps = {
   Icon: LucideIcon
 }
 
+export type DataTableHeader = {
+  title?: string
+  numbers: ReactNode
+}
+
 export interface DataTableProps<T extends DataTableValue> {
   value: T[]
   id: string
   filters?: DataTableFilterMeta
   onFilter?: (filters: DataTableFilterMeta) => void
   globalFilterFields?: string[]
-  headerTitle?: string
+  header?: DataTableHeader
   children: ReactNode
   rows?: number
   scrollHeight?: string
@@ -51,13 +56,14 @@ FilterService.register("custom_time_event_start", (_value, _filters) => {
   return true
 })
 
+// TODO: Change value to data (better naming)
 export function DataTable<T extends DataTableValue>({
   value,
   id,
   filters: initialFilters,
   onFilter,
   globalFilterFields = [],
-  headerTitle,
+  header,
   children,
   rows = 150,
   buttons = [],
@@ -87,29 +93,36 @@ export function DataTable<T extends DataTableValue>({
     }
   }
 
-  const renderHeader = () => (
-    <div className="flex justify-between items-center">
-      <div className="flex items-center gap-2">
-        {headerTitle && (
-          <span className="font-semibold text-lg">{headerTitle}</span>
-        )}
-        {globalFilterFields.length > 0 && (
-          <InputText
-            value={globalFilterValue}
-            onChange={onGlobalFilterChange}
-            placeholder="Buscar..."
-          />
-        )}
+  const renderHeader = () => {
+    const { numbers, title } = header || {}
+
+    return (
+      <div className="flex justify-between items-end font-normal">
+        <div className="flex gap-4">
+          <div>
+            {title && <span className="font-semibold text-lg">{title}</span>}
+          </div>
+          <div>
+            {globalFilterFields.length > 0 && (
+              <InputText
+                value={globalFilterValue}
+                onChange={onGlobalFilterChange}
+                placeholder="Buscar..."
+              />
+            )}
+          </div>
+          <div className="flex items-end gap-4">{numbers}</div>
+        </div>
+        <Button
+          variant="outline"
+          onClick={toggleMaximized}
+          title={isMaximized ? "Minimizar tabela" : "Maximizar tabela"}
+        >
+          {isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
+        </Button>
       </div>
-      <Button
-        variant="outline"
-        onClick={toggleMaximized}
-        title={isMaximized ? "Minimizar tabela" : "Maximizar tabela"}
-      >
-        {isMaximized ? <MinimizeIcon /> : <MaximizeIcon />}
-      </Button>
-    </div>
-  )
+    )
+  }
 
   //// See top todo
   // const dateRowFilterTemplate = (
