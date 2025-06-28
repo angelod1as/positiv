@@ -61,6 +61,7 @@ export type ParticipantWithExtraData = {
   gender: string[] | null
   orientation: string[] | null
   phone: number | null
+  // TODO: Should be ENUM
   process_status: string
   is_veteran: boolean | null
   is_social_spot: boolean | null
@@ -69,7 +70,7 @@ export type ParticipantWithExtraData = {
 }
 
 export const getAdminParticipantsWithExtraDataById = composable(
-  async (eventId: string) => {
+  async ({ eventId }: { eventId: string }) => {
     // Main query to get participants information along with if they were skipped in the last event
 
     const participantsWithExtraData = await kysely
