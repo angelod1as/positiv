@@ -38,7 +38,7 @@ BEGIN
     -- ### Seed public.event_participants ###
     -- Insert specific participation records using the retrieved IDs
 
-    INSERT INTO public.event_participants (profile_id, event_id, is_user_applied, process_status, application_date, cancellation_date, payment, notes, is_social_spot, is_staff_spot)
+    INSERT INTO public.event_participants (profile_id, event_id, is_user_applied, process_status, application_date, cancellation_date, payment, notes, is_social_spot, is_staff_spot, admin_general_notes)
     VALUES
     -- Admin's Participations (Example Scenarios)
     (
@@ -51,7 +51,8 @@ BEGIN
         20.00,                         -- payment (below price example)
         'Admin paid for this participation', -- notes
         FALSE,                          -- Is Social Spot
-        TRUE                           -- Is Staff Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         admin_profile_id,              -- profile_id: Admin
@@ -63,7 +64,8 @@ BEGIN
         NULL,                          -- payment
         NULL,                           -- notes
         FALSE,                          -- Is Social Spot
-        TRUE                           -- Is Staff Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         admin_profile_id,              -- profile_id: Admin
@@ -75,7 +77,8 @@ BEGIN
         NULL,                          -- payment
         'Rejected by admin due to event cancellation', -- notes
         FALSE,                          -- Is Social Spot
-        TRUE                           -- Is Staff Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
 
     -- User1's Participations (Example Scenarios)
@@ -89,7 +92,8 @@ BEGIN
         NULL,                          -- payment (not paid yet)
         NULL,                           -- notes
         FALSE,                          -- Is Social Spot
-        TRUE                           -- Is Staff Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user1_profile_id,              -- profile_id: User1
@@ -99,9 +103,10 @@ BEGIN
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment (no payment since skipped)
-        'Admin decision: capacity issues', -- notes
+        NULL,
         FALSE,                          -- Is Social Spot
-        TRUE                           -- Is Staff Spot explaining why skipped
+        TRUE,                           -- Is Staff Spot
+        'Admin notes here... why skipped and all...'                            -- admin_general_notes
     ),
     (
         user1_profile_id,              -- profile_id: User1
@@ -113,7 +118,8 @@ BEGIN
         15.00,                         -- payment (matches price example)
         'User paid for this closed event', -- notes
         FALSE,                          -- Is Social Spot
-        TRUE                           -- Is Staff Spot
+        TRUE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
 
     -- User2's Participations (Testing multiple skips)
@@ -127,7 +133,8 @@ BEGIN
         NULL,                          -- payment
         'Admin talking to user about participation', -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user2_profile_id,              -- profile_id: User2
@@ -139,7 +146,8 @@ BEGIN
         NULL,                          -- payment
         'Admin decision: behavioral concerns', -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user2_profile_id,              -- profile_id: User2
@@ -151,7 +159,8 @@ BEGIN
         NULL,                          -- payment
         'Admin decision: no-show history', -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
 
     -- User3's Participations (Control case - good participant)
@@ -165,7 +174,8 @@ BEGIN
         NULL,                          -- payment
         'User sent payment details'    , -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user3_profile_id,              -- profile_id: User3
@@ -177,7 +187,8 @@ BEGIN
         25.00,                         -- payment
         'Great participant!'           , -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user3_profile_id,              -- profile_id: User3
@@ -189,7 +200,8 @@ BEGIN
         20.00,                         -- payment
         NULL                           , -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
 
     -- User4's Participations (New scenarios for 'not-attended' and 'rejected')
@@ -203,7 +215,8 @@ BEGIN
         NULL,                          -- payment
         'User considering participation', -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user4_profile_id,              -- profile_id: User4
@@ -215,7 +228,8 @@ BEGIN
         NULL,                          -- payment
         'User applied but did not show up', -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user4_profile_id,              -- profile_id: User4
@@ -227,7 +241,8 @@ BEGIN
         NULL,                          -- payment
         'Application rejected by admin due to criteria mismatch', -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     ),
     (
         user4_profile_id,              -- profile_id: User4
@@ -239,7 +254,8 @@ BEGIN
         NULL,                          -- payment
         'Admin sent participation rules to user', -- notes
         FALSE,                          -- Is Social Spot
-        FALSE                           -- Is Staff Spot
+        FALSE,                           -- Is Staff Spot
+        NULL                            -- admin_general_notes
     );
 
     -- Summary of test scenarios created:
