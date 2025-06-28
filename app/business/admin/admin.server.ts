@@ -9,7 +9,11 @@ import { sendEmail, type MailOptions } from "~/lib/email/send-email"
 import { chunkArray } from "~/lib/helpers/chunk-array"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
-import type { ParticipantVsEvent, Profile } from "~types/entities.types"
+import type {
+  EventParticipant,
+  ParticipantVsEvent,
+  Profile,
+} from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,
@@ -54,70 +58,62 @@ export const getAdminEventById = composable(
   },
 )
 
-export type ParticipantWithExtraData = {
-  id: string
-  full_name: string | null
-  social_name: string | null
-  pronouns: Array<string> | null
-  gender: Array<string> | null
-  orientation: Array<string> | null
-  phone: number | null
-  // TODO: Should be ENUM
-  process_status: string
-  is_veteran: boolean | null
-  is_social_spot: boolean | null
-  was_admin_skipped_last_event: boolean
-  payment: number | null
-}
+export type ProfileWithExtraData = Profile &
+  EventParticipant & {
+    was_admin_skipped_last_event: boolean
+  }
 
-export const getAdminParticipantsWithExtraDataById = composable(
-  async ({ eventId }: { eventId: string }) => {
-    // Main query to get participants information along with if they were skipped in the last event
-
-    const participantsWithExtraData = await kysely
-      .selectFrom("event_participants as current_ep")
-      .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
-      .leftJoin(
-        (eb) =>
-          eb
-            .selectFrom("event_participants as ep")
-            .innerJoin("events as e", "ep.event_id", "e.id")
-            .select([
-              "ep.profile_id",
-              "ep.process_status",
-              sql<number>`row_number() over (
+// Main query to get participants information along with if they were skipped in the last event
+const profilesWithExtraDataQuery = kysely
+  .selectFrom("event_participants as current_ep")
+  .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
+  .leftJoin(
+    (eb) =>
+      eb
+        .selectFrom("event_participants as ep")
+        .innerJoin("events as e", "ep.event_id", "e.id")
+        .select([
+          "ep.profile_id",
+          "ep.process_status",
+          sql<number>`row_number() over (
             partition by ep.profile_id
             order by e.time_event_start desc
           )`.as("rn"),
-            ])
-            .where("ep.is_user_applied", "=", true)
-            .as("ranked_events"),
-        (join) =>
-          join
-            .onRef("ranked_events.profile_id", "=", "current_ep.profile_id")
-            .on("ranked_events.rn", "=", 2),
-      )
-      .select([
-        "p.id",
-        "p.full_name",
-        "p.social_name",
-        "p.pronouns",
-        "p.phone",
-        "p.gender",
-        "p.orientation",
-        "p.is_veteran",
-        "current_ep.payment",
-        "current_ep.process_status",
-        "current_ep.is_social_spot",
-        sql<boolean>`ranked_events.process_status = 'skipped'`.as(
-          "was_admin_skipped_last_event",
-        ),
-      ])
+        ])
+        .where("ep.is_user_applied", "=", true)
+        .as("ranked_events"),
+    (join) =>
+      join
+        .onRef("ranked_events.profile_id", "=", "current_ep.profile_id")
+        .on("ranked_events.rn", "=", 2),
+  )
+  .selectAll("p")
+  .selectAll("current_ep")
+  .select([
+    sql<boolean>`ranked_events.process_status = 'skipped'`.as(
+      "was_admin_skipped_last_event",
+    ),
+  ])
+
+export const getProfileWithExtraDataById = composable(
+  async ({ profileId, eventId }: { profileId: string; eventId: string }) => {
+    const profile = await profilesWithExtraDataQuery
+      .where("current_ep.event_id", "=", eventId)
+      .where("current_ep.is_user_applied", "=", true)
+      .where("current_ep.profile_id", "=", profileId)
+      .executeTakeFirstOrThrow()
+    return profile
+  },
+)
+
+export const getProfilesWithExtraDataById = composable(
+  async ({ eventId }: { eventId: string }) => {
+    const profiles = await profilesWithExtraDataQuery
       .where("current_ep.event_id", "=", eventId)
       .where("current_ep.is_user_applied", "=", true)
       .execute()
 
-    return participantsWithExtraData
+    return profiles
   },
 )
 
@@ -148,10 +144,6 @@ export const getEventParticipantHistoryById = composable(
       .execute()
   },
 )
-
-///////
-// ACTIONS
-//////
 
 export const createOrUpdateEvent = applySchema(
   eventFormSchema,
