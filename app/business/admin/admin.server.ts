@@ -14,6 +14,7 @@ import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,
   eventFormSchema,
+  ParticipantVsEventSchema,
   sendEventRemindersSchema,
   updateEventStatusSchema,
   updateParticipantPropertySchema,
@@ -469,5 +470,18 @@ export const getEventDemographicsById = composable(
 
     const demographics = calculateDemographics(result)
     return demographics
+  },
+)
+
+export const UpdateParticipantVsEvent = applySchema(ParticipantVsEventSchema)(
+  async (formData) => {
+    const { intent, event_id, profile_id, ...data } = formData
+
+    return await kysely
+      .updateTable("event_participants")
+      .where("event_id", "=", event_id)
+      .where("profile_id", "=", profile_id)
+      .set(data)
+      .execute()
   },
 )

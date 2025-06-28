@@ -96,7 +96,10 @@ export const sendEventRemindersSchema = zod.object({
 })
 
 export const ParticipantVsEventSchema = zod.object({
+  profile_id: zod.string(),
+  event_id: zod.string(),
+  intent: zod.literal("participant-vs-event-schema"),
   process_status: zod.string(),
   is_social_spot: zod.boolean(),
-  payment: zod.number(),
+  payment: zod.coerce.number(),
 })
