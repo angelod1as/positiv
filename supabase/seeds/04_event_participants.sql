@@ -11,6 +11,7 @@ DECLARE
     user1_profile_id uuid;
     user2_profile_id uuid;
     user3_profile_id uuid; -- Added for skipped scenarios
+    user4_profile_id uuid; -- New: For "not-attended" and "rejected" scenarios
 
     -- Declare variables for specific event IDs (based on title or status+index)
     event_id_reg_open_1 uuid;
@@ -25,6 +26,7 @@ BEGIN
     SELECT p.id INTO user1_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user1@example.com';
     SELECT p.id INTO user2_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user2@example.com';
     SELECT p.id INTO user3_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user3@example.com';
+    SELECT p.id INTO user4_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user4@example.com'; -- New user for new statuses
 
     -- Retrieve specific event IDs based on titles or statuses (from 03_events.sql)
     SELECT id INTO event_id_reg_open_1   FROM public.events WHERE title = 'Evento Com Inscrições Abertas 1';
@@ -43,11 +45,11 @@ BEGIN
         admin_profile_id,              -- profile_id: Admin
         event_id_reg_open_1,           -- event_id: Registration Open
         TRUE,                          -- is_user_applied: Applied by user
-        'confirmed',                   -- process_status: Confirmed
+        'paid',                        -- process_status: Paid (replaces 'confirmed')
         now() - interval '2 months',   -- application_date
         NULL,                          -- cancellation_date
         20.00,                         -- payment (below price example)
-        'Sample notes'                 -- notes
+        'Admin paid for this participation' -- notes
     ),
     (
         admin_profile_id,              -- profile_id: Admin
@@ -61,13 +63,13 @@ BEGIN
     ),
     (
         admin_profile_id,              -- profile_id: Admin
-        event_id_cancelled_1,          -- event_id: Cancelled
+        event_id_cancelled_1,          -- event_id: Cancelled (now 'rejected' as per new types)
         FALSE,                         -- is_user_applied: Added by admin
-        'cancelled_by_admin',          -- process_status: Cancelled by admin
+        'rejected',                    -- process_status: Rejected (replaces 'cancelled_by_admin')
         now() - interval '3 months',   -- application_date
         now() - interval '1 month',    -- cancellation_date
         NULL,                          -- payment
-        NULL                           -- notes
+        'Rejected by admin due to event cancellation' -- notes
     ),
 
     -- User1's Participations (Example Scenarios)
@@ -95,11 +97,11 @@ BEGIN
         user1_profile_id,              -- profile_id: User1
         event_id_reg_closed_1,         -- event_id: Registration Closed
         TRUE,                          -- is_user_applied: Applied by user
-        'confirmed',                   -- process_status: Confirmed
+        'paid',                        -- process_status: Paid (replaces 'confirmed')
         now() - interval '1 month',    -- application_date
         NULL,                          -- cancellation_date
         15.00,                         -- payment (matches price example)
-        NULL                           -- notes
+        'User paid for this closed event' -- notes
     ),
 
     -- User2's Participations (Testing multiple skips)
@@ -107,11 +109,11 @@ BEGIN
         user2_profile_id,              -- profile_id: User2
         event_id_reg_open_1,           -- event_id: Registration Open (current event)
         TRUE,                          -- is_user_applied: Applied by user
-        'applied',                     -- process_status: Applied
+        'talking',                     -- process_status: Talking (new status)
         now() - interval '2 days',     -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        NULL                           -- notes
+        'Admin talking to user about participation' -- notes
     ),
     (
         user2_profile_id,              -- profile_id: User2
@@ -139,11 +141,11 @@ BEGIN
         user3_profile_id,              -- profile_id: User3
         event_id_reg_open_1,           -- event_id: Registration Open (current event)
         TRUE,                          -- is_user_applied: Applied by user
-        'applied',                     -- process_status: Applied
+        'sent_payment_data',           -- process_status: Sent Payment Data (new status)
         now() - interval '3 days',     -- application_date
         NULL,                          -- cancellation_date
         NULL,                          -- payment
-        NULL                           -- notes
+        'User sent payment details'    -- notes
     ),
     (
         user3_profile_id,              -- profile_id: User3
@@ -164,12 +166,55 @@ BEGIN
         NULL,                          -- cancellation_date
         20.00,                         -- payment
         NULL                           -- notes
+    ),
+
+    -- User4's Participations (New scenarios for 'not-attended' and 'rejected')
+    (
+        user4_profile_id,              -- profile_id: User4
+        event_id_reg_open_1,           -- event_id: Registration Open (current event)
+        TRUE,                          -- is_user_applied: Applied by user
+        'think_better',                -- process_status: Think Better (new status)
+        now() - interval '5 days',     -- application_date
+        NULL,                          -- cancellation_date
+        NULL,                          -- payment
+        'User considering participation' -- notes
+    ),
+    (
+        user4_profile_id,              -- profile_id: User4
+        event_id_completed_1,          -- event_id: Completed (previous event - not-attended)
+        TRUE,                          -- is_user_applied: Applied by user
+        'not-attended',                -- process_status: Not Attended (new status)
+        now() - interval '4 months',   -- application_date
+        NULL,                          -- cancellation_date
+        NULL,                          -- payment
+        'User applied but did not show up' -- notes
+    ),
+    (
+        user4_profile_id,              -- profile_id: User4
+        event_id_reg_closed_1,         -- event_id: Registration Closed (rejected)
+        TRUE,                          -- is_user_applied: Applied by user
+        'rejected',                    -- process_status: Rejected (new status)
+        now() - interval '2 months',   -- application_date
+        NULL,                          -- cancellation_date
+        NULL,                          -- payment
+        'Application rejected by admin due to criteria mismatch' -- notes
+    ),
+    (
+        user4_profile_id,              -- profile_id: User4
+        event_id_scheduled_1,          -- event_id: Scheduled (sent_rules example)
+        TRUE,                          -- is_user_applied: Applied by user
+        'sent_rules',                  -- process_status: Sent Rules (new status)
+        now() - interval '7 months',   -- application_date
+        NULL,                          -- cancellation_date
+        NULL,                          -- payment
+        'Admin sent participation rules to user' -- notes
     );
 
     -- Summary of test scenarios created:
-    -- 1. User1: Applied to current event, was SKIPPED from most recent previous event
-    -- 2. User2: Applied to current event, was SKIPPED from last TWO events (repeat offender)
-    -- 3. User3: Applied to current event, ATTENDED previous events (good track record)
-    -- 4. Admin: Various statuses for admin testing
+    -- 1. Admin: Example of 'paid', 'attended', and 'rejected' statuses.
+    -- 2. User1: Applied to current event, 'skipped' from a previous, and 'paid' for another.
+    -- 3. User2: 'talking' for current, 'skipped' from two previous events.
+    -- 4. User3: 'sent_payment_data' for current, 'attended' two previous events.
+    -- 5. User4 (New): 'think_better' for current, 'not-attended' a previous, 'rejected' from another, and 'sent_rules' for an older event.
 
 END $$;
