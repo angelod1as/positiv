@@ -6,9 +6,9 @@ import { redirectWithError } from "remix-toast"
 import {
   getAdminContext,
   getAdminEventById,
-  getAdminParticipantsWithExtraDataById,
   getAdminReminderCountByEventId,
   getEventDemographicsById,
+  getProfilesWithExtraDataById,
   sendEventReminders,
   updateEventStatus,
 } from "~/business/admin/admin.server"
@@ -88,7 +88,7 @@ export async function loader({ params }: Route.LoaderArgs) {
         }
 
   const resultCollect = await collect({
-    participants: getAdminParticipantsWithExtraDataById,
+    participants: getProfilesWithExtraDataById,
     reminderCount: getAdminReminderCountByEventId,
     demographics: eventDemographics,
   })({

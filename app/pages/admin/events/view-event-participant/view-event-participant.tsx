@@ -2,15 +2,14 @@ import { all, inputFromForm } from "composable-functions"
 import { formAction } from "remix-forms"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import {
-  getAdminProfileById,
   getEventParticipantHistoryById,
+  getProfileWithExtraDataById,
   UpdateParticipantVsEvent,
 } from "~/business/admin/admin.server"
 import { ParticipantVsEventSchema } from "~/business/admin/common"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import { BasicData } from "./basic-data"
-import { ParticipantEventHistory } from "./participant-event-history"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
 
 const {
@@ -51,9 +50,12 @@ export async function loader({ params }: Route.LoaderArgs) {
     )
   }
 
-  const getData = all(getAdminProfileById, getEventParticipantHistoryById)
+  const getData = all(
+    getProfileWithExtraDataById,
+    getEventParticipantHistoryById,
+  )
 
-  const result = await getData({ profileId: participantId })
+  const result = await getData({ profileId: participantId, eventId: eventId })
 
   if (!result.success) {
     throw new Error(
@@ -72,7 +74,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
   const { participantHistory, profile } = loaderData
 
-  const [thisEvent, ...pastEvents] = participantHistory
+  const [thisEvent] = participantHistory
 
   const name = profile.social_name || profile.full_name
 
@@ -93,10 +95,10 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
 
       <BasicData profile={profile} />
       <ParticipantVsEventData eventParticipant={thisEvent} />
-      <ParticipantEventHistory
+      {/* <ParticipantEventHistory
         participantHistory={pastEvents}
         profile={profile}
-      />
+      /> */}
     </>
   )
 }
