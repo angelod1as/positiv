@@ -16,6 +16,7 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   return (
     <>
       <h2>Histórico anterior</h2>
+      <p>(WIP!)</p>
       <div className="space-y-4">
         {participantHistory.map(
           ({ event_emoji, event_title, ...pastEvent }) => {
@@ -30,11 +31,8 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
                   const value = pastEvent[pKey]
                   const dateValue =
                     typeof value === "object"
-                      ? formatDateTime(
-                          (
-                            profile.date_of_birth as unknown as Date
-                          ).toISOString(),
-                        ).date
+                      ? formatDateTime((value as unknown as Date).toISOString())
+                          .date
                       : undefined
                   return (
                     <DataPair key={key} pair={[label, dateValue || value]} />
