@@ -104,6 +104,40 @@ export const participantProcessStatusPropMap = (
       paid: "Pago",
       sent_rules: "Regras enviadas",
       think_better: "Pensar melhor",
+      attended: "Compareceu",
+      "not-attended": "Não compareceu",
+      rejected: "Rejeitade",
+      skipped: "Pulade (rodízio)",
     }[process_status] || ""
   )
 }
+
+export const processStatusOptions: Array<{
+  name: string
+  value: ParticipantProcessStatus
+}> = [
+  {
+    name: participantProcessStatusPropMap("applied"),
+    value: "applied",
+  },
+  {
+    name: participantProcessStatusPropMap("talking"),
+    value: "talking",
+  },
+  {
+    name: participantProcessStatusPropMap("sent_payment_data"),
+    value: "sent_payment_data",
+  },
+  {
+    name: participantProcessStatusPropMap("paid"),
+    value: "paid",
+  },
+  {
+    name: participantProcessStatusPropMap("sent_rules"),
+    value: "sent_rules",
+  },
+  {
+    name: participantProcessStatusPropMap("think_better"),
+    value: "think_better",
+  },
+]
