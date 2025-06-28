@@ -1,9 +1,12 @@
-import { all } from "composable-functions"
-import { redirectWithError } from "remix-toast"
+import { all, inputFromForm } from "composable-functions"
+import { formAction } from "remix-forms"
+import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import {
   getAdminProfileById,
   getEventParticipantHistoryById,
+  UpdateParticipantVsEvent,
 } from "~/business/admin/admin.server"
+import { ParticipantVsEventSchema } from "~/business/admin/common"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import { BasicData } from "./basic-data"
@@ -15,6 +18,25 @@ const {
     events: { ADMIN_EVENTS, ADMIN_VIEW_EVENT },
   },
 } = paths
+
+export async function action({ request }: Route.ActionArgs) {
+  const { intent } = await inputFromForm(request)
+
+  if (intent === "participant-vs-event-schema") {
+    return formAction({
+      request,
+      schema: ParticipantVsEventSchema,
+      mutation: UpdateParticipantVsEvent,
+      transformResult: async (result) => {
+        if (result.success) {
+          // TODO: FETCHER
+          throw await redirectWithSuccess(request.url, "Atualizado com sucesso")
+        }
+        return result
+      },
+    })
+  }
+}
 
 export async function loader({ params }: Route.LoaderArgs) {
   const { eventId, participantId } = params
