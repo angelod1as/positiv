@@ -11,7 +11,6 @@ type ParticipantEventHistoryProps = {
 }
 export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   participantHistory,
-  profile,
 }) => {
   return (
     <>
