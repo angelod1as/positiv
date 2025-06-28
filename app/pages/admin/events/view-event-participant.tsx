@@ -7,6 +7,7 @@ import {
 } from "~/business/admin/admin.server"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { phoneToButton } from "~/lib/helpers/phone-to-button"
 import { eventParticipantPropMap, profilePropMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
 import type { Database } from "~types/kysely.types"
@@ -54,10 +55,58 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
 }
 
+const getAge = (date_of_birth: string | null) => {
+  if (!date_of_birth) return ""
+  const date = new Date(date_of_birth)
+  const today = new Date()
+  let age = today.getFullYear() - date.getFullYear()
+  const m = today.getMonth() - date.getMonth()
+
+  if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+    age--
+  }
+
+  return age
+}
+
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
   const { participantHistory, participant, event } = loaderData
 
   const name = participant.social_name || participant.full_name
+
+  const {
+    full_name,
+    allow_marketing_email,
+    basic_data_filled,
+    cpf,
+    created_at,
+    date_of_birth,
+    email,
+    gender,
+    how_came_to_us,
+    id,
+    is_veteran,
+    orientation,
+    phone,
+    pronouns,
+    rg,
+    rg_issuer,
+    social_name,
+    user_id,
+    where_lives,
+  } = participant
+
+  const dataPairs: Array<Array<string | null | undefined>> = [
+    [profilePropMap("rg"), rg],
+    [profilePropMap("rg_issuer"), rg_issuer],
+    [profilePropMap("cpf"), cpf],
+    // TODO: AGE
+    [profilePropMap("date_of_birth"), date_of_birth],
+    [profilePropMap("where_lives"), where_lives],
+    [profilePropMap("how_came_to_us"), how_came_to_us],
+  ]
+
+  // TODO: Phone to Whatsapp
   return (
     <>
       <div className="flex">
@@ -70,19 +119,31 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
         <div>{/* TODO: Edit Buttons */}</div>
       </div>
       <h2>Dados básicos</h2>
-      <div>
-        {Object.keys(participant).map((key) => {
-          const pKey = key as keyof Database["profiles"]
-          const label = profilePropMap(pKey)
-          const value = participant[pKey]
-          if (value && typeof value === "object" && !Array.isArray(value)) {
-            const dateValue = formatDateTime((value as Date).toISOString()).date
-            return <DataPair key={key} pair={[label, dateValue]} />
-          }
 
-          return <DataPair key={key} pair={[label, value]} />
-        })}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="flex flex-col gap-2">
+          <h3>
+            <b>{social_name}</b> ({full_name}), {getAge(date_of_birth)}
+          </h3>
+          <p>{is_veteran ? "Veterane" : "Novate"}</p>
+          <p>
+            {gender?.join(", ")}; {pronouns?.join(", ")};{" "}
+            {orientation?.join(", ")}{" "}
+          </p>
+          <div>{phoneToButton(phone)}</div>
+        </div>
+        <div className="flex flex-col gap-2">
+          <DataPair top pair={[profilePropMap("email"), email]} />
+          <DataPair top pair={[profilePropMap("rg"), `${rg} ${rg_issuer}`]} />
+          <DataPair top pair={[profilePropMap("cpf"), cpf]} />
+          <DataPair top pair={[profilePropMap("where_lives"), where_lives]} />
+          <DataPair
+            top
+            pair={[profilePropMap("how_came_to_us"), how_came_to_us]}
+          />
+        </div>
       </div>
+
       <h2>Neste evento</h2>
       {event.id}
       <div />
