@@ -11,6 +11,7 @@ type ParticipantEventHistoryProps = {
 }
 export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   participantHistory,
+  profile,
 }) => {
   return (
     <>
@@ -30,8 +31,11 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
                   const value = pastEvent[pKey]
                   const dateValue =
                     typeof value === "object"
-                      ? formatDateTime((value as unknown as Date).toISOString())
-                          .date
+                      ? formatDateTime(
+                          (
+                            profile.date_of_birth as unknown as Date
+                          ).toISOString(),
+                        ).date
                       : undefined
                   return (
                     <DataPair key={key} pair={[label, dateValue || value]} />
