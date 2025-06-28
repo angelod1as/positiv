@@ -88,7 +88,7 @@ export default [
           // Participante vs Evento
           route(
             "/:eventId/participantes/:participantId",
-            "pages/admin/events/view-event-participant.tsx",
+            "pages/admin/events/view-event-participant/view-event-participant.tsx",
           ),
         ]),
       ]),
