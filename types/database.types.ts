@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       event_participants: {
         Row: {
+          admin_general_notes: string | null
           application_date: string
           bond: string | null
           cancellation_date: string | null
@@ -28,6 +29,7 @@ export type Database = {
           referrals: string | null
         }
         Insert: {
+          admin_general_notes?: string | null
           application_date?: string
           bond?: string | null
           cancellation_date?: string | null
@@ -45,6 +47,7 @@ export type Database = {
           referrals?: string | null
         }
         Update: {
+          admin_general_notes?: string | null
           application_date?: string
           bond?: string | null
           cancellation_date?: string | null
