@@ -69,6 +69,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                       <Field name="is_social_spot" />
                       <Field name="is_staff_spot" />
                     </div>
+                    <Field name="admin_general_notes" multiline />
                     <Error />
                     <Errors />
                     <Button />

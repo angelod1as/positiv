@@ -103,4 +103,5 @@ export const ParticipantVsEventSchema = zod.object({
   is_social_spot: zod.boolean(),
   is_staff_spot: zod.boolean(),
   payment: zod.coerce.number(),
+  admin_general_notes: zod.string(),
 })
