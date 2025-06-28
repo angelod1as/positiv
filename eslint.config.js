@@ -63,6 +63,7 @@ export default defineConfig([
     },
   },
   {
+    // General rules
     rules: {
       "no-console": [
         "error",
@@ -70,6 +71,13 @@ export default defineConfig([
           allow: ["warn", "error", "info"],
         },
       ],
+      // TODO: ACTIVATE & REFACTOR ERRORS
+      // "@typescript-eslint/array-type": [
+      //   "error",
+      //   {
+      //     default: "generic",
+      //   },
+      // ],
       "no-empty-pattern": "off",
       "react/jsx-uses-react": "off",
       "react/react-in-jsx-scope": "off",
