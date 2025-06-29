@@ -20,10 +20,14 @@ const {
 type HeaderProps = {
   profile: ProfileWithRoles | null
   userEmail?: string | null
-  isProd?: boolean
+  isProdInDev?: boolean
 }
 
-export const Header: FC<HeaderProps> = ({ profile, userEmail, isProd }) => {
+export const Header: FC<HeaderProps> = ({
+  profile,
+  userEmail,
+  isProdInDev,
+}) => {
   const { pathname } = useLocation()
 
   const showButton = pathname !== "/entrar"
@@ -35,7 +39,7 @@ export const Header: FC<HeaderProps> = ({ profile, userEmail, isProd }) => {
 
   return (
     <>
-      {isProd && (
+      {isProdInDev && (
         <div className="bg-red-400 fixed top-0 left-0 z-50 w-full text-center font-bold">
           PRODUCTION DATABASE
         </div>
