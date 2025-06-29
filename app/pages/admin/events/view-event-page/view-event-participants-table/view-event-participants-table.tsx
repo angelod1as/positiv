@@ -39,14 +39,6 @@ type AdminViewEventParticipantsTableProps = {
   fetcher: FetcherWithComponents<ComposableFetcherData>
 }
 
-const joinArray = (
-  values: ProfileWithExtraData,
-  prop: keyof ProfileWithExtraData,
-) => {
-  const value = values[prop]
-  return Array.isArray(value) ? value.join(", ") : value
-}
-
 const isParticipantAccepted = (participant: ProfileWithExtraData) => {
   const arr: ParticipantProcessStatus[] = [
     "sent_payment_data",
