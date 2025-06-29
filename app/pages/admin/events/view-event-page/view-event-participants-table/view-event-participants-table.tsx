@@ -6,6 +6,7 @@ import {
   type ColumnEvent,
 } from "primereact/column"
 
+import { FilterMatchMode } from "primereact/api"
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
@@ -98,6 +99,13 @@ export const AdminViewEventParticipantsTable: FC<
       value={participants}
       id="participants"
       sortField="social_name"
+      filters={{
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        process_status: {
+          value: null,
+          matchMode: FilterMatchMode.EQUALS,
+        },
+      }}
       editMode="cell"
       size="small"
       header={{
@@ -121,6 +129,7 @@ export const AdminViewEventParticipantsTable: FC<
           },
           title: "Ver participante",
           key: "id",
+          target: "_blank",
         },
       ]}
     >
@@ -174,10 +183,22 @@ export const AdminViewEventParticipantsTable: FC<
         sortable={false}
       />
 
-      {/* TODO: Make editable */}
       <Column
         field="process_status"
         header="Status"
+        filter
+        filterElement={(options) => (
+          <TableInputDropdown
+            value={options.value}
+            options={statusOptions}
+            filterCallback={options.filterCallback}
+            index={options.index}
+            placeholder="Selecione"
+            className="p-column-filter"
+            showClear
+          />
+        )}
+        showFilterMatchModes={false}
         editor={cellEditor}
         onCellEditComplete={onCellEditComplete}
         body={(values) => (

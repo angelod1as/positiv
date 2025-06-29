@@ -9,6 +9,7 @@ import {
 
 import { InputText } from "primereact/inputtext"
 import { useState, type ChangeEvent, type ReactNode } from "react"
+import type { LinkProps } from "react-router"
 import { Button } from "~/components/atoms/button/button"
 
 type buttonProps = {
@@ -20,6 +21,8 @@ type buttonProps = {
   key?: string
   /** Lucide icon */
   Icon: LucideIcon
+  /** Link target */
+  target?: LinkProps["target"]
 }
 
 export type DataTableHeader = {
@@ -203,13 +206,20 @@ export function DataTable<T extends DataTableValue>({
           body={(value: T) => {
             return (
               <div className="flex gap-2 justify-self-end">
-                {buttons.map(({ Icon, title, to, key = "id" }) => {
+                {buttons.map(({ Icon, title, to, key = "id", target }) => {
                   return (
                     <Button
                       to={typeof to === "function" ? key && to(value[key]) : to}
                       key={title}
                       aria-label={title}
                       variant="outline"
+                      linkProps={
+                        target
+                          ? {
+                              target,
+                            }
+                          : undefined
+                      }
                     >
                       <Icon />
                     </Button>
