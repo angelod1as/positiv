@@ -38,7 +38,6 @@ export interface DataTableProps<T extends DataTableValue> {
   globalFilterFields?: string[]
   header?: DataTableHeader
   children: ReactNode
-  rows?: number
   scrollHeight?: string
   stateKey?: string
   emptyMessage?: string
@@ -70,7 +69,6 @@ export function DataTable<T extends DataTableValue>({
   globalFilterFields = [],
   header,
   children,
-  rows = 150,
   buttons = [],
   selectable = false,
   resizableColumns = false,
@@ -158,8 +156,9 @@ export function DataTable<T extends DataTableValue>({
       editMode={editMode}
       size={size}
       // Pagination
-      rows={rows}
+      rows={25}
       paginator
+      rowsPerPageOptions={[5, 10, 25, 50, 100, 150]}
       // Filters
       filters={filters}
       filterDisplay="menu"
