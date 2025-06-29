@@ -30,6 +30,6 @@ BEGIN
         (user5_profile_id, event_id_completed_1, TRUE,  'attended', now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
         (user6_profile_id, event_id_completed_1, TRUE,  'attended', now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
         (user7_profile_id, event_id_completed_1, TRUE,  'confirmed', now() - interval '4 months', NULL, 50.00, 'Confirmed but did not show up'),
-        (user8_profile_id, event_id_completed_1, TRUE,  'skipped', now() - interval '4 months', NULL, NULL, 'Skipped by admin'),
+        (user8_profile_id, event_id_completed_1, TRUE,  'skipped', now() - interval '4 months', NULL, 0, 'Skipped by admin'),
         (user9_profile_id, event_id_completed_1, TRUE,  'attended', now() - interval '4 months', NULL, 50.00, 'Attended successfully');
 END $$;

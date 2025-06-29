@@ -82,20 +82,23 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   try {
-    const { currentProfile, currentUser, isProd } = await getContext(
+    const { currentProfile, currentUser, isProdInDev } = await getContext(
       request,
       params,
     )
     const { toast, headers } = await getToast(request)
 
-    return data({ currentUser, currentProfile, toast, isProd }, { headers })
+    return data(
+      { currentUser, currentProfile, toast, isProdInDev },
+      { headers },
+    )
   } catch (error) {
     console.error("Root loader error", error)
     return {
       currentUser: null,
       currentProfile: null,
       toast: null,
-      isProd: null,
+      isProdInDev: null,
     }
   }
 }
@@ -122,7 +125,7 @@ export function Layout(props: { children: ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { currentUser, currentProfile, toast, isProd } = loaderData
+  const { currentUser, currentProfile, toast, isProdInDev } = loaderData
 
   useEffect(() => {
     if (toast?.type) {
@@ -137,7 +140,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <Header
-        isProd={Boolean(isProd)}
+        isProdInDev={Boolean(isProdInDev)}
         profile={currentProfile}
         userEmail={currentUser?.email}
       />

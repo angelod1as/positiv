@@ -68,7 +68,7 @@ export default defineConfig([
       "no-console": [
         "error",
         {
-          allow: ["warn", "error", "info"],
+          allow: ["warn", "error", "info", "dir"],
         },
       ],
       // TODO: ACTIVATE & REFACTOR ERRORS

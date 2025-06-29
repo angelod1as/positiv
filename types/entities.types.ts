@@ -71,10 +71,6 @@ export type ViewEvent = Pick<
   is_set_reminder?: boolean
 }
 
-//////////
-// Participant Process Status
-//////////
-
 const participantProcessStatus = [
   // Golden Path
   "applied",
@@ -99,14 +95,13 @@ export type ParticipantProcessStatus = z.infer<
   typeof participantProcessStatusEnum
 >
 
-/////
-
 export type Genders = (typeof GENDERS)[number]
 export type Orientations = (typeof ORIENTATIONS)[number]
 export type Pronouns = (typeof PRONOUNS)[number]
 
 /////
 // Kysely helpers
+/////
 
 export type EventParticipant = Selectable<
   Database["public"]["Tables"]["event_participants"]["Row"]

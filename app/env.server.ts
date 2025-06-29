@@ -11,6 +11,7 @@ const getEnvironment = makeTypedEnvironment(
       .default("development"),
     CI: zod.string().optional(),
     IS_PROD: zod.string().optional(),
+    IS_PROD_IN_DEV: zod.string().optional(),
 
     TEST_USER_ADMIN_EMAIL: zod.string().optional(),
     TEST_USER_PASSWORD: zod.string().optional(),

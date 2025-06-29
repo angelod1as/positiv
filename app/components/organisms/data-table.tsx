@@ -9,6 +9,7 @@ import {
 
 import { InputText } from "primereact/inputtext"
 import { useState, type ChangeEvent, type ReactNode } from "react"
+import type { LinkProps } from "react-router"
 import { Button } from "~/components/atoms/button/button"
 
 type buttonProps = {
@@ -20,6 +21,8 @@ type buttonProps = {
   key?: string
   /** Lucide icon */
   Icon: LucideIcon
+  /** Link target */
+  target?: LinkProps["target"]
 }
 
 export type DataTableHeader = {
@@ -35,7 +38,6 @@ export interface DataTableProps<T extends DataTableValue> {
   globalFilterFields?: string[]
   header?: DataTableHeader
   children: ReactNode
-  rows?: number
   scrollHeight?: string
   stateKey?: string
   emptyMessage?: string
@@ -45,6 +47,7 @@ export interface DataTableProps<T extends DataTableValue> {
   reorderableColumns?: boolean
   sortField?: string
   editMode?: "cell" | "row"
+  size?: "small" | "normal" | "large"
 }
 
 // TODO: Implement date filtering
@@ -66,13 +69,13 @@ export function DataTable<T extends DataTableValue>({
   globalFilterFields = [],
   header,
   children,
-  rows = 150,
   buttons = [],
   selectable = false,
   resizableColumns = false,
   reorderableColumns = false,
   sortField,
   editMode,
+  size = "normal",
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [filters, setFilters] = useState<DataTableFilterMeta>(
@@ -147,12 +150,15 @@ export function DataTable<T extends DataTableValue>({
       dataKey="id"
       emptyMessage="Nenhum registro encontrado"
       header={renderHeader}
+      showGridlines
       stripedRows
       rowHover
       editMode={editMode}
+      size={size}
       // Pagination
-      rows={rows}
+      rows={25}
       paginator
+      rowsPerPageOptions={[5, 10, 25, 50, 100, 150]}
       // Filters
       filters={filters}
       filterDisplay="menu"
@@ -199,13 +205,20 @@ export function DataTable<T extends DataTableValue>({
           body={(value: T) => {
             return (
               <div className="flex gap-2 justify-self-end">
-                {buttons.map(({ Icon, title, to, key = "id" }) => {
+                {buttons.map(({ Icon, title, to, key = "id", target }) => {
                   return (
                     <Button
                       to={typeof to === "function" ? key && to(value[key]) : to}
                       key={title}
                       aria-label={title}
                       variant="outline"
+                      linkProps={
+                        target
+                          ? {
+                              target,
+                            }
+                          : undefined
+                      }
                     >
                       <Icon />
                     </Button>
