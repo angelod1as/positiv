@@ -7,6 +7,7 @@ import {
   updateParticipantVsEvent,
 } from "~/business/admin/admin.server"
 import { updateParticipantVsEventSchema } from "~/business/admin/common"
+import { getAge } from "~/lib/helpers/get-age"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import { BasicData } from "./basic-data"
@@ -38,12 +39,12 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ params }: Route.LoaderArgs) {
-  const { eventId, participantId } = params
+  const { eventId, eventParticipantId } = params
 
   if (!eventId) {
     return redirectWithError("Evento não encontrado", ADMIN_EVENTS)
   }
-  if (!participantId) {
+  if (!eventParticipantId) {
     return redirectWithError(
       "Participante não encontrade",
       ADMIN_VIEW_EVENT(eventId),
@@ -55,9 +56,12 @@ export async function loader({ params }: Route.LoaderArgs) {
     getEventParticipantHistoryById,
   )
 
-  const result = await getData({ profileId: participantId, eventId: eventId })
+  const result = await getData({
+    eventParticipantId: eventParticipantId,
+  })
 
   if (!result.success) {
+    console.dir(result, { depth: null })
     throw new Error(
       "Houve um erro procurando o evento ou e participante. Notifique o administrador.",
     )
@@ -74,6 +78,8 @@ export async function loader({ params }: Route.LoaderArgs) {
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
   const { participantHistory, profile } = loaderData
 
+  if (!profile) return null
+
   const [thisEvent] = participantHistory
 
   const name = profile.social_name || profile.full_name
@@ -82,7 +88,9 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
     <>
       <div className="flex">
         <div className="space-y-1">
-          <h1>{name}</h1>
+          <h1>
+            {name}, {getAge(profile.date_of_birth)}
+          </h1>
           <p>
             No evento{" "}
             <b>

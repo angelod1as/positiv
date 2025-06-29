@@ -6,14 +6,30 @@ import {
   type ColumnEvent,
 } from "primereact/column"
 
+import { FilterMatchMode } from "primereact/api"
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import {
+  GenderBadge,
+  OrientationBadge,
+  PronounsBadge,
+  RookieBadge,
+  VeteranBadge,
+} from "~/components/atoms/badges/badges"
 import { DataTable } from "~/components/organisms/data-table"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
-import { processStatusOptions } from "~/lib/helpers/propMaps"
+import {
+  eventParticipantPropMap,
+  processStatusOptions,
+  profilePropMap,
+} from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
-import type { ComposableFetcherData } from "~types/entities.types"
+import type {
+  ComposableFetcherData,
+  ParticipantProcessStatus,
+} from "~types/entities.types"
+import { TableCheckbox } from "./table-checkbox"
 import { TableInputDropdown } from "./table-input-dropdown"
 import { TableInputMoney } from "./table-input-money"
 
@@ -29,18 +45,13 @@ type AdminViewEventParticipantsTableProps = {
   fetcher: FetcherWithComponents<ComposableFetcherData>
 }
 
-const joinArray = (
-  values: ProfileWithExtraData,
-  prop: keyof ProfileWithExtraData,
-) => {
-  const value = values[prop]
-  return Array.isArray(value) ? value.join(", ") : value
-}
-
 const isParticipantAccepted = (participant: ProfileWithExtraData) => {
-  return ["sent_payment_data", "paid", "sent_rules"].includes(
-    participant.process_status,
-  )
+  const arr: ParticipantProcessStatus[] = [
+    "sent_payment_data",
+    "paid",
+    "sent_rules",
+  ]
+  return arr.includes(participant.process_status as ParticipantProcessStatus)
 }
 
 const statusOptions = processStatusOptions.map((option) => ({
@@ -59,6 +70,10 @@ export const AdminViewEventParticipantsTable: FC<
         return <TableInputMoney {...options} />
       case "process_status":
         return <TableInputDropdown {...options} options={statusOptions} />
+      case "is_social_spot":
+        return <TableCheckbox {...options} />
+      case "is_staff_spot":
+        return <TableCheckbox {...options} />
       default:
         return <div>This Field Lacks an Editing Component</div>
     }
@@ -93,7 +108,15 @@ export const AdminViewEventParticipantsTable: FC<
       value={participants}
       id="participants"
       sortField="social_name"
+      filters={{
+        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+        process_status: {
+          value: null,
+          matchMode: FilterMatchMode.EQUALS,
+        },
+      }}
       editMode="cell"
+      size="small"
       header={{
         title: "Inscrições",
         numbers: (
@@ -115,41 +138,80 @@ export const AdminViewEventParticipantsTable: FC<
           },
           title: "Ver participante",
           key: "id",
+          target: "_blank",
         },
       ]}
     >
       <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} />
 
-      <Column field="full_name" header="Nome" frozen={true} />
-      <Column field="social_name" header="Nome social" sortable />
+      <Column
+        field="social_name"
+        header="Nome"
+        sortable
+        frozen={true}
+        style={{ background: "oklch(87.2% 0.01 258.338)", maxWidth: "200px" }}
+        body={(values) =>
+          values.social_name || <i>{values.full_name.split(" ")[0]}</i>
+        }
+      />
+
+      <Column
+        field="full_name"
+        header={profilePropMap("full_name")}
+        className="min-w-40"
+      />
+
+      <Column
+        field="is_veteran"
+        header={profilePropMap("is_veteran")}
+        body={(values) =>
+          values.is_veteran ? <VeteranBadge /> : <RookieBadge />
+        }
+        className="min-w-30"
+      />
+
       <Column
         field="pronouns"
-        header="Pronomes"
-        body={(values) => joinArray(values, "pronouns")}
+        header={profilePropMap("pronouns")}
+        body={(values) => <PronounsBadge pronouns={values.pronouns} />}
       />
       <Column
         field="gender"
-        header="Gênero"
-        body={(values) => joinArray(values, "gender")}
+        header={profilePropMap("gender")}
+        body={(values) => <GenderBadge genders={values.gender} />}
       />
 
       <Column
         field="orientation"
-        header="Orientação"
-        body={(values) => joinArray(values, "orientation")}
+        header={profilePropMap("orientation")}
+        body={(values) => (
+          <OrientationBadge orientations={values.orientation} />
+        )}
       />
 
       <Column
         field="phone"
-        header="Whatsapp"
+        header={profilePropMap("phone")}
         body={(values) => <PhoneButton phone={values.phone} />}
         sortable={false}
       />
 
-      {/* TODO: Make editable */}
       <Column
         field="process_status"
-        header="Status"
+        header={eventParticipantPropMap("process_status")}
+        filter
+        filterElement={(options) => (
+          <TableInputDropdown
+            value={options.value}
+            options={statusOptions}
+            filterCallback={options.filterCallback}
+            index={options.index}
+            placeholder="Selecione"
+            className="p-column-filter"
+            showClear
+          />
+        )}
+        showFilterMatchModes={false}
         editor={cellEditor}
         onCellEditComplete={onCellEditComplete}
         body={(values) => (
@@ -161,31 +223,37 @@ export const AdminViewEventParticipantsTable: FC<
       />
       <Column
         field="payment"
-        header="Pagamento"
+        header={eventParticipantPropMap("payment")}
         editor={cellEditor}
         onCellEditComplete={onCellEditComplete}
         body={(values) => <TableInputMoney value={values.payment} />}
       />
-      {/* <Column
-        field="is_veteran"
-        header="Veterane?"
-        dataType="boolean"
-        body={(values) => booleanBodyTemplate(values, "is_veteran")}
-      />
       <Column
         field="is_social_spot"
-        header="Vaga Social?"
+        header={eventParticipantPropMap("is_social_spot")}
         dataType="boolean"
-        body={(values) => booleanBodyTemplate(values, "is_social_spot")}
+        body={(values) => (
+          <TableCheckbox value={values.is_social_spot} disabled />
+        )}
+      />
+      <Column
+        field="is_staff_spot"
+        header={eventParticipantPropMap("is_staff_spot")}
+        dataType="boolean"
+        body={(values) => (
+          <TableCheckbox value={values.is_staff_spot} disabled />
+        )}
+        className="min-w-30"
       />
       <Column
         field="was_admin_skipped_last_event"
-        header="Foi rodízio?"
+        header="Foi rodízio na última festa?"
         dataType="boolean"
-        body={(values) =>
-          booleanBodyTemplate(values, "was_admin_skipped_last_event")
-        }
-      /> */}
+        className="min-w-40"
+        body={(values) => (
+          <TableCheckbox disabled value={values.was_admin_skipped_last_event} />
+        )}
+      />
     </DataTable>
   )
 }

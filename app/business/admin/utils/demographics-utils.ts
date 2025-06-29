@@ -12,7 +12,7 @@ function isCisGender(gender: string): boolean {
 function isTransGender(gender: string): boolean {
   const lower = gender.toLowerCase()
   return (
-    /\btrans\b/i.test(lower) ||
+    /\btrans\b|\bnão binári[ae]\b/i.test(lower) ||
     lower === "travesti" ||
     lower === "mulher trans" ||
     lower === "homem trans"
@@ -24,7 +24,9 @@ function isAgender(gender: string): boolean {
   return /\bag[êe]nero\b|\bagender\b|\bagênera\b/i.test(lower)
 }
 
-export function classifySingleGender(genderString: string): "cis" | "trans" | "agender" | "other" {
+export function classifySingleGender(
+  genderString: string,
+): "cis" | "trans" | "agender" | "other" {
   if (isCisGender(genderString)) {
     return "cis"
   }
@@ -60,9 +62,7 @@ function isHomo(orientation: string): boolean {
 function isStraight(orientation: string): boolean {
   const lower = orientation.toLowerCase()
   return (
-    lower === "hétero" ||
-    lower === "hetero" ||
-    /\bhet[ée]ro\b/i.test(lower)
+    lower === "hétero" || lower === "hetero" || /\bhet[ée]ro\b/i.test(lower)
   )
 }
 
@@ -83,7 +83,7 @@ export function classifySingleOrientation(
   }
   if (
     isStraight(orientationString) &&
-    !result.some(c => c === "biPan" || c === "homo")
+    !result.some((c) => c === "biPan" || c === "homo")
   ) {
     result.push("straight")
   }
@@ -96,13 +96,13 @@ export function classifySingleOrientation(
   if (
     result.length === 1 &&
     result[0] === "aceDemi" &&
-    !result.some(c => c === "biPan" || c === "homo" || c === "straight")
+    !result.some((c) => c === "biPan" || c === "homo" || c === "straight")
   ) {
     result.unshift("other")
   }
   const uniqueResult = [...new Set(result)]
   return uniqueResult.length > 1 && uniqueResult.includes("other")
-    ? uniqueResult.filter(c => c !== "other")
+    ? uniqueResult.filter((c) => c !== "other")
     : uniqueResult
 }
 
