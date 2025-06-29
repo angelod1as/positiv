@@ -251,7 +251,7 @@ export const AdminViewEventParticipantsTable: FC<
         dataType="boolean"
         className="min-w-40"
         body={(values) => (
-          <TableCheckbox disabled value={values.is_social_spot} />
+          <TableCheckbox disabled value={values.was_admin_skipped_last_event} />
         )}
       />
     </DataTable>
