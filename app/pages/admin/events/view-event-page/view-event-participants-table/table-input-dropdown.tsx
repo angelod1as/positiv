@@ -3,7 +3,7 @@ import { Dropdown, type DropdownChangeEvent } from "primereact/dropdown"
 
 import type { SelectItemOptionsType } from "primereact/selectitem"
 
-type InputNumberCompoProps = {
+type TableInputDropdownProps = {
   value: ColumnEditorOptions["value"]
   editorCallback?: ColumnEditorOptions["editorCallback"]
   options: SelectItemOptionsType
@@ -12,7 +12,7 @@ export const TableInputDropdown = ({
   value,
   editorCallback,
   options,
-}: InputNumberCompoProps) => {
+}: TableInputDropdownProps) => {
   return (
     <Dropdown
       value={value}
