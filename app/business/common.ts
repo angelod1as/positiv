@@ -80,7 +80,7 @@ export const getSupabaseSchema = zod.object({
 export const contextSchema = getSupabaseSchema.extend({
   currentUser: currentUserSchema.nullable(),
   currentProfile: currentProfileSchema.nullable(),
-  isProd: zod.boolean().optional(),
+  isProdInDev: zod.boolean().optional(),
   host: zod.string().nullable(),
 })
 
