@@ -9,11 +9,21 @@ import {
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import {
+  GenderBadge,
+  OrientationBadge,
+  PronounsBadge,
+  RookieBadge,
+  VeteranBadge,
+} from "~/components/atoms/badges/badges"
 import { DataTable } from "~/components/organisms/data-table"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import { processStatusOptions } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
-import type { ComposableFetcherData } from "~types/entities.types"
+import type {
+  ComposableFetcherData,
+  ParticipantProcessStatus,
+} from "~types/entities.types"
 import { TableInputDropdown } from "./table-input-dropdown"
 import { TableInputMoney } from "./table-input-money"
 
@@ -44,7 +54,6 @@ const isParticipantAccepted = (participant: ProfileWithExtraData) => {
     "sent_rules",
   ]
   return arr.includes(participant.process_status as ParticipantProcessStatus)
-}
 }
 
 const statusOptions = processStatusOptions.map((option) => ({
@@ -139,20 +148,31 @@ export const AdminViewEventParticipantsTable: FC<
       <Column field="full_name" header="Nome" />
 
       <Column
+        field="is_veteran"
+        header="Veterane?"
+        body={(values) =>
+          values.is_veteran ? <VeteranBadge /> : <RookieBadge />
+        }
+        sortable={false}
+      />
+
+      <Column
         field="pronouns"
         header="Pronomes"
-        body={(values) => joinArray(values, "pronouns")}
+        body={(values) => <PronounsBadge pronouns={values.pronouns} />}
       />
       <Column
         field="gender"
         header="Gênero"
-        body={(values) => joinArray(values, "gender")}
+        body={(values) => <GenderBadge genders={values.gender} />}
       />
 
       <Column
         field="orientation"
         header="Orientação"
-        body={(values) => joinArray(values, "orientation")}
+        body={(values) => (
+          <OrientationBadge orientations={values.orientation} />
+        )}
       />
 
       <Column

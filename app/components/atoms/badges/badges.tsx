@@ -6,15 +6,37 @@ export const RookieBadge = () => <Badge variant="rookie">Novate</Badge>
 
 export const PronounsBadge = ({ pronouns }: { pronouns: string[] | null }) =>
   pronouns?.length ? (
-    <Badge variant="pronouns">{pronouns.join(", ")}</Badge>
+    <div className="flex gap-1 flex-wrap">
+      {pronouns.map((pronoun) => (
+        <Badge key={pronoun} variant="pronoun">
+          {pronoun}
+        </Badge>
+      ))}
+    </div>
   ) : null
+
 export const OrientationBadge = ({
-  orientation,
+  orientations,
 }: {
-  orientation: string[] | null
+  orientations: string[] | null
 }) =>
-  orientation?.length ? (
-    <Badge variant="orientation">{orientation.join(", ")}</Badge>
+  orientations?.length ? (
+    <div className="flex gap-1 flex-wrap">
+      {orientations.map((orientation) => (
+        <Badge key={orientation} variant="orientation">
+          {orientation}
+        </Badge>
+      ))}
+    </div>
   ) : null
-export const GenderBadge = ({ gender }: { gender: string[] | null }) =>
-  gender?.length ? <Badge variant="gender">{gender.join(", ")}</Badge> : null
+
+export const GenderBadge = ({ genders }: { genders: string[] | null }) =>
+  genders?.length ? (
+    <div className="flex gap-1 flex-wrap">
+      {genders.map((gender) => (
+        <Badge key={gender} variant="gender">
+          {gender}
+        </Badge>
+      ))}
+    </div>
+  ) : null
