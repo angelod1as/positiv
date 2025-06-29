@@ -36,7 +36,7 @@ export const getContext = async (
   request: Request,
   params: Params,
 ): Promise<z.infer<typeof contextSchema>> => {
-  const { isProd } = env()
+  const { isProdInDev } = env()
 
   const { supabase, supabaseHeaders } = await getSupabase(request, params)
   const host = request.headers.get("host")
@@ -49,7 +49,7 @@ export const getContext = async (
     host,
     currentUser: null,
     currentProfile: null,
-    isProd: isProd === "true",
+    isProdInDev: isProdInDev === "true",
   }
 
   if (authError) {
@@ -104,7 +104,7 @@ export const getContext = async (
     supabaseHeaders,
     currentProfile,
     currentUser,
-    isProd: isProd === "true",
+    isProdInDev: isProdInDev === "true",
     host,
   }
 }

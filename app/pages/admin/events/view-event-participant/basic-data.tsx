@@ -12,26 +12,11 @@ import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import { profilePropMap } from "~/lib/helpers/propMaps"
 
-const getAge = (date_of_birth: string | null) => {
-  if (!date_of_birth) return ""
-  const date = new Date(date_of_birth)
-  const today = new Date()
-  let age = today.getFullYear() - date.getFullYear()
-  const m = today.getMonth() - date.getMonth()
-
-  if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
-    age--
-  }
-
-  return age
-}
-
 type BasicDataProps = { profile: ProfileWithExtraData }
 export const BasicData: FC<BasicDataProps> = ({ profile }) => {
   const {
     full_name,
     cpf,
-    date_of_birth,
     email,
     gender,
     how_came_to_us,
@@ -41,7 +26,6 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
     pronouns,
     rg,
     rg_issuer,
-    social_name,
     where_lives,
     was_admin_skipped_last_event,
   } = profile
@@ -52,15 +36,13 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
 
       <div className="grid md:grid-cols-4 gap-4 [&>div]:space-y-2">
         <div className="col-span-2">
-          <h3 className="space-x-2">
-            <PhoneButton phone={phone} />
-            <b>{social_name}</b> ({full_name}), {getAge(date_of_birth)}
-          </h3>
-          <div className="space-x-2">
+          <PhoneButton phone={phone} />
+          <p>{full_name}</p>
+          <div className="flex gap-1">
             {is_veteran ? <VeteranBadge /> : <RookieBadge />}
             <PronounsBadge pronouns={pronouns} />
-            <GenderBadge gender={gender} />
-            <OrientationBadge orientation={orientation} />
+            <GenderBadge genders={gender} />
+            <OrientationBadge orientations={orientation} />
           </div>
           {was_admin_skipped_last_event && (
             <div className="mt-2">
