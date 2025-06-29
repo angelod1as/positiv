@@ -38,9 +38,13 @@ const joinArray = (
 }
 
 const isParticipantAccepted = (participant: ProfileWithExtraData) => {
-  return ["sent_payment_data", "paid", "sent_rules"].includes(
-    participant.process_status,
-  )
+  const arr: ParticipantProcessStatus[] = [
+    "sent_payment_data",
+    "paid",
+    "sent_rules",
+  ]
+  return arr.includes(participant.process_status as ParticipantProcessStatus)
+}
 }
 
 const statusOptions = processStatusOptions.map((option) => ({
@@ -94,6 +98,7 @@ export const AdminViewEventParticipantsTable: FC<
       id="participants"
       sortField="social_name"
       editMode="cell"
+      size="small"
       header={{
         title: "Inscrições",
         numbers: (
@@ -120,8 +125,19 @@ export const AdminViewEventParticipantsTable: FC<
     >
       <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} />
 
-      <Column field="full_name" header="Nome" frozen={true} />
-      <Column field="social_name" header="Nome social" sortable />
+      <Column
+        field="social_name"
+        header="Nome social"
+        sortable
+        frozen={true}
+        style={{ background: "oklch(87.2% 0.01 258.338)", maxWidth: "200px" }}
+        body={(values) =>
+          values.social_name || <i>{values.full_name.split(" ")[0]}</i>
+        }
+      />
+
+      <Column field="full_name" header="Nome" />
+
       <Column
         field="pronouns"
         header="Pronomes"
