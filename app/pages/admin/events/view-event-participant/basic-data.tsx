@@ -59,8 +59,8 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
           <div className="space-x-2">
             {is_veteran ? <VeteranBadge /> : <RookieBadge />}
             <PronounsBadge pronouns={pronouns} />
-            <GenderBadge gender={gender} />
-            <OrientationBadge orientation={orientation} />
+            <GenderBadge genders={gender} />
+            <OrientationBadge orientations={orientation} />
           </div>
           {was_admin_skipped_last_event && (
             <div className="mt-2">
