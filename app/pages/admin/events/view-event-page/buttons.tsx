@@ -5,8 +5,7 @@ import { Button } from "~/components/atoms/button/button"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import paths from "~/lib/paths"
-import type { Event } from "~types/entities.types"
-import type { FetcherData } from "./view-event-page"
+import type { ComposableFetcherData, Event } from "~types/entities.types"
 
 const {
   admin: {
@@ -16,7 +15,7 @@ const {
 
 type ButtonProps = {
   event: Event
-  fetcher: FetcherWithComponents<FetcherData>
+  fetcher: FetcherWithComponents<ComposableFetcherData>
   reminderCount: number
 }
 export const Buttons: FC<ButtonProps> = ({ event, fetcher, reminderCount }) => {

@@ -18,10 +18,10 @@ import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,
   eventFormSchema,
-  ParticipantVsEventSchema,
   sendEventRemindersSchema,
+  updateEventParticipantByIdSchema,
   updateEventStatusSchema,
-  updateParticipantPropertySchema,
+  updateParticipantVsEventSchema,
 } from "./common"
 import { calculateDemographics } from "./utils/demographics"
 
@@ -63,7 +63,7 @@ export type ProfileWithExtraData = Profile &
     was_admin_skipped_last_event: boolean
   }
 
-// Main query to get participants information along with if they were skipped in the last event
+// Main query to get event_participants information along with if they were skipped in the last event
 const profilesWithExtraDataQuery = kysely
   .selectFrom("event_participants as current_ep")
   .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
@@ -87,8 +87,7 @@ const profilesWithExtraDataQuery = kysely
         .onRef("ranked_events.profile_id", "=", "current_ep.profile_id")
         .on("ranked_events.rn", "=", 2),
   )
-  .selectAll("p")
-  .selectAll("current_ep")
+  .selectAll(["p", "current_ep"])
   .select([
     sql<boolean>`ranked_events.process_status = 'skipped'`.as(
       "was_admin_skipped_last_event",
@@ -188,99 +187,6 @@ export const updateEventStatus = applySchema(
 
   return result.length > 0
 })
-
-export const updateParticipantProperty = composable(
-  async (
-    eventId: string,
-    participantId: string,
-    property: z.infer<typeof updateParticipantPropertySchema>["property"],
-    value: boolean | number | string,
-  ) => {
-    const updateProfiles = async () => {
-      const result = await kysely
-        .updateTable("profiles")
-        .set({ [property]: value })
-        .where("id", "=", participantId)
-        .execute()
-
-      return result.length > 0
-    }
-
-    const updateEventParticipants = async () => {
-      const result = await kysely
-        .updateTable("event_participants")
-        .set({ [property]: value })
-        .where("event_id", "=", eventId)
-        .where("profile_id", "=", participantId)
-        .execute()
-
-      return result.length > 0
-    }
-
-    if (typeof value === "boolean") {
-      if (property === "is_veteran") {
-        return await updateProfiles()
-      }
-
-      if (property === "is_social_spot") {
-        return await updateEventParticipants()
-      }
-
-      if (property === "was_admin_skipped_last_event") {
-        // For was_admin_skipped_last_event, we need to find the previous event
-        // and update its process_status to 'skipped' or not
-
-        // First, get the current event's start time
-        const currentEvent = await kysely
-          .selectFrom("events")
-          .select("time_event_start")
-          .where("id", "=", eventId)
-          .executeTakeFirst()
-
-        if (!currentEvent) {
-          return false
-        }
-
-        // Find the previous event for this participant
-        const previousEvent = await kysely
-          .selectFrom("event_participants as ep")
-          .innerJoin("events as e", "ep.event_id", "e.id")
-          .select(["ep.id", "ep.process_status"])
-          .where("ep.profile_id", "=", participantId)
-          .where("ep.is_user_applied", "=", true)
-          .where("e.time_event_start", "<", currentEvent.time_event_start)
-          .orderBy("e.time_event_start", "desc")
-          .limit(1)
-          .executeTakeFirst()
-
-        if (!previousEvent) {
-          return false
-        }
-
-        // Update the process_status of the previous event
-        const result = await kysely
-          .updateTable("event_participants")
-          .set({ process_status: value ? "skipped" : "approved" })
-          .where("id", "=", previousEvent.id)
-          .execute()
-
-        return result.length > 0
-      }
-    }
-
-    if (typeof value === "number") {
-      return await updateEventParticipants()
-    }
-
-    if (typeof value === "string") {
-      if (property === "process_status") {
-        return await updateEventParticipants()
-      }
-    }
-
-    return false
-  },
-)
 
 const getEventRemindersByEventId = composable(
   async (eventId: string) =>
@@ -465,15 +371,27 @@ export const getEventDemographicsById = composable(
   },
 )
 
-export const UpdateParticipantVsEvent = applySchema(ParticipantVsEventSchema)(
-  async (formData) => {
-    const { intent, event_id, profile_id, ...data } = formData
+export const updateParticipantVsEvent = applySchema(
+  updateParticipantVsEventSchema,
+)(async (formData) => {
+  const { intent, event_id, profile_id, ...data } = formData
 
-    return await kysely
-      .updateTable("event_participants")
-      .where("event_id", "=", event_id)
-      .where("profile_id", "=", profile_id)
-      .set(data)
-      .execute()
-  },
-)
+  return await kysely
+    .updateTable("event_participants")
+    .where("event_id", "=", event_id)
+    .where("profile_id", "=", profile_id)
+    .set(data)
+    .execute()
+})
+
+export const updateEventParticipantById = applySchema(
+  updateEventParticipantByIdSchema,
+)(async (formData) => {
+  const { intent, id, ...data } = formData
+
+  return await kysely
+    .updateTable("event_participants")
+    .where("id", "=", id)
+    .set(data)
+    .execute()
+})
