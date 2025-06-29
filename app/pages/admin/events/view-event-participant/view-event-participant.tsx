@@ -7,6 +7,7 @@ import {
   updateParticipantVsEvent,
 } from "~/business/admin/admin.server"
 import { updateParticipantVsEventSchema } from "~/business/admin/common"
+import { getAge } from "~/lib/helpers/get-age"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import { BasicData } from "./basic-data"
@@ -87,7 +88,9 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
     <>
       <div className="flex">
         <div className="space-y-1">
-          <h1>{name}</h1>
+          <h1>
+            {name}, {getAge(profile.date_of_birth)}
+          </h1>
           <p>
             No evento{" "}
             <b>
