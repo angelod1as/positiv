@@ -10,41 +10,45 @@ import {
   getEventDemographicsById,
   getProfilesWithExtraDataById,
   sendEventReminders,
+  updateEventParticipantById,
   updateEventStatus,
 } from "~/business/admin/admin.server"
 import {
   sendEventRemindersSchema,
+  updateEventParticipantByIdSchema,
   updateEventStatusSchema,
 } from "~/business/admin/common"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
+import type { ComposableFetcherData } from "~types/entities.types"
 import type { Route } from "./+types/view-event-page"
-import { AdminEventParticipantsTable } from "./admin-event-participants-table"
 import { Buttons } from "./buttons"
 import { DatesAndTimes } from "./dates-and-times"
 import { DemographicsData } from "./demographics"
 import { EventStatusForm } from "./event-status-form"
 import { GeneralData } from "./general-data"
 import { sendToast } from "./send-toast"
+import { AdminViewEventParticipantsTable } from "./view-event-participants-table/view-event-participants-table"
 
 const {
   admin: { ADMIN_DASHBOARD },
 } = paths
-
-export type FetcherData =
-  | {
-      success: boolean
-      intent: "send-reminders" | "update-event-status"
-      errors?: Record<"_global", string[]>
-    }
-  | undefined
 
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getAdminContext(request, params)
 
   const { intent } = await inputFromForm(request)
+
+  if (intent === "update-event-participant") {
+    return await formAction({
+      request,
+      schema: updateEventParticipantByIdSchema,
+      mutation: updateEventParticipantById,
+      transformResult: (result) => ({ ...result, intent }),
+    })
+  }
 
   if (intent === "send-reminders") {
     return await formAction({
@@ -112,7 +116,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 }
 
 const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
-  const fetcher = useFetcher<FetcherData>()
+  const fetcher = useFetcher<ComposableFetcherData>()
 
   useEffect(() => {
     sendToast(fetcher.data)
@@ -138,9 +142,10 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       {demographics && <DemographicsData demographics={demographics} />}
 
       <div className="max-h-[600px]">
-        <AdminEventParticipantsTable
+        <AdminViewEventParticipantsTable
           participants={participants}
           eventId={event.id}
+          fetcher={fetcher}
         />
       </div>
 

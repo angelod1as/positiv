@@ -77,25 +77,13 @@ export const updateEventStatusSchema = zod.object({
   event_status: zod.custom<EventStatus>(),
 })
 
-export const updateParticipantPropertySchema = zod.object({
-  participantId: zod.string(),
-  property: zod.enum([
-    "is_veteran",
-    "is_social_spot",
-    "was_admin_skipped_last_event",
-    "payment",
-    "process_status",
-  ]),
-  value: zod.union([zod.boolean(), zod.string(), zod.number()]),
-})
-
 export const sendEventRemindersSchema = zod.object({
   intent: zod.string(),
   event_id: zod.string(),
   event_status: zod.custom<EventStatus>(),
 })
 
-export const ParticipantVsEventSchema = zod.object({
+export const updateParticipantVsEventSchema = zod.object({
   profile_id: zod.string(),
   event_id: zod.string(),
   intent: zod.literal("participant-vs-event-schema"),
@@ -104,4 +92,11 @@ export const ParticipantVsEventSchema = zod.object({
   is_staff_spot: zod.boolean(),
   payment: zod.coerce.number(),
   admin_general_notes: zod.string(),
+})
+
+export const updateEventParticipantByIdSchema = zod.object({
+  id: zod.string(),
+  intent: zod.literal("update-event-participant"),
+  payment: zod.coerce.number().optional(),
+  process_status: zod.string().optional(),
 })

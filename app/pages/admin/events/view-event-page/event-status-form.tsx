@@ -4,12 +4,11 @@ import { type FetcherWithComponents } from "react-router"
 import { updateEventStatusSchema } from "~/business/admin/common"
 import { SchemaForm } from "~/components/forms/schema-form"
 import { eventStatusMap } from "~/lib/helpers/propMaps"
-import type { EventStatus } from "~types/entities.types"
-import type { FetcherData } from "./view-event-page"
+import type { ComposableFetcherData, EventStatus } from "~types/entities.types"
 
 type EventStatusFormProps = {
   event_status: EventStatus
-  fetcher: FetcherWithComponents<FetcherData>
+  fetcher: FetcherWithComponents<ComposableFetcherData>
 }
 export const EventStatusForm: FC<EventStatusFormProps> = ({
   fetcher,
