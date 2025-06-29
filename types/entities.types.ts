@@ -8,6 +8,15 @@ import type { Database } from "./database.types"
 // TODO: selectable, insertable, updateable types
 // https://kysely.dev/docs/getting-started
 
+// General Fetcher data from Composables
+export type ComposableFetcherData =
+  | {
+      success: boolean
+      intent: string
+      errors?: Record<"_global", string[]>
+    }
+  | undefined
+
 /** Extension of User with more data, so, called Profile */
 const _profileWithRoles = currentProfileSchema.nullable()
 export type ProfileWithRoles = z.infer<typeof _profileWithRoles>
