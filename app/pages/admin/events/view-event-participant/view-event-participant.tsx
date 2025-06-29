@@ -4,9 +4,9 @@ import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import {
   getEventParticipantHistoryById,
   getProfileWithExtraDataById,
-  UpdateParticipantVsEvent,
+  updateParticipantVsEvent,
 } from "~/business/admin/admin.server"
-import { ParticipantVsEventSchema } from "~/business/admin/common"
+import { updateParticipantVsEventSchema } from "~/business/admin/common"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import { BasicData } from "./basic-data"
@@ -24,8 +24,8 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "participant-vs-event-schema") {
     return formAction({
       request,
-      schema: ParticipantVsEventSchema,
-      mutation: UpdateParticipantVsEvent,
+      schema: updateParticipantVsEventSchema,
+      mutation: updateParticipantVsEvent,
       transformResult: async (result) => {
         if (result.success) {
           // TODO: FETCHER
