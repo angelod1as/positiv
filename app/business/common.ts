@@ -104,8 +104,17 @@ export const agreeToTermsSchema = zod.object({
 /* BASIC DATA */
 export const basicDataSchema = zod
   .object({
-    full_name: zod.string().min(2).max(255),
-    social_name: zod.string().min(2).max(255).nullish(),
+    full_name: zod
+      .string()
+      .regex(/[^A-Z]/, "Não escreva com tudo em maiúscula, por favor")
+      .min(2)
+      .max(255),
+    social_name: zod
+      .string()
+      .regex(/[^A-Z]/, "Não escreva com tudo em maiúscula, por favor")
+      .min(2)
+      .max(255)
+      .nullish(),
     rg: zod.string().min(2),
     rg_issuer: zod.string().min(2),
     cpf: zod.string().min(2),
@@ -129,8 +138,14 @@ export const basicDataSchema = zod
       .refine((value) => PHONE_REGEXP.test(value.toString()), {
         message: "Número inválido",
       }),
-    how_came_to_us: zod.string().optional(),
-    where_lives: zod.string().optional(),
+    how_came_to_us: zod
+      .string()
+      .regex(/[^A-Z]/, "Não escreva com tudo em maiúscula, por favor")
+      .optional(),
+    where_lives: zod
+      .string()
+      .regex(/[^A-Z]/, "Não escreva com tudo em maiúscula, por favor")
+      .optional(),
   })
   .refine((data) => data.phone === data.confirm_phone, {
     message: "Os números de telefone são diferentes",

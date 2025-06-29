@@ -95,12 +95,11 @@ const profilesWithExtraDataQuery = kysely
   ])
 
 export const getProfileWithExtraDataById = composable(
-  async ({ profileId, eventId }: { profileId: string; eventId: string }) => {
+  async ({ eventParticipantId }: { eventParticipantId: string }) => {
     const profile = await profilesWithExtraDataQuery
-      .where("current_ep.event_id", "=", eventId)
+      .where("current_ep.id", "=", eventParticipantId)
       .where("current_ep.is_user_applied", "=", true)
-      .where("current_ep.profile_id", "=", profileId)
-      .executeTakeFirstOrThrow()
+      .executeTakeFirst()
     return profile
   },
 )
@@ -128,16 +127,16 @@ export const getAdminProfileById = composable(
 
 export const getEventParticipantHistoryById = composable(
   async ({
-    profileId,
+    eventParticipantId,
   }: {
-    profileId: string
+    eventParticipantId: string
   }): Promise<Array<ParticipantVsEvent>> => {
     return await kysely
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .selectAll("event_participants")
       .select(["events.title as event_title", "events.emoji as event_emoji"])
-      .where("event_participants.profile_id", "=", profileId)
+      .where("event_participants.id", "=", eventParticipantId)
       .where("is_user_applied", "=", true)
       .orderBy("events.time_event_start", "desc")
       .execute()
