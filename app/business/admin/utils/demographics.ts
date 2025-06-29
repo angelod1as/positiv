@@ -85,33 +85,80 @@ function countOrientations(rows: DemographicRow[]) {
     other: { count: number; others: string[] }
   }>(
     (acc, row) => {
+      // Use a Set to store unique orientation types for the current person
+      // This prevents double-counting if a person lists multiple orientations that
+      // fall under the same primary category (e.g., "Bi" and "Pan" for "biPan").
+      const personOrientationTypes = new Set<
+        "straight" | "homo" | "biPan" | "aceDemi" | "other"
+      >()
+      const personOtherOrientationsValues: string[] = []
+
       if (row.orientation?.length) {
-        let hasPrimary = false
-        const others: string[] = []
+        let hasPrimaryClassification = false
         for (const o of row.orientation) {
-          const types = classifySingleOrientation(o)
-          for (const t of types) {
-            if (t === "biPan" || t === "homo" || t === "straight") {
-              acc[t]++
-              hasPrimary = true
-            } else if (t === "aceDemi") {
-              acc.aceDemi++
+          const classifiedTypes = classifySingleOrientation(o)
+          for (const t of classifiedTypes) {
+            if (
+              t === "biPan" ||
+              t === "homo" ||
+              t === "straight" ||
+              t === "aceDemi"
+            ) {
+              personOrientationTypes.add(t)
+              // Mark that we found at least one primary classification.
+              // Ace/Demi is not considered a primary orientation in the context of excluding others.
+              if (t !== "aceDemi") {
+                hasPrimaryClassification = true
+              }
             } else if (t === "other") {
-              others.push(o)
+              personOtherOrientationsValues.push(o)
             }
           }
         }
-        if (!hasPrimary && others.length > 0) {
+
+        // If the person has no primary classifications (straight, homo, biPan)
+        // but has other orientations that fell into 'other' or 'aceDemi' alone
+        if (
+          !hasPrimaryClassification &&
+          personOtherOrientationsValues.length > 0
+        ) {
           acc.other.count++
-          acc.other.others.push(...others)
-        } else if (!hasPrimary && acc.aceDemi === 0 && others.length === 0) {
+          // Add only unique 'other' orientation values to avoid repetitions
+          acc.other.others.push(
+            ...Array.from(new Set(personOtherOrientationsValues)),
+          )
+        } else if (
+          !hasPrimaryClassification &&
+          personOrientationTypes.has("aceDemi") &&
+          personOrientationTypes.size === 1
+        ) {
+          // If the only primary classification is aceDemi and there are no other classifications,
+          // the original logic treated it as 'other' as well.
+          acc.other.count++
+          acc.other.others.push("Ace/Demi Unaccompanied (Treated as Other)")
+        } else if (
+          !hasPrimaryClassification &&
+          personOtherOrientationsValues.length === 0
+        ) {
+          // If no primary orientation was found and no specific 'other' values were listed
           acc.other.count++
           acc.other.others.push("Unclassified/Multiple Not Primary")
         }
       } else {
+        // If orientation was not provided
         acc.other.count++
         acc.other.others.push("Not Provided")
       }
+
+      // Now, increment the overall counters based on the unique types identified for this person.
+      // This is crucial to prevent double-counting individuals in the same category.
+      for (const type of personOrientationTypes) {
+        if (type === "straight") acc.straight++
+        else if (type === "homo") acc.homo++
+        else if (type === "biPan") acc.biPan++
+        else if (type === "aceDemi") acc.aceDemi++
+      }
+
       return acc
     },
     {
@@ -123,7 +170,6 @@ function countOrientations(rows: DemographicRow[]) {
     },
   )
 }
-
 function extractAges(rows: DemographicRow[]): number[] {
   return rows.flatMap((row) => {
     if (row.date_of_birth) {
