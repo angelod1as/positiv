@@ -142,4 +142,11 @@ export const processStatusOptions: Array<{
     name: participantProcessStatusPropMap("think_better"),
     value: "think_better",
   },
+  { name: participantProcessStatusPropMap("skipped"), value: "skipped" },
+  { name: participantProcessStatusPropMap("attended"), value: "attended" },
+  {
+    name: participantProcessStatusPropMap("not-attended"),
+    value: "not-attended",
+  },
+  { name: participantProcessStatusPropMap("rejected"), value: "rejected" },
 ]
