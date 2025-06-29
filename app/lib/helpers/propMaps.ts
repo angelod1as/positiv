@@ -95,58 +95,30 @@ export const eventStatusMap = (event_status: EventStatus) => {
     }[event_status] || ""
   )
 }
+
+const participantProcessStatus = {
+  applied: "Inscrite",
+  talking: "Conversando",
+  sent_payment_data: "Dados de pagto enviados",
+  paid: "Pago",
+  sent_rules: "Regras enviadas",
+  think_better: "Pensar melhor",
+  attended: "Compareceu",
+  "not-attended": "Não compareceu",
+  rejected: "Rejeitade",
+  skipped: "Pulade (rodízio)",
+}
+
 export const participantProcessStatusPropMap = (
   process_status: ParticipantProcessStatus,
 ) => {
-  return (
-    {
-      applied: "Inscrite",
-      talking: "Conversando",
-      sent_payment_data: "Dados de pagto enviados",
-      paid: "Pago",
-      sent_rules: "Regras enviadas",
-      think_better: "Pensar melhor",
-      attended: "Compareceu",
-      "not-attended": "Não compareceu",
-      rejected: "Rejeitade",
-      skipped: "Pulade (rodízio)",
-    }[process_status] || ""
-  )
+  return participantProcessStatus[process_status] || ""
 }
 
 export const processStatusOptions: Array<{
   name: string
   value: ParticipantProcessStatus
-}> = [
-  {
-    name: participantProcessStatusPropMap("applied"),
-    value: "applied",
-  },
-  {
-    name: participantProcessStatusPropMap("talking"),
-    value: "talking",
-  },
-  {
-    name: participantProcessStatusPropMap("sent_payment_data"),
-    value: "sent_payment_data",
-  },
-  {
-    name: participantProcessStatusPropMap("paid"),
-    value: "paid",
-  },
-  {
-    name: participantProcessStatusPropMap("sent_rules"),
-    value: "sent_rules",
-  },
-  {
-    name: participantProcessStatusPropMap("think_better"),
-    value: "think_better",
-  },
-  { name: participantProcessStatusPropMap("skipped"), value: "skipped" },
-  { name: participantProcessStatusPropMap("attended"), value: "attended" },
-  {
-    name: participantProcessStatusPropMap("not-attended"),
-    value: "not-attended",
-  },
-  { name: participantProcessStatusPropMap("rejected"), value: "rejected" },
-]
+}> = Object.entries(participantProcessStatus).map(([value, name]) => ({
+  name: name,
+  value: value as ParticipantProcessStatus,
+}))
