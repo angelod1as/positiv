@@ -45,6 +45,7 @@ export interface DataTableProps<T extends DataTableValue> {
   reorderableColumns?: boolean
   sortField?: string
   editMode?: "cell" | "row"
+  size?: "small" | "normal" | "large"
 }
 
 // TODO: Implement date filtering
@@ -73,6 +74,7 @@ export function DataTable<T extends DataTableValue>({
   reorderableColumns = false,
   sortField,
   editMode,
+  size = "normal",
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [filters, setFilters] = useState<DataTableFilterMeta>(
@@ -147,9 +149,11 @@ export function DataTable<T extends DataTableValue>({
       dataKey="id"
       emptyMessage="Nenhum registro encontrado"
       header={renderHeader}
+      showGridlines
       stripedRows
       rowHover
       editMode={editMode}
+      size={size}
       // Pagination
       rows={rows}
       paginator
