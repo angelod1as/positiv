@@ -1,5 +1,5 @@
 import type { FC } from "react"
-import { ParticipantVsEventSchema } from "~/business/admin/common"
+import { updateParticipantVsEventSchema } from "~/business/admin/common"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { SchemaForm } from "~/components/forms/schema-form"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
@@ -36,7 +36,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
           <h3>Administração</h3>
 
           <SchemaForm
-            schema={ParticipantVsEventSchema}
+            schema={updateParticipantVsEventSchema}
             buttonLabel="Salvar"
             hiddenFields={["intent", "event_id", "profile_id"]}
             values={{

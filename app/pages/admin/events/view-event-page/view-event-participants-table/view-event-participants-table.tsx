@@ -1,10 +1,21 @@
+import { composable } from "composable-functions"
 import { EyeIcon } from "lucide-react"
-import { Column } from "primereact/column"
+import {
+  Column,
+  type ColumnEditorOptions,
+  type ColumnEvent,
+} from "primereact/column"
+
 import type { FC } from "react"
+import type { FetcherWithComponents } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { DataTable } from "~/components/organisms/data-table"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
+import { processStatusOptions } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
+import type { ComposableFetcherData } from "~types/entities.types"
+import { TableInputDropdown } from "./table-input-dropdown"
+import { TableInputMoney } from "./table-input-money"
 
 const {
   admin: {
@@ -12,9 +23,10 @@ const {
   },
 } = paths
 
-type AdminEventParticipantsTableProps = {
+type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
   eventId: string
+  fetcher: FetcherWithComponents<ComposableFetcherData>
 }
 
 const joinArray = (
@@ -25,29 +37,63 @@ const joinArray = (
   return Array.isArray(value) ? value.join(", ") : value
 }
 
-// const booleanBodyTemplate = (
-//   values: ParticipantWithExtraData,
-//   prop: keyof ParticipantWithExtraData,
-// ) => {
-//   const value = values[prop]
-//   return <Checkbox checked={Boolean(value)} disabled />
-// }
-
 const isParticipantAccepted = (participant: ProfileWithExtraData) => {
   return ["sent_payment_data", "paid", "sent_rules"].includes(
     participant.process_status,
   )
 }
 
-export const AdminEventParticipantsTable: FC<
-  AdminEventParticipantsTableProps
-> = ({ participants, eventId }) => {
+const statusOptions = processStatusOptions.map((option) => ({
+  ...option,
+  label: option.name,
+}))
+
+export const AdminViewEventParticipantsTable: FC<
+  AdminViewEventParticipantsTableProps
+> = ({ participants, eventId, fetcher }) => {
   const accepted = participants.filter(isParticipantAccepted)
+
+  const cellEditor = (options: ColumnEditorOptions) => {
+    switch (options.field as keyof ProfileWithExtraData) {
+      case "payment":
+        return <TableInputMoney {...options} />
+      case "process_status":
+        return <TableInputDropdown {...options} options={statusOptions} />
+      default:
+        return <div>This Field Lacks an Editing Component</div>
+    }
+  }
+
+  const onCellEditComplete = async (columnEvent: ColumnEvent) => {
+    const { newValue, field, rowData, value } = columnEvent
+
+    rowData[field] = newValue
+
+    const result = await composable(
+      async () =>
+        await fetcher.submit(
+          {
+            intent: "update-event-participant",
+            id: rowData.id,
+            eventId: eventId,
+            [field]: newValue,
+          },
+          { method: "post" },
+        ),
+    )()
+
+    if (!result.success) {
+      rowData[field] = value
+      throw new Error("Ops, algo deu errado ao salvar seu valor")
+    }
+  }
+
   return (
     <DataTable
       value={participants}
       id="participants"
-      sortField="time_event_start"
+      sortField="social_name"
+      editMode="cell"
       header={{
         title: "Inscrições",
         numbers: (
@@ -75,7 +121,7 @@ export const AdminEventParticipantsTable: FC<
       <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} />
 
       <Column field="full_name" header="Nome" frozen={true} />
-      <Column field="social_name" header="Nome social" />
+      <Column field="social_name" header="Nome social" sortable />
       <Column
         field="pronouns"
         header="Pronomes"
@@ -101,8 +147,25 @@ export const AdminEventParticipantsTable: FC<
       />
 
       {/* TODO: Make editable */}
-      <Column field="process_status" header="Status" />
-      <Column field="payment" header="Pagamento" />
+      <Column
+        field="process_status"
+        header="Status"
+        editor={cellEditor}
+        onCellEditComplete={onCellEditComplete}
+        body={(values) => (
+          <TableInputDropdown
+            value={values.process_status}
+            options={statusOptions}
+          />
+        )}
+      />
+      <Column
+        field="payment"
+        header="Pagamento"
+        editor={cellEditor}
+        onCellEditComplete={onCellEditComplete}
+        body={(values) => <TableInputMoney value={values.payment} />}
+      />
       {/* <Column
         field="is_veteran"
         header="Veterane?"
