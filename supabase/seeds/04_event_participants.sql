@@ -61,7 +61,7 @@ BEGIN
         'attended',                    -- process_status: Attended
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         NULL,                           -- notes
         FALSE,                          -- Is Social Spot
         TRUE,                           -- Is Staff Spot
@@ -74,7 +74,7 @@ BEGIN
         'rejected',                    -- process_status: Rejected (replaces 'cancelled_by_admin')
         now() - interval '3 months',   -- application_date
         now() - interval '1 month',    -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         'Rejected by admin due to event cancellation', -- notes
         FALSE,                          -- Is Social Spot
         TRUE,                           -- Is Staff Spot
@@ -89,7 +89,7 @@ BEGIN
         'applied',                     -- process_status: Applied (not yet confirmed)
         now() - interval '1 day',      -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment (not paid yet)
+        0,                             -- payment (not paid yet)
         NULL,                           -- notes
         FALSE,                          -- Is Social Spot
         TRUE,                           -- Is Staff Spot
@@ -102,7 +102,7 @@ BEGIN
         'skipped',                     -- process_status: SKIPPED BY ADMIN
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment (no payment since skipped)
+        0,                             -- payment (no payment since skipped)
         NULL,
         FALSE,                          -- Is Social Spot
         TRUE,                           -- Is Staff Spot
@@ -130,7 +130,7 @@ BEGIN
         'talking',                     -- process_status: Talking (new status)
         now() - interval '2 days',     -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         'Admin talking to user about participation', -- notes
         FALSE,                          -- Is Social Spot
         FALSE,                           -- Is Staff Spot
@@ -143,7 +143,7 @@ BEGIN
         'skipped',                     -- process_status: SKIPPED BY ADMIN
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         'Admin decision: behavioral concerns', -- notes
         FALSE,                          -- Is Social Spot
         FALSE,                           -- Is Staff Spot
@@ -156,7 +156,7 @@ BEGIN
         'skipped',                     -- process_status: SKIPPED BY ADMIN
         now() - interval '6 months',   -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         'Admin decision: no-show history', -- notes
         FALSE,                          -- Is Social Spot
         FALSE,                           -- Is Staff Spot
@@ -171,7 +171,7 @@ BEGIN
         'sent_payment_data',           -- process_status: Sent Payment Data (new status)
         now() - interval '3 days',     -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         'User sent payment details'    , -- notes
         FALSE,                          -- Is Social Spot
         FALSE,                           -- Is Staff Spot
@@ -212,7 +212,7 @@ BEGIN
         'think_better',                -- process_status: Think Better (new status)
         now() - interval '5 days',     -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         'User considering participation', -- notes
         FALSE,                          -- Is Social Spot
         FALSE,                           -- Is Staff Spot
@@ -225,7 +225,7 @@ BEGIN
         'not-attended',                -- process_status: Not Attended (new status)
         now() - interval '4 months',   -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         'User applied but did not show up', -- notes
         FALSE,                          -- Is Social Spot
         FALSE,                           -- Is Staff Spot
@@ -238,7 +238,7 @@ BEGIN
         'rejected',                    -- process_status: Rejected (new status)
         now() - interval '2 months',   -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         'Application rejected by admin due to criteria mismatch', -- notes
         FALSE,                          -- Is Social Spot
         FALSE,                           -- Is Staff Spot
@@ -251,7 +251,7 @@ BEGIN
         'sent_rules',                  -- process_status: Sent Rules (new status)
         now() - interval '7 months',   -- application_date
         NULL,                          -- cancellation_date
-        NULL,                          -- payment
+        0,                             -- payment
         'Admin sent participation rules to user', -- notes
         FALSE,                          -- Is Social Spot
         FALSE,                           -- Is Staff Spot
