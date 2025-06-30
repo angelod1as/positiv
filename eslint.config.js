@@ -4,7 +4,13 @@ import reactRefresh from "eslint-plugin-react-refresh"
 import unusedImports from "eslint-plugin-unused-imports"
 import { defineConfig, globalIgnores } from "eslint/config"
 import globals from "globals"
+import { createRequire } from "node:module" // Needed to import commonjs modules in ES modules config
 import tseslint from "typescript-eslint"
+
+// Use createRequire to load the commonjs local plugin.
+// The path should be relative to where your eslint.config.js is located.
+const require = createRequire(import.meta.url)
+const localRulesPlugin = require("./eslint-local-rules/index.cjs") // Point to the .cjs entry file
 
 export default defineConfig([
   globalIgnores(["./.react-router/*", "./build/*", "./playwright-report/*"]),
@@ -34,7 +40,11 @@ export default defineConfig([
   tseslint.configs.strict,
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"],
-    plugins: { js, "unused-imports": unusedImports },
+    plugins: {
+      js,
+      "unused-imports": unusedImports,
+      "local-rules": localRulesPlugin, // Register your custom local plugin here
+    },
     extends: ["js/recommended"],
     rules: {
       // For unusedImports
@@ -52,6 +62,8 @@ export default defineConfig([
           ignoreRestSiblings: true,
         },
       ],
+      // Enable your custom rule here
+      "local-rules/no-admin-imports": "error",
     },
   },
   {
@@ -71,19 +83,18 @@ export default defineConfig([
           allow: ["warn", "error", "info", "dir"],
         },
       ],
-      // TODO: ACTIVATE & REFACTOR ERRORS
-      // "@typescript-eslint/array-type": [
-      //   "error",
-      //   {
-      //     default: "generic",
-      //   },
-      // ],
       "no-empty-pattern": "off",
       "react/jsx-uses-react": "off",
       "react/react-in-jsx-scope": "off",
       "react/no-unescaped-entities": "off",
       "react/self-closing-comp": "error",
       "react/prop-types": "off",
+    },
+  },
+  {
+    files: ["eslint-local-rules/**/*.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 ])
