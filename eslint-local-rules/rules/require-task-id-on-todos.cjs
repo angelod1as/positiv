@@ -2,7 +2,6 @@
 
 /**
  * @fileoverview Ensures that specific keywords in line comments (e.g., TODO:) are followed by a POS- task ID.
- * @author Your Name
  */
 
 "use strict"
