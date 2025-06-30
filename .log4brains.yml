@@ -1,0 +1,5 @@
+project:
+  name: Positiv
+  tz: America/Sao_Paulo
+  adrFolder: ./docs/decisions
+  packages: []
