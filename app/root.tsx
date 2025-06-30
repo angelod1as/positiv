@@ -1,4 +1,5 @@
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import { inputFromForm } from "composable-functions"
 import { useEffect, type ReactNode } from "react"
 import {
   data,
@@ -6,20 +7,21 @@ import {
   Links,
   Meta,
   Outlet,
+  redirect,
   Scripts,
   ScrollRestoration,
 } from "react-router"
-import { toast as notify, Toaster } from "sonner"
-
 import { getToast } from "remix-toast"
+import { toast as notify, Toaster } from "sonner"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
+import { newsCookie } from "./business/session.server"
 import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
-import { POSITIV_EMAIL } from "./lib/helpers/constants"
+import { NEWS_VERSION, POSITIV_EMAIL } from "./lib/helpers/constants"
 
 // COMMENT OUT when offline
 export const links: Route.LinksFunction = () => [
@@ -88,8 +90,21 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     )
     const { toast, headers } = await getToast(request)
 
+    const cookieHeader = request.headers.get("Cookie")
+    const cookie = (await newsCookie.parse(cookieHeader)) || {}
+
+    const { showNews, newsVersion: oldNewsVersion } = cookie
+    const shouldShowNews =
+      Number(oldNewsVersion) < Number(NEWS_VERSION) || showNews !== "false"
+
     return data(
-      { currentUser, currentProfile, toast, isProdInDev },
+      {
+        currentUser,
+        currentProfile,
+        toast,
+        isProdInDev,
+        showNews: shouldShowNews,
+      },
       { headers },
     )
   } catch (error) {
@@ -99,8 +114,27 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       currentProfile: null,
       toast: null,
       isProdInDev: null,
+      showNews: null,
     }
   }
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const cookieHeader = request.headers.get("Cookie")
+  const cookie = (await newsCookie.parse(cookieHeader)) || {}
+  const formData = await inputFromForm(request)
+  const { newsVersion: submittedNewsVersion } = formData
+
+  if (submittedNewsVersion) {
+    cookie.showNews = "false"
+    cookie.newsVersion = submittedNewsVersion
+  }
+
+  return redirect(request.url, {
+    headers: {
+      "Set-Cookie": await newsCookie.serialize(cookie),
+    },
+  })
 }
 
 export function Layout(props: { children: ReactNode }) {
@@ -125,7 +159,8 @@ export function Layout(props: { children: ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { currentUser, currentProfile, toast, isProdInDev } = loaderData
+  const { currentUser, currentProfile, toast, isProdInDev, showNews } =
+    loaderData
 
   useEffect(() => {
     if (toast?.type) {
@@ -147,7 +182,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
-      <Footer />
+      <Footer showNews={showNews} />
     </>
   )
 }
