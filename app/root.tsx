@@ -238,7 +238,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           )}
         </div>
       </main>
-      <Footer />
+      <Footer showNews={false} />
     </div>
   )
 }
