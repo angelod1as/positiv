@@ -2,7 +2,6 @@
 
 /**
  * @fileoverview Disallows imports from the admin folder outside of the admin folder.
- * @author Your Name
  */
 
 "use strict"
