@@ -1,8 +1,6 @@
 import type { CamelKeys } from "string-ts"
 import { camelKeys } from "string-ts"
 
-// TODO: move helpers into one file with correct documentation. Example below.
-
 /**
  * Creates a typed environment function that parses, camelCases, and caches the arguments.
  * @param schema - The schema used to parse the arguments.
