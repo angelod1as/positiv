@@ -1,4 +1,4 @@
-import { createCookieSessionStorage } from "react-router"
+import { createCookie, createCookieSessionStorage } from "react-router"
 import { env } from "~/env.server"
 
 type RulesSessionData = {
@@ -24,4 +24,8 @@ export const rulesSessionStorage = createCookieSessionStorage<
     secure: true,
     secrets: [cookieSecret || ""],
   },
+})
+
+export const newsCookie = createCookie("show-news", {
+  maxAge: 34560000, // max value
 })
