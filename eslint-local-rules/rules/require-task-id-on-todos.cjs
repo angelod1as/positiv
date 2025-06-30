@@ -26,14 +26,7 @@ module.exports = {
   create(context) {
     // Define the keywords we are looking for.
     // Making them case-insensitive for matching flexibility in the comment text.
-    const keywords = [
-      "BUG",
-      "TODO",
-      "URGENT",
-      "REFACTOR",
-      "TYPE",
-      "QUESTION",
-    ].map((k) => k.toLowerCase()) // Convert to lowercase for case-insensitive matching
+    const keywords = ["BUG", "TODO", "URGENT", "REFACTOR", "TYPE", "QUESTION"]
 
     // Regular expression to find "POS-" followed by one or more digits
     const taskIdPattern = /POS-\d+/
@@ -53,12 +46,12 @@ module.exports = {
             // Check if the comment starts with one of our keywords (case-insensitive)
             let matchedKeyword = null
             for (const keyword of keywords) {
-              // Regex to match keyword at the start of the comment line,
-              // optionally followed by a colon and whitespace.
-              // e.g., "TODO:", "Bug", "URGENT", "QUESTION: "
-              const keywordRegex = new RegExp(`^${keyword}(:\\s*)?`, "i") // 'i' for case-insensitive
+              // The regex specifically looks for the EXACT uppercase keyword
+              // at the start of the trimmed comment, followed by a word boundary,
+              // and then optionally a colon, whitespace, or the end of the string.
+              const keywordRegex = new RegExp(`^${keyword}\\b(?:[:\\s].*)?$`) // Matches "KEYWORD", "KEYWORD:", "KEYWORD: some text"
               if (keywordRegex.test(commentText)) {
-                matchedKeyword = keyword.toUpperCase() // Store the original uppercase keyword for message
+                matchedKeyword = keyword // Use the exact keyword for the message
                 break
               }
             }
