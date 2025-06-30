@@ -60,6 +60,7 @@ export default defineConfig([
 
       // Your custom rule for admin imports (applies to all relevant file types)
       "local-rules/no-admin-imports": "error",
+      "local-rules/require-task-id-on-todos": "error",
     },
   },
 
@@ -87,7 +88,7 @@ export default defineConfig([
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           caughtErrorsIgnorePattern: "^_",
-          ignoreRestSiblings: true, // ADDED: Allow unused rest siblings for TypeScript unused vars
+          ignoreRestSiblings: true,
         },
       ],
     },
