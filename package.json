@@ -1,6 +1,6 @@
 {
-  "name": "positiv-remix",
-  "private": true,
+  "name": "positiv",
+  "private": false,
   "type": "module",
   "scripts": {
     "build": "react-router build",
