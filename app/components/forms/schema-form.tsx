@@ -31,7 +31,6 @@ type SchemaFormProps<Schema extends FormSchema> =
 
 function SchemaForm<Schema extends FormSchema>({
   descriptions,
-  className,
   ...props
 }: SchemaFormProps<Schema>) {
   return (

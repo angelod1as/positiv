@@ -23,7 +23,7 @@ test("Apply to event", async ({ page }) => {
   await userDataPage.fillUserDataForm()
   await userDataPage.applyToEvent()
 
-  // TODO: turn on when calendar is fixed
+  // TODO: POS-141 turn on when calendar is fixed
   // await dashboard.testDownloadCalendar()
   await dashboard.cancelApplication()
 
