@@ -1,6 +1,6 @@
 {
   "name": "positiv",
-  "private": false,
+  "private": true,
   "type": "module",
   "scripts": {
     "build": "react-router build",
