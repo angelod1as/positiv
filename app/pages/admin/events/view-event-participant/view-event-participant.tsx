@@ -29,7 +29,6 @@ export async function action({ request }: Route.ActionArgs) {
       mutation: updateParticipantVsEvent,
       transformResult: async (result) => {
         if (result.success) {
-          // TODO: FETCHER
           throw await redirectWithSuccess(request.url, "Atualizado com sucesso")
         }
         return result
@@ -98,7 +97,6 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
             </b>
           </p>
         </div>
-        <div>{/* TODO: Edit Buttons */}</div>
       </div>
 
       <BasicData profile={profile} />

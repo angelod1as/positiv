@@ -52,8 +52,7 @@ test("delete database items", async ({ page }) => {
     }
   }
 
-  // TODO: Delete E2E events
-  // TBD!
+  // TODO: POS-138 Delete E2E events
 
   // try {
   //   await supabase.from("events").delete().eq("title", "EVENTO TESTE E2E")
