@@ -5,7 +5,7 @@ import { currentProfileSchema } from "~/business/common"
 import type { GENDERS, ORIENTATIONS, PRONOUNS } from "~/lib/helpers/constants"
 import type { Database } from "./database.types"
 
-// TODO: selectable, insertable, updateable types
+// TODO: POS-136 selectable, insertable, updateable types
 // https://kysely.dev/docs/getting-started
 
 // General Fetcher data from Composables
@@ -39,7 +39,7 @@ export type Participant = Profile &
     Database["public"]["Tables"]["event_participants"]["Row"],
     "process_status"
   > & {
-    // TODO: Should be ENUM
+    // TODO: POS-137 Should be ENUM
     process_status: ParticipantProcessStatus
   }
 
