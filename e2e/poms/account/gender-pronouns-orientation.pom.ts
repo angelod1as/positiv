@@ -71,6 +71,6 @@ export class GenderPronounOrientationPOM {
     await expect(this.page).toHaveURL(/dashboard$/)
   }
 
-  // TODO: check prefilled basic data
+  // TODO: POS-142 check prefilled basic data
   async checkPrefilledBasicData() {}
 }

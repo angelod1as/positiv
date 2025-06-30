@@ -50,7 +50,7 @@ export interface DataTableProps<T extends DataTableValue> {
   size?: "small" | "normal" | "large"
 }
 
-// TODO: Implement date filtering
+// TODO: POS-144 Implement date filtering
 FilterService.register("custom_time_event_start", (_value, _filters) => {
   // const [from, to] = filters ?? [null, null];
   // if (from === null && to === null) return true;
@@ -60,7 +60,7 @@ FilterService.register("custom_time_event_start", (_value, _filters) => {
   return true
 })
 
-// TODO: Change value to data (better naming)
+// TODO: POS-145 Change value to data (better naming)
 export function DataTable<T extends DataTableValue>({
   value,
   id,
