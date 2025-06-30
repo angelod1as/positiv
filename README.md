@@ -172,6 +172,18 @@ Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute t
 
 This project is licensed under the Creative Commons Attribution-NonCommercial License - see the [LICENSE](LICENSE) file for details.
 
+## Architectural Decision Records
+
+We use [Log4Brains](https://github.com/thomvaill/log4brains) to manage our ADRs. Check our [Decisions](./docs/decisions/index.md) folder or:
+
+1. Install Log4Brains: `pnpm install -g log4brains`
+2. Run `log4brains preview`
+3. Read the docs
+
+We recommend new ADRs for every big decision — vague, right? The maintainer can ask for an ADR in any PR.
+
+To add a new ADR: `log4brains adr new`.
+
 ## Notes from the Author
 
 [Angelo Dias](https://www.angelodias.com.br) built this software _almost_ entirely by hand.
