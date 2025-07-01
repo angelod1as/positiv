@@ -24,12 +24,23 @@ BEGIN
     SELECT id INTO event_id_completed_1 FROM public.events WHERE title = 'Evento Concluído 1';
 
     -- Insert new participations (no duplicates)
-    INSERT INTO public.event_participants (profile_id, event_id, is_user_applied, process_status, application_date, cancellation_date, payment, notes)
+    INSERT INTO public.event_participants (
+        profile_id,
+        event_id,
+        is_user_applied,
+        application_status,   -- New column
+        attendance_status,    -- New column
+        has_paid,             -- New column
+        application_date,
+        cancellation_date,
+        payment,
+        notes
+    )
     VALUES
-        (user4_profile_id, event_id_completed_1, TRUE,  'attended', now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
-        (user5_profile_id, event_id_completed_1, TRUE,  'attended', now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
-        (user6_profile_id, event_id_completed_1, TRUE,  'attended', now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
-        (user7_profile_id, event_id_completed_1, TRUE,  'confirmed', now() - interval '4 months', NULL, 50.00, 'Confirmed but did not show up'),
-        (user8_profile_id, event_id_completed_1, TRUE,  'skipped', now() - interval '4 months', NULL, 0, 'Skipped by admin'),
-        (user9_profile_id, event_id_completed_1, TRUE,  'attended', now() - interval '4 months', NULL, 50.00, 'Attended successfully');
+        (user4_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
+        (user5_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
+        (user6_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
+        (user7_profile_id, event_id_completed_1, TRUE,  'sent_payment_data', NULL, TRUE, now() - interval '4 months', NULL, 50.00, 'Confirmed but did not show up'),
+        (user8_profile_id, event_id_completed_1, TRUE,  'finalised', 'skipped', FALSE, now() - interval '4 months', NULL, 0, 'Skipped by admin'),
+        (user9_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully');
 END $$;
