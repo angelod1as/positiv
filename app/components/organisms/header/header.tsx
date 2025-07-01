@@ -6,6 +6,7 @@ import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import paths from "~/lib/paths"
 import type { ProfileWithRoles } from "~types/entities.types"
+import { NewsDialog } from "../news-dialog/news-dialog"
 
 const {
   root: { HOME },
@@ -21,12 +22,14 @@ type HeaderProps = {
   profile: ProfileWithRoles | null
   userEmail?: string | null
   isProdInDev?: boolean
+  isThereAnyNews: boolean
 }
 
 export const Header: FC<HeaderProps> = ({
   profile,
   userEmail,
   isProdInDev,
+  isThereAnyNews,
 }) => {
   const { pathname } = useLocation()
 
@@ -61,6 +64,7 @@ export const Header: FC<HeaderProps> = ({
                 {!!displayName && (
                   <p className="hidden sm:block">Olá, {displayName}</p>
                 )}
+                <NewsDialog isThereAnyNews={isThereAnyNews} isHeader={true} />
                 <Button
                   asChild
                   variant="outline"
