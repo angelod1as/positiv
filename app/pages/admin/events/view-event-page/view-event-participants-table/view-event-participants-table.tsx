@@ -11,9 +11,8 @@ import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
-  GenderBadge,
-  OrientationBadge,
-  PronounsBadge,
+  GenderWarning,
+  OrientationWarning,
   RookieBadge,
   VeteranBadge,
 } from "~/components/atoms/badges/badges"
@@ -62,8 +61,6 @@ const statusOptions = processStatusOptions.map((option) => ({
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId, fetcher }) => {
-  const accepted = participants.filter(isParticipantAccepted)
-
   const cellEditor = (options: ColumnEditorOptions) => {
     switch (options.field as keyof ProfileWithExtraData) {
       case "payment":
@@ -103,9 +100,46 @@ export const AdminViewEventParticipantsTable: FC<
     }
   }
 
+  const { accepted, applications } = participants.reduce(
+    (prev, curr) => {
+      const { accepted, applications } = prev
+      const isAccepted = isParticipantAccepted(curr)
+      if (isAccepted) {
+        accepted.total = accepted.total + 1
+        if (curr.is_veteran) {
+          accepted.veterans = accepted.veterans + 1
+        } else {
+          accepted.rookies = accepted.rookies + 1
+        }
+      }
+
+      if (curr.is_veteran) {
+        applications.veterans = applications.veterans + 1
+      } else {
+        applications.rookies = applications.rookies + 1
+      }
+
+      applications.total = applications.total + 1
+
+      return prev
+    },
+    {
+      applications: {
+        total: 0,
+        veterans: 0,
+        rookies: 0,
+      },
+      accepted: {
+        total: 0,
+        veterans: 0,
+        rookies: 0,
+      },
+    },
+  )
+
   return (
     <DataTable
-      value={participants}
+      data={participants}
       id="participants"
       sortField="social_name"
       filters={{
@@ -122,11 +156,28 @@ export const AdminViewEventParticipantsTable: FC<
         numbers: (
           <>
             <p>
-              <b>{participants.length}</b> inscrites
+              <b>{applications.total}</b> inscrites
             </p>
             <p>
-              <b>{accepted.length}</b> aceites
+              <b>{accepted.total}</b> aceites
             </p>
+            <span>|</span>
+            <p>Geral:</p>
+            <p>
+              <b>{applications.rookies}</b> N
+            </p>
+            <p>
+              <b>{applications.veterans}</b> V
+            </p>
+            <span>|</span>
+            <p>Aceites:</p>
+            <p>
+              <b>{accepted.rookies}</b> N
+            </p>
+            <p>
+              <b>{accepted.veterans}</b> V
+            </p>
+            <span>|</span>
           </>
         ),
       }}
@@ -173,19 +224,20 @@ export const AdminViewEventParticipantsTable: FC<
       <Column
         field="pronouns"
         header={profilePropMap("pronouns")}
-        body={(values) => <PronounsBadge pronouns={values.pronouns} />}
+        body={(values) => values.pronouns.join(", ")}
       />
       <Column
         field="gender"
+        className="min-w-40"
         header={profilePropMap("gender")}
-        body={(values) => <GenderBadge genders={values.gender} />}
+        body={(values) => <GenderWarning genders={values.gender} />}
       />
 
       <Column
         field="orientation"
         header={profilePropMap("orientation")}
         body={(values) => (
-          <OrientationBadge orientations={values.orientation} />
+          <OrientationWarning orientations={values.orientation} />
         )}
       />
 

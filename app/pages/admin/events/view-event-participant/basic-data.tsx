@@ -1,9 +1,8 @@
 import { type FC } from "react"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
-  GenderBadge,
-  OrientationBadge,
-  PronounsBadge,
+  GenderWarning,
+  OrientationWarning,
   RookieBadge,
   VeteranBadge,
 } from "~/components/atoms/badges/badges"
@@ -38,11 +37,11 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
         <div className="col-span-2">
           <PhoneButton phone={phone} />
           <p>{full_name}</p>
-          <div className="flex gap-1">
+          <div className="flex gap-3">
             {is_veteran ? <VeteranBadge /> : <RookieBadge />}
-            <PronounsBadge pronouns={pronouns} />
-            <GenderBadge genders={gender} />
-            <OrientationBadge orientations={orientation} />
+            {pronouns?.join(", ")}
+            <GenderWarning genders={gender} />
+            <OrientationWarning orientations={orientation} />
           </div>
           {was_admin_skipped_last_event && (
             <div className="mt-2">
