@@ -51,9 +51,7 @@ const isParticipantAccepted = (participant: ProfileWithExtraData) => {
     "sent_rules",
     "finalised",
   ]
-  return arr.includes(
-    participant.attendance_status as ParticipantApplicationStatus,
-  )
+  return arr.includes(participant.application_status)
 }
 
 export const AdminViewEventParticipantsTable: FC<
