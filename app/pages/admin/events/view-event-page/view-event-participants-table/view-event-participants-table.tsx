@@ -62,8 +62,6 @@ const statusOptions = processStatusOptions.map((option) => ({
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId, fetcher }) => {
-  const accepted = participants.filter(isParticipantAccepted)
-
   const cellEditor = (options: ColumnEditorOptions) => {
     switch (options.field as keyof ProfileWithExtraData) {
       case "payment":
@@ -103,6 +101,41 @@ export const AdminViewEventParticipantsTable: FC<
     }
   }
 
+  const { accepted, applications } = participants.reduce(
+    (prev, curr) => {
+      const { accepted, applications } = prev
+      const isAccepted = isParticipantAccepted(curr)
+      if (isAccepted) {
+        accepted.total = accepted.total + 1
+        if (curr.is_veteran) {
+          accepted.veterans = accepted.veterans + 1
+        } else {
+          accepted.rookies = accepted.rookies + 1
+        }
+      }
+
+      if (curr.is_veteran) {
+        applications.veterans = applications.veterans + 1
+      } else {
+        applications.rookies = applications.rookies + 1
+      }
+
+      return prev
+    },
+    {
+      applications: {
+        total: 0,
+        veterans: 0,
+        rookies: 0,
+      },
+      accepted: {
+        total: 0,
+        veterans: 0,
+        rookies: 0,
+      },
+    },
+  )
+
   return (
     <DataTable
       value={participants}
@@ -125,8 +158,25 @@ export const AdminViewEventParticipantsTable: FC<
               <b>{participants.length}</b> inscrites
             </p>
             <p>
-              <b>{accepted.length}</b> aceites
+              <b>{accepted.total}</b> aceites
             </p>
+            <span>|</span>
+            <p>Geral:</p>
+            <p>
+              <b>{applications.rookies}</b> N
+            </p>
+            <p>
+              <b>{applications.veterans}</b> V
+            </p>
+            <span>|</span>
+            <p>Aceites:</p>
+            <p>
+              <b>{accepted.rookies}</b> N
+            </p>
+            <p>
+              <b>{accepted.veterans}</b> V
+            </p>
+            <span>|</span>
           </>
         ),
       }}
