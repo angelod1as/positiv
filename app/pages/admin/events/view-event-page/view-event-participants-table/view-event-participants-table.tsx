@@ -119,6 +119,8 @@ export const AdminViewEventParticipantsTable: FC<
         applications.rookies = applications.rookies + 1
       }
 
+      applications.total = applications.total + 1
+
       return prev
     },
     {
