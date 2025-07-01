@@ -1,10 +1,12 @@
+import type { FC } from "react"
 import { Link } from "react-router"
 import Instagram from "~/assets/social/instagram.svg"
 import { NewsDialog } from "../news-dialog/news-dialog"
 
 const BUG_TRACKER_URL = "https://forms.gle/ys6W6W54YTcoBHrJA"
 
-export const Footer = ({ showNews = true }: { showNews: boolean | null }) => {
+type FooterProps = { isThereAnyNews: boolean }
+export const Footer: FC<FooterProps> = ({ isThereAnyNews }) => {
   return (
     <footer className="text-xs w-full p-3 bg-gray-100 border">
       <div className="px-4 md:px-6">
@@ -13,7 +15,7 @@ export const Footer = ({ showNews = true }: { showNews: boolean | null }) => {
             © 2025 Positiv. Todos os direitos reservados.
           </p>
           <div>
-            <NewsDialog showNews={showNews} />
+            <NewsDialog isThereAnyNews={isThereAnyNews} />
             <div className="flex justify-center items-center space-x-4 text-black">
               <Link
                 target="_blank"

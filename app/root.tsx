@@ -103,7 +103,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         currentProfile,
         toast,
         isProdInDev,
-        showNews: shouldShowNews,
+        isThereAnyNews: shouldShowNews,
       },
       { headers },
     )
@@ -114,7 +114,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       currentProfile: null,
       toast: null,
       isProdInDev: null,
-      showNews: null,
+      isThereAnyNews: null,
     }
   }
 }
@@ -123,18 +123,27 @@ export async function action({ request }: Route.ActionArgs) {
   const cookieHeader = request.headers.get("Cookie")
   const cookie = (await newsCookie.parse(cookieHeader)) || {}
   const formData = await inputFromForm(request)
-  const { newsVersion: submittedNewsVersion } = formData
+  const { intent, thisUrl, newsVersion: submittedNewsVersion } = formData
 
-  if (submittedNewsVersion) {
-    cookie.showNews = "false"
-    cookie.newsVersion = submittedNewsVersion
+  if (
+    cookie.showNews === "false" &&
+    cookie.newsVersion === submittedNewsVersion
+  ) {
+    return
   }
 
-  return redirect(request.url, {
-    headers: {
-      "Set-Cookie": await newsCookie.serialize(cookie),
-    },
-  })
+  if (intent === "news-update" && thisUrl) {
+    if (submittedNewsVersion) {
+      cookie.showNews = "false"
+      cookie.newsVersion = submittedNewsVersion
+    }
+
+    return redirect(thisUrl as string, {
+      headers: {
+        "Set-Cookie": await newsCookie.serialize(cookie),
+      },
+    })
+  }
 }
 
 export function Layout(props: { children: ReactNode }) {
@@ -159,8 +168,13 @@ export function Layout(props: { children: ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const { currentUser, currentProfile, toast, isProdInDev, showNews } =
-    loaderData
+  const {
+    currentUser,
+    currentProfile,
+    toast,
+    isProdInDev,
+    isThereAnyNews = false,
+  } = loaderData
 
   useEffect(() => {
     if (toast?.type) {
@@ -178,11 +192,12 @@ export default function App({ loaderData }: Route.ComponentProps) {
         isProdInDev={Boolean(isProdInDev)}
         profile={currentProfile}
         userEmail={currentUser?.email}
+        isThereAnyNews={isThereAnyNews ?? false}
       />
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
-      <Footer showNews={showNews} />
+      <Footer isThereAnyNews={isThereAnyNews ?? false} />
     </>
   )
 }
@@ -226,7 +241,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <div className="flex flex-col grow mt-16">
-      <Header profile={null} />
+      <Header profile={null} isThereAnyNews={false} />
       <main className="grow flex flex-col justify-center items-center">
         <div className="max-w-2xl">
           <h1>{message}</h1>
@@ -238,7 +253,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           )}
         </div>
       </main>
-      <Footer showNews={false} />
+      <Footer isThereAnyNews={false} />
     </div>
   )
 }
