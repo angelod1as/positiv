@@ -1,5 +1,9 @@
 import { zod } from "~/lib/helpers/zod"
-import type { EventStatus } from "~types/entities.types"
+import {
+  participantApplicationStatusEnum,
+  participantAttendanceStatusEnum,
+  type EventStatus,
+} from "~types/entities.types"
 import { userContextSchema } from "../common"
 
 const messages = {
@@ -87,7 +91,9 @@ export const updateParticipantVsEventSchema = zod.object({
   profile_id: zod.string(),
   event_id: zod.string(),
   intent: zod.literal("participant-vs-event-schema"),
-  process_status: zod.string(),
+  attendance_status: participantAttendanceStatusEnum,
+  application_status: participantApplicationStatusEnum,
+  has_paid: zod.boolean(),
   is_social_spot: zod.boolean(),
   is_staff_spot: zod.boolean(),
   payment: zod.coerce.number(),
@@ -98,5 +104,7 @@ export const updateEventParticipantByIdSchema = zod.object({
   id: zod.string(),
   intent: zod.literal("update-event-participant"),
   payment: zod.coerce.number().optional(),
-  process_status: zod.string().optional(),
+  attendance_status: participantAttendanceStatusEnum,
+  application_status: participantApplicationStatusEnum,
+  has_paid: zod.boolean(),
 })
