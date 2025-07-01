@@ -42,10 +42,15 @@ export async function action({ request, params }: Route.ActionArgs) {
   const { intent } = await inputFromForm(request)
 
   if (intent === "update-event-participant") {
+    console.log(await request.clone().formData())
     return await formAction({
       request,
       schema: updateEventParticipantByIdSchema,
       mutation: updateEventParticipantById,
+      transformValues: (values) => {
+        console.log(values)
+        return values
+      },
       transformResult: (result) => ({ ...result, intent }),
     })
   }

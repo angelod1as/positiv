@@ -60,7 +60,7 @@ BEGIN
         event_id_reg_open_1,           -- event_id: Registration Open
         TRUE,                          -- is_user_applied: Applied by user
         'sent_payment_data',           -- application_status (from old 'paid')
-        NULL,                          -- attendance_status (from old 'paid')
+        'pending',
         TRUE,                          -- has_paid (from old 'paid')
         now() - interval '2 months',   -- application_date
         NULL,                          -- cancellation_date
@@ -107,7 +107,7 @@ BEGIN
         event_id_reg_open_1,           -- event_id: Registration Open (current event)
         TRUE,                          -- is_user_applied: Applied by user
         'applied',                     -- application_status (from old 'applied')
-        NULL,                          -- attendance_status (from old 'applied')
+        'pending',
         FALSE,                         -- has_paid (from old 'applied')
         now() - interval '1 day',      -- application_date
         NULL,                          -- cancellation_date
@@ -137,7 +137,7 @@ BEGIN
         event_id_reg_closed_1,         -- event_id: Registration Closed
         TRUE,                          -- is_user_applied: Applied by user
         'sent_payment_data',           -- application_status (from old 'paid')
-        NULL,                          -- attendance_status (from old 'paid')
+        'pending',
         TRUE,                          -- has_paid (from old 'paid')
         now() - interval '1 month',    -- application_date
         NULL,                          -- cancellation_date
@@ -154,7 +154,7 @@ BEGIN
         event_id_reg_open_1,           -- event_id: Registration Open (current event)
         TRUE,                          -- is_user_applied: Applied by user
         'talking',                     -- application_status (from old 'talking')
-        NULL,                          -- attendance_status (from old 'talking')
+        'pending',
         FALSE,                         -- has_paid (from old 'talking')
         now() - interval '2 days',     -- application_date
         NULL,                          -- cancellation_date
@@ -201,7 +201,7 @@ BEGIN
         event_id_reg_open_1,           -- event_id: Registration Open (current event)
         TRUE,                          -- is_user_applied: Applied by user
         'sent_payment_data',           -- application_status (from old 'sent_payment_data')
-        NULL,                          -- attendance_status (from old 'sent_payment_data')
+        'pending',
         FALSE,                         -- has_paid (from old 'sent_payment_data')
         now() - interval '3 days',     -- application_date
         NULL,                          -- cancellation_date
@@ -248,7 +248,7 @@ BEGIN
         event_id_reg_open_1,           -- event_id: Registration Open (current event)
         TRUE,                          -- is_user_applied: Applied by user
         'think_better',                -- application_status (from old 'think_better')
-        NULL,                          -- attendance_status (from old 'think_better')
+        'pending',
         FALSE,                         -- has_paid (from old 'think_better')
         now() - interval '5 days',     -- application_date
         NULL,                          -- cancellation_date
@@ -293,7 +293,7 @@ BEGIN
         event_id_scheduled_1,          -- event_id: Scheduled (sent_rules example)
         TRUE,                          -- is_user_applied: Applied by user
         'sent_rules',                  -- application_status (from old 'sent_rules')
-        NULL,                          -- attendance_status (from old 'sent_rules')
+        'pending',
         TRUE,                          -- has_paid (from old 'sent_rules')
         now() - interval '7 months',   -- application_date
         NULL,                          -- cancellation_date

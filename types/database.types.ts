@@ -14,9 +14,7 @@ export type Database = {
           admin_general_notes: string | null
           application_date: string
           application_status: Database["public"]["Enums"]["application_status_enum"]
-          attendance_status:
-            | Database["public"]["Enums"]["attendance_status_enum"]
-            | null
+          attendance_status: Database["public"]["Enums"]["attendance_status_enum"]
           bond: string | null
           cancellation_date: string | null
           companions: string | null
@@ -36,9 +34,7 @@ export type Database = {
           admin_general_notes?: string | null
           application_date?: string
           application_status?: Database["public"]["Enums"]["application_status_enum"]
-          attendance_status?:
-            | Database["public"]["Enums"]["attendance_status_enum"]
-            | null
+          attendance_status?: Database["public"]["Enums"]["attendance_status_enum"]
           bond?: string | null
           cancellation_date?: string | null
           companions?: string | null
@@ -58,9 +54,7 @@ export type Database = {
           admin_general_notes?: string | null
           application_date?: string
           application_status?: Database["public"]["Enums"]["application_status_enum"]
-          attendance_status?:
-            | Database["public"]["Enums"]["attendance_status_enum"]
-            | null
+          attendance_status?: Database["public"]["Enums"]["attendance_status_enum"]
           bond?: string | null
           cancellation_date?: string | null
           companions?: string | null
@@ -332,6 +326,7 @@ export type Database = {
         | "think_better"
         | "finalised"
       attendance_status_enum:
+        | "pending"
         | "attended"
         | "not-attended"
         | "rejected"
@@ -468,6 +463,7 @@ export const Constants = {
         "finalised",
       ],
       attendance_status_enum: [
+        "pending",
         "attended",
         "not-attended",
         "rejected",

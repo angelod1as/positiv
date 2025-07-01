@@ -14,6 +14,7 @@ CREATE TYPE application_status_enum AS ENUM (
 
 -- Create ENUM type for attendance_status
 CREATE TYPE attendance_status_enum AS ENUM (
+    'pending',
     'attended',
     'not-attended',
     'rejected',
@@ -26,9 +27,9 @@ ALTER TABLE public.event_participants
 ADD COLUMN application_status application_status_enum NOT NULL DEFAULT 'applied';
 
 -- Add attendance_status column to event_participants
--- It's nullable and defaults to NULL as specified
+-- It's nullable and defaults to pending
 ALTER TABLE public.event_participants
-ADD COLUMN attendance_status attendance_status_enum DEFAULT null;
+ADD COLUMN attendance_status attendance_status_enum NOT NULL DEFAULT 'pending';
 
 -- Add has_paid column to event_participants
 ALTER TABLE public.event_participants
@@ -59,7 +60,7 @@ SET
         WHEN 'rejected' THEN 'rejected'::attendance_status_enum
         WHEN 'skipped' THEN 'skipped'::attendance_status_enum
         WHEN 'will-not-go' THEN 'will-not-go'::attendance_status_enum -- Ensure this is handled if it's a possible value from old column
-        ELSE null -- For all other process_status values, attendance_status remains NULL
+        ELSE 'pending' -- For all other process_status values, attendance_status defaults to 'pending'
     END,
     has_paid = CASE process_status
         WHEN 'paid' THEN true
