@@ -11,6 +11,7 @@ import { InputText } from "primereact/inputtext"
 import { useState, type ChangeEvent, type ReactNode } from "react"
 import type { LinkProps } from "react-router"
 import { Button } from "~/components/atoms/button/button"
+import { cn } from "~/lib/utils"
 
 type buttonProps = {
   /** Aria title */
@@ -145,7 +146,8 @@ export function DataTable<T extends DataTableValue>({
   return (
     <PrimeReactDataTable
       value={values}
-      className={isMaximized ? "maximized-table" : ""}
+      className={cn(isMaximized && "maximized-table")}
+      cellClassName={() => "text-sm"}
       // Base Settings
       dataKey="id"
       emptyMessage="Nenhum registro encontrado"
