@@ -1,6 +1,9 @@
 // Function to convert string arrays to comma-separated strings within an object
 export function mapToString(
-  object: Record<string, string | number | string[] | number[] | null>,
+  object: Record<
+    string,
+    string | number | string[] | number[] | null | boolean
+  >,
 ) {
   const result: { [index: string]: string | number } = {}
 
@@ -8,7 +11,9 @@ export function mapToString(
   for (const key in object) {
     if (Object.prototype.hasOwnProperty.call(object, key)) {
       const value = object[key]
-      if (value !== null) {
+      if (typeof value === "boolean") {
+        result[key] = value.toString()
+      } else if (value !== null) {
         // Check if the value is an array and join it if true, otherwise keep it as is
         result[key] = Array.isArray(value) ? value.join(", ") : value
       }

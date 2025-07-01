@@ -13,54 +13,60 @@ export type Database = {
         Row: {
           admin_general_notes: string | null
           application_date: string
+          application_status: Database["public"]["Enums"]["application_status_enum"]
+          attendance_status: Database["public"]["Enums"]["attendance_status_enum"]
           bond: string | null
           cancellation_date: string | null
           companions: string | null
           created_at: string
           event_id: string
+          has_paid: boolean
           id: string
           is_social_spot: boolean | null
           is_staff_spot: boolean | null
           is_user_applied: boolean
           notes: string | null
-          payment: number | null
-          process_status: string
+          payment: number
           profile_id: string | null
           referrals: string | null
         }
         Insert: {
           admin_general_notes?: string | null
           application_date?: string
+          application_status?: Database["public"]["Enums"]["application_status_enum"]
+          attendance_status?: Database["public"]["Enums"]["attendance_status_enum"]
           bond?: string | null
           cancellation_date?: string | null
           companions?: string | null
           created_at?: string
           event_id: string
+          has_paid?: boolean
           id?: string
           is_social_spot?: boolean | null
           is_staff_spot?: boolean | null
           is_user_applied?: boolean
           notes?: string | null
-          payment?: number | null
-          process_status?: string
+          payment?: number
           profile_id?: string | null
           referrals?: string | null
         }
         Update: {
           admin_general_notes?: string | null
           application_date?: string
+          application_status?: Database["public"]["Enums"]["application_status_enum"]
+          attendance_status?: Database["public"]["Enums"]["attendance_status_enum"]
           bond?: string | null
           cancellation_date?: string | null
           companions?: string | null
           created_at?: string
           event_id?: string
+          has_paid?: boolean
           id?: string
           is_social_spot?: boolean | null
           is_staff_spot?: boolean | null
           is_user_applied?: boolean
           notes?: string | null
-          payment?: number | null
-          process_status?: string
+          payment?: number
           profile_id?: string | null
           referrals?: string | null
         }
@@ -286,10 +292,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string[]
       }
-      get_applied_participants_count: {
-        Args: { event_id_input: string }
-        Returns: number
-      }
       get_profile_with_roles: {
         Args: { user_id_input: string }
         Returns: {
@@ -316,6 +318,20 @@ export type Database = {
       }
     }
     Enums: {
+      application_status_enum:
+        | "applied"
+        | "talking"
+        | "sent_payment_data"
+        | "sent_rules"
+        | "think_better"
+        | "finalised"
+      attendance_status_enum:
+        | "pending"
+        | "attended"
+        | "not-attended"
+        | "rejected"
+        | "skipped"
+        | "will-not-go"
       event_status:
         | "Draft"
         | "Completed"
@@ -438,6 +454,22 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      application_status_enum: [
+        "applied",
+        "talking",
+        "sent_payment_data",
+        "sent_rules",
+        "think_better",
+        "finalised",
+      ],
+      attendance_status_enum: [
+        "pending",
+        "attended",
+        "not-attended",
+        "rejected",
+        "skipped",
+        "will-not-go",
+      ],
       event_status: [
         "Draft",
         "Completed",

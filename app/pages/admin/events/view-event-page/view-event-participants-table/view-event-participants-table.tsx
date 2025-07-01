@@ -19,14 +19,15 @@ import {
 import { DataTable } from "~/components/organisms/data-table"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import {
+  applicationStatusOptions,
+  attendanceStatusOptions,
   eventParticipantPropMap,
-  processStatusOptions,
   profilePropMap,
 } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
 import type {
   ComposableFetcherData,
-  ParticipantProcessStatus,
+  ParticipantApplicationStatus,
 } from "~types/entities.types"
 import { TableCheckbox } from "./table-checkbox"
 import { TableInputDropdown } from "./table-input-dropdown"
@@ -45,18 +46,13 @@ type AdminViewEventParticipantsTableProps = {
 }
 
 const isParticipantAccepted = (participant: ProfileWithExtraData) => {
-  const arr: ParticipantProcessStatus[] = [
+  const arr: ParticipantApplicationStatus[] = [
     "sent_payment_data",
-    "paid",
     "sent_rules",
+    "finalised",
   ]
-  return arr.includes(participant.process_status as ParticipantProcessStatus)
+  return arr.includes(participant.application_status)
 }
-
-const statusOptions = processStatusOptions.map((option) => ({
-  ...option,
-  label: option.name,
-}))
 
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
@@ -65,8 +61,14 @@ export const AdminViewEventParticipantsTable: FC<
     switch (options.field as keyof ProfileWithExtraData) {
       case "payment":
         return <TableInputMoney {...options} />
-      case "process_status":
-        return <TableInputDropdown {...options} options={statusOptions} />
+      case "attendance_status":
+        return (
+          <TableInputDropdown {...options} options={attendanceStatusOptions} />
+        )
+      case "application_status":
+        return (
+          <TableInputDropdown {...options} options={applicationStatusOptions} />
+        )
       case "is_social_spot":
         return <TableCheckbox {...options} />
       case "is_staff_spot":
@@ -78,6 +80,7 @@ export const AdminViewEventParticipantsTable: FC<
 
   const onCellEditComplete = async (columnEvent: ColumnEvent) => {
     const { newValue, field, rowData, value } = columnEvent
+    const {} = rowData
 
     rowData[field] = newValue
 
@@ -88,6 +91,8 @@ export const AdminViewEventParticipantsTable: FC<
             intent: "update-event-participant",
             id: rowData.id,
             eventId: eventId,
+            application_status: rowData.application_status,
+            attendance_status: rowData.attendance_status,
             [field]: newValue,
           },
           { method: "post" },
@@ -144,7 +149,11 @@ export const AdminViewEventParticipantsTable: FC<
       sortField="social_name"
       filters={{
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        process_status: {
+        application_status: {
+          value: null,
+          matchMode: FilterMatchMode.EQUALS,
+        },
+        attendance_status: {
           value: null,
           matchMode: FilterMatchMode.EQUALS,
         },
@@ -249,13 +258,13 @@ export const AdminViewEventParticipantsTable: FC<
       />
 
       <Column
-        field="process_status"
-        header={eventParticipantPropMap("process_status")}
+        field="application_status"
+        header={eventParticipantPropMap("application_status")}
         filter
         filterElement={(options) => (
           <TableInputDropdown
             value={options.value}
-            options={statusOptions}
+            options={applicationStatusOptions}
             filterCallback={options.filterCallback}
             index={options.index}
             placeholder="Selecione"
@@ -268,11 +277,45 @@ export const AdminViewEventParticipantsTable: FC<
         onCellEditComplete={onCellEditComplete}
         body={(values) => (
           <TableInputDropdown
-            value={values.process_status}
-            options={statusOptions}
+            value={values.application_status}
+            options={applicationStatusOptions}
           />
         )}
       />
+
+      <Column
+        field="attendance_status"
+        header={eventParticipantPropMap("attendance_status")}
+        filter
+        filterElement={(options) => (
+          <TableInputDropdown
+            value={options.value}
+            options={attendanceStatusOptions}
+            filterCallback={options.filterCallback}
+            index={options.index}
+            placeholder="Selecione"
+            className="p-column-filter"
+            showClear
+          />
+        )}
+        showFilterMatchModes={false}
+        editor={cellEditor}
+        onCellEditComplete={onCellEditComplete}
+        body={(values) => (
+          <TableInputDropdown
+            value={values.attendance_status}
+            options={attendanceStatusOptions}
+          />
+        )}
+      />
+
+      <Column
+        field="has_paid"
+        header={eventParticipantPropMap("has_paid")}
+        dataType="boolean"
+        body={(values) => <TableCheckbox value={values.has_paid} disabled />}
+      />
+
       <Column
         field="payment"
         header={eventParticipantPropMap("payment")}
