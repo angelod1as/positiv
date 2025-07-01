@@ -137,7 +137,7 @@ export const AdminViewEventParticipantsTable: FC<
 
   return (
     <DataTable
-      value={participants}
+      data={participants}
       id="participants"
       sortField="social_name"
       filters={{
