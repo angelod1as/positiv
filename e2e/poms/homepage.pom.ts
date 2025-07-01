@@ -12,15 +12,9 @@ export class HomepagePOM {
   readonly headerDashboard: Locator
   readonly headerAdminArea: Locator
   readonly headerAccount: Locator
-  readonly newsDialog: Locator
-  readonly newsDialogButton: Locator
 
   constructor(page: Page) {
     this.page = page
-    this.newsDialog = this.page.getByRole("alertdialog", { name: "News" })
-    this.newsDialogButton = this.page.getByRole("button", {
-      name: "Não mostrar isso novamente",
-    })
     this.title = this.page.getByRole("heading", {
       name: "evento de gente pelada",
       exact: true,
@@ -46,14 +40,6 @@ export class HomepagePOM {
 
   async goto() {
     await this.page.goto(routes.root.HOME)
-    await this.clearPopup()
-  }
-
-  async clearPopup() {
-    if (await this.newsDialog.isVisible()) {
-      await this.newsDialogButton.click()
-      await expect(this.newsDialog).not.toBeVisible()
-    }
   }
 
   async assertHomepage() {
