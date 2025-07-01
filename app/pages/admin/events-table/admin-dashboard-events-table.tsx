@@ -50,7 +50,7 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
   return (
     <DataTable
       id="admin-events"
-      value={events}
+      data={events}
       filters={{
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
         time_event_start: { value: null, matchMode: FilterMatchMode.CUSTOM },

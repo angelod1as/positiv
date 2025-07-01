@@ -1,21 +1,11 @@
 import { Badge } from "~/components/ui/badge"
+import { cn } from "~/lib/utils"
 
 export const VeteranBadge = () => <Badge variant="veteran">Veterane</Badge>
 
 export const RookieBadge = () => <Badge variant="rookie">Novate</Badge>
 
-export const PronounsBadge = ({ pronouns }: { pronouns: string[] | null }) =>
-  pronouns?.length ? (
-    <div className="flex gap-1 flex-wrap">
-      {pronouns.map((pronoun) => (
-        <Badge key={pronoun} variant="pronoun">
-          {pronoun}
-        </Badge>
-      ))}
-    </div>
-  ) : null
-
-export const OrientationBadge = ({
+export const OrientationWarning = ({
   orientations,
 }: {
   orientations: string[] | null
@@ -23,20 +13,29 @@ export const OrientationBadge = ({
   orientations?.length ? (
     <div className="flex gap-1 flex-wrap">
       {orientations.map((orientation) => (
-        <Badge key={orientation} variant="orientation">
+        <p
+          key={orientation}
+          className={cn(orientation === "Hétero" && "text-red-700")}
+        >
           {orientation}
-        </Badge>
+        </p>
       ))}
     </div>
   ) : null
 
-export const GenderBadge = ({ genders }: { genders: string[] | null }) =>
+export const GenderWarning = ({ genders }: { genders: string[] | null }) =>
   genders?.length ? (
     <div className="flex gap-1 flex-wrap">
       {genders.map((gender) => (
-        <Badge key={gender} variant="gender">
+        <p
+          key={gender}
+          className={cn(
+            (gender.includes("trans") || gender.includes("agêner")) &&
+              "text-blue-700",
+          )}
+        >
           {gender}
-        </Badge>
+        </p>
       ))}
     </div>
   ) : null
