@@ -23,6 +23,11 @@ export type ProfileWithRoles = z.infer<typeof _profileWithRoles>
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 
+export type ParticipantApplicationStatus =
+  Database["public"]["Enums"]["application_status_enum"]
+export type ParticipantAttendanceStatus =
+  Database["public"]["Enums"]["attendance_status_enum"]
+
 /** Events information */
 export type Event = Omit<
   Database["public"]["Tables"]["events"]["Row"],
@@ -35,13 +40,7 @@ export type Event = Omit<
 
 /** Participant information */
 export type Participant = Profile &
-  Omit<
-    Database["public"]["Tables"]["event_participants"]["Row"],
-    "process_status"
-  > & {
-    // TODO: POS-137 Should be ENUM
-    process_status: ParticipantProcessStatus
-  }
+  Database["public"]["Tables"]["event_participants"]["Row"]
 
 /** Event Status */
 export type EventStatus = Database["public"]["Enums"]["event_status"]
@@ -71,29 +70,30 @@ export type ViewEvent = Pick<
   is_set_reminder?: boolean
 }
 
-const participantProcessStatus = [
-  // Golden Path
+const participantApplicationStatus = [
   "applied",
   "talking",
   "sent_payment_data",
-  "paid",
   "sent_rules",
-  // If not sure
   "think_better",
-  // Skipped this event
-  "skipped",
-  // Succesfully attended
+  "finalised",
+] as const satisfies ParticipantApplicationStatus[]
+
+export const participantApplicationStatusEnum = z.enum(
+  participantApplicationStatus,
+)
+
+const participantAttendanceStatus = [
   "attended",
-  // Did not attend (see admin notes)
   "not-attended",
   "rejected",
-] as const
+  "skipped",
+  "will-not-go",
+] as const satisfies ParticipantAttendanceStatus[]
 
-export const participantProcessStatusEnum = z.enum(participantProcessStatus)
-
-export type ParticipantProcessStatus = z.infer<
-  typeof participantProcessStatusEnum
->
+export const participantAttendanceStatusEnum = z.enum(
+  participantAttendanceStatus,
+)
 
 export type Genders = (typeof GENDERS)[number]
 export type Orientations = (typeof ORIENTATIONS)[number]
