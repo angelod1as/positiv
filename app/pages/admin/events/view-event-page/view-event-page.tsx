@@ -46,6 +46,9 @@ export async function action({ request, params }: Route.ActionArgs) {
       request,
       schema: updateEventParticipantByIdSchema,
       mutation: updateEventParticipantById,
+      transformValues: (values) => {
+        return values
+      },
       transformResult: (result) => ({ ...result, intent }),
     })
   }

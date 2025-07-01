@@ -74,7 +74,9 @@ const profilesWithExtraDataQuery = kysely
         .innerJoin("events as e", "ep.event_id", "e.id")
         .select([
           "ep.profile_id",
-          "ep.process_status",
+          "ep.application_status",
+          "ep.attendance_status",
+          "ep.has_paid",
           sql<number>`row_number() over (
             partition by ep.profile_id
             order by e.time_event_start desc
@@ -89,7 +91,7 @@ const profilesWithExtraDataQuery = kysely
   )
   .selectAll(["p", "current_ep"])
   .select([
-    sql<boolean>`ranked_events.process_status = 'skipped'`.as(
+    sql<boolean>`ranked_events.attendance_status = 'skipped'`.as(
       "was_admin_skipped_last_event",
     ),
   ])
@@ -352,7 +354,7 @@ export const getEventDemographicsById = composable(
     const baseQuery = kysely
       .selectFrom("event_participants")
       .where("event_participants.event_id", "=", eventId)
-      .where("process_status", "=", "attended")
+      .where("attendance_status", "=", "attended")
 
     const result = await baseQuery
       .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
