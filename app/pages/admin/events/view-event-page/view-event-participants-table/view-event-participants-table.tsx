@@ -11,9 +11,8 @@ import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
-  GenderBadge,
-  OrientationBadge,
-  PronounsBadge,
+  GenderWarning,
+  OrientationWarning,
   RookieBadge,
   VeteranBadge,
 } from "~/components/atoms/badges/badges"
@@ -223,19 +222,20 @@ export const AdminViewEventParticipantsTable: FC<
       <Column
         field="pronouns"
         header={profilePropMap("pronouns")}
-        body={(values) => <PronounsBadge pronouns={values.pronouns} />}
+        body={(values) => values.pronouns.join(", ")}
       />
       <Column
         field="gender"
+        className="min-w-40"
         header={profilePropMap("gender")}
-        body={(values) => <GenderBadge genders={values.gender} />}
+        body={(values) => <GenderWarning genders={values.gender} />}
       />
 
       <Column
         field="orientation"
         header={profilePropMap("orientation")}
         body={(values) => (
-          <OrientationBadge orientations={values.orientation} />
+          <OrientationWarning orientations={values.orientation} />
         )}
       />
 
