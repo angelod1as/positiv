@@ -13,7 +13,10 @@ export const OrientationWarning = ({
   orientations?.length ? (
     <div className="flex gap-1 flex-wrap">
       {orientations.map((orientation) => (
-        <p className={cn(orientation === "Hétero" && "text-red-700")}>
+        <p
+          key={orientation}
+          className={cn(orientation === "Hétero" && "text-red-700")}
+        >
           {orientation}
         </p>
       ))}
@@ -25,6 +28,7 @@ export const GenderWarning = ({ genders }: { genders: string[] | null }) =>
     <div className="flex gap-1 flex-wrap">
       {genders.map((gender) => (
         <p
+          key={gender}
           className={cn(
             (gender.includes("trans") || gender.includes("agêner")) &&
               "text-blue-700",
