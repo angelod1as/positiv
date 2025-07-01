@@ -101,19 +101,24 @@ export const agreeToTermsSchema = zod.object({
   mktEmails: zod.boolean().optional(),
 })
 
+const uppercaseRefine = (val?: string) => {
+  if (!val) return true
+  return !/^[A-Z]*$/.test(val) || val.length < 2
+}
+
 /* BASIC DATA */
 export const basicDataSchema = zod
   .object({
     full_name: zod
       .string()
-      .regex(/[^A-Z]/, "Não escreva com tudo em maiúscula, por favor")
-      .min(2)
-      .max(255),
-    social_name: zod
-      .string()
-      .regex(/[^A-Z]/, "Não escreva com tudo em maiúscula, por favor")
       .min(2)
       .max(255)
+      .refine(uppercaseRefine, "Não escreva com tudo em maiúscula, por favor"),
+    social_name: zod
+      .string()
+      .min(2)
+      .max(255)
+      .refine(uppercaseRefine, "Não escreva com tudo em maiúscula, por favor")
       .nullish(),
     rg: zod.string().min(2),
     rg_issuer: zod.string().min(2),
@@ -140,11 +145,11 @@ export const basicDataSchema = zod
       }),
     how_came_to_us: zod
       .string()
-      .regex(/[^A-Z]/, "Não escreva com tudo em maiúscula, por favor")
+      .refine(uppercaseRefine, "Não escreva com tudo em maiúscula, por favor")
       .optional(),
     where_lives: zod
       .string()
-      .regex(/[^A-Z]/, "Não escreva com tudo em maiúscula, por favor")
+      .refine(uppercaseRefine, "Não escreva com tudo em maiúscula, por favor")
       .optional(),
   })
   .refine((data) => data.phone === data.confirm_phone, {
