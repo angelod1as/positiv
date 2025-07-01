@@ -32,7 +32,7 @@ export type DataTableHeader = {
 }
 
 export interface DataTableProps<T extends DataTableValue> {
-  value: T[]
+  data: T[]
   id: string
   filters?: DataTableFilterMeta
   onFilter?: (filters: DataTableFilterMeta) => void
@@ -63,7 +63,7 @@ FilterService.register("custom_time_event_start", (_value, _filters) => {
 
 // TODO: POS-145 Change value to data (better naming)
 export function DataTable<T extends DataTableValue>({
-  value,
+  data,
   id,
   filters: initialFilters,
   onFilter,
@@ -84,7 +84,7 @@ export function DataTable<T extends DataTableValue>({
   )
   const [globalFilterValue, setGlobalFilterValue] = useState("")
   const [selection, setSelection] = useState<T[]>([])
-  const [values, setValues] = useState(value)
+  const [values, setValues] = useState(data)
 
   const toggleMaximized = () => setIsMaximized((state) => !state)
 
