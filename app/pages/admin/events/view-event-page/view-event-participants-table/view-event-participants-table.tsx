@@ -82,6 +82,7 @@ export const AdminViewEventParticipantsTable: FC<
 
   const onCellEditComplete = async (columnEvent: ColumnEvent) => {
     const { newValue, field, rowData, value } = columnEvent
+    const {} = rowData
 
     rowData[field] = newValue
 
@@ -92,6 +93,8 @@ export const AdminViewEventParticipantsTable: FC<
             intent: "update-event-participant",
             id: rowData.id,
             eventId: eventId,
+            application_status: rowData.application_status,
+            attendance_status: rowData.attendance_status,
             [field]: newValue,
           },
           { method: "post" },

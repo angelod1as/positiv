@@ -76,7 +76,7 @@ export function DataTable<T extends DataTableValue>({
   reorderableColumns = false,
   sortField,
   editMode,
-  size = "normal",
+  size = "small",
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [filters, setFilters] = useState<DataTableFilterMeta>(

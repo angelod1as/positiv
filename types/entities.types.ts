@@ -84,6 +84,7 @@ export const participantApplicationStatusEnum = z.enum(
 )
 
 const participantAttendanceStatus = [
+  "pending",
   "attended",
   "not-attended",
   "rejected",
