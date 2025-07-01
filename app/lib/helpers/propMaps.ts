@@ -113,6 +113,7 @@ const participantApplicationStatus: Record<
 
 const participantAttendanceStatus: Record<ParticipantAttendanceStatus, string> =
   {
+    pending: "Pendente",
     attended: "Compareceu",
     "not-attended": "Não compareceu",
     rejected: "Rejeitade",
