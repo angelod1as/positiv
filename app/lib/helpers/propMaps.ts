@@ -1,7 +1,8 @@
 import type {
   Event,
   EventStatus,
-  ParticipantProcessStatus,
+  ParticipantApplicationStatus,
+  ParticipantAttendanceStatus,
   Profile,
 } from "~types/entities.types"
 import type { Database } from "~types/kysely.types"
@@ -65,8 +66,10 @@ export const eventParticipantPropMap = (
     profile_id: "Id do perfil",
     event_id: "Id do evento",
     is_user_applied: "Inscrite?",
+    has_paid: "Pago?",
     payment: "Pagamento",
-    process_status: "Status",
+    attendance_status: "Status",
+    application_status: "Processo",
     application_date: "Data de inscrição",
     cancellation_date: "Data de cancelamento",
     created_at: "Criado em",
@@ -96,29 +99,47 @@ export const eventStatusMap = (event_status: EventStatus) => {
   )
 }
 
-const participantProcessStatus = {
+const participantApplicationStatus: Record<
+  ParticipantApplicationStatus,
+  string
+> = {
   applied: "Inscrite",
   talking: "Conversando",
   sent_payment_data: "Dados de pagto enviados",
-  paid: "Pago",
   sent_rules: "Regras enviadas",
   think_better: "Pensar melhor",
-  attended: "Compareceu",
-  "not-attended": "Não compareceu",
-  rejected: "Rejeitade",
-  skipped: "Pulade (rodízio)",
+  finalised: "Finalizado",
 }
 
-export const participantProcessStatusPropMap = (
-  process_status: ParticipantProcessStatus,
+const participantAttendanceStatus: Record<ParticipantAttendanceStatus, string> =
+  {
+    attended: "Compareceu",
+    "not-attended": "Não compareceu",
+    rejected: "Rejeitade",
+    skipped: "Pulade (rodízio)",
+    "will-not-go": "Não vai",
+  }
+
+export const participantApplicationStatusPropMap = (
+  application_status: ParticipantApplicationStatus,
 ) => {
-  return participantProcessStatus[process_status] || ""
+  return participantApplicationStatus[application_status] || ""
 }
 
-export const processStatusOptions: Array<{
+export const applicationStatusOptions: Array<{
   name: string
-  value: ParticipantProcessStatus
-}> = Object.entries(participantProcessStatus).map(([value, name]) => ({
+  value: ParticipantApplicationStatus
+}> = Object.entries(participantApplicationStatus).map(([value, name]) => ({
   name: name,
-  value: value as ParticipantProcessStatus,
+  label: name,
+  value: value as ParticipantApplicationStatus,
+}))
+
+export const attendanceStatusOptions: Array<{
+  name: string
+  value: ParticipantAttendanceStatus
+}> = Object.entries(participantAttendanceStatus).map(([value, name]) => ({
+  name: name,
+  label: name,
+  value: value as ParticipantAttendanceStatus,
 }))

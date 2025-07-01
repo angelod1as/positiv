@@ -4,8 +4,9 @@ import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { SchemaForm } from "~/components/forms/schema-form"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
+  applicationStatusOptions,
+  attendanceStatusOptions,
   eventParticipantPropMap,
-  processStatusOptions,
 } from "~/lib/helpers/propMaps"
 import { type ParticipantVsEvent } from "~types/entities.types"
 import type { Database } from "~types/kysely.types"
@@ -47,10 +48,12 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             inputTypes={{
               is_social_spot: "checkbox",
               is_staff_spot: "checkbox",
+              has_paid: "checkbox",
               payment: "number",
             }}
             options={{
-              process_status: processStatusOptions,
+              attendance_status: attendanceStatusOptions,
+              application_status: applicationStatusOptions,
             }}
             labels={labels}
           >
@@ -63,9 +66,11 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                   <Field name="profile_id" hidden />
 
                   <div className="space-y-2">
-                    <Field name="process_status" />
+                    <Field name="attendance_status" />
+                    <Field name="application_status" />
                     <Field name="payment" />
                     <div className="flex gap-2">
+                      <Field name="has_paid" />
                       <Field name="is_social_spot" />
                       <Field name="is_staff_spot" />
                     </div>
