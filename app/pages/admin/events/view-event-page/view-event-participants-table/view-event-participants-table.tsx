@@ -154,7 +154,7 @@ export const AdminViewEventParticipantsTable: FC<
         numbers: (
           <>
             <p>
-              <b>{participants.length}</b> inscrites
+              <b>{applications.total}</b> inscrites
             </p>
             <p>
               <b>{accepted.total}</b> aceites
