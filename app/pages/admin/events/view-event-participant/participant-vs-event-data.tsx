@@ -49,6 +49,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               is_social_spot: "checkbox",
               is_staff_spot: "checkbox",
               has_paid: "checkbox",
+              is_veteran: "checkbox",
               payment: "number",
             }}
             options={{
@@ -69,10 +70,11 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                     <Field name="attendance_status" />
                     <Field name="application_status" />
                     <Field name="payment" />
-                    <div className="flex gap-2">
+                    <div className="flex gap-8">
                       <Field name="has_paid" />
                       <Field name="is_social_spot" />
                       <Field name="is_staff_spot" />
+                      <Field name="is_veteran" />
                     </div>
                     <Field name="admin_general_notes" multiline />
                     <Error />
