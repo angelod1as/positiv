@@ -390,13 +390,15 @@ export const updateParticipantVsEvent = applySchema(
       .set(data)
       .execute()
 
-    await transaction
-      .updateTable("profiles")
-      .where("id", "=", profile_id)
-      .set({
-        is_veteran,
-      })
-      .execute()
+    if (typeof is_veteran === "boolean") {
+      await transaction
+        .updateTable("profiles")
+        .where("id", "=", profile_id)
+        .set({
+          is_veteran,
+        })
+        .execute()
+    }
   })
 })
 
