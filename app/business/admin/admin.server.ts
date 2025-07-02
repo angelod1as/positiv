@@ -136,8 +136,13 @@ export const getEventParticipantHistoryById = composable(
     return await kysely
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
+      .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
       .selectAll("event_participants")
-      .select(["events.title as event_title", "events.emoji as event_emoji"])
+      .select([
+        "events.title as event_title",
+        "events.emoji as event_emoji",
+        "profiles.is_veteran as is_veteran",
+      ])
       .where("event_participants.id", "=", eventParticipantId)
       .where("is_user_applied", "=", true)
       .orderBy("events.time_event_start", "desc")
