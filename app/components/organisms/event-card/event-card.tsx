@@ -12,7 +12,6 @@ import {
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calendar-link"
 import type { ViewEvent } from "~types/entities.types"
-import { DateStatus } from "./date-status"
 import { EventCardFooter } from "./event-card-footer"
 
 type EventCardProps = { event: ViewEvent; "data-testid": string }
@@ -23,20 +22,11 @@ export const EventCard: FC<EventCardProps> = ({
   const googleLink = generateGoogleCalendarLink(event)
 
   const {
-    time_application_end,
-    time_application_start,
     description,
     emoji,
-    time_event_end,
     event_status,
-    time_group_end,
-    time_group_start,
     id,
-    time_interviews_end,
-    time_interviews_start,
     location,
-    time_payment_start,
-    time_payment_end,
     time_event_start,
     ticket_price,
     title,
@@ -70,18 +60,6 @@ export const EventCard: FC<EventCardProps> = ({
             )}
             {location && <DataPair pair={["Local", location]} />}
           </div>
-          <DateStatus
-            time_application_end={time_application_end}
-            time_application_start={time_application_start}
-            time_event_end={time_event_end}
-            time_group_end={time_group_end}
-            time_group_start={time_group_start}
-            time_interviews_end={time_interviews_end}
-            time_interviews_start={time_interviews_start}
-            time_payment_start={time_payment_start}
-            time_payment_end={time_payment_end}
-            time_event_start={time_event_start}
-          />
         </div>
       </CardContent>
       <CardFooter>
