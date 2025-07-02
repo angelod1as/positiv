@@ -96,6 +96,7 @@ export const updateParticipantVsEventSchema = zod.object({
   has_paid: zod.boolean(),
   is_social_spot: zod.boolean(),
   is_staff_spot: zod.boolean(),
+  is_veteran: zod.boolean(),
   payment: zod.coerce.number(),
   admin_general_notes: zod.string(),
 })
