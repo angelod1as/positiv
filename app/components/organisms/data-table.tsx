@@ -11,6 +11,7 @@ import { InputText } from "primereact/inputtext"
 import { useState, type ChangeEvent, type ReactNode } from "react"
 import type { LinkProps } from "react-router"
 import { Button } from "~/components/atoms/button/button"
+import DelayedContent from "~/lib/helpers/delayed-component"
 import { cn } from "~/lib/utils"
 
 type buttonProps = {
@@ -49,6 +50,7 @@ export interface DataTableProps<T extends DataTableValue> {
   sortField?: string
   editMode?: "cell" | "row"
   size?: "small" | "normal" | "large"
+  maxHeight?: string | "auto"
 }
 
 // TODO: POS-144 Implement date filtering
@@ -61,7 +63,6 @@ FilterService.register("custom_time_event_start", (_value, _filters) => {
   return true
 })
 
-// TODO: POS-145 Change value to data (better naming)
 export function DataTable<T extends DataTableValue>({
   data,
   id,
@@ -77,6 +78,7 @@ export function DataTable<T extends DataTableValue>({
   sortField,
   editMode,
   size = "small",
+  maxHeight = "500px",
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [filters, setFilters] = useState<DataTableFilterMeta>(
@@ -144,95 +146,102 @@ export function DataTable<T extends DataTableValue>({
   // }
 
   return (
-    <PrimeReactDataTable
-      value={values}
-      className={cn(isMaximized && "maximized-table")}
-      cellClassName={() => "text-sm"}
-      // Base Settings
-      dataKey="id"
-      emptyMessage="Nenhum registro encontrado"
-      header={renderHeader}
-      showGridlines
-      stripedRows
-      rowHover
-      editMode={editMode}
-      size={size}
-      // Pagination
-      rows={25}
-      paginator
-      rowsPerPageOptions={[5, 10, 25, 50, 100, 150]}
-      // Filters
-      filters={filters}
-      filterDisplay="menu"
-      onFilter={(e) => {
-        setFilters(e.filters)
-        onFilter?.(e.filters)
-      }}
-      globalFilterFields={globalFilterFields}
-      // State
-      stateStorage="session"
-      stateKey={`dt-${id}-table`}
-      // Scroll
-      scrollable
-      scrollHeight="flex"
-      // Sorting
-      sortField={sortField}
-      sortMode="single"
-      removableSort
-      sortOrder={1}
-      // Selection
-      selection={selection}
-      onSelectionChange={(e) => setSelection(e.value)}
-      selectionMode="checkbox"
-      // Resize
-      resizableColumns={resizableColumns}
-      columnResizeMode="fit"
-      // Reorder
-      reorderableColumns={reorderableColumns}
-      onRowReorder={(e) => setValues(e.value)}
-    >
-      {selectable && (
-        <Column
-          selectionMode="multiple"
-          headerStyle={{ width: "3rem" }}
-          alignFrozen="left"
-        />
-      )}
-      <Column field="id" header="id" hidden={true} />
-      {children}
+    <DelayedContent>
+      <PrimeReactDataTable
+        value={values}
+        className={cn(isMaximized && "maximized-table")}
+        style={{
+          maxHeight: isMaximized ? undefined : maxHeight,
+        }}
+        cellClassName={() => "text-sm"}
+        // Base Settings
+        dataKey="id"
+        emptyMessage="Nenhum registro encontrado"
+        header={renderHeader}
+        showGridlines
+        stripedRows
+        rowHover
+        editMode={editMode}
+        size={size}
+        // Pagination
+        rows={25}
+        paginator
+        rowsPerPageOptions={[5, 10, 25, 50, 100, 150]}
+        // Filters
+        filters={filters}
+        filterDisplay="menu"
+        onFilter={(e) => {
+          setFilters(e.filters)
+          onFilter?.(e.filters)
+        }}
+        globalFilterFields={globalFilterFields}
+        // State
+        stateStorage="session"
+        stateKey={`dt-${id}-table`}
+        // Scroll
+        scrollable
+        scrollHeight="flex"
+        // Sorting
+        sortField={sortField}
+        sortMode="single"
+        removableSort
+        sortOrder={1}
+        // Selection
+        selection={selection}
+        onSelectionChange={(e) => setSelection(e.value)}
+        selectionMode="checkbox"
+        // Resize
+        resizableColumns={resizableColumns}
+        columnResizeMode="fit"
+        // Reorder
+        reorderableColumns={reorderableColumns}
+        onRowReorder={(e) => setValues(e.value)}
+      >
+        {selectable && (
+          <Column
+            selectionMode="multiple"
+            headerStyle={{ width: "3rem" }}
+            alignFrozen="left"
+          />
+        )}
+        <Column field="id" header="id" hidden={true} />
+        {children}
 
-      {/* Buttons */}
-      {buttons.length > 0 && (
-        <Column
-          frozen
-          alignFrozen="right"
-          body={(value: T) => {
-            return (
-              <div className="flex gap-2 justify-self-end">
-                {buttons.map(({ Icon, title, to, key = "id", target }) => {
-                  return (
-                    <Button
-                      to={typeof to === "function" ? key && to(value[key]) : to}
-                      key={title}
-                      aria-label={title}
-                      variant="outline"
-                      linkProps={
-                        target
-                          ? {
-                              target,
-                            }
-                          : undefined
-                      }
-                    >
-                      <Icon />
-                    </Button>
-                  )
-                })}
-              </div>
-            )
-          }}
-        />
-      )}
-    </PrimeReactDataTable>
+        {/* Buttons */}
+        {buttons.length > 0 && (
+          <Column
+            frozen
+            alignFrozen="right"
+            body={(value: T) => {
+              return (
+                <div className="flex gap-2 justify-self-end">
+                  {buttons.map(({ Icon, title, to, key = "id", target }) => {
+                    return (
+                      <Button
+                        to={
+                          typeof to === "function" ? key && to(value[key]) : to
+                        }
+                        key={title}
+                        aria-label={title}
+                        variant="outline"
+                        linkProps={
+                          target
+                            ? {
+                                target,
+                              }
+                            : undefined
+                        }
+                      >
+                        <Icon />
+                      </Button>
+                    )
+                  })}
+                </div>
+              )
+            }}
+          />
+        )}
+      </PrimeReactDataTable>
+    </DelayedContent>
   )
 }
