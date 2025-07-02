@@ -380,14 +380,24 @@ export const getEventDemographicsById = composable(
 export const updateParticipantVsEvent = applySchema(
   updateParticipantVsEventSchema,
 )(async (formData) => {
-  const { intent, event_id, profile_id, ...data } = formData
+  const { intent, event_id, profile_id, is_veteran, ...data } = formData
 
-  return await kysely
-    .updateTable("event_participants")
-    .where("event_id", "=", event_id)
-    .where("profile_id", "=", profile_id)
-    .set(data)
-    .execute()
+  return await kysely.transaction().execute(async (transaction) => {
+    await transaction
+      .updateTable("event_participants")
+      .where("event_id", "=", event_id)
+      .where("profile_id", "=", profile_id)
+      .set(data)
+      .execute()
+
+    await transaction
+      .updateTable("profiles")
+      .where("id", "=", profile_id)
+      .set({
+        is_veteran,
+      })
+      .execute()
+  })
 })
 
 export const updateEventParticipantById = applySchema(
