@@ -204,6 +204,8 @@ export function DataTable<T extends DataTableValue>({
       {/* Buttons */}
       {buttons.length > 0 && (
         <Column
+          frozen
+          alignFrozen="right"
           body={(value: T) => {
             return (
               <div className="flex gap-2 justify-self-end">
