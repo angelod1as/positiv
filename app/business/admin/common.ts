@@ -105,7 +105,7 @@ export const updateEventParticipantByIdSchema = zod.object({
   id: zod.string(),
   intent: zod.literal("update-event-participant"),
   payment: zod.coerce.number().optional(),
-  attendance_status: participantAttendanceStatusEnum,
-  application_status: participantApplicationStatusEnum,
-  has_paid: zod.boolean(),
+  attendance_status: participantAttendanceStatusEnum.optional(),
+  application_status: participantApplicationStatusEnum.optional(),
+  has_paid: zod.boolean().optional(),
 })
