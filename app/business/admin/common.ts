@@ -101,11 +101,21 @@ export const updateParticipantVsEventSchema = zod.object({
   admin_general_notes: zod.string(),
 })
 
+const parseBoolean = zod.union([
+  zod.literal("true").transform(() => true),
+  zod.literal("false").transform(() => false),
+  zod.boolean(),
+])
+
 export const updateEventParticipantByIdSchema = zod.object({
   id: zod.string(),
+  profile_id: zod.string(),
   intent: zod.literal("update-event-participant"),
   payment: zod.coerce.number().optional(),
   attendance_status: participantAttendanceStatusEnum.optional(),
   application_status: participantApplicationStatusEnum.optional(),
-  has_paid: zod.boolean().optional(),
+  has_paid: parseBoolean.optional(),
+  is_social_spot: parseBoolean.optional(),
+  is_staff_spot: parseBoolean.optional(),
+  is_veteran: parseBoolean.optional(),
 })

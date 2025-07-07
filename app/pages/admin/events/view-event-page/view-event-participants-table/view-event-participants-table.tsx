@@ -1,12 +1,7 @@
 import { composable } from "composable-functions"
 import { EyeIcon } from "lucide-react"
-import {
-  Column,
-  type ColumnEditorOptions,
-  type ColumnEvent,
-} from "primereact/column"
-
 import { FilterMatchMode } from "primereact/api"
+import { Column } from "primereact/column"
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
@@ -16,6 +11,11 @@ import {
   RookieBadge,
   VeteranBadge,
 } from "~/components/atoms/badges/badges"
+import {
+  CheckboxCellEditor,
+  NumberCellEditor,
+  SelectCellEditor,
+} from "~/components/forms/admin"
 import { DataTable } from "~/components/organisms/data-table"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import {
@@ -25,13 +25,9 @@ import {
   profilePropMap,
 } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
-import type {
-  ComposableFetcherData,
-  ParticipantApplicationStatus,
-} from "~types/entities.types"
-import { TableCheckbox } from "./table-checkbox"
+import type { ComposableFetcherData } from "~types/entities.types"
+import { countParticipants } from "./count-participants"
 import { TableInputDropdown } from "./table-input-dropdown"
-import { TableInputMoney } from "./table-input-money"
 
 const {
   admin: {
@@ -45,99 +41,41 @@ type AdminViewEventParticipantsTableProps = {
   fetcher: FetcherWithComponents<ComposableFetcherData>
 }
 
-const isParticipantAccepted = (participant: ProfileWithExtraData) => {
-  const arr: ParticipantApplicationStatus[] = [
-    "sent_payment_data",
-    "sent_rules",
-    "finalised",
-  ]
-  return arr.includes(participant.application_status)
-}
-
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId, fetcher }) => {
-  const cellEditor = (options: ColumnEditorOptions) => {
-    switch (options.field as keyof ProfileWithExtraData) {
-      case "payment":
-        return <TableInputMoney {...options} />
-      case "attendance_status":
-        return (
-          <TableInputDropdown {...options} options={attendanceStatusOptions} />
-        )
-      case "application_status":
-        return (
-          <TableInputDropdown {...options} options={applicationStatusOptions} />
-        )
-      case "is_social_spot":
-        return <TableCheckbox {...options} />
-      case "is_staff_spot":
-        return <TableCheckbox {...options} />
-      default:
-        return <div>This Field Lacks an Editing Component</div>
-    }
-  }
+  /**
+   * Generic function to save changes to a participant field
+   */
+  const handleSave = async <K extends keyof ProfileWithExtraData>(
+    id: string,
+    field: K,
+    value: ProfileWithExtraData[K],
+  ) => {
+    const participant = participants.find((p) => p.id === id)
+    if (!participant) return
 
-  const onCellEditComplete = async (columnEvent: ColumnEvent) => {
-    const { newValue, field, rowData, value } = columnEvent
+    participant[field] = value
 
-    rowData[field] = newValue
-
-    const result = await composable(
-      async () =>
-        await fetcher.submit(
-          {
-            intent: "update-event-participant",
-            id: rowData.id,
-            eventId: eventId,
-            [field]: newValue,
-          },
-          { method: "post" },
-        ),
-    )()
+    const result = await composable(async () => {
+      return await fetcher.submit(
+        {
+          intent: "update-event-participant",
+          id,
+          eventId,
+          profile_id: participant.profile_id,
+          [field]: value,
+        },
+        { method: "post" },
+      )
+    })()
 
     if (!result.success) {
-      rowData[field] = value
       throw new Error("Ops, algo deu errado ao salvar seu valor")
     }
   }
 
-  const { accepted, applications } = participants.reduce(
-    (prev, curr) => {
-      const { accepted, applications } = prev
-      const isAccepted = isParticipantAccepted(curr)
-      if (isAccepted) {
-        accepted.total = accepted.total + 1
-        if (curr.is_veteran) {
-          accepted.veterans = accepted.veterans + 1
-        } else {
-          accepted.rookies = accepted.rookies + 1
-        }
-      }
-
-      if (curr.is_veteran) {
-        applications.veterans = applications.veterans + 1
-      } else {
-        applications.rookies = applications.rookies + 1
-      }
-
-      applications.total = applications.total + 1
-
-      return prev
-    },
-    {
-      applications: {
-        total: 0,
-        veterans: 0,
-        rookies: 0,
-      },
-      accepted: {
-        total: 0,
-        veterans: 0,
-        rookies: 0,
-      },
-    },
-  )
+  const { accepted, applications } = countParticipants(participants)
 
   return (
     <DataTable
@@ -155,7 +93,6 @@ export const AdminViewEventParticipantsTable: FC<
           matchMode: FilterMatchMode.EQUALS,
         },
       }}
-      editMode="cell"
       size="small"
       header={{
         title: "Inscrições",
@@ -257,6 +194,7 @@ export const AdminViewEventParticipantsTable: FC<
         field="application_status"
         header={eventParticipantPropMap("application_status")}
         filter
+        className="min-w-[180px]"
         filterElement={(options) => (
           <TableInputDropdown
             value={options.value}
@@ -269,12 +207,16 @@ export const AdminViewEventParticipantsTable: FC<
           />
         )}
         showFilterMatchModes={false}
-        editor={cellEditor}
-        onCellEditComplete={onCellEditComplete}
         body={(values) => (
-          <TableInputDropdown
+          <SelectCellEditor
             value={values.application_status}
-            options={applicationStatusOptions}
+            rowData={values}
+            field="application_status"
+            onSave={handleSave}
+            options={applicationStatusOptions.map((opt) => ({
+              label: opt.name,
+              value: opt.value,
+            }))}
           />
         )}
       />
@@ -283,6 +225,7 @@ export const AdminViewEventParticipantsTable: FC<
         field="attendance_status"
         header={eventParticipantPropMap("attendance_status")}
         filter
+        className="min-w-[180px]"
         filterElement={(options) => (
           <TableInputDropdown
             value={options.value}
@@ -295,12 +238,16 @@ export const AdminViewEventParticipantsTable: FC<
           />
         )}
         showFilterMatchModes={false}
-        editor={cellEditor}
-        onCellEditComplete={onCellEditComplete}
         body={(values) => (
-          <TableInputDropdown
+          <SelectCellEditor
             value={values.attendance_status}
-            options={attendanceStatusOptions}
+            rowData={values}
+            field="attendance_status"
+            onSave={handleSave}
+            options={attendanceStatusOptions.map((opt) => ({
+              label: opt.name,
+              value: opt.value,
+            }))}
           />
         )}
       />
@@ -309,22 +256,39 @@ export const AdminViewEventParticipantsTable: FC<
         field="has_paid"
         header={eventParticipantPropMap("has_paid")}
         dataType="boolean"
-        body={(values) => <TableCheckbox value={values.has_paid} disabled />}
+        body={(values) => (
+          <CheckboxCellEditor
+            value={values.has_paid}
+            rowData={values}
+            field="has_paid"
+            onSave={handleSave}
+          />
+        )}
       />
 
       <Column
         field="payment"
         header={eventParticipantPropMap("payment")}
-        editor={cellEditor}
-        onCellEditComplete={onCellEditComplete}
-        body={(values) => <TableInputMoney value={values.payment} />}
+        body={(values) => (
+          <NumberCellEditor
+            value={values.payment}
+            rowData={values}
+            field="payment"
+            onSave={handleSave}
+          />
+        )}
       />
       <Column
         field="is_social_spot"
         header={eventParticipantPropMap("is_social_spot")}
         dataType="boolean"
         body={(values) => (
-          <TableCheckbox value={values.is_social_spot} disabled />
+          <CheckboxCellEditor
+            value={values.is_social_spot}
+            rowData={values}
+            field="is_social_spot"
+            onSave={handleSave}
+          />
         )}
       />
       <Column
@@ -332,7 +296,26 @@ export const AdminViewEventParticipantsTable: FC<
         header={eventParticipantPropMap("is_staff_spot")}
         dataType="boolean"
         body={(values) => (
-          <TableCheckbox value={values.is_staff_spot} disabled />
+          <CheckboxCellEditor
+            value={values.is_staff_spot}
+            rowData={values}
+            field="is_staff_spot"
+            onSave={handleSave}
+          />
+        )}
+        className="min-w-30"
+      />
+      <Column
+        field="is_veteran"
+        header={profilePropMap("is_veteran")}
+        dataType="boolean"
+        body={(values) => (
+          <CheckboxCellEditor
+            value={values.is_veteran}
+            rowData={values}
+            field="is_veteran"
+            onSave={handleSave}
+          />
         )}
         className="min-w-30"
       />
@@ -341,9 +324,9 @@ export const AdminViewEventParticipantsTable: FC<
         header="Foi rodízio na última festa?"
         dataType="boolean"
         className="min-w-40"
-        body={(values) => (
-          <TableCheckbox disabled value={values.was_admin_skipped_last_event} />
-        )}
+        body={({ was_admin_skipped_last_event }) =>
+          was_admin_skipped_last_event ? "Sim" : ""
+        }
       />
     </DataTable>
   )
