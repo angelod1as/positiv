@@ -63,7 +63,7 @@ export const AdminViewEventParticipantsTable: FC<
           intent: "update-event-participant",
           id,
           eventId,
-          profileId: participant.profile_id,
+          profile_id: participant.profile_id,
           [field]: value,
         },
         { method: "post" },
@@ -306,19 +306,27 @@ export const AdminViewEventParticipantsTable: FC<
         className="min-w-30"
       />
       <Column
+        field="is_veteran"
+        header={profilePropMap("is_veteran")}
+        dataType="boolean"
+        body={(values) => (
+          <CheckboxCellEditor
+            value={values.is_veteran}
+            rowData={values}
+            field="is_veteran"
+            onSave={handleSave}
+          />
+        )}
+        className="min-w-30"
+      />
+      <Column
         field="was_admin_skipped_last_event"
         header="Foi rodízio na última festa?"
         dataType="boolean"
         className="min-w-40"
-        body={(values) => (
-          <CheckboxCellEditor
-            value={values.was_admin_skipped_last_event}
-            rowData={values}
-            field="was_admin_skipped_last_event"
-            onSave={handleSave}
-            disabled
-          />
-        )}
+        body={({ was_admin_skipped_last_event }) =>
+          was_admin_skipped_last_event ? "Sim" : ""
+        }
       />
     </DataTable>
   )

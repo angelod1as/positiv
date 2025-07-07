@@ -408,14 +408,8 @@ export const updateEventParticipantById = applySchema(
   const { intent, id, profile_id, is_veteran, ...data } = formData
 
   return await kysely.transaction().execute(async (transaction) => {
-    await transaction
-      .updateTable("event_participants")
-      .where("id", "=", id)
-      .set(data)
-      .execute()
-
     if (typeof is_veteran === "boolean") {
-      await transaction
+      return await transaction
         .updateTable("profiles")
         .where("id", "=", profile_id)
         .set({
@@ -423,5 +417,11 @@ export const updateEventParticipantById = applySchema(
         })
         .execute()
     }
+
+    return await transaction
+      .updateTable("event_participants")
+      .where("id", "=", id)
+      .set(data)
+      .execute()
   })
 })
