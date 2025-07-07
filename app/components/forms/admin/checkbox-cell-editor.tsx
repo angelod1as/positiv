@@ -1,3 +1,4 @@
+import { SavingIndicator } from "./base-cell-editor"
 import type { BaseCellEditorProps } from "./use-cell-editor"
 import { useCellEditor } from "./use-cell-editor"
 
@@ -30,13 +31,7 @@ export const CheckboxCellEditor = <
         defaultChecked={Boolean(value)}
         className="w-4 h-4"
       />
-      {/* Why not SavingIndicator component? */}
-      {isSaving && (
-        <span className="ml-2 h-4 w-4">
-          <span className="animate-ping absolute h-4 w-4 rounded-full bg-blue-400 opacity-75" />
-          <span className="absolute h-4 w-4 rounded-full bg-blue-500" />
-        </span>
-      )}
+      {isSaving && <SavingIndicator />}
     </div>
   )
 }
