@@ -3,12 +3,12 @@ import type { BaseCellEditorProps } from "./use-cell-editor"
 import { useCellEditor } from "./use-cell-editor"
 
 export type CheckboxCellEditorProps<
-  T extends { id: string | number },
+  T extends { id: string },
   K extends keyof T,
 > = BaseCellEditorProps<T, K>
 
 export const CheckboxCellEditor = <
-  T extends { id: string | number },
+  T extends { id: string },
   K extends keyof T,
 >({
   value,
@@ -28,7 +28,7 @@ export const CheckboxCellEditor = <
       <input
         type="checkbox"
         {...register(field as string)}
-        defaultChecked={Boolean(value)}
+        defaultChecked={value as boolean}
         className="w-4 h-4"
       />
       {isSaving && <SavingIndicator />}
