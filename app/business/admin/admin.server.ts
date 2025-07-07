@@ -405,11 +405,23 @@ export const updateParticipantVsEvent = applySchema(
 export const updateEventParticipantById = applySchema(
   updateEventParticipantByIdSchema,
 )(async (formData) => {
-  const { intent, id, ...data } = formData
+  const { intent, id, profile_id, is_veteran, ...data } = formData
 
-  return await kysely
-    .updateTable("event_participants")
-    .where("id", "=", id)
-    .set(data)
-    .execute()
+  return await kysely.transaction().execute(async (transaction) => {
+    await transaction
+      .updateTable("event_participants")
+      .where("id", "=", id)
+      .set(data)
+      .execute()
+
+    if (typeof is_veteran === "boolean") {
+      await transaction
+        .updateTable("profiles")
+        .where("id", "=", profile_id)
+        .set({
+          is_veteran,
+        })
+        .execute()
+    }
+  })
 })
