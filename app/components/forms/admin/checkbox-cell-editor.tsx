@@ -5,7 +5,9 @@ import { useCellEditor } from "./use-cell-editor"
 export type CheckboxCellEditorProps<
   T extends { id: string },
   K extends keyof T,
-> = BaseCellEditorProps<T, K>
+> = BaseCellEditorProps<T, K> & {
+  disabled?: boolean
+}
 
 export const CheckboxCellEditor = <
   T extends { id: string },
@@ -15,6 +17,7 @@ export const CheckboxCellEditor = <
   rowData,
   field,
   onSave,
+  disabled,
 }: CheckboxCellEditorProps<T, K>) => {
   const { register, isSaving } = useCellEditor({
     value,
@@ -30,6 +33,7 @@ export const CheckboxCellEditor = <
         {...register(field as string)}
         defaultChecked={value as boolean}
         className="w-4 h-4"
+        disabled={disabled}
       />
       {isSaving && <SavingIndicator />}
     </div>
