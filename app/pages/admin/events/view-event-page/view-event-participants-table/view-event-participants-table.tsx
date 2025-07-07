@@ -142,7 +142,11 @@ export const AdminViewEventParticipantsTable: FC<
         header="Nome"
         sortable
         frozen={true}
-        style={{ background: "oklch(87.2% 0.01 258.338)", maxWidth: "200px" }}
+        style={{
+          background: "oklch(87.2% 0.01 258.338)",
+          maxWidth: "200px",
+          zIndex: 100,
+        }}
         body={(values) =>
           values.social_name || <i>{values.full_name.split(" ")[0]}</i>
         }
