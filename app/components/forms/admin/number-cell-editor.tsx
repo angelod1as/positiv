@@ -3,14 +3,11 @@ import type { BaseCellEditorProps } from "./use-cell-editor"
 import { useCellEditor } from "./use-cell-editor"
 
 export type NumberCellEditorProps<
-  T extends { id: string | number },
+  T extends { id: string },
   K extends keyof T,
 > = BaseCellEditorProps<T, K>
 
-export const NumberCellEditor = <
-  T extends { id: string | number },
-  K extends keyof T,
->({
+export const NumberCellEditor = <T extends { id: string }, K extends keyof T>({
   value,
   rowData,
   field,

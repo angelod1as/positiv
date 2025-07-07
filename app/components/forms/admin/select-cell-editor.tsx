@@ -8,16 +8,13 @@ export type SelectOption = {
 }
 
 export type SelectCellEditorProps<
-  T extends { id: string | number },
+  T extends { id: string },
   K extends keyof T,
 > = BaseCellEditorProps<T, K> & {
   options: SelectOption[]
 }
 
-export const SelectCellEditor = <
-  T extends { id: string | number },
-  K extends keyof T,
->({
+export const SelectCellEditor = <T extends { id: string }, K extends keyof T>({
   value,
   rowData,
   field,

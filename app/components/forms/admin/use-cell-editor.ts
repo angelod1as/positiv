@@ -1,21 +1,14 @@
-// ROO: REVIEW
 import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
 
-export type BaseCellEditorProps<
-  T extends { id: string | number },
-  K extends keyof T,
-> = {
+export type BaseCellEditorProps<T extends { id: string }, K extends keyof T> = {
   value: T[K]
   rowData: T
   field: K
-  onSave: (id: string | number, field: K, value: T[K]) => void
+  onSave: (id: string, field: K, value: T[K]) => void
 }
 
-export const useCellEditor = <
-  T extends { id: string | number },
-  K extends keyof T,
->({
+export const useCellEditor = <T extends { id: string }, K extends keyof T>({
   value,
   rowData,
   field,
@@ -24,7 +17,6 @@ export const useCellEditor = <
   const [isSaving, setIsSaving] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Use unknown instead of any
   const {
     register,
     watch,
@@ -36,7 +28,6 @@ export const useCellEditor = <
     mode: "onChange",
   })
 
-  // Watch for changes
   const watchedValue = watch(field as string)
 
   // Auto-save when value changes
@@ -81,4 +72,3 @@ export const useCellEditor = <
     isSaving,
   }
 }
-// ROO: REVIEW END
