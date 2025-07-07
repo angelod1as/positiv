@@ -44,25 +44,29 @@ type AdminViewEventParticipantsTableProps = {
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId, fetcher }) => {
-  const handleSave = async (
+  /**
+   * Generic function to save changes to a participant field
+   */
+  const handleSave = async <K extends keyof ProfileWithExtraData>(
     id: string | number,
-    field: keyof ProfileWithExtraData,
-    value: unknown,
+    field: K,
+    value: ProfileWithExtraData[K],
   ) => {
     const participant = participants.find((p) => p.id === id)
     if (!participant) return
 
-    participant[field] = value as never
+    participant[field] = value
 
     const result = await composable(async () => {
-      // Create a FormData object for submission
-      const formData = new FormData()
-      formData.append("intent", "update-event-participant")
-      formData.append("id", id.toString())
-      formData.append("eventId", eventId)
-      formData.append(field.toString(), value as string)
-
-      return await fetcher.submit(formData, { method: "post" })
+      return await fetcher.submit(
+        {
+          intent: "update-event-participant",
+          id,
+          eventId,
+          [field]: value,
+        },
+        { method: "post" },
+      )
     })()
 
     if (!result.success) {

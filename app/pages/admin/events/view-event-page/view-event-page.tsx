@@ -38,7 +38,6 @@ const {
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getAdminContext(request, params)
-
   const { intent } = await inputFromForm(request)
 
   if (intent === "update-event-participant") {
@@ -46,9 +45,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       request,
       schema: updateEventParticipantByIdSchema,
       mutation: updateEventParticipantById,
-      transformValues: (values) => {
-        return values
-      },
       transformResult: (result) => ({ ...result, intent }),
     })
   }
