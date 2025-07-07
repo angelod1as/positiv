@@ -48,7 +48,7 @@ export const AdminViewEventParticipantsTable: FC<
    * Generic function to save changes to a participant field
    */
   const handleSave = async <K extends keyof ProfileWithExtraData>(
-    id: string | number,
+    id: string,
     field: K,
     value: ProfileWithExtraData[K],
   ) => {
