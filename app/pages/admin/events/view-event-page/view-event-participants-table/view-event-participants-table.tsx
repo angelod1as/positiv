@@ -63,6 +63,7 @@ export const AdminViewEventParticipantsTable: FC<
           intent: "update-event-participant",
           id,
           eventId,
+          profileId: participant.profile_id,
           [field]: value,
         },
         { method: "post" },
@@ -315,6 +316,7 @@ export const AdminViewEventParticipantsTable: FC<
             rowData={values}
             field="was_admin_skipped_last_event"
             onSave={handleSave}
+            disabled
           />
         )}
       />
