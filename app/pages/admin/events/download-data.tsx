@@ -33,7 +33,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
         gender,
         orientation,
         where_lives,
-        how_came_to_us
+        how_came_to_us,
+        is_veteran,
+        approved
       ),
       application_status,
       attendance_status,
@@ -45,6 +47,8 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       bond
       `,
     )
+    .eq("profiles.approved", true)
+    .not("profiles", "is", null)
     .eq("event_id", params.id)
     .eq("is_user_applied", true)
 

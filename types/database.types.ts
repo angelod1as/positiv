@@ -195,6 +195,7 @@ export type Database = {
       profiles: {
         Row: {
           allow_marketing_email: boolean | null
+          approved: boolean
           basic_data_filled: boolean
           cpf: string | null
           created_at: string
@@ -216,6 +217,7 @@ export type Database = {
         }
         Insert: {
           allow_marketing_email?: boolean | null
+          approved?: boolean
           basic_data_filled?: boolean
           cpf?: string | null
           created_at?: string
@@ -237,6 +239,7 @@ export type Database = {
         }
         Update: {
           allow_marketing_email?: boolean | null
+          approved?: boolean
           basic_data_filled?: boolean
           cpf?: string | null
           created_at?: string
