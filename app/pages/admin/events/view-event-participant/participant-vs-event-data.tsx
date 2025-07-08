@@ -7,6 +7,7 @@ import {
   applicationStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
+  spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import { type ParticipantVsEvent } from "~types/entities.types"
 import type { Database } from "~types/kysely.types"
@@ -54,6 +55,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             options={{
               attendance_status: attendanceStatusOptions,
               application_status: applicationStatusOptions,
+              spot_type: spotTypeOptions,
             }}
             labels={labels}
           >
