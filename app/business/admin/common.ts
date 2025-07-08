@@ -87,6 +87,8 @@ export const sendEventRemindersSchema = zod.object({
   event_status: zod.custom<EventStatus>(),
 })
 
+const spotTypeEnum = zod.enum(["regular", "social", "staff"])
+
 export const updateParticipantVsEventSchema = zod.object({
   profile_id: zod.string(),
   event_id: zod.string(),
@@ -94,8 +96,7 @@ export const updateParticipantVsEventSchema = zod.object({
   attendance_status: participantAttendanceStatusEnum,
   application_status: participantApplicationStatusEnum,
   has_paid: zod.boolean(),
-  is_social_spot: zod.boolean(),
-  is_staff_spot: zod.boolean(),
+  spot_type: spotTypeEnum,
   is_veteran: zod.boolean(),
   payment: zod.coerce.number(),
   admin_general_notes: zod.string(),
@@ -115,7 +116,6 @@ export const updateEventParticipantByIdSchema = zod.object({
   attendance_status: participantAttendanceStatusEnum.optional(),
   application_status: participantApplicationStatusEnum.optional(),
   has_paid: parseBoolean.optional(),
-  is_social_spot: parseBoolean.optional(),
-  is_staff_spot: parseBoolean.optional(),
+  spot_type: spotTypeEnum.optional(),
   is_veteran: parseBoolean.optional(),
 })

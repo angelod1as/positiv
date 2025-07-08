@@ -49,8 +49,7 @@ BEGIN
         cancellation_date,
         payment,
         notes,
-        is_social_spot,
-        is_staff_spot,
+        spot_type,
         admin_general_notes
     )
     VALUES
@@ -66,8 +65,7 @@ BEGIN
         NULL,                          -- cancellation_date
         20.00,                         -- payment (below price example)
         'Admin paid for this participation', -- notes
-        FALSE,                         -- Is Social Spot
-        TRUE,                          -- Is Staff Spot
+        'staff',                       -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -81,8 +79,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         NULL,                          -- notes
-        FALSE,                         -- Is Social Spot
-        TRUE,                          -- Is Staff Spot
+        'staff',                       -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -96,8 +93,7 @@ BEGIN
         now() - interval '1 month',    -- cancellation_date
         0,                             -- payment
         'Rejected by admin due to event cancellation', -- notes
-        FALSE,                         -- Is Social Spot
-        TRUE,                          -- Is Staff Spot
+        'staff',                       -- spot_type
         NULL                           -- admin_general_notes
     ),
 
@@ -113,8 +109,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment (not paid yet)
         NULL,                          -- notes
-        FALSE,                         -- Is Social Spot
-        TRUE,                          -- Is Staff Spot
+        'staff',                       -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -128,8 +123,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         NULL,
-        FALSE,                         -- Is Social Spot
-        TRUE,                          -- Is Staff Spot
+        'staff',                       -- spot_type
         'Admin notes here... why skipped and all...' -- admin_general_notes
     ),
     (
@@ -143,8 +137,7 @@ BEGIN
         NULL,                          -- cancellation_date
         15.00,                         -- payment (matches price example)
         'User paid for this closed event', -- notes
-        FALSE,                         -- Is Social Spot
-        TRUE,                          -- Is Staff Spot
+        'staff',                       -- spot_type
         NULL                           -- admin_general_notes
     ),
 
@@ -160,8 +153,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         'Admin talking to user about participation', -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -175,8 +167,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         'Admin decision: behavioral concerns', -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -190,8 +181,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         'Admin decision: no-show history', -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
 
@@ -207,8 +197,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         'User sent payment details',   -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -222,8 +211,7 @@ BEGIN
         NULL,                          -- cancellation_date
         25.00,                         -- payment
         'Great participant!',          -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -237,8 +225,7 @@ BEGIN
         NULL,                          -- cancellation_date
         20.00,                         -- payment
         NULL,                          -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
 
@@ -254,8 +241,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         'User considering participation', -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -269,8 +255,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         'User applied but did not show up', -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -284,8 +269,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         'Application rejected by admin due to criteria mismatch', -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
     (
@@ -299,8 +283,7 @@ BEGIN
         NULL,                          -- cancellation_date
         0,                             -- payment
         'Admin sent participation rules to user', -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
     -- New entry to demonstrate 'will-not-go' attendance status
@@ -315,8 +298,7 @@ BEGIN
         now() - interval '15 days',    -- cancellation_date (user decided not to go)
         0,                             -- payment
         'User decided they will not go to the event.', -- notes
-        FALSE,                         -- Is Social Spot
-        FALSE,                         -- Is Staff Spot
+        'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     );
 
