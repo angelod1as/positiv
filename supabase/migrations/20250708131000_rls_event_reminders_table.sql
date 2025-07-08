@@ -1,3 +1,4 @@
+-- ROO: REVIEW
 -- Migration: RLS for public.event_reminders table
 
 -- 1. Enable Row Level Security
@@ -14,13 +15,13 @@ TO anon
 USING (false) WITH CHECK (false);
 
 -- ### Policies for Authenticated Users (Regular Users - Manage Their Own Reminders) ###
--- Authenticated users can see and delete their own reminders.
+-- Authenticated users can see, create, and delete their own reminders.
 
 -- Allow authenticated users to SELECT (read) their OWN reminders
 CREATE POLICY authenticated_select_own_reminder
 ON public.event_reminders FOR SELECT
 TO authenticated
-USING (profile_id = get_my_profile_id());
+USING (profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()));
 
 COMMENT ON POLICY authenticated_select_own_reminder ON public.event_reminders IS 'Allow authenticated users to select their own event reminders.';
 
@@ -28,7 +29,7 @@ COMMENT ON POLICY authenticated_select_own_reminder ON public.event_reminders IS
 CREATE POLICY authenticated_insert_own_reminder
 ON public.event_reminders FOR INSERT
 TO authenticated
-WITH CHECK (profile_id = get_my_profile_id());
+WITH CHECK (profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()));
 
 COMMENT ON POLICY authenticated_insert_own_reminder ON public.event_reminders IS 'Allow authenticated users to insert their own event reminders.';
 
@@ -36,7 +37,7 @@ COMMENT ON POLICY authenticated_insert_own_reminder ON public.event_reminders IS
 CREATE POLICY authenticated_delete_own_reminder
 ON public.event_reminders FOR DELETE
 TO authenticated
-USING (profile_id = get_my_profile_id());
+USING (profile_id IN (SELECT id FROM public.profiles WHERE user_id = auth.uid()));
 
 COMMENT ON POLICY authenticated_delete_own_reminder ON public.event_reminders IS 'Allow authenticated users to delete their own event reminders.';
 
@@ -60,3 +61,4 @@ COMMENT ON POLICY service_role_all_access_event_reminders ON public.event_remind
 
 -- Add comment for the table
 COMMENT ON TABLE public.event_reminders IS 'Tracks event reminders for users. RLS allows users to manage their own records and admins to manage all.';
+-- ROO: REVIEW END
