@@ -116,7 +116,6 @@ export const updateEventParticipantByIdSchema = zod.object({
   attendance_status: participantAttendanceStatusEnum.optional(),
   application_status: participantApplicationStatusEnum.optional(),
   has_paid: parseBoolean.optional(),
-  is_social_spot: parseBoolean.optional(),
-  is_staff_spot: parseBoolean.optional(),
+  spot_type: spotTypeEnum.optional(),
   is_veteran: parseBoolean.optional(),
 })
