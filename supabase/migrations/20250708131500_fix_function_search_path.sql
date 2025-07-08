@@ -2,5 +2,4 @@
 
 ALTER FUNCTION public.add_user_role(uuid, text) SET search_path = 'public';
 
--- ROO: REVIEW
 ALTER FUNCTION public.update_veteran_status() SET search_path = 'public';

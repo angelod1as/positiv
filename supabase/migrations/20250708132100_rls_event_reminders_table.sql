@@ -20,21 +20,23 @@ USING (false) WITH CHECK (false);
 CREATE POLICY authenticated_select_own_reminder
 ON public.event_reminders FOR SELECT
 TO authenticated
-USING (profile_id IN (
-    SELECT id FROM public.profiles
-    WHERE user_id = auth.uid()
-));
+USING (profile_id = get_my_profile_id());
 
 COMMENT ON POLICY authenticated_select_own_reminder ON public.event_reminders IS 'Allow authenticated users to select their own event reminders.';
+
+-- Allow authenticated users to INSERT their OWN reminders
+CREATE POLICY authenticated_insert_own_reminder
+ON public.event_reminders FOR INSERT
+TO authenticated
+WITH CHECK (profile_id = get_my_profile_id());
+
+COMMENT ON POLICY authenticated_insert_own_reminder ON public.event_reminders IS 'Allow authenticated users to insert their own event reminders.';
 
 -- Allow authenticated users to DELETE their OWN reminders
 CREATE POLICY authenticated_delete_own_reminder
 ON public.event_reminders FOR DELETE
 TO authenticated
-USING (profile_id IN (
-    SELECT id FROM public.profiles
-    WHERE user_id = auth.uid()
-));
+USING (profile_id = get_my_profile_id());
 
 COMMENT ON POLICY authenticated_delete_own_reminder ON public.event_reminders IS 'Allow authenticated users to delete their own event reminders.';
 
@@ -43,8 +45,8 @@ COMMENT ON POLICY authenticated_delete_own_reminder ON public.event_reminders IS
 CREATE POLICY admin_all_access_event_reminders
 ON public.event_reminders FOR ALL
 TO authenticated
-USING (profile_id IN (SELECT id FROM public.profiles WHERE user_id IN (SELECT user_id FROM public.user_roles WHERE role_name = 'admin')))
-WITH CHECK (profile_id IN (SELECT id FROM public.profiles WHERE user_id IN (SELECT user_id FROM public.user_roles WHERE role_name = 'admin')));
+USING (auth.uid() IN (SELECT user_id FROM public.user_roles WHERE role_name = 'admin'))
+WITH CHECK (auth.uid() IN (SELECT user_id FROM public.user_roles WHERE role_name = 'admin'));
 
 COMMENT ON POLICY admin_all_access_event_reminders ON public.event_reminders IS 'Allow admin users full access to all event reminders.';
 
