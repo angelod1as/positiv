@@ -29,6 +29,7 @@ export const profilePropMap = (property: keyof Profile) => {
     orientation: "Orientação",
     pronouns: "Pronomes",
     user_id: "Id de usuárie",
+    approved: "Aprovade",
   }[property]
 }
 
