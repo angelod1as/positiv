@@ -16,7 +16,8 @@ INSERT INTO public.profiles (
     how_came_to_us,
     rg_issuer,
     allow_marketing_email,
-    is_veteran
+    is_veteran,
+    approved
 )
 SELECT
     usr.id,
@@ -119,6 +120,14 @@ SELECT
     -- allow_marketing_email
     true,
     -- is_veteran (set true for admin, user1, user3, user4, user5; others false)
+    CASE usr.email
+        WHEN 'admin@example.com' THEN true
+        WHEN 'user1@example.com' THEN true
+        WHEN 'user3@example.com' THEN true
+        WHEN 'user4@example.com' THEN true
+        WHEN 'user5@example.com' THEN true
+        ELSE false
+    END,
     CASE usr.email
         WHEN 'admin@example.com' THEN true
         WHEN 'user1@example.com' THEN true
