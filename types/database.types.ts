@@ -22,13 +22,12 @@ export type Database = {
           event_id: string
           has_paid: boolean
           id: string
-          is_social_spot: boolean | null
-          is_staff_spot: boolean | null
           is_user_applied: boolean
           notes: string | null
           payment: number
           profile_id: string | null
           referrals: string | null
+          spot_type: Database["public"]["Enums"]["spot_type"]
         }
         Insert: {
           admin_general_notes?: string | null
@@ -42,13 +41,12 @@ export type Database = {
           event_id: string
           has_paid?: boolean
           id?: string
-          is_social_spot?: boolean | null
-          is_staff_spot?: boolean | null
           is_user_applied?: boolean
           notes?: string | null
           payment?: number
           profile_id?: string | null
           referrals?: string | null
+          spot_type?: Database["public"]["Enums"]["spot_type"]
         }
         Update: {
           admin_general_notes?: string | null
@@ -62,13 +60,12 @@ export type Database = {
           event_id?: string
           has_paid?: boolean
           id?: string
-          is_social_spot?: boolean | null
-          is_staff_spot?: boolean | null
           is_user_applied?: boolean
           notes?: string | null
           payment?: number
           profile_id?: string | null
           referrals?: string | null
+          spot_type?: Database["public"]["Enums"]["spot_type"]
         }
         Relationships: [
           {
@@ -339,6 +336,7 @@ export type Database = {
         | "Scheduled"
         | "Registration Closed"
         | "Registration Open"
+      spot_type: "regular" | "social" | "staff"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -478,6 +476,7 @@ export const Constants = {
         "Registration Closed",
         "Registration Open",
       ],
+      spot_type: ["regular", "social", "staff"],
     },
   },
 } as const
