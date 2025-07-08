@@ -7,6 +7,7 @@ import {
   applicationStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
+  spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import { type ParticipantVsEvent } from "~types/entities.types"
 import type { Database } from "~types/kysely.types"
@@ -46,15 +47,15 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               payment: Number(eventParticipant.payment),
             }}
             inputTypes={{
-              is_social_spot: "checkbox",
-              is_staff_spot: "checkbox",
               has_paid: "checkbox",
               is_veteran: "checkbox",
               payment: "number",
+              spot_type: "select",
             }}
             options={{
               attendance_status: attendanceStatusOptions,
               application_status: applicationStatusOptions,
+              spot_type: spotTypeOptions,
             }}
             labels={labels}
           >
@@ -69,11 +70,10 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                   <div className="space-y-2">
                     <Field name="attendance_status" />
                     <Field name="application_status" />
+                    <Field name="spot_type" />
                     <Field name="payment" />
                     <div className="flex gap-8">
                       <Field name="has_paid" />
-                      <Field name="is_social_spot" />
-                      <Field name="is_staff_spot" />
                       <Field name="is_veteran" />
                     </div>
                     <Field name="admin_general_notes" multiline />

@@ -77,11 +77,10 @@ export const eventParticipantPropMap = (
     referrals: "Indicações",
     companions: "Vai acompanhade?",
     bond: "Pode ir só?",
-    is_social_spot: "É vaga social?",
-    is_staff_spot: "É vaga de staff?",
     admin_general_notes: "Notas gerais da administração para este evento",
     emoji: "Emoji",
     title: "Título",
+    spot_type: "Tipo de vaga",
   }[property]
 }
 
@@ -143,4 +142,23 @@ export const attendanceStatusOptions: Array<{
   name: name,
   label: name,
   value: value as ParticipantAttendanceStatus,
+}))
+
+const participantSpotType: Record<string, string> = {
+  regular: "Regular",
+  social: "Social",
+  staff: "Staff",
+}
+
+export const participantSpotTypePropMap = (spot_type: string) => {
+  return participantSpotType[spot_type] || ""
+}
+
+export const spotTypeOptions: Array<{
+  name: string
+  value: string
+}> = Object.entries(participantSpotType).map(([value, name]) => ({
+  name: name,
+  label: name,
+  value: value,
 }))
