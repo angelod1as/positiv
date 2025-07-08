@@ -23,6 +23,7 @@ import {
   attendanceStatusOptions,
   eventParticipantPropMap,
   profilePropMap,
+  spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/entities.types"
@@ -283,31 +284,21 @@ export const AdminViewEventParticipantsTable: FC<
         )}
       />
       <Column
-        field="is_social_spot"
-        header={eventParticipantPropMap("is_social_spot")}
-        dataType="boolean"
+        field="spot_type"
+        header={eventParticipantPropMap("spot_type")}
+        className="min-w-[130px]"
         body={(values) => (
-          <CheckboxCellEditor
-            value={values.is_social_spot}
+          <SelectCellEditor
+            value={values.spot_type}
             rowData={values}
-            field="is_social_spot"
+            field="spot_type"
             onSave={handleSave}
+            options={spotTypeOptions.map((opt) => ({
+              label: opt.name,
+              value: opt.value,
+            }))}
           />
         )}
-      />
-      <Column
-        field="is_staff_spot"
-        header={eventParticipantPropMap("is_staff_spot")}
-        dataType="boolean"
-        body={(values) => (
-          <CheckboxCellEditor
-            value={values.is_staff_spot}
-            rowData={values}
-            field="is_staff_spot"
-            onSave={handleSave}
-          />
-        )}
-        className="min-w-30"
       />
       <Column
         field="is_veteran"
