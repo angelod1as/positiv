@@ -60,7 +60,7 @@ export const getAdminEventById = composable(
 
 export type ProfileWithExtraData = Profile &
   EventParticipant & {
-    was_admin_skipped_last_event: boolean
+    was_admin_skipped_last_event?: boolean
   }
 
 // Main query to get event_participants information along with if they were skipped in the last event
