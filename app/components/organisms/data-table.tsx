@@ -106,7 +106,7 @@ export function DataTable<T extends DataTableValue>({
 
     return (
       <div className="flex justify-between items-end font-normal">
-        <div className="flex gap-4">
+        <div className="flex items-center gap-4">
           <div>
             {title && <span className="font-semibold text-lg">{title}</span>}
           </div>

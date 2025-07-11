@@ -1,9 +1,14 @@
+import { composable } from "composable-functions"
 import { redirectWithError } from "remix-toast"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
+import { kysely } from "~/kysely"
 import { downloadXLSX } from "~/lib/helpers/download-xlsx"
+import { getWillGoToEventParticipants } from "~/lib/helpers/get-filtered-participants"
 import { mapToString } from "~/lib/helpers/map-string-array-to-string"
+import { eventParticipantPropMap, profilePropMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
+import type { EventParticipant, Profile } from "~types/entities.types"
 import type { Route } from "./+types/download-data"
 
 const {
@@ -11,54 +16,30 @@ const {
 } = paths
 
 export async function loader({ request, params }: Route.LoaderArgs) {
+  await getAdminContext(request, params)
+
   if (!params.id) {
-    return redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
+    throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
   }
-  const { supabase } = await getAdminContext(request, params)
 
-  const query = supabase
-    .from("event_participants")
-    .select(
-      `
-      ...profiles (
-        email,
-        full_name,
-        social_name,
-        pronouns,
-        rg,
-        rg_issuer,
-        cpf,
-        phone,
-        date_of_birth,
-        gender,
-        orientation,
-        where_lives,
-        how_came_to_us,
-        is_veteran,
-        approved
-      ),
-      application_status,
-      attendance_status,
-      has_paid,
-      payment,
-      notes,
-      referrals,
-      companions,
-      bond
-      `,
+  const result = await composable(async () => {
+    return kysely
+      .selectFrom("event_participants as ep")
+      .innerJoin("profiles as p", "p.id", "ep.profile_id")
+      .selectAll(["ep", "p"])
+      .where("ep.event_id", "=", params.id)
+      .where("ep.is_user_applied", "=", true)
+      .execute()
+  })()
+
+  if (!result.success) {
+    throw await redirectWithError(
+      ADMIN_DASHBOARD,
+      "Erro ao buscar participantes do evento",
     )
-    .eq("profiles.approved", true)
-    .not("profiles", "is", null)
-    .eq("event_id", params.id)
-    .eq("is_user_applied", true)
-
-  const { data, error } = await query
-
-  if (error) {
-    throw new Error("Ocorreu um erro buscando participantes")
   }
 
-  return { participants: data }
+  return { participants: result.data }
 }
 
 const AdminDownloadEventParticipants = ({
@@ -68,46 +49,45 @@ const AdminDownloadEventParticipants = ({
 
   const handleDownloadAll = async () => {
     const xlsxData = participants.map(mapToString).map((participant) => {
-      return {
-        "Nome Completo": participant.full_name,
-        "Nome Social": participant.social_name,
-        Pronomes: participant.pronouns,
-        "E-mail": participant.email,
-        RG: participant.rg,
-        "Emissor do RG": participant.rg_issuer,
-        CPF: participant.cpf,
-        Telefone: participant.phone,
-        Whatsapp: participant.phone && `https://wa.me/55${participant.phone}`,
-        "Data de Nascimento": participant.date_of_birth,
-        Gênero: participant.gender,
-        Orientação: participant.orientation,
-        "Onde mora": participant.where_lives,
-        "Como veio à nós": participant.how_came_to_us,
-        Processo: participant.application_status,
-        Status: participant.attendance_status,
-        "Pago?": participant.has_paid,
-        "Valor pago": participant.payment,
-        Notas: participant.notes,
-        Indicações: participant.referrals,
-        "Vai acompanhade?": participant.companions,
-        "Pode ir só?": participant.bond,
-      }
+      return Object.entries(participant)
+        .sort((a, b) => (a[0] > b[0] ? 1 : -1))
+        .map(([key, value]) => {
+          if (profilePropMap(key as keyof Profile)) {
+            return [profilePropMap(key as keyof Profile), value]
+          }
+
+          if (eventParticipantPropMap(key as keyof EventParticipant)) {
+            return [
+              eventParticipantPropMap(key as keyof EventParticipant),
+              value,
+            ]
+          }
+          return undefined
+        })
+        .reduce((prev, curr) => {
+          if (!curr) return prev
+          return {
+            ...prev,
+            [curr[0]]: curr[1],
+          }
+        }, {})
     })
     downloadXLSX(xlsxData)
-    // toast.success("Documento baixado com sucesso")
   }
 
   const handleDownloadNames = async () => {
-    const xlsxData = participants.map(
-      ({ full_name, rg, rg_issuer, social_name }) => ({
-        "Nome completo": full_name,
-        "Nome social": social_name,
-        RG: rg,
-        Emissor: rg_issuer,
+    const xlsxData = getWillGoToEventParticipants(
+      participants,
+    ).participants.map(
+      ({ full_name, rg, rg_issuer, social_name, approved_to_attend }) => ({
+        [profilePropMap("approved_to_attend")]: approved_to_attend,
+        [profilePropMap("full_name")]: full_name,
+        [profilePropMap("social_name")]: social_name,
+        [profilePropMap("rg")]: rg,
+        [profilePropMap("rg_issuer")]: rg_issuer,
       }),
     )
     downloadXLSX(xlsxData)
-    // toast.success("Documento baixado com sucesso")
   }
 
   return (

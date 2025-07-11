@@ -12,6 +12,11 @@ DECLARE
     user2_profile_id uuid;
     user3_profile_id uuid;
     user4_profile_id uuid;
+    user5_profile_id uuid;
+    user6_profile_id uuid;
+    user7_profile_id uuid;
+    user8_profile_id uuid;
+    user9_profile_id uuid;
 
     -- Declare variables for specific event IDs (based on title or status+index)
     event_id_reg_open_1 uuid;
@@ -27,6 +32,11 @@ BEGIN
     SELECT p.id INTO user2_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user2@example.com';
     SELECT p.id INTO user3_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user3@example.com';
     SELECT p.id INTO user4_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user4@example.com';
+    SELECT p.id INTO user5_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user5@example.com';
+    SELECT p.id INTO user6_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user6@example.com';
+    SELECT p.id INTO user7_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user7@example.com';
+    SELECT p.id INTO user8_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user8@example.com';
+    SELECT p.id INTO user9_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user9@example.com';
 
     -- Retrieve specific event IDs based on titles or statuses (from 03_events.sql)
     SELECT id INTO event_id_reg_open_1   FROM public.events WHERE title = 'Evento Com Inscrições Abertas 1';
@@ -58,9 +68,9 @@ BEGIN
         admin_profile_id,              -- profile_id: Admin
         event_id_reg_open_1,           -- event_id: Registration Open
         TRUE,                          -- is_user_applied: Applied by user
-        'sent_payment_data',           -- application_status (from old 'paid')
+        'sent_payment_data',           -- application_status
         'pending',
-        TRUE,                          -- has_paid (from old 'paid')
+        TRUE,                          -- has_paid
         now() - interval '2 months',   -- application_date
         NULL,                          -- cancellation_date
         20.00,                         -- payment (below price example)
@@ -86,13 +96,13 @@ BEGIN
         admin_profile_id,              -- profile_id: Admin
         event_id_cancelled_1,          -- event_id: Cancelled
         FALSE,                         -- is_user_applied: Added by admin
-        'finalised',                   -- application_status (from old 'rejected')
-        'rejected',                    -- attendance_status (from old 'rejected')
-        FALSE,                         -- has_paid (from old 'rejected')
+        'finalised',                   -- application_status
+        'pending',
+        FALSE,                         -- has_paid
         now() - interval '3 months',   -- application_date
         now() - interval '1 month',    -- cancellation_date
         0,                             -- payment
-        'Rejected by admin due to event cancellation', -- notes
+        'Event was cancelled, so attendance is just pending', -- notes
         'staff',                       -- spot_type
         NULL                           -- admin_general_notes
     ),
@@ -102,9 +112,9 @@ BEGIN
         user1_profile_id,              -- profile_id: User1
         event_id_reg_open_1,           -- event_id: Registration Open (current event)
         TRUE,                          -- is_user_applied: Applied by user
-        'applied',                     -- application_status (from old 'applied')
+        'pending',                     -- application_status
         'pending',
-        FALSE,                         -- has_paid (from old 'applied')
+        FALSE,                         -- has_paid
         now() - interval '1 day',      -- application_date
         NULL,                          -- cancellation_date
         0,                             -- payment (not paid yet)
@@ -130,9 +140,9 @@ BEGIN
         user1_profile_id,              -- profile_id: User1
         event_id_reg_closed_1,         -- event_id: Registration Closed
         TRUE,                          -- is_user_applied: Applied by user
-        'sent_payment_data',           -- application_status (from old 'paid')
+        'sent_payment_data',           -- application_status
         'pending',
-        TRUE,                          -- has_paid (from old 'paid')
+        TRUE,                          -- has_paid
         now() - interval '1 month',    -- application_date
         NULL,                          -- cancellation_date
         15.00,                         -- payment (matches price example)
@@ -262,13 +272,13 @@ BEGIN
         user4_profile_id,              -- profile_id: User4
         event_id_reg_closed_1,         -- event_id: Registration Closed (rejected)
         TRUE,                          -- is_user_applied: Applied by user
-        'finalised',                   -- application_status (from old 'rejected')
-        'rejected',                    -- attendance_status (from old 'rejected')
-        FALSE,                         -- has_paid (from old 'rejected')
+        'finalised',                   -- application_status
+        'pending',
+        FALSE,                         -- has_paid
         now() - interval '2 months',   -- application_date
         NULL,                          -- cancellation_date
         0,                             -- payment
-        'Application rejected by admin due to criteria mismatch', -- notes
+        'Application rejected, so attendance is just pending', -- notes
         'regular',                     -- spot_type
         NULL                           -- admin_general_notes
     ),
@@ -303,10 +313,11 @@ BEGIN
     );
 
     -- Summary of test scenarios created:
-    -- 1. Admin: Example of 'paid', 'attended', and 'rejected' statuses.
+    -- 1. Admin: Example of 'paid', 'attended', and 'cancelled' event scenarios.
     -- 2. User1: Applied to current event, 'skipped' from a previous, and 'paid' for another.
     -- 3. User2: 'talking' for current, 'skipped' from two previous events.
     -- 4. User3: 'sent_payment_data' for current, 'attended' two previous events.
-    -- 5. User4: 'think_better' for current, 'not-attended' a previous, 'rejected' from another, 'sent_rules' for an older event, and a new entry for 'will-not-go'.
+    -- 5. User4: 'think_better' for current, 'not-attended' a previous, 'cancelled' from another, 'sent_rules' for an older event, and a new entry for 'will-not-go'.
+    -- NOTE: 'rejected' was removed from the attendance_status enum and is now covered by the approval flow.
 
 END $$;

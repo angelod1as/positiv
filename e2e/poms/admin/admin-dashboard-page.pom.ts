@@ -42,7 +42,7 @@ export class AdminDashboardPOM {
         .getByLabel("Ver evento"),
       row: this.page.getByText("Evento Agendado 1"),
       title: this.page.getByText("📅 Evento Agendado 1").first(),
-      reminderWarning: this.page.getByText("Lembretes: 1"),
+      reminderWarning: this.page.getByText("Lembretes: 2"),
     }
     this.registrationOpenEvent = {
       viewEventButton: this.page

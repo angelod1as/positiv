@@ -7,6 +7,12 @@
   layer(primereact);
 /* End PrimeReact DataTable */
 
+@media not (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: auto;
+  }
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {
