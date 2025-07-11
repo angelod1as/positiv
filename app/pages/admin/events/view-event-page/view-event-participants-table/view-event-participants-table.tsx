@@ -20,6 +20,7 @@ import { DataTable } from "~/components/organisms/data-table"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import {
   applicationStatusOptions,
+  approvedToAttendStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
   profilePropMap,
@@ -59,13 +60,14 @@ export const AdminViewEventParticipantsTable: FC<
     participant[field] = value
 
     const result = await composable(async () => {
+      const obj = field ? { [field]: value } : {}
       return await fetcher.submit(
         {
           intent: "update-event-participant",
           id,
           eventId,
           profile_id: participant.profile_id,
-          [field]: value,
+          ...obj,
         },
         { method: "post" },
       )
@@ -250,6 +252,37 @@ export const AdminViewEventParticipantsTable: FC<
             field="attendance_status"
             onSave={handleSave}
             options={attendanceStatusOptions.map((opt) => ({
+              label: opt.name,
+              value: opt.value,
+            }))}
+          />
+        )}
+      />
+
+      <Column
+        field="approved_to_attend"
+        header={profilePropMap("approved_to_attend")}
+        filter
+        className="min-w-[180px]"
+        filterElement={(options) => (
+          <TableInputDropdown
+            value={options.value}
+            options={approvedToAttendStatusOptions}
+            filterCallback={options.filterCallback}
+            index={options.index}
+            placeholder="Selecione"
+            className="p-column-filter"
+            showClear
+          />
+        )}
+        showFilterMatchModes={false}
+        body={(values) => (
+          <SelectCellEditor
+            value={values.approved_to_attend}
+            rowData={values}
+            field="approved_to_attend"
+            onSave={handleSave}
+            options={approvedToAttendStatusOptions.map((opt) => ({
               label: opt.name,
               value: opt.value,
             }))}
