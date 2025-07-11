@@ -44,8 +44,6 @@ export const useCellEditor = <T extends { id: string }, K extends keyof T>({
     timeoutRef.current = setTimeout(async () => {
       setIsSaving(true)
       try {
-        // Log the save operation
-        console.info(`Auto-saving ${String(field)} with value:`, watchedValue)
         await new Promise((resolve) => setTimeout(resolve, 500))
 
         // Call the parent save function
