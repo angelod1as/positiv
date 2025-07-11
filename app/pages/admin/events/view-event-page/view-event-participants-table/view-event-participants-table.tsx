@@ -78,7 +78,7 @@ export const AdminViewEventParticipantsTable: FC<
     }
   }
 
-  const { accepted, applications } = countParticipants(participants)
+  const { acceptedInProcess, applications } = countParticipants(participants)
 
   return (
     <DataTable
@@ -106,7 +106,7 @@ export const AdminViewEventParticipantsTable: FC<
               <b>{applications.total}</b> inscrites
             </p>
             <p>
-              <b>{accepted.total}</b> aceites
+              <b>{acceptedInProcess.total}</b> aceites no processo
             </p>
             <span>|</span>
             <p>Geral:</p>
@@ -117,12 +117,12 @@ export const AdminViewEventParticipantsTable: FC<
               <b>{applications.veterans}</b> V
             </p>
             <span>|</span>
-            <p>Aceites:</p>
+            <p>Aceites no processo:</p>
             <p>
-              <b>{accepted.rookies}</b> N
+              <b>{acceptedInProcess.rookies}</b> N
             </p>
             <p>
-              <b>{accepted.veterans}</b> V
+              <b>{acceptedInProcess.veterans}</b> V
             </p>
             <span>|</span>
           </>
