@@ -195,7 +195,7 @@ export type Database = {
       profiles: {
         Row: {
           allow_marketing_email: boolean | null
-          approved: boolean
+          approved_to_attend: Database["public"]["Enums"]["approved_to_attend_enum"]
           basic_data_filled: boolean
           cpf: string | null
           created_at: string
@@ -217,7 +217,7 @@ export type Database = {
         }
         Insert: {
           allow_marketing_email?: boolean | null
-          approved?: boolean
+          approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
           basic_data_filled?: boolean
           cpf?: string | null
           created_at?: string
@@ -239,7 +239,7 @@ export type Database = {
         }
         Update: {
           allow_marketing_email?: boolean | null
-          approved?: boolean
+          approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
           basic_data_filled?: boolean
           cpf?: string | null
           created_at?: string
@@ -319,17 +319,21 @@ export type Database = {
     }
     Enums: {
       application_status_enum:
-        | "applied"
+        | "pending"
         | "talking"
         | "sent_payment_data"
         | "sent_rules"
         | "think_better"
         | "finalised"
+      approved_to_attend_enum:
+        | "pending"
+        | "approved"
+        | "approved_with_reservations"
+        | "rejected"
       attendance_status_enum:
         | "pending"
         | "attended"
         | "not-attended"
-        | "rejected"
         | "skipped"
         | "will-not-go"
       event_status:
@@ -456,18 +460,23 @@ export const Constants = {
   public: {
     Enums: {
       application_status_enum: [
-        "applied",
+        "pending",
         "talking",
         "sent_payment_data",
         "sent_rules",
         "think_better",
         "finalised",
       ],
+      approved_to_attend_enum: [
+        "pending",
+        "approved",
+        "approved_with_reservations",
+        "rejected",
+      ],
       attendance_status_enum: [
         "pending",
         "attended",
         "not-attended",
-        "rejected",
         "skipped",
         "will-not-go",
       ],
