@@ -66,7 +66,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
 
   const { isClosed, isOpen, isScheduled } = checkEventStatus(event_status)
 
-  if (isClosed) {
+  if (isScheduled) {
     if (is_set_reminder) {
       return (
         <fetcher.Form method="post">
@@ -115,6 +115,14 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
           </ConfirmDialog.Trigger>
         </ConfirmDialog>
       </fetcher.Form>
+    )
+  }
+
+  if (isClosed) {
+    return (
+      <Button data-testid={dataTestId} disabled={true}>
+        Inscrições encerradas
+      </Button>
     )
   }
 
