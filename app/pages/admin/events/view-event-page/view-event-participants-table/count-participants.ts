@@ -1,7 +1,7 @@
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import type { ParticipantApplicationStatus } from "~types/entities.types"
 
-const isParticipantAccepted = (participant: ProfileWithExtraData) => {
+const isParticipantAcceptedInProcess = (participant: ProfileWithExtraData) => {
   const arr: ParticipantApplicationStatus[] = [
     "sent_payment_data",
     "sent_rules",
@@ -13,14 +13,14 @@ const isParticipantAccepted = (participant: ProfileWithExtraData) => {
 export const countParticipants = (participants: ProfileWithExtraData[]) => {
   return participants.reduce(
     (prev, curr) => {
-      const { accepted, applications } = prev
-      const isAccepted = isParticipantAccepted(curr)
+      const { acceptedInProcess, applications } = prev
+      const isAccepted = isParticipantAcceptedInProcess(curr)
       if (isAccepted) {
-        accepted.total = accepted.total + 1
+        acceptedInProcess.total = acceptedInProcess.total + 1
         if (curr.is_veteran) {
-          accepted.veterans = accepted.veterans + 1
+          acceptedInProcess.veterans = acceptedInProcess.veterans + 1
         } else {
-          accepted.rookies = accepted.rookies + 1
+          acceptedInProcess.rookies = acceptedInProcess.rookies + 1
         }
       }
 
@@ -40,7 +40,7 @@ export const countParticipants = (participants: ProfileWithExtraData[]) => {
         veterans: 0,
         rookies: 0,
       },
-      accepted: {
+      acceptedInProcess: {
         total: 0,
         veterans: 0,
         rookies: 0,
