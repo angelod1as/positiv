@@ -1,11 +1,11 @@
 import type {
   Event,
+  EventParticipant,
   EventStatus,
   ParticipantApplicationStatus,
   ParticipantAttendanceStatus,
   Profile,
 } from "~types/entities.types"
-import type { Database } from "~types/kysely.types"
 
 export const profilePropMap = (property: keyof Profile) => {
   return {
@@ -24,19 +24,19 @@ export const profilePropMap = (property: keyof Profile) => {
     rg: "RG",
     rg_issuer: "Emissor do RG",
     gender: "Gênero",
-    id: "Id de perfil",
+    id: "Id do perfil",
     is_veteran: "É veterane?",
     orientation: "Orientação",
     pronouns: "Pronomes",
     user_id: "Id de usuárie",
-    approved: "Aprovade",
+    approved_to_attend: "Aprovade",
   }[property]
 }
 
 export const eventPropNameMap = (property: keyof Event) => {
   return {
     created_at: "Criado em",
-    id: "ID",
+    id: "Id do evento",
     time_application_end: "Fim das inscrições",
     time_application_start: "Início das inscrições",
     description: "Descrição",
@@ -59,11 +59,9 @@ export const eventPropNameMap = (property: keyof Event) => {
   }[property]
 }
 
-export const eventParticipantPropMap = (
-  property: keyof Database["event_participants"],
-) => {
+export const eventParticipantPropMap = (property: keyof EventParticipant) => {
   return {
-    id: "Id",
+    id: "Id do participante",
     profile_id: "Id do perfil",
     event_id: "Id do evento",
     is_user_applied: "Inscrite?",
@@ -103,7 +101,7 @@ const participantApplicationStatus: Record<
   ParticipantApplicationStatus,
   string
 > = {
-  applied: "Inscrite",
+  pending: "Pendente",
   talking: "Conversando",
   sent_payment_data: "Dados de pagto enviados",
   sent_rules: "Regras enviadas",
@@ -116,7 +114,6 @@ const participantAttendanceStatus: Record<ParticipantAttendanceStatus, string> =
     pending: "Pendente",
     attended: "Compareceu",
     "not-attended": "Não compareceu",
-    rejected: "Rejeitade",
     skipped: "Pulade (rodízio)",
     "will-not-go": "Não vai",
   }
