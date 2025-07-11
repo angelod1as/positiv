@@ -85,6 +85,7 @@ export const AdminViewEventParticipantsTable: FC<
       data={participants}
       id="participants"
       sortField="social_name"
+      globalFilterFields={["full_name"]}
       filters={{
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
         application_status: {
