@@ -27,6 +27,8 @@ export type ParticipantApplicationStatus =
   Database["public"]["Enums"]["application_status_enum"]
 export type ParticipantAttendanceStatus =
   Database["public"]["Enums"]["attendance_status_enum"]
+export type ProfileApprovedToAttendStatus =
+  Database["public"]["Enums"]["approved_to_attend_enum"]
 
 /** Events information */
 export type Event = Omit<
@@ -71,7 +73,7 @@ export type ViewEvent = Pick<
 }
 
 const participantApplicationStatus = [
-  "applied",
+  "pending",
   "talking",
   "sent_payment_data",
   "sent_rules",
@@ -87,13 +89,22 @@ const participantAttendanceStatus = [
   "pending",
   "attended",
   "not-attended",
-  "rejected",
   "skipped",
   "will-not-go",
 ] as const satisfies ParticipantAttendanceStatus[]
 
+const profileApprovedToAttendStatus = [
+  "pending",
+  "approved",
+  "approved_with_reservations",
+  "rejected",
+] as const satisfies ProfileApprovedToAttendStatus[]
+
 export const participantAttendanceStatusEnum = z.enum(
   participantAttendanceStatus,
+)
+export const profileApprovedToAttendStatusEnum = z.enum(
+  profileApprovedToAttendStatus,
 )
 
 export type Genders = (typeof GENDERS)[number]

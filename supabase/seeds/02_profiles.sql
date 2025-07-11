@@ -17,7 +17,7 @@ INSERT INTO public.profiles (
     rg_issuer,
     allow_marketing_email,
     is_veteran,
-    approved
+    approved_to_attend
 )
 SELECT
     usr.id,
@@ -129,12 +129,17 @@ SELECT
         ELSE false
     END,
     CASE usr.email
-        WHEN 'admin@example.com' THEN true
-        WHEN 'user1@example.com' THEN true
-        WHEN 'user3@example.com' THEN true
-        WHEN 'user4@example.com' THEN true
-        WHEN 'user5@example.com' THEN true
-        ELSE false
+        WHEN 'admin@example.com' THEN 'approved'::public.approved_to_attend_enum
+        WHEN 'user1@example.com' THEN 'approved'::public.approved_to_attend_enum
+        WHEN 'user2@example.com' THEN 'rejected'::public.approved_to_attend_enum
+        WHEN 'user3@example.com' THEN 'approved_with_reservations'::public.approved_to_attend_enum
+        WHEN 'user4@example.com' THEN 'pending'::public.approved_to_attend_enum
+        WHEN 'user5@example.com' THEN 'approved'::public.approved_to_attend_enum
+        WHEN 'user6@example.com' THEN 'approved'::public.approved_to_attend_enum
+        WHEN 'user7@example.com' THEN 'rejected'::public.approved_to_attend_enum
+        WHEN 'user8@example.com' THEN 'approved_with_reservations'::public.approved_to_attend_enum
+        WHEN 'user9@example.com' THEN 'pending'::public.approved_to_attend_enum
+        ELSE 'pending'::public.approved_to_attend_enum
     END
 FROM auth.users AS usr
 WHERE usr.email IN (
