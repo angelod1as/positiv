@@ -1,10 +1,11 @@
-import type {
-  Event,
-  EventParticipant,
-  EventStatus,
-  ParticipantApplicationStatus,
-  ParticipantAttendanceStatus,
-  Profile,
+import {
+  type Event,
+  type EventParticipant,
+  type EventStatus,
+  type ParticipantApplicationStatus,
+  type ParticipantAttendanceStatus,
+  type Profile,
+  type ProfileApprovedToAttendStatus,
 } from "~types/entities.types"
 
 export const profilePropMap = (property: keyof Profile) => {
@@ -118,6 +119,16 @@ const participantAttendanceStatus: Record<ParticipantAttendanceStatus, string> =
     "will-not-go": "Não vai",
   }
 
+const profileApprovedToAttendStatus: Record<
+  ProfileApprovedToAttendStatus,
+  string
+> = {
+  pending: "Pendente",
+  approved: "Aprovade",
+  approved_with_reservations: "Aprovade com Ressalvas",
+  rejected: "Rejeitade",
+}
+
 export const participantApplicationStatusPropMap = (
   application_status: ParticipantApplicationStatus,
 ) => {
@@ -140,6 +151,15 @@ export const attendanceStatusOptions: Array<{
   name: name,
   label: name,
   value: value as ParticipantAttendanceStatus,
+}))
+
+export const approvedToAttendStatusOptions: Array<{
+  name: string
+  value: ProfileApprovedToAttendStatus
+}> = Object.entries(profileApprovedToAttendStatus).map(([value, name]) => ({
+  name: name,
+  label: name,
+  value: value as ProfileApprovedToAttendStatus,
 }))
 
 const participantSpotType: Record<string, string> = {
