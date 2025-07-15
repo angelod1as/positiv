@@ -30,7 +30,7 @@ export const profilePropMap = (property: keyof Profile) => {
     orientation: "Orientação",
     pronouns: "Pronomes",
     user_id: "Id de usuárie",
-    approved_to_attend: "Aprovade",
+    approved_to_attend: "Status de Aprovação",
   }[property]
 }
 
@@ -68,8 +68,8 @@ export const eventParticipantPropMap = (property: keyof EventParticipant) => {
     is_user_applied: "Inscrite?",
     has_paid: "Pago?",
     payment: "Pagamento",
-    attendance_status: "Status",
-    application_status: "Processo",
+    attendance_status: "Status de Presença",
+    application_status: "Status de Processo",
     application_date: "Data de inscrição",
     cancellation_date: "Data de cancelamento",
     created_at: "Criado em",
