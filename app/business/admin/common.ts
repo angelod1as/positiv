@@ -2,6 +2,7 @@ import { zod } from "~/lib/helpers/zod"
 import {
   participantApplicationStatusEnum,
   participantAttendanceStatusEnum,
+  profileApprovedToAttendStatusEnum,
   type EventStatus,
 } from "~types/entities.types"
 import { userContextSchema } from "../common"
@@ -115,6 +116,7 @@ export const updateEventParticipantByIdSchema = zod.object({
   payment: zod.coerce.number().optional(),
   attendance_status: participantAttendanceStatusEnum.optional(),
   application_status: participantApplicationStatusEnum.optional(),
+  approved_to_attend: profileApprovedToAttendStatusEnum.optional(),
   has_paid: parseBoolean.optional(),
   spot_type: spotTypeEnum.optional(),
   is_veteran: parseBoolean.optional(),
