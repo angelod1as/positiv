@@ -405,15 +405,17 @@ export const updateParticipantVsEvent = applySchema(
 export const updateEventParticipantById = applySchema(
   updateEventParticipantByIdSchema,
 )(async (formData) => {
-  const { intent, id, profile_id, is_veteran, ...data } = formData
+  const { intent, id, profile_id, is_veteran, approved_to_attend, ...data } =
+    formData
 
   return await kysely.transaction().execute(async (transaction) => {
-    if (typeof is_veteran === "boolean") {
+    if (typeof is_veteran === "boolean" || !!approved_to_attend) {
       return await transaction
         .updateTable("profiles")
         .where("id", "=", profile_id)
         .set({
           is_veteran,
+          approved_to_attend,
         })
         .execute()
     }
