@@ -39,8 +39,8 @@ export const NewsDialog = ({
           </ConfirmDialog.Trigger>
         )
       ) : (
-        <ConfirmDialog.Trigger variant="ghost">
-          Veja as novidades
+        <ConfirmDialog.Trigger className="text-xs" variant="link">
+          Veja as novidades do site
         </ConfirmDialog.Trigger>
       )}
     </ConfirmDialog>
