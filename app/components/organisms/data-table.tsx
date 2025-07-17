@@ -29,7 +29,7 @@ type buttonProps = {
 
 export type DataTableHeader = {
   title?: string
-  numbers: ReactNode
+  elements?: ReactNode
 }
 
 export interface DataTableProps<T extends DataTableValue> {
@@ -102,7 +102,7 @@ export function DataTable<T extends DataTableValue>({
   }
 
   const renderHeader = () => {
-    const { numbers, title } = header || {}
+    const { elements, title } = header || {}
 
     return (
       <div className="flex justify-between items-end font-normal">
@@ -119,7 +119,7 @@ export function DataTable<T extends DataTableValue>({
               />
             )}
           </div>
-          <div className="flex items-end gap-4">{numbers}</div>
+          <div className="flex items-end gap-4">{elements}</div>
         </div>
         <Button
           variant="outline"

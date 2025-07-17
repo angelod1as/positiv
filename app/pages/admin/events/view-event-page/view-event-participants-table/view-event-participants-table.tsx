@@ -100,7 +100,7 @@ export const AdminViewEventParticipantsTable: FC<
       size="small"
       header={{
         title: "Inscrições",
-        numbers: (
+        elements: (
           <>
             <p>
               <b>{applications.total}</b> inscrites
