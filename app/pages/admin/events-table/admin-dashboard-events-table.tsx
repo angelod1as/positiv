@@ -6,6 +6,7 @@ import {
 } from "primereact/column"
 import { Dropdown } from "primereact/dropdown"
 import { type FC } from "react"
+import { Button } from "~/components/atoms/button/button"
 import { DataTable } from "~/components/organisms/data-table"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { eventPropNameMap, eventStatusMap } from "~/lib/helpers/propMaps"
@@ -14,7 +15,7 @@ import type { Event, EventStatus } from "~types/entities.types"
 
 const {
   admin: {
-    events: { ADMIN_VIEW_EVENT, ADMIN_EDIT_EVENT },
+    events: { ADMIN_VIEW_EVENT, ADMIN_EDIT_EVENT, ADMIN_CREATE_EVENT },
   },
 } = paths
 
@@ -55,6 +56,14 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
         global: { value: null, matchMode: FilterMatchMode.CONTAINS },
         time_event_start: { value: null, matchMode: FilterMatchMode.CUSTOM },
         event_status: { value: null, matchMode: FilterMatchMode.EQUALS },
+      }}
+      header={{
+        title: "Todos os eventos",
+        elements: (
+          <>
+            <Button to={ADMIN_CREATE_EVENT}>Criar evento</Button>
+          </>
+        ),
       }}
       buttons={[
         {
