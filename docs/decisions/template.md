@@ -1,72 +1,46 @@
-# [short title of solved problem and solution]
+# ADR-XXXX: [Title]
 
-- Status: [draft | proposed | rejected | accepted | deprecated | … | superseded by [xxx](yyyymmdd-xxx.md)] <!-- optional -->
-- Date: [YYYY-MM-DD when the decision was last updated] <!-- optional. To customize the ordering without relying on Git creation dates and filenames -->
-- Tags: [space and/or comma separated list of tags] <!-- optional -->
+**Status:** [Proposed | Accepted | Deprecated | Superseded by ADR-YYYY]  
+**Date:** YYYY-MM-DD  
+**Tags:** [architecture, development, tooling]
 
-Technical Story: [description | ticket/issue URL] <!-- optional -->
+## Context
 
-## Context and Problem Statement
+What is the issue that we're seeing that is motivating this decision or change? Describe the problem in 2-3 sentences.
 
-[Describe the context and problem statement, e.g., in free form using two to three sentences. You may want to articulate the problem in form of a question.]
+## Decision
 
-## Decision Drivers <!-- optional -->
+What is the change that we're proposing and/or doing? Be specific and concise.
 
-- [driver 1, e.g., a force, facing concern, …]
-- [driver 2, e.g., a force, facing concern, …]
-- … <!-- numbers of drivers can vary -->
+## Consequences
 
-## Considered Options
+### Positive
 
-- [option 1]
-- [option 2]
-- [option 3]
-- … <!-- numbers of options can vary -->
+- What becomes easier or more possible?
+- What improvements do we expect?
 
-## Decision Outcome
+### Negative
 
-Chosen option: "[option 1]", because [justification. e.g., only option, which meets k.o. criterion decision driver | which resolves force force | … | comes out best (see below)].
+- What becomes more difficult?
+- What trade-offs are we making?
 
-### Positive Consequences <!-- optional -->
+### Neutral
 
-- [e.g., improvement of quality attribute satisfaction, follow-up decisions required, …]
-- …
+- What doesn't change?
+- What remains the same?
 
-### Negative Consequences <!-- optional -->
+## Alternatives Considered
 
-- [e.g., compromising quality attribute, follow-up decisions required, …]
-- …
+1. **Alternative 1**: Brief description
+   - Pros: Why this might work
+   - Cons: Why we didn't choose this
 
-## Pros and Cons of the Options <!-- optional -->
+2. **Alternative 2**: Brief description
+   - Pros: Why this might work
+   - Cons: Why we didn't choose this
 
-### [option 1]
+## References
 
-[example | description | pointer to more information | …] <!-- optional -->
-
-- Good, because [argument a]
-- Good, because [argument b]
-- Bad, because [argument c]
-- … <!-- numbers of pros and cons can vary -->
-
-### [option 2]
-
-[example | description | pointer to more information | …] <!-- optional -->
-
-- Good, because [argument a]
-- Good, because [argument b]
-- Bad, because [argument c]
-- … <!-- numbers of pros and cons can vary -->
-
-### [option 3]
-
-[example | description | pointer to more information | …] <!-- optional -->
-
-- Good, because [argument a]
-- Good, because [argument b]
-- Bad, because [argument c]
-- … <!-- numbers of pros and cons can vary -->
-
-## Links <!-- optional -->
-
-- [Link type](link to adr) <!-- example: Refined by [xxx](yyyymmdd-xxx.md) -->
-- … <!-- numbers of links can vary -->
+- Links to relevant documentation
+- Related ADRs
+- External resources
