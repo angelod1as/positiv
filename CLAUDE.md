@@ -2,6 +2,35 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working with Git Worktrees
+
+**IMPORTANT**: Always use git worktrees for feature development to avoid conflicts and maintain clean workspace separation.
+
+### Creating a New Feature Worktree
+
+```bash
+# Create a new worktree for your feature
+wt add feature/your-feature-name feature-name
+
+# Switch to the new worktree
+cd ../positiv-worktrees/feature-name
+
+# Install dependencies
+pnpm install
+```
+
+### Worktree Commands
+- `wt add <branch> [name]` - Create new worktree
+- `wt list` or `wtl` - List all worktrees
+- `wt remove <name>` or `wtr <name>` - Remove worktree
+- `wt <name>` - Switch to worktree
+
+### Best Practices
+1. Create a new worktree for each feature/bug fix
+2. Name worktrees descriptively but concisely
+3. Always run `pnpm install` after creating a worktree
+4. Remove worktrees after merging PRs with `wtr <name>`
+
 ## Essential Commands
 
 ```bash
