@@ -28,6 +28,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           location: "Local",
           ticket_price: "Valor",
           total_spots: "Lotação",
+          event_type: "Tipo de evento",
           time_event_start: "Início do evento",
           time_event_end: "Fim do evento",
           time_application_start: "Abertura",
@@ -43,6 +44,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
         inputTypes={{
           ticket_price: "textnumber",
           total_spots: "textnumber",
+          event_type: "select",
           time_event_start: "datetime-local",
           time_event_end: "datetime-local",
           time_application_start: "datetime-local",
@@ -56,6 +58,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
         }}
         descriptions={{
           description: "Use uma frase divertida!",
+          event_type: "Edições BDSM têm uma página de consentimento adicional",
         }}
         placeholders={{
           title: "Rapa do Tacho",
@@ -63,6 +66,12 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           location: "Motel Harmony",
           ticket_price: "200",
           total_spots: "60",
+        }}
+        options={{
+          event_type: [
+            { value: "regular", name: "Regular" },
+            { value: "bdsm", name: "BDSM" },
+          ],
         }}
       >
         {({
@@ -118,6 +127,9 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                 </div>
                 <div className="sm:col-span-3 col-span-12">
                   <Field name="total_spots" suffix="pessoas" type="number" />
+                </div>
+                <div className="sm:col-span-12 col-span-12">
+                  <Field name="event_type" />
                 </div>
 
                 <div className="col-span-12">

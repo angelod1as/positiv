@@ -37,6 +37,8 @@ export const eventFormSchema = zod.object({
 
   ticket_price: zod.coerce.number().min(1, messages.min1num),
   total_spots: zod.coerce.number().min(1, messages.min1num),
+  
+  event_type: zod.enum(["regular", "bdsm"]).default("regular"),
 
   time_event_start: datetime,
   time_event_end: datetime,
@@ -59,6 +61,8 @@ export const eventSchema = zod.object({
 
   ticket_price: zod.coerce.number().nullish(),
   total_spots: zod.coerce.number().nullish(),
+  
+  event_type: zod.enum(["regular", "bdsm"]).nullish(),
 
   time_event_start: datetime.nullish(),
   time_event_end: datetime.nullish(),
