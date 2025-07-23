@@ -30,6 +30,11 @@ export default [
       layout("pages/events/layout.tsx", [
         // Root
         route(":id/", "pages/events/event.tsx"),
+        // BDSM Consent (conditional step)
+        route(
+          ":id/bdsm-consent",
+          "pages/events/application/bdsm-consent/event-bdsm-consent-page.tsx",
+        ),
         // Step 1
         route(
           ":id/regras",
