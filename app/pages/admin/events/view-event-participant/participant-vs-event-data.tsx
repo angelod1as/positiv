@@ -5,8 +5,10 @@ import { SchemaForm } from "~/components/forms/schema-form"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   applicationStatusOptions,
+  approvedToAttendStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
+  profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import { type ParticipantVsEvent } from "~types/entities.types"
@@ -28,7 +30,9 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
         curr as keyof Database["event_participants"],
       ),
     }
-  }, {})
+  }, {
+    approved_to_attend: profilePropMap("approved_to_attend"),
+  })
 
   return (
     <>
@@ -51,11 +55,13 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               is_veteran: "checkbox",
               payment: "number",
               spot_type: "select",
+              approved_to_attend: "select",
             }}
             options={{
               attendance_status: attendanceStatusOptions,
               application_status: applicationStatusOptions,
               spot_type: spotTypeOptions,
+              approved_to_attend: approvedToAttendStatusOptions,
             }}
             labels={labels}
           >
@@ -70,6 +76,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                   <div className="space-y-2">
                     <Field name="attendance_status" />
                     <Field name="application_status" />
+                    <Field name="approved_to_attend" />
                     <Field name="spot_type" />
                     <Field name="payment" />
                     <div className="flex gap-8">
