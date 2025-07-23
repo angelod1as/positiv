@@ -48,8 +48,12 @@ pnpm start        # Start production server
 pnpm lint         # Runs ESLint, generates types, and checks TypeScript
 
 # Testing
-pnpm test         # Run Playwright E2E tests
-pnpm test:ui      # Run tests with UI
+pnpm test         # Run unit tests with Vitest
+pnpm test:ui      # Run unit tests with Vitest UI
+pnpm test:coverage # Run unit tests with coverage report
+pnpm test:watch   # Run unit tests in watch mode
+pnpm test:e2e     # Run Playwright E2E tests
+pnpm test:e2e:ui  # Run E2E tests with UI
 
 # Database Types Generation
 pnpm db:types --local  # Generate TypeScript types from local Supabase instance
@@ -147,8 +151,59 @@ pnpm email:test   # Start Mailhog for local email testing
 
 ### Testing
 
-- ⁠Do your best to test the exposed API, its inputs and outputs rather than implementation details.
-- ⁠TDD is non-negotiable. Always write the tests first, and make sure they are failing before implementing the fix. Move in baby steps throug the red-green-refactor cycles.
+**Unit Testing with Vitest and React Testing Library**
+
+- Framework: Vitest with React Testing Library for component testing
+- Test files: Place tests next to components with `.test.tsx` or `.spec.tsx` extension
+- Setup: Configuration in `vitest.config.ts` and setup in `app/test/setup.ts`
+
+**TDD Workflow (Red-Green-Refactor)**
+
+1. **Red Phase**: Write a failing test first
+   - Define the expected behavior
+   - Run the test to ensure it fails
+   - The failure confirms the test is checking the right thing
+
+2. **Green Phase**: Write minimal code to pass
+   - Implement just enough code to make the test pass
+   - Don't worry about perfection yet
+   - Run the test to confirm it passes
+
+3. **Refactor Phase**: Improve the code
+   - Clean up implementation while keeping tests green
+   - Extract reusable patterns
+   - Ensure all tests still pass
+
+**Testing Guidelines**
+
+- Test the exposed API, inputs and outputs rather than implementation details
+- TDD is non-negotiable. Always write tests first and ensure they fail before implementing
+- Move in baby steps through red-green-refactor cycles
+- Focus on user behavior and interactions
+- Use data-testid sparingly, prefer accessible queries (getByRole, getByLabelText, etc.)
+- Mock external dependencies and API calls
+- Keep tests isolated and independent
+
+**Example Test Structure**
+
+```typescript
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import { Component } from './component'
+
+describe('Component', () => {
+  it('should handle user interaction', async () => {
+    const user = userEvent.setup()
+    const mockHandler = vi.fn()
+    
+    render(<Component onClick={mockHandler} />)
+    
+    await user.click(screen.getByRole('button'))
+    expect(mockHandler).toHaveBeenCalledTimes(1)
+  })
+})
+```
 
 ## Definition of Done
 
