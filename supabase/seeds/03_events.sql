@@ -10,6 +10,7 @@ INSERT INTO public.events (
     description,
     emoji,
     event_status,
+    event_type,
     time_event_start,
     time_event_end,
     time_application_start,
@@ -31,6 +32,7 @@ VALUES
     'Vestibulum nulla orci, ullamcorper et vehicula in, placerat vel tortor. Praesent fermentum elit a tortor pellentesque, eget luctus turpis laoreet. Nunc pharetra, urna viverra porttitor pharetra, nisl sapien molestie ante, quis blandit arcu urna non metus',            -- description
     '📓',                                               -- emoji
     'Draft',                                            -- event_status
+    'regular',                                          -- event_type
     now() + interval '1 month',                         -- time_event_start
     now() + interval '1 month' + interval '2 hours',    -- time_event_end
     now() + interval '3 weeks',                         -- time_application_start
@@ -51,6 +53,7 @@ VALUES
     'Mauris rutrum sem a enim viverra hendrerit. Aenean mattis odio nec felis vulputate, eget tristique dolor blandit.',                                                -- description
     '📅',                                                     -- emoji
     'Scheduled',                                              -- event_status
+    'regular',                                                -- event_type
     now() + interval '2 months',                              -- time_event_start
     now() + interval '2 months' + interval '3 hours',         -- time_event_end
     now() + interval '1 month',                              -- time_application_start
@@ -71,6 +74,7 @@ VALUES
     'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Sed vel lorem eu urna pretium vehicula non at urna. ', -- description
     '🙆',                     -- emoji
     'Registration Open',     -- event_status
+    'regular',               -- event_type
     now() + interval '4 months', -- time_event_start
     now() + interval '4 months' + interval '4 hours', -- time_event_end
     now() - interval '2 week', -- time_application_start
@@ -90,6 +94,7 @@ VALUES
     'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Sed vel lorem eu urna pretium vehicula non at urna. ', -- description
     '🤗',                     -- emoji
     'Registration Open',     -- event_status
+    'bdsm',                  -- event_type
     now() + interval '3 months', -- time_event_start
     now() + interval '3 months' + interval '4 hours', -- time_event_end
     now() - interval '1 week', -- time_application_start
@@ -110,6 +115,7 @@ VALUES
     'ivamus nec ante eget urna volutpat feugiat. Curabitur nulla sapien, pulvinar a cursus accumsan, mollis vitae odio. Nulla ac metus eget risus posuere auctor. ', -- description
     '😓',                     -- emoji
     'Registration Closed',   -- event_status
+    'regular',               -- event_type
     now() + interval '4 months', -- time_event_start
     now() + interval '4 months' + interval '1 hour', -- time_event_end
     now() - interval '2 months', -- time_application_start
@@ -130,6 +136,7 @@ VALUES
     'Aviso: O Evento Cancelado 1 foi cancelado.', -- description
     '',                      -- emoji
     'Cancelled',             -- event_status
+    'regular',               -- event_type
     now() - interval '1 hour', -- time_event_start
     now() + interval '2 hours', -- time_event_end
     now() - interval '1 month', -- time_application_start
@@ -150,6 +157,7 @@ VALUES
     'Resumo e resultados do Evento Concluído 1.', -- description
     '🥳',                     -- emoji
     'Completed',             -- event_status
+    'regular',               -- event_type
     now() - interval '1 month', -- time_event_start
     now() - interval '1 month' + interval '3 hours', -- time_event_end
     now() - interval '3 months', -- time_application_start
@@ -170,6 +178,7 @@ VALUES
     'Aviso: O Evento Cancelado 2 foi cancelado.', -- description
     '🙅‍♂️',                     -- emoji
     'Cancelled',             -- event_status
+    'regular',               -- event_type
     now() + interval '6 months', -- time_event_start
     now() + interval '6 months' + interval '2 hours', -- time_event_end
     now() + interval '1 week', -- time_application_start
@@ -190,6 +199,7 @@ VALUES
     'Prepare-se para o Evento Agendado 2! Marque em seus calendários!', -- description
     '🙏',                     -- emoji
     'Scheduled',             -- event_status
+    'regular',               -- event_type
     now() + interval '7 months', -- time_event_start
     now() + interval '7 months' + interval '1 hour', -- time_event_end
     now() + interval '6 months', -- time_application_start
