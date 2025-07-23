@@ -24,9 +24,22 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock IntersectionObserver
 class IntersectionObserver {
+  callback: IntersectionObserverCallback
+  options?: IntersectionObserverInit
+  
+  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+    this.callback = callback
+    this.options = options
+  }
+  
   observe = vi.fn()
   disconnect = vi.fn()
   unobserve = vi.fn()
+  takeRecords = vi.fn(() => [])
+  
+  root = null
+  rootMargin = '0px'
+  thresholds = [0]
 }
 
 Object.defineProperty(window, 'IntersectionObserver', {
