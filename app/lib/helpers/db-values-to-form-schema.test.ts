@@ -101,6 +101,38 @@ describe("dbValuesToFormSchema", () => {
     expect(result.ticket_price).toBe(100)
     expect(result.total_spots).toBe(50)
   })
+
+  it("transforms Date objects to datetime-local format", () => {
+    const input = {
+      id: "123",
+      title: "Test Event",
+      time_event_start: new Date("2024-02-01T10:00:00"),
+      time_event_end: new Date("2024-02-01T14:00:00"),
+    }
+
+    const result = dbValuesToFormSchema(input)
+
+    expect(result.time_event_start).toBe("2024-02-01T10:00")
+    expect(result.time_event_end).toBe("2024-02-01T14:00")
+  })
+
+  it("handles mixed date formats", () => {
+    const input = {
+      id: "123",
+      title: "Test Event",
+      time_event_start: new Date("2024-02-01T10:00:00"),
+      time_event_end: "2024-02-01T14:00:00",
+      time_application_start: "2024-02-01T09:00",
+      time_application_end: null,
+    }
+
+    const result = dbValuesToFormSchema(input)
+
+    expect(result.time_event_start).toBe("2024-02-01T10:00")
+    expect(result.time_event_end).toBe("2024-02-01T14:00")
+    expect(result.time_application_start).toBe("2024-02-01T09:00")
+    expect(result.time_application_end).toBeUndefined()
+  })
 })
 
 describe("schemaValuesToDB", () => {
