@@ -132,7 +132,7 @@ export type Database = {
           description: string | null
           emoji: string | null
           event_status: Database["public"]["Enums"]["event_status"]
-          event_type: Database["public"]["Enums"]["event_type"]
+          event_type: Database["public"]["Enums"]["event_type_enum"]
           id: string
           location: string | null
           ticket_price: number | null
@@ -154,7 +154,7 @@ export type Database = {
           description?: string | null
           emoji?: string | null
           event_status?: Database["public"]["Enums"]["event_status"]
-          event_type?: Database["public"]["Enums"]["event_type"]
+          event_type?: Database["public"]["Enums"]["event_type_enum"]
           id?: string
           location?: string | null
           ticket_price?: number | null
@@ -176,7 +176,7 @@ export type Database = {
           description?: string | null
           emoji?: string | null
           event_status?: Database["public"]["Enums"]["event_status"]
-          event_type?: Database["public"]["Enums"]["event_type"]
+          event_type?: Database["public"]["Enums"]["event_type_enum"]
           id?: string
           location?: string | null
           ticket_price?: number | null
@@ -346,7 +346,7 @@ export type Database = {
         | "Scheduled"
         | "Registration Closed"
         | "Registration Open"
-      event_type: "regular" | "bdsm"
+      event_type_enum: "regular" | "bdsm"
       spot_type: "regular" | "social" | "staff"
     }
     CompositeTypes: {
@@ -504,7 +504,7 @@ export const Constants = {
         "Registration Closed",
         "Registration Open",
       ],
-      event_type: ["regular", "bdsm"],
+      event_type_enum: ["regular", "bdsm"],
       spot_type: ["regular", "social", "staff"],
     },
   },
