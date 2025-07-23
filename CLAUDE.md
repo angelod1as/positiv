@@ -15,6 +15,9 @@ wt add feature/your-feature-name feature-name
 # Switch to the new worktree
 cd ../positiv-worktrees/feature-name
 
+# Copy environment variables from main worktree
+cp ../positiv/.env .env
+
 # Install dependencies
 pnpm install
 ```
@@ -76,7 +79,7 @@ pnpm email:test   # Start Mailhog for local email testing
 
 ### Project Structure
 
-```
+```sh
 /app
   /business     - Core business logic modules
     /admin      - Admin-specific logic and pages
@@ -151,13 +154,13 @@ pnpm email:test   # Start Mailhog for local email testing
 
 ### Testing
 
-**Unit Testing with Vitest and React Testing Library**
+#### Unit Testing with Vitest and React Testing Library
 
 - Framework: Vitest with React Testing Library for component testing
 - Test files: Place tests next to components with `.test.tsx` or `.spec.tsx` extension
 - Setup: Configuration in `vitest.config.ts` and setup in `app/test/setup.ts`
 
-**TDD Workflow (Red-Green-Refactor)**
+#### TDD Workflow (Red-Green-Refactor)
 
 1. **Red Phase**: Write a failing test first
    - Define the expected behavior
@@ -174,7 +177,7 @@ pnpm email:test   # Start Mailhog for local email testing
    - Extract reusable patterns
    - Ensure all tests still pass
 
-**Testing Guidelines**
+#### Testing Guidelines
 
 - Test the exposed API, inputs and outputs rather than implementation details
 - TDD is non-negotiable. Always write tests first and ensure they fail before implementing
@@ -184,7 +187,7 @@ pnpm email:test   # Start Mailhog for local email testing
 - Mock external dependencies and API calls
 - Keep tests isolated and independent
 
-**Example Test Structure**
+#### Example Test Structure
 
 ```typescript
 import { render, screen } from '@testing-library/react'
@@ -217,7 +220,7 @@ describe('Component', () => {
 
 •⁠  ⁠Always run related tests before committing changes.
 •⁠  ⁠Follow [Conventional Commits](https://www.conventionalcommits.org/) specification
-•⁠  ⁠Commit message structure: ⁠ <type>(optional scope): <description> ⁠
+•⁠  ⁠Commit message structure: ⁠ {type}(optional scope): {description}
 •⁠  ⁠Types include:
 
 - ⁠ feat ⁠: New feature
