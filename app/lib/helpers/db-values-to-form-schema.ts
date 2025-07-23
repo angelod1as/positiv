@@ -7,7 +7,7 @@ import { format } from "date-fns/format"
 import type { EventStatus } from "~types/entities.types"
 import { dateRegex, dateTimeFormat } from "../utils"
 
-type Primitive = string | number | EventStatus | boolean
+type Primitive = string | number | EventStatus | boolean | Date
 
 type Transform<T extends Record<string, Primitive | null>> = {
   [K in keyof T]: T[K] extends string
@@ -26,7 +26,11 @@ export function dbValuesToFormSchema<
   return Object.entries(obj).reduce((acc, [key, value]) => {
     if (value === null) {
       ;(acc as any)[key] = undefined
+    } else if (value instanceof Date) {
+      // Handle Date objects
+      ;(acc as any)[key] = format(value, dateTimeFormat)
     } else if (typeof value === "string" && dateRegex.test(value)) {
+      // Handle ISO string dates
       ;(acc as any)[key] = format(new Date(value), dateTimeFormat)
     } else {
       ;(acc as any)[key] = value
