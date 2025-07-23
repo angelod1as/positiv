@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import React from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import { Button } from './button'
 
@@ -84,10 +85,11 @@ describe('Button', () => {
   })
 
   it('forwards ref correctly', () => {
-    const ref = vi.fn()
+    const ref = React.createRef<HTMLButtonElement>()
     render(<Button ref={ref}>Button with ref</Button>)
     
-    expect(ref).toHaveBeenCalled()
+    expect(ref.current).toBeInstanceOf(HTMLButtonElement)
+    expect(ref.current?.textContent).toBe('Button with ref')
   })
 
   it('spreads additional props', () => {
