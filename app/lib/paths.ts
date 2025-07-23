@@ -26,6 +26,7 @@ const AGREE_TO_TERMS = `${ACCOUNT}/termos-e-condicoes`
 // EVENTS
 const EVENT_VIEW = (id: string) => `${DASHBOARD}/${id}`
 const EVENT_RULES = (id: string) => `${EVENT_VIEW(id)}/regras`
+const EVENT_BDSM_CONSENT = (id: string) => `${EVENT_VIEW(id)}/bdsm-consent`
 const EVENT_DATA = (id: string) => `${EVENT_VIEW(id)}/dados`
 
 //// ADMIN
@@ -72,6 +73,7 @@ const paths = {
     events: {
       EVENT_VIEW,
       EVENT_RULES,
+      EVENT_BDSM_CONSENT,
       EVENT_DATA,
     },
     participant: {
