@@ -1,17 +1,20 @@
-import { all, inputFromForm } from "composable-functions"
+import { inputFromForm } from "composable-functions"
 import { formAction } from "remix-forms"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import {
   getEventParticipantHistoryById,
   getProfileWithExtraDataById,
+  getParticipantFullEventHistory,
   updateParticipantVsEvent,
 } from "~/business/admin/admin.server"
 import { updateParticipantVsEventSchema } from "~/business/admin/common"
 import { getAge } from "~/lib/helpers/get-age"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
+import type { ParticipantVsEvent } from "~types/entities.types"
 import { BasicData } from "./basic-data"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
+import { ParticipantEventHistory } from "./participant-event-history"
 
 const {
   admin: {
@@ -50,32 +53,53 @@ export async function loader({ params }: Route.LoaderArgs) {
     )
   }
 
-  const getData = all(
-    getProfileWithExtraDataById,
-    getEventParticipantHistoryById,
-  )
-
-  const result = await getData({
+  const profileResult = await getProfileWithExtraDataById({
     eventParticipantId: eventParticipantId,
   })
 
-  if (!result.success) {
-    console.dir(result, { depth: null })
+  if (!profileResult.success) {
+    console.dir(profileResult, { depth: null })
     throw new Error(
-      "Houve um erro procurando o evento ou e participante. Notifique o administrador.",
+      "Houve um erro procurando o participante. Notifique o administrador.",
     )
   }
 
-  const [profile, participantHistory] = result.data
+  const profile = profileResult.data
+
+  // Get current event data
+  const currentEventResult = await getEventParticipantHistoryById({
+    eventParticipantId: eventParticipantId,
+  })
+
+  if (!currentEventResult.success) {
+    console.dir(currentEventResult, { depth: null })
+    throw new Error(
+      "Houve um erro procurando o evento. Notifique o administrador.",
+    )
+  }
+
+  // Get full participant history if they are a veteran
+  let fullHistory: Array<ParticipantVsEvent & { time_event_start: string }> = []
+  if (profile?.is_veteran && profile.profile_id) {
+    const historyResult = await getParticipantFullEventHistory({
+      profileId: profile.profile_id,
+      excludeEventId: eventId,
+    })
+    
+    if (historyResult.success) {
+      fullHistory = historyResult.data
+    }
+  }
 
   return {
     profile,
-    participantHistory,
+    participantHistory: currentEventResult.data,
+    fullHistory,
   }
 }
 
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
-  const { participantHistory, profile } = loaderData
+  const { participantHistory, profile, fullHistory } = loaderData
 
   if (!profile) return null
 
@@ -101,10 +125,9 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
 
       <BasicData profile={profile} />
       <ParticipantVsEventData eventParticipant={thisEvent} />
-      {/* <ParticipantEventHistory
-        participantHistory={pastEvents}
-        profile={profile}
-      /> */}
+      {profile.is_veteran && fullHistory.length > 0 && (
+        <ParticipantEventHistory participantHistory={fullHistory} />
+      )}
     </>
   )
 }
