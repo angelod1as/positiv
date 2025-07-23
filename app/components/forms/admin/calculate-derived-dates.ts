@@ -14,6 +14,7 @@ type DayOffsets = keyof Omit<
   | "location"
   | "ticket_price"
   | "total_spots"
+  | "event_type"
 >
 
 const dayOffsets: Record<DayOffsets, number> = {
