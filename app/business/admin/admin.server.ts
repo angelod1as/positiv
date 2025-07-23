@@ -142,6 +142,7 @@ export const getEventParticipantHistoryById = composable(
         "events.title as event_title",
         "events.emoji as event_emoji",
         "profiles.is_veteran as is_veteran",
+        "profiles.approved_to_attend as approved_to_attend",
       ])
       .where("event_participants.id", "=", eventParticipantId)
       .where("is_user_applied", "=", true)
@@ -381,7 +382,7 @@ export const getEventDemographicsById = composable(
 export const updateParticipantVsEvent = applySchema(
   updateParticipantVsEventSchema,
 )(async (formData) => {
-  const { intent, event_id, profile_id, is_veteran, ...data } = formData
+  const { intent, event_id, profile_id, is_veteran, approved_to_attend, ...data } = formData
 
   return await kysely.transaction().execute(async (transaction) => {
     await transaction
@@ -391,12 +392,13 @@ export const updateParticipantVsEvent = applySchema(
       .set(data)
       .execute()
 
-    if (typeof is_veteran === "boolean") {
+    if (typeof is_veteran === "boolean" || !!approved_to_attend) {
       await transaction
         .updateTable("profiles")
         .where("id", "=", profile_id)
         .set({
           is_veteran,
+          approved_to_attend,
         })
         .execute()
     }
