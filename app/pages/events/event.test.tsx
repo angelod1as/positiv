@@ -14,8 +14,8 @@ vi.mock("react-router", () => ({
 
 import { getContext } from "~/business/auth/auth.server"
 
-const mockGetContext = getContext as any
-const mockRedirect = redirect as any
+const mockGetContext = getContext as ReturnType<typeof vi.fn>
+const mockRedirect = redirect as ReturnType<typeof vi.fn>
 
 describe("Event navigation loader", () => {
   beforeEach(() => {

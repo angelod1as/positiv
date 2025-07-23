@@ -1,19 +1,35 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { EventForm } from "./event-form"
 import type { Event } from "~types/entities.types"
 
 // Mock the SchemaForm component to avoid React Router dependencies
-let mockFormValues: any = {}
-let mockSetValueCalls: Array<[string, any]> = []
+let mockFormValues: Record<string, unknown> = {}
+let mockSetValueCalls: Array<[string, unknown]> = []
 
 vi.mock("../schema-form", () => ({
-  SchemaForm: ({ children, schema, values, labels, options, descriptions, inputTypes }: any) => {
+  SchemaForm: ({ children, _schema, values, labels, options, descriptions, inputTypes }: {
+    children: (props: {
+      Field: React.FC<{ name: string }>
+      Button: React.FC<{ children: React.ReactNode }>
+      Errors: React.FC
+      clearErrors: () => void
+      getValues: (field: string) => unknown
+      setError: (field: string, error: { message: string, type: string }) => void
+      setValue: (field: string, value: unknown, options?: { shouldValidate: boolean }) => void
+    }) => React.ReactNode
+    _schema: unknown
+    values?: Record<string, unknown>
+    labels?: Record<string, string>
+    options?: Record<string, Array<{ value: string, name: string }>>
+    descriptions?: Record<string, string>
+    inputTypes?: Record<string, string>
+  }) => {
     mockFormValues = values || {}
     
     const renderProps = {
-      Field: ({ name }: any) => {
+      Field: ({ name }: { name: string }) => {
         const fieldType = inputTypes?.[name] || "text"
         const fieldLabel = labels?.[name] || name
         const fieldDescription = descriptions?.[name]
@@ -27,10 +43,10 @@ vi.mock("../schema-form", () => ({
               <select
                 id={name}
                 name={name}
-                defaultValue={mockFormValues[name] || ""}
+                defaultValue={(mockFormValues[name] as string) || ""}
                 data-testid={`field-${name}`}
               >
-                {fieldOptions.map((opt: any) => (
+                {fieldOptions.map((opt: { value: string, name: string }) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.name}
                   </option>
@@ -48,20 +64,20 @@ vi.mock("../schema-form", () => ({
               id={name}
               name={name}
               type={fieldType}
-              defaultValue={mockFormValues[name] || ""}
+              defaultValue={(mockFormValues[name] as string | number) || ""}
               data-testid={`field-${name}`}
             />
           </div>
         )
       },
-      Button: ({ children }: any) => (
+      Button: ({ children }: { children: React.ReactNode }) => (
         <button type="submit">{children || "Salvar"}</button>
       ),
       Errors: () => null,
       clearErrors: vi.fn(),
       getValues: (field: string) => mockFormValues[field],
       setError: vi.fn(),
-      setValue: (field: string, value: any) => {
+      setValue: (field: string, value: unknown) => {
         mockSetValueCalls.push([field, value])
         mockFormValues[field] = value
       },
