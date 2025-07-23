@@ -13,6 +13,7 @@ import type {
   EventParticipant,
   ParticipantVsEvent,
   Profile,
+  ProfileApprovedToAttendStatus,
 } from "~types/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import {
@@ -392,14 +393,24 @@ export const updateParticipantVsEvent = applySchema(
       .set(data)
       .execute()
 
-    if (typeof is_veteran === "boolean" || !!approved_to_attend) {
+    const profileUpdateData: { 
+      is_veteran?: boolean
+      approved_to_attend?: ProfileApprovedToAttendStatus
+    } = {}
+    
+    if (typeof is_veteran === "boolean") {
+      profileUpdateData.is_veteran = is_veteran
+    }
+    
+    if (approved_to_attend) {
+      profileUpdateData.approved_to_attend = approved_to_attend
+    }
+    
+    if (Object.keys(profileUpdateData).length > 0) {
       await transaction
         .updateTable("profiles")
         .where("id", "=", profile_id)
-        .set({
-          is_veteran,
-          approved_to_attend,
-        })
+        .set(profileUpdateData)
         .execute()
     }
   })

@@ -2,10 +2,19 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
 import type { ParticipantVsEvent } from "~types/entities.types"
+import type { ReactNode } from "react"
 
 // Mock the SchemaForm component
 vi.mock("~/components/forms/schema-form", () => ({
-  SchemaForm: ({ children, options }: any) => {
+  SchemaForm: ({ children, options }: { 
+    children: (props: {
+      Field: ({ name }: { name: string }) => ReactNode
+      Errors: () => null
+      Error: () => null
+      Button: () => ReactNode
+    }) => ReactNode
+    options?: Record<string, unknown>
+  }) => {
     // Verify that approved_to_attend options are passed
     const hasApprovedToAttendOptions = !!options?.approved_to_attend
     return (
@@ -31,7 +40,7 @@ const mockEventParticipant: ParticipantVsEvent = {
   event_id: "event-123",
   profile_id: "profile-123",
   application_date: "2024-01-01",
-  application_status: "applied",
+  application_status: "finalised",
   attendance_status: "pending",
   spot_type: "regular",
   payment: 100,
@@ -46,8 +55,8 @@ const mockEventParticipant: ParticipantVsEvent = {
   event_title: "Test Event",
   event_emoji: "🎉",
   is_user_applied: true,
+  cancellation_date: null,
   created_at: "2024-01-01",
-  updated_at: "2024-01-01",
 }
 
 describe("ParticipantVsEventData", () => {
