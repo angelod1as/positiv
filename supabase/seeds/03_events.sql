@@ -88,6 +88,27 @@ VALUES
     25.00,                   -- ticket_price
     200                      -- total_spots
 ),
+-- Registration Open - BDSM Event for Testing
+(
+    'Festa BDSM - Inscrições Abertas', -- title
+    'Suíte Premium, Motel Harmony', -- location
+    'Uma edição especial BDSM da Positiv. Venha explorar seus limites em um ambiente seguro e consensual.', -- description
+    '🔒',                     -- emoji
+    'Registration Open',     -- event_status
+    'bdsm',                  -- event_type
+    now() + interval '2 months', -- time_event_start
+    now() + interval '2 months' + interval '5 hours', -- time_event_end
+    now() - interval '1 week', -- time_application_start
+    now() + interval '6 weeks', -- time_application_end
+    now() + interval '6 weeks' - interval '21 days',  -- time_interviews_start
+    now() + interval '2 months' + interval '5 hours',   -- time_interviews_end
+    now() + interval '2 months' - interval '7 days',   -- time_group_start
+    now() + interval '2 months' + interval '30 days',  -- time_group_end
+    now() + interval '2 months' - interval '21 days',  -- time_payment_start
+    now() + interval '2 months' - interval '9 days',   -- time_payment_end
+    150.00,                  -- ticket_price
+    80                       -- total_spots
+),
 (
     'Evento Com Inscrições Abertas 1', -- title
     'Suíte Nagoya, Motel Harmony', -- location
