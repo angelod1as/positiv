@@ -208,6 +208,35 @@ describe("EventForm", () => {
       const eventTypeSelect = screen.getByTestId("field-event_type") as HTMLSelectElement
       expect(eventTypeSelect.value).toBe("regular")
     })
+
+    it("preserves dates when editing existing event", () => {
+      render(<EventForm event={mockEvent} />)
+      
+      // Check that dates are transformed properly
+      const startDateField = screen.getByTestId("field-time_event_start") as HTMLInputElement
+      const endDateField = screen.getByTestId("field-time_event_end") as HTMLInputElement
+      
+      // The dates should be formatted for datetime-local input
+      expect(startDateField.value).toBe("2024-02-01T10:00")
+      expect(endDateField.value).toBe("2024-02-01T14:00")
+    })
+
+
+    it("handles dates without seconds from database", () => {
+      const eventWithoutSeconds = {
+        ...mockEvent,
+        time_event_start: "2024-02-01T10:00",
+        time_event_end: "2024-02-01T14:00"
+      }
+      render(<EventForm event={eventWithoutSeconds} />)
+      
+      const startDateField = screen.getByTestId("field-time_event_start") as HTMLInputElement
+      const endDateField = screen.getByTestId("field-time_event_end") as HTMLInputElement
+      
+      // Now that regex is fixed, dates without seconds should still be formatted
+      expect(startDateField.value).toBe("2024-02-01T10:00")
+      expect(endDateField.value).toBe("2024-02-01T14:00")
+    })
   })
 
   describe("date generation", () => {
