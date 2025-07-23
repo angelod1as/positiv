@@ -37,9 +37,33 @@ jobs:
       - name: Push DB
         run: supabase db push
 
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Run unit tests
+        run: pnpm test:coverage
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
   test:
     runs-on: ubuntu-latest
-    needs: deploy
+    needs: [deploy, unit-test]
     timeout-minutes: 60
     services:
       mailhog:
@@ -50,11 +74,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
+          cache: 'pnpm'
       - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
+        run: pnpm install
       - name: Install Playwright Browsers
         run: pnpm exec playwright install chromium --with-deps
       - name: Run Playwright tests
