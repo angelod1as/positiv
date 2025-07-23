@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { EventBdsmConsentPage } from "./event-bdsm-consent"
@@ -7,8 +7,19 @@ import { EventBdsmConsentPage } from "./event-bdsm-consent"
 let mockFormState = { showError: false, isChecked: false }
 
 vi.mock("~/components/forms/schema-form", () => ({
-  SchemaForm: ({ children, schema, values, inputTypes, labels, buttonLabel }: any) => {
-    const handleSubmit = (e: any) => {
+  SchemaForm: ({ children, _schema, values, inputTypes, labels, buttonLabel }: {
+    children: (props: {
+      Field: React.FC<{ name: string }>
+      Button: React.FC<{ alignment?: string }>
+      Errors: React.FC
+    }) => React.ReactNode
+    _schema: unknown
+    values?: Record<string, unknown>
+    inputTypes?: Record<string, string>
+    labels?: Record<string, string>
+    buttonLabel?: string
+  }) => {
+    const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault()
       if (!mockFormState.isChecked) {
         mockFormState.showError = true
@@ -16,14 +27,14 @@ vi.mock("~/components/forms/schema-form", () => ({
     }
     
     const renderProps = {
-      Field: ({ name }: any) => (
+      Field: ({ name }: { name: string }) => (
         <label>
           <input 
             type={inputTypes?.[name] || "text"} 
             name={name}
-            defaultChecked={values?.[name] || false}
+            defaultChecked={values?.[name] as boolean || false}
             aria-label={labels?.[name]}
-            onChange={(e: any) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               mockFormState.isChecked = e.target.checked
               mockFormState.showError = false
             }}
@@ -34,7 +45,7 @@ vi.mock("~/components/forms/schema-form", () => ({
       Errors: () => mockFormState.showError ? (
         <div data-testid="errors">Você deve aceitar para continuar</div>
       ) : null,
-      Button: ({ alignment }: any) => (
+      Button: ({ alignment }: { alignment?: string }) => (
         <button type="submit" className={alignment}>{buttonLabel}</button>
       ),
     }
