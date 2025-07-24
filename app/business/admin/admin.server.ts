@@ -233,10 +233,17 @@ export const updateEventStatus = applySchema(
     const demographicsResult = await getEventDemographicsById({ eventId })
     if (demographicsResult.success && demographicsResult.data) {
       const { storeEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
-      await storeEventDemographicsSnapshot({
+      const snapshotResult = await storeEventDemographicsSnapshot({
         eventId,
         demographics: demographicsResult.data,
       })
+      
+      if (!snapshotResult.success) {
+        console.error("Failed to store demographics snapshot for event", {
+          eventId,
+          errors: snapshotResult.errors,
+        })
+      }
     }
   }
 

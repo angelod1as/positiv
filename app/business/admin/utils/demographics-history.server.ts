@@ -10,32 +10,36 @@ export const storeEventDemographicsSnapshot = composable(
     eventId: string
     demographics: Demographics
   }) => {
-    const snapshot = await kysely
-      .insertInto("event_demographics_history")
-      .values({
-        event_id: eventId,
-        total: demographics.total,
-        veteran_yes: demographics.veteran.yes,
-        veteran_no: demographics.veteran.no,
-        gender_cis: demographics.gender.cis,
-        gender_trans: demographics.gender.trans,
-        gender_agender: demographics.gender.agender,
-        gender_other_percentage: demographics.gender.other.percentage,
-        gender_other_values: demographics.gender.other.values || [],
-        orientation_straight: demographics.orientation.straight,
-        orientation_homo: demographics.orientation.homo,
-        orientation_bi_pan: demographics.orientation.biPan,
-        orientation_ace_demi: demographics.orientation.aceDemi,
-        orientation_other_percentage: demographics.orientation.other.percentage,
-        orientation_other_values: demographics.orientation.other.values || [],
-        age_average: demographics.age.average,
-        age_min: demographics.age.min,
-        age_max: demographics.age.max,
-      })
-      .returning(["id", "event_id", "calculated_at"])
-      .executeTakeFirstOrThrow()
-    
-    return snapshot
+    try {
+      const snapshot = await kysely
+        .insertInto("event_demographics_history")
+        .values({
+          event_id: eventId,
+          total: demographics.total,
+          veteran_yes: demographics.veteran.yes,
+          veteran_no: demographics.veteran.no,
+          gender_cis: demographics.gender.cis,
+          gender_trans: demographics.gender.trans,
+          gender_agender: demographics.gender.agender,
+          gender_other_percentage: demographics.gender.other.percentage,
+          gender_other_values: demographics.gender.other.values || [],
+          orientation_straight: demographics.orientation.straight,
+          orientation_homo: demographics.orientation.homo,
+          orientation_bi_pan: demographics.orientation.biPan,
+          orientation_ace_demi: demographics.orientation.aceDemi,
+          orientation_other_percentage: demographics.orientation.other.percentage,
+          orientation_other_values: demographics.orientation.other.values || [],
+          age_average: demographics.age.average,
+          age_min: demographics.age.min,
+          age_max: demographics.age.max,
+        })
+        .returning(["id", "event_id", "calculated_at"])
+        .executeTakeFirstOrThrow()
+      
+      return snapshot
+    } catch (error) {
+      throw new Error(`Failed to store demographics snapshot: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 )
 
