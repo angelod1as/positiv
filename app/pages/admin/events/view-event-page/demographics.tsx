@@ -5,7 +5,7 @@ import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { Button } from "~/components/ui/button"
 
 type DemographicsProps = {
-  demographics: Demographics
+  demographics: Demographics | null
   fetcher?: FetcherWithComponents<unknown>
   eventId?: string
 }
@@ -14,8 +14,6 @@ export const DemographicsData: FC<DemographicsProps> = ({
   fetcher,
   eventId,
 }: DemographicsProps) => {
-  const { total, veteran, gender, age, orientation } = demographics
-  
   const isUpdating = fetcher?.state === "submitting" && 
     fetcher?.formData?.get("intent") === "update-demographics"
   
@@ -37,48 +35,54 @@ export const DemographicsData: FC<DemographicsProps> = ({
           </fetcher.Form>
         )}
       </div>
-      <div className="flex flex-col gap-4 sm:grid sm:grid-cols-4">
-        <div>
-          <h4>Geral</h4>
-          <DataPair suffix=" participantes" pair={["Total", total]} />
-          <DataPair suffix="%" pair={["Veteranes", veteran.yes]} />
-          <DataPair suffix="%" pair={["Novates", veteran.no]} />
+      {demographics ? (
+        <div className="flex flex-col gap-4 sm:grid sm:grid-cols-4">
+          <div>
+            <h4>Geral</h4>
+            <DataPair suffix=" participantes" pair={["Total", demographics.total]} />
+            <DataPair suffix="%" pair={["Veteranes", demographics.veteran.yes]} />
+            <DataPair suffix="%" pair={["Novates", demographics.veteran.no]} />
+          </div>
+          <div>
+            <h4>Gênero</h4>
+            <DataPair suffix="%" pair={["Cis", demographics.gender.cis]} />
+            <DataPair suffix="%" pair={["Trans", demographics.gender.trans]} />
+            <DataPair suffix="%" pair={["Agênere", demographics.gender.agender]} />
+            {!!demographics.gender.other.percentage && (
+              <>
+                <DataPair suffix="%" pair={["Outros", demographics.gender.other.percentage]} />{" "}
+                - {demographics.gender.other.values?.join(", ")}
+              </>
+            )}
+          </div>
+          <div>
+            <h4>Orientação</h4>
+            <DataPair suffix="%" pair={["Héteres", demographics.orientation.straight]} />
+            <DataPair suffix="%" pair={["Bi/Pan", demographics.orientation.biPan]} />
+            <DataPair suffix="%" pair={["Homo", demographics.orientation.homo]} />
+            <DataPair suffix="%" pair={["Ace/Demi", demographics.orientation.aceDemi]} />
+            {!!demographics.orientation.other.percentage && (
+              <>
+                <DataPair
+                  suffix="%"
+                  pair={["Outros", demographics.orientation.other.percentage]}
+                />{" "}
+                - {demographics.orientation.other.values?.join(", ")}
+              </>
+            )}
+          </div>
+          <div>
+            <h4>Idades</h4>
+            <DataPair suffix=" anos" pair={["Menor", demographics.age.min]} />
+            <DataPair suffix=" anos" pair={["Média", demographics.age.average]} />
+            <DataPair suffix=" anos" pair={["Maior", demographics.age.max]} />
+          </div>
         </div>
-        <div>
-          <h4>Gênero</h4>
-          <DataPair suffix="%" pair={["Cis", gender.cis]} />
-          <DataPair suffix="%" pair={["Trans", gender.trans]} />
-          <DataPair suffix="%" pair={["Agênere", gender.agender]} />
-          {!!gender.other.percentage && (
-            <>
-              <DataPair suffix="%" pair={["Outros", gender.other.percentage]} />{" "}
-              - {gender.other.values?.join(", ")}
-            </>
-          )}
+      ) : (
+        <div className="text-sm text-muted-foreground">
+          Não há dados demográficos. Clique em 'Atualizar Demografia' para calcular.
         </div>
-        <div>
-          <h4>Orientação</h4>
-          <DataPair suffix="%" pair={["Héteres", orientation.straight]} />
-          <DataPair suffix="%" pair={["Bi/Pan", orientation.biPan]} />
-          <DataPair suffix="%" pair={["Homo", orientation.homo]} />
-          <DataPair suffix="%" pair={["Ace/Demi", orientation.aceDemi]} />
-          {!!orientation.other.percentage && (
-            <>
-              <DataPair
-                suffix="%"
-                pair={["Outros", orientation.other.percentage]}
-              />{" "}
-              - {orientation.other.values?.join(", ")}
-            </>
-          )}
-        </div>
-        <div>
-          <h4>Idades</h4>
-          <DataPair suffix=" anos" pair={["Menor", age.min]} />
-          <DataPair suffix=" anos" pair={["Média", age.average]} />
-          <DataPair suffix=" anos" pair={["Maior", age.max]} />
-        </div>
-      </div>
+      )}
     </>
   )
 }
