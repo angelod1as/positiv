@@ -31,7 +31,7 @@ import { DemographicsData } from "./demographics"
 import { EventStatusForm } from "./event-status-form"
 import { GeneralData } from "./general-data"
 import { sendToast } from "./send-toast"
-import { AdminViewEventParticipantsTable } from "./view-event-participants-table/view-event-participants-table"
+import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
 
 const {
   admin: { ADMIN_DASHBOARD },
