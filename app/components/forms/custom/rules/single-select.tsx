@@ -1,25 +1,23 @@
-import type { FC } from "react"
-import { Controller, type Control } from "react-hook-form"
+import { Controller, type Control, type FieldValues, type Path } from "react-hook-form"
 import { Error } from "~/components/forms/base/error"
 import { Label } from "~/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group"
-import type { RulesFormData } from "~/pages/events/application/rules/event-rules-page"
 
-type SingleSelectProps = {
-  name: string
-  control: Control<RulesFormData>
+type SingleSelectProps<T extends FieldValues = FieldValues> = {
+  name: Path<T> | string
+  control: Control<T>
   answers: string[]
   error?: string
 }
 
-export const SingleSelect: FC<SingleSelectProps> = ({
+export const SingleSelect = <T extends FieldValues = FieldValues>({
   name,
   control,
   answers,
   error,
-}) => (
+}: SingleSelectProps<T>): React.ReactElement => (
   <Controller
-    name={name}
+    name={name as Path<T>}
     control={control}
     render={({ field }) => (
       <div className="flex flex-col gap-2">

@@ -30,6 +30,9 @@ export type ParticipantAttendanceStatus =
 export type ProfileApprovedToAttendStatus =
   Database["public"]["Enums"]["approved_to_attend_enum"]
 
+/** Event Type */
+export type EventType = Database["public"]["Enums"]["event_type_enum"]
+
 /** Events information */
 export type Event = Omit<
   Database["public"]["Tables"]["events"]["Row"],
