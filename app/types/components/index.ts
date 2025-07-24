@@ -15,5 +15,5 @@ export type { DataTableProps } from "~/components/organisms/tables/base/data-tab
 
 // Form component props  
 // export type { EventFormProps } from "~/components/forms/admin/event-form"
-// export type { FormDescriptionProps } from "~/components/forms/form-description"
-// export type { SubmitButtonProps } from "~/components/forms/submit-button"
+// export type { FormDescriptionProps } from "~/components/forms/base/form-description"
+// export type { SubmitButtonProps } from "~/components/forms/base/submit-button"

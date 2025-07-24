@@ -5,7 +5,7 @@ import type { ParticipantVsEvent } from "~types/database/entities.types"
 import type { ReactNode } from "react"
 
 // Mock the SchemaForm component
-vi.mock("~/components/forms/schema-form", () => ({
+vi.mock("~/components/forms/base/schema-form", () => ({
   SchemaForm: ({ children, options }: { 
     children: (props: {
       Field: ({ name }: { name: string }) => ReactNode

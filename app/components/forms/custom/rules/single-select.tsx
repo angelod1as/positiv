@@ -3,7 +3,7 @@ import { Controller, type Control } from "react-hook-form"
 import { Error } from "~/components/forms/base/error"
 import { Label } from "~/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group"
-import type { RulesFormData } from "../event-rules-page"
+import type { RulesFormData } from "~/pages/events/application/rules/event-rules-page"
 
 type SingleSelectProps = {
   name: string

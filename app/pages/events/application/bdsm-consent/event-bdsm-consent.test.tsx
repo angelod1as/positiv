@@ -6,7 +6,7 @@ import { EventBdsmConsentPage } from "./event-bdsm-consent"
 // Mock the SchemaForm component to avoid React Router dependencies in tests
 let mockFormState = { showError: false, isChecked: false }
 
-vi.mock("~/components/forms/schema-form", () => ({
+vi.mock("~/components/forms/base/schema-form", () => ({
   SchemaForm: ({ children, _schema, values, inputTypes, labels, buttonLabel }: {
     children: (props: {
       Field: React.FC<{ name: string }>

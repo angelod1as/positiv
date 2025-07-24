@@ -1,6 +1,6 @@
 import type { FC, JSX } from "react"
 import { cn } from "~/lib/utils"
-import { Button } from "../atoms/button/button"
+import { Button } from "~/components/atoms/button/button"
 
 type SubmitButtonProps = JSX.IntrinsicElements["button"] & {
   alignment: "left" | "center" | "right"

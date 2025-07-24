@@ -5,7 +5,7 @@ import { Button } from "~/components/atoms/button/button"
 import { Separator } from "~/components/ui/separator"
 import { dbValuesToFormSchema } from "~/lib/helpers/db-values-to-form-schema"
 import type { Event } from "~types/database/entities.types"
-import { SchemaForm } from "../schema-form"
+import { SchemaForm } from "../base/schema-form"
 import { calculateDerivedDates } from "./calculate-derived-dates"
 
 type EventFormProps = {
