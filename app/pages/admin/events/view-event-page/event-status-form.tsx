@@ -2,7 +2,7 @@ import { type FC } from "react"
 import { type FetcherWithComponents } from "react-router"
 
 import { updateEventStatusSchema } from "~/business/admin/common"
-import { SchemaForm } from "~/components/forms/schema-form"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import { eventStatusMap } from "~/lib/helpers/propMaps"
 import type { ComposableFetcherData, EventStatus } from "~types/database/entities.types"
 

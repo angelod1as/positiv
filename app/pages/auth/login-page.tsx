@@ -15,7 +15,7 @@ import { redirect } from "react-router"
 import { redirectWithSuccess } from "remix-toast"
 import { getContext, loginUser } from "~/business/auth/auth.server"
 import { loginSchema } from "~/business/common"
-import { SchemaForm } from "~/components/forms/schema-form"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import type { Route } from "./+types/login-page"
 
 const {

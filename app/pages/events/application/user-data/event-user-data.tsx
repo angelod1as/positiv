@@ -5,7 +5,7 @@ import { getUserContext } from "~/business/auth/auth.server"
 import { applyToEventSchema } from "~/business/common"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { rulesSessionStorage } from "~/business/session.server"
-import { SchemaForm } from "~/components/forms/schema-form"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/event-user-data"
 
