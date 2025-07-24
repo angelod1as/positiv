@@ -238,6 +238,29 @@ describe('Component', () => {
 - ⁠Use imperative mood for descriptions (e.g., "Add feature" not "Added feature")
 - ⁠Include breaking changes with ⁠ BREAKING CHANGE: ⁠ in footer when applicable
 
+## News Dialog Updates
+
+When making changes to the application that affect users (new features, bug fixes, UI changes), ALWAYS update the news dialog:
+
+1. **Location**: `app/components/organisms/news-dialog/news.tsx`
+2. **Update Process**:
+   - Add new items to the `DEFAULT_NEWS_ITEMS` array
+   - REMOVE items older than 2 weeks (check `createdAt` dates)
+   - Follow the `NewsItem` interface structure
+3. **Content Guidelines**:
+   - Write for NON-TECHNICAL USERS (focus on functionality, not implementation)
+   - ✅ GOOD: "Now you can generate demographic reports by clicking the new button"
+   - ❌ BAD: "Added demographics upsert functionality to the database"
+   - Admin items (`isAdmin: true`) can include operational details but avoid code specifics
+4. **Required Fields**:
+   - `id`: Unique string identifier
+   - `title`: Brief, descriptive title
+   - `content`: Clear explanation of the change/feature
+   - `isAdmin`: Boolean (true for admin-only news)
+   - `createdAt`: Date object
+   - `isActive`: Boolean (usually true)
+5. **IMPORTANT**: ALWAYS update `NEWS_VERSION` in `app/lib/helpers/constants.ts` to current timestamp (use `Date.now()`) whenever you add or modify news items. This ensures the dialog appears for users who haven't seen the new updates.
+
 ## GitHub Workflow
 
 - ⁠Whenever the user has it, use the GitHub CLI to create pull requests
