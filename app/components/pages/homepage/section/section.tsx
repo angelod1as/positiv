@@ -1,5 +1,5 @@
 import { cn } from "~/lib/utils"
-import type { FCC } from "~types/utils.types"
+import type { FCC } from "~types/utils/utils.types"
 
 export const Section: FCC<{ className?: string; hasBg?: boolean }> = ({
   children,

@@ -1,5 +1,5 @@
 import { Card, CardContent } from "~/components/ui/card"
-import type { FCC } from "~types/utils.types"
+import type { FCC } from "~types/utils/utils.types"
 
 type TestimonialCardProps = {
   title: string

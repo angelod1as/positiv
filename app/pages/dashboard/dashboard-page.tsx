@@ -9,7 +9,7 @@ import {
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import paths from "~/lib/paths"
-import type { ViewEvent } from "~types/entities.types"
+import type { ViewEvent } from "~types/database/entities.types"
 import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 

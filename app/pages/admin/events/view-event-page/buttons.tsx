@@ -5,7 +5,7 @@ import { Button } from "~/components/atoms/button/button"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import paths from "~/lib/paths"
-import type { ComposableFetcherData, Event } from "~types/entities.types"
+import type { ComposableFetcherData, Event } from "~types/database/entities.types"
 
 const {
   admin: {

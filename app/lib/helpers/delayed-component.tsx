@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import type { FCC } from "~types/utils.types"
+import type { FCC } from "~types/utils/utils.types"
 
 //
 // S

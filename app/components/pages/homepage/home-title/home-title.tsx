@@ -1,4 +1,4 @@
-import type { FCC } from "~types/utils.types"
+import type { FCC } from "~types/utils/utils.types"
 
 type HomePageTitleProps = {
   subtitle?: string

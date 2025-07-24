@@ -1,6 +1,6 @@
 import Instagram from "~/assets/social/instagram.svg"
 import { Button } from "~/components/atoms/button/button"
-import type { FCC } from "~types/utils.types"
+import type { FCC } from "~types/utils/utils.types"
 
 type FounderCardProps = {
   name: string
