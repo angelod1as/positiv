@@ -1,7 +1,7 @@
-import { formatApplicationMail } from "~/lib/email/format-application-mail"
-import type { ProfileWithRoles, ViewEvent } from "~types/entities.types"
+import { formatApplicationMail } from "~/business/email/format-application-mail"
+import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
 
-import { type MailOptions, sendEmail } from "~/lib/email/send-email"
+import { type MailOptions, sendEmail } from "~/business/email/send-email"
 
 type sendApplicationMailProps = {
   event: ViewEvent

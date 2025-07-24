@@ -6,7 +6,7 @@ import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { rulesSessionStorage } from "~/business/session.server"
 import { Button } from "~/components/atoms/button/button"
-import { Error } from "~/components/forms/error"
+import { Error } from "~/components/forms/base/error"
 import {
   Card,
   CardContent,
@@ -16,13 +16,13 @@ import {
 } from "~/components/ui/card"
 import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
-import type { FCC } from "~types/utils.types"
+import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
-import { MultipleSelect } from "./rules-form/multiple-select"
-import { rulesFormSchema } from "./rules-form/rules-form-schema"
-import { shuffleQuestions } from "./rules-form/shuffle-questions"
-import { SingleSelect } from "./rules-form/single-select"
-import { RulesText } from "./rules-text"
+import { MultipleSelect } from "~/components/forms/custom/rules/multiple-select"
+import { rulesFormSchema } from "~/components/forms/custom/rules/rules-form-schema"
+import { shuffleQuestions } from "~/components/forms/custom/rules/shuffle-questions"
+import { SingleSelect } from "~/components/forms/custom/rules/single-select"
+import { RulesText } from "~/components/pages/events/rules/rules-text"
 
 const {
   dash: {

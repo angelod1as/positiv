@@ -2,13 +2,13 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { EventForm } from "./event-form"
-import type { Event } from "~types/entities.types"
+import type { Event } from "~types/database/entities.types"
 
 // Mock the SchemaForm component to avoid React Router dependencies
 let mockFormValues: Record<string, unknown> = {}
 let mockSetValueCalls: Array<[string, unknown]> = []
 
-vi.mock("../schema-form", () => ({
+vi.mock("../base/schema-form", () => ({
   SchemaForm: ({ children, _schema, values, labels, options, descriptions, inputTypes }: {
     children: (props: {
       Field: React.FC<{ name: string }>

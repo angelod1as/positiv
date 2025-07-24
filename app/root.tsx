@@ -21,7 +21,7 @@ import { newsCookie } from "./business/session.server"
 import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
-import { NEWS_VERSION, POSITIV_EMAIL } from "./lib/helpers/constants"
+import { NEWS_VERSION, POSITIV_EMAIL } from "~/lib/constants/constants"
 
 // COMMENT OUT when offline
 export const links: Route.LinksFunction = () => [

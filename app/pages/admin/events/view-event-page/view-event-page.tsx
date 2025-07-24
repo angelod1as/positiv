@@ -23,15 +23,15 @@ import {
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
-import type { ComposableFetcherData } from "~types/entities.types"
+import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
-import { Buttons } from "./buttons"
-import { DatesAndTimes } from "./dates-and-times"
-import { DemographicsData } from "./demographics"
-import { EventStatusForm } from "./event-status-form"
-import { GeneralData } from "./general-data"
+import { Buttons } from "~/components/pages/admin/events/buttons"
+import { DatesAndTimes } from "~/components/pages/admin/events/dates-and-times"
+import { DemographicsData } from "~/components/pages/admin/events/demographics"
+import { EventStatusForm } from "~/components/pages/admin/events/event-status-form"
+import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { sendToast } from "./send-toast"
-import { AdminViewEventParticipantsTable } from "./view-event-participants-table/view-event-participants-table"
+import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
 
 const {
   admin: { ADMIN_DASHBOARD },

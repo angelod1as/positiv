@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test"
-import { EVENT_PAGE_REGEXP } from "~/lib/helpers/constants"
+import { EVENT_PAGE_REGEXP } from "~/lib/constants/constants"
 import paths from "~/lib/paths"
-import { rulesFormQuestions } from "~/pages/events/application/rules/rules-form/rules-questions"
+import { rulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 
 export class RulesPOM {
   readonly page: Page

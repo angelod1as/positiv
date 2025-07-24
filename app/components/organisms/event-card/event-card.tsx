@@ -11,7 +11,7 @@ import {
 
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calendar-link"
-import type { ViewEvent } from "~types/entities.types"
+import type { ViewEvent } from "~types/database/entities.types"
 import { EventCardFooter } from "./event-card-footer"
 
 type EventCardProps = { event: ViewEvent; "data-testid": string }

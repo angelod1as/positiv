@@ -6,7 +6,7 @@ import {
   type ParticipantAttendanceStatus,
   type Profile,
   type ProfileApprovedToAttendStatus,
-} from "~types/entities.types"
+} from "~types/database/entities.types"
 
 export const profilePropMap = (property: keyof Profile) => {
   return {

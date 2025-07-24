@@ -4,7 +4,7 @@ import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 import { createBrowserClient } from "~/lib/supabase/client"
-import type { Database } from "~types/database.types"
+import type { Database } from "~types/database/database.types"
 import { currentProfileSchema, currentUserSchema } from "../common"
 
 const {
