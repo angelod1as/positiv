@@ -9,8 +9,8 @@ import {
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ViewEvent } from "~types/database/entities.types"
-import { EmailButton } from "../common/button"
-import { EmailWrapper } from "../common/wrapper"
+import { EmailButton } from "~/components/email/common/button"
+import { EmailWrapper } from "~/components/email/common/wrapper"
 
 interface ReminderEmailProps {
   event: Omit<ViewEvent, "is_applied">
