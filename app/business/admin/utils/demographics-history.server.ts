@@ -1,5 +1,5 @@
 import { composable } from "composable-functions"
-import { kysely } from "~/lib/supabase/db.server"
+import { kysely } from "~/kysely"
 import type { Demographics } from "./demographics"
 
 export const storeEventDemographicsSnapshot = composable(
