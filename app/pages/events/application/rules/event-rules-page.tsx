@@ -34,7 +34,9 @@ const {
 } = paths
 
 // This clientLoader is needed, otherwise the random form loads with Hydration Error
-export async function clientLoader({}: Route.ClientLoaderArgs) {}
+export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+  return await serverLoader()
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!params.id) return redirect(DASHBOARD)
