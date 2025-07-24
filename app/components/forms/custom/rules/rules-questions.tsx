@@ -1,4 +1,4 @@
-export const rulesFormQuestions = {
+export const getRulesFormQuestions = (eventType: "regular" | "bdsm") => ({
   "leave-no-trace": {
     question:
       "Sobre limpeza do ambiente e a responsabilidade dos pertences des participantes, é certo dizer:",
@@ -94,7 +94,9 @@ export const rulesFormQuestions = {
     answers: {
       correct: [
         "A frase está incorreta. A Positiv se parece mais com um picnic e não tem música alta ou luzes piscando.",
-        "A frase está incorreta. É até possível que haja drinks ou cerveja, mas a moderação é essencial.",
+        eventType === "bdsm" 
+          ? "A frase está incorreta. Na Positiv BDSM não há álcool ou outras substâncias."
+          : "A frase está incorreta. É até possível que haja drinks ou cerveja, mas a moderação é essencial.",
       ],
       incorrect: [
         "A frase está correta. A Positiv é o lugar ideal para eu ir e dançar a noite toda, ainda mais sabendo que vou tomar várias.",
@@ -165,4 +167,4 @@ export const rulesFormQuestions = {
       ],
     },
   },
-}
+})
