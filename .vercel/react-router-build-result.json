@@ -1,0 +1,520 @@
+{
+  "buildManifest": {
+    "serverBundles": {
+      "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0": {
+        "id": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+        "file": "build/server/nodejs_eyJydW50aW1lIjoibm9kZWpzIn0/index.js",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    },
+    "routeIdToServerBundleId": {
+      "pages/homepage/homepage": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/auth/confirm": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/auth/login-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/auth/forgot-password-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/auth/register-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/redirect/email-redirect-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/dashboard/dashboard-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/events/event": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/events/application/bdsm-consent/event-bdsm-consent-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/events/application/rules/event-rules-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/events/application/user-data/event-user-data": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/dashboard/download-calendar.route": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/account/account-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/dashboard/agree-to-terms-page/agree-to-terms-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/account/change-password-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/account/basic-data/basic-data-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/account/basic-data/gender-pronouns-orientation-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/admin/dashboard-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/admin/events-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/admin/events/view-event-page/view-event-page": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/admin/events/create-edit-event": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/admin/events/download-data": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0",
+      "pages/admin/events/view-event-participant/view-event-participant": "nodejs_eyJydW50aW1lIjoibm9kZWpzIn0"
+    },
+    "routes": {
+      "root": {
+        "path": "",
+        "id": "root",
+        "file": "app/root.tsx",
+        "config": {}
+      },
+      "pages/homepage/homepage": {
+        "id": "pages/homepage/homepage",
+        "parentId": "root",
+        "file": "app/pages/homepage/homepage.tsx",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/auth/confirm": {
+        "id": "pages/auth/confirm",
+        "parentId": "root",
+        "file": "app/pages/auth/confirm.tsx",
+        "path": "/auth/confirm",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/auth/layout": {
+        "id": "pages/auth/layout",
+        "parentId": "root",
+        "file": "app/pages/auth/layout.tsx",
+        "config": {}
+      },
+      "pages/auth/login-page": {
+        "id": "pages/auth/login-page",
+        "parentId": "pages/auth/layout",
+        "file": "app/pages/auth/login-page.tsx",
+        "path": "/entrar",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/auth/forgot-password-page": {
+        "id": "pages/auth/forgot-password-page",
+        "parentId": "pages/auth/layout",
+        "file": "app/pages/auth/forgot-password-page.tsx",
+        "path": "/entrar/esqueci",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/auth/register-page": {
+        "id": "pages/auth/register-page",
+        "parentId": "pages/auth/layout",
+        "file": "app/pages/auth/register-page.tsx",
+        "path": "/registrar",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/redirect/email-redirect-page": {
+        "id": "pages/redirect/email-redirect-page",
+        "parentId": "pages/auth/layout",
+        "file": "app/pages/redirect/email-redirect-page.tsx",
+        "path": "/email",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/guard/private": {
+        "id": "pages/guard/private",
+        "parentId": "root",
+        "file": "app/pages/guard/private.tsx",
+        "config": {}
+      },
+      "pages/dashboard/layout": {
+        "id": "pages/dashboard/layout",
+        "parentId": "pages/guard/private",
+        "file": "app/pages/dashboard/layout.tsx",
+        "config": {}
+      },
+      "pages/dashboard/dashboard-page": {
+        "id": "pages/dashboard/dashboard-page",
+        "parentId": "pages/dashboard/layout",
+        "file": "app/pages/dashboard/dashboard-page.tsx",
+        "path": "dashboard",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/events/layout": {
+        "id": "pages/events/layout",
+        "parentId": "pages/guard/private",
+        "file": "app/pages/events/layout.tsx",
+        "config": {}
+      },
+      "pages/events/event": {
+        "id": "pages/events/event",
+        "parentId": "pages/events/layout",
+        "file": "app/pages/events/event.tsx",
+        "path": "dashboard/:id/",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/events/application/bdsm-consent/event-bdsm-consent-page": {
+        "id": "pages/events/application/bdsm-consent/event-bdsm-consent-page",
+        "parentId": "pages/events/layout",
+        "file": "app/pages/events/application/bdsm-consent/event-bdsm-consent-page.tsx",
+        "path": "dashboard/:id/bdsm-consent",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/events/application/rules/event-rules-page": {
+        "id": "pages/events/application/rules/event-rules-page",
+        "parentId": "pages/events/layout",
+        "file": "app/pages/events/application/rules/event-rules-page.tsx",
+        "path": "dashboard/:id/regras",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/events/application/user-data/event-user-data": {
+        "id": "pages/events/application/user-data/event-user-data",
+        "parentId": "pages/events/layout",
+        "file": "app/pages/events/application/user-data/event-user-data.tsx",
+        "path": "dashboard/:id/dados",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/dashboard/download-calendar.route": {
+        "id": "pages/dashboard/download-calendar.route",
+        "parentId": "pages/guard/private",
+        "file": "app/pages/dashboard/download-calendar.route.tsx",
+        "path": "dashboard/download-calendar/:eventId",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/account/layout": {
+        "id": "pages/account/layout",
+        "parentId": "pages/guard/private",
+        "file": "app/pages/account/layout.tsx",
+        "config": {}
+      },
+      "pages/account/account-page": {
+        "id": "pages/account/account-page",
+        "parentId": "pages/account/layout",
+        "file": "app/pages/account/account-page.tsx",
+        "path": "conta",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/dashboard/agree-to-terms-page/agree-to-terms-page": {
+        "id": "pages/dashboard/agree-to-terms-page/agree-to-terms-page",
+        "parentId": "pages/account/layout",
+        "file": "app/pages/dashboard/agree-to-terms-page/agree-to-terms-page.tsx",
+        "path": "conta/termos-e-condicoes",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/account/change-password-page": {
+        "id": "pages/account/change-password-page",
+        "parentId": "pages/account/layout",
+        "file": "app/pages/account/change-password-page.tsx",
+        "path": "conta/mudar-senha",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/account/basic-data/basic-data-page": {
+        "id": "pages/account/basic-data/basic-data-page",
+        "parentId": "pages/account/layout",
+        "file": "app/pages/account/basic-data/basic-data-page.tsx",
+        "path": "conta/dados-basicos",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/account/basic-data/gender-pronouns-orientation-page": {
+        "id": "pages/account/basic-data/gender-pronouns-orientation-page",
+        "parentId": "pages/account/layout",
+        "file": "app/pages/account/basic-data/gender-pronouns-orientation-page.tsx",
+        "path": "conta/dados-basicos-cont",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/guard/admin": {
+        "id": "pages/guard/admin",
+        "parentId": "root",
+        "file": "app/pages/guard/admin.tsx",
+        "config": {}
+      },
+      "pages/admin/layout": {
+        "id": "pages/admin/layout",
+        "parentId": "pages/guard/admin",
+        "file": "app/pages/admin/layout.tsx",
+        "config": {}
+      },
+      "pages/admin/dashboard-page": {
+        "id": "pages/admin/dashboard-page",
+        "parentId": "pages/admin/layout",
+        "file": "app/pages/admin/dashboard-page.tsx",
+        "path": "admin",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/admin/events/layout": {
+        "id": "pages/admin/events/layout",
+        "parentId": "pages/guard/admin",
+        "file": "app/pages/admin/events/layout.tsx",
+        "config": {}
+      },
+      "pages/admin/events-page": {
+        "id": "pages/admin/events-page",
+        "parentId": "pages/admin/events/layout",
+        "file": "app/pages/admin/events-page.tsx",
+        "path": "admin/eventos",
+        "index": true,
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/admin/events/view-event-page/view-event-page": {
+        "id": "pages/admin/events/view-event-page/view-event-page",
+        "parentId": "pages/admin/events/layout",
+        "file": "app/pages/admin/events/view-event-page/view-event-page.tsx",
+        "path": "admin/eventos/:id?",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/admin/events/create-edit-event": {
+        "id": "pages/admin/events/create-edit-event",
+        "parentId": "pages/admin/events/layout",
+        "file": "app/pages/admin/events/create-edit-event.tsx",
+        "path": "admin/eventos/novo/:id?",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/admin/events/download-data": {
+        "id": "pages/admin/events/download-data",
+        "parentId": "pages/admin/events/layout",
+        "file": "app/pages/admin/events/download-data.tsx",
+        "path": "admin/eventos/:id/baixar",
+        "config": {
+          "runtime": "nodejs"
+        }
+      },
+      "pages/admin/events/view-event-participant/view-event-participant": {
+        "id": "pages/admin/events/view-event-participant/view-event-participant",
+        "parentId": "pages/admin/events/layout",
+        "file": "app/pages/admin/events/view-event-participant/view-event-participant.tsx",
+        "path": "admin/eventos/:eventId/participantes/:eventParticipantId",
+        "config": {
+          "runtime": "nodejs"
+        }
+      }
+    }
+  },
+  "reactRouterConfig": {
+    "appDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv/app",
+    "basename": "/",
+    "buildDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv/build",
+    "future": {
+      "unstable_middleware": false,
+      "unstable_optimizeDeps": false,
+      "unstable_splitRouteModules": false,
+      "unstable_subResourceIntegrity": false,
+      "unstable_viteEnvironmentApi": false
+    },
+    "routes": {
+      "root": {
+        "path": "",
+        "id": "root",
+        "file": "root.tsx"
+      },
+      "pages/homepage/homepage": {
+        "id": "pages/homepage/homepage",
+        "parentId": "root",
+        "file": "pages/homepage/homepage.tsx",
+        "index": true
+      },
+      "pages/auth/confirm": {
+        "id": "pages/auth/confirm",
+        "parentId": "root",
+        "file": "pages/auth/confirm.tsx",
+        "path": "/auth/confirm"
+      },
+      "pages/auth/layout": {
+        "id": "pages/auth/layout",
+        "parentId": "root",
+        "file": "pages/auth/layout.tsx"
+      },
+      "pages/auth/login-page": {
+        "id": "pages/auth/login-page",
+        "parentId": "pages/auth/layout",
+        "file": "pages/auth/login-page.tsx",
+        "path": "/entrar",
+        "index": true
+      },
+      "pages/auth/forgot-password-page": {
+        "id": "pages/auth/forgot-password-page",
+        "parentId": "pages/auth/layout",
+        "file": "pages/auth/forgot-password-page.tsx",
+        "path": "/entrar/esqueci"
+      },
+      "pages/auth/register-page": {
+        "id": "pages/auth/register-page",
+        "parentId": "pages/auth/layout",
+        "file": "pages/auth/register-page.tsx",
+        "path": "/registrar"
+      },
+      "pages/redirect/email-redirect-page": {
+        "id": "pages/redirect/email-redirect-page",
+        "parentId": "pages/auth/layout",
+        "file": "pages/redirect/email-redirect-page.tsx",
+        "path": "/email"
+      },
+      "pages/guard/private": {
+        "id": "pages/guard/private",
+        "parentId": "root",
+        "file": "pages/guard/private.tsx"
+      },
+      "pages/dashboard/layout": {
+        "id": "pages/dashboard/layout",
+        "parentId": "pages/guard/private",
+        "file": "pages/dashboard/layout.tsx"
+      },
+      "pages/dashboard/dashboard-page": {
+        "id": "pages/dashboard/dashboard-page",
+        "parentId": "pages/dashboard/layout",
+        "file": "pages/dashboard/dashboard-page.tsx",
+        "path": "dashboard",
+        "index": true
+      },
+      "pages/events/layout": {
+        "id": "pages/events/layout",
+        "parentId": "pages/guard/private",
+        "file": "pages/events/layout.tsx"
+      },
+      "pages/events/event": {
+        "id": "pages/events/event",
+        "parentId": "pages/events/layout",
+        "file": "pages/events/event.tsx",
+        "path": "dashboard/:id/"
+      },
+      "pages/events/application/bdsm-consent/event-bdsm-consent-page": {
+        "id": "pages/events/application/bdsm-consent/event-bdsm-consent-page",
+        "parentId": "pages/events/layout",
+        "file": "pages/events/application/bdsm-consent/event-bdsm-consent-page.tsx",
+        "path": "dashboard/:id/bdsm-consent"
+      },
+      "pages/events/application/rules/event-rules-page": {
+        "id": "pages/events/application/rules/event-rules-page",
+        "parentId": "pages/events/layout",
+        "file": "pages/events/application/rules/event-rules-page.tsx",
+        "path": "dashboard/:id/regras"
+      },
+      "pages/events/application/user-data/event-user-data": {
+        "id": "pages/events/application/user-data/event-user-data",
+        "parentId": "pages/events/layout",
+        "file": "pages/events/application/user-data/event-user-data.tsx",
+        "path": "dashboard/:id/dados"
+      },
+      "pages/dashboard/download-calendar.route": {
+        "id": "pages/dashboard/download-calendar.route",
+        "parentId": "pages/guard/private",
+        "file": "pages/dashboard/download-calendar.route.tsx",
+        "path": "dashboard/download-calendar/:eventId"
+      },
+      "pages/account/layout": {
+        "id": "pages/account/layout",
+        "parentId": "pages/guard/private",
+        "file": "pages/account/layout.tsx"
+      },
+      "pages/account/account-page": {
+        "id": "pages/account/account-page",
+        "parentId": "pages/account/layout",
+        "file": "pages/account/account-page.tsx",
+        "path": "conta",
+        "index": true
+      },
+      "pages/dashboard/agree-to-terms-page/agree-to-terms-page": {
+        "id": "pages/dashboard/agree-to-terms-page/agree-to-terms-page",
+        "parentId": "pages/account/layout",
+        "file": "pages/dashboard/agree-to-terms-page/agree-to-terms-page.tsx",
+        "path": "conta/termos-e-condicoes"
+      },
+      "pages/account/change-password-page": {
+        "id": "pages/account/change-password-page",
+        "parentId": "pages/account/layout",
+        "file": "pages/account/change-password-page.tsx",
+        "path": "conta/mudar-senha"
+      },
+      "pages/account/basic-data/basic-data-page": {
+        "id": "pages/account/basic-data/basic-data-page",
+        "parentId": "pages/account/layout",
+        "file": "pages/account/basic-data/basic-data-page.tsx",
+        "path": "conta/dados-basicos"
+      },
+      "pages/account/basic-data/gender-pronouns-orientation-page": {
+        "id": "pages/account/basic-data/gender-pronouns-orientation-page",
+        "parentId": "pages/account/layout",
+        "file": "pages/account/basic-data/gender-pronouns-orientation-page.tsx",
+        "path": "conta/dados-basicos-cont"
+      },
+      "pages/guard/admin": {
+        "id": "pages/guard/admin",
+        "parentId": "root",
+        "file": "pages/guard/admin.tsx"
+      },
+      "pages/admin/layout": {
+        "id": "pages/admin/layout",
+        "parentId": "pages/guard/admin",
+        "file": "pages/admin/layout.tsx"
+      },
+      "pages/admin/dashboard-page": {
+        "id": "pages/admin/dashboard-page",
+        "parentId": "pages/admin/layout",
+        "file": "pages/admin/dashboard-page.tsx",
+        "path": "admin",
+        "index": true
+      },
+      "pages/admin/events/layout": {
+        "id": "pages/admin/events/layout",
+        "parentId": "pages/guard/admin",
+        "file": "pages/admin/events/layout.tsx"
+      },
+      "pages/admin/events-page": {
+        "id": "pages/admin/events-page",
+        "parentId": "pages/admin/events/layout",
+        "file": "pages/admin/events-page.tsx",
+        "path": "admin/eventos",
+        "index": true
+      },
+      "pages/admin/events/view-event-page/view-event-page": {
+        "id": "pages/admin/events/view-event-page/view-event-page",
+        "parentId": "pages/admin/events/layout",
+        "file": "pages/admin/events/view-event-page/view-event-page.tsx",
+        "path": "admin/eventos/:id?"
+      },
+      "pages/admin/events/create-edit-event": {
+        "id": "pages/admin/events/create-edit-event",
+        "parentId": "pages/admin/events/layout",
+        "file": "pages/admin/events/create-edit-event.tsx",
+        "path": "admin/eventos/novo/:id?"
+      },
+      "pages/admin/events/download-data": {
+        "id": "pages/admin/events/download-data",
+        "parentId": "pages/admin/events/layout",
+        "file": "pages/admin/events/download-data.tsx",
+        "path": "admin/eventos/:id/baixar"
+      },
+      "pages/admin/events/view-event-participant/view-event-participant": {
+        "id": "pages/admin/events/view-event-participant/view-event-participant",
+        "parentId": "pages/admin/events/layout",
+        "file": "pages/admin/events/view-event-participant/view-event-participant.tsx",
+        "path": "admin/eventos/:eventId/participantes/:eventParticipantId"
+      }
+    },
+    "routeDiscovery": {
+      "mode": "lazy",
+      "manifestPath": "/__manifest"
+    },
+    "serverBuildFile": "index.js",
+    "serverModuleFormat": "esm",
+    "ssr": true
+  },
+  "viteConfig": {
+    "build": {
+      "assetsDir": "assets"
+    }
+  }
+}
