@@ -3,6 +3,7 @@ import { useEffect } from "react"
 import { useFetcher } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
+import { z as zod } from "zod"
 import {
   getAdminContext,
   getAdminEventById,
@@ -12,6 +13,7 @@ import {
   sendEventReminders,
   updateEventParticipantById,
   updateEventStatus,
+  updateEventDemographics,
 } from "~/business/admin/admin.server"
 import {
   sendEventRemindersSchema,
@@ -63,6 +65,16 @@ export async function action({ request, params }: Route.ActionArgs) {
       request,
       schema: updateEventStatusSchema,
       mutation: updateEventStatus,
+      context: { ...context, eventId: params.id },
+      transformResult: (result) => ({ ...result, intent }),
+    })
+  }
+
+  if (intent === "update-demographics") {
+    return await formAction({
+      request,
+      schema: zod.object({ intent: zod.string() }),
+      mutation: updateEventDemographics,
       context: { ...context, eventId: params.id },
       transformResult: (result) => ({ ...result, intent }),
     })
@@ -138,7 +150,13 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
 
       <EventStatusForm {...event} fetcher={fetcher} />
 
-      {demographics && <DemographicsData demographics={demographics} />}
+      {demographics && (
+        <DemographicsData 
+          demographics={demographics} 
+          fetcher={fetcher}
+          eventId={event.id}
+        />
+      )}
 
       <div className="max-h-[600px]">
         <AdminViewEventParticipantsTable
