@@ -1,6 +1,6 @@
 import { composable } from "composable-functions"
 import type Mail from "nodemailer/lib/mailer"
-import { POSITIV_EMAIL } from "../helpers/constants"
+import { POSITIV_EMAIL } from "../constants/constants"
 import { getEmailTransport } from "./get-email-transport"
 
 export interface MailOptions extends Omit<Mail.Options, "from"> {
