@@ -229,6 +229,17 @@ export const updateEventStatus = applySchema(
     .where("id", "=", eventId)
     .execute()
 
+  if (result.length > 0 && values.event_status === "Completed") {
+    const demographicsResult = await getEventDemographicsById({ eventId })
+    if (demographicsResult.success && demographicsResult.data) {
+      const { storeEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
+      await storeEventDemographicsSnapshot({
+        eventId,
+        demographics: demographicsResult.data,
+      })
+    }
+  }
+
   return result.length > 0
 })
 
