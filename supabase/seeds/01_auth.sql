@@ -28,7 +28,7 @@ SELECT
     'authenticated',                       -- Default audience
     'authenticated',                       -- Role for Auth system
     users_data.email,                      -- Email from defined test data
-    crypt(users_data.raw_password, gen_salt('bf')), -- Password hashing
+    '$2a$10$PzqJBgPYGQ9Gn7bSd4BbreUK3y9KQrW8m4KYIjjl/dP1zA3F72IZG', -- Hashed 'test1234' password
     current_timestamp,                     -- Email confirmed now
     current_timestamp,                     -- Recovery email sent now
     current_timestamp,                     -- Last sign-in set to now
