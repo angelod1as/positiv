@@ -9,7 +9,7 @@ import {
 import dotenv from "dotenv"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
-import { EmailWrapper } from "../common/wrapper"
+import { EmailWrapper } from "~/components/email/common/wrapper"
 dotenv.config()
 
 interface ApplicationMailProps {
