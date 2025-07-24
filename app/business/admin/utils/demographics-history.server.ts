@@ -43,6 +43,86 @@ export const storeEventDemographicsSnapshot = composable(
   }
 )
 
+export const upsertEventDemographicsSnapshot = composable(
+  async ({
+    eventId,
+    demographics,
+  }: {
+    eventId: string
+    demographics: Demographics
+  }) => {
+    try {
+      // Check if a snapshot already exists for this event
+      const existingSnapshot = await kysely
+        .selectFrom("event_demographics_history")
+        .select("id")
+        .where("event_id", "=", eventId)
+        .executeTakeFirst()
+      
+      if (existingSnapshot) {
+        // Update existing row
+        const updated = await kysely
+          .updateTable("event_demographics_history")
+          .set({
+            total: demographics.total,
+            veteran_yes: demographics.veteran.yes,
+            veteran_no: demographics.veteran.no,
+            gender_cis: demographics.gender.cis,
+            gender_trans: demographics.gender.trans,
+            gender_agender: demographics.gender.agender,
+            gender_other_percentage: demographics.gender.other.percentage,
+            gender_other_values: demographics.gender.other.values || [],
+            orientation_straight: demographics.orientation.straight,
+            orientation_homo: demographics.orientation.homo,
+            orientation_bi_pan: demographics.orientation.biPan,
+            orientation_ace_demi: demographics.orientation.aceDemi,
+            orientation_other_percentage: demographics.orientation.other.percentage,
+            orientation_other_values: demographics.orientation.other.values || [],
+            age_average: demographics.age.average,
+            age_min: demographics.age.min,
+            age_max: demographics.age.max,
+            calculated_at: new Date().toISOString(),
+          })
+          .where("event_id", "=", eventId)
+          .returning(["id", "event_id", "calculated_at"])
+          .executeTakeFirstOrThrow()
+        
+        return updated
+      } else {
+        // Insert new row
+        const snapshot = await kysely
+          .insertInto("event_demographics_history")
+          .values({
+            event_id: eventId,
+            total: demographics.total,
+            veteran_yes: demographics.veteran.yes,
+            veteran_no: demographics.veteran.no,
+            gender_cis: demographics.gender.cis,
+            gender_trans: demographics.gender.trans,
+            gender_agender: demographics.gender.agender,
+            gender_other_percentage: demographics.gender.other.percentage,
+            gender_other_values: demographics.gender.other.values || [],
+            orientation_straight: demographics.orientation.straight,
+            orientation_homo: demographics.orientation.homo,
+            orientation_bi_pan: demographics.orientation.biPan,
+            orientation_ace_demi: demographics.orientation.aceDemi,
+            orientation_other_percentage: demographics.orientation.other.percentage,
+            orientation_other_values: demographics.orientation.other.values || [],
+            age_average: demographics.age.average,
+            age_min: demographics.age.min,
+            age_max: demographics.age.max,
+          })
+          .returning(["id", "event_id", "calculated_at"])
+          .executeTakeFirstOrThrow()
+        
+        return snapshot
+      }
+    } catch (error) {
+      throw new Error(`Failed to upsert demographics snapshot: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+)
+
 export const getEventDemographicsHistory = composable(
   async ({ eventId }: { eventId: string }) => {
     const snapshot = await kysely

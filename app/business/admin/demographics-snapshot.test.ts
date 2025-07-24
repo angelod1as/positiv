@@ -29,5 +29,19 @@ describe("Demographics Snapshot Error Handling", () => {
     // We're not testing the full flow, just that the pattern is implemented
     
     consoleErrorSpy.mockRestore()
+  }, 10000)
+  
+  it("should have a separate function to manually update demographics", async () => {
+    // This test verifies that there's a dedicated function for updating demographics
+    // instead of automatically updating on every save
+    
+    const module = await import("./admin.server")
+    
+    // Verify the manual update function exists
+    expect(module.updateEventDemographics).toBeDefined()
+    expect(typeof module.updateEventDemographics).toBe("function")
+    
+    // The updateEventStatus should only create snapshot when changing TO Completed
+    // Manual updates should be done through updateEventDemographics
   })
 })

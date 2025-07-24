@@ -86,6 +86,10 @@ export const updateEventStatusSchema = zod.object({
   event_status: zod.custom<EventStatus>(),
 })
 
+export const updateEventDemographicsSchema = zod.object({
+  intent: zod.string(),
+})
+
 export const sendEventRemindersSchema = zod.object({
   intent: zod.string(),
   event_id: zod.string(),
