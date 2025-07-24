@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { PHONE_REGEXP } from "~/lib/helpers/constants"
+import { PHONE_REGEXP } from "~/lib/constants/constants"
 import { zod } from "~/lib/helpers/zod"
 import type { Database } from "~types/database.types"
 

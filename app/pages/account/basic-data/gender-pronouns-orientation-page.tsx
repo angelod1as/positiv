@@ -8,7 +8,7 @@ import { genderPronounsOrientation } from "~/business/participant/basic-data.ser
 import { CheckboxWithOther } from "~/components/forms/checkbox-with-other"
 import { Button } from "~/components/ui/button"
 import { Label } from "~/components/ui/label"
-import { GENDERS, ORIENTATIONS, PRONOUNS } from "~/lib/helpers/constants"
+import { GENDERS, ORIENTATIONS, PRONOUNS } from "~/lib/constants/constants"
 import type { Route } from "./+types/basic-data-page"
 
 const toOptions = (labels: readonly string[]) =>
