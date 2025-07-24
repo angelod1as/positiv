@@ -221,6 +221,10 @@ export const updateEventStatus = applySchema(
   const { eventId } = context
   if (!eventId) return null
 
+  // Get current event status before update
+  const currentEventResult = await getAdminEventById({ eventId })
+  const currentStatus = currentEventResult.success ? currentEventResult.data.event_status : null
+
   const result = await kysely
     .updateTable("events")
     .set({
@@ -229,7 +233,11 @@ export const updateEventStatus = applySchema(
     .where("id", "=", eventId)
     .execute()
 
-  if (result.length > 0 && values.event_status === "Completed") {
+  // Update demographics snapshot when:
+  // 1. Status is changing TO Completed, OR
+  // 2. Status is already Completed (to refresh demographics on save)
+  if (result.length > 0 && 
+      (values.event_status === "Completed" || currentStatus === "Completed")) {
     const demographicsResult = await getEventDemographicsById({ eventId })
     if (demographicsResult.success && demographicsResult.data) {
       const { storeEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
