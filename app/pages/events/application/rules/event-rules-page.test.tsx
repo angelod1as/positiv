@@ -5,20 +5,28 @@ import type { Route } from "./+types/event-rules-page"
 
 // Mock dependencies
 vi.mock("~/business/auth/auth.server", () => ({
-  getContext: vi.fn(),
+  getUserContext: vi.fn(),
+}))
+
+vi.mock("~/kysely", () => ({
+  kysely: {
+    selectFrom: vi.fn(),
+  },
 }))
 
 vi.mock("react-router", async (importOriginal) => {
-  const actual = await importOriginal() as any // eslint-disable-line @typescript-eslint/no-explicit-any
+  const actual = await importOriginal<typeof import("react-router")>()
   return {
     ...actual,
     redirect: vi.fn(),
   }
 })
 
-import { getContext } from "~/business/auth/auth.server"
+import { getUserContext } from "~/business/auth/auth.server"
+import { kysely } from "~/kysely"
 
-const mockGetContext = vi.mocked(getContext)
+const _mockGetUserContext = vi.mocked(getUserContext)
+const mockKysely = vi.mocked(kysely)
 const mockRedirect = vi.mocked(redirect)
 
 describe("event-rules-page loader", () => {
@@ -36,24 +44,15 @@ describe("event-rules-page loader", () => {
   })
 
   it("should redirect to dashboard if event not found", async () => {
-    const mockSupabase = {
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ data: null, error: null }),
-          }),
+    const mockSelectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          executeTakeFirst: vi.fn().mockResolvedValue(null),
         }),
       }),
-    }
+    })
 
-    mockGetContext.mockResolvedValue({ 
-      supabase: mockSupabase,
-      supabaseHeaders: new Headers(),
-      currentUser: null,
-      currentProfile: null,
-      isProdInDev: false,
-      host: "localhost"
-    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    mockKysely.selectFrom = mockSelectFrom
 
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
@@ -64,27 +63,15 @@ describe("event-rules-page loader", () => {
   })
 
   it("should return event type for regular event", async () => {
-    const mockSupabase = {
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ 
-              data: { event_type: "regular" }, 
-              error: null 
-            }),
-          }),
+    const mockSelectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          executeTakeFirst: vi.fn().mockResolvedValue({ event_type: "regular" }),
         }),
       }),
-    }
+    })
 
-    mockGetContext.mockResolvedValue({ 
-      supabase: mockSupabase,
-      supabaseHeaders: new Headers(),
-      currentUser: null,
-      currentProfile: null,
-      isProdInDev: false,
-      host: "localhost"
-    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    mockKysely.selectFrom = mockSelectFrom
 
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
@@ -92,33 +79,21 @@ describe("event-rules-page loader", () => {
     const result = await loader({ request: mockRequest, params: mockParams } as Route.LoaderArgs)
 
     expect(result).toEqual({ eventType: "regular" })
-    expect(mockSupabase.from).toHaveBeenCalledWith("events")
-    expect(mockSupabase.from().select).toHaveBeenCalledWith("event_type")
-    expect(mockSupabase.from().select().eq).toHaveBeenCalledWith("id", "123")
+    expect(mockSelectFrom).toHaveBeenCalledWith("events")
+    expect(mockSelectFrom().select).toHaveBeenCalledWith("event_type")
+    expect(mockSelectFrom().select().where).toHaveBeenCalledWith("id", "=", "123")
   })
 
   it("should return event type for bdsm event", async () => {
-    const mockSupabase = {
-      from: vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({ 
-              data: { event_type: "bdsm" }, 
-              error: null 
-            }),
-          }),
+    const mockSelectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          executeTakeFirst: vi.fn().mockResolvedValue({ event_type: "bdsm" }),
         }),
       }),
-    }
+    })
 
-    mockGetContext.mockResolvedValue({ 
-      supabase: mockSupabase,
-      supabaseHeaders: new Headers(),
-      currentUser: null,
-      currentProfile: null,
-      isProdInDev: false,
-      host: "localhost"
-    } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+    mockKysely.selectFrom = mockSelectFrom
 
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }

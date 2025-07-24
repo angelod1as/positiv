@@ -1,4 +1,6 @@
-export const getRulesFormQuestions = (eventType: "regular" | "bdsm") => ({
+import type { EventType } from "~types/database/entities.types"
+
+export const getRulesFormQuestions = (eventType: EventType) => ({
   "leave-no-trace": {
     question:
       "Sobre limpeza do ambiente e a responsabilidade dos pertences des participantes, é certo dizer:",
