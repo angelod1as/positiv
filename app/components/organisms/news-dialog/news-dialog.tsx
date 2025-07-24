@@ -2,16 +2,22 @@ import { BellDotIcon } from "lucide-react"
 import { useFetcher } from "react-router"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import { NEWS_VERSION } from "~/lib/helpers/constants"
-import { News } from "./news"
+import type { ProfileWithRoles } from "~/types/entities.types"
+import { News, type NewsItem } from "./news"
 
 export const NewsDialog = ({
   isThereAnyNews,
   isHeader,
+  currentProfile,
+  newsItems,
 }: {
   isThereAnyNews: boolean
   isHeader?: boolean
+  currentProfile?: ProfileWithRoles | null
+  newsItems?: NewsItem[]
 }) => {
   const fetcher = useFetcher()
+  const isAdmin = currentProfile?.is_admin ?? false
 
   const handleConfirm = (closeDialog: () => void) => {
     closeDialog()
@@ -27,7 +33,7 @@ export const NewsDialog = ({
 
   return (
     <ConfirmDialog
-      description={<News />}
+      description={<News newsItems={newsItems} isAdmin={isAdmin} />}
       title="News"
       onConfirm={handleConfirm}
       confirmLabel="Não mostrar isso novamente"
