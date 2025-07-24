@@ -47,10 +47,7 @@ export class RulesPOM {
     this.continueButton = this.page.getByRole("button", { name: "Continuar" })
     // Errors
     this.requiredError = this.page
-      .getByTestId("question")
-      .first()
-      .getByText("Resposta obrigatória", { exact: true })
-      .first()
+      .getByText("Há erros nas suas respostas", { exact: true })
 
     const sampleRadio = this.page.locator('div[data-testid="question"]', {
       hasText:
