@@ -28,7 +28,7 @@ SELECT
     'authenticated',                       -- Default audience
     'authenticated',                       -- Role for Auth system
     users_data.email,                      -- Email from defined test data
-    '$2a$10$PzqJBgPYGQ9Gn7bSd4BbreUK3y9KQrW8m4KYIjjl/dP1zA3F72IZG', -- Hashed 'test1234' password
+    extensions.crypt('test1234', extensions.gen_salt('bf')), -- Password hashing for 'test1234'
     current_timestamp,                     -- Email confirmed now
     current_timestamp,                     -- Recovery email sent now
     current_timestamp,                     -- Last sign-in set to now
@@ -41,19 +41,19 @@ SELECT
     '',                                    -- Empty email change token
     ''                                     -- Empty recovery token
 FROM (
-    -- Define 10 users: 1 admin and 9 standard users
+    -- Define 10 users: 1 admin and 9 standard users (all with password 'test1234')
     VALUES
-    ('admin@example.com', 'Admin@Example'), -- Admin user
-    ('user1@example.com', 'User1@Example'),
-    ('user2@example.com', 'User2@Example'),
-    ('user3@example.com', 'User3@Example'),
-    ('user4@example.com', 'User4@Example'),
-    ('user5@example.com', 'User5@Example'),
-    ('user6@example.com', 'User6@Example'),
-    ('user7@example.com', 'User7@Example'),
-    ('user8@example.com', 'User8@Example'),
-    ('user9@example.com', 'User9@Example')
-) AS users_data (email, raw_password); -- Alias for clarity
+    ('admin@example.com'),
+    ('user1@example.com'),
+    ('user2@example.com'),
+    ('user3@example.com'),
+    ('user4@example.com'),
+    ('user5@example.com'),
+    ('user6@example.com'),
+    ('user7@example.com'),
+    ('user8@example.com'),
+    ('user9@example.com')
+) AS users_data (email); -- All users have password 'test1234'
 
 -- Insert identities for the users in auth.identities
 INSERT INTO auth.identities (
