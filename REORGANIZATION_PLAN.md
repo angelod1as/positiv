@@ -62,8 +62,7 @@ All 10 phases have been successfully completed. The reorganization was done in t
 ### ✅ Phase 8: Form Organization
 - Created form subdirectories:
   - `base/` - Moved all remix-forms components here
-  - `custom/rules/` - Copied rules form components from pages
-  - `utils/` - Created for future form utilities
+  - `custom/rules/` - Moved rules form components from pages
 - Updated all form imports across the codebase
 - Fixed UI component imports in moved form files
 
@@ -80,103 +79,12 @@ All 10 phases have been successfully completed. The reorganization was done in t
 - Updated path references in documentation
 - All tests pass, lint passes, build succeeds
 
-## Components Still to Extract
-
-### 🔲 Empty Directories to Fill
-1. `app/components/pages/admin/` - Currently has only .gitkeep
-2. `app/components/pages/events/` - Currently has only .gitkeep
-3. `app/components/organisms/tables/common/` - Currently has only .gitkeep
-
-### 🔲 Phase 6: Email Templates
-- Create `app/components/email/` directory
-- Move email templates from `app/lib/email/templates/` to `app/components/email/`
-- Update imports in email sending logic
-- Structure:
-  ```
-  components/email/
-  ├── common/
-  │   ├── button.tsx
-  │   ├── footer.tsx
-  │   ├── header.tsx
-  │   └── wrapper.tsx
-  └── templates/
-      ├── application-email.tsx
-      └── reminder-email.tsx
-  ```
-
-### 🔲 Phase 7: Business Logic Reorganization
-- Create subdirectories in `app/business/admin/`:
-  - `events/` - Event management logic
-  - `participants/` - Participant management
-  - `demographics/` - Demographics utilities (move from utils/)
-  - `tables/` - Table-specific business logic
-- Move email business logic from `app/lib/` to `app/business/email/`
-- Create `app/business/common/` for shared business logic
-
-### 🔲 Phase 8: Form Organization
-- Create form subdirectories:
-  ```
-  components/forms/
-  ├── base/        # Current form components (for remix-forms)
-  ├── custom/      # Non-remix-forms components
-  │   └── rules/   # Rules form using react-hook-form
-  ├── admin/       # Admin-specific extensions (already exists)
-  └── utils/       # Form utilities
-  ```
-- Move rules form components from pages to forms/custom/rules/
-
-### 🔲 Phase 9: Documentation Reorganization
-- Reorganize docs/ structure:
-  ```
-  docs/
-  ├── architecture/
-  │   ├── decisions/   # Move ADRs here
-  │   └── patterns/    # Architectural patterns
-  ├── guides/
-  │   ├── development/
-  │   └── deployment/
-  └── api/
-  ```
-
-### 🔲 Phase 10: Final Cleanup
-- Remove all empty .gitkeep files from directories with content
-- Update CLAUDE.md with new project structure
-- Clean up any empty directories
-- Run final lint and test checks
-
-### 🔲 Components to Extract to pages/ directories
-
-#### Admin Page Components (`app/components/pages/admin/`)
-From `app/pages/admin/events/view-event-page/`:
-- buttons.tsx → `components/pages/admin/events/buttons.tsx`
-- dates-and-times.tsx → `components/pages/admin/events/dates-and-times.tsx`
-- demographics.tsx → `components/pages/admin/events/demographics.tsx`
-- event-status-form.tsx → `components/pages/admin/events/event-status-form.tsx`
-- general-data.tsx → `components/pages/admin/events/general-data.tsx`
-
-From `app/pages/admin/events/view-event-participant/`:
-- basic-data.tsx → `components/pages/admin/participants/basic-data.tsx`
-- participant-event-history.tsx → `components/pages/admin/participants/participant-event-history.tsx`
-- participant-vs-event-data.tsx → `components/pages/admin/participants/participant-vs-event-data.tsx`
-
-#### Event Page Components (`app/components/pages/events/`)
-From `app/pages/events/application/rules/`:
-- rules-dialog.tsx → `components/pages/events/rules/rules-dialog.tsx`
-- rules-text.tsx → `components/pages/events/rules/rules-text.tsx`
-
-From `app/pages/events/application/rules/rules-form/`:
-- multiple-select.tsx → `components/forms/custom/rules/multiple-select.tsx`
-- single-select.tsx → `components/forms/custom/rules/single-select.tsx`
-- rules-form-schema.tsx → `components/forms/custom/rules/rules-form-schema.tsx`
-- rules-questions.tsx → `components/forms/custom/rules/rules-questions.tsx`
-- shuffle-questions.ts → `components/forms/custom/rules/shuffle-questions.ts`
-
-From `app/pages/events/application/bdsm-consent/`:
-- event-bdsm-consent.tsx → `components/pages/events/bdsm-consent/event-bdsm-consent.tsx`
-
-## Future Work: Component Extraction
-
-The reorganization is complete, but there are still page-specific components that could be extracted to the `components/pages/` directories in a future task. These components are listed above and remain in their original locations for now.
+### ✅ Additional Work Completed
+1. Extracted admin page components to `app/components/pages/admin/`
+2. Extracted event page components to `app/components/pages/events/`
+3. Removed unnecessary empty directories
+4. Updated all imports and references
+5. Only one .gitkeep remains in `app/components/organisms/tables/common/`
 
 ## Git Commits Made So Far
 
