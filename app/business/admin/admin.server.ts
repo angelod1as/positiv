@@ -152,6 +152,41 @@ export const getEventParticipantHistoryById = composable(
   },
 )
 
+export const getParticipantFullEventHistory = composable(
+  async ({
+    profileId,
+    excludeEventId,
+  }: {
+    profileId: string
+    excludeEventId?: string
+  }): Promise<Array<ParticipantVsEvent & { time_event_start: string }>> => {
+    let query = kysely
+      .selectFrom("event_participants")
+      .innerJoin("events", "events.id", "event_participants.event_id")
+      .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+      .selectAll("event_participants")
+      .select([
+        "events.title as event_title",
+        "events.emoji as event_emoji",
+        "events.time_event_start as time_event_start",
+        "profiles.is_veteran as is_veteran",
+      ])
+      .where("event_participants.profile_id", "=", profileId)
+      .where("is_user_applied", "=", true)
+      .orderBy("events.time_event_start", "desc")
+
+    if (excludeEventId) {
+      query = query.where("event_participants.event_id", "!=", excludeEventId)
+    }
+
+    const results = await query.execute()
+    // Filter out results with null time_event_start since we need it for sorting
+    return results.filter((r): r is ParticipantVsEvent & { time_event_start: string } => 
+      r.time_event_start !== null
+    )
+  },
+)
+
 export const createOrUpdateEvent = applySchema(
   eventFormSchema,
   adminContextSchema,
