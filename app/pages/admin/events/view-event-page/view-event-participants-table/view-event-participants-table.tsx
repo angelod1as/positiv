@@ -16,7 +16,7 @@ import {
   NumberCellEditor,
   SelectCellEditor,
 } from "~/components/forms/admin"
-import { DataTable } from "~/components/organisms/data-table"
+import { DataTable } from "~/components/organisms/tables/base/data-table"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import {
   applicationStatusOptions,

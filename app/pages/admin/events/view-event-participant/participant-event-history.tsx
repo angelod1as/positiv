@@ -1,6 +1,6 @@
 import { Column } from "primereact/column"
 import { type FC } from "react"
-import { DataTable } from "~/components/organisms/data-table"
+import { DataTable } from "~/components/organisms/tables/base/data-table"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   applicationStatusOptions,
