@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { News, hasVisibleNews } from './news'
+import { News } from './news'
+import { hasVisibleNews } from './news-utils'
 
 interface NewsItem {
   id: string
