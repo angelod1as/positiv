@@ -25,7 +25,6 @@ import {
   updateEventDemographicsSchema,
   updateParticipantVsEventSchema,
 } from "./common"
-import { calculateDemographics } from "./utils/demographics"
 
 const {
   admin: { ADMIN_DASHBOARD },
@@ -232,20 +231,37 @@ export const updateEventStatus = applySchema(
 
   // Only create snapshot when status is changing TO Completed
   if (result.length > 0 && values.event_status === "Completed") {
-    const demographicsResult = await getEventDemographicsById({ eventId })
-    if (demographicsResult.success && demographicsResult.data) {
-      const { storeEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
-      const snapshotResult = await storeEventDemographicsSnapshot({
+    // Calculate demographics from database
+    const baseQuery = kysely
+      .selectFrom("event_participants")
+      .where("event_participants.event_id", "=", eventId)
+      .where("attendance_status", "=", "attended")
+
+    const participantsResult = await baseQuery
+      .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+      .select([
+        "profiles.date_of_birth",
+        "profiles.gender",
+        "profiles.is_veteran",
+        "profiles.orientation",
+        "profiles.where_lives",
+      ])
+      .execute()
+
+    const { calculateDemographics } = await import("./utils/demographics")
+    const demographics = calculateDemographics(participantsResult)
+    
+    const { upsertEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
+    const snapshotResult = await upsertEventDemographicsSnapshot({
+      eventId,
+      demographics,
+    })
+    
+    if (!snapshotResult.success) {
+      console.error("Failed to store demographics snapshot for event", {
         eventId,
-        demographics: demographicsResult.data,
+        errors: snapshotResult.errors,
       })
-      
-      if (!snapshotResult.success) {
-        console.error("Failed to store demographics snapshot for event", {
-          eventId,
-          errors: snapshotResult.errors,
-        })
-      }
     }
   }
 
@@ -265,21 +281,35 @@ export const updateEventDemographics = applySchema(
     throw new Error("Demographics can only be updated for completed events")
   }
 
-  // Calculate current demographics
-  const demographicsResult = await getEventDemographicsById({ eventId })
-  if (!demographicsResult.success || !demographicsResult.data) {
-    throw new Error("Failed to calculate demographics")
-  }
+  // Calculate current demographics from database
+  const baseQuery = kysely
+    .selectFrom("event_participants")
+    .where("event_participants.event_id", "=", eventId)
+    .where("attendance_status", "=", "attended")
 
-  // Store new snapshot
-  const { storeEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
-  const snapshotResult = await storeEventDemographicsSnapshot({
+  const result = await baseQuery
+    .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+    .select([
+      "profiles.date_of_birth",
+      "profiles.gender",
+      "profiles.is_veteran",
+      "profiles.orientation",
+      "profiles.where_lives",
+    ])
+    .execute()
+
+  const { calculateDemographics } = await import("./utils/demographics")
+  const demographics = calculateDemographics(result)
+
+  // Upsert the snapshot
+  const { upsertEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
+  const snapshotResult = await upsertEventDemographicsSnapshot({
     eventId,
-    demographics: demographicsResult.data,
+    demographics,
   })
   
   if (!snapshotResult.success) {
-    console.error("Failed to store demographics snapshot for event", {
+    console.error("Failed to upsert demographics snapshot for event", {
       eventId,
       errors: snapshotResult.errors,
     })
@@ -458,24 +488,7 @@ export const getEventDemographicsById = composable(
       return historicalResult.data
     }
 
-    const baseQuery = kysely
-      .selectFrom("event_participants")
-      .where("event_participants.event_id", "=", eventId)
-      .where("attendance_status", "=", "attended")
-
-    const result = await baseQuery
-      .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
-      .select([
-        "profiles.date_of_birth",
-        "profiles.gender",
-        "profiles.is_veteran",
-        "profiles.orientation",
-        "profiles.where_lives",
-      ])
-      .execute()
-
-    const demographics = calculateDemographics(result)
-    return demographics
+    return null
   },
 )
 
