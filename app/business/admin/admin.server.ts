@@ -4,8 +4,8 @@ import type { Params } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { kysely } from "~/kysely"
-import { formatReminderMail } from "~/lib/email/format-reminder-mail"
-import { sendEmail, type MailOptions } from "~/lib/email/send-email"
+import { formatReminderMail } from "~/business/email/format-reminder-mail"
+import { sendEmail, type MailOptions } from "~/business/email/send-email"
 import { chunkArray } from "~/lib/helpers/chunk-array"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
@@ -248,10 +248,10 @@ export const updateEventStatus = applySchema(
       ])
       .execute()
 
-    const { calculateDemographics } = await import("./utils/demographics")
+    const { calculateDemographics } = await import("./demographics/demographics")
     const demographics = calculateDemographics(participantsResult)
     
-    const { upsertEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
+    const { upsertEventDemographicsSnapshot } = await import("./demographics/demographics-history.server")
     const snapshotResult = await upsertEventDemographicsSnapshot({
       eventId,
       demographics,
@@ -298,11 +298,11 @@ export const updateEventDemographics = applySchema(
     ])
     .execute()
 
-  const { calculateDemographics } = await import("./utils/demographics")
+  const { calculateDemographics } = await import("./demographics/demographics")
   const demographics = calculateDemographics(result)
 
   // Upsert the snapshot
-  const { upsertEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
+  const { upsertEventDemographicsSnapshot } = await import("./demographics/demographics-history.server")
   const snapshotResult = await upsertEventDemographicsSnapshot({
     eventId,
     demographics,
@@ -481,7 +481,7 @@ export const getAdminReminderCountByEventId = composable(
 
 export const getEventDemographicsById = composable(
   async ({ eventId }: { eventId: string }) => {
-    const { getEventDemographicsHistory } = await import("./utils/demographics-history.server")
+    const { getEventDemographicsHistory } = await import("./demographics/demographics-history.server")
     const historicalResult = await getEventDemographicsHistory({ eventId })
     
     if (historicalResult.success && historicalResult.data) {
