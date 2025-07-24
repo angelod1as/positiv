@@ -199,7 +199,7 @@ describe('NewsDialog', () => {
       
       expect(mockSubmit).toHaveBeenCalledWith(
         {
-          newsVersion: '123456789',
+          newsVersion: '1753374084619',
           intent: 'news-update',
           thisUrl: 'http://localhost:3000/test',
         },
