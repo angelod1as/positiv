@@ -88,8 +88,8 @@ const ReminderEmail = ({ event }: ReminderEmailProps) => {
           </li>
           <li>
             Temos políticas de <b>entradas sociais</b> para pessoas trans,
-            negras, pardas, indígenas e em vulnerabilidade social. Se você é de
-            um desses grupos e gostaria de participar da festa, fale com Ju ou
+            negras, indígenas e em vulnerabilidade social. Se você é de um
+            desses grupos e gostaria de participar da festa, fale com Ju ou
             Angelo pelo nosso Whatsapp.
           </li>
         </ul>
