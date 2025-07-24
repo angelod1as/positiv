@@ -1,4 +1,4 @@
-import { GENDERS } from "~/lib/helpers/constants"
+import { GENDERS } from "~/lib/constants/constants"
 
 function isCisGender(gender: string): boolean {
   const lower = gender.toLowerCase()
