@@ -123,4 +123,5 @@ export type ParticipantVsEvent = EventParticipant & {
   event_title: Event["title"]
   event_emoji: Event["emoji"]
   is_veteran: Profile["is_veteran"]
+  approved_to_attend: Profile["approved_to_attend"]
 }
