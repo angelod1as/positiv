@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { News } from './news'
+import { News, hasVisibleNews } from './news'
 
 interface NewsItem {
   id: string
@@ -194,6 +194,76 @@ describe('News', () => {
       render(<News newsItems={newsItems} isAdmin={false} />)
       
       expect(screen.getByText(/há 1 dia/i)).toBeInTheDocument()
+    })
+  })
+  
+  describe('hasVisibleNews helper', () => {
+    it('should return false for regular user when only admin news exist', () => {
+      const adminOnlyNews: NewsItem[] = [
+        {
+          id: '1',
+          title: 'Admin only',
+          content: 'Admin content',
+          isAdmin: true,
+          createdAt: new Date(),
+          isActive: true,
+        },
+      ]
+      
+      expect(hasVisibleNews(false, adminOnlyNews)).toBe(false)
+    })
+    
+    it('should return true for admin user when only admin news exist', () => {
+      const adminOnlyNews: NewsItem[] = [
+        {
+          id: '1',
+          title: 'Admin only',
+          content: 'Admin content',
+          isAdmin: true,
+          createdAt: new Date(),
+          isActive: true,
+        },
+      ]
+      
+      expect(hasVisibleNews(true, adminOnlyNews)).toBe(true)
+    })
+    
+    it('should return true for regular user when regular news exist', () => {
+      const mixedNews: NewsItem[] = [
+        {
+          id: '1',
+          title: 'Regular news',
+          content: 'Regular content',
+          isAdmin: false,
+          createdAt: new Date(),
+          isActive: true,
+        },
+        {
+          id: '2',
+          title: 'Admin news',
+          content: 'Admin content',
+          isAdmin: true,
+          createdAt: new Date(),
+          isActive: true,
+        },
+      ]
+      
+      expect(hasVisibleNews(false, mixedNews)).toBe(true)
+    })
+    
+    it('should return false when all news are older than 2 weeks', () => {
+      const oldNews: NewsItem[] = [
+        {
+          id: '1',
+          title: 'Old news',
+          content: 'Old content',
+          isAdmin: false,
+          createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000), // 20 days ago
+          isActive: true,
+        },
+      ]
+      
+      expect(hasVisibleNews(false, oldNews)).toBe(false)
     })
   })
 })

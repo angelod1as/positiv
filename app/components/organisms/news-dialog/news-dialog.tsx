@@ -3,7 +3,7 @@ import { useFetcher } from "react-router"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import { NEWS_VERSION } from "~/lib/helpers/constants"
 import type { ProfileWithRoles } from "~types/entities.types"
-import { News } from "./news"
+import { News, hasVisibleNews } from "./news"
 
 export const NewsDialog = ({
   isThereAnyNews,
@@ -16,6 +16,10 @@ export const NewsDialog = ({
 }) => {
   const fetcher = useFetcher()
   const isAdmin = currentProfile?.is_admin ?? false
+  
+  // Check if user has any news they can actually see
+  const userHasVisibleNews = hasVisibleNews(isAdmin)
+  const shouldShowBell = isThereAnyNews && userHasVisibleNews
 
   const handleConfirm = (closeDialog: () => void) => {
     closeDialog()
@@ -37,7 +41,7 @@ export const NewsDialog = ({
       confirmLabel="Não mostrar isso novamente"
     >
       {isHeader ? (
-        isThereAnyNews && (
+        shouldShowBell && (
           <ConfirmDialog.Trigger variant="ghost">
             <BellDotIcon />
           </ConfirmDialog.Trigger>

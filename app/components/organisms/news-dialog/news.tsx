@@ -44,6 +44,12 @@ function filterAndSortNews(items: NewsItem[], isAdmin: boolean): NewsItem[] {
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 }
 
+// Export helper to check if user has visible news
+export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[] = DEFAULT_NEWS_ITEMS): boolean {
+  const filteredNews = filterAndSortNews(newsItems, isAdmin)
+  return filteredNews.length > 0
+}
+
 export const News = ({ newsItems = DEFAULT_NEWS_ITEMS, isAdmin = false }: NewsProps) => {
   const filteredNews = filterAndSortNews(newsItems, isAdmin)
   

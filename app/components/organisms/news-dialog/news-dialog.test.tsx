@@ -13,7 +13,6 @@ vi.mock('~/lib/helpers/constants', () => ({
   NEWS_VERSION: 123456789,
 }))
 
-
 vi.mock('./news', () => ({
   News: vi.fn(({ isAdmin }: { isAdmin: boolean }) => {
     const mockNewsItems = [
@@ -46,6 +45,7 @@ vi.mock('./news', () => ({
       </div>
     )
   }),
+  hasVisibleNews: vi.fn(() => true),
 }))
 
 describe('NewsDialog', () => {
@@ -76,6 +76,40 @@ describe('NewsDialog', () => {
       render(<NewsDialog isThereAnyNews={false} isHeader={true} currentProfile={null} />)
       
       expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    })
+    
+    it('should not show bell icon for regular user when only admin news exist', async () => {
+      const { hasVisibleNews } = await import('./news')
+      // Mock hasVisibleNews to return false for regular users
+      vi.mocked(hasVisibleNews).mockImplementation((isAdmin: boolean) => isAdmin)
+      
+      const regularProfile: ProfileWithRoles = {
+        id: '1',
+        email: 'user@test.com',
+        full_name: 'Regular User',
+        is_admin: false,
+        basic_data_filled: true,
+        social_name: null,
+        pronouns: null,
+        rg: null,
+        cpf: null,
+        phone: null,
+        date_of_birth: null,
+        gender: null,
+        orientation: null,
+        where_lives: null,
+        how_came_to_us: null,
+        rg_issuer: null,
+        allow_marketing_email: null,
+        created_at: '2024-01-01',
+      }
+      
+      render(<NewsDialog isThereAnyNews={true} isHeader={true} currentProfile={regularProfile} />)
+      
+      expect(screen.queryByRole('button')).not.toBeInTheDocument()
+      
+      // Reset mock to default behavior
+      vi.mocked(hasVisibleNews).mockImplementation(() => true)
     })
     
     it('should show footer link regardless of news status', () => {
