@@ -5,15 +5,15 @@ import { createMemoryRouter, RouterProvider } from "react-router"
 import ViewEventParticipant from "./view-event-participant"
 
 // Mock child components that might cause router issues
-vi.mock("./basic-data", () => ({
+vi.mock("~/components/pages/admin/participants/basic-data", () => ({
   BasicData: () => <div>Basic Data</div>,
 }))
 
-vi.mock("./participant-vs-event-data", () => ({
+vi.mock("~/components/pages/admin/participants/participant-vs-event-data", () => ({
   ParticipantVsEventData: () => <div>Participant Vs Event Data</div>,
 }))
 
-vi.mock("./participant-event-history", () => ({
+vi.mock("~/components/pages/admin/participants/participant-event-history", () => ({
   ParticipantEventHistory: ({ participantHistory }: { participantHistory: any[] }) => (
     <div>
       <h2>Histórico de Participações</h2>

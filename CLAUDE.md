@@ -84,13 +84,9 @@ pnpm email:test   # Start Mailhog for local email testing
   /business       - Core business logic modules
     /admin        - Admin-specific logic
       /demographics - Demographics calculations and history
-      /events     - Event management (empty)
-      /participants - Participant management (empty)
-      /tables     - Table-specific logic (empty)
     /auth         - Authentication flows
     /email        - Email formatting and sending
     /participant  - Participant-facing logic
-    /common       - Shared business logic (empty)
   /components     - React components (atomic design)
     /atoms        - Basic building blocks
     /forms        - Form components
@@ -106,8 +102,11 @@ pnpm email:test   # Start Mailhog for local email testing
         /common   - Common table components (empty)
     /pages        - Page-specific components
       /homepage   - Homepage components
-      /admin      - Admin page components (empty)
-      /events     - Event page components (empty)
+      /admin      - Admin page components
+        /events   - Event management components
+        /participants - Participant management components
+      /events     - Event page components
+        /rules    - Rules-related components
     /email        - Email templates
       /common     - Shared email components
       /templates  - Email templates
