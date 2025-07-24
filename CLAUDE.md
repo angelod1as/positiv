@@ -99,7 +99,6 @@ pnpm email:test   # Start Mailhog for local email testing
       /tables     - Table components
         /base     - Base data table
         /admin    - Admin-specific tables
-        /common   - Common table components (empty)
     /pages        - Page-specific components
       /homepage   - Homepage components
       /admin      - Admin page components
