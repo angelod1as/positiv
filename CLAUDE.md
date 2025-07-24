@@ -218,25 +218,25 @@ describe('Component', () => {
 
 ### Conventional Commit Style
 
-•⁠  ⁠Always run related tests before committing changes.
-•⁠  ⁠Follow [Conventional Commits](https://www.conventionalcommits.org/) specification
-•⁠  ⁠Commit message structure: ⁠ {type}(optional scope): {description}
-•⁠  ⁠Types include:
-
-- ⁠ feat ⁠: New feature
-- ⁠ fix ⁠: Bug fix
-- ⁠ docs ⁠: Documentation changes
-- ⁠ style ⁠: Code formatting, no logic change
-- ⁠ refactor ⁠: Code restructuring without changing behavior
-- ⁠ test ⁠: Adding or modifying tests
-- ⁠ chore ⁠: Maintenance tasks, dependency updates
-•⁠  ⁠Examples:
-- ⁠ feat(auth): add user registration flow ⁠
-- ⁠ fix(payments): resolve stripe webhook parsing error ⁠
-- ⁠ docs: update README with new setup instructions ⁠
-- ⁠ refactor(services): simplify user creation service ⁠
-•⁠  ⁠Use imperative mood for descriptions (e.g., "Add feature" not "Added feature")
-•⁠  ⁠Include breaking changes with ⁠ BREAKING CHANGE: ⁠ in footer when applicable
+- Always do minimal commits with detailed descriptions, so I can review the process commit by commit. Show me the commit plan when planning.
+- ⁠Always run related tests before committing changes.
+- ⁠Follow [Conventional Commits](https://www.conventionalcommits.org/) specification
+- ⁠Commit message structure: ⁠ {type}(optional scope): {description}
+- ⁠Types include:
+  - ⁠ feat ⁠: New feature
+  - ⁠ fix ⁠: Bug fix
+  - ⁠ docs ⁠: Documentation changes
+  - ⁠ style ⁠: Code formatting, no logic change
+  - ⁠ refactor ⁠: Code restructuring without changing behavior
+  - ⁠ test ⁠: Adding or modifying tests
+  - ⁠ chore ⁠: Maintenance tasks, dependency updates
+  - ⁠Examples:
+  - ⁠ feat(auth): add user registration flow ⁠
+  - ⁠ fix(payments): resolve stripe webhook parsing error ⁠
+  - ⁠ docs: update README with new setup instructions ⁠
+  - ⁠ refactor(services): simplify user creation service ⁠
+- ⁠Use imperative mood for descriptions (e.g., "Add feature" not "Added feature")
+- ⁠Include breaking changes with ⁠ BREAKING CHANGE: ⁠ in footer when applicable
 
 ## GitHub Workflow
 
