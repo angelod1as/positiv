@@ -3,7 +3,7 @@ import { redirectWithSuccess } from "remix-toast"
 import { forgotPassword, getContext } from "~/business/auth/auth.server"
 import { forgotPasswordSchema } from "~/business/common"
 import { Link } from "~/components/atoms/link/link"
-import { SchemaForm } from "~/components/forms/schema-form"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import {
   Card,
   CardContent,

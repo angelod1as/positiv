@@ -81,22 +81,47 @@ pnpm email:test   # Start Mailhog for local email testing
 
 ```sh
 /app
-  /business     - Core business logic modules
-    /admin      - Admin-specific logic and pages
-    /auth       - Authentication flows
-    /participant - Participant-facing logic
-  /components   - React components (atomic design)
-    /atoms      - Basic building blocks
-    /forms      - Form components
-    /molecules  - Composite components
-    /organisms  - Complex components
-    /ui         - ShadcN UI components
-  /lib          - Utilities and integrations
-    /email      - Email sending and templates
-    /helpers    - General utilities
-    /supabase   - Database client and types
-  /pages        - Application pages (follows route structure)
-  /types        - TypeScript type definitions
+  /business       - Core business logic modules
+    /admin        - Admin-specific logic
+      /demographics - Demographics calculations and history
+    /auth         - Authentication flows
+    /email        - Email formatting and sending
+    /participant  - Participant-facing logic
+  /components     - React components (atomic design)
+    /atoms        - Basic building blocks
+    /forms        - Form components
+      /base       - Remix-forms components
+      /custom     - Custom form implementations
+        /rules    - Rules form (react-hook-form)
+      /admin      - Admin-specific form components
+    /molecules    - Composite components
+    /organisms    - Complex components
+      /tables     - Table components
+        /base     - Base data table
+        /admin    - Admin-specific tables
+    /pages        - Page-specific components
+      /homepage   - Homepage components
+      /admin      - Admin page components
+        /events   - Event management components
+        /participants - Participant management components
+      /events     - Event page components
+        /rules    - Rules-related components
+    /email        - Email templates
+      /common     - Shared email components
+      /templates  - Email templates
+    /ui           - ShadcN UI components
+  /lib            - Utilities and integrations
+    /constants    - Application constants
+    /helpers      - General utilities
+    /hooks        - Custom React hooks
+    /supabase     - Database client and types
+  /pages          - Application pages (follows route structure)
+  /types          - TypeScript type definitions
+    /database     - Database-related types
+    /forms        - Form schemas and types
+    /api          - API types (empty)
+    /components   - Component prop types
+    /utils        - Utility types
 ```
 
 ### Key Architectural Patterns
@@ -105,11 +130,11 @@ pnpm email:test   # Start Mailhog for local email testing
 
 2. **Authentication**: Supabase Auth with SSR support. Auth state is managed through React Router's session handling.
 
-3. **Form Handling**: Consistent pattern using React Hook Form + Zod schemas. Forms are in `/app/components/forms`.
+3. **Form Handling**: Consistent pattern using React Hook Form + Zod schemas. Forms are organized in `/app/components/forms` with base components for remix-forms and custom implementations.
 
 4. **Email System**:
-   - Templates in `/app/lib/email/templates`
-   - Sending logic in `/app/lib/email/send.server.ts`
+   - Templates in `/app/components/email/templates`
+   - Sending logic in `/app/business/email/`
    - Local testing with Mailhog
 
 5. **Type Safety**: Strict TypeScript with database types generated from schema. Path aliases use `~/*` for `/app/*`.

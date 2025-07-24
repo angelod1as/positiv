@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 import { env } from "~/env.server"
-import type { Database } from "~types/database.types"
+import type { Database } from "~types/database/database.types"
 
 export const createSupabaseTestClient = async () => {
   const { viteSupabaseUrl, supabaseServiceRoleKey } = env()

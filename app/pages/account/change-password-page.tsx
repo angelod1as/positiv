@@ -6,7 +6,7 @@ import {
   getUserContext,
 } from "~/business/auth/auth.server"
 import { changePasswordSchema } from "~/business/common"
-import { SchemaForm } from "~/components/forms/schema-form"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/change-password-page"
 

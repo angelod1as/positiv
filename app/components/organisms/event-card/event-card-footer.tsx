@@ -6,7 +6,7 @@ import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import paths from "~/lib/paths"
-import type { EventStatus } from "~types/entities.types"
+import type { EventStatus } from "~types/database/entities.types"
 
 const {
   dash: {

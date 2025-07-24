@@ -3,7 +3,7 @@ import { redirectWithSuccess } from "remix-toast"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { basicDataSchema } from "~/business/common"
 import { basicData } from "~/business/participant/basic-data.server"
-import { SchemaForm } from "~/components/forms/schema-form"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/basic-data-page"
 
