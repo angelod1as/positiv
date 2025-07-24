@@ -4,8 +4,9 @@ import { useForm, type SubmitHandler } from "react-hook-form"
 import { Form, redirect, useLoaderData, useSubmit } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
-import { getContext } from "~/business/auth/auth.server"
+import { getUserContext } from "~/business/auth/auth.server"
 import { rulesSessionStorage } from "~/business/session.server"
+import { kysely } from "~/kysely"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/base/error"
 import {
@@ -38,13 +39,13 @@ export async function clientLoader({}: Route.ClientLoaderArgs) {}
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!params.id) return redirect(DASHBOARD)
   
-  const { supabase } = await getContext(request, params)
+  await getUserContext(request, params)
   
-  const { data: event } = await supabase
-    .from("events")
+  const event = await kysely
+    .selectFrom("events")
     .select("event_type")
-    .eq("id", params.id)
-    .single()
+    .where("id", "=", params.id)
+    .executeTakeFirst()
   
   if (!event) return redirect(DASHBOARD)
   

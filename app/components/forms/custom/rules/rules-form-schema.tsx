@@ -1,8 +1,9 @@
 import type { z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { getRulesFormQuestions } from "./rules-questions"
+import type { EventType } from "~types/database/entities.types"
 
-export const getRulesFormSchema = (eventType: "regular" | "bdsm") => {
+export const getRulesFormSchema = (eventType: EventType) => {
   const rulesFormQuestions = getRulesFormQuestions(eventType)
   
   return Object.entries(rulesFormQuestions).reduce(
