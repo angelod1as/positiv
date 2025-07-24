@@ -8,7 +8,7 @@ import type { Event } from "~types/database/entities.types"
 let mockFormValues: Record<string, unknown> = {}
 let mockSetValueCalls: Array<[string, unknown]> = []
 
-vi.mock("../schema-form", () => ({
+vi.mock("../base/schema-form", () => ({
   SchemaForm: ({ children, _schema, values, labels, options, descriptions, inputTypes }: {
     children: (props: {
       Field: React.FC<{ name: string }>
