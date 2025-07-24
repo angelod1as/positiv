@@ -87,6 +87,8 @@ describe("ParticipantEventHistory", () => {
     await waitFor(() => {
       const finalizadoElements = screen.getAllByText("Finalizado")
       expect(finalizadoElements).toHaveLength(2) // Both events have finalised status
+      const aprovadeElements = screen.getAllByText("Aprovade")
+      expect(aprovadeElements).toHaveLength(2) // Both events have approved status
       expect(screen.getByText("Compareceu")).toBeInTheDocument() // attended attendance status
       expect(screen.getByText("Não compareceu")).toBeInTheDocument() // not-attended attendance status
     })
@@ -136,6 +138,7 @@ describe("ParticipantEventHistory", () => {
     
     expect(screen.getByText("Evento")).toBeInTheDocument()
     expect(screen.getByText("Status de Inscrição")).toBeInTheDocument()
+    expect(screen.getByText("Status de Aprovação")).toBeInTheDocument()
     expect(screen.getByText("Comparecimento")).toBeInTheDocument()
     expect(screen.getByText("Notas do Admin")).toBeInTheDocument()
   })

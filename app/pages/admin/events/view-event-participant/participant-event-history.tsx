@@ -5,6 +5,7 @@ import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
+  approvedToAttendStatusOptions,
 } from "~/lib/helpers/propMaps"
 import type { ParticipantVsEvent } from "~types/entities.types"
 
@@ -41,6 +42,13 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
     return status?.name || rowData.attendance_status
   }
 
+  const approvalStatusBodyTemplate = (rowData: ParticipantVsEvent & { time_event_start: string }) => {
+    const status = approvedToAttendStatusOptions.find(
+      (opt) => opt.value === rowData.approved_to_attend
+    )
+    return status?.name || rowData.approved_to_attend
+  }
+
   return (
     <>
       <h2>Histórico de Participações</h2>
@@ -61,6 +69,12 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
           field="application_status"
           header="Status de Inscrição"
           body={applicationStatusBodyTemplate}
+          sortable
+        />
+        <Column
+          field="approved_to_attend"
+          header="Status de Aprovação"
+          body={approvalStatusBodyTemplate}
           sortable
         />
         <Column
