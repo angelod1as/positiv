@@ -1,4 +1,4 @@
-import { rulesFormQuestions } from "./rules-questions"
+import { getRulesFormQuestions } from "./rules-questions"
 
 const shuffleArray = <T>(array: T[]): T[] => {
   const shuffled = [...array]
@@ -9,7 +9,8 @@ const shuffleArray = <T>(array: T[]): T[] => {
   return shuffled
 }
 
-export const shuffleQuestions = () => {
+export const shuffleQuestions = (eventType: "regular" | "bdsm") => {
+  const rulesFormQuestions = getRulesFormQuestions(eventType)
   return shuffleArray(Object.entries(rulesFormQuestions)).map(
     ([name, question]) => {
       return {

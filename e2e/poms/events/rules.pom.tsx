@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page } from "@playwright/test"
 import { EVENT_PAGE_REGEXP } from "~/lib/constants/constants"
 import paths from "~/lib/paths"
-import { rulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
+import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 
 export class RulesPOM {
   readonly page: Page
@@ -140,6 +140,7 @@ export class RulesPOM {
   }
 
   async fillRulesForm() {
+    const rulesFormQuestions = getRulesFormQuestions("regular") // Default to regular for e2e tests
     for (const item of Object.values(rulesFormQuestions)) {
       const question = this.page.locator('div[data-testid="question"]', {
         hasText: item.question,
