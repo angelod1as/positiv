@@ -7,9 +7,9 @@ import {
   type Path,
 } from "react-hook-form"
 import { cn } from "~/lib/utils"
-import { Checkbox } from "../ui/checkbox"
-import { Input } from "../ui/input"
-import { Label } from "../ui/label"
+import { Checkbox } from "~/components/ui/checkbox"
+import { Input } from "~/components/ui/input"
+import { Label } from "~/components/ui/label"
 import { Error } from "./error"
 import { FormDescription } from "./form-description"
 
