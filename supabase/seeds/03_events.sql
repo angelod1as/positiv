@@ -75,16 +75,16 @@ VALUES
     '🙆',                     -- emoji
     'Registration Open',     -- event_status
     'regular',               -- event_type
-    now() + interval '4 months', -- time_event_start
-    now() + interval '4 months' + interval '4 hours', -- time_event_end
+    now() + interval '5 months', -- time_event_start (1 month after BDSM)
+    now() + interval '5 months' + interval '4 hours', -- time_event_end
     now() - interval '2 week', -- time_application_start
-    now() + interval '3 months', -- time_application_end
-    now() + interval '3 months' - interval '21 days',  -- time_interviews_start
-    now() + interval '4 months' + interval '4 hours',   -- time_interviews_end
-    now() + interval '4 months' - interval '7 days',   -- time_group_start
-    now() + interval '4 months' + interval '30 days',  -- time_group_end
-    now() + interval '4 months' - interval '21 days',  -- time_payment_start
-    now() + interval '4 months' - interval '9 days',   -- time_payment_end
+    now() + interval '4 months', -- time_application_end
+    now() + interval '4 months' - interval '21 days',  -- time_interviews_start
+    now() + interval '5 months' + interval '4 hours',   -- time_interviews_end
+    now() + interval '5 months' - interval '7 days',   -- time_group_start
+    now() + interval '5 months' + interval '30 days',  -- time_group_end
+    now() + interval '5 months' - interval '21 days',  -- time_payment_start
+    now() + interval '5 months' - interval '9 days',   -- time_payment_end
     25.00,                   -- ticket_price
     200                      -- total_spots
 ),
@@ -96,16 +96,16 @@ VALUES
     '🔒',                     -- emoji
     'Registration Open',     -- event_status
     'bdsm',                  -- event_type
-    now() + interval '2 months', -- time_event_start
-    now() + interval '2 months' + interval '5 hours', -- time_event_end
+    now() + interval '4 months', -- time_event_start (1 month after Abertas 1)
+    now() + interval '4 months' + interval '5 hours', -- time_event_end
     now() - interval '1 week', -- time_application_start
-    now() + interval '6 weeks', -- time_application_end
-    now() + interval '6 weeks' - interval '21 days',  -- time_interviews_start
-    now() + interval '2 months' + interval '5 hours',   -- time_interviews_end
-    now() + interval '2 months' - interval '7 days',   -- time_group_start
-    now() + interval '2 months' + interval '30 days',  -- time_group_end
-    now() + interval '2 months' - interval '21 days',  -- time_payment_start
-    now() + interval '2 months' - interval '9 days',   -- time_payment_end
+    now() + interval '14 weeks', -- time_application_end
+    now() + interval '14 weeks' - interval '21 days',  -- time_interviews_start
+    now() + interval '4 months' + interval '5 hours',   -- time_interviews_end
+    now() + interval '4 months' - interval '7 days',   -- time_group_start
+    now() + interval '4 months' + interval '30 days',  -- time_group_end
+    now() + interval '4 months' - interval '21 days',  -- time_payment_start
+    now() + interval '4 months' - interval '9 days',   -- time_payment_end
     150.00,                  -- ticket_price
     80                       -- total_spots
 ),
@@ -115,7 +115,7 @@ VALUES
     'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Sed vel lorem eu urna pretium vehicula non at urna. ', -- description
     '🤗',                     -- emoji
     'Registration Open',     -- event_status
-    'bdsm',                  -- event_type
+    'regular',               -- event_type
     now() + interval '3 months', -- time_event_start
     now() + interval '3 months' + interval '4 hours', -- time_event_end
     now() - interval '1 week', -- time_application_start
@@ -137,16 +137,16 @@ VALUES
     '😓',                     -- emoji
     'Registration Closed',   -- event_status
     'regular',               -- event_type
-    now() + interval '4 months', -- time_event_start
-    now() + interval '4 months' + interval '1 hour', -- time_event_end
+    now() + interval '6 months', -- time_event_start
+    now() + interval '6 months' + interval '1 hour', -- time_event_end
     now() - interval '2 months', -- time_application_start
     now() - interval '1 week', -- time_application_end
     now() - interval '1 week' - interval '21 days',  -- time_interviews_start
-    now() + interval '4 months' + interval '1 hour', -- time_interviews_end
-    now() + interval '4 months' - interval '7 days', -- time_group_start
-    now() + interval '4 months' + interval '30 days', -- time_group_end
-    now() + interval '4 months' - interval '21 days', -- time_payment_start
-    now() + interval '4 months' - interval '9 days',  -- time_payment_end
+    now() + interval '6 months' + interval '1 hour', -- time_interviews_end
+    now() + interval '6 months' - interval '7 days', -- time_group_start
+    now() + interval '6 months' + interval '30 days', -- time_group_end
+    now() + interval '6 months' - interval '21 days', -- time_payment_start
+    now() + interval '6 months' - interval '9 days',  -- time_payment_end
     15.00,                   -- ticket_price
     150                      -- total_spots
 ),
