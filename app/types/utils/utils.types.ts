@@ -1,8 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { FC, PropsWithChildren } from "react"
-import type { Database } from "./database.types"
-// import { SupabaseClient } from "@supabase/supabase-js"
-// import { Database } from "./database.types"
+import type { Database } from "../database/database.types"
 
 export type FCC<T = unknown> = FC<PropsWithChildren & T>
 export type NonNullableFields<T> = {

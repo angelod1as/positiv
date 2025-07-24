@@ -29,7 +29,7 @@
         "./app/*"
       ],
       "~types/*": [
-        "./types/*"
+        "./app/types/*"
       ]
     },
     "esModuleInterop": true,
