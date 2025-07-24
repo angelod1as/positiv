@@ -25,50 +25,10 @@ function getDaysAgo(days: number): Date {
 const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
     id: '1',
-    title: '🎉 Teste: Novidade para todos os usuários!',
-    content: 'Esta é uma notícia de teste que TODOS podem ver. Se você está vendo isso, o sistema de notícias está funcionando!',
-    isAdmin: false,
+    title: '🔔 Sistema de notificações melhorado (Admin)',
+    content: 'O sistema de notícias agora tem visualizações diferenciadas! Administradores podem ver atualizações técnicas exclusivas marcadas com "(Admin)" no título. As notícias antigas são removidas automaticamente após 2 semanas.',
+    isAdmin: true,
     createdAt: getDaysAgo(0), // Today
-    isActive: true,
-  },
-  {
-    id: '2',
-    title: '🔧 Teste: Notícia só para administradores',
-    content: 'Esta notícia é EXCLUSIVA para administradores. Se você não é admin e está vendo isso, algo está errado!',
-    isAdmin: true,
-    createdAt: getDaysAgo(1), // Yesterday
-    isActive: true,
-  },
-  {
-    id: '3',
-    title: '📊 Nova funcionalidade de exportação',
-    content: 'Agora você pode exportar relatórios de participantes em formato Excel clicando no botão "Exportar" na página do evento.',
-    isAdmin: false,
-    createdAt: getDaysAgo(2), // 2 days ago
-    isActive: true,
-  },
-  {
-    id: '4',
-    title: '🛠️ Dashboard de métricas (Admin)',
-    content: 'Administradores agora têm acesso a um novo dashboard com métricas detalhadas sobre eventos, participantes e tendências de inscrição.',
-    isAdmin: true,
-    createdAt: getDaysAgo(3), // 3 days ago
-    isActive: true,
-  },
-  {
-    id: '5',
-    title: '✨ Melhorias no sistema de inscrições',
-    content: 'O formulário de inscrição agora salva automaticamente seu progresso. Se você sair da página, pode continuar de onde parou!',
-    isAdmin: false,
-    createdAt: getDaysAgo(5), // 5 days ago
-    isActive: true,
-  },
-  {
-    id: '6',
-    title: '🔒 Ferramenta de moderação (Admin)',
-    content: 'Nova interface para aprovar ou rejeitar inscrições em lote, com filtros avançados e busca por nome ou e-mail.',
-    isAdmin: true,
-    createdAt: getDaysAgo(10), // 10 days ago
     isActive: true,
   },
 ]
