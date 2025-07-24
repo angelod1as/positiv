@@ -1,7 +1,7 @@
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
 import nodemailer from "nodemailer"
 import { env } from "~/env.server"
-import { isProd } from "../helpers/is-prod.server"
+import { isProd } from "~/lib/helpers/is-prod.server"
 
 const { awsAccessKeyId, awsSecretAccessKey } = env()
 

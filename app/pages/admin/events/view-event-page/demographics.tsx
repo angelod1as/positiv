@@ -1,6 +1,6 @@
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
-import type { Demographics } from "~/business/admin/utils/demographics"
+import type { Demographics } from "~/business/admin/demographics/demographics"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { Button } from "~/components/ui/button"
 
