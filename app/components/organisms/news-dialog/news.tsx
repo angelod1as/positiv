@@ -15,45 +15,60 @@ interface NewsProps {
   isAdmin?: boolean
 }
 
+// Helper function to get date relative to today
+function getDaysAgo(days: number): Date {
+  const date = new Date()
+  date.setDate(date.getDate() - days)
+  return date
+}
+
 const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
     id: '1',
-    title: 'Nova funcionalidade de exportação',
-    content: 'Agora você pode exportar relatórios de participantes em formato Excel clicando no botão "Exportar" na página do evento.',
+    title: '🎉 Teste: Novidade para todos os usuários!',
+    content: 'Esta é uma notícia de teste que TODOS podem ver. Se você está vendo isso, o sistema de notícias está funcionando!',
     isAdmin: false,
-    createdAt: new Date('2025-01-22'),
+    createdAt: getDaysAgo(0), // Today
     isActive: true,
   },
   {
     id: '2',
-    title: 'Melhorias no sistema de inscrições',
-    content: 'O formulário de inscrição agora salva automaticamente seu progresso. Se você sair da página, pode continuar de onde parou!',
-    isAdmin: false,
-    createdAt: new Date('2025-01-20'),
+    title: '🔧 Teste: Notícia só para administradores',
+    content: 'Esta notícia é EXCLUSIVA para administradores. Se você não é admin e está vendo isso, algo está errado!',
+    isAdmin: true,
+    createdAt: getDaysAgo(1), // Yesterday
     isActive: true,
   },
   {
     id: '3',
-    title: 'Novo dashboard de métricas',
-    content: 'Administradores agora têm acesso a um novo dashboard com métricas detalhadas sobre eventos, participantes e tendências de inscrição.',
-    isAdmin: true,
-    createdAt: new Date('2025-01-19'),
+    title: '📊 Nova funcionalidade de exportação',
+    content: 'Agora você pode exportar relatórios de participantes em formato Excel clicando no botão "Exportar" na página do evento.',
+    isAdmin: false,
+    createdAt: getDaysAgo(2), // 2 days ago
     isActive: true,
   },
   {
     id: '4',
-    title: 'Sistema de notificações melhorado',
-    content: 'Correções no envio de e-mails garantem que você receba todas as notificações importantes sobre seus eventos.',
-    isAdmin: false,
-    createdAt: new Date('2025-01-15'),
+    title: '🛠️ Dashboard de métricas (Admin)',
+    content: 'Administradores agora têm acesso a um novo dashboard com métricas detalhadas sobre eventos, participantes e tendências de inscrição.',
+    isAdmin: true,
+    createdAt: getDaysAgo(3), // 3 days ago
     isActive: true,
   },
   {
     id: '5',
-    title: 'Ferramenta de moderação de inscrições',
+    title: '✨ Melhorias no sistema de inscrições',
+    content: 'O formulário de inscrição agora salva automaticamente seu progresso. Se você sair da página, pode continuar de onde parou!',
+    isAdmin: false,
+    createdAt: getDaysAgo(5), // 5 days ago
+    isActive: true,
+  },
+  {
+    id: '6',
+    title: '🔒 Ferramenta de moderação (Admin)',
     content: 'Nova interface para aprovar ou rejeitar inscrições em lote, com filtros avançados e busca por nome ou e-mail.',
     isAdmin: true,
-    createdAt: new Date('2025-01-10'),
+    createdAt: getDaysAgo(10), // 10 days ago
     isActive: true,
   },
 ]
@@ -74,9 +89,9 @@ export const News = ({ newsItems = DEFAULT_NEWS_ITEMS, isAdmin = false }: NewsPr
   
   if (filteredNews.length === 0) {
     return (
-      <div className="space-y-4 [&>div]:space-y-2">
-        <h3>O que há de novo</h3>
-        <div>
+      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+        <h3 className="sticky top-0 bg-background pb-2">O que há de novo</h3>
+        <div className="space-y-2">
           <h4>Olha! Um aviso!</h4>
           <p>
             Através dele você poderá saber sobre as atualizações, resoluções de
@@ -98,20 +113,22 @@ export const News = ({ newsItems = DEFAULT_NEWS_ITEMS, isAdmin = false }: NewsPr
   }
   
   return (
-    <div className="space-y-4">
-      <h3>O que há de novo</h3>
-      {filteredNews.map((item) => (
-        <div key={item.id} className="space-y-2">
-          <h4>{item.title}</h4>
-          <p>{item.content}</p>
-          <p className="text-sm text-muted-foreground">
-            {formatDistanceToNow(item.createdAt, { 
-              addSuffix: true,
-              locale: ptBR 
-            })}
-          </p>
-        </div>
-      ))}
+    <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+      <h3 className="sticky top-0 bg-background pb-2">O que há de novo</h3>
+      <div className="space-y-4">
+        {filteredNews.map((item) => (
+          <div key={item.id} className="space-y-2 pb-2 border-b last:border-0">
+            <h4>{item.title}</h4>
+            <p>{item.content}</p>
+            <p className="text-sm text-muted-foreground">
+              {formatDistanceToNow(item.createdAt, { 
+                addSuffix: true,
+                locale: ptBR 
+              })}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
