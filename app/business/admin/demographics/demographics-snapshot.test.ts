@@ -8,7 +8,7 @@ describe("Demographics Snapshot Error Handling", () => {
     // by checking that errors are caught and don't break the flow
     
     // Test that the implementation uses composable patterns
-    const { storeEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
+    const { storeEventDemographicsSnapshot } = await import("./demographics-history.server")
     
     // The function should be a composable that returns Result
     expect(typeof storeEventDemographicsSnapshot).toBe("function")
@@ -23,7 +23,7 @@ describe("Demographics Snapshot Error Handling", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
     
     // Import and check the updateEventStatus implementation
-    await import("./admin.server")
+    await import("../admin.server")
     
     // The test passes if the code includes error logging
     // We're not testing the full flow, just that the pattern is implemented
@@ -35,7 +35,7 @@ describe("Demographics Snapshot Error Handling", () => {
     // This test verifies that there's a dedicated function for updating demographics
     // instead of automatically updating on every save
     
-    const module = await import("./admin.server")
+    const module = await import("../admin.server")
     
     // Verify the manual update function exists
     expect(module.updateEventDemographics).toBeDefined()
