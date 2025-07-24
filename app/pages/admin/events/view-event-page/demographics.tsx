@@ -1,17 +1,42 @@
 import type { FC } from "react"
+import type { FetcherWithComponents } from "react-router"
 import type { Demographics } from "~/business/admin/utils/demographics"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import { Button } from "~/components/ui/button"
 
 type DemographicsProps = {
   demographics: Demographics
+  fetcher?: FetcherWithComponents<unknown>
+  eventId?: string
 }
 export const DemographicsData: FC<DemographicsProps> = ({
   demographics,
+  fetcher,
+  eventId,
 }: DemographicsProps) => {
   const { total, veteran, gender, age, orientation } = demographics
+  
+  const isUpdating = fetcher?.state === "submitting" && 
+    fetcher?.formData?.get("intent") === "update-demographics"
+  
   return (
     <>
-      <h2>Demographics</h2>
+      <div className="flex items-center justify-between">
+        <h2>Demographics</h2>
+        {fetcher && eventId && (
+          <fetcher.Form method="post">
+            <input type="hidden" name="intent" value="update-demographics" />
+            <Button 
+              type="submit" 
+              variant="secondary"
+              size="sm"
+              disabled={isUpdating}
+            >
+              {isUpdating ? "Atualizando..." : "Atualizar Demografia"}
+            </Button>
+          </fetcher.Form>
+        )}
+      </div>
       <div className="flex flex-col gap-4 sm:grid sm:grid-cols-4">
         <div>
           <h4>Geral</h4>

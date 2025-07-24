@@ -22,6 +22,7 @@ import {
   sendEventRemindersSchema,
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
+  updateEventDemographicsSchema,
   updateParticipantVsEventSchema,
 } from "./common"
 import { calculateDemographics } from "./utils/demographics"
@@ -221,10 +222,6 @@ export const updateEventStatus = applySchema(
   const { eventId } = context
   if (!eventId) return null
 
-  // Get current event status before update
-  const currentEventResult = await getAdminEventById({ eventId })
-  const currentStatus = currentEventResult.success ? currentEventResult.data.event_status : null
-
   const result = await kysely
     .updateTable("events")
     .set({
@@ -233,11 +230,8 @@ export const updateEventStatus = applySchema(
     .where("id", "=", eventId)
     .execute()
 
-  // Update demographics snapshot when:
-  // 1. Status is changing TO Completed, OR
-  // 2. Status is already Completed (to refresh demographics on save)
-  if (result.length > 0 && 
-      (values.event_status === "Completed" || currentStatus === "Completed")) {
+  // Only create snapshot when status is changing TO Completed
+  if (result.length > 0 && values.event_status === "Completed") {
     const demographicsResult = await getEventDemographicsById({ eventId })
     if (demographicsResult.success && demographicsResult.data) {
       const { storeEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
@@ -256,6 +250,43 @@ export const updateEventStatus = applySchema(
   }
 
   return result.length > 0
+})
+
+export const updateEventDemographics = applySchema(
+  updateEventDemographicsSchema,
+  adminContextSchema,
+)(async (_values, context) => {
+  const { eventId } = context
+  if (!eventId) return null
+
+  // Check if event is completed
+  const eventResult = await getAdminEventById({ eventId })
+  if (!eventResult.success || eventResult.data.event_status !== "Completed") {
+    throw new Error("Demographics can only be updated for completed events")
+  }
+
+  // Calculate current demographics
+  const demographicsResult = await getEventDemographicsById({ eventId })
+  if (!demographicsResult.success || !demographicsResult.data) {
+    throw new Error("Failed to calculate demographics")
+  }
+
+  // Store new snapshot
+  const { storeEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
+  const snapshotResult = await storeEventDemographicsSnapshot({
+    eventId,
+    demographics: demographicsResult.data,
+  })
+  
+  if (!snapshotResult.success) {
+    console.error("Failed to store demographics snapshot for event", {
+      eventId,
+      errors: snapshotResult.errors,
+    })
+    throw new Error("Failed to update demographics snapshot")
+  }
+
+  return snapshotResult.data
 })
 
 const getEventRemindersByEventId = composable(
