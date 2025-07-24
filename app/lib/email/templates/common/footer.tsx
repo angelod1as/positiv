@@ -1,5 +1,5 @@
 import { Hr, Link, Section, Text } from "@react-email/components"
-import { POSITIV_URL } from "~/lib/helpers/constants"
+import { POSITIV_URL } from "~/lib/constants/constants"
 
 export const EmailFooter = () => {
   return (

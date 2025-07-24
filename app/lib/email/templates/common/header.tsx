@@ -1,5 +1,5 @@
 import { Img, Section } from "@react-email/components"
-import { POSITIV_URL } from "~/lib/helpers/constants"
+import { POSITIV_URL } from "~/lib/constants/constants"
 
 const logo = `${POSITIV_URL}positiv-logo-colors.png`
 

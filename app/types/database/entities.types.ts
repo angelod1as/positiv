@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import type { Selectable } from "kysely"
 import { currentProfileSchema } from "~/business/common"
-import type { GENDERS, ORIENTATIONS, PRONOUNS } from "~/lib/helpers/constants"
+import type { GENDERS, ORIENTATIONS, PRONOUNS } from "~/lib/constants/constants"
 import type { Database } from "./database.types"
 
 // TODO: POS-136 selectable, insertable, updateable types

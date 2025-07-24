@@ -6,7 +6,7 @@ import {
   Section,
   Text,
 } from "@react-email/components"
-import { POSITIV_URL } from "~/lib/helpers/constants"
+import { POSITIV_URL } from "~/lib/constants/constants"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ViewEvent } from "~types/entities.types"
 import { EmailButton } from "../common/button"
