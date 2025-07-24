@@ -31,22 +31,17 @@ describe("Demographics Snapshot Error Handling", () => {
     consoleErrorSpy.mockRestore()
   }, 10000)
   
-  it("should update demographics snapshot when saving an already completed event", async () => {
-    // This test verifies that demographics are refreshed when we save
-    // an event that is already in Completed status
-    
-    // The updateEventStatus function should:
-    // 1. Check the current status
-    // 2. If already Completed and saving as Completed, still update snapshot
+  it("should have a separate function to manually update demographics", async () => {
+    // This test verifies that there's a dedicated function for updating demographics
+    // instead of automatically updating on every save
     
     const module = await import("./admin.server")
     
-    // Verify the function exists
-    expect(module.updateEventStatus).toBeDefined()
-    expect(typeof module.updateEventStatus).toBe("function")
+    // Verify the manual update function exists
+    expect(module.updateEventDemographics).toBeDefined()
+    expect(typeof module.updateEventDemographics).toBe("function")
     
-    // The implementation should handle both cases:
-    // - Status changing TO Completed
-    // - Status already IS Completed (refresh case)
+    // The updateEventStatus should only create snapshot when changing TO Completed
+    // Manual updates should be done through updateEventDemographics
   })
 })

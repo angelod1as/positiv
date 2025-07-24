@@ -36,6 +36,10 @@ export const sendToast = (fetcherData: ComposableFetcherData) => {
     return toast.success("Status atualizado com sucesso")
   }
 
+  if (fetcherData.intent === "update-demographics") {
+    return toast.success("Demografia atualizada com sucesso")
+  }
+
   return toast.info(
     "A função foi executada mas não há um intent configurado para mostrar uma mensagem compatível",
   )
