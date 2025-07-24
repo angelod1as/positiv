@@ -197,7 +197,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
-      <Footer isThereAnyNews={isThereAnyNews ?? false} />
+      <Footer isThereAnyNews={isThereAnyNews ?? false} currentProfile={currentProfile} />
     </>
   )
 }
@@ -253,7 +253,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           )}
         </div>
       </main>
-      <Footer isThereAnyNews={false} />
+      <Footer isThereAnyNews={false} currentProfile={null} />
     </div>
   )
 }
