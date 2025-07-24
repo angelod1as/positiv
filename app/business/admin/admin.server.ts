@@ -229,6 +229,24 @@ export const updateEventStatus = applySchema(
     .where("id", "=", eventId)
     .execute()
 
+  if (result.length > 0 && values.event_status === "Completed") {
+    const demographicsResult = await getEventDemographicsById({ eventId })
+    if (demographicsResult.success && demographicsResult.data) {
+      const { storeEventDemographicsSnapshot } = await import("./utils/demographics-history.server")
+      const snapshotResult = await storeEventDemographicsSnapshot({
+        eventId,
+        demographics: demographicsResult.data,
+      })
+      
+      if (!snapshotResult.success) {
+        console.error("Failed to store demographics snapshot for event", {
+          eventId,
+          errors: snapshotResult.errors,
+        })
+      }
+    }
+  }
+
   return result.length > 0
 })
 
@@ -394,6 +412,13 @@ export const getAdminReminderCountByEventId = composable(
 
 export const getEventDemographicsById = composable(
   async ({ eventId }: { eventId: string }) => {
+    const { getEventDemographicsHistory } = await import("./utils/demographics-history.server")
+    const historicalResult = await getEventDemographicsHistory({ eventId })
+    
+    if (historicalResult.success && historicalResult.data) {
+      return historicalResult.data
+    }
+
     const baseQuery = kysely
       .selectFrom("event_participants")
       .where("event_participants.event_id", "=", eventId)
