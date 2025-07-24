@@ -2,7 +2,7 @@ import { BellDotIcon } from "lucide-react"
 import { useFetcher } from "react-router"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import { NEWS_VERSION } from "~/lib/helpers/constants"
-import type { ProfileWithRoles } from "~/types/entities.types"
+import type { ProfileWithRoles } from "~types/entities.types"
 import { News, type NewsItem } from "./news"
 
 export const NewsDialog = ({

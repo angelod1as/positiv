@@ -1,9 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useFetcher } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
-import { NEWS_VERSION } from '~/lib/helpers/constants'
-import type { ProfileWithRoles } from '~/types/entities.types'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ProfileWithRoles } from '~types/entities.types'
 import { NewsDialog } from './news-dialog'
 import type { NewsItem } from './news'
 
@@ -57,7 +56,7 @@ describe('NewsDialog', () => {
     vi.clearAllMocks()
     vi.mocked(useFetcher).mockReturnValue({
       submit: mockSubmit,
-    } as any)
+    } as unknown as ReturnType<typeof useFetcher>)
     
     Object.defineProperty(window, 'location', {
       value: { href: 'http://localhost:3000/test' },
