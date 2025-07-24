@@ -4,7 +4,6 @@ import { useFetcher } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProfileWithRoles } from '~types/entities.types'
 import { NewsDialog } from './news-dialog'
-import type { NewsItem } from './news'
 
 vi.mock('react-router', () => ({
   useFetcher: vi.fn(),
@@ -14,28 +13,28 @@ vi.mock('~/lib/helpers/constants', () => ({
   NEWS_VERSION: 123456789,
 }))
 
-const mockNewsItems: NewsItem[] = [
-  {
-    id: '1',
-    title: 'Regular Feature Update',
-    content: 'Now you can export reports in PDF format',
-    isAdmin: false,
-    createdAt: new Date(),
-    isActive: true,
-  },
-  {
-    id: '2',
-    title: 'Admin-Only Update',
-    content: 'New dashboard metrics are available for monitoring',
-    isAdmin: true,
-    createdAt: new Date(),
-    isActive: true,
-  },
-]
 
 vi.mock('./news', () => ({
-  News: vi.fn(({ newsItems, isAdmin }: { newsItems: NewsItem[], isAdmin: boolean }) => {
-    const filtered = newsItems.filter(item => !item.isAdmin || isAdmin)
+  News: vi.fn(({ isAdmin }: { isAdmin: boolean }) => {
+    const mockNewsItems = [
+      {
+        id: '1',
+        title: 'Regular Feature Update',
+        content: 'Now you can export reports in PDF format',
+        isAdmin: false,
+        createdAt: new Date(),
+        isActive: true,
+      },
+      {
+        id: '2',
+        title: 'Admin-Only Update',
+        content: 'New dashboard metrics are available for monitoring',
+        isAdmin: true,
+        createdAt: new Date(),
+        isActive: true,
+      },
+    ]
+    const filtered = mockNewsItems.filter(item => !item.isAdmin || isAdmin)
     return (
       <div>
         {filtered.map(item => (
@@ -66,7 +65,7 @@ describe('NewsDialog', () => {
   
   describe('Dialog visibility based on NEWS_VERSION', () => {
     it('should show bell icon in header when there is news', () => {
-      render(<NewsDialog isThereAnyNews={true} isHeader={true} currentProfile={null} newsItems={mockNewsItems} />)
+      render(<NewsDialog isThereAnyNews={true} isHeader={true} currentProfile={null} />)
       
       const button = screen.getByRole('button')
       expect(button).toBeInTheDocument()
@@ -74,13 +73,13 @@ describe('NewsDialog', () => {
     })
     
     it('should not show bell icon in header when there is no news', () => {
-      render(<NewsDialog isThereAnyNews={false} isHeader={true} currentProfile={null} newsItems={mockNewsItems} />)
+      render(<NewsDialog isThereAnyNews={false} isHeader={true} currentProfile={null} />)
       
       expect(screen.queryByRole('button')).not.toBeInTheDocument()
     })
     
     it('should show footer link regardless of news status', () => {
-      render(<NewsDialog isThereAnyNews={false} isHeader={false} currentProfile={null} newsItems={mockNewsItems} />)
+      render(<NewsDialog isThereAnyNews={false} isHeader={false} currentProfile={null} />)
       
       expect(screen.getByText('Veja as novidades do site')).toBeInTheDocument()
     })
@@ -109,7 +108,7 @@ describe('NewsDialog', () => {
         created_at: '2024-01-01',
       }
       
-      render(<NewsDialog isThereAnyNews={true} isHeader={false} currentProfile={regularProfile} newsItems={mockNewsItems} />)
+      render(<NewsDialog isThereAnyNews={true} isHeader={false} currentProfile={regularProfile} />)
       
       const user = userEvent.setup()
       await user.click(screen.getByText('Veja as novidades do site'))
@@ -140,7 +139,7 @@ describe('NewsDialog', () => {
         created_at: '2024-01-01',
       }
       
-      render(<NewsDialog isThereAnyNews={true} isHeader={false} currentProfile={adminProfile} newsItems={mockNewsItems} />)
+      render(<NewsDialog isThereAnyNews={true} isHeader={false} currentProfile={adminProfile} />)
       
       const user = userEvent.setup()
       await user.click(screen.getByText('Veja as novidades do site'))
@@ -152,7 +151,7 @@ describe('NewsDialog', () => {
   
   describe('User interaction', () => {
     it('should submit form when clicking "don\'t show again"', async () => {
-      render(<NewsDialog isThereAnyNews={true} isHeader={false} currentProfile={null} newsItems={mockNewsItems} />)
+      render(<NewsDialog isThereAnyNews={true} isHeader={false} currentProfile={null} />)
       
       const user = userEvent.setup()
       await user.click(screen.getByText('Veja as novidades do site'))
