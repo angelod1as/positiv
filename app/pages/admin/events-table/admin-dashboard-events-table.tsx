@@ -7,7 +7,7 @@ import {
 import { Dropdown } from "primereact/dropdown"
 import { type FC } from "react"
 import { Button } from "~/components/atoms/button/button"
-import { DataTable } from "~/components/organisms/data-table"
+import { DataTable } from "~/components/organisms/tables/base/data-table"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { eventPropNameMap, eventStatusMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
