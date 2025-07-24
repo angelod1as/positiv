@@ -4,7 +4,7 @@
 import { formatISO } from "date-fns"
 import { fromZonedTime } from "date-fns-tz"
 import { format } from "date-fns/format"
-import type { EventStatus } from "~types/entities.types"
+import type { EventStatus } from "~types/database/entities.types"
 import { dateRegex, dateTimeFormat } from "../utils"
 
 type Primitive = string | number | EventStatus | boolean | Date

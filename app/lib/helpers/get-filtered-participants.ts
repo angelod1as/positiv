@@ -3,7 +3,7 @@ import {
   type ParticipantApplicationStatus,
   type ParticipantAttendanceStatus,
   type ProfileApprovedToAttendStatus,
-} from "~types/entities.types"
+} from "~types/database/entities.types"
 
 export const getWillGoToEventParticipants = (
   participants: ProfileWithExtraData[],

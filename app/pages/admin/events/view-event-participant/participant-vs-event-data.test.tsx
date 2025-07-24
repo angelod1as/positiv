@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
-import type { ParticipantVsEvent } from "~types/entities.types"
+import type { ParticipantVsEvent } from "~types/database/entities.types"
 import type { ReactNode } from "react"
 
 // Mock the SchemaForm component

@@ -8,7 +8,7 @@ import { getWillGoToEventParticipants } from "~/lib/helpers/get-filtered-partici
 import { mapToString } from "~/lib/helpers/map-string-array-to-string"
 import { eventParticipantPropMap, profilePropMap } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
-import type { EventParticipant, Profile } from "~types/entities.types"
+import type { EventParticipant, Profile } from "~types/database/entities.types"
 import type { Route } from "./+types/download-data"
 
 const {

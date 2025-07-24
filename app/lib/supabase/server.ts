@@ -3,8 +3,8 @@ import {
   parseCookieHeader,
   serializeCookieHeader,
 } from "@supabase/ssr"
-import type { Database } from "~types/database.types"
-import type { DBClient } from "~types/utils.types"
+import type { Database } from "~types/database/database.types"
+import type { DBClient } from "~types/utils/utils.types"
 
 const { VITE_SUPABASE_URL = "", VITE_SUPABASE_ANON_KEY = "" } = import.meta.env
 

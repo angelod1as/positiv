@@ -1,5 +1,5 @@
 import React, { type ReactElement } from "react"
-import type { FCC } from "~types/utils.types"
+import type { FCC } from "~types/utils/utils.types"
 
 type AboutCardProps = {
   title: string

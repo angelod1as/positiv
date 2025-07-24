@@ -27,7 +27,7 @@ import {
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
-import type { ComposableFetcherData } from "~types/entities.types"
+import type { ComposableFetcherData } from "~types/database/entities.types"
 import { countParticipants } from "./count-participants"
 import { TableInputDropdown } from "./table-input-dropdown"
 

@@ -1,5 +1,5 @@
 import ical, { ICalAlarmType, ICalCalendarMethod } from "ical-generator"
-import type { Event, ViewEvent } from "~types/entities.types"
+import type { Event, ViewEvent } from "~types/database/entities.types"
 import { POSITIV_EMAIL, POSITIV_URL } from "~/lib/constants/constants"
 
 export const formatCalendarEvent = async (event: ViewEvent | Event) => {

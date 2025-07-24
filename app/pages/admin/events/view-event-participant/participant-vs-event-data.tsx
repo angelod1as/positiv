@@ -11,8 +11,8 @@ import {
   profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
-import { type ParticipantVsEvent } from "~types/entities.types"
-import type { Database } from "~types/kysely.types"
+import { type ParticipantVsEvent } from "~types/database/entities.types"
+import type { Database } from "~types/database/kysely.types"
 
 type ParticipantVsEventDataProps = {
   eventParticipant: ParticipantVsEvent

@@ -1,5 +1,5 @@
 import { formatApplicationMail } from "~/lib/email/format-application-mail"
-import type { ProfileWithRoles, ViewEvent } from "~types/entities.types"
+import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
 
 import { type MailOptions, sendEmail } from "~/lib/email/send-email"
 

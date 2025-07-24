@@ -14,7 +14,7 @@ import type {
   ParticipantVsEvent,
   Profile,
   ProfileApprovedToAttendStatus,
-} from "~types/entities.types"
+} from "~types/database/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,

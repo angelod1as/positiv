@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useFetcher } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ProfileWithRoles } from '~types/entities.types'
+import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from './news-dialog'
 
 vi.mock('react-router', () => ({

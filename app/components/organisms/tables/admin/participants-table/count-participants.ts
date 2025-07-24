@@ -3,7 +3,7 @@ import type {
   ParticipantApplicationStatus,
   ParticipantAttendanceStatus,
   ProfileApprovedToAttendStatus,
-} from "~types/entities.types"
+} from "~types/database/entities.types"
 
 const isParticipantAcceptedInProcess = (
   participant: ProfileWithExtraData,

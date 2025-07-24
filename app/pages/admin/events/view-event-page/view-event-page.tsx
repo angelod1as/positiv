@@ -23,7 +23,7 @@ import {
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
-import type { ComposableFetcherData } from "~types/entities.types"
+import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
 import { Buttons } from "./buttons"
 import { DatesAndTimes } from "./dates-and-times"
