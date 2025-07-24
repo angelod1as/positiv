@@ -1,51 +1,94 @@
+import { Column } from "primereact/column"
 import { type FC } from "react"
-import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import { DataTable } from "~/components/organisms/data-table"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import { eventParticipantPropMap } from "~/lib/helpers/propMaps"
-import type { ParticipantVsEvent, Profile } from "~types/entities.types"
-import type { Database } from "~types/kysely.types"
+import {
+  applicationStatusOptions,
+  attendanceStatusOptions,
+  approvedToAttendStatusOptions,
+} from "~/lib/helpers/propMaps"
+import type { ParticipantVsEvent } from "~types/entities.types"
 
 type ParticipantEventHistoryProps = {
-  participantHistory: Array<ParticipantVsEvent>
-  profile: Profile
+  participantHistory: Array<ParticipantVsEvent & { time_event_start: string }>
 }
+
 export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   participantHistory,
-  profile,
 }) => {
+  const eventBodyTemplate = (rowData: ParticipantVsEvent & { time_event_start: string }) => {
+    const eventDate = formatDateTime(rowData.time_event_start).date
+    return (
+      <div>
+        <div className="font-medium">
+          {rowData.event_emoji} {rowData.event_title}
+        </div>
+        <div className="text-sm text-gray-500">{eventDate}</div>
+      </div>
+    )
+  }
+
+  const applicationStatusBodyTemplate = (rowData: ParticipantVsEvent & { time_event_start: string }) => {
+    const status = applicationStatusOptions.find(
+      (opt) => opt.value === rowData.application_status
+    )
+    return status?.name || rowData.application_status
+  }
+
+  const attendanceStatusBodyTemplate = (rowData: ParticipantVsEvent & { time_event_start: string }) => {
+    const status = attendanceStatusOptions.find(
+      (opt) => opt.value === rowData.attendance_status
+    )
+    return status?.name || rowData.attendance_status
+  }
+
+  const approvalStatusBodyTemplate = (rowData: ParticipantVsEvent & { time_event_start: string }) => {
+    const status = approvedToAttendStatusOptions.find(
+      (opt) => opt.value === rowData.approved_to_attend
+    )
+    return status?.name || rowData.approved_to_attend
+  }
+
   return (
     <>
-      <h2>Histórico anterior</h2>
-      <p>(WIP!)</p>
-      <div className="space-y-4">
-        {participantHistory.map(
-          ({ event_emoji, event_title, ...pastEvent }) => {
-            return (
-              <div key={pastEvent.id}>
-                <h3>
-                  {event_emoji} {event_title}
-                </h3>
-                {Object.keys(pastEvent).map((key) => {
-                  const pKey = key as keyof Database["event_participants"]
-                  const label = eventParticipantPropMap(pKey)
-                  const value = pastEvent[pKey]
-                  const dateValue =
-                    typeof value === "object"
-                      ? formatDateTime(
-                          (
-                            profile.date_of_birth as unknown as Date
-                          ).toISOString(),
-                        ).date
-                      : undefined
-                  return (
-                    <DataPair key={key} pair={[label, dateValue || value]} />
-                  )
-                })}
-              </div>
-            )
-          },
-        )}
-      </div>
+      <h2>Histórico de Participações</h2>
+      <DataTable
+        data={participantHistory}
+        id="participant-history"
+        sortField="time_event_start"
+        size="small"
+        emptyMessage="Nenhuma participação anterior encontrada"
+      >
+        <Column
+          field="event_title"
+          header="Evento"
+          body={eventBodyTemplate}
+          sortable
+        />
+        <Column
+          field="application_status"
+          header="Status de Inscrição"
+          body={applicationStatusBodyTemplate}
+          sortable
+        />
+        <Column
+          field="approved_to_attend"
+          header="Status de Aprovação"
+          body={approvalStatusBodyTemplate}
+          sortable
+        />
+        <Column
+          field="attendance_status"
+          header="Comparecimento"
+          body={attendanceStatusBodyTemplate}
+          sortable
+        />
+        <Column
+          field="admin_general_notes"
+          header="Notas do Admin"
+          sortable
+        />
+      </DataTable>
     </>
   )
 }
