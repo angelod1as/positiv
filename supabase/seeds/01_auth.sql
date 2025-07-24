@@ -24,11 +24,11 @@ INSERT INTO auth.users (
 )
 SELECT
     '00000000-0000-0000-0000-000000000000', -- Default instance ID
-    uuid_generate_v4(),                    -- Generate unique UUID for each user
+    gen_random_uuid(),                    -- Generate unique UUID for each user
     'authenticated',                       -- Default audience
     'authenticated',                       -- Role for Auth system
     users_data.email,                      -- Email from defined test data
-    crypt(users_data.raw_password, gen_salt('bf')), -- Password hashing
+    '$2a$10$PzqJBgPYGQ9Gn7bSd4BbreUK3y9KQrW8m4KYIjjl/dP1zA3F72IZG', -- Hashed 'test1234' password
     current_timestamp,                     -- Email confirmed now
     current_timestamp,                     -- Recovery email sent now
     current_timestamp,                     -- Last sign-in set to now
@@ -67,7 +67,7 @@ INSERT INTO auth.identities (
     updated_at             -- Update timestamp
 )
 SELECT
-    uuid_generate_v4(), -- Generate unique UUID for the identity
+    gen_random_uuid(), -- Generate unique UUID for the identity
     users.id AS id1,    -- Link to user's ID
     format('{"sub":"%s","email":"%s"}', users.id::text, users.email)::jsonb, -- Identity data
     'email',            -- Provider name

@@ -9,6 +9,86 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      event_demographics_history: {
+        Row: {
+          age_average: number | null
+          age_max: number | null
+          age_min: number | null
+          calculated_at: string
+          created_at: string
+          event_id: string
+          gender_agender: number
+          gender_cis: number
+          gender_other_percentage: number
+          gender_other_values: string[] | null
+          gender_trans: number
+          id: string
+          orientation_ace_demi: number
+          orientation_bi_pan: number
+          orientation_homo: number
+          orientation_other_percentage: number
+          orientation_other_values: string[] | null
+          orientation_straight: number
+          total: number
+          veteran_no: number
+          veteran_yes: number
+        }
+        Insert: {
+          age_average?: number | null
+          age_max?: number | null
+          age_min?: number | null
+          calculated_at?: string
+          created_at?: string
+          event_id: string
+          gender_agender?: number
+          gender_cis?: number
+          gender_other_percentage?: number
+          gender_other_values?: string[] | null
+          gender_trans?: number
+          id?: string
+          orientation_ace_demi?: number
+          orientation_bi_pan?: number
+          orientation_homo?: number
+          orientation_other_percentage?: number
+          orientation_other_values?: string[] | null
+          orientation_straight?: number
+          total?: number
+          veteran_no?: number
+          veteran_yes?: number
+        }
+        Update: {
+          age_average?: number | null
+          age_max?: number | null
+          age_min?: number | null
+          calculated_at?: string
+          created_at?: string
+          event_id?: string
+          gender_agender?: number
+          gender_cis?: number
+          gender_other_percentage?: number
+          gender_other_values?: string[] | null
+          gender_trans?: number
+          id?: string
+          orientation_ace_demi?: number
+          orientation_bi_pan?: number
+          orientation_homo?: number
+          orientation_other_percentage?: number
+          orientation_other_values?: string[] | null
+          orientation_straight?: number
+          total?: number
+          veteran_no?: number
+          veteran_yes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_demographics_history_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_participants: {
         Row: {
           admin_general_notes: string | null
