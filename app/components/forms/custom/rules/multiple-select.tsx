@@ -1,26 +1,24 @@
-import type { FC } from "react"
-import { Controller, type Control } from "react-hook-form"
+import { Controller, type Control, type FieldValues, type Path } from "react-hook-form"
 import { Error } from "~/components/forms/base/error"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Label } from "~/components/ui/label"
-import type { RulesFormData } from "~/pages/events/application/rules/event-rules-page"
 
-type MultipleSelectProps = {
-  name: string
-  control: Control<RulesFormData>
+type MultipleSelectProps<T extends FieldValues = FieldValues> = {
+  name: Path<T> | string
+  control: Control<T>
   answers: string[]
   error?: string
 }
 
-export const MultipleSelect: FC<MultipleSelectProps> = ({
+export const MultipleSelect = <T extends FieldValues = FieldValues>({
   answers,
   control,
   name,
   error,
-}) => {
+}: MultipleSelectProps<T>): React.ReactElement => {
   return (
     <Controller
-      name={name}
+      name={name as Path<T>}
       control={control}
       render={({ field }) => (
         <div className="flex flex-col gap-4">
