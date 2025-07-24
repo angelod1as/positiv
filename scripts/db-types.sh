@@ -14,6 +14,6 @@ if [ "$1" = "--local" ]; then
 fi
 
 # Execute the chosen command and redirect output
-$SUPABASE_COMMAND > types/database.types.ts
+$SUPABASE_COMMAND > app/types/database/database.types.ts
 
 echo "Supabase types generation complete."
