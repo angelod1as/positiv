@@ -5,7 +5,7 @@ import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import paths from "~/lib/paths"
-import type { ProfileWithRoles } from "~types/entities.types"
+import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
 
 const {

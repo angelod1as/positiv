@@ -1,5 +1,5 @@
 import { bdsmConsentSchema } from "~/business/participant/bdsm-consent"
-import { SchemaForm } from "~/components/forms/schema-form"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 
 export const EventBdsmConsentPage = () => {

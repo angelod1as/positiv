@@ -1,4 +1,4 @@
-import type { EventStatus } from "~types/entities.types"
+import type { EventStatus } from "~types/database/entities.types"
 
 export const checkEventStatus = (event_status: EventStatus) => ({
   isScheduled: event_status === "Scheduled",

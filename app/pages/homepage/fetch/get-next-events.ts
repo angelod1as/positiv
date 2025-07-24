@@ -1,6 +1,6 @@
 import { composable, type Composable } from "composable-functions"
 import { kysely } from "~/kysely"
-import type { EventStatus, ViewEvent } from "~types/entities.types"
+import type { EventStatus, ViewEvent } from "~types/database/entities.types"
 
 type GetNextEvents = Composable<
   (

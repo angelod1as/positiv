@@ -14,7 +14,7 @@ import { cn } from "~/lib/utils"
 import { redirectWithSuccess } from "remix-toast"
 import { getContext, registerUser } from "~/business/auth/auth.server"
 import { registerUserSchema } from "~/business/common"
-import { SchemaForm } from "~/components/forms/schema-form"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import type { Route } from "./+types/register-page"
 
 const {

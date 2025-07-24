@@ -2,7 +2,7 @@ import { GithubIcon } from "lucide-react"
 import type { FC } from "react"
 import Instagram from "~/assets/social/instagram.svg"
 import { Link } from "~/components/atoms/link/link"
-import type { ProfileWithRoles } from "~types/entities.types"
+import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
 
 const BUG_TRACKER_URL = "https://forms.gle/ys6W6W54YTcoBHrJA"

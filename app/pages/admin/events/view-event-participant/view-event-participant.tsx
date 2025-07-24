@@ -11,10 +11,10 @@ import { updateParticipantVsEventSchema } from "~/business/admin/common"
 import { getAge } from "~/lib/helpers/get-age"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
-import type { ParticipantVsEvent } from "~types/entities.types"
-import { BasicData } from "./basic-data"
-import { ParticipantVsEventData } from "./participant-vs-event-data"
-import { ParticipantEventHistory } from "./participant-event-history"
+import type { ParticipantVsEvent } from "~types/database/entities.types"
+import { BasicData } from "~/components/pages/admin/participants/basic-data"
+import { ParticipantVsEventData } from "~/components/pages/admin/participants/participant-vs-event-data"
+import { ParticipantEventHistory } from "~/components/pages/admin/participants/participant-event-history"
 
 const {
   admin: {
