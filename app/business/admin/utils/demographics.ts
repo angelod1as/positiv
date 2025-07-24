@@ -1,4 +1,4 @@
-import type { Genders, Orientations } from "~types/entities.types"
+import type { Genders, Orientations } from "~types/database/entities.types"
 import {
   calculateAge,
   calculateAverage,

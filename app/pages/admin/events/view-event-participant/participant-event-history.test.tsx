@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 import { ParticipantEventHistory } from "./participant-event-history"
-import type { ParticipantVsEvent } from "~types/entities.types"
+import type { ParticipantVsEvent } from "~types/database/entities.types"
 
 const mockParticipantHistory: Array<ParticipantVsEvent & { time_event_start: string }> = [
   {

@@ -1,6 +1,6 @@
 import { getAdminContext } from "~/business/admin/admin.server"
 import { Separator } from "~/components/ui/separator"
-import type { Event } from "~types/entities.types"
+import type { Event } from "~types/database/entities.types"
 import type { Route } from "./+types/dashboard-page"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
 

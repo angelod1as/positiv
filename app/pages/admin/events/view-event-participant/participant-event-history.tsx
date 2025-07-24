@@ -7,7 +7,7 @@ import {
   attendanceStatusOptions,
   approvedToAttendStatusOptions,
 } from "~/lib/helpers/propMaps"
-import type { ParticipantVsEvent } from "~types/entities.types"
+import type { ParticipantVsEvent } from "~types/database/entities.types"
 
 type ParticipantEventHistoryProps = {
   participantHistory: Array<ParticipantVsEvent & { time_event_start: string }>

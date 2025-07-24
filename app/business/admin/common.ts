@@ -4,7 +4,7 @@ import {
   participantAttendanceStatusEnum,
   profileApprovedToAttendStatusEnum,
   type EventStatus,
-} from "~types/entities.types"
+} from "~types/database/entities.types"
 import { userContextSchema } from "../common"
 
 const messages = {

@@ -1,7 +1,7 @@
 import { render } from "@react-email/components"
 
 import { htmlToText } from "html-to-text"
-import type { ProfileWithRoles, ViewEvent } from "~types/entities.types"
+import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
 import Email from "./templates/emails/application-email"
 
 export const formatApplicationMail = async (

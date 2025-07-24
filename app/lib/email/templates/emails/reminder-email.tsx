@@ -8,7 +8,7 @@ import {
 } from "@react-email/components"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type { ViewEvent } from "~types/entities.types"
+import type { ViewEvent } from "~types/database/entities.types"
 import { EmailButton } from "../common/button"
 import { EmailWrapper } from "../common/wrapper"
 

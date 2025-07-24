@@ -1,6 +1,6 @@
 import { toast } from "sonner"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
-import type { ComposableFetcherData } from "~types/entities.types"
+import type { ComposableFetcherData } from "~types/database/entities.types"
 
 export const sendToast = (fetcherData: ComposableFetcherData) => {
   if (!fetcherData) {

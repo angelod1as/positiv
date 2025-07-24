@@ -1,6 +1,6 @@
 import { type FC } from "react"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type { Event } from "~types/entities.types"
+import type { Event } from "~types/database/entities.types"
 
 type DatesAndTimesProps = Event
 export const DatesAndTimes: FC<DatesAndTimesProps> = ({

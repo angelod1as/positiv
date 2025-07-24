@@ -16,7 +16,7 @@ import {
 } from "~/components/ui/card"
 import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
-import type { FCC } from "~types/utils.types"
+import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
 import { MultipleSelect } from "./rules-form/multiple-select"
 import { rulesFormSchema } from "./rules-form/rules-form-schema"

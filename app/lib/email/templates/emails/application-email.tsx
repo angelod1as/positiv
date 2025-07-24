@@ -8,7 +8,7 @@ import {
 } from "@react-email/components"
 import dotenv from "dotenv"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type { ProfileWithRoles, ViewEvent } from "~types/entities.types"
+import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
 import { EmailWrapper } from "../common/wrapper"
 dotenv.config()
 

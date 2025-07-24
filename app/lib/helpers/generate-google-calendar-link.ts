@@ -1,4 +1,4 @@
-import type { ViewEvent } from "~types/entities.types"
+import type { ViewEvent } from "~types/database/entities.types"
 import { POSITIV_URL } from "../constants/constants"
 
 export const generateGoogleCalendarLink = (event: ViewEvent) => {
