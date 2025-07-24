@@ -45,7 +45,11 @@ vi.mock('./news', () => ({
       </div>
     )
   }),
+}))
+
+vi.mock('./news-utils', () => ({
   hasVisibleNews: vi.fn(() => true),
+  DEFAULT_NEWS_ITEMS: [],
 }))
 
 describe('NewsDialog', () => {
@@ -79,7 +83,7 @@ describe('NewsDialog', () => {
     })
     
     it('should not show bell icon for regular user when only admin news exist', async () => {
-      const { hasVisibleNews } = await import('./news')
+      const { hasVisibleNews } = await import('./news-utils')
       // Mock hasVisibleNews to return false for regular users
       vi.mocked(hasVisibleNews).mockImplementation((isAdmin: boolean) => isAdmin)
       
