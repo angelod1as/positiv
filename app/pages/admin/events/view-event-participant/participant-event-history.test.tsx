@@ -26,6 +26,7 @@ const mockParticipantHistory: Array<ParticipantVsEvent & { time_event_start: str
     spot_type: "regular",
     cancellation_date: null,
     is_veteran: true,
+    approved_to_attend: "approved",
   },
   {
     id: "2",
@@ -49,6 +50,7 @@ const mockParticipantHistory: Array<ParticipantVsEvent & { time_event_start: str
     spot_type: "regular",
     cancellation_date: null,
     is_veteran: true,
+    approved_to_attend: "approved",
   },
 ]
 
