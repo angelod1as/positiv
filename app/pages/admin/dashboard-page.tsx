@@ -2,7 +2,7 @@ import { getAdminContext } from "~/business/admin/admin.server"
 import { Separator } from "~/components/ui/separator"
 import type { Event } from "~types/entities.types"
 import type { Route } from "./+types/dashboard-page"
-import { AdminDashboardEventsTable } from "./events-table/admin-dashboard-events-table"
+import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { events } = await getAdminContext(request, params)
