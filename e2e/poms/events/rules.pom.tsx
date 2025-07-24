@@ -49,7 +49,7 @@ export class RulesPOM {
     this.requiredError = this.page
       .getByTestId("question")
       .first()
-      .getByText("Obrigatório", { exact: true })
+      .getByText("Resposta obrigatória", { exact: true })
       .first()
 
     const sampleRadio = this.page.locator('div[data-testid="question"]', {
