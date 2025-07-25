@@ -1,0 +1,1 @@
+export { kysely as db } from "~/kysely"
