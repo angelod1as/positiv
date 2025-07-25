@@ -18,15 +18,19 @@ export const FlagBadge = ({ flag, flagNotes, showTooltip = true }: FlagBadgeProp
     none: "",
   }[flag]
 
-  const title = showTooltip && flagNotes 
-    ? `${profileFlagStatusMap(flag)}: ${flagNotes}` 
+  const title = showTooltip 
+    ? (flagNotes ? `${profileFlagStatusMap(flag)}: ${flagNotes}` : profileFlagStatusMap(flag))
+    : undefined
+
+  const ariaLabel = flagNotes 
+    ? `${profileFlagStatusMap(flag)}: ${flagNotes}`
     : profileFlagStatusMap(flag)
 
   return (
-    <span title={title}>
+    <span title={title} role="img" aria-label={ariaLabel}>
       <Flag 
         className={cn("size-4", flagColorClass)} 
-        aria-label={profileFlagStatusMap(flag)}
+        aria-hidden="true"
       />
     </span>
   )
