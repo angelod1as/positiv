@@ -10,6 +10,7 @@ import {
   eventParticipantPropMap,
   profilePropMap,
   spotTypeOptions,
+  flagStatusOptions,
 } from "~/lib/helpers/propMaps"
 import { type ParticipantVsEvent } from "~types/database/entities.types"
 import type { Database } from "~types/database/kysely.types"
@@ -32,6 +33,8 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     }
   }, {
     approved_to_attend: profilePropMap("approved_to_attend"),
+    flag: profilePropMap("flag"),
+    flag_notes: profilePropMap("flag_notes"),
   })
 
   return (
@@ -56,12 +59,15 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               payment: "number",
               spot_type: "select",
               approved_to_attend: "select",
+              flag: "select",
+              flag_notes: "textarea",
             }}
             options={{
               attendance_status: attendanceStatusOptions,
               application_status: applicationStatusOptions,
               spot_type: spotTypeOptions,
               approved_to_attend: approvedToAttendStatusOptions,
+              flag: flagStatusOptions,
             }}
             labels={labels}
           >
@@ -83,6 +89,8 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                       <Field name="has_paid" />
                       <Field name="is_veteran" />
                     </div>
+                    <Field name="flag" />
+                    <Field name="flag_notes" multiline />
                     <Field name="admin_general_notes" multiline />
                     <Error />
                     <Errors />

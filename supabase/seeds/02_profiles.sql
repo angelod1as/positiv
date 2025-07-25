@@ -17,7 +17,9 @@ INSERT INTO public.profiles (
     rg_issuer,
     allow_marketing_email,
     is_veteran,
-    approved_to_attend
+    approved_to_attend,
+    flag,
+    flag_notes
 )
 SELECT
     usr.id,
@@ -128,6 +130,7 @@ SELECT
         WHEN 'user5@example.com' THEN true
         ELSE false
     END,
+    -- approved_to_attend
     CASE usr.email
         WHEN 'admin@example.com' THEN 'approved'::public.approved_to_attend_enum
         WHEN 'user1@example.com' THEN 'approved'::public.approved_to_attend_enum
@@ -140,6 +143,21 @@ SELECT
         WHEN 'user8@example.com' THEN 'approved_with_reservations'::public.approved_to_attend_enum
         WHEN 'user9@example.com' THEN 'pending'::public.approved_to_attend_enum
         ELSE 'pending'::public.approved_to_attend_enum
+    END,
+    -- flag
+    CASE usr.email
+        WHEN 'admin@example.com' THEN 'none'::public.profile_flag_enum
+        WHEN 'user1@example.com' THEN 'yellow'::public.profile_flag_enum
+        WHEN 'user2@example.com' THEN 'red'::public.profile_flag_enum
+        WHEN 'user3@example.com' THEN 'yellow'::public.profile_flag_enum
+        ELSE 'none'::public.profile_flag_enum
+    END,
+    -- flag_notes
+    CASE usr.email
+        WHEN 'user1@example.com' THEN 'Test flag note for yellow flag'
+        WHEN 'user2@example.com' THEN 'Test flag note for red flag'
+        WHEN 'user3@example.com' THEN 'Another test flag note'
+        ELSE NULL
     END
 FROM auth.users AS usr
 WHERE usr.email IN (
