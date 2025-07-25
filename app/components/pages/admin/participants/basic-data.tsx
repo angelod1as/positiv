@@ -6,6 +6,7 @@ import {
   RookieBadge,
   VeteranBadge,
 } from "~/components/atoms/badges/badges"
+import { FlagBadge } from "~/components/atoms/badges/flag-badge"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
@@ -27,6 +28,8 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
     rg_issuer,
     where_lives,
     was_admin_skipped_last_event,
+    flag,
+    flag_notes,
   } = profile
 
   return (
@@ -39,6 +42,7 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
           <p>{full_name}</p>
           <div className="flex gap-3">
             {is_veteran ? <VeteranBadge /> : <RookieBadge />}
+            <FlagBadge flag={flag} flagNotes={flag_notes} />
             {pronouns?.join(", ")}
             <GenderWarning genders={gender} />
             <OrientationWarning orientations={orientation} />
