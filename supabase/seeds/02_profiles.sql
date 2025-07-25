@@ -154,9 +154,9 @@ SELECT
     END,
     -- flag_notes
     CASE usr.email
-        WHEN 'user1@example.com' THEN 'Needs attention - frequent cancellations'
-        WHEN 'user2@example.com' THEN 'Behavioral issues reported'
-        WHEN 'user3@example.com' THEN 'Payment delays'
+        WHEN 'user1@example.com' THEN 'Test flag note for yellow flag'
+        WHEN 'user2@example.com' THEN 'Test flag note for red flag'
+        WHEN 'user3@example.com' THEN 'Another test flag note'
         ELSE NULL
     END
 FROM auth.users AS usr
