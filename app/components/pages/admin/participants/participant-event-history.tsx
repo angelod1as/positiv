@@ -1,11 +1,13 @@
 import { Column } from "primereact/column"
 import { type FC } from "react"
+import { FlagBadge } from "~/components/atoms/badges/flag-badge"
 import { DataTable } from "~/components/organisms/tables/base/data-table"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
   approvedToAttendStatusOptions,
+  profilePropMap,
 } from "~/lib/helpers/propMaps"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
 
@@ -81,6 +83,17 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
           field="attendance_status"
           header="Comparecimento"
           body={attendanceStatusBodyTemplate}
+          sortable
+        />
+        <Column
+          field="flag"
+          header={profilePropMap("flag")}
+          body={(rowData: ParticipantVsEvent) => (
+            <FlagBadge 
+              flag={rowData.flag} 
+              flagNotes={rowData.flag_notes}
+            />
+          )}
           sortable
         />
         <Column
