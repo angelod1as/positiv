@@ -11,6 +11,7 @@ import {
   RookieBadge,
   VeteranBadge,
 } from "~/components/atoms/badges/badges"
+import { FlagBadge } from "~/components/atoms/badges/flag-badge"
 import {
   CheckboxCellEditor,
   NumberCellEditor,
@@ -169,6 +170,19 @@ export const AdminViewEventParticipantsTable: FC<
           values.is_veteran ? <VeteranBadge /> : <RookieBadge />
         }
         className="min-w-30"
+      />
+
+      <Column
+        field="flag"
+        header={profilePropMap("flag")}
+        body={(values) => (
+          <FlagBadge 
+            flag={values.flag} 
+            flagNotes={values.flag_notes}
+          />
+        )}
+        className="min-w-20"
+        sortable
       />
 
       <Column
