@@ -21,11 +21,14 @@ export const FlagBadge = ({ flag, flagNotes, showTooltip = true }: FlagBadgeProp
   const getFlagMessage = () => 
     flagNotes ? `${profileFlagStatusMap(flag)}: ${flagNotes}` : profileFlagStatusMap(flag)
 
-  const title = showTooltip ? getFlagMessage() : undefined
   const ariaLabel = getFlagMessage()
 
   return (
-    <span title={title} role="img" aria-label={ariaLabel}>
+    <span 
+      role="img" 
+      aria-label={ariaLabel}
+      {...(showTooltip && { title: ariaLabel })}
+    >
       <Flag 
         className={cn("size-4", flagColorClass)}
       />
