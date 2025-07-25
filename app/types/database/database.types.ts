@@ -284,6 +284,8 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           email: string
+          flag: Database["public"]["Enums"]["profile_flag_enum"]
+          flag_notes: string | null
           full_name: string | null
           gender: string[] | null
           how_came_to_us: string | null
@@ -306,6 +308,8 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           email: string
+          flag?: Database["public"]["Enums"]["profile_flag_enum"]
+          flag_notes?: string | null
           full_name?: string | null
           gender?: string[] | null
           how_came_to_us?: string | null
@@ -328,6 +332,8 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           email?: string
+          flag?: Database["public"]["Enums"]["profile_flag_enum"]
+          flag_notes?: string | null
           full_name?: string | null
           gender?: string[] | null
           how_came_to_us?: string | null
@@ -427,6 +433,7 @@ export type Database = {
         | "Registration Closed"
         | "Registration Open"
       event_type_enum: "regular" | "bdsm"
+      profile_flag_enum: "none" | "yellow" | "red"
       spot_type: "regular" | "social" | "staff"
     }
     CompositeTypes: {
@@ -585,6 +592,7 @@ export const Constants = {
         "Registration Open",
       ],
       event_type_enum: ["regular", "bdsm"],
+      profile_flag_enum: ["none", "yellow", "red"],
       spot_type: ["regular", "social", "staff"],
     },
   },

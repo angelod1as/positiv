@@ -3,6 +3,7 @@ import {
   participantApplicationStatusEnum,
   participantAttendanceStatusEnum,
   profileApprovedToAttendStatusEnum,
+  profileFlagStatusEnum,
   type EventStatus,
 } from "~types/database/entities.types"
 import { userContextSchema } from "../common"
@@ -110,6 +111,8 @@ export const updateParticipantVsEventSchema = zod.object({
   approved_to_attend: profileApprovedToAttendStatusEnum,
   payment: zod.coerce.number(),
   admin_general_notes: zod.string(),
+  flag: profileFlagStatusEnum,
+  flag_notes: zod.string().nullable(),
 })
 
 const parseBoolean = zod.union([
@@ -129,4 +132,6 @@ export const updateEventParticipantByIdSchema = zod.object({
   has_paid: parseBoolean.optional(),
   spot_type: spotTypeEnum.optional(),
   is_veteran: parseBoolean.optional(),
+  flag: profileFlagStatusEnum.optional(),
+  flag_notes: zod.string().nullable(),
 })
