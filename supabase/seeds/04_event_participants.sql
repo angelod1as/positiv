@@ -60,7 +60,9 @@ BEGIN
         payment,
         notes,
         spot_type,
-        admin_general_notes
+        admin_general_notes,
+        flag,
+        flag_notes
     )
     VALUES
     -- Admin's Participations (Example Scenarios)
@@ -76,7 +78,9 @@ BEGIN
         20.00,                         -- payment (below price example)
         'Admin paid for this participation', -- notes
         'staff',                       -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
     (
         admin_profile_id,              -- profile_id: Admin
@@ -90,7 +94,9 @@ BEGIN
         0,                             -- payment
         NULL,                          -- notes
         'staff',                       -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
     (
         admin_profile_id,              -- profile_id: Admin
@@ -104,7 +110,9 @@ BEGIN
         0,                             -- payment
         'Event was cancelled, so attendance is just pending', -- notes
         'staff',                       -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
 
     -- User1's Participations (Example Scenarios)
@@ -120,7 +128,9 @@ BEGIN
         0,                             -- payment (not paid yet)
         NULL,                          -- notes
         'staff',                       -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'yellow',                      -- flag
+        'Usuário novo, acompanhar comportamento' -- flag_notes
     ),
     (
         user1_profile_id,              -- profile_id: User1
@@ -134,7 +144,9 @@ BEGIN
         0,                             -- payment
         NULL,
         'staff',                       -- spot_type
-        'Admin notes here... why skipped and all...' -- admin_general_notes
+        'Admin notes here... why skipped and all...', -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
     (
         user1_profile_id,              -- profile_id: User1
@@ -148,7 +160,9 @@ BEGIN
         15.00,                         -- payment (matches price example)
         'User paid for this closed event', -- notes
         'staff',                       -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
 
     -- User2's Participations (Testing multiple skips)
@@ -164,7 +178,9 @@ BEGIN
         0,                             -- payment
         'Admin talking to user about participation', -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'red',                         -- flag
+        'Histórico de faltas sem aviso' -- flag_notes
     ),
     (
         user2_profile_id,              -- profile_id: User2
@@ -178,7 +194,9 @@ BEGIN
         0,                             -- payment
         'Admin decision: behavioral concerns', -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'red',                         -- flag
+        'Comportamento inadequado em eventos anteriores' -- flag_notes
     ),
     (
         user2_profile_id,              -- profile_id: User2
@@ -192,7 +210,9 @@ BEGIN
         0,                             -- payment
         'Admin decision: no-show history', -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'red',                         -- flag
+        'Múltiplas faltas sem aviso prévio' -- flag_notes
     ),
 
     -- User3's Participations (Control case - good participant)
@@ -208,7 +228,9 @@ BEGIN
         0,                             -- payment
         'User sent payment details',   -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
     (
         user3_profile_id,              -- profile_id: User3
@@ -222,7 +244,9 @@ BEGIN
         25.00,                         -- payment
         'Great participant!',          -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
     (
         user3_profile_id,              -- profile_id: User3
@@ -236,7 +260,9 @@ BEGIN
         20.00,                         -- payment
         NULL,                          -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
 
     -- User4's Participations (New scenarios for 'not-attended', 'rejected', 'will-not-go')
@@ -252,7 +278,9 @@ BEGIN
         0,                             -- payment
         'User considering participation', -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
     (
         user4_profile_id,              -- profile_id: User4
@@ -266,7 +294,9 @@ BEGIN
         0,                             -- payment
         'User applied but did not show up', -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'yellow',                      -- flag
+        'Faltou ao último evento sem aviso' -- flag_notes
     ),
     (
         user4_profile_id,              -- profile_id: User4
@@ -280,7 +310,9 @@ BEGIN
         0,                             -- payment
         'Application rejected, so attendance is just pending', -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
     (
         user4_profile_id,              -- profile_id: User4
@@ -294,7 +326,9 @@ BEGIN
         0,                             -- payment
         'Admin sent participation rules to user', -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     ),
     -- New entry to demonstrate 'will-not-go' attendance status
     (
@@ -309,7 +343,9 @@ BEGIN
         0,                             -- payment
         'User decided they will not go to the event.', -- notes
         'regular',                     -- spot_type
-        NULL                           -- admin_general_notes
+        NULL,                          -- admin_general_notes
+        'none',                        -- flag
+        NULL                           -- flag_notes
     );
 
     -- Summary of test scenarios created:
