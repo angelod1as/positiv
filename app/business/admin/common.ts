@@ -112,7 +112,7 @@ export const updateParticipantVsEventSchema = zod.object({
   payment: zod.coerce.number(),
   admin_general_notes: zod.string(),
   flag: profileFlagStatusEnum,
-  flag_notes: zod.string().nullable(),
+  flag_notes: zod.string().nullable().optional(),
 })
 
 const parseBoolean = zod.union([
