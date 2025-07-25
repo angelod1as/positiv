@@ -32,8 +32,8 @@ export const profilePropMap = (property: keyof Profile) => {
     pronouns: "Pronomes",
     user_id: "Id de usuárie",
     approved_to_attend: "Status de Aprovação",
-    flag: "Sinalização",
-    flag_notes: "Notas de Sinalização",
+    flag: "Flag",
+    flag_notes: "Notas da flag",
   }[property]
 }
 
@@ -85,6 +85,8 @@ export const eventParticipantPropMap = (property: keyof EventParticipant) => {
     emoji: "Emoji",
     title: "Título",
     spot_type: "Tipo de vaga",
+    flag: "Flag",
+    flag_notes: "Notas da Flag",
   }[property]
 }
 
@@ -134,9 +136,9 @@ const profileApprovedToAttendStatus: Record<
 }
 
 const profileFlagStatus: Record<ProfileFlagStatus, string> = {
-  none: "Sem sinalização",
-  yellow: "Atenção moderada",
-  red: "Atenção alta",
+  none: "Sem flag",
+  yellow: "Flag amarela",
+  red: "Flag vermelha",
 }
 
 export const participantApplicationStatusPropMap = (

@@ -57,6 +57,8 @@ const mockEventParticipant: ParticipantVsEvent = {
   is_user_applied: true,
   cancellation_date: null,
   created_at: "2024-01-01",
+  flag: "yellow",
+  flag_notes: "Precisa de acompanhamento próximo",
 }
 
 describe("ParticipantVsEventData", () => {
@@ -87,5 +89,24 @@ describe("ParticipantVsEventData", () => {
     expect(attendanceIndex).toBeLessThan(applicationIndex)
     expect(applicationIndex).toBeLessThan(approvedIndex)
     expect(approvedIndex).toBeLessThan(spotTypeIndex)
+  })
+
+  it("should render flag and flag_notes fields", () => {
+    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+    
+    // Check that flag fields are rendered
+    expect(screen.getByTestId("field-flag")).toBeInTheDocument()
+    expect(screen.getByTestId("field-flag_notes")).toBeInTheDocument()
+  })
+
+  it("should render flag_notes after flag field", () => {
+    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+    
+    const fields = screen.getAllByTestId(/^field-/).map(el => el.textContent)
+    const flagIndex = fields.indexOf("flag")
+    const flagNotesIndex = fields.indexOf("flag_notes")
+    
+    // Check the order of fields
+    expect(flagIndex).toBeLessThan(flagNotesIndex)
   })
 })
