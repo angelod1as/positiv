@@ -44,7 +44,7 @@ function parseArgs(): CLIArgs {
 }
 
 function printHelp() {
-  console.log(`
+  console.info(`
 CSV Event Import Script
 
 Usage: tsx scripts/csv-import/index.ts [options] <csv-file>
@@ -76,23 +76,23 @@ function printReport(
   csvFile: string,
   dryRun: boolean
 ) {
-  console.log('\n=== IMPORT REPORT ===')
-  console.log(`CSV File: ${csvFile}`)
-  console.log(`Mode: ${dryRun ? 'DRY RUN (validation only)' : 'FULL'}`)
-  console.log(`Valid events: ${result.valid.length}`)
-  console.log(`Errors: ${result.errors.length}`)
+  console.info('\n=== IMPORT REPORT ===')
+  console.info(`CSV File: ${csvFile}`)
+  console.info(`Mode: ${dryRun ? 'DRY RUN (validation only)' : 'FULL'}`)
+  console.info(`Valid events: ${result.valid.length}`)
+  console.info(`Errors: ${result.errors.length}`)
   
   if (result.errors.length > 0) {
-    console.log('\n=== VALIDATION ERRORS ===')
+    console.info('\n=== VALIDATION ERRORS ===')
     result.errors.forEach(error => {
-      console.log(`Row ${error.row}: ${error.error}`)
+      console.info(`Row ${error.row}: ${error.error}`)
     })
   }
   
   if (result.valid.length > 0) {
-    console.log('\n=== VALID EVENTS ===')
+    console.info('\n=== VALID EVENTS ===')
     result.valid.forEach((event, index) => {
-      console.log(`${index + 1}. ${event.title} - ${event.time_event_start} (${event.event_type})`)
+      console.info(`${index + 1}. ${event.title} - ${event.time_event_start} (${event.event_type})`)
     })
   }
 }
@@ -127,10 +127,10 @@ async function main() {
       
       if (args.outputFile) {
         writeFileSync(args.outputFile, sql)
-        console.log(`\nSQL written to: ${args.outputFile}`)
+        console.info(`\nSQL written to: ${args.outputFile}`)
       } else {
-        console.log('\n=== GENERATED SQL ===')
-        console.log(sql)
+        console.info('\n=== GENERATED SQL ===')
+        console.info(sql)
       }
     }
     

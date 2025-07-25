@@ -1,6 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import { processCSV, validateRow, generateSQL, type CSVRow, type ProcessedEvent } from "./import-events"
-import { readFileSync } from "fs"
 
 describe("CSV Event Import Script", () => {
   describe("CSV Parsing", () => {
