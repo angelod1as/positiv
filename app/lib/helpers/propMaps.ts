@@ -6,6 +6,7 @@ import {
   type ParticipantAttendanceStatus,
   type Profile,
   type ProfileApprovedToAttendStatus,
+  type ProfileFlagStatus,
 } from "~types/database/entities.types"
 
 export const profilePropMap = (property: keyof Profile) => {
@@ -31,6 +32,8 @@ export const profilePropMap = (property: keyof Profile) => {
     pronouns: "Pronomes",
     user_id: "Id de usuárie",
     approved_to_attend: "Status de Aprovação",
+    flag: "Sinalização",
+    flag_notes: "Notas de Sinalização",
   }[property]
 }
 
@@ -130,10 +133,20 @@ const profileApprovedToAttendStatus: Record<
   rejected: "Rejeitade",
 }
 
+const profileFlagStatus: Record<ProfileFlagStatus, string> = {
+  none: "Sem sinalização",
+  yellow: "Atenção moderada",
+  red: "Atenção alta",
+}
+
 export const participantApplicationStatusPropMap = (
   application_status: ParticipantApplicationStatus,
 ) => {
   return participantApplicationStatus[application_status] || ""
+}
+
+export const profileFlagStatusMap = (flag: ProfileFlagStatus) => {
+  return profileFlagStatus[flag] || ""
 }
 
 export const applicationStatusOptions: Array<{
@@ -161,6 +174,15 @@ export const approvedToAttendStatusOptions: Array<{
   name: name,
   label: name,
   value: value as ProfileApprovedToAttendStatus,
+}))
+
+export const flagStatusOptions: Array<{
+  name: string
+  value: ProfileFlagStatus
+}> = Object.entries(profileFlagStatus).map(([value, name]) => ({
+  name: name,
+  label: name,
+  value: value as ProfileFlagStatus,
 }))
 
 const participantSpotType: Record<string, string> = {
