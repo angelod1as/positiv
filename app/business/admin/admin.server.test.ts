@@ -50,7 +50,7 @@ describe("getParticipantFullEventHistory", () => {
     })
   })
 
-  // TODO: This test requires a test database connection to work properly
+  // TODO [POS-179]: This test requires a test database connection to work properly
   // Currently skipped because it's an integration test that needs database access
   // To properly test this:
   // 1. Set up a test database with proper migrations
