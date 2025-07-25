@@ -29,6 +29,8 @@ export type ParticipantAttendanceStatus =
   Database["public"]["Enums"]["attendance_status_enum"]
 export type ProfileApprovedToAttendStatus =
   Database["public"]["Enums"]["approved_to_attend_enum"]
+export type ProfileFlagStatus =
+  Database["public"]["Enums"]["profile_flag_enum"]
 
 /** Event Type */
 export type EventType = Database["public"]["Enums"]["event_type_enum"]
@@ -103,12 +105,19 @@ const profileApprovedToAttendStatus = [
   "rejected",
 ] as const satisfies ProfileApprovedToAttendStatus[]
 
+const profileFlagStatus = [
+  "none",
+  "yellow",
+  "red",
+] as const satisfies ProfileFlagStatus[]
+
 export const participantAttendanceStatusEnum = z.enum(
   participantAttendanceStatus,
 )
 export const profileApprovedToAttendStatusEnum = z.enum(
   profileApprovedToAttendStatus,
 )
+export const profileFlagStatusEnum = z.enum(profileFlagStatus)
 
 export type Genders = (typeof GENDERS)[number]
 export type Orientations = (typeof ORIENTATIONS)[number]

@@ -17,7 +17,8 @@
     "types": "pnpm db:types",
     "db:types": "./scripts/db-types.sh",
     "email:test": "./scripts/testmail.sh",
-    "prepare": "husky"
+    "prepare": "husky",
+    "migration:event-mapping": "tsx scripts/temp/migration/generate-event-mapping.ts"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.810.0",
@@ -75,6 +76,7 @@
   "devDependencies": {
     "@eslint/css": "^0.7.0",
     "@eslint/js": "^9.25.1",
+    "@inquirer/prompts": "^7.7.1",
     "@playwright/test": "^1.52.0",
     "@react-router/dev": "^7.6.0",
     "@tailwindcss/vite": "^4.0.0",
@@ -102,6 +104,7 @@
     "react-router-devtools": "^5.0.5",
     "supabase": "^2.23.4",
     "tailwindcss": "^4.0.0",
+    "tsx": "^4.20.3",
     "tw-animate-css": "^1.2.8",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.31.1",
