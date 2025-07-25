@@ -112,7 +112,7 @@ export const updateParticipantVsEventSchema = zod.object({
   payment: zod.coerce.number(),
   admin_general_notes: zod.string(),
   flag: profileFlagStatusEnum,
-  flag_notes: zod.string().nullable().optional(),
+  flag_notes: zod.string().nullish(),
 })
 
 const parseBoolean = zod.union([
@@ -133,5 +133,5 @@ export const updateEventParticipantByIdSchema = zod.object({
   spot_type: spotTypeEnum.optional(),
   is_veteran: parseBoolean.optional(),
   flag: profileFlagStatusEnum.optional(),
-  flag_notes: zod.string().nullable().optional(),
+  flag_notes: zod.string().nullish(),
 })
