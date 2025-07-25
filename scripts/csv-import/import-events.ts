@@ -118,7 +118,7 @@ export async function processCSV(csvContent: string): Promise<ProcessResult> {
   return result
 }
 
-export function validateRow(row: CSVRow, rowNumber: number): ValidationResult {
+export function validateRow(row: CSVRow, _rowNumber: number): ValidationResult {
   const errors: string[] = []
 
   // Title validation (2-50 characters)
