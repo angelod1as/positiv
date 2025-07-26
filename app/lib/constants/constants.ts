@@ -2,7 +2,9 @@ export const POSITIV_URL = "https://www.positivparty.com/"
 
 export const POSITIV_EMAIL = "contato@positivparty.com"
 
-export const NEWS_VERSION = 1753374084619
+// NEWS_VERSION is a timestamp that triggers the news dialog when updated
+// Update this to Date.now() whenever adding new news items
+export const NEWS_VERSION = 1738002000000 // July 26, 2025 00:00:00 UTC
 
 export const EVENT_PAGE_REGEXP =
   /dashboard\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/

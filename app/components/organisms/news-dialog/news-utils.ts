@@ -26,11 +26,11 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
-    id: '1',
-    title: '🔔 Sistema de notificações melhorado (Admin)',
-    content: 'O sistema de notícias agora tem visualizações diferenciadas! Administradores podem ver atualizações técnicas exclusivas marcadas com "(Admin)" no título. As notícias antigas são removidas automaticamente após 2 semanas.',
+    id: '2',
+    title: '🚩 Sistema de flags para participantes (Admin)',
+    content: 'Agora é possível adicionar flags (amarela ou vermelha) aos participantes em cada evento específico, com notas explicativas. As flags aparecem nas tabelas de participantes com indicadores visuais e tooltips mostrando as notas ao passar o mouse.',
     isAdmin: true,
-    createdAt: getDaysAgo(0), // Today
+    createdAt: new Date('2025-07-26T00:00:00'), // July 26, 2025
     isActive: true,
   },
 ]
