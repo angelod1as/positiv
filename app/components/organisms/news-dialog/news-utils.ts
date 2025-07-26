@@ -30,7 +30,7 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
     title: '🚩 Sistema de flags para participantes (Admin)',
     content: 'Agora é possível adicionar flags (amarela ou vermelha) aos participantes em cada evento específico, com notas explicativas. As flags aparecem nas tabelas de participantes com indicadores visuais e tooltips mostrando as notas ao passar o mouse.',
     isAdmin: true,
-    createdAt: new Date('2025-01-25T23:00:00'), // January 25, 2025
+    createdAt: new Date('2025-07-26T00:00:00'), // July 26, 2025
     isActive: true,
   },
 ]
