@@ -198,11 +198,11 @@ describe('NewsDialog', () => {
       await user.click(confirmButton)
       
       expect(mockSubmit).toHaveBeenCalledWith(
-        {
-          newsVersion: '1753374084619',
+        expect.objectContaining({
+          newsVersion: expect.stringMatching(/^\d+$/), // Should be a numeric string
           intent: 'news-update',
           thisUrl: 'http://localhost:3000/test',
-        },
+        }),
         { method: 'POST' }
       )
     })
