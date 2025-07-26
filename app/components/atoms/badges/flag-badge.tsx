@@ -2,6 +2,12 @@ import { Flag } from "lucide-react"
 import { type ProfileFlagStatus } from "~/types/database/entities.types"
 import { cn } from "~/lib/utils"
 import { profileFlagStatusMap } from "~/lib/helpers/propMaps"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip"
 
 interface FlagBadgeProps {
   flag: ProfileFlagStatus
@@ -23,15 +29,37 @@ export const FlagBadge = ({ flag, flagNotes, showTooltip = true }: FlagBadgeProp
 
   const ariaLabel = getFlagMessage()
 
+  if (!showTooltip || !flagNotes) {
+    return (
+      <span 
+        role="img" 
+        aria-label={ariaLabel}
+      >
+        <Flag 
+          className={cn("size-4", flagColorClass)}
+        />
+      </span>
+    )
+  }
+
   return (
-    <span 
-      role="img" 
-      aria-label={ariaLabel}
-      {...(showTooltip && { title: ariaLabel })}
-    >
-      <Flag 
-        className={cn("size-4", flagColorClass)}
-      />
-    </span>
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span 
+            role="img" 
+            aria-label={ariaLabel}
+            className="inline-flex cursor-default"
+          >
+            <Flag 
+              className={cn("size-4", flagColorClass)}
+            />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="max-w-xs">{flagNotes}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   )
 }
