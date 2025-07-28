@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { ProfileMatchingService, generateUpdateSQL, type MatchResult } from './generate-sql-existing-profiles';
+import { describe, it, expect } from 'vitest';
+import { generateUpdateSQL, type MatchResult } from './generate-sql-existing-profiles';
 import type { ValidatedProfile } from './validate-profiles-csv';
 import type { Database } from '~/types/database/kysely.types';
 import type { Selectable } from 'kysely';
