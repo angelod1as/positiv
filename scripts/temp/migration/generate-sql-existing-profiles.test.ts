@@ -1,13 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MatchResult, ProfileMatchingService, generateUpdateSQL } from './generate-sql-existing-profiles';
+import { type MatchResult, ProfileMatchingService, generateUpdateSQL } from './generate-sql-existing-profiles';
 import type { Database } from '~/types/database/kysely.types';
-import type { Selectable } from 'kysely';
+import { Kysely, type Selectable } from 'kysely';
 
 type Profile = Selectable<Database['profiles']>;
 
 describe('ProfileMatchingService', () => {
   let service: ProfileMatchingService;
-  let mockDb: ReturnType<typeof vi.fn>;
+  let mockDb: {
+    selectFrom: ReturnType<typeof vi.fn>;
+    select: ReturnType<typeof vi.fn>;
+    where: ReturnType<typeof vi.fn>;
+    execute: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockDb = {
@@ -16,7 +21,7 @@ describe('ProfileMatchingService', () => {
       where: vi.fn().mockReturnThis(),
       execute: vi.fn(),
     };
-    service = new ProfileMatchingService(mockDb);
+    service = new ProfileMatchingService(mockDb as unknown as Kysely<Database>);
   });
 
   describe('100% certainty matching (email AND phone)', () => {
@@ -45,7 +50,7 @@ describe('ProfileMatchingService', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,
@@ -89,7 +94,7 @@ describe('ProfileMatchingService', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,
@@ -132,7 +137,7 @@ describe('ProfileMatchingService', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,
@@ -175,7 +180,7 @@ describe('ProfileMatchingService', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,
@@ -220,7 +225,7 @@ describe('ProfileMatchingService', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,
@@ -246,7 +251,7 @@ describe('ProfileMatchingService', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,
@@ -289,7 +294,7 @@ describe('ProfileMatchingService', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,
@@ -315,7 +320,7 @@ describe('ProfileMatchingService', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,
@@ -356,7 +361,7 @@ describe('generateUpdateSQL', () => {
       allow_marketing_email: null,
       approved_to_attend: 'approved',
       basic_data_filled: true,
-      flag: 'green',
+      flag: 'none',
       flag_notes: null,
       how_came_to_us: null,
       where_lives: null,
@@ -404,7 +409,7 @@ describe('generateUpdateSQL', () => {
       allow_marketing_email: null,
       approved_to_attend: 'approved',
       basic_data_filled: true,
-      flag: 'green',
+      flag: 'none',
       flag_notes: null,
       how_came_to_us: null,
       where_lives: null,
@@ -451,7 +456,7 @@ describe('generateUpdateSQL', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,
@@ -476,7 +481,7 @@ describe('generateUpdateSQL', () => {
         allow_marketing_email: null,
         approved_to_attend: 'approved',
         basic_data_filled: true,
-        flag: 'green',
+        flag: 'none',
         flag_notes: null,
         general_notes: null,
         how_came_to_us: null,

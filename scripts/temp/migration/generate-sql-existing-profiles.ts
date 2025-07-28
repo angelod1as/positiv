@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { Kysely, sql } from 'kysely';
+import { Kysely } from 'kysely';
 import type { Database } from '~/types/database/kysely.types';
 import type { Selectable } from 'kysely';
 import { normalizePhone } from './schemas/profile-csv.schema';
@@ -55,15 +55,7 @@ export class ProfileMatchingService {
       ]);
 
     // Build WHERE clause for email OR phone
-    const conditions: ReturnType<typeof sql>[] = [];
-    if (csvProfile.email) {
-      conditions.push(sql`email = ${csvProfile.email.toLowerCase()}`);
-    }
-    if (phoneNumber) {
-      conditions.push(sql`phone = ${phoneNumber}`);
-    }
-
-    if (conditions.length === 0) {
+    if (!csvProfile.email && !phoneNumber) {
       return {
         certainty: 0,
         profiles: [],
@@ -72,7 +64,20 @@ export class ProfileMatchingService {
       };
     }
 
-    query = query.where(sql`${sql.join(conditions, sql` OR `)}`);
+    query = query.where((eb) => {
+      const conditions = [];
+      if (csvProfile.email) {
+        conditions.push(eb('email', '=', csvProfile.email.toLowerCase()));
+      }
+      if (phoneNumber) {
+        conditions.push(eb('phone', '=', phoneNumber));
+      }
+      
+      if (conditions.length === 1) {
+        return conditions[0];
+      }
+      return eb.or(conditions);
+    });
     
     const profiles = await query.execute();
 
