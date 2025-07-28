@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# Script para sincronizar banco de produção com banco local
-# Uso: ./sync-production-db.sh [--dry-run]
+# Script to sync production database with local database
+# Usage: ./sync-production-db.sh [--dry-run]
 
 set -euo pipefail
 
-# Cores para output
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Variáveis
+# Variables
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../../.." && pwd )"
 ENV_FILE="$PROJECT_ROOT/.env.vercel.production"
@@ -20,163 +20,163 @@ TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 BACKUP_FILE="production-dump-${TIMESTAMP}.sql"
 DRY_RUN=false
 
-# Verificar argumentos
+# Check arguments
 if [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN=true
 fi
 
-# Função para exibir erro e sair
+# Function to display error and exit
 error_exit() {
   echo -e "${RED}❌ $1${NC}" >&2
   exit 1
 }
 
-# Função para exibir aviso
+# Function to display warning
 warning() {
   echo -e "${YELLOW}⚠️  $1${NC}"
 }
 
-# Função para exibir sucesso
+# Function to display success
 success() {
   echo -e "${GREEN}✅ $1${NC}"
 }
 
-# Função para exibir info
+# Function to display info
 info() {
   echo -e "${BLUE}ℹ️  $1${NC}"
 }
 
-# Verificar se arquivo .env.vercel.production existe
+# Check if .env.vercel.production file exists
 if [[ ! -f "$ENV_FILE" ]]; then
-  error_exit "Arquivo .env.vercel.production não encontrado em $PROJECT_ROOT"
+  error_exit ".env.vercel.production file not found at $PROJECT_ROOT"
 fi
 
-# Carregar variáveis de ambiente de produção
+# Load production environment variables
 set -a
 source "$ENV_FILE"
 set +a
 
-# Verificar variáveis necessárias
+# Check required variables
 if [[ -z "${SUPABASE_CONNECT_URL:-}" ]]; then
-  error_exit "SUPABASE_CONNECT_URL não está definido em .env.vercel.production"
+  error_exit "SUPABASE_CONNECT_URL is not defined in .env.vercel.production"
 fi
 
-# Carregar variáveis locais
+# Load local variables
 if [[ -f "$PROJECT_ROOT/.env" ]]; then
   LOCAL_DATABASE_URL=$(grep "^SUPABASE_CONNECT_URL=" "$PROJECT_ROOT/.env" | cut -d '=' -f2- | tr -d '"' | tr -d "'")
 else
-  error_exit "Arquivo .env não encontrado. Execute 'cp ../positiv/.env .env' primeiro"
+  error_exit ".env file not found. Run 'cp ../positiv/.env .env' first"
 fi
 
 if [[ -z "$LOCAL_DATABASE_URL" ]]; then
-  error_exit "LOCAL_DATABASE_URL não está definido em .env"
+  error_exit "LOCAL_DATABASE_URL is not defined in .env"
 fi
 
-# Verificar se Supabase local está rodando
-echo "Verificando conexão com banco local..."
+# Check if local Supabase is running
+echo "Checking local database connection..."
 if ! psql "$LOCAL_DATABASE_URL" -c "SELECT 1" > /dev/null 2>&1; then
-  error_exit "Local Supabase is not running. Execute 'supabase start' primeiro"
+  error_exit "Local Supabase is not running. Run 'supabase start' first"
 fi
 
-# Modo dry-run
+# Dry-run mode
 if [[ "$DRY_RUN" == "true" ]]; then
   echo ""
   echo "========================================="
-  echo "         DRY RUN MODE ATIVADO"
+  echo "         DRY RUN MODE ENABLED"
   echo "========================================="
   echo ""
   
   info "Would perform the following operations:"
   echo ""
-  echo "1. Fazer backup do banco de produção"
-  echo "   - Origem: Banco de produção Supabase"
-  echo "   - Destino: $BACKUP_FILE"
+  echo "1. Backup production database"
+  echo "   - Source: Production Supabase database"
+  echo "   - Destination: $BACKUP_FILE"
   echo ""
-  echo "2. Limpar banco local"
-  echo "   - Dropar schema public"
-  echo "   - Recriar schema public"
+  echo "2. Clean local database"
+  echo "   - Drop public schema"
+  echo "   - Recreate public schema"
   echo ""
-  echo "3. Restaurar dados de produção no banco local"
-  echo "   - Origem: $BACKUP_FILE"
-  echo "   - Destino: Banco local Supabase"
+  echo "3. Restore production data to local database"
+  echo "   - Source: $BACKUP_FILE"
+  echo "   - Destination: Local Supabase database"
   echo ""
-  echo "4. Verificar integridade dos dados"
-  echo ""
-  
-  # Mostrar estatísticas atuais do banco de produção
-  info "Estatísticas do banco de produção:"
+  echo "4. Verify data integrity"
   echo ""
   
-  # Contar registros nas principais tabelas
-  PROFILES_COUNT=$(psql "$SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM profiles" 2>/dev/null || echo "Erro")
-  EVENTS_COUNT=$(psql "$SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM events" 2>/dev/null || echo "Erro")
-  PARTICIPANTS_COUNT=$(psql "$SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM event_participants" 2>/dev/null || echo "Erro")
+  # Show current production database statistics
+  info "Production database statistics:"
+  echo ""
+  
+  # Count records in main tables
+  PROFILES_COUNT=$(psql "$SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM profiles" 2>/dev/null || echo "Error")
+  EVENTS_COUNT=$(psql "$SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM events" 2>/dev/null || echo "Error")
+  PARTICIPANTS_COUNT=$(psql "$SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM event_participants" 2>/dev/null || echo "Error")
   
   echo "  - Profiles: $PROFILES_COUNT"
   echo "  - Events: $EVENTS_COUNT"
   echo "  - Event Participants: $PARTICIPANTS_COUNT"
   echo ""
   
-  success "Nenhuma alteração foi feita (dry-run mode)"
+  success "No changes were made (dry-run mode)"
   exit 0
 fi
 
-# Modo normal - pedir confirmação
-warning "ATENÇÃO: Isso apagará TODOS os dados locais (seeded data)!"
+# Normal mode - request confirmation
+warning "WARNING: This will DELETE ALL local data (seeded data)!"
 echo ""
-echo "Esta operação irá:"
-echo "  1. Fazer backup completo do banco de produção"
-echo "  2. APAGAR todos os dados do banco local"
-echo "  3. Restaurar os dados de produção no banco local"
+echo "This operation will:"
+echo "  1. Create a full backup of the production database"
+echo "  2. DELETE all data from the local database"
+echo "  3. Restore production data to the local database"
 echo ""
-read -p "Deseja continuar? (digite 'sim' para confirmar): " CONFIRM
+read -p "Do you want to continue? (type 'yes' to confirm): " CONFIRM
 
-if [[ "$CONFIRM" != "sim" ]]; then
-  info "Operação cancelada"
+if [[ "$CONFIRM" != "yes" ]]; then
+  info "Operation cancelled"
   exit 0
 fi
 
-# 1. Fazer backup do banco de produção
-info "📥 Baixando dados de produção..."
+# 1. Backup production database
+info "📥 Downloading production data..."
 if ! pg_dump "$SUPABASE_CONNECT_URL" --clean --if-exists --no-owner --no-privileges > "$BACKUP_FILE"; then
-  error_exit "Erro ao fazer backup do banco de produção"
+  error_exit "Error backing up production database"
 fi
-success "Backup criado: $BACKUP_FILE"
+success "Backup created: $BACKUP_FILE"
 
-# 2. Limpar banco local
-info "🗑️  Limpando banco local..."
+# 2. Clean local database
+info "🗑️  Cleaning local database..."
 if ! psql "$LOCAL_DATABASE_URL" -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;" > /dev/null 2>&1; then
-  error_exit "Erro ao limpar banco local"
+  error_exit "Error cleaning local database"
 fi
-success "Banco local limpo"
+success "Local database cleaned"
 
-# 3. Restaurar dados no banco local
-info "📤 Restaurando dados de produção..."
+# 3. Restore data to local database
+info "📤 Restoring production data..."
 if ! psql "$LOCAL_DATABASE_URL" < "$BACKUP_FILE" > /dev/null 2>&1; then
-  error_exit "Erro ao restaurar dados no banco local"
+  error_exit "Error restoring data to local database"
 fi
-success "Dados restaurados com sucesso"
+success "Data restored successfully"
 
-# 4. Verificar integridade
-info "✅ Verificando integridade..."
+# 4. Verify integrity
+info "✅ Verifying integrity..."
 echo ""
 
-# Contar registros nas principais tabelas
+# Count records in main tables
 PROFILES_COUNT=$(psql "$LOCAL_DATABASE_URL" -t -c "SELECT COUNT(*) FROM profiles" 2>/dev/null || echo "0")
 EVENTS_COUNT=$(psql "$LOCAL_DATABASE_URL" -t -c "SELECT COUNT(*) FROM events" 2>/dev/null || echo "0")
 PARTICIPANTS_COUNT=$(psql "$LOCAL_DATABASE_URL" -t -c "SELECT COUNT(*) FROM event_participants" 2>/dev/null || echo "0")
 USERS_WITH_ID=$(psql "$LOCAL_DATABASE_URL" -t -c "SELECT COUNT(*) FROM profiles WHERE user_id IS NOT NULL" 2>/dev/null || echo "0")
 COMPLETED_EVENTS=$(psql "$LOCAL_DATABASE_URL" -t -c "SELECT COUNT(*) FROM events WHERE event_status = 'Completed'" 2>/dev/null || echo "0")
 
-echo "Estatísticas do banco local após sincronização:"
+echo "Local database statistics after synchronization:"
 echo "  - Profiles: $PROFILES_COUNT"
 echo "  - Events: $EVENTS_COUNT"
 echo "  - Event Participants: $PARTICIPANTS_COUNT"
-echo "  - Profiles com user_id: $USERS_WITH_ID"
-echo "  - Eventos completados: $COMPLETED_EVENTS"
+echo "  - Profiles with user_id: $USERS_WITH_ID"
+echo "  - Completed events: $COMPLETED_EVENTS"
 echo ""
 
-success "Sincronização concluída com sucesso!"
+success "Synchronization completed successfully!"
 echo ""
-info "Arquivo de backup preservado em: $BACKUP_FILE"
-info "Para restaurar os dados seeded, execute: 'supabase db reset'"
+info "Backup file preserved at: $BACKUP_FILE"
+info "To restore seeded data, run: 'supabase db reset'"
