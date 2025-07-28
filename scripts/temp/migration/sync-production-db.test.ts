@@ -22,7 +22,7 @@ describe('sync-production-db.sh', () => {
     try {
       fs.unlinkSync(envFile)
       fs.unlinkSync(localEnvFile)
-    } catch (e) {
+    } catch (_e) {
       // Ignore errors if files don't exist
     }
   })
@@ -54,8 +54,8 @@ fi
         fs.unlinkSync(psqlPath)
       } catch (error) {
         // If local Supabase is not running, skip this test
-        if (error.message.includes('Local Supabase is not running')) {
-          console.log('Skipping test - Local Supabase not running')
+        if (error instanceof Error && error.message.includes('Local Supabase is not running')) {
+          // Skip test if local Supabase is not running
           return
         }
         throw error
@@ -83,9 +83,6 @@ fi
         
         expect(result).toContain('ATENÇÃO: Isso apagará TODOS os dados locais')
         expect(result).toContain('Operação cancelada')
-      } catch (error) {
-        // Should not throw an error
-        throw error
       } finally {
         fs.unlinkSync(psqlPath)
       }
@@ -100,7 +97,14 @@ fi
         execSync(`bash ${scriptPath} --dry-run 2>&1`, { encoding: 'utf8' })
         throw new Error('Should have failed')
       } catch (error) {
-        const output = error.stdout || error.stderr || error.message
+        let output = ''
+        if (error && typeof error === 'object' && 'stdout' in error) {
+          output = error.stdout as string
+        } else if (error && typeof error === 'object' && 'stderr' in error) {
+          output = error.stderr as string
+        } else if (error instanceof Error) {
+          output = error.message
+        }
         expect(output).toContain('Arquivo .env.vercel.production não encontrado')
       }
     })
@@ -112,7 +116,14 @@ fi
         execSync(`bash ${scriptPath} --dry-run 2>&1`, { encoding: 'utf8' })
         throw new Error('Should have failed')
       } catch (error) {
-        const output = error.stdout || error.stderr || error.message
+        let output = ''
+        if (error && typeof error === 'object' && 'stdout' in error) {
+          output = error.stdout as string
+        } else if (error && typeof error === 'object' && 'stderr' in error) {
+          output = error.stderr as string
+        } else if (error instanceof Error) {
+          output = error.message
+        }
         expect(output).toContain('SUPABASE_CONNECT_URL não está definido')
       }
     })
