@@ -7,7 +7,7 @@ type Profile = Selectable<Database['profiles']>;
 
 describe('ProfileMatchingService', () => {
   let service: ProfileMatchingService;
-  let mockDb: any;
+  let mockDb: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     mockDb = {

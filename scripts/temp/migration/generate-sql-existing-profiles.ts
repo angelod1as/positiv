@@ -55,7 +55,7 @@ export class ProfileMatchingService {
       ]);
 
     // Build WHERE clause for email OR phone
-    const conditions: any[] = [];
+    const conditions: ReturnType<typeof sql>[] = [];
     if (csvProfile.email) {
       conditions.push(sql`email = ${csvProfile.email.toLowerCase()}`);
     }
