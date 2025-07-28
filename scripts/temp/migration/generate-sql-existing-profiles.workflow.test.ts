@@ -11,7 +11,7 @@ describe('Profile Update SQL Generation Workflow', () => {
     // Test data
     const testProfiles: Profile[] = [
       {
-        id: 'uuid-100-percent',
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'match100@example.com',
         phone: 11999999999,
         full_name: 'Existing User 100',
@@ -36,7 +36,7 @@ describe('Profile Update SQL Generation Workflow', () => {
         is_veteran: null,
       },
       {
-        id: 'uuid-50-percent',
+        id: '456e7890-e89b-12d3-a456-426614174000',
         email: 'match50@example.com',
         phone: null,
         full_name: null,
@@ -115,8 +115,8 @@ describe('Profile Update SQL Generation Workflow', () => {
 
     // Test conflict SQL generation
     const conflictProfiles: Profile[] = [
-      { ...testProfiles[0], id: 'uuid-conflict-1', email: 'conflict@example.com', phone: null },
-      { ...testProfiles[0], id: 'uuid-conflict-2', email: 'other@example.com', phone: 11777777777 },
+      { ...testProfiles[0], id: 'ccc34567-e89b-12d3-a456-426614174000', email: 'conflict@example.com', phone: null },
+      { ...testProfiles[0], id: 'ddd34567-e89b-12d3-a456-426614174000', email: 'other@example.com', phone: 11777777777 },
     ];
 
     const matchConflict: MatchResult = {
@@ -135,7 +135,7 @@ describe('Profile Update SQL Generation Workflow', () => {
 
   it('should handle edge cases correctly', () => {
     const profile: Profile = {
-      id: 'uuid-edge',
+      id: '789e0123-e89b-12d3-a456-426614174000',
       email: 'edge@example.com',
       phone: 11999999999,
       full_name: 'Edge User',
@@ -184,7 +184,7 @@ describe('Profile Update SQL Generation Workflow', () => {
 
   it('should properly escape SQL injection attempts', () => {
     const profile: Profile = {
-      id: 'uuid-inject',
+      id: 'abce4567-e89b-12d3-a456-426614174000',
       email: 'inject@example.com',
       phone: null,
       full_name: null,
@@ -227,12 +227,107 @@ describe('Profile Update SQL Generation Workflow', () => {
     expect(sql).toContain("''"); // Escaped quotes
     // The actual SQL should have escaped quotes, not the raw injection attempts
     expect(sql).toContain("Robert''); DROP TABLE profiles;");
-    expect(sql).toContain("'''; DELETE FROM profiles WHERE ''1''=''1");
+    expect(sql).toContain("''; DELETE FROM profiles WHERE ''1''=''1");
+    // Also check backslashes are escaped
+    expect(sql).not.toContain("\\'; DROP");
+  });
+
+  it('should handle backslash escaping properly', () => {
+    const profile: Profile = {
+      id: 'defe4567-e89b-12d3-a456-426614174000',
+      email: 'backslash@example.com',
+      phone: null,
+      full_name: null,
+      general_notes: null,
+      created_at: new Date().toISOString(),
+      user_id: null,
+      social_name: null,
+      date_of_birth: null,
+      gender: null,
+      orientation: null,
+      pronouns: null,
+      cpf: null,
+      rg: null,
+      rg_issuer: null,
+      allow_marketing_email: null,
+      approved_to_attend: 'approved',
+      basic_data_filled: true,
+      flag: 'none',
+      flag_notes: null,
+      how_came_to_us: null,
+      where_lives: null,
+      is_veteran: null,
+    };
+
+    const csvData: Partial<ValidatedProfile> = {
+      nome: "Test\\Name",
+      observacao: "Note with \\ backslash and ' quote",
+    };
+
+    const match: MatchResult = {
+      certainty: 50,
+      profiles: [profile],
+      matchType: 'email_only',
+      reason: 'Matched by email only',
+    };
+
+    const sql = generateUpdateSQL(profile, csvData, match);
+    
+    // Backslashes should be escaped
+    expect(sql).toContain("Test\\\\Name");
+    expect(sql).toContain("Note with \\\\ backslash and '' quote");
+  });
+
+  it('should handle invalid phone numbers gracefully', () => {
+    const profile: Profile = {
+      id: '11124567-e89b-12d3-a456-426614174000',
+      email: 'invalidphone@example.com',
+      phone: null,
+      full_name: null,
+      general_notes: null,
+      created_at: new Date().toISOString(),
+      user_id: null,
+      social_name: null,
+      date_of_birth: null,
+      gender: null,
+      orientation: null,
+      pronouns: null,
+      cpf: null,
+      rg: null,
+      rg_issuer: null,
+      allow_marketing_email: null,
+      approved_to_attend: 'approved',
+      basic_data_filled: true,
+      flag: 'none',
+      flag_notes: null,
+      how_came_to_us: null,
+      where_lives: null,
+      is_veteran: null,
+    };
+
+    const csvData: Partial<ValidatedProfile> = {
+      celular: 'invalid-phone-number',
+      nome: 'Test User',
+    };
+
+    const match: MatchResult = {
+      certainty: 50,
+      profiles: [profile],
+      matchType: 'email_only',
+      reason: 'Matched by email only',
+    };
+
+    const sql = generateUpdateSQL(profile, csvData, match);
+    
+    // Should still update the name even if phone is invalid
+    expect(sql).toContain("full_name = COALESCE(full_name, 'Test User')");
+    // Phone should not be in the update since it's invalid
+    expect(sql).not.toContain('phone = COALESCE');
   });
 
   it('should format phone numbers correctly', () => {
     const profile: Profile = {
-      id: 'uuid-phone',
+      id: '22234567-e89b-12d3-a456-426614174000',
       email: 'phone@example.com',
       phone: null,
       full_name: null,

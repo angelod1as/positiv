@@ -22,8 +22,14 @@ export class ProfileMatchingService {
   constructor(private db: Kysely<Database>) {}
 
   async findMatches(csvProfile: Partial<ValidatedProfile>): Promise<MatchResult> {
-    const normalizedPhone = csvProfile.celular ? normalizePhone(csvProfile.celular) : null;
-    const phoneNumber = normalizedPhone ? parseInt(normalizedPhone, 10) : null;
+    let phoneNumber: number | null = null;
+    
+    try {
+      phoneNumber = validateAndFormatPhone(csvProfile.celular);
+    } catch (error) {
+      // Log the error but continue with email-only matching
+      console.warn(`Phone validation error for row: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
 
     // Find all profiles that match either email or phone
     let query = this.db
@@ -185,6 +191,30 @@ export class ProfileMatchingService {
   }
 }
 
+// Helper function to safely escape SQL strings
+function escapeSQLString(value: string): string {
+  // PostgreSQL escaping: double single quotes and escape backslashes
+  return value
+    .replace(/\\/g, '\\\\')  // Escape backslashes first
+    .replace(/'/g, "''")     // Escape single quotes
+    .replace(/\0/g, '');     // Remove null bytes
+}
+
+// Helper function to validate and format phone numbers
+function validateAndFormatPhone(phone: string | null | undefined): number | null {
+  if (!phone) return null;
+  
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) return null;
+  
+  const phoneNumber = parseInt(normalizedPhone, 10);
+  if (isNaN(phoneNumber) || phoneNumber <= 0) {
+    throw new Error(`Invalid phone number format: ${phone} (normalized: ${normalizedPhone})`);
+  }
+  
+  return phoneNumber;
+}
+
 export function generateUpdateSQL(
   profile: Profile,
   csvData: Partial<ValidatedProfile>,
@@ -215,31 +245,44 @@ export function generateUpdateSQL(
 
   // Add phone if missing
   if (csvData.celular && !profile.phone) {
-    const normalizedPhone = normalizePhone(csvData.celular);
-    if (normalizedPhone) {
-      updates.push(`  phone = COALESCE(phone, ${parseInt(normalizedPhone, 10)})`);
+    try {
+      const phoneNumber = validateAndFormatPhone(csvData.celular);
+      if (phoneNumber !== null) {
+        updates.push(`  phone = COALESCE(phone, ${phoneNumber})`);
+      }
+    } catch (error) {
+      lines.push(`-- WARNING: Skipping phone update due to validation error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   // Add full_name if missing
   if (csvData.nome && !profile.full_name) {
-    updates.push(`  full_name = COALESCE(full_name, '${csvData.nome.replace(/'/g, "''")}')`);
+    const escapedName = escapeSQLString(csvData.nome);
+    updates.push(`  full_name = COALESCE(full_name, '${escapedName}')`);
   }
 
   // Add social_name if missing
   if (csvData.nome_social && !profile.social_name) {
-    updates.push(`  social_name = COALESCE(social_name, '${csvData.nome_social.replace(/'/g, "''")}')`);
+    const escapedSocialName = escapeSQLString(csvData.nome_social);
+    updates.push(`  social_name = COALESCE(social_name, '${escapedSocialName}')`);
   }
 
   // Only add general_notes if it's currently null
   if (csvData.observacao && !profile.general_notes) {
-    updates.push(`  general_notes = COALESCE(general_notes, '${csvData.observacao.replace(/'/g, "''")}')`);
+    const escapedNotes = escapeSQLString(csvData.observacao);
+    updates.push(`  general_notes = COALESCE(general_notes, '${escapedNotes}')`);
   }
 
   if (updates.length === 0) {
     lines.push('-- No updates needed - all fields already populated');
     lines.push('');
     return lines.join('\n');
+  }
+
+  // Validate profile ID format (UUID)
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(profile.id)) {
+    throw new Error(`Invalid profile ID format: ${profile.id}`);
   }
 
   lines.push('UPDATE profiles');
