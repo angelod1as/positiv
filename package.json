@@ -18,7 +18,9 @@
     "db:types": "./scripts/db-types.sh",
     "email:test": "./scripts/testmail.sh",
     "prepare": "husky",
-    "migration:event-mapping": "tsx scripts/temp/migration/generate-event-mapping.ts"
+    "migration:event-mapping": "tsx scripts/temp/migration/generate-event-mapping.ts",
+    "db:sync:prod": "bash scripts/temp/migration/sync-production-db.sh",
+    "db:sync:prod:dry-run": "bash scripts/temp/migration/sync-production-db.sh --dry-run"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.810.0",
