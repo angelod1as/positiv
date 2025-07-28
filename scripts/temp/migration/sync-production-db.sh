@@ -20,6 +20,17 @@ TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 BACKUP_FILE="production-dump-${TIMESTAMP}.sql"
 DRY_RUN=false
 
+# Cleanup function
+cleanup() {
+  if [[ -f "$BACKUP_FILE" ]] && [[ "${BACKUP_CREATED:-false}" == "false" ]]; then
+    rm -f "$BACKUP_FILE"
+    echo "Cleaned up incomplete backup file"
+  fi
+}
+
+# Set trap for cleanup on exit
+trap cleanup EXIT
+
 # Check arguments
 if [[ "${1:-}" == "--dry-run" ]]; then
   DRY_RUN=true
@@ -51,13 +62,11 @@ if [[ ! -f "$ENV_FILE" ]]; then
   error_exit ".env.vercel.production file not found at $PROJECT_ROOT"
 fi
 
-# Load production environment variables
-set -a
-source "$ENV_FILE"
-set +a
+# Load production environment variables without exporting all
+PROD_SUPABASE_CONNECT_URL=$(grep "^SUPABASE_CONNECT_URL=" "$ENV_FILE" | cut -d '=' -f2- | tr -d '"' | tr -d "'")
 
 # Check required variables
-if [[ -z "${SUPABASE_CONNECT_URL:-}" ]]; then
+if [[ -z "${PROD_SUPABASE_CONNECT_URL:-}" ]]; then
   error_exit "SUPABASE_CONNECT_URL is not defined in .env.vercel.production"
 fi
 
@@ -108,9 +117,9 @@ if [[ "$DRY_RUN" == "true" ]]; then
   echo ""
   
   # Count records in main tables
-  PROFILES_COUNT=$(psql "$SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM profiles" 2>/dev/null || echo "Error")
-  EVENTS_COUNT=$(psql "$SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM events" 2>/dev/null || echo "Error")
-  PARTICIPANTS_COUNT=$(psql "$SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM event_participants" 2>/dev/null || echo "Error")
+  PROFILES_COUNT=$(psql "$PROD_SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM profiles" 2>/dev/null || echo "Error")
+  EVENTS_COUNT=$(psql "$PROD_SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM events" 2>/dev/null || echo "Error")
+  PARTICIPANTS_COUNT=$(psql "$PROD_SUPABASE_CONNECT_URL" -t -c "SELECT COUNT(*) FROM event_participants" 2>/dev/null || echo "Error")
   
   echo "  - Profiles: $PROFILES_COUNT"
   echo "  - Events: $EVENTS_COUNT"
@@ -136,24 +145,46 @@ if [[ "$CONFIRM" != "yes" ]]; then
   exit 0
 fi
 
+# Double confirmation for safety
+echo ""
+warning "⚠️  FINAL CONFIRMATION REQUIRED ⚠️"
+echo "You are about to sync PRODUCTION data to your local database."
+echo "This will PERMANENTLY DELETE all current local data."
+echo ""
+read -p "Type 'DELETE LOCAL DATA' to proceed: " FINAL_CONFIRM
+
+if [[ "$FINAL_CONFIRM" != "DELETE LOCAL DATA" ]]; then
+  info "Operation cancelled"
+  exit 0
+fi
+
 # 1. Backup production database
 info "📥 Downloading production data..."
-if ! pg_dump "$SUPABASE_CONNECT_URL" --clean --if-exists --no-owner --no-privileges > "$BACKUP_FILE"; then
-  error_exit "Error backing up production database"
+if ! pg_dump "$PROD_SUPABASE_CONNECT_URL" --clean --if-exists --no-owner --no-privileges > "$BACKUP_FILE" 2>&1; then
+  error_exit "Error backing up production database. Check connection and credentials."
 fi
+BACKUP_CREATED=true
 success "Backup created: $BACKUP_FILE"
 
 # 2. Clean local database
 info "🗑️  Cleaning local database..."
-if ! psql "$LOCAL_DATABASE_URL" -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;" > /dev/null 2>&1; then
-  error_exit "Error cleaning local database"
+# First check if we can connect
+if ! psql "$LOCAL_DATABASE_URL" -c "SELECT 1" > /dev/null 2>&1; then
+  error_exit "Cannot connect to local database. Is Supabase running?"
+fi
+
+# Drop and recreate schema with error details
+if ! OUTPUT=$(psql "$LOCAL_DATABASE_URL" -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;" 2>&1); then
+  error_exit "Error cleaning local database: $OUTPUT"
 fi
 success "Local database cleaned"
 
 # 3. Restore data to local database
 info "📤 Restoring production data..."
-if ! psql "$LOCAL_DATABASE_URL" < "$BACKUP_FILE" > /dev/null 2>&1; then
-  error_exit "Error restoring data to local database"
+if ! OUTPUT=$(psql "$LOCAL_DATABASE_URL" < "$BACKUP_FILE" 2>&1); then
+  # Show last few lines of error for debugging
+  LAST_LINES=$(echo "$OUTPUT" | tail -n 10)
+  error_exit "Error restoring data to local database. Last 10 lines of output:\n$LAST_LINES"
 fi
 success "Data restored successfully"
 
