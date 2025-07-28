@@ -2,50 +2,60 @@
 
 ## Quick Start
 
-The global worktree management system is now available in your shell. Here's how to use it:
+This guide shows how to use git worktrees for the Positiv project development:
 
 ### Basic Commands
 
 ```bash
 # Create a new worktree for a feature
-wt add feature/dark-mode
+git worktree add ../positiv-worktrees/dark-mode -b feature/dark-mode
 
 # List all worktrees
-wt list
+git worktree list
 
 # Switch to a worktree
-wt dark-mode  # or: wt cd dark-mode
+cd ../positiv-worktrees/dark-mode
 
 # Remove a worktree when done
-wt remove dark-mode
+git worktree remove ../positiv-worktrees/dark-mode
 ```
 
-### Aliases for Speed
+### Quick Reference
 
 ```bash
-wta feature/auth       # Add worktree
-wtl                    # List worktrees
-wtg auth               # Go to worktree
-wtr auth               # Remove worktree
+# Add worktree
+git worktree add ../positiv-worktrees/auth -b feature/auth
+
+# List worktrees
+git worktree list
+
+# Go to worktree
+cd ../positiv-worktrees/auth
+
+# Remove worktree
+git worktree remove ../positiv-worktrees/auth
 ```
 
 ## Working with Claude
 
 ### Parallel Development
+
 1. Create a worktree for each feature:
+
    ```bash
-   wta feature/dark-mode dark-mode
-   wta bugfix/auth-error auth-fix
+   git worktree add ../positiv-worktrees/dark-mode -b feature/dark-mode
+   git worktree add ../positiv-worktrees/auth-fix -b bugfix/auth-error
    ```
 
 2. Open separate Claude sessions:
+
    ```bash
    # Terminal 1
-   wt dark-mode
+   cd ../positiv-worktrees/dark-mode
    claude
 
    # Terminal 2
-   wt auth-fix
+   cd ../positiv-worktrees/auth-fix
    claude
    ```
 
@@ -55,10 +65,10 @@ wtr auth               # Remove worktree
 
 ```bash
 # 1. Create a worktree for a new Linear issue
-wta pos-165-dark-mode dark-mode
+git worktree add ../positiv-worktrees/dark-mode -b pos-165-dark-mode
 
 # 2. Switch to it
-wt dark-mode
+cd ../positiv-worktrees/dark-mode
 
 # 3. Install dependencies
 pnpm install
@@ -67,14 +77,14 @@ pnpm install
 claude
 
 # 5. When done, remove the worktree
-wtr dark-mode
+git worktree remove ../positiv-worktrees/dark-mode
 ```
 
 ## Directory Structure
 
 Worktrees are created as siblings to your main repository:
 
-```
+```sh
 /Users/angelodias/Documents/GIT/private/positiv-project/
 ├── positiv/                    # Main repository
 └── positiv-worktrees/          # All worktrees
@@ -85,48 +95,62 @@ Worktrees are created as siblings to your main repository:
 
 ## Advanced Usage
 
-### Custom Worktree Names
+### Creating Worktrees with Different Names
+
 ```bash
-# Branch: feature/complex-name, Worktree: simple-name
-wt add feature/pos-165-implement-dark-mode dark
+# Branch: feature/pos-165-implement-dark-mode
+# Worktree directory: dark
+git worktree add ../positiv-worktrees/dark -b feature/pos-165-implement-dark-mode
 ```
 
-### Environment Variable
-Set a custom base directory for all worktrees:
+### Working Directory
+
+Worktrees are created in the `positiv-worktrees` directory next to the main repository:
+
 ```bash
-export GIT_WORKTREE_BASE_DIR="$HOME/worktrees"
+# Always create worktrees as siblings to the main repo
+git worktree add ../positiv-worktrees/<name> -b <branch-name>
 ```
 
 ### Essential Files
-The system automatically copies these files to new worktrees:
-- `.env.example` → `.env`
-- `CLAUDE.md`
-- `.nvmrc`
+
+After creating a worktree, copy these essential files:
+
+```bash
+# Copy environment variables
+cp ../positiv/.env .env
+
+# CLAUDE.md and .nvmrc are already tracked in git
+```
 
 ## Tips
 
 1. **Clean Commits**: Each worktree has its own working directory, so you can commit without affecting other work
 
-2. **Quick Switching**: Tab completion works with worktree names:
+2. **Quick Switching**: Navigate between worktrees:
+
    ```bash
-   wt d<tab>  # Completes to: wt dark-mode
+   cd ../positiv-worktrees/dark-mode
    ```
 
 3. **Cleanup**: Remove worktrees when done to keep things organized:
+
    ```bash
-   wtr feature-name
+   git worktree remove ../positiv-worktrees/feature-name
    ```
 
 4. **Status Check**: See all active worktrees and their branches:
+
    ```bash
-   wtl
+   git worktree list
    ```
 
-## Installation
+## Summary
 
-The worktree commands are globally available through your zsh configuration. The script is located at:
-```
-~/.zsh_custom/worktree.zsh
-```
+Use standard git worktree commands for managing feature development:
 
-If you need to customize the behavior, you can edit this file directly.
+- `git worktree add` - Create new worktree
+- `git worktree list` - List all worktrees  
+- `git worktree remove` - Remove worktree
+- Always create worktrees in `../positiv-worktrees/` directory
+- Run `pnpm install` after creating each worktree
