@@ -24,3 +24,5 @@ test-results/
 /playwright/.auth/*
 playwright/.auth/*
 .vercel/
+validated-profiles.json
+scripts/temp/migration/output/
