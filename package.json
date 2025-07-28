@@ -19,6 +19,7 @@
     "email:test": "./scripts/testmail.sh",
     "prepare": "husky",
     "migration:event-mapping": "tsx scripts/temp/migration/generate-event-mapping.ts",
+    "migration:validate": "tsx scripts/temp/migration/validate-profiles-csv.ts",
     "db:sync:prod": "bash scripts/temp/migration/sync-production-db.sh",
     "db:sync:prod:dry-run": "bash scripts/temp/migration/sync-production-db.sh --dry-run"
   },
