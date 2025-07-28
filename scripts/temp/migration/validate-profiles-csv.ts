@@ -1,6 +1,5 @@
 import { parse } from 'csv-parse';
 import { readFile, writeFile } from 'fs/promises';
-import { z } from 'zod';
 import { ProfileCSVRowSchema, normalizePhone } from './schemas/profile-csv.schema';
 
 export interface ValidatedProfile {
@@ -53,7 +52,7 @@ async function processRow(
   rowNumber: number,
   eventColumns: string[]
 ): Promise<{ profile?: ValidatedProfile; errors?: string[] }> {
-  const knownFields: Record<string, any> = {};
+  const knownFields: Record<string, unknown> = {};
   
   for (const col of knownColumns) {
     if (col in row) {
@@ -96,12 +95,12 @@ async function processRow(
 export async function validateCSV(filePath: string): Promise<ValidationResult> {
   const content = await readFile(filePath, 'utf-8');
   
-  const records: Record<string, string>[] = await new Promise((resolve, reject) => {
+  const records: Record<string, string>[] = await new Promise<Record<string, string>[]>((resolve, reject) => {
     parse(content, {
       columns: true,
       skip_empty_lines: true,
       trim: true,
-    }, (err, output) => {
+    }, (err, output: Record<string, string>[]) => {
       if (err) reject(err);
       else resolve(output);
     });
@@ -172,38 +171,38 @@ async function main() {
   const csvFile = args[0];
   
   try {
-    console.log('📊 Validating CSV...');
+    console.info('📊 Validating CSV...');
     
     const result = await validateCSV(csvFile);
     
-    console.log(`✅ ${result.stats.valid} perfis válidos`);
-    console.log(`❌ ${result.stats.invalid} perfis com erros`);
+    console.info(`✅ ${result.stats.valid} perfis válidos`);
+    console.info(`❌ ${result.stats.invalid} perfis com erros`);
     
     if (result.errors.length > 0) {
-      console.log('\nErros encontrados:');
+      console.info('\nErros encontrados:');
       result.errors.slice(0, 10).forEach(error => {
-        console.log(`- Linha ${error.row}: ${error.errors.join(', ')}`);
+        console.info(`- Linha ${error.row}: ${error.errors.join(', ')}`);
       });
       
       if (result.errors.length > 10) {
-        console.log(`... e mais ${result.errors.length - 10} erros`);
+        console.info(`... e mais ${result.errors.length - 10} erros`);
       }
     }
     
-    console.log('\nEstatísticas:');
-    console.log(`- Total de perfis: ${result.stats.total}`);
+    console.info('\nEstatísticas:');
+    console.info(`- Total de perfis: ${result.stats.total}`);
     
     const emailCount = result.valid.filter(p => p.email).length;
     const phoneCount = result.valid.filter(p => p.celular).length;
     const notesCount = result.valid.filter(p => p.observacao).length;
     
-    console.log(`- Perfis com email: ${emailCount}`);
-    console.log(`- Perfis com telefone: ${phoneCount}`);
-    console.log(`- Perfis com observações: ${notesCount}`);
+    console.info(`- Perfis com email: ${emailCount}`);
+    console.info(`- Perfis com telefone: ${phoneCount}`);
+    console.info(`- Perfis com observações: ${notesCount}`);
     
-    console.log(`\nColunas de eventos detectadas: ${result.eventColumns.length}`);
+    console.info(`\nColunas de eventos detectadas: ${result.eventColumns.length}`);
     result.eventColumns.forEach(col => {
-      console.log(`- "${col}"`);
+      console.info(`- "${col}"`);
     });
     
     const outputFile = 'validated-profiles.json';
@@ -213,7 +212,7 @@ async function main() {
       'utf-8'
     );
     
-    console.log(`\nSalvando resultado em: ${outputFile}`);
+    console.info(`\nSalvando resultado em: ${outputFile}`);
   } catch (error) {
     console.error('Erro ao validar CSV:', error);
     process.exit(1);

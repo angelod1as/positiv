@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { readFile } from 'fs/promises';
-import { validateCSV, ValidationResult } from './validate-profiles-csv';
+import { validateCSV } from './validate-profiles-csv';
 
 vi.mock('fs/promises');
 
