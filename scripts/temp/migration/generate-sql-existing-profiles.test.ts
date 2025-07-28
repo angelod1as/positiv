@@ -33,7 +33,7 @@ describe('ProfileMatchingService', () => {
       };
 
       const existingProfile: Profile = {
-        id: 'uuid-123',
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.com',
         phone: 11999999999,
         full_name: 'Test User',
@@ -65,7 +65,7 @@ describe('ProfileMatchingService', () => {
       expect(result.certainty).toBe(100);
       expect(result.matchType).toBe('email_and_phone');
       expect(result.profiles).toHaveLength(1);
-      expect(result.profiles[0].id).toBe('uuid-123');
+      expect(result.profiles[0].id).toBe('123e4567-e89b-12d3-a456-426614174000');
       expect(result.reason).toContain('Matched by both email AND phone');
     });
 
@@ -77,7 +77,7 @@ describe('ProfileMatchingService', () => {
       };
 
       const existingProfile: Profile = {
-        id: 'uuid-123',
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.com',
         phone: 11999999999, // unformatted
         full_name: 'Test User',
@@ -120,7 +120,7 @@ describe('ProfileMatchingService', () => {
       };
 
       const existingProfile: Profile = {
-        id: 'uuid-123',
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.com',
         phone: null, // No phone
         full_name: 'Test User',
@@ -163,7 +163,7 @@ describe('ProfileMatchingService', () => {
       };
 
       const existingProfile: Profile = {
-        id: 'uuid-123',
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'different@example.com', // Different email
         phone: 11999999999,
         full_name: 'Test User',
@@ -208,7 +208,7 @@ describe('ProfileMatchingService', () => {
       };
 
       const profileWithEmail: Profile = {
-        id: 'uuid-123',
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.com',
         phone: null,
         full_name: 'Test User 1',
@@ -234,7 +234,7 @@ describe('ProfileMatchingService', () => {
       };
 
       const profileWithPhone: Profile = {
-        id: 'uuid-456',
+        id: '456e7890-e89b-12d3-a456-426614174000',
         email: 'different@example.com',
         phone: 11999999999,
         full_name: 'Test User 2',
@@ -277,7 +277,7 @@ describe('ProfileMatchingService', () => {
       };
 
       const profile1: Profile = {
-        id: 'uuid-123',
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.com',
         phone: null,
         full_name: 'Test User 1',
@@ -303,7 +303,7 @@ describe('ProfileMatchingService', () => {
       };
 
       const profile2: Profile = {
-        id: 'uuid-456',
+        id: '456e7890-e89b-12d3-a456-426614174000',
         email: 'test@example.com',
         phone: null,
         full_name: 'Test User 2',
@@ -343,7 +343,7 @@ describe('ProfileMatchingService', () => {
 describe('generateUpdateSQL', () => {
   it('should generate SQL with 100% certainty comment', () => {
     const profile: Profile = {
-      id: 'uuid-123',
+      id: '123e4567-e89b-12d3-a456-426614174000',
       email: 'test@example.com',
       phone: 11999999999,
       full_name: 'Existing Name',
@@ -385,13 +385,13 @@ describe('generateUpdateSQL', () => {
     expect(sql).toContain('-- CERTAINTY: 100% - Matched by both email AND phone');
     expect(sql).toContain('UPDATE profiles');
     expect(sql).toContain("general_notes = COALESCE(general_notes, 'New observation')");
-    expect(sql).toContain("WHERE id = 'uuid-123'");
+    expect(sql).toContain("WHERE id = '123e4567-e89b-12d3-a456-426614174000'");
     expect(sql).not.toContain('full_name'); // Should not update existing data
   });
 
   it('should generate SQL with 50% certainty comment', () => {
     const profile: Profile = {
-      id: 'uuid-123',
+      id: '123e4567-e89b-12d3-a456-426614174000',
       email: 'test@example.com',
       phone: null,
       full_name: null,
@@ -439,7 +439,7 @@ describe('generateUpdateSQL', () => {
   it('should not generate SQL for conflicts', () => {
     const profiles: Profile[] = [
       {
-        id: 'uuid-123',
+        id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.com',
         phone: null,
         full_name: 'Test 1',
@@ -464,7 +464,7 @@ describe('generateUpdateSQL', () => {
         is_veteran: null,
       },
       {
-        id: 'uuid-456',
+        id: '456e7890-e89b-12d3-a456-426614174000',
         email: 'different@example.com',
         phone: 11999999999,
         full_name: 'Test 2',
