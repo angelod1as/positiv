@@ -49,7 +49,7 @@ fi
         
         expect(result).toContain('DRY RUN MODE')
         expect(result).toContain('Would perform the following operations')
-        expect(result).not.toContain('Erro ao fazer backup')
+        expect(result).not.toContain('Error backing up')
         
         fs.unlinkSync(psqlPath)
       } catch (error) {
@@ -81,8 +81,8 @@ fi
           env: { ...process.env, PATH: `${__dirname}:${process.env.PATH}` }
         })
         
-        expect(result).toContain('ATENÇÃO: Isso apagará TODOS os dados locais')
-        expect(result).toContain('Operação cancelada')
+        expect(result).toContain('WARNING: This will DELETE ALL local data')
+        expect(result).toContain('Operation cancelled')
       } finally {
         fs.unlinkSync(psqlPath)
       }
@@ -105,7 +105,7 @@ fi
         } else if (error instanceof Error) {
           output = error.message
         }
-        expect(output).toContain('Arquivo .env.vercel.production não encontrado')
+        expect(output).toContain('.env.vercel.production file not found')
       }
     })
 
@@ -124,7 +124,7 @@ fi
         } else if (error instanceof Error) {
           output = error.message
         }
-        expect(output).toContain('SUPABASE_CONNECT_URL não está definido')
+        expect(output).toContain('SUPABASE_CONNECT_URL is not defined')
       }
     })
   })
