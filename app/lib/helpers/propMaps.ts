@@ -34,6 +34,7 @@ export const profilePropMap = (property: keyof Profile) => {
     approved_to_attend: "Status de Aprovação",
     flag: "Flag",
     flag_notes: "Notas da flag",
+    general_notes: "Observações gerais",
   }[property]
 }
 

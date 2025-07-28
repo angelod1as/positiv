@@ -294,6 +294,7 @@ export type Database = {
           flag_notes: string | null
           full_name: string | null
           gender: string[] | null
+          general_notes: string | null
           how_came_to_us: string | null
           id: string
           is_veteran: boolean | null
@@ -318,6 +319,7 @@ export type Database = {
           flag_notes?: string | null
           full_name?: string | null
           gender?: string[] | null
+          general_notes?: string | null
           how_came_to_us?: string | null
           id?: string
           is_veteran?: boolean | null
@@ -342,6 +344,7 @@ export type Database = {
           flag_notes?: string | null
           full_name?: string | null
           gender?: string[] | null
+          general_notes?: string | null
           how_came_to_us?: string | null
           id?: string
           is_veteran?: boolean | null
