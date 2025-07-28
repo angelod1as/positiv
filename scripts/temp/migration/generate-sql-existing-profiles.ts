@@ -226,8 +226,8 @@ export function generateUpdateSQL(
     updates.push(`  social_name = COALESCE(social_name, '${csvData.nome_social.replace(/'/g, "''")}')`);
   }
 
-  // Always try to add general_notes
-  if (csvData.observacao) {
+  // Only add general_notes if it's currently null
+  if (csvData.observacao && !profile.general_notes) {
     updates.push(`  general_notes = COALESCE(general_notes, '${csvData.observacao.replace(/'/g, "''")}')`);
   }
 
@@ -392,7 +392,7 @@ async function generateReport(
       if (csvProfile.nome_social && !profile.social_name) {
         fieldsToUpdate.push('social_name');
       }
-      if (csvProfile.observacao) {
+      if (csvProfile.observacao && !profile.general_notes) {
         fieldsToUpdate.push('general_notes');
       }
 
