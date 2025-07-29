@@ -1,10 +1,12 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { basicData } from "./basic-data.server"
 import type { z } from "zod"
-import type { basicDataSchema, contextSchema } from "../common"
+import type { contextSchema } from "../common"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "~/types/database/database.types"
 
 describe("basicData", () => {
-  const mockFormData: z.infer<typeof basicDataSchema> = {
+  const mockFormData = {
     full_name: "Test User",
     social_name: "Test",
     date_of_birth: "1990-01-01",
@@ -30,12 +32,12 @@ describe("basicData", () => {
       })
 
       const mockContext: z.infer<typeof contextSchema> = {
-        supabase: { from: mockFrom } as any,
+        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
         currentProfile: null,
         currentUser: {
           id: "user-123",
           email: "test@example.com",
-        } as any,
+        },
         supabaseHeaders: new Headers(),
         host: "localhost",
       }
@@ -75,12 +77,12 @@ describe("basicData", () => {
       })
 
       const mockContext: z.infer<typeof contextSchema> = {
-        supabase: { from: mockFrom } as any,
+        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
         currentProfile: null,
         currentUser: {
           id: "user-123",
           email: "test@example.com",
-        } as any,
+        },
         supabaseHeaders: new Headers(),
         host: "localhost",
       }
@@ -109,12 +111,12 @@ describe("basicData", () => {
       })
 
       const mockContext: z.infer<typeof contextSchema> = {
-        supabase: { from: mockFrom } as any,
+        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
         currentProfile: null,
         currentUser: {
           id: "user-123",
           email: "test@example.com",
-        } as any,
+        },
         supabaseHeaders: new Headers(),
         host: "localhost",
       }
@@ -143,17 +145,31 @@ describe("basicData", () => {
       })
 
       const mockContext: z.infer<typeof contextSchema> = {
-        supabase: { from: mockFrom } as any,
+        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
         currentProfile: { 
           id: "current-profile-123",
           basic_data_filled: false,
           created_at: "2024-01-01T00:00:00Z",
-          is_admin: false
-        } as any,
+          is_admin: false,
+          email: null,
+          full_name: null,
+          social_name: null,
+          pronouns: null,
+          rg: null,
+          cpf: null,
+          phone: null,
+          date_of_birth: null,
+          gender: null,
+          orientation: null,
+          where_lives: null,
+          how_came_to_us: null,
+          rg_issuer: null,
+          allow_marketing_email: null
+        },
         currentUser: {
           id: "user-123",
           email: "test@example.com",
-        } as any,
+        },
         supabaseHeaders: new Headers(),
         host: "localhost",
       }

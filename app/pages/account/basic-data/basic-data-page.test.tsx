@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from "vitest"
 import { loader } from "./basic-data-page"
 import * as authServer from "~/business/auth/auth.server"
 import type { Route } from "./+types/basic-data-page"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import type { Database } from "~/types/database/database.types"
+import type { Profile } from "~/types/database/entities.types"
 
 vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
@@ -13,11 +16,11 @@ describe("basic-data-page loader", () => {
 
   describe("orphaned profile handling", () => {
     it("should return orphaned profile when found", async () => {
-      const orphanedProfile = {
+      const orphanedProfile: Partial<Profile> = {
         id: "orphaned-123",
         email: "test@example.com",
         full_name: "Orphaned User",
-        phone: "11999999999",
+        phone: 11999999999,
         user_id: null,
       }
 
@@ -38,12 +41,14 @@ describe("basic-data-page loader", () => {
         currentUser: {
           id: "user-123",
           email: "test@example.com",
-        } as any,
-        supabase: mockSupabase as any,
+        },
+        supabase: mockSupabase as unknown as SupabaseClient<Database>,
         supabaseHeaders: new Headers(),
-      } as any)
+        host: null,
+        isProdInDev: false,
+      })
 
-      const result = await loader({ request: mockRequest, params: mockParams })
+      const result = await loader({ request: mockRequest, params: mockParams, context: {} })
       
       expect(result).toEqual({
         profile: null,
@@ -69,26 +74,43 @@ describe("basic-data-page loader", () => {
         }),
       }
 
+      const currentProfile = {
+        id: "profile-123",
+        full_name: "Current User",
+        basic_data_filled: true,
+        created_at: "2024-01-01T00:00:00Z",
+        is_admin: false,
+        email: null,
+        social_name: null,
+        pronouns: null,
+        rg: null,
+        cpf: null,
+        phone: null,
+        date_of_birth: null,
+        gender: null,
+        orientation: null,
+        where_lives: null,
+        how_came_to_us: null,
+        rg_issuer: null,
+        allow_marketing_email: null,
+      }
+
       vi.mocked(authServer.getUserContext).mockResolvedValue({
-        currentProfile: {
-          id: "profile-123",
-          full_name: "Current User",
-        } as any,
+        currentProfile,
         currentUser: {
           id: "user-123",
           email: "test@example.com",
-        } as any,
-        supabase: mockSupabase as any,
+        },
+        supabase: mockSupabase as unknown as SupabaseClient<Database>,
         supabaseHeaders: new Headers(),
-      } as any)
+        host: null,
+        isProdInDev: false,
+      })
 
-      const result = await loader({ request: mockRequest, params: mockParams })
+      const result = await loader({ request: mockRequest, params: mockParams, context: {} })
       
       expect(result).toEqual({
-        profile: {
-          id: "profile-123",
-          full_name: "Current User",
-        },
+        profile: currentProfile,
         orphanedProfile: null,
       })
     })
@@ -114,12 +136,14 @@ describe("basic-data-page loader", () => {
         currentUser: {
           id: "user-123",
           email: "test@example.com",
-        } as any,
-        supabase: mockSupabase as any,
+        },
+        supabase: mockSupabase as unknown as SupabaseClient<Database>,
         supabaseHeaders: new Headers(),
-      } as any)
+        host: null,
+        isProdInDev: false,
+      })
 
-      const result = await loader({ request: mockRequest, params: mockParams })
+      const result = await loader({ request: mockRequest, params: mockParams, context: {} })
       
       expect(result).toEqual({
         profile: null,
