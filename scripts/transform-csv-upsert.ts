@@ -62,13 +62,17 @@ const genderMap: Record<string, string> = {
   "Homem cis Queer": "Homem cis",
   "Sapatão masculino": "Pessoa não binária",
   "Hétero flexível": "Pessoa não binária",
-  "Eu nasci em 22/08/1985 (não consegui responder acima) / sou uma pessoa trans NB": "Pessoa não binária",
-  "Tô começando a me sentir um pouco gênero fluido em breves momentos": "Pessoa não binária",
-  "transmasculine": "Homem trans",
+  "Eu nasci em 22/08/1985 (não consegui responder acima) / sou uma pessoa trans NB":
+    "Pessoa não binária",
+  "Tô começando a me sentir um pouco gênero fluido em breves momentos":
+    "Pessoa não binária",
+  transmasculine: "Homem trans",
   "Gênero Fluído mais voltada ao feminino": "Pessoa não binária",
-  "Mulher cis (mas que no coração é não-binárie mesmo, em construção 💜)": "Mulher cis",
+  "Mulher cis (mas que no coração é não-binárie mesmo, em construção 💜)":
+    "Mulher cis",
   "Boyceta / transmasc nb": "Homem trans",
-  "Sempre acho essa pergunta difícil.  Eu sou lida como mulher cis e acho ok desde que não me tratem diferente por isso (mas isso é um problema da sociedade). Sinceramente não me identifico com nenhum dos gêneros, mas coloco mulher cis pra maior parte das coisas porque é mais fácil": "Mulher cis",
+  "Sempre acho essa pergunta difícil.  Eu sou lida como mulher cis e acho ok desde que não me tratem diferente por isso (mas isso é um problema da sociedade). Sinceramente não me identifico com nenhum dos gêneros, mas coloco mulher cis pra maior parte das coisas porque é mais fácil":
+    "Mulher cis",
   "#N/A": "",
 }
 
@@ -114,16 +118,14 @@ const pronounMap: Record<string, string> = {
   Mary: "Ela/dela",
   "Ela/Del": "Ela/dela",
   "Ela/delq": "Ela/dela",
-  "Ela / dela": "Ela/dela",
   "Ela/ dela": "Ela/dela",
   "Ele/dle": "Ele/dele",
   "Ela/ele": "Ela/dela",
   "ela/dela": "Ela/dela",
   "ele/dele": "Ele/dele",
   "elu/delu": "Elu/delu",
-  "ile/dile": "Ile/dile",
   "Elu/Delu (mas atendo por todos)": "Elu/delu",
-  "Ela/Dela/ Elu/Delu": "Ela/dela",
+  "Ela/Dela/ Elu/Delu": "Elu/delu",
 }
 
 function cleanPhone(phone: string): string | null {
@@ -143,7 +145,7 @@ function parseArrayField(
     .split(",")
     .map((v) => v.trim())
     .filter(Boolean)
-    .filter(item => item !== "#N/A")
+    .filter((item) => item !== "#N/A")
   const mapped: string[] = []
   const unknown: string[] = []
 
@@ -184,7 +186,7 @@ function parsePronounsField(value: string): string[] {
     .split(/[,;]/)
     .map((v) => v.trim())
     .filter(Boolean)
-    .filter(item => item !== "#N/A")
+    .filter((item) => item !== "#N/A")
   const mapped: string[] = []
   const seenPronouns = new Set<string>()
   const unknown: string[] = []
@@ -225,7 +227,7 @@ function parsePronounsField(value: string): string[] {
       // Try to handle variations like "ela/dela" -> "Ela/dela"
       const lowerItem = item.toLowerCase()
       const matchingPronoun = PRONOUNS.find(
-        (p) => p.toLowerCase() === lowerItem
+        (p) => p.toLowerCase() === lowerItem,
       )
       if (matchingPronoun && !seenPronouns.has(matchingPronoun)) {
         mapped.push(matchingPronoun)
