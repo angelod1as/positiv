@@ -53,6 +53,14 @@ export const getContext = async (
   }
 
   if (authError) {
+    if (authError.code === "refresh_token_not_found") {
+      supabaseHeaders.append(
+        "Set-Cookie", 
+        "sb-127-auth-token=; Max-Age=0; Path=/; SameSite=Lax"
+      )
+      return errorProps
+    }
+    
     if (!authError.message.includes("Auth session missing!")) {
       console.error("AUTH error", errorProps)
       throw await redirectWithError(
