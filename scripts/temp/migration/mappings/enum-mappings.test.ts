@@ -57,8 +57,8 @@ describe('enum-mappings', () => {
       expect(getGender('MULHER CIS')).toBe('Mulher cis');
     });
 
-    it('should return original value if no mapping found', () => {
-      expect(getGender('Unknown Gender')).toBe('Unknown Gender');
+    it('should return undefined if no valid mapping found', () => {
+      expect(getGender('Unknown Gender')).toBeUndefined();
     });
 
     it('should return undefined for empty values', () => {
@@ -85,8 +85,8 @@ describe('enum-mappings', () => {
       expect(getOrientation('Bi, Pan, Demi')).toBe('Bi');
     });
 
-    it('should return original value if no mapping found', () => {
-      expect(getOrientation('Unknown')).toBe('Unknown');
+    it('should return undefined if no valid mapping found', () => {
+      expect(getOrientation('Unknown')).toBeUndefined();
     });
 
     it('should return undefined for empty values', () => {
