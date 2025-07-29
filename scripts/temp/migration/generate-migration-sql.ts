@@ -13,6 +13,8 @@ import {
   normalizePhone,
   normalizeRG,
 } from './mappings/enum-mappings';
+import { escapeSQL, formatSQLValue } from './utils/sql-escape';
+import type { ProfileMatch, FindProfileResult } from './types';
 
 interface CSVRow {
   Nome: string;
@@ -32,12 +34,7 @@ interface CSVRow {
 interface ProcessedProfile {
   csvRow: number;
   csvData: CSVRow;
-  dbMatch?: {
-    id: string;
-    email: string | null;
-    phone: string | null;
-    full_name: string | null;
-  } | undefined;
+  dbMatch?: ProfileMatch | undefined;
   isNew: boolean;
   mappedData: {
     full_name: string;
@@ -120,9 +117,10 @@ async function parseCSV(filePath: string): Promise<CSVRow[]> {
   });
 }
 
-async function findExistingProfile(csvProfile: CSVRow) {
+async function findExistingProfile(csvProfile: CSVRow): Promise<FindProfileResult> {
   const email = csvProfile['E-mail']?.toLowerCase();
-  const phone = normalizePhone(csvProfile['Celular']);
+  const phoneStr = normalizePhone(csvProfile['Celular']);
+  const phone = phoneStr ? parseInt(phoneStr, 10) : null;
   
   if (!email && !phone) {
     return { type: 'not_found' as const };
@@ -132,33 +130,25 @@ async function findExistingProfile(csvProfile: CSVRow) {
     .selectFrom('profiles')
     .select(['id', 'email', 'phone', 'full_name']);
   
-  query = query.where((eb) => {
-    const conditions = [];
-    if (email) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      conditions.push(eb('email', '=', email as any));
-    }
-    if (phone) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      conditions.push(eb('phone', '=', phone as any));
-    }
-    
-    if (conditions.length === 1) {
-      return conditions[0];
-    }
-    return eb.or(conditions);
-  });
+  if (email && phone) {
+    query = query.where((eb) => eb.or([
+      eb('email', '=', email),
+      eb('phone', '=', phone)
+    ]));
+  } else if (email) {
+    query = query.where((eb) => eb('email', '=', email));
+  } else if (phone) {
+    query = query.where((eb) => eb('phone', '=', phone));
+  }
   
   const existing = await query.execute();
   
   if (existing.length > 1) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { type: 'conflict' as const, profiles: existing as any };
+    return { type: 'conflict' as const, profiles: existing as ProfileMatch[] };
   }
   
   if (existing.length === 1) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return { type: 'found' as const, profile: existing[0] as any };
+    return { type: 'found' as const, profile: existing[0] as ProfileMatch };
   }
   
   return { type: 'not_found' as const };
@@ -354,17 +344,17 @@ function generateNewProfilesSQL(profiles: ProcessedProfile[]): string {
     sql += ') VALUES (\n';
     sql += '  gen_random_uuid(),\n';
     sql += '  NULL, -- Orphan profile\n';
-    sql += `  ${mappedData.full_name ? `'${mappedData.full_name.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.social_name ? `'${mappedData.social_name.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.gender ? `'${mappedData.gender.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.orientation ? `'${mappedData.orientation.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.pronouns ? `'${mappedData.pronouns.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.email ? `'${mappedData.email}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.phone ? `'${mappedData.phone}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.rg ? `'${mappedData.rg}'` : 'NULL'},\n`;
-    sql += `  '${mappedData.approved_to_attend}',\n`;
-    sql += `  '${mappedData.flag}',\n`;
-    sql += `  ${mappedData.general_notes ? `'${mappedData.general_notes.replace(/'/g, "''")}'` : 'NULL'},\n`;
+    sql += `  ${formatSQLValue(mappedData.full_name)},\n`;
+    sql += `  ${formatSQLValue(mappedData.social_name)},\n`;
+    sql += `  ${formatSQLValue(mappedData.gender)},\n`;
+    sql += `  ${formatSQLValue(mappedData.orientation)},\n`;
+    sql += `  ${formatSQLValue(mappedData.pronouns)},\n`;
+    sql += `  ${formatSQLValue(mappedData.email)},\n`;
+    sql += `  ${formatSQLValue(mappedData.phone)},\n`;
+    sql += `  ${formatSQLValue(mappedData.rg)},\n`;
+    sql += `  '${escapeSQL(mappedData.approved_to_attend)}',\n`;
+    sql += `  '${escapeSQL(mappedData.flag)}',\n`;
+    sql += `  ${formatSQLValue(mappedData.general_notes)},\n`;
     sql += '  NOW(),\n';
     sql += '  NOW()\n';
     sql += ');\n\n';
@@ -404,15 +394,15 @@ function generateEventParticipantsSQL(profiles: ProcessedProfile[], eventMapping
         sql += '  created_at, updated_at\n';
         sql += ') VALUES (\n';
         sql += '  gen_random_uuid(),\n';
-        sql += `  '${eventId}',\n`;
+        sql += `  '${escapeSQL(eventId)}',\n`;
         sql += '  (SELECT id FROM profiles WHERE\n';
         
         const conditions = [];
         if (profile.mappedData.email) {
-          conditions.push(`    email = '${profile.mappedData.email}'`);
+          conditions.push(`    email = ${formatSQLValue(profile.mappedData.email)}`);
         }
         if (profile.mappedData.phone) {
-          conditions.push(`    phone = '${profile.mappedData.phone}'`);
+          conditions.push(`    phone = ${formatSQLValue(profile.mappedData.phone)}`);
         }
         sql += conditions.join(' OR\n') + '\n';
         sql += '    LIMIT 1),\n';
@@ -429,8 +419,8 @@ function generateEventParticipantsSQL(profiles: ProcessedProfile[], eventMapping
         sql += '  created_at, updated_at\n';
         sql += ') VALUES (\n';
         sql += '  gen_random_uuid(),\n';
-        sql += `  '${eventId}',\n`;
-        sql += `  '${profile.dbMatch.id}',\n`;
+        sql += `  '${escapeSQL(eventId)}',\n`;
+        sql += `  '${escapeSQL(profile.dbMatch.id)}',\n`;
         sql += "  'confirmed',\n";
         sql += '  true,\n';
         sql += '  NOW(),\n';
@@ -467,7 +457,8 @@ async function loadEventMapping(): Promise<Record<string, string>> {
 
 async function main() {
   const args = process.argv.slice(2);
-  let csvPath = '/Users/angelodias/Documents/GIT/private/positiv-project/mailing.csv';
+  // Default to mailing.csv in positiv-project root
+  let csvPath = join(process.cwd(), '../../../../mailing.csv');
   let generateSQL = false;
   
   // Parse arguments
