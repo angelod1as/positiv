@@ -62,9 +62,12 @@ Migration of 666 participant records from CSV to Supabase production database.
 
 ## Scripts Created
 1. `scripts/validate-csv.ts` - Validates CSV data, checks for duplicates
-2. `scripts/transform-csv.ts` - Transforms CSV to SQL
-3. `migration-profiles.sql` - 662 INSERT statements for profiles
-4. `migration-event-participants.sql` - 600 INSERT statements for event_participants
+2. `scripts/transform-csv.ts` - Transforms CSV to SQL (simple INSERT)
+3. `scripts/transform-csv-upsert.ts` - Transforms CSV to SQL with UPSERT logic
+4. `migration-profiles.sql` - 662 INSERT statements for profiles (will fail on duplicates)
+5. `migration-event-participants.sql` - 600 INSERT statements for event_participants
+6. `migration-profiles-upsert.sql` - 662 UPSERT statements that handle existing profiles
+7. `migration-event-participants-upsert.sql` - 600 INSERT statements with duplicate checks
 
 ## Progress Checklist
 - [x] Create migration worktree
@@ -74,9 +77,19 @@ Migration of 666 participant records from CSV to Supabase production database.
 - [x] Create transformation script
 - [x] Generate profiles SQL
 - [x] Generate event_participants SQL
+- [x] Create UPSERT version that handles existing profiles
 - [ ] Backup production database
 - [ ] Test migration locally
 - [ ] Execute on production
+
+## IMPORTANT: Migration Execution Notes
+- **USE THE UPSERT VERSION** (`migration-profiles-upsert.sql` and `migration-event-participants-upsert.sql`)
+- Both SQL files must be run in the **SAME DATABASE SESSION**
+- The profiles script creates a temporary table that the event participants script uses
+- The scripts will:
+  - UPDATE existing profiles (matched by email or phone)
+  - INSERT new profiles only if they don't exist
+  - Skip creating duplicate event participants
 
 ## Backup Commands
 
