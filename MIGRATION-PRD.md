@@ -62,16 +62,18 @@ Migration of 666 participant records from CSV to Supabase production database.
 
 ## Scripts Created
 1. `scripts/validate-csv.ts` - Validates CSV data, checks for duplicates
-2. `scripts/transform-csv.ts` - Transforms CSV to SQL (TODO)
+2. `scripts/transform-csv.ts` - Transforms CSV to SQL
+3. `migration-profiles.sql` - 662 INSERT statements for profiles
+4. `migration-event-participants.sql` - 600 INSERT statements for event_participants
 
 ## Progress Checklist
 - [x] Create migration worktree
 - [x] Validate CSV data
 - [x] Remove duplicate phone numbers
 - [x] Define mapping rules
-- [ ] Create transformation script
-- [ ] Generate profiles SQL
-- [ ] Generate event_participants SQL
+- [x] Create transformation script
+- [x] Generate profiles SQL
+- [x] Generate event_participants SQL
 - [ ] Backup production database
 - [ ] Test migration locally
 - [ ] Execute on production
@@ -80,20 +82,44 @@ Migration of 666 participant records from CSV to Supabase production database.
 
 ### Full Production Backup
 ```bash
-# TODO: Document Supabase backup commands
+# 1. Export database schema and data (excluding auth schema)
+supabase db dump --db-url "postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-west-1.pooler.supabase.com:6543/postgres" > prod_backup.sql
+
+# 2. Export auth schema separately (if needed)
+supabase db dump --db-url "postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-west-1.pooler.supabase.com:6543/postgres" --schema auth > prod_auth_backup.sql
+
+# Alternative: Use pg_dump directly
+pg_dump "postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-west-1.pooler.supabase.com:6543/postgres" \
+  --clean --if-exists --schema=public > prod_backup.sql
 ```
 
 ### Restore to Local
 ```bash
-# TODO: Document restore process
+# 1. Stop local Supabase
+supabase stop
+
+# 2. Start fresh
+supabase start
+
+# 3. Restore the backup
+psql "postgresql://postgres:postgres@localhost:54322/postgres" < prod_backup.sql
+
+# 4. If auth was backed up separately
+psql "postgresql://postgres:postgres@localhost:54322/postgres" < prod_auth_backup.sql
 ```
 
 ## Migration Statistics
 - Original CSV records: 677
 - After duplicate removal: 666
-- Records to skip (no email/phone): 14
-- Expected profiles to create: ~652
-- Expected event_participants records: ~597
+- Records to skip (no email/phone): 4
+- Valid profiles created: 662
+- Event participants created: 600
+- Records skipped: Caíque Apolinário, Leo Seabra, Matheus Brandão Ponter, Rodrigo Stucker
+
+## Data Quality Notes
+- Many custom gender/orientation/pronoun values that don't match constants
+- These were logged during transformation but preserved as empty arrays
+- Consider manual review of these edge cases
 
 ## Notes
 - All imported profiles will have `user_id = NULL` (no auth user)
