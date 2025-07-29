@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { getContext } from "./auth.server"
+import type { DBClient } from "~/types/utils/utils.types"
 
 vi.mock("~/env.server", () => ({
   env: vi.fn(() => ({ isProdInDev: "false" })),
@@ -36,24 +37,19 @@ describe("getContext", () => {
     
     const { createServerClient } = await import("~/lib/supabase/server")
     vi.mocked(createServerClient).mockReturnValue({
-      supabase: mockSupabase as any,
+      supabase: mockSupabase as unknown as DBClient,
       headers: mockHeaders,
     })
     
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
     
-    try {
-      const result = await getContext(mockRequest, mockParams)
-      
-      expect(result.currentUser).toBeNull()
-      expect(result.currentProfile).toBeNull()
-      expect(result.supabaseHeaders.get("Set-Cookie")).toContain("sb-127-auth-token=; Max-Age=0")
-      expect(consoleSpy).not.toHaveBeenCalled()
-    } catch (e) {
-      console.log("Error caught:", e)
-      throw e
-    } finally {
-      consoleSpy.mockRestore()
-    }
+    const result = await getContext(mockRequest, mockParams)
+    
+    expect(result.currentUser).toBeNull()
+    expect(result.currentProfile).toBeNull()
+    expect(result.supabaseHeaders.get("Set-Cookie")).toContain("sb-127-auth-token=; Max-Age=0")
+    expect(consoleSpy).not.toHaveBeenCalled()
+    
+    consoleSpy.mockRestore()
   })
 })
