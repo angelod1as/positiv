@@ -91,34 +91,43 @@ Migration of 666 participant records from CSV to Supabase production database.
   - INSERT new profiles only if they don't exist
   - Skip creating duplicate event participants
 
-## Backup Commands
+## Backup and Migration Process
 
-### Full Production Backup
+### Step 1: Backup Production and Restore to Local
 ```bash
-# 1. Export database schema and data (excluding auth schema)
-supabase db dump --db-url "postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-west-1.pooler.supabase.com:6543/postgres" > prod_backup.sql
+# 1. Edit the backup script with your production credentials
+# Edit: scripts/backup-restore-prod.sh
+# Replace PROD_DB_URL with your actual production URL
 
-# 2. Export auth schema separately (if needed)
-supabase db dump --db-url "postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-west-1.pooler.supabase.com:6543/postgres" --schema auth > prod_auth_backup.sql
+# 2. Run the backup and restore script
+./scripts/backup-restore-prod.sh
 
-# Alternative: Use pg_dump directly
-pg_dump "postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-us-west-1.pooler.supabase.com:6543/postgres" \
-  --clean --if-exists --schema=public > prod_backup.sql
+# This script will:
+# - Backup production database to backups/ directory
+# - Reset your local Supabase
+# - Restore production data to local
 ```
 
-### Restore to Local
+### Step 2: Run Migration on Local
 ```bash
-# 1. Stop local Supabase
-supabase stop
+# After restore is complete, run the migration:
+./scripts/run-migration-local.sh
 
-# 2. Start fresh
-supabase start
+# This will:
+# - Run both migration files in the same session
+# - Create a log file with results
+# - Show summary of migrated data
+```
 
-# 3. Restore the backup
-psql "postgresql://postgres:postgres@localhost:54322/postgres" < prod_backup.sql
+### Step 3: Manual Migration Execution (Alternative)
+```bash
+# If you prefer to run manually:
+psql "postgresql://postgres:postgres@localhost:54322/postgres"
 
-# 4. If auth was backed up separately
-psql "postgresql://postgres:postgres@localhost:54322/postgres" < prod_auth_backup.sql
+# In psql prompt, run both files:
+\i migration-profiles-upsert.sql
+\i migration-event-participants-upsert.sql
+\q
 ```
 
 ## Migration Statistics

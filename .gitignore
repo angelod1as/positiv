@@ -26,3 +26,12 @@ playwright/.auth/*
 .vercel/
 validated-profiles.json
 scripts/temp/migration/output/
+
+# CSV Migration files
+backups/
+*.sql
+migration-log-*.txt
+migration-combined-*.sql
+
+# Script with production credentials
+scripts/backup-restore-prod.sh
