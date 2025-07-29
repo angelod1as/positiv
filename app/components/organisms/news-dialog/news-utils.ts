@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '4',
+    title: '🏳️‍🌈 Atualização nas opções de orientação',
+    content: 'A opção "Sapatão" foi alterada para "Lésbica" nas opções de orientação sexual. Isso reflete uma terminologia mais inclusiva e respeitosa. Se você já tinha selecionado a opção anterior, seus dados permanecem inalterados.',
+    isAdmin: false,
+    createdAt: new Date('2025-07-29T19:00:00'), // July 29, 2025
+    isActive: true,
+  },
+  {
     id: '3',
     title: '📧 Migração de mailing concluída',
     content: 'A migração dos dados de mailing foi concluída com sucesso! Todos os perfis e participantes foram atualizados. O sistema está agora totalmente operacional com os novos dados.',
