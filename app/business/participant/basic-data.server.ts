@@ -27,23 +27,29 @@ export const basicData = applySchema(
   const { confirm_phone, ...data } = parsedValues
 
   // Check for orphaned profile with user's email
-  const { data: orphanedProfile } = await supabase
+  const { data: orphanedProfile, error: orphanedError } = await supabase
     .from("profiles")
     .select("*")
     .eq("email", currentUser.email)
     .is("user_id", null)
     .single()
 
-  // Use orphaned profile ID if found, otherwise use current profile ID
-  const profileId = orphanedProfile?.id || currentProfile?.id
+  // If there's an error other than "no rows", throw it
+  if (orphanedError && orphanedError.code !== 'PGRST116') {
+    throw new Error(`Error checking for orphaned profile: ${orphanedError.message}`)
+  }
 
-  const { error: upsertError } = await supabase.from("profiles").upsert({
+  // Build upsert data with optional id
+  const profileId = orphanedProfile?.id || currentProfile?.id
+  const upsertData = {
     ...data,
     date_of_birth: dateToString(data.date_of_birth),
     user_id: currentUser.id,
     email: currentUser.email,
-    id: profileId,
-  })
+    ...(profileId ? { id: profileId } : {}),
+  }
+
+  const { error: upsertError } = await supabase.from("profiles").upsert(upsertData)
 
   if (upsertError) {
     const { code, message } = upsertError || {}

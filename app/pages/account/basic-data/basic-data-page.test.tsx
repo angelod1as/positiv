@@ -116,6 +116,8 @@ describe("basic-data-page loader", () => {
     })
 
     it("should handle errors when checking for orphaned profiles", async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      
       const mockSupabase = {
         from: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
@@ -123,7 +125,7 @@ describe("basic-data-page loader", () => {
               is: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue({ 
                   data: null, 
-                  error: { message: "Database error" } 
+                  error: { code: 'PGRST500', message: "Database error" } 
                 }),
               }),
             }),
@@ -149,6 +151,57 @@ describe("basic-data-page loader", () => {
         profile: null,
         orphanedProfile: null,
       })
+      
+      // Should log the error
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error checking for orphaned profile:', 
+        expect.objectContaining({ code: 'PGRST500', message: 'Database error' })
+      )
+      
+      consoleErrorSpy.mockRestore()
+    })
+
+    it("should handle 'no rows' error gracefully", async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      
+      const mockSupabase = {
+        from: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              is: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({ 
+                  data: null, 
+                  error: { code: 'PGRST116', message: "No rows found" } 
+                }),
+              }),
+            }),
+          }),
+        }),
+      }
+
+      vi.mocked(authServer.getUserContext).mockResolvedValue({
+        currentProfile: null,
+        currentUser: {
+          id: "user-123",
+          email: "test@example.com",
+        },
+        supabase: mockSupabase as unknown as SupabaseClient<Database>,
+        supabaseHeaders: new Headers(),
+        host: null,
+        isProdInDev: false,
+      })
+
+      const result = await loader({ request: mockRequest, params: mockParams, context: {} })
+      
+      expect(result).toEqual({
+        profile: null,
+        orphanedProfile: null,
+      })
+      
+      // Should NOT log "no rows" errors
+      expect(consoleErrorSpy).not.toHaveBeenCalled()
+      
+      consoleErrorSpy.mockRestore()
     })
   })
 })

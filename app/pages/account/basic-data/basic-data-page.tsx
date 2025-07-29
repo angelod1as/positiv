@@ -38,14 +38,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // Check for orphaned profile with user's email
   let orphanedProfile = null
   if (currentUser?.email) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("email", currentUser.email)
       .is("user_id", null)
       .single()
     
-    orphanedProfile = data
+    // Only set orphanedProfile if we found one (ignore "no rows" error)
+    if (data && !error) {
+      orphanedProfile = data
+    } else if (error && error.code !== 'PGRST116') {
+      // Log unexpected errors but don't fail the loader
+      console.error('Error checking for orphaned profile:', error)
+    }
   }
   
   return { profile, orphanedProfile }
