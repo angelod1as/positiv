@@ -17,12 +17,7 @@
     "types": "pnpm db:types",
     "db:types": "./scripts/db-types.sh",
     "email:test": "./scripts/testmail.sh",
-    "prepare": "husky",
-    "migration:event-mapping": "tsx scripts/temp/migration/generate-event-mapping.ts",
-    "migration:validate": "tsx scripts/temp/migration/validate-profiles-csv.ts",
-    "migration:generate-sql": "tsx scripts/temp/migration/generate-sql-existing-profiles.ts",
-    "db:sync:prod": "bash scripts/temp/migration/sync-production-db.sh",
-    "db:sync:prod:dry-run": "bash scripts/temp/migration/sync-production-db.sh --dry-run"
+    "prepare": "husky"
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.810.0",
@@ -51,7 +46,6 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "composable-functions": "^5.0.0",
-    "csv-parse": "^6.1.0",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
     "dotenv": "^16.5.0",
