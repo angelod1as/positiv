@@ -33,18 +33,41 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { currentProfile: profile } = await getUserContext(request, params)
-  return { profile }
+  const { currentProfile: profile, currentUser, supabase } = await getUserContext(request, params)
+  
+  // Check for orphaned profile with user's email
+  let orphanedProfile = null
+  if (currentUser?.email) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("email", currentUser.email)
+      .is("user_id", null)
+      .single()
+    
+    // Only set orphanedProfile if we found one (ignore "no rows" error)
+    if (data && !error) {
+      orphanedProfile = data
+    } else if (error && error.code !== 'PGRST116') {
+      // Log unexpected errors but don't fail the loader
+      console.error('Error checking for orphaned profile:', error)
+    }
+  }
+  
+  return { profile, orphanedProfile }
 }
 
 const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
-  const { profile } = loaderData || {}
+  const { profile, orphanedProfile } = loaderData || {}
+
+  // Use orphaned profile data if available, otherwise use current profile
+  const profileData = orphanedProfile || profile
 
   const defaultValues = {
-    ...(profile || {}),
-    ...(profile?.phone
+    ...(profileData || {}),
+    ...(profileData?.phone
       ? {
-          confirm_phone: profile.phone,
+          confirm_phone: profileData.phone,
         }
       : {}),
   }
@@ -54,7 +77,9 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
       <div>
         <h1>Dados básicos</h1>
         <p className="text-muted-foreground">
-          {profile?.basic_data_filled
+          {orphanedProfile
+            ? "Encontramos seu perfil anterior! Revise e atualize seus dados se necessário."
+            : profile?.basic_data_filled
             ? "Atualize seus dados"
             : "Precisamos destes dados básicos para nosso controle interno de pessoas participantes"}
         </p>
