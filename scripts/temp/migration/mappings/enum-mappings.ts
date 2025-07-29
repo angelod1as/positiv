@@ -1,4 +1,5 @@
-import type { ProfileApprovedToAttendStatus, ProfileFlagStatus } from '~/types/database/entities.types';
+import type { ProfileApprovedToAttendStatus, ProfileFlagStatus, Genders, Orientations } from '~/types/database/entities.types';
+import { GENDERS, ORIENTATIONS } from '~/lib/constants/constants';
 
 /**
  * Maps CSV flag values (emojis) to database flag enum values
@@ -98,48 +99,68 @@ export function getApprovedStatus(csvValue: string | undefined): ProfileApproved
 }
 
 /**
- * Gets mapped gender value, returns original if no mapping found
+ * Gets mapped gender value, returns undefined if not a valid database enum
  */
-export function getGender(csvValue: string | undefined): string | undefined {
+export function getGender(csvValue: string | undefined): Genders | undefined {
   if (!csvValue || csvValue.trim() === '') return undefined;
   
   const trimmed = csvValue.trim();
   
   // First try exact match
   if (genderMapping[trimmed]) {
-    return genderMapping[trimmed];
+    const mapped = genderMapping[trimmed];
+    // Validate against database enum
+    if (GENDERS.includes(mapped as Genders)) {
+      return mapped as Genders;
+    }
   }
   
   // Try case-insensitive match
   const lowerCase = trimmed.toLowerCase();
   for (const [key, value] of Object.entries(genderMapping)) {
     if (key.toLowerCase() === lowerCase) {
-      return value;
+      // Validate against database enum
+      if (GENDERS.includes(value as Genders)) {
+        return value as Genders;
+      }
     }
   }
   
-  // Return original value if no mapping found
-  return trimmed;
+  // Check if the original value is already a valid enum
+  if (GENDERS.includes(trimmed as Genders)) {
+    return trimmed as Genders;
+  }
+  
+  // Return undefined if no valid mapping found
+  return undefined;
 }
 
 /**
- * Gets mapped orientation value, returns original if no mapping found
+ * Gets mapped orientation value, returns undefined if not a valid database enum
  */
-export function getOrientation(csvValue: string | undefined): string | undefined {
+export function getOrientation(csvValue: string | undefined): Orientations | undefined {
   if (!csvValue || csvValue.trim() === '') return undefined;
   
   const trimmed = csvValue.trim();
   
   // First try exact match
   if (orientationMapping[trimmed]) {
-    return orientationMapping[trimmed];
+    const mapped = orientationMapping[trimmed];
+    // Validate against database enum
+    if (ORIENTATIONS.includes(mapped as Orientations)) {
+      return mapped as Orientations;
+    }
   }
   
   // For combined orientations, take the first one
   if (trimmed.includes(',')) {
     const firstOrientation = trimmed.split(',')[0].trim();
     if (orientationMapping[firstOrientation]) {
-      return orientationMapping[firstOrientation];
+      const mapped = orientationMapping[firstOrientation];
+      // Validate against database enum
+      if (ORIENTATIONS.includes(mapped as Orientations)) {
+        return mapped as Orientations;
+      }
     }
   }
   
@@ -147,12 +168,20 @@ export function getOrientation(csvValue: string | undefined): string | undefined
   const lowerCase = trimmed.toLowerCase();
   for (const [key, value] of Object.entries(orientationMapping)) {
     if (key.toLowerCase() === lowerCase) {
-      return value;
+      // Validate against database enum
+      if (ORIENTATIONS.includes(value as Orientations)) {
+        return value as Orientations;
+      }
     }
   }
   
-  // Return original value if no mapping found
-  return trimmed;
+  // Check if the original value is already a valid enum
+  if (ORIENTATIONS.includes(trimmed as Orientations)) {
+    return trimmed as Orientations;
+  }
+  
+  // Return undefined if no valid mapping found
+  return undefined;
 }
 
 /**
