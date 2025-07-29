@@ -26,12 +26,23 @@ export const basicData = applySchema(
 
   const { confirm_phone, ...data } = parsedValues
 
+  // Check for orphaned profile with user's email
+  const { data: orphanedProfile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("email", currentUser.email)
+    .is("user_id", null)
+    .single()
+
+  // Use orphaned profile ID if found, otherwise use current profile ID
+  const profileId = orphanedProfile?.id || currentProfile?.id
+
   const { error: upsertError } = await supabase.from("profiles").upsert({
     ...data,
     date_of_birth: dateToString(data.date_of_birth),
     user_id: currentUser.id,
     email: currentUser.email,
-    id: currentProfile?.id,
+    id: profileId,
   })
 
   if (upsertError) {
