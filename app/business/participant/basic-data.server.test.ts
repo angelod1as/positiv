@@ -126,11 +126,73 @@ describe("basicData", () => {
       expect(result.success).toBe(true)
       expect(mockUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: undefined,
           user_id: "user-123",
           email: "test@example.com",
         })
       )
+      // Verify id is not included when creating new profile
+      const upsertCall = mockUpsert.mock.calls[0][0]
+      expect(upsertCall).not.toHaveProperty('id')
+      // But should have all other required fields
+      expect(upsertCall).toHaveProperty('full_name', 'Test User')
+      expect(upsertCall).toHaveProperty('date_of_birth')
+    })
+
+    it("should handle database errors when checking for orphaned profiles", async () => {
+      const databaseError = { code: 'PGRST500', message: 'Database connection error' }
+      const mockSingle = vi.fn().mockResolvedValue({ data: null, error: databaseError })
+      const mockIs = vi.fn().mockReturnValue({ single: mockSingle })
+      const mockEq = vi.fn().mockReturnValue({ is: mockIs })
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
+      const mockFrom = vi.fn().mockReturnValue({
+        select: mockSelect,
+      })
+
+      const mockContext: z.infer<typeof contextSchema> = {
+        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
+        currentProfile: null,
+        currentUser: {
+          id: "user-123",
+          email: "test@example.com",
+        },
+        supabaseHeaders: new Headers(),
+        host: "localhost",
+      }
+
+      const result = await basicData(mockFormData, mockContext)
+      
+      expect(result.success).toBe(false)
+      expect(result.errors?.[0]?.message).toContain('Error checking for orphaned profile')
+    })
+
+    it("should ignore 'no rows' error when checking for orphaned profiles", async () => {
+      const noRowsError = { code: 'PGRST116', message: 'No rows found' }
+      const mockSingle = vi.fn().mockResolvedValue({ data: null, error: noRowsError })
+      const mockIs = vi.fn().mockReturnValue({ single: mockSingle })
+      const mockEq = vi.fn().mockReturnValue({ is: mockIs })
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
+      const mockUpsert = vi.fn().mockResolvedValue({ error: null })
+      const mockFrom = vi.fn().mockReturnValue({
+        select: mockSelect,
+        upsert: mockUpsert,
+      })
+
+      const mockContext: z.infer<typeof contextSchema> = {
+        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
+        currentProfile: null,
+        currentUser: {
+          id: "user-123",
+          email: "test@example.com",
+        },
+        supabaseHeaders: new Headers(),
+        host: "localhost",
+      }
+
+      const result = await basicData(mockFormData, mockContext)
+      
+      expect(result.success).toBe(true)
+      // Should proceed with upsert despite 'no rows' error
+      expect(mockUpsert).toHaveBeenCalled()
     })
 
     it("should use currentProfile ID when available and no orphaned profile", async () => {
