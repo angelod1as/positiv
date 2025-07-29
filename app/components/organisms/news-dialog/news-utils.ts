@@ -26,19 +26,11 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
-    id: '4',
-    title: '🚀 Scripts de migração de dados CSV (Admin)',
-    content: 'Novos scripts para executar e reverter migrações de perfis CSV. Use "bash scripts/temp/migration/execute-migration.sh" para executar a migração após gerar os arquivos SQL, e "bash scripts/temp/migration/rollback-migration.sh" para reverter usando um backup. Inclui verificações de segurança e backup automático.',
-    isAdmin: true,
-    createdAt: new Date('2025-07-29T00:00:00'), // July 29, 2025
-    isActive: true,
-  },
-  {
     id: '3',
-    title: '🔄 Ferramenta de sincronização de banco de dados (Admin)',
-    content: 'Nova ferramenta para copiar dados de produção para ambiente local de desenvolvimento. Use "pnpm db:sync:prod:dry-run" para visualizar o que será feito ou "pnpm db:sync:prod" para executar a sincronização completa. Útil para testar migrações com dados reais.',
-    isAdmin: true,
-    createdAt: new Date('2025-07-28T00:00:00'), // July 28, 2025
+    title: '📧 Migração de mailing concluída',
+    content: 'A migração dos dados de mailing foi concluída com sucesso! Todos os perfis e participantes foram atualizados. O sistema está agora totalmente operacional com os novos dados.',
+    isAdmin: false,
+    createdAt: new Date('2025-07-29T00:00:00'), // July 29, 2025
     isActive: true,
   },
   {
