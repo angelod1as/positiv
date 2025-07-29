@@ -78,8 +78,10 @@ Migration of 666 participant records from CSV to Supabase production database.
 - [x] Generate profiles SQL
 - [x] Generate event_participants SQL
 - [x] Create UPSERT version that handles existing profiles
-- [ ] Backup production database
-- [ ] Test migration locally
+- [x] Backup production database
+- [x] Test migration locally
+- [x] Fix is_user_applied to be TRUE (required for UI visibility)
+- [x] Create permissions fix SQL for production restore
 - [ ] Execute on production
 
 ## IMPORTANT: Migration Execution Notes
@@ -90,6 +92,11 @@ Migration of 666 participant records from CSV to Supabase production database.
   - UPDATE existing profiles (matched by email or phone)
   - INSERT new profiles only if they don't exist
   - Skip creating duplicate event participants
+  - Set `is_user_applied = true` for all participants (required for UI visibility)
+
+## Known Issues Fixed
+1. **Database Permissions**: After restoring production backup, run `fix-permissions.sql`
+2. **UI Visibility**: Event participants must have `is_user_applied = true` to appear in admin UI
 
 ## Backup and Migration Process
 

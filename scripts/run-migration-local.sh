@@ -58,7 +58,7 @@ cat migration-event-participants-upsert.sql >> "$COMBINED_FILE"
 echo -e "${YELLOW}Running migration...${NC}"
 
 # Run the combined migration
-psql "$LOCAL_DB_URL" < "$COMBINED_FILE" > "migration-log-${TIMESTAMP}.txt" 2>&1
+/opt/homebrew/opt/postgresql@15/bin/psql "$LOCAL_DB_URL" < "$COMBINED_FILE" > "migration-log-${TIMESTAMP}.txt" 2>&1
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✓ Migration completed successfully!${NC}"
@@ -66,12 +66,12 @@ if [ $? -eq 0 ]; then
     
     # Show summary
     echo -e "\n${YELLOW}Migration Summary:${NC}"
-    psql "$LOCAL_DB_URL" -c "SELECT COUNT(*) as total_profiles FROM public.profiles;"
-    psql "$LOCAL_DB_URL" -c "SELECT COUNT(*) as total_participants FROM public.event_participants;"
+    /opt/homebrew/opt/postgresql@15/bin/psql "$LOCAL_DB_URL" -c "SELECT COUNT(*) as total_profiles FROM public.profiles;"
+    /opt/homebrew/opt/postgresql@15/bin/psql "$LOCAL_DB_URL" -c "SELECT COUNT(*) as total_participants FROM public.event_participants;"
     
     # Show recently modified profiles
     echo -e "\n${YELLOW}Recently modified profiles (last 5):${NC}"
-    psql "$LOCAL_DB_URL" -c "SELECT id, email, full_name, social_name, created_at FROM public.profiles ORDER BY created_at DESC LIMIT 5;"
+    /opt/homebrew/opt/postgresql@15/bin/psql "$LOCAL_DB_URL" -c "SELECT id, email, full_name, social_name, created_at FROM public.profiles ORDER BY created_at DESC LIMIT 5;"
 else
     echo -e "${RED}✗ Migration failed. Check migration-log-${TIMESTAMP}.txt for details${NC}"
     tail -20 "migration-log-${TIMESTAMP}.txt"

@@ -144,11 +144,11 @@ SELECT * FROM existing_profiles;
 `
   
   records.forEach((record, index) => {
-    // Skip records without email or phone
-    if (!record.email && !record.phone) {
+    // Skip records without email (email is required in profiles table)
+    if (!record.email) {
       skippedRecords.push({
         name: record.full_name || record.social_name || `Row ${index + 2}`,
-        reason: 'Missing both email and phone'
+        reason: 'Missing email (required field)'
       })
       return
     }
@@ -219,7 +219,7 @@ BEGIN
       NULL,
       ${escapeString(record.email || null)},
       NOW(),
-      false,
+      true,
       ${escapeString(record.full_name || null)},
       ${escapeString(record.social_name || null)},
       ${escapeString(record.rg || null)},
@@ -251,19 +251,25 @@ INSERT INTO public.event_participants (
   id,
   profile_id,
   event_id,
-  user_applied_status,
-  process_status,
+  is_user_applied,
   application_date,
-  created_at
+  created_at,
+  application_status,
+  attendance_status,
+  has_paid,
+  payment
 ) 
 SELECT
   gen_random_uuid(),
   profile_id,
   '${eventId}'::uuid,
-  false,
-  'applied',
+  true,
   NOW(),
-  NOW()
+  NOW(),
+  'pending'::application_status_enum,
+  'pending'::attendance_status_enum,
+  true,
+  0
 FROM temp_profile_mapping
 WHERE ${record.email ? `email = ${escapeString(record.email)}` : `phone = ${phone}`}
   AND NOT EXISTS (
