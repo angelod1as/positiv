@@ -59,10 +59,8 @@ export const getContext = async (
         authError.message?.includes("Invalid Refresh Token") ||
         authError.message?.includes("Refresh Token Not Found") ||
         authError.message?.includes("User from sub claim in JWT does not exist")) {
-      supabaseHeaders.append(
-        "Set-Cookie", 
-        "sb-127-auth-token=; Max-Age=0; Path=/; SameSite=Lax"
-      )
+      // Clear auth session by signing out properly
+      await supabase.auth.signOut()
       return errorProps
     }
     
