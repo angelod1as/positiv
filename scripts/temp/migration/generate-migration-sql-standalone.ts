@@ -12,6 +12,7 @@ import {
   normalizePhone,
   normalizeRG,
 } from './mappings/enum-mappings';
+import { escapeSQL, formatSQLValue } from './utils/sql-escape';
 
 interface CSVRow {
   Nome: string;
@@ -291,17 +292,17 @@ function generateNewProfilesSQL(profiles: ProcessedProfile[]): string {
     sql += ') VALUES (\n';
     sql += '  gen_random_uuid(),\n';
     sql += '  NULL, -- Orphan profile\n';
-    sql += `  ${mappedData.full_name ? `'${mappedData.full_name.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.social_name ? `'${mappedData.social_name.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.gender ? `'${mappedData.gender.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.orientation ? `'${mappedData.orientation.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.pronouns ? `'${mappedData.pronouns.replace(/'/g, "''")}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.email ? `'${mappedData.email}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.phone ? `'${mappedData.phone}'` : 'NULL'},\n`;
-    sql += `  ${mappedData.rg ? `'${mappedData.rg}'` : 'NULL'},\n`;
-    sql += `  '${mappedData.approved_to_attend}',\n`;
-    sql += `  '${mappedData.flag}',\n`;
-    sql += `  ${mappedData.general_notes ? `'${mappedData.general_notes.replace(/'/g, "''")}'` : 'NULL'},\n`;
+    sql += `  ${formatSQLValue(mappedData.full_name)},\n`;
+    sql += `  ${formatSQLValue(mappedData.social_name)},\n`;
+    sql += `  ${formatSQLValue(mappedData.gender)},\n`;
+    sql += `  ${formatSQLValue(mappedData.orientation)},\n`;
+    sql += `  ${formatSQLValue(mappedData.pronouns)},\n`;
+    sql += `  ${formatSQLValue(mappedData.email)},\n`;
+    sql += `  ${formatSQLValue(mappedData.phone)},\n`;
+    sql += `  ${formatSQLValue(mappedData.rg)},\n`;
+    sql += `  '${escapeSQL(mappedData.approved_to_attend)}',\n`;
+    sql += `  '${escapeSQL(mappedData.flag)}',\n`;
+    sql += `  ${formatSQLValue(mappedData.general_notes)},\n`;
     sql += '  NOW(),\n';
     sql += '  NOW()\n';
     sql += ');\n\n';
@@ -342,19 +343,19 @@ function generateEventParticipantsSQL(profiles: ProcessedProfile[], eventMapping
       sql += '  created_at, updated_at\n';
       sql += ') VALUES (\n';
       sql += '  gen_random_uuid(),\n';
-      sql += `  '${eventId}',\n`;
+      sql += `  '${escapeSQL(eventId)}',\n`;
       sql += '  (SELECT id FROM profiles WHERE\n';
       
       const conditions = [];
       if (profile.mappedData.email) {
-        conditions.push(`    email = '${profile.mappedData.email}'`);
+        conditions.push(`    email = ${formatSQLValue(profile.mappedData.email)}`);
       }
       if (profile.mappedData.phone) {
-        conditions.push(`    phone = '${profile.mappedData.phone}'`);
+        conditions.push(`    phone = ${formatSQLValue(profile.mappedData.phone)}`);
       }
       if (conditions.length === 0) {
         // Use name as fallback
-        conditions.push(`    full_name = '${profile.mappedData.full_name.replace(/'/g, "''")}'`);
+        conditions.push(`    full_name = ${formatSQLValue(profile.mappedData.full_name)}`);
       }
       sql += conditions.join(' OR\n') + '\n';
       sql += '    LIMIT 1),\n';
@@ -397,7 +398,8 @@ async function loadEventMapping(): Promise<Record<string, string>> {
 
 async function main() {
   const args = process.argv.slice(2);
-  let csvPath = '/Users/angelodias/Documents/GIT/private/positiv-project/mailing.csv';
+  // Default to mailing.csv in positiv-project root
+  let csvPath = join(process.cwd(), '../../../../mailing.csv');
   let generateSQL = false;
   
   // Parse arguments
