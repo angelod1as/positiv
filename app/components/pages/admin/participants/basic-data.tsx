@@ -11,11 +11,13 @@ import { DataPair } from "~/components/atoms/data-pair/data-pair"
 
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import { profilePropMap } from "~/lib/helpers/propMaps"
+import { AddToGoogleContactsButton } from "~/components/atoms/buttons/add-to-google-contacts-button"
 
 type BasicDataProps = { profile: ProfileWithExtraData }
 export const BasicData: FC<BasicDataProps> = ({ profile }) => {
   const {
     full_name,
+    social_name,
     cpf,
     email,
     gender,
@@ -38,7 +40,19 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
 
       <div className="grid md:grid-cols-4 gap-4 [&>div]:space-y-2">
         <div className="col-span-2">
-          <PhoneButton phone={phone} />
+          <div className="flex gap-2 flex-wrap">
+            <PhoneButton phone={phone} />
+            <AddToGoogleContactsButton
+              profile={{
+                social_name,
+                full_name,
+                gender,
+                pronouns,
+              }}
+              email={email}
+              phone={phone}
+            />
+          </div>
           <p>{full_name}</p>
           <div className="flex gap-3">
             {is_veteran ? <VeteranBadge /> : <RookieBadge />}
