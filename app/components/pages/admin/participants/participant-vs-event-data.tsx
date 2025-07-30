@@ -21,7 +21,6 @@ type ParticipantVsEventDataProps = {
 export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   eventParticipant,
 }) => {
-  console.log(`\n\n:DEV eventParticipant:\n`, eventParticipant, `\n\n`)
   const { application_date, bond, companions, notes, referrals } =
     eventParticipant
 
