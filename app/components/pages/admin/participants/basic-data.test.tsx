@@ -6,7 +6,7 @@ import type { ProfileWithExtraData } from '~/business/admin/admin.server'
 
 // Mock the AddToGoogleContactsButton
 vi.mock('~/components/atoms/buttons/add-to-google-contacts-button', () => ({
-  AddToGoogleContactsButton: vi.fn(({ profile, email, phone }) => (
+  AddToGoogleContactsButton: vi.fn(({ profile }) => (
     <button data-testid="google-contacts-button">
       Add to Google Contacts - {profile.social_name || profile.full_name}
     </button>
@@ -25,7 +25,7 @@ const renderWithRouter = (component: React.ReactElement) => {
 }
 
 describe('BasicData', () => {
-  const mockProfile: ProfileWithExtraData = {
+  const mockProfile = {
     id: '123',
     user_id: '456',
     full_name: 'João Silva Santos',
@@ -50,22 +50,7 @@ describe('BasicData', () => {
     basic_data_filled: true,
     created_at: '2023-01-01',
     general_notes: null,
-    // EventParticipant fields
-    event_id: 'event123',
-    profile_id: '123',
-    is_user_applied: true,
-    created_by_user_id: '456',
-    application_status: 'approved',
-    attendance_status: 'present',
-    has_paid: true,
-    selected_dates: [],
-    work_mode: 'presencial',
-    expectations: null,
-    previous_experience: null,
-    instagram: null,
-    notes: null,
-    experience_status: null,
-  }
+  } as ProfileWithExtraData
 
   it('should render the AddToGoogleContactsButton', () => {
     renderWithRouter(<BasicData profile={mockProfile} />)
