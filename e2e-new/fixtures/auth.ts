@@ -1,5 +1,5 @@
 import { type Page, expect } from '@playwright/test'
-import { TEST_USERS, type TestUserKey, type TestUser } from './test-users'
+import { TEST_USERS, type TestUserKey } from './test-users'
 import { setupUserAsFullyOnboarded } from '../utils/db-cleanup'
 
 const LOGIN_URL = '/entrar'
@@ -100,20 +100,20 @@ export async function performUILogin(page: Page, email: string, password: string
       // Click the first visible checkbox label in each section
       const sections = page.locator('section')
       const sectionCount = await sections.count()
-      console.log(`Found ${sectionCount} sections`)
+      // console.log(`Found ${sectionCount} sections`)
       
       for (let i = 0; i < Math.min(sectionCount, 3); i++) {
         const labels = sections.nth(i).locator('label')
         const labelCount = await labels.count()
         if (labelCount > 0) {
-          console.log(`Section ${i} has ${labelCount} labels`)
+          // console.log(`Section ${i} has ${labelCount} labels`)
           // Click the first label in this section
           await labels.first().click({ force: true })
           await page.waitForTimeout(300)
         }
       }
-    } catch (error) {
-      console.error('Error clicking checkboxes:', error)
+    } catch (_error) {
+      // console.error('Error clicking checkboxes:', _error)
       // Fallback: try to click any visible checkbox
       const anyLabel = page.locator('label').first()
       if (await anyLabel.isVisible()) {
@@ -130,7 +130,7 @@ export async function performUILogin(page: Page, email: string, password: string
     
     // If we're still on the same page, there might be validation errors
     if (page.url().includes('dados-basicos-cont')) {
-      console.log('Still on dados-basicos-cont, checking for errors...')
+      // console.log('Still on dados-basicos-cont, checking for errors...')
       // Take a screenshot for debugging
       await page.screenshot({ path: 'test-results/dados-basicos-cont-error.png' })
     }

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from '../../app/lib/supabase/database.types'
+import type { Database } from '../../app/types/database/database.types'
 import { TEST_USERS } from '../fixtures/test-users'
 
 export function createSupabaseAdminClient() {
@@ -119,7 +119,7 @@ export async function setupUserAsFullyOnboarded(email: string): Promise<void> {
       is_profile_filled: true,
       full_name: 'Test E2E User',
       social_name: 'E2E Test',
-      phone: '11999999999',
+      phone: 11999999999,
       gender: ['mulher_cis'],
       orientation: ['hetero'],
       pronouns: ['ela_dela'],
@@ -162,5 +162,5 @@ export async function cleanupAllTestUsers(): Promise<void> {
     await resetUserToDefaultState(email)
   }
   
-  console.log(`✅ Reset ${testEmails.length} test users to default state`)
+  // console.log(`✅ Reset ${testEmails.length} test users to default state`)
 }
