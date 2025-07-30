@@ -3,9 +3,9 @@ import { sql } from "kysely"
 import type { Params } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
-import { kysely } from "~/kysely"
 import { formatReminderMail } from "~/business/email/format-reminder-mail"
 import { sendEmail, type MailOptions } from "~/business/email/send-email"
+import { kysely } from "~/kysely"
 import { chunkArray } from "~/lib/helpers/chunk-array"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
@@ -20,9 +20,9 @@ import {
   adminContextSchema,
   eventFormSchema,
   sendEventRemindersSchema,
+  updateEventDemographicsSchema,
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
-  updateEventDemographicsSchema,
   updateParticipantVsEventSchema,
 } from "./common"
 
@@ -181,8 +181,9 @@ export const getParticipantFullEventHistory = composable(
 
     const results = await query.execute()
     // Filter out results with null time_event_start since we need it for sorting
-    return results.filter((r): r is ParticipantVsEvent & { time_event_start: string } => 
-      r.time_event_start !== null
+    return results.filter(
+      (r): r is ParticipantVsEvent & { time_event_start: string } =>
+        r.time_event_start !== null,
     )
   },
 )
@@ -248,15 +249,19 @@ export const updateEventStatus = applySchema(
       ])
       .execute()
 
-    const { calculateDemographics } = await import("./demographics/demographics")
+    const { calculateDemographics } = await import(
+      "./demographics/demographics"
+    )
     const demographics = calculateDemographics(participantsResult)
-    
-    const { upsertEventDemographicsSnapshot } = await import("./demographics/demographics-history.server")
+
+    const { upsertEventDemographicsSnapshot } = await import(
+      "./demographics/demographics-history.server"
+    )
     const snapshotResult = await upsertEventDemographicsSnapshot({
       eventId,
       demographics,
     })
-    
+
     if (!snapshotResult.success) {
       console.error("Failed to store demographics snapshot for event", {
         eventId,
@@ -302,12 +307,14 @@ export const updateEventDemographics = applySchema(
   const demographics = calculateDemographics(result)
 
   // Upsert the snapshot
-  const { upsertEventDemographicsSnapshot } = await import("./demographics/demographics-history.server")
+  const { upsertEventDemographicsSnapshot } = await import(
+    "./demographics/demographics-history.server"
+  )
   const snapshotResult = await upsertEventDemographicsSnapshot({
     eventId,
     demographics,
   })
-  
+
   if (!snapshotResult.success) {
     console.error("Failed to upsert demographics snapshot for event", {
       eventId,
@@ -481,9 +488,11 @@ export const getAdminReminderCountByEventId = composable(
 
 export const getEventDemographicsById = composable(
   async ({ eventId }: { eventId: string }) => {
-    const { getEventDemographicsHistory } = await import("./demographics/demographics-history.server")
+    const { getEventDemographicsHistory } = await import(
+      "./demographics/demographics-history.server"
+    )
     const historicalResult = await getEventDemographicsHistory({ eventId })
-    
+
     if (historicalResult.success && historicalResult.data) {
       return historicalResult.data
     }
@@ -495,7 +504,14 @@ export const getEventDemographicsById = composable(
 export const updateParticipantVsEvent = applySchema(
   updateParticipantVsEventSchema,
 )(async (formData) => {
-  const { intent, event_id, profile_id, is_veteran, approved_to_attend, ...data } = formData
+  const {
+    intent,
+    event_id,
+    profile_id,
+    is_veteran,
+    approved_to_attend,
+    ...data
+  } = formData
 
   return await kysely.transaction().execute(async (transaction) => {
     await transaction
@@ -505,19 +521,19 @@ export const updateParticipantVsEvent = applySchema(
       .set(data)
       .execute()
 
-    const profileUpdateData: { 
+    const profileUpdateData: {
       is_veteran?: boolean
       approved_to_attend?: ProfileApprovedToAttendStatus
     } = {}
-    
+
     if (typeof is_veteran === "boolean") {
       profileUpdateData.is_veteran = is_veteran
     }
-    
+
     if (approved_to_attend) {
       profileUpdateData.approved_to_attend = approved_to_attend
     }
-    
+
     if (Object.keys(profileUpdateData).length > 0) {
       await transaction
         .updateTable("profiles")
@@ -531,25 +547,45 @@ export const updateParticipantVsEvent = applySchema(
 export const updateEventParticipantById = applySchema(
   updateEventParticipantByIdSchema,
 )(async (formData) => {
-  const { intent, id, profile_id, is_veteran, approved_to_attend, ...data } =
-    formData
+  const {
+    intent,
+    id,
+    profile_id,
+    is_veteran,
+    approved_to_attend,
+    flag,
+    flag_notes,
+    ...data
+  } = formData
 
   return await kysely.transaction().execute(async (transaction) => {
-    if (typeof is_veteran === "boolean" || !!approved_to_attend) {
-      return await transaction
+    if (
+      typeof is_veteran === "boolean" ||
+      !!approved_to_attend ||
+      flag ||
+      flag_notes
+    ) {
+      const profileUpdates: Record<string, string | boolean | null> = {}
+      if (typeof is_veteran === "boolean")
+        profileUpdates.is_veteran = is_veteran
+      if (approved_to_attend)
+        profileUpdates.approved_to_attend = approved_to_attend
+      if (flag) profileUpdates.flag = flag
+      if (flag_notes !== undefined) profileUpdates.flag_notes = flag_notes
+
+      await transaction
         .updateTable("profiles")
         .where("id", "=", profile_id)
-        .set({
-          is_veteran,
-          approved_to_attend,
-        })
+        .set(profileUpdates)
         .execute()
     }
 
-    return await transaction
-      .updateTable("event_participants")
-      .where("id", "=", id)
-      .set(data)
-      .execute()
+    if (Object.keys(data).length > 0) {
+      await transaction
+        .updateTable("event_participants")
+        .where("id", "=", id)
+        .set(data)
+        .execute()
+    }
   })
 })
