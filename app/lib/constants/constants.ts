@@ -4,7 +4,7 @@ export const POSITIV_EMAIL = "contato@positivparty.com"
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1753829800000 // July 29, 2025 - Auth improvements + Orientation update
+export const NEWS_VERSION = 1753887600000 // July 30, 2025 - Google Contacts integration
 
 export const EVENT_PAGE_REGEXP =
   /dashboard\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/

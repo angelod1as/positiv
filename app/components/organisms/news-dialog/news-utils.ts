@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '6',
+    title: '📱 Adicione participantes aos seus Google Contacts!',
+    content: 'Agora você pode adicionar participantes aos seus Google Contacts com um clique! O nome formatado é copiado automaticamente para você colar no Google Contacts.',
+    isAdmin: true,
+    createdAt: new Date('2025-07-30T12:00:00'), // July 30, 2025
+    isActive: true,
+  },
+  {
     id: '5',
     title: '🔐 Melhorias no sistema de autenticação',
     content: 'Melhoramos o sistema de autenticação para uma experiência mais estável. Agora, se você precisar fazer login novamente, o processo será mais suave e sem mensagens de erro desnecessárias.',
