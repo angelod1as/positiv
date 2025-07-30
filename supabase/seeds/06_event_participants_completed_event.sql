@@ -34,16 +34,14 @@ BEGIN
         application_date,
         cancellation_date,
         payment,
-        notes,
-        flag,
-        flag_notes
+        notes
     )
     VALUES
-        (user4_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully', 'none', NULL),
-        (user5_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully', 'none', NULL),
-        (user6_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully', 'none', NULL),
+        (user4_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
+        (user5_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
+        (user6_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully'),
         -- 'confirmed' implies payment but not attendance, so application_status 'sent_payment_data' and attendance_status 'pending'
-        (user7_profile_id, event_id_completed_1, TRUE,  'sent_payment_data', 'pending', TRUE, now() - interval '4 months', NULL, 50.00, 'Confirmed but did not show up', 'none', NULL),
-        (user8_profile_id, event_id_completed_1, TRUE,  'finalised', 'skipped', FALSE, now() - interval '4 months', NULL, 0, 'Skipped by admin', 'none', NULL),
-        (user9_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully', 'none', NULL);
+        (user7_profile_id, event_id_completed_1, TRUE,  'sent_payment_data', 'pending', TRUE, now() - interval '4 months', NULL, 50.00, 'Confirmed but did not show up'),
+        (user8_profile_id, event_id_completed_1, TRUE,  'finalised', 'skipped', FALSE, now() - interval '4 months', NULL, 0, 'Skipped by admin'),
+        (user9_profile_id, event_id_completed_1, TRUE,  'finalised', 'attended', TRUE, now() - interval '4 months', NULL, 50.00, 'Attended successfully');
 END $$;
