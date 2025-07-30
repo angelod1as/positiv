@@ -100,8 +100,6 @@ export type Database = {
           companions: string | null
           created_at: string
           event_id: string
-          flag: Database["public"]["Enums"]["profile_flag_enum"]
-          flag_notes: string | null
           has_paid: boolean
           id: string
           is_user_applied: boolean
@@ -121,8 +119,6 @@ export type Database = {
           companions?: string | null
           created_at?: string
           event_id: string
-          flag?: Database["public"]["Enums"]["profile_flag_enum"]
-          flag_notes?: string | null
           has_paid?: boolean
           id?: string
           is_user_applied?: boolean
@@ -142,8 +138,6 @@ export type Database = {
           companions?: string | null
           created_at?: string
           event_id?: string
-          flag?: Database["public"]["Enums"]["profile_flag_enum"]
-          flag_notes?: string | null
           has_paid?: boolean
           id?: string
           is_user_applied?: boolean
