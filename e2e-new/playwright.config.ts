@@ -62,7 +62,7 @@ export default defineConfig({
       dependencies: ['setup'],
     },
     
-    // TODO: Enable when user auth is fixed
+    // TODO POS-187: Enable when user auth is fixed
     // {
     //   name: 'chromium-authenticated-user',
     //   use: {
