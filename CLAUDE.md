@@ -292,3 +292,7 @@ When making changes to the application that affect users (new features, bug fixe
 - ⁠PR titles should not use the Conventional Commit Style. Instead, they should add the Linear ticket(s) to the start of the title, like in "[POS-923, POS-924] Add rake tasks for failed searches import and book brief generation". If no Linear ticket exists, use "[NO-TICKET]" prefix.
 - The Linear tasks should also be in the description using keywords like "Solve POS-123" or "Fixes POS-123". For PRs without Linear tickets, use "Fixes NO-TICKET"
 - ⁠Follow PR description style from @.github/pull_request_template.md
+
+## PR Template
+
+There's a PR template. Follow it closely.
