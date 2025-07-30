@@ -33,24 +33,44 @@ export async function cleanupTestData(
 ): Promise<void> {
   const dataToCleanup = tracker.getTrackedDataForCleanup()
   
-  for (const { table, id } of dataToCleanup) {
+  // Group entities by table for batch operations
+  const groupedData = dataToCleanup.reduce((acc, { table, id }) => {
+    if (!acc[table]) {
+      acc[table] = []
+    }
+    acc[table].push(id)
+    return acc
+  }, {} as Record<string, string[]>)
+  
+  // Perform batch deletions for each table
+  for (const [table, ids] of Object.entries(groupedData)) {
+    if (ids.length === 0) continue
+    
     try {
-      // Handle each table type separately for type safety
       switch (table) {
         case "event_participants":
-          await kysely.deleteFrom("event_participants").where("id", "=", id).execute()
+          await kysely
+            .deleteFrom("event_participants")
+            .where("id", "in", ids)
+            .execute()
           break
         case "events":
-          await kysely.deleteFrom("events").where("id", "=", id).execute()
+          await kysely
+            .deleteFrom("events")
+            .where("id", "in", ids)
+            .execute()
           break
         case "profiles":
-          await kysely.deleteFrom("profiles").where("id", "=", id).execute()
+          await kysely
+            .deleteFrom("profiles")
+            .where("id", "in", ids)
+            .execute()
           break
         default:
           console.warn(`Unknown table type: ${table}`)
       }
     } catch (error) {
-      console.error(`Failed to delete ${table} with id ${id}:`, error)
+      console.error(`Failed to delete ${ids.length} records from ${table}:`, error)
     }
   }
   
