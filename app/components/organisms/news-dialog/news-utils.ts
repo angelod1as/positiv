@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '5',
+    title: '🔐 Melhorias no sistema de autenticação',
+    content: 'Melhoramos o sistema de autenticação para uma experiência mais estável. Agora, se você precisar fazer login novamente, o processo será mais suave e sem mensagens de erro desnecessárias.',
+    isAdmin: false,
+    createdAt: new Date('2025-07-29T19:30:00'), // July 29, 2025
+    isActive: true,
+  },
+  {
     id: '4',
     title: '🏳️‍🌈 Atualização nas opções de orientação',
     content: 'A opção "Sapatão" foi alterada para "Lésbica" nas opções de orientação sexual. Isso reflete uma terminologia mais inclusiva e respeitosa. Se você já tinha selecionado a opção anterior, seus dados permanecem inalterados.',
