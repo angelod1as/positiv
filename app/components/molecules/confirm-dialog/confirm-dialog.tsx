@@ -64,7 +64,7 @@ const ConfirmDialog: FC<ConfirmDialogProps> & {
           <AlertDialogTitle>{title}</AlertDialogTitle>
           {description && (
             <AlertDialogDescription asChild>
-              {description}
+              <div>{description}</div>
             </AlertDialogDescription>
           )}
         </AlertDialogHeader>
