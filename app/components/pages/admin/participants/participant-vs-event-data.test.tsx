@@ -57,8 +57,6 @@ const mockEventParticipant: ParticipantVsEvent = {
   is_user_applied: true,
   cancellation_date: null,
   created_at: "2024-01-01",
-  flag: "yellow",
-  flag_notes: "Precisa de acompanhamento próximo",
 }
 
 describe("ParticipantVsEventData", () => {
