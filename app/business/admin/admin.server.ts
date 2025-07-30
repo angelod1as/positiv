@@ -572,15 +572,15 @@ export const updateEventParticipantById = applySchema(
     if (
       typeof is_veteran === "boolean" ||
       !!approved_to_attend ||
-      flag ||
-      flag_notes
+      flag !== undefined ||
+      flag_notes !== undefined
     ) {
       const profileUpdates: Record<string, string | boolean | null> = {}
       if (typeof is_veteran === "boolean")
         profileUpdates.is_veteran = is_veteran
       if (approved_to_attend)
         profileUpdates.approved_to_attend = approved_to_attend
-      if (flag) profileUpdates.flag = flag
+      if (flag !== undefined) profileUpdates.flag = flag
       if (flag_notes !== undefined) profileUpdates.flag_notes = flag_notes
 
       await transaction
