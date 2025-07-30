@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { TestDataTracker } from "./db-test-utils"
+import type { Kysely } from "kysely"
+import type { Database } from "~/types/database/kysely.types"
 
 describe("TestDataTracker", () => {
   it("should track created entities", () => {
@@ -72,7 +74,7 @@ describe("cleanupTestData", () => {
     tracker.track("events", "event-id-1")
     tracker.track("event_participants", "participant-id-1")
     
-    await cleanupTestData(tracker, mockKysely as any)
+    await cleanupTestData(tracker, mockKysely as unknown as Kysely<Database>)
     
     // Should delete in reverse order
     expect(mockKysely.deleteFrom).toHaveBeenCalledTimes(3)
@@ -97,7 +99,7 @@ describe("cleanupTestData", () => {
     tracker.track("profiles", "profile-id-1")
     
     // Should not throw, but log error
-    await expect(cleanupTestData(tracker, mockKysely as any)).resolves.not.toThrow()
+    await expect(cleanupTestData(tracker, mockKysely as unknown as Kysely<Database>)).resolves.not.toThrow()
   })
 })
 
@@ -110,21 +112,20 @@ describe("Test data creation utilities", () => {
       insertInto: vi.fn().mockReturnThis(),
       values: vi.fn().mockReturnThis(),
       returning: vi.fn().mockReturnThis(),
+      returningAll: vi.fn().mockReturnThis(),
       executeTakeFirstOrThrow: vi.fn().mockResolvedValue({
         id: "generated-profile-id",
         user_id: "test-user-id",
-        email: "test@example.com",
-        is_test_data: true
+        email: "test@example.com"
       })
     }
     
-    const profile = await createTestProfile(tracker, mockKysely as any, {
+    const profile = await createTestProfile(tracker, mockKysely as unknown as Kysely<Database>, {
       user_id: "test-user-id",
       email: "test@example.com"
     })
     
     expect(profile.id).toBe("generated-profile-id")
-    expect(profile.is_test_data).toBe(true)
     
     // Should track the created profile
     const tracked = tracker.getTrackedData()
@@ -140,19 +141,18 @@ describe("Test data creation utilities", () => {
       insertInto: vi.fn().mockReturnThis(),
       values: vi.fn().mockReturnThis(),
       returning: vi.fn().mockReturnThis(),
+      returningAll: vi.fn().mockReturnThis(),
       executeTakeFirstOrThrow: vi.fn().mockResolvedValue({
         id: "generated-event-id",
-        title: "Test Event",
-        is_test_data: true
+        title: "Test Event"
       })
     }
     
-    const event = await createTestEvent(tracker, mockKysely as any, {
+    const event = await createTestEvent(tracker, mockKysely as unknown as Kysely<Database>, {
       title: "Test Event"
     })
     
     expect(event.id).toBe("generated-event-id")
-    expect(event.is_test_data).toBe(true)
     
     // Should track the created event
     const tracked = tracker.getTrackedData()

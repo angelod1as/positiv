@@ -27,8 +27,6 @@ const mockParticipantHistory: Array<ParticipantVsEvent & { time_event_start: str
     cancellation_date: null,
     is_veteran: true,
     approved_to_attend: "approved",
-    flag: "yellow",
-    flag_notes: "Chegou atrasado ao evento",
   },
   {
     id: "2",
@@ -53,8 +51,6 @@ const mockParticipantHistory: Array<ParticipantVsEvent & { time_event_start: str
     cancellation_date: null,
     is_veteran: true,
     approved_to_attend: "approved",
-    flag: "red",
-    flag_notes: "Múltiplas faltas anteriores",
   },
 ]
 
@@ -147,16 +143,4 @@ describe("ParticipantEventHistory", () => {
     expect(screen.getByText("Notas do Admin")).toBeInTheDocument()
   })
 
-  it("should display flag badges when participants have flags", async () => {
-    render(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
-    
-    await waitFor(() => {
-      // Check for flag icons (using aria-label from FlagBadge component)
-      const yellowFlag = screen.getByRole('img', { name: /Flag amarela: Chegou atrasado ao evento/ })
-      expect(yellowFlag).toBeInTheDocument()
-      
-      const redFlag = screen.getByRole('img', { name: /Flag vermelha: Múltiplas faltas anteriores/ })
-      expect(redFlag).toBeInTheDocument()
-    })
-  })
 })

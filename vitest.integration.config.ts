@@ -10,6 +10,9 @@ export default defineConfig({
     environment: 'node', // Integration tests run in Node, not jsdom
     globals: true,
     setupFiles: './app/test/integration-setup.ts',
+    env: {
+      NODE_ENV: 'test'
+    },
     include: ['app/**/*.integration.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     // Integration tests should run sequentially to avoid database conflicts
     pool: 'forks',

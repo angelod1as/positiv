@@ -1,5 +1,6 @@
-import type { Kysely } from "kysely"
+import type { Kysely, Selectable, Insertable } from "kysely"
 import type { Database } from "~/types/database/kysely.types"
+import type { Database as DatabaseTypes } from "~/types/database/database.types"
 
 interface TrackedEntity {
   table: string
@@ -34,10 +35,20 @@ export async function cleanupTestData(
   
   for (const { table, id } of dataToCleanup) {
     try {
-      await kysely
-        .deleteFrom(table as any)
-        .where("id" as any, "=", id)
-        .execute()
+      // Handle each table type separately for type safety
+      switch (table) {
+        case "event_participants":
+          await kysely.deleteFrom("event_participants").where("id", "=", id).execute()
+          break
+        case "events":
+          await kysely.deleteFrom("events").where("id", "=", id).execute()
+          break
+        case "profiles":
+          await kysely.deleteFrom("profiles").where("id", "=", id).execute()
+          break
+        default:
+          console.warn(`Unknown table type: ${table}`)
+      }
     } catch (error) {
       console.error(`Failed to delete ${table} with id ${id}:`, error)
     }
@@ -49,47 +60,41 @@ export async function cleanupTestData(
 interface TestProfileData {
   user_id: string
   email: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export async function createTestProfile(
   tracker: TestDataTracker,
   kysely: Kysely<Database>,
   data: TestProfileData
-): Promise<any> {
+): Promise<Selectable<DatabaseTypes["public"]["Tables"]["profiles"]["Row"]>> {
   const profile = await kysely
     .insertInto("profiles")
-    .values({
-      ...data,
-      is_test_data: true
-    } as any)
-    .returning("*" as any)
+    .values(data as Insertable<DatabaseTypes["public"]["Tables"]["profiles"]["Row"]>)
+    .returningAll()
     .executeTakeFirstOrThrow()
   
-  tracker.track("profiles", (profile as any).id)
+  tracker.track("profiles", profile.id)
   return profile
 }
 
 interface TestEventData {
   title: string
-  [key: string]: any
+  [key: string]: unknown
 }
 
 export async function createTestEvent(
   tracker: TestDataTracker,
   kysely: Kysely<Database>,
   data: TestEventData
-): Promise<any> {
+): Promise<Selectable<DatabaseTypes["public"]["Tables"]["events"]["Row"]>> {
   const event = await kysely
     .insertInto("events")
-    .values({
-      ...data,
-      is_test_data: true
-    } as any)
-    .returning("*" as any)
+    .values(data as Insertable<DatabaseTypes["public"]["Tables"]["events"]["Row"]>)
+    .returningAll()
     .executeTakeFirstOrThrow()
   
-  tracker.track("events", (event as any).id)
+  tracker.track("events", event.id)
   return event
 }
 
@@ -99,15 +104,15 @@ export async function createTestEventParticipant(
   data: {
     profile_id: string
     event_id: string
-    [key: string]: any
+    [key: string]: unknown
   }
-): Promise<any> {
+): Promise<Selectable<DatabaseTypes["public"]["Tables"]["event_participants"]["Row"]>> {
   const participant = await kysely
     .insertInto("event_participants")
-    .values(data as any)
-    .returning("*" as any)
+    .values(data as Insertable<DatabaseTypes["public"]["Tables"]["event_participants"]["Row"]>)
+    .returningAll()
     .executeTakeFirstOrThrow()
   
-  tracker.track("event_participants", (participant as any).id)
+  tracker.track("event_participants", participant.id)
   return participant
 }
