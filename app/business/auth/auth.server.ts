@@ -53,6 +53,17 @@ export const getContext = async (
   }
 
   if (authError) {
+    // Handle errors that indicate invalid/expired tokens
+    if (authError.code === "refresh_token_not_found" || 
+        authError.code === "user_not_found" ||
+        authError.message?.includes("Invalid Refresh Token") ||
+        authError.message?.includes("Refresh Token Not Found") ||
+        authError.message?.includes("User from sub claim in JWT does not exist")) {
+      // Clear auth session by signing out properly
+      await supabase.auth.signOut()
+      return errorProps
+    }
+    
     if (!authError.message.includes("Auth session missing!")) {
       console.error("AUTH error", errorProps)
       throw await redirectWithError(
