@@ -49,9 +49,37 @@ export default defineConfig({
 
   /* Configure projects for major browsers */
   projects: [
+    // Setup project runs first to generate auth states
+    { 
+      name: 'setup', 
+      testMatch: '**/auth/setup.ts'
+    },
+    
+    // Default project without authentication
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      dependencies: ['setup'],
+    },
+    
+    // TODO: Enable when user auth is fixed
+    // {
+    //   name: 'chromium-authenticated-user',
+    //   use: {
+    //     ...devices['Desktop Chrome'],
+    //     storageState: 'e2e-new/.auth/user.json',
+    //   },
+    //   dependencies: ['setup'],
+    // },
+    
+    // Authenticated admin project
+    {
+      name: 'chromium-authenticated-admin',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'e2e-new/.auth/admin.json',
+      },
+      dependencies: ['setup'],
     },
   ],
 
