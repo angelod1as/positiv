@@ -1,12 +1,10 @@
 import { test, expect } from '@playwright/test'
 import { 
   loginAsUser, 
-  loginAsAdmin, 
   logout, 
   ensureLoggedOut,
   isAuthenticated,
-  getCurrentUserEmail,
-  performUILogin
+  getCurrentUserEmail
 } from '../../fixtures/auth'
 import { TEST_USERS } from '../../fixtures/test-users'
 import { resetUserToDefaultState } from '../../utils/db-cleanup'
@@ -179,7 +177,7 @@ test.describe('Authentication', () => {
   })
 })
 
-// TODO: Enable when user auth is fixed
+// TODO POS-187: Enable when user auth is fixed
 // test.describe('Authentication with storage state', () => {
 //   test.use({ storageState: 'e2e-new/.auth/user.json' })
 //   
