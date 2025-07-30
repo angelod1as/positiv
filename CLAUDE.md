@@ -51,7 +51,9 @@ pnpm start        # Start production server
 pnpm lint         # Runs ESLint, generates types, and checks TypeScript
 
 # Testing
-pnpm test         # Run unit tests with Vitest
+pnpm test         # Run unit tests and integration tests
+pnpm test:unit    # Run unit tests only with Vitest
+pnpm test:integration # Run integration tests only (requires database)
 pnpm test:ui      # Run unit tests with Vitest UI
 pnpm test:coverage # Run unit tests with coverage report
 pnpm test:watch   # Run unit tests in watch mode
@@ -185,6 +187,21 @@ pnpm email:test   # Start Mailhog for local email testing
 - Test files: Place tests next to components with `.test.tsx` or `.spec.tsx` extension
 - Setup: Configuration in `vitest.config.ts` and setup in `app/test/setup.ts`
 
+#### Integration Testing
+
+- Integration tests use real database connections and are kept separate from unit tests
+- Test files: Use `.integration.test.ts` extension
+- Configuration: `vitest.integration.config.ts` uses Node environment
+- Database: Tests run against local Supabase instance
+- Test utilities: 
+  - `TestDataTracker` for tracking created test data
+  - `cleanupTestData` for cleaning up after tests
+  - Helper functions for creating test entities
+- Best practices:
+  - Clear existing data before tests to ensure clean state
+  - Track all created data for cleanup
+  - Run tests sequentially to avoid conflicts
+
 #### TDD Workflow (Red-Green-Refactor)
 
 1. **Red Phase**: Write a failing test first
@@ -214,6 +231,7 @@ pnpm email:test   # Start Mailhog for local email testing
 
 #### Example Test Structure
 
+**Unit Test Example:**
 ```typescript
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -229,6 +247,38 @@ describe('Component', () => {
     
     await user.click(screen.getByRole('button'))
     expect(mockHandler).toHaveBeenCalledTimes(1)
+  })
+})
+```
+
+**Integration Test Example:**
+```typescript
+import { describe, expect, it, beforeEach, afterEach } from "vitest"
+import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
+import { createTestProfile, createTestEvent } from "~/test/db-test-utils"
+
+describe("Database Function - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+    // Clear existing test data if needed
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should perform database operation", async () => {
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event",
+      // ... other fields
+    })
+
+    // Test your database function
+    const result = await myDatabaseFunction(event.id)
+    
+    expect(result).toBeDefined()
   })
 })
 ```

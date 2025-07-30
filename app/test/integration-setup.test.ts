@@ -1,6 +1,8 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import { getTestKysely, setupIntegrationTest, cleanupAfterTest } from "./integration-setup"
 import { TestDataTracker } from "./db-test-utils"
+import type { Kysely } from "kysely"
+import type { Database } from "~/types/database/kysely.types"
 
 // Mock the kysely module
 vi.mock("~/kysely", () => ({
@@ -42,7 +44,7 @@ describe("Integration Test Setup", () => {
     tracker.track("profiles", "test-profile-id")
     tracker.track("events", "test-event-id")
     
-    await cleanupAfterTest(tracker, mockKysely as any)
+    await cleanupAfterTest(tracker, mockKysely as unknown as Kysely<Database>)
     
     // Should have called cleanup
     expect(mockKysely.deleteFrom).toHaveBeenCalled()

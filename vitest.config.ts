@@ -23,6 +23,7 @@ export default defineConfig({
       ],
     },
     include: ['app/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}', 'scripts/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    exclude: ['node_modules/', '**/*.integration.test.{ts,tsx}'],
   },
   resolve: {
     alias: {
