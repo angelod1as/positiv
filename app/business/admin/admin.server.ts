@@ -14,6 +14,7 @@ import type {
   ParticipantVsEvent,
   Profile,
   ProfileApprovedToAttendStatus,
+  ProfileFlagStatus,
 } from "~types/database/entities.types"
 import { getUserContext } from "../auth/auth.server"
 import {
@@ -144,6 +145,8 @@ export const getEventParticipantHistoryById = composable(
         "events.emoji as event_emoji",
         "profiles.is_veteran as is_veteran",
         "profiles.approved_to_attend as approved_to_attend",
+        "profiles.flag as flag",
+        "profiles.flag_notes as flag_notes",
       ])
       .where("event_participants.id", "=", eventParticipantId)
       .where("is_user_applied", "=", true)
@@ -510,6 +513,8 @@ export const updateParticipantVsEvent = applySchema(
     profile_id,
     is_veteran,
     approved_to_attend,
+    flag,
+    flag_notes,
     ...data
   } = formData
 
@@ -524,6 +529,8 @@ export const updateParticipantVsEvent = applySchema(
     const profileUpdateData: {
       is_veteran?: boolean
       approved_to_attend?: ProfileApprovedToAttendStatus
+      flag?: ProfileFlagStatus
+      flag_notes?: string
     } = {}
 
     if (typeof is_veteran === "boolean") {
@@ -533,6 +540,9 @@ export const updateParticipantVsEvent = applySchema(
     if (approved_to_attend) {
       profileUpdateData.approved_to_attend = approved_to_attend
     }
+
+    if (flag) profileUpdateData.flag = flag
+    if (flag_notes) profileUpdateData.flag_notes = flag_notes
 
     if (Object.keys(profileUpdateData).length > 0) {
       await transaction

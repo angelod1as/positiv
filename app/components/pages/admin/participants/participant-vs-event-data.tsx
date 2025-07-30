@@ -8,9 +8,9 @@ import {
   approvedToAttendStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
+  flagStatusOptions,
   profilePropMap,
   spotTypeOptions,
-  flagStatusOptions,
 } from "~/lib/helpers/propMaps"
 import { type ParticipantVsEvent } from "~types/database/entities.types"
 import type { Database } from "~types/database/kysely.types"
@@ -21,21 +21,25 @@ type ParticipantVsEventDataProps = {
 export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   eventParticipant,
 }) => {
+  console.log(`\n\n:DEV eventParticipant:\n`, eventParticipant, `\n\n`)
   const { application_date, bond, companions, notes, referrals } =
     eventParticipant
 
-  const labels = Object.keys(eventParticipant).reduce((acc, curr) => {
-    return {
-      ...acc,
-      [curr]: eventParticipantPropMap(
-        curr as keyof Database["event_participants"],
-      ),
-    }
-  }, {
-    approved_to_attend: profilePropMap("approved_to_attend"),
-    flag: profilePropMap("flag"),
-    flag_notes: profilePropMap("flag_notes"),
-  })
+  const labels = Object.keys(eventParticipant).reduce(
+    (acc, curr) => {
+      return {
+        ...acc,
+        [curr]: eventParticipantPropMap(
+          curr as keyof Database["event_participants"],
+        ),
+      }
+    },
+    {
+      approved_to_attend: profilePropMap("approved_to_attend"),
+      flag: profilePropMap("flag"),
+      flag_notes: profilePropMap("flag_notes"),
+    },
+  )
 
   return (
     <>
