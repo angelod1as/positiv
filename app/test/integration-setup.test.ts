@@ -19,12 +19,24 @@ vi.mock("~/kysely", () => ({
 
 describe("Integration Test Setup", () => {
   it("should provide a test Kysely instance", () => {
+    // Skip this test if SUPABASE_CONNECT_URL is not set (e.g., in CI)
+    if (!process.env.SUPABASE_CONNECT_URL) {
+      expect(() => getTestKysely()).toThrow("SUPABASE_CONNECT_URL environment variable is not set")
+      return
+    }
+    
     const kysely = getTestKysely()
     expect(kysely).toBeDefined()
     expect(kysely).toHaveProperty("selectFrom")
   })
 
   it("should setup integration test with tracker", () => {
+    // Skip this test if SUPABASE_CONNECT_URL is not set (e.g., in CI)
+    if (!process.env.SUPABASE_CONNECT_URL) {
+      expect(() => setupIntegrationTest()).toThrow("SUPABASE_CONNECT_URL environment variable is not set")
+      return
+    }
+    
     const { tracker, kysely } = setupIntegrationTest()
     
     expect(tracker).toBeInstanceOf(TestDataTracker)
@@ -71,6 +83,12 @@ describe("Integration Test Hooks", () => {
 
   it("should work in test environment", () => {
     process.env.NODE_ENV = "test"
+    
+    // Skip this test if SUPABASE_CONNECT_URL is not set (e.g., in CI)
+    if (!process.env.SUPABASE_CONNECT_URL) {
+      expect(() => setupIntegrationTest()).toThrow("SUPABASE_CONNECT_URL environment variable is not set")
+      return
+    }
     
     expect(() => setupIntegrationTest()).not.toThrow()
   })

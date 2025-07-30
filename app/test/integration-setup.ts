@@ -40,7 +40,6 @@ export function setupIntegrationTest(): {
     throw new Error("Integration tests can only run in test environment")
   }
 
-
   const tracker = new TestDataTracker()
   const testKysely = getTestKysely()
   

@@ -13,19 +13,18 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     // This ensures tests start with a clean slate
     const testEmails = ["user1@example.com", "user2@example.com", "user3@example.com", "user9@example.com"]
     
-    for (const email of testEmails) {
-      const profile = await kysely
-        .selectFrom("profiles")
-        .select("id")
-        .where("email", "=", email)
-        .executeTakeFirst()
-      
-      if (profile) {
-        await kysely
-          .deleteFrom("event_participants")
-          .where("profile_id", "=", profile.id)
-          .execute()
-      }
+    const profiles = await kysely
+      .selectFrom("profiles")
+      .select("id")
+      .where("email", "in", testEmails)
+      .execute()
+    
+    if (profiles.length > 0) {
+      const profileIds = profiles.map(p => p.id)
+      await kysely
+        .deleteFrom("event_participants")
+        .where("profile_id", "in", profileIds)
+        .execute()
     }
   })
 
