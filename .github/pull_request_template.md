@@ -7,7 +7,7 @@ Fixes POS-XXX
 <!-- What does this PR do? Be concise. -->
 
 ## How to test manually
-<!-- Succint step by step process to test this PR manually in the UI. Optional — if the PR does not change UI features -->
+<!-- Succinct step by step process to test this PR manually in the UI. Optional — if the PR does not change UI features -->
 
 ## Implementation Notes
 <!-- Optional: Any specific thought process or decisions worth noting -->
