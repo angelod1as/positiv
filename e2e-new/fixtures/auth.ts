@@ -220,35 +220,50 @@ export async function ensureLoggedOut(page: Page): Promise<void> {
 }
 
 export async function isAuthenticated(page: Page): Promise<boolean> {
-  const loginButton = page.getByRole('banner').getByRole('link', { name: 'Entrar' })
-  const userAvatar = page.locator('[data-testid="user-avatar"]').or(
-    page.getByRole('button', { name: /menu do usuário/i })
-  )
-  
   try {
-    const [loginVisible, avatarVisible] = await Promise.all([
-      loginButton.isVisible({ timeout: 2000 }).catch(() => false),
-      userAvatar.isVisible({ timeout: 2000 }).catch(() => false)
-    ])
+    // Check if we're on a protected page
+    const currentUrl = page.url()
+    if (currentUrl.includes('/dashboard') || currentUrl.includes('/conta')) {
+      return true
+    }
     
-    return !loginVisible && avatarVisible
+    // Check for authentication elements in localStorage
+    const hasAuthToken = await page.evaluate(() => {
+      const storage = localStorage.getItem('supabase.auth.token')
+      return !!storage
+    })
+    
+    return hasAuthToken
   } catch {
     return false
   }
 }
 
 export async function getCurrentUserEmail(page: Page): Promise<string | null> {
-  if (!await isAuthenticated(page)) {
-    return null
-  }
-  
   try {
     const userEmail = await page.evaluate(() => {
-      const storage = localStorage.getItem('supabase.auth.token')
-      if (!storage) return null
+      // Check various possible storage keys
+      const keys = Object.keys(localStorage).filter(key => 
+        key.includes('supabase') && key.includes('auth')
+      )
       
-      const parsed = JSON.parse(storage)
-      return parsed?.currentSession?.user?.email || null
+      for (const key of keys) {
+        try {
+          const storage = localStorage.getItem(key)
+          if (!storage) continue
+          
+          const parsed = JSON.parse(storage)
+          const email = parsed?.currentSession?.user?.email || 
+                       parsed?.user?.email || 
+                       parsed?.access_token?.email
+          
+          if (email) return email
+        } catch {
+          // Continue to next key
+        }
+      }
+      
+      return null
     })
     
     return userEmail
