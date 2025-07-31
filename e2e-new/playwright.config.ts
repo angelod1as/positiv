@@ -55,29 +55,33 @@ export default defineConfig({
       testMatch: '**/auth/setup.ts'
     },
     
-    // Default project without authentication
+    // Unauthenticated tests
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testMatch: '**/unauthenticated/*.spec.ts',
       dependencies: ['setup'],
     },
     
+    // Authenticated user tests
     {
       name: 'chromium-authenticated-user',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e-new/.auth/user.json',
       },
+      testMatch: '**/authenticated/user-*.spec.ts',
       dependencies: ['setup'],
     },
     
-    // Authenticated admin project
+    // Authenticated admin tests
     {
       name: 'chromium-authenticated-admin',
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e-new/.auth/admin.json',
       },
+      testMatch: '**/authenticated/admin-*.spec.ts',
       dependencies: ['setup'],
     },
   ],
