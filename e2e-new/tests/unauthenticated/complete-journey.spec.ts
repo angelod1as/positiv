@@ -4,13 +4,17 @@ import { logout } from '../../fixtures/auth'
 
 test.describe('Complete Unauthenticated Journey', () => {
   test('from homepage to login to dashboard to logout', async ({ page }) => {
-    // Monitor console errors throughout the test (excluding expected auth errors)
+    // Monitor console errors throughout the test (excluding expected errors)
     const consoleErrors: string[] = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         const text = msg.text()
-        // Ignore expected authentication errors (422 from invalid credentials)
-        if (!text.includes('422') && !text.includes('Unprocessable Entity')) {
+        // Ignore expected errors:
+        // - Authentication errors (422 from invalid credentials)
+        // - React Router dev mode manifest patches (only in dev)
+        if (!text.includes('422') && 
+            !text.includes('Unprocessable Entity') &&
+            !text.includes('Failed to fetch manifest patches')) {
           consoleErrors.push(text)
         }
       }
