@@ -61,7 +61,7 @@ test.describe('Complete Unauthenticated Journey', () => {
     await expect(page).toHaveURL(/entrar|login|cadastr|register/i)
     
     const emailInput = page.getByRole('textbox', { name: 'E-mail' })
-    const passwordInput = page.getByRole('textbox', { name: 'Senha' })
+    const passwordInput = page.getByLabel('Senha')
     const submitButton = page.getByRole('button', { name: 'Entrar' })
     
     await expect(emailInput).toBeVisible()

@@ -24,7 +24,7 @@ test.describe('Onboarding Flow - New User Journey', () => {
     // Login again - should go straight to dashboard
     await page.goto('/entrar')
     const emailInput = page.getByRole('textbox', { name: 'E-mail' })
-    const passwordInput = page.getByRole('textbox', { name: 'Senha' })
+    const passwordInput = page.getByLabel('Senha')
     const submitButton = page.getByRole('button', { name: 'Entrar' })
     
     await emailInput.fill(TEST_USERS.user4.email)
