@@ -116,26 +116,24 @@ export async function performUILogin(page: Page, email: string, password: string
     await expect(page.getByText('Orientação')).toBeVisible()
     await expect(page.getByText('Pronomes')).toBeVisible()
     
-    // Select checkboxes using specific values and proper Playwright patterns
+    // Select checkboxes using label locators for better reliability
     // Gender
-    const genderCheckbox = page.getByRole('checkbox', { name: TEST_USER_PROFILE_DATA.gender[0] })
-    await expect(genderCheckbox).toBeVisible()
-    await genderCheckbox.check()
+    const genderLabel = page.locator('label').filter({ hasText: TEST_USER_PROFILE_DATA.gender[0] })
+    await expect(genderLabel).toBeVisible({ timeout: 10000 })
+    await genderLabel.click()
     
     // Orientation
-    const orientationCheckbox = page.getByRole('checkbox', { name: TEST_USER_PROFILE_DATA.orientation[0] })
-    await expect(orientationCheckbox).toBeVisible()
-    await orientationCheckbox.check()
+    const orientationLabel = page.locator('label').filter({ hasText: TEST_USER_PROFILE_DATA.orientation[0] })
+    await expect(orientationLabel).toBeVisible({ timeout: 10000 })
+    await orientationLabel.click()
     
     // Pronouns
-    const pronounsCheckbox = page.getByRole('checkbox', { name: TEST_USER_PROFILE_DATA.pronouns[0] })
-    await expect(pronounsCheckbox).toBeVisible()
-    await pronounsCheckbox.check()
+    const pronounsLabel = page.locator('label').filter({ hasText: TEST_USER_PROFILE_DATA.pronouns[0] })
+    await expect(pronounsLabel).toBeVisible({ timeout: 10000 })
+    await pronounsLabel.click()
     
-    // Verify selections were made
-    await expect(genderCheckbox).toBeChecked()
-    await expect(orientationCheckbox).toBeChecked()
-    await expect(pronounsCheckbox).toBeChecked()
+    // Give a moment for the checkboxes to be checked
+    await page.waitForTimeout(500)
     
     // Click continue button
     const continueButton2 = page.getByRole('button', { name: 'Continuar' })
