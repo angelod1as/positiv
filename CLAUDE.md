@@ -193,7 +193,7 @@ pnpm email:test   # Start Mailhog for local email testing
 - Test files: Use `.integration.test.ts` extension
 - Configuration: `vitest.integration.config.ts` uses Node environment
 - Database: Tests run against local Supabase instance
-- Test utilities: 
+- Test utilities:
   - `TestDataTracker` for tracking created test data
   - `cleanupTestData` for cleaning up after tests
   - Helper functions for creating test entities
@@ -232,6 +232,7 @@ pnpm email:test   # Start Mailhog for local email testing
 #### Example Test Structure
 
 **Unit Test Example:**
+
 ```typescript
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -252,6 +253,7 @@ describe('Component', () => {
 ```
 
 **Integration Test Example:**
+
 ```typescript
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
@@ -346,3 +348,7 @@ When making changes to the application that affect users (new features, bug fixe
 ## PR Template
 
 There's a PR template. Follow it closely.
+
+## E2E Tests
+
+When designing E2E tests, read thoroughly the [E2E Readme](e2e-new/README.md)
