@@ -2,8 +2,8 @@ import { type Page, expect } from '@playwright/test'
 import { TEST_USERS, type TestUserKey } from './test-users'
 import { setupUserAsFullyOnboarded } from '../utils/db-cleanup'
 import { TEST_USER_PROFILE_DATA } from './test-data'
+import { LoginPage } from '../pages/LoginPage'
 
-const LOGIN_URL = '/entrar'
 const DASHBOARD_URL = '/dashboard'
 const TERMS_URL = '/conta/termos-e-condicoes'
 
@@ -16,35 +16,19 @@ const TERMS_URL = '/conta/termos-e-condicoes'
  * update the profile data, then navigate to dashboard.
  */
 export async function performUILoginWithPrefilledData(page: Page, email: string, password: string): Promise<void> {
-  await page.goto(LOGIN_URL)
-  await page.waitForLoadState('networkidle')
-
-  const emailInput = page.getByRole('textbox', { name: 'E-mail' })
-  const passwordInput = page.getByRole('textbox', { name: 'Senha' })
-  const submitButton = page.getByRole('button', { name: 'Entrar' })
-
-  await emailInput.fill(email)
-  await passwordInput.fill(password)
+  const loginPage = new LoginPage(page)
   
-  // Click submit and wait for navigation
-  await submitButton.click()
-  
-  // Wait for either dashboard or terms page
-  await page.waitForURL(url => {
-    const pathname = new URL(url).pathname
-    return pathname === DASHBOARD_URL || pathname === TERMS_URL
-  }, { timeout: 10000 })
+  // Perform login
+  await loginPage.login(email, password)
   
   // If we're at the terms page, the profile now exists - update it and navigate to dashboard
   if (page.url().includes('termos-e-condicoes')) {
     await setupUserAsFullyOnboarded(email)
-    await page.goto(DASHBOARD_URL)
-    await page.waitForLoadState('networkidle')
+    await loginPage.navigateTo(DASHBOARD_URL)
   }
 
   // Verify we're at dashboard
   await expect(page).toHaveURL(DASHBOARD_URL)
-  await page.waitForLoadState('networkidle')
 }
 
 /**
@@ -53,23 +37,10 @@ export async function performUILoginWithPrefilledData(page: Page, email: string,
  * For most tests, use loginAsUser() which uses pre-filled data.
  */
 export async function performUILogin(page: Page, email: string, password: string): Promise<void> {
-  await page.goto(LOGIN_URL)
-  await page.waitForLoadState('networkidle')
-
-  const emailInput = page.getByRole('textbox', { name: 'E-mail' })
-  const passwordInput = page.getByRole('textbox', { name: 'Senha' })
-  const submitButton = page.getByRole('button', { name: 'Entrar' })
-
-  await emailInput.fill(email)
-  await passwordInput.fill(password)
+  const loginPage = new LoginPage(page)
   
-  await Promise.all([
-    page.waitForNavigation({ 
-      url: url => url.pathname === DASHBOARD_URL || url.pathname === TERMS_URL,
-      waitUntil: 'networkidle' 
-    }),
-    submitButton.click()
-  ])
+  // Perform login
+  await loginPage.login(email, password)
 
   const currentPath = new URL(page.url()).pathname
   if (currentPath === TERMS_URL) {
@@ -218,56 +189,13 @@ export async function ensureLoggedOut(page: Page): Promise<void> {
 }
 
 export async function isAuthenticated(page: Page): Promise<boolean> {
-  try {
-    // Check if we're on a protected page
-    const currentUrl = page.url()
-    if (currentUrl.includes('/dashboard') || currentUrl.includes('/conta')) {
-      return true
-    }
-    
-    // Check for authentication elements in localStorage
-    const hasAuthToken = await page.evaluate(() => {
-      const storage = localStorage.getItem('supabase.auth.token')
-      return !!storage
-    })
-    
-    return hasAuthToken
-  } catch {
-    return false
-  }
+  const loginPage = new LoginPage(page)
+  return await loginPage.isLoggedIn()
 }
 
 export async function getCurrentUserEmail(page: Page): Promise<string | null> {
-  try {
-    const userEmail = await page.evaluate(() => {
-      // Check various possible storage keys
-      const keys = Object.keys(localStorage).filter(key => 
-        key.includes('supabase') && key.includes('auth')
-      )
-      
-      for (const key of keys) {
-        try {
-          const storage = localStorage.getItem(key)
-          if (!storage) continue
-          
-          const parsed = JSON.parse(storage)
-          const email = parsed?.currentSession?.user?.email || 
-                       parsed?.user?.email || 
-                       parsed?.access_token?.email
-          
-          if (email) return email
-        } catch {
-          // Continue to next key
-        }
-      }
-      
-      return null
-    })
-    
-    return userEmail
-  } catch {
-    return null
-  }
+  const loginPage = new LoginPage(page)
+  return await loginPage.getCurrentUserEmail()
 }
 
 export async function waitForAuthRedirect(page: Page): Promise<void> {
