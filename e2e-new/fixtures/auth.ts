@@ -24,7 +24,8 @@ export async function performUILoginWithPrefilledData(page: Page, email: string,
   // If we're at the terms page, the profile now exists - update it and navigate to dashboard
   if (page.url().includes('termos-e-condicoes')) {
     await setupUserAsFullyOnboarded(email)
-    await loginPage.navigateTo(DASHBOARD_URL)
+    await page.goto(DASHBOARD_URL)
+    await page.waitForLoadState('networkidle')
   }
 
   // Verify we're at dashboard
