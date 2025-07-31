@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { 
   loginAsUser, 
+  loginAsUserWithOnboarding,
   logout, 
   ensureLoggedOut,
   isAuthenticated,
@@ -130,30 +131,20 @@ test.describe('Authentication', () => {
     expect(page.url()).toMatch(/dashboard$/)
   })
 
-  test('handles terms acceptance flow for new users', async ({ page }) => {
+  test('handles terms acceptance and onboarding flow for new users', async ({ page }) => {
     await resetUserToDefaultState(TEST_USERS.user4.email)
     
-    await page.goto('/entrar')
+    // Use loginAsUserWithOnboarding to test the full onboarding flow
+    await loginAsUserWithOnboarding(page, 'user4')
     
-    const emailInput = page.getByRole('textbox', { name: 'E-mail' })
-    const passwordInput = page.getByRole('textbox', { name: 'Senha' })
-    const submitButton = page.getByRole('button', { name: 'Entrar' })
-    
-    await emailInput.fill(TEST_USERS.user4.email)
-    await passwordInput.fill(TEST_USERS.user4.password)
-    await submitButton.click()
-    
-    await expect(page).toHaveURL('/termos-e-condicoes')
-    
-    const agreeButton = page.getByRole('button', { name: 'Li e concordo' })
-    await expect(agreeButton).toBeVisible()
-    
-    await agreeButton.click()
-    
+    // After going through the full onboarding flow, user should be at dashboard
     await expect(page).toHaveURL('/dashboard')
     
     const authenticated = await isAuthenticated(page)
     expect(authenticated).toBe(true)
+    
+    const currentEmail = await getCurrentUserEmail(page)
+    expect(currentEmail).toBe(TEST_USERS.user4.email)
   })
 
   test('validates empty fields', async ({ page }) => {
@@ -177,18 +168,17 @@ test.describe('Authentication', () => {
   })
 })
 
-// TODO POS-187: Enable when user auth is fixed
-// test.describe('Authentication with storage state', () => {
-//   test.use({ storageState: 'e2e-new/.auth/user.json' })
-//   
-//   test('pre-authenticated user can access dashboard directly', async ({ page }) => {
-//     await page.goto('/dashboard')
-//     await expect(page).toHaveURL('/dashboard')
-//     
-//     const authenticated = await isAuthenticated(page)
-//     expect(authenticated).toBe(true)
-//   })
-// })
+test.describe('Authentication with storage state', () => {
+  test.use({ storageState: 'e2e-new/.auth/user.json' })
+  
+  test('pre-authenticated user can access dashboard directly', async ({ page }) => {
+    await page.goto('/dashboard')
+    await expect(page).toHaveURL('/dashboard')
+    
+    const authenticated = await isAuthenticated(page)
+    expect(authenticated).toBe(true)
+  })
+})
 
 test.describe('Admin authentication with storage state', () => {
   test.use({ storageState: 'e2e-new/.auth/admin.json' })

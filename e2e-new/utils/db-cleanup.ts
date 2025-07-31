@@ -3,11 +3,11 @@ import type { Database } from '../../app/types/database/database.types'
 import { TEST_USERS } from '../fixtures/test-users'
 
 export function createSupabaseAdminClient() {
-  const supabaseUrl = process.env.SUPABASE_URL
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables')
+    throw new Error('Missing VITE_SUPABASE_URL/SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables')
   }
 
   return createClient<Database>(supabaseUrl, supabaseServiceKey, {
@@ -42,7 +42,7 @@ export async function cleanupEventParticipations(userId: string): Promise<void> 
   const { error } = await supabase
     .from('event_participants')
     .delete()
-    .eq('user_id', userId)
+    .eq('profile_id', userId)
   
   if (error) {
     console.error(`Error cleaning up event participations for user ${userId}:`, error)
@@ -55,7 +55,7 @@ export async function cleanupEventReminders(userId: string): Promise<void> {
   const { error } = await supabase
     .from('event_reminders')
     .delete()
-    .eq('user_id', userId)
+    .eq('profile_id', userId)
   
   if (error) {
     console.error(`Error cleaning up event reminders for user ${userId}:`, error)
@@ -82,11 +82,8 @@ export async function resetUserToDefaultState(email: string): Promise<void> {
   const { error: updateError } = await supabase
     .from('profiles')
     .update({
-      agreed_to_terms: false,
-      agreed_to_terms_at: null,
-      has_filled_first_time_form: false,
-      general_notes: null,
-      is_profile_filled: false
+      basic_data_filled: false,
+      general_notes: null
     })
     .eq('id', profile.id)
   
@@ -100,40 +97,47 @@ export async function setupUserAsFullyOnboarded(email: string): Promise<void> {
   
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id')
+    .select('id, basic_data_filled')
     .eq('email', email)
     .single()
   
   if (profileError || !profile) {
     console.error(`Error fetching profile for ${email}:`, profileError)
+    // If profile doesn't exist, we can't proceed
+    if (profileError?.code === 'PGRST116') {
+      console.error(`Profile not found for ${email}. User may need to log in first to create profile.`)
+    }
     return
   }
   
+  console.log(`Profile found for ${email}: id=${profile.id}, basic_data_filled=${profile.basic_data_filled}`)
+  
   // Update profile to be fully onboarded
-  const { error: updateError } = await supabase
+  const { data: updatedProfile, error: updateError } = await supabase
     .from('profiles')
     .update({
-      agreed_to_terms: true,
-      agreed_to_terms_at: new Date().toISOString(),
-      has_filled_first_time_form: true,
-      is_profile_filled: true,
+      basic_data_filled: true,
       full_name: 'Test E2E User',
       social_name: 'E2E Test',
       phone: 11999999999,
-      gender: ['mulher_cis'],
-      orientation: ['hetero'],
-      pronouns: ['ela_dela'],
+      gender: ['Mulher cis'],
+      orientation: ['Hétero'],
+      pronouns: ['Ela/dela'],
       date_of_birth: '1990-01-01',
       rg: '123456789',
       rg_issuer: 'SSP/SP',
       cpf: '12345678900',
       where_lives: 'São Paulo',
-      how_did_you_meet_us: 'E2E Tests'
+      how_came_to_us: 'E2E Tests'
     })
     .eq('id', profile.id)
+    .select()
+    .single()
   
   if (updateError) {
     console.error(`Error setting up user as onboarded for ${email}:`, updateError)
+  } else {
+    console.log(`Successfully set up user as onboarded for ${email}: basic_data_filled=${updatedProfile?.basic_data_filled}`)
   }
 }
 
