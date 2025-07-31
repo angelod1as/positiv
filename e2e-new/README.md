@@ -36,13 +36,15 @@ e2e-new/
 
 ## When to Merge vs Separate Tests
 
-### Merge Tests When:
+### Merge Tests When
+
 - Features naturally flow into each other (e.g., homepage → login → dashboard)
 - Testing the same page with different validations (empty fields → invalid data → valid data)
 - The combined flow represents a realistic user journey
 - Setup/teardown overhead is significant
 
-### Keep Tests Separate When:
+### Keep Tests Separate When
+
 - Testing completely different user states (new user onboarding vs existing user)
 - Features are unrelated and combining would create confusion
 - Failure in one area shouldn't block testing of another
@@ -51,6 +53,7 @@ e2e-new/
 ## Examples
 
 ### Good: Sequential Flow Test
+
 ```typescript
 test('complete login flow from validation to logout', async ({ page }) => {
   // Test empty fields
@@ -76,6 +79,7 @@ test('complete login flow from validation to logout', async ({ page }) => {
 ```
 
 ### Bad: Over-Isolated Tests
+
 ```typescript
 // DON'T DO THIS - Too many separate tests for the same flow
 test('login with empty email shows error', async ({ page }) => {
@@ -119,6 +123,7 @@ pnpm test:e2e:new -- --ui
 ## Best Practices
 
 1. **Use Proper Waiting**: Always wait for navigation/network idle after actions
+
    ```typescript
    await Promise.all([
      page.waitForNavigation({ waitUntil: 'networkidle' }),
@@ -127,16 +132,19 @@ pnpm test:e2e:new -- --ui
    ```
 
 2. **Flexible Assertions**: Use regex for URLs that might have query parameters
+
    ```typescript
    await expect(page).toHaveURL(/\/entrar/) // Not just '/entrar'
    ```
 
 3. **Leverage Auth State**: Use Playwright's storage state to avoid re-login
+
    ```typescript
    test.use({ storageState: 'e2e-new/.auth/user.json' })
    ```
 
 4. **Monitor Errors**: Track console errors throughout journeys
+
    ```typescript
    page.on('console', (msg) => {
      if (msg.type() === 'error') consoleErrors.push(msg.text())
@@ -144,6 +152,7 @@ pnpm test:e2e:new -- --ui
    ```
 
 5. **Clear Test Data**: Use the provided cleanup utilities
+
    ```typescript
    await resetUserToDefaultState(testUser.email)
    ```
