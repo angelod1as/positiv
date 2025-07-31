@@ -1,13 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../app/types/database/database.types'
 import { TEST_USERS } from '../fixtures/test-users'
+import { TEST_USER_PROFILE_DATA } from '../fixtures/test-data'
 
 export function createSupabaseAdminClient() {
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const supabaseUrl = process.env.VITE_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing VITE_SUPABASE_URL/SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables')
+    throw new Error('Missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY environment variables')
   }
 
   return createClient<Database>(supabaseUrl, supabaseServiceKey, {
@@ -95,49 +96,30 @@ export async function resetUserToDefaultState(email: string): Promise<void> {
 export async function setupUserAsFullyOnboarded(email: string): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
-  const { data: profile, error: profileError } = await supabase
+  // First, try to create the profile if it doesn't exist
+  const { data: existingProfile } = await supabase
     .from('profiles')
     .select('id, basic_data_filled')
     .eq('email', email)
     .single()
   
-  if (profileError || !profile) {
-    console.error(`Error fetching profile for ${email}:`, profileError)
-    // If profile doesn't exist, we can't proceed
-    if (profileError?.code === 'PGRST116') {
-      console.error(`Profile not found for ${email}. User may need to log in first to create profile.`)
-    }
-    return
+  if (!existingProfile) {
+    // Profile doesn't exist yet - can't create it directly without user_id
+    // This should only be called after user has logged in at least once
+    throw new Error(`Profile not found for ${email}. User must log in first to create profile.`)
   }
   
-  console.log(`Profile found for ${email}: id=${profile.id}, basic_data_filled=${profile.basic_data_filled}`)
-  
-  // Update profile to be fully onboarded
-  const { data: updatedProfile, error: updateError } = await supabase
+  // Profile exists - update it
+  const { error: updateError } = await supabase
     .from('profiles')
     .update({
       basic_data_filled: true,
-      full_name: 'Test E2E User',
-      social_name: 'E2E Test',
-      phone: 11999999999,
-      gender: ['Mulher cis'],
-      orientation: ['Hétero'],
-      pronouns: ['Ela/dela'],
-      date_of_birth: '1990-01-01',
-      rg: '123456789',
-      rg_issuer: 'SSP/SP',
-      cpf: '12345678900',
-      where_lives: 'São Paulo',
-      how_came_to_us: 'E2E Tests'
+      ...TEST_USER_PROFILE_DATA
     })
-    .eq('id', profile.id)
-    .select()
-    .single()
+    .eq('id', existingProfile.id)
   
   if (updateError) {
-    console.error(`Error setting up user as onboarded for ${email}:`, updateError)
-  } else {
-    console.log(`Successfully set up user as onboarded for ${email}: basic_data_filled=${updatedProfile?.basic_data_filled}`)
+    throw new Error(`Failed to update profile for ${email}: ${updateError.message}`)
   }
 }
 

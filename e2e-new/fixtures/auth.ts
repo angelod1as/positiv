@@ -1,11 +1,20 @@
 import { type Page, expect } from '@playwright/test'
 import { TEST_USERS, type TestUserKey } from './test-users'
 import { setupUserAsFullyOnboarded } from '../utils/db-cleanup'
+import { TEST_USER_PROFILE_DATA } from './test-data'
 
 const LOGIN_URL = '/entrar'
 const DASHBOARD_URL = '/dashboard'
 const TERMS_URL = '/conta/termos-e-condicoes'
 
+/**
+ * Logs in a user with pre-filled profile data to skip onboarding.
+ * This is the preferred method for most tests as it's faster and more reliable.
+ * 
+ * Note: We can't pre-fill data before login because profiles require a user_id
+ * which is only created after first authentication. So we log in first, then
+ * update the profile data, then navigate to dashboard.
+ */
 export async function performUILoginWithPrefilledData(page: Page, email: string, password: string): Promise<void> {
   await page.goto(LOGIN_URL)
   await page.waitForLoadState('networkidle')
@@ -17,35 +26,32 @@ export async function performUILoginWithPrefilledData(page: Page, email: string,
   await emailInput.fill(email)
   await passwordInput.fill(password)
   
-  // First attempt login
+  // Click submit and wait for navigation
   await submitButton.click()
   
-  // Wait for navigation - could go to terms or dashboard
-  await page.waitForNavigation({ 
-    url: url => url.pathname === DASHBOARD_URL || url.pathname === TERMS_URL,
-    waitUntil: 'networkidle',
-    timeout: 10000
-  })
+  // Wait for either dashboard or terms page
+  await page.waitForURL(url => {
+    const pathname = new URL(url).pathname
+    return pathname === DASHBOARD_URL || pathname === TERMS_URL
+  }, { timeout: 10000 })
   
-  // If we landed on terms page, user profile now exists and we can update it
+  // If we're at the terms page, the profile now exists - update it and navigate to dashboard
   if (page.url().includes('termos-e-condicoes')) {
-    // Pre-fill user data to skip onboarding forms
     await setupUserAsFullyOnboarded(email)
-    
-    // Navigate to dashboard - the loader should check basic_data_filled
     await page.goto(DASHBOARD_URL)
     await page.waitForLoadState('networkidle')
-    
-    // Should stay at dashboard now
-    await expect(page).toHaveURL(new RegExp(`${DASHBOARD_URL}$`))
-  } else {
-    // Already at dashboard
-    await expect(page).toHaveURL(new RegExp(`${DASHBOARD_URL}$`))
   }
-  
+
+  // Verify we're at dashboard
+  await expect(page).toHaveURL(DASHBOARD_URL)
   await page.waitForLoadState('networkidle')
 }
 
+/**
+ * Performs a full UI login including onboarding flow if needed.
+ * Use this when you specifically need to test the onboarding process.
+ * For most tests, use loginAsUser() which uses pre-filled data.
+ */
 export async function performUILogin(page: Page, email: string, password: string): Promise<void> {
   await page.goto(LOGIN_URL)
   await page.waitForLoadState('networkidle')
@@ -84,16 +90,16 @@ export async function performUILogin(page: Page, email: string, password: string
     await expect(page).toHaveURL(/dados-basicos$/)
     
     // Fill all required fields
-    await page.getByRole('textbox', { name: 'Nome completo' }).fill('Test E2E User')
-    await page.getByRole('textbox', { name: 'Nome social ou apelido' }).fill('E2E Test')
-    await page.getByRole('textbox', { name: 'RG', exact: true }).fill('123456789')
-    await page.getByRole('textbox', { name: 'Emissor do RG' }).fill('SSP/SP')
-    await page.getByRole('textbox', { name: 'CPF' }).fill('12345678900')
-    await page.getByRole('textbox', { name: 'Data de nascimento' }).fill('1990-01-01')
-    await page.getByRole('spinbutton', { name: 'Whatsapp', exact: true }).fill('11999999999')
-    await page.getByRole('spinbutton', { name: 'Confirme seu whatsapp' }).fill('11999999999')
-    await page.getByRole('textbox', { name: 'Como chegou até nós?' }).fill('E2E Tests')
-    await page.getByRole('textbox', { name: 'Em que cidade você mora?' }).fill('São Paulo')
+    await page.getByRole('textbox', { name: 'Nome completo' }).fill(TEST_USER_PROFILE_DATA.full_name)
+    await page.getByRole('textbox', { name: 'Nome social ou apelido' }).fill(TEST_USER_PROFILE_DATA.social_name)
+    await page.getByRole('textbox', { name: 'RG', exact: true }).fill(TEST_USER_PROFILE_DATA.rg)
+    await page.getByRole('textbox', { name: 'Emissor do RG' }).fill(TEST_USER_PROFILE_DATA.rg_issuer)
+    await page.getByRole('textbox', { name: 'CPF' }).fill(TEST_USER_PROFILE_DATA.cpf)
+    await page.getByRole('textbox', { name: 'Data de nascimento' }).fill(TEST_USER_PROFILE_DATA.date_of_birth)
+    await page.getByRole('spinbutton', { name: 'Whatsapp', exact: true }).fill(String(TEST_USER_PROFILE_DATA.phone))
+    await page.getByRole('spinbutton', { name: 'Confirme seu whatsapp' }).fill(String(TEST_USER_PROFILE_DATA.phone))
+    await page.getByRole('textbox', { name: 'Como chegou até nós?' }).fill(TEST_USER_PROFILE_DATA.how_came_to_us)
+    await page.getByRole('textbox', { name: 'Em que cidade você mora?' }).fill(TEST_USER_PROFILE_DATA.where_lives)
     
     const continueBtn = page.getByRole('button', { name: 'Continuar' })
     await Promise.all([
@@ -111,18 +117,18 @@ export async function performUILogin(page: Page, email: string, password: string
     await expect(page.getByText('Pronomes')).toBeVisible()
     
     // Select checkboxes using specific values and proper Playwright patterns
-    // Select gender: "Mulher cis" (first option)
-    const genderCheckbox = page.getByRole('checkbox', { name: 'Mulher cis' })
+    // Gender
+    const genderCheckbox = page.getByRole('checkbox', { name: TEST_USER_PROFILE_DATA.gender[0] })
     await expect(genderCheckbox).toBeVisible()
     await genderCheckbox.check()
     
-    // Select orientation: "Hétero" (first option)
-    const orientationCheckbox = page.getByRole('checkbox', { name: 'Hétero' })
+    // Orientation
+    const orientationCheckbox = page.getByRole('checkbox', { name: TEST_USER_PROFILE_DATA.orientation[0] })
     await expect(orientationCheckbox).toBeVisible()
     await orientationCheckbox.check()
     
-    // Select pronouns: "Ela/dela" (second option for consistency with gender)
-    const pronounsCheckbox = page.getByRole('checkbox', { name: 'Ela/dela' })
+    // Pronouns
+    const pronounsCheckbox = page.getByRole('checkbox', { name: TEST_USER_PROFILE_DATA.pronouns[0] })
     await expect(pronounsCheckbox).toBeVisible()
     await pronounsCheckbox.check()
     
