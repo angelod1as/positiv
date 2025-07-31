@@ -63,6 +63,14 @@ export default defineConfig({
       dependencies: ['setup'],
     },
     
+    // Auth tests (login, registration, etc.)
+    {
+      name: "chromium-auth",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: '**/auth/*.spec.ts',
+      testIgnore: '**/auth/setup.ts',
+    },
+    
     // Authenticated user tests
     {
       name: 'chromium-authenticated-user',
