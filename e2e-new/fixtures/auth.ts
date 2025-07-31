@@ -7,9 +7,6 @@ const DASHBOARD_URL = '/dashboard'
 const TERMS_URL = '/conta/termos-e-condicoes'
 
 export async function performUILoginWithPrefilledData(page: Page, email: string, password: string): Promise<void> {
-  // Pre-fill user data to skip onboarding forms
-  await setupUserAsFullyOnboarded(email)
-  
   await page.goto(LOGIN_URL)
   await page.waitForLoadState('networkidle')
 
@@ -20,15 +17,32 @@ export async function performUILoginWithPrefilledData(page: Page, email: string,
   await emailInput.fill(email)
   await passwordInput.fill(password)
   
-  await Promise.all([
-    page.waitForNavigation({ 
-      url: DASHBOARD_URL,
-      waitUntil: 'networkidle' 
-    }),
-    submitButton.click()
-  ])
-
-  await expect(page).toHaveURL(new RegExp(`${DASHBOARD_URL}$`))
+  // First attempt login
+  await submitButton.click()
+  
+  // Wait for navigation - could go to terms or dashboard
+  await page.waitForNavigation({ 
+    url: url => url.pathname === DASHBOARD_URL || url.pathname === TERMS_URL,
+    waitUntil: 'networkidle',
+    timeout: 10000
+  })
+  
+  // If we landed on terms page, user profile now exists and we can update it
+  if (page.url().includes('termos-e-condicoes')) {
+    // Pre-fill user data to skip onboarding forms
+    await setupUserAsFullyOnboarded(email)
+    
+    // Navigate to dashboard - the loader should check basic_data_filled
+    await page.goto(DASHBOARD_URL)
+    await page.waitForLoadState('networkidle')
+    
+    // Should stay at dashboard now
+    await expect(page).toHaveURL(new RegExp(`${DASHBOARD_URL}$`))
+  } else {
+    // Already at dashboard
+    await expect(page).toHaveURL(new RegExp(`${DASHBOARD_URL}$`))
+  }
+  
   await page.waitForLoadState('networkidle')
 }
 
@@ -91,49 +105,40 @@ export async function performUILogin(page: Page, email: string, password: string
     await expect(page).toHaveURL(/dados-basicos-cont$/)
     await page.waitForLoadState('networkidle')
     
-    // Scroll down a bit to avoid header interference
-    await page.evaluate(() => window.scrollBy(0, 100))
-    await page.waitForTimeout(500)
+    // Wait for form to be fully loaded
+    await expect(page.getByText('Gênero')).toBeVisible()
+    await expect(page.getByText('Orientação')).toBeVisible()
+    await expect(page.getByText('Pronomes')).toBeVisible()
     
-    // Try clicking checkboxes via their labels
-    try {
-      // Click the first visible checkbox label in each section
-      const sections = page.locator('section')
-      const sectionCount = await sections.count()
-      // console.log(`Found ${sectionCount} sections`)
-      
-      for (let i = 0; i < Math.min(sectionCount, 3); i++) {
-        const labels = sections.nth(i).locator('label')
-        const labelCount = await labels.count()
-        if (labelCount > 0) {
-          // console.log(`Section ${i} has ${labelCount} labels`)
-          // Click the first label in this section
-          await labels.first().click({ force: true })
-          await page.waitForTimeout(300)
-        }
-      }
-    } catch (_error) {
-      // console.error('Error clicking checkboxes:', _error)
-      // Fallback: try to click any visible checkbox
-      const anyLabel = page.locator('label').first()
-      if (await anyLabel.isVisible()) {
-        await anyLabel.click({ force: true })
-      }
-    }
+    // Select checkboxes using specific values and proper Playwright patterns
+    // Select gender: "Mulher cis" (first option)
+    const genderCheckbox = page.getByRole('checkbox', { name: 'Mulher cis' })
+    await expect(genderCheckbox).toBeVisible()
+    await genderCheckbox.check()
     
-    // Try to continue regardless
+    // Select orientation: "Hétero" (first option)
+    const orientationCheckbox = page.getByRole('checkbox', { name: 'Hétero' })
+    await expect(orientationCheckbox).toBeVisible()
+    await orientationCheckbox.check()
+    
+    // Select pronouns: "Ela/dela" (second option for consistency with gender)
+    const pronounsCheckbox = page.getByRole('checkbox', { name: 'Ela/dela' })
+    await expect(pronounsCheckbox).toBeVisible()
+    await pronounsCheckbox.check()
+    
+    // Verify selections were made
+    await expect(genderCheckbox).toBeChecked()
+    await expect(orientationCheckbox).toBeChecked()
+    await expect(pronounsCheckbox).toBeChecked()
+    
+    // Click continue button
     const continueButton2 = page.getByRole('button', { name: 'Continuar' })
-    await continueButton2.click()
+    await expect(continueButton2).toBeVisible()
     
-    // Wait for navigation - might go to dashboard or show an error
-    await page.waitForLoadState('networkidle')
-    
-    // If we're still on the same page, there might be validation errors
-    if (page.url().includes('dados-basicos-cont')) {
-      // console.log('Still on dados-basicos-cont, checking for errors...')
-      // Take a screenshot for debugging
-      await page.screenshot({ path: 'test-results/dados-basicos-cont-error.png' })
-    }
+    await Promise.all([
+      page.waitForNavigation({ url: DASHBOARD_URL, waitUntil: 'networkidle' }),
+      continueButton2.click()
+    ])
   }
 
   await expect(page).toHaveURL(new RegExp(`${DASHBOARD_URL}$`))
@@ -141,6 +146,15 @@ export async function performUILogin(page: Page, email: string, password: string
 }
 
 export async function loginAsUser(page: Page, userKey: TestUserKey = 'user1'): Promise<void> {
+  const user = TEST_USERS[userKey]
+  if (!user || user.role === 'admin') {
+    throw new Error(`Invalid user key: ${userKey}. Must be a non-admin user.`)
+  }
+  
+  await performUILoginWithPrefilledData(page, user.email, user.password)
+}
+
+export async function loginAsUserWithOnboarding(page: Page, userKey: TestUserKey = 'user1'): Promise<void> {
   const user = TEST_USERS[userKey]
   if (!user || user.role === 'admin') {
     throw new Error(`Invalid user key: ${userKey}. Must be a non-admin user.`)
