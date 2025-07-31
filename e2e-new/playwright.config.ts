@@ -62,15 +62,14 @@ export default defineConfig({
       dependencies: ['setup'],
     },
     
-    // TODO POS-187: Enable when user auth is fixed
-    // {
-    //   name: 'chromium-authenticated-user',
-    //   use: {
-    //     ...devices['Desktop Chrome'],
-    //     storageState: 'e2e-new/.auth/user.json',
-    //   },
-    //   dependencies: ['setup'],
-    // },
+    {
+      name: 'chromium-authenticated-user',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: 'e2e-new/.auth/user.json',
+      },
+      dependencies: ['setup'],
+    },
     
     // Authenticated admin project
     {
