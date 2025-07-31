@@ -1,7 +1,7 @@
 import { type Page, type Locator, expect } from '@playwright/test'
+import { BasePage } from './BasePage'
 
-export class LoginPage {
-  readonly page: Page
+export class LoginPage extends BasePage {
   
   // Page URL
   private readonly url = '/entrar'
@@ -17,11 +17,11 @@ export class LoginPage {
   readonly headerLoginButton: Locator
   
   constructor(page: Page) {
-    this.page = page
+    super(page)
     
     // Initialize locators
     this.emailInput = page.getByRole('textbox', { name: 'E-mail' })
-    this.passwordInput = page.getByRole('textbox', { name: 'Senha' })
+    this.passwordInput = page.getByLabel('Senha')
     this.submitButton = page.getByRole('button', { name: 'Entrar' })
     
     // Error locators
