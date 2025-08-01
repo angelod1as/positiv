@@ -6,63 +6,71 @@ import {
   ensureLoggedOut,
   isAuthenticated
 } from '../../fixtures/auth'
+import { LoginPage } from '../../pages/LoginPage'
 import { TEST_USERS } from '../../fixtures/test-users'
 import { resetUserToDefaultState } from '../../utils/db-cleanup'
 
-test.describe('Authentication Flow Tests', () => {
+test.describe('Authentication Flows', () => {
   test.beforeEach(async ({ page }) => {
     await ensureLoggedOut(page)
   })
 
-  test('user login flow with auth utilities', async ({ page }) => {
-    // Test user login
-    await loginAsUser(page, 'user1')
+  test('complete authentication journey with form validation and POM', async ({ page }) => {
+    const loginPage = new LoginPage(page)
     
-    // Verify we're authenticated (without email check for now)
+    // Step 1: Navigate to login and verify page elements
+    await loginPage.goto()
+    await loginPage.verifyLoginPageDisplayed()
+    
+    // Step 2: Test empty field validation
+    await page.getByRole('button', { name: 'Entrar' }).click()
+    await expect(loginPage.emailError).toBeVisible()
+    await expect(loginPage.passwordError).toBeVisible()
+    
+    // Step 3: Test invalid credentials
+    await loginPage.emailInput.fill('wrong@example.com')
+    await loginPage.passwordInput.fill('wrongpassword')
+    await page.getByRole('button', { name: 'Entrar' }).click()
+    await expect(loginPage.generalErrorAlert).toBeVisible()
+    
+    // Step 4: Test successful login using POM method
+    await loginPage.emailInput.clear()
+    await loginPage.passwordInput.clear()
+    await loginPage.login(TEST_USERS.user1.email, TEST_USERS.user1.password)
+    
+    // Should be authenticated
     const authenticated = await isAuthenticated(page)
     expect(authenticated).toBe(true)
     
-    // Verify we're on dashboard
+    // Should be at dashboard
     await expect(page).toHaveURL('/dashboard')
     
-    // Verify user cannot access admin area
+    // Step 5: Verify user cannot access admin area
     await page.goto('/admin')
-    // User should be redirected away from admin - could be to dashboard or homepage
     await expect(page).not.toHaveURL('/admin')
     
-    // Test logout
+    // Step 6: Test logout
     await logout(page)
-    
-    // Verify we're logged out
     const loggedOut = await isAuthenticated(page)
     expect(loggedOut).toBe(false)
-    
-    // Verify we're back on homepage
     await expect(page).toHaveURL('/')
   })
 
-  test('admin login flow with auth utilities', async ({ page }) => {
-    // Test admin login
+  test('admin authentication and access control', async ({ page }) => {
+    // Use auth utilities for quick admin login
     await loginAsAdmin(page)
     
-    // Verify we're authenticated (without email check for now)
+    // Verify authenticated
     const authenticated = await isAuthenticated(page)
     expect(authenticated).toBe(true)
     
-    // Verify we're on dashboard
+    // Verify on dashboard
     await expect(page).toHaveURL('/dashboard')
     
     // Verify admin can access admin area
     await page.goto('/admin')
     await expect(page).toHaveURL('/admin')
     await expect(page.getByRole('heading', { name: 'Visão geral' })).toBeVisible()
-    
-    // Test logout
-    await logout(page)
-    
-    // Verify we're logged out
-    const loggedOut = await isAuthenticated(page)
-    expect(loggedOut).toBe(false)
   })
 
   test('session persistence across page reloads', async ({ page }) => {
@@ -80,8 +88,6 @@ test.describe('Authentication Flow Tests', () => {
     // Verify still authenticated
     const authenticatedAfterReload = await isAuthenticated(page)
     expect(authenticatedAfterReload).toBe(true)
-    
-    // Just verify still authenticated
     
     // Verify still on dashboard
     await expect(page).toHaveURL('/dashboard')
@@ -107,7 +113,7 @@ test.describe('Authentication Flow Tests', () => {
     expect(await isAuthenticated(page)).toBe(true)
   })
 
-  test('ensureLoggedOut works correctly', async ({ page }) => {
+  test('ensureLoggedOut utility works correctly', async ({ page }) => {
     // Start logged in
     await loginAsUser(page, 'user5')
     expect(await isAuthenticated(page)).toBe(true)
