@@ -26,10 +26,15 @@ e2e-new/
 │   │   └── admin-access.spec.ts
 │   └── auth/                # Authentication setup
 │       └── setup.ts
+├── pages/                   # Page Object Models
+│   ├── BasePage.ts         # Base page class
+│   ├── LoginPage.ts        # Login page POM
+│   └── RegisterPage.ts     # Registration page POM
 ├── fixtures/                # Reusable test utilities
 │   ├── auth.ts             # Authentication helpers
 │   ├── test-users.ts       # Test user configurations
-│   └── test-data.ts        # Shared test data
+│   ├── test-data.ts        # Shared test data
+│   └── supabase-mock.ts    # Supabase mocking utilities
 └── utils/                  # Test utilities
     └── db-cleanup.ts       # Database cleanup helpers
 ```
@@ -173,5 +178,29 @@ pnpm test:e2e:new -- --ui
 3. Follow naming convention: `{feature}-{action}.spec.ts` or `{journey-name}.spec.ts`
 4. Consider the authentication context needed
 5. Update this README if adding new patterns or directories
+
+### Page Object Model (POM)
+
+All pages should extend `BasePage` and follow these patterns:
+- Place in `pages/` directory
+- Use descriptive locators with proper selectors
+- Provide methods for common interactions
+- Include verification methods for page state
+
+Example:
+```typescript
+export class ExamplePage extends BasePage {
+  readonly submitButton: Locator
+  
+  constructor(page: Page) {
+    super(page)
+    this.submitButton = page.getByRole('button', { name: 'Submit' })
+  }
+  
+  async submit(): Promise<void> {
+    await this.submitButton.click()
+  }
+}
+```
 
 Remember: The goal is to test like a real user would interact with the application, not to achieve 100% isolation at the cost of efficiency and realism.

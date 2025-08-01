@@ -71,14 +71,6 @@ export default defineConfig({
       testIgnore: '**/auth/setup.ts',
     },
     
-    // User tests (registration, etc.)
-    {
-      name: "chromium-user",
-      use: { ...devices["Desktop Chrome"] },
-      testMatch: '**/user/*.spec.ts',
-      dependencies: ['setup'],
-    },
-    
     // Authenticated user tests
     {
       name: 'chromium-authenticated-user',
