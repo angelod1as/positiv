@@ -76,7 +76,7 @@ export default defineConfig({
       name: 'chromium-authenticated-user',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'e2e-new/.auth/user.json',
+        storageState: path.resolve(import.meta.dirname, '.auth/user.json'),
       },
       testMatch: '**/authenticated/user-*.spec.ts',
       dependencies: ['setup'],
@@ -87,7 +87,7 @@ export default defineConfig({
       name: 'chromium-authenticated-admin',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'e2e-new/.auth/admin.json',
+        storageState: path.resolve(import.meta.dirname, '.auth/admin.json'),
       },
       testMatch: '**/authenticated/admin-*.spec.ts',
       dependencies: ['setup'],
