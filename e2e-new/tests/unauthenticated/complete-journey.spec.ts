@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test'
-import { TEST_USERS } from '../../fixtures/test-users'
 
 test.describe('Complete Unauthenticated Journey', () => {
   test('from homepage through navigation to login', async ({ page }) => {
