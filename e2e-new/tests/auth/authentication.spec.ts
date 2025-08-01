@@ -42,8 +42,9 @@ test.describe('Authentication Flows', () => {
     const authenticated = await isAuthenticated(page)
     expect(authenticated).toBe(true)
     
-    // Should be at dashboard
-    await expect(page).toHaveURL('/dashboard')
+    // Should be at dashboard or terms page (if profile not complete)
+    const currentUrl = page.url()
+    expect(currentUrl.includes('/dashboard') || currentUrl.includes('/conta/termos-e-condicoes')).toBe(true)
     
     // Step 5: Verify user cannot access admin area
     await page.goto('/admin')
