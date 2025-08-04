@@ -48,7 +48,7 @@ export async function createTestUser(email: string, password: string, options?: 
 
     return {
       id: newUser.id,
-      email: newUser.email!,
+      email: newUser.email || email,
       password,
     }
   } catch (error) {
@@ -113,7 +113,7 @@ export async function deleteAllTestUsers(): Promise<void> {
     // Filter to mock users only
     const mockUsers = users.filter(user => user.user_metadata?.is_mock_user === true)
 
-    console.log(`Found ${mockUsers.length} test users to delete`)
+    console.info(`Found ${mockUsers.length} test users to delete`)
 
     // Delete each mock user
     for (const user of mockUsers) {

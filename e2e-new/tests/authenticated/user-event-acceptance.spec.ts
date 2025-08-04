@@ -20,7 +20,7 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     // This is OK - tests will handle navigation as needed
     const currentUrl = page.url()
     if (!currentUrl.includes('/dashboard')) {
-      console.log(`Note: Starting from ${currentUrl} instead of dashboard`)
+      console.info(`Note: Starting from ${currentUrl} instead of dashboard`)
     }
   })
 
