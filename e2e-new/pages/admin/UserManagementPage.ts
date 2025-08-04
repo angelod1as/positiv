@@ -11,7 +11,7 @@ export class UserManagementPage extends BasePage {
   
   constructor(page: Page) {
     super(page)
-    this.participantsTable = page.locator('[data-testid="participants-table"]')
+    this.participantsTable = page.locator('[data-testid="participants-table"], table').first()
     this.tableRows = page.locator('.p-datatable-tbody tr')
     this.viewParticipantButtons = page.locator('[title="Ver participante"]')
     this.whatsappButtons = page.locator('button:has(img[alt="Whatsapp"])')
