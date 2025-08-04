@@ -15,7 +15,7 @@ test.describe('Admin User Management', () => {
     adminDashboard = new AdminDashboardPage(page)
   })
   
-  test.afterEach(async ({ page }) => {
+  test.afterEach(async () => {
     // Cleanup window.open override
     await userManagement.cleanup()
   })
