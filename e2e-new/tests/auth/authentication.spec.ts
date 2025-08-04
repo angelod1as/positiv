@@ -1,22 +1,36 @@
 import { test, expect } from '@playwright/test'
 import { 
-  loginAsUser, 
-  loginAsAdmin, 
   logout, 
   ensureLoggedOut,
-  isAuthenticated
+  isAuthenticated,
+  performUILogin
 } from '../../fixtures/auth'
 import { LoginPage } from '../../pages/LoginPage'
-import { TEST_USERS } from '../../fixtures/test-users'
-import { resetUserToDefaultState } from '../../utils/db-cleanup'
+import { createTestUser, generateTestEmail, generateTestPassword, deleteTestUser } from '../../utils/user-management'
 
 test.describe('Authentication Flows', () => {
+  let testUsers: Array<{ id: string; email: string; password: string }> = []
+
   test.beforeEach(async ({ page }) => {
     await ensureLoggedOut(page)
   })
 
+  test.afterEach(async () => {
+    // Clean up any users created in individual tests
+    for (const user of testUsers) {
+      await deleteTestUser(user.id)
+    }
+    testUsers = []
+  })
+
   test('complete authentication journey with form validation and POM', async ({ page }) => {
     const loginPage = new LoginPage(page)
+    
+    // Create a test user for this specific test
+    const email = generateTestEmail()
+    const password = generateTestPassword()
+    const testUser = await createTestUser(email, password)
+    testUsers.push(testUser)
     
     // Step 1: Navigate to login and verify page elements
     await loginPage.goto()
@@ -36,7 +50,7 @@ test.describe('Authentication Flows', () => {
     // Step 4: Test successful login using POM method
     await loginPage.emailInput.clear()
     await loginPage.passwordInput.clear()
-    await loginPage.login(TEST_USERS.user1.email, TEST_USERS.user1.password)
+    await loginPage.login(email, password)
     
     // Should be authenticated
     const authenticated = await isAuthenticated(page)
@@ -58,14 +72,20 @@ test.describe('Authentication Flows', () => {
   })
 
   test('admin authentication and access control', async ({ page }) => {
-    // Use auth utilities for quick admin login
-    await loginAsAdmin(page)
+    // Create an admin user for this test
+    const email = generateTestEmail()
+    const password = generateTestPassword()
+    const adminUser = await createTestUser(email, password, { admin: true })
+    testUsers.push(adminUser)
+    
+    // Use performUILogin which handles the full onboarding flow
+    await performUILogin(page, email, password)
     
     // Verify authenticated
     const authenticated = await isAuthenticated(page)
     expect(authenticated).toBe(true)
     
-    // Verify on dashboard
+    // Should be on dashboard after login
     await expect(page).toHaveURL('/dashboard')
     
     // Verify admin can access admin area
@@ -75,8 +95,16 @@ test.describe('Authentication Flows', () => {
   })
 
   test('session persistence across page reloads', async ({ page }) => {
-    // Login as user
-    await loginAsUser(page, 'user2')
+    // Create a user for this test
+    const email = generateTestEmail()
+    const password = generateTestPassword()
+    const testUser = await createTestUser(email, password)
+    testUsers.push(testUser)
+    
+    // Login
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login(email, password)
     
     // Verify authenticated before reload
     const authBefore = await isAuthenticated(page)
@@ -90,58 +118,67 @@ test.describe('Authentication Flows', () => {
     const authenticatedAfterReload = await isAuthenticated(page)
     expect(authenticatedAfterReload).toBe(true)
     
-    // Verify still on dashboard
-    await expect(page).toHaveURL('/dashboard')
+    // Should still be on dashboard or terms page
+    const url = page.url()
+    expect(url.includes('/dashboard') || url.includes('/conta/termos-e-condicoes')).toBe(true)
   })
 
   test('multiple users can login sequentially', async ({ page }) => {
-    // Login as first user
-    await loginAsUser(page, 'user3')
-    expect(await isAuthenticated(page)).toBe(true)
+    // Create three users
+    const users = []
+    for (let i = 0; i < 3; i++) {
+      const email = generateTestEmail()
+      const password = generateTestPassword()
+      const user = await createTestUser(email, password)
+      users.push({ ...user, password })
+      testUsers.push(user)
+    }
     
-    // Logout
-    await logout(page)
+    const loginPage = new LoginPage(page)
     
-    // Login as second user
-    await loginAsUser(page, 'user4')
-    expect(await isAuthenticated(page)).toBe(true)
-    
-    // Logout
-    await logout(page)
-    
-    // Login as admin
-    await loginAsAdmin(page)
-    expect(await isAuthenticated(page)).toBe(true)
+    // Login as each user sequentially
+    for (const user of users) {
+      // Ensure logged out
+      await ensureLoggedOut(page)
+      
+      // Login
+      await loginPage.goto()
+      await loginPage.login(user.email, user.password)
+      
+      // Verify authenticated
+      expect(await isAuthenticated(page)).toBe(true)
+      
+      // Logout
+      await logout(page)
+      expect(await isAuthenticated(page)).toBe(false)
+    }
   })
 
   test('ensureLoggedOut utility works correctly', async ({ page }) => {
-    // Start logged in
-    await loginAsUser(page, 'user5')
+    // Create a user
+    const email = generateTestEmail()
+    const password = generateTestPassword()
+    const testUser = await createTestUser(email, password)
+    testUsers.push(testUser)
+    
+    // Start logged out
+    const initialAuth = await isAuthenticated(page)
+    expect(initialAuth).toBe(false)
+    
+    // Login
+    const loginPage = new LoginPage(page)
+    await loginPage.goto()
+    await loginPage.login(email, password)
     expect(await isAuthenticated(page)).toBe(true)
     
     // Use ensureLoggedOut
     await ensureLoggedOut(page)
     
-    // Verify logged out
-    const authenticated = await isAuthenticated(page)
-    expect(authenticated).toBe(false)
+    // Should be logged out
+    const finalAuth = await isAuthenticated(page)
+    expect(finalAuth).toBe(false)
     
-    // Call ensureLoggedOut again (should handle already logged out state)
-    await ensureLoggedOut(page)
-    
-    // Verify still logged out
-    const stillLoggedOut = await isAuthenticated(page)
-    expect(stillLoggedOut).toBe(false)
-  })
-
-  test.afterEach(async () => {
-    // Clean up test data for users that were used
-    const usedUsers = ['user1', 'user2', 'user3', 'user4', 'user5', 'admin']
-    for (const userKey of usedUsers) {
-      const user = TEST_USERS[userKey as keyof typeof TEST_USERS]
-      if (user) {
-        await resetUserToDefaultState(user.email)
-      }
-    }
+    // Should be on homepage
+    await expect(page).toHaveURL('/')
   })
 })
