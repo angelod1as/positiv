@@ -69,13 +69,22 @@ export const AdminViewEventParticipantsTable: FC<
       
       // Always include flag and flag_notes if they exist to satisfy validation
       if (participant.flag && participant.flag !== "none") {
+        // Validation requires non-empty flag_notes when flag is set
+        if (!participant.flag_notes || participant.flag_notes.trim().length === 0) {
+          throw new Error("Flag notes são obrigatórias quando uma flag está configurada")
+        }
         formData.append("flag", participant.flag)
-        formData.append("flag_notes", participant.flag_notes || "")
+        formData.append("flag_notes", participant.flag_notes)
       }
       
       // Add the field being updated
       if (field && value !== undefined && value !== null) {
-        formData.append(field, String(value))
+        // Handle boolean values specially
+        if (typeof value === "boolean") {
+          formData.append(field, value ? "true" : "false")
+        } else {
+          formData.append(field, String(value))
+        }
       }
       
       return await fetcher.submit(formData, { method: "post" })
