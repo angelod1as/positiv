@@ -201,6 +201,6 @@ export async function cleanupTestEvents(): Promise<void> {
   if (deleteError) {
     console.error('Error deleting test events:', deleteError)
   } else {
-    console.log(`✅ Cleaned up ${testEvents.length} test events`)
+    console.info(`✅ Cleaned up ${testEvents.length} test events`)
   }
 }
