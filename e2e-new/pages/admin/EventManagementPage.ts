@@ -143,6 +143,12 @@ export class EventManagementPage extends BasePage {
     )
     await this.page.waitForLoadState('networkidle')
   }
+  
+  async clickSaveButton(): Promise<void> {
+    // Just click save without waiting for navigation
+    // Use this when testing validation errors
+    await this.saveButton.click()
+  }
 
   async clickEdit(): Promise<void> {
     await this.editButton.click()
