@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { createTestEvent, createTestEventParticipant } from "~/test/db-test-utils"
-import { getParticipantFullEventHistory } from "./admin.server"
+import { createTestEvent, createTestEventParticipant, createTestProfile } from "~/test/db-test-utils"
+import { getParticipantFullEventHistory, updateEventParticipantById } from "./admin.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -33,20 +33,12 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
   })
 
   it("should return participant event history for a given profile", async () => {
-    // Get existing profile from seeded data
-    const profile = await kysely
-      .selectFrom("profiles")
-      .selectAll()
-      .where("email", "=", "user9@example.com")
-      .executeTakeFirst()
-    
-      
-    if (!profile) {
-      throw new Error("Test profile not found. Make sure database is seeded.")
-    }
-
-    // Track the profile for cleanup if we make changes to it
-    tracker.track("profiles", profile.id)
+    // Create a test profile for this test
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: crypto.randomUUID(),
+      email: "test-history-user@example.com",
+      full_name: "Test History User"
+    })
 
     const event1 = await createTestEvent(tracker, kysely, {
       title: "Test Event 1",
@@ -294,5 +286,142 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     if (result.success) {
       expect(result.data).toHaveLength(0)
     }
+  })
+})
+
+describe("updateEventParticipantById - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+    // Clear existing test data
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-flag-%")
+      )
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should update event participant fields when participant has flag set", async () => {
+    // Create test data
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: crypto.randomUUID(),
+      email: "test-flag-participant@example.com",
+      full_name: "Test Flag Participant",
+      flag: "yellow",
+      flag_notes: "Test warning note"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event with Flags",
+      time_event_start: new Date().toISOString()
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      payment: 100,
+      attendance_status: "pending"
+    })
+
+    // Test updating payment field when participant has flag
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      payment: 150
+    })
+
+    expect(result.success).toBe(true)
+
+    // Verify the update
+    const updatedParticipant = await kysely
+      .selectFrom("event_participants")
+      .selectAll()
+      .where("id", "=", participant.id)
+      .executeTakeFirst()
+
+    expect(updatedParticipant?.payment).toBe("150.00")
+  })
+
+  it("should fail when updating participant with flag but without flag_notes", async () => {
+    // Create test data
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: crypto.randomUUID(),
+      email: "test-flag-fail@example.com",
+      full_name: "Test Flag Fail",
+      flag: "none"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event Flag Fail",
+      time_event_start: new Date().toISOString()
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true
+    })
+
+    // Test updating flag without flag_notes
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      flag: "yellow"
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.errors).toBeDefined()
+  })
+
+  it("should successfully update attendance_status for participant with existing flag", async () => {
+    // Create test data with flag
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: crypto.randomUUID(),
+      email: "test-attendance-flag@example.com",
+      full_name: "Test Attendance Flag",
+      flag: "red",
+      flag_notes: "Important participant note"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event Attendance",
+      time_event_start: new Date().toISOString()
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      attendance_status: "pending"
+    })
+
+    // Test updating attendance_status only
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      attendance_status: "attended"
+    })
+
+    // This used to fail but now should succeed with the fix
+    expect(result.success).toBe(true)
+
+    // Verify the update
+    const updatedParticipant = await kysely
+      .selectFrom("event_participants")
+      .selectAll()
+      .where("id", "=", participant.id)
+      .executeTakeFirst()
+
+    expect(updatedParticipant?.attendance_status).toBe("attended")
   })
 })
