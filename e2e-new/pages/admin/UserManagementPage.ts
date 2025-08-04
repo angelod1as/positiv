@@ -1,4 +1,4 @@
-import { Locator, Page } from '@playwright/test'
+import { type Locator, type Page } from '@playwright/test'
 import { BasePage } from '../BasePage'
 
 export class UserManagementPage extends BasePage {
@@ -158,10 +158,14 @@ export class UserManagementPage extends BasePage {
     
     // Intercept the window.open call to prevent actual navigation
     await this.page.evaluate(() => {
-      (window as any).lastOpenedUrl = null;
-      (window as any).originalOpen = window.open;
-      window.open = (url: string) => {
-        (window as any).lastOpenedUrl = url;
+      const win = window as unknown as Window & { 
+        lastOpenedUrl: string | null; 
+        originalOpen: typeof window.open 
+      };
+      win.lastOpenedUrl = null;
+      win.originalOpen = window.open;
+      window.open = (url?: string | URL, _target?: string, _features?: string) => {
+        win.lastOpenedUrl = url?.toString() || null;
         return null;
       };
     })
@@ -170,7 +174,10 @@ export class UserManagementPage extends BasePage {
   }
   
   async getLastOpenedUrl(): Promise<string | null> {
-    return await this.page.evaluate(() => (window as any).lastOpenedUrl)
+    return await this.page.evaluate(() => {
+      const win = window as Window & { lastOpenedUrl?: string | null };
+      return win.lastOpenedUrl || null;
+    })
   }
   
   async verifyWhatsAppUrl(expectedPhone: string): Promise<boolean> {
@@ -195,14 +202,20 @@ export class UserManagementPage extends BasePage {
     
     // Setup clipboard and window.open interception
     await this.page.evaluate(() => {
-      (window as any).lastCopiedText = null;
-      (window as any).lastOpenedUrl = null;
+      const win = window as unknown as Window & { 
+        lastCopiedText: string | null;
+        lastOpenedUrl: string | null;
+        originalOpen?: typeof window.open;
+      };
+      
+      win.lastCopiedText = null;
+      win.lastOpenedUrl = null;
       
       // Override clipboard
       Object.defineProperty(navigator, 'clipboard', {
         value: {
           writeText: async (text: string) => {
-            (window as any).lastCopiedText = text;
+            win.lastCopiedText = text;
             return Promise.resolve();
           }
         },
@@ -210,10 +223,10 @@ export class UserManagementPage extends BasePage {
       });
       
       // Override window.open if not already done
-      if (!(window as any).originalOpen) {
-        (window as any).originalOpen = window.open;
-        window.open = (url: string) => {
-          (window as any).lastOpenedUrl = url;
+      if (!win.originalOpen) {
+        win.originalOpen = window.open;
+        window.open = (url?: string | URL, _target?: string, _features?: string) => {
+          win.lastOpenedUrl = url?.toString() || null;
           return null;
         };
       }
@@ -226,7 +239,10 @@ export class UserManagementPage extends BasePage {
   }
   
   async getLastCopiedText(): Promise<string | null> {
-    return await this.page.evaluate(() => (window as any).lastCopiedText)
+    return await this.page.evaluate(() => {
+      const win = window as Window & { lastCopiedText?: string | null };
+      return win.lastCopiedText || null;
+    })
   }
   
   async verifyGoogleContactsIntegration(): Promise<{
@@ -242,8 +258,9 @@ export class UserManagementPage extends BasePage {
   // Cleanup method to restore window.open
   async cleanup(): Promise<void> {
     await this.page.evaluate(() => {
-      if ((window as any).originalOpen) {
-        window.open = (window as any).originalOpen;
+      const win = window as Window & { originalOpen?: typeof window.open };
+      if (win.originalOpen) {
+        window.open = win.originalOpen;
       }
     })
   }
