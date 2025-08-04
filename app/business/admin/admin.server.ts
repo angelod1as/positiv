@@ -590,7 +590,11 @@ export const updateEventParticipantById = applySchema(
         .execute()
     }
 
-    if (Object.keys(data).length > 0) {
+    const notAllUndefined = Object.values(data).some(
+      (value) => value !== undefined,
+    )
+
+    if (Object.keys(data).length > 0 && notAllUndefined) {
       await transaction
         .updateTable("event_participants")
         .where("id", "=", id)
