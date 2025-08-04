@@ -35,6 +35,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
   it("should return participant event history for a given profile", async () => {
     // Create a test profile for this test
     const profile = await createTestProfile(tracker, kysely, {
+      user_id: crypto.randomUUID(),
       email: "test-history-user@example.com",
       full_name: "Test History User"
     })
@@ -309,6 +310,7 @@ describe("updateEventParticipantById - Integration Tests", () => {
   it("should update event participant fields when participant has flag set", async () => {
     // Create test data
     const profile = await createTestProfile(tracker, kysely, {
+      user_id: crypto.randomUUID(),
       email: "test-flag-participant@example.com",
       full_name: "Test Flag Participant",
       flag: "yellow",
@@ -351,6 +353,7 @@ describe("updateEventParticipantById - Integration Tests", () => {
   it("should fail when updating participant with flag but without flag_notes", async () => {
     // Create test data
     const profile = await createTestProfile(tracker, kysely, {
+      user_id: crypto.randomUUID(),
       email: "test-flag-fail@example.com",
       full_name: "Test Flag Fail",
       flag: "none"
@@ -379,9 +382,10 @@ describe("updateEventParticipantById - Integration Tests", () => {
     expect(result.errors).toBeDefined()
   })
 
-  it("should fail when updating attendance_status for participant with existing flag", async () => {
+  it("should successfully update attendance_status for participant with existing flag", async () => {
     // Create test data with flag
     const profile = await createTestProfile(tracker, kysely, {
+      user_id: crypto.randomUUID(),
       email: "test-attendance-flag@example.com",
       full_name: "Test Attendance Flag",
       flag: "red",
@@ -408,8 +412,16 @@ describe("updateEventParticipantById - Integration Tests", () => {
       attendance_status: "attended"
     })
 
-    // This should fail with the current implementation because flag_notes is missing
-    expect(result.success).toBe(false)
-    expect(result.errors).toBeDefined()
+    // This used to fail but now should succeed with the fix
+    expect(result.success).toBe(true)
+
+    // Verify the update
+    const updatedParticipant = await kysely
+      .selectFrom("event_participants")
+      .selectAll()
+      .where("id", "=", participant.id)
+      .executeTakeFirst()
+
+    expect(updatedParticipant?.attendance_status).toBe("attended")
   })
 })
