@@ -1,5 +1,4 @@
 import { type Page, expect } from '@playwright/test'
-import { TEST_USERS, type TestUserKey } from './test-users'
 import { TEST_USER_PROFILE_DATA } from './test-data'
 import { LoginPage } from '../pages/LoginPage'
 
