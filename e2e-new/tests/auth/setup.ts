@@ -23,7 +23,7 @@ setup('authenticate as admin', async ({ page }) => {
   const email = generateTestEmail()
   const password = generateTestPassword()
   
-  console.log('Creating test admin user:', email)
+  console.info('Creating test admin user:', email)
   const adminUser = await createTestUser(email, password, { admin: true })
   setupUsers.admin = { ...adminUser, password }
   
@@ -32,7 +32,7 @@ setup('authenticate as admin', async ({ page }) => {
   
   await page.context().storageState({ path: adminFile })
   
-  console.log('✅ Admin authentication state saved')
+  console.info('✅ Admin authentication state saved')
 })
 
 setup('authenticate as user', async ({ page }) => {
@@ -40,7 +40,7 @@ setup('authenticate as user', async ({ page }) => {
   const email = generateTestEmail()
   const password = generateTestPassword()
   
-  console.log('Creating test user:', email)
+  console.info('Creating test user:', email)
   const testUser = await createTestUser(email, password)
   setupUsers.user = { ...testUser, password }
   
@@ -49,5 +49,5 @@ setup('authenticate as user', async ({ page }) => {
   
   await page.context().storageState({ path: userFile })
   
-  console.log('✅ User authentication state saved')
+  console.info('✅ User authentication state saved')
 })
