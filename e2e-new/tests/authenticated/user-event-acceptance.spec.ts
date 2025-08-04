@@ -24,7 +24,7 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     }
   })
 
-  test('AC1: EventsPage POM - browse and interact with events', async ({ page }) => {
+  test('AC1: EventsPage POM - browse and interact with events', async ({ page: _page }) => {
     // Navigate to events page
     await eventsPage.goto()
     
