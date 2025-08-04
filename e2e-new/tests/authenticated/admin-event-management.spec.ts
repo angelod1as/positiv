@@ -2,9 +2,16 @@ import { test, expect } from '@playwright/test'
 import path from 'path'
 import { AdminDashboardPage } from '../../pages/admin/AdminDashboardPage'
 import { EventManagementPage } from '../../pages/admin/EventManagementPage'
+import { cleanupTestEvents } from '../../utils/db-cleanup'
 
 test.describe('Admin Event Management', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/admin.json') })
+  
+  test.afterEach(async () => {
+    // Clean up any test events created during the test
+    // This ensures cleanup even if the test fails
+    await cleanupTestEvents()
+  })
 
   test('admin can navigate to dashboard and manage events', async ({ page }) => {
     const adminDashboard = new AdminDashboardPage(page)
@@ -62,10 +69,9 @@ test.describe('Admin Event Management', () => {
     // Go back to dashboard
     await adminDashboard.navigate()
     
-    // Wait for table to load and verify new event appears in the list
+    // Wait for table to load and wait for the new event to appear
     await adminDashboard.eventsTable.waitFor({ state: 'visible' })
-    const eventVisible = await adminDashboard.isEventInList(eventTitle)
-    expect(eventVisible).toBeTruthy()
+    await adminDashboard.waitForEventInList(eventTitle)
     
     // Click to view the event
     await adminDashboard.clickViewEvent(eventTitle)
@@ -106,7 +112,7 @@ test.describe('Admin Event Management', () => {
     await page.goto('/admin/eventos/novo')
     
     // Try to save without filling required fields
-    await eventManagement.saveEvent()
+    await eventManagement.clickSaveButton()
     
     // Should show validation errors - looking for minimum characters error
     await expect(page.getByText('No mínimo 2 caracteres').first()).toBeVisible()

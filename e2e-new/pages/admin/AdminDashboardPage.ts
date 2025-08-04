@@ -35,17 +35,63 @@ export class AdminDashboardPage extends BasePage {
   }
 
   async clickViewEvent(eventTitle: string): Promise<void> {
+    // Make sure event is visible on current page
+    if (!(await this.isEventInList(eventTitle))) {
+      throw new Error(`Event "${eventTitle}" not found in list`)
+    }
+    
     const eventRow = this.page.getByRole('row').filter({ hasText: eventTitle })
     await eventRow.getByRole('link', { name: 'Ver evento' }).click()
   }
 
   async clickEditEvent(eventTitle: string): Promise<void> {
+    // Make sure event is visible on current page
+    if (!(await this.isEventInList(eventTitle))) {
+      throw new Error(`Event "${eventTitle}" not found in list`)
+    }
+    
     const eventRow = this.page.getByRole('row').filter({ hasText: eventTitle })
     await eventRow.getByRole('link', { name: 'Editar evento' }).click()
   }
 
   async isEventInList(eventTitle: string): Promise<boolean> {
+    // First check if event is visible on current page
     const eventCell = this.page.getByRole('cell', { name: eventTitle }).first()
-    return await eventCell.isVisible()
+    if (await eventCell.isVisible()) {
+      return true
+    }
+    
+    // If not visible, check if there's pagination
+    const nextPageButton = this.page.getByRole('button', { name: 'Next Page' })
+    
+    // Keep clicking next until we find the event or reach the last page
+    while (await nextPageButton.isEnabled()) {
+      await nextPageButton.click()
+      // Wait for table to update
+      await this.page.waitForTimeout(500)
+      
+      if (await eventCell.isVisible()) {
+        return true
+      }
+    }
+    
+    // Event not found in any page
+    return false
+  }
+  
+  async waitForEventInList(eventTitle: string, timeout: number = 30000): Promise<void> {
+    const startTime = Date.now()
+    
+    while (Date.now() - startTime < timeout) {
+      if (await this.isEventInList(eventTitle)) {
+        return
+      }
+      
+      // Refresh the page to check for new events
+      await this.navigate()
+      await this.page.waitForTimeout(1000)
+    }
+    
+    throw new Error(`Event "${eventTitle}" not found in list after ${timeout}ms`)
   }
 }
