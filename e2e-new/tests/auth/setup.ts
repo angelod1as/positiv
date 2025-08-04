@@ -1,6 +1,6 @@
 import { test as setup } from '@playwright/test'
-import { performUILogin, performUILoginWithPrefilledData } from '../../fixtures/auth'
-import { TEST_USERS } from '../../fixtures/test-users'
+import { performUILogin } from '../../fixtures/auth'
+import { createTestUser, generateTestEmail, generateTestPassword } from '../../utils/user-management'
 import path from 'path'
 import fs from 'fs/promises'
 
@@ -8,24 +8,46 @@ const authDir = path.join(import.meta.dirname, '..', '..', '.auth')
 const adminFile = path.join(authDir, 'admin.json')
 const userFile = path.join(authDir, 'user.json')
 
+// Store created users for potential cleanup
+export const setupUsers = {
+  admin: null as { email: string; password: string; id: string } | null,
+  user: null as { email: string; password: string; id: string } | null,
+}
+
 setup.beforeAll(async () => {
   await fs.mkdir(authDir, { recursive: true })
 })
 
 setup('authenticate as admin', async ({ page }) => {
-  // Admin should go straight to dashboard
-  await performUILogin(page, TEST_USERS.admin.email, TEST_USERS.admin.password)
+  // Create a fresh admin user
+  const email = generateTestEmail()
+  const password = generateTestPassword()
+  
+  console.log('Creating test admin user:', email)
+  const adminUser = await createTestUser(email, password, { admin: true })
+  setupUsers.admin = { ...adminUser, password }
+  
+  // Admin should go through full login flow
+  await performUILogin(page, email, password)
   
   await page.context().storageState({ path: adminFile })
   
-  // console.log('✅ Admin authentication state saved')
+  console.log('✅ Admin authentication state saved')
 })
 
 setup('authenticate as user', async ({ page }) => {
-  // Use pre-filled data for reliable authentication
-  await performUILoginWithPrefilledData(page, TEST_USERS.user1.email, TEST_USERS.user1.password)
+  // Create a fresh regular user
+  const email = generateTestEmail()
+  const password = generateTestPassword()
+  
+  console.log('Creating test user:', email)
+  const testUser = await createTestUser(email, password)
+  setupUsers.user = { ...testUser, password }
+  
+  // User goes through full login flow
+  await performUILogin(page, email, password)
   
   await page.context().storageState({ path: userFile })
   
-  // console.log('✅ User authentication state saved')
+  console.log('✅ User authentication state saved')
 })

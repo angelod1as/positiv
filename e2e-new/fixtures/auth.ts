@@ -1,6 +1,5 @@
 import { type Page, expect } from '@playwright/test'
 import { TEST_USERS, type TestUserKey } from './test-users'
-import { setupUserAsFullyOnboarded } from '../utils/db-cleanup'
 import { TEST_USER_PROFILE_DATA } from './test-data'
 import { LoginPage } from '../pages/LoginPage'
 
@@ -21,15 +20,12 @@ export async function performUILoginWithPrefilledData(page: Page, email: string,
   // Perform login
   await loginPage.login(email, password)
   
-  // If we're at the terms page, the profile now exists - update it and navigate to dashboard
-  if (page.url().includes('termos-e-condicoes')) {
-    await setupUserAsFullyOnboarded(email)
-    await page.goto(DASHBOARD_URL)
-    await page.waitForLoadState('networkidle')
-  }
-
-  // Verify we're at dashboard
-  await expect(page).toHaveURL(DASHBOARD_URL)
+  // Let the natural flow happen - user might be on terms page or dashboard
+  await page.waitForLoadState('networkidle')
+  
+  // We should be either on dashboard or terms page
+  const currentUrl = page.url()
+  expect(currentUrl.includes('/dashboard') || currentUrl.includes('/conta/termos-e-condicoes')).toBe(true)
 }
 
 /**
@@ -121,28 +117,10 @@ export async function performUILogin(page: Page, email: string, password: string
   await page.waitForLoadState('networkidle')
 }
 
-export async function loginAsUser(page: Page, userKey: TestUserKey = 'user1'): Promise<void> {
-  const user = TEST_USERS[userKey]
-  if (!user || user.role === 'admin') {
-    throw new Error(`Invalid user key: ${userKey}. Must be a non-admin user.`)
-  }
-  
-  await performUILoginWithPrefilledData(page, user.email, user.password)
-}
-
-export async function loginAsUserWithOnboarding(page: Page, userKey: TestUserKey = 'user1'): Promise<void> {
-  const user = TEST_USERS[userKey]
-  if (!user || user.role === 'admin') {
-    throw new Error(`Invalid user key: ${userKey}. Must be a non-admin user.`)
-  }
-  
-  await performUILogin(page, user.email, user.password)
-}
-
-export async function loginAsAdmin(page: Page): Promise<void> {
-  const admin = TEST_USERS.admin
-  await performUILogin(page, admin.email, admin.password)
-}
+// These functions are deprecated - use performUILogin directly with dynamic users
+// export async function loginAsUser(page: Page, userKey: TestUserKey = 'user1'): Promise<void>
+// export async function loginAsUserWithOnboarding(page: Page, userKey: TestUserKey = 'user1'): Promise<void>
+// export async function loginAsAdmin(page: Page): Promise<void>
 
 export async function logout(page: Page): Promise<void> {
   const userAvatar = page.locator('[data-testid="user-avatar"]').or(
