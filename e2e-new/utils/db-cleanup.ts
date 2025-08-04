@@ -150,3 +150,57 @@ export async function cleanupAllTestUsers(): Promise<void> {
   
   // console.log(`✅ Reset ${testEmails.length} test users to default state`)
 }
+
+export async function cleanupTestEvents(): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+  
+  // Delete events with titles that indicate they're test events
+  // This includes patterns like "Test Event", "E2E", etc.
+  const { data: testEvents, error: fetchError } = await supabase
+    .from('events')
+    .select('id, title')
+    .or('title.ilike.%Test Event%,title.ilike.%E2E%,title.ilike.%Updated Test Event%')
+  
+  if (fetchError) {
+    console.error('Error fetching test events:', fetchError)
+    return
+  }
+  
+  if (!testEvents || testEvents.length === 0) {
+    return
+  }
+  
+  // Delete associated event participants first (due to foreign key constraints)
+  const eventIds = testEvents.map(event => event.id)
+  
+  const { error: participantsError } = await supabase
+    .from('event_participants')
+    .delete()
+    .in('event_id', eventIds)
+  
+  if (participantsError) {
+    console.error('Error deleting event participants:', participantsError)
+  }
+  
+  // Delete associated event reminders
+  const { error: remindersError } = await supabase
+    .from('event_reminders')
+    .delete()
+    .in('event_id', eventIds)
+  
+  if (remindersError) {
+    console.error('Error deleting event reminders:', remindersError)
+  }
+  
+  // Now delete the events
+  const { error: deleteError } = await supabase
+    .from('events')
+    .delete()
+    .in('id', eventIds)
+  
+  if (deleteError) {
+    console.error('Error deleting test events:', deleteError)
+  } else {
+    console.log(`✅ Cleaned up ${testEvents.length} test events`)
+  }
+}
