@@ -571,14 +571,14 @@ export const updateEventParticipantById = applySchema(
   return await kysely.transaction().execute(async (transaction) => {
     if (
       typeof is_veteran === "boolean" ||
-      !!approved_to_attend ||
+      approved_to_attend !== undefined ||
       flag !== undefined ||
       flag_notes !== undefined
     ) {
       const profileUpdates: Record<string, string | boolean | null> = {}
       if (typeof is_veteran === "boolean")
         profileUpdates.is_veteran = is_veteran
-      if (approved_to_attend)
+      if (approved_to_attend !== undefined)
         profileUpdates.approved_to_attend = approved_to_attend
       if (flag !== undefined) profileUpdates.flag = flag
       if (flag_notes !== undefined) profileUpdates.flag_notes = flag_notes
