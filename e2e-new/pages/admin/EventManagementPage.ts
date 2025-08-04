@@ -133,6 +133,15 @@ export class EventManagementPage extends BasePage {
 
   async saveEvent(): Promise<void> {
     await this.saveButton.click()
+    // Wait for navigation after save - the save button should redirect from /novo to the event view page
+    await this.page.waitForFunction(
+      () => {
+        const url = window.location.href
+        return url.includes('/admin/eventos/') && !url.includes('/novo')
+      },
+      { timeout: 30000 }
+    )
+    await this.page.waitForLoadState('networkidle')
   }
 
   async clickEdit(): Promise<void> {
