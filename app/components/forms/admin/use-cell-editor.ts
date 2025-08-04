@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 
 export type BaseCellEditorProps<T extends { id: string }, K extends keyof T> = {
   value: T[K]
   rowData: T
   field: K
-  onSave: (id: string, field: K, value: T[K]) => void
+  onSave: (id: string, field: K, value: T[K]) => void | Promise<void>
 }
 
 export const useCellEditor = <T extends { id: string }, K extends keyof T>({
@@ -15,6 +16,7 @@ export const useCellEditor = <T extends { id: string }, K extends keyof T>({
   onSave,
 }: BaseCellEditorProps<T, K>) => {
   const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const {
@@ -43,13 +45,17 @@ export const useCellEditor = <T extends { id: string }, K extends keyof T>({
     // Set a new timeout for debouncing
     timeoutRef.current = setTimeout(async () => {
       setIsSaving(true)
+      setError(null)
       try {
         await new Promise((resolve) => setTimeout(resolve, 500))
 
         // Call the parent save function
-        onSave(rowData.id, field, watchedValue as T[K])
+        await onSave(rowData.id, field, watchedValue as T[K])
       } catch (error) {
         console.error("Error saving data:", error)
+        const errorMessage = error instanceof Error ? error.message : "Erro ao salvar dados"
+        setError(errorMessage)
+        toast.error(errorMessage)
       } finally {
         setIsSaving(false)
         timeoutRef.current = null
@@ -68,5 +74,6 @@ export const useCellEditor = <T extends { id: string }, K extends keyof T>({
     register,
     errors,
     isSaving,
+    error,
   }
 }

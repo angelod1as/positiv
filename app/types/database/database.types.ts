@@ -377,7 +377,7 @@ export type Database = {
     }
     Functions: {
       add_user_role: {
-        Args: { p_user_id: string; p_role_name: string }
+        Args: { p_role_name: string; p_user_id: string }
         Returns: undefined
       }
       get_admin_user_ids: {

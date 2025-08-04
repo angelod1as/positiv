@@ -58,8 +58,6 @@ export const AdminViewEventParticipantsTable: FC<
     const participant = participants.find((p) => p.id === id)
     if (!participant) return
 
-    participant[field] = value
-
     const result = await composable(async () => {
       const formData = new FormData()
       formData.append("intent", "update-event-participant")
@@ -67,14 +65,30 @@ export const AdminViewEventParticipantsTable: FC<
       formData.append("eventId", eventId)
       formData.append("profile_id", participant.profile_id || "")
       
-      // Always include flag and flag_notes if they exist to satisfy validation
-      if (participant.flag && participant.flag !== "none") {
-        // Validation requires non-empty flag_notes when flag is set
-        if (!participant.flag_notes || participant.flag_notes.trim().length === 0) {
-          throw new Error("Flag notes são obrigatórias quando uma flag está configurada")
+      // Only include flag data when we're actually updating flag-related fields
+      const isUpdatingFlag = field === "flag" || field === "flag_notes"
+      
+      if (isUpdatingFlag) {
+        // When updating flag fields, validate and include both flag and flag_notes
+        const flagValue = field === "flag" ? value : participant.flag
+        const flagNotesValue = field === "flag_notes" ? value : participant.flag_notes
+        
+        if (flagValue && flagValue !== "none") {
+          if (!flagNotesValue || String(flagNotesValue).trim().length === 0) {
+            throw new Error("Flag notes são obrigatórias quando uma flag está configurada")
+          }
+          formData.append("flag", String(flagValue))
+          formData.append("flag_notes", String(flagNotesValue))
+        } else if (field === "flag") {
+          // If clearing the flag, include it
+          formData.append("flag", String(value))
         }
-        formData.append("flag", participant.flag)
-        formData.append("flag_notes", participant.flag_notes)
+      } else {
+        // For non-flag fields, only include flag data if participant has a flag set
+        if (participant.flag && participant.flag !== "none" && participant.flag_notes) {
+          formData.append("flag", participant.flag)
+          formData.append("flag_notes", participant.flag_notes)
+        }
       }
       
       // Add the field being updated
@@ -93,6 +107,9 @@ export const AdminViewEventParticipantsTable: FC<
     if (!result.success) {
       throw new Error("Ops, algo deu errado ao salvar seu valor")
     }
+    
+    // Only update local data after successful save
+    participant[field] = value
   }
 
   const { acceptedInProcess, applications } = countParticipants(participants)

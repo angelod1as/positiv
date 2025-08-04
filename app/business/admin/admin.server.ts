@@ -583,11 +583,14 @@ export const updateEventParticipantById = applySchema(
       if (flag !== undefined) profileUpdates.flag = flag
       if (flag_notes !== undefined) profileUpdates.flag_notes = flag_notes
 
-      await transaction
-        .updateTable("profiles")
-        .where("id", "=", profile_id)
-        .set(profileUpdates)
-        .execute()
+      // Only execute update if there are actual changes and profile_id exists
+      if (Object.keys(profileUpdates).length > 0 && profile_id) {
+        await transaction
+          .updateTable("profiles")
+          .where("id", "=", profile_id)
+          .set(profileUpdates)
+          .execute()
+      }
     }
 
     if (Object.keys(data).length > 0) {
