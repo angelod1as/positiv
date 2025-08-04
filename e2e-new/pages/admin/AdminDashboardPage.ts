@@ -19,6 +19,9 @@ export class AdminDashboardPage extends BasePage {
 
   async navigate(): Promise<void> {
     await this.page.goto('/admin')
+    // Wait for loading state to disappear - the admin dashboard uses delayed-component
+    // which shows "Carregando..." text while data is loading
+    await this.page.waitForFunction(() => !document.body.textContent?.includes('Carregando...'), { timeout: 30000 })
   }
 
   async verifyAdminAccess(): Promise<void> {

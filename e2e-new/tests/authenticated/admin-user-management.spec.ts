@@ -3,33 +3,43 @@ import path from 'path'
 import { UserManagementPage } from '../../pages/admin/UserManagementPage'
 import { AdminDashboardPage } from '../../pages/admin/AdminDashboardPage'
 import { EventManagementPage } from '../../pages/admin/EventManagementPage'
+import { createTestEventWithParticipants, cleanupTestParticipants, type TestParticipant } from '../../utils/event-helpers'
 
 test.describe('Admin User Management', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/admin.json') })
   
   let userManagement: UserManagementPage
   let adminDashboard: AdminDashboardPage
+  let eventManagement: EventManagementPage
+  let testParticipants: TestParticipant[] = []
+  let testEventId: string = ''
+  let testEventIdDetail: string = ''
   
   test.beforeEach(async ({ page }) => {
     userManagement = new UserManagementPage(page)
     adminDashboard = new AdminDashboardPage(page)
+    eventManagement = new EventManagementPage(page)
   })
   
   test.afterEach(async () => {
     // Cleanup window.open override
     await userManagement.cleanup()
+    
+    // Cleanup test participants
+    if (testParticipants.length > 0) {
+      await cleanupTestParticipants(testParticipants)
+      testParticipants = []
+    }
   })
   
-  test('verify user management page loads correctly', async ({ page }) => {
-    const eventManagement = new EventManagementPage(page)
-    
+  test('table inline editing operations', async ({ page }) => {
     // Navigate to admin dashboard
     await adminDashboard.navigate()
     await adminDashboard.verifyAdminAccess()
     
-    // Create a test event first to ensure we have data
+    // Create a test event with participants
     const timestamp = Date.now()
-    const eventTitle = `Test Event for User Management ${timestamp}`
+    const eventTitle = `Test Event ${timestamp}`
     
     await adminDashboard.clickCreateEvent()
     await expect(page).toHaveURL('/admin/eventos/novo')
@@ -45,90 +55,143 @@ test.describe('Admin User Management', () => {
       type: 'regular'
     })
     
-    // Set event start date
+    // Set event start date (one month from now)
     const eventDate = new Date()
-    eventDate.setMonth(eventDate.getMonth() + 1) // 1 month from now
+    eventDate.setDate(eventDate.getDate() + 30) // Add 30 days instead of adding a month
     await eventManagement.setEventStartDate(eventDate)
     
     // Click auto-calculate dates button
     await eventManagement.clickCalculateDates()
     
-    // Save the event
+    // Save the event (this will wait for navigation)
     await eventManagement.saveEvent()
     
     // Should redirect to view event page
     await expect(page).toHaveURL(/\/admin\/eventos\/[\w-]+$/)
     
-    // Get the event ID from URL
+    // Get the event ID from URL - ensure it's not "novo"
     const url = page.url()
-    const eventId = url.split('/').pop() || ''
+    testEventId = url.split('/').pop() || ''
+    expect(testEventId).not.toBe('novo')
+    expect(testEventId).toMatch(/^[\w-]+$/)
+    
+    // Create test participants
+    testParticipants = await createTestEventWithParticipants(testEventId, 3)
     
     // Navigate to user management page
-    await userManagement.navigate(eventId)
-    await expect(page).toHaveURL(`/admin/eventos/${eventId}`)
+    await userManagement.navigate(testEventId)
+    await expect(page).toHaveURL(`/admin/eventos/${testEventId}`)
     
     // Verify the participants table is visible
     await expect(userManagement.participantsTable).toBeVisible()
+    await userManagement.waitForTableToLoad()
     
-    // Verify table headers are present
-    await expect(page.getByText('Inscrições')).toBeVisible()
-    
-    // Since we just created the event, there should be no participants
+    // Verify participant count
     const participantCount = await userManagement.tableRows.count()
-    expect(participantCount).toBe(0)
+    expect(participantCount).toBe(3)
     
-    // Verify the empty state is shown properly
-    await expect(page.getByText('0 inscrites')).toBeVisible()
+    // Test 1: Inline editing - Select cell (application_status)
+    const firstParticipant = testParticipants[0]
+    const firstRow = await userManagement.findRowByParticipantName(firstParticipant.socialName)
+    
+    // Edit application status
+    await userManagement.editSelectCell(firstRow, 'application_status', 'sent_rules')
+    await page.waitForTimeout(1000) // Allow for save
+    
+    // Verify the change persisted (check for translated value)
+    const hasStatus = await userManagement.verifyCellContent(firstRow, 'application_status', 'Regras enviadas')
+    expect(hasStatus).toBe(true)
+    
+    // Test 2: Inline editing - Checkbox cell (has_paid)
+    const secondParticipant = testParticipants[1]
+    const secondRow = await userManagement.findRowByParticipantName(secondParticipant.socialName)
+    
+    await userManagement.editCheckboxCell(secondRow, 'has_paid', true)
+    await page.waitForTimeout(1000)
+    
+    // Test 3: Inline editing - Number cell (payment)
+    await userManagement.editNumberCell(secondRow, 'payment', '150')
+    await page.waitForTimeout(1000)
+    
+    // Test 4: Inline editing - Select cell (attendance_status)
+    await userManagement.editSelectCell(secondRow, 'attendance_status', 'attended')
+    await page.waitForTimeout(1000)
+    
+    // Test 5: Data persistence - Refresh page
+    await page.reload()
+    await userManagement.waitForTableToLoad()
+    
+    // Find rows again and verify data persisted
+    const refreshedFirstRow = await userManagement.findRowByParticipantName(firstParticipant.socialName)
+    const refreshedSecondRow = await userManagement.findRowByParticipantName(secondParticipant.socialName)
+    
+    // Verify first participant changes persisted
+    const firstStatusPersisted = await userManagement.verifyCellContent(refreshedFirstRow, 'application_status', 'Regras enviadas')
+    expect(firstStatusPersisted).toBe(true)
+    
+    // Verify second participant has payment value
+    const paymentInput = refreshedSecondRow.locator('input[name="payment"]').first()
+    const paymentValue = await paymentInput.inputValue()
+    expect(paymentValue).toBe('150.00')
   })
   
-  test('test user management with existing event data', async ({ page }) => {
+  test('detail view and external integrations', async ({ page }) => {
     // Navigate to admin dashboard
     await adminDashboard.navigate()
     await adminDashboard.verifyAdminAccess()
     
-    // Look for existing events with participants
-    await adminDashboard.eventsTable.waitFor({ state: 'visible' })
+    // Create a new test event for detail view testing
+    const timestamp = Date.now()
+    const eventTitle = `Test Event Detail View ${timestamp}`
     
-    // Find events that might have participants (completed or ongoing)
-    const eventRows = await page.locator('.p-datatable-tbody tr').all()
+    await adminDashboard.clickCreateEvent()
+    await expect(page).toHaveURL('/admin/eventos/novo')
     
-    let foundEventWithParticipants = false
-    let eventId = ''
+    // Fill event creation form
+    await eventManagement.fillBasicEventInfo({
+      title: eventTitle,
+      emoji: '🎯',
+      description: 'Test event for detail view E2E tests',
+      location: 'Test Location',
+      price: '50',
+      capacity: '30',
+      type: 'regular'
+    })
     
-    // Try to find an event with participants
-    for (const row of eventRows) {
-      const status = await row.locator('td').nth(3).textContent() // Assuming status is in 4th column
-      
-      // Look for events that are likely to have participants
-      if (status && (status.includes('Completed') || status.includes('Registration'))) {
-        await row.getByRole('link', { name: 'Ver evento' }).click()
-        await page.waitForNavigation({ waitUntil: 'networkidle' })
-        
-        eventId = page.url().split('/').pop() || ''
-        
-        // Check if this event has participants
-        const participantRows = await userManagement.tableRows.count()
-        if (participantRows > 0) {
-          foundEventWithParticipants = true
-          break
-        }
-        
-        // Go back to admin dashboard if no participants
-        await adminDashboard.navigate()
-      }
-    }
+    // Set event start date (one month from now)
+    const eventDate = new Date()
+    eventDate.setDate(eventDate.getDate() + 30)
+    await eventManagement.setEventStartDate(eventDate)
     
-    if (!foundEventWithParticipants) {
-      test.skip(true, 'No events with participants found for testing')
-    }
+    // Click auto-calculate dates button
+    await eventManagement.clickCalculateDates()
     
-    // Now we have an event with participants, let's test
+    // Save the event (this will wait for navigation)
+    await eventManagement.saveEvent()
+    
+    // Should redirect to view event page
+    await expect(page).toHaveURL(/\/admin\/eventos\/[\w-]+$/)
+    
+    // Get the event ID from URL - ensure it's not "novo"
+    const url = page.url()
+    testEventIdDetail = url.split('/').pop() || ''
+    expect(testEventIdDetail).not.toBe('novo')
+    expect(testEventIdDetail).toMatch(/^[\w-]+$/)
+    
+    // Create test participants with minimal data for speed
+    testParticipants = await createTestEventWithParticipants(testEventIdDetail, 2)
+    
+    // Navigate back to the event page to see participants
+    await userManagement.navigate(testEventIdDetail)
+    await userManagement.waitForTableToLoad()
+    
+    // Get the first participant row
     const firstRow = await userManagement.tableRows.first()
     const participantName = await firstRow.locator('td').nth(1).textContent() || 'Unknown'
     
-    // Test WhatsApp button functionality
-    const phoneCell = firstRow.locator('button:has(img[alt="Whatsapp"])').first()
-    const hasWhatsApp = await phoneCell.isVisible()
+    // Test WhatsApp button if available
+    const whatsappButton = firstRow.locator('button:has(img[alt="Whatsapp"])').first()
+    const hasWhatsApp = await whatsappButton.count() > 0
     
     if (hasWhatsApp) {
       await userManagement.clickWhatsAppButton(firstRow)
@@ -136,17 +199,22 @@ test.describe('Admin User Management', () => {
       expect(openedUrl).toMatch(/^https:\/\/wa\.me\//)
     }
     
-    // Test opening participant detail view
+    // Test detail view
     await userManagement.clickViewParticipantButton(firstRow)
     await userManagement.waitForDetailView()
     
     // Verify we're on the detail page
-    await expect(page).toHaveURL(new RegExp(`/admin/eventos/${eventId}/participantes/[\\w-]+$`))
+    await expect(page).toHaveURL(new RegExp(`/admin/eventos/${testEventIdDetail}/participantes/[\\w-]+$`))
     await expect(page.locator('h1')).toContainText(participantName.split(' ')[0])
     
-    // Test Google Contacts integration
-    const googleContactsVisible = await userManagement.googleContactsButton.isVisible()
+    // Edit a field in detail view
+    await userManagement.editDetailField('application_status', 'finalised')
     
+    // Save changes
+    await userManagement.saveDetailViewChanges()
+    
+    // Test Google Contacts integration if visible
+    const googleContactsVisible = await userManagement.googleContactsButton.isVisible()
     if (googleContactsVisible) {
       await userManagement.clickGoogleContactsButton()
       
@@ -160,5 +228,14 @@ test.describe('Admin User Management', () => {
       expect(openedUrl).toBeTruthy()
       expect(openedUrl).toContain('contacts.google.com')
     }
+    
+    // Navigate back to table
+    await userManagement.navigate(testEventIdDetail)
+    await userManagement.waitForTableToLoad()
+    
+    // Verify detail view change reflected in table
+    const updatedRow = await userManagement.findRowByParticipantName(participantName.split(' ')[0])
+    const statusUpdated = await userManagement.verifyCellContent(updatedRow, 'application_status', 'Finalizado')
+    expect(statusUpdated).toBe(true)
   })
 })
