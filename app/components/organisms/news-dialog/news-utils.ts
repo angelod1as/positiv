@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '7',
+    title: '🛠️ Correção na edição de participantes (Admin)',
+    content: 'Corrigimos um problema que impedia a edição de dados na tabela de participantes quando o participante tinha uma flag configurada. Agora você pode editar normalmente todos os campos.',
+    isAdmin: true,
+    createdAt: new Date('2025-08-04T12:00:00'), // August 4, 2025
+    isActive: true,
+  },
+  {
     id: '6',
     title: '📱 Adicione participantes aos seus Google Contacts!',
     content: 'Agora você pode adicionar participantes aos seus Google Contacts com um clique! O nome formatado é copiado automaticamente para você colar no Google Contacts.',
