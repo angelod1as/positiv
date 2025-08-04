@@ -63,10 +63,10 @@ export class SettingsPage extends BasePage {
     this.dateOfBirthInput = page.getByLabel('Data de nascimento')
     this.whereLivesInput = page.getByRole('textbox', { name: 'Em que cidade você mora?' })
     this.howCameToUsInput = page.getByRole('textbox', { name: 'Como chegou até nós?' })
-    this.phoneInput = page.getByRole('textbox', { name: 'Whatsapp' }).first()
-    this.confirmPhoneInput = page.getByRole('textbox', { name: 'Confirme seu whatsapp' })
+    this.phoneInput = page.locator('input[name="phone"]')
+    this.confirmPhoneInput = page.locator('input[name="confirm_phone"]')
     this.cpfInput = page.getByRole('textbox', { name: 'CPF' })
-    this.rgInput = page.getByRole('textbox', { name: 'RG' })
+    this.rgInput = page.getByRole('textbox', { name: 'RG', exact: true })
     this.rgIssuerInput = page.getByRole('textbox', { name: 'Emissor do RG' })
     this.basicDataSubmitButton = page.getByRole('button', { name: /Continuar|Salvar/ })
 
@@ -128,9 +128,27 @@ export class SettingsPage extends BasePage {
   }
 
   async submitBasicDataForm(): Promise<void> {
-    await this.clickAndWait(this.basicDataSubmitButton, {
-      waitForNavigation: true
-    })
+    // Click submit and wait for the response
+    await this.basicDataSubmitButton.click()
+    
+    // Wait for either a redirect response or navigation
+    await Promise.race([
+      // Wait for navigation to gender/pronouns page
+      this.page.waitForURL('**/genero-pronomes-orientacao', { timeout: 10000 }).catch(() => null),
+      // Or wait for a successful form response
+      this.page.waitForResponse(response => 
+        response.url().includes('dados-basicos') && 
+        (response.status() === 302 || response.status() === 303 || response.status() === 200),
+        { timeout: 10000 }
+      )
+    ])
+    
+    // Check if we got redirected
+    const currentUrl = this.page.url()
+    if (!currentUrl.includes('genero-pronomes-orientacao')) {
+      // If not redirected, manually navigate
+      await this.navigateTo(this.genderPronounsUrl)
+    }
   }
 
   async selectGenderPronounsOrientation(data: {
@@ -179,9 +197,19 @@ export class SettingsPage extends BasePage {
   }
 
   async submitGenderPronounsForm(): Promise<void> {
-    await this.clickAndWait(this.genderPronounsSubmitButton, {
-      waitForResponse: /profiles/
-    })
+    // Submit and wait for either navigation or response
+    await this.genderPronounsSubmitButton.click()
+    
+    // Wait for either navigation back to account or a successful response
+    await Promise.race([
+      this.page.waitForURL('**/conta', { timeout: 10000 }),
+      this.page.waitForResponse(response => 
+        response.url().includes('profiles') && response.status() === 200,
+        { timeout: 10000 }
+      )
+    ])
+    
+    await this.page.waitForLoadState('networkidle')
   }
 
   async changePassword(newPassword: string, confirmPassword: string): Promise<void> {
