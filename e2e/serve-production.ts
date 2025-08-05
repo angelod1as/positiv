@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process"
 import type { ChildProcess } from "node:child_process"
 import { existsSync, readdirSync, statSync } from "node:fs"
-import { join, resolve, isAbsolute, dirname } from "node:path"
+import { join, resolve, isAbsolute } from "node:path"
 
 const PORT = 5173
 
@@ -50,7 +50,6 @@ async function startProductionServer() {
   const standardBuildPath = join(serverDir, "index.js")
   
   let serverPath: string
-  let isVercelBuild = false
   
   if (existsSync(standardBuildPath)) {
     // Standard build
@@ -65,95 +64,48 @@ async function startProductionServer() {
     
     const vercelPath = join(serverDir, vercelDir, "index.js")
     serverPath = validateServerPath(vercelPath, serverDir)
-    isVercelBuild = true
   }
   
-  if (isVercelBuild) {
-    // For Vercel builds, use the wrapper script file
-    const wrapperScriptPath = join(dirname(new URL(import.meta.url).pathname), "vercel-server-wrapper.js")
+  // Use react-router-serve for both standard and Vercel builds
+  return new Promise<void>((resolve, reject) => {
+    serverProcess = spawn("pnpm", ["react-router-serve", serverPath], {
+      stdio: ["ignore", "pipe", "pipe"],
+      cwd: process.cwd(),
+      env: {
+        ...process.env,
+        PORT: String(PORT),
+        NODE_ENV: "production",
+      },
+      detached: false,
+      killSignal: "SIGTERM"
+    })
     
-    return new Promise<void>((resolve, reject) => {
-      serverProcess = spawn("node", [wrapperScriptPath], {
-        stdio: ["ignore", "pipe", "pipe"],
-        cwd: process.cwd(),
-        env: {
-          ...process.env,
-          NODE_ENV: "production",
-          PORT: String(PORT),
-          SERVER_PATH: serverPath, // Pass validated server path as environment variable
-        },
-        detached: false,
-        killSignal: "SIGTERM"
-      })
+    let serverStarted = false
+    
+    serverProcess.stdout?.on("data", (data) => {
+      const message = data.toString()
+      console.info(message.trim())
       
-      let serverStarted = false
-      
-      serverProcess.stdout?.on("data", (data) => {
-        const message = data.toString()
-        console.info(message.trim())
-        
-        if (!serverStarted && message.includes("Production server running")) {
-          serverStarted = true
-          resolve()
-        }
-      })
-      
-      serverProcess.stderr?.on("data", (data) => {
-        console.error(data.toString())
-      })
-      
-      serverProcess.on("error", (error) => {
-        reject(error)
-      })
-      
-      serverProcess.on("exit", (code) => {
-        if (code !== 0 && code !== null && !serverStarted) {
-          reject(new Error(`Server process exited with code ${code}`))
-        }
-      })
+      if (!serverStarted && message.includes(`localhost:${PORT}`)) {
+        serverStarted = true
+        resolve()
+      }
     })
-  } else {
-    // For standard builds, use react-router-serve
-    return new Promise<void>((resolve, reject) => {
-      serverProcess = spawn("pnpm", ["react-router-serve", serverPath], {
-        stdio: ["ignore", "pipe", "pipe"],
-        cwd: process.cwd(),
-        env: {
-          ...process.env,
-          PORT: String(PORT),
-          NODE_ENV: "production",
-        },
-        detached: false,
-        killSignal: "SIGTERM"
-      })
-      
-      let serverStarted = false
-      
-      serverProcess.stdout?.on("data", (data) => {
-        const message = data.toString()
-        console.info(message.trim())
-        
-        if (!serverStarted && message.includes(`localhost:${PORT}`)) {
-          serverStarted = true
-          resolve()
-        }
-      })
-      
-      serverProcess.stderr?.on("data", (data) => {
-        console.error(data.toString())
-      })
-      
-      serverProcess.on("error", (error) => {
-        reject(error)
-      })
-      
-      serverProcess.on("exit", (code) => {
-        if (code !== 0 && code !== null && !serverStarted) {
-          reject(new Error(`Server process exited with code ${code}`))
-        }
-      })
+    
+    serverProcess.stderr?.on("data", (data) => {
+      console.error(data.toString())
     })
-  }
+    
+    serverProcess.on("error", (error) => {
+      reject(error)
+    })
+    
+    serverProcess.on("exit", (code) => {
+      if (code !== 0 && code !== null && !serverStarted) {
+        reject(new Error(`Server process exited with code ${code}`))
+      }
+    })
+  })
 }
 
 function stopProductionServer(): Promise<void> {
