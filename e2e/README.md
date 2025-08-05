@@ -34,7 +34,7 @@ Our E2E tests prioritize **realistic user journeys** over isolated atomic tests.
 ## Directory Structure
 
 ```
-e2e-new/
+e2e/
 ├── tests/
 │   ├── unauthenticated/      # Tests that don't require login
 │   │   ├── complete-journey.spec.ts
@@ -122,25 +122,25 @@ test('login with invalid credentials shows error', async ({ page }) => {
 
 ```bash
 # Run all E2E tests
-pnpm test:e2e:new
+pnpm test:e2e
 
 # Run only unauthenticated tests
-pnpm test:e2e:new -- --project=chromium
+pnpm test:e2e -- --project=chromium
 
 # Run only user authenticated tests  
-pnpm test:e2e:new -- --project=chromium-authenticated-user
+pnpm test:e2e -- --project=chromium-authenticated-user
 
 # Run only admin tests
-pnpm test:e2e:new -- --project=chromium-authenticated-admin
+pnpm test:e2e -- --project=chromium-authenticated-admin
 
 # Run specific test file
-pnpm test:e2e:new -- complete-journey
+pnpm test:e2e -- complete-journey
 
 # Run in headed mode for debugging
-pnpm test:e2e:new -- --headed
+pnpm test:e2e -- --headed
 
 # Run with UI mode for interactive debugging
-pnpm test:e2e:new -- --ui
+pnpm test:e2e -- --ui
 ```
 
 ## Best Practices
@@ -163,7 +163,7 @@ pnpm test:e2e:new -- --ui
 3. **Leverage Auth State**: Use Playwright's storage state to avoid re-login
 
    ```typescript
-   test.use({ storageState: 'e2e-new/.auth/user.json' })
+   test.use({ storageState: 'e2e/.auth/user.json' })
    ```
 
 4. **Monitor Errors**: Track console errors throughout journeys
