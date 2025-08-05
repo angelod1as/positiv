@@ -45,16 +45,6 @@ export async function performUILogin(page: Page, email: string, password: string
     await expect(agreeCheckbox).toBeVisible({ timeout: 10000 })
     await agreeCheckbox.click()
     
-    // Check the marketing email checkbox (set to true for testing)
-    const marketingCheckbox = page.getByLabel('Aceito receber e-mails sobre a Positiv')
-    await expect(marketingCheckbox).toBeVisible()
-    await marketingCheckbox.check()
-    
-    // Check the system emails checkbox too
-    const systemEmailsCheckbox = page.getByLabel('Aceito receber e-mails gerais do sistema')
-    await expect(systemEmailsCheckbox).toBeVisible()
-    await systemEmailsCheckbox.check()
-    
     const continueButton = page.getByRole('button', { name: 'Continuar' })
     await expect(continueButton).toBeVisible()
     

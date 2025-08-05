@@ -74,4 +74,52 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     // Should see mismatch error
     await expect(page.locator('text=/não combinam/i')).toBeVisible()
   })
+
+  test('Marketing email preference can be toggled and persists', async ({ page }) => {
+    // Go to terms page
+    await page.goto('/conta/termos-e-condicoes')
+    await expect(page).toHaveURL('/conta/termos-e-condicoes')
+    
+    // Find the marketing email checkbox
+    const marketingCheckbox = page.getByLabel('Aceito receber e-mails sobre a Positiv')
+    await expect(marketingCheckbox).toBeVisible()
+    
+    // Get initial state
+    const initialState = await marketingCheckbox.isChecked()
+    
+    // Toggle it by clicking the label text (avoids label overlay issues)
+    await page.getByText('Aceito receber e-mails sobre a Positiv').click()
+    
+    // Verify it toggled
+    const afterToggle = await marketingCheckbox.isChecked()
+    expect(afterToggle).toBe(!initialState)
+    
+    // Save the form
+    await page.getByRole('button', { name: 'Continuar' }).click()
+    await page.waitForLoadState('networkidle')
+    
+    // Navigate away and come back
+    await page.goto('/conta')
+    await page.goto('/conta/termos-e-condicoes')
+    
+    // Verify the new state persisted
+    const newState = await marketingCheckbox.isChecked()
+    expect(newState).toBe(!initialState)
+    
+    // Toggle it back to original state by clicking the label text
+    await page.getByText('Aceito receber e-mails sobre a Positiv').click()
+    
+    // Verify it toggled back
+    const afterSecondToggle = await marketingCheckbox.isChecked()
+    expect(afterSecondToggle).toBe(initialState)
+    
+    // Save again
+    await page.getByRole('button', { name: 'Continuar' }).click()
+    await page.waitForLoadState('networkidle')
+    
+    // Verify one more time
+    await page.goto('/conta/termos-e-condicoes')
+    const finalState = await marketingCheckbox.isChecked()
+    expect(finalState).toBe(initialState)
+  })
 })
