@@ -2,10 +2,16 @@
  * Wrapper script for serving Vercel builds in production
  * This file is executed as a separate process to avoid dynamic code execution
  */
-const express = require('express');
-const { join, isAbsolute, resolve } = require('path');
-const compression = require('compression');
-const { existsSync, statSync } = require('fs');
+import express from 'express';
+import { join, isAbsolute, resolve } from 'path';
+import compression from 'compression';
+import { existsSync, statSync } from 'fs';
+import { createRequestHandler } from '@react-router/express';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const PORT = process.env.PORT || 5173;
 const SERVER_PATH = process.env.SERVER_PATH;
@@ -57,9 +63,8 @@ app.use(express.static(join(process.cwd(), 'build/client'), {
   }
 }));
 
-// Import the Vercel server build
-const serverBuild = require(serverPath);
-const { createRequestHandler } = require('@react-router/express');
+// Import the Vercel server build dynamically
+const serverBuild = await import(serverPath);
 
 // Create the request handler with the build
 const requestHandler = createRequestHandler({
