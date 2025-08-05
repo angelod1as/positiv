@@ -7,6 +7,7 @@ on:
     types:
       - opened
       - synchronize
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -86,9 +87,10 @@ jobs:
         run: pnpm install
       - name: Install Playwright Browsers
         run: pnpm exec playwright install chromium --with-deps
-      - name: Run Playwright tests
-        run: pnpm exec playwright test
+      - name: Run E2E tests
+        run: pnpm test:e2e
         env:
+          CI: true
           VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
@@ -101,4 +103,10 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-test-results
+          path: test-results/
           retention-days: 30

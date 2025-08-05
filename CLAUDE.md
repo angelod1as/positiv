@@ -193,7 +193,7 @@ pnpm email:test   # Start Mailhog for local email testing
 - Test files: Use `.integration.test.ts` extension
 - Configuration: `vitest.integration.config.ts` uses Node environment
 - Database: Tests run against local Supabase instance
-- Test utilities: 
+- Test utilities:
   - `TestDataTracker` for tracking created test data
   - `cleanupTestData` for cleaning up after tests
   - Helper functions for creating test entities
@@ -232,6 +232,7 @@ pnpm email:test   # Start Mailhog for local email testing
 #### Example Test Structure
 
 **Unit Test Example:**
+
 ```typescript
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -252,6 +253,7 @@ describe('Component', () => {
 ```
 
 **Integration Test Example:**
+
 ```typescript
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
@@ -346,3 +348,44 @@ When making changes to the application that affect users (new features, bug fixe
 ## PR Template
 
 There's a PR template. Follow it closely.
+
+## E2E Tests
+
+### Overview
+
+E2E tests run against a production build to ensure realistic testing conditions. The test suite is organized by authentication state and follows user journeys rather than isolated atomic tests.
+
+### Running Tests
+
+```bash
+pnpm test:e2e       # Run all E2E tests
+pnpm test:e2e:ui    # Run with Playwright UI for debugging
+
+# Run specific test suites
+pnpm test:e2e -- --project=chromium                    # Unauthenticated tests
+pnpm test:e2e -- --project=chromium-authenticated-user # User tests
+pnpm test:e2e -- --project=chromium-authenticated-admin # Admin tests
+```
+
+### Test Organization
+
+Tests are located in `/e2e/tests/` and organized as:
+- `auth/` - Authentication setup and flows
+- `unauthenticated/` - Tests that don't require login
+- `authenticated/` - Tests requiring authentication (user and admin)
+
+### Key Principles
+
+1. **Sequential Execution**: Tests run sequentially for reliability
+2. **User Journeys**: Tests follow realistic user flows rather than isolated actions
+3. **Page Object Model**: All pages extend `BasePage` with smart wait strategies
+4. **Production Build**: Tests run against `pnpm build` output, not dev server
+
+### Adding New Tests
+
+1. Determine the authentication context needed
+2. Place in appropriate directory
+3. Follow existing POM patterns in `/e2e/pages/`
+4. Use smart waits and proper error handling
+
+For detailed information, see the [E2E Readme](e2e/README.md)
