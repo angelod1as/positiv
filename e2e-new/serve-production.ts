@@ -193,7 +193,7 @@ function stopProductionServer(): Promise<void> {
     const killTimeout = setTimeout(() => {
       try {
         processToKill.kill("SIGKILL")
-      } catch (error) {
+      } catch (_error) {
         // Process might already be dead
       }
     }, 5000)
