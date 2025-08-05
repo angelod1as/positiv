@@ -304,9 +304,9 @@
     }
   },
   "reactRouterConfig": {
-    "appDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv/app",
+    "appDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv-worktrees/e2e-overhaul/app",
     "basename": "/",
-    "buildDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv/build",
+    "buildDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv-worktrees/e2e-overhaul/build",
     "future": {
       "unstable_middleware": false,
       "unstable_optimizeDeps": false,

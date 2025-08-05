@@ -116,17 +116,32 @@ To run Supabase locally, you'll need [Docker](https://www.docker.com/products/do
 
 ## Testing
 
-The project uses Playwright for end-to-end testing. Run tests with:
+The project uses various testing frameworks:
+
+### Unit and Integration Tests
 
 ```bash
-pnpm test
+pnpm test         # Run unit tests with Vitest
+pnpm test:integration  # Run integration tests (requires database)
+pnpm test:ui      # Run tests with Vitest UI
+pnpm test:coverage # Run tests with coverage report
 ```
 
-For interactive testing with UI:
+### E2E Tests
+
+The project uses Playwright for end-to-end testing against a production build:
 
 ```bash
-pnpm test:ui
+pnpm test:e2e     # Run all E2E tests
+pnpm test:e2e:ui  # Run E2E tests with interactive UI
 ```
+
+E2E tests are organized by authentication state:
+- Unauthenticated tests: Test public pages and authentication flows
+- Authenticated user tests: Test user dashboard and features
+- Authenticated admin tests: Test admin functionality
+
+Tests run sequentially for reliability and follow realistic user journeys.
 
 ## Email template development
 
