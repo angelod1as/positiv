@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '7',
+    title: '🧪 Melhorias no sistema de testes automatizados',
+    content: 'Implementamos um novo sistema de testes automatizados mais confiável e eficiente. Os testes agora simulam melhor o comportamento real dos usuários, garantindo uma experiência mais estável e menos bugs em produção.',
+    isAdmin: true,
+    createdAt: new Date('2025-08-05T14:00:00'), // August 5, 2025
+    isActive: true,
+  },
+  {
     id: '6',
     title: '📱 Adicione participantes aos seus Google Contacts!',
     content: 'Agora você pode adicionar participantes aos seus Google Contacts com um clique! O nome formatado é copiado automaticamente para você colar no Google Contacts.',
@@ -55,14 +63,6 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
     content: 'A migração dos dados de mailing foi concluída com sucesso! Todos os perfis e participantes foram atualizados. O sistema está agora totalmente operacional com os novos dados.',
     isAdmin: false,
     createdAt: new Date('2025-07-29T00:00:00'), // July 29, 2025
-    isActive: true,
-  },
-  {
-    id: '2',
-    title: '🚩 Sistema de flags para participantes (Admin)',
-    content: 'Agora é possível adicionar flags (amarela ou vermelha) aos participantes em cada evento específico, com notas explicativas. As flags aparecem nas tabelas de participantes com indicadores visuais e tooltips mostrando as notas ao passar o mouse.',
-    isAdmin: true,
-    createdAt: new Date('2025-07-26T00:00:00'), // July 26, 2025
     isActive: true,
   },
 ]
