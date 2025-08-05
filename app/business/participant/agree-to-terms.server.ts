@@ -7,8 +7,10 @@ export const agreeToTerms = applySchema(
 )(async (values, context) => {
   const { supabase, currentProfile, currentUser } = context
   
-  // If no user is authenticated, return early
-  if (!currentUser || !currentUser.email) return
+  // If no user is authenticated, throw an error for proper handling
+  if (!currentUser || !currentUser.email) {
+    throw new Error("Usuário não autenticado")
+  }
 
   // Build the upsert data
   const upsertData: {

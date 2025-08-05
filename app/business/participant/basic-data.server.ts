@@ -49,8 +49,9 @@ export const basicData = applySchema(
     user_id: currentUser.id,
     email: currentUser.email,
     ...(profileId ? { id: profileId } : {}),
-    // Preserve allow_marketing_email if it exists in the profile
-    ...(existingProfile?.allow_marketing_email !== undefined 
+    // Preserve allow_marketing_email only if it has a meaningful value (not null/undefined)
+    // This ensures we keep true/false values but don't preserve null
+    ...(existingProfile?.allow_marketing_email != null 
       ? { allow_marketing_email: existingProfile.allow_marketing_email }
       : {}),
   }
