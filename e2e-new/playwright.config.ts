@@ -8,10 +8,8 @@ dotenv.config({ path: path.resolve(import.meta.dirname, "..", ".env") })
 /**
  * See https://playwright.dev/docs/test-configuration.
  * 
- * Note: Currently using dev server for E2E tests. Production build testing
- * requires custom server setup due to Vercel preset in react-router.config.ts
- * which creates a different build structure than expected by react-router-serve.
- * This is still effective for testing app functionality.
+ * E2E tests now run against production build using a custom server
+ * that handles the Vercel preset build structure.
  */
 export default defineConfig({
   testDir: "./tests",
@@ -93,12 +91,4 @@ export default defineConfig({
       dependencies: ['setup'],
     },
   ],
-
-  /* Run dev server for testing - production build testing requires custom server setup */
-  webServer: {
-    command: "pnpm dev",
-    port: 5173,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120000, // 2 minutes to start
-  },
 })
