@@ -36,19 +36,45 @@ export class UserManagementPage extends BasePage {
     return row
   }
   
-  async getRowIndex(row: Locator): Promise<number> {
-    const rows = await this.tableRows.all()
-    const targetElement = await row.elementHandle()
-    
-    if (!targetElement) {
-      throw new Error('Could not get element handle for the target row')
+  async getRowIndex(row: Locator, retries: number = 3): Promise<number> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const rows = await this.tableRows.all()
+        const targetElement = await row.elementHandle()
+        
+        if (!targetElement) {
+          // This might be a timing issue, wait and retry
+          if (attempt < retries) {
+            await this.page.waitForTimeout(500 * attempt) // Progressive wait
+            continue
+          }
+          // After retries, provide more context about the failure
+          const rowText = await row.textContent().catch(() => 'unknown')
+          throw new Error(`Could not get element handle for row with text: ${rowText}. This may indicate the row is no longer in the DOM.`)
+        }
+        
+        for (let i = 0; i < rows.length; i++) {
+          const isMatch = await rows[i].evaluate((el, targetRow) => el === targetRow, targetElement)
+          if (isMatch) return i
+        }
+        
+        // If we reach here, the row wasn't found in the current attempt
+        if (attempt < retries) {
+          await this.page.waitForTimeout(500 * attempt)
+          continue
+        }
+      } catch (error) {
+        if (attempt === retries) {
+          throw error
+        }
+        await this.page.waitForTimeout(500 * attempt)
+      }
     }
     
-    for (let i = 0; i < rows.length; i++) {
-      const isMatch = await rows[i].evaluate((el, targetRow) => el === targetRow, targetElement)
-      if (isMatch) return i
-    }
-    throw new Error('Row not found in table')
+    // If all retries failed, provide detailed error
+    const rowText = await row.textContent().catch(() => 'unknown')
+    const rowCount = await this.tableRows.count()
+    throw new Error(`Row not found in table after ${retries} attempts. Row text: ${rowText}, Total rows: ${rowCount}`)
   }
   
   async editSelectCell(row: Locator, fieldName: string, value: string): Promise<void> {
