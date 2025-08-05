@@ -109,13 +109,22 @@ test.describe('Admin User Management', () => {
     await userManagement.editCheckboxCell(secondRow, 'has_paid', true)
     await page.waitForTimeout(1000)
     
-    // Test 3: Inline editing - Number cell (payment)
-    await userManagement.editNumberCell(secondRow, 'payment', '150')
-    await page.waitForTimeout(1000)
-    
-    // Test 4: Inline editing - Select cell (attendance_status)
+    // Test 3: Inline editing - Select cell (attendance_status)
     await userManagement.editSelectCell(secondRow, 'attendance_status', 'attended')
     await page.waitForTimeout(1000)
+    
+    // Test 4: Inline editing - Number cell (payment) on first row which already has has_paid=true
+    const firstRowPaymentCell = firstRow.locator(`td:has([name="payment"])`).first()
+    await firstRowPaymentCell.click()
+    
+    const firstRowPaymentInput = firstRowPaymentCell.locator('input[type="number"]').first()
+    await firstRowPaymentInput.waitFor({ state: 'visible' })
+    await firstRowPaymentInput.clear()
+    await firstRowPaymentInput.fill('150')
+    
+    // Click outside to save
+    await page.locator('h1').first().click()
+    await page.waitForTimeout(2000)
     
     // Test 5: Data persistence - Refresh page
     await page.reload()
@@ -129,10 +138,14 @@ test.describe('Admin User Management', () => {
     const firstStatusPersisted = await userManagement.verifyCellContent(refreshedFirstRow, 'application_status', 'Regras enviadas')
     expect(firstStatusPersisted).toBe(true)
     
-    // Verify second participant has payment value
-    const paymentInput = refreshedSecondRow.locator('input[name="payment"]').first()
-    const paymentValue = await paymentInput.inputValue()
+    // Verify first participant payment value was updated
+    const refreshedPaymentInput = refreshedFirstRow.locator('input[name="payment"]').first()
+    const paymentValue = await refreshedPaymentInput.inputValue()
     expect(paymentValue).toBe('150.00')
+    
+    // Verify second participant changes persisted
+    const secondStatusPersisted = await userManagement.verifyCellContent(refreshedSecondRow, 'attendance_status', 'Compareceu')
+    expect(secondStatusPersisted).toBe(true)
   })
   
   test('detail view and external integrations', async ({ page }) => {

@@ -85,8 +85,11 @@ export class UserManagementPage extends BasePage {
     await input.clear()
     await input.fill(value)
     
-    // Press Enter to save
-    await input.press('Enter')
+    // Press Tab to trigger save (more reliable than Enter for number inputs)
+    await input.press('Tab')
+    
+    // Wait for the auto-save to complete (useCellEditor has 500ms debounce + 500ms save delay)
+    await this.page.waitForTimeout(1500)
     await this.page.waitForLoadState('networkidle')
   }
   
