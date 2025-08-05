@@ -67,8 +67,25 @@ async function startProductionServer() {
       app.all('*', requestHandler);
       
       // Start server
-      app.listen(PORT, () => {
+      const server = app.listen(PORT, () => {
         console.info('Production server running at http://localhost:' + PORT);
+      });
+      
+      // Handle graceful shutdown
+      process.on('SIGTERM', () => {
+        console.info('SIGTERM received, closing server...');
+        server.close(() => {
+          console.info('Server closed');
+          process.exit(0);
+        });
+      });
+      
+      process.on('SIGINT', () => {
+        console.info('SIGINT received, closing server...');
+        server.close(() => {
+          console.info('Server closed');
+          process.exit(0);
+        });
       });
     `;
     
@@ -79,7 +96,9 @@ async function startProductionServer() {
         env: {
           ...process.env,
           NODE_ENV: "production",
-        }
+        },
+        detached: false,
+        killSignal: "SIGTERM"
       })
       
       let serverStarted = false
@@ -118,7 +137,9 @@ async function startProductionServer() {
           ...process.env,
           PORT: String(PORT),
           NODE_ENV: "production",
-        }
+        },
+        detached: false,
+        killSignal: "SIGTERM"
       })
       
       let serverStarted = false
@@ -157,19 +178,30 @@ function stopProductionServer(): Promise<void> {
       return
     }
     
-    serverProcess.on("exit", () => {
-      serverProcess = null
+    const processToKill = serverProcess
+    serverProcess = null
+    
+    // Set up exit handler
+    processToKill.on("exit", () => {
       resolve()
     })
     
-    serverProcess.kill("SIGTERM")
+    // Try graceful shutdown first
+    processToKill.kill("SIGTERM")
     
-    // Force kill after 5 seconds
-    setTimeout(() => {
-      if (serverProcess) {
-        serverProcess.kill("SIGKILL")
+    // Force kill after 5 seconds if still running
+    const killTimeout = setTimeout(() => {
+      try {
+        processToKill.kill("SIGKILL")
+      } catch (error) {
+        // Process might already be dead
       }
     }, 5000)
+    
+    // Clean up timeout if process exits
+    processToKill.once("exit", () => {
+      clearTimeout(killTimeout)
+    })
   })
 }
 
