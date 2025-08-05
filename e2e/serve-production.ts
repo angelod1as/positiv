@@ -54,7 +54,8 @@ async function startProductionServer() {
       }));
       
       // Import the Vercel server build
-      const serverBuild = require('${serverPath.replace(/\\/g, '\\\\')}');
+      // SERVER_PATH is passed as environment variable to avoid code injection
+      const serverBuild = require(process.env.SERVER_PATH);
       const { createRequestHandler } = require('@react-router/express');
       
       // Create the request handler with the build
@@ -96,6 +97,7 @@ async function startProductionServer() {
         env: {
           ...process.env,
           NODE_ENV: "production",
+          SERVER_PATH: serverPath, // Pass server path as environment variable
         },
         detached: false,
         killSignal: "SIGTERM"
