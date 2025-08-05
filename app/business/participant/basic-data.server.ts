@@ -44,7 +44,16 @@ export const basicData = applySchema(
   const existingProfile = orphanedProfile || currentProfile
   
   // Build base upsert data
-  const upsertData: any = {
+  interface ProfileUpsertData {
+    [key: string]: string | number | boolean | null | undefined | Date | string[]
+    id?: string
+    user_id: string
+    email: string
+    date_of_birth: string | null
+    allow_marketing_email?: boolean
+  }
+  
+  const upsertData: ProfileUpsertData = {
     ...data,
     date_of_birth: dateToString(data.date_of_birth),
     user_id: currentUser.id,
