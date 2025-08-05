@@ -23,7 +23,7 @@ node_modules/
 test-results/
 /playwright/.auth/*
 playwright/.auth/*
-e2e/.auth
+e2e/.auth/
 .vercel/
 validated-profiles.json
 scripts/temp/migration/output/
