@@ -304,9 +304,9 @@
     }
   },
   "reactRouterConfig": {
-    "appDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv-worktrees/e2e-overhaul/app",
+    "appDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv-worktrees/marketing-email-fix/app",
     "basename": "/",
-    "buildDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv-worktrees/e2e-overhaul/build",
+    "buildDirectory": "/Users/angelodias/Documents/GIT/private/positiv-project/positiv-worktrees/marketing-email-fix/build",
     "future": {
       "unstable_middleware": false,
       "unstable_optimizeDeps": false,
