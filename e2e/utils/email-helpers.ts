@@ -159,7 +159,7 @@ export function extractEmailBody(email: MailhogMessage): string {
   // Try to decode if it looks like base64
   if (body && /^[A-Za-z0-9+/=]+$/.test(body.trim())) {
     try {
-      return atob(body)
+      return Buffer.from(body, 'base64').toString('utf-8')
     } catch {
       // Not base64, return as is
       return body
