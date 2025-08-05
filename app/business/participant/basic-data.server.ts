@@ -41,12 +41,18 @@ export const basicData = applySchema(
 
   // Build upsert data with optional id
   const profileId = orphanedProfile?.id || currentProfile?.id
+  // Preserve allow_marketing_email from existing profile
+  const existingProfile = orphanedProfile || currentProfile
   const upsertData = {
     ...data,
     date_of_birth: dateToString(data.date_of_birth),
     user_id: currentUser.id,
     email: currentUser.email,
     ...(profileId ? { id: profileId } : {}),
+    // Preserve allow_marketing_email if it exists in the profile
+    ...(existingProfile?.allow_marketing_email !== undefined 
+      ? { allow_marketing_email: existingProfile.allow_marketing_email }
+      : {}),
   }
 
   const { error: upsertError } = await supabase.from("profiles").upsert(upsertData)
