@@ -2,6 +2,24 @@
 
 This guide explains our E2E testing philosophy and best practices for the Positiv project.
 
+## Production Build Testing
+
+**Important**: E2E tests run against a production build of the application, not the development server. This ensures we test what users actually experience and catch build-specific issues early.
+
+### How It Works
+
+1. **Build Phase**: The application is built using `pnpm build` before tests start
+2. **Server**: A custom production server (`serve-production.ts`) handles the Vercel-preset build
+3. **Port**: Tests run on the same port as development (5173) for consistency
+4. **Caching**: Build artifacts are cached locally for faster subsequent runs (disabled in CI)
+
+### CI Compatibility
+
+The setup automatically detects CI environments (`process.env.CI`) and:
+- Forces a fresh build on every run
+- Disables build caching
+- Ensures all environment variables are available
+
 ## Testing Philosophy
 
 Our E2E tests prioritize **realistic user journeys** over isolated atomic tests. We compose tests that flow naturally from one state to another, reducing test execution time while maintaining reliability.
