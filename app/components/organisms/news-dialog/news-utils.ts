@@ -26,11 +26,19 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
-    id: '7',
+    id: '8',
     title: '🧪 Melhorias no sistema de testes automatizados',
     content: 'Implementamos um novo sistema de testes automatizados mais confiável e eficiente. Os testes agora simulam melhor o comportamento real dos usuários, garantindo uma experiência mais estável e menos bugs em produção.',
     isAdmin: true,
     createdAt: new Date('2025-08-05T14:00:00'), // August 5, 2025
+    isActive: true,
+  },
+  {
+    id: '7',
+    title: '🛠️ Correção na edição de participantes (Admin)',
+    content: 'Corrigimos um problema que impedia a edição de dados na tabela de participantes quando o participante tinha uma flag configurada. Agora você pode editar normalmente todos os campos.',
+    isAdmin: true,
+    createdAt: new Date('2025-08-04T12:00:00'), // August 4, 2025
     isActive: true,
   },
   {
