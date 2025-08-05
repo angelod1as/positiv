@@ -109,16 +109,20 @@ export class MyApplicationsPage extends BasePage {
     return 'not-found'
   }
 
-  async waitForApplicationStatusChange(eventTitle: string, expectedStatus: 'applied' | 'not-applied'): Promise<void> {
+  async waitForApplicationStatusChange(eventTitle: string, expectedStatus: 'applied' | 'not-applied', timeout: number = 30000): Promise<void> {
     const eventCard = await this.findEventByTitle(eventTitle)
     if (!eventCard) {
       throw new Error(`Event "${eventTitle}" not found`)
     }
     
-    if (expectedStatus === 'applied') {
-      await eventCard.getByRole('button', { name: 'Cancelar inscrição' }).waitFor({ state: 'visible' })
-    } else {
-      await eventCard.getByRole('link', { name: 'Fazer inscrição' }).waitFor({ state: 'visible' })
+    try {
+      if (expectedStatus === 'applied') {
+        await eventCard.getByRole('button', { name: 'Cancelar inscrição' }).waitFor({ state: 'visible', timeout })
+      } else {
+        await eventCard.getByRole('link', { name: 'Fazer inscrição' }).waitFor({ state: 'visible', timeout })
+      }
+    } catch (_error) {
+      throw new Error(`Timeout waiting for "${eventTitle}" to change to "${expectedStatus}" status after ${timeout}ms`)
     }
   }
 }

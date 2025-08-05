@@ -31,23 +31,28 @@ function getLatestModificationTime(dir: string): number {
   let latestTime = 0
   
   function checkDirectory(path: string) {
-    const stats = statSync(path)
-    
-    if (stats.isDirectory()) {
-      // Skip node_modules and build directories
-      if (path.includes("node_modules") || path.includes("build")) {
-        return
-      }
+    try {
+      const stats = statSync(path)
       
-      const files = readdirSync(path)
-      for (const file of files) {
-        checkDirectory(join(path, file))
+      if (stats.isDirectory()) {
+        // Skip node_modules and build directories
+        if (path.includes("node_modules") || path.includes("build")) {
+          return
+        }
+        
+        const files = readdirSync(path)
+        for (const file of files) {
+          checkDirectory(join(path, file))
+        }
+      } else if (stats.isFile()) {
+        // Only check source files
+        if (path.match(/\.(ts|tsx|js|jsx|css|json)$/)) {
+          latestTime = Math.max(latestTime, stats.mtime.getTime())
+        }
       }
-    } else if (stats.isFile()) {
-      // Only check source files
-      if (path.match(/\.(ts|tsx|js|jsx|css|json)$/)) {
-        latestTime = Math.max(latestTime, stats.mtime.getTime())
-      }
+    } catch (error) {
+      // Skip files/directories that can't be accessed (permissions, broken symlinks, etc.)
+      console.warn(`Skipping ${path}: ${error}`)
     }
   }
   

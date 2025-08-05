@@ -167,7 +167,10 @@ export class SettingsPage extends BasePage {
       }
     }
     if (data.genderOther) {
-      await this.page.getByRole('checkbox', { name: 'Outro' }).first().check()
+      // Use semantic selector to find the "Outro" checkbox in the gender section
+      const genderSection = this.page.getByRole('group').filter({ hasText: 'Gênero' })
+      const genderOtherCheckbox = genderSection.getByRole('checkbox', { name: 'Outro' })
+      await genderOtherCheckbox.check()
       await this.fillAndVerify(this.genderOtherInput, data.genderOther)
     }
 
@@ -179,7 +182,10 @@ export class SettingsPage extends BasePage {
       }
     }
     if (data.orientationOther) {
-      await this.page.getByRole('checkbox', { name: 'Outro' }).nth(1).check()
+      // Use semantic selector to find the "Outro" checkbox in the orientation section
+      const orientationSection = this.page.getByRole('group').filter({ hasText: 'Orientação' })
+      const orientationOtherCheckbox = orientationSection.getByRole('checkbox', { name: 'Outro' })
+      await orientationOtherCheckbox.check()
       await this.fillAndVerify(this.orientationOtherInput, data.orientationOther)
     }
 
@@ -191,7 +197,10 @@ export class SettingsPage extends BasePage {
       }
     }
     if (data.pronounsOther) {
-      await this.page.getByRole('checkbox', { name: 'Outro' }).nth(2).check()
+      // Use semantic selector to find the "Outro" checkbox in the pronouns section
+      const pronounsSection = this.page.getByRole('group').filter({ hasText: 'Pronomes' })
+      const pronounsOtherCheckbox = pronounsSection.getByRole('checkbox', { name: 'Outro' })
+      await pronounsOtherCheckbox.check()
       await this.fillAndVerify(this.pronounsOtherInput, data.pronounsOther)
     }
   }

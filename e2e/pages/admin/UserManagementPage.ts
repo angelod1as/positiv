@@ -114,9 +114,13 @@ export class UserManagementPage extends BasePage {
     // Press Tab to trigger save (more reliable than Enter for number inputs)
     await input.press('Tab')
     
-    // Wait for the auto-save to complete (useCellEditor has 500ms debounce + 500ms save delay)
-    await this.page.waitForTimeout(1500)
-    await this.page.waitForLoadState('networkidle')
+    // Wait for the auto-save to complete by waiting for network idle with timeout
+    try {
+      await this.page.waitForLoadState('networkidle', { timeout: 3000 })
+    } catch {
+      // Fallback: wait for any pending save requests
+      await this.page.waitForTimeout(1500)
+    }
   }
   
   async verifyCellContent(row: Locator, fieldName: string, expectedValue: string): Promise<boolean> {
