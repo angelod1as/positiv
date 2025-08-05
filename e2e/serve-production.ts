@@ -82,12 +82,23 @@ async function startProductionServer() {
     
     let serverStarted = false
     
+    // Add timeout to prevent hanging if server fails to start
+    const startupTimeout = setTimeout(() => {
+      if (!serverStarted) {
+        if (serverProcess) {
+          serverProcess.kill("SIGTERM")
+        }
+        reject(new Error(`Server failed to start within 30 seconds`))
+      }
+    }, 30000)
+    
     serverProcess.stdout?.on("data", (data) => {
       const message = data.toString()
       console.info(message.trim())
       
       if (!serverStarted && message.includes(`localhost:${PORT}`)) {
         serverStarted = true
+        clearTimeout(startupTimeout)
         resolve()
       }
     })
@@ -97,10 +108,12 @@ async function startProductionServer() {
     })
     
     serverProcess.on("error", (error) => {
+      clearTimeout(startupTimeout)
       reject(error)
     })
     
     serverProcess.on("exit", (code) => {
+      clearTimeout(startupTimeout)
       if (code !== 0 && code !== null && !serverStarted) {
         reject(new Error(`Server process exited with code ${code}`))
       }
