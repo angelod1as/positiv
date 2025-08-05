@@ -38,8 +38,14 @@ export class UserManagementPage extends BasePage {
   
   async getRowIndex(row: Locator): Promise<number> {
     const rows = await this.tableRows.all()
+    const targetElement = await row.elementHandle()
+    
+    if (!targetElement) {
+      throw new Error('Could not get element handle for the target row')
+    }
+    
     for (let i = 0; i < rows.length; i++) {
-      const isMatch = await rows[i].evaluate((el, targetRow) => el === targetRow, await row.elementHandle())
+      const isMatch = await rows[i].evaluate((el, targetRow) => el === targetRow, targetElement)
       if (isMatch) return i
     }
     throw new Error('Row not found in table')
