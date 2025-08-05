@@ -161,7 +161,7 @@ export function Layout(props: { children: ReactNode }) {
         {props.children}
         <ScrollRestoration />
         <Scripts />
-        <SpeedInsights />
+        {process.env.VERCEL && <SpeedInsights />}
       </body>
     </html>
   )
