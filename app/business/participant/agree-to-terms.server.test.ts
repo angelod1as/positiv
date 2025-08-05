@@ -85,7 +85,7 @@ describe("agreeToTerms", () => {
     })
   })
 
-  it("should handle the case when user is not authenticated", async () => {
+  it("should return error when user is not authenticated", async () => {
     const context = createContext({
       currentUser: null,
       currentProfile: null,
@@ -99,8 +99,11 @@ describe("agreeToTerms", () => {
 
     const result = await agreeToTerms(values, context)
 
-    // composable-functions returns a Result object
+    // composable-functions catches the error and returns it in the result
     expect(result).toBeDefined()
+    if ('errors' in result && result.errors) {
+      expect(result.errors[0].message).toBe("Usuário não autenticado")
+    }
     expect(mockFrom).not.toHaveBeenCalled()
   })
 
