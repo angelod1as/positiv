@@ -48,10 +48,9 @@ export async function performUILogin(page: Page, email: string, password: string
     const continueButton = page.getByRole('button', { name: 'Continuar' })
     await expect(continueButton).toBeVisible()
     
-    await Promise.all([
-      page.waitForNavigation({ url: /dados-basicos$/, waitUntil: 'networkidle' }),
-      continueButton.click()
-    ])
+    // Click and wait for navigation in a single action
+    await continueButton.click()
+    await page.waitForURL(/dados-basicos$/, { waitUntil: 'networkidle' })
     
     // Fill basic data form - page 1
     await expect(page).toHaveURL(/dados-basicos$/)
@@ -69,10 +68,8 @@ export async function performUILogin(page: Page, email: string, password: string
     await page.getByRole('textbox', { name: 'Em que cidade você mora?' }).fill(TEST_USER_PROFILE_DATA.where_lives)
     
     const continueBtn = page.getByRole('button', { name: 'Continuar' })
-    await Promise.all([
-      page.waitForNavigation({ url: /dados-basicos-cont$/, waitUntil: 'networkidle' }),
-      continueBtn.click()
-    ])
+    await continueBtn.click()
+    await page.waitForURL(/dados-basicos-cont$/, { waitUntil: 'networkidle' })
     
     // Fill basic data form - page 2 (gender/pronouns/orientation)
     await expect(page).toHaveURL(/dados-basicos-cont$/)
