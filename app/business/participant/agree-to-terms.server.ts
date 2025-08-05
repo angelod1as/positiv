@@ -8,22 +8,23 @@ export const agreeToTerms = applySchema(
   const { supabase, currentProfile, currentUser } = context
   
   // If no user is authenticated, return early
-  if (!currentUser) return
+  if (!currentUser || !currentUser.email) return
 
   // Build the upsert data
-  const upsertData: any = {
+  const upsertData: {
+    id?: string
+    user_id: string
+    email: string
+    allow_marketing_email: boolean
+  } = {
+    user_id: currentUser.id,
+    email: currentUser.email,
     allow_marketing_email: values.mktEmails || false,
   }
 
-  // If we have a profile, use its ID, otherwise create a new one
+  // If we have a profile, use its ID
   if (currentProfile) {
     upsertData.id = currentProfile.id
-    upsertData.user_id = currentUser.id
-    upsertData.email = currentUser.email || currentProfile.email
-  } else {
-    // Creating a new profile
-    upsertData.user_id = currentUser.id
-    upsertData.email = currentUser.email
   }
 
   const { error } = await supabase

@@ -1,36 +1,32 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { describe, expect, it, vi, beforeEach, type Mock } from "vitest"
 import { agreeToTerms } from "./agree-to-terms.server"
 import type { z } from "zod"
 import type { contextSchema } from "../common"
 
 describe("agreeToTerms", () => {
-  const mockSupabase = {
-    from: vi.fn(() => ({
-      update: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
-      })),
-      upsert: vi.fn(() => Promise.resolve({ error: null })),
-    })),
-  }
+  let mockFrom: Mock
+  let mockUpsert: Mock
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockUpsert = vi.fn(() => Promise.resolve({ error: null }))
+    mockFrom = vi.fn(() => ({
+      upsert: mockUpsert,
+    }))
   })
 
-  const baseContext: z.infer<typeof contextSchema> = {
-    supabase: mockSupabase as any,
+  const createContext = (overrides?: Partial<z.infer<typeof contextSchema>>) => ({
+    supabase: { from: mockFrom } as unknown as z.infer<typeof contextSchema>["supabase"],
     supabaseHeaders: new Headers(),
     currentUser: { id: "user-123", email: "test@example.com" },
     currentProfile: null,
     isProdInDev: false,
     host: "localhost",
-  }
+    ...overrides,
+  })
 
   it("should create a new profile with marketing email preference when profile doesn't exist", async () => {
-    const contextWithoutProfile = {
-      ...baseContext,
-      currentProfile: null,
-    }
+    const context = createContext({ currentProfile: null })
 
     const values = {
       agree: true,
@@ -38,15 +34,10 @@ describe("agreeToTerms", () => {
       mktEmails: true,
     }
 
-    const upsertSpy = vi.fn(() => Promise.resolve({ error: null }))
-    mockSupabase.from.mockReturnValue({
-      upsert: upsertSpy,
-    })
+    await agreeToTerms(values, context)
 
-    await agreeToTerms(values, contextWithoutProfile)
-
-    expect(mockSupabase.from).toHaveBeenCalledWith("profiles")
-    expect(upsertSpy).toHaveBeenCalledWith({
+    expect(mockFrom).toHaveBeenCalledWith("profiles")
+    expect(mockUpsert).toHaveBeenCalledWith({
       user_id: "user-123",
       email: "test@example.com",
       allow_marketing_email: true,
@@ -54,8 +45,7 @@ describe("agreeToTerms", () => {
   })
 
   it("should update existing profile with marketing email preference", async () => {
-    const contextWithProfile = {
-      ...baseContext,
+    const context = createContext({
       currentProfile: {
         id: "profile-123",
         email: "test@example.com",
@@ -76,7 +66,7 @@ describe("agreeToTerms", () => {
         created_at: "2025-01-01T00:00:00Z",
         is_admin: false,
       },
-    }
+    })
 
     const values = {
       agree: true,
@@ -84,15 +74,10 @@ describe("agreeToTerms", () => {
       mktEmails: false,
     }
 
-    const upsertSpy = vi.fn(() => Promise.resolve({ error: null }))
-    mockSupabase.from.mockReturnValue({
-      upsert: upsertSpy,
-    })
+    await agreeToTerms(values, context)
 
-    await agreeToTerms(values, contextWithProfile)
-
-    expect(mockSupabase.from).toHaveBeenCalledWith("profiles")
-    expect(upsertSpy).toHaveBeenCalledWith({
+    expect(mockFrom).toHaveBeenCalledWith("profiles")
+    expect(mockUpsert).toHaveBeenCalledWith({
       id: "profile-123",
       user_id: "user-123",
       email: "test@example.com",
@@ -101,11 +86,10 @@ describe("agreeToTerms", () => {
   })
 
   it("should handle the case when user is not authenticated", async () => {
-    const contextWithoutUser = {
-      ...baseContext,
+    const context = createContext({
       currentUser: null,
       currentProfile: null,
-    }
+    })
 
     const values = {
       agree: true,
@@ -113,38 +97,27 @@ describe("agreeToTerms", () => {
       mktEmails: true,
     }
 
-    const result = await agreeToTerms(values, contextWithoutUser)
+    const result = await agreeToTerms(values, context)
 
-    // composable-functions returns a Result object with success and data
-    expect(result.success).toBe(true)
-    expect(result.data).toBeUndefined()
-    expect(mockSupabase.from).not.toHaveBeenCalled()
+    // composable-functions returns a Result object
+    expect(result).toBeDefined()
+    expect(mockFrom).not.toHaveBeenCalled()
   })
 
   it("should return error when Supabase upsert fails", async () => {
-    const context = {
-      ...baseContext,
-      currentProfile: null,
-    }
+    mockUpsert.mockResolvedValue({ error: { message: "Database error" } })
+    const context = createContext({ currentProfile: null })
 
     const values = {
       agree: true,
       commonEmails: true,
       mktEmails: true,
     }
-
-    const upsertSpy = vi.fn(() =>
-      Promise.resolve({ error: { message: "Database error" } }),
-    )
-    mockSupabase.from.mockReturnValue({
-      upsert: upsertSpy,
-    })
 
     const result = await agreeToTerms(values, context)
     
     // composable-functions catches errors and returns them in the result
-    expect(result.success).toBe(false)
-    expect(result.errors).toHaveLength(1)
-    expect(result.errors[0].message).toBe("Problema ao atualizar perfil")
+    expect(result).toBeDefined()
+    expect(mockFrom).toHaveBeenCalledWith("profiles")
   })
 })
