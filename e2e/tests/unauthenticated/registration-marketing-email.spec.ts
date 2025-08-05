@@ -15,10 +15,8 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     await page.getByLabel('Senha', { exact: true }).fill(password)
     await page.getByLabel('Confirme a senha').fill(password)
     
-    // Check the over 18 checkbox (wait for it to be ready)
-    const over18Checkbox = page.getByLabel('Sou maior de 18 anos')
-    await over18Checkbox.waitFor({ state: 'visible' })
-    await over18Checkbox.check()
+    // Click the label text to check the over 18 checkbox (avoids label overlay issues)
+    await page.getByText('Sou maior de 18 anos').click()
     
     // Submit registration - button text is "Continuar" (Continue)
     await page.getByRole('button', { name: /continuar/i }).click()
@@ -95,10 +93,8 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     await page.getByLabel('Senha', { exact: true }).fill(password)
     await page.getByLabel('Confirme a senha').fill(password)
     
-    // Check the over 18 checkbox (wait for it to be ready)
-    const over18Checkbox = page.getByLabel('Sou maior de 18 anos')
-    await over18Checkbox.waitFor({ state: 'visible' })
-    await over18Checkbox.check()
+    // Click the label text to check the over 18 checkbox (avoids label overlay issues)
+    await page.getByText('Sou maior de 18 anos').click()
     
     // Submit registration - button text is "Continuar" (Continue)
     await page.getByRole('button', { name: /continuar/i }).click()
