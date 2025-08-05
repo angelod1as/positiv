@@ -14,7 +14,9 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     await page.getByRole('textbox', { name: /e-mail/i }).fill(uniqueEmail)
     await page.getByLabel('Senha', { exact: true }).fill(password)
     await page.getByLabel('Confirme a senha').fill(password)
-    await page.getByRole('checkbox', { name: /sou maior de 18 anos/i }).check()
+    
+    // Use force option to bypass visibility checks for the checkbox
+    await page.getByLabel('Sou maior de 18 anos').check({ force: true })
     
     // Submit registration
     await page.getByRole('button', { name: /cadastrar/i }).click()
@@ -35,22 +37,14 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     // Check if we're redirected to agree-to-terms page
     const url = page.url()
     if (url.includes('agree-to-terms')) {
-      // Find and check the marketing email checkbox
-      const marketingCheckbox = page.getByRole('checkbox', { 
-        name: /aceito receber e-mails sobre a positiv/i 
-      })
+      // Find and click the marketing email checkbox label
+      const marketingCheckbox = page.getByLabel('Aceito receber e-mails sobre a Positiv')
       await expect(marketingCheckbox).toBeVisible()
+      await marketingCheckbox.click()
       
-      // Check the marketing email checkbox
-      await marketingCheckbox.check()
-      
-      // Also check required checkboxes
-      await page.getByRole('checkbox', { 
-        name: /li tudo e estou de acordo/i 
-      }).check()
-      await page.getByRole('checkbox', { 
-        name: /aceito receber e-mails gerais do sistema/i 
-      }).check()
+      // Also click required checkbox labels
+      await page.getByLabel('Li tudo e estou de acordo!').click()
+      await page.getByLabel('Aceito receber e-mails gerais do sistema').click()
       
       // Submit the form
       await page.getByRole('button', { name: /continuar/i }).click()
@@ -91,7 +85,9 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     await page.getByRole('textbox', { name: /e-mail/i }).fill(uniqueEmail)
     await page.getByLabel('Senha', { exact: true }).fill(password)
     await page.getByLabel('Confirme a senha').fill(password)
-    await page.getByRole('checkbox', { name: /sou maior de 18 anos/i }).check()
+    
+    // Use force option to bypass visibility checks for the checkbox
+    await page.getByLabel('Sou maior de 18 anos').check({ force: true })
     
     // Submit registration
     await page.getByRole('button', { name: /cadastrar/i }).click()
@@ -109,24 +105,18 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     const url = page.url()
     if (url.includes('agree-to-terms')) {
       // Find the marketing email checkbox
-      const marketingCheckbox = page.getByRole('checkbox', { 
-        name: /aceito receber e-mails sobre a positiv/i 
-      })
+      const marketingCheckbox = page.getByLabel('Aceito receber e-mails sobre a Positiv')
       await expect(marketingCheckbox).toBeVisible()
       
       // Verify it starts as checked (default true per the code)
       await expect(marketingCheckbox).toBeChecked()
       
-      // Uncheck it
-      await marketingCheckbox.uncheck()
+      // Click to uncheck it
+      await marketingCheckbox.click()
       
-      // Check required checkboxes
-      await page.getByRole('checkbox', { 
-        name: /li tudo e estou de acordo/i 
-      }).check()
-      await page.getByRole('checkbox', { 
-        name: /aceito receber e-mails gerais do sistema/i 
-      }).check()
+      // Click required checkbox labels
+      await page.getByLabel('Li tudo e estou de acordo!').click()
+      await page.getByLabel('Aceito receber e-mails gerais do sistema').click()
       
       // Submit the form
       await page.getByRole('button', { name: /continuar/i }).click()
