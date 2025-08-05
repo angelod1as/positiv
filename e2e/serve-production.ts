@@ -1,11 +1,48 @@
 import { spawn } from "node:child_process"
 import type { ChildProcess } from "node:child_process"
-import { existsSync, readdirSync } from "node:fs"
-import { join } from "node:path"
+import { existsSync, readdirSync, statSync } from "node:fs"
+import { join, resolve, isAbsolute, dirname } from "node:path"
 
 const PORT = 5173
 
 let serverProcess: ChildProcess | null = null
+
+/**
+ * Validates that a path is safe to use and points to a legitimate file
+ * @param filePath The path to validate
+ * @param expectedDir The directory the file should be within
+ * @returns The validated absolute path
+ * @throws Error if path is invalid or unsafe
+ */
+function validateServerPath(filePath: string, expectedDir: string): string {
+  // Ensure the path is absolute
+  const absolutePath = isAbsolute(filePath) ? filePath : resolve(filePath)
+  
+  // Ensure the path exists and is a file
+  if (!existsSync(absolutePath)) {
+    throw new Error(`Server path does not exist: ${absolutePath}`)
+  }
+  
+  const stats = statSync(absolutePath)
+  if (!stats.isFile()) {
+    throw new Error(`Server path is not a file: ${absolutePath}`)
+  }
+  
+  // Ensure the file is within the expected directory (prevent directory traversal)
+  const normalizedPath = resolve(absolutePath)
+  const normalizedExpectedDir = resolve(expectedDir)
+  
+  if (!normalizedPath.startsWith(normalizedExpectedDir)) {
+    throw new Error(`Server path is outside expected directory: ${absolutePath}`)
+  }
+  
+  // Check file extension
+  if (!normalizedPath.endsWith('.js')) {
+    throw new Error(`Server path must be a JavaScript file: ${absolutePath}`)
+  }
+  
+  return normalizedPath
+}
 
 async function startProductionServer() {
   // Check if we have a standard build or Vercel build
@@ -17,7 +54,7 @@ async function startProductionServer() {
   
   if (existsSync(standardBuildPath)) {
     // Standard build
-    serverPath = standardBuildPath
+    serverPath = validateServerPath(standardBuildPath, serverDir)
   } else {
     // Vercel build - look for the encoded directory
     const vercelDir = readdirSync(serverDir).find(dir => dir.startsWith("nodejs_"))
@@ -26,78 +63,24 @@ async function startProductionServer() {
       throw new Error("Could not find server build output")
     }
     
-    serverPath = join(serverDir, vercelDir, "index.js")
+    const vercelPath = join(serverDir, vercelDir, "index.js")
+    serverPath = validateServerPath(vercelPath, serverDir)
     isVercelBuild = true
   }
   
   if (isVercelBuild) {
-    // For Vercel builds, use a custom Express server
-    const wrapperScript = `
-      const express = require('express');
-      const { join } = require('path');
-      const compression = require('compression');
-      
-      const app = express();
-      const PORT = ${PORT};
-      
-      // Enable compression
-      app.use(compression());
-      
-      // Serve static files
-      app.use(express.static(join(process.cwd(), 'build/client'), {
-        maxAge: '1h',
-        setHeaders: (res, path) => {
-          if (path.endsWith('.js')) {
-            res.setHeader('Content-Type', 'application/javascript');
-          }
-        }
-      }));
-      
-      // Import the Vercel server build
-      // SERVER_PATH is passed as environment variable to avoid code injection
-      const serverBuild = require(process.env.SERVER_PATH);
-      const { createRequestHandler } = require('@react-router/express');
-      
-      // Create the request handler with the build
-      const requestHandler = createRequestHandler({
-        build: serverBuild,
-        mode: process.env.NODE_ENV || 'production'
-      });
-      
-      // Handle all other requests with React Router
-      app.all('*', requestHandler);
-      
-      // Start server
-      const server = app.listen(PORT, () => {
-        console.info('Production server running at http://localhost:' + PORT);
-      });
-      
-      // Handle graceful shutdown
-      process.on('SIGTERM', () => {
-        console.info('SIGTERM received, closing server...');
-        server.close(() => {
-          console.info('Server closed');
-          process.exit(0);
-        });
-      });
-      
-      process.on('SIGINT', () => {
-        console.info('SIGINT received, closing server...');
-        server.close(() => {
-          console.info('Server closed');
-          process.exit(0);
-        });
-      });
-    `;
+    // For Vercel builds, use the wrapper script file
+    const wrapperScriptPath = join(dirname(new URL(import.meta.url).pathname), "vercel-server-wrapper.js")
     
     return new Promise<void>((resolve, reject) => {
-      serverProcess = spawn("node", ["-e", wrapperScript], {
+      serverProcess = spawn("node", [wrapperScriptPath], {
         stdio: ["ignore", "pipe", "pipe"],
         cwd: process.cwd(),
         env: {
           ...process.env,
           NODE_ENV: "production",
-          SERVER_PATH: serverPath, // Pass server path as environment variable
+          PORT: String(PORT),
+          SERVER_PATH: serverPath, // Pass validated server path as environment variable
         },
         detached: false,
         killSignal: "SIGTERM"
