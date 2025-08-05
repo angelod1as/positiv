@@ -18,8 +18,8 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     // Use force option to bypass visibility checks for the checkbox
     await page.getByLabel('Sou maior de 18 anos').check({ force: true })
     
-    // Submit registration
-    await page.getByRole('button', { name: /cadastrar/i }).click()
+    // Submit registration - button text is "Continuar" (Continue)
+    await page.getByRole('button', { name: /continuar/i }).click()
     
     // Wait for redirect to home or confirmation page
     await page.waitForURL('/', { timeout: 10000 })
@@ -32,7 +32,7 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     await page.goto('/entrar')
     await page.getByRole('textbox', { name: /e-mail/i }).fill(uniqueEmail)
     await page.getByLabel('Senha', { exact: true }).fill(password)
-    await page.getByRole('button', { name: /entrar/i }).click()
+    await page.getByRole('button', { name: 'Entrar' }).click()
     
     // Check if we're redirected to agree-to-terms page
     const url = page.url()
@@ -89,8 +89,8 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     // Use force option to bypass visibility checks for the checkbox
     await page.getByLabel('Sou maior de 18 anos').check({ force: true })
     
-    // Submit registration
-    await page.getByRole('button', { name: /cadastrar/i }).click()
+    // Submit registration - button text is "Continuar" (Continue)
+    await page.getByRole('button', { name: /continuar/i }).click()
     
     // Wait for redirect
     await page.waitForURL('/', { timeout: 10000 })
@@ -99,7 +99,7 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     await page.goto('/entrar')
     await page.getByRole('textbox', { name: /e-mail/i }).fill(uniqueEmail)
     await page.getByLabel('Senha', { exact: true }).fill(password)
-    await page.getByRole('button', { name: /entrar/i }).click()
+    await page.getByRole('button', { name: 'Entrar' }).click()
     
     // Check if we're redirected to agree-to-terms page
     const url = page.url()
