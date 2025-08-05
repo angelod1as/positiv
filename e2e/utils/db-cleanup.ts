@@ -49,6 +49,12 @@ export async function getTestUserIds(): Promise<string[]> {
   return profiles?.map(p => p.id) || []
 }
 
+/**
+ * Cleans up event participations for a user
+ * @param userId - The user ID to clean up participations for
+ * @param throwOnError - If true, throws on error. If false, logs warning and continues.
+ *                       Use true for critical operations (setup), false for best-effort cleanup.
+ */
 export async function cleanupEventParticipations(userId: string, throwOnError: boolean = false): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
@@ -69,6 +75,12 @@ export async function cleanupEventParticipations(userId: string, throwOnError: b
   }
 }
 
+/**
+ * Cleans up event reminders for a user
+ * @param userId - The user ID to clean up reminders for
+ * @param throwOnError - If true, throws on error. If false, logs warning and continues.
+ *                       Use true for critical operations (setup), false for best-effort cleanup.
+ */
 export async function cleanupEventReminders(userId: string, throwOnError: boolean = false): Promise<void> {
   const supabase = createSupabaseAdminClient()
   

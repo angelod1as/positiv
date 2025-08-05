@@ -39,6 +39,13 @@ export class UserManagementPage extends BasePage {
   async getRowIndex(row: Locator, retries: number = 3): Promise<number> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
+        // Wait for the row to be attached to DOM before proceeding
+        await row.waitFor({ state: 'attached', timeout: 5000 }).catch(() => {
+          // If row is not attached, it might have been removed from DOM
+          throw new Error('Row is not attached to DOM')
+        })
+        
+        // Get fresh references to avoid stale elements
         const rows = await this.tableRows.all()
         const targetElement = await row.elementHandle()
         
@@ -53,9 +60,16 @@ export class UserManagementPage extends BasePage {
           throw new Error(`Could not get element handle for row with text: ${rowText}. This may indicate the row is no longer in the DOM.`)
         }
         
+        // Use a more robust comparison that handles stale elements
         for (let i = 0; i < rows.length; i++) {
-          const isMatch = await rows[i].evaluate((el, targetRow) => el === targetRow, targetElement)
-          if (isMatch) return i
+          try {
+            const isMatch = await rows[i].evaluate((el, targetRow) => el === targetRow, targetElement)
+            if (isMatch) return i
+          } catch (evalError) {
+            // Element might have become stale during evaluation, skip and continue
+            console.warn(`Skipping stale element at index ${i}:`, evalError)
+            continue
+          }
         }
         
         // If we reach here, the row wasn't found in the current attempt
@@ -64,14 +78,27 @@ export class UserManagementPage extends BasePage {
           continue
         }
       } catch (error) {
+        // Log the specific error for debugging
+        console.warn(`Attempt ${attempt} failed:`, error)
+        
         if (attempt === retries) {
-          throw error
+          // Provide comprehensive error information
+          const rowText = await row.textContent().catch(() => 'unknown')
+          const rowCount = await this.tableRows.count().catch(() => 'unknown')
+          const errorMessage = error instanceof Error ? error.message : String(error)
+          
+          throw new Error(
+            `Failed to get row index after ${retries} attempts.\n` +
+            `Last error: ${errorMessage}\n` +
+            `Row text: ${rowText}\n` +
+            `Total rows in table: ${rowCount}`
+          )
         }
         await this.page.waitForTimeout(500 * attempt)
       }
     }
     
-    // If all retries failed, provide detailed error
+    // This should never be reached due to the throw in the catch block
     const rowText = await row.textContent().catch(() => 'unknown')
     const rowCount = await this.tableRows.count()
     throw new Error(`Row not found in table after ${retries} attempts. Row text: ${rowText}, Total rows: ${rowCount}`)
