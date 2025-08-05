@@ -22,7 +22,7 @@ export default defineConfig({
   /* Single worker - no parallel execution */
   workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: "list",
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   /* Test timeout */
   timeout: 60000, // 60 seconds
   /* Global setup/teardown */
