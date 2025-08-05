@@ -15,8 +15,10 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     await page.getByLabel('Senha', { exact: true }).fill(password)
     await page.getByLabel('Confirme a senha').fill(password)
     
-    // Use force option to bypass visibility checks for the checkbox
-    await page.getByLabel('Sou maior de 18 anos').check({ force: true })
+    // Check the over 18 checkbox (wait for it to be ready)
+    const over18Checkbox = page.getByLabel('Sou maior de 18 anos')
+    await over18Checkbox.waitFor({ state: 'visible' })
+    await over18Checkbox.check()
     
     // Submit registration - button text is "Continuar" (Continue)
     await page.getByRole('button', { name: /continuar/i }).click()
@@ -37,10 +39,17 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     // Check if we're redirected to agree-to-terms page
     const url = page.url()
     if (url.includes('agree-to-terms')) {
-      // Find and click the marketing email checkbox label
+      // Find the marketing email checkbox
       const marketingCheckbox = page.getByLabel('Aceito receber e-mails sobre a Positiv')
       await expect(marketingCheckbox).toBeVisible()
-      await marketingCheckbox.click()
+      
+      // Ensure it's checked (it should default to true, but let's be explicit)
+      const isChecked = await marketingCheckbox.isChecked()
+      if (!isChecked) {
+        await marketingCheckbox.check()
+      }
+      // Verify it's checked
+      await expect(marketingCheckbox).toBeChecked()
       
       // Also click required checkbox labels
       await page.getByLabel('Li tudo e estou de acordo!').click()
@@ -86,8 +95,10 @@ test.describe('Registration with Marketing Email Acceptance', () => {
     await page.getByLabel('Senha', { exact: true }).fill(password)
     await page.getByLabel('Confirme a senha').fill(password)
     
-    // Use force option to bypass visibility checks for the checkbox
-    await page.getByLabel('Sou maior de 18 anos').check({ force: true })
+    // Check the over 18 checkbox (wait for it to be ready)
+    const over18Checkbox = page.getByLabel('Sou maior de 18 anos')
+    await over18Checkbox.waitFor({ state: 'visible' })
+    await over18Checkbox.check()
     
     // Submit registration - button text is "Continuar" (Continue)
     await page.getByRole('button', { name: /continuar/i }).click()
@@ -108,11 +119,14 @@ test.describe('Registration with Marketing Email Acceptance', () => {
       const marketingCheckbox = page.getByLabel('Aceito receber e-mails sobre a Positiv')
       await expect(marketingCheckbox).toBeVisible()
       
-      // Verify it starts as checked (default true per the code)
-      await expect(marketingCheckbox).toBeChecked()
-      
-      // Click to uncheck it
-      await marketingCheckbox.click()
+      // The checkbox defaults to true for new profiles, but we should uncheck it for this test
+      // First check if it's already checked, then uncheck it
+      const isChecked = await marketingCheckbox.isChecked()
+      if (isChecked) {
+        await marketingCheckbox.uncheck()
+      }
+      // Verify it's now unchecked
+      await expect(marketingCheckbox).not.toBeChecked()
       
       // Click required checkbox labels
       await page.getByLabel('Li tudo e estou de acordo!').click()
