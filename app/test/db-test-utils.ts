@@ -96,17 +96,13 @@ export async function cleanupTestData(
             .execute()
           break
         default:
-          console.warn(`Unknown table type: ${table}`)
+          // For any unknown tables, log a warning
+          // We don't attempt deletion as it could fail with unknown table names
+          console.warn(`Unknown table type: ${table} - skipping ${ids.length} records`)
       }
     } catch (error) {
       console.error(`Failed to delete ${ids.length} records from ${table}:`, error)
     }
-  }
-  
-  // Handle any tables not in the predefined order
-  for (const [table, ids] of Object.entries(groupedData)) {
-    if (tableOrder.includes(table) || ids.length === 0) continue
-    console.warn(`Unknown table type: ${table}`)
   }
   
   tracker.clear()
