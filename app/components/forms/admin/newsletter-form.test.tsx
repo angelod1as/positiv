@@ -3,20 +3,18 @@ import { describe, expect, it, vi } from 'vitest'
 import { NewsletterForm } from './newsletter-form'
 
 vi.mock('~/lib/helpers/db-values-to-form-schema', () => ({
-  dbValuesToFormSchema: (data: any) => data,
+  dbValuesToFormSchema: (data: unknown) => data,
 }))
 
 // Mock the SchemaForm component to avoid React Router dependencies
 vi.mock('../base/schema-form', () => ({
-  SchemaForm: ({ children, values, labels, options, inputTypes, multiline, placeholders }: {
+  SchemaForm: ({ children, values, labels, options, placeholders }: {
     children?: (props: {
       Button: React.FC<{ children: React.ReactNode }>
     }) => React.ReactNode
     values?: Record<string, unknown>
     labels?: Record<string, string>
     options?: Record<string, Array<{ value: string, label: string }>>
-    inputTypes?: Record<string, string>
-    multiline?: string[]
     placeholders?: Record<string, string>
   }) => {
     const Button = ({ children: btnChildren }: { children: React.ReactNode }) => (
@@ -84,7 +82,7 @@ vi.mock('../base/schema-form', () => ({
 }))
 
 describe('NewsletterForm', () => {
-  const renderForm = (newsletter?: any) => {
+  const renderForm = (newsletter?: Parameters<typeof NewsletterForm>[0]['newsletter']) => {
     return render(<NewsletterForm newsletter={newsletter} />)
   }
 

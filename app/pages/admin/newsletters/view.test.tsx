@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { loader } from './view'
 import { getNewsletterById } from '~/business/admin/newsletter/newsletter.server'
@@ -22,7 +23,7 @@ vi.mock('~/business/admin/newsletter/newsletter.server', () => ({
 }))
 
 vi.mock('remix-toast', () => ({
-  redirectWithToast: vi.fn((path, toast) => {
+  redirectWithToast: vi.fn((path, _toast) => {
     throw new Response(null, {
       status: 302,
       headers: { Location: path },
@@ -46,6 +47,8 @@ describe('View Newsletter Page', () => {
         created_at: '2025-01-01T10:00:00Z',
         updated_at: '2025-01-01T10:00:00Z',
         created_by: 'user-123',
+        sent_at: null,
+        scheduled_at: null,
       }
       
       const mockGetNewsletterById = vi.mocked(getNewsletterById)
@@ -63,7 +66,7 @@ describe('View Newsletter Page', () => {
 
     it('should redirect if newsletter not found', async () => {
       const mockGetNewsletterById = vi.mocked(getNewsletterById)
-      mockGetNewsletterById.mockResolvedValue(null)
+      mockGetNewsletterById.mockResolvedValue(undefined)
       
       const request = new Request('http://localhost:3000/admin/newsletters/invalid-id')
       

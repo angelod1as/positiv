@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { json } from 'react-router'
 import { loader, action } from './new'
 import { createNewsletter } from '~/business/admin/newsletter/newsletter.server'
+import type { Route } from './+types/new'
 
 // Mock dependencies
 vi.mock('~/lib/paths', () => ({
@@ -24,7 +25,7 @@ vi.mock('~/business/admin/newsletter/newsletter.server', () => ({
 
 vi.mock('remix-forms', () => ({
   formAction: vi.fn((config) => {
-    return async ({ request, params }: any) => {
+    return async ({ request, params }: { request: Request; params: Record<string, string> }) => {
       const formData = await request.formData()
       const data = Object.fromEntries(formData)
       const context = config.context || (await config.contextFactory?.({ request, params }))
@@ -38,7 +39,7 @@ vi.mock('remix-forms', () => ({
 }))
 
 vi.mock('remix-toast', () => ({
-  redirectWithSuccess: vi.fn((path, message) => {
+  redirectWithSuccess: vi.fn((path, _message) => {
     throw new Response(null, {
       status: 302,
       headers: { Location: path },
@@ -54,7 +55,7 @@ describe('New Newsletter Page', () => {
   describe('loader', () => {
     it('should return admin context', async () => {
       const request = new Request('http://localhost:3000/admin/newsletters/new')
-      const result = await loader({ request, params: {} } as any)
+      const result = await loader({ request, params: {} } as Route.LoaderArgs)
       
       expect(result).toEqual({ userId: 'test-user-id' })
     })
@@ -68,6 +69,11 @@ describe('New Newsletter Page', () => {
         template_name: 'general-news',
         content_mdx: '# Test Content',
         status: 'draft',
+        created_at: '2025-01-01T10:00:00Z',
+        updated_at: '2025-01-01T10:00:00Z',
+        created_by: 'user-123',
+        sent_at: null,
+        scheduled_at: null,
       }
       
       const mockCreateNewsletter = vi.mocked(createNewsletter)
@@ -83,8 +89,8 @@ describe('New Newsletter Page', () => {
         body: formData,
       })
       
-      const actionFunction = await action({ request, params: {} } as any)
-      await expect(actionFunction({ request, params: {} })).rejects.toThrow()
+      const actionFn: any = await action({ request, params: {} } as any)
+      await expect(actionFn({ request, params: {} })).rejects.toThrow()
       
       expect(mockCreateNewsletter).toHaveBeenCalledWith(expect.objectContaining({
         subject: 'Test Newsletter',
@@ -101,6 +107,10 @@ describe('New Newsletter Page', () => {
         content_mdx: '# Event Content',
         status: 'scheduled',
         scheduled_at: '2025-12-25T10:00:00',
+        created_at: '2025-01-01T10:00:00Z',
+        updated_at: '2025-01-01T10:00:00Z',
+        created_by: 'user-123',
+        sent_at: null,
       }
       
       const mockCreateNewsletter = vi.mocked(createNewsletter)
@@ -118,8 +128,8 @@ describe('New Newsletter Page', () => {
         body: formData,
       })
       
-      const actionFunction = await action({ request, params: {} } as any)
-      await expect(actionFunction({ request, params: {} })).rejects.toThrow()
+      const actionFn: any = await action({ request, params: {} } as any)
+      await expect(actionFn({ request, params: {} })).rejects.toThrow()
       
       expect(mockCreateNewsletter).toHaveBeenCalledWith(expect.objectContaining({
         subject: 'Scheduled Newsletter',

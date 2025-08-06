@@ -5,7 +5,7 @@ import { getNewsletterById } from '~/business/admin/newsletter/newsletter.server
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
-import { ArrowLeft, Edit, Clock, Calendar, User } from 'lucide-react'
+import { ArrowLeft, Edit, Clock, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
 import paths from '~/lib/paths'
 import type { Route } from './+types/view'

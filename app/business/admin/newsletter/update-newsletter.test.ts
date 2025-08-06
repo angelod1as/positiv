@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { updateNewsletter } from './newsletter.server'
 import { db } from '~/lib/supabase/db.server'
