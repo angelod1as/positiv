@@ -38,11 +38,11 @@ const getStatusBadgeVariant = (status: NewsletterStatus) => {
     case 'draft':
       return 'secondary'
     case 'scheduled':
-      return 'default'
+      return 'outline'  // Better visual distinction for scheduled
     case 'sending':
-      return 'default'
+      return 'default'   // Active state
     case 'sent':
-      return 'default' // Changed from 'success' as it's not a valid variant
+      return 'default'   // Completed state
     case 'failed':
       return 'destructive'
     default:
