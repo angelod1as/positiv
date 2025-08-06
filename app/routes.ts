@@ -97,6 +97,9 @@ export default [
           ),
         ]),
       ]),
+      ...prefix("newsletters", [
+        index("pages/admin/newsletters/index.tsx"),
+      ]),
     ]),
   ]),
 ] satisfies RouteConfig
