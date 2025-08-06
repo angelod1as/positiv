@@ -45,13 +45,16 @@ describe("generate-event-mapping", () => {
 
       const { db } = await import("~/lib/supabase/db.server")
       const mockExecute = vi.fn().mockResolvedValue(mockEvents)
-      vi.mocked(db.selectFrom).mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          orderBy: vi.fn().mockReturnValue({
-            execute: mockExecute,
-          }),
-        }),
-      } as unknown)
+      const mockOrderBy = vi.fn().mockReturnValue({
+        execute: mockExecute,
+      })
+      const mockSelect = vi.fn().mockReturnValue({
+        orderBy: mockOrderBy,
+      })
+      
+      vi.mocked(db.selectFrom).mockImplementation(() => ({
+        select: mockSelect,
+      }) as unknown as ReturnType<typeof db.selectFrom>)
 
       const events = await fetchAllEvents()
       expect(events).toEqual(mockEvents)
