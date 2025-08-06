@@ -1,10 +1,14 @@
 import { db } from "~/lib/supabase/db.server"
 
+export type NewsletterStatus = "draft" | "scheduled" | "sending" | "sent" | "failed"
+export type NewsletterSendStatus = "sent" | "failed" | "bounced"
+export type NewsletterQueueStatus = "pending" | "processing" | "sent" | "failed"
+
 interface CreateNewsletterData {
   subject: string
   template_name: string
   content_mdx: string
-  status?: "draft" | "scheduled" | "sending" | "sent" | "failed"
+  status?: NewsletterStatus
   scheduled_at?: string
   sent_at?: string
   created_by: string
@@ -13,14 +17,14 @@ interface CreateNewsletterData {
 interface CreateNewsletterSendData {
   newsletter_id: string
   profile_id: string
-  status: "sent" | "failed" | "bounced"
+  status: NewsletterSendStatus
   error_message?: string
 }
 
 interface AddToQueueData {
   newsletter_id: string
   profile_id: string
-  status: "pending" | "processing" | "sent" | "failed"
+  status: NewsletterQueueStatus
 }
 
 export async function createNewsletter(data: CreateNewsletterData) {
@@ -49,7 +53,7 @@ export async function getNewsletterById(id: string) {
   return result
 }
 
-export async function getNewslettersByStatus(status: string) {
+export async function getNewslettersByStatus(status: NewsletterStatus) {
   const results = await db
     .selectFrom("newsletters")
     .selectAll()
@@ -65,7 +69,7 @@ export async function createNewsletterSend(data: CreateNewsletterSendData) {
     .values({
       ...data,
       id: crypto.randomUUID(),
-      sent_at: new Date().toISOString()
+      sent_at: data.status === "sent" ? new Date().toISOString() : null
     })
     .returningAll()
     .executeTakeFirstOrThrow()

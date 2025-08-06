@@ -9,7 +9,7 @@ CREATE TABLE public.newsletters (
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'scheduled', 'sending', 'sent', 'failed')),
   scheduled_at TIMESTAMPTZ,
   sent_at TIMESTAMPTZ,
-  created_by UUID REFERENCES public.profiles(id),
+  created_by UUID NOT NULL REFERENCES public.profiles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -19,7 +19,7 @@ CREATE TABLE public.newsletter_sends (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   newsletter_id UUID NOT NULL REFERENCES public.newsletters(id) ON DELETE CASCADE,
   profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at TIMESTAMPTZ DEFAULT NOW(),
   status TEXT NOT NULL CHECK (status IN ('sent', 'failed', 'bounced')),
   error_message TEXT,
   UNIQUE(newsletter_id, profile_id)
@@ -48,7 +48,7 @@ CREATE INDEX idx_newsletter_sends_status ON public.newsletter_sends(status);
 
 CREATE INDEX idx_newsletter_queue_newsletter_id ON public.newsletter_queue(newsletter_id);
 CREATE INDEX idx_newsletter_queue_profile_id ON public.newsletter_queue(profile_id);
-CREATE INDEX idx_newsletter_queue_status_created_at ON public.newsletter_queue(status, created_at) WHERE status IN ('pending', 'processing');
+CREATE INDEX idx_newsletter_queue_status_created_at ON public.newsletter_queue(status, created_at) WHERE status IN ('pending', 'processing', 'failed');
 
 -- Enable RLS on all tables
 ALTER TABLE public.newsletters ENABLE ROW LEVEL SECURITY;

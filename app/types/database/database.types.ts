@@ -329,7 +329,7 @@ export type Database = {
           id: string
           newsletter_id: string
           profile_id: string
-          sent_at: string
+          sent_at: string | null
           status: string
         }
         Insert: {
@@ -337,7 +337,7 @@ export type Database = {
           id?: string
           newsletter_id: string
           profile_id: string
-          sent_at?: string
+          sent_at?: string | null
           status: string
         }
         Update: {
@@ -345,7 +345,7 @@ export type Database = {
           id?: string
           newsletter_id?: string
           profile_id?: string
-          sent_at?: string
+          sent_at?: string | null
           status?: string
         }
         Relationships: [
@@ -369,7 +369,7 @@ export type Database = {
         Row: {
           content_mdx: string
           created_at: string
-          created_by: string | null
+          created_by: string
           id: string
           scheduled_at: string | null
           sent_at: string | null
@@ -381,7 +381,7 @@ export type Database = {
         Insert: {
           content_mdx: string
           created_at?: string
-          created_by?: string | null
+          created_by: string
           id?: string
           scheduled_at?: string | null
           sent_at?: string | null
@@ -393,7 +393,7 @@ export type Database = {
         Update: {
           content_mdx?: string
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           id?: string
           scheduled_at?: string | null
           sent_at?: string | null
