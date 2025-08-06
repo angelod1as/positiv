@@ -5,13 +5,20 @@ import type { contextSchema } from "../common"
 
 describe("agreeToTerms", () => {
   let mockFrom: Mock
-  let mockUpsert: Mock
+  let mockUpdate: Mock
+  let mockInsert: Mock
+  let mockEq: Mock
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUpsert = vi.fn(() => Promise.resolve({ error: null }))
+    mockUpdate = vi.fn(() => ({
+      eq: mockEq,
+    }))
+    mockInsert = vi.fn(() => Promise.resolve({ error: null }))
+    mockEq = vi.fn(() => Promise.resolve({ error: null }))
     mockFrom = vi.fn(() => ({
-      upsert: mockUpsert,
+      update: mockUpdate,
+      insert: mockInsert,
     }))
   })
 
@@ -37,7 +44,7 @@ describe("agreeToTerms", () => {
     await agreeToTerms(values, context)
 
     expect(mockFrom).toHaveBeenCalledWith("profiles")
-    expect(mockUpsert).toHaveBeenCalledWith({
+    expect(mockInsert).toHaveBeenCalledWith({
       user_id: "user-123",
       email: "test@example.com",
       allow_marketing_email: true,
@@ -77,12 +84,10 @@ describe("agreeToTerms", () => {
     await agreeToTerms(values, context)
 
     expect(mockFrom).toHaveBeenCalledWith("profiles")
-    expect(mockUpsert).toHaveBeenCalledWith({
-      id: "profile-123",
-      user_id: "user-123",
-      email: "test@example.com",
+    expect(mockUpdate).toHaveBeenCalledWith({
       allow_marketing_email: false,
     })
+    expect(mockEq).toHaveBeenCalledWith('id', "profile-123")
   })
 
   it("should return error when user is not authenticated", async () => {
@@ -107,8 +112,8 @@ describe("agreeToTerms", () => {
     expect(mockFrom).not.toHaveBeenCalled()
   })
 
-  it("should return error when Supabase upsert fails", async () => {
-    mockUpsert.mockResolvedValue({ error: { message: "Database error" } })
+  it("should return error when Supabase insert fails", async () => {
+    mockInsert.mockResolvedValue({ error: { message: "Database error" } })
     const context = createContext({ currentProfile: null })
 
     const values = {
@@ -122,5 +127,8 @@ describe("agreeToTerms", () => {
     // composable-functions catches errors and returns them in the result
     expect(result).toBeDefined()
     expect(mockFrom).toHaveBeenCalledWith("profiles")
+    if ('errors' in result && result.errors) {
+      expect(result.errors[0].message).toBe("Problema ao criar perfil")
+    }
   })
 })
