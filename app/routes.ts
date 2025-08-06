@@ -99,6 +99,9 @@ export default [
       ]),
       ...prefix("newsletters", [
         index("pages/admin/newsletters/index.tsx"),
+        route("/new", "pages/admin/newsletters/new.tsx"),
+        route("/:id", "pages/admin/newsletters/view.tsx"),
+        route("/:id/edit", "pages/admin/newsletters/edit.tsx"),
       ]),
     ]),
   ]),
