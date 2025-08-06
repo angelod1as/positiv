@@ -80,6 +80,18 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     await page.goto('/conta/termos-e-condicoes')
     await expect(page).toHaveURL('/conta/termos-e-condicoes')
     
+    // Ensure required checkboxes are checked first
+    const agreeCheckbox = page.getByLabel('Li tudo e estou de acordo!')
+    const systemEmailsCheckbox = page.getByLabel('Aceito receber e-mails gerais do sistema')
+    
+    // Check them if not already checked
+    if (!(await agreeCheckbox.isChecked())) {
+      await page.getByText('Li tudo e estou de acordo!').click()
+    }
+    if (!(await systemEmailsCheckbox.isChecked())) {
+      await page.getByText('Aceito receber e-mails gerais do sistema').click()
+    }
+    
     // Find the marketing email checkbox
     const marketingCheckbox = page.getByLabel('Aceito receber e-mails sobre a Positiv')
     await expect(marketingCheckbox).toBeVisible()
@@ -96,11 +108,13 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     
     // Save the form
     await page.getByRole('button', { name: 'Continuar' }).click()
-    await page.waitForLoadState('networkidle')
     
-    // Navigate away and come back
-    await page.goto('/conta')
+    // Wait for navigation - the page redirects to dados-basicos after save
+    await page.waitForURL('**/conta/dados-basicos', { timeout: 10000 })
+    
+    // Navigate back to terms page to verify persistence
     await page.goto('/conta/termos-e-condicoes')
+    await page.waitForLoadState('networkidle')
     
     // Verify the new state persisted
     const newState = await marketingCheckbox.isChecked()
@@ -113,12 +127,20 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     const afterSecondToggle = await marketingCheckbox.isChecked()
     expect(afterSecondToggle).toBe(initialState)
     
+    // Ensure the agree checkbox is still checked before saving again
+    if (!(await agreeCheckbox.isChecked())) {
+      await page.getByText('Li tudo e estou de acordo!').click()
+    }
+    
     // Save again
     await page.getByRole('button', { name: 'Continuar' }).click()
-    await page.waitForLoadState('networkidle')
     
-    // Verify one more time
+    // Wait for navigation - the page redirects to dados-basicos after save
+    await page.waitForURL('**/conta/dados-basicos', { timeout: 10000 })
+    
+    // Navigate back to terms page for final verification
     await page.goto('/conta/termos-e-condicoes')
+    await page.waitForLoadState('networkidle')
     const finalState = await marketingCheckbox.isChecked()
     expect(finalState).toBe(initialState)
   })
