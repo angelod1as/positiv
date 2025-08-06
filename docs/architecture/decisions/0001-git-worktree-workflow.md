@@ -15,7 +15,7 @@ When working with AI coding assistants like Claude, we often need to work on mul
 
 ## Decision
 
-We will use Git worktrees as the standard workflow for parallel development. A global zsh function (`wt`) has been implemented to manage worktrees across all projects, with automatic setup of essential files and consistent directory structure.
+We will use Git worktrees as the standard workflow for parallel development. Git's built-in `git worktree` command is used to manage worktrees across all projects, with automatic setup of essential files and consistent directory structure.
 
 ## Consequences
 
