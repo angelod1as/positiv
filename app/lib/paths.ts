@@ -40,6 +40,12 @@ const ADMIN_CREATE_EVENT = `${ADMIN_EVENTS}/novo`
 const ADMIN_EVENT_VIEW_PARTICIPANT = (eventId: string, participantId: string) =>
   `${ADMIN_EVENTS}/${eventId}/participantes/${participantId}`
 
+// NEWSLETTERS
+const ADMIN_NEWSLETTERS = () => `${ADMIN_DASHBOARD}/newsletters`
+const ADMIN_VIEW_NEWSLETTER = (id: string) => `${ADMIN_NEWSLETTERS()}/${id}`
+const ADMIN_EDIT_NEWSLETTER = (id: string) => `${ADMIN_NEWSLETTERS()}/${id}/edit`
+const ADMIN_CREATE_NEWSLETTER = () => `${ADMIN_NEWSLETTERS()}/new`
+
 const paths = {
   root: {
     HOME,
@@ -53,6 +59,12 @@ const paths = {
       ADMIN_EVENTS,
       ADMIN_CREATE_EVENT,
       ADMIN_EVENT_VIEW_PARTICIPANT,
+    },
+    newsletters: {
+      ADMIN_NEWSLETTERS,
+      ADMIN_VIEW_NEWSLETTER,
+      ADMIN_EDIT_NEWSLETTER,
+      ADMIN_CREATE_NEWSLETTER,
     },
   },
   auth: {
