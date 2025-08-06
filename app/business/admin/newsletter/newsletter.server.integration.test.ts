@@ -1,0 +1,315 @@
+import { describe, expect, it, beforeEach, afterEach } from "vitest"
+import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
+import { createTestProfile } from "~/test/db-test-utils"
+import {
+  createNewsletter,
+  getNewslettersByStatus,
+  createNewsletterSend,
+  addToQueue,
+  getQueueEntry
+} from "./newsletter.server"
+
+describe("Newsletter Tables - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+    
+    // Clear any existing newsletter data for clean tests
+    await kysely.deleteFrom("newsletter_queue").execute()
+    await kysely.deleteFrom("newsletter_sends").execute()
+    await kysely.deleteFrom("newsletters").execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should create a newsletter with all required fields", async () => {
+    // Create a test profile to be the creator
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin@example.com",
+      full_name: "Admin User"
+    })
+
+    const newsletterData = {
+      subject: "Test Newsletter",
+      template_name: "general-news",
+      content_mdx: "# Welcome\n\nThis is a test newsletter.",
+      status: "draft" as const,
+      created_by: creator.id
+    }
+
+    const result = await createNewsletter(newsletterData)
+    tracker.track("newsletters", result.id)
+    
+    expect(result).toBeDefined()
+    expect(result.id).toBeDefined()
+    expect(result.subject).toBe(newsletterData.subject)
+    expect(result.template_name).toBe(newsletterData.template_name)
+    expect(result.content_mdx).toBe(newsletterData.content_mdx)
+    expect(result.status).toBe("draft")
+    expect(result.created_by).toBe(creator.id)
+    expect(result.created_at).toBeDefined()
+    expect(result.updated_at).toBeDefined()
+  })
+
+  it("should create a newsletter with draft status by default", async () => {
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin2@example.com",
+      full_name: "Admin User 2"
+    })
+
+    const newsletterData = {
+      subject: "Draft Newsletter",
+      template_name: "event-announcement",
+      content_mdx: "# Draft Content",
+      created_by: creator.id
+    }
+
+    const result = await createNewsletter(newsletterData)
+    tracker.track("newsletters", result.id)
+    
+    expect(result.status).toBe("draft")
+  })
+
+  it("should query newsletters by status", async () => {
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin3@example.com",
+      full_name: "Admin User 3"
+    })
+
+    // Create newsletters with different statuses
+    const newsletter1 = await createNewsletter({
+      subject: "Draft 1",
+      template_name: "general-news",
+      content_mdx: "Draft content",
+      status: "draft",
+      created_by: creator.id
+    })
+    tracker.track("newsletters", newsletter1.id)
+
+    const newsletter2 = await createNewsletter({
+      subject: "Scheduled 1",
+      template_name: "event-announcement",
+      content_mdx: "Scheduled content",
+      status: "scheduled",
+      scheduled_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      created_by: creator.id
+    })
+    tracker.track("newsletters", newsletter2.id)
+
+    const newsletter3 = await createNewsletter({
+      subject: "Sent 1",
+      template_name: "general-news",
+      content_mdx: "Sent content",
+      status: "sent",
+      sent_at: new Date().toISOString(),
+      created_by: creator.id
+    })
+    tracker.track("newsletters", newsletter3.id)
+
+    // Query by status
+    const drafts = await getNewslettersByStatus("draft")
+    const scheduled = await getNewslettersByStatus("scheduled")
+    const sent = await getNewslettersByStatus("sent")
+
+    expect(drafts).toHaveLength(1)
+    expect(drafts[0].subject).toBe("Draft 1")
+    
+    expect(scheduled).toHaveLength(1)
+    expect(scheduled[0].subject).toBe("Scheduled 1")
+    
+    expect(sent).toHaveLength(1)
+    expect(sent[0].subject).toBe("Sent 1")
+  })
+
+  it("should record newsletter sends to profiles", async () => {
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin4@example.com",
+      full_name: "Admin User 4"
+    })
+
+    const recipient = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "recipient@example.com",
+      full_name: "Recipient User",
+      allow_marketing_email: true
+    })
+
+    const newsletter = await createNewsletter({
+      subject: "Test Send",
+      template_name: "general-news",
+      content_mdx: "Content",
+      status: "sending",
+      created_by: creator.id
+    })
+    tracker.track("newsletters", newsletter.id)
+
+    const send = await createNewsletterSend({
+      newsletter_id: newsletter.id,
+      profile_id: recipient.id,
+      status: "sent"
+    })
+    tracker.track("newsletter_sends", send.id)
+
+    expect(send).toBeDefined()
+    expect(send.newsletter_id).toBe(newsletter.id)
+    expect(send.profile_id).toBe(recipient.id)
+    expect(send.status).toBe("sent")
+    expect(send.sent_at).toBeDefined()
+  })
+
+  it("should manage newsletter queue entries", async () => {
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin5@example.com",
+      full_name: "Admin User 5"
+    })
+
+    const recipient = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "queued@example.com",
+      full_name: "Queued User",
+      allow_marketing_email: true
+    })
+
+    const newsletter = await createNewsletter({
+      subject: "Queue Test",
+      template_name: "event-announcement",
+      content_mdx: "Queue content",
+      status: "scheduled",
+      created_by: creator.id
+    })
+    tracker.track("newsletters", newsletter.id)
+
+    const queueEntry = await addToQueue({
+      newsletter_id: newsletter.id,
+      profile_id: recipient.id,
+      status: "pending"
+    })
+    tracker.track("newsletter_queue", queueEntry.id)
+
+    expect(queueEntry).toBeDefined()
+    expect(queueEntry.newsletter_id).toBe(newsletter.id)
+    expect(queueEntry.profile_id).toBe(recipient.id)
+    expect(queueEntry.status).toBe("pending")
+    expect(queueEntry.attempts).toBe(0)
+    expect(queueEntry.created_at).toBeDefined()
+
+    // Fetch the queue entry
+    const fetched = await getQueueEntry(queueEntry.id)
+    expect(fetched).toBeDefined()
+    expect(fetched?.id).toBe(queueEntry.id)
+  })
+
+  it("should enforce foreign key constraint to profiles table", async () => {
+    // Try to create a newsletter with invalid created_by
+    const invalidCreatorId = crypto.randomUUID()
+    
+    await expect(
+      createNewsletter({
+        subject: "Invalid Creator",
+        template_name: "general-news",
+        content_mdx: "Content",
+        created_by: invalidCreatorId
+      })
+    ).rejects.toThrow()
+  })
+
+  it("should enforce unique constraint on newsletter_sends", async () => {
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin6@example.com",
+      full_name: "Admin User 6"
+    })
+
+    const recipient = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "unique-test@example.com",
+      full_name: "Unique Test User",
+      allow_marketing_email: true
+    })
+
+    const newsletter = await createNewsletter({
+      subject: "Unique Test",
+      template_name: "general-news",
+      content_mdx: "Content",
+      created_by: creator.id
+    })
+    tracker.track("newsletters", newsletter.id)
+
+    // First send should succeed
+    const firstSend = await createNewsletterSend({
+      newsletter_id: newsletter.id,
+      profile_id: recipient.id,
+      status: "sent"
+    })
+    tracker.track("newsletter_sends", firstSend.id)
+
+    // Second send with same newsletter_id and profile_id should fail
+    await expect(
+      createNewsletterSend({
+        newsletter_id: newsletter.id,
+        profile_id: recipient.id,
+        status: "sent"
+      })
+    ).rejects.toThrow()
+  })
+
+  it("should enforce status enum constraints", async () => {
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin7@example.com",
+      full_name: "Admin User 7"
+    })
+
+    // Test invalid newsletter status
+    await expect(
+      kysely
+        .insertInto("newsletters")
+        .values({
+          id: crypto.randomUUID(),
+          subject: "Invalid Status",
+          template_name: "general-news",
+          content_mdx: "Content",
+          status: "invalid_status" as unknown as "draft" | "scheduled" | "sending" | "sent" | "failed",
+          created_by: creator.id
+        })
+        .execute()
+    ).rejects.toThrow()
+
+    // Test invalid queue status
+    const newsletter = await createNewsletter({
+      subject: "Valid Newsletter",
+      template_name: "general-news",
+      content_mdx: "Content",
+      created_by: creator.id
+    })
+    tracker.track("newsletters", newsletter.id)
+
+    const recipient = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "status-test@example.com",
+      full_name: "Status Test User",
+      allow_marketing_email: true
+    })
+
+    await expect(
+      kysely
+        .insertInto("newsletter_queue")
+        .values({
+          id: crypto.randomUUID(),
+          newsletter_id: newsletter.id,
+          profile_id: recipient.id,
+          status: "invalid_queue_status" as unknown as "pending" | "processing" | "sent" | "failed",
+          attempts: 0
+        })
+        .execute()
+    ).rejects.toThrow()
+  })
+})
