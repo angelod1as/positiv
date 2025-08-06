@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Create a new worktree for your feature
-wt add feature/your-feature-name feature-name
+git worktree add ../positiv-worktrees/feature-name feature/your-feature-name
 
 # Switch to the new worktree
 cd ../positiv-worktrees/feature-name
@@ -24,18 +24,18 @@ pnpm install
 
 ### Worktree Commands
 
-- `wt add <branch> [name]` - Create new worktree
-- `wt list` or `wtl` - List all worktrees
-- `wt remove <name>` or `wtr <name>` - Remove worktree
-- `wt <name>` - Switch to worktree
+- `git worktree add ../positiv-worktrees/<name> <branch>` - Create new worktree
+- `git worktree list` - List all worktrees
+- `git worktree remove ../positiv-worktrees/<name>` - Remove worktree
+- `cd ../positiv-worktrees/<name>` - Switch to worktree
 
 ### Best Practices
 
 1. Create a new worktree for each feature/bug fix
 2. Name worktrees descriptively but concisely
 3. Always run `pnpm install` after creating a worktree
-4. Remove worktrees after merging PRs with `wtr <name>`
-5. When `wtr <name>` is used, `git pull` from the main `positiv/` folder
+4. Remove worktrees after merging PRs with `git worktree remove ../positiv-worktrees/<name>`
+5. When a worktree is removed, `git pull` from the main `positiv/` folder
 
 ## Essential Commands
 
