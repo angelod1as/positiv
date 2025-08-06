@@ -74,4 +74,74 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     // Should see mismatch error
     await expect(page.locator('text=/não combinam/i')).toBeVisible()
   })
+
+  test('Marketing email preference can be toggled and persists', async ({ page }) => {
+    // Go to terms page
+    await page.goto('/conta/termos-e-condicoes')
+    await expect(page).toHaveURL('/conta/termos-e-condicoes')
+    
+    // Ensure required checkboxes are checked first
+    const agreeCheckbox = page.getByLabel('Li tudo e estou de acordo!')
+    const systemEmailsCheckbox = page.getByLabel('Aceito receber e-mails gerais do sistema')
+    
+    // Check them if not already checked
+    if (!(await agreeCheckbox.isChecked())) {
+      await page.getByText('Li tudo e estou de acordo!').click()
+    }
+    if (!(await systemEmailsCheckbox.isChecked())) {
+      await page.getByText('Aceito receber e-mails gerais do sistema').click()
+    }
+    
+    // Find the marketing email checkbox
+    const marketingCheckbox = page.getByLabel('Aceito receber e-mails sobre a Positiv')
+    await expect(marketingCheckbox).toBeVisible()
+    
+    // Get initial state
+    const initialState = await marketingCheckbox.isChecked()
+    
+    // Toggle it by clicking the label text (avoids label overlay issues)
+    await page.getByText('Aceito receber e-mails sobre a Positiv').click()
+    
+    // Verify it toggled
+    const afterToggle = await marketingCheckbox.isChecked()
+    expect(afterToggle).toBe(!initialState)
+    
+    // Save the form
+    await page.getByRole('button', { name: 'Continuar' }).click()
+    
+    // Wait for navigation - the page redirects to dados-basicos after save
+    await page.waitForURL('**/conta/dados-basicos', { timeout: 10000 })
+    
+    // Navigate back to terms page to verify persistence
+    await page.goto('/conta/termos-e-condicoes')
+    await page.waitForLoadState('networkidle')
+    
+    // Verify the new state persisted
+    const newState = await marketingCheckbox.isChecked()
+    expect(newState).toBe(!initialState)
+    
+    // Toggle it back to original state by clicking the label text
+    await page.getByText('Aceito receber e-mails sobre a Positiv').click()
+    
+    // Verify it toggled back
+    const afterSecondToggle = await marketingCheckbox.isChecked()
+    expect(afterSecondToggle).toBe(initialState)
+    
+    // Ensure the agree checkbox is still checked before saving again
+    if (!(await agreeCheckbox.isChecked())) {
+      await page.getByText('Li tudo e estou de acordo!').click()
+    }
+    
+    // Save again
+    await page.getByRole('button', { name: 'Continuar' }).click()
+    
+    // Wait for navigation - the page redirects to dados-basicos after save
+    await page.waitForURL('**/conta/dados-basicos', { timeout: 10000 })
+    
+    // Navigate back to terms page for final verification
+    await page.goto('/conta/termos-e-condicoes')
+    await page.waitForLoadState('networkidle')
+    const finalState = await marketingCheckbox.isChecked()
+    expect(finalState).toBe(initialState)
+  })
 })
