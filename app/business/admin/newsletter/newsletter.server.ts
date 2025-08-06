@@ -132,3 +132,27 @@ export async function getAllNewslettersWithCounts() {
     recipient_count: countMap.get(newsletter.id) || 0
   }))
 }
+
+interface UpdateNewsletterData {
+  subject?: string
+  template_name?: string
+  content_mdx?: string
+  status?: NewsletterStatus
+  scheduled_at?: string
+}
+
+export async function updateNewsletter(id: string, data: UpdateNewsletterData) {
+  const updateData = {
+    ...data,
+    updated_at: new Date().toISOString()
+  }
+  
+  const result = await db
+    .updateTable("newsletters")
+    .set(updateData)
+    .where("id", "=", id)
+    .returningAll()
+    .executeTakeFirst()
+  
+  return result
+}
