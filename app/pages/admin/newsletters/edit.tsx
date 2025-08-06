@@ -1,5 +1,7 @@
 import { formAction } from "remix-forms"
 import { redirectWithSuccess, redirectWithToast } from "remix-toast"
+import { applySchema } from "composable-functions"
+import { z } from "zod"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { getNewsletterById, updateNewsletter } from "~/business/admin/newsletter/newsletter.server"
 import { newsletterFormSchema } from "~/business/admin/newsletter/newsletter-schema"
@@ -44,6 +46,17 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { newsletter }
 }
 
+const updateNewsletterMutation = applySchema(
+  newsletterFormSchema,
+  z.object({ newsletterId: z.string() })
+)(async (data, context) => {
+  const newsletter = await updateNewsletter(context.newsletterId, {
+    ...data,
+    status: data.status || 'draft',
+  })
+  return { success: true as const, data: newsletter }
+})
+
 export async function action({ request, params }: Route.ActionArgs) {
   await getAdminContext(request, params)
   
@@ -58,13 +71,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   return formAction({
     request,
     schema: newsletterFormSchema,
-    mutation: async (data) => {
-      const newsletter = await updateNewsletter(newsletterId, {
-        ...data,
-        status: data.status || 'draft',
-      })
-      return { success: true, data: newsletter }
-    },
+    mutation: updateNewsletterMutation,
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(
@@ -74,6 +81,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
       return result
     },
+    context: { newsletterId },
   })
 }
 

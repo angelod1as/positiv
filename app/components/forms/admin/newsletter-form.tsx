@@ -1,6 +1,5 @@
 import type { FC } from "react"
 import { newsletterFormSchema } from "~/business/admin/newsletter/newsletter-schema"
-import { Button } from "~/components/atoms/button/button"
 import { dbValuesToFormSchema } from "~/lib/helpers/db-values-to-form-schema"
 import { SchemaForm } from "../base/schema-form"
 
@@ -29,7 +28,6 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter }) => {
       <SchemaForm
         schema={newsletterFormSchema}
         values={formattedNewsletter}
-        hiddenFields={["id"]}
         labels={{
           subject: "Subject",
           template_name: "Template",
@@ -47,8 +45,8 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter }) => {
         }}
         options={{
           template_name: [
-            { value: "general-news", label: "General News" },
-            { value: "event-announcement", label: "Event Announcement" },
+            { value: "general-news", name: "General News" },
+            { value: "event-announcement", name: "Event Announcement" },
           ],
         }}
       >
