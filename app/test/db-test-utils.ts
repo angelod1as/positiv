@@ -78,7 +78,7 @@ export async function cleanupTestData(
 }
 
 interface TestProfileData {
-  user_id: string
+  user_id: string | null
   email: string
   [key: string]: unknown
 }
