@@ -43,8 +43,19 @@ export async function cleanupTestData(
   }, {} as Record<string, string[]>)
   
   // Perform batch deletions for each table
-  for (const [table, ids] of Object.entries(groupedData)) {
-    if (ids.length === 0) continue
+  // Order matters due to foreign key constraints - delete in reverse order of dependencies
+  const tableOrder = [
+    "newsletter_queue",
+    "newsletter_sends", 
+    "newsletters",
+    "event_participants",
+    "events",
+    "profiles"
+  ]
+  
+  for (const table of tableOrder) {
+    const ids = groupedData[table]
+    if (!ids || ids.length === 0) continue
     
     try {
       switch (table) {
@@ -66,8 +77,28 @@ export async function cleanupTestData(
             .where("id", "in", ids)
             .execute()
           break
+        case "newsletters":
+          await kysely
+            .deleteFrom("newsletters")
+            .where("id", "in", ids)
+            .execute()
+          break
+        case "newsletter_sends":
+          await kysely
+            .deleteFrom("newsletter_sends")
+            .where("id", "in", ids)
+            .execute()
+          break
+        case "newsletter_queue":
+          await kysely
+            .deleteFrom("newsletter_queue")
+            .where("id", "in", ids)
+            .execute()
+          break
         default:
-          console.warn(`Unknown table type: ${table}`)
+          // For any unknown tables, log a warning
+          // We don't attempt deletion as it could fail with unknown table names
+          console.warn(`Unknown table type: ${table} - skipping ${ids.length} records`)
       }
     } catch (error) {
       console.error(`Failed to delete ${ids.length} records from ${table}:`, error)

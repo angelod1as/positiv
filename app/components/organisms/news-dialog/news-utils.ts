@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '9',
+    title: '📧 Infraestrutura de email marketing criada',
+    content: 'Foi criada a base do sistema de newsletters: tabelas no banco de dados e funções para gerenciar newsletters, envios e filas de processamento. Em breve você poderá criar e enviar newsletters para os participantes!',
+    isAdmin: true,
+    createdAt: new Date('2025-08-06T15:00:00'), // August 6, 2025
+    isActive: true,
+  },
+  {
     id: '8',
     title: '🧪 Melhorias no sistema de testes automatizados',
     content: 'Implementamos um novo sistema de testes automatizados mais confiável e eficiente. Os testes agora simulam melhor o comportamento real dos usuários, garantindo uma experiência mais estável e menos bugs em produção.',
