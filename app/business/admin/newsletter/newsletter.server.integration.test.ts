@@ -312,4 +312,124 @@ describe("Newsletter Tables - Integration Tests", () => {
         .execute()
     ).rejects.toThrow()
   })
+
+  it("should fetch all newsletters with recipient counts", async () => {
+    const { getAllNewslettersWithCounts } = await import("./newsletter.server")
+    
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin8@example.com",
+      full_name: "Admin User 8"
+    })
+
+    // Create multiple profiles to be recipients
+    const recipient1 = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "recipient1@example.com",
+      full_name: "Recipient 1",
+      allow_marketing_email: true
+    })
+
+    const recipient2 = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "recipient2@example.com",
+      full_name: "Recipient 2",
+      allow_marketing_email: true
+    })
+
+    const recipient3 = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "recipient3@example.com",
+      full_name: "Recipient 3",
+      allow_marketing_email: true
+    })
+
+    // Create newsletters with different statuses
+    const draftNewsletter = await createNewsletter({
+      subject: "Draft Newsletter",
+      template_name: "general-news",
+      content_mdx: "# Draft Content",
+      status: "draft",
+      created_by: creator.id
+    })
+    tracker.track("newsletters", draftNewsletter.id)
+
+    const sentNewsletter = await createNewsletter({
+      subject: "Sent Newsletter",
+      template_name: "event-announcement",
+      content_mdx: "# Sent Content",
+      status: "sent",
+      sent_at: new Date().toISOString(),
+      created_by: creator.id
+    })
+    tracker.track("newsletters", sentNewsletter.id)
+
+    // Create newsletter sends for the sent newsletter
+    const send1 = await createNewsletterSend({
+      newsletter_id: sentNewsletter.id,
+      profile_id: recipient1.id,
+      status: "sent"
+    })
+    tracker.track("newsletter_sends", send1.id)
+
+    const send2 = await createNewsletterSend({
+      newsletter_id: sentNewsletter.id,
+      profile_id: recipient2.id,
+      status: "sent"
+    })
+    tracker.track("newsletter_sends", send2.id)
+
+    const send3 = await createNewsletterSend({
+      newsletter_id: sentNewsletter.id,
+      profile_id: recipient3.id,
+      status: "failed",
+      error_message: "Email bounce"
+    })
+    tracker.track("newsletter_sends", send3.id)
+
+    // Create a scheduled newsletter
+    const scheduledNewsletter = await createNewsletter({
+      subject: "Scheduled Newsletter",
+      template_name: "general-news",
+      content_mdx: "# Scheduled Content",
+      status: "scheduled",
+      scheduled_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      created_by: creator.id
+    })
+    tracker.track("newsletters", scheduledNewsletter.id)
+
+    // Fetch all newsletters with counts
+    const newsletters = await getAllNewslettersWithCounts()
+
+    // Should have all 3 newsletters
+    expect(newsletters).toHaveLength(3)
+
+    // Find each newsletter in the results
+    const draftResult = newsletters.find(n => n.id === draftNewsletter.id)
+    const sentResult = newsletters.find(n => n.id === sentNewsletter.id)
+    const scheduledResult = newsletters.find(n => n.id === scheduledNewsletter.id)
+
+    // Check draft newsletter
+    expect(draftResult).toBeDefined()
+    expect(draftResult?.subject).toBe("Draft Newsletter")
+    expect(draftResult?.status).toBe("draft")
+    expect(draftResult?.recipient_count).toBe(0)
+
+    // Check sent newsletter
+    expect(sentResult).toBeDefined()
+    expect(sentResult?.subject).toBe("Sent Newsletter")
+    expect(sentResult?.status).toBe("sent")
+    expect(sentResult?.recipient_count).toBe(3) // Total sends (regardless of status)
+
+    // Check scheduled newsletter
+    expect(scheduledResult).toBeDefined()
+    expect(scheduledResult?.subject).toBe("Scheduled Newsletter")
+    expect(scheduledResult?.status).toBe("scheduled")
+    expect(scheduledResult?.recipient_count).toBe(0)
+
+    // Check that newsletters are ordered by created_at DESC (newest first)
+    expect(newsletters[0].id).toBe(scheduledNewsletter.id)
+    expect(newsletters[1].id).toBe(sentNewsletter.id)
+    expect(newsletters[2].id).toBe(draftNewsletter.id)
+  })
 })

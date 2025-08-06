@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '10',
+    title: '📬 Gerenciamento de Newsletters disponível!',
+    content: 'Agora administradores podem visualizar todas as newsletters do sistema! Acesse o painel administrativo e clique em "Gerenciar Newsletters" para ver a lista completa com informações sobre status, destinatários e datas. Em breve: criação e envio de newsletters!',
+    isAdmin: true,
+    createdAt: new Date('2025-08-06T18:00:00'), // August 6, 2025
+    isActive: true,
+  },
+  {
     id: '9',
     title: '📧 Infraestrutura de email marketing criada',
     content: 'Foi criada a base do sistema de newsletters: tabelas no banco de dados e funções para gerenciar newsletters, envios e filas de processamento. Em breve você poderá criar e enviar newsletters para os participantes!',
@@ -55,30 +63,6 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
     content: 'Agora você pode adicionar participantes aos seus Google Contacts com um clique! O nome formatado é copiado automaticamente para você colar no Google Contacts.',
     isAdmin: true,
     createdAt: new Date('2025-07-30T12:00:00'), // July 30, 2025
-    isActive: true,
-  },
-  {
-    id: '5',
-    title: '🔐 Melhorias no sistema de autenticação',
-    content: 'Melhoramos o sistema de autenticação para uma experiência mais estável. Agora, se você precisar fazer login novamente, o processo será mais suave e sem mensagens de erro desnecessárias.',
-    isAdmin: false,
-    createdAt: new Date('2025-07-29T19:30:00'), // July 29, 2025
-    isActive: true,
-  },
-  {
-    id: '4',
-    title: '🏳️‍🌈 Atualização nas opções de orientação',
-    content: 'A opção "Sapatão" foi alterada para "Lésbica" nas opções de orientação sexual. Isso reflete uma terminologia mais inclusiva e respeitosa. Se você já tinha selecionado a opção anterior, seus dados permanecem inalterados.',
-    isAdmin: false,
-    createdAt: new Date('2025-07-29T19:00:00'), // July 29, 2025
-    isActive: true,
-  },
-  {
-    id: '3',
-    title: '📧 Migração de mailing concluída',
-    content: 'A migração dos dados de mailing foi concluída com sucesso! Todos os perfis e participantes foram atualizados. O sistema está agora totalmente operacional com os novos dados.',
-    isAdmin: false,
-    createdAt: new Date('2025-07-29T00:00:00'), // July 29, 2025
     isActive: true,
   },
 ]
