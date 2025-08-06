@@ -101,3 +101,42 @@ export async function getQueueEntry(id: string) {
 
   return result
 }
+
+export async function getAllNewslettersWithCounts() {
+  const newsletters = await db
+    .selectFrom("newsletters as n")
+    .leftJoin("newsletter_sends as ns", "n.id", "ns.newsletter_id")
+    .select([
+      "n.id",
+      "n.subject",
+      "n.template_name",
+      "n.content_mdx",
+      "n.status",
+      "n.scheduled_at",
+      "n.sent_at",
+      "n.created_by",
+      "n.created_at",
+      "n.updated_at",
+      (eb) => eb.fn.count<number>("ns.id").as("recipient_count")
+    ])
+    .groupBy([
+      "n.id",
+      "n.subject",
+      "n.template_name",
+      "n.content_mdx",
+      "n.status",
+      "n.scheduled_at",
+      "n.sent_at",
+      "n.created_by",
+      "n.created_at",
+      "n.updated_at"
+    ])
+    .orderBy("n.created_at", "desc")
+    .execute()
+
+  return newsletters.map(newsletter => ({
+    ...newsletter,
+    status: newsletter.status as NewsletterStatus,
+    recipient_count: Number(newsletter.recipient_count)
+  }))
+}
