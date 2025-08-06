@@ -275,6 +275,143 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          newsletter_id: string
+          processed_at: string | null
+          profile_id: string
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          newsletter_id: string
+          processed_at?: string | null
+          profile_id: string
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          newsletter_id?: string
+          processed_at?: string | null
+          profile_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_queue_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_queue_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletter_sends: {
+        Row: {
+          error_message: string | null
+          id: string
+          newsletter_id: string
+          profile_id: string
+          sent_at: string
+          status: string
+        }
+        Insert: {
+          error_message?: string | null
+          id?: string
+          newsletter_id: string
+          profile_id: string
+          sent_at?: string
+          status: string
+        }
+        Update: {
+          error_message?: string | null
+          id?: string
+          newsletter_id?: string
+          profile_id?: string
+          sent_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_sends_newsletter_id_fkey"
+            columns: ["newsletter_id"]
+            isOneToOne: false
+            referencedRelation: "newsletters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "newsletter_sends_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      newsletters: {
+        Row: {
+          content_mdx: string
+          created_at: string
+          created_by: string | null
+          id: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          content_mdx: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          content_mdx?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletters_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           allow_marketing_email: boolean | null
@@ -377,7 +514,7 @@ export type Database = {
     }
     Functions: {
       add_user_role: {
-        Args: { p_user_id: string; p_role_name: string }
+        Args: { p_role_name: string; p_user_id: string }
         Returns: undefined
       }
       get_admin_user_ids: {
