@@ -151,17 +151,27 @@ describe('Newsletter Templates', () => {
       expect(newsHtml).toContain('Positiv')
     })
 
-    it('should properly escape HTML in content', async () => {
+    it('should properly sanitize dangerous HTML in content', async () => {
       const props = {
         subject: 'Security Test',
-        content: '<script>alert("XSS")</script><p>Safe content</p>',
+        content: '<script>alert("XSS")</script><p>Safe content</p><div onclick="alert(\'XSS\')">Click</div>',
         unsubscribeUrl: 'https://positiv.com/unsubscribe'
       }
 
       const eventHtml = await render(<EventAnnouncement {...props} />)
       const newsHtml = await render(<GeneralNews {...props} />)
       
-      // Script tags should be rendered as text, not executed
+      // Script tags should be completely removed
+      expect(eventHtml).not.toContain('<script')
+      expect(eventHtml).not.toContain('alert')
+      expect(newsHtml).not.toContain('<script')
+      expect(newsHtml).not.toContain('alert')
+      
+      // Event handlers should be removed
+      expect(eventHtml).not.toContain('onclick')
+      expect(newsHtml).not.toContain('onclick')
+      
+      // Safe content should be preserved
       expect(eventHtml).toContain('Safe content')
       expect(newsHtml).toContain('Safe content')
     })
