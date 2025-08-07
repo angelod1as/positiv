@@ -38,7 +38,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // Only allow editing draft newsletters
   if (newsletter.status !== 'draft') {
     throw await redirectWithToast(
-      ADMIN_VIEW_NEWSLETTER?.(newsletterId) || ADMIN_NEWSLETTERS(),
+      ADMIN_VIEW_NEWSLETTER(newsletterId),
       { message: "Only draft newsletters can be edited", type: "error" }
     )
   }
@@ -75,7 +75,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(
-          ADMIN_VIEW_NEWSLETTER?.(newsletterId) || ADMIN_NEWSLETTERS(),
+          ADMIN_VIEW_NEWSLETTER(newsletterId),
           "Newsletter updated successfully"
         )
       }
