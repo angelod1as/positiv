@@ -6,6 +6,13 @@ import { db } from '~/lib/supabase/db.server'
 // Mock the database
 vi.mock('~/lib/supabase/db.server', () => ({
   db: {
+    selectFrom: vi.fn(() => ({
+      select: vi.fn(() => ({
+        where: vi.fn(() => ({
+          executeTakeFirst: vi.fn(),
+        })),
+      })),
+    })),
     updateTable: vi.fn(() => ({
       set: vi.fn(() => ({
         where: vi.fn(() => ({
@@ -33,12 +40,19 @@ describe('updateNewsletter', () => {
       updated_at: new Date().toISOString(),
     }
 
-    const executeTakeFirst = vi.fn().mockResolvedValue(mockUpdatedNewsletter)
-    const returningAll = vi.fn(() => ({ executeTakeFirst }))
-    const where = vi.fn(() => ({ returningAll }))
-    const set = vi.fn(() => ({ where }))
+    // Mock the selectFrom for status check
+    const selectExecuteTakeFirst = vi.fn().mockResolvedValue({ status: 'draft' })
+    const selectWhere = vi.fn(() => ({ executeTakeFirst: selectExecuteTakeFirst }))
+    const select = vi.fn(() => ({ where: selectWhere }))
+    const selectFrom = vi.fn(() => ({ select }))
+    vi.mocked(db.selectFrom).mockImplementation(selectFrom as any)
+
+    // Mock the updateTable
+    const updateExecuteTakeFirst = vi.fn().mockResolvedValue(mockUpdatedNewsletter)
+    const returningAll = vi.fn(() => ({ executeTakeFirst: updateExecuteTakeFirst }))
+    const updateWhere = vi.fn(() => ({ returningAll }))
+    const set = vi.fn(() => ({ where: updateWhere }))
     const updateTable = vi.fn(() => ({ set }))
-    
     vi.mocked(db.updateTable).mockImplementation(updateTable as any)
 
     const result = await updateNewsletter('newsletter-123', {
@@ -47,6 +61,9 @@ describe('updateNewsletter', () => {
       content_mdx: '# Updated Content',
     })
 
+    expect(selectFrom).toHaveBeenCalledWith('newsletters')
+    expect(select).toHaveBeenCalledWith('status')
+    expect(selectWhere).toHaveBeenCalledWith('id', '=', 'newsletter-123')
     expect(updateTable).toHaveBeenCalledWith('newsletters')
     expect(set).toHaveBeenCalledWith(expect.objectContaining({
       subject: 'Updated Newsletter',
@@ -54,7 +71,7 @@ describe('updateNewsletter', () => {
       content_mdx: '# Updated Content',
       updated_at: expect.any(String),
     }))
-    expect(where).toHaveBeenCalledWith('id', '=', 'newsletter-123')
+    expect(updateWhere).toHaveBeenCalledWith('id', '=', 'newsletter-123')
     expect(result).toEqual(mockUpdatedNewsletter)
   })
 
@@ -69,12 +86,19 @@ describe('updateNewsletter', () => {
       updated_at: new Date().toISOString(),
     }
 
-    const executeTakeFirst = vi.fn().mockResolvedValue(mockUpdatedNewsletter)
-    const returningAll = vi.fn(() => ({ executeTakeFirst }))
-    const where = vi.fn(() => ({ returningAll }))
-    const set = vi.fn(() => ({ where }))
+    // Mock the selectFrom for status check
+    const selectExecuteTakeFirst = vi.fn().mockResolvedValue({ status: 'draft' })
+    const selectWhere = vi.fn(() => ({ executeTakeFirst: selectExecuteTakeFirst }))
+    const select = vi.fn(() => ({ where: selectWhere }))
+    const selectFrom = vi.fn(() => ({ select }))
+    vi.mocked(db.selectFrom).mockImplementation(selectFrom as any)
+
+    // Mock the updateTable
+    const updateExecuteTakeFirst = vi.fn().mockResolvedValue(mockUpdatedNewsletter)
+    const returningAll = vi.fn(() => ({ executeTakeFirst: updateExecuteTakeFirst }))
+    const updateWhere = vi.fn(() => ({ returningAll }))
+    const set = vi.fn(() => ({ where: updateWhere }))
     const updateTable = vi.fn(() => ({ set }))
-    
     vi.mocked(db.updateTable).mockImplementation(updateTable as any)
 
     const result = await updateNewsletter('newsletter-123', {
@@ -91,20 +115,34 @@ describe('updateNewsletter', () => {
     expect(result).toEqual(mockUpdatedNewsletter)
   })
 
-  it('should return null if newsletter not found', async () => {
-    const executeTakeFirst = vi.fn().mockResolvedValue(undefined)
-    const returningAll = vi.fn(() => ({ executeTakeFirst }))
-    const where = vi.fn(() => ({ returningAll }))
-    const set = vi.fn(() => ({ where }))
-    const updateTable = vi.fn(() => ({ set }))
-    
-    vi.mocked(db.updateTable).mockImplementation(updateTable as any)
+  it('should throw error if newsletter not found', async () => {
+    // Mock the selectFrom to return undefined (not found)
+    const selectExecuteTakeFirst = vi.fn().mockResolvedValue(undefined)
+    const selectWhere = vi.fn(() => ({ executeTakeFirst: selectExecuteTakeFirst }))
+    const select = vi.fn(() => ({ where: selectWhere }))
+    const selectFrom = vi.fn(() => ({ select }))
+    vi.mocked(db.selectFrom).mockImplementation(selectFrom as any)
 
-    const result = await updateNewsletter('invalid-id', {
-      subject: 'Updated Newsletter',
-    })
+    await expect(
+      updateNewsletter('invalid-id', {
+        subject: 'Updated Newsletter',
+      })
+    ).rejects.toThrow('Newsletter not found')
+  })
 
-    expect(result).toBeUndefined()
+  it('should throw error if newsletter is not in draft status', async () => {
+    // Mock the selectFrom to return a non-draft newsletter
+    const selectExecuteTakeFirst = vi.fn().mockResolvedValue({ status: 'sent' })
+    const selectWhere = vi.fn(() => ({ executeTakeFirst: selectExecuteTakeFirst }))
+    const select = vi.fn(() => ({ where: selectWhere }))
+    const selectFrom = vi.fn(() => ({ select }))
+    vi.mocked(db.selectFrom).mockImplementation(selectFrom as any)
+
+    await expect(
+      updateNewsletter('newsletter-123', {
+        subject: 'Updated Newsletter',
+      })
+    ).rejects.toThrow('Only draft newsletters can be updated')
   })
 
   it('should only update provided fields', async () => {
@@ -117,12 +155,19 @@ describe('updateNewsletter', () => {
       updated_at: new Date().toISOString(),
     }
 
-    const executeTakeFirst = vi.fn().mockResolvedValue(mockUpdatedNewsletter)
-    const returningAll = vi.fn(() => ({ executeTakeFirst }))
-    const where = vi.fn(() => ({ returningAll }))
-    const set = vi.fn(() => ({ where }))
+    // Mock the selectFrom for status check
+    const selectExecuteTakeFirst = vi.fn().mockResolvedValue({ status: 'draft' })
+    const selectWhere = vi.fn(() => ({ executeTakeFirst: selectExecuteTakeFirst }))
+    const select = vi.fn(() => ({ where: selectWhere }))
+    const selectFrom = vi.fn(() => ({ select }))
+    vi.mocked(db.selectFrom).mockImplementation(selectFrom as any)
+
+    // Mock the updateTable
+    const updateExecuteTakeFirst = vi.fn().mockResolvedValue(mockUpdatedNewsletter)
+    const returningAll = vi.fn(() => ({ executeTakeFirst: updateExecuteTakeFirst }))
+    const updateWhere = vi.fn(() => ({ returningAll }))
+    const set = vi.fn(() => ({ where: updateWhere }))
     const updateTable = vi.fn(() => ({ set }))
-    
     vi.mocked(db.updateTable).mockImplementation(updateTable as any)
 
     const result = await updateNewsletter('newsletter-123', {

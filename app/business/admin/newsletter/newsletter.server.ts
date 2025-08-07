@@ -142,6 +142,21 @@ interface UpdateNewsletterData {
 }
 
 export async function updateNewsletter(id: string, data: UpdateNewsletterData) {
+  // First check if newsletter exists and is in draft status
+  const existing = await db
+    .selectFrom("newsletters")
+    .select("status")
+    .where("id", "=", id)
+    .executeTakeFirst()
+  
+  if (!existing) {
+    throw new Error("Newsletter not found")
+  }
+  
+  if (existing.status !== "draft") {
+    throw new Error("Only draft newsletters can be updated")
+  }
+  
   const updateData = {
     ...data,
     updated_at: new Date().toISOString()
