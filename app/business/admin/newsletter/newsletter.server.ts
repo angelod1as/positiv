@@ -132,3 +132,42 @@ export async function getAllNewslettersWithCounts() {
     recipient_count: countMap.get(newsletter.id) || 0
   }))
 }
+
+interface UpdateNewsletterData {
+  subject?: string
+  template_name?: string
+  content_mdx?: string
+  status?: NewsletterStatus
+  scheduled_at?: string
+}
+
+export async function updateNewsletter(id: string, data: UpdateNewsletterData) {
+  // First check if newsletter exists and is in draft status
+  const existing = await db
+    .selectFrom("newsletters")
+    .select("status")
+    .where("id", "=", id)
+    .executeTakeFirst()
+  
+  if (!existing) {
+    throw new Error("Newsletter not found")
+  }
+  
+  if (existing.status !== "draft") {
+    throw new Error("Only draft newsletters can be updated")
+  }
+  
+  const updateData = {
+    ...data,
+    updated_at: new Date().toISOString()
+  }
+  
+  const result = await db
+    .updateTable("newsletters")
+    .set(updateData)
+    .where("id", "=", id)
+    .returningAll()
+    .executeTakeFirst()
+  
+  return result
+}

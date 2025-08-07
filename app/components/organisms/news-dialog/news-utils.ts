@@ -26,9 +26,17 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '11',
+    title: '✏️ Criar e editar newsletters agora disponível!',
+    content: 'Administradores agora podem criar novas newsletters e editar rascunhos existentes! Use o editor MDX para formatar seu conteúdo com títulos, listas e muito mais. Agende envios para datas futuras ou salve como rascunho para continuar depois.',
+    isAdmin: true,
+    createdAt: new Date('2025-08-06T21:00:00'), // August 6, 2025, 9PM
+    isActive: true,
+  },
+  {
     id: '10',
     title: '📬 Gerenciamento de Newsletters disponível!',
-    content: 'Agora administradores podem visualizar todas as newsletters do sistema! Acesse o painel administrativo e clique em "Gerenciar Newsletters" para ver a lista completa com informações sobre status, destinatários e datas. Em breve: criação e envio de newsletters!',
+    content: 'Agora administradores podem visualizar todas as newsletters do sistema! Acesse o painel administrativo e clique em "Gerenciar Newsletters" para ver a lista completa com informações sobre status, destinatários e datas.',
     isAdmin: true,
     createdAt: new Date('2025-08-06T18:00:00'), // August 6, 2025
     isActive: true,
