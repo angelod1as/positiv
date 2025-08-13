@@ -1,5 +1,5 @@
 import { type Kysely, sql } from "kysely"
-import type { Database } from "~/lib/supabase/db.server"
+import type { Database } from "~types/database/kysely.types"
 
 export interface SegmentFilter {
   veteransOnly?: boolean
@@ -46,11 +46,11 @@ export async function getEligibleRecipients(
     }
     if (filter.gender) {
       // Gender is an array, so we use the @> operator to check if it contains the value
-      query = query.where(sql`gender @> ARRAY[${filter.gender}]::text[]`)
+      query = query.where(sql<boolean>`gender @> ARRAY[${filter.gender}]::text[]`)
     }
     if (filter.orientation) {
       // Orientation is an array, so we use the @> operator to check if it contains the value
-      query = query.where(sql`orientation @> ARRAY[${filter.orientation}]::text[]`)
+      query = query.where(sql<boolean>`orientation @> ARRAY[${filter.orientation}]::text[]`)
     }
   }
 
@@ -82,11 +82,11 @@ export async function getRecipientCount(
     }
     if (filter.gender) {
       // Gender is an array, so we use the @> operator to check if it contains the value
-      query = query.where(sql`gender @> ARRAY[${filter.gender}]::text[]`)
+      query = query.where(sql<boolean>`gender @> ARRAY[${filter.gender}]::text[]`)
     }
     if (filter.orientation) {
       // Orientation is an array, so we use the @> operator to check if it contains the value
-      query = query.where(sql`orientation @> ARRAY[${filter.orientation}]::text[]`)
+      query = query.where(sql<boolean>`orientation @> ARRAY[${filter.orientation}]::text[]`)
     }
   }
 

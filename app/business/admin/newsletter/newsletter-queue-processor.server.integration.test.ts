@@ -6,12 +6,12 @@ import {
   createQueueEntriesForNewsletter,
   processQueueEntry,
 } from "./newsletter-queue-processor.server"
-import { createNewsletter, updateNewsletter } from "./newsletter.server"
+import { createNewsletter } from "./newsletter.server"
 import type { SegmentFilter } from "./newsletter-recipients.server"
 
 // Mock the email sending function
 vi.mock("~/business/email/send-email", () => ({
-  sendEmail: vi.fn().mockResolvedValue({ success: true })
+  sendEmail: vi.fn().mockResolvedValue({ success: true, data: undefined, errors: [] })
 }))
 
 describe("Newsletter Queue Processor - Integration Tests", () => {
@@ -29,20 +29,27 @@ describe("Newsletter Queue Processor - Integration Tests", () => {
   afterEach(async () => {
     await cleanupAfterTest(tracker, kysely)
     vi.clearAllMocks()
+    vi.resetAllMocks()
+    // Reset the sendEmail mock to its default implementation
+    const { sendEmail } = await import("~/business/email/send-email")
+    vi.mocked(sendEmail).mockResolvedValue({ success: true, data: undefined, errors: [] })
   })
 
   describe("createQueueEntriesForNewsletter", () => {
     it("should create queue entries for all eligible recipients", async () => {
       // Create test profiles
       const profile1 = await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test1@test.com",
         allow_marketing_email: true,
       })
-      const profile2 = await createTestProfile(tracker, kysely, {
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test2@test.com",
         allow_marketing_email: true,
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "nomarketing@test.com",
         allow_marketing_email: false,
       })
@@ -76,11 +83,13 @@ describe("Newsletter Queue Processor - Integration Tests", () => {
     it("should apply segmentation filters", async () => {
       // Create test profiles
       const veteran = await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "veteran@test.com",
         allow_marketing_email: true,
         is_veteran: true,
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "newbie@test.com",
         allow_marketing_email: true,
         is_veteran: false,
@@ -114,6 +123,7 @@ describe("Newsletter Queue Processor - Integration Tests", () => {
 
     it("should not create duplicate queue entries", async () => {
       const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test@test.com",
         allow_marketing_email: true,
       })
@@ -148,6 +158,7 @@ describe("Newsletter Queue Processor - Integration Tests", () => {
     it("should process a queue entry successfully", async () => {
       const { sendEmail } = await import("~/business/email/send-email")
       const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test@test.com",
         allow_marketing_email: true,
       })
@@ -207,6 +218,7 @@ describe("Newsletter Queue Processor - Integration Tests", () => {
       vi.mocked(sendEmail).mockRejectedValueOnce(new Error("Network error"))
 
       const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test@test.com",
         allow_marketing_email: true,
       })
@@ -254,6 +266,7 @@ describe("Newsletter Queue Processor - Integration Tests", () => {
       vi.mocked(sendEmail).mockRejectedValue(new Error("Permanent failure"))
 
       const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test@test.com",
         allow_marketing_email: true,
       })
@@ -315,14 +328,17 @@ describe("Newsletter Queue Processor - Integration Tests", () => {
       // Create multiple profiles
       const profiles = await Promise.all([
         createTestProfile(tracker, kysely, {
+        user_id: null,
           email: "test1@test.com",
           allow_marketing_email: true,
         }),
         createTestProfile(tracker, kysely, {
+        user_id: null,
           email: "test2@test.com",
           allow_marketing_email: true,
         }),
         createTestProfile(tracker, kysely, {
+        user_id: null,
           email: "test3@test.com",
           allow_marketing_email: true,
         }),
@@ -359,21 +375,28 @@ describe("Newsletter Queue Processor - Integration Tests", () => {
 
     it("should handle partial failures", async () => {
       const { sendEmail } = await import("~/business/email/send-email")
-      vi.mocked(sendEmail)
-        .mockResolvedValueOnce({ success: true })
-        .mockRejectedValueOnce(new Error("Failed"))
-        .mockResolvedValueOnce({ success: true })
+      
+      // Mock based on the email address to ensure consistent behavior
+      vi.mocked(sendEmail).mockImplementation(async (options) => {
+        if (options.to === "fail@test.com") {
+          throw new Error("Failed")
+        }
+        return { success: true, data: undefined, errors: [] }
+      })
 
       const profiles = await Promise.all([
         createTestProfile(tracker, kysely, {
+        user_id: null,
           email: "success1@test.com",
           allow_marketing_email: true,
         }),
         createTestProfile(tracker, kysely, {
+        user_id: null,
           email: "fail@test.com",
           allow_marketing_email: true,
         }),
         createTestProfile(tracker, kysely, {
+        user_id: null,
           email: "success2@test.com",
           allow_marketing_email: true,
         }),
@@ -406,3 +429,4 @@ describe("Newsletter Queue Processor - Integration Tests", () => {
     })
   })
 })
+

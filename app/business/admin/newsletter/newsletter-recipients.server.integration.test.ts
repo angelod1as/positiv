@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { createTestProfile, createTestEvent } from "~/test/db-test-utils"
+import { createTestProfile } from "~/test/db-test-utils"
 import {
   getEligibleRecipients,
   type SegmentFilter,
@@ -22,15 +22,18 @@ describe("Newsletter Recipients - Integration Tests", () => {
   describe("getEligibleRecipients", () => {
     it("should return only profiles with allow_marketing_email = true", async () => {
       // Create test profiles
-      const allowedProfile1 = await createTestProfile(tracker, kysely, {
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "allowed1@test.com",
         allow_marketing_email: true,
       })
-      const allowedProfile2 = await createTestProfile(tracker, kysely, {
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "allowed2@test.com",
         allow_marketing_email: true,
       })
-      const notAllowedProfile = await createTestProfile(tracker, kysely, {
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "notallowed@test.com",
         allow_marketing_email: false,
       })
@@ -45,11 +48,13 @@ describe("Newsletter Recipients - Integration Tests", () => {
 
     it("should filter by veteran status", async () => {
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "veteran@test.com",
         allow_marketing_email: true,
         is_veteran: true,
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "newbie@test.com",
         allow_marketing_email: true,
         is_veteran: false,
@@ -70,16 +75,19 @@ describe("Newsletter Recipients - Integration Tests", () => {
 
     it("should filter by gender", async () => {
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "male@test.com",
         allow_marketing_email: true,
         gender: ["Male"],
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "female@test.com",
         allow_marketing_email: true,
         gender: ["Female"],
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "nonbinary@test.com",
         allow_marketing_email: true,
         gender: ["Non-binary"],
@@ -94,11 +102,13 @@ describe("Newsletter Recipients - Integration Tests", () => {
 
     it("should filter by orientation", async () => {
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "gay@test.com",
         allow_marketing_email: true,
         orientation: ["Gay"],
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "bi@test.com",
         allow_marketing_email: true,
         orientation: ["Bisexual"],
@@ -113,18 +123,21 @@ describe("Newsletter Recipients - Integration Tests", () => {
 
     it("should combine multiple filters", async () => {
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "veteran-male@test.com",
         allow_marketing_email: true,
         is_veteran: true,
         gender: ["Male"],
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "newbie-male@test.com",
         allow_marketing_email: true,
         is_veteran: false,
         gender: ["Male"],
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "veteran-female@test.com",
         allow_marketing_email: true,
         is_veteran: true,
@@ -143,6 +156,7 @@ describe("Newsletter Recipients - Integration Tests", () => {
 
     it("should return empty array when no profiles match", async () => {
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test@test.com",
         allow_marketing_email: false,
       })
@@ -154,6 +168,7 @@ describe("Newsletter Recipients - Integration Tests", () => {
 
     it("should handle null/undefined filters gracefully", async () => {
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test@test.com",
         allow_marketing_email: true,
       })
@@ -168,14 +183,17 @@ describe("Newsletter Recipients - Integration Tests", () => {
   describe("getRecipientCount", () => {
     it("should return count of eligible recipients", async () => {
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test1@test.com",
         allow_marketing_email: true,
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test2@test.com",
         allow_marketing_email: true,
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "test3@test.com",
         allow_marketing_email: false,
       })
@@ -188,16 +206,19 @@ describe("Newsletter Recipients - Integration Tests", () => {
 
     it("should return count with filters applied", async () => {
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "veteran1@test.com",
         allow_marketing_email: true,
         is_veteran: true,
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "veteran2@test.com",
         allow_marketing_email: true,
         is_veteran: true,
       })
       await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "newbie@test.com",
         allow_marketing_email: true,
         is_veteran: false,
@@ -211,3 +232,4 @@ describe("Newsletter Recipients - Integration Tests", () => {
     })
   })
 })
+
