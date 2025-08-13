@@ -5,6 +5,9 @@ import { convert, type HtmlToTextOptions, type FormatCallback } from "html-to-te
 import React from "react"
 import { runInNewContext } from "vm"
 
+// Base URL for email links - matching the pattern used in format-newsletter-mail.tsx
+const BASE_URL = 'https://positiv.com'
+
 // Custom email components
 const EmailEventCard = ({ title, date, location, spots }: {
   title: string
@@ -42,8 +45,18 @@ const EmailButton = ({ href, children }: {
   href: string
   children: React.ReactNode
 }) => {
+  // Validate href to prevent javascript: or data: URIs
+  const isValidHref = href && (
+    href.startsWith('http://') || 
+    href.startsWith('https://') || 
+    href.startsWith('mailto:') ||
+    href.startsWith('/')
+  )
+  
+  const safeHref = isValidHref ? href : '#'
+  
   return React.createElement('a', { 
-    href,
+    href: safeHref,
     className: 'button',
     style: {
       display: 'inline-block',
@@ -117,7 +130,7 @@ function htmlToPlainText(html: string): string {
   const textOptions: HtmlToTextOptions = {
     wordwrap: 130,
     selectors: [
-      { selector: 'a', options: { baseUrl: 'https://positiv.com' } },
+      { selector: 'a', options: { baseUrl: BASE_URL } },
       { selector: 'hr', format: 'horizontalLine' },
       { selector: 'blockquote', format: 'blockquoteFormatter' },
       { selector: 'h1', options: { uppercase: false } },
@@ -136,58 +149,108 @@ function htmlToPlainText(html: string): string {
   return convert(html, textOptions).trim()
 }
 
+// Block MDX expressions and JSX via remark/rehype plugins
+const remarkPlugins = [
+  // Block import/export statements and expressions
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  () => (tree: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const visit = (node: any): void => {
+      // Block ESM imports/exports
+      if (node.type === 'mdxjsEsm') {
+        throw new Error('JavaScript expressions are not allowed in newsletter content for security reasons')
+      }
+      // Block inline JS expressions {}
+      if (node.type === 'mdxFlowExpression' || node.type === 'mdxTextExpression') {
+        throw new Error('JavaScript expressions are not allowed in newsletter content for security reasons')
+      }
+      if (node.children) {
+        node.children.forEach(visit)
+      }
+    }
+    visit(tree)
+  }
+]
+
 // Helper function to compile and render MDX
 async function compileMDXToHtml(
   mdxContent: string, 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  customComponents: Record<string, React.ComponentType<any>>,
-  useSandbox: boolean = true
+  customComponents: Record<string, React.ComponentType<any>>
 ): Promise<{ html: string; text: string }> {
-  // Compile MDX to JavaScript
+  // Compile MDX to JavaScript with security restrictions
   const compiled = await compile(mdxContent, {
     outputFormat: 'function-body',
     development: false,
-    // Disable JS expressions in MDX for security
-    remarkPlugins: [],
-    rehypePlugins: []
+    // Block JS expressions in MDX for security
+    remarkPlugins,
+    rehypePlugins: [],
+    // Disable MDX provider and imports
+    providerImportSource: undefined,
   })
 
   const code = String(compiled)
   
+  // Create a frozen copy of runtime to prevent prototype pollution
+  const frozenRuntime = Object.freeze({ ...runtime })
+  
+  // Create a sandboxed context for safer execution
+  // This prevents access to Node.js globals and file system
+  const sandbox = {
+    _jsx_runtime: frozenRuntime,
+    // Explicitly block potentially dangerous globals
+    console: undefined,
+    process: undefined,
+    require: undefined,
+    __dirname: undefined,
+    __filename: undefined,
+    module: undefined,
+    exports: undefined,
+    global: undefined,
+    Buffer: undefined,
+    setImmediate: undefined,
+    setInterval: undefined,
+    setTimeout: undefined,
+    clearTimeout: undefined,
+    clearInterval: undefined,
+    clearImmediate: undefined,
+    fetch: undefined,
+    XMLHttpRequest: undefined,
+    WebSocket: undefined,
+  }
+  
+  // Freeze the sandbox to prevent modification
+  Object.freeze(sandbox)
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let MDXContent: React.ComponentType<any>
   
-  if (useSandbox) {
-    // Create a sandboxed context for safer execution
-    // This prevents access to Node.js globals and file system
-    const sandbox = {
-      _jsx_runtime: runtime,
-      console: { log: () => {}, error: () => {}, warn: () => {} }, // Disable console
-      process: undefined,
-      require: undefined,
-      __dirname: undefined,
-      __filename: undefined,
-      module: undefined,
-      exports: undefined,
-      global: undefined,
-    }
-    
+  try {
     // Run the compiled MDX in a sandboxed environment
     const mdxExport = runInNewContext(
-      `(function(_jsx_runtime) { ${code} })(_jsx_runtime)`,
+      `(function(_jsx_runtime) { 
+        'use strict';
+        ${code} 
+      })(_jsx_runtime)`,
       sandbox,
       {
-        timeout: 1000, // 1 second timeout
-        displayErrors: false
+        timeout: 500, // 500ms timeout
+        displayErrors: false,
+        contextCodeGeneration: {
+          strings: false,
+          wasm: false
+        }
       }
     )
     
     MDXContent = mdxExport.default
-  } else {
-    // Direct execution for fallback (still safer than new Function with full access)
-    const mdxFunction = new Function('_jsx_runtime', code)
-    const mdxExport = mdxFunction(runtime)
-    MDXContent = mdxExport.default
+  } catch (error) {
+    // If sandbox execution fails, check if it's due to missing component
+    if (error instanceof Error && error.message.includes('to be defined')) {
+      // Re-throw with more context
+      throw new Error(`MDX rendering failed: ${error.message}`)
+    }
+    throw error
   }
 
   // Render the MDX content with custom components
@@ -204,7 +267,7 @@ async function compileMDXToHtml(
   } catch (renderError) {
     // If rendering fails due to missing component, throw a more informative error
     if (renderError instanceof Error && renderError.message.includes('to be defined')) {
-      throw renderError
+      throw new Error(`Component rendering failed: ${renderError.message}`)
     }
     throw renderError
   }
@@ -213,9 +276,9 @@ async function compileMDXToHtml(
 export async function processMDXContent(
   mdxContent: string
 ): Promise<ProcessMDXResult> {
-  // First, validate that MDX content is from a trusted source
-  // In production, this should come from admin-only input
+  // SECURITY: This function should ONLY accept content from trusted admin users
   // Never accept MDX from untrusted user input
+  // Consider adding authentication/authorization checks here
   
   try {
     // Try to compile with our custom components
@@ -226,14 +289,19 @@ export async function processMDXContent(
       throw new Error(`Invalid MDX syntax: ${error.message}`)
     }
     
-    // If it's about missing components, try to handle gracefully
+    // Check if it's a security violation
+    if (error instanceof Error && error.message.includes('not allowed')) {
+      throw error // Re-throw security errors as-is
+    }
+    
+    // If it's about missing components, try with fallback while maintaining sandbox
     if (error instanceof Error && (
-      error.message.includes('Expected component') || 
+      error.message.includes('Component rendering failed') || 
       error.message.includes('to be defined')
     )) {
       // Extract component name from error message
-      const componentMatch = error.message.match(/Expected component `(\w+)`/) || 
-                           error.message.match(/`(\w+)` to be defined/)
+      const componentMatch = error.message.match(/`(\w+)` to be defined/) ||
+                           error.message.match(/Expected component `(\w+)`/)
       const missingComponent = componentMatch ? componentMatch[1] : 'Unknown'
       
       // Create components with fallback for missing component
@@ -243,8 +311,8 @@ export async function processMDXContent(
       }
       
       try {
-        // Retry with fallback component, using direct execution to avoid sandbox issues
-        return await compileMDXToHtml(mdxContent, fallbackComponents, false)
+        // Retry with fallback component, KEEPING SANDBOX ENABLED
+        return await compileMDXToHtml(mdxContent, fallbackComponents)
       } catch (_retryError) {
         // If retry also fails, throw original error
         throw error
