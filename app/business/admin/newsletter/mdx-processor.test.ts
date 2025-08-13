@@ -152,5 +152,45 @@ More valid content
       expect(result.html).toContain("Test Content")
       expect(result.text).toContain("Test Content")
     })
+
+    it("should block JavaScript expressions for security", async () => {
+      const mdxWithExpression = `
+# Hello
+
+{console.log("This should not execute")}
+
+More content
+      `.trim()
+
+      await expect(processMDXContent(mdxWithExpression))
+        .rejects
+        .toThrow('JavaScript expressions are not allowed')
+    })
+
+    it("should block import statements for security", async () => {
+      const mdxWithImport = `
+import fs from 'fs'
+
+# Content
+
+This should not work
+      `.trim()
+
+      await expect(processMDXContent(mdxWithImport))
+        .rejects
+        .toThrow('JavaScript expressions are not allowed')
+    })
+
+    it("should sanitize button href to prevent XSS", async () => {
+      const mdxWithXSS = `
+<Button href="javascript:alert('XSS')">Click me</Button>
+      `.trim()
+
+      const result = await processMDXContent(mdxWithXSS)
+      
+      // Should sanitize the javascript: URL to #
+      expect(result.html).not.toContain('javascript:')
+      expect(result.html).toContain('href="#"')
+    })
   })
 })
