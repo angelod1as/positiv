@@ -5,8 +5,10 @@ import { convert, type HtmlToTextOptions, type FormatCallback } from "html-to-te
 import React from "react"
 import { runInNewContext } from "vm"
 
-// Base URL for email links - matching the pattern used in format-newsletter-mail.tsx
-const BASE_URL = 'https://positiv.com'
+// Base URL for email links - use environment variable with fallback
+const BASE_URL = (process.env.APP_URL && /^https?:\/\//.test(process.env.APP_URL))
+  ? process.env.APP_URL
+  : 'https://positiv.com'
 
 // Custom email components
 const EmailEventCard = ({ title, date, location, spots }: {
@@ -172,6 +174,17 @@ const remarkPlugins = [
   }
 ]
 
+// Helper function to deep freeze objects
+function deepFreeze<T extends object>(obj: T): T {
+  Object.getOwnPropertyNames(obj).forEach((name) => {
+    const value = obj[name as keyof T]
+    if (value && typeof value === 'object') {
+      deepFreeze(value as object)
+    }
+  })
+  return Object.freeze(obj)
+}
+
 // Helper function to compile and render MDX
 async function compileMDXToHtml(
   mdxContent: string, 
@@ -191,12 +204,12 @@ async function compileMDXToHtml(
 
   const code = String(compiled)
   
-  // Create a frozen copy of runtime to prevent prototype pollution
-  const frozenRuntime = Object.freeze({ ...runtime })
+  // Create a deep-frozen copy of runtime to prevent prototype pollution
+  const frozenRuntime = deepFreeze({ ...runtime })
   
   // Create a sandboxed context for safer execution
   // This prevents access to Node.js globals and file system
-  const sandbox = {
+  const sandbox = deepFreeze({
     _jsx_runtime: frozenRuntime,
     // Explicitly block potentially dangerous globals
     console: undefined,
@@ -217,10 +230,7 @@ async function compileMDXToHtml(
     fetch: undefined,
     XMLHttpRequest: undefined,
     WebSocket: undefined,
-  }
-  
-  // Freeze the sandbox to prevent modification
-  Object.freeze(sandbox)
+  })
   
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let MDXContent: React.ComponentType<any>

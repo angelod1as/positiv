@@ -76,7 +76,22 @@ export async function processQueueEntry(
   kysely: Kysely<Database>,
   queueEntryId: string
 ): Promise<boolean> {
-  // Get queue entry with newsletter and profile details
+  // Atomically update status to processing and get the entry
+  // This prevents concurrent workers from processing the same entry
+  const updatedEntry = await kysely
+    .updateTable("newsletter_queue")
+    .set({ status: "processing" })
+    .where("id", "=", queueEntryId)
+    .where("status", "=", "pending") // Only process if still pending
+    .returningAll()
+    .executeTakeFirst()
+
+  if (!updatedEntry) {
+    // Entry was already being processed or doesn't exist
+    return false
+  }
+
+  // Get newsletter and profile details
   const entry = await kysely
     .selectFrom("newsletter_queue as nq")
     .innerJoin("newsletters as n", "n.id", "nq.newsletter_id")
@@ -97,15 +112,14 @@ export async function processQueueEntry(
 
   if (!entry || !entry.email) {
     console.error("No entry found or no email:", { queueEntryId, entry })
+    // Reset status back to pending if we can't process
+    await kysely
+      .updateTable("newsletter_queue")
+      .set({ status: "pending" })
+      .where("id", "=", queueEntryId)
+      .execute()
     return false
   }
-
-  // Mark as processing
-  await kysely
-    .updateTable("newsletter_queue")
-    .set({ status: "processing" })
-    .where("id", "=", queueEntryId)
-    .execute()
 
   try {
     // Generate unsubscribe token
@@ -278,8 +292,21 @@ export async function processNewsletterQueue(
     }
   }
 
-  // Update newsletter status
-  const finalStatus = failed === 0 || processed > 0 ? "sent" : "failed"
+  // Check if there are any remaining pending or processing entries
+  const remaining = await kysely
+    .selectFrom("newsletter_queue")
+    .select(kysely.fn.countAll().as("count"))
+    .where("newsletter_id", "=", newsletterId)
+    .where("status", "in", ["pending", "processing"])
+    .executeTakeFirst()
+
+  const remainingCount = Number(remaining?.count ?? 0)
+  
+  // Determine final status based on remaining queue entries
+  const finalStatus = remainingCount === 0
+    ? (failed > 0 && processed === 0 ? "failed" : "sent")
+    : "sending"
+  
   await kysely
     .updateTable("newsletters")
     .set({
