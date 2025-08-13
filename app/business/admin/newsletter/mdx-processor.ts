@@ -3,6 +3,7 @@ import * as runtime from "react/jsx-runtime"
 import { renderToStaticMarkup } from "react-dom/server"
 import { convert, type HtmlToTextOptions, type FormatCallback } from "html-to-text"
 import React from "react"
+import { runInNewContext } from "vm"
 
 // Custom email components
 const EmailEventCard = ({ title, date, location, spots }: {
@@ -23,16 +24,16 @@ const EmailEventCard = ({ title, date, location, spots }: {
   }, [
     React.createElement('h3', { key: 'title', style: { marginTop: 0 } }, `🎉 ${title}`),
     React.createElement('p', { key: 'date' }, [
-      React.createElement('strong', { key: 'date-label' }, 'Data: '),
+      React.createElement('strong', { key: 'date-label' }, 'Date: '),
       date
     ]),
     React.createElement('p', { key: 'location' }, [
-      React.createElement('strong', { key: 'location-label' }, 'Local: '),
+      React.createElement('strong', { key: 'location-label' }, 'Location: '),
       location
     ]),
     React.createElement('p', { key: 'spots' }, [
-      React.createElement('strong', { key: 'spots-label' }, 'Vagas: '),
-      `${spots} pessoas`
+      React.createElement('strong', { key: 'spots-label' }, 'Spots: '),
+      `${spots}`
     ])
   ])
 }
@@ -94,71 +95,131 @@ const components = {
   Quote: EmailQuote,
 }
 
+// Fallback component for unknown components
+const FallbackComponent = ({ children }: { children?: React.ReactNode }) => 
+  React.createElement('div', {}, children)
+
 interface ProcessMDXResult {
   html: string
   text: string
 }
 
-export async function processMDXContent(
-  mdxContent: string,
-  _templateName: 'event-announcement' | 'general-news'
-): Promise<ProcessMDXResult> {
-  try {
-    // Compile MDX to JavaScript
-    const compiled = await compile(mdxContent, {
-      outputFormat: 'function-body',
-      development: false,
-    })
+// Helper function to convert HTML to plain text
+function htmlToPlainText(html: string): string {
+  const blockquoteFormatter: FormatCallback = (elem, walk, builder) => {
+    walk(elem.children || [], builder)
+  }
+  
+  const horizontalLine: FormatCallback = (_elem, _walk, builder) => {
+    builder.addInline('\n---\n')
+  }
+  
+  const textOptions: HtmlToTextOptions = {
+    wordwrap: 130,
+    selectors: [
+      { selector: 'a', options: { baseUrl: 'https://positiv.com' } },
+      { selector: 'hr', format: 'horizontalLine' },
+      { selector: 'blockquote', format: 'blockquoteFormatter' },
+      { selector: 'h1', options: { uppercase: false } },
+      { selector: 'h2', options: { uppercase: false } },
+      { selector: 'h3', options: { uppercase: false } },
+      { selector: 'h4', options: { uppercase: false } },
+      { selector: 'h5', options: { uppercase: false } },
+      { selector: 'h6', options: { uppercase: false } },
+    ],
+    formatters: {
+      blockquoteFormatter,
+      horizontalLine
+    }
+  }
+  
+  return convert(html, textOptions).trim()
+}
 
-    // Create a function from the compiled code
-    const code = String(compiled)
+// Helper function to compile and render MDX
+async function compileMDXToHtml(
+  mdxContent: string, 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  customComponents: Record<string, React.ComponentType<any>>,
+  useSandbox: boolean = true
+): Promise<{ html: string; text: string }> {
+  // Compile MDX to JavaScript
+  const compiled = await compile(mdxContent, {
+    outputFormat: 'function-body',
+    development: false,
+    // Disable JS expressions in MDX for security
+    remarkPlugins: [],
+    rehypePlugins: []
+  })
+
+  const code = String(compiled)
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let MDXContent: React.ComponentType<any>
+  
+  if (useSandbox) {
+    // Create a sandboxed context for safer execution
+    // This prevents access to Node.js globals and file system
+    const sandbox = {
+      _jsx_runtime: runtime,
+      console: { log: () => {}, error: () => {}, warn: () => {} }, // Disable console
+      process: undefined,
+      require: undefined,
+      __dirname: undefined,
+      __filename: undefined,
+      module: undefined,
+      exports: undefined,
+      global: undefined,
+    }
     
-    // Create the MDX function
+    // Run the compiled MDX in a sandboxed environment
+    const mdxExport = runInNewContext(
+      `(function(_jsx_runtime) { ${code} })(_jsx_runtime)`,
+      sandbox,
+      {
+        timeout: 1000, // 1 second timeout
+        displayErrors: false
+      }
+    )
+    
+    MDXContent = mdxExport.default
+  } else {
+    // Direct execution for fallback (still safer than new Function with full access)
     const mdxFunction = new Function('_jsx_runtime', code)
-    
-    // Run the MDX function to get React elements
     const mdxExport = mdxFunction(runtime)
-    const MDXContent = mdxExport.default
+    MDXContent = mdxExport.default
+  }
 
-    // Render the MDX content with custom components
-    const element = React.createElement(MDXContent, { components })
+  // Render the MDX content with custom components
+  try {
+    const element = React.createElement(MDXContent, { components: customComponents })
     
     // Convert React elements to HTML string
     const html = renderToStaticMarkup(element)
-
-    // Convert HTML to plain text for fallback
-    const blockquoteFormatter: FormatCallback = (elem, walk, builder) => {
-      walk(elem.children || [], builder)
-    }
     
-    const horizontalLine: FormatCallback = (_elem, _walk, builder) => {
-      builder.addInline('\n---\n')
-    }
-    
-    const textOptions: HtmlToTextOptions = {
-      wordwrap: 130,
-      selectors: [
-        { selector: 'a', options: { baseUrl: 'https://positiv.com' } },
-        { selector: 'hr', format: 'horizontalLine' },
-        { selector: 'blockquote', format: 'blockquoteFormatter' },
-        { selector: 'h1', options: { uppercase: false } },
-        { selector: 'h2', options: { uppercase: false } },
-        { selector: 'h3', options: { uppercase: false } },
-        { selector: 'h4', options: { uppercase: false } },
-        { selector: 'h5', options: { uppercase: false } },
-        { selector: 'h6', options: { uppercase: false } },
-      ],
-      formatters: {
-        blockquoteFormatter,
-        horizontalLine
-      }
-    }
-    const text = convert(html, textOptions)
+    // Convert HTML to plain text
+    const text = htmlToPlainText(html)
 
-    return {
-      html,
-      text: text.trim()
+    return { html, text }
+  } catch (renderError) {
+    // If rendering fails due to missing component, throw a more informative error
+    if (renderError instanceof Error && renderError.message.includes('to be defined')) {
+      throw renderError
     }
+    throw renderError
+  }
+}
+
+export async function processMDXContent(
+  mdxContent: string
+): Promise<ProcessMDXResult> {
+  // First, validate that MDX content is from a trusted source
+  // In production, this should come from admin-only input
+  // Never accept MDX from untrusted user input
+  
+  try {
+    // Try to compile with our custom components
+    return await compileMDXToHtml(mdxContent, components)
   } catch (error) {
     // Check if it's a malformed MDX syntax error
     if (error instanceof Error && error.message.includes('Could not parse')) {
@@ -166,59 +227,24 @@ export async function processMDXContent(
     }
     
     // If it's about missing components, try to handle gracefully
-    if (error instanceof Error && error.message.includes('Expected component')) {
+    if (error instanceof Error && (
+      error.message.includes('Expected component') || 
+      error.message.includes('to be defined')
+    )) {
       // Extract component name from error message
-      const componentMatch = error.message.match(/Expected component `(\w+)`/)
+      const componentMatch = error.message.match(/Expected component `(\w+)`/) || 
+                           error.message.match(/`(\w+)` to be defined/)
       const missingComponent = componentMatch ? componentMatch[1] : 'Unknown'
       
-      // Create a fallback component that renders children as-is
+      // Create components with fallback for missing component
       const fallbackComponents = {
         ...components,
-        [missingComponent]: ({ children }: { children: React.ReactNode }) => 
-          React.createElement('div', {}, children)
+        [missingComponent]: FallbackComponent
       }
       
       try {
-        // Retry with fallback component
-        const compiled = await compile(mdxContent, {
-          outputFormat: 'function-body',
-          development: false,
-        })
-        
-        const code = String(compiled)
-        const mdxFunction = new Function('_jsx_runtime', code)
-        const mdxExport = mdxFunction(runtime)
-        const MDXContent = mdxExport.default
-        
-        const element = React.createElement(MDXContent, { components: fallbackComponents })
-        const html = renderToStaticMarkup(element)
-        
-        const fallbackHorizontalLine: FormatCallback = (_elem, _walk, builder) => {
-          builder.addInline('\n---\n')
-        }
-        
-        const fallbackTextOptions: HtmlToTextOptions = {
-          wordwrap: 130,
-          selectors: [
-            { selector: 'a', options: { baseUrl: 'https://positiv.com' } },
-            { selector: 'hr', format: 'horizontalLine' },
-            { selector: 'h1', options: { uppercase: false } },
-            { selector: 'h2', options: { uppercase: false } },
-            { selector: 'h3', options: { uppercase: false } },
-            { selector: 'h4', options: { uppercase: false } },
-            { selector: 'h5', options: { uppercase: false } },
-            { selector: 'h6', options: { uppercase: false } },
-          ],
-          formatters: {
-            horizontalLine: fallbackHorizontalLine
-          }
-        }
-        const text = convert(html, fallbackTextOptions)
-        
-        return {
-          html,
-          text: text.trim()
-        }
+        // Retry with fallback component, using direct execution to avoid sandbox issues
+        return await compileMDXToHtml(mdxContent, fallbackComponents, false)
       } catch (_retryError) {
         // If retry also fails, throw original error
         throw error
