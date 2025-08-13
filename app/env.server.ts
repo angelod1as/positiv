@@ -37,6 +37,8 @@ const getEnvironment = makeTypedEnvironment(
     AWS_SECRET_ACCESS_KEY: zod.string().optional(),
 
     COOKIE_SECRET: zod.string().optional(),
+
+    VERCEL: zod.string().optional(),
   }),
 )
 

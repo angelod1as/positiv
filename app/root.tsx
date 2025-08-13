@@ -14,6 +14,7 @@ import {
 import { getToast } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
+import { NEWS_VERSION, POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
@@ -21,7 +22,6 @@ import { newsCookie } from "./business/session.server"
 import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
-import { NEWS_VERSION, POSITIV_EMAIL } from "~/lib/constants/constants"
 
 // COMMENT OUT when offline
 export const links: Route.LinksFunction = () => [
@@ -161,7 +161,7 @@ export function Layout(props: { children: ReactNode }) {
         {props.children}
         <ScrollRestoration />
         <Scripts />
-        {process.env.VERCEL && <SpeedInsights />}
+        {import.meta.env.VERCEL && <SpeedInsights />}
       </body>
     </html>
   )
@@ -197,7 +197,10 @@ export default function App({ loaderData }: Route.ComponentProps) {
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
-      <Footer isThereAnyNews={isThereAnyNews ?? false} currentProfile={currentProfile} />
+      <Footer
+        isThereAnyNews={isThereAnyNews ?? false}
+        currentProfile={currentProfile}
+      />
     </>
   )
 }
