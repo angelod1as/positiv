@@ -1,9 +1,9 @@
-import { type Kysely, sql } from "kysely"
-import type { Database } from "~/lib/supabase/db.server"
+import { type Kysely } from "kysely"
+import type { Database } from "~types/database/kysely.types"
 import { sendEmail } from "~/business/email/send-email"
 import { generateUnsubscribeToken } from "./unsubscribe-tokens.server"
 import { getEligibleRecipients, type SegmentFilter } from "./newsletter-recipients.server"
-import { processNewsletterMDX } from "./mdx-processor.server"
+import { processMDXContent } from "./mdx-processor.server"
 import { renderNewsletterEmail } from "./newsletter-email-renderer.server"
 
 const MAX_RETRIES = 3
@@ -96,6 +96,7 @@ export async function processQueueEntry(
     .executeTakeFirst()
 
   if (!entry || !entry.email) {
+    console.error("No entry found or no email:", { queueEntryId, entry })
     return false
   }
 
@@ -112,13 +113,13 @@ export async function processQueueEntry(
     const unsubscribeUrl = `${process.env.APP_URL || "http://localhost:5173"}/unsubscribe?token=${unsubscribeToken}`
 
     // Process MDX content
-    const processedContent = await processNewsletterMDX(entry.content_mdx)
+    const processedContent = await processMDXContent(entry.content_mdx)
 
     // Render email HTML
     const { html, text } = await renderNewsletterEmail({
       subject: entry.subject,
       templateName: entry.template_name,
-      content: processedContent,
+      content: processedContent.html,
       unsubscribeUrl,
     })
 
@@ -162,6 +163,7 @@ export async function processQueueEntry(
 
     return true
   } catch (error) {
+    console.error("Error processing queue entry:", error)
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
     const newAttempts = entry.attempts + 1
 
