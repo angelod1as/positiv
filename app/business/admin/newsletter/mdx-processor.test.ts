@@ -13,7 +13,7 @@ This is a **bold** paragraph with *italic* text.
 - Item 2
       `.trim()
 
-      const result = await processMDXContent(mdxContent, "event-announcement")
+      const result = await processMDXContent(mdxContent)
 
       expect(result).toBeDefined()
       expect(result.html).toBeDefined()
@@ -49,11 +49,14 @@ This is a **bold** paragraph with *italic* text.
 Join us for an amazing night!
       `.trim()
 
-      const result = await processMDXContent(mdxContent, "event-announcement")
+      const result = await processMDXContent(mdxContent)
 
       expect(result.html).toContain("Summer Party")
+      expect(result.html).toContain("Date:")
       expect(result.html).toContain("2025-02-15")
+      expect(result.html).toContain("Location:")
       expect(result.html).toContain("São Paulo")
+      expect(result.html).toContain("Spots:")
       expect(result.html).toContain("50")
       
       // Plain text should also include the event details
@@ -66,7 +69,7 @@ Join us for an amazing night!
 <Button href="https://positiv.com/events">View All Events</Button>
       `.trim()
 
-      const result = await processMDXContent(mdxContent, "general-news")
+      const result = await processMDXContent(mdxContent)
 
       expect(result.html).toContain('href="https://positiv.com/events"')
       expect(result.html).toContain("View All Events")
@@ -84,7 +87,7 @@ First section
 Second section
       `.trim()
 
-      const result = await processMDXContent(mdxContent, "general-news")
+      const result = await processMDXContent(mdxContent)
 
       expect(result.html).toContain("<hr")
       expect(result.text).toContain("---") // Plain text representation of divider
@@ -97,7 +100,7 @@ Second section
 </Quote>
       `.trim()
 
-      const result = await processMDXContent(mdxContent, "general-news")
+      const result = await processMDXContent(mdxContent)
 
       expect(result.html).toContain("Life is beautiful")
       expect(result.html).toContain("Angelo")
@@ -106,7 +109,7 @@ Second section
       expect(result.text).toContain("- Angelo")
     })
 
-    it("should handle invalid MDX gracefully", async () => {
+    it("should throw error for unknown components", async () => {
       const invalidMdx = `
 # Valid heading
 
@@ -117,15 +120,11 @@ Second section
 More valid content
       `.trim()
 
-      const result = await processMDXContent(invalidMdx, "event-announcement")
-
-      // Should still process valid content
-      expect(result.html).toContain("Valid heading")
-      expect(result.html).toContain("More valid content")
-      
-      // Invalid component should be rendered as text or ignored
-      expect(result.text).toContain("Valid heading")
-      expect(result.text).toContain("More valid content")
+      // With the VM sandbox security improvement, unknown components will throw an error
+      // This is safer than silently rendering unknown components
+      await expect(processMDXContent(invalidMdx))
+        .rejects
+        .toThrow('Expected component')
     })
 
     it("should throw error for malformed MDX syntax", async () => {
@@ -136,23 +135,22 @@ More valid content
   This is malformed MDX
       `.trim()
 
-      await expect(processMDXContent(malformedMdx, "event-announcement"))
+      await expect(processMDXContent(malformedMdx))
         .rejects
         .toThrow()
     })
 
-    it("should support both template types", async () => {
+    it("should process MDX content correctly", async () => {
       const content = "# Test Content"
 
-      const eventResult = await processMDXContent(content, "event-announcement")
-      const newsResult = await processMDXContent(content, "general-news")
+      const result = await processMDXContent(content)
 
-      expect(eventResult.html).toBeDefined()
-      expect(newsResult.html).toBeDefined()
+      expect(result.html).toBeDefined()
+      expect(result.text).toBeDefined()
       
-      // Both should process the same content
-      expect(eventResult.html).toContain("Test Content")
-      expect(newsResult.html).toContain("Test Content")
+      // Should process the content correctly
+      expect(result.html).toContain("Test Content")
+      expect(result.text).toContain("Test Content")
     })
   })
 })
