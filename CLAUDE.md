@@ -68,6 +68,56 @@ pnpm db:types          # For production Supabase (rarely used)
 pnpm email:test   # Start Mailhog for local email testing
 ```
 
+## Database Migration Rules
+
+**CRITICAL**: These rules must be followed to avoid breaking production databases.
+
+### Never Modify Already-Applied Migrations
+
+1. **NEVER** change a migration file after it has been applied to ANY database (local, staging, or production)
+2. **NEVER** rename migration files that have already been applied
+3. If you need to fix something in an already-applied migration:
+   - Create a NEW migration that rolls back the problematic changes
+   - Create another NEW migration that applies the correct changes
+
+### Before Pushing Migration Changes
+
+1. **ALWAYS** test migrations locally with `supabase db reset`
+2. **ALWAYS** ensure migrations run successfully from a clean state
+3. If syncing with staging/production:
+   - Use `supabase db pull` to get the current state
+   - Create NEW migrations for any additional changes needed
+   - Never modify the pulled migrations
+
+### Migration Best Practices
+
+1. Handle duplicate object creation gracefully:
+   ```sql
+   -- Use DO blocks with exception handling for types
+   DO $$ BEGIN
+     CREATE TYPE "public"."my_type" as ("field" varchar);
+   EXCEPTION
+     WHEN duplicate_object THEN null;
+   END $$;
+   
+   -- Use IF NOT EXISTS for extensions
+   CREATE EXTENSION IF NOT EXISTS pg_cron;
+   ```
+
+2. Use proper delimiters for complex SQL in functions:
+   ```sql
+   -- Use $job$ or other delimiters instead of $$ when nesting
+   PERFORM cron.schedule('job-name', '*/5 * * * *', $job$
+     SELECT some_function();
+   $job$);
+   ```
+
+3. Always check if objects exist before dropping:
+   ```sql
+   DROP EXTENSION IF EXISTS pg_net;
+   DROP TYPE IF EXISTS "public"."my_type";
+   ```
+
 ## High-Level Architecture
 
 ### Tech Stack
