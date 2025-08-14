@@ -1,4 +1,3 @@
-import React from "react"
 import { render } from "@react-email/components"
 import { EventAnnouncement } from "~/components/email/templates/newsletter/event-announcement"
 import { GeneralNews } from "~/components/email/templates/newsletter/general-news"
@@ -24,11 +23,11 @@ export async function renderNewsletterEmail(options: RenderOptions): Promise<{
 
   // Render the email HTML
   const html = await render(
-    React.createElement(Template, {
-      subject,
-      content,
-      unsubscribeUrl,
-    })
+    <Template
+      subject={subject}
+      content={content}
+      unsubscribeUrl={unsubscribeUrl}
+    />
   )
 
   // Convert HTML to plain text
