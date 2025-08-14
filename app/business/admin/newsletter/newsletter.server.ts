@@ -70,7 +70,7 @@ export async function createNewsletterSend(data: CreateNewsletterSendData) {
     .values({
       ...data,
       id: crypto.randomUUID(),
-      sent_at: data.status === "sent" ? new Date().toISOString() : null
+      sent_at: new Date().toISOString() // Always set sent_at, even for failed sends
     })
     .returningAll()
     .executeTakeFirstOrThrow()
