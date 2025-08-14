@@ -75,7 +75,8 @@ describe("UnsubscribePage", () => {
       vi.mocked(unsubscribeService.processUnsubscribe).mockResolvedValue({
         success: true,
         profileId: "550e8400-e29b-41d4-a716-446655440000",
-      })
+        alreadyUnsubscribed: false,
+      } as const)
 
       const formData = new FormData()
       formData.append("profileId", "550e8400-e29b-41d4-a716-446655440000")
@@ -99,7 +100,7 @@ describe("UnsubscribePage", () => {
         success: true,
         profileId: "550e8400-e29b-41d4-a716-446655440000",
         alreadyUnsubscribed: true,
-      })
+      } as const)
 
       const formData = new FormData()
       formData.append("profileId", "550e8400-e29b-41d4-a716-446655440000")
