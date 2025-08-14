@@ -5,6 +5,9 @@
     "**/.client/**/*",
     ".react-router/types/**/*"
   ],
+  "exclude": [
+    "supabase/functions/**/*"
+  ],
   "compilerOptions": {
     "lib": [
       "DOM",
