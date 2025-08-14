@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest"
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile } from "~/test/db-test-utils"
 import {
@@ -6,8 +6,14 @@ import {
   getNewslettersByStatus,
   createNewsletterSend,
   addToQueue,
-  getQueueEntry
+  getQueueEntry,
+  sendNewsletterNow
 } from "./newsletter.server"
+
+// Mock the email sending function
+vi.mock("~/business/email/send-email", () => ({
+  sendEmail: vi.fn().mockResolvedValue({ success: true, data: undefined, errors: [] })
+}))
 
 describe("Newsletter Tables - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -431,5 +437,127 @@ describe("Newsletter Tables - Integration Tests", () => {
     expect(newsletters[0].id).toBe(scheduledNewsletter.id)
     expect(newsletters[1].id).toBe(sentNewsletter.id)
     expect(newsletters[2].id).toBe(draftNewsletter.id)
+  })
+
+  it("should send a newsletter immediately when sendNewsletterNow is called", async () => {
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin9@example.com",
+      full_name: "Admin User 9"
+    })
+
+    // Create recipients
+    await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "immediate1@example.com",
+      full_name: "Immediate Recipient 1",
+      allow_marketing_email: true
+    })
+
+    await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "immediate2@example.com",
+      full_name: "Immediate Recipient 2",
+      allow_marketing_email: true
+    })
+
+    // Create a recipient without marketing consent
+    await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "no-marketing@example.com",
+      full_name: "No Marketing",
+      allow_marketing_email: false
+    })
+
+    // Create a draft newsletter
+    const newsletter = await createNewsletter({
+      subject: "Immediate Send Test",
+      template_name: "general-news",
+      content_mdx: "# Immediate Content\n\nThis will be sent immediately.",
+      status: "draft",
+      created_by: creator.id
+    })
+    tracker.track("newsletters", newsletter.id)
+
+    // Send the newsletter immediately
+    const result = await sendNewsletterNow(newsletter.id)
+
+    // Check the result
+    expect(result.success).toBe(true)
+    expect(result.processed).toBe(2) // Only recipients with marketing consent
+    expect(result.failed).toBe(0)
+    expect(result.newsletterId).toBe(newsletter.id)
+
+    // Verify newsletter status was updated
+    const updatedNewsletter = await kysely
+      .selectFrom("newsletters")
+      .selectAll()
+      .where("id", "=", newsletter.id)
+      .executeTakeFirst()
+
+    expect(updatedNewsletter?.status).toBe("sent")
+    expect(updatedNewsletter?.sent_at).toBeDefined()
+
+    // Verify queue entries were created and processed
+    const queueEntries = await kysely
+      .selectFrom("newsletter_queue")
+      .selectAll()
+      .where("newsletter_id", "=", newsletter.id)
+      .execute()
+
+    expect(queueEntries).toHaveLength(2)
+    expect(queueEntries.every(e => e.status === "sent")).toBe(true)
+
+    // Verify newsletter_sends records were created
+    const sends = await kysely
+      .selectFrom("newsletter_sends")
+      .selectAll()
+      .where("newsletter_id", "=", newsletter.id)
+      .execute()
+
+    expect(sends).toHaveLength(2)
+    expect(sends.every(s => s.status === "sent")).toBe(true)
+  })
+
+  it("should fail to send a non-draft newsletter immediately", async () => {
+    const creator = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin10@example.com",
+      full_name: "Admin User 10"
+    })
+
+    // Create a scheduled newsletter
+    const newsletter = await createNewsletter({
+      subject: "Already Scheduled",
+      template_name: "general-news",
+      content_mdx: "# Content",
+      status: "scheduled",
+      scheduled_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      created_by: creator.id
+    })
+    tracker.track("newsletters", newsletter.id)
+
+    // Try to send immediately
+    await expect(sendNewsletterNow(newsletter.id)).rejects.toThrow(
+      "Only draft newsletters can be sent immediately"
+    )
+
+    // Verify status wasn't changed
+    const unchangedNewsletter = await kysely
+      .selectFrom("newsletters")
+      .selectAll()
+      .where("id", "=", newsletter.id)
+      .executeTakeFirst()
+
+    expect(unchangedNewsletter?.status).toBe("scheduled")
+  })
+
+  it("should handle errors gracefully when sending immediately", async () => {
+    // Try to send a non-existent newsletter
+    const fakeId = crypto.randomUUID()
+    
+    await expect(sendNewsletterNow(fakeId)).rejects.toThrow(
+      "Newsletter not found"
+    )
   })
 })
