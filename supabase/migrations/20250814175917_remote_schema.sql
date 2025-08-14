@@ -1,4 +1,5 @@
-drop extension if exists "pg_net";
+-- Note: pg_net might be needed for net.http_post function used later
+-- drop extension if exists "pg_net";
 
 create extension if not exists "http" with schema "public";
 
@@ -18,11 +19,24 @@ CREATE INDEX idx_newsletter_queue_status_created_at ON public.newsletter_queue U
 
 set check_function_bodies = off;
 
-create type "public"."http_header" as ("field" character varying, "value" character varying);
+-- These types are created by the http extension, only create if they don't exist
+DO $$ BEGIN
+  CREATE TYPE "public"."http_header" as ("field" character varying, "value" character varying);
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-create type "public"."http_request" as ("method" http_method, "uri" character varying, "headers" http_header[], "content_type" character varying, "content" character varying);
+DO $$ BEGIN
+  CREATE TYPE "public"."http_request" as ("method" http_method, "uri" character varying, "headers" http_header[], "content_type" character varying, "content" character varying);
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
-create type "public"."http_response" as ("status" integer, "content_type" character varying, "headers" http_header[], "content" character varying);
+DO $$ BEGIN
+  CREATE TYPE "public"."http_response" as ("status" integer, "content_type" character varying, "headers" http_header[], "content" character varying);
+EXCEPTION
+  WHEN duplicate_object THEN null;
+END $$;
 
 CREATE OR REPLACE FUNCTION public.trigger_newsletter_processing()
  RETURNS jsonb
