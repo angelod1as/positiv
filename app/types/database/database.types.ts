@@ -490,6 +490,44 @@ export type Database = {
         }
         Relationships: []
       }
+      unsubscribe_logs: {
+        Row: {
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          profile_id: string
+          source: string
+          unsubscribed_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          profile_id: string
+          source?: string
+          unsubscribed_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          profile_id?: string
+          source?: string
+          unsubscribed_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unsubscribe_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -524,25 +562,25 @@ export type Database = {
       get_profile_with_roles: {
         Args: { user_id_input: string }
         Returns: {
-          id: string
+          allow_marketing_email: boolean
+          basic_data_filled: boolean
+          cpf: string
+          created_at: string
+          date_of_birth: string
           email: string
           full_name: string
-          basic_data_filled: boolean
-          social_name: string
+          gender: string[]
+          how_came_to_us: string
+          id: string
+          is_admin: boolean
+          orientation: string[]
+          phone: number
           pronouns: string[]
           rg: string
-          cpf: string
-          phone: number
-          date_of_birth: string
-          gender: string[]
-          orientation: string[]
-          where_lives: string
-          how_came_to_us: string
           rg_issuer: string
-          allow_marketing_email: boolean
-          created_at: string
-          is_admin: boolean
           roles: string[]
+          social_name: string
+          where_lives: string
         }[]
       }
     }
