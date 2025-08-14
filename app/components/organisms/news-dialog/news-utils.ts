@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '12',
+    title: '⏰ Newsletters agendadas são enviadas automaticamente!',
+    content: 'Newsletters agendadas agora são processadas automaticamente a cada 5 minutos! Quando chegar o horário agendado, o sistema enviará automaticamente para todos os destinatários. Você também pode acionar o envio manualmente se necessário.',
+    isAdmin: true,
+    createdAt: new Date('2025-08-14T12:00:00'), // August 14, 2025
+    isActive: true,
+  },
+  {
     id: '11',
     title: '✏️ Criar e editar newsletters agora disponível!',
     content: 'Administradores agora podem criar novas newsletters e editar rascunhos existentes! Use o editor MDX para formatar seu conteúdo com títulos, listas e muito mais. Agende envios para datas futuras ou salve como rascunho para continuar depois.',
@@ -65,12 +73,5 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
     createdAt: new Date('2025-08-04T12:00:00'), // August 4, 2025
     isActive: true,
   },
-  {
-    id: '6',
-    title: '📱 Adicione participantes aos seus Google Contacts!',
-    content: 'Agora você pode adicionar participantes aos seus Google Contacts com um clique! O nome formatado é copiado automaticamente para você colar no Google Contacts.',
-    isAdmin: true,
-    createdAt: new Date('2025-07-30T12:00:00'), // July 30, 2025
-    isActive: true,
-  },
+  // Removed items older than 2 weeks as per guidelines
 ]
