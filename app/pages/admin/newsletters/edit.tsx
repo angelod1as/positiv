@@ -113,7 +113,7 @@ export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentP
   const { newsletter } = loaderData
   const fetcher = useFetcher()
   
-  const handleSendNow = (newsletterId: string) => {
+  const handleSendNow = (_newsletterId: string) => {
     if (confirm("Are you sure you want to send this newsletter immediately to all subscribers?")) {
       fetcher.submit(
         { intent: 'send-now' },

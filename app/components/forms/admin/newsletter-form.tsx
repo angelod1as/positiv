@@ -57,7 +57,11 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow 
             {newsletter?.id && newsletter?.status === "draft" && onSendNow && (
               <button
                 type="button"
-                onClick={() => onSendNow(newsletter.id!)}
+                onClick={() => {
+                  if (newsletter.id) {
+                    onSendNow(newsletter.id)
+                  }
+                }}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
               >
                 Send Now

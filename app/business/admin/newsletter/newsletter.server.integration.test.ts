@@ -447,14 +447,14 @@ describe("Newsletter Tables - Integration Tests", () => {
     })
 
     // Create recipients
-    const recipient1 = await createTestProfile(tracker, kysely, {
+    await createTestProfile(tracker, kysely, {
       user_id: null,
       email: "immediate1@example.com",
       full_name: "Immediate Recipient 1",
       allow_marketing_email: true
     })
 
-    const recipient2 = await createTestProfile(tracker, kysely, {
+    await createTestProfile(tracker, kysely, {
       user_id: null,
       email: "immediate2@example.com",
       full_name: "Immediate Recipient 2",
