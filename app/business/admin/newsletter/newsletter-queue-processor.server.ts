@@ -202,12 +202,13 @@ export async function processQueueEntry(
           newsletter_id: entry.newsletter_id,
           profile_id: entry.profile_id,
           status: "failed",
-          sent_at: null,
+          sent_at: new Date().toISOString(), // Set current time even for failed sends
           error_message: errorMessage,
         })
         .onConflict((oc) =>
           oc.columns(["newsletter_id", "profile_id"]).doUpdateSet({
             status: "failed",
+            sent_at: new Date().toISOString(),
             error_message: errorMessage,
           })
         )
@@ -237,15 +238,20 @@ export async function processNewsletterQueue(
 ): Promise<ProcessResult> {
   const { batchSize = DEFAULT_BATCH_SIZE, delayMs = DEFAULT_DELAY_MS } = options
 
-  // Update newsletter status to sending
+  const sendStartedAt = new Date().toISOString()
+
+  // Update newsletter status to sending and record start time
   await kysely
     .updateTable("newsletters")
-    .set({ status: "sending" })
+    .set({ 
+      status: "sending",
+      send_started_at: sendStartedAt
+    })
     .where("id", "=", newsletterId)
     .execute()
 
   // Create queue entries if they don't exist
-  await createQueueEntriesForNewsletter(kysely, newsletterId, segmentFilter)
+  const recipientCount = await createQueueEntriesForNewsletter(kysely, newsletterId, segmentFilter)
 
   let processed = 0
   let failed = 0
@@ -307,11 +313,28 @@ export async function processNewsletterQueue(
     ? (failed > 0 && processed === 0 ? "failed" : "sent")
     : "sending"
   
+  const sendCompletedAt = finalStatus === "sent" || finalStatus === "failed" 
+    ? new Date().toISOString() 
+    : null
+
+  // Get the total recipient count from the queue
+  const totalRecipientsResult = await kysely
+    .selectFrom("newsletter_queue")
+    .select(kysely.fn.countAll().as("count"))
+    .where("newsletter_id", "=", newsletterId)
+    .executeTakeFirst()
+  
+  const totalRecipients = Number(totalRecipientsResult?.count ?? 0)
+  
   await kysely
     .updateTable("newsletters")
     .set({
       status: finalStatus,
-      sent_at: finalStatus === "sent" ? new Date().toISOString() : null,
+      sent_at: finalStatus === "sent" ? sendCompletedAt : null,
+      send_completed_at: sendCompletedAt,
+      total_recipients: totalRecipients,
+      successful_sends: processed,
+      failed_sends: failed
     })
     .where("id", "=", newsletterId)
     .execute()
