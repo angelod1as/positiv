@@ -14,7 +14,7 @@ vi.mock('../base/schema-form', () => ({
     }) => React.ReactNode
     values?: Record<string, unknown>
     labels?: Record<string, string>
-    options?: Record<string, Array<{ value: string, label: string }>>
+    options?: Record<string, Array<{ value: string, name: string }>>
     placeholders?: Record<string, string>
   }) => {
     const Button = ({ children: btnChildren }: { children: React.ReactNode }) => (
@@ -47,7 +47,7 @@ vi.mock('../base/schema-form', () => ({
             <option value="">Select a template</option>
             {options?.template_name?.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {opt.name}
               </option>
             ))}
           </select>
@@ -82,8 +82,11 @@ vi.mock('../base/schema-form', () => ({
 }))
 
 describe('NewsletterForm', () => {
-  const renderForm = (newsletter?: Parameters<typeof NewsletterForm>[0]['newsletter']) => {
-    return render(<NewsletterForm newsletter={newsletter} />)
+  const renderForm = (
+    newsletter?: Parameters<typeof NewsletterForm>[0]['newsletter'],
+    onSendNow?: Parameters<typeof NewsletterForm>[0]['onSendNow']
+  ) => {
+    return render(<NewsletterForm newsletter={newsletter} onSendNow={onSendNow} />)
   }
 
   describe('rendering', () => {
@@ -169,6 +172,65 @@ describe('NewsletterForm', () => {
       expect(screen.getByLabelText(/template/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/content/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/schedule/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('Send Now button', () => {
+    it('should render Send Now button for draft newsletters', () => {
+      const mockOnSendNow = vi.fn()
+      const draftNewsletter = {
+        id: '123',
+        subject: 'Draft Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Draft Content',
+        status: 'draft',
+      }
+      
+      renderForm(draftNewsletter, mockOnSendNow)
+      
+      const sendNowButton = screen.getByRole('button', { name: /send now/i })
+      expect(sendNowButton).toBeInTheDocument()
+    })
+
+    it('should not render Send Now button for new newsletters', () => {
+      renderForm()
+      
+      const sendNowButton = screen.queryByRole('button', { name: /send now/i })
+      expect(sendNowButton).not.toBeInTheDocument()
+    })
+
+    it('should not render Send Now button for scheduled newsletters', () => {
+      const scheduledNewsletter = {
+        id: '123',
+        subject: 'Scheduled Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Content',
+        status: 'scheduled',
+        scheduled_at: '2025-12-25T10:00:00',
+      }
+      
+      renderForm(scheduledNewsletter)
+      
+      const sendNowButton = screen.queryByRole('button', { name: /send now/i })
+      expect(sendNowButton).not.toBeInTheDocument()
+    })
+
+    it('should call onSendNow callback when Send Now is clicked', () => {
+      const mockOnSendNow = vi.fn()
+      const draftNewsletter = {
+        id: '123',
+        subject: 'Draft Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Draft Content',
+        status: 'draft',
+      }
+      
+      render(<NewsletterForm newsletter={draftNewsletter} onSendNow={mockOnSendNow} />)
+      
+      const sendNowButton = screen.getByRole('button', { name: /send now/i })
+      sendNowButton.click()
+      
+      expect(mockOnSendNow).toHaveBeenCalledWith('123')
     })
   })
 })
