@@ -1,6 +1,7 @@
 import { type Kysely } from "kysely"
 import type { Database } from "~types/database/kysely.types"
 import { processNewsletterQueue } from "./newsletter-queue-processor.server"
+import { safeExecute } from "~/lib/helpers/error-handling"
 
 interface ProcessOptions {
   maxExecutionTime?: number // milliseconds
@@ -31,7 +32,8 @@ export async function processScheduledNewsletters(
       .selectFrom("newsletters")
       .selectAll()
       .where("status", "=", "scheduled")
-      .where("scheduled_at", "<=", new Date().toISOString())
+      // Use DB-side timestamp comparison to avoid timezone issues
+      .where("scheduled_at", "<=", kysely.fn<string>("now"))
       .orderBy("scheduled_at", "asc") // Process oldest first
       .execute()
 
@@ -47,9 +49,9 @@ export async function processScheduledNewsletters(
 
       console.info(`Processing newsletter: ${newsletter.id} - ${newsletter.subject}`)
 
-      try {
-        // Process the newsletter queue
-        const result = await processNewsletterQueue(
+      // Process the newsletter queue with error handling
+      const processResult = await safeExecute(() =>
+        processNewsletterQueue(
           kysely,
           newsletter.id,
           undefined, // No segment filter for now (will be added later)
@@ -58,18 +60,20 @@ export async function processScheduledNewsletters(
             delayMs: 1000, // 1 second between emails for SES rate limit
           }
         )
+      )
 
+      if (processResult.success) {
         processedNewsletters.push({
           id: newsletter.id,
           subject: newsletter.subject,
         })
         
-        totalProcessed += result.processed
-        totalFailed += result.failed
+        totalProcessed += processResult.data.processed
+        totalFailed += processResult.data.failed
 
-        console.info(`Newsletter ${newsletter.id} processed: ${result.processed} sent, ${result.failed} failed`)
-      } catch (error) {
-        console.error(`Error processing newsletter ${newsletter.id}:`, error)
+        console.info(`Newsletter ${newsletter.id} processed: ${processResult.data.processed} sent, ${processResult.data.failed} failed`)
+      } else {
+        console.error(`Error processing newsletter ${newsletter.id}:`, processResult.error)
         
         // Mark newsletter as failed if there was a critical error
         await kysely
@@ -104,7 +108,8 @@ export async function getScheduledNewslettersCount(
     .selectFrom("newsletters")
     .select(kysely.fn.count<number>("id").as("count"))
     .where("status", "=", "scheduled")
-    .where("scheduled_at", "<=", new Date().toISOString())
+    // Use DB-side timestamp comparison to avoid timezone issues
+    .where("scheduled_at", "<=", kysely.fn<string>("now"))
     .executeTakeFirst()
 
   return Number(result?.count ?? 0)
