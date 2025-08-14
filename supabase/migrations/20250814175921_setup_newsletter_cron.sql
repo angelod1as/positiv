@@ -24,7 +24,7 @@ BEGIN
     PERFORM cron.schedule(
       'process-scheduled-newsletters', -- job name
       '*/5 * * * *', -- every 5 minutes
-      $$
+      $job$
       SELECT net.http_post(
         url := current_setting('app.settings.supabase_url') || '/functions/v1/process-newsletters',
         headers := jsonb_build_object(
@@ -33,7 +33,7 @@ BEGIN
         ),
         body := jsonb_build_object('trigger', 'cron')
       );
-      $$
+      $job$
     );
     
     -- Log that the job was created
