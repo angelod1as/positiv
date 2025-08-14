@@ -25,7 +25,9 @@ describe("Unsubscribe Service - Integration Tests", () => {
       const result = await processUnsubscribe(profile.id)
 
       expect(result.success).toBe(true)
-      expect(result.profileId).toBe(profile.id)
+      if (result.success === true) {
+        expect(result.profileId).toBe(profile.id)
+      }
 
       const updatedProfile = await kysely
         .selectFrom("profiles")
@@ -46,8 +48,10 @@ describe("Unsubscribe Service - Integration Tests", () => {
       const result = await processUnsubscribe(profile.id)
 
       expect(result.success).toBe(true)
-      expect(result.profileId).toBe(profile.id)
-      expect(result.alreadyUnsubscribed).toBe(true)
+      if (result.success === true) {
+        expect(result.profileId).toBe(profile.id)
+        expect(result.alreadyUnsubscribed).toBe(true)
+      }
     })
 
     it("should return error for non-existent profile", async () => {
@@ -56,7 +60,9 @@ describe("Unsubscribe Service - Integration Tests", () => {
       const result = await processUnsubscribe(fakeProfileId)
 
       expect(result.success).toBe(false)
-      expect(result.error).toBe("profile_not_found")
+      if (result.success === false) {
+        expect(result.error).toBe("profile_not_found")
+      }
     })
 
     it("should log unsubscribe event for compliance", async () => {

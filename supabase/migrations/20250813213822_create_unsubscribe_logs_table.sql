@@ -46,3 +46,11 @@ CREATE POLICY "Service role can manage unsubscribe logs"
   FOR ALL
   USING (auth.role() = 'service_role')
   WITH CHECK (auth.role() = 'service_role');
+
+-- Allow public inserts for unsubscribe logging from the public endpoint
+-- This is needed because the unsubscribe endpoint runs without authentication
+CREATE POLICY "Allow public insert for unsubscribe logging"
+  ON unsubscribe_logs
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (source = 'email_link');

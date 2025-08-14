@@ -15,7 +15,17 @@ const rateLimiter = new RateLimiter({
 })
 
 export async function loader({ params }: LoaderFunctionArgs) {
-  const token = params.token as string
+  const token = typeof params.token === "string" ? params.token.trim() : ""
+  
+  // Validate token presence
+  if (!token) {
+    return {
+      tokenValid: false,
+      profileId: null,
+      error: "invalid" as const,
+    }
+  }
+  
   const validation = validateUnsubscribeToken(token)
   
   return {
@@ -27,14 +37,29 @@ export async function loader({ params }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData()
-  const profileId = formData.get("profileId") as string
+  const profileId = (formData.get("profileId") as string | null)?.trim() || ""
+  
+  // Validate profileId presence
+  if (!profileId) {
+    return { 
+      success: false, 
+      alreadyUnsubscribed: false, 
+      rateLimited: false 
+    }
+  }
   
   const headers = request.headers
-  const ipAddress = headers.get("x-forwarded-for") || headers.get("x-real-ip") || "unknown"
+  // Extract IP address, handling proxies correctly
+  const forwardedFor = headers.get("x-forwarded-for") || headers.get("x-real-ip") || ""
+  const ipAddress = forwardedFor.split(",")[0]?.trim() || null
   const userAgent = headers.get("user-agent") || undefined
   
+  // Use IP for rate limiting, or fallback to a unique key per request
+  // Avoid using static "unknown" which would block all users without IP
+  const rateKey = ipAddress || `req:${Date.now()}-${Math.random()}`
+  
   // Check rate limit
-  if (!rateLimiter.checkLimit(ipAddress)) {
+  if (!rateLimiter.checkLimit(rateKey)) {
     return {
       success: false,
       rateLimited: true,
@@ -45,13 +70,21 @@ export async function action({ request }: ActionFunctionArgs) {
   const result = await processUnsubscribe(
     profileId,
     "email_link",
-    ipAddress || undefined,
+    ipAddress ?? undefined,
     userAgent || undefined
   )
   
+  if (result.success === false) {
+    return {
+      success: false,
+      alreadyUnsubscribed: false,
+      rateLimited: false,
+    }
+  }
+  
   return {
-    success: result.success,
-    alreadyUnsubscribed: result.alreadyUnsubscribed || false,
+    success: true,
+    alreadyUnsubscribed: result.alreadyUnsubscribed,
     rateLimited: false,
   }
 }
