@@ -18,9 +18,10 @@ type Newsletter = {
 
 type NewsletterFormProps = {
   newsletter?: Newsletter
+  onSendNow?: (newsletterId: string) => void
 }
 
-export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter }) => {
+export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow }) => {
   const formattedNewsletter = newsletter?.id ? dbValuesToFormSchema(newsletter) : newsletter
 
   return (
@@ -53,6 +54,15 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter }) => {
         {({ Button: SubmitButton }) => (
           <div className="flex gap-4">
             <SubmitButton>{newsletter?.id ? "Update Newsletter" : "Create Newsletter"}</SubmitButton>
+            {newsletter?.id && newsletter?.status === "draft" && onSendNow && (
+              <button
+                type="button"
+                onClick={() => onSendNow(newsletter.id!)}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Send Now
+              </button>
+            )}
           </div>
         )}
       </SchemaForm>
