@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { compile } from "@mdx-js/mdx"
 import * as runtime from "react/jsx-runtime"
 import { renderToStaticMarkup } from "react-dom/server"
@@ -17,30 +18,29 @@ const EmailEventCard = ({ title, date, location, spots }: {
   location: string
   spots: number
 }) => {
-  return React.createElement('div', { 
-    className: 'event-card',
-    style: { 
-      border: '1px solid #e5e5e5', 
-      borderRadius: '8px', 
-      padding: '16px', 
-      marginBottom: '16px',
-      backgroundColor: '#f9f9f9'
-    }
-  }, [
-    React.createElement('h3', { key: 'title', style: { marginTop: 0 } }, `🎉 ${title}`),
-    React.createElement('p', { key: 'date' }, [
-      React.createElement('strong', { key: 'date-label' }, 'Date: '),
-      date
-    ]),
-    React.createElement('p', { key: 'location' }, [
-      React.createElement('strong', { key: 'location-label' }, 'Location: '),
-      location
-    ]),
-    React.createElement('p', { key: 'spots' }, [
-      React.createElement('strong', { key: 'spots-label' }, 'Spots: '),
-      `${spots}`
-    ])
-  ])
+  return (
+    <div 
+      className="event-card"
+      style={{ 
+        border: '1px solid #e5e5e5', 
+        borderRadius: '8px', 
+        padding: '16px', 
+        marginBottom: '16px',
+        backgroundColor: '#f9f9f9'
+      }}
+    >
+      <h3 style={{ marginTop: 0 }}>🎉 {title}</h3>
+      <p>
+        <strong>Date: </strong>{date}
+      </p>
+      <p>
+        <strong>Location: </strong>{location}
+      </p>
+      <p>
+        <strong>Spots: </strong>{spots}
+      </p>
+    </div>
+  )
 }
 
 const EmailButton = ({ href, children }: {
@@ -57,49 +57,57 @@ const EmailButton = ({ href, children }: {
   
   const safeHref = isValidHref ? href : '#'
   
-  return React.createElement('a', { 
-    href: safeHref,
-    className: 'button',
-    style: {
-      display: 'inline-block',
-      padding: '12px 24px',
-      backgroundColor: '#8b5cf6',
-      color: 'white',
-      textDecoration: 'none',
-      borderRadius: '6px',
-      fontWeight: 'bold',
-      marginTop: '8px',
-      marginBottom: '8px'
-    }
-  }, children)
+  return (
+    <a 
+      href={safeHref}
+      className="button"
+      style={{
+        display: 'inline-block',
+        padding: '12px 24px',
+        backgroundColor: '#8b5cf6',
+        color: 'white',
+        textDecoration: 'none',
+        borderRadius: '6px',
+        fontWeight: 'bold',
+        marginTop: '8px',
+        marginBottom: '8px'
+      }}
+    >
+      {children}
+    </a>
+  )
 }
 
 const EmailDivider = () => {
-  return React.createElement('hr', { 
-    style: { 
-      borderTop: '1px solid #e5e5e5',
-      marginTop: '24px',
-      marginBottom: '24px'
-    } 
-  })
+  return (
+    <hr 
+      style={{ 
+        borderTop: '1px solid #e5e5e5',
+        marginTop: '24px',
+        marginBottom: '24px'
+      }} 
+    />
+  )
 }
 
 const EmailQuote = ({ author, children }: {
   author?: string
   children: React.ReactNode
 }) => {
-  return React.createElement('blockquote', {
-    style: {
-      borderLeft: '4px solid #8b5cf6',
-      paddingLeft: '16px',
-      marginLeft: 0,
-      fontStyle: 'italic',
-      color: '#666'
-    }
-  }, [
-    React.createElement('p', { key: 'quote' }, children),
-    author && React.createElement('p', { key: 'author', style: { marginTop: '8px' } }, `- ${author}`)
-  ])
+  return (
+    <blockquote
+      style={{
+        borderLeft: '4px solid #8b5cf6',
+        paddingLeft: '16px',
+        marginLeft: 0,
+        fontStyle: 'italic',
+        color: '#666'
+      }}
+    >
+      <p>{children}</p>
+      {author && <p style={{ marginTop: '8px' }}>- {author}</p>}
+    </blockquote>
+  )
 }
 
 // Component mapping for MDX
@@ -111,8 +119,9 @@ const components = {
 }
 
 // Fallback component for unknown components
-const FallbackComponent = ({ children }: { children?: React.ReactNode }) => 
-  React.createElement('div', {}, children)
+const FallbackComponent = ({ children }: { children?: React.ReactNode }) => (
+  <div>{children}</div>
+)
 
 interface ProcessMDXResult {
   html: string
@@ -265,7 +274,7 @@ async function compileMDXToHtml(
 
   // Render the MDX content with custom components
   try {
-    const element = React.createElement(MDXContent, { components: customComponents })
+    const element = <MDXContent components={customComponents} />
     
     // Convert React elements to HTML string
     const html = renderToStaticMarkup(element)
