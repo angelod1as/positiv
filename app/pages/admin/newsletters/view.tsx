@@ -2,6 +2,9 @@ import { Link, useLoaderData, useFetcher } from 'react-router'
 import { redirectWithToast } from 'remix-toast'
 import { getAdminContext } from '~/business/admin/admin.server'
 import { getNewsletterById } from '~/business/admin/newsletter/newsletter.server'
+import { processScheduledNewsletters } from '~/business/admin/newsletter/newsletter-scheduler.server'
+import { db } from '~/lib/supabase/db.server'
+import { withErrorRedirect } from '~/lib/helpers/error-handling'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
@@ -46,41 +49,17 @@ export async function action({ request, params }: Route.ActionArgs) {
   const intent = formData.get('intent')
   
   if (intent === 'trigger-processing') {
-    // Trigger the edge function to process newsletters
-    try {
-      const response = await fetch(`${process.env.APP_URL || 'http://localhost:5173'}/api/admin/newsletters/process`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || 'test'}`,
-        },
-        body: JSON.stringify({}),
-      })
-      
-      if (response.ok) {
-        const result = await response.json()
-        throw await redirectWithToast(
-          `/admin/newsletters/${params.id}`,
-          { 
-            message: `Processing triggered: ${result.totalProcessed} sent, ${result.totalFailed} failed`,
-            type: "success"
-          }
-        )
-      } else {
-        throw await redirectWithToast(
-          `/admin/newsletters/${params.id}`,
-          { message: "Failed to trigger processing", type: "error" }
-        )
+    // Process newsletters directly on the server without API call
+    return withErrorRedirect(
+      () => processScheduledNewsletters(db, {
+        maxExecutionTime: 140000, // 140 seconds (leaving buffer for edge function's 150s limit)
+      }),
+      {
+        redirectPath: `/admin/newsletters/${params.id}`,
+        successMessage: (result) => `Processing triggered: ${result.totalProcessed} sent, ${result.totalFailed} failed`,
+        errorMessage: "Error triggering processing",
       }
-    } catch (error) {
-      if (error instanceof Response) {
-        throw error // Re-throw redirect responses
-      }
-      throw await redirectWithToast(
-        `/admin/newsletters/${params.id}`,
-        { message: "Error triggering processing", type: "error" }
-      )
-    }
+    )
   }
   
   return { success: false }
