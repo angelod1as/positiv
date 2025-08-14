@@ -1,12 +1,12 @@
-import { Link, useLoaderData } from 'react-router'
+import { Link, useLoaderData, useFetcher } from 'react-router'
 import { redirectWithToast } from 'remix-toast'
 import { getAdminContext } from '~/business/admin/admin.server'
 import { getNewsletterById } from '~/business/admin/newsletter/newsletter.server'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
-import { ArrowLeft, Edit, Clock, Calendar } from 'lucide-react'
-import { format } from 'date-fns'
+import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle } from 'lucide-react'
+import { format, isPast } from 'date-fns'
 import paths from '~/lib/paths'
 import type { Route } from './+types/view'
 
@@ -39,6 +39,53 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { newsletter }
 }
 
+export async function action({ request, params }: Route.ActionArgs) {
+  await getAdminContext(request, params)
+  
+  const formData = await request.formData()
+  const intent = formData.get('intent')
+  
+  if (intent === 'trigger-processing') {
+    // Trigger the edge function to process newsletters
+    try {
+      const response = await fetch(`${process.env.APP_URL || 'http://localhost:5173'}/api/admin/newsletters/process`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || 'test'}`,
+        },
+        body: JSON.stringify({}),
+      })
+      
+      if (response.ok) {
+        const result = await response.json()
+        throw await redirectWithToast(
+          `/admin/newsletters/${params.id}`,
+          { 
+            message: `Processing triggered: ${result.totalProcessed} sent, ${result.totalFailed} failed`,
+            type: "success"
+          }
+        )
+      } else {
+        throw await redirectWithToast(
+          `/admin/newsletters/${params.id}`,
+          { message: "Failed to trigger processing", type: "error" }
+        )
+      }
+    } catch (error) {
+      if (error instanceof Response) {
+        throw error // Re-throw redirect responses
+      }
+      throw await redirectWithToast(
+        `/admin/newsletters/${params.id}`,
+        { message: "Error triggering processing", type: "error" }
+      )
+    }
+  }
+  
+  return { success: false }
+}
+
 const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case 'draft':
@@ -69,6 +116,12 @@ const formatTemplateName = (template: string) => {
 
 export default function AdminViewNewsletterPage() {
   const { newsletter } = useLoaderData<typeof loader>()
+  const fetcher = useFetcher()
+  const isProcessing = fetcher.state === 'submitting'
+  
+  const isScheduledAndReady = newsletter.status === 'scheduled' && 
+    newsletter.scheduled_at && 
+    isPast(new Date(newsletter.scheduled_at))
   
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
@@ -82,14 +135,35 @@ export default function AdminViewNewsletterPage() {
           </Link>
         </div>
         
-        {newsletter.status === 'draft' && (
-          <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
-            <Button>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Newsletter
-            </Button>
-          </Link>
-        )}
+        <div className="flex gap-2">
+          {newsletter.status === 'draft' && (
+            <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
+              <Button>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Newsletter
+              </Button>
+            </Link>
+          )}
+          
+          {(newsletter.status === 'scheduled' || newsletter.status === 'sending') && (
+            <fetcher.Form method="post">
+              <input type="hidden" name="intent" value="trigger-processing" />
+              <Button type="submit" variant="outline" disabled={isProcessing}>
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Trigger Processing
+                  </>
+                )}
+              </Button>
+            </fetcher.Form>
+          )}
+        </div>
       </div>
       
       <Card>
@@ -147,6 +221,66 @@ export default function AdminViewNewsletterPage() {
               <p className="text-sm text-muted-foreground">
                 This newsletter is in draft mode. You can edit it or schedule it for sending.
               </p>
+            </div>
+          )}
+          
+          {newsletter.status === 'scheduled' && (
+            <div className="pt-4 border-t">
+              {isScheduledAndReady ? (
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-yellow-500 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium">Ready for Processing</p>
+                    <p className="text-sm text-muted-foreground">
+                      This newsletter is scheduled and ready to be sent. It will be processed automatically 
+                      within the next 5 minutes, or you can trigger processing manually using the button above.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  This newsletter is scheduled to be sent on {newsletter.scheduled_at && format(new Date(newsletter.scheduled_at), 'MMM d, yyyy h:mm a')}.
+                  It will be processed automatically when the scheduled time arrives.
+                </p>
+              )}
+            </div>
+          )}
+          
+          {newsletter.status === 'sending' && (
+            <div className="pt-4 border-t">
+              <div className="flex items-start gap-2">
+                <Loader2 className="h-4 w-4 text-blue-500 mt-0.5 animate-spin" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium">Currently Sending</p>
+                  <p className="text-sm text-muted-foreground">
+                    This newsletter is currently being processed and sent to recipients.
+                    The status will update to "Sent" once all emails have been delivered.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {newsletter.status === 'sent' && (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                This newsletter was successfully sent on {newsletter.sent_at && format(new Date(newsletter.sent_at), 'MMM d, yyyy h:mm a')}.
+              </p>
+            </div>
+          )}
+          
+          {newsletter.status === 'failed' && (
+            <div className="pt-4 border-t">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-red-500 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-red-500">Sending Failed</p>
+                  <p className="text-sm text-muted-foreground">
+                    There was an error sending this newsletter. Please check the logs for more information
+                    or try triggering the processing again.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </CardContent>
