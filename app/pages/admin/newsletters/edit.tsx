@@ -2,8 +2,9 @@ import { formAction } from "remix-forms"
 import { redirectWithSuccess, redirectWithToast } from "remix-toast"
 import { applySchema } from "composable-functions"
 import { z } from "zod"
+import { useFetcher } from "react-router"
 import { getAdminContext } from "~/business/admin/admin.server"
-import { getNewsletterById, updateNewsletter } from "~/business/admin/newsletter/newsletter.server"
+import { getNewsletterById, updateNewsletter, sendNewsletterNow } from "~/business/admin/newsletter/newsletter.server"
 import { newsletterFormSchema } from "~/business/admin/newsletter/newsletter-schema"
 import { NewsletterForm } from "~/components/forms/admin/newsletter-form"
 import paths from "~/lib/paths"
@@ -68,6 +69,29 @@ export async function action({ request, params }: Route.ActionArgs) {
     )
   }
   
+  const formData = await request.formData()
+  const intent = formData.get('intent')
+  
+  // Handle Send Now action
+  if (intent === 'send-now') {
+    try {
+      const result = await sendNewsletterNow(newsletterId)
+      throw await redirectWithSuccess(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        `Newsletter sent successfully! ${result.processed} emails sent.`
+      )
+    } catch (error) {
+      if (error instanceof Response) throw error
+      throw await redirectWithToast(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        { 
+          message: error instanceof Error ? error.message : "Failed to send newsletter", 
+          type: "error" 
+        }
+      )
+    }
+  }
+  
   return formAction({
     request,
     schema: newsletterFormSchema,
@@ -87,6 +111,16 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentProps) {
   const { newsletter } = loaderData
+  const fetcher = useFetcher()
+  
+  const handleSendNow = (newsletterId: string) => {
+    if (confirm("Are you sure you want to send this newsletter immediately to all subscribers?")) {
+      fetcher.submit(
+        { intent: 'send-now' },
+        { method: 'post' }
+      )
+    }
+  }
   
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
@@ -97,7 +131,10 @@ export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentP
         </p>
       </div>
       
-      <NewsletterForm newsletter={newsletter} />
+      <NewsletterForm 
+        newsletter={newsletter} 
+        onSendNow={handleSendNow}
+      />
     </div>
   )
 }

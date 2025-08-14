@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '13',
+    title: '🚀 Envio imediato de newsletters disponível!',
+    content: 'Agora você pode enviar newsletters imediatamente sem precisar agendar! Ao editar um rascunho de newsletter, clique no botão "Send Now" para enviar instantaneamente para todos os assinantes. O sistema mostrará o progresso e estatísticas do envio.',
+    isAdmin: true,
+    createdAt: new Date('2025-08-14T18:00:00'), // August 14, 2025, 6PM
+    isActive: true,
+  },
+  {
     id: '12',
     title: '⏰ Newsletters agendadas são enviadas automaticamente!',
     content: 'Newsletters agendadas agora são processadas automaticamente a cada 5 minutos! Quando chegar o horário agendado, o sistema enviará automaticamente para todos os destinatários. Você também pode acionar o envio manualmente se necessário.',
