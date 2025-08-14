@@ -22,6 +22,7 @@ vi.mock('~/business/admin/admin.server', () => ({
 vi.mock('~/business/admin/newsletter/newsletter.server', () => ({
   getNewsletterById: vi.fn(),
   updateNewsletter: vi.fn(),
+  sendNewsletterNow: vi.fn(),
 }))
 
 vi.mock('remix-forms', () => ({
@@ -155,7 +156,9 @@ describe('Edit Newsletter Page', () => {
         body: formData,
       })
       
+      // The action returns a function from formAction mock
       const actionFn: any = await action({ request, params: { id: 'newsletter-123' } } as any)
+      // Call the function returned by formAction with request and params
       await expect(actionFn({ request, params: { id: 'newsletter-123' } })).rejects.toThrow()
       
       expect(mockUpdateNewsletter).toHaveBeenCalledWith('newsletter-123', expect.objectContaining({
@@ -194,7 +197,9 @@ describe('Edit Newsletter Page', () => {
         body: formData,
       })
       
+      // The action returns a function from formAction mock
       const actionFn: any = await action({ request, params: { id: 'newsletter-123' } } as any)
+      // Call the function returned by formAction with request and params
       await expect(actionFn({ request, params: { id: 'newsletter-123' } })).rejects.toThrow()
       
       expect(mockUpdateNewsletter).toHaveBeenCalledWith('newsletter-123', expect.objectContaining({
@@ -218,6 +223,29 @@ describe('Edit Newsletter Page', () => {
       await expect(action({ request, params: {} } as any)).rejects.toThrow()
       
       expect(updateNewsletter).not.toHaveBeenCalled()
+    })
+
+    it('should handle send-now intent', async () => {
+      const { sendNewsletterNow } = await import('~/business/admin/newsletter/newsletter.server')
+      const mockSendNewsletterNow = vi.mocked(sendNewsletterNow)
+      mockSendNewsletterNow.mockResolvedValue({
+        success: true,
+        processed: 10,
+        failed: 0,
+        newsletterId: 'newsletter-123',
+      })
+      
+      const formData = new FormData()
+      formData.append('intent', 'send-now')
+      
+      const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123/edit', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      await expect(action({ request, params: { id: 'newsletter-123' } } as any)).rejects.toThrow()
+      
+      expect(mockSendNewsletterNow).toHaveBeenCalledWith('newsletter-123')
     })
   })
 })

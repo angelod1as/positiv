@@ -69,7 +69,9 @@ export async function action({ request, params }: Route.ActionArgs) {
     )
   }
   
-  const formData = await request.formData()
+  // Clone the request to check for intent without consuming the body
+  const clonedRequest = request.clone()
+  const formData = await clonedRequest.formData()
   const intent = formData.get('intent')
   
   // Handle Send Now action

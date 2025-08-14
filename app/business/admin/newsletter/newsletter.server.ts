@@ -203,21 +203,49 @@ export async function sendNewsletterNow(newsletterId: string): Promise<SendNewsl
     .where("id", "=", newsletterId)
     .execute()
   
-  // Process the newsletter queue
-  const result = await processNewsletterQueue(
-    db,
-    newsletterId,
-    undefined, // No segment filter for now
-    {
-      batchSize: 50,
-      delayMs: 0 // No delay for immediate send in tests
+  try {
+    // Process the newsletter queue
+    const result = await processNewsletterQueue(
+      db,
+      newsletterId,
+      undefined, // No segment filter for now
+      {
+        batchSize: 50,
+        delayMs: 0 // No delay for immediate send in tests
+      }
+    )
+    
+    // Update status to sent if successful
+    const finalStatus = result.failed === 0 && result.processed > 0 ? "sent" : 
+                       result.processed === 0 ? "failed" : "sent"
+    
+    await db
+      .updateTable("newsletters")
+      .set({
+        status: finalStatus,
+        sent_at: finalStatus === "sent" ? new Date().toISOString() : null,
+        updated_at: new Date().toISOString()
+      })
+      .where("id", "=", newsletterId)
+      .execute()
+    
+    return {
+      success: finalStatus === "sent",
+      processed: result.processed,
+      failed: result.failed,
+      newsletterId
     }
-  )
-  
-  return {
-    success: true,
-    processed: result.processed,
-    failed: result.failed,
-    newsletterId
+  } catch (error) {
+    // Update status to failed on error
+    await db
+      .updateTable("newsletters")
+      .set({
+        status: "failed",
+        updated_at: new Date().toISOString()
+      })
+      .where("id", "=", newsletterId)
+      .execute()
+    
+    throw error
   }
 }

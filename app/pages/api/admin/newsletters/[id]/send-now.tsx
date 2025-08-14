@@ -27,9 +27,17 @@ export async function action({ request, params }: ActionFunctionArgs) {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "An error occurred"
     
+    // Return appropriate status codes based on error type
+    let statusCode = 500
+    if (errorMessage === "Newsletter not found") {
+      statusCode = 404
+    } else if (errorMessage === "Only draft newsletters can be sent immediately") {
+      statusCode = 400
+    }
+    
     return Response.json(
       { error: errorMessage },
-      { status: 500 }
+      { status: statusCode }
     )
   }
 }
