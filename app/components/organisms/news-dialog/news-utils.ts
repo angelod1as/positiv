@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-216-segmentation',
+    title: '🎯 Nova funcionalidade: Segmentação de audiência para newsletters',
+    content: 'Agora você pode enviar newsletters para grupos específicos de participantes! Escolha entre veteranos, novatos, quem nunca participou, quem já participou, novos cadastros, e mais opções. Você também pode optar por incluir ou excluir participantes rejeitados.',
+    isAdmin: true,
+    createdAt: new Date('2025-08-15T10:00:00'), // August 15, 2025, 10AM
+    isActive: true,
+  },
+  {
     id: '13',
     title: '🚀 Envio imediato de newsletters disponível!',
     content: 'Agora você pode enviar newsletters imediatamente sem precisar agendar! Ao editar um rascunho de newsletter, clique no botão "Send Now" para enviar instantaneamente para todos os assinantes. O sistema mostrará o progresso e estatísticas do envio.',
