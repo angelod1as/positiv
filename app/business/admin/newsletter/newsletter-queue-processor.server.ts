@@ -251,7 +251,7 @@ export async function processNewsletterQueue(
     .execute()
 
   // Create queue entries if they don't exist
-  const recipientCount = await createQueueEntriesForNewsletter(kysely, newsletterId, segmentFilter)
+  await createQueueEntriesForNewsletter(kysely, newsletterId, segmentFilter)
 
   let processed = 0
   let failed = 0

@@ -73,6 +73,11 @@ describe('Edit Newsletter Page', () => {
         created_by: 'user-123',
         sent_at: null,
         scheduled_at: null,
+        send_started_at: null,
+        send_completed_at: null,
+        total_recipients: null,
+        successful_sends: null,
+        failed_sends: null,
       }
       
       const mockGetNewsletterById = vi.mocked(getNewsletterById)
@@ -114,6 +119,11 @@ describe('Edit Newsletter Page', () => {
         created_by: 'user-123',
         sent_at: '2025-01-01T11:00:00Z',
         scheduled_at: null,
+        send_started_at: null,
+        send_completed_at: null,
+        total_recipients: null,
+        successful_sends: null,
+        failed_sends: null,
       }
       
       const mockGetNewsletterById = vi.mocked(getNewsletterById)
@@ -141,6 +151,11 @@ describe('Edit Newsletter Page', () => {
         created_by: 'user-123',
         sent_at: null,
         scheduled_at: null,
+        send_started_at: null,
+        send_completed_at: null,
+        total_recipients: null,
+        successful_sends: null,
+        failed_sends: null,
       }
       
       const mockUpdateNewsletter = vi.mocked(updateNewsletter)
@@ -180,6 +195,11 @@ describe('Edit Newsletter Page', () => {
         updated_at: '2025-01-01T11:00:00Z',
         created_by: 'user-123',
         sent_at: null,
+        send_started_at: null,
+        send_completed_at: null,
+        total_recipients: null,
+        successful_sends: null,
+        failed_sends: null,
       }
       
       const mockUpdateNewsletter = vi.mocked(updateNewsletter)

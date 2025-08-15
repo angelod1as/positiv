@@ -12,8 +12,13 @@ type Newsletter = {
   status?: string
   created_at?: string
   updated_at?: string
-  created_by?: string
+  created_by?: string | null
   sent_at?: string | null
+  send_started_at?: string | null
+  send_completed_at?: string | null
+  total_recipients?: number | null
+  successful_sends?: number | null
+  failed_sends?: number | null
 }
 
 type NewsletterFormProps = {
