@@ -681,7 +681,7 @@ async function getAdvancedSegmentRecipients(
   
   // Filter out any recipients without email and transform results
   return recipients
-    .filter((r): r is any => r.email !== null)
+    .filter((r) => r.email !== null)
     .map(r => ({
       id: r.id,
       email: r.email,

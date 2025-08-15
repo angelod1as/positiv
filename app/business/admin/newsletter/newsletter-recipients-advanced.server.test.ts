@@ -4,7 +4,6 @@ import type { Database } from "~types/database/kysely.types"
 import {
   getEligibleRecipients,
   type SegmentFilter,
-  type NewsletterRecipient,
 } from "./newsletter-recipients.server"
 
 describe("Advanced Segmentation - Phase 2", () => {
@@ -22,7 +21,8 @@ describe("Advanced Segmentation - Phase 2", () => {
       // This test should fail because activityStatus is not implemented
       expect(recipients).toBeDefined()
       expect(recipients.every(r => {
-        const lastAttendance = new Date(r.last_attendance_date!)
+        if (!r.last_attendance_date) return false
+        const lastAttendance = new Date(r.last_attendance_date)
         const sixMonthsAgo = new Date()
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
         return lastAttendance < sixMonthsAgo
@@ -45,7 +45,8 @@ describe("Advanced Segmentation - Phase 2", () => {
       // This test should fail because lastAttendanceRange is not implemented
       expect(recipients).toBeDefined()
       expect(recipients.every(r => {
-        const lastAttendance = new Date(r.last_attendance_date!)
+        if (!r.last_attendance_date) return false
+        const lastAttendance = new Date(r.last_attendance_date)
         const threeMonthsAgo = new Date()
         threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
         return lastAttendance >= threeMonthsAgo
@@ -67,7 +68,8 @@ describe("Advanced Segmentation - Phase 2", () => {
       
       expect(recipients).toBeDefined()
       expect(recipients.every(r => {
-        const lastAttendance = new Date(r.last_attendance_date!)
+        if (!r.last_attendance_date) return false
+        const lastAttendance = new Date(r.last_attendance_date)
         return lastAttendance >= startDate && lastAttendance <= endDate
       })).toBe(true)
     })
@@ -85,7 +87,7 @@ describe("Advanced Segmentation - Phase 2", () => {
       
       // This test should fail because eventAttendanceCount is not implemented
       expect(recipients).toBeDefined()
-      expect(recipients.every(r => r.attendance_count! >= 3)).toBe(true)
+      expect(recipients.every(r => (r.attendance_count ?? 0) >= 3)).toBe(true)
     })
 
     it("should filter one-time attendees (exactly 1 event)", async () => {
@@ -112,9 +114,10 @@ describe("Advanced Segmentation - Phase 2", () => {
       const recipients = await getEligibleRecipients(mockKysely, filter)
       
       expect(recipients).toBeDefined()
-      expect(recipients.every(r => 
-        r.attendance_count! >= 2 && r.attendance_count! <= 5
-      )).toBe(true)
+      expect(recipients.every(r => {
+        const count = r.attendance_count ?? 0
+        return count >= 2 && count <= 5
+      })).toBe(true)
     })
   })
 
@@ -133,8 +136,9 @@ describe("Advanced Segmentation - Phase 2", () => {
       // This test should fail because lapsed status is not implemented
       expect(recipients).toBeDefined()
       expect(recipients.every(r => {
-        const hasEnoughAttendance = r.attendance_count! >= 3
-        const lastAttendance = new Date(r.last_attendance_date!)
+        const hasEnoughAttendance = (r.attendance_count ?? 0) >= 3
+        if (!r.last_attendance_date) return false
+        const lastAttendance = new Date(r.last_attendance_date)
         const sixMonthsAgo = new Date()
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
         const isInactive = lastAttendance < sixMonthsAgo
@@ -176,7 +180,7 @@ describe("Advanced Segmentation - Phase 2", () => {
       expect(recipients).toBeDefined()
       expect(recipients.every(r => 
         r.is_veteran === true &&
-        r.attendance_count! >= 2
+        (r.attendance_count ?? 0) >= 2
       )).toBe(true)
     })
   })
