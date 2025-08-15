@@ -558,7 +558,7 @@ async function getAdvancedSegmentRecipients(
       "profiles.orientation",
       "profiles.created_at",
       kysely.fn.max("events.time_event_start").as("last_attendance_date"),
-      kysely.fn.countAll<number>().as("attendance_count"),
+      kysely.fn.count<number>("event_participants.id").as("attendance_count"),
     ])
     .where("profiles.allow_marketing_email", "=", true)
     .where("profiles.email", "is not", null)
@@ -630,7 +630,7 @@ async function getAdvancedSegmentRecipients(
         const minAttendance = filter.eventAttendanceCount?.min || 3
         
         query = query
-          .having(kysely.fn.countAll<number>(), ">=", minAttendance)
+          .having(kysely.fn.count<number>("event_participants.id"), ">=", minAttendance)
           .having(kysely.fn.max("events.time_event_start"), "<", cutoffDate.toISOString())
         break
       }
@@ -653,13 +653,13 @@ async function getAdvancedSegmentRecipients(
   // Handle attendance count filters
   if (filter.eventAttendanceCount) {
     if (filter.eventAttendanceCount.exact !== undefined) {
-      query = query.having(kysely.fn.countAll<number>(), "=", filter.eventAttendanceCount.exact)
+      query = query.having(kysely.fn.count<number>("event_participants.id"), "=", filter.eventAttendanceCount.exact)
     } else {
       if (filter.eventAttendanceCount.min !== undefined) {
-        query = query.having(kysely.fn.countAll<number>(), ">=", filter.eventAttendanceCount.min)
+        query = query.having(kysely.fn.count<number>("event_participants.id"), ">=", filter.eventAttendanceCount.min)
       }
       if (filter.eventAttendanceCount.max !== undefined) {
-        query = query.having(kysely.fn.countAll<number>(), "<=", filter.eventAttendanceCount.max)
+        query = query.having(kysely.fn.count<number>("event_participants.id"), "<=", filter.eventAttendanceCount.max)
       }
     }
   }
