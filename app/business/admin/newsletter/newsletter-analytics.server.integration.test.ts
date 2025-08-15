@@ -219,46 +219,7 @@ describe("Newsletter Analytics - Integration Tests", () => {
       const sendStartedAt = new Date('2024-01-15T10:00:00Z')
       const sendCompletedAt = new Date('2024-01-15T10:05:30Z') // 5.5 minutes later
       
-      // First check if columns exist and add them if not (we'll do this in migration later)
-      // We don't need this placeholder compile, columns are added in migration
-      
-      // Check columns by trying to query them
-      let hasSendStartedAt = false
-      let hasSendCompletedAt = false
-      
-      try {
-        await kysely.selectFrom("newsletters")
-          .select("send_started_at")
-          .limit(1)
-          .execute()
-        hasSendStartedAt = true
-      } catch {
-        // Column doesn't exist
-      }
-      
-      try {
-        await kysely.selectFrom("newsletters")
-          .select("send_completed_at")
-          .limit(1)
-          .execute()
-        hasSendCompletedAt = true
-      } catch {
-        // Column doesn't exist
-      }
-      
-      if (!hasSendStartedAt) {
-        await kysely.schema
-          .alterTable("newsletters")
-          .addColumn("send_started_at", "timestamptz")
-          .execute()
-      }
-      
-      if (!hasSendCompletedAt) {
-        await kysely.schema
-          .alterTable("newsletters")
-          .addColumn("send_completed_at", "timestamptz")
-          .execute()
-      }
+      // Columns are added via migration, no need to alter schema in tests
 
       const newsletter = await kysely
         .insertInto("newsletters")
@@ -308,9 +269,6 @@ describe("Newsletter Analytics - Integration Tests", () => {
       expect(analytics.averageSendTime).toBe(33) // 330 seconds / 10 emails = 33 seconds per email
       expect(analytics.totalRecipients).toBe(10)
       expect(analytics.successfulSends).toBe(10)
-
-      // Clean up the added columns if they were added for this test
-      // Since we now have these columns in the migration, we don't need to clean them up
     })
   })
 
