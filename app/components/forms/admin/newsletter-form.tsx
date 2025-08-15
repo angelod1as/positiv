@@ -1,7 +1,9 @@
 import type { FC } from "react"
-import { newsletterFormSchema } from "~/business/admin/newsletter/newsletter-schema"
+import { useState } from "react"
+import { newsletterFormSchema, type SegmentFilter } from "~/business/admin/newsletter/newsletter-schema"
 import { dbValuesToFormSchema } from "~/lib/helpers/db-values-to-form-schema"
 import { SchemaForm } from "../base/schema-form"
+import { SegmentSelector } from "./segment-selector"
 
 type Newsletter = {
   id?: string
@@ -19,6 +21,8 @@ type Newsletter = {
   total_recipients?: number | null
   successful_sends?: number | null
   failed_sends?: number | null
+  segment_filter?: SegmentFilter | null
+  exclude_rejected?: boolean | null
 }
 
 type NewsletterFormProps = {
@@ -27,13 +31,43 @@ type NewsletterFormProps = {
 }
 
 export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow }) => {
-  const formattedNewsletter = newsletter?.id ? dbValuesToFormSchema(newsletter) : newsletter
+  // Format newsletter for the form schema
+  const newsletterForForm = newsletter ? {
+    id: newsletter.id,
+    subject: newsletter.subject,
+    template_name: newsletter.template_name,
+    content_mdx: newsletter.content_mdx,
+    scheduled_at: newsletter.scheduled_at,
+    status: newsletter.status,
+    created_at: newsletter.created_at,
+    updated_at: newsletter.updated_at,
+    created_by: newsletter.created_by,
+    sent_at: newsletter.sent_at,
+    send_started_at: newsletter.send_started_at,
+    send_completed_at: newsletter.send_completed_at,
+    total_recipients: newsletter.total_recipients,
+    successful_sends: newsletter.successful_sends,
+    failed_sends: newsletter.failed_sends,
+  } : undefined
+  
+  const formattedNewsletter = newsletter?.id 
+    ? dbValuesToFormSchema(newsletterForForm as Record<string, string | number | boolean | null>) 
+    : newsletter
+  
+  // Initialize segment filter state
+  const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>(
+    newsletter?.segment_filter || { excludeRejected: newsletter?.exclude_rejected ?? true }
+  )
 
   return (
-    <div>
+    <div className="space-y-6">
       <SchemaForm
         schema={newsletterFormSchema}
-        values={formattedNewsletter}
+        values={{
+          ...formattedNewsletter,
+          segment_filter: segmentFilter,
+          exclude_rejected: segmentFilter.excludeRejected,
+        }}
         labels={{
           subject: "Subject",
           template_name: "Template",
@@ -57,22 +91,31 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow 
         }}
       >
         {({ Button: SubmitButton }) => (
-          <div className="flex gap-4">
-            <SubmitButton>{newsletter?.id ? "Update Newsletter" : "Create Newsletter"}</SubmitButton>
-            {newsletter?.id && newsletter?.status === "draft" && onSendNow && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (newsletter.id) {
-                    onSendNow(newsletter.id)
-                  }
-                }}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Send Now
-              </button>
-            )}
-          </div>
+          <>
+            <div className="border-t pt-4">
+              <h3 className="text-lg font-medium mb-4">Audience Segmentation</h3>
+              <SegmentSelector
+                value={segmentFilter}
+                onChange={setSegmentFilter}
+              />
+            </div>
+            <div className="flex gap-4 border-t pt-4">
+              <SubmitButton>{newsletter?.id ? "Update Newsletter" : "Create Newsletter"}</SubmitButton>
+              {newsletter?.id && newsletter?.status === "draft" && onSendNow && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newsletter.id) {
+                      onSendNow(newsletter.id)
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Send Now
+                </button>
+              )}
+            </div>
+          </>
         )}
       </SchemaForm>
     </div>

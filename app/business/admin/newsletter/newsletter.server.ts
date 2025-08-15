@@ -13,6 +13,8 @@ interface CreateNewsletterData {
   scheduled_at?: string
   sent_at?: string
   created_by: string
+  segment_filter?: Record<string, unknown>
+  exclude_rejected?: boolean
 }
 
 interface CreateNewsletterSendData {
@@ -32,8 +34,15 @@ export async function createNewsletter(data: CreateNewsletterData) {
   const result = await db
     .insertInto("newsletters")
     .values({
-      ...data,
+      subject: data.subject,
+      template_name: data.template_name,
+      content_mdx: data.content_mdx,
+      scheduled_at: data.scheduled_at,
+      sent_at: data.sent_at,
+      created_by: data.created_by,
       status: data.status || "draft",
+      segment_filter: data.segment_filter ? JSON.stringify(data.segment_filter) : null,
+      exclude_rejected: data.exclude_rejected ?? true,
       id: crypto.randomUUID(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -140,6 +149,8 @@ interface UpdateNewsletterData {
   content_mdx?: string
   status?: NewsletterStatus
   scheduled_at?: string
+  segment_filter?: Record<string, unknown>
+  exclude_rejected?: boolean
 }
 
 export async function updateNewsletter(id: string, data: UpdateNewsletterData) {
@@ -158,10 +169,17 @@ export async function updateNewsletter(id: string, data: UpdateNewsletterData) {
     throw new Error("Only draft newsletters can be updated")
   }
   
-  const updateData = {
-    ...data,
+  const updateData: Record<string, string | boolean | null> = {
     updated_at: new Date().toISOString()
   }
+  
+  if (data.subject !== undefined) updateData.subject = data.subject
+  if (data.template_name !== undefined) updateData.template_name = data.template_name
+  if (data.content_mdx !== undefined) updateData.content_mdx = data.content_mdx
+  if (data.status !== undefined) updateData.status = data.status
+  if (data.scheduled_at !== undefined) updateData.scheduled_at = data.scheduled_at
+  if (data.segment_filter !== undefined) updateData.segment_filter = JSON.stringify(data.segment_filter)
+  if (data.exclude_rejected !== undefined) updateData.exclude_rejected = data.exclude_rejected
   
   const result = await db
     .updateTable("newsletters")
