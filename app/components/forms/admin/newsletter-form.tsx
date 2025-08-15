@@ -54,10 +54,13 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow 
     ? dbValuesToFormSchema(newsletterForForm as Record<string, string | number | boolean | null>) 
     : newsletter
   
-  // Initialize segment filter state
-  const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>(
-    newsletter?.segment_filter || { excludeRejected: newsletter?.exclude_rejected ?? true }
-  )
+  // Initialize segment filter state with normalized excludeRejected
+  const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>(() => {
+    const base = newsletter?.segment_filter || {}
+    // Ensure excludeRejected is always set, prioritizing segment_filter over exclude_rejected
+    const excludeRejected = base.excludeRejected ?? newsletter?.exclude_rejected ?? true
+    return { ...base, excludeRejected }
+  })
 
   return (
     <div className="space-y-6">
