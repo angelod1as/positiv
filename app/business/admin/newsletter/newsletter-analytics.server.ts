@@ -1,4 +1,4 @@
-import { type Kysely, sql } from "kysely"
+import { type Kysely } from "kysely"
 import type { Database } from "~types/database/kysely.types"
 
 export interface NewsletterAnalytics {

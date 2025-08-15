@@ -220,23 +220,40 @@ describe("Newsletter Analytics - Integration Tests", () => {
       const sendCompletedAt = new Date('2024-01-15T10:05:30Z') // 5.5 minutes later
       
       // First check if columns exist and add them if not (we'll do this in migration later)
-      const columns = await kysely
-        .selectFrom("information_schema.columns" as any)
-        .select("column_name")
-        .where("table_name", "=", "newsletters")
-        .where("column_name", "in", ["send_started_at", "send_completed_at"])
-        .execute()
+      // We don't need this placeholder compile, columns are added in migration
       
-      const existingColumns = columns.map(c => c.column_name)
+      // Check columns by trying to query them
+      let hasSendStartedAt = false
+      let hasSendCompletedAt = false
       
-      if (!existingColumns.includes("send_started_at")) {
+      try {
+        await kysely.selectFrom("newsletters")
+          .select("send_started_at")
+          .limit(1)
+          .execute()
+        hasSendStartedAt = true
+      } catch {
+        // Column doesn't exist
+      }
+      
+      try {
+        await kysely.selectFrom("newsletters")
+          .select("send_completed_at")
+          .limit(1)
+          .execute()
+        hasSendCompletedAt = true
+      } catch {
+        // Column doesn't exist
+      }
+      
+      if (!hasSendStartedAt) {
         await kysely.schema
           .alterTable("newsletters")
           .addColumn("send_started_at", "timestamptz")
           .execute()
       }
       
-      if (!existingColumns.includes("send_completed_at")) {
+      if (!hasSendCompletedAt) {
         await kysely.schema
           .alterTable("newsletters")
           .addColumn("send_completed_at", "timestamptz")
@@ -293,19 +310,7 @@ describe("Newsletter Analytics - Integration Tests", () => {
       expect(analytics.successfulSends).toBe(10)
 
       // Clean up the added columns if they were added for this test
-      const columnsToClean = await kysely
-        .selectFrom("information_schema.columns" as any)
-        .select("column_name")
-        .where("table_name", "=", "newsletters")
-        .where("column_name", "in", ["send_started_at", "send_completed_at"])
-        .execute()
-      
-      for (const col of columnsToClean) {
-        await kysely.schema
-          .alterTable("newsletters")
-          .dropColumn(col.column_name as any)
-          .execute()
-      }
+      // Since we now have these columns in the migration, we don't need to clean them up
     })
   })
 

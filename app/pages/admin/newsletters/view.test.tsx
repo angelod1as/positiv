@@ -49,6 +49,11 @@ describe('View Newsletter Page', () => {
         created_by: 'user-123',
         sent_at: null,
         scheduled_at: null,
+        send_started_at: null,
+        send_completed_at: null,
+        total_recipients: null,
+        successful_sends: null,
+        failed_sends: null,
       }
       
       const mockGetNewsletterById = vi.mocked(getNewsletterById)
