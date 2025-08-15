@@ -12,15 +12,15 @@ export const OrientationWarning = ({
 }) =>
   orientations?.length ? (
     <div className="flex gap-1 flex-wrap">
-      {orientations.map((orientation) => {
-        const lowerOrientation = orientation.toLowerCase()
+      {orientations.map((orientation, idx) => {
+        const lowerOrientation = orientation.toLocaleLowerCase('pt-BR')
         const shouldHighlight = 
           lowerOrientation === "hétero" || 
           lowerOrientation === "sapiosexual"
         
         return (
           <p
-            key={orientation}
+            key={`${orientation}-${idx}`}
             className={cn(shouldHighlight && "text-red-700")}
           >
             {orientation}
@@ -33,8 +33,8 @@ export const OrientationWarning = ({
 export const GenderWarning = ({ genders }: { genders: string[] | null }) =>
   genders?.length ? (
     <div className="flex gap-1 flex-wrap">
-      {genders.map((gender) => {
-        const lowerGender = gender.toLowerCase()
+      {genders.map((gender, idx) => {
+        const lowerGender = gender.toLocaleLowerCase('pt-BR')
         const shouldHighlight = 
           lowerGender.includes("trans") || 
           lowerGender.includes("agêner") || 
@@ -43,7 +43,7 @@ export const GenderWarning = ({ genders }: { genders: string[] | null }) =>
         
         return (
           <p
-            key={gender}
+            key={`${gender}-${idx}`}
             className={cn(shouldHighlight && "text-blue-700")}
           >
             {gender}
