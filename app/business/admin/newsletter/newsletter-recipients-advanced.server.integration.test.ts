@@ -9,11 +9,31 @@ describe("Advanced Segmentation Integration Tests", () => {
   beforeEach(async () => {
     tracker.clear()
     
-    // Clear existing test data
+    // Clear existing test data more thoroughly
     await kysely.deleteFrom("event_participants").execute()
     await kysely.deleteFrom("events").execute()
     await kysely.deleteFrom("profiles")
       .where("email", "like", "%@test.com")
+      .execute()
+    
+    // Also clear any profiles created in the test that might have been missed
+    await kysely.deleteFrom("profiles")
+      .where("email", "in", [
+        "active@test.com",
+        "inactive@test.com",
+        "never@test.com",
+        "recent@test.com",
+        "old@test.com",
+        "frequent@test.com",
+        "occasional@test.com",
+        "onetime@test.com",
+        "multi@test.com",
+        "lapsed@test.com",
+        "stillactive@test.com",
+        "veteran-active@test.com",
+        "newbie-never@test.com",
+        "veteran-inactive@test.com"
+      ])
       .execute()
   })
 
@@ -329,6 +349,7 @@ describe("Advanced Segmentation Integration Tests", () => {
   describe("Combined Filters", () => {
     it("should combine veteran filter with activity filters", async () => {
       // Create profiles
+      // Note: The database trigger automatically sets is_veteran=true when someone attends an event
       const veteranActive = await createTestProfile(tracker, kysely, {
         email: "veteran-active@test.com",
         full_name: "Veteran Active",
@@ -336,9 +357,10 @@ describe("Advanced Segmentation Integration Tests", () => {
         allow_marketing_email: true,
       })
       
-      const newbieActive = await createTestProfile(tracker, kysely, {
-        email: "newbie-active@test.com",
-        full_name: "Newbie Active",
+      // This will remain a newbie since they won't attend any events
+      const newbieNeverAttended = await createTestProfile(tracker, kysely, {
+        email: "newbie-never@test.com",
+        full_name: "Newbie Never Attended",
         is_veteran: false,
         allow_marketing_email: true,
       })
@@ -370,18 +392,14 @@ describe("Advanced Segmentation Integration Tests", () => {
           application_date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
         },
         {
-          profile_id: newbieActive.id,
-          event_id: recentEvent.id,
-          attendance_status: "attended",
-          application_date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
-        },
-        {
           profile_id: veteranInactive.id,
           event_id: oldEvent.id,
           attendance_status: "attended",
           application_date: new Date(Date.now() - 205 * 24 * 60 * 60 * 1000),
         },
       ]).execute()
+      
+      // Note: newbieNeverAttended doesn't attend any events, so remains a newbie
       
       const filter: SegmentFilter = {
         veteransOnly: true,
@@ -390,6 +408,7 @@ describe("Advanced Segmentation Integration Tests", () => {
       
       const recipients = await getEligibleRecipients(kysely, filter)
       
+      // Should only get the veteran who attended recently
       expect(recipients).toHaveLength(1)
       expect(recipients[0].email).toBe("veteran-active@test.com")
     })
