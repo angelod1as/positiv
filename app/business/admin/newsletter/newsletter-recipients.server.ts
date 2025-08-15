@@ -347,8 +347,202 @@ export async function getRecipientCount(
   kysely: Kysely<Database>,
   filter?: SegmentFilter
 ): Promise<number> {
-  const recipients = await getEligibleRecipients(kysely, filter)
-  return recipients.length
+  const excludeRejected = filter?.excludeRejected ?? true
+  
+  // Handle activity-based filters with efficient COUNT queries
+  if (filter?.activityType) {
+    return getActivityBasedCount(kysely, filter.activityType, filter, excludeRejected)
+  }
+  
+  // Handle new registrations filter
+  if (filter?.registeredWithinDays) {
+    return getNewRegistrationsCount(kysely, filter.registeredWithinDays, filter, excludeRejected)
+  }
+  
+  // Standard count query for basic filters
+  let query = kysely
+    .selectFrom("profiles")
+    .select((eb) => eb.fn.count<number>("profiles.id").as("count"))
+    .where("profiles.allow_marketing_email", "=", true)
+    .where("profiles.email", "is not", null)
+  
+  // Exclude rejected participants if needed
+  if (excludeRejected) {
+    query = query.where((eb) => eb.or([
+      eb("profiles.approved_to_attend", "is", null),
+      eb("profiles.approved_to_attend", "!=", "rejected")
+    ]))
+  }
+  
+  // Apply basic segmentation filters
+  if (filter) {
+    if (filter.veteransOnly === true) {
+      query = query.where("profiles.is_veteran", "=", true)
+    }
+    if (filter.newbiesOnly === true) {
+      query = query.where("profiles.is_veteran", "=", false)
+    }
+  }
+  
+  const result = await query.executeTakeFirst()
+  return Number(result?.count ?? 0)
+}
+
+async function getActivityBasedCount(
+  kysely: Kysely<Database>,
+  activityType: ActivityType,
+  filter: SegmentFilter,
+  excludeRejected: boolean
+): Promise<number> {
+  
+  switch (activityType) {
+    case "never_attended": {
+      let query = kysely
+        .selectFrom("profiles")
+        .leftJoin(
+          "event_participants",
+          (join) => join
+            .onRef("event_participants.profile_id", "=", "profiles.id")
+            .on("event_participants.attendance_status", "=", "attended")
+        )
+        .select((eb) => eb.fn.count<number>("profiles.id").as("count"))
+        .where("profiles.allow_marketing_email", "=", true)
+        .where("profiles.email", "is not", null)
+        .where("event_participants.id", "is", null)
+      
+      if (excludeRejected) {
+        query = query.where((eb) => eb.or([
+          eb("profiles.approved_to_attend", "is", null),
+          eb("profiles.approved_to_attend", "!=", "rejected")
+        ]))
+      }
+      
+      const result = await query.executeTakeFirst()
+      return Number(result?.count ?? 0)
+    }
+    
+    case "has_attended": {
+      let query = kysely
+        .selectFrom("profiles")
+        .innerJoin(
+          "event_participants",
+          (join) => join
+            .onRef("event_participants.profile_id", "=", "profiles.id")
+            .on("event_participants.attendance_status", "=", "attended")
+        )
+        .select((eb) => eb.fn.count<number>(eb.fn("distinct", ["profiles.id"])).as("count"))
+        .where("profiles.allow_marketing_email", "=", true)
+        .where("profiles.email", "is not", null)
+      
+      if (excludeRejected) {
+        query = query.where((eb) => eb.or([
+          eb("profiles.approved_to_attend", "is", null),
+          eb("profiles.approved_to_attend", "!=", "rejected")
+        ]))
+      }
+      
+      const result = await query.executeTakeFirst()
+      return result?.count ? Number(result.count) : 0
+    }
+    
+    case "never_applied": {
+      let query = kysely
+        .selectFrom("profiles")
+        .leftJoin(
+          "event_participants",
+          (join) => join.onRef("event_participants.profile_id", "=", "profiles.id")
+        )
+        .select((eb) => eb.fn.count<number>("profiles.id").as("count"))
+        .where("profiles.allow_marketing_email", "=", true)
+        .where("profiles.email", "is not", null)
+        .where("event_participants.id", "is", null)
+      
+      if (excludeRejected) {
+        query = query.where((eb) => eb.or([
+          eb("profiles.approved_to_attend", "is", null),
+          eb("profiles.approved_to_attend", "!=", "rejected")
+        ]))
+      }
+      
+      if (filter.registeredWithinDays) {
+        const cutoffDate = new Date()
+        cutoffDate.setDate(cutoffDate.getDate() - filter.registeredWithinDays)
+        query = query.where("profiles.created_at", ">=", cutoffDate.toISOString())
+      }
+      
+      const result = await query.executeTakeFirst()
+      return Number(result?.count ?? 0)
+    }
+    
+    case "applied_never_attended": {
+      let query = kysely
+        .selectFrom("profiles")
+        .innerJoin(
+          "event_participants",
+          (join) => join.onRef("event_participants.profile_id", "=", "profiles.id")
+        )
+        .select((eb) => eb.fn.count<number>(eb.fn("distinct", ["profiles.id"])).as("count"))
+        .where("profiles.allow_marketing_email", "=", true)
+        .where("profiles.email", "is not", null)
+        .where((eb) => 
+          eb.not(
+            eb.exists(
+              eb.selectFrom("event_participants as ep_attended")
+                .select("ep_attended.id")
+                .whereRef("ep_attended.profile_id", "=", "profiles.id")
+                .where("ep_attended.attendance_status", "=", "attended")
+            )
+          )
+        )
+      
+      if (excludeRejected) {
+        query = query.where((eb) => eb.or([
+          eb("profiles.approved_to_attend", "is", null),
+          eb("profiles.approved_to_attend", "!=", "rejected")
+        ]))
+      }
+      
+      const result = await query.executeTakeFirst()
+      return result?.count ? Number(result.count) : 0
+    }
+    
+    default:
+      return 0
+  }
+}
+
+async function getNewRegistrationsCount(
+  kysely: Kysely<Database>,
+  days: number,
+  filter: SegmentFilter,
+  excludeRejected: boolean
+): Promise<number> {
+  const cutoffDate = new Date()
+  cutoffDate.setDate(cutoffDate.getDate() - days)
+  
+  let query = kysely
+    .selectFrom("profiles")
+    .select((eb) => eb.fn.count<number>("profiles.id").as("count"))
+    .where("profiles.allow_marketing_email", "=", true)
+    .where("profiles.email", "is not", null)
+    .where("profiles.created_at", ">=", cutoffDate.toISOString())
+  
+  if (excludeRejected) {
+    query = query.where((eb) => eb.or([
+      eb("profiles.approved_to_attend", "is", null),
+      eb("profiles.approved_to_attend", "!=", "rejected")
+    ]))
+  }
+  
+  if (filter.veteransOnly === true) {
+    query = query.where("profiles.is_veteran", "=", true)
+  }
+  if (filter.newbiesOnly === true) {
+    query = query.where("profiles.is_veteran", "=", false)
+  }
+  
+  const result = await query.executeTakeFirst()
+  return Number(result?.count ?? 0)
 }
 
 export async function getRecipientPreview(
