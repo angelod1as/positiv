@@ -58,6 +58,11 @@ export async function getEligibleRecipients(
     return getRecipientsByActivity(kysely, filter.activityType, filter, excludeRejected)
   }
   
+  // Handle Phase 2 advanced filters
+  if (filter?.activityStatus || filter?.lastAttendanceRange || filter?.eventAttendanceCount || filter?.specificEventIds) {
+    return getAdvancedSegmentRecipients(kysely, filter, excludeRejected)
+  }
+  
   // Note: registeredWithinDays is only used with activityType "never_applied"
   // and is handled within getRecipientsByActivity
   
@@ -529,4 +534,163 @@ export async function getSegmentCounts(
   counts.applied_never = await getRecipientCount(kysely, { activityType: "applied_never_attended" })
   
   return counts
+}
+
+async function getAdvancedSegmentRecipients(
+  kysely: Kysely<Database>,
+  filter: SegmentFilter,
+  excludeRejected: boolean
+): Promise<NewsletterRecipient[]> {
+  // Build base query with attendance count calculation
+  let query = kysely
+    .selectFrom("profiles")
+    .leftJoin("event_participants", (join) => join
+      .onRef("event_participants.profile_id", "=", "profiles.id")
+      .on("event_participants.attendance_status", "=", "attended")
+    )
+    .leftJoin("events", "events.id", "event_participants.event_id")
+    .select([
+      "profiles.id",
+      "profiles.email",
+      "profiles.full_name",
+      "profiles.is_veteran",
+      "profiles.gender",
+      "profiles.orientation",
+      "profiles.created_at",
+      kysely.fn.max("events.starts_at").as("last_attendance_date"),
+      kysely.fn.countAll<number>().as("attendance_count"),
+    ])
+    .where("profiles.allow_marketing_email", "=", true)
+    .where("profiles.email", "is not", null)
+    .groupBy([
+      "profiles.id",
+      "profiles.email",
+      "profiles.full_name",
+      "profiles.is_veteran",
+      "profiles.gender",
+      "profiles.orientation",
+      "profiles.created_at",
+    ])
+
+  // Exclude rejected participants if needed
+  if (excludeRejected) {
+    query = query.where((eb) => eb.or([
+      eb("profiles.approved_to_attend", "is", null),
+      eb("profiles.approved_to_attend", "!=", "rejected")
+    ]))
+  }
+
+  // Apply veteran/newbie filters
+  if (filter.veteransOnly === true) {
+    query = query.where("profiles.is_veteran", "=", true)
+  }
+  if (filter.newbiesOnly === true) {
+    query = query.where("profiles.is_veteran", "=", false)
+  }
+
+  // Handle activity status filters
+  if (filter.activityStatus) {
+    const now = new Date()
+    
+    switch (filter.activityStatus) {
+      case "inactive": {
+        // Profiles that attended but not in the last X days (default 180)
+        const inactivityDays = filter.inactivityPeriodDays || 180
+        const cutoffDate = new Date(now.getTime() - inactivityDays * 24 * 60 * 60 * 1000)
+        
+        query = query
+          .having(kysely.fn.max("events.starts_at"), "is not", null)
+          .having(kysely.fn.max("events.starts_at"), "<", cutoffDate.toISOString())
+        break
+      }
+      
+      case "recent": {
+        // Profiles that attended recently (within specified range or last 90 days)
+        let fromDate: Date
+        let toDate: Date
+        
+        if (filter.lastAttendanceRange) {
+          fromDate = filter.lastAttendanceRange.from || new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+          toDate = filter.lastAttendanceRange.to || now
+        } else {
+          fromDate = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000)
+          toDate = now
+        }
+        
+        query = query
+          .having(kysely.fn.max("events.starts_at"), ">=", fromDate.toISOString())
+          .having(kysely.fn.max("events.starts_at"), "<=", toDate.toISOString())
+        break
+      }
+      
+      case "lapsed": {
+        // Previously active (3+ events) but haven't attended in X days
+        const inactivityDays = filter.inactivityPeriodDays || 180
+        const cutoffDate = new Date(now.getTime() - inactivityDays * 24 * 60 * 60 * 1000)
+        const minAttendance = filter.eventAttendanceCount?.min || 3
+        
+        query = query
+          .having(kysely.fn.countAll<number>(), ">=", minAttendance)
+          .having(kysely.fn.max("events.starts_at"), "<", cutoffDate.toISOString())
+        break
+      }
+    }
+  }
+
+  // Handle custom date range filter (without activity status)
+  if (!filter.activityStatus && filter.lastAttendanceRange) {
+    const fromDate = filter.lastAttendanceRange.from
+    const toDate = filter.lastAttendanceRange.to
+    
+    if (fromDate) {
+      query = query.having(kysely.fn.max("events.starts_at"), ">=", fromDate.toISOString())
+    }
+    if (toDate) {
+      query = query.having(kysely.fn.max("events.starts_at"), "<=", toDate.toISOString())
+    }
+  }
+
+  // Handle attendance count filters
+  if (filter.eventAttendanceCount) {
+    if (filter.eventAttendanceCount.exact !== undefined) {
+      query = query.having(kysely.fn.countAll<number>(), "=", filter.eventAttendanceCount.exact)
+    } else {
+      if (filter.eventAttendanceCount.min !== undefined) {
+        query = query.having(kysely.fn.countAll<number>(), ">=", filter.eventAttendanceCount.min)
+      }
+      if (filter.eventAttendanceCount.max !== undefined) {
+        query = query.having(kysely.fn.countAll<number>(), "<=", filter.eventAttendanceCount.max)
+      }
+    }
+  }
+
+  // Handle specific event IDs filter
+  if (filter.specificEventIds && filter.specificEventIds.length > 0) {
+    // Use subquery to find profiles that attended specific events
+    const profilesWithSpecificEvents = kysely
+      .selectFrom("event_participants")
+      .select("event_participants.profile_id")
+      .where("event_participants.attendance_status", "=", "attended")
+      .where("event_participants.event_id", "in", filter.specificEventIds)
+      .groupBy("event_participants.profile_id")
+    
+    query = query.where("profiles.id", "in", profilesWithSpecificEvents)
+  }
+
+  const recipients = await query.execute()
+  
+  // Filter out any recipients without email and transform results
+  return recipients
+    .filter((r): r is any => r.email !== null)
+    .map(r => ({
+      id: r.id,
+      email: r.email,
+      full_name: r.full_name,
+      is_veteran: r.is_veteran,
+      gender: r.gender,
+      orientation: r.orientation,
+      created_at: r.created_at,
+      last_attendance_date: r.last_attendance_date,
+      attendance_count: Number(r.attendance_count) || 0,
+    }))
 }
