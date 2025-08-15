@@ -54,6 +54,9 @@ describe('View Newsletter Page', () => {
         total_recipients: null,
         successful_sends: null,
         failed_sends: null,
+        exclude_rejected: true,
+        expected_recipient_count: null,
+        segment_filter: null,
       }
       
       const mockGetNewsletterById = vi.mocked(getNewsletterById)
