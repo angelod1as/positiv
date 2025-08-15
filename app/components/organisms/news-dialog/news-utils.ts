@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: '14',
+    title: '🎨 Melhorias visuais na tabela de participantes',
+    content: 'A tabela de participantes agora destaca visualmente identidades de gênero como Travesti e Pessoa não-binária (em azul), além de orientações como Sapiosexual (em vermelho), facilitando a visualização da diversidade do evento.',
+    isAdmin: true,
+    createdAt: new Date('2025-08-15T13:30:00'), // August 15, 2025, 1:30PM
+    isActive: true,
+  },
+  {
     id: '13',
     title: '🚀 Envio imediato de newsletters disponível!',
     content: 'Agora você pode enviar newsletters imediatamente sem precisar agendar! Ao editar um rascunho de newsletter, clique no botão "Send Now" para enviar instantaneamente para todos os assinantes. O sistema mostrará o progresso e estatísticas do envio.',
