@@ -74,6 +74,11 @@ describe('New Newsletter Page', () => {
         created_by: 'user-123',
         sent_at: null,
         scheduled_at: null,
+        send_started_at: null,
+        send_completed_at: null,
+        total_recipients: null,
+        successful_sends: null,
+        failed_sends: null,
       }
       
       const mockCreateNewsletter = vi.mocked(createNewsletter)
@@ -111,6 +116,11 @@ describe('New Newsletter Page', () => {
         updated_at: '2025-01-01T10:00:00Z',
         created_by: 'user-123',
         sent_at: null,
+        send_started_at: null,
+        send_completed_at: null,
+        total_recipients: null,
+        successful_sends: null,
+        failed_sends: null,
       }
       
       const mockCreateNewsletter = vi.mocked(createNewsletter)

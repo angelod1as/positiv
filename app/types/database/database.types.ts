@@ -329,7 +329,7 @@ export type Database = {
           id: string
           newsletter_id: string
           profile_id: string
-          sent_at: string | null
+          sent_at: string
           status: string
         }
         Insert: {
@@ -337,7 +337,7 @@ export type Database = {
           id?: string
           newsletter_id: string
           profile_id: string
-          sent_at?: string | null
+          sent_at?: string
           status: string
         }
         Update: {
@@ -345,7 +345,7 @@ export type Database = {
           id?: string
           newsletter_id?: string
           profile_id?: string
-          sent_at?: string | null
+          sent_at?: string
           status?: string
         }
         Relationships: [
@@ -369,37 +369,52 @@ export type Database = {
         Row: {
           content_mdx: string
           created_at: string
-          created_by: string
+          created_by: string | null
+          failed_sends: number | null
           id: string
           scheduled_at: string | null
+          send_completed_at: string | null
+          send_started_at: string | null
           sent_at: string | null
           status: string
           subject: string
+          successful_sends: number | null
           template_name: string
+          total_recipients: number | null
           updated_at: string
         }
         Insert: {
           content_mdx: string
           created_at?: string
-          created_by: string
+          created_by?: string | null
+          failed_sends?: number | null
           id?: string
           scheduled_at?: string | null
+          send_completed_at?: string | null
+          send_started_at?: string | null
           sent_at?: string | null
           status?: string
           subject: string
+          successful_sends?: number | null
           template_name: string
+          total_recipients?: number | null
           updated_at?: string
         }
         Update: {
           content_mdx?: string
           created_at?: string
-          created_by?: string
+          created_by?: string | null
+          failed_sends?: number | null
           id?: string
           scheduled_at?: string | null
+          send_completed_at?: string | null
+          send_started_at?: string | null
           sent_at?: string | null
           status?: string
           subject?: string
+          successful_sends?: number | null
           template_name?: string
+          total_recipients?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -555,6 +570,10 @@ export type Database = {
         Args: { p_role_name: string; p_user_id: string }
         Returns: undefined
       }
+      bytea_to_text: {
+        Args: { data: string }
+        Returns: string
+      }
       get_admin_user_ids: {
         Args: Record<PropertyKey, never>
         Returns: string[]
@@ -582,6 +601,69 @@ export type Database = {
           social_name: string
           where_lives: string
         }[]
+      }
+      http: {
+        Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_delete: {
+        Args:
+          | { content: string; content_type: string; uri: string }
+          | { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_get: {
+        Args: { data: Json; uri: string } | { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_head: {
+        Args: { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_header: {
+        Args: { field: string; value: string }
+        Returns: Database["public"]["CompositeTypes"]["http_header"]
+      }
+      http_list_curlopt: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          curlopt: string
+          value: string
+        }[]
+      }
+      http_patch: {
+        Args: { content: string; content_type: string; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_post: {
+        Args:
+          | { content: string; content_type: string; uri: string }
+          | { data: Json; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_put: {
+        Args: { content: string; content_type: string; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+      }
+      http_reset_curlopt: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      http_set_curlopt: {
+        Args: { curlopt: string; value: string }
+        Returns: boolean
+      }
+      text_to_bytea: {
+        Args: { data: string }
+        Returns: string
+      }
+      trigger_newsletter_processing: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      urlencode: {
+        Args: { data: Json } | { string: string } | { string: string }
+        Returns: string
       }
     }
     Enums: {
@@ -615,7 +697,23 @@ export type Database = {
       spot_type: "regular" | "social" | "staff"
     }
     CompositeTypes: {
-      [_ in never]: never
+      http_header: {
+        field: string | null
+        value: string | null
+      }
+      http_request: {
+        method: unknown | null
+        uri: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content_type: string | null
+        content: string | null
+      }
+      http_response: {
+        status: number | null
+        content_type: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content: string | null
+      }
     }
   }
 }
