@@ -11,7 +11,7 @@ export interface SegmentFilter {
   veteransOnly?: boolean
   newbiesOnly?: boolean
   activityType?: ActivityType
-  registeredWithinDays?: number
+  registeredWithinDays?: number // Only used with activityType "never_applied"
   excludeRejected?: boolean // default: true
 }
 
@@ -37,10 +37,8 @@ export async function getEligibleRecipients(
     return getRecipientsByActivity(kysely, filter.activityType, filter, excludeRejected)
   }
   
-  // Handle new registrations filter
-  if (filter?.registeredWithinDays) {
-    return getNewRegistrations(kysely, filter.registeredWithinDays, filter, excludeRejected)
-  }
+  // Note: registeredWithinDays is only used with activityType "never_applied"
+  // and is handled within getRecipientsByActivity
   
   // Standard query for basic filters
   let query = kysely
@@ -299,49 +297,8 @@ async function getRecipientsByActivity(
   }
 }
 
-async function getNewRegistrations(
-  kysely: Kysely<Database>,
-  withinDays: number,
-  filter: SegmentFilter,
-  excludeRejected: boolean
-): Promise<NewsletterRecipient[]> {
-  const cutoffDate = new Date()
-  cutoffDate.setDate(cutoffDate.getDate() - withinDays)
-  
-  let query = kysely
-    .selectFrom("profiles")
-    .select([
-      "profiles.id",
-      "profiles.email",
-      "profiles.full_name",
-      "profiles.is_veteran",
-      "profiles.gender",
-      "profiles.orientation",
-      "profiles.created_at",
-    ])
-    .where("profiles.allow_marketing_email", "=", true)
-    .where("profiles.email", "is not", null)
-    .where("profiles.created_at", ">=", cutoffDate.toISOString())
-  
-  // Exclude rejected participants if needed
-  if (excludeRejected) {
-    query = query.where((eb) => eb.or([
-      eb("profiles.approved_to_attend", "is", null),
-      eb("profiles.approved_to_attend", "!=", "rejected")
-    ]))
-  }
-  
-  // Apply veteran filter if needed
-  if (filter.veteransOnly === true) {
-    query = query.where("profiles.is_veteran", "=", true)
-  }
-  if (filter.newbiesOnly === true) {
-    query = query.where("profiles.is_veteran", "=", false)
-  }
-  
-  const recipients = await query.execute()
-  return recipients.filter((r): r is NewsletterRecipient => r.email !== null) as NewsletterRecipient[]
-}
+// Note: This function was removed as registeredWithinDays is only used 
+// with activityType "never_applied" and is handled within getRecipientsByActivity
 
 export async function getRecipientCount(
   kysely: Kysely<Database>,
@@ -354,10 +311,8 @@ export async function getRecipientCount(
     return getActivityBasedCount(kysely, filter.activityType, filter, excludeRejected)
   }
   
-  // Handle new registrations filter
-  if (filter?.registeredWithinDays) {
-    return getNewRegistrationsCount(kysely, filter.registeredWithinDays, filter, excludeRejected)
-  }
+  // Note: registeredWithinDays is only used with activityType "never_applied"
+  // and is handled within getActivityBasedCount
   
   // Standard count query for basic filters
   let query = kysely
@@ -511,39 +466,8 @@ async function getActivityBasedCount(
   }
 }
 
-async function getNewRegistrationsCount(
-  kysely: Kysely<Database>,
-  days: number,
-  filter: SegmentFilter,
-  excludeRejected: boolean
-): Promise<number> {
-  const cutoffDate = new Date()
-  cutoffDate.setDate(cutoffDate.getDate() - days)
-  
-  let query = kysely
-    .selectFrom("profiles")
-    .select((eb) => eb.fn.count<number>("profiles.id").as("count"))
-    .where("profiles.allow_marketing_email", "=", true)
-    .where("profiles.email", "is not", null)
-    .where("profiles.created_at", ">=", cutoffDate.toISOString())
-  
-  if (excludeRejected) {
-    query = query.where((eb) => eb.or([
-      eb("profiles.approved_to_attend", "is", null),
-      eb("profiles.approved_to_attend", "!=", "rejected")
-    ]))
-  }
-  
-  if (filter.veteransOnly === true) {
-    query = query.where("profiles.is_veteran", "=", true)
-  }
-  if (filter.newbiesOnly === true) {
-    query = query.where("profiles.is_veteran", "=", false)
-  }
-  
-  const result = await query.executeTakeFirst()
-  return Number(result?.count ?? 0)
-}
+// Note: This function was removed as registeredWithinDays is only used 
+// with activityType "never_applied" and is handled within getActivityBasedCount
 
 export async function getRecipientPreview(
   kysely: Kysely<Database>,

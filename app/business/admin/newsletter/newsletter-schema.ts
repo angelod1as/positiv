@@ -9,7 +9,7 @@ export const segmentFilterSchema = z.object({
     'never_applied',
     'applied_never_attended'
   ]).optional(),
-  registeredWithinDays: z.number().optional(),
+  registeredWithinDays: z.number().optional(), // Only used with activityType "never_applied"
   excludeRejected: z.boolean().optional(),
 })
 
