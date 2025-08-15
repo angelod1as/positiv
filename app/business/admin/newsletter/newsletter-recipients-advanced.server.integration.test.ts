@@ -1,0 +1,397 @@
+import { describe, expect, it, beforeEach, afterEach } from "vitest"
+import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
+import { createTestProfile, createTestEvent } from "~/test/db-test-utils"
+import { getEligibleRecipients, type SegmentFilter } from "./newsletter-recipients.server"
+
+describe("Advanced Segmentation Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+    
+    // Clear existing test data
+    await kysely.deleteFrom("event_participants").execute()
+    await kysely.deleteFrom("events").execute()
+    await kysely.deleteFrom("profiles")
+      .where("email", "like", "%@test.com")
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  describe("Inactive Users Filter", () => {
+    it("should filter profiles that attended > 6 months ago", async () => {
+      // Create profiles
+      const activeProfile = await createTestProfile(tracker, kysely, {
+        email: "active@test.com",
+        full_name: "Active User",
+        allow_marketing_email: true,
+      })
+      
+      const inactiveProfile = await createTestProfile(tracker, kysely, {
+        email: "inactive@test.com",
+        full_name: "Inactive User",
+        allow_marketing_email: true,
+      })
+      
+      const neverAttendedProfile = await createTestProfile(tracker, kysely, {
+        email: "never@test.com",
+        full_name: "Never Attended",
+        allow_marketing_email: true,
+      })
+      
+      // Create events
+      const recentEvent = await createTestEvent(tracker, kysely, {
+        title: "Recent Event",
+        time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+      })
+      
+      const oldEvent = await createTestEvent(tracker, kysely, {
+        title: "Old Event",
+        time_event_start: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000), // 200 days ago
+      })
+      
+      // Create attendance records
+      await kysely.insertInto("event_participants").values([
+        {
+          profile_id: activeProfile.id,
+          event_id: recentEvent.id,
+          attendance_status: "attended",
+          application_date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
+        },
+        {
+          profile_id: inactiveProfile.id,
+          event_id: oldEvent.id,
+          attendance_status: "attended",
+          application_date: new Date(Date.now() - 205 * 24 * 60 * 60 * 1000),
+        },
+      ]).execute()
+      
+      const filter: SegmentFilter = {
+        activityStatus: "inactive",
+        inactivityPeriodDays: 180,
+      }
+      
+      const recipients = await getEligibleRecipients(kysely, filter)
+      
+      expect(recipients).toHaveLength(1)
+      expect(recipients[0].email).toBe("inactive@test.com")
+    })
+  })
+
+  describe("Recent Attendees Filter", () => {
+    it("should filter profiles that attended in the last 3 months", async () => {
+      // Create profiles
+      const recentProfile = await createTestProfile(tracker, kysely, {
+        email: "recent@test.com",
+        full_name: "Recent User",
+        allow_marketing_email: true,
+      })
+      
+      const oldProfile = await createTestProfile(tracker, kysely, {
+        email: "old@test.com",
+        full_name: "Old User",
+        allow_marketing_email: true,
+      })
+      
+      // Create events
+      const recentEvent = await createTestEvent(tracker, kysely, {
+        title: "Recent Event",
+        time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+      })
+      
+      const oldEvent = await createTestEvent(tracker, kysely, {
+        title: "Old Event",
+        time_event_start: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000), // 120 days ago
+      })
+      
+      // Create attendance records
+      await kysely.insertInto("event_participants").values([
+        {
+          profile_id: recentProfile.id,
+          event_id: recentEvent.id,
+          attendance_status: "attended",
+          application_date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
+        },
+        {
+          profile_id: oldProfile.id,
+          event_id: oldEvent.id,
+          attendance_status: "attended",
+          application_date: new Date(Date.now() - 125 * 24 * 60 * 60 * 1000),
+        },
+      ]).execute()
+      
+      const filter: SegmentFilter = {
+        activityStatus: "recent",
+      }
+      
+      const recipients = await getEligibleRecipients(kysely, filter)
+      
+      expect(recipients).toHaveLength(1)
+      expect(recipients[0].email).toBe("recent@test.com")
+    })
+  })
+
+  describe("Attendance Count Filters", () => {
+    it("should filter frequent attendees (3+ events)", async () => {
+      // Create profiles
+      const frequentProfile = await createTestProfile(tracker, kysely, {
+        email: "frequent@test.com",
+        full_name: "Frequent User",
+        allow_marketing_email: true,
+      })
+      
+      const occasionalProfile = await createTestProfile(tracker, kysely, {
+        email: "occasional@test.com",
+        full_name: "Occasional User",
+        allow_marketing_email: true,
+      })
+      
+      // Create events
+      const events = await Promise.all([
+        createTestEvent(tracker, kysely, { title: "Event 1" }),
+        createTestEvent(tracker, kysely, { title: "Event 2" }),
+        createTestEvent(tracker, kysely, { title: "Event 3" }),
+        createTestEvent(tracker, kysely, { title: "Event 4" }),
+      ])
+      
+      // Frequent user attended 4 events
+      await kysely.insertInto("event_participants").values(
+        events.map(event => ({
+          profile_id: frequentProfile.id,
+          event_id: event.id,
+          attendance_status: "attended" as const,
+          application_date: new Date(),
+        }))
+      ).execute()
+      
+      // Occasional user attended 2 events
+      await kysely.insertInto("event_participants").values([
+        {
+          profile_id: occasionalProfile.id,
+          event_id: events[0].id,
+          attendance_status: "attended" as const,
+          application_date: new Date(),
+        },
+        {
+          profile_id: occasionalProfile.id,
+          event_id: events[1].id,
+          attendance_status: "attended" as const,
+          application_date: new Date(),
+        },
+      ]).execute()
+      
+      const filter: SegmentFilter = {
+        eventAttendanceCount: {
+          min: 3,
+        },
+      }
+      
+      const recipients = await getEligibleRecipients(kysely, filter)
+      
+      expect(recipients).toHaveLength(1)
+      expect(recipients[0].email).toBe("frequent@test.com")
+      expect(recipients[0].attendance_count).toBe(4)
+    })
+
+    it("should filter one-time attendees", async () => {
+      // Create profiles
+      const oneTimeProfile = await createTestProfile(tracker, kysely, {
+        email: "onetime@test.com",
+        full_name: "One Time User",
+        allow_marketing_email: true,
+      })
+      
+      const multiProfile = await createTestProfile(tracker, kysely, {
+        email: "multi@test.com",
+        full_name: "Multi User",
+        allow_marketing_email: true,
+      })
+      
+      // Create events
+      const event1 = await createTestEvent(tracker, kysely, { title: "Event 1" })
+      const event2 = await createTestEvent(tracker, kysely, { title: "Event 2" })
+      
+      // One-time user attended 1 event
+      await kysely.insertInto("event_participants").values({
+        profile_id: oneTimeProfile.id,
+        event_id: event1.id,
+        attendance_status: "attended",
+        application_date: new Date(),
+      }).execute()
+      
+      // Multi user attended 2 events
+      await kysely.insertInto("event_participants").values([
+        {
+          profile_id: multiProfile.id,
+          event_id: event1.id,
+          attendance_status: "attended" as const,
+          application_date: new Date(),
+        },
+        {
+          profile_id: multiProfile.id,
+          event_id: event2.id,
+          attendance_status: "attended" as const,
+          application_date: new Date(),
+        },
+      ]).execute()
+      
+      const filter: SegmentFilter = {
+        eventAttendanceCount: {
+          exact: 1,
+        },
+      }
+      
+      const recipients = await getEligibleRecipients(kysely, filter)
+      
+      expect(recipients).toHaveLength(1)
+      expect(recipients[0].email).toBe("onetime@test.com")
+      expect(recipients[0].attendance_count).toBe(1)
+    })
+  })
+
+  describe("Lapsed Users Filter", () => {
+    it("should filter previously active users who haven't attended recently", async () => {
+      // Create profiles
+      const lapsedProfile = await createTestProfile(tracker, kysely, {
+        email: "lapsed@test.com",
+        full_name: "Lapsed User",
+        allow_marketing_email: true,
+      })
+      
+      const activeProfile = await createTestProfile(tracker, kysely, {
+        email: "stillactive@test.com",
+        full_name: "Still Active",
+        allow_marketing_email: true,
+      })
+      
+      // Create events
+      const oldEvents = await Promise.all([
+        createTestEvent(tracker, kysely, {
+          title: "Old Event 1",
+          time_event_start: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000),
+        }),
+        createTestEvent(tracker, kysely, {
+          title: "Old Event 2",
+          time_event_start: new Date(Date.now() - 250 * 24 * 60 * 60 * 1000),
+        }),
+        createTestEvent(tracker, kysely, {
+          title: "Old Event 3",
+          time_event_start: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000),
+        }),
+      ])
+      
+      const recentEvent = await createTestEvent(tracker, kysely, {
+        title: "Recent Event",
+        time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      })
+      
+      // Lapsed user attended 3 old events
+      await kysely.insertInto("event_participants").values(
+        oldEvents.map(event => ({
+          profile_id: lapsedProfile.id,
+          event_id: event.id,
+          attendance_status: "attended" as const,
+          application_date: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000),
+        }))
+      ).execute()
+      
+      // Active user attended old events AND recent event
+      await kysely.insertInto("event_participants").values([
+        ...oldEvents.map(event => ({
+          profile_id: activeProfile.id,
+          event_id: event.id,
+          attendance_status: "attended" as const,
+          application_date: new Date(Date.now() - 300 * 24 * 60 * 60 * 1000),
+        })),
+        {
+          profile_id: activeProfile.id,
+          event_id: recentEvent.id,
+          attendance_status: "attended" as const,
+          application_date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
+        },
+      ]).execute()
+      
+      const filter: SegmentFilter = {
+        activityStatus: "lapsed",
+        inactivityPeriodDays: 180,
+      }
+      
+      const recipients = await getEligibleRecipients(kysely, filter)
+      
+      expect(recipients).toHaveLength(1)
+      expect(recipients[0].email).toBe("lapsed@test.com")
+    })
+  })
+
+  describe("Combined Filters", () => {
+    it("should combine veteran filter with activity filters", async () => {
+      // Create profiles
+      const veteranActive = await createTestProfile(tracker, kysely, {
+        email: "veteran-active@test.com",
+        full_name: "Veteran Active",
+        is_veteran: true,
+        allow_marketing_email: true,
+      })
+      
+      const newbieActive = await createTestProfile(tracker, kysely, {
+        email: "newbie-active@test.com",
+        full_name: "Newbie Active",
+        is_veteran: false,
+        allow_marketing_email: true,
+      })
+      
+      const veteranInactive = await createTestProfile(tracker, kysely, {
+        email: "veteran-inactive@test.com",
+        full_name: "Veteran Inactive",
+        is_veteran: true,
+        allow_marketing_email: true,
+      })
+      
+      // Create events
+      const recentEvent = await createTestEvent(tracker, kysely, {
+        title: "Recent Event",
+        time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      })
+      
+      const oldEvent = await createTestEvent(tracker, kysely, {
+        title: "Old Event",
+        time_event_start: new Date(Date.now() - 200 * 24 * 60 * 60 * 1000),
+      })
+      
+      // Create attendance records
+      await kysely.insertInto("event_participants").values([
+        {
+          profile_id: veteranActive.id,
+          event_id: recentEvent.id,
+          attendance_status: "attended",
+          application_date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
+        },
+        {
+          profile_id: newbieActive.id,
+          event_id: recentEvent.id,
+          attendance_status: "attended",
+          application_date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000),
+        },
+        {
+          profile_id: veteranInactive.id,
+          event_id: oldEvent.id,
+          attendance_status: "attended",
+          application_date: new Date(Date.now() - 205 * 24 * 60 * 60 * 1000),
+        },
+      ]).execute()
+      
+      const filter: SegmentFilter = {
+        veteransOnly: true,
+        activityStatus: "recent",
+      }
+      
+      const recipients = await getEligibleRecipients(kysely, filter)
+      
+      expect(recipients).toHaveLength(1)
+      expect(recipients[0].email).toBe("veteran-active@test.com")
+    })
+  })
+})
