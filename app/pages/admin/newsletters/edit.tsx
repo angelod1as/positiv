@@ -5,7 +5,7 @@ import { z } from "zod"
 import { useFetcher } from "react-router"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { getNewsletterById, updateNewsletter, sendNewsletterNow } from "~/business/admin/newsletter/newsletter.server"
-import { newsletterFormSchema } from "~/business/admin/newsletter/newsletter-schema"
+import { newsletterFormSchema, type SegmentFilter } from "~/business/admin/newsletter/newsletter-schema"
 import { NewsletterForm } from "~/components/forms/admin/newsletter-form"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/edit"
@@ -44,7 +44,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
   
-  return { newsletter }
+  return { 
+    newsletter: {
+      ...newsletter,
+      segment_filter: newsletter.segment_filter as SegmentFilter | null,
+    } 
+  }
 }
 
 const updateNewsletterMutation = applySchema(
