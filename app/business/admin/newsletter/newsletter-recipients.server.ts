@@ -7,12 +7,32 @@ export type ActivityType =
   | "never_applied" 
   | "applied_never_attended"
 
+export type ActivityStatus = 
+  | "inactive" 
+  | "recent" 
+  | "lapsed"
+
 export interface SegmentFilter {
+  // Phase 1: Basic filters
   veteransOnly?: boolean
   newbiesOnly?: boolean
   activityType?: ActivityType
   registeredWithinDays?: number // Only used with activityType "never_applied"
   excludeRejected?: boolean // default: true
+  
+  // Phase 2: Advanced filters
+  activityStatus?: ActivityStatus
+  lastAttendanceRange?: {
+    from?: Date
+    to?: Date
+  }
+  eventAttendanceCount?: {
+    min?: number
+    max?: number
+    exact?: number
+  }
+  inactivityPeriodDays?: number // "haven't attended in X days"
+  specificEventIds?: string[] // attended these specific events
 }
 
 export interface NewsletterRecipient {
@@ -24,6 +44,7 @@ export interface NewsletterRecipient {
   orientation: string[] | null
   created_at: string
   last_attendance_date?: string | null
+  attendance_count?: number // Added for Phase 2
 }
 
 export async function getEligibleRecipients(
