@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-221-advanced-segmentation',
+    title: '🚀 Segmentação avançada de audiência disponível!',
+    content: 'A segmentação de newsletters foi aprimorada com filtros avançados! Agora você pode segmentar por: frequência de participação (quem participou X vezes), atividade recente (últimos 3 meses), usuários inativos (não participam há 6+ meses), usuários que abandonaram (eram ativos mas pararam), e filtros por datas específicas. Combine múltiplos filtros para criar audiências super específicas!',
+    isAdmin: true,
+    createdAt: new Date('2025-08-15T16:00:00'), // August 15, 2025, 4PM
+    isActive: true,
+  },
+  {
     id: 'pos-216-segmentation',
     title: '🎯 Nova funcionalidade: Segmentação de audiência para newsletters',
     content: 'Agora você pode enviar newsletters para grupos específicos de participantes! Escolha entre veteranos, novatos, quem nunca participou, quem já participou, novos cadastros, e mais opções. Você também pode optar por incluir ou excluir participantes rejeitados.',
