@@ -14,6 +14,9 @@ interface NewsletterMock {
   total_recipients: number | null
   successful_sends: number | null
   failed_sends: number | null
+  exclude_rejected: boolean
+  expected_recipient_count: number | null
+  segment_filter: Record<string, unknown> | null
 }
 
 export function createMockNewsletter(overrides: Partial<NewsletterMock> = {}): NewsletterMock {
@@ -33,6 +36,9 @@ export function createMockNewsletter(overrides: Partial<NewsletterMock> = {}): N
     total_recipients: null,
     successful_sends: null,
     failed_sends: null,
+    exclude_rejected: true,
+    expected_recipient_count: null,
+    segment_filter: null,
     ...overrides
   }
 }

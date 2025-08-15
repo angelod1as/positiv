@@ -78,8 +78,10 @@ describe('Edit Newsletter Page', () => {
         total_recipients: null,
         successful_sends: null,
         failed_sends: null,
-      }
-      
+        exclude_rejected: true,
+        expected_recipient_count: null,
+        segment_filter: null,
+      }      
       const mockGetNewsletterById = vi.mocked(getNewsletterById)
       mockGetNewsletterById.mockResolvedValue(mockNewsletter)
       
@@ -124,6 +126,9 @@ describe('Edit Newsletter Page', () => {
         total_recipients: null,
         successful_sends: null,
         failed_sends: null,
+        exclude_rejected: true,
+        expected_recipient_count: null,
+        segment_filter: null,
       }
       
       const mockGetNewsletterById = vi.mocked(getNewsletterById)
@@ -156,6 +161,9 @@ describe('Edit Newsletter Page', () => {
         total_recipients: null,
         successful_sends: null,
         failed_sends: null,
+        exclude_rejected: true,
+        expected_recipient_count: null,
+        segment_filter: null,
       }
       
       const mockUpdateNewsletter = vi.mocked(updateNewsletter)
@@ -200,6 +208,9 @@ describe('Edit Newsletter Page', () => {
         total_recipients: null,
         successful_sends: null,
         failed_sends: null,
+        exclude_rejected: true,
+        expected_recipient_count: null,
+        segment_filter: null,
       }
       
       const mockUpdateNewsletter = vi.mocked(updateNewsletter)

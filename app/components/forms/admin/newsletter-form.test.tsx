@@ -81,6 +81,17 @@ vi.mock('../base/schema-form', () => ({
   }
 }))
 
+// Mock the SegmentSelector component
+vi.mock('./segment-selector', () => ({
+  SegmentSelector: () => {
+    return (
+      <div data-testid="segment-selector">
+        <label htmlFor="segment">Segment Selector</label>
+      </div>
+    )
+  },
+}))
+
 describe('NewsletterForm', () => {
   const renderForm = (
     newsletter?: Parameters<typeof NewsletterForm>[0]['newsletter'],
@@ -172,6 +183,15 @@ describe('NewsletterForm', () => {
       expect(screen.getByLabelText(/template/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/content/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/schedule/i)).toBeInTheDocument()
+    })
+  })
+
+  describe('Segment Selector', () => {
+    it('should render segment selector in the form', () => {
+      renderForm()
+      
+      expect(screen.getByTestId('segment-selector')).toBeInTheDocument()
+      expect(screen.getByText('Segment Selector')).toBeInTheDocument()
     })
   })
 

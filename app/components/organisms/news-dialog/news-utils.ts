@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-216-segmentation',
+    title: '🎯 Nova funcionalidade: Segmentação de audiência para newsletters',
+    content: 'Agora você pode enviar newsletters para grupos específicos de participantes! Escolha entre veteranos, novatos, quem nunca participou, quem já participou, novos cadastros, e mais opções. Você também pode optar por incluir ou excluir participantes rejeitados.',
+    isAdmin: true,
+    createdAt: new Date('2025-08-15T14:00:00'), // August 15, 2025, 2PM
+    isActive: true,
+  },
+  {
     id: '14',
     title: '🎨 Melhorias visuais na tabela de participantes',
     content: 'A tabela de participantes agora destaca visualmente identidades de gênero como Travesti e Pessoa não-binária (em azul), além de orientações como Sapiosexual (em vermelho), facilitando a visualização da diversidade do evento.',
