@@ -557,7 +557,7 @@ async function getAdvancedSegmentRecipients(
       "profiles.gender",
       "profiles.orientation",
       "profiles.created_at",
-      kysely.fn.max("events.starts_at").as("last_attendance_date"),
+      kysely.fn.max("events.time_event_start").as("last_attendance_date"),
       kysely.fn.countAll<number>().as("attendance_count"),
     ])
     .where("profiles.allow_marketing_email", "=", true)
@@ -599,8 +599,8 @@ async function getAdvancedSegmentRecipients(
         const cutoffDate = new Date(now.getTime() - inactivityDays * 24 * 60 * 60 * 1000)
         
         query = query
-          .having(kysely.fn.max("events.starts_at"), "is not", null)
-          .having(kysely.fn.max("events.starts_at"), "<", cutoffDate.toISOString())
+          .having(kysely.fn.max("events.time_event_start"), "is not", null)
+          .having(kysely.fn.max("events.time_event_start"), "<", cutoffDate.toISOString())
         break
       }
       
@@ -618,8 +618,8 @@ async function getAdvancedSegmentRecipients(
         }
         
         query = query
-          .having(kysely.fn.max("events.starts_at"), ">=", fromDate.toISOString())
-          .having(kysely.fn.max("events.starts_at"), "<=", toDate.toISOString())
+          .having(kysely.fn.max("events.time_event_start"), ">=", fromDate.toISOString())
+          .having(kysely.fn.max("events.time_event_start"), "<=", toDate.toISOString())
         break
       }
       
@@ -631,7 +631,7 @@ async function getAdvancedSegmentRecipients(
         
         query = query
           .having(kysely.fn.countAll<number>(), ">=", minAttendance)
-          .having(kysely.fn.max("events.starts_at"), "<", cutoffDate.toISOString())
+          .having(kysely.fn.max("events.time_event_start"), "<", cutoffDate.toISOString())
         break
       }
     }
@@ -643,10 +643,10 @@ async function getAdvancedSegmentRecipients(
     const toDate = filter.lastAttendanceRange.to
     
     if (fromDate) {
-      query = query.having(kysely.fn.max("events.starts_at"), ">=", fromDate.toISOString())
+      query = query.having(kysely.fn.max("events.time_event_start"), ">=", fromDate.toISOString())
     }
     if (toDate) {
-      query = query.having(kysely.fn.max("events.starts_at"), "<=", toDate.toISOString())
+      query = query.having(kysely.fn.max("events.time_event_start"), "<=", toDate.toISOString())
     }
   }
 
