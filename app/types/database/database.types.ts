@@ -370,9 +370,12 @@ export type Database = {
           content_mdx: string
           created_at: string
           created_by: string | null
+          exclude_rejected: boolean
+          expected_recipient_count: number | null
           failed_sends: number | null
           id: string
           scheduled_at: string | null
+          segment_filter: Json | null
           send_completed_at: string | null
           send_started_at: string | null
           sent_at: string | null
@@ -387,9 +390,12 @@ export type Database = {
           content_mdx: string
           created_at?: string
           created_by?: string | null
+          exclude_rejected?: boolean
+          expected_recipient_count?: number | null
           failed_sends?: number | null
           id?: string
           scheduled_at?: string | null
+          segment_filter?: Json | null
           send_completed_at?: string | null
           send_started_at?: string | null
           sent_at?: string | null
@@ -404,9 +410,12 @@ export type Database = {
           content_mdx?: string
           created_at?: string
           created_by?: string | null
+          exclude_rejected?: boolean
+          expected_recipient_count?: number | null
           failed_sends?: number | null
           id?: string
           scheduled_at?: string | null
+          segment_filter?: Json | null
           send_completed_at?: string | null
           send_started_at?: string | null
           sent_at?: string | null
