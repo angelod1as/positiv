@@ -1,6 +1,8 @@
 import type { Kysely, Selectable, Insertable } from "kysely"
 import type { Database } from "~/types/database/kysely.types"
 import type { Database as DatabaseTypes } from "~/types/database/database.types"
+import { createClient } from "@supabase/supabase-js"
+import { ROLES } from "~/lib/constants/roles"
 
 interface TrackedEntity {
   table: string
@@ -166,4 +168,112 @@ export async function createTestEventParticipant(
   
   tracker.track("event_participants", participant.id)
   return participant
+}
+
+/**
+ * Helper to create a Supabase client for test operations
+ * Uses service role key for admin operations in test environment
+ */
+export function getTestSupabaseClient() {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set for tests")
+  }
+  
+  return createClient<DatabaseTypes>(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  })
+}
+
+/**
+ * Helper to create an auth user for testing
+ * Returns the user ID that can be used in profiles
+ */
+export async function createTestAuthUser(
+  email: string,
+  password: string = 'test1234'
+): Promise<string> {
+  const supabase = getTestSupabaseClient()
+  
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true
+  })
+  
+  if (error) {
+    throw new Error(`Failed to create test auth user: ${error.message}`)
+  }
+  
+  return data.user.id
+}
+
+/**
+ * Helper to clean up test auth users
+ */
+export async function cleanupTestAuthUsers(emails: string[]): Promise<void> {
+  if (emails.length === 0) return
+  
+  const supabase = getTestSupabaseClient()
+  
+  // Get user IDs for the emails
+  const { data: users, error: listError } = await supabase.auth.admin.listUsers()
+  
+  if (listError) {
+    console.error('Failed to list users for cleanup:', listError)
+    return
+  }
+  
+  const testUsers = users.users.filter(u => u.email && emails.includes(u.email))
+  
+  // Delete each test user
+  for (const user of testUsers) {
+    const { error } = await supabase.auth.admin.deleteUser(user.id)
+    if (error) {
+      console.error(`Failed to delete test user ${user.email}:`, error)
+    }
+  }
+}
+
+/**
+ * Helper to create a test admin user
+ * Creates auth user, profile, and assigns admin role
+ */
+export async function createTestAdminUser(
+  tracker: TestDataTracker,
+  kysely: Kysely<Database>,
+  email: string,
+  profileData?: Partial<TestProfileData>
+): Promise<{
+  userId: string
+  profile: Selectable<DatabaseTypes["public"]["Tables"]["profiles"]["Row"]>
+}> {
+  // Create auth user
+  const userId = await createTestAuthUser(email)
+  
+  // Create profile
+  const profile = await createTestProfile(tracker, kysely, {
+    user_id: userId,
+    email,
+    full_name: profileData?.full_name || "Test Admin",
+    allow_marketing_email: true,
+    ...profileData
+  })
+  
+  // Add admin role
+  await kysely
+    .insertInto("user_roles")
+    .values({
+      user_id: userId,
+      role_name: ROLES.ADMIN,
+      created_at: new Date().toISOString()
+    })
+    .execute()
+  
+  return { userId, profile }
 }
