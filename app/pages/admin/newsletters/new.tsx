@@ -24,81 +24,78 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 const createNewsletterMutation = applySchema(
   newsletterFormSchema,
-  z.object({ userId: z.string() })
+  z.object({ profileId: z.string() })
 )(async (data, context) => {
-  console.info('[Newsletter Create] Starting mutation with data:', data)
-  
-  try {
-    const newsletter = await createNewsletter({
-      ...data,
-      created_by: context.userId,
-      status: data.status || 'draft',
-    })
-    console.info('[Newsletter Create] Successfully created newsletter:', newsletter.id)
-    return { success: true as const, data: newsletter }
-  } catch (error) {
-    console.error('[Newsletter Create] Error creating newsletter:', error)
-    throw error
+  // Validate context
+  if (!context?.profileId) {
+    throw new Error('Profile ID is required')
   }
+  
+  // Convert segment_type to segment_filter
+  const segmentFilter: Record<string, unknown> = {
+    excludeRejected: data.exclude_rejected ?? true
+  }
+  
+  switch (data.segment_type) {
+    case 'veterans':
+      segmentFilter.veteransOnly = true
+      break
+    case 'newbies':
+      segmentFilter.newbiesOnly = true
+      break
+    case 'never_attended':
+      segmentFilter.activityType = 'never_attended'
+      break
+    case 'has_attended':
+      segmentFilter.activityType = 'has_attended'
+      break
+    case 'never_applied':
+      segmentFilter.activityType = 'never_applied'
+      break
+    case 'applied_never_attended':
+      segmentFilter.activityType = 'applied_never_attended'
+      break
+    case 'all':
+    default:
+      // No additional filters for 'all'
+      break
+  }
+  
+  const newsletter = await createNewsletter({
+    subject: data.subject,
+    template_name: data.template_name,
+    content_mdx: data.content_mdx,
+    scheduled_at: data.scheduled_at,
+    created_by: context.profileId,
+    status: data.status || 'draft',
+    segment_filter: segmentFilter,
+    exclude_rejected: data.exclude_rejected,
+  })
+  return { success: true as const, data: newsletter }
 })
 
 export async function action({ request, params }: Route.ActionArgs) {
-  console.info('[Newsletter Action] Processing form submission')
+  const context = await getAdminContext(request, params)
   
-  try {
-    const context = await getAdminContext(request, params)
-    
-    // Parse form data for debugging
-    const formData = await request.clone().formData()
-    const formEntries = Object.fromEntries(formData.entries())
-    console.info('[Newsletter Action] Form data received:', formEntries)
-    
-    // Parse segment_filter if it's a JSON string
-    if (formEntries.segment_filter && typeof formEntries.segment_filter === 'string') {
-      try {
-        formEntries.segment_filter = JSON.parse(formEntries.segment_filter)
-      } catch (e) {
-        console.warn('[Newsletter Action] Failed to parse segment_filter:', e)
+  return formAction({
+    request,
+    schema: newsletterFormSchema,
+    mutation: createNewsletterMutation,
+    transformResult: async (result) => {
+      if (result.success) {
+        throw await redirectWithSuccess(
+          ADMIN_NEWSLETTERS(),
+          "Newsletter created successfully"
+        )
       }
-    }
-    
-    return formAction({
-      request,
-      schema: newsletterFormSchema,
-      mutation: createNewsletterMutation,
-      transformResult: async (result) => {
-        console.info('[Newsletter Action] Transform result:', result)
-        
-        if (result.success) {
-          console.info('[Newsletter Action] Success! Redirecting...')
-          throw await redirectWithSuccess(
-            ADMIN_NEWSLETTERS(),
-            "Newsletter created successfully"
-          )
-        }
-        
-        // Log validation errors if any
-        if (!result.success && 'errors' in result) {
-          console.error('[Newsletter Action] Validation errors:', result.errors)
-        }
-        
-        return result
-      },
-      context,
-    })
-  } catch (error) {
-    console.error('[Newsletter Action] Unexpected error:', error)
-    throw error
-  }
+      return result
+    },
+    context: { profileId: context.currentProfile?.id || '' },
+  })
 }
 
 export default function AdminNewNewsletterPage() {
   const actionData = useActionData<typeof action>()
-  
-  // Log action data for debugging
-  if (actionData) {
-    console.info('[Newsletter Page] Action data:', actionData)
-  }
   
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
