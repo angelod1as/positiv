@@ -1,5 +1,6 @@
 import { type Kysely } from "kysely"
 import type { Database } from "~types/database/kysely.types"
+import { ROLES } from "~/lib/constants/roles"
 
 export type ActivityType = 
   | "never_attended" 
@@ -33,6 +34,14 @@ export interface SegmentFilter {
   }
   inactivityPeriodDays?: number // "haven't attended in X days"
   specificEventIds?: string[] // attended these specific events
+  
+  /**
+   * Admin-only filter for testing purposes
+   * When true, only users with admin role are included
+   * This filter takes precedence and can be combined with other filters
+   * Note: Only joins with user_roles table when this filter is active for performance
+   */
+  adminsOnly?: boolean
 }
 
 export interface NewsletterRecipient {
@@ -52,6 +61,11 @@ export async function getEligibleRecipients(
   filter?: SegmentFilter
 ): Promise<NewsletterRecipient[]> {
   const excludeRejected = filter?.excludeRejected ?? true
+  
+  // Handle admin-only filter
+  if (filter?.adminsOnly) {
+    return getAdminRecipients(kysely, filter, excludeRejected)
+  }
   
   // Handle activity-based filters which require different query structures
   if (filter?.activityType) {
@@ -83,10 +97,9 @@ export async function getEligibleRecipients(
   
   // Exclude rejected participants if needed
   if (excludeRejected) {
-    query = query.where((eb) => eb.or([
-      eb("profiles.approved_to_attend", "is", null),
+    query = query.where((eb) => 
       eb("profiles.approved_to_attend", "!=", "rejected")
-    ]))
+    )
   }
   
   // Apply basic segmentation filters
@@ -97,6 +110,57 @@ export async function getEligibleRecipients(
     if (filter.newbiesOnly === true) {
       query = query.where("profiles.is_veteran", "=", false)
     }
+  }
+  
+  const recipients = await query.execute()
+  
+  // Filter out any recipients without email (type safety)
+  return recipients.filter((r): r is NewsletterRecipient => 
+    r.email !== null
+  ) as NewsletterRecipient[]
+}
+
+/**
+ * Get recipients who are admin users
+ * Performs an inner join with user_roles table to filter only admins
+ * This is used for testing the newsletter system with a controlled audience
+ */
+async function getAdminRecipients(
+  kysely: Kysely<Database>,
+  filter: SegmentFilter,
+  excludeRejected: boolean
+): Promise<NewsletterRecipient[]> {
+  // Build query that joins with user_roles to get only admins
+  let query = kysely
+    .selectFrom("profiles")
+    .innerJoin("user_roles", "user_roles.user_id", "profiles.user_id")
+    .select([
+      "profiles.id",
+      "profiles.email",
+      "profiles.full_name",
+      "profiles.is_veteran",
+      "profiles.gender",
+      "profiles.orientation",
+      "profiles.created_at",
+    ])
+    .where("profiles.allow_marketing_email", "=", true)
+    .where("profiles.email", "is not", null)
+    .where("user_roles.role_name", "=", ROLES.ADMIN)
+    .distinct()
+  
+  // Exclude rejected participants if needed
+  if (excludeRejected) {
+    query = query.where((eb) => 
+      eb("profiles.approved_to_attend", "!=", "rejected")
+    )
+  }
+  
+  // Apply other filters if combined with adminsOnly
+  if (filter.veteransOnly === true) {
+    query = query.where("profiles.is_veteran", "=", true)
+  }
+  if (filter.newbiesOnly === true) {
+    query = query.where("profiles.is_veteran", "=", false)
   }
   
   const recipients = await query.execute()
@@ -332,6 +396,11 @@ export async function getRecipientCount(
 ): Promise<number> {
   const excludeRejected = filter?.excludeRejected ?? true
   
+  // Handle admin-only filter
+  if (filter?.adminsOnly) {
+    return getAdminRecipientCount(kysely, filter, excludeRejected)
+  }
+  
   // Handle activity-based filters with efficient COUNT queries
   if (filter?.activityType) {
     return getActivityBasedCount(kysely, filter.activityType, filter, excludeRejected)
@@ -349,10 +418,9 @@ export async function getRecipientCount(
   
   // Exclude rejected participants if needed
   if (excludeRejected) {
-    query = query.where((eb) => eb.or([
-      eb("profiles.approved_to_attend", "is", null),
+    query = query.where((eb) => 
       eb("profiles.approved_to_attend", "!=", "rejected")
-    ]))
+    )
   }
   
   // Apply basic segmentation filters
@@ -363,6 +431,39 @@ export async function getRecipientCount(
     if (filter.newbiesOnly === true) {
       query = query.where("profiles.is_veteran", "=", false)
     }
+  }
+  
+  const result = await query.executeTakeFirst()
+  return Number(result?.count ?? 0)
+}
+
+async function getAdminRecipientCount(
+  kysely: Kysely<Database>,
+  filter: SegmentFilter,
+  excludeRejected: boolean
+): Promise<number> {
+  // Build count query that joins with user_roles to count only admins
+  let query = kysely
+    .selectFrom("profiles")
+    .innerJoin("user_roles", "user_roles.user_id", "profiles.user_id")
+    .select((eb) => eb.fn.count<number>(eb.fn("distinct", ["profiles.id"])).as("count"))
+    .where("profiles.allow_marketing_email", "=", true)
+    .where("profiles.email", "is not", null)
+    .where("user_roles.role_name", "=", ROLES.ADMIN)
+  
+  // Exclude rejected participants if needed
+  if (excludeRejected) {
+    query = query.where((eb) => 
+      eb("profiles.approved_to_attend", "!=", "rejected")
+    )
+  }
+  
+  // Apply other filters if combined with adminsOnly
+  if (filter.veteransOnly === true) {
+    query = query.where("profiles.is_veteran", "=", true)
+  }
+  if (filter.newbiesOnly === true) {
+    query = query.where("profiles.is_veteran", "=", false)
   }
   
   const result = await query.executeTakeFirst()
@@ -574,10 +675,9 @@ async function getAdvancedSegmentRecipients(
 
   // Exclude rejected participants if needed
   if (excludeRejected) {
-    query = query.where((eb) => eb.or([
-      eb("profiles.approved_to_attend", "is", null),
+    query = query.where((eb) => 
       eb("profiles.approved_to_attend", "!=", "rejected")
-    ]))
+    )
   }
 
   // Apply veteran/newbie filters
