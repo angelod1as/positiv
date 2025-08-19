@@ -1,5 +1,4 @@
 import type { FC } from "react"
-import { useEffect, useState } from "react"
 import { useNavigation } from "react-router"
 import {
   newsletterFormSchema,
@@ -7,7 +6,6 @@ import {
 } from "~/business/admin/newsletter/newsletter-schema"
 import { dbValuesToFormSchema } from "~/lib/helpers/db-values-to-form-schema"
 import { SchemaForm } from "../base/schema-form"
-import { SegmentSelector } from "./segment-selector"
 
 type Newsletter = {
   id?: string
@@ -68,21 +66,20 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
       )
     : newsletter
 
-  // Initialize segment filter state with normalized excludeRejected
-  const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>(() => {
-    const base = newsletter?.segment_filter || {}
-    // Ensure excludeRejected is always set, prioritizing segment_filter over exclude_rejected
-    const excludeRejected =
-      base.excludeRejected ?? newsletter?.exclude_rejected ?? true
-    return { ...base, excludeRejected }
-  })
-
-  // Log submission state changes
-  useEffect(() => {
-    if (isSubmitting) {
-      console.info("[NewsletterForm] Form is submitting...")
-    }
-  }, [isSubmitting])
+  // Determine initial segment type for the dropdown
+  const getSegmentType = (filter?: SegmentFilter | null): string => {
+    if (!filter) return "all"
+    if (filter.veteransOnly) return "veterans"
+    if (filter.newbiesOnly) return "newbies"
+    if (filter.activityType === "never_attended") return "never_attended"
+    if (filter.activityType === "has_attended") return "has_attended"
+    if (filter.activityType === "never_applied") return "never_applied"
+    if (filter.activityType === "applied_never_attended") return "applied_never_attended"
+    return "all"
+  }
+  
+  const initialSegmentType = getSegmentType(newsletter?.segment_filter)
+  const initialExcludeRejected = newsletter?.segment_filter?.excludeRejected ?? newsletter?.exclude_rejected ?? true
 
   return (
     <div className="space-y-6">
@@ -90,14 +87,16 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
         schema={newsletterFormSchema}
         values={{
           ...formattedNewsletter,
-          segment_filter: segmentFilter,
-          exclude_rejected: segmentFilter.excludeRejected,
+          segment_type: initialSegmentType || 'all',
+          exclude_rejected: initialExcludeRejected,
         }}
         labels={{
           subject: "Subject",
           template_name: "Template",
           content_mdx: "Content (MDX)",
           scheduled_at: "Schedule For",
+          segment_type: "Audience Segment",
+          exclude_rejected: "Exclude rejected participants",
         }}
         placeholders={{
           subject: "Enter newsletter subject",
@@ -107,15 +106,25 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
         multiline={["content_mdx"]}
         inputTypes={{
           template_name: "select",
+          segment_type: "select",
           scheduled_at: "datetime-local",
+          exclude_rejected: "checkbox",
         }}
         options={{
           template_name: [
             { value: "general-news", name: "General News" },
             { value: "event-announcement", name: "Event Announcement" },
           ],
+          segment_type: [
+            { value: "all", name: "All subscribers" },
+            { value: "veterans", name: "Veterans only" },
+            { value: "newbies", name: "Newbies only" },
+            { value: "never_attended", name: "Never attended any event" },
+            { value: "has_attended", name: "Has attended at least one event" },
+            { value: "never_applied", name: "New registrations" },
+            { value: "applied_never_attended", name: "Applied but never attended" },
+          ],
         }}
-        hiddenFields={["segment_filter", "exclude_rejected"]}
         buttonLabel={
           isSubmitting 
             ? "Processing..." 
@@ -123,24 +132,11 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
         }
       />
       
-      {/* Segment Selector section - outside form but updates hidden fields */}
-      <div className="border rounded-lg p-4 bg-muted/10">
-        <h3 className="text-lg font-medium mb-4">Audience Segmentation</h3>
-        <SegmentSelector
-          value={segmentFilter}
-          onChange={(newFilter) => {
-            console.info('[NewsletterForm] Segment filter changed:', newFilter)
-            setSegmentFilter(newFilter)
-          }}
-        />
-      </div>
-      
       {/* Send Now button for existing drafts */}
       {newsletter?.id && newsletter?.status === "draft" && onSendNow && (
         <button
           type="button"
           onClick={() => {
-            console.info('[NewsletterForm] Send Now clicked for newsletter:', newsletter.id)
             if (newsletter.id) {
               onSendNow(newsletter.id)
             }
