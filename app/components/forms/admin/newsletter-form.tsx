@@ -93,8 +93,15 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow 
           ],
         }}
       >
-        {({ Button: SubmitButton }) => (
+        {({ Field, Button, Errors }) => (
           <>
+            {/* Render all the main form fields */}
+            <Field name="subject" />
+            <Field name="template_name" />
+            <Field name="content_mdx" />
+            <Field name="scheduled_at" />
+            
+            {/* Segment Selector section */}
             <div className="border-t pt-4">
               <h3 className="text-lg font-medium mb-4">Audience Segmentation</h3>
               <SegmentSelector
@@ -102,8 +109,17 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow 
                 onChange={setSegmentFilter}
               />
             </div>
+            
+            {/* Hidden fields for segment data */}
+            <input type="hidden" name="segment_filter" value={JSON.stringify(segmentFilter)} />
+            <input type="hidden" name="exclude_rejected" value={String(segmentFilter.excludeRejected)} />
+            
+            {/* Form errors */}
+            <Errors />
+            
+            {/* Submit button */}
             <div className="flex gap-4 border-t pt-4">
-              <SubmitButton>{newsletter?.id ? "Update Newsletter" : "Create Newsletter"}</SubmitButton>
+              <Button>{newsletter?.id ? "Update Newsletter" : "Create Newsletter"}</Button>
               {newsletter?.id && newsletter?.status === "draft" && onSendNow && (
                 <button
                   type="button"

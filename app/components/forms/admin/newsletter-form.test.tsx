@@ -10,72 +10,88 @@ vi.mock('~/lib/helpers/db-values-to-form-schema', () => ({
 vi.mock('../base/schema-form', () => ({
   SchemaForm: ({ children, values, labels, options, placeholders }: {
     children?: (props: {
+      Field: React.FC<{ name: string }>
       Button: React.FC<{ children: React.ReactNode }>
+      Errors: React.FC
     }) => React.ReactNode
     values?: Record<string, unknown>
     labels?: Record<string, string>
     options?: Record<string, Array<{ value: string, name: string }>>
     placeholders?: Record<string, string>
   }) => {
+    const Field = ({ name }: { name: string }) => {
+      if (name === 'subject') {
+        return (
+          <div>
+            <label htmlFor="subject">{labels?.subject || 'Subject'}</label>
+            <input
+              id="subject"
+              name="subject"
+              type="text"
+              defaultValue={(values?.subject as string) || ''}
+              placeholder={placeholders?.subject}
+            />
+          </div>
+        )
+      }
+      if (name === 'template_name') {
+        return (
+          <div>
+            <label htmlFor="template_name">{labels?.template_name || 'Template'}</label>
+            <select
+              id="template_name"
+              name="template_name"
+              value={(values?.template_name as string) || ''}
+              onChange={() => {}}
+            >
+              <option value="">Select a template</option>
+              {options?.template_name?.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )
+      }
+      if (name === 'content_mdx') {
+        return (
+          <div>
+            <label htmlFor="content_mdx">{labels?.content_mdx || 'Content'}</label>
+            <textarea
+              id="content_mdx"
+              name="content_mdx"
+              defaultValue={(values?.content_mdx as string) || ''}
+              placeholder={placeholders?.content_mdx}
+            />
+          </div>
+        )
+      }
+      if (name === 'scheduled_at') {
+        return (
+          <div>
+            <label htmlFor="scheduled_at">{labels?.scheduled_at || 'Schedule'}</label>
+            <input
+              id="scheduled_at"
+              name="scheduled_at"
+              type="datetime-local"
+              defaultValue={(values?.scheduled_at as string) || ''}
+            />
+          </div>
+        )
+      }
+      return null
+    }
+    
     const Button = ({ children: btnChildren }: { children: React.ReactNode }) => (
       <button type="submit">{btnChildren}</button>
     )
     
+    const Errors = () => null
+    
     return (
       <form>
-        {/* Subject field */}
-        <div>
-          <label htmlFor="subject">{labels?.subject || 'Subject'}</label>
-          <input
-            id="subject"
-            name="subject"
-            type="text"
-            defaultValue={(values?.subject as string) || ''}
-            placeholder={placeholders?.subject}
-          />
-        </div>
-        
-        {/* Template field */}
-        <div>
-          <label htmlFor="template_name">{labels?.template_name || 'Template'}</label>
-          <select
-            id="template_name"
-            name="template_name"
-            value={(values?.template_name as string) || ''}
-            onChange={() => {}}
-          >
-            <option value="">Select a template</option>
-            {options?.template_name?.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        
-        {/* Content field */}
-        <div>
-          <label htmlFor="content_mdx">{labels?.content_mdx || 'Content'}</label>
-          <textarea
-            id="content_mdx"
-            name="content_mdx"
-            defaultValue={(values?.content_mdx as string) || ''}
-            placeholder={placeholders?.content_mdx}
-          />
-        </div>
-        
-        {/* Schedule field */}
-        <div>
-          <label htmlFor="scheduled_at">{labels?.scheduled_at || 'Schedule'}</label>
-          <input
-            id="scheduled_at"
-            name="scheduled_at"
-            type="datetime-local"
-            defaultValue={(values?.scheduled_at as string) || ''}
-          />
-        </div>
-        
-        {children && children({ Button })}
+        {children && children({ Field, Button, Errors })}
       </form>
     )
   }
