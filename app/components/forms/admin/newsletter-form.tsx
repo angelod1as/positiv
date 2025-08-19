@@ -1,7 +1,10 @@
 import type { FC } from "react"
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigation } from "react-router"
-import { newsletterFormSchema, type SegmentFilter } from "~/business/admin/newsletter/newsletter-schema"
+import {
+  newsletterFormSchema,
+  type SegmentFilter,
+} from "~/business/admin/newsletter/newsletter-schema"
 import { dbValuesToFormSchema } from "~/lib/helpers/db-values-to-form-schema"
 import { SchemaForm } from "../base/schema-form"
 import { SegmentSelector } from "./segment-selector"
@@ -31,45 +34,53 @@ type NewsletterFormProps = {
   onSendNow?: (newsletterId: string) => void
 }
 
-export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow }) => {
+export const NewsletterForm: FC<NewsletterFormProps> = ({
+  newsletter,
+  onSendNow,
+}) => {
   const navigation = useNavigation()
   const isSubmitting = navigation.state === "submitting"
-  
+
   // Format newsletter for the form schema
-  const newsletterForForm = newsletter ? {
-    id: newsletter.id,
-    subject: newsletter.subject,
-    template_name: newsletter.template_name,
-    content_mdx: newsletter.content_mdx,
-    scheduled_at: newsletter.scheduled_at,
-    status: newsletter.status,
-    created_at: newsletter.created_at,
-    updated_at: newsletter.updated_at,
-    created_by: newsletter.created_by,
-    sent_at: newsletter.sent_at,
-    send_started_at: newsletter.send_started_at,
-    send_completed_at: newsletter.send_completed_at,
-    total_recipients: newsletter.total_recipients,
-    successful_sends: newsletter.successful_sends,
-    failed_sends: newsletter.failed_sends,
-  } : undefined
-  
-  const formattedNewsletter = newsletter?.id 
-    ? dbValuesToFormSchema(newsletterForForm as Record<string, string | number | boolean | null>) 
+  const newsletterForForm = newsletter
+    ? {
+        id: newsletter.id,
+        subject: newsletter.subject,
+        template_name: newsletter.template_name,
+        content_mdx: newsletter.content_mdx,
+        scheduled_at: newsletter.scheduled_at,
+        status: newsletter.status,
+        created_at: newsletter.created_at,
+        updated_at: newsletter.updated_at,
+        created_by: newsletter.created_by,
+        sent_at: newsletter.sent_at,
+        send_started_at: newsletter.send_started_at,
+        send_completed_at: newsletter.send_completed_at,
+        total_recipients: newsletter.total_recipients,
+        successful_sends: newsletter.successful_sends,
+        failed_sends: newsletter.failed_sends,
+      }
+    : undefined
+
+  const formattedNewsletter = newsletter?.id
+    ? dbValuesToFormSchema(
+        newsletterForForm as Record<string, string | number | boolean | null>,
+      )
     : newsletter
-  
+
   // Initialize segment filter state with normalized excludeRejected
   const [segmentFilter, setSegmentFilter] = useState<SegmentFilter>(() => {
     const base = newsletter?.segment_filter || {}
     // Ensure excludeRejected is always set, prioritizing segment_filter over exclude_rejected
-    const excludeRejected = base.excludeRejected ?? newsletter?.exclude_rejected ?? true
+    const excludeRejected =
+      base.excludeRejected ?? newsletter?.exclude_rejected ?? true
     return { ...base, excludeRejected }
   })
-  
+
   // Log submission state changes
   useEffect(() => {
     if (isSubmitting) {
-      console.info('[NewsletterForm] Form is submitting...')
+      console.info("[NewsletterForm] Form is submitting...")
     }
   }, [isSubmitting])
 
@@ -90,7 +101,8 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow 
         }}
         placeholders={{
           subject: "Enter newsletter subject",
-          content_mdx: "# Newsletter Title\n\nWrite your newsletter content here using Markdown...",
+          content_mdx:
+            "# Newsletter Title\n\nWrite your newsletter content here using Markdown...",
         }}
         multiline={["content_mdx"]}
         inputTypes={{
@@ -103,83 +115,42 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({ newsletter, onSendNow 
             { value: "event-announcement", name: "Event Announcement" },
           ],
         }}
-      >
-        {({ Field, Button, Errors }) => {
-          // Custom button with loading state
-          const SubmitButton = ({ children }: { children: React.ReactNode }) => {
-            const handleClick = () => {
-              console.info('[NewsletterForm] Submit button clicked')
-              console.info('[NewsletterForm] Current segment filter:', segmentFilter)
+        hiddenFields={["segment_filter", "exclude_rejected"]}
+        buttonLabel={
+          isSubmitting 
+            ? "Processing..." 
+            : (newsletter?.id ? "Update Newsletter" : "Create Newsletter")
+        }
+      />
+      
+      {/* Segment Selector section - outside form but updates hidden fields */}
+      <div className="border rounded-lg p-4 bg-muted/10">
+        <h3 className="text-lg font-medium mb-4">Audience Segmentation</h3>
+        <SegmentSelector
+          value={segmentFilter}
+          onChange={(newFilter) => {
+            console.info('[NewsletterForm] Segment filter changed:', newFilter)
+            setSegmentFilter(newFilter)
+          }}
+        />
+      </div>
+      
+      {/* Send Now button for existing drafts */}
+      {newsletter?.id && newsletter?.status === "draft" && onSendNow && (
+        <button
+          type="button"
+          onClick={() => {
+            console.info('[NewsletterForm] Send Now clicked for newsletter:', newsletter.id)
+            if (newsletter.id) {
+              onSendNow(newsletter.id)
             }
-            
-            return (
-              <Button>
-                <span onClick={handleClick}>
-                  {isSubmitting ? (
-                    <>
-                      <span className="inline-block animate-spin mr-2">⏳</span>
-                      Processing...
-                    </>
-                  ) : (
-                    children
-                  )}
-                </span>
-              </Button>
-            )
-          }
-          
-          return (
-            <>
-              {/* Render all the main form fields */}
-              <Field name="subject" />
-              <Field name="template_name" />
-              <Field name="content_mdx" />
-              <Field name="scheduled_at" />
-              
-              {/* Segment Selector section */}
-              <div className="border-t pt-4">
-                <h3 className="text-lg font-medium mb-4">Audience Segmentation</h3>
-                <SegmentSelector
-                  value={segmentFilter}
-                  onChange={(newFilter) => {
-                    console.info('[NewsletterForm] Segment filter changed:', newFilter)
-                    setSegmentFilter(newFilter)
-                  }}
-                />
-              </div>
-              
-              {/* Hidden fields for segment data */}
-              <input type="hidden" name="segment_filter" value={JSON.stringify(segmentFilter)} />
-              <input type="hidden" name="exclude_rejected" value={String(segmentFilter.excludeRejected)} />
-              
-              {/* Form errors */}
-              <Errors />
-              
-              {/* Submit button */}
-              <div className="flex gap-4 border-t pt-4">
-                <SubmitButton>
-                  {newsletter?.id ? "Update Newsletter" : "Create Newsletter"}
-                </SubmitButton>
-                {newsletter?.id && newsletter?.status === "draft" && onSendNow && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      console.info('[NewsletterForm] Send Now clicked for newsletter:', newsletter.id)
-                      if (newsletter.id) {
-                        onSendNow(newsletter.id)
-                      }
-                    }}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                    disabled={isSubmitting}
-                  >
-                    Send Now
-                  </button>
-                )}
-              </div>
-            </>
-          )
-        }}
-      </SchemaForm>
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+          disabled={isSubmitting}
+        >
+          Send Now
+        </button>
+      )}
     </div>
   )
 }
