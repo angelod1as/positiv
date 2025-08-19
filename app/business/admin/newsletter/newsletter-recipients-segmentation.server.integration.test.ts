@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
+import { sql } from "kysely"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile, createTestEvent, createTestEventParticipant } from "~/test/db-test-utils"
 import {
@@ -13,13 +14,172 @@ describe("Newsletter Recipients Segmentation - Integration Tests", () => {
   beforeEach(async () => {
     tracker.clear()
     // Clear existing test data
+    await kysely.deleteFrom("user_roles").execute()
     await kysely.deleteFrom("event_participants").execute()
     await kysely.deleteFrom("events").execute()
     await kysely.deleteFrom("profiles").execute()
+    await kysely.executeQuery(sql`DELETE FROM auth.users WHERE email LIKE '%@test.com'`.compile(kysely))
   })
 
   afterEach(async () => {
+    await kysely.deleteFrom("user_roles").execute()
+    await kysely.executeQuery(sql`DELETE FROM auth.users WHERE email LIKE '%@test.com'`.compile(kysely))
     await cleanupAfterTest(tracker, kysely)
+  })
+
+  describe("Admin-Only Segmentation", () => {
+    it("should return only admin profiles when adminsOnly is true", async () => {
+      // Create an admin user in auth.users first
+      const adminUserId = crypto.randomUUID()
+      await kysely.executeQuery(sql`
+        INSERT INTO auth.users (id, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+        VALUES (${adminUserId}, ${'admin@test.com'}, '{}', '{}', NOW(), NOW())
+      `.compile(kysely))
+      
+      // Create admin profile
+      const adminProfile = await createTestProfile(tracker, kysely, {
+        user_id: adminUserId,
+        email: "admin@test.com",
+        full_name: "Admin User",
+        allow_marketing_email: true,
+      })
+      
+      // Add admin role
+      await kysely
+        .insertInto("user_roles")
+        .values({
+          user_id: adminUserId,
+          role_name: "admin",
+          created_at: new Date().toISOString(),
+        })
+        .execute()
+      
+      // Create regular user profile (no admin role)
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "regular@test.com",
+        full_name: "Regular User",
+        allow_marketing_email: true,
+      })
+      
+      // Test with adminsOnly filter
+      const filter: SegmentFilter = { adminsOnly: true }
+      const recipients = await getEligibleRecipients(kysely, filter)
+      
+      expect(recipients).toHaveLength(1)
+      expect(recipients[0].email).toBe("admin@test.com")
+      expect(recipients[0].id).toBe(adminProfile.id)
+    })
+
+    it("should combine adminsOnly with other filters", async () => {
+      // Create admin veteran
+      const adminVeteranId = crypto.randomUUID()
+      await kysely.executeQuery(sql`
+        INSERT INTO auth.users (id, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+        VALUES (${adminVeteranId}, ${'admin-veteran@test.com'}, '{}', '{}', NOW(), NOW())
+      `.compile(kysely))
+      
+      await createTestProfile(tracker, kysely, {
+        user_id: adminVeteranId,
+        email: "admin-veteran@test.com",
+        full_name: "Admin Veteran",
+        allow_marketing_email: true,
+        is_veteran: true,
+      })
+      
+      await kysely
+        .insertInto("user_roles")
+        .values({
+          user_id: adminVeteranId,
+          role_name: "admin",
+          created_at: new Date().toISOString(),
+        })
+        .execute()
+      
+      // Create admin newbie
+      const adminNewbieId = crypto.randomUUID()
+      await kysely.executeQuery(sql`
+        INSERT INTO auth.users (id, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+        VALUES (${adminNewbieId}, ${'admin-newbie@test.com'}, '{}', '{}', NOW(), NOW())
+      `.compile(kysely))
+      
+      await createTestProfile(tracker, kysely, {
+        user_id: adminNewbieId,
+        email: "admin-newbie@test.com",
+        full_name: "Admin Newbie",
+        allow_marketing_email: true,
+        is_veteran: false,
+      })
+      
+      await kysely
+        .insertInto("user_roles")
+        .values({
+          user_id: adminNewbieId,
+          role_name: "admin",
+          created_at: new Date().toISOString(),
+        })
+        .execute()
+      
+      // Create regular veteran (not admin)
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "regular-veteran@test.com",
+        full_name: "Regular Veteran",
+        allow_marketing_email: true,
+        is_veteran: true,
+      })
+      
+      // Test adminsOnly + veteransOnly
+      const filter: SegmentFilter = { 
+        adminsOnly: true,
+        veteransOnly: true 
+      }
+      const recipients = await getEligibleRecipients(kysely, filter)
+      
+      expect(recipients).toHaveLength(1)
+      expect(recipients[0].email).toBe("admin-veteran@test.com")
+    })
+
+    it("should return correct count for adminsOnly filter", async () => {
+      // Create multiple admins
+      for (let i = 0; i < 3; i++) {
+        const userId = crypto.randomUUID()
+        await kysely.executeQuery(sql`
+          INSERT INTO auth.users (id, email, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
+          VALUES (${userId}, ${`admin${i}@test.com`}, '{}', '{}', NOW(), NOW())
+        `.compile(kysely))
+        
+        await createTestProfile(tracker, kysely, {
+          user_id: userId,
+          email: `admin${i}@test.com`,
+          allow_marketing_email: true,
+        })
+        
+        await kysely
+          .insertInto("user_roles")
+          .values({
+            user_id: userId,
+            role_name: "admin",
+            created_at: new Date().toISOString(),
+          })
+          .execute()
+      }
+      
+      // Create regular users
+      for (let i = 0; i < 2; i++) {
+        await createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `regular${i}@test.com`,
+          allow_marketing_email: true,
+        })
+      }
+      
+      // Test count
+      const filter: SegmentFilter = { adminsOnly: true }
+      const count = await getRecipientCount(kysely, filter)
+      
+      expect(count).toBe(3)
+    })
   })
 
   describe("Rejected Participant Exclusion", () => {

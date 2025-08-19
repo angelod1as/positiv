@@ -33,6 +33,9 @@ export interface SegmentFilter {
   }
   inactivityPeriodDays?: number // "haven't attended in X days"
   specificEventIds?: string[] // attended these specific events
+  
+  // Admin-only filter
+  adminsOnly?: boolean // Only send to admin users
 }
 
 export interface NewsletterRecipient {
@@ -52,6 +55,11 @@ export async function getEligibleRecipients(
   filter?: SegmentFilter
 ): Promise<NewsletterRecipient[]> {
   const excludeRejected = filter?.excludeRejected ?? true
+  
+  // Handle admin-only filter
+  if (filter?.adminsOnly) {
+    return getAdminRecipients(kysely, filter, excludeRejected)
+  }
   
   // Handle activity-based filters which require different query structures
   if (filter?.activityType) {
@@ -97,6 +105,53 @@ export async function getEligibleRecipients(
     if (filter.newbiesOnly === true) {
       query = query.where("profiles.is_veteran", "=", false)
     }
+  }
+  
+  const recipients = await query.execute()
+  
+  // Filter out any recipients without email (type safety)
+  return recipients.filter((r): r is NewsletterRecipient => 
+    r.email !== null
+  ) as NewsletterRecipient[]
+}
+
+async function getAdminRecipients(
+  kysely: Kysely<Database>,
+  filter: SegmentFilter,
+  excludeRejected: boolean
+): Promise<NewsletterRecipient[]> {
+  // Build query that joins with user_roles to get only admins
+  let query = kysely
+    .selectFrom("profiles")
+    .innerJoin("user_roles", "user_roles.user_id", "profiles.user_id")
+    .select([
+      "profiles.id",
+      "profiles.email",
+      "profiles.full_name",
+      "profiles.is_veteran",
+      "profiles.gender",
+      "profiles.orientation",
+      "profiles.created_at",
+    ])
+    .where("profiles.allow_marketing_email", "=", true)
+    .where("profiles.email", "is not", null)
+    .where("user_roles.role_name", "=", "admin")
+    .distinct()
+  
+  // Exclude rejected participants if needed
+  if (excludeRejected) {
+    query = query.where((eb) => eb.or([
+      eb("profiles.approved_to_attend", "is", null),
+      eb("profiles.approved_to_attend", "!=", "rejected")
+    ]))
+  }
+  
+  // Apply other filters if combined with adminsOnly
+  if (filter.veteransOnly === true) {
+    query = query.where("profiles.is_veteran", "=", true)
+  }
+  if (filter.newbiesOnly === true) {
+    query = query.where("profiles.is_veteran", "=", false)
   }
   
   const recipients = await query.execute()
@@ -332,6 +387,11 @@ export async function getRecipientCount(
 ): Promise<number> {
   const excludeRejected = filter?.excludeRejected ?? true
   
+  // Handle admin-only filter
+  if (filter?.adminsOnly) {
+    return getAdminRecipientCount(kysely, filter, excludeRejected)
+  }
+  
   // Handle activity-based filters with efficient COUNT queries
   if (filter?.activityType) {
     return getActivityBasedCount(kysely, filter.activityType, filter, excludeRejected)
@@ -363,6 +423,40 @@ export async function getRecipientCount(
     if (filter.newbiesOnly === true) {
       query = query.where("profiles.is_veteran", "=", false)
     }
+  }
+  
+  const result = await query.executeTakeFirst()
+  return Number(result?.count ?? 0)
+}
+
+async function getAdminRecipientCount(
+  kysely: Kysely<Database>,
+  filter: SegmentFilter,
+  excludeRejected: boolean
+): Promise<number> {
+  // Build count query that joins with user_roles to count only admins
+  let query = kysely
+    .selectFrom("profiles")
+    .innerJoin("user_roles", "user_roles.user_id", "profiles.user_id")
+    .select((eb) => eb.fn.count<number>(eb.fn("distinct", ["profiles.id"])).as("count"))
+    .where("profiles.allow_marketing_email", "=", true)
+    .where("profiles.email", "is not", null)
+    .where("user_roles.role_name", "=", "admin")
+  
+  // Exclude rejected participants if needed
+  if (excludeRejected) {
+    query = query.where((eb) => eb.or([
+      eb("profiles.approved_to_attend", "is", null),
+      eb("profiles.approved_to_attend", "!=", "rejected")
+    ]))
+  }
+  
+  // Apply other filters if combined with adminsOnly
+  if (filter.veteransOnly === true) {
+    query = query.where("profiles.is_veteran", "=", true)
+  }
+  if (filter.newbiesOnly === true) {
+    query = query.where("profiles.is_veteran", "=", false)
   }
   
   const result = await query.executeTakeFirst()
