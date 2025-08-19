@@ -13,7 +13,11 @@ describe('Newsletter Form Schema', () => {
       const result = newsletterFormSchema.safeParse(validData)
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data).toEqual(validData)
+        expect(result.data).toEqual({
+          ...validData,
+          segment_type: 'all',
+          exclude_rejected: false
+        })
       }
     })
 

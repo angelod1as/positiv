@@ -21,8 +21,19 @@ export const newsletterFormSchema = z.object({
   content_mdx: z.string().min(1, 'Content is required'),
   scheduled_at: z.string().optional(),
   status: z.enum(['draft', 'scheduled']).optional(),
-  segment_filter: segmentFilterSchema.optional(),
-  exclude_rejected: z.boolean().optional(),
+  segment_type: z.enum([
+    'all',
+    'veterans',
+    'newbies',
+    'never_attended',
+    'has_attended',
+    'never_applied',
+    'applied_never_attended'
+  ]).optional().default('all'),
+  exclude_rejected: z.preprocess(
+    (val) => val === 'on' || val === true || val === 'true',
+    z.boolean().optional()
+  ),
 })
 
 export type SegmentFilter = z.infer<typeof segmentFilterSchema>

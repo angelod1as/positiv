@@ -16,7 +16,10 @@ vi.mock('~/lib/paths', () => ({
 }))
 
 vi.mock('~/business/admin/admin.server', () => ({
-  getAdminContext: vi.fn().mockResolvedValue({ userId: 'test-user-id' }),
+  getAdminContext: vi.fn().mockResolvedValue({ 
+    currentProfile: { id: 'test-profile-id' },
+    currentUser: { id: 'test-user-id' }
+  }),
 }))
 
 vi.mock('~/business/admin/newsletter/newsletter.server', () => ({
@@ -57,7 +60,10 @@ describe('New Newsletter Page', () => {
       const request = new Request('http://localhost:3000/admin/newsletters/new')
       const result = await loader({ request, params: {} } as Route.LoaderArgs)
       
-      expect(result).toEqual({ userId: 'test-user-id' })
+      expect(result).toEqual({ 
+        currentProfile: { id: 'test-profile-id' },
+        currentUser: { id: 'test-user-id' }
+      })
     })
   })
 
