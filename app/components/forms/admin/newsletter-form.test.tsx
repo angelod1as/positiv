@@ -2,25 +2,25 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { NewsletterForm } from './newsletter-form'
 
+// Mock useNavigation hook
+vi.mock('react-router', () => ({
+  useNavigation: () => ({ state: 'idle' }),
+}))
+
 vi.mock('~/lib/helpers/db-values-to-form-schema', () => ({
   dbValuesToFormSchema: (data: unknown) => data,
 }))
 
 // Mock the SchemaForm component to avoid React Router dependencies
 vi.mock('../base/schema-form', () => ({
-  SchemaForm: ({ children, values, labels, options, placeholders }: {
-    children?: (props: {
-      Button: React.FC<{ children: React.ReactNode }>
-    }) => React.ReactNode
+  SchemaForm: ({ values, labels, options, placeholders, buttonLabel, inputTypes }: {
     values?: Record<string, unknown>
     labels?: Record<string, string>
     options?: Record<string, Array<{ value: string, name: string }>>
     placeholders?: Record<string, string>
+    buttonLabel?: string
+    inputTypes?: Record<string, string>
   }) => {
-    const Button = ({ children: btnChildren }: { children: React.ReactNode }) => (
-      <button type="submit">{btnChildren}</button>
-    )
-    
     return (
       <form>
         {/* Subject field */}
@@ -75,22 +75,44 @@ vi.mock('../base/schema-form', () => ({
           />
         </div>
         
-        {children && children({ Button })}
+        {/* Segment type field */}
+        {inputTypes?.segment_type === 'select' && (
+          <div>
+            <label htmlFor="segment_type">{labels?.segment_type || 'Audience Segment'}</label>
+            <select
+              id="segment_type"
+              name="segment_type"
+              defaultValue={(values?.segment_type as string) || 'all'}
+            >
+              {options?.segment_type?.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        
+        {/* Exclude rejected checkbox */}
+        <div>
+          <label htmlFor="exclude_rejected">
+            <input
+              id="exclude_rejected"
+              name="exclude_rejected"
+              type="checkbox"
+              defaultChecked={(values?.exclude_rejected as boolean) ?? true}
+            />
+            {labels?.exclude_rejected || 'Exclude rejected participants'}
+          </label>
+        </div>
+        
+        {/* Submit button */}
+        <button type="submit">{buttonLabel || 'Submit'}</button>
       </form>
     )
   }
 }))
 
-// Mock the SegmentSelector component
-vi.mock('./segment-selector', () => ({
-  SegmentSelector: () => {
-    return (
-      <div data-testid="segment-selector">
-        <label htmlFor="segment">Segment Selector</label>
-      </div>
-    )
-  },
-}))
 
 describe('NewsletterForm', () => {
   const renderForm = (
@@ -186,12 +208,35 @@ describe('NewsletterForm', () => {
     })
   })
 
-  describe('Segment Selector', () => {
-    it('should render segment selector in the form', () => {
+  describe('Segment Type', () => {
+    it('should render segment type dropdown in the form', () => {
       renderForm()
       
-      expect(screen.getByTestId('segment-selector')).toBeInTheDocument()
-      expect(screen.getByText('Segment Selector')).toBeInTheDocument()
+      const segmentSelect = screen.getByLabelText(/audience segment/i)
+      expect(segmentSelect).toBeInTheDocument()
+      expect(segmentSelect.tagName).toBe('SELECT')
+    })
+    
+    it('should have all segment options', () => {
+      renderForm()
+      
+      const segmentSelect = screen.getByLabelText(/audience segment/i)
+      const options = segmentSelect.querySelectorAll('option')
+      const optionValues = Array.from(options).map(opt => opt.value)
+      
+      expect(optionValues).toContain('all')
+      expect(optionValues).toContain('veterans')
+      expect(optionValues).toContain('newbies')
+    })
+  })
+  
+  describe('Exclude Rejected', () => {
+    it('should render exclude rejected checkbox', () => {
+      renderForm()
+      
+      const checkbox = screen.getByLabelText(/exclude rejected/i)
+      expect(checkbox).toBeInTheDocument()
+      expect(checkbox).toHaveAttribute('type', 'checkbox')
     })
   })
 

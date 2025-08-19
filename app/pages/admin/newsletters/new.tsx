@@ -6,8 +6,10 @@ import { getAdminContext } from "~/business/admin/admin.server"
 import { createNewsletter } from "~/business/admin/newsletter/newsletter.server"
 import { newsletterFormSchema } from "~/business/admin/newsletter/newsletter-schema"
 import { NewsletterForm } from "~/components/forms/admin/newsletter-form"
+import { Alert, AlertDescription } from "~/components/ui/alert"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/new"
+import { useActionData } from "react-router"
 
 const {
   admin: {
@@ -22,12 +24,52 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 const createNewsletterMutation = applySchema(
   newsletterFormSchema,
-  z.object({ userId: z.string() })
+  z.object({ profileId: z.string() })
 )(async (data, context) => {
+  // Validate context
+  if (!context?.profileId) {
+    throw new Error('Profile ID is required')
+  }
+  
+  // Convert segment_type to segment_filter
+  const segmentFilter: Record<string, unknown> = {
+    excludeRejected: data.exclude_rejected ?? true
+  }
+  
+  switch (data.segment_type) {
+    case 'veterans':
+      segmentFilter.veteransOnly = true
+      break
+    case 'newbies':
+      segmentFilter.newbiesOnly = true
+      break
+    case 'never_attended':
+      segmentFilter.activityType = 'never_attended'
+      break
+    case 'has_attended':
+      segmentFilter.activityType = 'has_attended'
+      break
+    case 'never_applied':
+      segmentFilter.activityType = 'never_applied'
+      break
+    case 'applied_never_attended':
+      segmentFilter.activityType = 'applied_never_attended'
+      break
+    case 'all':
+    default:
+      // No additional filters for 'all'
+      break
+  }
+  
   const newsletter = await createNewsletter({
-    ...data,
-    created_by: context.userId,
+    subject: data.subject,
+    template_name: data.template_name,
+    content_mdx: data.content_mdx,
+    scheduled_at: data.scheduled_at,
+    created_by: context.profileId,
     status: data.status || 'draft',
+    segment_filter: segmentFilter,
+    exclude_rejected: data.exclude_rejected,
   })
   return { success: true as const, data: newsletter }
 })
@@ -48,11 +90,13 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
       return result
     },
-    context,
+    context: { profileId: context.currentProfile?.id || '' },
   })
 }
 
 export default function AdminNewNewsletterPage() {
+  const actionData = useActionData<typeof action>()
+  
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
       <div>
@@ -61,6 +105,31 @@ export default function AdminNewNewsletterPage() {
           Create a new newsletter to send to your community members
         </p>
       </div>
+      
+      {/* Show validation errors if any */}
+      {actionData && !actionData.success && 'errors' in actionData && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            <strong>Please fix the following errors:</strong>
+            <ul className="list-disc list-inside mt-2">
+              {Object.entries(actionData.errors).map(([field, error]) => (
+                <li key={field}>
+                  <strong>{field}:</strong> {String(error)}
+                </li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {/* Show general error if something went wrong */}
+      {actionData && !actionData.success && !('errors' in actionData) && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            An error occurred while creating the newsletter. Please try again.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <NewsletterForm />
     </div>
