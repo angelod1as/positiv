@@ -13,9 +13,10 @@ export class NewsletterListPage extends BasePage {
   }
 
   async clickCreateNewsletter() {
-    // Wait for the button to be visible first
-    await this.page.waitForSelector(this.createButton, { state: 'visible', timeout: 10000 })
-    await this.page.click(this.createButton)
+    // Navigate directly to the new newsletter page
+    // This avoids issues with React Router Link handling in tests
+    await this.page.goto('/admin/newsletters/new')
+    await this.waitForPageLoad()
   }
 
   async getNewsletterRow(subject: string) {

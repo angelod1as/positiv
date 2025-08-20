@@ -380,7 +380,7 @@ Este evento é perfeito para:
 ## Dicas Para Aproveitar ao Máximo
 
 - **Seja você mesmo** - Autenticidade é nosso valor principal
-- **Chegue no horário** - Aprovei te desde o início
+- **Chegue no horário** - Aproveite desde o início
 - **Interaja** - Todos estão ali para conhecer pessoas novas
 - **Divirta-se** - Este é o mais importante!
 

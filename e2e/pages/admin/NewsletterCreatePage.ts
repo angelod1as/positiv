@@ -12,6 +12,7 @@ export class NewsletterCreatePage extends BasePage {
   protected eventAttendanceMaxInput = 'input[name="eventAttendanceMax"]'
   protected previewButton = 'button:has-text("Preview")'
   protected saveDraftButton = 'button:has-text("Save as Draft")'
+  protected createButton = 'button:has-text("Create Newsletter")'
   protected sendButton = 'button:has-text("Send Now")'
   protected scheduleButton = 'button:has-text("Schedule")'
   protected recipientCount = '[data-testid="recipient-count"]'
@@ -25,14 +26,17 @@ export class NewsletterCreatePage extends BasePage {
   }
 
   async fillSubject(subject: string) {
+    await this.page.waitForSelector(this.subjectInput, { state: 'visible', timeout: 10000 })
     await this.page.fill(this.subjectInput, subject)
   }
 
   async selectTemplate(template: 'event-announcement' | 'general-news') {
+    await this.page.waitForSelector(this.templateSelect, { state: 'visible', timeout: 10000 })
     await this.page.selectOption(this.templateSelect, template)
   }
 
   async fillMDXContent(content: string) {
+    await this.page.waitForSelector(this.mdxEditor, { state: 'visible', timeout: 10000 })
     await this.page.fill(this.mdxEditor, content)
   }
 
@@ -76,7 +80,13 @@ export class NewsletterCreatePage extends BasePage {
   }
 
   async sendImmediately() {
-    await this.page.click(this.sendButton)
+    // For new newsletters, click Create Newsletter button
+    // For existing drafts, click Send Now button
+    try {
+      await this.page.click(this.createButton, { timeout: 5000 })
+    } catch {
+      await this.page.click(this.sendButton)
+    }
   }
 
   async scheduleNewsletter(date: Date) {
