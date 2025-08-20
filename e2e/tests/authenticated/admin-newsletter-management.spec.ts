@@ -251,9 +251,7 @@ See you there!`
     }
   })
 
-  test.skip('admin can delete draft newsletter', async ({ page }) => {
-    // Skip this test as the delete functionality doesn't appear to be implemented
-    // on the view page. There's only an Edit button visible.
+  test('admin can delete draft newsletter', async ({ page }) => {
     const timestamp = Date.now()
     const subject = `Newsletter to Delete ${timestamp}`
     
@@ -280,13 +278,9 @@ See you there!`
     await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/, { timeout: 10000 })
     
     // Delete the newsletter from the view page
+    // The delete button now has a JavaScript confirm dialog
+    page.on('dialog', dialog => dialog.accept())
     await page.click('button:has-text("Delete")')
-    
-    // Handle confirmation dialog if it appears
-    const confirmButton = page.locator('button:has-text("Confirm"), button:has-text("Yes"), button:has-text("OK")')
-    if (await confirmButton.count() > 0) {
-      await confirmButton.click()
-    }
     
     // Should redirect to list
     await page.waitForURL(/\/admin\/newsletters/, { timeout: 10000 })

@@ -3,12 +3,13 @@ import { redirectWithToast } from 'remix-toast'
 import { getAdminContext } from '~/business/admin/admin.server'
 import { getNewsletterById } from '~/business/admin/newsletter/newsletter.server'
 import { processScheduledNewsletters } from '~/business/admin/newsletter/newsletter-scheduler.server'
+import { deleteNewsletter } from '~/business/admin/newsletter/delete-newsletter.server'
 import { db } from '~/lib/supabase/db.server'
 import { withErrorRedirect } from '~/lib/helpers/error-handling'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
-import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2 } from 'lucide-react'
 import { format, isPast } from 'date-fns'
 import paths from '~/lib/paths'
 import type { Route } from './+types/view'
@@ -47,6 +48,25 @@ export async function action({ request, params }: Route.ActionArgs) {
   
   const formData = await request.formData()
   const intent = formData.get('intent')
+  const newsletterId = params.id
+  
+  if (!newsletterId) {
+    throw await redirectWithToast(
+      ADMIN_NEWSLETTERS(),
+      { message: "Newsletter ID is required", type: "error" }
+    )
+  }
+  
+  if (intent === 'delete') {
+    return withErrorRedirect(
+      () => deleteNewsletter(newsletterId),
+      {
+        redirectPath: ADMIN_NEWSLETTERS(),
+        successMessage: "Newsletter deleted successfully",
+        errorMessage: "Error deleting newsletter",
+      }
+    )
+  }
   
   if (intent === 'trigger-processing') {
     // Process newsletters directly on the server without API call
@@ -115,6 +135,24 @@ export default function AdminViewNewsletterPage() {
         </div>
         
         <div className="flex gap-2">
+          {(newsletter.status === 'draft' || newsletter.status === 'scheduled') && (
+            <fetcher.Form method="post">
+              <input type="hidden" name="intent" value="delete" />
+              <Button 
+                type="submit" 
+                variant="destructive"
+                onClick={(e) => {
+                  if (!confirm('Are you sure you want to delete this newsletter? This action cannot be undone.')) {
+                    e.preventDefault()
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </fetcher.Form>
+          )}
+          
           {newsletter.status === 'draft' && (
             <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
               <Button>
