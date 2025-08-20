@@ -80,13 +80,28 @@ export class NewsletterCreatePage extends BasePage {
   }
 
   async sendImmediately() {
-    // For new newsletters, click Create Newsletter button
-    // For existing drafts, click Send Now button
-    try {
-      await this.page.click(this.createButton, { timeout: 5000 })
-    } catch {
+    // Wait for the page to be ready
+    await this.page.waitForLoadState('networkidle')
+    
+    // Check which button is available
+    const createButtonExists = await this.page.locator(this.createButton).isVisible().catch(() => false)
+    const sendButtonExists = await this.page.locator(this.sendButton).isVisible().catch(() => false)
+    
+    if (createButtonExists) {
+      await this.page.click(this.createButton)
+    } else if (sendButtonExists) {
       await this.page.click(this.sendButton)
+    } else {
+      // If neither button is visible, wait a bit and try again
+      await this.page.waitForTimeout(2000)
+      
+      // Try to find any button with "Send" or "Create" text
+      const sendCreateButton = this.page.locator('button:has-text("Send"), button:has-text("Create Newsletter")')
+      await sendCreateButton.first().click({ timeout: 10000 })
     }
+    
+    // Wait for navigation after clicking
+    await this.page.waitForLoadState('networkidle')
   }
 
   async scheduleNewsletter(date: Date) {

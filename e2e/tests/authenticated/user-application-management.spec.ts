@@ -105,17 +105,15 @@ test.describe('POS-191: Application Management Tests', () => {
     // The cancellation date might still be there from history, that's ok
   })
 
-  test('Handle multiple applications', async ({ page }) => {
+  test('Handle multiple applications', async ({ page: _page }) => {
     // Check prerequisites
     expect(profileId).toBeTruthy()
     expect(testEvent).toBeTruthy()
     if (!profileId || !testEvent) return
     
     // Get a second event if available
-    const { data: events } = await page.evaluate(async () => {
-      const response = await fetch('/api/events?status=inscricoes-abertas&limit=2')
-      return await response.json()
-    }).catch(() => ({ data: [] }))
+    const { getOpenEvents } = await import('../../utils/application-helpers')
+    const events = await getOpenEvents(2)
     
     if (events.length < 2) {
       test.skip()

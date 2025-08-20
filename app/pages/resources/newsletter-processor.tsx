@@ -4,7 +4,6 @@ import { db } from "~/lib/supabase/db.server"
 import { safeExecute, handleApiError } from "~/lib/helpers/error-handling"
 
 export async function action({ request }: ActionFunctionArgs) {
-  // Validate the service role key for security
   const authHeader = request.headers.get("authorization") || ""
   const expectedToken = process.env.SUPABASE_SERVICE_ROLE_KEY
   
@@ -17,10 +16,9 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: "Forbidden" }, { status: 403 })
   }
 
-  // Process scheduled newsletters using composable error handling
   const result = await safeExecute(() => 
     processScheduledNewsletters(db, {
-      maxExecutionTime: 140000, // 140 seconds (leaving buffer for edge function's 150s limit)
+      maxExecutionTime: 140000,
     })
   )
 
@@ -37,7 +35,6 @@ export async function action({ request }: ActionFunctionArgs) {
   return handleApiError(result.error)
 }
 
-// GET method for health check
 export async function loader() {
   return Response.json({ 
     status: "ok",

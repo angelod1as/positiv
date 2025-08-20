@@ -63,8 +63,8 @@ serve(async (req) => {
 
     console.info(`Found ${scheduledNewsletters.length} newsletter(s) ready to process`)
 
-    // Call the API endpoint to process newsletters
-    const response = await fetch(`${appUrl}/api/admin/newsletters/process`, {
+    // Call the resource route to process newsletters
+    const response = await fetch(`${appUrl}/resources/newsletter-processor`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

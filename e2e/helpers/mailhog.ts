@@ -19,7 +19,7 @@ export class MailhogHelper {
     const context = await request.newContext()
     try {
       const response = await context.get(`${this.apiUrl}/v2/messages`)
-      if (response.ok) {
+      if (response.ok()) {
         const data = await response.json()
         return data.items || []
       }
@@ -49,7 +49,7 @@ export class MailhogHelper {
     const context = await request.newContext()
     try {
       const response = await context.get(`${this.apiUrl}/v1/messages/${messageId}`)
-      if (response.ok) {
+      if (response.ok()) {
         return await response.json()
       }
       return null
