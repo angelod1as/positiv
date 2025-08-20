@@ -14,9 +14,9 @@ export class NewsletterListPage extends BasePage {
 
   async clickCreateNewsletter() {
     // Navigate directly to the new newsletter page
-    // This avoids issues with React Router Link handling in tests
     await this.page.goto('/admin/newsletters/new')
-    await this.waitForPageLoad()
+    // Wait for the page to actually navigate
+    await this.page.waitForURL('**/admin/newsletters/new')
   }
 
   async waitForTableToAppear() {
