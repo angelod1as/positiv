@@ -90,13 +90,17 @@ Best regards,
     // Wait for navigation back to newsletter list
     await page.waitForURL(/\/admin\/newsletters/, { timeout: 10000 })
     
+    // Wait for the table to load
+    await page.waitForSelector('table', { state: 'visible', timeout: 10000 })
+    
     // Verify the newsletter was created in the list
     const subject = await page.textContent('td:has-text("Test Newsletter - Immediate Send")')
     expect(subject).toBeTruthy()
     
     // Verify it's a draft (since we're not actually sending)
-    const status = await page.textContent('tr:has-text("Test Newsletter - Immediate Send") [data-testid="status-badge"]')
-    expect(status?.toLowerCase()).toBe('draft')
+    // Find the row and then get the status column (3rd column)
+    const statusCell = await page.locator('tr:has-text("Test Newsletter - Immediate Send") td:nth-child(3)').textContent()
+    expect(statusCell?.toLowerCase()).toBe('draft')
     
     // If it's a draft, we can't check emails yet
     // The test name says "send immediately" but the form creates drafts
