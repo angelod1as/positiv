@@ -21,7 +21,8 @@ export class NewsletterCreatePage extends BasePage {
   }
 
   async fillSubject(subject: string) {
-    await this.page.waitForSelector(this.subjectInput, { state: 'visible', timeout: 10000 })
+    // The element should already be visible after navigation
+    await this.page.waitForSelector(this.subjectInput, { state: 'visible', timeout: 5000 })
     await this.page.fill(this.subjectInput, subject)
   }
 

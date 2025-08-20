@@ -1,7 +1,7 @@
 import { BasePage } from '../BasePage'
 
 export class NewsletterListPage extends BasePage {
-  protected createButton = 'text="Create Newsletter"'
+  protected createButton = 'a[href="/admin/newsletters/new"]'
   protected newsletterTable = 'table'
   protected searchInput = 'input[placeholder*="Search"]'
   protected statusFilter = 'select[name="status"]'
@@ -13,10 +13,10 @@ export class NewsletterListPage extends BasePage {
   }
 
   async clickCreateNewsletter() {
-    // Navigate directly to the new newsletter page
-    await this.page.goto('/admin/newsletters/new')
-    // Wait for the page to actually navigate
-    await this.page.waitForURL('**/admin/newsletters/new')
+    // Direct navigation is more reliable than clicking buttons
+    await this.page.goto('/admin/newsletters/new', { waitUntil: 'networkidle' })
+    // Wait for the subject input to be visible as an indicator the page is ready
+    await this.page.waitForSelector('input[name="subject"]', { state: 'visible', timeout: 10000 })
   }
 
   async waitForTableToAppear() {
