@@ -14,9 +14,8 @@ export class NewsletterListPage extends BasePage {
 
   async clickCreateNewsletter() {
     // Direct navigation is more reliable than clicking buttons
-    await this.page.goto('/admin/newsletters/new', { waitUntil: 'networkidle' })
-    // Wait for the subject input to be visible as an indicator the page is ready
-    await this.page.waitForSelector('input[name="subject"]', { state: 'visible', timeout: 10000 })
+    await this.page.goto('/admin/newsletters/new')
+    await this.waitForPageLoad()
   }
 
   async waitForTableToAppear() {
