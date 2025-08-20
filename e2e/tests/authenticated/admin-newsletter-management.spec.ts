@@ -77,7 +77,14 @@ Best regards,
     await segmentSelect.selectOption('all')
     await page.waitForTimeout(100)
     
-    // Submit the form (status defaults to 'draft' automatically)
+    // Select draft status (the form shows a status dropdown)
+    const statusSelect = page.locator('select[name="status"]')
+    if (await statusSelect.count() > 0) {
+      await statusSelect.selectOption('draft')
+      await page.waitForTimeout(100)
+    }
+    
+    // Submit the form
     await page.click('button:has-text("Create Newsletter")')
     
     // Wait for navigation back to newsletter list

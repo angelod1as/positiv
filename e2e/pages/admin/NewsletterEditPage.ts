@@ -10,6 +10,8 @@ export class NewsletterEditPage extends NewsletterCreatePage {
   }
 
   async updateNewsletter() {
+    // Select draft status if the field exists
+    await this.selectStatus('draft')
     await this.page.click(this.updateButton)
   }
 

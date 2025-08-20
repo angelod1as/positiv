@@ -5,6 +5,7 @@ export class NewsletterCreatePage extends BasePage {
   protected templateSelect = 'select[name="template_name"]'
   protected mdxEditor = 'textarea[name="content_mdx"]'
   protected segmentTypeSelect = 'select[name="segment_type"]'
+  protected statusSelect = 'select[name="status"]'
   protected excludeRejectedCheckbox = 'input[name="exclude_rejected"]'
   protected previewButton = 'button:has-text("Preview")'
   protected saveDraftButton = 'button:has-text("Save as Draft")'
@@ -45,17 +46,29 @@ export class NewsletterCreatePage extends BasePage {
     await this.page.click(this.excludeRejectedCheckbox)
   }
 
+  async selectStatus(status: 'draft' | 'scheduled') {
+    const statusSelect = await this.page.locator(this.statusSelect)
+    if (await statusSelect.count() > 0) {
+      await this.page.selectOption(this.statusSelect, status)
+    }
+  }
+
   async previewNewsletter() {
     await this.page.click(this.previewButton)
     await this.page.waitForSelector(this.previewModal, { state: 'visible' })
   }
 
   async saveAsDraft() {
-    await this.page.click(this.saveDraftButton)
+    // Select draft status if the field exists
+    await this.selectStatus('draft')
+    // Click the Create Newsletter button (form submit)
+    await this.page.click(this.createButton)
   }
 
   async sendImmediately() {
-    // Just click the Create Newsletter button (it's a form submit button)
+    // Select draft status if the field exists (newsletters start as drafts)
+    await this.selectStatus('draft')
+    // Click the Create Newsletter button (form submit)
     await this.page.click(this.createButton)
   }
 
