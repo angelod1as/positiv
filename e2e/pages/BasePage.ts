@@ -11,35 +11,71 @@ export abstract class BasePage {
    * Wait for the page to be fully loaded, including:
    * - DOM content loaded
    * - Network idle
-   * - No pending animations
+   * - No pending animations (with timeout)
    */
   async waitForPageLoad(): Promise<void> {
     // Wait for DOM content to be loaded
     await this.page.waitForLoadState('domcontentloaded')
     
-    // Wait for network to be idle
-    await this.page.waitForLoadState('networkidle')
+    // Wait for network to be idle with a reasonable timeout
+    try {
+      await this.page.waitForLoadState('networkidle', { timeout: 5000 })
+    } catch {
+      // If network doesn't go idle in 5 seconds, continue anyway
+      console.warn('Network did not go idle within 5 seconds, continuing...')
+    }
     
-    // Wait for any animations to complete
-    await this.page.evaluate(() => {
-      return new Promise<void>((resolve) => {
-        // Wait for any pending animations
-        if (document.getAnimations) {
-          const animations = document.getAnimations()
-          if (animations.length === 0) {
-            resolve()
-            return
-          }
+    // Wait for any animations to complete with a timeout
+    try {
+      await this.page.evaluate(() => {
+        return new Promise<void>((resolve) => {
+          // Set a maximum wait time for animations
+          const maxWait = setTimeout(() => resolve(), 1000)
           
-          Promise.all(animations.map(animation => animation.finished)).then(() => {
-            resolve()
-          })
-        } else {
-          // Fallback for browsers that don't support getAnimations
-          setTimeout(resolve, 300)
-        }
+          // Wait for any pending animations
+          if (document.getAnimations) {
+            const animations = document.getAnimations()
+            if (animations.length === 0) {
+              clearTimeout(maxWait)
+              resolve()
+              return
+            }
+            
+            // Only wait for animations that aren't infinite
+            const finiteAnimations = animations.filter(anim => {
+              const effect = anim.effect
+              if (effect && 'getTiming' in effect) {
+                const timing = (effect as KeyframeEffect).getTiming()
+                return timing.iterations !== Infinity
+              }
+              return true
+            })
+            
+            if (finiteAnimations.length > 0) {
+              Promise.all(finiteAnimations.map(animation => animation.finished))
+                .then(() => {
+                  clearTimeout(maxWait)
+                  resolve()
+                })
+                .catch(() => {
+                  clearTimeout(maxWait)
+                  resolve()
+                })
+            } else {
+              clearTimeout(maxWait)
+              resolve()
+            }
+          } else {
+            // Fallback for browsers that don't support getAnimations
+            clearTimeout(maxWait)
+            setTimeout(resolve, 300)
+          }
+        })
       })
-    })
+    } catch {
+      // If animation wait fails, continue
+      console.warn('Animation wait failed, continuing...')
+    }
   }
 
   /**
