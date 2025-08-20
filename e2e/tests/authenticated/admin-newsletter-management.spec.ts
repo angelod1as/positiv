@@ -4,6 +4,7 @@ import { NewsletterCreatePage } from '../../pages/admin/NewsletterCreatePage'
 import { NewsletterViewPage } from '../../pages/admin/NewsletterViewPage'
 import { NewsletterEditPage } from '../../pages/admin/NewsletterEditPage'
 import { MailhogHelper } from '../../helpers/mailhog'
+import { cleanupTestNewsletters } from '../../utils/db-cleanup'
 
 test.describe('Admin Newsletter Management', () => {
   let listPage: NewsletterListPage
@@ -23,7 +24,16 @@ test.describe('Admin Newsletter Management', () => {
     await mailhog.clearAllMessages()
   })
 
+  test.afterEach(async () => {
+    // Clean up test newsletters after each test
+    await cleanupTestNewsletters()
+  })
+
   test('admin can create and send newsletter immediately', async ({ page }) => {
+    // Generate unique subject with timestamp
+    const timestamp = Date.now()
+    const subject = `Test Newsletter - Immediate Send ${timestamp}`
+    
     // Navigate to newsletter list
     await page.goto('/admin/newsletters')
     await page.waitForLoadState('networkidle')
@@ -34,7 +44,7 @@ test.describe('Admin Newsletter Management', () => {
     
     // Fill in newsletter details with waits to ensure form state updates
     const subjectInput = page.locator('input[name="subject"]')
-    await subjectInput.fill('Test Newsletter - Immediate Send')
+    await subjectInput.fill(subject)
     await page.waitForTimeout(100) // Small wait for form state
     
     const templateSelect = page.locator('select[name="template_name"]')
@@ -94,12 +104,12 @@ Best regards,
     await page.waitForSelector('table', { state: 'visible', timeout: 10000 })
     
     // Verify the newsletter was created in the list
-    const subject = await page.textContent('td:has-text("Test Newsletter - Immediate Send")')
-    expect(subject).toBeTruthy()
+    const subjectCell = await page.textContent(`td:has-text("${subject}")`)
+    expect(subjectCell).toBeTruthy()
     
     // Verify it's a draft (since we're not actually sending)
     // Find the row and then get the status column (3rd column)
-    const statusCell = await page.locator('tr:has-text("Test Newsletter - Immediate Send") td:nth-child(3)').textContent()
+    const statusCell = await page.locator(`tr:has-text("${subject}") td:nth-child(3)`).textContent()
     expect(statusCell?.toLowerCase()).toBe('draft')
     
     // If it's a draft, we can't check emails yet
@@ -108,11 +118,14 @@ Best regards,
   })
 
   test('admin can schedule a newsletter for future', async ({ page }) => {
+    const timestamp = Date.now()
+    const subject = `Scheduled Newsletter Test ${timestamp}`
+    
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
     
     // Fill newsletter details
-    await createPage.fillSubject('Scheduled Newsletter Test')
+    await createPage.fillSubject(subject)
     await createPage.selectTemplate('event-announcement')
     
     const mdxContent = `# Upcoming Event!
@@ -141,7 +154,7 @@ See you there!`
     await listPage.waitForTableToAppear()
     
     // Click on the newsletter to view it
-    await listPage.clickViewNewsletter('Scheduled Newsletter Test')
+    await listPage.clickViewNewsletter(subject)
     
     // Wait for navigation to the view page
     await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/, { timeout: 10000 })
@@ -152,11 +165,15 @@ See you there!`
   })
 
   test('admin can edit draft newsletter', async ({ page }) => {
+    const timestamp = Date.now()
+    const originalSubject = `Draft Newsletter to Edit ${timestamp}`
+    const updatedSubject = `Updated Draft Newsletter ${timestamp}`
+    
     // First create a draft
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
     
-    await createPage.fillSubject('Draft Newsletter to Edit')
+    await createPage.fillSubject(originalSubject)
     await createPage.selectTemplate('general-news')
     await createPage.fillMDXContent('# Draft Content')
     await createPage.selectSegmentation('all')
@@ -169,13 +186,13 @@ See you there!`
     await listPage.waitForTableToAppear()
     
     // Edit the draft
-    await listPage.clickEditNewsletter('Draft Newsletter to Edit')
+    await listPage.clickEditNewsletter(originalSubject)
     
     // Wait for edit page to load
     await page.waitForURL(/\/admin\/newsletters\/edit/, { timeout: 10000 })
     
     // Update content
-    await editPage.fillSubject('Updated Draft Newsletter')
+    await editPage.fillSubject(updatedSubject)
     await editPage.fillMDXContent('# Updated Content\n\nThis content has been updated.')
     await editPage.updateNewsletter()
     
@@ -186,18 +203,21 @@ See you there!`
     await listPage.waitForTableToAppear()
     
     // Click to view the updated newsletter
-    await listPage.clickViewNewsletter('Updated Draft Newsletter')
+    await listPage.clickViewNewsletter(updatedSubject)
     await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/, { timeout: 10000 })
     
-    const subject = await viewPage.getSubject()
-    expect(subject).toContain('Updated Draft Newsletter')
+    const subjectText = await viewPage.getSubject()
+    expect(subjectText).toContain(updatedSubject)
   })
 
   test('admin can preview newsletter before sending', async ({ page }) => {
+    const timestamp = Date.now()
+    const subject = `Preview Test Newsletter ${timestamp}`
+    
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
     
-    await createPage.fillSubject('Preview Test Newsletter')
+    await createPage.fillSubject(subject)
     await createPage.selectTemplate('general-news')
     await createPage.fillMDXContent('# Preview Test\n\nThis is preview content.')
     await createPage.selectSegmentation('all')
@@ -219,11 +239,14 @@ See you there!`
   })
 
   test('admin can delete draft newsletter', async ({ page }) => {
+    const timestamp = Date.now()
+    const subject = `Newsletter to Delete ${timestamp}`
+    
     // Create a draft first
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
     
-    await createPage.fillSubject('Newsletter to Delete')
+    await createPage.fillSubject(subject)
     await createPage.selectTemplate('general-news')
     await createPage.fillMDXContent('# To be deleted')
     await createPage.selectSegmentation('all')
@@ -236,7 +259,7 @@ See you there!`
     await listPage.waitForTableToAppear()
     
     // Click to view the draft
-    await listPage.clickViewNewsletter('Newsletter to Delete')
+    await listPage.clickViewNewsletter(subject)
     await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/, { timeout: 10000 })
     
     // Delete the newsletter
@@ -249,7 +272,7 @@ See you there!`
     await page.waitForTimeout(1000)
     
     // Verify newsletter is gone
-    const rows = await page.locator('table tr:has-text("Newsletter to Delete")').count()
+    const rows = await page.locator(`table tr:has-text("${subject}")`).count()
     expect(rows).toBe(0)
   })
 
