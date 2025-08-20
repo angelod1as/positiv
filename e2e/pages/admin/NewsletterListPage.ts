@@ -19,7 +19,16 @@ export class NewsletterListPage extends BasePage {
     await this.waitForPageLoad()
   }
 
+  async waitForTableToAppear() {
+    // First wait for any loading to complete
+    await this.waitForPageLoad()
+    // Then wait for the table to be visible (it only appears when newsletters exist)
+    await this.page.waitForSelector(this.newsletterTable, { state: 'visible', timeout: 10000 })
+  }
+
   async getNewsletterRow(subject: string) {
+    // Ensure table exists first
+    await this.waitForTableToAppear()
     const row = this.page.locator(`${this.newsletterTable} tr:has-text("${subject}")`)
     await row.waitFor({ state: 'visible' })
     return row
@@ -27,7 +36,8 @@ export class NewsletterListPage extends BasePage {
 
   async clickViewNewsletter(subject: string) {
     const row = await this.getNewsletterRow(subject)
-    await row.locator('text="View"').click()
+    // The View button is inside a Link component, be more specific
+    await row.locator('a:has-text("View")').click()
   }
 
   async clickEditNewsletter(subject: string) {
