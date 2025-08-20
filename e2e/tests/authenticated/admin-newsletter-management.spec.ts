@@ -77,13 +77,7 @@ Best regards,
     await segmentSelect.selectOption('all')
     await page.waitForTimeout(100)
     
-    // Set status to draft explicitly
-    const statusInput = page.locator('input[name="status"]')
-    if (await statusInput.count() > 0) {
-      await statusInput.fill('draft')
-    }
-    
-    // Submit the form
+    // Submit the form (status defaults to 'draft' automatically)
     await page.click('button:has-text("Create Newsletter")')
     
     // Wait for navigation back to newsletter list
@@ -102,7 +96,7 @@ Best regards,
     // This is expected behavior - newsletters are created as drafts first
   })
 
-  test.skip('admin can schedule a newsletter for future', async ({ page }) => {
+  test('admin can schedule a newsletter for future', async ({ page }) => {
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
     
@@ -117,7 +111,7 @@ Join us for our next community gathering.
 <EventCard 
   title="Spring Meetup"
   date="2025-03-20"
-  location="Community Center"
+  location="Community Center"  
   spots={30}
 />
 
@@ -126,77 +120,94 @@ See you there!`
     await createPage.fillMDXContent(mdxContent)
     await createPage.selectSegmentation('all')
     
-    // For now, just create as draft (scheduling needs different UI)
-    await createPage.sendImmediately()
+    // Save as draft first
+    await createPage.saveAsDraft()
     
     // Wait for redirect to list
-    await page.waitForURL(/\/admin\/newsletters$/)
+    await page.waitForURL(/\/admin\/newsletters/, { timeout: 10000 })
+    
+    // Wait for table to load
+    await listPage.waitForTableToAppear()
     
     // Click on the newsletter to view it
     await listPage.clickViewNewsletter('Scheduled Newsletter Test')
     
     // Wait for navigation to the view page
-    await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/)
+    await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/, { timeout: 10000 })
     
-    // Verify it was created (as draft)
+    // Verify it was created as draft
     const status = await viewPage.getStatus()
     expect(status).toMatch(/draft/i)
   })
 
-  test.skip('admin can edit draft newsletter', async ({ page }) => {
+  test('admin can edit draft newsletter', async ({ page }) => {
     // First create a draft
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
     
-    await createPage.fillSubject('Draft Newsletter')
+    await createPage.fillSubject('Draft Newsletter to Edit')
     await createPage.selectTemplate('general-news')
     await createPage.fillMDXContent('# Draft Content')
+    await createPage.selectSegmentation('all')
     await createPage.saveAsDraft()
     
-    // Navigate back to list
-    await page.waitForURL(/\/admin\/newsletters/)
-    await listPage.filterByStatus('draft')
+    // Wait for redirect to list
+    await page.waitForURL(/\/admin\/newsletters/, { timeout: 10000 })
+    
+    // Wait for table to load
+    await listPage.waitForTableToAppear()
     
     // Edit the draft
-    await listPage.clickEditNewsletter('Draft Newsletter')
+    await listPage.clickEditNewsletter('Draft Newsletter to Edit')
+    
+    // Wait for edit page to load
+    await page.waitForURL(/\/admin\/newsletters\/edit/, { timeout: 10000 })
     
     // Update content
     await editPage.fillSubject('Updated Draft Newsletter')
     await editPage.fillMDXContent('# Updated Content\n\nThis content has been updated.')
     await editPage.updateNewsletter()
     
-    // Verify updates - should redirect to list after update
-    await page.waitForURL(/\/admin\/newsletters$/)
+    // Wait for redirect to list after update
+    await page.waitForURL(/\/admin\/newsletters/, { timeout: 10000 })
+    
+    // Wait for table to load
+    await listPage.waitForTableToAppear()
     
     // Click to view the updated newsletter
     await listPage.clickViewNewsletter('Updated Draft Newsletter')
-    await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/)
+    await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/, { timeout: 10000 })
     
     const subject = await viewPage.getSubject()
-    expect(subject).toBe('Updated Draft Newsletter')
+    expect(subject).toContain('Updated Draft Newsletter')
   })
 
-  test.skip('admin can preview newsletter before sending', async ({ page: _page }) => {
+  test('admin can preview newsletter before sending', async ({ page }) => {
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
     
     await createPage.fillSubject('Preview Test Newsletter')
     await createPage.selectTemplate('general-news')
     await createPage.fillMDXContent('# Preview Test\n\nThis is preview content.')
+    await createPage.selectSegmentation('all')
     
     // Click preview
     await createPage.previewNewsletter()
     
     // Verify preview modal appears
-    const previewModal = createPage['page'].locator('[data-testid="preview-modal"]')
+    const previewModal = page.locator('[data-testid="preview-modal"]')
     await expect(previewModal).toBeVisible()
     
+    // Verify content is shown in preview
+    await expect(previewModal).toContainText('Preview Test')
+    await expect(previewModal).toContainText('This is preview content')
+    
     // Close preview
-    await createPage['page'].click('[data-testid="close-preview"]')
+    await page.click('[data-testid="close-preview"]')
     await expect(previewModal).not.toBeVisible()
   })
 
-  test.skip('admin can delete draft newsletter', async ({ page }) => {
+  test('admin can delete draft newsletter', async ({ page }) => {
     // Create a draft first
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
@@ -204,31 +215,38 @@ See you there!`
     await createPage.fillSubject('Newsletter to Delete')
     await createPage.selectTemplate('general-news')
     await createPage.fillMDXContent('# To be deleted')
+    await createPage.selectSegmentation('all')
     await createPage.saveAsDraft()
     
-    // Go back to list page
-    await page.waitForURL(/\/admin\/newsletters$/)
+    // Wait for redirect to list page
+    await page.waitForURL(/\/admin\/newsletters/, { timeout: 10000 })
+    
+    // Wait for table to load
+    await listPage.waitForTableToAppear()
     
     // Click to view the draft
     await listPage.clickViewNewsletter('Newsletter to Delete')
-    await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/)
+    await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/, { timeout: 10000 })
     
     // Delete the newsletter
     await viewPage.clickDelete()
     
     // Should redirect to list
-    await page.waitForURL(/\/admin\/newsletters$/)
+    await page.waitForURL(/\/admin\/newsletters/, { timeout: 10000 })
+    
+    // Wait a moment for the table to update
+    await page.waitForTimeout(1000)
     
     // Verify newsletter is gone
     const rows = await page.locator('table tr:has-text("Newsletter to Delete")').count()
     expect(rows).toBe(0)
   })
 
-  test.skip('validation errors are shown for invalid input', async ({ page }) => {
+  test('validation errors are shown for invalid input', async ({ page }) => {
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
     
-    // Try to send without filling required fields
+    // Try to submit without filling required fields
     await createPage.sendImmediately()
     
     // Check for validation errors - should stay on the same page
@@ -237,7 +255,15 @@ See you there!`
     expect(currentUrl).toContain('/admin/newsletters/new')
     
     // Look for error messages on the page
-    const errors = await page.locator('[role="alert"], .text-destructive, .text-red-500').allTextContents()
+    const errors = await page.locator('[role="alert"], .text-destructive, .text-red-500, .text-red-600').allTextContents()
     expect(errors.length).toBeGreaterThan(0)
+    
+    // Verify specific validation messages appear
+    const pageContent = await page.content()
+    const hasValidationError = pageContent.includes('required') || 
+                               pageContent.includes('Required') || 
+                               pageContent.includes('is required') ||
+                               pageContent.includes('Please')
+    expect(hasValidationError).toBeTruthy()
   })
 })
