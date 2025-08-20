@@ -293,3 +293,45 @@ export async function cleanupTestEvents(): Promise<void> {
     console.info(`✅ Cleaned up ${testEvents.length} test events`)
   }
 }
+
+export async function cleanupTestNewsletters(): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+  
+  // Delete newsletters with subjects that indicate they're test newsletters
+  const { data: testNewsletters, error: fetchError } = await supabase
+    .from('newsletters')
+    .select('id, subject')
+    .or('subject.ilike.%Test Newsletter%,subject.ilike.%E2E%,subject.ilike.%Draft Newsletter%,subject.ilike.%Scheduled Newsletter%,subject.ilike.%Preview Test%,subject.ilike.%Updated Draft%,subject.ilike.%Newsletter to Delete%,subject.ilike.%Complex MDX%,subject.ilike.%EventCard Component%,subject.ilike.%Button Component%,subject.ilike.%Divider Component%,subject.ilike.%Quote Component%,subject.ilike.%Markdown Formatting%,subject.ilike.%Live Preview%,subject.ilike.%Invalid MDX%')
+  
+  if (fetchError) {
+    throw new CleanupError(
+      'Failed to fetch test newsletters for cleanup',
+      'cleanupTestNewsletters',
+      fetchError
+    )
+  }
+  
+  if (!testNewsletters || testNewsletters.length === 0) {
+    console.info('✅ No test newsletters to clean up')
+    return
+  }
+  
+  // Delete the newsletters (no dependent tables to worry about for newsletters)
+  const newsletterIds = testNewsletters.map(newsletter => newsletter.id)
+  
+  const { error: deleteError } = await supabase
+    .from('newsletters')
+    .delete()
+    .in('id', newsletterIds)
+  
+  if (deleteError) {
+    // Newsletter deletion is critical - if we can't delete test newsletters, we'll have pollution
+    throw new CleanupError(
+      `Failed to delete ${testNewsletters.length} test newsletters`,
+      'cleanupTestNewsletters',
+      deleteError
+    )
+  }
+  
+  console.info(`✅ Cleaned up ${testNewsletters.length} test newsletters`)
+}
