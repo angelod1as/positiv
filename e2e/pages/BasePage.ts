@@ -45,7 +45,7 @@ export abstract class BasePage {
             const finiteAnimations = animations.filter(anim => {
               const effect = anim.effect
               if (effect && 'getTiming' in effect) {
-                const timing = (effect as any).getTiming()
+                const timing = (effect as KeyframeEffect).getTiming()
                 return timing.iterations !== Infinity
               }
               return true
