@@ -182,6 +182,61 @@ export async function ensureEventIsOpen(eventId: string): Promise<void> {
   }
 }
 
+export async function createClosedEvent(): Promise<{ id: string; title: string }> {
+  const supabase = createSupabaseAdminClient()
+  
+  // Future event but with registration closed
+  const futureDate = new Date()
+  futureDate.setMonth(futureDate.getMonth() + 1)
+  
+  const pastDate = new Date()
+  pastDate.setDate(pastDate.getDate() - 1) // Registration ended yesterday
+  
+  const eventData = {
+    title: `E2E Test Closed Event ${Date.now()}`,
+    event_status: 'Registration Closed' as const,
+    time_event_start: futureDate.toISOString(), // Event is in the future
+    time_event_end: new Date(futureDate.getTime() + 3 * 60 * 60 * 1000).toISOString(),
+    time_application_start: new Date(pastDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    time_application_end: pastDate.toISOString(), // Registration already ended
+    description: 'Automated test event for E2E testing - closed',
+    location: 'Test Location - São Paulo, SP',
+    ticket_price: 50,
+    total_spots: 65,
+    event_type: 'regular' as const
+  }
+  
+  const { data, error } = await supabase
+    .from('events')
+    .insert(eventData)
+    .select('id, title')
+    .single()
+  
+  if (error) {
+    throw new Error(`Failed to create closed test event: ${error.message}`)
+  }
+  
+  return { id: data.id, title: data.title || '' }
+}
+
+export async function ensureMultipleOpenEvents(count: number = 2): Promise<Array<{ id: string; title: string }>> {
+  const existingEvents = await getOpenEvents(count)
+  
+  if (existingEvents.length >= count) {
+    return existingEvents.slice(0, count)
+  }
+  
+  const eventsToCreate = count - existingEvents.length
+  const newEvents: Array<{ id: string; title: string }> = []
+  
+  for (let i = 0; i < eventsToCreate; i++) {
+    const event = await createTestEvent()
+    newEvents.push(event)
+  }
+  
+  return [...existingEvents, ...newEvents]
+}
+
 export async function ensureTestUserProfileExists(): Promise<string> {
   // For E2E tests, we know the test user is created with a dynamic email
   // We need to find the most recently created test profile

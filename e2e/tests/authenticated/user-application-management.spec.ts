@@ -111,14 +111,11 @@ test.describe('POS-191: Application Management Tests', () => {
     expect(testEvent).toBeTruthy()
     if (!profileId || !testEvent) return
     
-    // Get a second event if available
-    const { getOpenEvents } = await import('../../utils/application-helpers')
-    const events = await getOpenEvents(2)
+    // Ensure we have at least 2 events
+    const { ensureMultipleOpenEvents } = await import('../../utils/application-helpers')
+    const events = await ensureMultipleOpenEvents(2)
     
-    if (events.length < 2) {
-      test.skip()
-      return
-    }
+    expect(events.length).toBeGreaterThanOrEqual(2)
     
     const secondEvent = events[1]
     
@@ -147,11 +144,40 @@ test.describe('POS-191: Application Management Tests', () => {
     expect(newStatus2).toBe('applied')
   })
 
-  test('Cannot apply to closed event', async ({ page: _page }) => {
-    // This test verifies edge case handling
-    // We'll need to find or create a closed event
+  test('Cannot apply to closed event', async ({ page }) => {
+    // Check prerequisites
+    expect(profileId).toBeTruthy()
+    if (!profileId) return
     
-    // For now, skip if we can't test this scenario
-    test.skip()
+    // Create a closed event
+    const { createClosedEvent } = await import('../../utils/application-helpers')
+    const closedEvent = await createClosedEvent()
+    
+    // Navigate to dashboard (closed events are shown on dashboard)
+    await page.goto('/dashboard')
+    await page.waitForLoadState('networkidle')
+    
+    // Look for the closed event - it should show up on dashboard
+    const eventCard = page.locator(`text="${closedEvent.title}"`)
+    const eventCardExists = await eventCard.count() > 0
+    
+    // The event should be visible on dashboard
+    expect(eventCardExists).toBe(true)
+    
+    // Verify there's no apply button for closed events
+    const applyButton = page.locator(`text="${closedEvent.title}"`)
+      .locator('..')
+      .locator('a:has-text("Fazer inscrição"), button:has-text("Fazer inscrição")')
+    
+    const applyButtonCount = await applyButton.count()
+    expect(applyButtonCount).toBe(0)
+    
+    // Also check if there's a "Registration Closed" indicator
+    const closedIndicator = page.locator(`text="${closedEvent.title}"`)
+      .locator('..')
+      .locator('text=/closed|encerrado|fechado|Registration Closed/i')
+    
+    const hasClosedIndicator = await closedIndicator.count() > 0
+    expect(hasClosedIndicator).toBe(true)
   })
 })
