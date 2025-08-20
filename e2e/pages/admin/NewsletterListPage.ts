@@ -1,7 +1,7 @@
 import { BasePage } from '../BasePage'
 
 export class NewsletterListPage extends BasePage {
-  protected createButton = 'a:has-text("Create Newsletter")'
+  protected createButton = 'text="Create Newsletter"'
   protected newsletterTable = 'table'
   protected searchInput = 'input[placeholder*="Search"]'
   protected statusFilter = 'select[name="status"]'
@@ -13,6 +13,8 @@ export class NewsletterListPage extends BasePage {
   }
 
   async clickCreateNewsletter() {
+    // Wait for the button to be visible first
+    await this.page.waitForSelector(this.createButton, { state: 'visible', timeout: 10000 })
     await this.page.click(this.createButton)
   }
 
@@ -24,12 +26,12 @@ export class NewsletterListPage extends BasePage {
 
   async clickViewNewsletter(subject: string) {
     const row = await this.getNewsletterRow(subject)
-    await row.locator('a:has-text("View")').click()
+    await row.locator('text="View"').click()
   }
 
   async clickEditNewsletter(subject: string) {
     const row = await this.getNewsletterRow(subject)
-    await row.locator('a:has-text("Edit")').click()
+    await row.locator('text="Edit"').click()
   }
 
   async getNewsletterCount() {
