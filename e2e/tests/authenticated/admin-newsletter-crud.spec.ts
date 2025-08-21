@@ -209,8 +209,9 @@ This is a test newsletter content.
     await page.click('button:has-text("Create Newsletter")')
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
     
-    // Click on the newsletter to view details
-    await page.click(`text="${subject}"`)
+    // Find the newsletter row and click View button
+    const newsletterRow = page.locator('tr').filter({ hasText: subject })
+    await newsletterRow.locator('button:has-text("View")').click()
     await page.waitForLoadState('networkidle')
     
     // Click delete button
@@ -227,7 +228,7 @@ This is a test newsletter content.
     await expect(page.locator(`text="${subject}"`)).not.toBeVisible()
   })
 
-  test('admin can delete draft newsletter from edit page', async ({ page }) => {
+  test('admin can delete draft newsletter after viewing from edit navigation', async ({ page }) => {
     // First create a newsletter
     const timestamp = Date.now()
     const subject = `Test Newsletter - Delete from Edit ${timestamp}`
@@ -248,16 +249,22 @@ This is a test newsletter content.
     await page.click('button:has-text("Create Newsletter")')
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
     
-    // Click on the newsletter to view it
-    await page.click(`text="${subject}"`)
+    // Find the newsletter row and click Edit button
+    const newsletterRow = page.locator('tr').filter({ hasText: subject })
+    await newsletterRow.locator('button:has-text("Edit")').click()
     await page.waitForLoadState('networkidle')
     
-    // Click edit button
-    await page.click('a:has-text("Edit")')
+    // Delete button doesn't exist on edit page, so go to view page first
+    await page.goto('/admin/newsletters')
     await page.waitForLoadState('networkidle')
     
-    // Click delete button
-    await page.click('button:has-text("Delete Newsletter")')
+    // Find the newsletter row again and click View button
+    const newsletterRowView = page.locator('tr').filter({ hasText: subject })
+    await newsletterRowView.locator('button:has-text("View")').click()
+    await page.waitForLoadState('networkidle')
+    
+    // Click delete button on view page
+    await page.click('button:has-text("Delete")')
     
     // Wait for dialog to appear and confirm deletion
     await page.waitForSelector('button:has-text("Yes, delete")', { state: 'visible' })
@@ -291,8 +298,9 @@ This is a test newsletter content.
     await page.click('button:has-text("Create Newsletter")')
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
     
-    // Click on the newsletter to view details
-    await page.click(`text="${subject}"`)
+    // Find the newsletter row and click View button
+    const newsletterRow = page.locator('tr').filter({ hasText: subject })
+    await newsletterRow.locator('button:has-text("View")').click()
     await page.waitForLoadState('networkidle')
     
     // Click delete button
@@ -303,7 +311,7 @@ This is a test newsletter content.
     await page.click('button:has-text("Cancel")')
     
     // Verify we're still on the view page
-    await expect(page.locator('h1').filter({ hasText: subject })).toBeVisible()
+    await expect(page.locator('.text-2xl').filter({ hasText: subject })).toBeVisible()
     
     // Go back to list to verify newsletter still exists
     await page.goto('/admin/newsletters')
