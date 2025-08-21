@@ -37,15 +37,11 @@ export async function ensureMinimumOpenEvents(count: number = 2): Promise<{ id: 
       event_status: 'Registration Open' as EventStatus,
       time_event_start: eventDate.toISOString(),
       time_event_end: new Date(eventDate.getTime() + 3 * 60 * 60 * 1000).toISOString(), // 3 hours later
-      time_registration_start: now.toISOString(),
-      time_registration_end: new Date(eventDate.getTime() - 24 * 60 * 60 * 1000).toISOString(), // Day before event
+      time_application_start: now.toISOString(),
+      time_application_end: new Date(eventDate.getTime() - 24 * 60 * 60 * 1000).toISOString(), // Day before event
       description: 'Test event created for E2E testing',
       location: 'Test Location',
-      max_participants: 100,
-      participant_count: 0,
-      email: 'test@example.com',
-      participant_counter_active: true,
-      event_public: true
+      total_spots: 100
     }
     
     const { data, error } = await supabase
@@ -96,15 +92,11 @@ export async function ensureClosedTestEvent(): Promise<{ id: string; title: stri
     event_status: 'Registration Closed' as EventStatus,
     time_event_start: pastDate.toISOString(),
     time_event_end: new Date(pastDate.getTime() + 3 * 60 * 60 * 1000).toISOString(),
-    time_registration_start: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    time_registration_end: new Date(pastDate.getTime() - 24 * 60 * 60 * 1000).toISOString(),
+    time_application_start: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    time_application_end: new Date(pastDate.getTime() - 24 * 60 * 60 * 1000).toISOString(),
     description: 'Test closed event for E2E testing',
     location: 'Test Location',
-    max_participants: 100,
-    participant_count: 0,
-    email: 'test@example.com',
-    participant_counter_active: true,
-    event_public: true
+    total_spots: 100
   }
   
   const { data, error } = await supabase

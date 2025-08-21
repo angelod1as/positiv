@@ -28,9 +28,9 @@ export class NewsletterListPage extends BasePage {
   async getNewsletterRow(subject: string) {
     // Ensure table exists first
     await this.waitForTableToAppear()
-    const row = this.page.locator(`${this.newsletterTable} tr:has-text("${subject}")`)
-    await row.waitFor({ state: 'visible' })
-    return row
+    const row = this.page.locator(this.newsletterTable).locator('tr', { hasText: subject })
+    await row.first().waitFor({ state: 'visible' })
+    return row.first()
   }
 
   async clickViewNewsletter(subject: string) {
