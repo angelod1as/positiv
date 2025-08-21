@@ -162,11 +162,12 @@ test.describe('Admin Newsletter Delete Operations', () => {
     await newsletterRow.locator('button:has-text("Edit")').click()
     await page.waitForLoadState('networkidle')
     
-    // Send the newsletter
-    await page.click('button:has-text("Send Now")')
+    // Send the newsletter using the dialog
+    page.on('dialog', async dialog => {
+      await dialog.accept()
+    })
     
-    // Confirm sending
-    await page.click('button:has-text("OK")')
+    await page.click('button:has-text("Send Now")')
     
     // Wait for redirect to view page
     await page.waitForURL('**/admin/newsletters/*', { timeout: 10000 })
