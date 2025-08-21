@@ -11,35 +11,74 @@ export abstract class BasePage {
    * Wait for the page to be fully loaded, including:
    * - DOM content loaded
    * - Network idle
-   * - No pending animations
+   * - No pending animations (with timeout)
    */
   async waitForPageLoad(): Promise<void> {
     // Wait for DOM content to be loaded
     await this.page.waitForLoadState('domcontentloaded')
     
-    // Wait for network to be idle
-    await this.page.waitForLoadState('networkidle')
+    // Wait for network to be idle with a reasonable timeout
+    try {
+      await this.page.waitForLoadState('networkidle', { timeout: 5000 })
+    } catch {
+      console.warn('Network did not go idle within 5 seconds, attempting fallback readiness check...')
+      try {
+        // Fallback: ensure the main document is still attached and not loading
+        await this.page.waitForLoadState('domcontentloaded', { timeout: 2000 })
+        // Wait for the document to be visible to reduce flakiness
+        await this.page.waitForFunction(() => document.visibilityState === 'visible', null, { timeout: 2000 })
+      } catch {
+        console.warn('Fallback readiness check failed, continuing anyway.')
+      }
+    }
     
-    // Wait for any animations to complete
-    await this.page.evaluate(() => {
-      return new Promise<void>((resolve) => {
-        // Wait for any pending animations
-        if (document.getAnimations) {
-          const animations = document.getAnimations()
-          if (animations.length === 0) {
-            resolve()
-            return
-          }
+    // Wait for any animations to complete with a timeout
+    try {
+      await this.page.evaluate(() => {
+        return new Promise<void>((resolve) => {
+          // Set a maximum wait time for animations (increased for real UI transitions)
+          const maxWait = setTimeout(() => resolve(), 3000)
           
-          Promise.all(animations.map(animation => animation.finished)).then(() => {
-            resolve()
-          })
-        } else {
-          // Fallback for browsers that don't support getAnimations
-          setTimeout(resolve, 300)
-        }
+          // Wait for any pending animations
+          if (document.getAnimations) {
+            const animations = document.getAnimations()
+            
+            // Filter for actively running, finite animations
+            const activeAnimations = animations.filter(anim => {
+              // Ignore finished or paused animations
+              if (anim.playState !== 'running') return false
+              
+              const effect = anim.effect
+              if (effect && 'getTiming' in effect) {
+                const timing = (effect as KeyframeEffect).getTiming()
+                return timing.iterations !== Infinity
+              }
+              return true
+            })
+            
+            if (activeAnimations.length === 0) {
+              clearTimeout(maxWait)
+              resolve()
+              return
+            }
+            
+            // Use allSettled to handle both resolved and rejected animations
+            Promise.allSettled(activeAnimations.map(animation => animation.finished))
+              .finally(() => {
+                clearTimeout(maxWait)
+                resolve()
+              })
+          } else {
+            // Fallback for browsers that don't support getAnimations
+            clearTimeout(maxWait)
+            setTimeout(resolve, 300)
+          }
+        })
       })
-    })
+    } catch {
+      // If animation wait fails, continue
+      console.warn('Animation wait failed, continuing...')
+    }
   }
 
   /**
