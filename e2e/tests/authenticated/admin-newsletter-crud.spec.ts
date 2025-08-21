@@ -216,7 +216,8 @@ This is a test newsletter content.
     // Click delete button
     await page.click('button:has-text("Delete")')
     
-    // Confirm deletion in dialog
+    // Wait for dialog to appear and confirm deletion
+    await page.waitForSelector('button:has-text("Yes, delete")', { state: 'visible' })
     await page.click('button:has-text("Yes, delete")')
     
     // Wait for navigation back to list
@@ -258,7 +259,8 @@ This is a test newsletter content.
     // Click delete button
     await page.click('button:has-text("Delete Newsletter")')
     
-    // Confirm deletion in dialog
+    // Wait for dialog to appear and confirm deletion
+    await page.waitForSelector('button:has-text("Yes, delete")', { state: 'visible' })
     await page.click('button:has-text("Yes, delete")')
     
     // Wait for navigation back to list
@@ -296,7 +298,8 @@ This is a test newsletter content.
     // Click delete button
     await page.click('button:has-text("Delete")')
     
-    // Cancel deletion in dialog
+    // Wait for dialog to appear and cancel deletion
+    await page.waitForSelector('button:has-text("Cancel")', { state: 'visible' })
     await page.click('button:has-text("Cancel")')
     
     // Verify we're still on the view page
