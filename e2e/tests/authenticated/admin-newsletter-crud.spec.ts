@@ -187,4 +187,126 @@ This is a test newsletter content.
     // Verify we're back on the list page
     await expect(page).toHaveURL('/admin/newsletters')
   })
+
+  test('admin can delete draft newsletter from view page', async ({ page }) => {
+    // First create a newsletter
+    const timestamp = Date.now()
+    const subject = `Test Newsletter - Delete ${timestamp}`
+    
+    await page.goto('/admin/newsletters/new')
+    await page.waitForLoadState('networkidle')
+    
+    await page.fill('input[name="subject"]', subject)
+    await page.selectOption('select[name="template_name"]', 'general-news')
+    await page.fill('textarea[name="content_mdx"]', '# Test Content for Deletion')
+    await page.selectOption('select[name="segment_type"]', 'all')
+    
+    const statusSelect = page.locator('select[name="status"]')
+    if (await statusSelect.count() > 0) {
+      await statusSelect.selectOption('draft')
+    }
+    
+    await page.click('button:has-text("Create Newsletter")')
+    await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
+    
+    // Click on the newsletter to view details
+    await page.click(`text="${subject}"`)
+    await page.waitForLoadState('networkidle')
+    
+    // Click delete button
+    await page.click('button:has-text("Delete")')
+    
+    // Confirm deletion in dialog
+    await page.click('button:has-text("Yes, delete")')
+    
+    // Wait for navigation back to list
+    await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
+    
+    // Verify the newsletter is no longer in the list
+    await expect(page.locator(`text="${subject}"`)).not.toBeVisible()
+  })
+
+  test('admin can delete draft newsletter from edit page', async ({ page }) => {
+    // First create a newsletter
+    const timestamp = Date.now()
+    const subject = `Test Newsletter - Delete from Edit ${timestamp}`
+    
+    await page.goto('/admin/newsletters/new')
+    await page.waitForLoadState('networkidle')
+    
+    await page.fill('input[name="subject"]', subject)
+    await page.selectOption('select[name="template_name"]', 'general-news')
+    await page.fill('textarea[name="content_mdx"]', '# Test Content for Deletion')
+    await page.selectOption('select[name="segment_type"]', 'all')
+    
+    const statusSelect = page.locator('select[name="status"]')
+    if (await statusSelect.count() > 0) {
+      await statusSelect.selectOption('draft')
+    }
+    
+    await page.click('button:has-text("Create Newsletter")')
+    await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
+    
+    // Click on the newsletter to view it
+    await page.click(`text="${subject}"`)
+    await page.waitForLoadState('networkidle')
+    
+    // Click edit button
+    await page.click('a:has-text("Edit")')
+    await page.waitForLoadState('networkidle')
+    
+    // Click delete button
+    await page.click('button:has-text("Delete Newsletter")')
+    
+    // Confirm deletion in dialog
+    await page.click('button:has-text("Yes, delete")')
+    
+    // Wait for navigation back to list
+    await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
+    
+    // Verify the newsletter is no longer in the list
+    await expect(page.locator(`text="${subject}"`)).not.toBeVisible()
+  })
+
+  test('admin can cancel newsletter deletion', async ({ page }) => {
+    // First create a newsletter
+    const timestamp = Date.now()
+    const subject = `Test Newsletter - Cancel Delete ${timestamp}`
+    
+    await page.goto('/admin/newsletters/new')
+    await page.waitForLoadState('networkidle')
+    
+    await page.fill('input[name="subject"]', subject)
+    await page.selectOption('select[name="template_name"]', 'general-news')
+    await page.fill('textarea[name="content_mdx"]', '# Test Content')
+    await page.selectOption('select[name="segment_type"]', 'all')
+    
+    const statusSelect = page.locator('select[name="status"]')
+    if (await statusSelect.count() > 0) {
+      await statusSelect.selectOption('draft')
+    }
+    
+    await page.click('button:has-text("Create Newsletter")')
+    await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
+    
+    // Click on the newsletter to view details
+    await page.click(`text="${subject}"`)
+    await page.waitForLoadState('networkidle')
+    
+    // Click delete button
+    await page.click('button:has-text("Delete")')
+    
+    // Cancel deletion in dialog
+    await page.click('button:has-text("Cancel")')
+    
+    // Verify we're still on the view page
+    await expect(page.locator('h1').filter({ hasText: subject })).toBeVisible()
+    
+    // Go back to list to verify newsletter still exists
+    await page.goto('/admin/newsletters')
+    await page.waitForLoadState('networkidle')
+    
+    // Verify the newsletter is still in the list
+    await expect(page.locator(`text="${subject}"`).first()).toBeVisible()
+  })
 })
