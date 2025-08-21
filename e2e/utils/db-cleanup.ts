@@ -297,11 +297,11 @@ export async function cleanupTestEvents(): Promise<void> {
 export async function cleanupTestNewsletters(): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
-  // Delete newsletters with subjects that indicate they're test newsletters
+  // Delete newsletters with the E2E test prefix - safer and more deterministic
   const { data: testNewsletters, error: fetchError } = await supabase
     .from('newsletters')
     .select('id, subject')
-    .or('subject.ilike.%Test Newsletter%,subject.ilike.%E2E%,subject.ilike.%Draft Newsletter%,subject.ilike.%Scheduled Newsletter%,subject.ilike.%Preview Test%,subject.ilike.%Updated Draft%,subject.ilike.%Newsletter to Delete%,subject.ilike.%Complex MDX%,subject.ilike.%EventCard Component%,subject.ilike.%Button Component%,subject.ilike.%Divider Component%,subject.ilike.%Quote Component%,subject.ilike.%Markdown Formatting%,subject.ilike.%Live Preview%,subject.ilike.%Invalid MDX%')
+    .ilike('subject', '[E2E-TEST]%')
   
   if (fetchError) {
     throw new CleanupError(
