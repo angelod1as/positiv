@@ -228,12 +228,11 @@ export async function cleanupAllTestUsers(): Promise<void> {
 export async function cleanupTestEvents(): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
-  // Delete events with titles that indicate they're test events
-  // This includes patterns like "Test Event", "E2E", etc.
+  // Delete only events with the specific E2E test prefix - don't delete seed events
   const { data: testEvents, error: fetchError } = await supabase
     .from('events')
     .select('id, title')
-    .or('title.ilike.%Test Event%,title.ilike.%E2E%,title.ilike.%Updated Test Event%')
+    .ilike('title', '[E2E-TEST]%')
   
   if (fetchError) {
     throw new CleanupError(
