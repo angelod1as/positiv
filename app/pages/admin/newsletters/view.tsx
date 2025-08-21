@@ -1,16 +1,19 @@
 import { Link, useLoaderData, useFetcher } from 'react-router'
 import { redirectWithToast } from 'remix-toast'
+import { useState } from 'react'
 import { getAdminContext } from '~/business/admin/admin.server'
 import { getNewsletterById } from '~/business/admin/newsletter/newsletter.server'
 import { processScheduledNewsletters } from '~/business/admin/newsletter/newsletter-scheduler.server'
+import { deleteNewsletter } from '~/business/admin/newsletter/delete-newsletter.server'
 import { db } from '~/lib/supabase/db.server'
 import { withErrorRedirect } from '~/lib/helpers/error-handling'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
-import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2 } from 'lucide-react'
 import { format, isPast } from 'date-fns'
 import paths from '~/lib/paths'
+import ConfirmDialog from '~/components/molecules/confirm-dialog/confirm-dialog'
 import type { Route } from './+types/view'
 
 const {
@@ -47,6 +50,25 @@ export async function action({ request, params }: Route.ActionArgs) {
   
   const formData = await request.formData()
   const intent = formData.get('intent')
+  const newsletterId = params.id
+  
+  if (!newsletterId) {
+    throw await redirectWithToast(
+      ADMIN_NEWSLETTERS(),
+      { message: "Newsletter ID is required", type: "error" }
+    )
+  }
+  
+  if (intent === 'delete') {
+    return withErrorRedirect(
+      () => deleteNewsletter(newsletterId),
+      {
+        redirectPath: ADMIN_NEWSLETTERS(),
+        successMessage: "Newsletter deleted successfully",
+        errorMessage: "Error deleting newsletter",
+      }
+    )
+  }
   
   if (intent === 'trigger-processing') {
     // Process newsletters directly on the server without API call
@@ -96,11 +118,21 @@ const formatTemplateName = (template: string) => {
 export default function AdminViewNewsletterPage() {
   const { newsletter } = useLoaderData<typeof loader>()
   const fetcher = useFetcher()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const isProcessing = fetcher.state === 'submitting'
+  const isDeleting = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'delete'
   
   const isScheduledAndReady = newsletter.status === 'scheduled' && 
     newsletter.scheduled_at && 
     isPast(new Date(newsletter.scheduled_at))
+  
+  const handleDeleteConfirm = (closeDialog: () => void) => {
+    fetcher.submit(
+      { intent: 'delete' },
+      { method: 'post' }
+    )
+    closeDialog()
+  }
   
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
@@ -115,6 +147,29 @@ export default function AdminViewNewsletterPage() {
         </div>
         
         <div className="flex gap-2">
+          {(newsletter.status === 'draft' || newsletter.status === 'scheduled') && (
+            <>
+              <ConfirmDialog
+                open={deleteDialogOpen}
+                onOpenChange={setDeleteDialogOpen}
+                title="Delete Newsletter"
+                description="Are you sure you want to delete this newsletter? This action cannot be undone."
+                confirmLabel="Yes, delete"
+                cancelLabel="Cancel"
+                onConfirm={handleDeleteConfirm}
+                isLoading={isDeleting}
+              >
+                <ConfirmDialog.Trigger
+                  variant="destructive"
+                  disabled={isDeleting}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </ConfirmDialog.Trigger>
+              </ConfirmDialog>
+            </>
+          )}
+          
           {newsletter.status === 'draft' && (
             <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
               <Button>
