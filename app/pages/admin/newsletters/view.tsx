@@ -61,7 +61,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   
   if (intent === 'delete') {
     return withErrorRedirect(
-      () => deleteNewsletter(request, params, newsletterId),
+      () => deleteNewsletter(newsletterId),
       {
         redirectPath: ADMIN_NEWSLETTERS(),
         successMessage: "Newsletter deleted successfully",
@@ -162,7 +162,6 @@ export default function AdminViewNewsletterPage() {
                 <ConfirmDialog.Trigger
                   variant="destructive"
                   disabled={isDeleting}
-                  onClick={() => setDeleteDialogOpen(true)}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
                   {isDeleting ? 'Deleting...' : 'Delete'}
