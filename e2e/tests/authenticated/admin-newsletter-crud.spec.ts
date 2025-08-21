@@ -1,22 +1,7 @@
 import { test, expect } from '@playwright/test'
-import { NewsletterListPage } from '../../pages/admin/NewsletterListPage'
-import { NewsletterCreatePage } from '../../pages/admin/NewsletterCreatePage'
-import { NewsletterViewPage } from '../../pages/admin/NewsletterViewPage'
-import { NewsletterEditPage } from '../../pages/admin/NewsletterEditPage'
 import { cleanupTestNewsletters } from '../../utils/db-cleanup'
 
 test.describe('Admin Newsletter CRUD Operations', () => {
-  let _listPage: NewsletterListPage
-  let _createPage: NewsletterCreatePage
-  let _viewPage: NewsletterViewPage
-  let _editPage: NewsletterEditPage
-
-  test.beforeEach(async ({ page }) => {
-    _listPage = new NewsletterListPage(page)
-    _createPage = new NewsletterCreatePage(page)
-    _viewPage = new NewsletterViewPage(page)
-    _editPage = new NewsletterEditPage(page)
-  })
 
   test.afterEach(async () => {
     // Clean up test newsletters after each test
@@ -38,12 +23,12 @@ test.describe('Admin Newsletter CRUD Operations', () => {
     
     // Fill in newsletter details
     const subjectInput = page.locator('input[name="subject"]')
+    await expect(subjectInput).toBeVisible()
     await subjectInput.fill(subject)
-    await page.waitForTimeout(100)
     
     const templateSelect = page.locator('select[name="template_name"]')
+    await expect(templateSelect).toBeVisible()
     await templateSelect.selectOption('general-news')
-    await page.waitForTimeout(100)
     
     // Add simple MDX content
     const mdxContent = `# Test Newsletter
@@ -55,19 +40,20 @@ This is a test newsletter content.
 - Item 3`
     
     const contentTextarea = page.locator('textarea[name="content_mdx"]')
+    await expect(contentTextarea).toBeVisible()
     await contentTextarea.fill(mdxContent)
-    await page.waitForTimeout(100)
     
     // Select all recipients
     const segmentSelect = page.locator('select[name="segment_type"]')
+    await expect(segmentSelect).toBeVisible()
     await segmentSelect.selectOption('all')
-    await page.waitForTimeout(100)
     
     // Select draft status
     const statusSelect = page.locator('select[name="status"]')
     if (await statusSelect.count() > 0) {
+      await expect(statusSelect).toBeAttached()
+      await expect(statusSelect).toBeEnabled()
       await statusSelect.selectOption('draft')
-      await page.waitForTimeout(100)
     }
     
     // Submit the form
@@ -161,7 +147,6 @@ This is a test newsletter content.
     
     // Wait for navigation back to newsletter list or view
     await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1000)
     
     // Go back to list if not already there
     if (!page.url().endsWith('/admin/newsletters')) {
@@ -173,7 +158,7 @@ This is a test newsletter content.
     await expect(page.locator(`text="${updatedSubject}"`).first()).toBeVisible({ timeout: 10000 })
     
     // Verify the original subject is gone
-    await expect(page.locator(`text="${originalSubject}"`)).not.toBeVisible()
+    await expect(page.locator(`text="${originalSubject}"`)).toHaveCount(0)
   })
 
   test('admin can navigate newsletter pages', async ({ page }) => {
