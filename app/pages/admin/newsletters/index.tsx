@@ -1,5 +1,7 @@
 import { Link, useLoaderData } from 'react-router'
+import { redirectWithSuccess, redirectWithToast } from 'remix-toast'
 import { getAllNewslettersWithCounts } from '~/business/admin/newsletter/newsletter.server'
+import { deleteNewsletter } from '~/business/admin/newsletter/delete-newsletter.server'
 import { NewsletterTable } from '~/components/organisms/tables/admin/newsletter-table'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
@@ -13,6 +15,35 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const newsletters = await getAllNewslettersWithCounts()
   
   return { newsletters }
+}
+
+export async function action({ request, params }: Route.ActionArgs) {
+  await getAdminContext(request, params)
+  
+  const formData = await request.formData()
+  const intent = formData.get('intent')
+  const newsletterId = formData.get('newsletterId')
+  
+  if (intent === 'delete' && newsletterId) {
+    try {
+      await deleteNewsletter(newsletterId.toString())
+      throw await redirectWithSuccess(
+        '/admin/newsletters',
+        "Newsletter deleted successfully"
+      )
+    } catch (error) {
+      if (error instanceof Response) throw error
+      throw await redirectWithToast(
+        '/admin/newsletters',
+        { 
+          message: error instanceof Error ? error.message : "Failed to delete newsletter", 
+          type: "error" 
+        }
+      )
+    }
+  }
+  
+  return { success: false }
 }
 
 export default function NewslettersPage() {

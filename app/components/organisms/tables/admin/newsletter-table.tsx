@@ -1,5 +1,6 @@
-import { Link } from 'react-router'
+import { Link, useFetcher } from 'react-router'
 import { format } from 'date-fns'
+import { useState } from 'react'
 import { Badge } from '~/components/ui/badge'
 import { Button } from '~/components/ui/button'
 import {
@@ -11,7 +12,8 @@ import {
   TableRow,
 } from '~/components/ui/table'
 import { Card, CardContent } from '~/components/ui/card'
-import { Eye, Pencil } from 'lucide-react'
+import { Eye, Pencil, Trash2 } from 'lucide-react'
+import ConfirmDialog from '~/components/molecules/confirm-dialog/confirm-dialog'
 
 type NewsletterStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed'
 
@@ -77,6 +79,29 @@ const getDisplayDate = (newsletter: Newsletter) => {
 }
 
 export function NewsletterTable({ newsletters }: NewsletterTableProps) {
+  const fetcher = useFetcher()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [newsletterToDelete, setNewsletterToDelete] = useState<Newsletter | null>(null)
+  
+  const handleDeleteClick = (newsletter: Newsletter) => {
+    setNewsletterToDelete(newsletter)
+    setDeleteDialogOpen(true)
+  }
+  
+  const confirmDelete = (closeDialog: () => void) => {
+    if (newsletterToDelete) {
+      fetcher.submit(
+        { 
+          intent: 'delete',
+          newsletterId: newsletterToDelete.id 
+        },
+        { method: 'post' }
+      )
+      closeDialog()
+      setNewsletterToDelete(null)
+    }
+  }
+  
   if (newsletters.length === 0) {
     return (
       <Card>
@@ -88,62 +113,84 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
   }
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Subject</TableHead>
-              <TableHead>Template</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Recipients</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {newsletters.map((newsletter) => (
-              <TableRow key={newsletter.id}>
-                <TableCell className="font-medium">
-                  {newsletter.subject}
-                </TableCell>
-                <TableCell>
-                  {formatTemplateName(newsletter.template_name)}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={getStatusBadgeVariant(newsletter.status)}>
-                    {newsletter.status.charAt(0).toUpperCase() + newsletter.status.slice(1)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  {newsletter.recipient_count > 0 ? newsletter.recipient_count : '-'}
-                </TableCell>
-                <TableCell>
-                  {format(getDisplayDate(newsletter), 'MMM d, yyyy h:mm a')}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Link to={`/admin/newsletters/${newsletter.id}`}>
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                    </Link>
-                    {newsletter.status === 'draft' && (
-                      <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
+    <>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Subject</TableHead>
+                <TableHead>Template</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Recipients</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {newsletters.map((newsletter) => (
+                <TableRow key={newsletter.id}>
+                  <TableCell className="font-medium">
+                    {newsletter.subject}
+                  </TableCell>
+                  <TableCell>
+                    {formatTemplateName(newsletter.template_name)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusBadgeVariant(newsletter.status)}>
+                      {newsletter.status.charAt(0).toUpperCase() + newsletter.status.slice(1)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {newsletter.recipient_count > 0 ? newsletter.recipient_count : '-'}
+                  </TableCell>
+                  <TableCell>
+                    {format(getDisplayDate(newsletter), 'MMM d, yyyy h:mm a')}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Link to={`/admin/newsletters/${newsletter.id}`}>
                         <Button variant="ghost" size="sm">
-                          <Pencil className="h-4 w-4 mr-1" />
-                          Edit
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
                         </Button>
                       </Link>
-                    )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+                      {newsletter.status === 'draft' && (
+                        <>
+                          <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
+                            <Button variant="ghost" size="sm">
+                              <Pencil className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                          </Link>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleDeleteClick(newsletter)}
+                            aria-label="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        title="Delete Newsletter?"
+        description={`This action cannot be undone. This will permanently delete the newsletter "${newsletterToDelete?.subject}".`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+      />
+    </>
   )
 }
