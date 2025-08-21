@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { EventsPage } from '../../pages/EventsPage'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
 import { clearAllEmails } from '../../utils/email-helpers'
+import { ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
 
 test.describe('POS-190: Event Application Acceptance Tests', () => {
   let eventsPage: EventsPage
@@ -72,63 +73,66 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
   })
 
   test('AC4: Complete flow - navigate to event application', async ({ page }) => {
+    // Ensure at least one open event exists
+    await ensureMinimumOpenEvents(1)
+    
     // Navigate to events
     await eventsPage.goto()
     
     // Try to find an available event
     const availableEvents = await eventsPage.getOpenEventsCount()
     
-    if (availableEvents > 0) {
-      // Click first open event
-      await eventsPage.clickFirstOpenEvent()
-      
-      // Verify we navigated away from dashboard
-      await expect(page).not.toHaveURL(/dashboard$/)
-      
-      // Verify we're on some event page
-      const url = page.url()
-      expect(url).toContain('dashboard/')
-      
-      // Verify page has content
-      const heading = page.getByRole('heading').first()
-      await expect(heading).toBeVisible()
-    } else {
-      // No events available to test
-      test.skip()
-    }
+    // We should always have at least one event now
+    expect(availableEvents).toBeGreaterThan(0)
+    
+    // Click first open event
+    await eventsPage.clickFirstOpenEvent()
+    
+    // Verify we navigated away from dashboard
+    await expect(page).not.toHaveURL(/dashboard$/)
+    
+    // Verify we're on some event page
+    const url = page.url()
+    expect(url).toContain('dashboard/')
+    
+    // Verify page has content
+    const heading = page.getByRole('heading').first()
+    await expect(heading).toBeVisible()
   })
 
   test('Verify form validation exists', async ({ page }) => {
+    // Ensure at least one open event exists
+    await ensureMinimumOpenEvents(1)
+    
     await eventsPage.goto()
     
     // Find any button that says "Fazer inscrição"
     const applyButtons = page.getByRole('link', { name: 'Fazer inscrição' })
     const buttonCount = await applyButtons.count()
     
-    if (buttonCount > 0) {
-      await applyButtons.first().click()
+    // We should always have at least one event now
+    expect(buttonCount).toBeGreaterThan(0)
+    
+    await applyButtons.first().click()
+    await page.waitForLoadState('networkidle')
+    
+    // Handle BDSM info page if present
+    if (await page.getByText('Essa é uma edição BDSM da Positiv').isVisible({ timeout: 1000 }).catch(() => false)) {
+      await page.getByRole('button', { name: 'Continuar' }).click()
       await page.waitForLoadState('networkidle')
+    }
+    
+    // Try to continue without filling form
+    const continueButton = page.getByRole('button', { name: 'Continuar' })
+    if (await continueButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await continueButton.click()
       
-      // Handle BDSM info page if present
-      if (await page.getByText('Essa é uma edição BDSM da Positiv').isVisible({ timeout: 1000 }).catch(() => false)) {
-        await page.getByRole('button', { name: 'Continuar' }).click()
-        await page.waitForLoadState('networkidle')
-      }
+      // Wait for any validation message
+      await page.waitForTimeout(2000)
       
-      // Try to continue without filling form
-      const continueButton = page.getByRole('button', { name: 'Continuar' })
-      if (await continueButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await continueButton.click()
-        
-        // Wait for any validation message
-        await page.waitForTimeout(2000)
-        
-        // Check if we're still on the same page (validation prevented navigation)
-        const urlAfterClick = page.url()
-        expect(urlAfterClick).toContain('dashboard/')
-      }
-    } else {
-      test.skip()
+      // Check if we're still on the same page (validation prevented navigation)
+      const urlAfterClick = page.url()
+      expect(urlAfterClick).toContain('dashboard/')
     }
   })
 })
