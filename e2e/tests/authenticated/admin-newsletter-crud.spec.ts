@@ -145,16 +145,18 @@ This is a test newsletter content.
     // Save changes
     await page.click('button:has-text("Update Newsletter")')
     
-    // Wait for navigation back to newsletter list or view
+    // Wait for redirect to view page
+    await page.waitForURL('**/admin/newsletters/*', { timeout: 10000 })
     await page.waitForLoadState('networkidle')
     
-    // Go back to list if not already there
-    if (!page.url().endsWith('/admin/newsletters')) {
-      await page.goto('/admin/newsletters')
-      await page.waitForLoadState('networkidle')
-    }
+    // Verify we're on the view page and the updated subject is shown
+    await expect(page.locator('.text-2xl').filter({ hasText: updatedSubject })).toBeVisible({ timeout: 10000 })
     
-    // Verify the updated subject appears
+    // Navigate back to the list to verify the changes there
+    await page.goto('/admin/newsletters')
+    await page.waitForLoadState('networkidle')
+    
+    // Verify the updated subject appears in the list
     await expect(page.locator(`text="${updatedSubject}"`).first()).toBeVisible({ timeout: 10000 })
     
     // Verify the original subject is gone
