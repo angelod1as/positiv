@@ -228,12 +228,11 @@ export async function cleanupAllTestUsers(): Promise<void> {
 export async function cleanupTestEvents(): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
-  // Delete events with titles that indicate they're test events
-  // This includes patterns like "Test Event", "E2E", etc.
+  // Delete only events with the specific E2E test prefix - don't delete seed events
   const { data: testEvents, error: fetchError } = await supabase
     .from('events')
     .select('id, title')
-    .or('title.ilike.%Test Event%,title.ilike.%E2E%,title.ilike.%Updated Test Event%')
+    .ilike('title', '[E2E-TEST]%')
   
   if (fetchError) {
     throw new CleanupError(
@@ -292,4 +291,46 @@ export async function cleanupTestEvents(): Promise<void> {
   } else {
     console.info(`✅ Cleaned up ${testEvents.length} test events`)
   }
+}
+
+export async function cleanupTestNewsletters(): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+  
+  // Delete newsletters with the E2E test prefix - safer and more deterministic
+  const { data: testNewsletters, error: fetchError } = await supabase
+    .from('newsletters')
+    .select('id, subject')
+    .ilike('subject', '[E2E-TEST]%')
+  
+  if (fetchError) {
+    throw new CleanupError(
+      'Failed to fetch test newsletters for cleanup',
+      'cleanupTestNewsletters',
+      fetchError
+    )
+  }
+  
+  if (!testNewsletters || testNewsletters.length === 0) {
+    console.info('✅ No test newsletters to clean up')
+    return
+  }
+  
+  // Delete the newsletters (no dependent tables to worry about for newsletters)
+  const newsletterIds = testNewsletters.map(newsletter => newsletter.id)
+  
+  const { error: deleteError } = await supabase
+    .from('newsletters')
+    .delete()
+    .in('id', newsletterIds)
+  
+  if (deleteError) {
+    // Newsletter deletion is critical - if we can't delete test newsletters, we'll have pollution
+    throw new CleanupError(
+      `Failed to delete ${testNewsletters.length} test newsletters`,
+      'cleanupTestNewsletters',
+      deleteError
+    )
+  }
+  
+  console.info(`✅ Cleaned up ${testNewsletters.length} test newsletters`)
 }
