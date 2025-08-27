@@ -191,7 +191,7 @@ This is a test newsletter content.
   test('admin can delete draft newsletter from view page', async ({ page }) => {
     // First create a newsletter
     const timestamp = Date.now()
-    const subject = `Test Newsletter - Delete ${timestamp}`
+    const subject = `[E2E-TEST] Newsletter - Delete ${timestamp}`
     
     await page.goto('/admin/newsletters/new')
     await page.waitForLoadState('networkidle')
@@ -231,7 +231,7 @@ This is a test newsletter content.
   test('admin can delete draft newsletter after viewing from edit navigation', async ({ page }) => {
     // First create a newsletter
     const timestamp = Date.now()
-    const subject = `Test Newsletter - Delete from Edit ${timestamp}`
+    const subject = `[E2E-TEST] Newsletter - Delete from Edit ${timestamp}`
     
     await page.goto('/admin/newsletters/new')
     await page.waitForLoadState('networkidle')
@@ -280,7 +280,7 @@ This is a test newsletter content.
   test('admin can cancel newsletter deletion', async ({ page }) => {
     // First create a newsletter
     const timestamp = Date.now()
-    const subject = `Test Newsletter - Cancel Delete ${timestamp}`
+    const subject = `[E2E-TEST] Newsletter - Cancel Delete ${timestamp}`
     
     await page.goto('/admin/newsletters/new')
     await page.waitForLoadState('networkidle')

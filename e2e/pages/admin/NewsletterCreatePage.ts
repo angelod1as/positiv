@@ -10,7 +10,6 @@ export class NewsletterCreatePage extends BasePage {
   protected previewButton = 'button:has-text("Preview")'
   protected saveDraftButton = 'button:has-text("Save as Draft")'
   protected createButton = 'button:has-text("Create Newsletter")'
-  protected sendButton = 'button:has-text("Send Now")'
   protected scheduleButton = 'button:has-text("Schedule")'
   protected errorMessage = '[role="alert"]'
   protected previewModal = '[data-testid="preview-modal"]'
@@ -66,8 +65,10 @@ export class NewsletterCreatePage extends BasePage {
   }
 
   async sendImmediately() {
-    // Click the Send Now button to send immediately
-    await this.page.click(this.sendButton)
+    // TODO POS-217: Rename this method to createDraft() to reflect actual behavior
+    // There is no Send Now button in the current implementation
+    // Newsletters are created as drafts and then can be sent from the view page
+    await this.page.click(this.createButton)
     await this.waitForPageLoad()
     await this.page.waitForLoadState('networkidle')
   }
