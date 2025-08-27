@@ -21,28 +21,33 @@ export abstract class BasePage {
     try {
       await this.page.waitForLoadState('networkidle', { timeout: 5000 })
     } catch {
-      // If network doesn't go idle in 5 seconds, continue anyway
-      console.warn('Network did not go idle within 5 seconds, continuing...')
+      console.warn('Network did not go idle within 5 seconds, attempting fallback readiness check...')
+      try {
+        // Fallback: ensure the main document is still attached and not loading
+        await this.page.waitForLoadState('domcontentloaded', { timeout: 2000 })
+        // Wait for the document to be visible to reduce flakiness
+        await this.page.waitForFunction(() => document.visibilityState === 'visible', null, { timeout: 2000 })
+      } catch {
+        console.warn('Fallback readiness check failed, continuing anyway.')
+      }
     }
     
     // Wait for any animations to complete with a timeout
     try {
       await this.page.evaluate(() => {
         return new Promise<void>((resolve) => {
-          // Set a maximum wait time for animations
-          const maxWait = setTimeout(() => resolve(), 1000)
+          // Set a maximum wait time for animations (increased for real UI transitions)
+          const maxWait = setTimeout(() => resolve(), 3000)
           
           // Wait for any pending animations
           if (document.getAnimations) {
             const animations = document.getAnimations()
-            if (animations.length === 0) {
-              clearTimeout(maxWait)
-              resolve()
-              return
-            }
             
-            // Only wait for animations that aren't infinite
-            const finiteAnimations = animations.filter(anim => {
+            // Filter for actively running, finite animations
+            const activeAnimations = animations.filter(anim => {
+              // Ignore finished or paused animations
+              if (anim.playState !== 'running') return false
+              
               const effect = anim.effect
               if (effect && 'getTiming' in effect) {
                 const timing = (effect as KeyframeEffect).getTiming()
@@ -51,20 +56,18 @@ export abstract class BasePage {
               return true
             })
             
-            if (finiteAnimations.length > 0) {
-              Promise.all(finiteAnimations.map(animation => animation.finished))
-                .then(() => {
-                  clearTimeout(maxWait)
-                  resolve()
-                })
-                .catch(() => {
-                  clearTimeout(maxWait)
-                  resolve()
-                })
-            } else {
+            if (activeAnimations.length === 0) {
               clearTimeout(maxWait)
               resolve()
+              return
             }
+            
+            // Use allSettled to handle both resolved and rejected animations
+            Promise.allSettled(activeAnimations.map(animation => animation.finished))
+              .finally(() => {
+                clearTimeout(maxWait)
+                resolve()
+              })
           } else {
             // Fallback for browsers that don't support getAnimations
             clearTimeout(maxWait)

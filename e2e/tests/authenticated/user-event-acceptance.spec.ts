@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import { EventsPage } from '../../pages/EventsPage'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
 import { clearAllEmails } from '../../utils/email-helpers'
+import { ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
 
 test.describe('POS-190: Event Application Acceptance Tests', () => {
   let eventsPage: EventsPage
@@ -72,24 +73,16 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
   })
 
   test('AC4: Complete flow - navigate to event application', async ({ page }) => {
+    // Ensure at least one open event exists
+    await ensureMinimumOpenEvents(1)
+    
     // Navigate to events
     await eventsPage.goto()
     
     // Try to find an available event
     let availableEvents = await eventsPage.getOpenEventsCount()
     
-    // If no events, create one
-    if (availableEvents === 0) {
-      const { getFirstOpenEvent } = await import('../../utils/application-helpers')
-      await getFirstOpenEvent()
-      
-      // Refresh the page to see the new event
-      await page.reload()
-      await page.waitForLoadState('networkidle')
-      
-      availableEvents = await eventsPage.getOpenEventsCount()
-    }
-    
+    // We should always have at least one event now
     expect(availableEvents).toBeGreaterThan(0)
     
     // Click first open event
@@ -108,25 +101,16 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
   })
 
   test('Verify form validation exists', async ({ page }) => {
+    // Ensure at least one open event exists
+    await ensureMinimumOpenEvents(1)
+    
     await eventsPage.goto()
     
     // Find any button that says "Fazer inscrição"
     let applyButtons = page.getByRole('link', { name: 'Fazer inscrição' })
     let buttonCount = await applyButtons.count()
     
-    // If no events with apply buttons, create one
-    if (buttonCount === 0) {
-      const { getFirstOpenEvent } = await import('../../utils/application-helpers')
-      await getFirstOpenEvent()
-      
-      // Refresh the page to see the new event
-      await page.reload()
-      await page.waitForLoadState('networkidle')
-      
-      applyButtons = page.getByRole('link', { name: 'Fazer inscrição' })
-      buttonCount = await applyButtons.count()
-    }
-    
+    // We should always have at least one event now
     expect(buttonCount).toBeGreaterThan(0)
     
     await applyButtons.first().click()

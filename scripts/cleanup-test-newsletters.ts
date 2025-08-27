@@ -29,34 +29,21 @@ function createSupabaseAdminClient() {
 async function cleanupAllTestNewsletters() {
   console.info('🧹 Starting cleanup of all test newsletters...\n')
   
+  // Safety check: prevent running against production
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || ''
+  if (!supabaseUrl.includes('localhost') && !supabaseUrl.includes('127.0.0.1')) {
+    console.error('❌ Safety check failed: This script should only run against local Supabase')
+    console.error('   Current URL:', supabaseUrl)
+    process.exit(1)
+  }
+  
   const supabase = createSupabaseAdminClient()
   
-  // Fetch all test newsletters with a broader pattern
+  // Fetch all test newsletters with the E2E test prefix - safer and more deterministic
   const { data: testNewsletters, error: fetchError } = await supabase
     .from('newsletters')
     .select('id, subject, status, created_at')
-    .or(`
-      subject.ilike.%Test Newsletter%,
-      subject.ilike.%E2E%,
-      subject.ilike.%Draft Newsletter%,
-      subject.ilike.%Scheduled Newsletter%,
-      subject.ilike.%Preview Test%,
-      subject.ilike.%Updated Draft%,
-      subject.ilike.%Newsletter to Delete%,
-      subject.ilike.%Complex MDX%,
-      subject.ilike.%EventCard Component%,
-      subject.ilike.%Button Component%,
-      subject.ilike.%Divider Component%,
-      subject.ilike.%Quote Component%,
-      subject.ilike.%Markdown Formatting%,
-      subject.ilike.%Live Preview%,
-      subject.ilike.%Invalid MDX%,
-      subject.ilike.%Immediate Send%,
-      subject.ilike.%to Edit%,
-      subject.ilike.%Test Subject%,
-      subject.ilike.%Test Content%
-    `.replace(/\s+/g, '')
-    )
+    .ilike('subject', '[E2E-TEST]%')
     .order('created_at', { ascending: false })
   
   if (fetchError) {

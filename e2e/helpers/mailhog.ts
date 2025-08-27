@@ -1,5 +1,16 @@
 import { request } from '@playwright/test'
 
+interface MailhogMessage {
+  To?: Array<{ address: string }>
+  From?: { address: string }
+  Subject?: string
+  Body?: string
+  Content?: {
+    Headers?: Record<string, string[]>
+    Body?: string
+  }
+}
+
 export class MailhogHelper {
   private readonly apiUrl = 'http://localhost:8025/api'
 
@@ -66,15 +77,45 @@ export class MailhogHelper {
     return unsubscribeMatch ? unsubscribeMatch[1] : null
   }
 
-  async waitForMessages(expectedCount: number, timeout = 30000): Promise<boolean> {
+  async waitForMessages(
+    expectedCount: number, 
+    timeout = 30000,
+    options?: {
+      pollInterval?: number
+      recipient?: string
+      subject?: string
+    }
+  ): Promise<boolean> {
     const startTime = Date.now()
+    const pollInterval = options?.pollInterval || 1000
+    
     while (Date.now() - startTime < timeout) {
-      const messages = await this.getMessages()
+      let messages = await this.getMessages()
+      
+      // Apply optional filters
+      if (options?.recipient) {
+        messages = messages.filter((msg: MailhogMessage) => 
+          msg.To?.some((to: { address: string }) => to.address === options.recipient)
+        )
+      }
+      if (options?.subject) {
+        messages = messages.filter((msg: MailhogMessage) => 
+          msg.Subject?.includes(options.subject || '')
+        )
+      }
+      
       if (messages.length >= expectedCount) {
         return true
       }
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Log progress for debugging
+      const elapsed = Math.round((Date.now() - startTime) / 1000)
+      console.info(`Waiting for ${expectedCount} messages, found ${messages.length} (${elapsed}s elapsed)`)
+      
+      await new Promise(resolve => setTimeout(resolve, pollInterval))
     }
+    
+    console.warn(`Timeout: Expected ${expectedCount} messages but found ${await this.getMessages().then(m => m.length)}`)
     return false
   }
 }
