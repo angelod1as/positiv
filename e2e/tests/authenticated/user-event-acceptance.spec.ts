@@ -80,7 +80,7 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     await eventsPage.goto()
     
     // Try to find an available event
-    let availableEvents = await eventsPage.getOpenEventsCount()
+    const availableEvents = await eventsPage.getOpenEventsCount()
     
     // We should always have at least one event now
     expect(availableEvents).toBeGreaterThan(0)
@@ -107,8 +107,8 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     await eventsPage.goto()
     
     // Find any button that says "Fazer inscrição"
-    let applyButtons = page.getByRole('link', { name: 'Fazer inscrição' })
-    let buttonCount = await applyButtons.count()
+    const applyButtons = page.getByRole('link', { name: 'Fazer inscrição' })
+    const buttonCount = await applyButtons.count()
     
     // We should always have at least one event now
     expect(buttonCount).toBeGreaterThan(0)
