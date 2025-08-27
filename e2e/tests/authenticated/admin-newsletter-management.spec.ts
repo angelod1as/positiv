@@ -29,7 +29,7 @@ test.describe('Admin Newsletter Management', () => {
     await cleanupTestNewsletters()
   })
 
-  test('admin can create and send newsletter immediately', async ({ page }) => {
+  test('admin can create newsletter as draft', async ({ page }) => {
     // Generate unique subject with timestamp
     const timestamp = Date.now()
     const subject = `Test Newsletter - Immediate Send ${timestamp}`
@@ -300,8 +300,8 @@ See you there!`
     // Try to submit without filling required fields
     await createPage.sendImmediately()
     
-    // Check for validation errors - should stay on the same page
-    await page.waitForTimeout(1000) // Give time for validation
+    // Check for validation errors - wait for error element to appear
+    await page.waitForSelector('[role="alert"], .text-destructive, .text-red-500, .text-red-600', { timeout: 2000 })
     const currentUrl = page.url()
     expect(currentUrl).toContain('/admin/newsletters/new')
     
