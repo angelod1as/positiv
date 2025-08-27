@@ -66,17 +66,20 @@ export class NewsletterCreatePage extends BasePage {
   }
 
   async sendImmediately() {
-    // Select draft status if the field exists (newsletters start as drafts)
-    await this.selectStatus('draft')
-    // Click the Create Newsletter button (form submit)
-    await this.page.click(this.createButton)
+    // Click the Send Now button to send immediately
+    await this.page.click(this.sendButton)
+    await this.waitForPageLoad()
+    await this.page.waitForLoadState('networkidle')
   }
 
   async scheduleNewsletter(date: Date) {
     await this.page.click(this.scheduleButton)
-    const dateString = date.toISOString().slice(0, 16) // Format: YYYY-MM-DDTHH:mm
+    await this.page.waitForSelector(this.scheduleDateInput, { state: 'visible', timeout: 5000 })
+    const dateString = date.toISOString().slice(0, 16) // YYYY-MM-DDTHH:mm for datetime-local
     await this.page.fill(this.scheduleDateInput, dateString)
     await this.page.click('button:has-text("Confirm Schedule")')
+    await this.page.waitForSelector(this.scheduleDateInput, { state: 'detached', timeout: 10000 })
+    await this.page.waitForLoadState('networkidle')
   }
 
 

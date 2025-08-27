@@ -228,12 +228,11 @@ export async function cleanupAllTestUsers(): Promise<void> {
 export async function cleanupTestEvents(): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
-  // Delete events with titles that indicate they're test events
-  // This includes patterns like "Test Event", "E2E", etc.
+  // Delete only events with the specific E2E test prefix - don't delete seed events
   const { data: testEvents, error: fetchError } = await supabase
     .from('events')
     .select('id, title')
-    .or('title.ilike.%Test Event%,title.ilike.%E2E%,title.ilike.%Updated Test Event%')
+    .ilike('title', '[E2E-TEST]%')
   
   if (fetchError) {
     throw new CleanupError(
@@ -297,11 +296,11 @@ export async function cleanupTestEvents(): Promise<void> {
 export async function cleanupTestNewsletters(): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
-  // Delete newsletters with subjects that indicate they're test newsletters
+  // Delete newsletters with the E2E test prefix - safer and more deterministic
   const { data: testNewsletters, error: fetchError } = await supabase
     .from('newsletters')
     .select('id, subject')
-    .or('subject.ilike.%Test Newsletter%,subject.ilike.%E2E%,subject.ilike.%Draft Newsletter%,subject.ilike.%Scheduled Newsletter%,subject.ilike.%Preview Test%,subject.ilike.%Updated Draft%,subject.ilike.%Newsletter to Delete%,subject.ilike.%Complex MDX%,subject.ilike.%EventCard Component%,subject.ilike.%Button Component%,subject.ilike.%Divider Component%,subject.ilike.%Quote Component%,subject.ilike.%Markdown Formatting%,subject.ilike.%Live Preview%,subject.ilike.%Invalid MDX%')
+    .ilike('subject', '[E2E-TEST]%')
   
   if (fetchError) {
     throw new CleanupError(
