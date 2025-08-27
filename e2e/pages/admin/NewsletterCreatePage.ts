@@ -65,9 +65,9 @@ export class NewsletterCreatePage extends BasePage {
   }
 
   async sendImmediately() {
+    // TODO POS-217: Rename this method to createDraft() to reflect actual behavior
     // There is no Send Now button in the current implementation
     // Newsletters are created as drafts and then can be sent from the view page
-    // For now, just create as draft
     await this.page.click(this.createButton)
     await this.waitForPageLoad()
     await this.page.waitForLoadState('networkidle')
