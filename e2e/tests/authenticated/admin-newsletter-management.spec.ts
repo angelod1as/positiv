@@ -107,14 +107,13 @@ Best regards,
     const subjectCell = await page.textContent(`td:has-text("${subject}")`)
     expect(subjectCell).toBeTruthy()
     
-    // Verify it's a draft (since we're not actually sending)
+    // Verify it's a draft
     // Find the row and then get the status column (3rd column)
     const statusCell = await page.locator(`tr:has-text("${subject}") td:nth-child(3)`).textContent()
     expect(statusCell?.toLowerCase()).toBe('draft')
     
-    // If it's a draft, we can't check emails yet
-    // The test name says "send immediately" but the form creates drafts
     // This is expected behavior - newsletters are created as drafts first
+    // before they can be sent
   })
 
   test('admin can schedule a newsletter for future', async ({ page }) => {
