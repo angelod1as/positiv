@@ -297,8 +297,8 @@ See you there!`
     await listPage.navigate()
     await listPage.clickCreateNewsletter()
     
-    // Try to submit without filling required fields
-    await createPage.sendImmediately()
+    // Try to submit without filling required fields - click Create Newsletter button directly
+    await page.click('button:has-text("Create Newsletter")')
     
     // Check for validation errors - wait for error element to appear
     await page.waitForSelector('[role="alert"], .text-destructive, .text-red-500, .text-red-600', { timeout: 2000 })
