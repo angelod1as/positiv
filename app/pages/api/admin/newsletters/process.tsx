@@ -4,17 +4,13 @@ import { db } from "~/lib/supabase/db.server"
 import { safeExecute, handleApiError } from "~/lib/helpers/error-handling"
 
 export async function action({ request }: ActionFunctionArgs) {
-  // Validate the service role key for security
-  const authHeader = request.headers.get("authorization") || ""
-  const expectedToken = process.env.SUPABASE_SERVICE_ROLE_KEY
+  // Validate the internal job token for security
+  const internalToken = request.headers.get("x-internal-job-token") || ""
+  const expectedToken = process.env.INTERNAL_JOB_SECRET
   
-  if (!authHeader.startsWith("Bearer ") || !expectedToken) {
+  // Uniform 401 response for all authentication failures to prevent token oracle attacks
+  if (!internalToken || !expectedToken || internalToken !== expectedToken) {
     return Response.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  
-  const providedToken = authHeader.replace(/^Bearer\s+/i, "")
-  if (providedToken !== expectedToken) {
-    return Response.json({ error: "Forbidden" }, { status: 403 })
   }
 
   // Process scheduled newsletters using composable error handling
@@ -27,7 +23,6 @@ export async function action({ request }: ActionFunctionArgs) {
   if (result.success) {
     return Response.json({
       success: true,
-      processedNewsletters: result.data.processedNewsletters,
       totalProcessed: result.data.totalProcessed,
       totalFailed: result.data.totalFailed,
       timeLimitReached: result.data.timeLimitReached,

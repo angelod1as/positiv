@@ -18,8 +18,9 @@ serve(async (req) => {
     // Initialize Supabase client with service role
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const internalJobSecret = Deno.env.get('INTERNAL_JOB_SECRET')
     
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseUrl || !supabaseServiceKey || !internalJobSecret) {
       throw new Error('Missing required environment variables')
     }
     const appUrl = Deno.env.get('APP_URL') || 'http://localhost:5173'
@@ -68,7 +69,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseServiceKey}`,
+        'X-Internal-Job-Token': internalJobSecret,
       },
       body: JSON.stringify({}),
     })
