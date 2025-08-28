@@ -85,7 +85,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (result.success) {
         throw await redirectWithSuccess(
           ADMIN_NEWSLETTERS(),
-          "Newsletter created successfully"
+          "Newsletter criada com sucesso"
         )
       }
       return result
@@ -100,9 +100,9 @@ export default function AdminNewNewsletterPage() {
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-3xl font-bold">Create Newsletter</h1>
+        <h1 className="text-3xl font-bold">Criar Newsletter</h1>
         <p className="text-muted-foreground mt-2">
-          Create a new newsletter to send to your community members
+          Crie uma nova newsletter para enviar aos membros da sua comunidade
         </p>
       </div>
       
@@ -110,7 +110,7 @@ export default function AdminNewNewsletterPage() {
       {actionData && !actionData.success && 'errors' in actionData && (
         <Alert variant="destructive">
           <AlertDescription>
-            <strong>Please fix the following errors:</strong>
+            <strong>Por favor, corrija os seguintes erros:</strong>
             <ul className="list-disc list-inside mt-2">
               {Object.entries(actionData.errors).map(([field, error]) => (
                 <li key={field}>
@@ -126,7 +126,7 @@ export default function AdminNewNewsletterPage() {
       {actionData && !actionData.success && !('errors' in actionData) && (
         <Alert variant="destructive">
           <AlertDescription>
-            An error occurred while creating the newsletter. Please try again.
+            Ocorreu um erro ao criar a newsletter. Por favor, tente novamente.
           </AlertDescription>
         </Alert>
       )}

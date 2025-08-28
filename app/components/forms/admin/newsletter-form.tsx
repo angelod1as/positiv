@@ -91,17 +91,17 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
           exclude_rejected: initialExcludeRejected,
         }}
         labels={{
-          subject: "Subject",
-          template_name: "Template",
-          content_mdx: "Content (MDX)",
-          scheduled_at: "Schedule For",
-          segment_type: "Audience Segment",
-          exclude_rejected: "Exclude rejected participants",
+          subject: "Assunto",
+          template_name: "Modelo",
+          content_mdx: "Conteúdo (MDX)",
+          scheduled_at: "Agendar Para",
+          segment_type: "Segmento de Público",
+          exclude_rejected: "Excluir participantes rejeitados",
         }}
         placeholders={{
-          subject: "Enter newsletter subject",
+          subject: "Digite o assunto da newsletter",
           content_mdx:
-            "# Newsletter Title\n\nWrite your newsletter content here using Markdown...",
+            "# Título da Newsletter\n\nEscreva o conteúdo da sua newsletter aqui usando Markdown...",
         }}
         multiline={["content_mdx"]}
         inputTypes={{
@@ -112,23 +112,23 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
         }}
         options={{
           template_name: [
-            { value: "general-news", name: "General News" },
-            { value: "event-announcement", name: "Event Announcement" },
+            { value: "general-news", name: "Notícias Gerais" },
+            { value: "event-announcement", name: "Anúncio de Evento" },
           ],
           segment_type: [
-            { value: "all", name: "All subscribers" },
-            { value: "veterans", name: "Veterans only" },
-            { value: "newbies", name: "Newbies only" },
-            { value: "never_attended", name: "Never attended any event" },
-            { value: "has_attended", name: "Has attended at least one event" },
-            { value: "never_applied", name: "New registrations" },
-            { value: "applied_never_attended", name: "Applied but never attended" },
+            { value: "all", name: "Todos os inscritos" },
+            { value: "veterans", name: "Apenas veteranos" },
+            { value: "newbies", name: "Apenas novatos" },
+            { value: "never_attended", name: "Nunca participou de nenhum evento" },
+            { value: "has_attended", name: "Participou de pelo menos um evento" },
+            { value: "never_applied", name: "Novos cadastros" },
+            { value: "applied_never_attended", name: "Se inscreveu mas nunca participou" },
           ],
         }}
         buttonLabel={
           isSubmitting 
-            ? "Processing..." 
-            : (newsletter?.id ? "Update Newsletter" : "Create Newsletter")
+            ? "Processando..." 
+            : (newsletter?.id ? "Atualizar Newsletter" : "Criar Newsletter")
         }
       />
       
@@ -144,7 +144,7 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
           className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
           disabled={isSubmitting}
         >
-          Send Now
+          Enviar Agora
         </button>
       )}
     </div>
