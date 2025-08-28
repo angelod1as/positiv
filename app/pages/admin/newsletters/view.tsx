@@ -29,7 +29,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (!newsletterId) {
     throw await redirectWithToast(
       ADMIN_NEWSLETTERS(),
-      { message: "Newsletter ID is required", type: "error" }
+      { message: "ID da newsletter é obrigatório", type: "error" }
     )
   }
   
@@ -38,7 +38,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (!newsletter) {
     throw await redirectWithToast(
       ADMIN_NEWSLETTERS(),
-      { message: "Newsletter not found", type: "error" }
+      { message: "Newsletter não encontrada", type: "error" }
     )
   }
   
@@ -55,7 +55,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (!newsletterId) {
     throw await redirectWithToast(
       ADMIN_NEWSLETTERS(),
-      { message: "Newsletter ID is required", type: "error" }
+      { message: "ID da newsletter é obrigatório", type: "error" }
     )
   }
   
@@ -64,8 +64,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       () => deleteNewsletter(newsletterId),
       {
         redirectPath: ADMIN_NEWSLETTERS(),
-        successMessage: "Newsletter deleted successfully",
-        errorMessage: "Error deleting newsletter",
+        successMessage: "Newsletter excluída com sucesso",
+        errorMessage: "Erro ao excluir newsletter",
       }
     )
   }
@@ -78,8 +78,8 @@ export async function action({ request, params }: Route.ActionArgs) {
       }),
       {
         redirectPath: `/admin/newsletters/${params.id}`,
-        successMessage: (result) => `Processing triggered: ${result.totalProcessed} sent, ${result.totalFailed} failed`,
-        errorMessage: "Error triggering processing",
+        successMessage: (result) => `Processamento iniciado: ${result.totalProcessed} enviadas, ${result.totalFailed} falharam`,
+        errorMessage: "Erro ao iniciar processamento",
       }
     )
   }
@@ -107,11 +107,28 @@ const getStatusBadgeVariant = (status: string) => {
 const formatTemplateName = (template: string) => {
   switch (template) {
     case 'general-news':
-      return 'General News'
+      return 'Notícias Gerais'
     case 'event-announcement':
-      return 'Event Announcement'
+      return 'Anúncio de Evento'
     default:
       return template
+  }
+}
+
+const formatStatusText = (status: string) => {
+  switch (status) {
+    case 'draft':
+      return 'Rascunho'
+    case 'scheduled':
+      return 'Agendada'
+    case 'sending':
+      return 'Enviando'
+    case 'sent':
+      return 'Enviada'
+    case 'failed':
+      return 'Falhou'
+    default:
+      return status.charAt(0).toUpperCase() + status.slice(1)
   }
 }
 
@@ -141,7 +158,7 @@ export default function AdminViewNewsletterPage() {
           <Link to={ADMIN_NEWSLETTERS()}>
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Newsletters
+              Voltar para Newsletters
             </Button>
           </Link>
         </div>
@@ -152,10 +169,10 @@ export default function AdminViewNewsletterPage() {
               <ConfirmDialog
                 open={deleteDialogOpen}
                 onOpenChange={setDeleteDialogOpen}
-                title="Delete Newsletter"
-                description="Are you sure you want to delete this newsletter? This action cannot be undone."
-                confirmLabel="Yes, delete"
-                cancelLabel="Cancel"
+                title="Excluir Newsletter"
+                description="Tem certeza que deseja excluir esta newsletter? Esta ação não pode ser desfeita."
+                confirmLabel="Sim, excluir"
+                cancelLabel="Cancelar"
                 onConfirm={handleDeleteConfirm}
                 isLoading={isDeleting}
               >
@@ -164,7 +181,7 @@ export default function AdminViewNewsletterPage() {
                   disabled={isDeleting}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  {isDeleting ? 'Deleting...' : 'Delete'}
+                  {isDeleting ? 'Excluindo...' : 'Excluir'}
                 </ConfirmDialog.Trigger>
               </ConfirmDialog>
             </>
@@ -174,7 +191,7 @@ export default function AdminViewNewsletterPage() {
             <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
               <Button>
                 <Edit className="h-4 w-4 mr-2" />
-                Edit Newsletter
+                Editar Newsletter
               </Button>
             </Link>
           )}
@@ -186,12 +203,12 @@ export default function AdminViewNewsletterPage() {
                 {isProcessing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
+                    Processando...
                   </>
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Trigger Processing
+                    Iniciar Processamento
                   </>
                 )}
               </Button>
@@ -207,10 +224,10 @@ export default function AdminViewNewsletterPage() {
               <CardTitle className="text-2xl">{newsletter.subject}</CardTitle>
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <Badge variant={getStatusBadgeVariant(newsletter.status)}>
-                  {newsletter.status.charAt(0).toUpperCase() + newsletter.status.slice(1)}
+                  {formatStatusText(newsletter.status)}
                 </Badge>
                 <span className="flex items-center gap-1">
-                  Template: {formatTemplateName(newsletter.template_name)}
+                  Modelo: {formatTemplateName(newsletter.template_name)}
                 </span>
               </div>
             </div>
@@ -221,26 +238,26 @@ export default function AdminViewNewsletterPage() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>Created: {format(new Date(newsletter.created_at), 'MMM d, yyyy h:mm a')}</span>
+              <span>Criada em: {format(new Date(newsletter.created_at), 'MMM d, yyyy h:mm a')}</span>
             </div>
             
             {newsletter.scheduled_at && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>Scheduled: {format(new Date(newsletter.scheduled_at), 'MMM d, yyyy h:mm a')}</span>
+                <span>Agendada para: {format(new Date(newsletter.scheduled_at), 'MMM d, yyyy h:mm a')}</span>
               </div>
             )}
             
             {newsletter.sent_at && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>Sent: {format(new Date(newsletter.sent_at), 'MMM d, yyyy h:mm a')}</span>
+                <span>Enviada em: {format(new Date(newsletter.sent_at), 'MMM d, yyyy h:mm a')}</span>
               </div>
             )}
           </div>
           
           <div className="space-y-2">
-            <h3 className="font-semibold">Content (MDX)</h3>
+            <h3 className="font-semibold">Conteúdo (MDX)</h3>
             <Card>
               <CardContent className="pt-6">
                 <pre className="whitespace-pre-wrap font-mono text-sm bg-muted p-4 rounded-md overflow-x-auto">
@@ -253,7 +270,7 @@ export default function AdminViewNewsletterPage() {
           {newsletter.status === 'draft' && (
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground">
-                This newsletter is in draft mode. You can edit it or schedule it for sending.
+                Esta newsletter está em modo rascunho. Você pode editá-la ou agendá-la para envio.
               </p>
             </div>
           )}
@@ -264,17 +281,17 @@ export default function AdminViewNewsletterPage() {
                 <div className="flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-yellow-500 mt-0.5" />
                   <div className="space-y-1">
-                    <p className="text-sm font-medium">Ready for Processing</p>
+                    <p className="text-sm font-medium">Pronta para Processamento</p>
                     <p className="text-sm text-muted-foreground">
-                      This newsletter is scheduled and ready to be sent. It will be processed automatically 
-                      within the next 5 minutes, or you can trigger processing manually using the button above.
+                      Esta newsletter está agendada e pronta para ser enviada. Ela será processada automaticamente 
+                      nos próximos 5 minutos, ou você pode iniciar o processamento manualmente usando o botão acima.
                     </p>
                   </div>
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  This newsletter is scheduled to be sent on {newsletter.scheduled_at && format(new Date(newsletter.scheduled_at), 'MMM d, yyyy h:mm a')}.
-                  It will be processed automatically when the scheduled time arrives.
+                  Esta newsletter está agendada para ser enviada em {newsletter.scheduled_at && format(new Date(newsletter.scheduled_at), 'MMM d, yyyy h:mm a')}.
+                  Ela será processada automaticamente quando o horário agendado chegar.
                 </p>
               )}
             </div>
@@ -285,10 +302,10 @@ export default function AdminViewNewsletterPage() {
               <div className="flex items-start gap-2">
                 <Loader2 className="h-4 w-4 text-blue-500 mt-0.5 animate-spin" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">Currently Sending</p>
+                  <p className="text-sm font-medium">Enviando no Momento</p>
                   <p className="text-sm text-muted-foreground">
-                    This newsletter is currently being processed and sent to recipients.
-                    The status will update to "Sent" once all emails have been delivered.
+                    Esta newsletter está sendo processada e enviada aos destinatários.
+                    O status será atualizado para "Enviada" quando todos os emails forem entregues.
                   </p>
                 </div>
               </div>
@@ -298,7 +315,7 @@ export default function AdminViewNewsletterPage() {
           {newsletter.status === 'sent' && (
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground">
-                This newsletter was successfully sent on {newsletter.sent_at && format(new Date(newsletter.sent_at), 'MMM d, yyyy h:mm a')}.
+                Esta newsletter foi enviada com sucesso em {newsletter.sent_at && format(new Date(newsletter.sent_at), 'MMM d, yyyy h:mm a')}.
               </p>
             </div>
           )}
@@ -308,10 +325,10 @@ export default function AdminViewNewsletterPage() {
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-red-500 mt-0.5" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-red-500">Sending Failed</p>
+                  <p className="text-sm font-medium text-red-500">Falha no Envio</p>
                   <p className="text-sm text-muted-foreground">
-                    There was an error sending this newsletter. Please check the logs for more information
-                    or try triggering the processing again.
+                    Houve um erro ao enviar esta newsletter. Por favor, verifique os logs para mais informações
+                    ou tente iniciar o processamento novamente.
                   </p>
                 </div>
               </div>
