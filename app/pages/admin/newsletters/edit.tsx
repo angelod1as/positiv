@@ -23,7 +23,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (!newsletterId) {
     throw await redirectWithToast(
       ADMIN_NEWSLETTERS(),
-      { message: "Newsletter ID is required", type: "error" }
+      { message: "ID da newsletter é obrigatório", type: "error" }
     )
   }
   
@@ -32,7 +32,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (!newsletter) {
     throw await redirectWithToast(
       ADMIN_NEWSLETTERS(),
-      { message: "Newsletter not found", type: "error" }
+      { message: "Newsletter não encontrada", type: "error" }
     )
   }
   
@@ -40,7 +40,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (newsletter.status !== 'draft') {
     throw await redirectWithToast(
       ADMIN_VIEW_NEWSLETTER(newsletterId),
-      { message: "Only draft newsletters can be edited", type: "error" }
+      { message: "Apenas newsletters em rascunho podem ser editadas", type: "error" }
     )
   }
   
@@ -70,7 +70,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (!newsletterId) {
     throw await redirectWithToast(
       ADMIN_NEWSLETTERS(),
-      { message: "Newsletter ID is required", type: "error" }
+      { message: "ID da newsletter é obrigatório", type: "error" }
     )
   }
   
@@ -85,14 +85,14 @@ export async function action({ request, params }: Route.ActionArgs) {
       const result = await sendNewsletterNow(newsletterId)
       throw await redirectWithSuccess(
         ADMIN_VIEW_NEWSLETTER(newsletterId),
-        `Newsletter sent successfully! ${result.processed} emails sent.`
+        `Newsletter enviada com sucesso! ${result.processed} emails enviados.`
       )
     } catch (error) {
       if (error instanceof Response) throw error
       throw await redirectWithToast(
         ADMIN_VIEW_NEWSLETTER(newsletterId),
         { 
-          message: error instanceof Error ? error.message : "Failed to send newsletter", 
+          message: error instanceof Error ? error.message : "Falha ao enviar newsletter", 
           type: "error" 
         }
       )
@@ -107,7 +107,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (result.success) {
         throw await redirectWithSuccess(
           ADMIN_VIEW_NEWSLETTER(newsletterId),
-          "Newsletter updated successfully"
+          "Newsletter atualizada com sucesso"
         )
       }
       return result
@@ -121,7 +121,7 @@ export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentP
   const fetcher = useFetcher()
   
   const handleSendNow = (_newsletterId: string) => {
-    if (confirm("Are you sure you want to send this newsletter immediately to all subscribers?")) {
+    if (confirm("Tem certeza que deseja enviar esta newsletter imediatamente para todos os inscritos?")) {
       fetcher.submit(
         { intent: 'send-now' },
         { method: 'post' }
@@ -132,9 +132,9 @@ export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentP
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-3xl font-bold">Edit Newsletter</h1>
+        <h1 className="text-3xl font-bold">Editar Newsletter</h1>
         <p className="text-muted-foreground mt-2">
-          Update your newsletter content and settings
+          Atualize o conteúdo e configurações da sua newsletter
         </p>
       </div>
       

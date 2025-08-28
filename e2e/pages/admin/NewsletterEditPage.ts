@@ -1,8 +1,8 @@
 import { NewsletterCreatePage } from './NewsletterCreatePage'
 
 export class NewsletterEditPage extends NewsletterCreatePage {
-  protected updateButton = 'button:has-text("Update Newsletter"), button:has-text("Update")'
-  protected cancelButton = 'a:has-text("Cancel"), button:has-text("Cancel")'
+  protected updateButton = 'button:has-text("Atualizar Newsletter"), button:has-text("Atualizar")'
+  protected cancelButton = 'a:has-text("Cancelar"), button:has-text("Cancelar")'
 
   async navigateToEdit(newsletterId: string) {
     await this.page.goto(`/admin/newsletters/edit?id=${newsletterId}`)

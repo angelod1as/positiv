@@ -126,21 +126,21 @@ describe('NewsletterForm', () => {
     it('should render all required form fields', () => {
       renderForm()
       
-      expect(screen.getByLabelText(/subject/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/template/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/content/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/assunto/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/modelo/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/conteúdo/i)).toBeInTheDocument()
     })
 
     it('should render scheduled_at field', () => {
       renderForm()
       
-      expect(screen.getByLabelText(/schedule/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/agendar/i)).toBeInTheDocument()
     })
 
     it('should show correct template options in dropdown', () => {
       renderForm()
       
-      const templateSelect = screen.getByLabelText(/template/i)
+      const templateSelect = screen.getByLabelText(/modelo/i)
       expect(templateSelect).toBeInTheDocument()
       
       // Check that it's a select element
@@ -157,14 +157,14 @@ describe('NewsletterForm', () => {
     it('should render submit button', () => {
       renderForm()
       
-      const submitButton = screen.getByRole('button', { name: /save|submit|create/i })
+      const submitButton = screen.getByRole('button', { name: /criar|atualizar|processar/i })
       expect(submitButton).toBeInTheDocument()
     })
 
     it('should render content field as textarea', () => {
       renderForm()
       
-      const contentField = screen.getByLabelText(/content/i)
+      const contentField = screen.getByLabelText(/conteúdo/i)
       expect(contentField.tagName).toBe('TEXTAREA')
     })
   })
@@ -184,7 +184,7 @@ describe('NewsletterForm', () => {
       
       expect(screen.getByDisplayValue('Test Newsletter')).toBeInTheDocument()
       // For select elements, check if the option is selected
-      const templateSelect = screen.getByLabelText(/template/i) as HTMLSelectElement
+      const templateSelect = screen.getByLabelText(/modelo/i) as HTMLSelectElement
       expect(templateSelect.value).toBe('event-announcement')
       expect(screen.getByDisplayValue(/Test Content/)).toBeInTheDocument()
     })
@@ -192,7 +192,7 @@ describe('NewsletterForm', () => {
     it('should show edit mode in submit button', () => {
       renderForm(existingNewsletter)
       
-      const submitButton = screen.getByRole('button', { name: /update|save/i })
+      const submitButton = screen.getByRole('button', { name: /atualizar|salvar/i })
       expect(submitButton).toBeInTheDocument()
     })
   })
@@ -201,10 +201,10 @@ describe('NewsletterForm', () => {
     it('should have proper labels for all fields', () => {
       renderForm()
       
-      expect(screen.getByLabelText(/subject/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/template/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/content/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/schedule/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/assunto/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/modelo/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/conteúdo/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/agendar/i)).toBeInTheDocument()
     })
   })
 
@@ -212,7 +212,7 @@ describe('NewsletterForm', () => {
     it('should render segment type dropdown in the form', () => {
       renderForm()
       
-      const segmentSelect = screen.getByLabelText(/audience segment/i)
+      const segmentSelect = screen.getByLabelText(/segmento de público/i)
       expect(segmentSelect).toBeInTheDocument()
       expect(segmentSelect.tagName).toBe('SELECT')
     })
@@ -220,7 +220,7 @@ describe('NewsletterForm', () => {
     it('should have all segment options', () => {
       renderForm()
       
-      const segmentSelect = screen.getByLabelText(/audience segment/i)
+      const segmentSelect = screen.getByLabelText(/segmento de público/i)
       const options = segmentSelect.querySelectorAll('option')
       const optionValues = Array.from(options).map(opt => opt.value)
       
@@ -234,7 +234,7 @@ describe('NewsletterForm', () => {
     it('should render exclude rejected checkbox', () => {
       renderForm()
       
-      const checkbox = screen.getByLabelText(/exclude rejected/i)
+      const checkbox = screen.getByLabelText(/excluir.*rejeitados/i)
       expect(checkbox).toBeInTheDocument()
       expect(checkbox).toHaveAttribute('type', 'checkbox')
     })
@@ -253,14 +253,14 @@ describe('NewsletterForm', () => {
       
       renderForm(draftNewsletter, mockOnSendNow)
       
-      const sendNowButton = screen.getByRole('button', { name: /send now/i })
+      const sendNowButton = screen.getByRole('button', { name: /enviar agora/i })
       expect(sendNowButton).toBeInTheDocument()
     })
 
     it('should not render Send Now button for new newsletters', () => {
       renderForm()
       
-      const sendNowButton = screen.queryByRole('button', { name: /send now/i })
+      const sendNowButton = screen.queryByRole('button', { name: /enviar agora/i })
       expect(sendNowButton).not.toBeInTheDocument()
     })
 
@@ -276,7 +276,7 @@ describe('NewsletterForm', () => {
       
       renderForm(scheduledNewsletter)
       
-      const sendNowButton = screen.queryByRole('button', { name: /send now/i })
+      const sendNowButton = screen.queryByRole('button', { name: /enviar agora/i })
       expect(sendNowButton).not.toBeInTheDocument()
     })
 
@@ -292,7 +292,7 @@ describe('NewsletterForm', () => {
       
       render(<NewsletterForm newsletter={draftNewsletter} onSendNow={mockOnSendNow} />)
       
-      const sendNowButton = screen.getByRole('button', { name: /send now/i })
+      const sendNowButton = screen.getByRole('button', { name: /enviar agora/i })
       sendNowButton.click()
       
       expect(mockOnSendNow).toHaveBeenCalledWith('123')

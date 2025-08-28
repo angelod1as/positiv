@@ -57,7 +57,7 @@ This is a test newsletter content.
     }
     
     // Submit the form
-    await page.click('button:has-text("Create Newsletter")')
+    await page.click('button:has-text("Criar Newsletter")')
     
     // Wait for navigation back to newsletter list
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
@@ -67,7 +67,7 @@ This is a test newsletter content.
     await expect(newsletterRow).toBeVisible({ timeout: 10000 })
     
     // Verify status badge shows Draft
-    await expect(newsletterRow.locator('text="Draft"')).toBeVisible()
+    await expect(newsletterRow.locator('text="Rascunho"')).toBeVisible()
   })
 
   test('admin can view newsletter details', async ({ page }) => {
@@ -88,12 +88,12 @@ This is a test newsletter content.
       await statusSelect.selectOption('draft')
     }
     
-    await page.click('button:has-text("Create Newsletter")')
+    await page.click('button:has-text("Criar Newsletter")')
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
     
     // Find the row with the newsletter and click the View button
     const newsletterRow = page.locator('tr').filter({ hasText: subject })
-    await newsletterRow.locator('button:has-text("View")').click()
+    await newsletterRow.locator('a:has-text("Visualizar")').first().click()
     await page.waitForLoadState('networkidle')
     
     // Verify we're on the view page
@@ -101,8 +101,8 @@ This is a test newsletter content.
     
     // Verify details are displayed - subject is in CardTitle with text-2xl
     await expect(page.locator('.text-2xl').filter({ hasText: subject })).toBeVisible()
-    await expect(page.locator('text="Draft"')).toBeVisible()
-    await expect(page.locator('text="Template: General News"')).toBeVisible()
+    await expect(page.locator('text="Rascunho"')).toBeVisible()
+    await expect(page.locator('text="Modelo: Notícias Gerais"')).toBeVisible()
   })
 
   test('admin can edit newsletter', async ({ page }) => {
@@ -124,12 +124,12 @@ This is a test newsletter content.
       await statusSelect.selectOption('draft')
     }
     
-    await page.click('button:has-text("Create Newsletter")')
+    await page.click('button:has-text("Criar Newsletter")')
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
     
     // Find the row with the newsletter and click the Edit button
     const newsletterRow = page.locator('tr').filter({ hasText: originalSubject })
-    await newsletterRow.locator('button:has-text("Edit")').click()
+    await newsletterRow.locator('a:has-text("Editar")').first().click()
     await page.waitForLoadState('networkidle')
     
     // Update the subject
@@ -143,7 +143,7 @@ This is a test newsletter content.
     await contentTextarea.fill('# Updated Content\n\nThis content has been updated.')
     
     // Save changes
-    await page.click('button:has-text("Update Newsletter")')
+    await page.click('button:has-text("Atualizar Newsletter"), button:has-text("Atualizar")')
     
     // Wait for redirect to view page
     await page.waitForURL('**/admin/newsletters/*', { timeout: 10000 })
@@ -172,13 +172,13 @@ This is a test newsletter content.
     await expect(page).toHaveURL('/admin/newsletters')
     await expect(page.locator('h1').filter({ hasText: 'Newsletters' })).toBeVisible()
     
-    // Click new newsletter button - the button text is "Create Newsletter"
-    await page.click('a:has-text("Create Newsletter")')
+    // Click new newsletter button - the button text is "Criar Newsletter"
+    await page.click('a:has-text("Criar Newsletter")')
     await page.waitForLoadState('networkidle')
     
     // Verify we're on the create page
     await expect(page).toHaveURL('/admin/newsletters/new')
-    await expect(page.locator('h1').filter({ hasText: 'Create Newsletter' })).toBeVisible()
+    await expect(page.locator('h1').filter({ hasText: 'Criar Newsletter' })).toBeVisible()
     
     // Navigate back to list using direct navigation
     await page.goto('/admin/newsletters')
@@ -206,20 +206,20 @@ This is a test newsletter content.
       await statusSelect.selectOption('draft')
     }
     
-    await page.click('button:has-text("Create Newsletter")')
+    await page.click('button:has-text("Criar Newsletter")')
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
     
     // Find the newsletter row and click View button
     const newsletterRow = page.locator('tr').filter({ hasText: subject })
-    await newsletterRow.locator('button:has-text("View")').click()
+    await newsletterRow.locator('a:has-text("Visualizar")').first().click()
     await page.waitForLoadState('networkidle')
     
     // Click delete button
-    await page.click('button:has-text("Delete")')
+    await page.click('button:has-text("Excluir")')
     
     // Wait for dialog to appear and confirm deletion
-    await page.waitForSelector('button:has-text("Yes, delete")', { state: 'visible' })
-    await page.click('button:has-text("Yes, delete")')
+    await page.waitForSelector('button:has-text("Sim, excluir")', { state: 'visible' })
+    await page.click('button:has-text("Sim, excluir")')
     
     // Wait for navigation back to list
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
@@ -246,12 +246,12 @@ This is a test newsletter content.
       await statusSelect.selectOption('draft')
     }
     
-    await page.click('button:has-text("Create Newsletter")')
+    await page.click('button:has-text("Criar Newsletter")')
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
     
     // Find the newsletter row and click Edit button
     const newsletterRow = page.locator('tr').filter({ hasText: subject })
-    await newsletterRow.locator('button:has-text("Edit")').click()
+    await newsletterRow.locator('a:has-text("Editar")').first().click()
     await page.waitForLoadState('networkidle')
     
     // Delete button doesn't exist on edit page, so go to view page first
@@ -260,15 +260,15 @@ This is a test newsletter content.
     
     // Find the newsletter row again and click View button
     const newsletterRowView = page.locator('tr').filter({ hasText: subject })
-    await newsletterRowView.locator('button:has-text("View")').click()
+    await newsletterRowView.locator('a:has-text("Visualizar")').first().click()
     await page.waitForLoadState('networkidle')
     
     // Click delete button on view page
-    await page.click('button:has-text("Delete")')
+    await page.click('button:has-text("Excluir")')
     
     // Wait for dialog to appear and confirm deletion
-    await page.waitForSelector('button:has-text("Yes, delete")', { state: 'visible' })
-    await page.click('button:has-text("Yes, delete")')
+    await page.waitForSelector('button:has-text("Sim, excluir")', { state: 'visible' })
+    await page.click('button:has-text("Sim, excluir")')
     
     // Wait for navigation back to list
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
@@ -295,20 +295,20 @@ This is a test newsletter content.
       await statusSelect.selectOption('draft')
     }
     
-    await page.click('button:has-text("Create Newsletter")')
+    await page.click('button:has-text("Criar Newsletter")')
     await page.waitForURL('**/admin/newsletters', { timeout: 10000 })
     
     // Find the newsletter row and click View button
     const newsletterRow = page.locator('tr').filter({ hasText: subject })
-    await newsletterRow.locator('button:has-text("View")').click()
+    await newsletterRow.locator('a:has-text("Visualizar")').first().click()
     await page.waitForLoadState('networkidle')
     
     // Click delete button
-    await page.click('button:has-text("Delete")')
+    await page.click('button:has-text("Excluir")')
     
     // Wait for dialog to appear and cancel deletion
-    await page.waitForSelector('button:has-text("Cancel")', { state: 'visible' })
-    await page.click('button:has-text("Cancel")')
+    await page.waitForSelector('button:has-text("Cancelar")', { state: 'visible' })
+    await page.click('button:has-text("Cancelar")')
     
     // Verify we're still on the view page
     await expect(page.locator('.text-2xl').filter({ hasText: subject })).toBeVisible()

@@ -29,7 +29,7 @@ export default function NewslettersPage() {
         <Link to="/admin/newsletters/new">
           <Button>
             <Mail className="mr-2 h-4 w-4" />
-            Create Newsletter
+            Criar Newsletter
           </Button>
         </Link>
       </div>
@@ -38,7 +38,7 @@ export default function NewslettersPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Newsletters</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Newsletters</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -48,7 +48,7 @@ export default function NewslettersPage() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sent</CardTitle>
+              <CardTitle className="text-sm font-medium">Enviadas</CardTitle>
               <Send className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -58,7 +58,7 @@ export default function NewslettersPage() {
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Recipients</CardTitle>
+              <CardTitle className="text-sm font-medium">Total de Destinatários</CardTitle>
               <Mail className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -72,10 +72,10 @@ export default function NewslettersPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center p-12 text-center">
             <Mail className="h-12 w-12 text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No newsletters found</h2>
-            <p className="text-muted-foreground mb-4">Create your first newsletter to start engaging with your community</p>
+            <h2 className="text-xl font-semibold mb-2">Nenhuma newsletter encontrada</h2>
+            <p className="text-muted-foreground mb-4">Crie sua primeira newsletter para começar a engajar com sua comunidade</p>
             <Link to="/admin/newsletters/new">
-              <Button>Create Newsletter</Button>
+              <Button>Criar Newsletter</Button>
             </Link>
           </CardContent>
         </Card>
