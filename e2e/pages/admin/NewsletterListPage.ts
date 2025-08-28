@@ -36,12 +36,12 @@ export class NewsletterListPage extends BasePage {
   async clickViewNewsletter(subject: string) {
     const row = await this.getNewsletterRow(subject)
     // The View button is inside a Link component, be more specific
-    await row.locator('a:has-text("View")').click()
+    await row.locator('a:has-text("Visualizar")').click()
   }
 
   async clickEditNewsletter(subject: string) {
     const row = await this.getNewsletterRow(subject)
-    await row.locator('text="Edit"').click()
+    await row.locator('text="Editar"').click()
   }
 
   async getNewsletterCount() {
