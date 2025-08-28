@@ -43,11 +43,11 @@ const getStatusBadgeVariant = (status: NewsletterStatus) => {
     case 'draft':
       return 'secondary'
     case 'scheduled':
-      return 'outline'  // Better visual distinction for scheduled
+      return 'outline'
     case 'sending':
-      return 'default'   // Active state
+      return 'default'
     case 'sent':
-      return 'default'   // Completed state
+      return 'default'
     case 'failed':
       return 'destructive'
     default:
@@ -55,12 +55,31 @@ const getStatusBadgeVariant = (status: NewsletterStatus) => {
   }
 }
 
+const formatStatusText = (status: NewsletterStatus): string => {
+  switch (status) {
+    case 'draft':
+      return 'Rascunho'
+    case 'scheduled':
+      return 'Agendada'
+    case 'sending':
+      return 'Enviando'
+    case 'sent':
+      return 'Enviada'
+    case 'failed':
+      return 'Falhou'
+    default: {
+      const _exhaustive: never = status
+      return _exhaustive
+    }
+  }
+}
+
 const formatTemplateName = (template: string) => {
   switch (template) {
     case 'general-news':
-      return 'General News'
+      return 'Notícias Gerais'
     case 'event-announcement':
-      return 'Event Announcement'
+      return 'Anúncio de Evento'
     default:
       return template
   }
@@ -81,7 +100,7 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-center text-muted-foreground">No newsletters found</p>
+          <p className="text-center text-muted-foreground">Nenhuma newsletter encontrada</p>
         </CardContent>
       </Card>
     )
@@ -93,12 +112,12 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Subject</TableHead>
-              <TableHead>Template</TableHead>
+              <TableHead>Assunto</TableHead>
+              <TableHead>Modelo</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Recipients</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Destinatários</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -112,7 +131,7 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
                 </TableCell>
                 <TableCell>
                   <Badge variant={getStatusBadgeVariant(newsletter.status)}>
-                    {newsletter.status.charAt(0).toUpperCase() + newsletter.status.slice(1)}
+                    {formatStatusText(newsletter.status)}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -126,14 +145,14 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
                     <Link to={`/admin/newsletters/${newsletter.id}`}>
                       <Button variant="ghost" size="sm">
                         <Eye className="h-4 w-4 mr-1" />
-                        View
+                        Visualizar
                       </Button>
                     </Link>
                     {newsletter.status === 'draft' && (
                       <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
                         <Button variant="ghost" size="sm">
                           <Pencil className="h-4 w-4 mr-1" />
-                          Edit
+                          Editar
                         </Button>
                       </Link>
                     )}
