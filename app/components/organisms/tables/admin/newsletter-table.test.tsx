@@ -55,12 +55,12 @@ describe('NewsletterTable', () => {
   it('should render table headers', () => {
     render(<NewsletterTable newsletters={mockNewsletters} />)
     
-    expect(screen.getByText('Subject')).toBeInTheDocument()
-    expect(screen.getByText('Template')).toBeInTheDocument()
+    expect(screen.getByText('Assunto')).toBeInTheDocument()
+    expect(screen.getByText('Modelo')).toBeInTheDocument()
     expect(screen.getByText('Status')).toBeInTheDocument()
-    expect(screen.getByText('Recipients')).toBeInTheDocument()
-    expect(screen.getByText('Date')).toBeInTheDocument()
-    expect(screen.getByText('Actions')).toBeInTheDocument()
+    expect(screen.getByText('Destinatários')).toBeInTheDocument()
+    expect(screen.getByText('Data')).toBeInTheDocument()
+    expect(screen.getByText('Ações')).toBeInTheDocument()
   })
 
   it('should render newsletter rows', () => {
@@ -74,21 +74,21 @@ describe('NewsletterTable', () => {
   it('should display template names correctly', () => {
     render(<NewsletterTable newsletters={mockNewsletters} />)
     
-    // We have 2 newsletters with "General News" template
-    const generalNewsElements = screen.getAllByText('General News')
+    // We have 2 newsletters with "Notícias Gerais" template
+    const generalNewsElements = screen.getAllByText('Notícias Gerais')
     expect(generalNewsElements).toHaveLength(2)
     
-    // We have 1 newsletter with "Event Announcement" template
-    const eventAnnouncementElements = screen.getAllByText('Event Announcement')
+    // We have 1 newsletter with "Anúncio de Evento" template
+    const eventAnnouncementElements = screen.getAllByText('Anúncio de Evento')
     expect(eventAnnouncementElements).toHaveLength(1)
   })
 
   it('should display status badges correctly', () => {
     render(<NewsletterTable newsletters={mockNewsletters} />)
     
-    const draftBadge = screen.getByText('Draft')
-    const sentBadge = screen.getByText('Sent')
-    const scheduledBadge = screen.getByText('Scheduled')
+    const draftBadge = screen.getByText('Rascunho')
+    const sentBadge = screen.getByText('Enviada')
+    const scheduledBadge = screen.getByText('Agendada')
     
     expect(draftBadge).toBeInTheDocument()
     expect(sentBadge).toBeInTheDocument()
@@ -126,11 +126,11 @@ describe('NewsletterTable', () => {
     render(<NewsletterTable newsletters={mockNewsletters} />)
     
     // Should have view buttons for all newsletters
-    const viewButtons = screen.getAllByText('View')
+    const viewButtons = screen.getAllByText('Visualizar')
     expect(viewButtons).toHaveLength(3)
     
     // Should have edit button only for draft newsletter
-    const editButtons = screen.getAllByText('Edit')
+    const editButtons = screen.getAllByText('Editar')
     expect(editButtons).toHaveLength(1)
   })
 
@@ -138,19 +138,19 @@ describe('NewsletterTable', () => {
     render(<NewsletterTable newsletters={mockNewsletters} />)
     
     // Check view links
-    const viewLinks = screen.getAllByRole('link', { name: /view/i })
+    const viewLinks = screen.getAllByRole('link', { name: /visualizar/i })
     expect(viewLinks[0]).toHaveAttribute('href', '/admin/newsletters/1')
     expect(viewLinks[1]).toHaveAttribute('href', '/admin/newsletters/2')
     expect(viewLinks[2]).toHaveAttribute('href', '/admin/newsletters/3')
     
     // Check edit link (only for draft)
-    const editLink = screen.getByRole('link', { name: /edit/i })
+    const editLink = screen.getByRole('link', { name: /editar/i })
     expect(editLink).toHaveAttribute('href', '/admin/newsletters/1/edit')
   })
 
   it('should handle empty newsletter list', () => {
     render(<NewsletterTable newsletters={[]} />)
     
-    expect(screen.getByText('No newsletters found')).toBeInTheDocument()
+    expect(screen.getByText('Nenhuma newsletter encontrada')).toBeInTheDocument()
   })
 })

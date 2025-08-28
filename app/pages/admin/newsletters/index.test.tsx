@@ -56,7 +56,7 @@ describe('NewslettersPage', () => {
 
     render(<NewslettersPage />)
     
-    const createButtons = screen.getAllByRole('link', { name: /create newsletter/i })
+    const createButtons = screen.getAllByRole('link', { name: /criar newsletter/i })
     expect(createButtons).toHaveLength(2) // One in header, one in empty state
     expect(createButtons[0]).toHaveAttribute('href', '/admin/newsletters/new')
     expect(createButtons[1]).toHaveAttribute('href', '/admin/newsletters/new')
@@ -69,8 +69,8 @@ describe('NewslettersPage', () => {
 
     render(<NewslettersPage />)
     
-    expect(screen.getByText(/no newsletters found/i)).toBeInTheDocument()
-    expect(screen.getByText(/create your first newsletter/i)).toBeInTheDocument()
+    expect(screen.getByText(/nenhuma newsletter encontrada/i)).toBeInTheDocument()
+    expect(screen.getByText(/crie sua primeira newsletter/i)).toBeInTheDocument()
   })
 
   it('should display newsletter table when newsletters exist', () => {
@@ -165,10 +165,10 @@ describe('NewslettersPage', () => {
     
     // Check statistics
     expect(screen.getByText('3')).toBeInTheDocument() // Total newsletters
-    expect(screen.getByText('Total Newsletters')).toBeInTheDocument()
+    expect(screen.getByText('Total de Newsletters')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument() // Sent newsletters
-    expect(screen.getByText('Sent')).toBeInTheDocument()
+    expect(screen.getByText('Enviadas')).toBeInTheDocument()
     expect(screen.getByText('250')).toBeInTheDocument() // Total recipients
-    expect(screen.getByText('Total Recipients')).toBeInTheDocument()
+    expect(screen.getByText('Total de Destinatários')).toBeInTheDocument()
   })
 })
