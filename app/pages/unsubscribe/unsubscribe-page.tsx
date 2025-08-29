@@ -1,11 +1,17 @@
-import type { LoaderFunctionArgs, ActionFunctionArgs } from "react-router"
-import { useLoaderData, useActionData, Form } from "react-router"
+import { AlertCircle, CheckCircle2, Mail, XCircle } from "lucide-react"
+import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router"
+import { Form, useActionData, useLoaderData } from "react-router"
 import { validateUnsubscribeToken } from "~/business/admin/newsletter/unsubscribe-tokens.server"
 import { processUnsubscribe } from "~/business/admin/newsletter/unsubscribe.server"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
-import { Button } from "~/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
-import { CheckCircle2, XCircle, AlertCircle, Mail } from "lucide-react"
+import { Button } from "~/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card"
 import { RateLimiter } from "~/lib/rate-limiter"
 
 // Rate limiter: 5 attempts per IP per hour
@@ -16,7 +22,7 @@ const rateLimiter = new RateLimiter({
 
 export async function loader({ params }: LoaderFunctionArgs) {
   const token = typeof params.token === "string" ? params.token.trim() : ""
-  
+
   // Validate token presence
   if (!token) {
     return {
@@ -25,9 +31,9 @@ export async function loader({ params }: LoaderFunctionArgs) {
       error: "invalid" as const,
     }
   }
-  
+
   const validation = validateUnsubscribeToken(token)
-  
+
   return {
     tokenValid: validation.valid,
     profileId: validation.profileId || null,
@@ -38,26 +44,27 @@ export async function loader({ params }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData()
   const profileId = (formData.get("profileId") as string | null)?.trim() || ""
-  
+
   // Validate profileId presence
   if (!profileId) {
-    return { 
-      success: false, 
-      alreadyUnsubscribed: false, 
-      rateLimited: false 
+    return {
+      success: false,
+      alreadyUnsubscribed: false,
+      rateLimited: false,
     }
   }
-  
+
   const headers = request.headers
   // Extract IP address, handling proxies correctly
-  const forwardedFor = headers.get("x-forwarded-for") || headers.get("x-real-ip") || ""
+  const forwardedFor =
+    headers.get("x-forwarded-for") || headers.get("x-real-ip") || ""
   const ipAddress = forwardedFor.split(",")[0]?.trim() || null
   const userAgent = headers.get("user-agent") || undefined
-  
+
   // Use IP for rate limiting, or fallback to a unique key per request
   // Avoid using static "unknown" which would block all users without IP
   const rateKey = ipAddress || `req:${Date.now()}-${Math.random()}`
-  
+
   // Check rate limit
   if (!rateLimiter.checkLimit(rateKey)) {
     return {
@@ -66,14 +73,14 @@ export async function action({ request }: ActionFunctionArgs) {
       alreadyUnsubscribed: false,
     }
   }
-  
+
   const result = await processUnsubscribe(
     profileId,
     "email_link",
     ipAddress ?? undefined,
-    userAgent || undefined
+    userAgent || undefined,
   )
-  
+
   if (result.success === false) {
     return {
       success: false,
@@ -81,7 +88,7 @@ export async function action({ request }: ActionFunctionArgs) {
       rateLimited: false,
     }
   }
-  
+
   return {
     success: true,
     alreadyUnsubscribed: result.alreadyUnsubscribed,
@@ -92,7 +99,7 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function UnsubscribePage() {
   const { tokenValid, profileId, error } = useLoaderData<typeof loader>()
   const actionData = useActionData<typeof action>()
-  
+
   if (error === "expired") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -105,14 +112,15 @@ export default function UnsubscribePage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600">
-              Este link de cancelamento expirou. Por favor, solicite um novo link através do próximo email de newsletter que você receber.
+              Este link de cancelamento expirou. Por favor, solicite um novo
+              link através do próximo email de newsletter que você receber.
             </p>
           </CardContent>
         </Card>
       </div>
     )
   }
-  
+
   if (error === "invalid" || !tokenValid) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -125,14 +133,15 @@ export default function UnsubscribePage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600">
-              Este link de cancelamento é inválido. Por favor, use o link fornecido no email de newsletter.
+              Este link de cancelamento é inválido. Por favor, use o link
+              fornecido no email de newsletter.
             </p>
           </CardContent>
         </Card>
       </div>
     )
   }
-  
+
   if (actionData?.rateLimited) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -145,7 +154,8 @@ export default function UnsubscribePage() {
           </CardHeader>
           <CardContent>
             <p className="text-gray-600">
-              Você excedeu o número máximo de tentativas de cancelamento. Por favor, aguarde uma hora antes de tentar novamente.
+              Você excedeu o número máximo de tentativas de cancelamento. Por
+              favor, aguarde uma hora antes de tentar novamente.
             </p>
           </CardContent>
         </Card>
@@ -173,11 +183,15 @@ export default function UnsubscribePage() {
               <Mail className="h-4 w-4" />
               <AlertTitle>Importante</AlertTitle>
               <AlertDescription>
-                Você continuará recebendo emails importantes sobre eventos aos quais está inscrito, como confirmações e lembretes.
+                Você continuará recebendo emails importantes sobre eventos aos
+                quais está inscrito, como confirmações e lembretes.
               </AlertDescription>
             </Alert>
             <div className="pt-4">
-              <a href="/" className="text-blue-600 hover:text-blue-800 underline">
+              <a
+                href="/"
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
                 Voltar para a página inicial
               </a>
             </div>
@@ -186,14 +200,15 @@ export default function UnsubscribePage() {
       </div>
     )
   }
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="max-w-md w-full">
         <CardHeader>
           <CardTitle>Confirmar Cancelamento</CardTitle>
           <CardDescription>
-            Você está prestes a cancelar sua inscrição na lista de emails de marketing do Positiv.
+            Você está prestes a cancelar sua inscrição na lista de emails de
+            marketing do Positiv.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -210,11 +225,12 @@ export default function UnsubscribePage() {
               <Mail className="h-4 w-4" />
               <AlertTitle>Nota</AlertTitle>
               <AlertDescription>
-                Você continuará recebendo emails transacionais importantes, como confirmações de inscrição em eventos.
+                Você continuará recebendo emails transacionais importantes, como
+                confirmações de inscrição em eventos.
               </AlertDescription>
             </Alert>
           </div>
-          
+
           <Form method="post" className="space-y-4">
             <input type="hidden" name="profileId" value={profileId || ""} />
             <div className="flex gap-3">

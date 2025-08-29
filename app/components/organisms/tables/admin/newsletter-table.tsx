@@ -1,7 +1,9 @@
-import { Link } from 'react-router'
-import { format } from 'date-fns'
-import { Badge } from '~/components/ui/badge'
-import { Button } from '~/components/ui/button'
+import { format } from "date-fns"
+import { Eye, Pencil } from "lucide-react"
+import { Link } from "react-router"
+import { Badge } from "~/components/ui/badge"
+import { Button } from "~/components/ui/button"
+import { Card, CardContent } from "~/components/ui/card"
 import {
   Table,
   TableBody,
@@ -9,11 +11,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '~/components/ui/table'
-import { Card, CardContent } from '~/components/ui/card'
-import { Eye, Pencil } from 'lucide-react'
+} from "~/components/ui/table"
 
-type NewsletterStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed'
+type NewsletterStatus = "draft" | "scheduled" | "sending" | "sent" | "failed"
 
 interface Newsletter {
   id: string
@@ -40,33 +40,33 @@ interface NewsletterTableProps {
 
 const getStatusBadgeVariant = (status: NewsletterStatus) => {
   switch (status) {
-    case 'draft':
-      return 'secondary'
-    case 'scheduled':
-      return 'outline'
-    case 'sending':
-      return 'default'
-    case 'sent':
-      return 'default'
-    case 'failed':
-      return 'destructive'
+    case "draft":
+      return "secondary"
+    case "scheduled":
+      return "outline"
+    case "sending":
+      return "default"
+    case "sent":
+      return "default"
+    case "failed":
+      return "destructive"
     default:
-      return 'secondary'
+      return "secondary"
   }
 }
 
 const formatStatusText = (status: NewsletterStatus): string => {
   switch (status) {
-    case 'draft':
-      return 'Rascunho'
-    case 'scheduled':
-      return 'Agendada'
-    case 'sending':
-      return 'Enviando'
-    case 'sent':
-      return 'Enviada'
-    case 'failed':
-      return 'Falhou'
+    case "draft":
+      return "Rascunho"
+    case "scheduled":
+      return "Agendada"
+    case "sending":
+      return "Enviando"
+    case "sent":
+      return "Enviada"
+    case "failed":
+      return "Falhou"
     default: {
       const _exhaustive: never = status
       return _exhaustive
@@ -76,10 +76,10 @@ const formatStatusText = (status: NewsletterStatus): string => {
 
 const formatTemplateName = (template: string) => {
   switch (template) {
-    case 'general-news':
-      return 'Notícias Gerais'
-    case 'event-announcement':
-      return 'Anúncio de Evento'
+    case "general-news":
+      return "Notícias Gerais"
+    case "event-announcement":
+      return "Anúncio de Evento"
     default:
       return template
   }
@@ -100,7 +100,9 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
     return (
       <Card>
         <CardContent className="p-6">
-          <p className="text-center text-muted-foreground">Nenhuma newsletter encontrada</p>
+          <p className="text-center text-muted-foreground">
+            Nenhuma newsletter encontrada
+          </p>
         </CardContent>
       </Card>
     )
@@ -117,7 +119,7 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
               <TableHead>Status</TableHead>
               <TableHead>Destinatários</TableHead>
               <TableHead>Data</TableHead>
-              <TableHead>Ações</TableHead>
+              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -135,24 +137,24 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {newsletter.recipient_count > 0 ? newsletter.recipient_count : '-'}
+                  {newsletter.recipient_count > 0
+                    ? newsletter.recipient_count
+                    : "-"}
                 </TableCell>
                 <TableCell>
-                  {format(getDisplayDate(newsletter), 'MMM d, yyyy h:mm a')}
+                  {format(getDisplayDate(newsletter), "MMM d, yyyy h:mm a")}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Link to={`/admin/newsletters/${newsletter.id}`}>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" aria-label="Visualizar">
                         <Eye className="h-4 w-4 mr-1" />
-                        Visualizar
                       </Button>
                     </Link>
-                    {newsletter.status === 'draft' && (
+                    {newsletter.status === "draft" && (
                       <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" aria-label="Editar">
                           <Pencil className="h-4 w-4 mr-1" />
-                          Editar
                         </Button>
                       </Link>
                     )}
