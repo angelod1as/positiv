@@ -147,13 +147,13 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
                 <TableCell>
                   <div className="flex gap-2">
                     <Link to={`/admin/newsletters/${newsletter.id}`}>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" aria-label="Visualizar">
                         <Eye className="h-4 w-4 mr-1" />
                       </Button>
                     </Link>
                     {newsletter.status === "draft" && (
                       <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" aria-label="Editar">
                           <Pencil className="h-4 w-4 mr-1" />
                         </Button>
                       </Link>
