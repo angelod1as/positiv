@@ -60,7 +60,6 @@ describe('NewsletterTable', () => {
     expect(screen.getByText('Status')).toBeInTheDocument()
     expect(screen.getByText('Destinatários')).toBeInTheDocument()
     expect(screen.getByText('Data')).toBeInTheDocument()
-    expect(screen.getByText('Ações')).toBeInTheDocument()
   })
 
   it('should render newsletter rows', () => {
@@ -126,11 +125,11 @@ describe('NewsletterTable', () => {
     render(<NewsletterTable newsletters={mockNewsletters} />)
     
     // Should have view buttons for all newsletters
-    const viewButtons = screen.getAllByText('Visualizar')
+    const viewButtons = screen.getAllByLabelText('Visualizar')
     expect(viewButtons).toHaveLength(3)
     
     // Should have edit button only for draft newsletter
-    const editButtons = screen.getAllByText('Editar')
+    const editButtons = screen.getAllByLabelText('Editar')
     expect(editButtons).toHaveLength(1)
   })
 
@@ -138,13 +137,14 @@ describe('NewsletterTable', () => {
     render(<NewsletterTable newsletters={mockNewsletters} />)
     
     // Check view links
-    const viewLinks = screen.getAllByRole('link', { name: /visualizar/i })
+    const viewLinks = screen.getAllByLabelText('Visualizar').map(btn => btn.closest('a'))
     expect(viewLinks[0]).toHaveAttribute('href', '/admin/newsletters/1')
     expect(viewLinks[1]).toHaveAttribute('href', '/admin/newsletters/2')
     expect(viewLinks[2]).toHaveAttribute('href', '/admin/newsletters/3')
     
     // Check edit link (only for draft)
-    const editLink = screen.getByRole('link', { name: /editar/i })
+    const editButton = screen.getByLabelText('Editar')
+    const editLink = editButton.closest('a')
     expect(editLink).toHaveAttribute('href', '/admin/newsletters/1/edit')
   })
 

@@ -9,9 +9,9 @@ import {
   Section,
   Tailwind,
 } from "@react-email/components"
+import { emailTailwindConfig } from "~/components/email/common/email-tailwind-config"
 import { EmailHeader } from "~/components/email/common/header"
 import { NewsletterFooter } from "~/components/email/common/newsletter-footer"
-import { emailTailwindConfig } from "~/components/email/common/email-tailwind-config"
 import { sanitizeNewsletterHtml } from "~/lib/email/sanitize-html"
 
 interface EventAnnouncementProps {
@@ -27,7 +27,7 @@ export const EventAnnouncement = ({
 }: EventAnnouncementProps) => {
   // Sanitize the content to prevent XSS attacks
   const sanitizedContent = sanitizeNewsletterHtml(content)
-  
+
   return (
     <Html lang="pt-BR">
       <Tailwind config={emailTailwindConfig}>
@@ -54,22 +54,22 @@ export const EventAnnouncement = ({
             <Container className="bg-white max-w-3xl my-8 shadow-lg">
               <Container className="max-w-md p-4">
                 <EmailHeader />
-                
+
                 {/* Event Announcement Banner */}
                 <Section className="bg-gradient-to-r from-purple to-green text-white rounded-lg p-6 mb-6 text-center">
                   <Heading as="h2" className="text-2xl font-bold m-0">
                     🎉 Anúncio de Evento
                   </Heading>
                 </Section>
-                
+
                 {/* Main Content */}
                 <Section>
-                  <div 
+                  <div
                     className="prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                   />
                 </Section>
-                
+
                 <NewsletterFooter unsubscribeUrl={unsubscribeUrl} />
               </Container>
             </Container>
@@ -98,5 +98,5 @@ EventAnnouncement.PreviewProps = {
     <p><em>Abraços,</em><br />
     <em>Equipe Positiv</em></p>
   `,
-  unsubscribeUrl: "https://positiv.com/unsubscribe?token=abc123",
+  unsubscribeUrl: "https://positiv.com/unsubscribe/abc123",
 }

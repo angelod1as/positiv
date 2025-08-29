@@ -9,9 +9,9 @@ import {
   Section,
   Tailwind,
 } from "@react-email/components"
+import { emailTailwindConfig } from "~/components/email/common/email-tailwind-config"
 import { EmailHeader } from "~/components/email/common/header"
 import { NewsletterFooter } from "~/components/email/common/newsletter-footer"
-import { emailTailwindConfig } from "~/components/email/common/email-tailwind-config"
 import { sanitizeNewsletterHtml } from "~/lib/email/sanitize-html"
 
 interface GeneralNewsProps {
@@ -27,7 +27,7 @@ export const GeneralNews = ({
 }: GeneralNewsProps) => {
   // Sanitize the content to prevent XSS attacks
   const sanitizedContent = sanitizeNewsletterHtml(content)
-  
+
   return (
     <Html lang="pt-BR">
       <Tailwind config={emailTailwindConfig}>
@@ -54,22 +54,25 @@ export const GeneralNews = ({
             <Container className="bg-white max-w-3xl my-8 shadow-lg">
               <Container className="max-w-md p-4">
                 <EmailHeader />
-                
+
                 {/* General News Header */}
                 <Section className="border-b-2 border-lightgreen pb-4 mb-6">
-                  <Heading as="h2" className="text-2xl font-bold text-purple m-0">
+                  <Heading
+                    as="h2"
+                    className="text-2xl font-bold text-purple m-0"
+                  >
                     📰 Novidades da Comunidade
                   </Heading>
                 </Section>
-                
+
                 {/* Main Content */}
                 <Section>
-                  <div 
+                  <div
                     className="prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: sanitizedContent }}
                   />
                 </Section>
-                
+
                 <NewsletterFooter unsubscribeUrl={unsubscribeUrl} />
               </Container>
             </Container>
@@ -86,26 +89,26 @@ GeneralNews.PreviewProps = {
     <h1>Novidades do Positiv! 🎉</h1>
     <p>Olá pessoal!</p>
     <p>Temos ótimas notícias para compartilhar com nossa comunidade.</p>
-    
+
     <h2>O que vem por aí</h2>
     <ul>
       <li>Novas funcionalidades no site</li>
       <li>Eventos especiais planejados</li>
       <li>Parcerias incríveis</li>
     </ul>
-    
+
     <blockquote>
       <p>"A comunidade Positiv mudou minha vida! Encontrei amigos verdadeiros e experiências únicas." - Membro da comunidade</p>
     </blockquote>
-    
+
     <h3>Fique por dentro</h3>
     <p>Continue acompanhando nossas novidades e não perca nenhum evento!</p>
-    
+
     <p><a href="https://positiv.com/events" class="button">Ver Todos os Eventos</a></p>
-    
+
     <hr />
     <p><em>Abraços,</em><br />
     <em>Equipe Positiv</em></p>
   `,
-  unsubscribeUrl: "https://positiv.com/unsubscribe?token=xyz789",
+  unsubscribeUrl: "https://positiv.com/unsubscribe/xyz789",
 }

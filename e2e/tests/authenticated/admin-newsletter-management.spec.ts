@@ -188,7 +188,7 @@ See you there!`
 
     // Click edit button for this newsletter
     await page.click(
-      `tr:has-text("${originalSubject}") a:has-text("Editar"), tr:has-text("${originalSubject}") button:has-text("Editar")`,
+      `tr:has-text("${originalSubject}") button[aria-label="Editar"]`,
     )
 
     // Wait for edit page to load
@@ -289,7 +289,7 @@ See you there!`
     await listPage.waitForTableToAppear()
 
     // Click on the View button for this newsletter
-    await page.click(`tr:has-text("${subject}") a:has-text("Visualizar")`)
+    await page.click(`tr:has-text("${subject}") button[aria-label="Visualizar"]`)
 
     // Wait for view page to load
     await page.waitForURL(/\/admin\/newsletters\/[a-zA-Z0-9-]+$/, {

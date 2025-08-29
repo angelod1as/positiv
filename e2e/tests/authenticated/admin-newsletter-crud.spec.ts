@@ -93,7 +93,7 @@ This is a test newsletter content.
     
     // Find the row with the newsletter and click the View button
     const newsletterRow = page.locator('tr').filter({ hasText: subject })
-    await newsletterRow.locator('a:has-text("Visualizar")').first().click()
+    await newsletterRow.locator('button[aria-label="Visualizar"]').first().click()
     await page.waitForLoadState('networkidle')
     
     // Verify we're on the view page
@@ -129,7 +129,7 @@ This is a test newsletter content.
     
     // Find the row with the newsletter and click the Edit button
     const newsletterRow = page.locator('tr').filter({ hasText: originalSubject })
-    await newsletterRow.locator('a:has-text("Editar")').first().click()
+    await newsletterRow.locator('button[aria-label="Editar"]').first().click()
     await page.waitForLoadState('networkidle')
     
     // Update the subject
@@ -211,7 +211,7 @@ This is a test newsletter content.
     
     // Find the newsletter row and click View button
     const newsletterRow = page.locator('tr').filter({ hasText: subject })
-    await newsletterRow.locator('a:has-text("Visualizar")').first().click()
+    await newsletterRow.locator('button[aria-label="Visualizar"]').first().click()
     await page.waitForLoadState('networkidle')
     
     // Click delete button
@@ -251,7 +251,7 @@ This is a test newsletter content.
     
     // Find the newsletter row and click Edit button
     const newsletterRow = page.locator('tr').filter({ hasText: subject })
-    await newsletterRow.locator('a:has-text("Editar")').first().click()
+    await newsletterRow.locator('button[aria-label="Editar"]').first().click()
     await page.waitForLoadState('networkidle')
     
     // Delete button doesn't exist on edit page, so go to view page first
@@ -260,7 +260,7 @@ This is a test newsletter content.
     
     // Find the newsletter row again and click View button
     const newsletterRowView = page.locator('tr').filter({ hasText: subject })
-    await newsletterRowView.locator('a:has-text("Visualizar")').first().click()
+    await newsletterRowView.locator('button[aria-label="Visualizar"]').first().click()
     await page.waitForLoadState('networkidle')
     
     // Click delete button on view page
@@ -300,7 +300,7 @@ This is a test newsletter content.
     
     // Find the newsletter row and click View button
     const newsletterRow = page.locator('tr').filter({ hasText: subject })
-    await newsletterRow.locator('a:has-text("Visualizar")').first().click()
+    await newsletterRow.locator('button[aria-label="Visualizar"]').first().click()
     await page.waitForLoadState('networkidle')
     
     // Click delete button
