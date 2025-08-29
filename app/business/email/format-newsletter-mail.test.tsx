@@ -5,14 +5,14 @@ describe("formatNewsletterMail", () => {
   const baseProps = {
     subject: "Test Newsletter",
     content: "<h1>Test Content</h1><p>This is a test newsletter.</p>",
-    unsubscribeUrl: "https://positiv.com/unsubscribe?token=test123"
+    unsubscribeUrl: "https://positiv.com/unsubscribe/test123",
   }
 
   describe("Event Announcement Template", () => {
     it("should generate HTML and text versions for event announcement", async () => {
       const result = await formatNewsletterMail({
         ...baseProps,
-        template: "event-announcement"
+        template: "event-announcement",
       })
 
       expect(result.html).toBeDefined()
@@ -21,7 +21,7 @@ describe("formatNewsletterMail", () => {
       expect(result.html).toContain("This is a test newsletter")
       expect(result.html).toContain(baseProps.unsubscribeUrl)
       expect(result.html).toContain("Anúncio de Evento")
-      
+
       // Text version should not contain HTML tags
       expect(result.text).not.toContain("<h1>")
       expect(result.text).not.toContain("<p>")
@@ -46,14 +46,14 @@ describe("formatNewsletterMail", () => {
         subject: "Novo Evento",
         content: mdxContent,
         template: "event-announcement",
-        unsubscribeUrl: "https://positiv.com/unsubscribe"
+        unsubscribeUrl: "https://positiv.com/unsubscribe",
       })
 
       expect(result.html).toContain("Festa de Verão 2025")
       expect(result.html).toContain("15 de fevereiro de 2025")
       expect(result.html).toContain("50 pessoas")
       expect(result.html).toContain("Ver Eventos")
-      
+
       // Check text conversion (headers are uppercase in text)
       expect(result.text).toContain("FESTA DE VERÃO 2025")
       expect(result.text).toContain("15 de fevereiro de 2025")
@@ -65,7 +65,7 @@ describe("formatNewsletterMail", () => {
     it("should generate HTML and text versions for general news", async () => {
       const result = await formatNewsletterMail({
         ...baseProps,
-        template: "general-news"
+        template: "general-news",
       })
 
       expect(result.html).toBeDefined()
@@ -74,7 +74,7 @@ describe("formatNewsletterMail", () => {
       expect(result.html).toContain("This is a test newsletter")
       expect(result.html).toContain(baseProps.unsubscribeUrl)
       expect(result.html).toContain("Novidades da Comunidade")
-      
+
       // Text version validation
       expect(result.text).not.toContain("<h1>")
       expect(result.text).toContain("TEST CONTENT") // Headers are uppercase in text
@@ -100,14 +100,14 @@ describe("formatNewsletterMail", () => {
         subject: "Newsletter Mensal",
         content: contentWithQuotes,
         template: "general-news",
-        unsubscribeUrl: "https://positiv.com/unsubscribe"
+        unsubscribeUrl: "https://positiv.com/unsubscribe",
       })
 
       expect(result.html).toContain("Atualizações da Comunidade")
       expect(result.html).toContain("Nova funcionalidade X")
       expect(result.html).toContain("Experiência incrível na comunidade!")
       expect(result.html).toContain("Equipe Positiv")
-      
+
       // Text should preserve list structure
       expect(result.text).toContain("Nova funcionalidade X")
       expect(result.text).toContain("Melhoria Y")
@@ -119,12 +119,12 @@ describe("formatNewsletterMail", () => {
     it("should include unsubscribe link for both templates", async () => {
       const eventResult = await formatNewsletterMail({
         ...baseProps,
-        template: "event-announcement"
+        template: "event-announcement",
       })
 
       const newsResult = await formatNewsletterMail({
         ...baseProps,
-        template: "general-news"
+        template: "general-news",
       })
 
       expect(eventResult.html).toContain(baseProps.unsubscribeUrl)
@@ -144,14 +144,14 @@ describe("formatNewsletterMail", () => {
         subject: "Edição Especial",
         content,
         template: "general-news",
-        unsubscribeUrl: "https://positiv.com/unsubscribe"
+        unsubscribeUrl: "https://positiv.com/unsubscribe",
       })
 
       expect(result.html).toContain("Atenção")
       expect(result.html).toContain("Próxima Edição")
       expect(result.html).toContain("várias atrações")
       expect(result.html).toContain("única e inesquecível")
-      
+
       // Text should preserve special characters (headers are uppercase)
       expect(result.text).toContain("ATENÇÃO")
       expect(result.text).toContain("PRÓXIMA EDIÇÃO")
@@ -162,7 +162,7 @@ describe("formatNewsletterMail", () => {
         subject: "Empty Newsletter",
         content: "",
         template: "event-announcement",
-        unsubscribeUrl: "https://positiv.com/unsubscribe"
+        unsubscribeUrl: "https://positiv.com/unsubscribe",
       })
 
       expect(result.html).toBeDefined()

@@ -1,10 +1,13 @@
 import { type Kysely } from "kysely"
-import type { Database } from "~types/database/kysely.types"
 import { sendEmail } from "~/business/email/send-email"
-import { generateUnsubscribeToken } from "./unsubscribe-tokens.server"
-import { getEligibleRecipients, type SegmentFilter } from "./newsletter-recipients.server"
+import type { Database } from "~types/database/kysely.types"
 import { processMDXContent } from "./mdx-processor.server"
 import { renderNewsletterEmail } from "./newsletter-email-renderer.server"
+import {
+  getEligibleRecipients,
+  type SegmentFilter,
+} from "./newsletter-recipients.server"
+import { generateUnsubscribeToken } from "./unsubscribe-tokens.server"
 
 const MAX_RETRIES = 3
 const DEFAULT_BATCH_SIZE = 50
@@ -21,17 +24,17 @@ interface ProcessResult {
 }
 
 async function delay(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export async function createQueueEntriesForNewsletter(
   kysely: Kysely<Database>,
   newsletterId: string,
-  segmentFilter?: SegmentFilter
+  segmentFilter?: SegmentFilter,
 ): Promise<number> {
   // Get eligible recipients
   const recipients = await getEligibleRecipients(kysely, segmentFilter)
-  
+
   if (recipients.length === 0) {
     return 0
   }
@@ -42,18 +45,18 @@ export async function createQueueEntriesForNewsletter(
     .select("profile_id")
     .where("newsletter_id", "=", newsletterId)
     .execute()
-  
-  const existingProfileIds = new Set(existingEntries.map(e => e.profile_id))
-  
+
+  const existingProfileIds = new Set(existingEntries.map((e) => e.profile_id))
+
   // Filter out recipients who already have queue entries
-  const newRecipients = recipients.filter(r => !existingProfileIds.has(r.id))
-  
+  const newRecipients = recipients.filter((r) => !existingProfileIds.has(r.id))
+
   if (newRecipients.length === 0) {
     return 0
   }
 
   // Create queue entries for new recipients
-  const queueEntries = newRecipients.map(recipient => ({
+  const queueEntries = newRecipients.map((recipient) => ({
     id: crypto.randomUUID(),
     newsletter_id: newsletterId,
     profile_id: recipient.id,
@@ -64,17 +67,14 @@ export async function createQueueEntriesForNewsletter(
     processed_at: null,
   }))
 
-  await kysely
-    .insertInto("newsletter_queue")
-    .values(queueEntries)
-    .execute()
+  await kysely.insertInto("newsletter_queue").values(queueEntries).execute()
 
   return newRecipients.length
 }
 
 export async function processQueueEntry(
   kysely: Kysely<Database>,
-  queueEntryId: string
+  queueEntryId: string,
 ): Promise<boolean> {
   // Atomically update status to processing and get the entry
   // This prevents concurrent workers from processing the same entry
@@ -124,7 +124,7 @@ export async function processQueueEntry(
   try {
     // Generate unsubscribe token
     const unsubscribeToken = generateUnsubscribeToken(entry.profile_id)
-    const unsubscribeUrl = `${process.env.APP_URL || "http://localhost:5173"}/unsubscribe?token=${unsubscribeToken}`
+    const unsubscribeUrl = `${process.env.APP_URL || "http://localhost:5173"}/unsubscribe/${unsubscribeToken}`
 
     // Process MDX content
     const processedContent = await processMDXContent(entry.content_mdx)
@@ -166,19 +166,20 @@ export async function processQueueEntry(
         sent_at: new Date().toISOString(), // Records successful delivery time
         error_message: null,
       })
-      .onConflict((oc) => 
+      .onConflict((oc) =>
         oc.columns(["newsletter_id", "profile_id"]).doUpdateSet({
           status: "sent",
           sent_at: new Date().toISOString(), // Records successful delivery time
           error_message: null,
-        })
+        }),
       )
       .execute()
 
     return true
   } catch (error) {
     console.error("Error processing queue entry:", error)
-    const errorMessage = error instanceof Error ? error.message : "Unknown error"
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error"
     const newAttempts = entry.attempts + 1
 
     if (newAttempts >= MAX_RETRIES) {
@@ -210,7 +211,7 @@ export async function processQueueEntry(
             status: "failed",
             sent_at: new Date().toISOString(), // Records attempt time
             error_message: errorMessage,
-          })
+          }),
         )
         .execute()
     } else {
@@ -234,7 +235,7 @@ export async function processNewsletterQueue(
   kysely: Kysely<Database>,
   newsletterId: string,
   segmentFilter?: SegmentFilter,
-  options: ProcessOptions = {}
+  options: ProcessOptions = {},
 ): Promise<ProcessResult> {
   const { batchSize = DEFAULT_BATCH_SIZE, delayMs = DEFAULT_DELAY_MS } = options
 
@@ -243,9 +244,9 @@ export async function processNewsletterQueue(
   // Update newsletter status to sending and record start time
   await kysely
     .updateTable("newsletters")
-    .set({ 
+    .set({
       status: "sending",
-      send_started_at: sendStartedAt
+      send_started_at: sendStartedAt,
     })
     .where("id", "=", newsletterId)
     .execute()
@@ -275,7 +276,7 @@ export async function processNewsletterQueue(
     // Process each entry in the batch
     for (const entry of batch) {
       const success = await processQueueEntry(kysely, entry.id)
-      
+
       if (success) {
         processed++
       } else {
@@ -285,7 +286,7 @@ export async function processNewsletterQueue(
           .select("status")
           .where("id", "=", entry.id)
           .executeTakeFirst()
-        
+
         if (queueEntry?.status === "failed") {
           failed++
         }
@@ -307,17 +308,21 @@ export async function processNewsletterQueue(
       .where("newsletter_id", "=", newsletterId)
       .where("status", "in", ["pending", "processing"])
       .executeTakeFirst()
-    
+
     const currentRemainingCount = Number(remaining?.count ?? 0)
-    
+
     // Determine final status based on remaining queue entries
-    const finalStatus = currentRemainingCount === 0
-      ? (failed > 0 && processed === 0 ? "failed" : "sent")
-      : "sending"
-    
-    const sendCompletedAt = finalStatus === "sent" || finalStatus === "failed" 
-      ? new Date().toISOString() 
-      : null
+    const finalStatus =
+      currentRemainingCount === 0
+        ? failed > 0 && processed === 0
+          ? "failed"
+          : "sent"
+        : "sending"
+
+    const sendCompletedAt =
+      finalStatus === "sent" || finalStatus === "failed"
+        ? new Date().toISOString()
+        : null
 
     // Get the total recipient count from the queue
     const totalRecipientsResult = await trx
@@ -325,9 +330,9 @@ export async function processNewsletterQueue(
       .select(trx.fn.countAll<number>().as("count"))
       .where("newsletter_id", "=", newsletterId)
       .executeTakeFirst()
-    
+
     const totalRecipients = Number(totalRecipientsResult?.count ?? 0)
-    
+
     await trx
       .updateTable("newsletters")
       .set({
@@ -336,7 +341,7 @@ export async function processNewsletterQueue(
         send_completed_at: sendCompletedAt,
         total_recipients: totalRecipients,
         successful_sends: processed,
-        failed_sends: failed
+        failed_sends: failed,
       })
       .where("id", "=", newsletterId)
       .execute()
