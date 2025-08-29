@@ -10,7 +10,7 @@ export default [
   // PUBLIC
   index("pages/homepage/homepage.tsx"),
   route("/auth/confirm", "pages/auth/confirm.tsx"),
-  route("/unsubscribe/:token", "pages/unsubscribe/unsubscribe-page.tsx"),
+  route("unsubscribe/:token", "pages/unsubscribe/unsubscribe-page.tsx"),
 
   layout("pages/auth/layout.tsx", [
     ...prefix("/entrar", [
