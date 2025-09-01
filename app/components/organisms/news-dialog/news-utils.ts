@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-217-email-testing-docs',
+    title: '📚 Sistema de newsletters completo com testes e documentação!',
+    content: 'O sistema de email marketing agora está totalmente testado e documentado! Foram criados testes automatizados para todas as funcionalidades, guias completos para administradores, documentação dos componentes MDX, e guia de resolução de problemas. O sistema está pronto para uso em produção com confiança!',
+    isAdmin: true,
+    createdAt: new Date('2025-08-19T12:00:00'), // August 19, 2025, 12PM
+    isActive: true,
+  },
+  {
     id: 'pos-221-advanced-segmentation',
     title: '🚀 Segmentação avançada de audiência disponível!',
     content: 'A segmentação de newsletters foi aprimorada com filtros avançados! Agora você pode segmentar por: frequência de participação (quem participou X vezes), atividade recente (últimos 3 meses), usuários inativos (não participam há 6+ meses), usuários que abandonaram (eram ativos mas pararam), e filtros por datas específicas. Combine múltiplos filtros para criar audiências super específicas!',
