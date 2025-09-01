@@ -78,13 +78,11 @@ describe("View Newsletter Page Action - Integration Tests", () => {
         body: formData,
       })
       
-      // Execute the action and expect it to throw a redirect
-      await expect(
-        action({
-          request,
-          params: { id: newsletterInsert.id },
-        } as Route.ActionArgs)
-      ).rejects.toThrow()
+      // Execute the action and expect it to throw a redirect response
+      await expect(action({
+        request,
+        params: { id: newsletterInsert.id },
+      } as Route.ActionArgs)).rejects.toThrow()
       
       // Verify the newsletter status was updated
       const updatedNewsletter = await kysely
@@ -139,12 +137,10 @@ describe("View Newsletter Page Action - Integration Tests", () => {
       })
       
       // Execute the action and expect it to throw a redirect with error
-      await expect(
-        action({
-          request,
-          params: { id: newsletterInsert.id },
-        } as Route.ActionArgs)
-      ).rejects.toThrow()
+      await expect(action({
+        request,
+        params: { id: newsletterInsert.id },
+      } as Route.ActionArgs)).rejects.toThrow()
       
       // Verify the newsletter status was NOT changed
       const updatedNewsletter = await kysely
