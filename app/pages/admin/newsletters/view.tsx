@@ -155,8 +155,10 @@ export default function AdminViewNewsletterPage() {
   const { newsletter } = useLoaderData<typeof loader>()
   const fetcher = useFetcher()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [sendNowDialogOpen, setSendNowDialogOpen] = useState(false)
   const isProcessing = fetcher.state === 'submitting'
   const isDeleting = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'delete'
+  const isSending = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'send-now'
   
   const isScheduledAndReady = newsletter.status === 'scheduled' && 
     newsletter.scheduled_at && 
@@ -165,6 +167,14 @@ export default function AdminViewNewsletterPage() {
   const handleDeleteConfirm = (closeDialog: () => void) => {
     fetcher.submit(
       { intent: 'delete' },
+      { method: 'post' }
+    )
+    closeDialog()
+  }
+  
+  const handleSendNowConfirm = (closeDialog: () => void) => {
+    fetcher.submit(
+      { intent: 'send-now' },
       { method: 'post' }
     )
     closeDialog()
@@ -207,12 +217,33 @@ export default function AdminViewNewsletterPage() {
           )}
           
           {newsletter.status === 'draft' && (
-            <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
-              <Button>
-                <Edit className="h-4 w-4 mr-2" />
-                Editar Newsletter
-              </Button>
-            </Link>
+            <>
+              <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
+                <Button>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar Newsletter
+                </Button>
+              </Link>
+              
+              <ConfirmDialog
+                open={sendNowDialogOpen}
+                onOpenChange={setSendNowDialogOpen}
+                title="Enviar Newsletter Agora"
+                description="Tem certeza que deseja enviar esta newsletter imediatamente para todos os inscritos?"
+                confirmLabel="Sim, enviar agora"
+                cancelLabel="Cancelar"
+                onConfirm={handleSendNowConfirm}
+                isLoading={isSending}
+              >
+                <ConfirmDialog.Trigger
+                  variant="default"
+                  disabled={isSending}
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {isSending ? 'Enviando...' : 'Enviar Agora'}
+                </ConfirmDialog.Trigger>
+              </ConfirmDialog>
+            </>
           )}
           
           {(newsletter.status === 'scheduled' || newsletter.status === 'sending') && (
