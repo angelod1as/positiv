@@ -1,8 +1,8 @@
 import { Link, useLoaderData, useFetcher } from 'react-router'
-import { redirectWithToast } from 'remix-toast'
+import { redirectWithToast, redirectWithSuccess } from 'remix-toast'
 import { useState } from 'react'
 import { getAdminContext } from '~/business/admin/admin.server'
-import { getNewsletterById } from '~/business/admin/newsletter/newsletter.server'
+import { getNewsletterById, sendNewsletterNow } from '~/business/admin/newsletter/newsletter.server'
 import { processScheduledNewsletters } from '~/business/admin/newsletter/newsletter-scheduler.server'
 import { deleteNewsletter } from '~/business/admin/newsletter/delete-newsletter.server'
 import { db } from '~/lib/supabase/db.server'
@@ -18,7 +18,7 @@ import type { Route } from './+types/view'
 
 const {
   admin: {
-    newsletters: { ADMIN_NEWSLETTERS },
+    newsletters: { ADMIN_NEWSLETTERS, ADMIN_VIEW_NEWSLETTER },
   },
 } = paths
 
@@ -68,6 +68,25 @@ export async function action({ request, params }: Route.ActionArgs) {
         errorMessage: "Erro ao excluir newsletter",
       }
     )
+  }
+  
+  if (intent === 'send-now') {
+    try {
+      const result = await sendNewsletterNow(newsletterId)
+      throw await redirectWithSuccess(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        `Newsletter enviada com sucesso! ${result.processed} emails enviados.`
+      )
+    } catch (error) {
+      if (error instanceof Response) throw error
+      throw await redirectWithToast(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        { 
+          message: error instanceof Error ? error.message : "Falha ao enviar newsletter", 
+          type: "error" 
+        }
+      )
+    }
   }
   
   if (intent === 'trigger-processing') {
