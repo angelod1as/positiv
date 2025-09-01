@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { loader } from './view'
-import { getNewsletterById } from '~/business/admin/newsletter/newsletter.server'
+import { loader, action } from './view'
+import { getNewsletterById, sendNewsletterNow } from '~/business/admin/newsletter/newsletter.server'
+import { redirectWithSuccess } from 'remix-toast'
 
 // Mock dependencies
 vi.mock('~/lib/paths', () => ({
@@ -9,6 +10,7 @@ vi.mock('~/lib/paths', () => ({
     admin: {
       newsletters: {
         ADMIN_NEWSLETTERS: () => '/admin/newsletters',
+        ADMIN_VIEW_NEWSLETTER: (id: string) => `/admin/newsletters/${id}`,
       },
     },
   },
@@ -20,10 +22,29 @@ vi.mock('~/business/admin/admin.server', () => ({
 
 vi.mock('~/business/admin/newsletter/newsletter.server', () => ({
   getNewsletterById: vi.fn(),
+  sendNewsletterNow: vi.fn(),
+}))
+
+vi.mock('~/business/admin/newsletter/delete-newsletter.server', () => ({
+  deleteNewsletter: vi.fn(),
+}))
+
+vi.mock('~/business/admin/newsletter/newsletter-scheduler.server', () => ({
+  processScheduledNewsletters: vi.fn(),
+}))
+
+vi.mock('~/lib/supabase/db.server', () => ({
+  db: {},
 }))
 
 vi.mock('remix-toast', () => ({
   redirectWithToast: vi.fn((path, _toast) => {
+    throw new Response(null, {
+      status: 302,
+      headers: { Location: path },
+    })
+  }),
+  redirectWithSuccess: vi.fn((path, _message) => {
     throw new Response(null, {
       status: 302,
       headers: { Location: path },
@@ -95,6 +116,79 @@ describe('View Newsletter Page', () => {
       } as any)).rejects.toThrow()
       
       expect(getNewsletterById).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('action', () => {
+    describe('send-now intent', () => {
+      it('should send newsletter immediately when intent is send-now', async () => {
+        const mockSendNewsletterNow = vi.mocked(sendNewsletterNow)
+        const mockRedirectWithSuccess = vi.mocked(redirectWithSuccess)
+        
+        mockSendNewsletterNow.mockResolvedValue({
+          success: true,
+          processed: 50,
+          failed: 0,
+          newsletterId: 'newsletter-123',
+        })
+        
+        const formData = new FormData()
+        formData.append('intent', 'send-now')
+        
+        const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123', {
+          method: 'POST',
+          body: formData,
+        })
+        
+        await expect(action({ 
+          request, 
+          params: { id: 'newsletter-123' }
+        } as any)).rejects.toThrow()
+        
+        expect(mockSendNewsletterNow).toHaveBeenCalledWith('newsletter-123')
+        expect(mockRedirectWithSuccess).toHaveBeenCalledWith(
+          '/admin/newsletters/newsletter-123',
+          'Newsletter enviada com sucesso! 50 emails enviados.'
+        )
+      })
+      
+      it('should handle errors when sending newsletter fails', async () => {
+        const mockSendNewsletterNow = vi.mocked(sendNewsletterNow)
+        const error = new Error('Only draft newsletters can be sent immediately')
+        mockSendNewsletterNow.mockRejectedValue(error)
+        
+        const formData = new FormData()
+        formData.append('intent', 'send-now')
+        
+        const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123', {
+          method: 'POST',
+          body: formData,
+        })
+        
+        await expect(action({ 
+          request, 
+          params: { id: 'newsletter-123' }
+        } as any)).rejects.toThrow()
+        
+        expect(mockSendNewsletterNow).toHaveBeenCalledWith('newsletter-123')
+      })
+      
+      it('should require newsletter ID for send-now', async () => {
+        const formData = new FormData()
+        formData.append('intent', 'send-now')
+        
+        const request = new Request('http://localhost:3000/admin/newsletters/', {
+          method: 'POST',
+          body: formData,
+        })
+        
+        await expect(action({ 
+          request, 
+          params: {}
+        } as any)).rejects.toThrow()
+        
+        expect(sendNewsletterNow).not.toHaveBeenCalled()
+      })
     })
   })
 })
