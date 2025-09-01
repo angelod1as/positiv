@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { loader, action } from './view'
+import AdminViewNewsletterPage from './view'
 import { getNewsletterById, sendNewsletterNow } from '~/business/admin/newsletter/newsletter.server'
 import { redirectWithSuccess } from 'remix-toast'
 
@@ -50,6 +53,21 @@ vi.mock('remix-toast', () => ({
       headers: { Location: path },
     })
   }),
+}))
+
+// Mock React Router components
+const mockUseLoaderData = vi.fn()
+const mockUseFetcher = vi.fn(() => ({
+  state: 'idle',
+  formData: null,
+  submit: vi.fn(),
+  Form: vi.fn(({ children, ...props }: any) => <form {...props}>{children}</form>),
+}))
+
+vi.mock('react-router', () => ({
+  Link: vi.fn(({ children, to }: any) => <a href={to}>{children}</a>),
+  useLoaderData: () => mockUseLoaderData(),
+  useFetcher: () => mockUseFetcher(),
 }))
 
 describe('View Newsletter Page', () => {
@@ -189,6 +207,104 @@ describe('View Newsletter Page', () => {
         
         expect(sendNewsletterNow).not.toHaveBeenCalled()
       })
+    })
+  })
+
+  describe('component', () => {
+    it('should display Send Now button for draft newsletters', () => {
+      const mockNewsletter = {
+        id: 'newsletter-123',
+        subject: 'Test Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Test Content',
+        status: 'draft',
+        created_at: '2025-01-01T10:00:00Z',
+        updated_at: '2025-01-01T10:00:00Z',
+        created_by: 'user-123',
+        sent_at: null,
+        scheduled_at: null,
+      }
+      
+      mockUseLoaderData.mockReturnValue({ newsletter: mockNewsletter })
+      
+      render(<AdminViewNewsletterPage />)
+      
+      expect(screen.getByRole('button', { name: /enviar agora/i })).toBeInTheDocument()
+    })
+    
+    it('should not display Send Now button for scheduled newsletters', () => {
+      const mockNewsletter = {
+        id: 'newsletter-123',
+        subject: 'Test Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Test Content',
+        status: 'scheduled',
+        created_at: '2025-01-01T10:00:00Z',
+        updated_at: '2025-01-01T10:00:00Z',
+        created_by: 'user-123',
+        sent_at: null,
+        scheduled_at: '2025-12-01T10:00:00Z',
+      }
+      
+      mockUseLoaderData.mockReturnValue({ newsletter: mockNewsletter })
+      
+      render(<AdminViewNewsletterPage />)
+      
+      expect(screen.queryByRole('button', { name: /enviar agora/i })).not.toBeInTheDocument()
+    })
+    
+    it('should not display Send Now button for sent newsletters', () => {
+      const mockNewsletter = {
+        id: 'newsletter-123',
+        subject: 'Test Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Test Content',
+        status: 'sent',
+        created_at: '2025-01-01T10:00:00Z',
+        updated_at: '2025-01-01T10:00:00Z',
+        created_by: 'user-123',
+        sent_at: '2025-01-02T10:00:00Z',
+        scheduled_at: null,
+      }
+      
+      mockUseLoaderData.mockReturnValue({ newsletter: mockNewsletter })
+      
+      render(<AdminViewNewsletterPage />)
+      
+      expect(screen.queryByRole('button', { name: /enviar agora/i })).not.toBeInTheDocument()
+    })
+    
+    it('should show confirmation dialog when Send Now button is clicked', async () => {
+      const user = userEvent.setup()
+      const mockSubmit = vi.fn()
+      const mockNewsletter = {
+        id: 'newsletter-123',
+        subject: 'Test Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Test Content',
+        status: 'draft',
+        created_at: '2025-01-01T10:00:00Z',
+        updated_at: '2025-01-01T10:00:00Z',
+        created_by: 'user-123',
+        sent_at: null,
+        scheduled_at: null,
+      }
+      
+      mockUseLoaderData.mockReturnValue({ newsletter: mockNewsletter })
+      mockUseFetcher.mockReturnValue({
+        state: 'idle',
+        formData: null,
+        submit: mockSubmit,
+        Form: vi.fn(({ children, ...props }: any) => <form {...props}>{children}</form>),
+      })
+      
+      render(<AdminViewNewsletterPage />)
+      
+      const sendButton = screen.getByRole('button', { name: /enviar agora/i })
+      await user.click(sendButton)
+      
+      // Check if confirmation dialog appears
+      expect(screen.getByText(/tem certeza que deseja enviar esta newsletter/i)).toBeInTheDocument()
     })
   })
 })
