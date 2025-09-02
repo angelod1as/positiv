@@ -323,6 +323,30 @@ export type Database = {
           },
         ]
       }
+      newsletter_segment_counts: {
+        Row: {
+          count: number
+          description: string
+          segment_key: string
+          segment_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          count?: number
+          description: string
+          segment_key: string
+          segment_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          count?: number
+          description?: string
+          segment_key?: string
+          segment_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       newsletter_sends: {
         Row: {
           error_message: string | null
