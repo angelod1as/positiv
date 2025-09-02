@@ -6,6 +6,7 @@ import {
 } from "~/business/admin/newsletter/newsletter-schema"
 import { dbValuesToFormSchema } from "~/lib/helpers/db-values-to-form-schema"
 import { SchemaForm } from "../base/schema-form"
+import { MDXComponentsDocs } from "~/components/organisms/newsletter/mdx-components-docs"
 
 type Newsletter = {
   id?: string
@@ -83,26 +84,30 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
 
   return (
     <div className="space-y-6">
-      <SchemaForm
-        schema={newsletterFormSchema}
-        values={{
-          ...formattedNewsletter,
-          segment_type: initialSegmentType || 'all',
-          exclude_rejected: initialExcludeRejected,
-        }}
-        labels={{
-          subject: "Assunto",
-          template_name: "Modelo",
-          content_mdx: "Conteúdo (MDX)",
-          scheduled_at: "Agendar Para",
-          segment_type: "Segmento de Público",
-          exclude_rejected: "Excluir participantes rejeitados",
-        }}
-        placeholders={{
-          subject: "Digite o assunto da newsletter",
-          content_mdx:
-            "# Título da Newsletter\n\nEscreva o conteúdo da sua newsletter aqui usando Markdown...",
-        }}
+      <div className="relative">
+        <div className="absolute right-0 -top-2 z-10">
+          <MDXComponentsDocs />
+        </div>
+        <SchemaForm
+          schema={newsletterFormSchema}
+          values={{
+            ...formattedNewsletter,
+            segment_type: initialSegmentType || 'all',
+            exclude_rejected: initialExcludeRejected,
+          }}
+          labels={{
+            subject: "Assunto",
+            template_name: "Modelo",
+            content_mdx: "Conteúdo (MDX)",
+            scheduled_at: "Agendar Para",
+            segment_type: "Segmento de Público",
+            exclude_rejected: "Excluir participantes rejeitados",
+          }}
+          placeholders={{
+            subject: "Digite o assunto da newsletter",
+            content_mdx:
+              "# Título da Newsletter\n\nEscreva o conteúdo da sua newsletter aqui usando Markdown...",
+          }}
         multiline={["content_mdx"]}
         inputTypes={{
           template_name: "select",
@@ -130,7 +135,8 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
             ? "Processando..." 
             : (newsletter?.id ? "Atualizar Newsletter" : "Criar Newsletter")
         }
-      />
+        />
+      </div>
       
       {/* Send Now button for existing drafts */}
       {newsletter?.id && newsletter?.status === "draft" && onSendNow && (

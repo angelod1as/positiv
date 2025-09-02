@@ -7,6 +7,16 @@ afterEach(() => {
   cleanup()
 })
 
+// Mock clipboard API
+Object.defineProperty(navigator, 'clipboard', {
+  value: {
+    writeText: vi.fn().mockResolvedValue(undefined),
+    readText: vi.fn().mockResolvedValue(''),
+  },
+  writable: true,
+  configurable: true,
+})
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

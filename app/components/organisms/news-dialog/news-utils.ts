@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-226-mdx-components-docs',
+    title: '📝 Documentação de componentes MDX para newsletters!',
+    content: 'Ao criar ou editar uma newsletter, agora você tem um botão "Componentes MDX" que abre um painel lateral com todos os componentes disponíveis para usar no conteúdo. Veja pré-visualizações ao vivo, copie códigos prontos e consulte a documentação completa de cada componente sem sair da tela de edição!',
+    isAdmin: true,
+    createdAt: new Date('2025-09-02T10:00:00'), // September 2, 2025, 10AM
+    isActive: true,
+  },
+  {
     id: 'pos-225-segment-descriptions',
     title: '📊 Tabela de descrições de segmentos disponível!',
     content: 'Ao criar uma nova newsletter, agora você verá uma tabela explicativa com todos os segmentos disponíveis, suas descrições e a quantidade de pessoas em cada um. Os números são atualizados diariamente automaticamente. Isso facilita a escolha do público-alvo correto para suas newsletters!',
