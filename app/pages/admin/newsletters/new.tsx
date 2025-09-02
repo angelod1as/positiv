@@ -4,12 +4,15 @@ import { applySchema } from "composable-functions"
 import { z } from "zod"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { createNewsletter } from "~/business/admin/newsletter/newsletter.server"
+import { getSegmentDescriptions } from "~/business/admin/newsletter/newsletter-segments.server"
 import { newsletterFormSchema } from "~/business/admin/newsletter/newsletter-schema"
 import { NewsletterForm } from "~/components/forms/admin/newsletter-form"
+import { SegmentTable } from "~/components/organisms/newsletter/segment-table"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 import paths from "~/lib/paths"
+import { db } from "~/lib/supabase/db.server"
 import type { Route } from "./+types/new"
-import { useActionData } from "react-router"
+import { useActionData, useLoaderData } from "react-router"
 
 const {
   admin: {
@@ -19,7 +22,20 @@ const {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const context = await getAdminContext(request, params)
-  return context
+  
+  try {
+    const segments = await getSegmentDescriptions(db)
+    return {
+      ...context,
+      segments
+    }
+  } catch (error) {
+    console.error('Failed to load segment descriptions:', error)
+    return {
+      ...context,
+      segments: []
+    }
+  }
 }
 
 const createNewsletterMutation = applySchema(
@@ -96,6 +112,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 
 export default function AdminNewNewsletterPage() {
   const actionData = useActionData<typeof action>()
+  const { segments } = useLoaderData<typeof loader>()
   
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
@@ -132,6 +149,9 @@ export default function AdminNewNewsletterPage() {
       )}
       
       <NewsletterForm />
+      
+      {/* Segment descriptions table */}
+      <SegmentTable segments={segments} />
     </div>
   )
 }
