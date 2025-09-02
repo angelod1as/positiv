@@ -26,6 +26,25 @@ vi.mock('~/business/admin/newsletter/newsletter.server', () => ({
   createNewsletter: vi.fn(),
 }))
 
+vi.mock('~/business/admin/newsletter/newsletter-segments.server', () => ({
+  getSegmentDescriptions: vi.fn().mockResolvedValue([
+    {
+      segment_key: 'all',
+      segment_name: 'Todos os inscritos',
+      description: 'Todos que permitiram receber emails de marketing',
+      count: 150,
+      updated_at: new Date().toISOString()
+    },
+    {
+      segment_key: 'veterans',
+      segment_name: 'Veteranos',
+      description: 'Já participou de algum evento',
+      count: 75,
+      updated_at: new Date().toISOString()
+    }
+  ])
+}))
+
 vi.mock('remix-forms', () => ({
   formAction: vi.fn((config) => {
     return async ({ request, params }: { request: Request; params: Record<string, string> }) => {
@@ -56,13 +75,29 @@ describe('New Newsletter Page', () => {
   })
 
   describe('loader', () => {
-    it('should return admin context', async () => {
+    it('should return admin context and segment descriptions', async () => {
       const request = new Request('http://localhost:3000/admin/newsletters/new')
       const result = await loader({ request, params: {} } as Route.LoaderArgs)
       
       expect(result).toEqual({ 
         currentProfile: { id: 'test-profile-id' },
-        currentUser: { id: 'test-user-id' }
+        currentUser: { id: 'test-user-id' },
+        segments: [
+          {
+            segment_key: 'all',
+            segment_name: 'Todos os inscritos',
+            description: 'Todos que permitiram receber emails de marketing',
+            count: 150,
+            updated_at: expect.any(String)
+          },
+          {
+            segment_key: 'veterans',
+            segment_name: 'Veteranos',
+            description: 'Já participou de algum evento',
+            count: 75,
+            updated_at: expect.any(String)
+          }
+        ]
       })
     })
   })
