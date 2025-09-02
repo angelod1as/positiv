@@ -4,7 +4,7 @@ export const POSITIV_EMAIL = "contato@positivparty.com"
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1756810800000 // September 2, 2025 - MDX components documentation drawer added to newsletter editor
+export const NEWS_VERSION = 1756814400000 // September 2, 2025 - Event scheduling with auto-publish feature and MDX components docs
 
 export const EVENT_PAGE_REGEXP =
   /dashboard\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/

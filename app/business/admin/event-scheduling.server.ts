@@ -1,0 +1,23 @@
+import type { Kysely } from "kysely"
+import type { Database } from "~/types/database/kysely.types"
+
+export type UpdateResult = {
+  success: boolean
+  count: number
+  updated: string[]
+  timestamp: string
+}
+
+export async function updateEventStatusesAutomatically(
+  kysely: Kysely<Database>
+): Promise<UpdateResult> {
+  // Call the database function that handles the automatic updates using raw SQL
+  const result = await kysely
+    .selectNoFrom((eb) => [
+      eb.fn("update_event_statuses_automatically", []).as("result")
+    ])
+    .executeTakeFirstOrThrow()
+
+  // The database function returns JSONB, which kysely parses for us
+  return result.result as UpdateResult
+}

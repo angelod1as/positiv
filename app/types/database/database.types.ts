@@ -208,6 +208,7 @@ export type Database = {
       }
       events: {
         Row: {
+          auto_publish: boolean
           created_at: string
           description: string | null
           emoji: string | null
@@ -230,6 +231,7 @@ export type Database = {
           total_spots: number | null
         }
         Insert: {
+          auto_publish?: boolean
           created_at?: string
           description?: string | null
           emoji?: string | null
@@ -252,6 +254,7 @@ export type Database = {
           total_spots?: number | null
         }
         Update: {
+          auto_publish?: boolean
           created_at?: string
           description?: string | null
           emoji?: string | null
@@ -691,6 +694,10 @@ export type Database = {
         Returns: string
       }
       trigger_newsletter_processing: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      update_event_statuses_automatically: {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
