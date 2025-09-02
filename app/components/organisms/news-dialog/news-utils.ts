@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-230-event-scheduling',
+    title: '📅 Publicação automática de eventos disponível!',
+    content: 'Os eventos agora podem ser publicados automaticamente! Ao criar ou editar um evento, você pode marcar a opção "Publicar automaticamente" para que o evento seja liberado para inscrições na data e hora configuradas. Não precisa mais ficar lembrando de abrir as inscrições manualmente!',
+    isAdmin: true,
+    createdAt: new Date('2025-09-02T11:00:00'), // September 2, 2025, 11AM
+    isActive: true,
+  },
+  {
     id: 'pos-226-mdx-components-docs',
     title: '📝 Documentação de componentes MDX para newsletters!',
     content: 'Ao criar ou editar uma newsletter, agora você tem um botão "Componentes MDX" que abre um painel lateral com todos os componentes disponíveis para usar no conteúdo. Veja pré-visualizações ao vivo, copie códigos prontos e consulte a documentação completa de cada componente sem sair da tela de edição!',
