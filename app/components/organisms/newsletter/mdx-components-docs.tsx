@@ -11,6 +11,105 @@ import {
 import { Button } from "~/components/ui/button"
 import { cn } from "~/lib/utils"
 
+// Email components - same components used in actual email rendering
+const EmailEventCard = ({ title, date, location, spots }: {
+  title: string
+  date: string
+  location: string
+  spots: number
+}) => {
+  return (
+    <div 
+      className="event-card"
+      style={{ 
+        border: '1px solid #e5e5e5', 
+        borderRadius: '8px', 
+        padding: '16px', 
+        marginBottom: '16px',
+        backgroundColor: '#f9f9f9'
+      }}
+    >
+      <h3 style={{ marginTop: 0 }}>🎉 {title}</h3>
+      <p>
+        <strong>Date: </strong>{date}
+      </p>
+      <p>
+        <strong>Location: </strong>{location}
+      </p>
+      <p>
+        <strong>Spots: </strong>{spots}
+      </p>
+    </div>
+  )
+}
+
+const EmailButton = ({ href, children }: {
+  href: string
+  children: React.ReactNode
+}) => {
+  // Validate href to prevent javascript: or data: URIs
+  const isValidHref = href && (
+    href.startsWith('http://') || 
+    href.startsWith('https://') || 
+    href.startsWith('mailto:') ||
+    href.startsWith('/')
+  )
+  
+  const safeHref = isValidHref ? href : '#'
+  
+  return (
+    <a 
+      href={safeHref}
+      className="button"
+      style={{
+        display: 'inline-block',
+        padding: '12px 24px',
+        backgroundColor: '#8b5cf6',
+        color: 'white',
+        textDecoration: 'none',
+        borderRadius: '6px',
+        fontWeight: 'bold',
+        marginTop: '8px',
+        marginBottom: '8px'
+      }}
+    >
+      {children}
+    </a>
+  )
+}
+
+const EmailDivider = () => {
+  return (
+    <hr 
+      style={{ 
+        borderTop: '1px solid #e5e5e5',
+        marginTop: '24px',
+        marginBottom: '24px'
+      }} 
+    />
+  )
+}
+
+const EmailQuote = ({ author, children }: {
+  author?: string
+  children: React.ReactNode
+}) => {
+  return (
+    <blockquote
+      style={{
+        borderLeft: '4px solid #8b5cf6',
+        paddingLeft: '16px',
+        marginLeft: 0,
+        fontStyle: 'italic',
+        color: '#666'
+      }}
+    >
+      <p>{children}</p>
+      {author && <p style={{ marginTop: '8px' }}>- {author}</p>}
+    </blockquote>
+  )
+}
+
 interface ComponentExample {
   name: string
   description: string
@@ -29,26 +128,12 @@ const mdxComponents: ComponentExample[] = [
     name: "EventCard",
     description: "Exibe informações de um evento com destaque visual",
     preview: (
-      <div
-        style={{
-          border: "1px solid #e5e5e5",
-          borderRadius: "8px",
-          padding: "16px",
-          marginBottom: "16px",
-          backgroundColor: "#f9f9f9",
-        }}
-      >
-        <h3 style={{ marginTop: 0 }}>🎉 Festival de Verão</h3>
-        <p>
-          <strong>Date: </strong>2025-02-15
-        </p>
-        <p>
-          <strong>Location: </strong>Praia de Copacabana
-        </p>
-        <p>
-          <strong>Spots: </strong>200
-        </p>
-      </div>
+      <EmailEventCard 
+        title="Festival de Verão"
+        date="2025-02-15"
+        location="Praia de Copacabana"
+        spots={200}
+      />
     ),
     code: `<EventCard 
   title="Festival de Verão"
@@ -87,22 +172,9 @@ const mdxComponents: ComponentExample[] = [
     name: "Button",
     description: "Botão de call-to-action com link",
     preview: (
-      <a
-        href="#"
-        style={{
-          display: "inline-block",
-          padding: "12px 24px",
-          backgroundColor: "#8b5cf6",
-          color: "white",
-          textDecoration: "none",
-          borderRadius: "6px",
-          fontWeight: "bold",
-          marginTop: "8px",
-          marginBottom: "8px",
-        }}
-      >
+      <EmailButton href="#">
         Ver Todos os Eventos
-      </a>
+      </EmailButton>
     ),
     code: `<Button href="https://positiv.com/events">
   Ver Todos os Eventos
@@ -125,15 +197,7 @@ const mdxComponents: ComponentExample[] = [
   {
     name: "Divider",
     description: "Linha divisória para separar seções",
-    preview: (
-      <hr
-        style={{
-          borderTop: "1px solid #e5e5e5",
-          marginTop: "24px",
-          marginBottom: "24px",
-        }}
-      />
-    ),
+    preview: <EmailDivider />,
     code: `<Divider />`,
     parameters: [],
   },
@@ -141,21 +205,10 @@ const mdxComponents: ComponentExample[] = [
     name: "Quote",
     description: "Citação em destaque com autor opcional",
     preview: (
-      <blockquote
-        style={{
-          borderLeft: "4px solid #8b5cf6",
-          paddingLeft: "16px",
-          marginLeft: 0,
-          fontStyle: "italic",
-          color: "#666",
-        }}
-      >
-        <p>
-          Esta foi uma experiência incrível! Conheci pessoas maravilhosas e me
-          diverti muito.
-        </p>
-        <p style={{ marginTop: "8px" }}>- João Silva</p>
-      </blockquote>
+      <EmailQuote author="João Silva">
+        Esta foi uma experiência incrível! Conheci pessoas maravilhosas e me
+        diverti muito.
+      </EmailQuote>
     ),
     code: `<Quote author="João Silva">
   Esta foi uma experiência incrível! Conheci pessoas maravilhosas e me diverti muito.
@@ -182,9 +235,32 @@ function CopyButton({ text }: { text: string }) {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      // Try modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement("textarea")
+        textArea.value = text
+        textArea.style.position = "fixed"
+        textArea.style.left = "-999999px"
+        textArea.style.top = "-999999px"
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+        
+        try {
+          document.execCommand('copy')
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        } catch (err) {
+          console.error("Failed to copy text with fallback:", err)
+        } finally {
+          textArea.remove()
+        }
+      }
     } catch (err) {
       console.error("Failed to copy text:", err)
     }
@@ -290,7 +366,7 @@ export function MDXComponentsDocs() {
           Componentes MDX
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[500px] sm:max-w-[500px] overflow-y-auto">
+      <SheetContent side="right" className="w-full sm:w-[500px] sm:max-w-[500px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Componentes MDX Disponíveis</SheetTitle>
           <SheetDescription>
