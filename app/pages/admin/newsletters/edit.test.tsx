@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { loader, action } from './edit'
 import { getNewsletterById, updateNewsletter } from '~/business/admin/newsletter/newsletter.server'
+import type { Route } from './+types/edit'
 
 // Mock dependencies
 vi.mock('~/lib/paths', () => ({
@@ -26,17 +26,19 @@ vi.mock('~/business/admin/newsletter/newsletter.server', () => ({
 }))
 
 vi.mock('remix-forms', () => ({
-  formAction: vi.fn((config) => {
-    return async ({ request, params }: { request: Request; params: Record<string, string> }) => {
-      const formData = await request.formData()
-      const data = Object.fromEntries(formData)
-      const context = config.context || (await config.contextFactory?.({ request, params }))
-      const result = await config.mutation(data, context)
-      if (config.transformResult) {
-        return config.transformResult(result)
-      }
-      return result
+  formAction: vi.fn(async (config) => {
+    const clonedRequest = config.request.clone()
+    const formData = await clonedRequest.formData()
+    const data = Object.fromEntries(formData)
+    const context = config.context
+    const result = await config.mutation(data, context)
+    if (config.transformResult) {
+      return config.transformResult(result)
     }
+    return result
+  }),
+  applySchema: vi.fn((_schema, _contextSchema) => {
+    return (mutationFn: unknown) => mutationFn
   }),
 }))
 
@@ -89,7 +91,7 @@ describe('Edit Newsletter Page', () => {
       const result = await loader({ 
         request, 
         params: { id: 'newsletter-123' }
-      } as any)
+      } as Route.ActionArgs)
       
       expect(mockGetNewsletterById).toHaveBeenCalledWith('newsletter-123')
       expect(result).toEqual({ newsletter: mockNewsletter })
@@ -104,7 +106,7 @@ describe('Edit Newsletter Page', () => {
       await expect(loader({ 
         request, 
         params: { id: 'invalid-id' }
-      } as any)).rejects.toThrow()
+      } as Route.ActionArgs)).rejects.toThrow()
       
       expect(mockGetNewsletterById).toHaveBeenCalledWith('invalid-id')
     })
@@ -139,7 +141,7 @@ describe('Edit Newsletter Page', () => {
       await expect(loader({ 
         request, 
         params: { id: 'newsletter-123' }
-      } as any)).rejects.toThrow()
+      } as Route.ActionArgs)).rejects.toThrow()
     })
   })
 
@@ -169,20 +171,21 @@ describe('Edit Newsletter Page', () => {
       const mockUpdateNewsletter = vi.mocked(updateNewsletter)
       mockUpdateNewsletter.mockResolvedValue(mockUpdatedNewsletter)
       
-      const formData = new FormData()
-      formData.append('subject', 'Updated Newsletter')
-      formData.append('template_name', 'event-announcement')
-      formData.append('content_mdx', '# Updated Content')
+      const body = new URLSearchParams()
+      body.append('subject', 'Updated Newsletter')
+      body.append('template_name', 'event-announcement')
+      body.append('content_mdx', '# Updated Content')
       
       const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123/edit', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
       })
       
-      // The action returns a function from formAction mock
-      const actionFn: any = await action({ request, params: { id: 'newsletter-123' } } as any)
-      // Call the function returned by formAction with request and params
-      await expect(actionFn({ request, params: { id: 'newsletter-123' } })).rejects.toThrow()
+      // The action directly calls formAction
+      await expect(action({ request, params: { id: 'newsletter-123' } } as Route.ActionArgs)).rejects.toThrow()
       
       expect(mockUpdateNewsletter).toHaveBeenCalledWith('newsletter-123', expect.objectContaining({
         subject: 'Updated Newsletter',
@@ -216,22 +219,23 @@ describe('Edit Newsletter Page', () => {
       const mockUpdateNewsletter = vi.mocked(updateNewsletter)
       mockUpdateNewsletter.mockResolvedValue(mockUpdatedNewsletter)
       
-      const formData = new FormData()
-      formData.append('subject', 'Scheduled Newsletter')
-      formData.append('template_name', 'general-news')
-      formData.append('content_mdx', '# Content')
-      formData.append('scheduled_at', '2025-12-25T10:00:00')
-      formData.append('status', 'scheduled')
+      const body = new URLSearchParams()
+      body.append('subject', 'Scheduled Newsletter')
+      body.append('template_name', 'general-news')
+      body.append('content_mdx', '# Content')
+      body.append('scheduled_at', '2025-12-25T10:00:00')
+      body.append('status', 'scheduled')
       
       const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123/edit', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
       })
       
-      // The action returns a function from formAction mock
-      const actionFn: any = await action({ request, params: { id: 'newsletter-123' } } as any)
-      // Call the function returned by formAction with request and params
-      await expect(actionFn({ request, params: { id: 'newsletter-123' } })).rejects.toThrow()
+      // The action directly calls formAction
+      await expect(action({ request, params: { id: 'newsletter-123' } } as Route.ActionArgs)).rejects.toThrow()
       
       expect(mockUpdateNewsletter).toHaveBeenCalledWith('newsletter-123', expect.objectContaining({
         subject: 'Scheduled Newsletter',
@@ -243,15 +247,18 @@ describe('Edit Newsletter Page', () => {
     })
 
     it('should handle missing newsletter id', async () => {
-      const formData = new FormData()
-      formData.append('subject', 'Newsletter')
+      const body = new URLSearchParams()
+      body.append('subject', 'Newsletter')
       
       const request = new Request('http://localhost:3000/admin/newsletters/edit', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
       })
       
-      await expect(action({ request, params: {} } as any)).rejects.toThrow()
+      await expect(action({ request, params: {} } as Route.ActionArgs)).rejects.toThrow()
       
       expect(updateNewsletter).not.toHaveBeenCalled()
     })
@@ -266,15 +273,18 @@ describe('Edit Newsletter Page', () => {
         newsletterId: 'newsletter-123',
       })
       
-      const formData = new FormData()
-      formData.append('intent', 'send-now')
+      const body = new URLSearchParams()
+      body.append('intent', 'send-now')
       
       const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123/edit', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
       })
       
-      await expect(action({ request, params: { id: 'newsletter-123' } } as any)).rejects.toThrow()
+      await expect(action({ request, params: { id: 'newsletter-123' } } as Route.ActionArgs)).rejects.toThrow()
       
       expect(mockSendNewsletterNow).toHaveBeenCalledWith('newsletter-123')
     })

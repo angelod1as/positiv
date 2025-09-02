@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { loader, action } from './new'
 import { createNewsletter } from '~/business/admin/newsletter/newsletter.server'
@@ -46,17 +45,23 @@ vi.mock('~/business/admin/newsletter/newsletter-segments.server', () => ({
 }))
 
 vi.mock('remix-forms', () => ({
-  formAction: vi.fn((config) => {
-    return async ({ request, params }: { request: Request; params: Record<string, string> }) => {
-      const formData = await request.formData()
-      const data = Object.fromEntries(formData)
-      const context = config.context || (await config.contextFactory?.({ request, params }))
-      const result = await config.mutation(data, context)
-      if (config.transformResult) {
-        return config.transformResult(result)
-      }
-      return result
+  formAction: vi.fn(async (config) => {
+    const clonedRequest = config.request.clone()
+    const formData = await clonedRequest.formData()
+    const data = Object.fromEntries(formData)
+    const context = config.context || (await config.contextFactory?.({ request: config.request }))
+    
+    // Call the mutation with the data and context
+    const result = await config.mutation(data, context)
+    
+    if (config.transformResult) {
+      return config.transformResult(result)
     }
+    return result
+  }),
+  applySchema: vi.fn((_schema, _contextSchema) => {
+    // Return the mutation function directly
+    return (mutationFn: unknown) => mutationFn
   }),
 }))
 
@@ -128,18 +133,30 @@ describe('New Newsletter Page', () => {
       const mockCreateNewsletter = vi.mocked(createNewsletter)
       mockCreateNewsletter.mockResolvedValue(mockNewsletter)
       
-      const formData = new FormData()
-      formData.append('subject', 'Test Newsletter')
-      formData.append('template_name', 'general-news')
-      formData.append('content_mdx', '# Test Content')
+      const body = new URLSearchParams()
+      body.append('subject', 'Test Newsletter')
+      body.append('template_name', 'general-news')
+      body.append('content_mdx', '# Test Content')
       
       const request = new Request('http://localhost:3000/admin/newsletters/new', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
       })
       
-      const actionFn: any = await action({ request, params: {} } as any)
-      await expect(actionFn({ request, params: {} })).rejects.toThrow()
+      try {
+        await action({ request, params: {} } as Route.ActionArgs)
+        // If we get here without throwing, fail the test
+        expect.fail('Expected action to throw')
+      } catch (error) {
+        // Check if it's the redirect response we expect
+        expect(error).toBeInstanceOf(Response)
+        if (error instanceof Response) {
+          expect(error.status).toBe(302)
+        }
+      }
       
       expect(mockCreateNewsletter).toHaveBeenCalledWith(expect.objectContaining({
         subject: 'Test Newsletter',
@@ -173,20 +190,22 @@ describe('New Newsletter Page', () => {
       const mockCreateNewsletter = vi.mocked(createNewsletter)
       mockCreateNewsletter.mockResolvedValue(mockNewsletter)
       
-      const formData = new FormData()
-      formData.append('subject', 'Scheduled Newsletter')
-      formData.append('template_name', 'event-announcement')
-      formData.append('content_mdx', '# Event Content')
-      formData.append('scheduled_at', '2025-12-25T10:00:00')
-      formData.append('status', 'scheduled')
+      const body = new URLSearchParams()
+      body.append('subject', 'Scheduled Newsletter')
+      body.append('template_name', 'event-announcement')
+      body.append('content_mdx', '# Event Content')
+      body.append('scheduled_at', '2025-12-25T10:00:00')
+      body.append('status', 'scheduled')
       
       const request = new Request('http://localhost:3000/admin/newsletters/new', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
       })
       
-      const actionFn: any = await action({ request, params: {} } as any)
-      await expect(actionFn({ request, params: {} })).rejects.toThrow()
+      await expect(action({ request, params: {} } as Route.ActionArgs)).rejects.toThrow()
       
       expect(mockCreateNewsletter).toHaveBeenCalledWith(expect.objectContaining({
         subject: 'Scheduled Newsletter',

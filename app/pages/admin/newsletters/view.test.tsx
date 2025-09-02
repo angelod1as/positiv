@@ -150,12 +150,15 @@ describe('View Newsletter Page', () => {
           newsletterId: 'newsletter-123',
         })
         
-        const formData = new FormData()
-        formData.append('intent', 'send-now')
+        const body = new URLSearchParams()
+        body.append('intent', 'send-now')
         
         const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123', {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: body.toString(),
         })
         
         await expect(action({ 
@@ -175,12 +178,15 @@ describe('View Newsletter Page', () => {
         const error = new Error('Only draft newsletters can be sent immediately')
         mockSendNewsletterNow.mockRejectedValue(error)
         
-        const formData = new FormData()
-        formData.append('intent', 'send-now')
+        const body = new URLSearchParams()
+        body.append('intent', 'send-now')
         
         const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123', {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: body.toString(),
         })
         
         await expect(action({ 
@@ -192,12 +198,15 @@ describe('View Newsletter Page', () => {
       })
       
       it('should require newsletter ID for send-now', async () => {
-        const formData = new FormData()
-        formData.append('intent', 'send-now')
+        const body = new URLSearchParams()
+        body.append('intent', 'send-now')
         
         const request = new Request('http://localhost:3000/admin/newsletters/', {
           method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: body.toString(),
         })
         
         await expect(action({ 
