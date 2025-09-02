@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-225-segment-descriptions',
+    title: '📊 Tabela de descrições de segmentos disponível!',
+    content: 'Ao criar uma nova newsletter, agora você verá uma tabela explicativa com todos os segmentos disponíveis, suas descrições e a quantidade de pessoas em cada um. Os números são atualizados diariamente automaticamente. Isso facilita a escolha do público-alvo correto para suas newsletters!',
+    isAdmin: true,
+    createdAt: new Date('2025-09-01T17:00:00'), // September 1, 2025, 5PM
+    isActive: true,
+  },
+  {
     id: 'pos-217-email-testing-docs',
     title: '📚 Sistema de newsletters completo com testes e documentação!',
     content: 'O sistema de email marketing agora está totalmente testado e documentado! Foram criados testes automatizados para todas as funcionalidades, guias completos para administradores, documentação dos componentes MDX, e guia de resolução de problemas. O sistema está pronto para uso em produção com confiança!',
