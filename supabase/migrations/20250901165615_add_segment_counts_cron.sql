@@ -18,6 +18,19 @@ BEGIN
   SET count = segment_count, updated_at = NOW()
   WHERE segment_key = 'all';
   
+  -- Update count for admins only
+  SELECT COUNT(*)::INTEGER INTO segment_count
+  FROM profiles p
+  JOIN user_roles ur ON ur.user_id = p.id
+  WHERE p.allow_marketing_email = true 
+    AND p.email IS NOT NULL
+    AND ur.role_name = 'admin'
+    AND (p.approved_to_attend IS NULL OR p.approved_to_attend != 'rejected');
+  
+  UPDATE newsletter_segment_counts 
+  SET count = segment_count, updated_at = NOW()
+  WHERE segment_key = 'admins';
+  
   -- Update count for veterans
   SELECT COUNT(*)::INTEGER INTO segment_count
   FROM profiles 

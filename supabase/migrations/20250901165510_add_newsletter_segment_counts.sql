@@ -14,6 +14,7 @@ CREATE INDEX IF NOT EXISTS idx_newsletter_segment_counts_updated_at
 -- Insert initial data with Portuguese descriptions
 INSERT INTO newsletter_segment_counts (segment_key, segment_name, description, count) VALUES
   ('all', 'Todos os inscritos', 'Todos que permitiram receber emails de marketing', 0),
+  ('admins', 'Administradores', 'Apenas administradores do sistema', 0),
   ('veterans', 'Veteranos', 'Já participou de algum evento', 0),
   ('newbies', 'Novatos', 'Nunca participou de um evento', 0),
   ('new_registrations_30d', 'Novos cadastros', 'Cadastrados nos últimos 30 dias', 0),

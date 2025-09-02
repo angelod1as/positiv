@@ -20,6 +20,13 @@ describe("getSegmentDescriptions", () => {
               updated_at: new Date().toISOString()
             },
             {
+              segment_key: "admins",
+              segment_name: "Administradores",
+              description: "Apenas administradores do sistema",
+              count: 3,
+              updated_at: new Date().toISOString()
+            },
+            {
               segment_key: "veterans",
               segment_name: "Veteranos",
               description: "Já participou de algum evento",
@@ -54,7 +61,7 @@ describe("getSegmentDescriptions", () => {
     
     const segments = await getSegmentDescriptions(mockKysely)
     
-    expect(segments).toHaveLength(5)
+    expect(segments).toHaveLength(6)
     expect(segments[0]).toEqual({
       segment_key: "all",
       segment_name: "Todos os inscritos",
@@ -62,10 +69,11 @@ describe("getSegmentDescriptions", () => {
       count: 150,
       updated_at: expect.any(String)
     })
-    expect(segments[1].segment_key).toBe("veterans")
-    expect(segments[2].segment_key).toBe("newbies")
-    expect(segments[3].segment_key).toBe("new_registrations_30d")
-    expect(segments[4].segment_key).toBe("applied_never_attended")
+    expect(segments[1].segment_key).toBe("admins")
+    expect(segments[2].segment_key).toBe("veterans")
+    expect(segments[3].segment_key).toBe("newbies")
+    expect(segments[4].segment_key).toBe("new_registrations_30d")
+    expect(segments[5].segment_key).toBe("applied_never_attended")
   })
   
   it("should handle empty results gracefully", async () => {
