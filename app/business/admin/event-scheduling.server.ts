@@ -11,13 +11,31 @@ export type UpdateResult = {
 export async function updateEventStatusesAutomatically(
   kysely: Kysely<Database>
 ): Promise<UpdateResult> {
-  // Call the database function that handles the automatic updates using raw SQL
-  const result = await kysely
-    .selectNoFrom((eb) => [
-      eb.fn("update_event_statuses_automatically", []).as("result")
-    ])
-    .executeTakeFirstOrThrow()
+  try {
+    // Call the database function that handles the automatic updates using raw SQL
+    const result = await kysely
+      .selectNoFrom((eb) => [
+        eb.fn("update_event_statuses_automatically", []).as("result")
+      ])
+      .executeTakeFirstOrThrow()
 
-  // The database function returns JSONB, which kysely parses for us
-  return result.result as UpdateResult
+    // The database function returns JSONB, which kysely parses for us
+    const parsedResult = result.result as UpdateResult
+    
+    // Validate the result structure
+    if (!parsedResult || typeof parsedResult.success !== 'boolean') {
+      throw new Error('Invalid response from database function')
+    }
+    
+    return parsedResult
+  } catch (error) {
+    console.error('Failed to update event statuses automatically:', error)
+    // Return a safe default result on error
+    return {
+      success: false,
+      count: 0,
+      updated: [],
+      timestamp: new Date().toISOString()
+    }
+  }
 }
