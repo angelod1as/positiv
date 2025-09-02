@@ -13,6 +13,7 @@ BEGIN
   -- 1. Current status is "Scheduled"
   -- 2. auto_publish is true
   -- 3. time_application_start has passed (is less than or equal to current time)
+  -- 4. time_event_start is still in the future (prevent opening past events)
   WITH updated_events AS (
     UPDATE public.events
     SET 
@@ -22,6 +23,8 @@ BEGIN
       AND auto_publish = true
       AND time_application_start IS NOT NULL
       AND time_application_start <= NOW()
+      AND time_event_start IS NOT NULL
+      AND time_event_start > NOW()
     RETURNING id
   )
   SELECT 

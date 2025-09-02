@@ -21,7 +21,8 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
 }) => {
   const isScheduledForAutoPublish = event_status === "Scheduled" && auto_publish && time_application_start
   const publishTime = time_application_start ? new Date(time_application_start) : null
-  const isPastPublishTime = publishTime && publishTime <= new Date()
+  const isValidDate = publishTime && !isNaN(publishTime.getTime())
+  const isPastPublishTime = isValidDate && publishTime <= new Date()
   return (
     <SchemaForm
       schema={updateEventStatusSchema}
@@ -55,7 +56,7 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
           <>
             <Field name="intent" hidden />
             <Field name="event_status" onChange={submit} />
-            {isScheduledForAutoPublish && (
+            {isScheduledForAutoPublish && isValidDate && (
               <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md text-sm">
                 {!isPastPublishTime ? (
                   <>
