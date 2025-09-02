@@ -14,6 +14,13 @@ describe("SegmentTable", () => {
         updated_at: new Date().toISOString()
       },
       {
+        segment_key: "admins",
+        segment_name: "Administradores",
+        description: "Apenas administradores do sistema",
+        count: 3,
+        updated_at: new Date().toISOString()
+      },
+      {
         segment_key: "veterans",
         segment_name: "Veteranos",
         description: "Já participou de algum evento",
@@ -52,6 +59,7 @@ describe("SegmentTable", () => {
 
     // Check segment names
     expect(screen.getByText("Todos os inscritos")).toBeInTheDocument()
+    expect(screen.getByText("Administradores")).toBeInTheDocument()
     expect(screen.getByText("Veteranos")).toBeInTheDocument()
     expect(screen.getByText("Novatos")).toBeInTheDocument()
     expect(screen.getByText("Novos cadastros")).toBeInTheDocument()
@@ -59,6 +67,7 @@ describe("SegmentTable", () => {
 
     // Check descriptions
     expect(screen.getByText("Todos que permitiram receber emails de marketing")).toBeInTheDocument()
+    expect(screen.getByText("Apenas administradores do sistema")).toBeInTheDocument()
     expect(screen.getByText("Já participou de algum evento")).toBeInTheDocument()
     expect(screen.getByText("Nunca participou de um evento")).toBeInTheDocument()
     expect(screen.getByText("Cadastrados nos últimos 30 dias")).toBeInTheDocument()
@@ -66,6 +75,7 @@ describe("SegmentTable", () => {
 
     // Check counts
     expect(screen.getByText("150")).toBeInTheDocument()
+    expect(screen.getByText("3")).toBeInTheDocument()
     expect(screen.getAllByText("75")).toHaveLength(2) // Veterans and Newbies both have 75
     expect(screen.getByText("20")).toBeInTheDocument()
     expect(screen.getByText("10")).toBeInTheDocument()
