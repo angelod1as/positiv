@@ -29,6 +29,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           ticket_price: "Valor",
           total_spots: "Lotação",
           event_type: "Tipo de evento",
+          auto_publish: "Publicar automaticamente",
           time_event_start: "Início do evento",
           time_event_end: "Fim do evento",
           time_application_start: "Abertura",
@@ -45,6 +46,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           ticket_price: "textnumber",
           total_spots: "textnumber",
           event_type: "select",
+          auto_publish: "checkbox",
           time_event_start: "datetime-local",
           time_event_end: "datetime-local",
           time_application_start: "datetime-local",
@@ -59,6 +61,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
         descriptions={{
           description: "Use uma frase divertida!",
           event_type: "Edições BDSM têm uma página de consentimento adicional",
+          auto_publish: "Quando marcado, o evento será publicado automaticamente na data de abertura das inscrições",
         }}
         placeholders={{
           title: "Rapa do Tacho",
@@ -130,6 +133,9 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                 </div>
                 <div className="sm:col-span-12 col-span-12">
                   <Field name="event_type" />
+                </div>
+                <div className="sm:col-span-12 col-span-12">
+                  <Field name="auto_publish" />
                 </div>
 
                 <div className="col-span-12">

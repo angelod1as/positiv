@@ -78,12 +78,15 @@ describe("UnsubscribePage", () => {
         alreadyUnsubscribed: false,
       } as const)
 
-      const formData = new FormData()
-      formData.append("profileId", "550e8400-e29b-41d4-a716-446655440000")
+      const body = new URLSearchParams()
+      body.append("profileId", "550e8400-e29b-41d4-a716-446655440000")
 
       const request = new Request("http://localhost:3000/unsubscribe/token", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: body.toString(),
       })
 
       const result = await action({ request, params: {}, context: {} })
@@ -102,12 +105,15 @@ describe("UnsubscribePage", () => {
         alreadyUnsubscribed: true,
       } as const)
 
-      const formData = new FormData()
-      formData.append("profileId", "550e8400-e29b-41d4-a716-446655440000")
+      const body = new URLSearchParams()
+      body.append("profileId", "550e8400-e29b-41d4-a716-446655440000")
 
       const request = new Request("http://localhost:3000/unsubscribe/token", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: body.toString(),
       })
 
       const result = await action({ request, params: {}, context: {} })

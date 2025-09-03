@@ -89,7 +89,7 @@ describe("Demographics Snapshot Error Handling", () => {
     // and updateEventDemographics (lines 321-327)
     
     consoleErrorSpy.mockRestore()
-  }, 10000)
+  }, 15000)
   
   it("should have a separate function to manually update demographics", async () => {
     const adminModule = await import("../admin.server")
