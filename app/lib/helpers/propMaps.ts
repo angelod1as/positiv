@@ -49,6 +49,7 @@ export const eventPropNameMap = (property: keyof Event) => {
     time_event_end: "Fim do evento",
     event_status: "Status",
     event_type: "Tipo de evento",
+    auto_publish: "Publicação automática",
     time_group_end: "Fechamento do grupo",
     time_group_start: "Abertura do grupo",
     time_interviews_end: "Fim das entrevistas",

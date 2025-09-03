@@ -40,6 +40,7 @@ export const eventFormSchema = zod.object({
   total_spots: zod.coerce.number().min(1, messages.min1num),
   
   event_type: zod.enum(["regular", "bdsm"]).default("regular"),
+  auto_publish: zod.boolean().default(true),
 
   time_event_start: datetime,
   time_event_end: datetime,
@@ -64,6 +65,7 @@ export const eventSchema = zod.object({
   total_spots: zod.coerce.number().nullish(),
   
   event_type: zod.enum(["regular", "bdsm"]).nullish(),
+  auto_publish: zod.boolean().nullish(),
 
   time_event_start: datetime.nullish(),
   time_event_end: datetime.nullish(),

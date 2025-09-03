@@ -172,6 +172,7 @@ describe("EventForm", () => {
       event_type: "bdsm",
       event_status: "Draft",
       created_at: "2024-01-01",
+      auto_publish: true,
       time_event_start: "2024-02-01T10:00:00",
       time_event_end: "2024-02-01T14:00:00",
       time_application_start: null,
