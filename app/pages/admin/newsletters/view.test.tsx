@@ -119,7 +119,11 @@ describe('View Newsletter Page', () => {
       } as any)
       
       expect(mockGetNewsletterWithMetadata).toHaveBeenCalledWith('newsletter-123')
-      expect(result).toEqual({ newsletter: mockNewsletter })
+      expect(result).toEqual({ 
+        newsletter: mockNewsletter,
+        formattedSegment: 'Todos os inscritos',
+        formattedSender: 'Sistema'
+      })
     })
 
     it('should redirect if newsletter not found', async () => {
@@ -245,7 +249,11 @@ describe('View Newsletter Page', () => {
         scheduled_at: null,
       }
       
-      mockUseLoaderData.mockReturnValue({ newsletter: mockNewsletter })
+      mockUseLoaderData.mockReturnValue({ 
+        newsletter: mockNewsletter,
+        formattedSegment: 'Todos os inscritos',
+        formattedSender: 'Sistema'
+      })
       
       render(<AdminViewNewsletterPage />)
       
@@ -266,7 +274,11 @@ describe('View Newsletter Page', () => {
         scheduled_at: '2025-12-01T10:00:00Z',
       }
       
-      mockUseLoaderData.mockReturnValue({ newsletter: mockNewsletter })
+      mockUseLoaderData.mockReturnValue({ 
+        newsletter: mockNewsletter,
+        formattedSegment: 'Todos os inscritos',
+        formattedSender: 'Sistema'
+      })
       
       render(<AdminViewNewsletterPage />)
       
@@ -287,7 +299,11 @@ describe('View Newsletter Page', () => {
         scheduled_at: null,
       }
       
-      mockUseLoaderData.mockReturnValue({ newsletter: mockNewsletter })
+      mockUseLoaderData.mockReturnValue({ 
+        newsletter: mockNewsletter,
+        formattedSegment: 'Todos os inscritos',
+        formattedSender: 'Sistema'
+      })
       
       render(<AdminViewNewsletterPage />)
       
@@ -310,7 +326,11 @@ describe('View Newsletter Page', () => {
         scheduled_at: null,
       }
       
-      mockUseLoaderData.mockReturnValue({ newsletter: mockNewsletter })
+      mockUseLoaderData.mockReturnValue({ 
+        newsletter: mockNewsletter,
+        formattedSegment: 'Todos os inscritos',
+        formattedSender: 'Sistema'
+      })
       mockUseFetcher.mockReturnValue({
         state: 'idle',
         formData: null,
