@@ -71,7 +71,7 @@ describe('Newsletter Preview API - Error Handling', () => {
     expect(data.success).toBe(false)
     expect(data.error).toBeDefined()
     expect(data.error.message).toContain('UnknownComponent')
-    expect(data.error.message).toMatch(/Available components|EventCard|Button|Divider|Quote/i)
+    expect(data.error.message).toMatch(/Componentes disponíveis|EventCard|Button|Divider|Quote/i)
   })
 
   it('should block JavaScript expressions and return security error', async () => {
@@ -92,7 +92,7 @@ describe('Newsletter Preview API - Error Handling', () => {
     expect(response.status).toBe(200)
     expect(data.success).toBe(false)
     expect(data.error).toBeDefined()
-    expect(data.error.message).toContain('not allowed')
+    expect(data.error.message).toMatch(/não são permitidas|não permitido/i)
   })
 
   it('should include line number in error when available', async () => {
@@ -141,7 +141,7 @@ Line 5 content`, // Error on line 4
 
     expect(response.status).toBe(400)
     expect(data.success).toBe(false)
-    expect(data.error.message).toContain('MDX content is required')
+    expect(data.error.message).toContain('Conteúdo MDX é obrigatório')
   })
 
   it('should process markdown with special characters correctly', async () => {

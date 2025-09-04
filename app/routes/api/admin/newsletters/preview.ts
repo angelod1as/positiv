@@ -19,7 +19,7 @@ export async function action({ request, params }: ActionArgs) {
       return Response.json({ 
         success: false, 
         error: { 
-          message: 'MDX content is required',
+          message: 'Conteúdo MDX é obrigatório',
           line: null 
         } 
       }, { status: 400 })
@@ -29,7 +29,7 @@ export async function action({ request, params }: ActionArgs) {
       return Response.json({ 
         success: false, 
         error: { 
-          message: 'Valid template name is required',
+          message: 'Template válido é obrigatório',
           line: null 
         } 
       }, { status: 400 })
@@ -86,9 +86,9 @@ export async function action({ request, params }: ActionArgs) {
         if (error.includes('Could not parse')) {
           const cleanMessage = error.split('Could not parse')[1]
           if (cleanMessage) {
-            message = 'Invalid MDX syntax:' + cleanMessage.split('\n')[0]
+            message = 'Sintaxe MDX inválida:' + cleanMessage.split('\n')[0]
           } else {
-            message = 'Invalid MDX syntax in your content'
+            message = 'Sintaxe MDX inválida no seu conteúdo'
           }
         } else if (error.includes('to be defined') || error.includes('Expected component')) {
           // Component not found error - try multiple patterns
@@ -108,25 +108,29 @@ export async function action({ request, params }: ActionArgs) {
           }
           
           if (componentName) {
-            message = `Unknown component: ${componentName}. Available components: EventCard, Button, Divider, Quote`
+            message = `Componente desconhecido: ${componentName}. Componentes disponíveis: EventCard, Button, Divider, Quote`
           } else {
-            message = 'Unknown component used in content. Available components: EventCard, Button, Divider, Quote'
+            message = 'Componente desconhecido usado no conteúdo. Componentes disponíveis: EventCard, Button, Divider, Quote'
           }
         } else if (error.includes('Expected')) {
           // Extract the useful part of the error
           const expectedMatch = error.match(/Expected (.+?)(?:\n|$)/)
           if (expectedMatch && expectedMatch[1]) {
-            message = `MDX Error: Expected ${expectedMatch[1].trim()}`
+            message = `Erro MDX: Esperado ${expectedMatch[1].trim()}`
           } else {
-            message = 'MDX syntax error in your content'
+            message = 'Erro de sintaxe MDX no seu conteúdo'
           }
         } else if (error.includes('not allowed')) {
-          // Security errors should be shown as-is
-          message = error
+          // Security errors - translate them
+          if (error.includes('JavaScript expressions')) {
+            message = 'Expressões JavaScript não são permitidas no conteúdo MDX por razões de segurança'
+          } else {
+            message = 'Conteúdo não permitido por razões de segurança'
+          }
         }
       } catch {
         // If any parsing fails, use a safe fallback
-        message = 'MDX parsing error. Please check your content syntax.'
+        message = 'Erro ao processar MDX. Por favor, verifique a sintaxe do seu conteúdo.'
       }
       
       return Response.json({ 
@@ -144,7 +148,7 @@ export async function action({ request, params }: ActionArgs) {
     return Response.json({ 
       success: false, 
       error: { 
-        message: 'An unexpected error occurred while generating preview',
+        message: 'Ocorreu um erro inesperado ao gerar o preview',
         line: null 
       } 
     }, { status: 500 })
