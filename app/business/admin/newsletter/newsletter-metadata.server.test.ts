@@ -51,14 +51,17 @@ describe('Newsletter Metadata Functions', () => {
     })
 
     it('should format event attendance count filters correctly', () => {
-      const minFilter = JSON.stringify({ attendanceCountRange: { min: 5 }, excludeRejected: true })
+      const minFilter = JSON.stringify({ eventAttendanceCount: { min: 5 }, excludeRejected: true })
       expect(formatSegmentDescription(minFilter)).toBe("Participou de pelo menos 5 eventos (excluindo rejeitados)")
 
-      const maxFilter = JSON.stringify({ attendanceCountRange: { max: 3 }, excludeRejected: true })
+      const maxFilter = JSON.stringify({ eventAttendanceCount: { max: 3 }, excludeRejected: true })
       expect(formatSegmentDescription(maxFilter)).toBe("Participou de no máximo 3 eventos (excluindo rejeitados)")
 
-      const rangeFilter = JSON.stringify({ attendanceCountRange: { min: 2, max: 5 }, excludeRejected: true })
+      const rangeFilter = JSON.stringify({ eventAttendanceCount: { min: 2, max: 5 }, excludeRejected: true })
       expect(formatSegmentDescription(rangeFilter)).toBe("Participou de 2 a 5 eventos (excluindo rejeitados)")
+
+      const exactFilter = JSON.stringify({ eventAttendanceCount: { exact: 1 }, excludeRejected: true })
+      expect(formatSegmentDescription(exactFilter)).toBe("Participou de exatamente 1 evento (excluindo rejeitados)")
     })
 
     it('should handle invalid JSON gracefully', () => {
