@@ -27,15 +27,15 @@ const EmailEventCard = ({ title, date, location, spots }: {
   }, [
     React.createElement('h3', { key: 'title', style: { marginTop: 0 } }, `🎉 ${title}`),
     React.createElement('p', { key: 'date' }, [
-      React.createElement('strong', { key: 'date-label' }, 'Date: '),
+      React.createElement('strong', { key: 'date-label' }, 'Data: '),
       date
     ]),
     React.createElement('p', { key: 'location' }, [
-      React.createElement('strong', { key: 'location-label' }, 'Location: '),
+      React.createElement('strong', { key: 'location-label' }, 'Local: '),
       location
     ]),
     React.createElement('p', { key: 'spots' }, [
-      React.createElement('strong', { key: 'spots-label' }, 'Spots: '),
+      React.createElement('strong', { key: 'spots-label' }, 'Vagas: '),
       `${spots}`
     ])
   ])

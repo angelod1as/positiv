@@ -31,13 +31,13 @@ const EmailEventCard = ({ title, date, location, spots }: {
     >
       <h3 style={{ marginTop: 0 }}>🎉 {title}</h3>
       <p>
-        <strong>Date: </strong>{date}
+        <strong>Data: </strong>{date}
       </p>
       <p>
-        <strong>Location: </strong>{location}
+        <strong>Local: </strong>{location}
       </p>
       <p>
-        <strong>Spots: </strong>{spots}
+        <strong>Vagas: </strong>{spots}
       </p>
     </div>
   )
