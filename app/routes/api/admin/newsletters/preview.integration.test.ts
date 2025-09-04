@@ -165,7 +165,9 @@ Line 5 content`, // Error on line 4
     expect(data.html).toContain('welcome')
   })
 
-  it('should log errors to console for debugging', async () => {
+  it('should log errors to console for debugging in development', async () => {
+    const originalEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'development'
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     
     const request = new Request('http://localhost:3000/api/admin/newsletters/preview', {
@@ -187,5 +189,31 @@ Line 5 content`, // Error on line 4
     expect(errorCall[0]).toContain('MDX compilation error')
     
     consoleErrorSpy.mockRestore()
+    process.env.NODE_ENV = originalEnv
+  })
+
+  it('should not log errors to console in production', async () => {
+    const originalEnv = process.env.NODE_ENV
+    process.env.NODE_ENV = 'production'
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    
+    const request = new Request('http://localhost:3000/api/admin/newsletters/preview', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content_mdx: '<BrokenComponent', 
+        template_name: 'general-news'
+      })
+    })
+
+    await action({ request, params: {} })
+    
+    // Should not log in production
+    expect(consoleErrorSpy).not.toHaveBeenCalled()
+    
+    consoleErrorSpy.mockRestore()
+    process.env.NODE_ENV = originalEnv
   })
 })
