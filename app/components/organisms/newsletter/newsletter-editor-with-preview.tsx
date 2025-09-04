@@ -10,6 +10,7 @@ interface NewsletterEditorWithPreviewProps {
   templateName: string
   placeholder?: string
   className?: string
+  'data-testid'?: string
 }
 
 interface PreviewError {
@@ -22,7 +23,8 @@ export function NewsletterEditorWithPreview({
   onChange,
   templateName,
   placeholder,
-  className
+  className,
+  'data-testid': dataTestId
 }: NewsletterEditorWithPreviewProps) {
   const [preview, setPreview] = useState<string>('')
   const [error, setError] = useState<PreviewError | null>(null)
@@ -140,6 +142,7 @@ export function NewsletterEditorWithPreview({
           placeholder={placeholder}
           className="w-full min-h-[500px] p-4 font-mono text-sm border rounded-md resize-y"
           spellCheck={false}
+          data-testid={dataTestId}
         />
         
         {error && (
