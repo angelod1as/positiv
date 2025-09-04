@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDebounceFunction } from '~/lib/hooks/use-debounce'
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert'
 import { Loader2, AlertCircle } from 'lucide-react'
@@ -33,7 +33,8 @@ export function NewsletterEditorWithPreview({
   const abortControllerRef = useRef<AbortController | null>(null)
   const isMountedRef = useRef(true)
   
-  const fetchPreview = async (content: string, template: string) => {
+  
+  const fetchPreview = useCallback(async (content: string, template: string) => {
     // Don't fetch if content is empty
     if (!content.trim()) {
       setPreview('')
@@ -73,8 +74,8 @@ export function NewsletterEditorWithPreview({
       
       const data = await response.json()
       
-      // Only update state if still mounted and this request wasn't aborted
-      if (isMountedRef.current && abortControllerRef.current === controller) {
+      // Only update state if this request wasn't aborted
+      if (abortControllerRef.current === controller) {
         if (data.success) {
           setPreview(data.html)
           setError(null)
@@ -89,8 +90,8 @@ export function NewsletterEditorWithPreview({
         return
       }
       
-      // Only update state if still mounted and this request wasn't aborted
-      if (isMountedRef.current && abortControllerRef.current === controller) {
+      // Only update state if this request wasn't aborted
+      if (abortControllerRef.current === controller) {
         let errorMessage = 'Falha ao gerar preview. Por favor, tente novamente.'
         
         if (err instanceof Error) {
@@ -108,12 +109,12 @@ export function NewsletterEditorWithPreview({
         setPreview('')
       }
     } finally {
-      // Only update loading state if still mounted and this request wasn't aborted
-      if (isMountedRef.current && abortControllerRef.current === controller) {
+      // Only update loading state if this request wasn't aborted
+      if (abortControllerRef.current === controller) {
         setIsLoading(false)
       }
     }
-  }
+  }, [])
   
   // Create debounced version of fetchPreview
   const debouncedFetchPreview = useDebounceFunction(fetchPreview, 500)
@@ -135,7 +136,7 @@ export function NewsletterEditorWithPreview({
         abortControllerRef.current.abort()
       }
     }
-  }, [value, templateName])
+  }, [value, templateName, debouncedFetchPreview])
   
   return (
     <div className={cn("grid lg:grid-cols-2 gap-4", className)}>
@@ -186,10 +187,6 @@ export function NewsletterEditorWithPreview({
             <div className="flex items-center justify-center h-[500px] text-muted-foreground">
               <p>Comece a digitar para ver o preview</p>
             </div>
-          ) : isLoading && !preview ? (
-            <div className="flex items-center justify-center h-[500px]">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
           ) : error ? (
             <div className="flex items-center justify-center h-[500px] p-8">
               <div className="text-center">
@@ -199,7 +196,11 @@ export function NewsletterEditorWithPreview({
                 </p>
               </div>
             </div>
-          ) : (
+          ) : isLoading && !preview ? (
+            <div className="flex items-center justify-center h-[500px]">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : preview ? (
             <iframe
               ref={iframeRef}
               srcDoc={preview}
@@ -207,6 +208,10 @@ export function NewsletterEditorWithPreview({
               title="Newsletter Preview"
               sandbox="allow-same-origin"
             />
+          ) : (
+            <div className="flex items-center justify-center h-[500px]">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
           )}
         </div>
       </div>
