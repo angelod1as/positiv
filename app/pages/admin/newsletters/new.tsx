@@ -97,7 +97,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       content_mdx: data.content_mdx,
       scheduled_at: data.scheduled_at,
       created_by: context.currentProfile?.id || '',
-      status: 'draft',
+      status: data.scheduled_at ? 'scheduled' : 'draft',
       segment_filter: segmentFilter,
       exclude_rejected: data.exclude_rejected,
     })
