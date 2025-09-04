@@ -90,7 +90,6 @@ export function NewsletterFormWithPreview({
 
   const {
     register,
-    handleSubmit,
     watch,
     setValue,
     formState: { errors }
@@ -119,7 +118,6 @@ export function NewsletterFormWithPreview({
 
         <Form 
           method="post" 
-          onSubmit={handleSubmit(() => {})}
           className="space-y-6"
         >
           {/* Subject Field */}
