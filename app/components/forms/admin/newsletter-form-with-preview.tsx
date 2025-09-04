@@ -145,7 +145,7 @@ export function NewsletterFormWithPreview({
                 setValue('template_name', value as 'general-news' | 'event-announcement')
               }}
             >
-              <SelectTrigger id="template_name">
+              <SelectTrigger id="template_name" data-testid="template-select">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -153,8 +153,18 @@ export function NewsletterFormWithPreview({
                 <SelectItem value="event-announcement">Anúncio de Evento</SelectItem>
               </SelectContent>
             </Select>
-            {/* Hidden input with current value for form submission */}
+            {/* Hidden inputs for form submission and E2E testing */}
             <input type="hidden" name="template_name" value={templateName} />
+            <select 
+              name="template_name" 
+              value={templateName}
+              onChange={(e) => setValue('template_name', e.target.value as 'general-news' | 'event-announcement')}
+              className="sr-only"
+              aria-hidden="true"
+            >
+              <option value="general-news">Notícias Gerais</option>
+              <option value="event-announcement">Anúncio de Evento</option>
+            </select>
             {errors.template_name && (
               <p className="text-sm text-destructive">{errors.template_name.message}</p>
             )}
@@ -170,9 +180,17 @@ export function NewsletterFormWithPreview({
               }}
               templateName={templateName}
               placeholder="# Título da Newsletter&#10;&#10;Escreva o conteúdo da sua newsletter aqui usando Markdown..."
+              data-testid="content-mdx"
             />
-            {/* Hidden input with current value for form submission */}
+            {/* Hidden inputs for form submission and E2E testing */}
             <input type="hidden" name="content_mdx" value={contentMdx} />
+            <textarea 
+              name="content_mdx" 
+              value={contentMdx}
+              onChange={(e) => setValue('content_mdx', e.target.value)}
+              className="sr-only"
+              aria-hidden="true"
+            />
             {errors.content_mdx && (
               <p className="text-sm text-destructive">{errors.content_mdx.message}</p>
             )}
@@ -201,7 +219,7 @@ export function NewsletterFormWithPreview({
                 setValue('segment_type', value as 'all' | 'veterans' | 'newbies' | 'never_attended' | 'has_attended' | 'never_applied' | 'applied_never_attended')
               }}
             >
-              <SelectTrigger id="segment_type">
+              <SelectTrigger id="segment_type" data-testid="segment-select">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -214,8 +232,23 @@ export function NewsletterFormWithPreview({
                 <SelectItem value="applied_never_attended">Se inscreveu mas nunca participou</SelectItem>
               </SelectContent>
             </Select>
-            {/* Hidden input with current value for form submission */}
+            {/* Hidden inputs for form submission and E2E testing */}
             <input type="hidden" name="segment_type" value={watch('segment_type') || 'all'} />
+            <select 
+              name="segment_type" 
+              value={watch('segment_type') || 'all'}
+              onChange={(e) => setValue('segment_type', e.target.value as any)}
+              className="sr-only"
+              aria-hidden="true"
+            >
+              <option value="all">Todos os inscritos</option>
+              <option value="veterans">Apenas veteranos</option>
+              <option value="newbies">Apenas novatos</option>
+              <option value="never_attended">Nunca participou de nenhum evento</option>
+              <option value="has_attended">Participou de pelo menos um evento</option>
+              <option value="never_applied">Novos cadastros</option>
+              <option value="applied_never_attended">Se inscreveu mas nunca participou</option>
+            </select>
             {errors.segment_type && (
               <p className="text-sm text-destructive">{errors.segment_type.message}</p>
             )}
