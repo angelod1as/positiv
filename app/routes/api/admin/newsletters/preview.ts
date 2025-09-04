@@ -49,6 +49,9 @@ export async function action({ request, params }: ActionArgs) {
       
       return Response.json({ success: true, html })
     } catch (mdxError) {
+      // Log the full error for debugging
+      console.error('MDX compilation error:', mdxError)
+      
       // Parse error for line number
       const error = mdxError instanceof Error ? mdxError.message : String(mdxError)
       
@@ -65,8 +68,11 @@ export async function action({ request, params }: ActionArgs) {
       for (const pattern of linePatterns) {
         const match = error.match(pattern)
         if (match && match[1]) {
-          line = parseInt(match[1])
-          if (!isNaN(line)) break
+          const parsedLine = parseInt(match[1])
+          if (!isNaN(parsedLine)) {
+            line = parsedLine
+            break
+          }
         }
       }
       
