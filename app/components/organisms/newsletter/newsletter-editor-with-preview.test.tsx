@@ -132,6 +132,90 @@ describe('NewsletterEditorWithPreview', () => {
       expect(screen.getByText('Fix the error to see preview')).toBeInTheDocument()
     })
   })
+
+  it('should display detailed error for unknown MDX components', async () => {
+    const errorResponse = {
+      success: false,
+      error: {
+        message: 'Unknown component: MyComponent. Available components: EventCard, Button, Divider, Quote',
+        line: null
+      }
+    }
+    
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: async () => errorResponse
+    } as Response)
+    
+    render(
+      <NewsletterEditorWithPreview
+        value="<MyComponent />"
+        onChange={mockOnChange}
+        templateName="general-news"
+      />
+    )
+    
+    await waitFor(() => {
+      expect(screen.getByText('MDX Error')).toBeInTheDocument()
+      expect(screen.getByText(/Unknown component: MyComponent/)).toBeInTheDocument()
+      expect(screen.getByText(/Available components: EventCard, Button, Divider, Quote/)).toBeInTheDocument()
+    })
+  })
+
+  it('should display security error for JavaScript expressions', async () => {
+    const errorResponse = {
+      success: false,
+      error: {
+        message: 'JavaScript expressions are not allowed in newsletter content for security reasons',
+        line: null
+      }
+    }
+    
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: async () => errorResponse
+    } as Response)
+    
+    render(
+      <NewsletterEditorWithPreview
+        value="Hello {console.log('test')} world"
+        onChange={mockOnChange}
+        templateName="general-news"
+      />
+    )
+    
+    await waitFor(() => {
+      expect(screen.getByText('MDX Error')).toBeInTheDocument()
+      expect(screen.getByText(/not allowed in newsletter content for security reasons/)).toBeInTheDocument()
+    })
+  })
+
+  it('should not display generic error message when detailed error is available', async () => {
+    const errorResponse = {
+      success: false,
+      error: {
+        message: 'Invalid MDX syntax: Unexpected character at position 10',
+        line: 3
+      }
+    }
+    
+    vi.mocked(fetch).mockResolvedValueOnce({
+      json: async () => errorResponse
+    } as Response)
+    
+    render(
+      <NewsletterEditorWithPreview
+        value="# Test\n\n<Invalid>"
+        onChange={mockOnChange}
+        templateName="general-news"
+      />
+    )
+    
+    await waitFor(() => {
+      expect(screen.getByText('MDX Error')).toBeInTheDocument()
+      expect(screen.getByText(/Invalid MDX syntax: Unexpected character at position 10/)).toBeInTheDocument()
+      // Should NOT show generic error message
+      expect(screen.queryByText('Failed to generate preview. Please try again.')).not.toBeInTheDocument()
+    })
+  })
   
   it('should show loading state while fetching', async () => {
     let resolvePromise: ((value: Response) => void) | undefined
