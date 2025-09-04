@@ -137,7 +137,7 @@ export default function NewslettersPage() {
               }
             }}
             open={deleteDialogOpen}
-            setOpen={setDeleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
           />
         </>
       )}
