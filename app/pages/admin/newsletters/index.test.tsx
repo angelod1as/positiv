@@ -19,6 +19,11 @@ type Newsletter = {
 
 vi.mock('react-router', () => ({
   useLoaderData: vi.fn(),
+  useFetcher: vi.fn(() => ({
+    submit: vi.fn(),
+    state: 'idle',
+    data: undefined,
+  })),
   Link: ({ children, to, ...props }: { children: React.ReactNode, to: string }) => (
     <a href={to} {...props}>{children}</a>
   )
@@ -32,6 +37,10 @@ vi.mock('~/components/organisms/tables/admin/newsletter-table', () => ({
       ))}
     </div>
   )
+}))
+
+vi.mock('~/components/molecules/confirm-dialog/confirm-dialog', () => ({
+  default: () => null
 }))
 
 describe('NewslettersPage', () => {
