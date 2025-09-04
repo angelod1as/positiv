@@ -29,6 +29,7 @@ export function NewsletterEditorWithPreview({
   const [isLoading, setIsLoading] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
+  const isMountedRef = useRef(true)
   
   const fetchPreview = async (content: string, template: string) => {
     // Don't fetch if content is empty
@@ -44,7 +45,8 @@ export function NewsletterEditorWithPreview({
     }
     
     // Create new abort controller for this request
-    abortControllerRef.current = new AbortController()
+    const controller = new AbortController()
+    abortControllerRef.current = controller
     
     setIsLoading(true)
     setError(null)
@@ -59,17 +61,20 @@ export function NewsletterEditorWithPreview({
           content_mdx: content,
           template_name: template
         }),
-        signal: abortControllerRef.current.signal
+        signal: controller.signal
       })
       
       const data = await response.json()
       
-      if (data.success) {
-        setPreview(data.html)
-        setError(null)
-      } else {
-        setError(data.error)
-        setPreview('')
+      // Only update state if still mounted and this request wasn't aborted
+      if (isMountedRef.current && abortControllerRef.current === controller) {
+        if (data.success) {
+          setPreview(data.html)
+          setError(null)
+        } else {
+          setError(data.error)
+          setPreview('')
+        }
       }
     } catch (err) {
       // Ignore abort errors
@@ -77,18 +82,31 @@ export function NewsletterEditorWithPreview({
         return
       }
       
-      setError({
-        message: 'Failed to generate preview. Please try again.',
-        line: null
-      })
-      setPreview('')
+      // Only update state if still mounted and this request wasn't aborted
+      if (isMountedRef.current && abortControllerRef.current === controller) {
+        setError({
+          message: 'Failed to generate preview. Please try again.',
+          line: null
+        })
+        setPreview('')
+      }
     } finally {
-      setIsLoading(false)
+      // Only update loading state if still mounted and this request wasn't aborted
+      if (isMountedRef.current && abortControllerRef.current === controller) {
+        setIsLoading(false)
+      }
     }
   }
   
   // Create debounced version of fetchPreview
   const debouncedFetchPreview = useDebounceFunction(fetchPreview, 500)
+  
+  // Track mount status
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
   
   // Fetch preview when content or template changes
   useEffect(() => {
