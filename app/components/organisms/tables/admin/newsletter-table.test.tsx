@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import userEvent from '@testing-library/user-event'
 import { NewsletterTable } from './newsletter-table'
 import { format } from 'date-fns'
 
@@ -152,5 +153,68 @@ describe('NewsletterTable', () => {
     render(<NewsletterTable newsletters={[]} />)
     
     expect(screen.getByText('Nenhuma newsletter encontrada')).toBeInTheDocument()
+  })
+
+  it('should show delete button only for draft and scheduled newsletters', () => {
+    const mockOnDelete = vi.fn()
+    render(<NewsletterTable newsletters={mockNewsletters} onDelete={mockOnDelete} />)
+    
+    // Should have delete buttons only for draft (id: 1) and scheduled (id: 3) newsletters
+    const deleteButtons = screen.getAllByLabelText('Excluir')
+    expect(deleteButtons).toHaveLength(2)
+    
+    // Should not have delete button for sent newsletter (id: 2)
+    // We can verify this by checking that we only have 2 delete buttons, not 3
+  })
+
+  it('should call onDelete with correct id when delete button is clicked', async () => {
+    const user = userEvent.setup()
+    const mockOnDelete = vi.fn()
+    render(<NewsletterTable newsletters={mockNewsletters} onDelete={mockOnDelete} />)
+    
+    // Click the first delete button (for draft newsletter with id: 1)
+    const deleteButtons = screen.getAllByLabelText('Excluir')
+    await user.click(deleteButtons[0])
+    
+    expect(mockOnDelete).toHaveBeenCalledTimes(1)
+    expect(mockOnDelete).toHaveBeenCalledWith('1')
+  })
+
+  it('should call onDelete for scheduled newsletter', async () => {
+    const user = userEvent.setup()
+    const mockOnDelete = vi.fn()
+    render(<NewsletterTable newsletters={mockNewsletters} onDelete={mockOnDelete} />)
+    
+    // Click the second delete button (for scheduled newsletter with id: 3)
+    const deleteButtons = screen.getAllByLabelText('Excluir')
+    await user.click(deleteButtons[1])
+    
+    expect(mockOnDelete).toHaveBeenCalledTimes(1)
+    expect(mockOnDelete).toHaveBeenCalledWith('3')
+  })
+
+  it('should not show delete button for sent newsletters', () => {
+    const mockOnDelete = vi.fn()
+    const sentNewsletters = [
+      {
+        id: '1',
+        subject: 'Sent Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Content',
+        status: 'sent' as const,
+        scheduled_at: null,
+        sent_at: '2025-01-02T10:00:00Z',
+        created_by: 'user-1',
+        created_at: '2025-01-01T00:00:00Z',
+        updated_at: '2025-01-02T10:00:00Z',
+        recipient_count: 150
+      }
+    ]
+    
+    render(<NewsletterTable newsletters={sentNewsletters} onDelete={mockOnDelete} />)
+    
+    // Should not have any delete buttons
+    const deleteButtons = screen.queryAllByLabelText('Excluir')
+    expect(deleteButtons).toHaveLength(0)
   })
 })
