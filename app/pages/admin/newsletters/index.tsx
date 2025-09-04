@@ -123,8 +123,10 @@ export default function NewslettersPage() {
           <ConfirmDialog
             title="Excluir Newsletter"
             description="Tem certeza que deseja excluir esta newsletter? Esta ação não pode ser desfeita."
+            confirmLabel="Excluir"
+            cancelLabel="Cancelar"
             onConfirm={() => {
-              if (selectedNewsletterId) {
+              if (selectedNewsletterId && fetcher.state === 'idle') {
                 fetcher.submit(
                   {
                     intent: 'delete',
@@ -138,6 +140,7 @@ export default function NewslettersPage() {
             }}
             open={deleteDialogOpen}
             onOpenChange={setDeleteDialogOpen}
+            isLoading={fetcher.state !== 'idle'}
           />
         </>
       )}

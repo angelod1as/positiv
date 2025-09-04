@@ -49,8 +49,10 @@ export async function action({ request, params }: ActionArgs) {
       
       return Response.json({ success: true, html })
     } catch (mdxError) {
-      // Log the full error for debugging
-      console.error('MDX compilation error:', mdxError)
+      // Log the full error for debugging (only in development)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('MDX compilation error:', mdxError)
+      }
       
       // Parse error for line number
       const error = mdxError instanceof Error ? mdxError.message : String(mdxError)
@@ -136,7 +138,9 @@ export async function action({ request, params }: ActionArgs) {
       })
     }
   } catch (error) {
-    console.error('Newsletter preview error:', error)
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Newsletter preview error:', error)
+    }
     return Response.json({ 
       success: false, 
       error: { 
