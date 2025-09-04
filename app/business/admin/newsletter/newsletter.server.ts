@@ -222,11 +222,18 @@ export async function sendNewsletterNow(newsletterId: string): Promise<SendNewsl
     .execute()
   
   try {
+    // Parse segment filter from newsletter
+    const segmentFilter = newsletter.segment_filter 
+      ? typeof newsletter.segment_filter === 'string'
+        ? JSON.parse(newsletter.segment_filter)
+        : newsletter.segment_filter
+      : undefined
+    
     // Process the newsletter queue
     const result = await processNewsletterQueue(
       db,
       newsletterId,
-      undefined, // No segment filter for now
+      segmentFilter,
       {
         batchSize: 50,
         delayMs: 0 // No delay for immediate send in tests
