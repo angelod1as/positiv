@@ -10,10 +10,11 @@ import { withErrorRedirect } from '~/lib/helpers/error-handling'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
-import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2 } from 'lucide-react'
+import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2, Eye } from 'lucide-react'
 import { format, isPast } from 'date-fns'
 import paths from '~/lib/paths'
 import ConfirmDialog from '~/components/molecules/confirm-dialog/confirm-dialog'
+import { NewsletterPreviewModal } from '~/components/organisms/newsletter/newsletter-preview-modal'
 import type { Route } from './+types/view'
 
 const {
@@ -156,6 +157,7 @@ export default function AdminViewNewsletterPage() {
   const fetcher = useFetcher()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [sendNowDialogOpen, setSendNowDialogOpen] = useState(false)
+  const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const isProcessing = fetcher.state === 'submitting'
   const isDeleting = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'delete'
   const isSending = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'send-now'
@@ -193,6 +195,17 @@ export default function AdminViewNewsletterPage() {
         </div>
         
         <div className="flex gap-2">
+          {/* Preview button for all newsletters with content */}
+          {newsletter.content_mdx && (
+            <Button
+              variant="outline"
+              onClick={() => setPreviewModalOpen(true)}
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Preview Email
+            </Button>
+          )}
+          
           {(newsletter.status === 'draft' || newsletter.status === 'scheduled') && (
             <>
               <ConfirmDialog
@@ -386,6 +399,15 @@ export default function AdminViewNewsletterPage() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Preview Modal */}
+      <NewsletterPreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => setPreviewModalOpen(false)}
+        subject={newsletter.subject}
+        contentMdx={newsletter.content_mdx}
+        templateName={newsletter.template_name}
+      />
     </div>
   )
 }
