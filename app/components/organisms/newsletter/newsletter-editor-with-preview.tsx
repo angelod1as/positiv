@@ -66,6 +66,11 @@ export function NewsletterEditorWithPreview({
         signal: controller.signal
       })
       
+      // Check if the response is ok
+      if (!response.ok) {
+        throw new Error(`Preview API error: ${response.status} ${response.statusText}`)
+      }
+      
       const data = await response.json()
       
       // Only update state if still mounted and this request wasn't aborted
@@ -86,8 +91,18 @@ export function NewsletterEditorWithPreview({
       
       // Only update state if still mounted and this request wasn't aborted
       if (isMountedRef.current && abortControllerRef.current === controller) {
+        let errorMessage = 'Falha ao gerar preview. Por favor, tente novamente.'
+        
+        if (err instanceof Error) {
+          if (err.message.includes('404')) {
+            errorMessage = 'Serviço de preview não disponível. Por favor, recarregue a página e tente novamente.'
+          } else if (err.message.includes('Preview API error')) {
+            errorMessage = 'Erro no serviço de preview. Por favor, tente novamente.'
+          }
+        }
+        
         setError({
-          message: 'Failed to generate preview. Please try again.',
+          message: errorMessage,
           line: null
         })
         setPreview('')
@@ -131,7 +146,7 @@ export function NewsletterEditorWithPreview({
           {isLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
-              Generating preview...
+              Gerando preview...
             </div>
           )}
         </div>
@@ -148,9 +163,9 @@ export function NewsletterEditorWithPreview({
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>MDX Error</AlertTitle>
+            <AlertTitle>Erro MDX</AlertTitle>
             <AlertDescription>
-              {error.line && <span className="font-semibold">Line {error.line}: </span>}
+              {error.line && <span className="font-semibold">Linha {error.line}: </span>}
               {error.message}
             </AlertDescription>
           </Alert>
@@ -162,14 +177,14 @@ export function NewsletterEditorWithPreview({
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium">Preview</label>
           {preview && !isLoading && (
-            <span className="text-sm text-green-600">Live preview</span>
+            <span className="text-sm text-green-600">Preview ao vivo</span>
           )}
         </div>
         
         <div className="border rounded-md overflow-hidden bg-gray-50 min-h-[500px]">
           {!value.trim() ? (
             <div className="flex items-center justify-center h-[500px] text-muted-foreground">
-              <p>Start typing to see preview</p>
+              <p>Comece a digitar para ver o preview</p>
             </div>
           ) : isLoading && !preview ? (
             <div className="flex items-center justify-center h-[500px]">
@@ -180,7 +195,7 @@ export function NewsletterEditorWithPreview({
               <div className="text-center">
                 <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                 <p className="text-sm text-muted-foreground">
-                  Fix the error to see preview
+                  Corrija o erro para ver o preview
                 </p>
               </div>
             </div>
