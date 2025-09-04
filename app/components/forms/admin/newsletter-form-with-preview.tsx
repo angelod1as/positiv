@@ -237,7 +237,7 @@ export function NewsletterFormWithPreview({
             <select 
               name="segment_type" 
               value={watch('segment_type') || 'all'}
-              onChange={(e) => setValue('segment_type', e.target.value as any)}
+              onChange={(e) => setValue('segment_type', e.target.value as 'all' | 'veterans' | 'newbies' | 'never_attended' | 'has_attended' | 'never_applied' | 'applied_never_attended')}
               className="sr-only"
               aria-hidden="true"
             >
