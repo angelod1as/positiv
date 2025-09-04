@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-229-newsletter-metadata',
+    title: '📊 Informações detalhadas sobre o envio de newsletters!',
+    content: 'Agora você pode ver todas as informações sobre newsletters enviadas! Ao visualizar uma newsletter que foi enviada, você verá: o segmento selecionado, quantas pessoas receberam, quando foi enviada e quem enviou. Essas informações ficam preservadas para histórico e não podem ser alteradas depois do envio.',
+    isAdmin: true,
+    createdAt: new Date('2025-09-04T14:00:00'), // September 4, 2025, 2PM
+    isActive: true,
+  },
+  {
     id: 'pos-230-event-scheduling',
     title: '📅 Publicação automática de eventos disponível!',
     content: 'Os eventos agora podem ser publicados automaticamente! Ao criar ou editar um evento, você pode marcar a opção "Publicar automaticamente" para que o evento seja liberado para inscrições na data e hora configuradas. Não precisa mais ficar lembrando de abrir as inscrições manualmente!',

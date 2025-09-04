@@ -49,12 +49,19 @@ export async function processScheduledNewsletters(
 
       console.info(`Processing newsletter: ${newsletter.id} - ${newsletter.subject}`)
 
+      // Parse segment filter from newsletter
+      const segmentFilter = newsletter.segment_filter 
+        ? typeof newsletter.segment_filter === 'string'
+          ? JSON.parse(newsletter.segment_filter)
+          : newsletter.segment_filter
+        : undefined
+      
       // Process the newsletter queue with error handling
       const processResult = await safeExecute(() =>
         processNewsletterQueue(
           kysely,
           newsletter.id,
-          undefined, // No segment filter for now (will be added later)
+          segmentFilter,
           {
             batchSize: 50,
             delayMs: 1000, // 1 second between emails for SES rate limit
