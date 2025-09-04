@@ -145,7 +145,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       template_name: parsedData.template_name,
       content_mdx: parsedData.content_mdx,
       scheduled_at: parsedData.scheduled_at,
-      status: 'draft',
+      status: parsedData.scheduled_at ? 'scheduled' : 'draft',
       segment_filter: segmentFilter,
       exclude_rejected: parsedData.exclude_rejected,
     })
