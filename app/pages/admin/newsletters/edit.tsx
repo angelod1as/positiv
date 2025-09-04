@@ -1,12 +1,9 @@
-import { formAction } from "remix-forms"
 import { redirectWithSuccess, redirectWithToast } from "remix-toast"
-import { applySchema } from "composable-functions"
-import { z } from "zod"
 import { useFetcher } from "react-router"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { getNewsletterById, updateNewsletter, sendNewsletterNow } from "~/business/admin/newsletter/newsletter.server"
 import { newsletterFormSchema, type SegmentFilter } from "~/business/admin/newsletter/newsletter-schema"
-import { NewsletterForm } from "~/components/forms/admin/newsletter-form"
+import { NewsletterFormWithPreview } from "~/components/forms/admin/newsletter-form-with-preview"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/edit"
 
@@ -52,16 +49,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 }
 
-const updateNewsletterMutation = applySchema(
-  newsletterFormSchema,
-  z.object({ newsletterId: z.string() })
-)(async (data, context) => {
-  const newsletter = await updateNewsletter(context.newsletterId, {
-    ...data,
-    status: data.status || 'draft',
-  })
-  return { success: true as const, data: newsletter }
-})
 
 export async function action({ request, params }: Route.ActionArgs) {
   await getAdminContext(request, params)
@@ -99,21 +86,88 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
   }
   
-  return formAction({
-    request,
-    schema: newsletterFormSchema,
-    mutation: updateNewsletterMutation,
-    transformResult: async (result) => {
-      if (result.success) {
-        throw await redirectWithSuccess(
-          ADMIN_VIEW_NEWSLETTER(newsletterId),
-          "Newsletter atualizada com sucesso"
-        )
+  // Handle Update action
+  try {
+    const data = await request.formData()
+    const rawData = Object.fromEntries(data)
+    
+    // Parse the form data with the schema
+    const parseResult = newsletterFormSchema.safeParse({
+      subject: rawData.subject,
+      template_name: rawData.template_name,
+      content_mdx: rawData.content_mdx,
+      scheduled_at: rawData.scheduled_at || undefined,
+      segment_type: rawData.segment_type || 'all',
+      exclude_rejected: rawData.exclude_rejected === 'true',
+    })
+    
+    if (!parseResult.success) {
+      return { 
+        success: false, 
+        errors: parseResult.error.flatten().fieldErrors 
       }
-      return result
-    },
-    context: { newsletterId },
-  })
+    }
+    
+    const parsedData = parseResult.data
+    
+    // Convert segment_type to segment_filter
+    const segmentFilter: Record<string, unknown> = {
+      excludeRejected: parsedData.exclude_rejected ?? true
+    }
+    
+    switch (parsedData.segment_type) {
+      case 'veterans':
+        segmentFilter.veteransOnly = true
+        break
+      case 'newbies':
+        segmentFilter.newbiesOnly = true
+        break
+      case 'never_attended':
+        segmentFilter.activityType = 'never_attended'
+        break
+      case 'has_attended':
+        segmentFilter.activityType = 'has_attended'
+        break
+      case 'never_applied':
+        segmentFilter.activityType = 'never_applied'
+        break
+      case 'applied_never_attended':
+        segmentFilter.activityType = 'applied_never_attended'
+        break
+      case 'all':
+      default:
+        // No additional filters for 'all'
+        break
+    }
+    
+    await updateNewsletter(newsletterId, {
+      subject: parsedData.subject,
+      template_name: parsedData.template_name,
+      content_mdx: parsedData.content_mdx,
+      scheduled_at: parsedData.scheduled_at,
+      status: 'draft',
+      segment_filter: segmentFilter,
+      exclude_rejected: parsedData.exclude_rejected,
+    })
+    
+    throw await redirectWithSuccess(
+      ADMIN_VIEW_NEWSLETTER(newsletterId),
+      "Newsletter atualizada com sucesso"
+    )
+  } catch (error) {
+    if (error instanceof Response) {
+      throw error
+    }
+    
+    console.error('Error updating newsletter:', error)
+    throw await redirectWithToast(
+      ADMIN_VIEW_NEWSLETTER(newsletterId),
+      {
+        message: 'Erro ao atualizar newsletter',
+        type: 'error'
+      }
+    )
+  }
 }
 
 export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentProps) {
@@ -138,7 +192,7 @@ export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentP
         </p>
       </div>
       
-      <NewsletterForm 
+      <NewsletterFormWithPreview 
         newsletter={newsletter} 
         onSendNow={handleSendNow}
       />
