@@ -2,16 +2,18 @@ import { Link, useLoaderData, useFetcher } from 'react-router'
 import { redirectWithToast, redirectWithSuccess } from 'remix-toast'
 import { useState } from 'react'
 import { getAdminContext } from '~/business/admin/admin.server'
-import { getNewsletterById, sendNewsletterNow } from '~/business/admin/newsletter/newsletter.server'
+import { sendNewsletterNow } from '~/business/admin/newsletter/newsletter.server'
 import { processScheduledNewsletters } from '~/business/admin/newsletter/newsletter-scheduler.server'
 import { deleteNewsletter } from '~/business/admin/newsletter/delete-newsletter.server'
+import { getNewsletterWithMetadata, formatSegmentDescription, formatSenderName } from '~/business/admin/newsletter/newsletter-metadata.server'
 import { db } from '~/lib/supabase/db.server'
 import { withErrorRedirect } from '~/lib/helpers/error-handling'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
-import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2, Eye } from 'lucide-react'
+import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2, Eye, Users, User } from 'lucide-react'
 import { format, isPast } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import paths from '~/lib/paths'
 import ConfirmDialog from '~/components/molecules/confirm-dialog/confirm-dialog'
 import { NewsletterPreviewModal } from '~/components/organisms/newsletter/newsletter-preview-modal'
@@ -34,7 +36,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
   
-  const newsletter = await getNewsletterById(newsletterId)
+  const newsletter = await getNewsletterWithMetadata(newsletterId)
   
   if (!newsletter) {
     throw await redirectWithToast(
@@ -329,6 +331,69 @@ export default function AdminViewNewsletterPage() {
               </CardContent>
             </Card>
           </div>
+          
+          {/* Metadata section for sent newsletters */}
+          {(newsletter.status === 'sent' || newsletter.status === 'sending') && (
+            <div className="space-y-2">
+              <h3 className="font-semibold">Informações de Envio</h3>
+              <Card>
+                <CardContent className="pt-6 space-y-4">
+                  {/* Segment information */}
+                  <div className="flex items-start gap-3">
+                    <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Segmento</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatSegmentDescription(newsletter.segment_filter, newsletter.exclude_rejected)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Recipient count */}
+                  {newsletter.total_recipients !== null && (
+                    <div className="flex items-start gap-3">
+                      <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Destinatários</p>
+                        <p className="text-sm text-muted-foreground">
+                          {newsletter.total_recipients} {newsletter.total_recipients === 1 ? 'destinatário' : 'destinatários'}
+                          {newsletter.successful_sends !== null && newsletter.failed_sends !== null && (
+                            <span className="ml-2">
+                              ({newsletter.successful_sends} enviados, {newsletter.failed_sends} falharam)
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Send timestamp */}
+                  {newsletter.sent_at && (
+                    <div className="flex items-start gap-3">
+                      <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">Data de Envio</p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(newsletter.sent_at), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Sender information */}
+                  <div className="flex items-start gap-3">
+                    <User className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Enviado por</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatSenderName(newsletter.creator_name, newsletter.creator_email)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
           
           {newsletter.status === 'draft' && (
             <div className="pt-4 border-t">
