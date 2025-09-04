@@ -51,41 +51,74 @@ export async function action({ request, params }: ActionArgs) {
     } catch (mdxError) {
       // Parse error for line number
       const error = mdxError instanceof Error ? mdxError.message : String(mdxError)
-      const lineMatch = error.match(/line (\d+)|Line (\d+)|at position \((\d+):/)
-      const line = lineMatch 
-        ? parseInt(lineMatch[1] || lineMatch[2] || lineMatch[3]) 
-        : null
+      
+      // Try multiple patterns for line number extraction
+      let line: number | null = null
+      const linePatterns = [
+        /line (\d+)/i,
+        /Line (\d+)/,
+        /at position \((\d+):/,
+        /:(\d+):\d+/,  // Common format like file.mdx:15:3
+        /\((\d+):(\d+)\)/  // Alternative format (15:3)
+      ]
+      
+      for (const pattern of linePatterns) {
+        const match = error.match(pattern)
+        if (match && match[1]) {
+          line = parseInt(match[1])
+          if (!isNaN(line)) break
+        }
+      }
       
       // Clean up error message for user
       let message = error
       
-      // Handle common MDX errors
-      if (error.includes('Could not parse')) {
-        message = 'Invalid MDX syntax: ' + error.replace(/^.*?Could not parse[^\n]*\n?/, '')
-      } else if (error.includes('to be defined')) {
-        // Component not found error
-        const componentMatch = error.match(/`(\w+)` to be defined/)
-        if (componentMatch) {
-          message = `Unknown component: ${componentMatch[1]}. Available components: EventCard, Button, Divider, Quote`
-        } else {
-          message = error // Keep original if we can't parse it
-        }
-      } else if (error.includes('Expected component')) {
-        // Alternative format for component not found
-        const componentMatch = error.match(/Expected component `(\w+)`/)
-        if (componentMatch) {
-          message = `Unknown component: ${componentMatch[1]}. Available components: EventCard, Button, Divider, Quote`
-        } else {
+      // Handle common MDX errors with safer parsing
+      try {
+        if (error.includes('Could not parse')) {
+          const cleanMessage = error.split('Could not parse')[1]
+          if (cleanMessage) {
+            message = 'Invalid MDX syntax:' + cleanMessage.split('\n')[0]
+          } else {
+            message = 'Invalid MDX syntax in your content'
+          }
+        } else if (error.includes('to be defined') || error.includes('Expected component')) {
+          // Component not found error - try multiple patterns
+          const componentPatterns = [
+            /`(\w+)` to be defined/,
+            /Expected component `(\w+)`/,
+            /Unknown component: (\w+)/
+          ]
+          
+          let componentName: string | null = null
+          for (const pattern of componentPatterns) {
+            const match = error.match(pattern)
+            if (match && match[1]) {
+              componentName = match[1]
+              break
+            }
+          }
+          
+          if (componentName) {
+            message = `Unknown component: ${componentName}. Available components: EventCard, Button, Divider, Quote`
+          } else {
+            message = 'Unknown component used in content. Available components: EventCard, Button, Divider, Quote'
+          }
+        } else if (error.includes('Expected')) {
+          // Extract the useful part of the error
+          const expectedMatch = error.match(/Expected (.+?)(?:\n|$)/)
+          if (expectedMatch && expectedMatch[1]) {
+            message = `MDX Error: Expected ${expectedMatch[1].trim()}`
+          } else {
+            message = 'MDX syntax error in your content'
+          }
+        } else if (error.includes('not allowed')) {
+          // Security errors should be shown as-is
           message = error
         }
-      } else if (error.includes('Expected')) {
-        // Extract the useful part of the error
-        const expectedMatch = error.match(/Expected (.+?)(?:\n|$)/)
-        if (expectedMatch) {
-          message = `MDX Error: Expected ${expectedMatch[1]}`
-        }
-      } else if (error.includes('not allowed')) {
-        message = error // Security errors should be shown as-is
+      } catch {
+        // If any parsing fails, use a safe fallback
+        message = 'MDX parsing error. Please check your content syntax.'
       }
       
       return Response.json({ 

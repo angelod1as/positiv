@@ -141,7 +141,9 @@ export function NewsletterFormWithPreview({
             <Label htmlFor="template_name">Modelo</Label>
             <Select
               value={templateName}
-              onValueChange={(value) => setValue('template_name', value as 'general-news' | 'event-announcement')}
+              onValueChange={(value) => {
+                setValue('template_name', value as 'general-news' | 'event-announcement')
+              }}
             >
               <SelectTrigger id="template_name">
                 <SelectValue />
@@ -151,7 +153,8 @@ export function NewsletterFormWithPreview({
                 <SelectItem value="event-announcement">Anúncio de Evento</SelectItem>
               </SelectContent>
             </Select>
-            <input type="hidden" {...register('template_name')} />
+            {/* Hidden input with current value for form submission */}
+            <input type="hidden" name="template_name" value={templateName} />
             {errors.template_name && (
               <p className="text-sm text-destructive">{errors.template_name.message}</p>
             )}
@@ -162,11 +165,14 @@ export function NewsletterFormWithPreview({
             <Label htmlFor="content_mdx">Conteúdo (MDX)</Label>
             <NewsletterEditorWithPreview
               value={contentMdx}
-              onChange={(value) => setValue('content_mdx', value)}
+              onChange={(value) => {
+                setValue('content_mdx', value)
+              }}
               templateName={templateName}
               placeholder="# Título da Newsletter&#10;&#10;Escreva o conteúdo da sua newsletter aqui usando Markdown..."
             />
-            <input type="hidden" {...register('content_mdx')} />
+            {/* Hidden input with current value for form submission */}
+            <input type="hidden" name="content_mdx" value={contentMdx} />
             {errors.content_mdx && (
               <p className="text-sm text-destructive">{errors.content_mdx.message}</p>
             )}
@@ -191,7 +197,9 @@ export function NewsletterFormWithPreview({
             <Label htmlFor="segment_type">Segmento de Público</Label>
             <Select
               value={watch('segment_type') || 'all'}
-              onValueChange={(value) => setValue('segment_type', value as 'all' | 'veterans' | 'newbies' | 'never_attended' | 'has_attended' | 'never_applied' | 'applied_never_attended')}
+              onValueChange={(value) => {
+                setValue('segment_type', value as 'all' | 'veterans' | 'newbies' | 'never_attended' | 'has_attended' | 'never_applied' | 'applied_never_attended')
+              }}
             >
               <SelectTrigger id="segment_type">
                 <SelectValue />
@@ -206,7 +214,8 @@ export function NewsletterFormWithPreview({
                 <SelectItem value="applied_never_attended">Se inscreveu mas nunca participou</SelectItem>
               </SelectContent>
             </Select>
-            <input type="hidden" {...register('segment_type')} />
+            {/* Hidden input with current value for form submission */}
+            <input type="hidden" name="segment_type" value={watch('segment_type') || 'all'} />
             {errors.segment_type && (
               <p className="text-sm text-destructive">{errors.segment_type.message}</p>
             )}
@@ -217,7 +226,9 @@ export function NewsletterFormWithPreview({
             <Checkbox
               id="exclude_rejected"
               checked={watch('exclude_rejected')}
-              onChange={(e) => setValue('exclude_rejected', e.target.checked)}
+              onChange={(e) => {
+                setValue('exclude_rejected', (e.target as HTMLInputElement).checked)
+              }}
             />
             <div className="space-y-1">
               <Label
@@ -227,7 +238,8 @@ export function NewsletterFormWithPreview({
                 Excluir participantes rejeitados
               </Label>
             </div>
-            <input type="hidden" {...register('exclude_rejected')} value={String(watch('exclude_rejected'))} />
+            {/* Hidden input with string value for form submission */}
+            <input type="hidden" name="exclude_rejected" value={String(watch('exclude_rejected'))} />
           </div>
 
           {/* Submit Button */}
