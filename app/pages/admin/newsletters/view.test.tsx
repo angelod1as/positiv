@@ -4,7 +4,8 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { loader, action } from './view'
 import AdminViewNewsletterPage from './view'
-import { getNewsletterById, sendNewsletterNow } from '~/business/admin/newsletter/newsletter.server'
+import { sendNewsletterNow } from '~/business/admin/newsletter/newsletter.server'
+import { getNewsletterWithMetadata } from '~/business/admin/newsletter/newsletter-metadata.server'
 import { redirectWithSuccess } from 'remix-toast'
 
 // Mock dependencies
@@ -24,8 +25,13 @@ vi.mock('~/business/admin/admin.server', () => ({
 }))
 
 vi.mock('~/business/admin/newsletter/newsletter.server', () => ({
-  getNewsletterById: vi.fn(),
   sendNewsletterNow: vi.fn(),
+}))
+
+vi.mock('~/business/admin/newsletter/newsletter-metadata.server', () => ({
+  getNewsletterWithMetadata: vi.fn(),
+  formatSegmentDescription: vi.fn(() => 'Todos os inscritos'),
+  formatSenderName: vi.fn((name) => name || 'Sistema'),
 }))
 
 vi.mock('~/business/admin/newsletter/delete-newsletter.server', () => ({
@@ -70,6 +76,11 @@ vi.mock('react-router', () => ({
   useFetcher: () => mockUseFetcher(),
 }))
 
+// Mock Newsletter preview modal
+vi.mock('~/components/organisms/newsletter/newsletter-preview-modal', () => ({
+  NewsletterPreviewModal: vi.fn(() => null),
+}))
+
 describe('View Newsletter Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -98,8 +109,8 @@ describe('View Newsletter Page', () => {
         segment_filter: null,
       }
       
-      const mockGetNewsletterById = vi.mocked(getNewsletterById)
-      mockGetNewsletterById.mockResolvedValue(mockNewsletter)
+      const mockGetNewsletterWithMetadata = vi.mocked(getNewsletterWithMetadata)
+      mockGetNewsletterWithMetadata.mockResolvedValue(mockNewsletter)
       
       const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123')
       const result = await loader({ 
@@ -107,13 +118,13 @@ describe('View Newsletter Page', () => {
         params: { id: 'newsletter-123' }
       } as any)
       
-      expect(mockGetNewsletterById).toHaveBeenCalledWith('newsletter-123')
+      expect(mockGetNewsletterWithMetadata).toHaveBeenCalledWith('newsletter-123')
       expect(result).toEqual({ newsletter: mockNewsletter })
     })
 
     it('should redirect if newsletter not found', async () => {
-      const mockGetNewsletterById = vi.mocked(getNewsletterById)
-      mockGetNewsletterById.mockResolvedValue(undefined)
+      const mockGetNewsletterWithMetadata = vi.mocked(getNewsletterWithMetadata)
+      mockGetNewsletterWithMetadata.mockResolvedValue(null)
       
       const request = new Request('http://localhost:3000/admin/newsletters/invalid-id')
       
@@ -122,7 +133,7 @@ describe('View Newsletter Page', () => {
         params: { id: 'invalid-id' }
       } as any)).rejects.toThrow()
       
-      expect(mockGetNewsletterById).toHaveBeenCalledWith('invalid-id')
+      expect(mockGetNewsletterWithMetadata).toHaveBeenCalledWith('invalid-id')
     })
 
     it('should handle missing id parameter', async () => {
@@ -133,7 +144,7 @@ describe('View Newsletter Page', () => {
         params: {}
       } as any)).rejects.toThrow()
       
-      expect(getNewsletterById).not.toHaveBeenCalled()
+      expect(getNewsletterWithMetadata).not.toHaveBeenCalled()
     })
   })
 
