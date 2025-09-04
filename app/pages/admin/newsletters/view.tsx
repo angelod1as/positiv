@@ -45,7 +45,15 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
   
-  return { newsletter }
+  // Format metadata on the server side
+  const formattedSegment = formatSegmentDescription(newsletter.segment_filter, newsletter.exclude_rejected)
+  const formattedSender = formatSenderName(newsletter.creator_name, newsletter.creator_email)
+  
+  return { 
+    newsletter,
+    formattedSegment,
+    formattedSender
+  }
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -155,7 +163,7 @@ const formatStatusText = (status: string) => {
 }
 
 export default function AdminViewNewsletterPage() {
-  const { newsletter } = useLoaderData<typeof loader>()
+  const { newsletter, formattedSegment, formattedSender } = useLoaderData<typeof loader>()
   const fetcher = useFetcher()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [sendNowDialogOpen, setSendNowDialogOpen] = useState(false)
@@ -344,7 +352,7 @@ export default function AdminViewNewsletterPage() {
                     <div className="space-y-1">
                       <p className="text-sm font-medium">Segmento</p>
                       <p className="text-sm text-muted-foreground">
-                        {formatSegmentDescription(newsletter.segment_filter, newsletter.exclude_rejected)}
+                        {formattedSegment}
                       </p>
                     </div>
                   </div>
@@ -386,7 +394,7 @@ export default function AdminViewNewsletterPage() {
                     <div className="space-y-1">
                       <p className="text-sm font-medium">Enviado por</p>
                       <p className="text-sm text-muted-foreground">
-                        {formatSenderName(newsletter.creator_name, newsletter.creator_email)}
+                        {formattedSender}
                       </p>
                     </div>
                   </div>
