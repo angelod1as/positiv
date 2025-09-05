@@ -17,6 +17,22 @@ Object.defineProperty(navigator, 'clipboard', {
   configurable: true,
 })
 
+// Mock pointer capture API for Radix UI
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = vi.fn().mockReturnValue(false)
+}
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = vi.fn()
+}
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = vi.fn()
+}
+
+// Mock scrollIntoView for Radix UI Select
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = vi.fn()
+}
+
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
