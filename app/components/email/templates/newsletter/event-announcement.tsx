@@ -1,7 +1,6 @@
 import {
   Body,
   Container,
-  Font,
   Head,
   Heading,
   Html,
@@ -38,16 +37,6 @@ export const EventAnnouncement = ({
               content="width=device-width, initial-scale=1.0"
             />
             <title>{`${subject} - Positiv Party`}</title>
-            <Font
-              fontFamily="Nunito"
-              fallbackFontFamily="Verdana"
-              webFont={{
-                url: "https://fonts.gstatic.com/s/nunito/v26/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshdTo3j6zbXWjgevT5.woff2",
-                format: "woff2",
-              }}
-              fontWeight={400}
-              fontStyle="normal"
-            />
           </Head>
           <Preview>{subject}</Preview>
           <Body className="bg-black bg-no-repeat bg-positiv-gradient font-sans min-h-screen">
@@ -56,7 +45,7 @@ export const EventAnnouncement = ({
                 <EmailHeader />
 
                 {/* Event Announcement Banner */}
-                <Section className="bg-gradient-to-r from-purple to-green text-white rounded-lg p-6 mb-6 text-center">
+                <Section className="rounded-lg p-6 mb-6 text-center">
                   <Heading as="h2" className="text-2xl font-bold m-0">
                     🎉 Anúncio de Evento
                   </Heading>
