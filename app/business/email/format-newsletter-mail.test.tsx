@@ -39,8 +39,8 @@ describe("formatNewsletterMail", () => {
       expect(result.html).toContain("@font-face")
       expect(result.html).toContain("font-family: 'Nunito'")
       
-      // Check for regular font weight 400
-      expect(result.html).toContain("font-weight: 400")
+      // Check for bold font weight 700
+      expect(result.html).toContain("font-weight: 700")
       expect(result.html).toContain("https://fonts.gstatic.com/s/nunito/v26/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshdTo3j6zbXWjgevT5.woff2")
       
       // Note: React Email v0.0.40 has limitations with multiple Font components
