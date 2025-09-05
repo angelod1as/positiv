@@ -1,7 +1,6 @@
 import {
   Body,
   Container,
-  Font,
   Head,
   Heading,
   Html,
@@ -38,16 +37,6 @@ export const GeneralNews = ({
               content="width=device-width, initial-scale=1.0"
             />
             <title>{`${subject} - Positiv Party`}</title>
-            <Font
-              fontFamily="Nunito"
-              fallbackFontFamily="Verdana"
-              webFont={{
-                url: "https://fonts.gstatic.com/s/nunito/v26/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshdTo3j6zbXWjgevT5.woff2",
-                format: "woff2",
-              }}
-              fontWeight={400}
-              fontStyle="normal"
-            />
           </Head>
           <Preview>{subject}</Preview>
           <Body className="bg-black bg-no-repeat bg-positiv-gradient font-sans min-h-screen">
@@ -56,11 +45,8 @@ export const GeneralNews = ({
                 <EmailHeader />
 
                 {/* General News Header */}
-                <Section className="border-b-2 border-lightgreen pb-4 mb-6">
-                  <Heading
-                    as="h2"
-                    className="text-2xl font-bold text-purple m-0"
-                  >
+                <Section className="border-b-2  pb-4 mb-6">
+                  <Heading as="h2" className="text-2xl font-bold m-0">
                     📰 Novidades da Comunidade
                   </Heading>
                 </Section>

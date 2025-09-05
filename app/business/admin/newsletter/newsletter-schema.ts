@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const segmentFilterSchema = z.object({
+  adminsOnly: z.boolean().optional(),
   veteransOnly: z.boolean().optional(),
   newbiesOnly: z.boolean().optional(),
   activityType: z.enum([
@@ -23,6 +24,7 @@ export const newsletterFormSchema = z.object({
   status: z.enum(['draft', 'scheduled']).optional(),
   segment_type: z.enum([
     'all',
+    'admins',
     'veterans',
     'newbies',
     'never_attended',
