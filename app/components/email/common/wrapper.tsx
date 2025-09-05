@@ -84,12 +84,14 @@ type EmailWrapperProps = {
   children: ReactNode
   pageTitle: string
   previewText: string
+  includeFooter?: boolean // Default true, set false for custom footer like newsletters
 }
 
 export const EmailWrapper: FC<EmailWrapperProps> = ({
   children,
   pageTitle,
   previewText,
+  includeFooter = true,
 }) => {
   return (
     <Html lang="pt-BR">
@@ -108,7 +110,7 @@ export const EmailWrapper: FC<EmailWrapperProps> = ({
                 url: "https://fonts.gstatic.com/s/nunito/v26/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshdTo3j6zbXWjgevT5.woff2",
                 format: "woff2",
               }}
-              fontWeight={400}
+              fontWeight={700}
               fontStyle="normal"
             />
           </Head>
@@ -118,7 +120,7 @@ export const EmailWrapper: FC<EmailWrapperProps> = ({
               <Container className="max-w-md p-4">
                 <EmailHeader />
                 <Section>{children}</Section>
-                <EmailFooter />
+                {includeFooter && <EmailFooter />}
               </Container>
             </Container>
           </Body>

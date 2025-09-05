@@ -105,5 +105,9 @@ export default [
         route("/:id/edit", "pages/admin/newsletters/edit.tsx"),
       ]),
     ]),
+    // API Routes
+    ...prefix("api/admin", [
+      route("/newsletters/preview", "routes/api/admin/newsletters/preview.ts"),
+    ]),
   ]),
 ] satisfies RouteConfig

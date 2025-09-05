@@ -73,4 +73,23 @@ describe("SegmentSelector", () => {
       excludeRejected: false,
     }))
   })
+  
+  it("should handle admins segment selection", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    
+    render(<SegmentSelector value={{}} onChange={onChange} />)
+    
+    const dropdown = screen.getByLabelText(/audience segment/i)
+    await user.click(dropdown)
+    
+    // Find and click the admins option
+    const adminsOption = screen.getByText("Admins only")
+    await user.click(adminsOption)
+    
+    expect(onChange).toHaveBeenCalledWith({
+      adminsOnly: true,
+      excludeRejected: true,
+    })
+  })
 })

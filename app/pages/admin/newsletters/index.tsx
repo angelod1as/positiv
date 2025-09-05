@@ -1,11 +1,16 @@
-import { Link, useLoaderData } from 'react-router'
+import { Link, useLoaderData, useFetcher } from 'react-router'
+import { redirectWithToast } from 'remix-toast'
+import { useState } from 'react'
 import { getAllNewslettersWithCounts } from '~/business/admin/newsletter/newsletter.server'
+import { deleteNewsletter } from '~/business/admin/newsletter/delete-newsletter.server'
 import { NewsletterTable } from '~/components/organisms/tables/admin/newsletter-table'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Mail, Send, FileText } from 'lucide-react'
 import type { Route } from './+types/index'
 import { getAdminContext } from '~/business/admin/admin.server'
+import ConfirmDialog from '~/components/molecules/confirm-dialog/confirm-dialog'
+import { withErrorRedirect } from '~/lib/helpers/error-handling'
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   await getAdminContext(request, params)
@@ -15,8 +20,35 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { newsletters }
 }
 
+export async function action({ request, params }: Route.ActionArgs) {
+  await getAdminContext(request, params)
+  
+  const formData = await request.formData()
+  const intent = formData.get('intent')
+  const newsletterId = formData.get('newsletterId')
+  
+  if (intent === 'delete' && typeof newsletterId === 'string') {
+    return withErrorRedirect(
+      () => deleteNewsletter(newsletterId),
+      {
+        redirectPath: '/admin/newsletters',
+        successMessage: "Newsletter excluída com sucesso",
+        errorMessage: "Erro ao excluir newsletter",
+      }
+    )
+  }
+  
+  throw await redirectWithToast(
+    '/admin/newsletters',
+    { message: "Ação inválida", type: "error" }
+  )
+}
+
 export default function NewslettersPage() {
   const { newsletters } = useLoaderData<typeof loader>()
+  const fetcher = useFetcher()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [selectedNewsletterId, setSelectedNewsletterId] = useState<string | null>(null)
   
   const totalNewsletters = newsletters.length
   const sentNewsletters = newsletters.filter(n => n.status === 'sent').length
@@ -80,7 +112,37 @@ export default function NewslettersPage() {
           </CardContent>
         </Card>
       ) : (
-        <NewsletterTable newsletters={newsletters} />
+        <>
+          <NewsletterTable
+            newsletters={newsletters}
+            onDelete={(id) => {
+              setSelectedNewsletterId(id)
+              setDeleteDialogOpen(true)
+            }}
+          />
+          <ConfirmDialog
+            title="Excluir Newsletter"
+            description="Tem certeza que deseja excluir esta newsletter? Esta ação não pode ser desfeita."
+            confirmLabel="Excluir"
+            cancelLabel="Cancelar"
+            onConfirm={() => {
+              if (selectedNewsletterId && fetcher.state === 'idle') {
+                fetcher.submit(
+                  {
+                    intent: 'delete',
+                    newsletterId: selectedNewsletterId,
+                  },
+                  { method: 'POST' }
+                )
+                setDeleteDialogOpen(false)
+                setSelectedNewsletterId(null)
+              }
+            }}
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
+            isLoading={fetcher.state !== 'idle'}
+          />
+        </>
       )}
     </div>
   )

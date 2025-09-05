@@ -1,5 +1,5 @@
 import { format } from "date-fns"
-import { Eye, Pencil } from "lucide-react"
+import { Eye, Pencil, Trash2 } from "lucide-react"
 import { Link } from "react-router"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
@@ -36,6 +36,7 @@ interface Newsletter {
 
 interface NewsletterTableProps {
   newsletters: Newsletter[]
+  onDelete?: (id: string) => void
 }
 
 const getStatusBadgeVariant = (status: NewsletterStatus) => {
@@ -95,7 +96,7 @@ const getDisplayDate = (newsletter: Newsletter) => {
   return new Date(newsletter.created_at)
 }
 
-export function NewsletterTable({ newsletters }: NewsletterTableProps) {
+export function NewsletterTable({ newsletters, onDelete }: NewsletterTableProps) {
   if (newsletters.length === 0) {
     return (
       <Card>
@@ -157,6 +158,16 @@ export function NewsletterTable({ newsletters }: NewsletterTableProps) {
                           <Pencil className="h-4 w-4 mr-1" />
                         </Button>
                       </Link>
+                    )}
+                    {(newsletter.status === "draft" || newsletter.status === "scheduled") && onDelete && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Excluir"
+                        onClick={() => onDelete(newsletter.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                      </Button>
                     )}
                   </div>
                 </TableCell>
