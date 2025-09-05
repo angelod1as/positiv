@@ -52,11 +52,11 @@ Join us for an amazing night!
       const result = await processMDXContent(mdxContent)
 
       expect(result.html).toContain("Summer Party")
-      expect(result.html).toContain("Date:")
+      expect(result.html).toContain("Data:")
       expect(result.html).toContain("2025-02-15")
-      expect(result.html).toContain("Location:")
+      expect(result.html).toContain("Local:")
       expect(result.html).toContain("São Paulo")
-      expect(result.html).toContain("Spots:")
+      expect(result.html).toContain("Vagas:")
       expect(result.html).toContain("50")
       
       // Plain text should also include the event details

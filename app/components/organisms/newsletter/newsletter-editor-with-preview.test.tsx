@@ -36,7 +36,7 @@ describe('NewsletterEditorWithPreview', () => {
     expect(screen.getByText('Editor')).toBeInTheDocument()
     expect(screen.getByText('Preview')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Enter content...')).toBeInTheDocument()
-    expect(screen.getByText('Start typing to see preview')).toBeInTheDocument()
+    expect(screen.getByText('Comece a digitar para ver o preview')).toBeInTheDocument()
   })
   
   it('should call onChange when typing', async () => {
@@ -72,6 +72,7 @@ describe('NewsletterEditorWithPreview', () => {
   it('should fetch and display preview when content changes', async () => {
     const mockHtml = '<html><body><h1>Hello</h1></body></html>'
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ success: true, html: mockHtml })
     } as Response)
     
@@ -114,6 +115,7 @@ describe('NewsletterEditorWithPreview', () => {
     }
     
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => errorResponse
     } as Response)
     
@@ -126,10 +128,97 @@ describe('NewsletterEditorWithPreview', () => {
     )
     
     await waitFor(() => {
-      expect(screen.getByText('MDX Error')).toBeInTheDocument()
-      expect(screen.getByText(/Line 5:/)).toBeInTheDocument()
+      expect(screen.getByText('Erro MDX')).toBeInTheDocument()
+      expect(screen.getByText(/Linha 5:/)).toBeInTheDocument()
       expect(screen.getByText(/Invalid MDX syntax: Expected closing tag/)).toBeInTheDocument()
-      expect(screen.getByText('Fix the error to see preview')).toBeInTheDocument()
+      expect(screen.getByText('Corrija o erro para ver o preview')).toBeInTheDocument()
+    })
+  })
+
+  it('should display detailed error for unknown MDX components', async () => {
+    const errorResponse = {
+      success: false,
+      error: {
+        message: 'Componente desconhecido: MyComponent. Componentes disponíveis: EventCard, Button, Divider, Quote',
+        line: null
+      }
+    }
+    
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => errorResponse
+    } as Response)
+    
+    render(
+      <NewsletterEditorWithPreview
+        value="<MyComponent />"
+        onChange={mockOnChange}
+        templateName="general-news"
+      />
+    )
+    
+    await waitFor(() => {
+      expect(screen.getByText('Erro MDX')).toBeInTheDocument()
+      expect(screen.getByText(/Componente desconhecido: MyComponent/)).toBeInTheDocument()
+      expect(screen.getByText(/Componentes disponíveis: EventCard, Button, Divider, Quote/)).toBeInTheDocument()
+    })
+  })
+
+  it('should display security error for JavaScript expressions', async () => {
+    const errorResponse = {
+      success: false,
+      error: {
+        message: 'Expressões JavaScript não são permitidas no conteúdo MDX por razões de segurança',
+        line: null
+      }
+    }
+    
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => errorResponse
+    } as Response)
+    
+    render(
+      <NewsletterEditorWithPreview
+        value="Hello {console.log('test')} world"
+        onChange={mockOnChange}
+        templateName="general-news"
+      />
+    )
+    
+    await waitFor(() => {
+      expect(screen.getByText('Erro MDX')).toBeInTheDocument()
+      expect(screen.getByText(/não são permitidas no conteúdo MDX por razões de segurança/)).toBeInTheDocument()
+    })
+  })
+
+  it('should not display generic error message when detailed error is available', async () => {
+    const errorResponse = {
+      success: false,
+      error: {
+        message: 'Invalid MDX syntax: Unexpected character at position 10',
+        line: 3
+      }
+    }
+    
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => errorResponse
+    } as Response)
+    
+    render(
+      <NewsletterEditorWithPreview
+        value="# Test\n\n<Invalid>"
+        onChange={mockOnChange}
+        templateName="general-news"
+      />
+    )
+    
+    await waitFor(() => {
+      expect(screen.getByText('Erro MDX')).toBeInTheDocument()
+      expect(screen.getByText(/Invalid MDX syntax: Unexpected character at position 10/)).toBeInTheDocument()
+      // Should NOT show generic error message
+      expect(screen.queryByText('Falha ao gerar preview. Por favor, tente novamente.')).not.toBeInTheDocument()
     })
   })
   
@@ -150,17 +239,18 @@ describe('NewsletterEditorWithPreview', () => {
     )
     
     await waitFor(() => {
-      expect(screen.getByText('Generating preview...')).toBeInTheDocument()
+      expect(screen.getByText('Gerando preview...')).toBeInTheDocument()
     })
     
     if (resolvePromise) {
       resolvePromise({
+        ok: true,
         json: async () => ({ success: true, html: '<h1>Test</h1>' })
       } as Response)
     }
     
     await waitFor(() => {
-      expect(screen.queryByText('Generating preview...')).not.toBeInTheDocument()
+      expect(screen.queryByText('Gerando preview...')).not.toBeInTheDocument()
     })
   })
   
@@ -177,11 +267,12 @@ describe('NewsletterEditorWithPreview', () => {
     await new Promise(resolve => setTimeout(resolve, 100))
     
     expect(fetch).not.toHaveBeenCalled()
-    expect(screen.getByText('Start typing to see preview')).toBeInTheDocument()
+    expect(screen.getByText('Comece a digitar para ver o preview')).toBeInTheDocument()
   })
   
   it('should update preview when template changes', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ success: true, html: '<h1>General</h1>' })
     } as Response)
     
@@ -203,6 +294,7 @@ describe('NewsletterEditorWithPreview', () => {
     })
     
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ success: true, html: '<h1>Event</h1>' })
     } as Response)
     
@@ -226,6 +318,7 @@ describe('NewsletterEditorWithPreview', () => {
   
   it('should show live preview indicator when preview is ready', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
       json: async () => ({ success: true, html: '<h1>Test</h1>' })
     } as Response)
     
@@ -238,7 +331,7 @@ describe('NewsletterEditorWithPreview', () => {
     )
     
     await waitFor(() => {
-      expect(screen.getByText('Live preview')).toBeInTheDocument()
+      expect(screen.getByText('Preview ao vivo')).toBeInTheDocument()
     })
   })
 })

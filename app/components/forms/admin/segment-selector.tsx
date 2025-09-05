@@ -20,6 +20,7 @@ interface SegmentSelectorProps {
 
 type SegmentType = 
   | "all"
+  | "admins"
   | "veterans"
   | "newbies"
   | "never_attended"
@@ -29,6 +30,7 @@ type SegmentType =
 
 const SEGMENT_OPTIONS: { value: SegmentType; label: string; description: string }[] = [
   { value: "all", label: "All subscribers", description: "Send to everyone who opted in" },
+  { value: "admins", label: "Admins only", description: "Send only to admin users (for testing)" },
   { value: "veterans", label: "Veterans only", description: "People who have attended before" },
   { value: "newbies", label: "Newbies only", description: "People who haven't attended yet" },
   { value: "never_attended", label: "Never attended any event", description: "Never participated in any event" },
@@ -45,6 +47,7 @@ export const SegmentSelector: FC<SegmentSelectorProps> = ({
   recipientPreview,
 }) => {
   const currentSegment = useMemo(() => {
+    if (value.adminsOnly) return "admins"
     if (value.veteransOnly) return "veterans"
     if (value.newbiesOnly) return "newbies"
     if (value.activityType === "never_attended") return "never_attended"
@@ -60,6 +63,9 @@ export const SegmentSelector: FC<SegmentSelectorProps> = ({
     }
     
     switch (segmentType) {
+      case "admins":
+        newFilter.adminsOnly = true
+        break
       case "veterans":
         newFilter.veteransOnly = true
         break

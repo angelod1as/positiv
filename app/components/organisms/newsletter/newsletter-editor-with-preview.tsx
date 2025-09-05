@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useDebounceFunction } from '~/lib/hooks/use-debounce'
 import { Alert, AlertDescription, AlertTitle } from '~/components/ui/alert'
 import { Loader2, AlertCircle } from 'lucide-react'
@@ -31,9 +31,9 @@ export function NewsletterEditorWithPreview({
   const [isLoading, setIsLoading] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
-  const isMountedRef = useRef(true)
   
-  const fetchPreview = async (content: string, template: string) => {
+  
+  const fetchPreview = useCallback(async (content: string, template: string) => {
     // Don't fetch if content is empty
     if (!content.trim()) {
       setPreview('')
@@ -66,10 +66,15 @@ export function NewsletterEditorWithPreview({
         signal: controller.signal
       })
       
+      // Check if the response is ok
+      if (!response.ok) {
+        throw new Error(`Preview API error: ${response.status} ${response.statusText}`)
+      }
+      
       const data = await response.json()
       
-      // Only update state if still mounted and this request wasn't aborted
-      if (isMountedRef.current && abortControllerRef.current === controller) {
+      // Only update state if this request wasn't aborted
+      if (abortControllerRef.current === controller) {
         if (data.success) {
           setPreview(data.html)
           setError(null)
@@ -84,31 +89,34 @@ export function NewsletterEditorWithPreview({
         return
       }
       
-      // Only update state if still mounted and this request wasn't aborted
-      if (isMountedRef.current && abortControllerRef.current === controller) {
+      // Only update state if this request wasn't aborted
+      if (abortControllerRef.current === controller) {
+        let errorMessage = 'Falha ao gerar preview. Por favor, tente novamente.'
+        
+        if (err instanceof Error) {
+          if (err.message.includes('404')) {
+            errorMessage = 'Serviço de preview não disponível. Por favor, recarregue a página e tente novamente.'
+          } else if (err.message.includes('Preview API error')) {
+            errorMessage = 'Erro no serviço de preview. Por favor, tente novamente.'
+          }
+        }
+        
         setError({
-          message: 'Failed to generate preview. Please try again.',
+          message: errorMessage,
           line: null
         })
         setPreview('')
       }
     } finally {
-      // Only update loading state if still mounted and this request wasn't aborted
-      if (isMountedRef.current && abortControllerRef.current === controller) {
+      // Only update loading state if this request wasn't aborted
+      if (abortControllerRef.current === controller) {
         setIsLoading(false)
       }
     }
-  }
+  }, [])
   
   // Create debounced version of fetchPreview
   const debouncedFetchPreview = useDebounceFunction(fetchPreview, 500)
-  
-  // Track mount status
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
   
   // Fetch preview when content or template changes
   useEffect(() => {
@@ -120,7 +128,7 @@ export function NewsletterEditorWithPreview({
         abortControllerRef.current.abort()
       }
     }
-  }, [value, templateName])
+  }, [value, templateName, debouncedFetchPreview])
   
   return (
     <div className={cn("grid lg:grid-cols-2 gap-4", className)}>
@@ -131,7 +139,7 @@ export function NewsletterEditorWithPreview({
           {isLoading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-3 w-3 animate-spin" />
-              Generating preview...
+              Gerando preview...
             </div>
           )}
         </div>
@@ -148,9 +156,9 @@ export function NewsletterEditorWithPreview({
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>MDX Error</AlertTitle>
+            <AlertTitle>Erro MDX</AlertTitle>
             <AlertDescription>
-              {error.line && <span className="font-semibold">Line {error.line}: </span>}
+              {error.line && <span className="font-semibold">Linha {error.line}: </span>}
               {error.message}
             </AlertDescription>
           </Alert>
@@ -162,29 +170,29 @@ export function NewsletterEditorWithPreview({
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium">Preview</label>
           {preview && !isLoading && (
-            <span className="text-sm text-green-600">Live preview</span>
+            <span className="text-sm text-green-600">Preview ao vivo</span>
           )}
         </div>
         
         <div className="border rounded-md overflow-hidden bg-gray-50 min-h-[500px]">
           {!value.trim() ? (
             <div className="flex items-center justify-center h-[500px] text-muted-foreground">
-              <p>Start typing to see preview</p>
-            </div>
-          ) : isLoading && !preview ? (
-            <div className="flex items-center justify-center h-[500px]">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <p>Comece a digitar para ver o preview</p>
             </div>
           ) : error ? (
             <div className="flex items-center justify-center h-[500px] p-8">
               <div className="text-center">
                 <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
                 <p className="text-sm text-muted-foreground">
-                  Fix the error to see preview
+                  Corrija o erro para ver o preview
                 </p>
               </div>
             </div>
-          ) : (
+          ) : isLoading && !preview ? (
+            <div className="flex items-center justify-center h-[500px]">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : preview ? (
             <iframe
               ref={iframeRef}
               srcDoc={preview}
@@ -192,6 +200,10 @@ export function NewsletterEditorWithPreview({
               title="Newsletter Preview"
               sandbox="allow-same-origin"
             />
+          ) : (
+            <div className="flex items-center justify-center h-[500px] text-muted-foreground">
+              <p className="text-sm">Digite algum conteúdo para ver o preview</p>
+            </div>
           )}
         </div>
       </div>
