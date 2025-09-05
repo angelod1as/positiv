@@ -111,6 +111,16 @@ export const EmailWrapper: FC<EmailWrapperProps> = ({
               fontWeight={400}
               fontStyle="normal"
             />
+            <Font
+              fontFamily="Nunito"
+              fallbackFontFamily="Verdana"
+              webFont={{
+                url: "https://fonts.gstatic.com/s/nunito/v26/XRXW3I6Li01BKofiOc5wtlZ2di8HDLshZgY9Y3E.woff2",
+                format: "woff2",
+              }}
+              fontWeight={700}
+              fontStyle="normal"
+            />
           </Head>
           <Preview>{previewText}</Preview>
           <Body className="bg-black bg-no-repeat bg-positiv-gradient font-sans min-h-screen">

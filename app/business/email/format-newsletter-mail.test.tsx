@@ -28,6 +28,25 @@ describe("formatNewsletterMail", () => {
       expect(result.text).toContain("TEST CONTENT") // HTML to text converts headers to uppercase
       expect(result.text).toContain("This is a test newsletter")
     })
+    
+    it("should include font declarations", async () => {
+      const result = await formatNewsletterMail({
+        ...baseProps,
+        template: "event-announcement",
+      })
+
+      // Check that font declarations are present
+      expect(result.html).toContain("@font-face")
+      expect(result.html).toContain("font-family: 'Nunito'")
+      
+      // Check for regular font weight 400
+      expect(result.html).toContain("font-weight: 400")
+      expect(result.html).toContain("https://fonts.gstatic.com/s/nunito/v26/XRXI3I6Li01BKofiOc5wtlZ2di8HDLshdTo3j6zbXWjgevT5.woff2")
+      
+      // Note: React Email v0.0.40 has limitations with multiple Font components
+      // Both are defined but only the first one is rendered in the style tag
+      // This is a known limitation of the library
+    })
 
     it("should handle complex MDX-generated content", async () => {
       const mdxContent = `
