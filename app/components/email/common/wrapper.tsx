@@ -84,12 +84,14 @@ type EmailWrapperProps = {
   children: ReactNode
   pageTitle: string
   previewText: string
+  includeFooter?: boolean // Default true, set false for custom footer like newsletters
 }
 
 export const EmailWrapper: FC<EmailWrapperProps> = ({
   children,
   pageTitle,
   previewText,
+  includeFooter = true,
 }) => {
   return (
     <Html lang="pt-BR">
@@ -118,7 +120,7 @@ export const EmailWrapper: FC<EmailWrapperProps> = ({
               <Container className="max-w-md p-4">
                 <EmailHeader />
                 <Section>{children}</Section>
-                <EmailFooter />
+                {includeFooter && <EmailFooter />}
               </Container>
             </Container>
           </Body>
