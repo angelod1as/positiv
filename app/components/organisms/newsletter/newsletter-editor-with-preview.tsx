@@ -31,7 +31,6 @@ export function NewsletterEditorWithPreview({
   const [isLoading, setIsLoading] = useState(false)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
-  const isMountedRef = useRef(true)
   
   
   const fetchPreview = useCallback(async (content: string, template: string) => {
@@ -119,13 +118,6 @@ export function NewsletterEditorWithPreview({
   // Create debounced version of fetchPreview
   const debouncedFetchPreview = useDebounceFunction(fetchPreview, 500)
   
-  // Track mount status
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
-  
   // Fetch preview when content or template changes
   useEffect(() => {
     debouncedFetchPreview(value, templateName)
@@ -209,8 +201,8 @@ export function NewsletterEditorWithPreview({
               sandbox="allow-same-origin"
             />
           ) : (
-            <div className="flex items-center justify-center h-[500px]">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex items-center justify-center h-[500px] text-muted-foreground">
+              <p className="text-sm">Digite algum conteúdo para ver o preview</p>
             </div>
           )}
         </div>
