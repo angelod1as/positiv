@@ -1,15 +1,5 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Preview,
-  Section,
-  Tailwind,
-} from "@react-email/components"
-import { emailTailwindConfig } from "~/components/email/common/email-tailwind-config"
-import { EmailHeader } from "~/components/email/common/header"
+import { Heading, Section } from "@react-email/components"
+import { EmailWrapper } from "~/components/email/common/wrapper"
 import { NewsletterFooter } from "~/components/email/common/newsletter-footer"
 import { sanitizeNewsletterHtml } from "~/lib/email/sanitize-html"
 
@@ -28,44 +18,28 @@ export const GeneralNews = ({
   const sanitizedContent = sanitizeNewsletterHtml(content)
 
   return (
-    <Html lang="pt-BR">
-      <Tailwind config={emailTailwindConfig}>
-        <>
-          <Head>
-            <meta
-              name="viewport"
-              content="width=device-width, initial-scale=1.0"
-            />
-            <title>{`${subject} - Positiv Party`}</title>
-          </Head>
-          <Preview>{subject}</Preview>
-          <Body className="bg-black bg-no-repeat bg-positiv-gradient font-sans min-h-screen">
-            <Container className="bg-white max-w-3xl my-8 shadow-lg">
-              <Container className="max-w-md p-4">
-                <EmailHeader />
+    <EmailWrapper
+      pageTitle={subject}
+      previewText={subject}
+      includeFooter={false}
+    >
+      {/* General News Header */}
+      <Section className="border-b-2  pb-4 mb-6">
+        <Heading as="h2" className="text-2xl font-bold m-0">
+          📰 Novidades da Comunidade
+        </Heading>
+      </Section>
 
-                {/* General News Header */}
-                <Section className="border-b-2  pb-4 mb-6">
-                  <Heading as="h2" className="text-2xl font-bold m-0">
-                    📰 Novidades da Comunidade
-                  </Heading>
-                </Section>
+      {/* Main Content */}
+      <Section>
+        <div
+          className="prose prose-sm max-w-none"
+          dangerouslySetInnerHTML={{ __html: sanitizedContent }}
+        />
+      </Section>
 
-                {/* Main Content */}
-                <Section>
-                  <div
-                    className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-                  />
-                </Section>
-
-                <NewsletterFooter unsubscribeUrl={unsubscribeUrl} />
-              </Container>
-            </Container>
-          </Body>
-        </>
-      </Tailwind>
-    </Html>
+      <NewsletterFooter unsubscribeUrl={unsubscribeUrl} />
+    </EmailWrapper>
   )
 }
 
