@@ -4,7 +4,6 @@ import {
   Column,
   type ColumnFilterElementTemplateOptions,
 } from "primereact/column"
-import { type DataTableFilterMeta } from "primereact/datatable"
 import { MultiSelect } from "primereact/multiselect"
 import { useEffect, useState, type FC } from "react"
 import { Button } from "~/components/atoms/button/button"
@@ -22,6 +21,14 @@ const {
 
 const SESSION_STORAGE_KEY = 'admin-events-filter-status'
 
+// Type for our custom filter structure
+interface CustomFilterMeta {
+  [key: string]: {
+    value: unknown
+    matchMode: string
+  }
+}
+
 const ALL_STATUS_OPTIONS: EventStatus[] = [
   "Draft",
   "Scheduled",
@@ -38,7 +45,8 @@ const DEFAULT_SELECTED_STATUSES: EventStatus[] = [
   "Registration Closed",
 ]
 
-// Register custom filter for multiselect - must match the filterField name
+// Register custom filter for event_status field
+// Custom filters must be registered with the pattern "custom_[field]"
 FilterService.register('custom_event_status', (value: EventStatus, filters: EventStatus[] | null) => {
   if (!filters || filters.length === 0) return true
   return filters.includes(value)
@@ -95,12 +103,12 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
     return DEFAULT_SELECTED_STATUSES
   })
 
-  const [filters, setFilters] = useState<DataTableFilterMeta>({
+  const [filters, setFilters] = useState<CustomFilterMeta>({
     global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    time_event_start: { value: null, matchMode: FilterMatchMode.CUSTOM },
+    time_event_start: { value: null, matchMode: 'custom_time_event_start' },
     event_status: { 
       value: statusFilter, 
-      matchMode: FilterMatchMode.CUSTOM 
+      matchMode: 'custom_event_status'
     },
   })
 
@@ -110,7 +118,7 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
       ...prev,
       event_status: {
         value: statusFilter,
-        matchMode: FilterMatchMode.CUSTOM
+        matchMode: 'custom_event_status'
       }
     }))
   }, [statusFilter])
@@ -121,13 +129,14 @@ export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
       data={events}
       filters={filters}
       onFilter={(e) => {
-        const newFilters = e.filters as unknown as DataTableFilterMeta
+        const newFilters = e.filters as CustomFilterMeta
         setFilters(newFilters)
         // Update statusFilter state if event_status filter changed
-        if ('event_status' in newFilters) {
-          const eventStatusFilter = newFilters.event_status as { value: EventStatus[] | null }
-          if (eventStatusFilter.value && eventStatusFilter.value !== statusFilter) {
-            setStatusFilter(eventStatusFilter.value)
+        if ('event_status' in newFilters && newFilters.event_status) {
+          const eventStatusFilter = newFilters.event_status
+          const filterValue = eventStatusFilter.value as EventStatus[] | null
+          if (filterValue && filterValue !== statusFilter) {
+            setStatusFilter(filterValue)
           }
         }
       }}
