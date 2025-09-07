@@ -32,11 +32,13 @@ export type DataTableHeader = {
   elements?: ReactNode
 }
 
+type FlexibleFilterMeta = DataTableFilterMeta | Record<string, { value: unknown; matchMode: string }>
+
 export interface DataTableProps<T extends DataTableValue> {
   data: T[]
   id: string
-  filters?: DataTableFilterMeta
-  onFilter?: (filters: DataTableFilterMeta) => void
+  filters?: FlexibleFilterMeta
+  onFilter?: (event: { filters: FlexibleFilterMeta }) => void
   globalFilterFields?: string[]
   header?: DataTableHeader
   children: ReactNode
@@ -81,7 +83,7 @@ export function DataTable<T extends DataTableValue>({
   maxHeight = "500px",
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
-  const [filters, setFilters] = useState<DataTableFilterMeta>(
+  const [filters, setFilters] = useState<FlexibleFilterMeta>(
     initialFilters || {},
   )
   const [globalFilterValue, setGlobalFilterValue] = useState("")
@@ -97,7 +99,7 @@ export function DataTable<T extends DataTableValue>({
       stateFilters["global"].value = value
       setFilters(stateFilters)
       setGlobalFilterValue(value)
-      onFilter?.(stateFilters)
+      onFilter?.({ filters: stateFilters })
     }
   }
 
@@ -168,11 +170,11 @@ export function DataTable<T extends DataTableValue>({
         paginator
         rowsPerPageOptions={[5, 10, 25, 50, 100, 150]}
         // Filters
-        filters={filters}
+        filters={filters as DataTableFilterMeta}
         filterDisplay="menu"
         onFilter={(e) => {
           setFilters(e.filters)
-          onFilter?.(e.filters)
+          onFilter?.({ filters: e.filters })
         }}
         globalFilterFields={globalFilterFields}
         // State
