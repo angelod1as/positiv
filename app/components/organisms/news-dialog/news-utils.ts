@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-232-events-filter',
+    title: '🎯 Filtro de status na tabela de eventos!',
+    content: 'A tabela de eventos agora mostra apenas eventos ativos por padrão (excluindo eventos cancelados e concluídos). Você pode personalizar quais status de eventos deseja visualizar usando o novo filtro multi-seleção na coluna "Status". Suas preferências são salvas automaticamente para a próxima vez que acessar a página!',
+    isAdmin: true,
+    createdAt: new Date('2025-09-07T15:30:00'), // September 7, 2025, 3:30PM
+    isActive: true,
+  },
+  {
     id: 'fix-mdx-newsletter-delete',
     title: '🗑️ Exclusão de newsletters rascunho agora disponível!',
     content: 'Agora você pode excluir newsletters que estão em rascunho ou agendadas diretamente da lista de newsletters! Basta clicar no ícone de lixeira ao lado do botão de edição. Newsletters já enviadas não podem ser excluídas para manter o histórico.',
