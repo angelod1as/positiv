@@ -1,5 +1,7 @@
 import { composable } from "composable-functions"
 import { kysely } from "~/kysely"
+import type { Transaction } from "kysely"
+import type { Database } from "~/types/database/kysely.types"
 import type { Demographics } from "./demographics"
 
 export const storeEventDemographicsSnapshot = composable(
@@ -47,23 +49,41 @@ export const upsertEventDemographicsSnapshot = composable(
   async ({
     eventId,
     demographics,
+    trx,
   }: {
     eventId: string
     demographics: Demographics
+    trx?: Transaction<Database>
   }) => {
     try {
-      // Check if a snapshot already exists for this event
-      const existingSnapshot = await kysely
-        .selectFrom("event_demographics_history")
-        .select("id")
-        .where("event_id", "=", eventId)
-        .executeTakeFirst()
+      // Use transaction if provided, otherwise use kysely directly
+      const db = trx || kysely
       
-      if (existingSnapshot) {
-        // Update existing row
-        const updated = await kysely
-          .updateTable("event_demographics_history")
-          .set({
+      // Use atomic UPSERT operation with onConflict to handle race conditions
+      const snapshot = await db
+        .insertInto("event_demographics_history")
+        .values({
+          event_id: eventId,
+          total: demographics.total,
+          veteran_yes: demographics.veteran.yes,
+          veteran_no: demographics.veteran.no,
+          gender_cis: demographics.gender.cis,
+          gender_trans: demographics.gender.trans,
+          gender_agender: demographics.gender.agender,
+          gender_other_percentage: demographics.gender.other.percentage,
+          gender_other_values: demographics.gender.other.values || [],
+          orientation_straight: demographics.orientation.straight,
+          orientation_homo: demographics.orientation.homo,
+          orientation_bi_pan: demographics.orientation.biPan,
+          orientation_ace_demi: demographics.orientation.aceDemi,
+          orientation_other_percentage: demographics.orientation.other.percentage,
+          orientation_other_values: demographics.orientation.other.values || [],
+          age_average: demographics.age.average,
+          age_min: demographics.age.min,
+          age_max: demographics.age.max,
+        })
+        .onConflict((oc) =>
+          oc.column("event_id").doUpdateSet({
             total: demographics.total,
             veteran_yes: demographics.veteran.yes,
             veteran_no: demographics.veteran.no,
@@ -83,40 +103,11 @@ export const upsertEventDemographicsSnapshot = composable(
             age_max: demographics.age.max,
             calculated_at: new Date().toISOString(),
           })
-          .where("event_id", "=", eventId)
-          .returning(["id", "event_id", "calculated_at"])
-          .executeTakeFirstOrThrow()
-        
-        return updated
-      } else {
-        // Insert new row
-        const snapshot = await kysely
-          .insertInto("event_demographics_history")
-          .values({
-            event_id: eventId,
-            total: demographics.total,
-            veteran_yes: demographics.veteran.yes,
-            veteran_no: demographics.veteran.no,
-            gender_cis: demographics.gender.cis,
-            gender_trans: demographics.gender.trans,
-            gender_agender: demographics.gender.agender,
-            gender_other_percentage: demographics.gender.other.percentage,
-            gender_other_values: demographics.gender.other.values || [],
-            orientation_straight: demographics.orientation.straight,
-            orientation_homo: demographics.orientation.homo,
-            orientation_bi_pan: demographics.orientation.biPan,
-            orientation_ace_demi: demographics.orientation.aceDemi,
-            orientation_other_percentage: demographics.orientation.other.percentage,
-            orientation_other_values: demographics.orientation.other.values || [],
-            age_average: demographics.age.average,
-            age_min: demographics.age.min,
-            age_max: demographics.age.max,
-          })
-          .returning(["id", "event_id", "calculated_at"])
-          .executeTakeFirstOrThrow()
-        
-        return snapshot
-      }
+        )
+        .returning(["id", "event_id", "calculated_at"])
+        .executeTakeFirstOrThrow()
+      
+      return snapshot
     } catch (error) {
       throw new Error(`Failed to upsert demographics snapshot: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
