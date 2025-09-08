@@ -23,20 +23,16 @@ type SegmentType =
   | "admins"
   | "veterans"
   | "newbies"
-  | "never_attended"
-  | "has_attended"
-  | "never_applied"
+  | "new_registrations_30d"
   | "applied_never_attended"
 
 const SEGMENT_OPTIONS: { value: SegmentType; label: string; description: string }[] = [
-  { value: "all", label: "All subscribers", description: "Send to everyone who opted in" },
-  { value: "admins", label: "Admins only", description: "Send only to admin users (for testing)" },
-  { value: "veterans", label: "Veterans only", description: "People who have attended before" },
-  { value: "newbies", label: "Newbies only", description: "People who haven't attended yet" },
-  { value: "never_attended", label: "Never attended any event", description: "Never participated in any event" },
-  { value: "has_attended", label: "Has attended at least one event", description: "Participated in one or more events" },
-  { value: "never_applied", label: "New registrations", description: "Registered but never applied to events" },
-  { value: "applied_never_attended", label: "Applied but never attended", description: "Applied to events but never attended" },
+  { value: "all", label: "Todos os inscritos", description: "Todos que permitiram receber emails de marketing" },
+  { value: "admins", label: "Administradores", description: "Apenas administradores do sistema" },
+  { value: "veterans", label: "Veteranos", description: "Já participou de algum evento" },
+  { value: "newbies", label: "Novatos", description: "Nunca participou de um evento" },
+  { value: "new_registrations_30d", label: "Novos cadastros", description: "Cadastrados nos últimos 30 dias" },
+  { value: "applied_never_attended", label: "Novatos (nunca participou)", description: "Se inscreveu mas nunca participou" },
 ]
 
 export const SegmentSelector: FC<SegmentSelectorProps> = ({
@@ -50,10 +46,8 @@ export const SegmentSelector: FC<SegmentSelectorProps> = ({
     if (value.adminsOnly) return "admins"
     if (value.veteransOnly) return "veterans"
     if (value.newbiesOnly) return "newbies"
-    if (value.activityType === "never_attended") return "never_attended"
-    if (value.activityType === "has_attended") return "has_attended"
-    if (value.activityType === "never_applied") return "never_applied"
-    if (value.activityType === "applied_never_attended") return "applied_never_attended"
+    if (value.newRegistrations) return "new_registrations_30d"
+    if (value.appliedNeverAttended) return "applied_never_attended"
     return "all"
   }, [value])
   
@@ -72,17 +66,11 @@ export const SegmentSelector: FC<SegmentSelectorProps> = ({
       case "newbies":
         newFilter.newbiesOnly = true
         break
-      case "never_attended":
-        newFilter.activityType = "never_attended"
-        break
-      case "has_attended":
-        newFilter.activityType = "has_attended"
-        break
-      case "never_applied":
-        newFilter.activityType = "never_applied"
+      case "new_registrations_30d":
+        newFilter.newRegistrations = true
         break
       case "applied_never_attended":
-        newFilter.activityType = "applied_never_attended"
+        newFilter.appliedNeverAttended = true
         break
       case "all":
       default:

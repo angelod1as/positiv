@@ -67,23 +67,20 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
     
     switch (data.segment_type) {
+      case 'admins':
+        segmentFilter.adminsOnly = true
+        break
       case 'veterans':
         segmentFilter.veteransOnly = true
         break
       case 'newbies':
         segmentFilter.newbiesOnly = true
         break
-      case 'never_attended':
-        segmentFilter.activityType = 'never_attended'
-        break
-      case 'has_attended':
-        segmentFilter.activityType = 'has_attended'
-        break
-      case 'never_applied':
-        segmentFilter.activityType = 'never_applied'
+      case 'new_registrations_30d':
+        segmentFilter.newRegistrations = true
         break
       case 'applied_never_attended':
-        segmentFilter.activityType = 'applied_never_attended'
+        segmentFilter.appliedNeverAttended = true
         break
       case 'all':
       default:
