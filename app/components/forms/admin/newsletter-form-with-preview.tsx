@@ -29,11 +29,10 @@ const newsletterFormSchema = z.object({
   status: z.enum(['draft', 'scheduled']).optional(),
   segment_type: z.enum([
     'all',
+    'admins',
     'veterans',
     'newbies',
-    'never_attended',
-    'has_attended',
-    'never_applied',
+    'new_registrations_30d',
     'applied_never_attended'
   ]).optional(),
   exclude_rejected: z.boolean().optional(),
@@ -76,12 +75,11 @@ export function NewsletterFormWithPreview({
   // Determine initial values
   const getSegmentType = (filter?: SegmentFilter | null): string => {
     if (!filter) return 'all'
+    if (filter.adminsOnly) return 'admins'
     if (filter.veteransOnly) return 'veterans'
     if (filter.newbiesOnly) return 'newbies'
-    if (filter.activityType === 'never_attended') return 'never_attended'
-    if (filter.activityType === 'has_attended') return 'has_attended'
-    if (filter.activityType === 'never_applied') return 'never_applied'
-    if (filter.activityType === 'applied_never_attended') return 'applied_never_attended'
+    if (filter.newRegistrations) return 'new_registrations_30d'
+    if (filter.appliedNeverAttended) return 'applied_never_attended'
     return 'all'
   }
 
@@ -100,7 +98,7 @@ export function NewsletterFormWithPreview({
       template_name: (newsletter?.template_name || 'general-news') as 'general-news' | 'event-announcement',
       content_mdx: newsletter?.content_mdx || '',
       scheduled_at: newsletter?.scheduled_at || undefined,
-      segment_type: initialSegmentType as 'all' | 'veterans' | 'newbies' | 'never_attended' | 'has_attended' | 'never_applied' | 'applied_never_attended' | undefined,
+      segment_type: initialSegmentType as 'all' | 'admins' | 'veterans' | 'newbies' | 'new_registrations_30d' | 'applied_never_attended' | undefined,
       exclude_rejected: initialExcludeRejected,
     }
   })
@@ -214,7 +212,7 @@ export function NewsletterFormWithPreview({
             <Select
               value={watch('segment_type') || 'all'}
               onValueChange={(value) => {
-                setValue('segment_type', value as 'all' | 'veterans' | 'newbies' | 'never_attended' | 'has_attended' | 'never_applied' | 'applied_never_attended')
+                setValue('segment_type', value as 'all' | 'admins' | 'veterans' | 'newbies' | 'new_registrations_30d' | 'applied_never_attended')
               }}
             >
               <SelectTrigger id="segment_type" data-testid="segment-select">
@@ -222,12 +220,11 @@ export function NewsletterFormWithPreview({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os inscritos</SelectItem>
-                <SelectItem value="veterans">Apenas veteranos</SelectItem>
-                <SelectItem value="newbies">Apenas novatos</SelectItem>
-                <SelectItem value="never_attended">Nunca participou de nenhum evento</SelectItem>
-                <SelectItem value="has_attended">Participou de pelo menos um evento</SelectItem>
-                <SelectItem value="never_applied">Novos cadastros</SelectItem>
-                <SelectItem value="applied_never_attended">Se inscreveu mas nunca participou</SelectItem>
+                <SelectItem value="admins">Administradores</SelectItem>
+                <SelectItem value="veterans">Veteranos</SelectItem>
+                <SelectItem value="newbies">Novatos</SelectItem>
+                <SelectItem value="new_registrations_30d">Novos cadastros</SelectItem>
+                <SelectItem value="applied_never_attended">Novatos (nunca participou)</SelectItem>
               </SelectContent>
             </Select>
             {/* Hidden inputs for form submission and E2E testing */}
@@ -235,17 +232,16 @@ export function NewsletterFormWithPreview({
             <select 
               name="segment_type" 
               value={watch('segment_type') || 'all'}
-              onChange={(e) => setValue('segment_type', e.target.value as 'all' | 'veterans' | 'newbies' | 'never_attended' | 'has_attended' | 'never_applied' | 'applied_never_attended')}
+              onChange={(e) => setValue('segment_type', e.target.value as 'all' | 'admins' | 'veterans' | 'newbies' | 'new_registrations_30d' | 'applied_never_attended')}
               className="sr-only"
               aria-hidden="true"
             >
               <option value="all">Todos os inscritos</option>
-              <option value="veterans">Apenas veteranos</option>
-              <option value="newbies">Apenas novatos</option>
-              <option value="never_attended">Nunca participou de nenhum evento</option>
-              <option value="has_attended">Participou de pelo menos um evento</option>
-              <option value="never_applied">Novos cadastros</option>
-              <option value="applied_never_attended">Se inscreveu mas nunca participou</option>
+              <option value="admins">Administradores</option>
+              <option value="veterans">Veteranos</option>
+              <option value="newbies">Novatos</option>
+              <option value="new_registrations_30d">Novos cadastros</option>
+              <option value="applied_never_attended">Novatos (nunca participou)</option>
             </select>
             {errors.segment_type && (
               <p className="text-sm text-destructive">{errors.segment_type.message}</p>
