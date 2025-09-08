@@ -65,7 +65,7 @@ describe("Demographics History - Integration Tests", () => {
 
     // Mock the admin context
     const mockContext = {
-      supabase: {} as any,
+      supabase: {} as unknown,
       eventId: event.id,
       params: {},
       events: [],
@@ -82,9 +82,16 @@ describe("Demographics History - Integration Tests", () => {
     // Verify demographics were stored
     const demographicsResult = await getEventDemographicsHistory({ eventId: event.id })
     expect(demographicsResult.success).toBe(true)
+    
+    if (!demographicsResult.success) {
+      throw new Error("Demographics should have been stored")
+    }
+    
     expect(demographicsResult.data).toBeDefined()
-
-    const demographics = demographicsResult.data!
+    const demographics = demographicsResult.data
+    if (!demographics) {
+      throw new Error("Demographics data should exist")
+    }
     expect(demographics.total).toBe(2)
     expect(demographics.veteran.yes).toBe(50) // 1 veteran out of 2
     expect(demographics.veteran.no).toBe(50) // 1 newbie out of 2
@@ -116,7 +123,7 @@ describe("Demographics History - Integration Tests", () => {
       user_id: userId,
       email: "test@test.com",
       full_name: "Test User",
-      is_veteran: null as any, // This could cause issues
+      is_veteran: null as unknown as boolean, // This could cause issues
     })
 
     await createTestEventParticipant(tracker, kysely, {
@@ -127,7 +134,7 @@ describe("Demographics History - Integration Tests", () => {
     })
 
     const mockContext = {
-      supabase: {} as any,
+      supabase: {} as unknown,
       eventId: event.id,
       params: {},
       events: [],
@@ -145,9 +152,15 @@ describe("Demographics History - Integration Tests", () => {
     // Verify demographics were still stored (with default values for null)
     const demographicsResult = await getEventDemographicsHistory({ eventId: event.id })
     expect(demographicsResult.success).toBe(true)
+    
+    if (!demographicsResult.success) {
+      throw new Error("Demographics should have been stored")
+    }
+    
     expect(demographicsResult.data).toBeDefined()
-    expect(demographicsResult.data!.total).toBe(1)
-    expect(demographicsResult.data!.veteran.no).toBe(100) // null is_veteran defaults to false
+    const demoData = demographicsResult.data || { total: 0, veteran: { no: 0 } }
+    expect(demoData.total).toBe(1)
+    expect(demoData.veteran.no).toBe(100) // null is_veteran defaults to false
   })
 
   it("should handle concurrent updates correctly using transactions", async () => {
@@ -190,7 +203,7 @@ describe("Demographics History - Integration Tests", () => {
     )
 
     const mockContext = {
-      supabase: {} as any,
+      supabase: {} as unknown,
       eventId: event.id,
       params: {},
       events: [],
@@ -284,7 +297,7 @@ describe("Demographics History - Integration Tests", () => {
     })
 
     const mockContext = {
-      supabase: {} as any,
+      supabase: {} as unknown,
       eventId: event.id,
       params: {},
       events: [],
@@ -299,9 +312,15 @@ describe("Demographics History - Integration Tests", () => {
     // Verify demographics only counted attended participant
     const demographicsResult = await getEventDemographicsHistory({ eventId: event.id })
     expect(demographicsResult.success).toBe(true)
+    
+    if (!demographicsResult.success) {
+      throw new Error("Demographics should have been stored")
+    }
+    
     expect(demographicsResult.data).toBeDefined()
-    expect(demographicsResult.data!.total).toBe(1) // Only 1 attended
-    expect(demographicsResult.data!.veteran.yes).toBe(100) // The attended user is a veteran
-    expect(demographicsResult.data!.veteran.no).toBe(0)
+    const finalDemoData = demographicsResult.data || { total: 0, veteran: { yes: 0, no: 0 } }
+    expect(finalDemoData.total).toBe(1) // Only 1 attended
+    expect(finalDemoData.veteran.yes).toBe(100) // The attended user is a veteran
+    expect(finalDemoData.veteran.no).toBe(0)
   })
 })
