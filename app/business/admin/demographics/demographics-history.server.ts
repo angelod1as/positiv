@@ -1,7 +1,7 @@
 import { composable } from "composable-functions"
 import { kysely } from "~/kysely"
-import type { Kysely, Transaction } from "kysely"
-import type { Database } from "~/lib/supabase/db.server"
+import type { Transaction } from "kysely"
+import type { Database } from "~/types/database/kysely.types"
 import type { Demographics } from "./demographics"
 
 export const storeEventDemographicsSnapshot = composable(
