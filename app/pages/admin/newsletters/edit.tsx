@@ -2,9 +2,12 @@ import { redirectWithSuccess, redirectWithToast } from "remix-toast"
 import { useFetcher } from "react-router"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { getNewsletterById, updateNewsletter, sendNewsletterNow } from "~/business/admin/newsletter/newsletter.server"
+import { getSegmentDescriptions, type SegmentDescription } from "~/business/admin/newsletter/newsletter-segments.server"
 import { newsletterFormSchema, type SegmentFilter } from "~/business/admin/newsletter/newsletter-schema"
 import { NewsletterFormWithPreview } from "~/components/forms/admin/newsletter-form-with-preview"
+import { SegmentTable } from "~/components/organisms/newsletter/segment-table"
 import paths from "~/lib/paths"
+import { db } from "~/lib/supabase/db.server"
 import type { Route } from "./+types/edit"
 
 const {
@@ -41,11 +44,20 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
   
+  // Load segment descriptions
+  let segments: SegmentDescription[] = []
+  try {
+    segments = await getSegmentDescriptions(db)
+  } catch (error) {
+    console.error('Failed to load segment descriptions:', error)
+  }
+  
   return { 
     newsletter: {
       ...newsletter,
       segment_filter: newsletter.segment_filter as SegmentFilter | null,
-    } 
+    },
+    segments
   }
 }
 
@@ -116,23 +128,20 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
     
     switch (parsedData.segment_type) {
+      case 'admins':
+        segmentFilter.adminsOnly = true
+        break
       case 'veterans':
         segmentFilter.veteransOnly = true
         break
       case 'newbies':
         segmentFilter.newbiesOnly = true
         break
-      case 'never_attended':
-        segmentFilter.activityType = 'never_attended'
-        break
-      case 'has_attended':
-        segmentFilter.activityType = 'has_attended'
-        break
-      case 'never_applied':
-        segmentFilter.activityType = 'never_applied'
+      case 'new_registrations_30d':
+        segmentFilter.newRegistrations = true
         break
       case 'applied_never_attended':
-        segmentFilter.activityType = 'applied_never_attended'
+        segmentFilter.appliedNeverAttended = true
         break
       case 'all':
       default:
@@ -171,7 +180,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentProps) {
-  const { newsletter } = loaderData
+  const { newsletter, segments } = loaderData
   const fetcher = useFetcher()
   
   const handleSendNow = (_newsletterId: string) => {
@@ -196,6 +205,9 @@ export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentP
         newsletter={newsletter} 
         onSendNow={handleSendNow}
       />
+      
+      {/* Segment descriptions table */}
+      <SegmentTable segments={segments} />
     </div>
   )
 }

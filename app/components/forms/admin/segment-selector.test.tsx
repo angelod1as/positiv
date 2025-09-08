@@ -84,7 +84,7 @@ describe("SegmentSelector", () => {
     await user.click(dropdown)
     
     // Find and click the admins option
-    const adminsOption = screen.getByText("Admins only")
+    const adminsOption = screen.getByText("Administradores")
     await user.click(adminsOption)
     
     expect(onChange).toHaveBeenCalledWith({
