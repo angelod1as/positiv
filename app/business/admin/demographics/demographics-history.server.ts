@@ -1,5 +1,7 @@
 import { composable } from "composable-functions"
 import { kysely } from "~/kysely"
+import type { Kysely, Transaction } from "kysely"
+import type { Database } from "~/lib/supabase/db.server"
 import type { Demographics } from "./demographics"
 
 export const storeEventDemographicsSnapshot = composable(
@@ -47,13 +49,18 @@ export const upsertEventDemographicsSnapshot = composable(
   async ({
     eventId,
     demographics,
+    trx,
   }: {
     eventId: string
     demographics: Demographics
+    trx?: Transaction<Database>
   }) => {
     try {
+      // Use transaction if provided, otherwise use kysely directly
+      const db = trx || kysely
+      
       // Check if a snapshot already exists for this event
-      const existingSnapshot = await kysely
+      const existingSnapshot = await db
         .selectFrom("event_demographics_history")
         .select("id")
         .where("event_id", "=", eventId)
@@ -61,7 +68,7 @@ export const upsertEventDemographicsSnapshot = composable(
       
       if (existingSnapshot) {
         // Update existing row
-        const updated = await kysely
+        const updated = await db
           .updateTable("event_demographics_history")
           .set({
             total: demographics.total,
@@ -90,7 +97,7 @@ export const upsertEventDemographicsSnapshot = composable(
         return updated
       } else {
         // Insert new row
-        const snapshot = await kysely
+        const snapshot = await db
           .insertInto("event_demographics_history")
           .values({
             event_id: eventId,
