@@ -4,13 +4,8 @@ export const segmentFilterSchema = z.object({
   adminsOnly: z.boolean().optional(),
   veteransOnly: z.boolean().optional(),
   newbiesOnly: z.boolean().optional(),
-  activityType: z.enum([
-    'never_attended',
-    'has_attended',
-    'never_applied',
-    'applied_never_attended'
-  ]).optional(),
-  registeredWithinDays: z.number().optional(), // Only used with activityType "never_applied"
+  newRegistrations: z.boolean().optional(),
+  appliedNeverAttended: z.boolean().optional(),
   excludeRejected: z.boolean().optional(),
 })
 
@@ -27,9 +22,7 @@ export const newsletterFormSchema = z.object({
     'admins',
     'veterans',
     'newbies',
-    'never_attended',
-    'has_attended',
-    'never_applied',
+    'new_registrations_30d',
     'applied_never_attended'
   ]).optional().default('all'),
   exclude_rejected: z.preprocess(

@@ -70,12 +70,11 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
   // Determine initial segment type for the dropdown
   const getSegmentType = (filter?: SegmentFilter | null): string => {
     if (!filter) return "all"
+    if (filter.adminsOnly) return "admins"
     if (filter.veteransOnly) return "veterans"
     if (filter.newbiesOnly) return "newbies"
-    if (filter.activityType === "never_attended") return "never_attended"
-    if (filter.activityType === "has_attended") return "has_attended"
-    if (filter.activityType === "never_applied") return "never_applied"
-    if (filter.activityType === "applied_never_attended") return "applied_never_attended"
+    if (filter.newRegistrations) return "new_registrations_30d"
+    if (filter.appliedNeverAttended) return "applied_never_attended"
     return "all"
   }
   
@@ -122,12 +121,11 @@ export const NewsletterForm: FC<NewsletterFormProps> = ({
           ],
           segment_type: [
             { value: "all", name: "Todos os inscritos" },
-            { value: "veterans", name: "Apenas veteranos" },
-            { value: "newbies", name: "Apenas novatos" },
-            { value: "never_attended", name: "Nunca participou de nenhum evento" },
-            { value: "has_attended", name: "Participou de pelo menos um evento" },
-            { value: "never_applied", name: "Novos cadastros" },
-            { value: "applied_never_attended", name: "Se inscreveu mas nunca participou" },
+            { value: "admins", name: "Administradores" },
+            { value: "veterans", name: "Veteranos" },
+            { value: "newbies", name: "Novatos" },
+            { value: "new_registrations_30d", name: "Novos cadastros" },
+            { value: "applied_never_attended", name: "Novatos (nunca participou)" },
           ],
         }}
         buttonLabel={

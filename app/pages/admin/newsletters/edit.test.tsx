@@ -25,6 +25,14 @@ vi.mock('~/business/admin/newsletter/newsletter.server', () => ({
   sendNewsletterNow: vi.fn(),
 }))
 
+vi.mock('~/business/admin/newsletter/newsletter-segments.server', () => ({
+  getSegmentDescriptions: vi.fn().mockResolvedValue([]),
+}))
+
+vi.mock('~/lib/supabase/db.server', () => ({
+  db: {},
+}))
+
 vi.mock('remix-forms', () => ({
   formAction: vi.fn(async (config) => {
     const clonedRequest = config.request.clone()
@@ -94,7 +102,10 @@ describe('Edit Newsletter Page', () => {
       } as Route.ActionArgs)
       
       expect(mockGetNewsletterById).toHaveBeenCalledWith('newsletter-123')
-      expect(result).toEqual({ newsletter: mockNewsletter })
+      expect(result).toEqual({ 
+        newsletter: mockNewsletter,
+        segments: []
+      })
     })
 
     it('should redirect if newsletter not found', async () => {
