@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'pos-231-demographics-fix',
+    title: '🔧 Correção no cálculo de demografia de eventos!',
+    content: 'Corrigimos um problema onde a demografia do evento poderia mostrar dados incorretos (como 100% veteranes) ao marcar o evento como concluído. Agora o cálculo é feito de forma confiável antes de atualizar o status, garantindo que os dados demográficos sejam sempre precisos.',
+    isAdmin: true,
+    createdAt: new Date('2025-09-08T22:15:00'), // September 8, 2025, 10:15PM
+    isActive: true,
+  },
+  {
     id: 'pos-232-events-filter',
     title: '🎯 Filtro de status na tabela de eventos!',
     content: 'A tabela de eventos agora mostra apenas eventos ativos por padrão (excluindo eventos cancelados e concluídos). Você pode personalizar quais status de eventos deseja visualizar usando o novo filtro multi-seleção na coluna "Status". Suas preferências são salvas automaticamente para a próxima vez que acessar a página!',
