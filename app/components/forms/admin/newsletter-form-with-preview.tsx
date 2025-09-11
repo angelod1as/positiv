@@ -136,6 +136,7 @@ export function NewsletterFormWithPreview({
           <div className="space-y-2">
             <Label htmlFor="template_name">Modelo</Label>
             <Select
+              defaultValue="general-news"
               value={templateName}
               onValueChange={(value) => {
                 setValue('template_name', value as 'general-news' | 'event-announcement')

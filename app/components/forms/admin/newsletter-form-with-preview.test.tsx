@@ -30,6 +30,44 @@ vi.mock('react-router', async () => {
 })
 
 describe('NewsletterFormWithPreview', () => {
+  describe('Template Dropdown', () => {
+    it('should default to "general-news" template', () => {
+      render(
+        <BrowserRouter>
+          <NewsletterFormWithPreview />
+        </BrowserRouter>
+      )
+
+      // Check the hidden select element that mirrors the ShadCN Select
+      const hiddenSelect = document.querySelector('select[name="template_name"]') as HTMLSelectElement
+      expect(hiddenSelect).toBeTruthy()
+      expect(hiddenSelect.value).toBe('general-news')
+
+      // Check the hidden input used for form submission
+      const hiddenInput = document.querySelector('input[type="hidden"][name="template_name"]') as HTMLInputElement
+      expect(hiddenInput).toBeTruthy()
+      expect(hiddenInput.value).toBe('general-news')
+    })
+
+    it('should have the correct template options', () => {
+      render(
+        <BrowserRouter>
+          <NewsletterFormWithPreview />
+        </BrowserRouter>
+      )
+
+      const hiddenSelect = document.querySelector('select[name="template_name"]') as HTMLSelectElement
+      expect(hiddenSelect).toBeTruthy()
+
+      const options = Array.from(hiddenSelect.options)
+      const optionValues = options.map(opt => opt.value)
+      const optionTexts = options.map(opt => opt.text)
+
+      expect(optionValues).toEqual(['general-news', 'event-announcement'])
+      expect(optionTexts).toEqual(['Notícias Gerais', 'Anúncio de Evento'])
+    })
+  })
+
   describe('Segment Dropdown', () => {
     it('should have the correct segment options matching database', () => {
       render(
