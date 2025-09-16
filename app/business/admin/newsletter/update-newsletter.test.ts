@@ -142,7 +142,7 @@ describe('updateNewsletter', () => {
       updateNewsletter('newsletter-123', {
         subject: 'Updated Newsletter',
       })
-    ).rejects.toThrow('Newsletters that have been sent or failed cannot be updated')
+    ).rejects.toThrow('Newsletters that are being sent, have been sent, or failed cannot be updated')
   })
 
   it('should only update provided fields', async () => {

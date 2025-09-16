@@ -37,11 +37,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
   
   // Only allow editing draft and scheduled newsletters
-  // Sent and failed newsletters cannot be edited
-  if (newsletter.status === 'sent' || newsletter.status === 'failed') {
+  // Sending, sent, and failed newsletters cannot be edited
+  if (newsletter.status === 'sending' || newsletter.status === 'sent' || newsletter.status === 'failed') {
     throw await redirectWithToast(
       ADMIN_VIEW_NEWSLETTER(newsletterId),
-      { message: "Newsletters enviadas ou com falha não podem ser editadas", type: "error" }
+      { message: "Newsletters em envio, enviadas ou com falha não podem ser editadas", type: "error" }
     )
   }
   
