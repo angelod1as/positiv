@@ -12,8 +12,8 @@ import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
 import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2, Eye, Users, User, X } from 'lucide-react'
-import { format, isPast } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { isPast } from 'date-fns'
+import { formatDateTime } from '~/lib/helpers/format-date-time'
 import paths from '~/lib/paths'
 import ConfirmDialog from '~/components/molecules/confirm-dialog/confirm-dialog'
 import { NewsletterPreviewModal } from '~/components/organisms/newsletter/newsletter-preview-modal'
@@ -364,20 +364,20 @@ export default function AdminViewNewsletterPage() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>Criada em: {format(new Date(newsletter.created_at), 'MMM d, yyyy h:mm a')}</span>
+              <span>Criada em: {formatDateTime(newsletter.created_at).full}</span>
             </div>
-            
+
             {newsletter.scheduled_at && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>Agendada para: {format(new Date(newsletter.scheduled_at), 'MMM d, yyyy h:mm a')}</span>
+                <span>Agendada para: {formatDateTime(newsletter.scheduled_at).full}</span>
               </div>
             )}
-            
+
             {newsletter.sent_at && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>Enviada em: {format(new Date(newsletter.sent_at), 'MMM d, yyyy h:mm a')}</span>
+                <span>Enviada em: {formatDateTime(newsletter.sent_at).full}</span>
               </div>
             )}
           </div>
@@ -435,7 +435,7 @@ export default function AdminViewNewsletterPage() {
                       <div className="space-y-1">
                         <p className="text-sm font-medium">Data de Envio</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(newsletter.sent_at), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                          {formatDateTime(newsletter.sent_at).full}
                         </p>
                       </div>
                     </div>
@@ -479,7 +479,7 @@ export default function AdminViewNewsletterPage() {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Esta newsletter está agendada para ser enviada em {newsletter.scheduled_at && format(new Date(newsletter.scheduled_at), 'MMM d, yyyy h:mm a')}.
+                  Esta newsletter está agendada para ser enviada em {newsletter.scheduled_at && formatDateTime(newsletter.scheduled_at).full}.
                   Ela será processada automaticamente quando o horário agendado chegar.
                 </p>
               )}
@@ -504,7 +504,7 @@ export default function AdminViewNewsletterPage() {
           {newsletter.status === 'sent' && (
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground">
-                Esta newsletter foi enviada com sucesso em {newsletter.sent_at && format(new Date(newsletter.sent_at), 'MMM d, yyyy h:mm a')}.
+                Esta newsletter foi enviada com sucesso em {newsletter.sent_at && formatDateTime(newsletter.sent_at).full}.
               </p>
             </div>
           )}
