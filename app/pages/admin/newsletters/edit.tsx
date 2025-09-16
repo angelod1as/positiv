@@ -36,11 +36,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
   
-  // Only allow editing draft newsletters
-  if (newsletter.status !== 'draft') {
+  // Only allow editing draft and scheduled newsletters
+  // Sent and failed newsletters cannot be edited
+  if (newsletter.status === 'sent' || newsletter.status === 'failed') {
     throw await redirectWithToast(
       ADMIN_VIEW_NEWSLETTER(newsletterId),
-      { message: "Apenas newsletters em rascunho podem ser editadas", type: "error" }
+      { message: "Newsletters enviadas ou com falha não podem ser editadas", type: "error" }
     )
   }
   
@@ -90,9 +91,32 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (error instanceof Response) throw error
       throw await redirectWithToast(
         ADMIN_VIEW_NEWSLETTER(newsletterId),
-        { 
-          message: error instanceof Error ? error.message : "Falha ao enviar newsletter", 
-          type: "error" 
+        {
+          message: error instanceof Error ? error.message : "Falha ao enviar newsletter",
+          type: "error"
+        }
+      )
+    }
+  }
+
+  // Handle Unschedule action
+  if (intent === 'unschedule') {
+    try {
+      await updateNewsletter(newsletterId, {
+        status: 'draft',
+        scheduled_at: null,
+      })
+      throw await redirectWithSuccess(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        "Newsletter removida do agendamento e voltou para rascunho"
+      )
+    } catch (error) {
+      if (error instanceof Response) throw error
+      throw await redirectWithToast(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        {
+          message: error instanceof Error ? error.message : "Falha ao cancelar agendamento",
+          type: "error"
         }
       )
     }
@@ -182,7 +206,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentProps) {
   const { newsletter, segments } = loaderData
   const fetcher = useFetcher()
-  
+
   const handleSendNow = (_newsletterId: string) => {
     if (confirm("Tem certeza que deseja enviar esta newsletter imediatamente para todos os inscritos?")) {
       fetcher.submit(
@@ -191,7 +215,16 @@ export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentP
       )
     }
   }
-  
+
+  const handleUnschedule = (_newsletterId: string) => {
+    if (confirm("Tem certeza que deseja cancelar o agendamento desta newsletter? Ela voltará para rascunho.")) {
+      fetcher.submit(
+        { intent: 'unschedule' },
+        { method: 'post' }
+      )
+    }
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6 max-w-4xl">
       <div>
@@ -200,10 +233,11 @@ export default function AdminEditNewsletterPage({ loaderData }: Route.ComponentP
           Atualize o conteúdo e configurações da sua newsletter
         </p>
       </div>
-      
-      <NewsletterFormWithPreview 
-        newsletter={newsletter} 
+
+      <NewsletterFormWithPreview
+        newsletter={newsletter}
         onSendNow={handleSendNow}
+        onUnschedule={handleUnschedule}
       />
       
       {/* Segment descriptions table */}

@@ -239,34 +239,34 @@ export default function AdminViewNewsletterPage() {
             </>
           )}
           
+          {(newsletter.status === 'draft' || newsletter.status === 'scheduled') && (
+            <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
+              <Button>
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Newsletter
+              </Button>
+            </Link>
+          )}
+
           {newsletter.status === 'draft' && (
-            <>
-              <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
-                <Button>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Newsletter
-                </Button>
-              </Link>
-              
-              <ConfirmDialog
-                open={sendNowDialogOpen}
-                onOpenChange={setSendNowDialogOpen}
-                title="Enviar Newsletter Agora"
-                description="Tem certeza que deseja enviar esta newsletter imediatamente para todos os inscritos?"
-                confirmLabel="Sim, enviar agora"
-                cancelLabel="Cancelar"
-                onConfirm={handleSendNowConfirm}
-                isLoading={isSending}
+            <ConfirmDialog
+              open={sendNowDialogOpen}
+              onOpenChange={setSendNowDialogOpen}
+              title="Enviar Newsletter Agora"
+              description="Tem certeza que deseja enviar esta newsletter imediatamente para todos os inscritos?"
+              confirmLabel="Sim, enviar agora"
+              cancelLabel="Cancelar"
+              onConfirm={handleSendNowConfirm}
+              isLoading={isSending}
+            >
+              <ConfirmDialog.Trigger
+                variant="default"
+                disabled={isSending}
               >
-                <ConfirmDialog.Trigger
-                  variant="default"
-                  disabled={isSending}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {isSending ? 'Enviando...' : 'Enviar Agora'}
-                </ConfirmDialog.Trigger>
-              </ConfirmDialog>
-            </>
+                <Send className="h-4 w-4 mr-2" />
+                {isSending ? 'Enviando...' : 'Enviar Agora'}
+              </ConfirmDialog.Trigger>
+            </ConfirmDialog>
           )}
           
           {(newsletter.status === 'scheduled' || newsletter.status === 'sending') && (

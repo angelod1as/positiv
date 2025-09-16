@@ -63,11 +63,13 @@ type Newsletter = {
 type NewsletterFormWithPreviewProps = {
   newsletter?: Newsletter
   onSendNow?: (newsletterId: string) => void
+  onUnschedule?: (newsletterId: string) => void
 }
 
 export function NewsletterFormWithPreview({
   newsletter,
   onSendNow,
+  onUnschedule,
 }: NewsletterFormWithPreviewProps) {
   const navigation = useNavigation()
   const isSubmitting = navigation.state === 'submitting'
@@ -296,6 +298,22 @@ export function NewsletterFormWithPreview({
           variant="outline"
         >
           Enviar Agora
+        </Button>
+      )}
+
+      {/* Unschedule button for scheduled newsletters */}
+      {newsletter?.id && newsletter?.status === 'scheduled' && onUnschedule && (
+        <Button
+          type="button"
+          onClick={() => {
+            if (newsletter.id) {
+              onUnschedule(newsletter.id)
+            }
+          }}
+          disabled={isSubmitting}
+          variant="destructive"
+        >
+          Cancelar Agendamento
         </Button>
       )}
     </div>

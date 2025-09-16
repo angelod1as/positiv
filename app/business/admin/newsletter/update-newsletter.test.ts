@@ -130,7 +130,7 @@ describe('updateNewsletter', () => {
     ).rejects.toThrow('Newsletter not found')
   })
 
-  it('should throw error if newsletter is not in draft status', async () => {
+  it('should throw error if newsletter is sent or failed', async () => {
     // Mock the selectFrom to return a non-draft newsletter
     const selectExecuteTakeFirst = vi.fn().mockResolvedValue({ status: 'sent' })
     const selectWhere = vi.fn(() => ({ executeTakeFirst: selectExecuteTakeFirst }))
@@ -142,7 +142,7 @@ describe('updateNewsletter', () => {
       updateNewsletter('newsletter-123', {
         subject: 'Updated Newsletter',
       })
-    ).rejects.toThrow('Only draft newsletters can be updated')
+    ).rejects.toThrow('Newsletters that have been sent or failed cannot be updated')
   })
 
   it('should only update provided fields', async () => {
