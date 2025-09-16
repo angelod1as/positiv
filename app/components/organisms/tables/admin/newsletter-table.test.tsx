@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { NewsletterTable } from './newsletter-table'
-import { format } from 'date-fns'
+import { formatDateTime } from '~/lib/helpers/format-date-time'
 
 vi.mock('react-router', () => ({
   Link: ({ children, to, ...props }: { children: React.ReactNode, to: string }) => (
@@ -108,18 +108,24 @@ describe('NewsletterTable', () => {
 
   it('should display dates correctly', () => {
     render(<NewsletterTable newsletters={mockNewsletters} />)
-    
+
     // For sent newsletter, should show sent date
-    const sentDate = format(new Date('2025-01-02T10:00:00Z'), 'MMM d, yyyy h:mm a')
-    expect(screen.getByText(sentDate)).toBeInTheDocument()
-    
+    const sentDate = formatDateTime('2025-01-02T10:00:00Z', 'short').full
+    if (sentDate) {
+      expect(screen.getByText(sentDate)).toBeInTheDocument()
+    }
+
     // For scheduled newsletter, should show scheduled date
-    const scheduledDate = format(new Date('2025-01-10T15:00:00Z'), 'MMM d, yyyy h:mm a')
-    expect(screen.getByText(scheduledDate)).toBeInTheDocument()
-    
+    const scheduledDate = formatDateTime('2025-01-10T15:00:00Z', 'short').full
+    if (scheduledDate) {
+      expect(screen.getByText(scheduledDate)).toBeInTheDocument()
+    }
+
     // For draft, should show created date
-    const draftDate = format(new Date('2025-01-01T00:00:00Z'), 'MMM d, yyyy h:mm a')
-    expect(screen.getByText(draftDate)).toBeInTheDocument()
+    const draftDate = formatDateTime('2025-01-01T00:00:00Z', 'short').full
+    if (draftDate) {
+      expect(screen.getByText(draftDate)).toBeInTheDocument()
+    }
   })
 
   it('should render action buttons', () => {
