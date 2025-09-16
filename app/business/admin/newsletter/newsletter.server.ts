@@ -165,10 +165,10 @@ export async function updateNewsletter(id: string, data: UpdateNewsletterData) {
     throw new Error("Newsletter not found")
   }
 
-  // Allow updating draft and scheduled newsletters
-  // Sent and failed newsletters cannot be updated
-  if (existing.status === "sent" || existing.status === "failed") {
-    throw new Error("Newsletters that have been sent or failed cannot be updated")
+  // Allow updating draft and scheduled newsletters only
+  // Sending, sent, and failed newsletters cannot be updated to prevent race conditions
+  if (existing.status === "sending" || existing.status === "sent" || existing.status === "failed") {
+    throw new Error("Newsletters that are being sent, have been sent, or failed cannot be updated")
   }
   
   const updateData: Record<string, string | boolean | null> = {

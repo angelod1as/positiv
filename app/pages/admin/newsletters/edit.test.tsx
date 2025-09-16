@@ -160,7 +160,7 @@ describe('Edit Newsletter Page', () => {
       })
     })
 
-    it('should redirect if newsletter is sent or failed', async () => {
+    it('should redirect if newsletter is sending, sent or failed', async () => {
       const mockNewsletter = {
         id: 'newsletter-123',
         subject: 'Sent Newsletter',

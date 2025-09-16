@@ -2,7 +2,7 @@ import { Link, useLoaderData, useFetcher } from 'react-router'
 import { redirectWithToast, redirectWithSuccess } from 'remix-toast'
 import { useState } from 'react'
 import { getAdminContext } from '~/business/admin/admin.server'
-import { sendNewsletterNow } from '~/business/admin/newsletter/newsletter.server'
+import { sendNewsletterNow, updateNewsletter } from '~/business/admin/newsletter/newsletter.server'
 import { processScheduledNewsletters } from '~/business/admin/newsletter/newsletter-scheduler.server'
 import { deleteNewsletter } from '~/business/admin/newsletter/delete-newsletter.server'
 import { getNewsletterWithMetadata, formatSegmentDescription, formatSenderName } from '~/business/admin/newsletter/newsletter-metadata.server'
@@ -11,7 +11,7 @@ import { withErrorRedirect } from '~/lib/helpers/error-handling'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
-import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2, Eye, Users, User } from 'lucide-react'
+import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2, Eye, Users, User, X } from 'lucide-react'
 import { format, isPast } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import paths from '~/lib/paths'
@@ -113,7 +113,29 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
     )
   }
-  
+
+  if (intent === 'unschedule') {
+    try {
+      await updateNewsletter(newsletterId, {
+        status: 'draft',
+        scheduled_at: null,
+      })
+      throw await redirectWithSuccess(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        "Newsletter removida do agendamento e voltou para rascunho"
+      )
+    } catch (error) {
+      if (error instanceof Response) throw error
+      throw await redirectWithToast(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        {
+          message: error instanceof Error ? error.message : "Falha ao cancelar agendamento",
+          type: "error"
+        }
+      )
+    }
+  }
+
   return { success: false }
 }
 
@@ -167,10 +189,12 @@ export default function AdminViewNewsletterPage() {
   const fetcher = useFetcher()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [sendNowDialogOpen, setSendNowDialogOpen] = useState(false)
+  const [unscheduleDialogOpen, setUnscheduleDialogOpen] = useState(false)
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const isProcessing = fetcher.state === 'submitting'
   const isDeleting = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'delete'
   const isSending = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'send-now'
+  const isUnscheduling = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'unschedule'
   
   const isScheduledAndReady = newsletter.status === 'scheduled' && 
     newsletter.scheduled_at && 
@@ -187,6 +211,14 @@ export default function AdminViewNewsletterPage() {
   const handleSendNowConfirm = (closeDialog: () => void) => {
     fetcher.submit(
       { intent: 'send-now' },
+      { method: 'post' }
+    )
+    closeDialog()
+  }
+
+  const handleUnscheduleConfirm = (closeDialog: () => void) => {
+    fetcher.submit(
+      { intent: 'unschedule' },
       { method: 'post' }
     )
     closeDialog()
@@ -268,7 +300,28 @@ export default function AdminViewNewsletterPage() {
               </ConfirmDialog.Trigger>
             </ConfirmDialog>
           )}
-          
+
+          {newsletter.status === 'scheduled' && (
+            <ConfirmDialog
+              open={unscheduleDialogOpen}
+              onOpenChange={setUnscheduleDialogOpen}
+              title="Cancelar Agendamento"
+              description="Tem certeza que deseja cancelar o agendamento desta newsletter? Ela voltará para rascunho."
+              confirmLabel="Sim, cancelar agendamento"
+              cancelLabel="Manter agendamento"
+              onConfirm={handleUnscheduleConfirm}
+              isLoading={isUnscheduling}
+            >
+              <ConfirmDialog.Trigger
+                variant="outline"
+                disabled={isUnscheduling}
+              >
+                <X className="h-4 w-4 mr-2" />
+                {isUnscheduling ? 'Cancelando...' : 'Cancelar Agendamento'}
+              </ConfirmDialog.Trigger>
+            </ConfirmDialog>
+          )}
+
           {(newsletter.status === 'scheduled' || newsletter.status === 'sending') && (
             <fetcher.Form method="post">
               <input type="hidden" name="intent" value="trigger-processing" />
