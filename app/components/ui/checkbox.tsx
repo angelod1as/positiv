@@ -26,7 +26,7 @@ export const Checkbox = React.forwardRef<
           checked ? "bg-primary border-primary" : "border-black",
         )}
       >
-        <CheckIcon className="w-3 h-3 text-primary-foreground" />
+        {checked && <CheckIcon className="w-3 h-3 text-primary-foreground" />}
       </div>
     </label>
   )
