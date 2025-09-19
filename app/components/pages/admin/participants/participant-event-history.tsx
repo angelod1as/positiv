@@ -51,13 +51,13 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
 
   return (
     <>
-      <h2>Histórico de Participações</h2>
+      <h2>Histórico de Inscrições</h2>
       <DataTable
         data={participantHistory}
         id="participant-history"
         sortField="time_event_start"
         size="small"
-        emptyMessage="Nenhuma participação anterior encontrada"
+        emptyMessage="Nenhuma inscrição anterior encontrada"
       >
         <Column
           field="event_title"
