@@ -1,6 +1,6 @@
-import { format } from "date-fns"
 import { Eye, Pencil, Trash2 } from "lucide-react"
 import { Link } from "react-router"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { Badge } from "~/components/ui/badge"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
@@ -143,7 +143,7 @@ export function NewsletterTable({ newsletters, onDelete }: NewsletterTableProps)
                     : "-"}
                 </TableCell>
                 <TableCell>
-                  {format(getDisplayDate(newsletter), "MMM d, yyyy h:mm a")}
+                  {formatDateTime(getDisplayDate(newsletter).toISOString(), "short").full}
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">

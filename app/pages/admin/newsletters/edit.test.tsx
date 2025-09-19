@@ -122,7 +122,45 @@ describe('Edit Newsletter Page', () => {
       expect(mockGetNewsletterById).toHaveBeenCalledWith('invalid-id')
     })
 
-    it('should redirect if newsletter is not in draft status', async () => {
+    it('should allow editing scheduled newsletters', async () => {
+      const mockNewsletter = {
+        id: 'newsletter-123',
+        subject: 'Scheduled Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Content',
+        status: 'scheduled',
+        created_at: '2025-01-01T10:00:00Z',
+        updated_at: '2025-01-01T10:00:00Z',
+        created_by: 'user-123',
+        sent_at: null,
+        scheduled_at: '2025-12-25T10:00:00Z',
+        send_started_at: null,
+        send_completed_at: null,
+        total_recipients: null,
+        successful_sends: null,
+        failed_sends: null,
+        exclude_rejected: true,
+        expected_recipient_count: null,
+        segment_filter: null,
+      }
+
+      const mockGetNewsletterById = vi.mocked(getNewsletterById)
+      mockGetNewsletterById.mockResolvedValue(mockNewsletter)
+
+      const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123/edit')
+      const result = await loader({
+        request,
+        params: { id: 'newsletter-123' }
+      } as Route.ActionArgs)
+
+      expect(mockGetNewsletterById).toHaveBeenCalledWith('newsletter-123')
+      expect(result).toEqual({
+        newsletter: mockNewsletter,
+        segments: []
+      })
+    })
+
+    it('should redirect if newsletter is sending, sent or failed', async () => {
       const mockNewsletter = {
         id: 'newsletter-123',
         subject: 'Sent Newsletter',
@@ -143,14 +181,14 @@ describe('Edit Newsletter Page', () => {
         expected_recipient_count: null,
         segment_filter: null,
       }
-      
+
       const mockGetNewsletterById = vi.mocked(getNewsletterById)
       mockGetNewsletterById.mockResolvedValue(mockNewsletter)
-      
+
       const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123/edit')
-      
-      await expect(loader({ 
-        request, 
+
+      await expect(loader({
+        request,
         params: { id: 'newsletter-123' }
       } as Route.ActionArgs)).rejects.toThrow()
     })
@@ -283,10 +321,10 @@ describe('Edit Newsletter Page', () => {
         failed: 0,
         newsletterId: 'newsletter-123',
       })
-      
+
       const body = new URLSearchParams()
       body.append('intent', 'send-now')
-      
+
       const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123/edit', {
         method: 'POST',
         headers: {
@@ -294,10 +332,52 @@ describe('Edit Newsletter Page', () => {
         },
         body: body.toString(),
       })
-      
+
       await expect(action({ request, params: { id: 'newsletter-123' } } as Route.ActionArgs)).rejects.toThrow()
-      
+
       expect(mockSendNewsletterNow).toHaveBeenCalledWith('newsletter-123')
+    })
+
+    it('should handle unschedule intent for scheduled newsletters', async () => {
+      const mockUpdateNewsletter = vi.mocked(updateNewsletter)
+      mockUpdateNewsletter.mockResolvedValue({
+        id: 'newsletter-123',
+        subject: 'Test Newsletter',
+        template_name: 'general-news',
+        content_mdx: '# Test content',
+        status: 'draft',
+        scheduled_at: null,
+        created_at: '2025-01-01T10:00:00Z',
+        updated_at: '2025-01-01T10:00:00Z',
+        created_by: 'user-123',
+        sent_at: null,
+        send_started_at: null,
+        send_completed_at: null,
+        total_recipients: null,
+        successful_sends: null,
+        failed_sends: null,
+        exclude_rejected: true,
+        expected_recipient_count: null,
+        segment_filter: null,
+      })
+
+      const body = new URLSearchParams()
+      body.append('intent', 'unschedule')
+
+      const request = new Request('http://localhost:3000/admin/newsletters/newsletter-123/edit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: body.toString(),
+      })
+
+      await expect(action({ request, params: { id: 'newsletter-123' } } as Route.ActionArgs)).rejects.toThrow()
+
+      expect(mockUpdateNewsletter).toHaveBeenCalledWith('newsletter-123', {
+        status: 'draft',
+        scheduled_at: null,
+      })
     })
   })
 })

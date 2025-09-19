@@ -2,7 +2,7 @@ import { Link, useLoaderData, useFetcher } from 'react-router'
 import { redirectWithToast, redirectWithSuccess } from 'remix-toast'
 import { useState } from 'react'
 import { getAdminContext } from '~/business/admin/admin.server'
-import { sendNewsletterNow } from '~/business/admin/newsletter/newsletter.server'
+import { sendNewsletterNow, updateNewsletter } from '~/business/admin/newsletter/newsletter.server'
 import { processScheduledNewsletters } from '~/business/admin/newsletter/newsletter-scheduler.server'
 import { deleteNewsletter } from '~/business/admin/newsletter/delete-newsletter.server'
 import { getNewsletterWithMetadata, formatSegmentDescription, formatSenderName } from '~/business/admin/newsletter/newsletter-metadata.server'
@@ -11,9 +11,9 @@ import { withErrorRedirect } from '~/lib/helpers/error-handling'
 import { Button } from '~/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card'
 import { Badge } from '~/components/ui/badge'
-import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2, Eye, Users, User } from 'lucide-react'
-import { format, isPast } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { ArrowLeft, Edit, Clock, Calendar, Send, Loader2, AlertCircle, Trash2, Eye, Users, User, X } from 'lucide-react'
+import { isPast } from 'date-fns'
+import { formatDateTime } from '~/lib/helpers/format-date-time'
 import paths from '~/lib/paths'
 import ConfirmDialog from '~/components/molecules/confirm-dialog/confirm-dialog'
 import { NewsletterPreviewModal } from '~/components/organisms/newsletter/newsletter-preview-modal'
@@ -113,7 +113,29 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
     )
   }
-  
+
+  if (intent === 'unschedule') {
+    try {
+      await updateNewsletter(newsletterId, {
+        status: 'draft',
+        scheduled_at: null,
+      })
+      throw await redirectWithSuccess(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        "Newsletter removida do agendamento e voltou para rascunho"
+      )
+    } catch (error) {
+      if (error instanceof Response) throw error
+      throw await redirectWithToast(
+        ADMIN_VIEW_NEWSLETTER(newsletterId),
+        {
+          message: error instanceof Error ? error.message : "Falha ao cancelar agendamento",
+          type: "error"
+        }
+      )
+    }
+  }
+
   return { success: false }
 }
 
@@ -167,10 +189,12 @@ export default function AdminViewNewsletterPage() {
   const fetcher = useFetcher()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [sendNowDialogOpen, setSendNowDialogOpen] = useState(false)
+  const [unscheduleDialogOpen, setUnscheduleDialogOpen] = useState(false)
   const [previewModalOpen, setPreviewModalOpen] = useState(false)
   const isProcessing = fetcher.state === 'submitting'
   const isDeleting = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'delete'
   const isSending = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'send-now'
+  const isUnscheduling = fetcher.state !== 'idle' && fetcher.formData?.get('intent') === 'unschedule'
   
   const isScheduledAndReady = newsletter.status === 'scheduled' && 
     newsletter.scheduled_at && 
@@ -187,6 +211,14 @@ export default function AdminViewNewsletterPage() {
   const handleSendNowConfirm = (closeDialog: () => void) => {
     fetcher.submit(
       { intent: 'send-now' },
+      { method: 'post' }
+    )
+    closeDialog()
+  }
+
+  const handleUnscheduleConfirm = (closeDialog: () => void) => {
+    fetcher.submit(
+      { intent: 'unschedule' },
       { method: 'post' }
     )
     closeDialog()
@@ -239,36 +271,57 @@ export default function AdminViewNewsletterPage() {
             </>
           )}
           
-          {newsletter.status === 'draft' && (
-            <>
-              <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
-                <Button>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Newsletter
-                </Button>
-              </Link>
-              
-              <ConfirmDialog
-                open={sendNowDialogOpen}
-                onOpenChange={setSendNowDialogOpen}
-                title="Enviar Newsletter Agora"
-                description="Tem certeza que deseja enviar esta newsletter imediatamente para todos os inscritos?"
-                confirmLabel="Sim, enviar agora"
-                cancelLabel="Cancelar"
-                onConfirm={handleSendNowConfirm}
-                isLoading={isSending}
-              >
-                <ConfirmDialog.Trigger
-                  variant="default"
-                  disabled={isSending}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {isSending ? 'Enviando...' : 'Enviar Agora'}
-                </ConfirmDialog.Trigger>
-              </ConfirmDialog>
-            </>
+          {(newsletter.status === 'draft' || newsletter.status === 'scheduled') && (
+            <Link to={`/admin/newsletters/${newsletter.id}/edit`}>
+              <Button>
+                <Edit className="h-4 w-4 mr-2" />
+                Editar Newsletter
+              </Button>
+            </Link>
           )}
-          
+
+          {newsletter.status === 'draft' && (
+            <ConfirmDialog
+              open={sendNowDialogOpen}
+              onOpenChange={setSendNowDialogOpen}
+              title="Enviar Newsletter Agora"
+              description="Tem certeza que deseja enviar esta newsletter imediatamente para todos os inscritos?"
+              confirmLabel="Sim, enviar agora"
+              cancelLabel="Cancelar"
+              onConfirm={handleSendNowConfirm}
+              isLoading={isSending}
+            >
+              <ConfirmDialog.Trigger
+                variant="default"
+                disabled={isSending}
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {isSending ? 'Enviando...' : 'Enviar Agora'}
+              </ConfirmDialog.Trigger>
+            </ConfirmDialog>
+          )}
+
+          {newsletter.status === 'scheduled' && (
+            <ConfirmDialog
+              open={unscheduleDialogOpen}
+              onOpenChange={setUnscheduleDialogOpen}
+              title="Cancelar Agendamento"
+              description="Tem certeza que deseja cancelar o agendamento desta newsletter? Ela voltará para rascunho."
+              confirmLabel="Sim, cancelar agendamento"
+              cancelLabel="Manter agendamento"
+              onConfirm={handleUnscheduleConfirm}
+              isLoading={isUnscheduling}
+            >
+              <ConfirmDialog.Trigger
+                variant="outline"
+                disabled={isUnscheduling}
+              >
+                <X className="h-4 w-4 mr-2" />
+                {isUnscheduling ? 'Cancelando...' : 'Cancelar Agendamento'}
+              </ConfirmDialog.Trigger>
+            </ConfirmDialog>
+          )}
+
           {(newsletter.status === 'scheduled' || newsletter.status === 'sending') && (
             <fetcher.Form method="post">
               <input type="hidden" name="intent" value="trigger-processing" />
@@ -311,20 +364,20 @@ export default function AdminViewNewsletterPage() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>Criada em: {format(new Date(newsletter.created_at), 'MMM d, yyyy h:mm a')}</span>
+              <span>Criada em: {formatDateTime(newsletter.created_at).full}</span>
             </div>
-            
+
             {newsletter.scheduled_at && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>Agendada para: {format(new Date(newsletter.scheduled_at), 'MMM d, yyyy h:mm a')}</span>
+                <span>Agendada para: {formatDateTime(newsletter.scheduled_at).full}</span>
               </div>
             )}
-            
+
             {newsletter.sent_at && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>Enviada em: {format(new Date(newsletter.sent_at), 'MMM d, yyyy h:mm a')}</span>
+                <span>Enviada em: {formatDateTime(newsletter.sent_at).full}</span>
               </div>
             )}
           </div>
@@ -382,7 +435,7 @@ export default function AdminViewNewsletterPage() {
                       <div className="space-y-1">
                         <p className="text-sm font-medium">Data de Envio</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(newsletter.sent_at), "d 'de' MMMM 'de' yyyy 'às' HH:mm", { locale: ptBR })}
+                          {formatDateTime(newsletter.sent_at).full}
                         </p>
                       </div>
                     </div>
@@ -426,7 +479,7 @@ export default function AdminViewNewsletterPage() {
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  Esta newsletter está agendada para ser enviada em {newsletter.scheduled_at && format(new Date(newsletter.scheduled_at), 'MMM d, yyyy h:mm a')}.
+                  Esta newsletter está agendada para ser enviada em {newsletter.scheduled_at && formatDateTime(newsletter.scheduled_at).full}.
                   Ela será processada automaticamente quando o horário agendado chegar.
                 </p>
               )}
@@ -451,7 +504,7 @@ export default function AdminViewNewsletterPage() {
           {newsletter.status === 'sent' && (
             <div className="pt-4 border-t">
               <p className="text-sm text-muted-foreground">
-                Esta newsletter foi enviada com sucesso em {newsletter.sent_at && format(new Date(newsletter.sent_at), 'MMM d, yyyy h:mm a')}.
+                Esta newsletter foi enviada com sucesso em {newsletter.sent_at && formatDateTime(newsletter.sent_at).full}.
               </p>
             </div>
           )}
