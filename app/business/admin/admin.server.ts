@@ -175,7 +175,6 @@ export const getParticipantFullEventHistory = composable(
         "profiles.is_veteran as is_veteran",
       ])
       .where("event_participants.profile_id", "=", profileId)
-      .where("is_user_applied", "=", true)
       .orderBy("events.time_event_start", "desc")
 
     if (excludeEventId) {

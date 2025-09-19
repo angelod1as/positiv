@@ -110,6 +110,120 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     }
   })
 
+  it("should return ALL registrations including admin-added participants", async () => {
+    // This test verifies that getParticipantFullEventHistory returns ALL registrations,
+    // not just those where is_user_applied = true (fixing POS-238)
+
+    // Create a test profile
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: crypto.randomUUID(),
+      email: "test-all-registrations@example.com",
+      full_name: "Test All Registrations User"
+    })
+
+    const event1 = await createTestEvent(tracker, kysely, {
+      title: "Event with User Application",
+      emoji: "📝",
+      location: "Location 1",
+      description: "User applied themselves",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+      time_event_end: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      time_application_start: new Date().toISOString(),
+      time_application_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_price: 100,
+      total_spots: 50
+    })
+
+    const event2 = await createTestEvent(tracker, kysely, {
+      title: "Event Admin Added",
+      emoji: "👤",
+      location: "Location 2",
+      description: "Admin added participant",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+      time_event_end: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      time_application_start: new Date().toISOString(),
+      time_application_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_price: 150,
+      total_spots: 30
+    })
+
+    const event3 = await createTestEvent(tracker, kysely, {
+      title: "Event No Show",
+      emoji: "❌",
+      location: "Location 3",
+      description: "User didn't attend",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      time_application_start: new Date().toISOString(),
+      time_application_end: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_price: 100,
+      total_spots: 40
+    })
+
+    // Create participants with different scenarios
+    // 1. User applied and attended
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event1.id,
+      is_user_applied: true,
+      application_status: "finalised",
+      attendance_status: "attended",
+      admin_general_notes: "Participated actively"
+    })
+
+    // 2. Admin added participant (is_user_applied = false) - THIS SHOULD BE INCLUDED
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event2.id,
+      is_user_applied: false, // Admin added
+      application_status: "finalised",
+      attendance_status: "attended",
+      admin_general_notes: "Admin added this person directly"
+    })
+
+    // 3. User applied but didn't attend - THIS SHOULD BE INCLUDED
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event3.id,
+      is_user_applied: true,
+      application_status: "finalised",
+      attendance_status: "not-attended",
+      admin_general_notes: "Was interviewed but didn't show up"
+    })
+
+    // Test the function
+    const result = await getParticipantFullEventHistory({
+      profileId: profile.id,
+      excludeEventId: undefined
+    })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      // IMPORTANT: Should return ALL 3 registrations, not just where is_user_applied = true
+      expect(result.data).toHaveLength(3)
+
+      // Verify all events are included
+      const eventTitles = result.data.map(e => e.event_title)
+      expect(eventTitles).toContain("Event with User Application")
+      expect(eventTitles).toContain("Event Admin Added")
+      expect(eventTitles).toContain("Event No Show")
+
+      // Verify admin notes are preserved even for no-shows
+      const noShowEvent = result.data.find(e => e.event_title === "Event No Show")
+      expect(noShowEvent?.admin_general_notes).toBe("Was interviewed but didn't show up")
+
+      // Verify admin-added participant is included
+      const adminAddedEvent = result.data.find(e => e.event_title === "Event Admin Added")
+      expect(adminAddedEvent?.admin_general_notes).toBe("Admin added this person directly")
+    }
+  })
+
   it("should exclude the current event from history", async () => {
     // Get existing profile from seeded data
     const profile = await kysely
