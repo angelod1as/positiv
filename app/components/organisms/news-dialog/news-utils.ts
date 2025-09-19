@@ -26,6 +26,14 @@ export function hasVisibleNews(isAdmin: boolean, newsItems: NewsItem[]): boolean
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: 'fix-newsletter-edit-schedule',
+    title: '✏️ Edição de newsletters agendadas agora disponível!',
+    content: 'Correção importante: agora você pode editar newsletters que já foram agendadas! Além disso, adicionamos um botão "Cancelar Agendamento" para voltar a newsletter para rascunho se você precisar fazer mudanças maiores. Newsletters enviadas continuam não podendo ser editadas para manter a integridade do histórico.',
+    isAdmin: true,
+    createdAt: new Date('2025-09-16T17:45:00'), // September 16, 2025, 5:45PM
+    isActive: true,
+  },
+  {
     id: 'pos-231-demographics-fix',
     title: '🔧 Correção no cálculo de demografia de eventos!',
     content: 'Corrigimos um problema onde a demografia do evento poderia mostrar dados incorretos (como 100% veteranes) ao marcar o evento como concluído. Agora o cálculo é feito de forma confiável antes de atualizar o status, garantindo que os dados demográficos sejam sempre precisos.',
@@ -65,29 +73,5 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
     createdAt: new Date('2025-09-04T14:00:00'), // September 4, 2025, 2PM
     isActive: true,
   },
-  {
-    id: 'pos-230-event-scheduling',
-    title: '📅 Publicação automática de eventos disponível!',
-    content: 'Os eventos agora podem ser publicados automaticamente! Ao criar ou editar um evento, você pode marcar a opção "Publicar automaticamente" para que o evento seja liberado para inscrições na data e hora configuradas. Não precisa mais ficar lembrando de abrir as inscrições manualmente!',
-    isAdmin: true,
-    createdAt: new Date('2025-09-02T11:00:00'), // September 2, 2025, 11AM
-    isActive: true,
-  },
-  {
-    id: 'pos-226-mdx-components-docs',
-    title: '📝 Documentação de componentes MDX para newsletters!',
-    content: 'Ao criar ou editar uma newsletter, agora você tem um botão "Componentes MDX" que abre um painel lateral com todos os componentes disponíveis para usar no conteúdo. Veja pré-visualizações ao vivo, copie códigos prontos e consulte a documentação completa de cada componente sem sair da tela de edição!',
-    isAdmin: true,
-    createdAt: new Date('2025-09-02T10:00:00'), // September 2, 2025, 10AM
-    isActive: true,
-  },
-  {
-    id: 'pos-225-segment-descriptions',
-    title: '📊 Tabela de descrições de segmentos disponível!',
-    content: 'Ao criar uma nova newsletter, agora você verá uma tabela explicativa com todos os segmentos disponíveis, suas descrições e a quantidade de pessoas em cada um. Os números são atualizados diariamente automaticamente. Isso facilita a escolha do público-alvo correto para suas newsletters!',
-    isAdmin: true,
-    createdAt: new Date('2025-09-01T17:00:00'), // September 1, 2025, 5PM
-    isActive: true,
-  },
-  // Items older than 2 weeks (before August 21, 2025) were removed as per guidelines
+  // Items older than 2 weeks (before September 2, 2025) were removed as per guidelines
 ]

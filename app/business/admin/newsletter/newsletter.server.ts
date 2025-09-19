@@ -148,25 +148,27 @@ interface UpdateNewsletterData {
   template_name?: string
   content_mdx?: string
   status?: NewsletterStatus
-  scheduled_at?: string
+  scheduled_at?: string | null
   segment_filter?: Record<string, unknown>
   exclude_rejected?: boolean
 }
 
 export async function updateNewsletter(id: string, data: UpdateNewsletterData) {
-  // First check if newsletter exists and is in draft status
+  // First check if newsletter exists
   const existing = await db
     .selectFrom("newsletters")
     .select("status")
     .where("id", "=", id)
     .executeTakeFirst()
-  
+
   if (!existing) {
     throw new Error("Newsletter not found")
   }
-  
-  if (existing.status !== "draft") {
-    throw new Error("Only draft newsletters can be updated")
+
+  // Allow updating draft and scheduled newsletters only
+  // Sending, sent, and failed newsletters cannot be updated to prevent race conditions
+  if (existing.status === "sending" || existing.status === "sent" || existing.status === "failed") {
+    throw new Error("Newsletters that are being sent, have been sent, or failed cannot be updated")
   }
   
   const updateData: Record<string, string | boolean | null> = {
