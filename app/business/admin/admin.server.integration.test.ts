@@ -11,21 +11,12 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     
     // Clear any existing event participants for test profiles
     // This ensures tests start with a clean slate
-    const testEmails = ["user1@example.com", "user2@example.com", "user3@example.com", "user9@example.com"]
-    
-    const profiles = await kysely
-      .selectFrom("profiles")
-      .select("id")
-      .where("email", "in", testEmails)
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-%")
+      )
       .execute()
-    
-    if (profiles.length > 0) {
-      const profileIds = profiles.map(p => p.id)
-      await kysely
-        .deleteFrom("event_participants")
-        .where("profile_id", "in", profileIds)
-        .execute()
-    }
   })
 
   afterEach(async () => {
@@ -35,7 +26,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
   it("should return participant event history for a given profile", async () => {
     // Create a test profile for this test
     const profile = await createTestProfile(tracker, kysely, {
-      user_id: crypto.randomUUID(),
+      user_id: null,
       email: "test-history-user@example.com",
       full_name: "Test History User"
     })
@@ -116,7 +107,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
 
     // Create a test profile
     const profile = await createTestProfile(tracker, kysely, {
-      user_id: crypto.randomUUID(),
+      user_id: null,
       email: "test-all-registrations@example.com",
       full_name: "Test All Registrations User"
     })
@@ -225,19 +216,12 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
   })
 
   it("should exclude the current event from history", async () => {
-    // Get existing profile from seeded data
-    const profile = await kysely
-      .selectFrom("profiles")
-      .selectAll()
-      .where("email", "=", "user1@example.com")
-      .executeTakeFirst()
-      
-    if (!profile) {
-      throw new Error("Test profile not found. Make sure database is seeded.")
-    }
-
-    // Track the profile for cleanup if we make changes to it
-    tracker.track("profiles", profile.id)
+    // Create a test profile instead of relying on seeded data
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-exclude-event@example.com",
+      full_name: "Test Exclude Event User"
+    })
 
     const event1 = await createTestEvent(tracker, kysely, {
       title: "Event to Include",
@@ -299,19 +283,12 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
   })
 
   it("should order events by date descending (most recent first)", async () => {
-    // Get existing profile from seeded data
-    const profile = await kysely
-      .selectFrom("profiles")
-      .selectAll()
-      .where("email", "=", "user2@example.com")
-      .executeTakeFirst()
-      
-    if (!profile) {
-      throw new Error("Test profile not found. Make sure database is seeded.")
-    }
-
-    // Track the profile for cleanup if we make changes to it
-    tracker.track("profiles", profile.id)
+    // Create a test profile instead of relying on seeded data
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-order-events@example.com",
+      full_name: "Test Order Events User"
+    })
 
     // Create events with different dates
     const olderEvent = await createTestEvent(tracker, kysely, {
@@ -377,19 +354,12 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
   })
 
   it("should handle profile with no event history", async () => {
-    // Get existing profile from seeded data
-    const profile = await kysely
-      .selectFrom("profiles")
-      .selectAll()
-      .where("email", "=", "user3@example.com")
-      .executeTakeFirst()
-      
-    if (!profile) {
-      throw new Error("Test profile not found. Make sure database is seeded.")
-    }
-
-    // Track the profile for cleanup if we make changes to it
-    tracker.track("profiles", profile.id)
+    // Create a test profile instead of relying on seeded data
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-no-events@example.com",
+      full_name: "Test No Events User"
+    })
 
     const result = await getParticipantFullEventHistory({
       profileId: profile.id,
@@ -424,7 +394,7 @@ describe("updateEventParticipantById - Integration Tests", () => {
   it("should update event participant fields when participant has flag set", async () => {
     // Create test data
     const profile = await createTestProfile(tracker, kysely, {
-      user_id: crypto.randomUUID(),
+      user_id: null,
       email: "test-flag-participant@example.com",
       full_name: "Test Flag Participant",
       flag: "yellow",
@@ -467,7 +437,7 @@ describe("updateEventParticipantById - Integration Tests", () => {
   it("should fail when updating participant with flag but without flag_notes", async () => {
     // Create test data
     const profile = await createTestProfile(tracker, kysely, {
-      user_id: crypto.randomUUID(),
+      user_id: null,
       email: "test-flag-fail@example.com",
       full_name: "Test Flag Fail",
       flag: "none"
@@ -499,7 +469,7 @@ describe("updateEventParticipantById - Integration Tests", () => {
   it("should successfully update attendance_status for participant with existing flag", async () => {
     // Create test data with flag
     const profile = await createTestProfile(tracker, kysely, {
-      user_id: crypto.randomUUID(),
+      user_id: null,
       email: "test-attendance-flag@example.com",
       full_name: "Test Attendance Flag",
       flag: "red",
