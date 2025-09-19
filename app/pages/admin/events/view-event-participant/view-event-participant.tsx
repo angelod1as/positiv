@@ -78,14 +78,14 @@ export async function loader({ params }: Route.LoaderArgs) {
     )
   }
 
-  // Get full participant history if they are a veteran
+  // Get full participant history for all participants (not just veterans)
   let fullHistory: Array<ParticipantVsEvent & { time_event_start: string }> = []
-  if (profile?.is_veteran && profile.profile_id) {
+  if (profile?.profile_id) {
     const historyResult = await getParticipantFullEventHistory({
       profileId: profile.profile_id,
       excludeEventId: eventId,
     })
-    
+
     if (historyResult.success) {
       fullHistory = historyResult.data
     }
@@ -125,7 +125,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
 
       <BasicData profile={profile} />
       <ParticipantVsEventData eventParticipant={thisEvent} />
-      {profile.is_veteran && fullHistory.length > 0 && (
+      {fullHistory.length > 0 && (
         <ParticipantEventHistory participantHistory={fullHistory} />
       )}
     </>
