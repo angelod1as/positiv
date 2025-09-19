@@ -55,10 +55,10 @@ const mockParticipantHistory: Array<ParticipantVsEvent & { time_event_start: str
 ]
 
 describe("ParticipantEventHistory", () => {
-  it("should render the history section title", () => {
+  it("should render the history section title as 'Histórico de Inscrições'", () => {
     render(<ParticipantEventHistory participantHistory={[]} />)
-    
-    expect(screen.getByText("Histórico de Participações")).toBeInTheDocument()
+
+    expect(screen.getByText("Histórico de Inscrições")).toBeInTheDocument()
   })
 
   it("should render a DataTable with event history", async () => {
@@ -103,13 +103,12 @@ describe("ParticipantEventHistory", () => {
     })
   })
 
-  it.skip("should handle empty history gracefully", async () => {
-    // Skipping due to DataTable's delayed content rendering making it difficult to test empty state
+  it("should show 'Nenhuma inscrição anterior encontrada' when history is empty", async () => {
     render(<ParticipantEventHistory participantHistory={[]} />)
-    
+
     // Wait for the content to load then check for empty message
     await waitFor(() => {
-      const emptyMessage = screen.getByText(/Nenhuma participação anterior encontrada/i)
+      const emptyMessage = screen.getByText(/Nenhuma inscrição anterior encontrada/i)
       expect(emptyMessage).toBeInTheDocument()
     }, { timeout: 1000 }) // Give it a bit more time for the delayed content
   })

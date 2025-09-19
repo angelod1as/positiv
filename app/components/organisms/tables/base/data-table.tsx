@@ -81,6 +81,7 @@ export function DataTable<T extends DataTableValue>({
   editMode,
   size = "small",
   maxHeight = "500px",
+  emptyMessage = "Nenhum registro encontrado",
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [filters, setFilters] = useState<FlexibleFilterMeta>(
@@ -158,7 +159,7 @@ export function DataTable<T extends DataTableValue>({
         cellClassName={() => "text-sm"}
         // Base Settings
         dataKey="id"
-        emptyMessage="Nenhum registro encontrado"
+        emptyMessage={emptyMessage}
         header={renderHeader}
         showGridlines
         stripedRows
