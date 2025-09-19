@@ -149,7 +149,6 @@ export const getEventParticipantHistoryById = composable(
         "profiles.flag_notes as flag_notes",
       ])
       .where("event_participants.id", "=", eventParticipantId)
-      .where("is_user_applied", "=", true)
       .orderBy("events.time_event_start", "desc")
       .execute()
   },

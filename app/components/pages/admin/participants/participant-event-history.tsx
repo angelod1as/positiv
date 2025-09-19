@@ -56,6 +56,7 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         data={participantHistory}
         id="participant-history"
         sortField="time_event_start"
+        sortOrder={-1}
         size="small"
         emptyMessage="Nenhuma inscrição anterior encontrada"
       >
