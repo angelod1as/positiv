@@ -50,6 +50,7 @@ export interface DataTableProps<T extends DataTableValue> {
   resizableColumns?: boolean
   reorderableColumns?: boolean
   sortField?: string
+  sortOrder?: 1 | -1 | 0 | null | undefined
   editMode?: "cell" | "row"
   size?: "small" | "normal" | "large"
   maxHeight?: string | "auto"
@@ -78,6 +79,7 @@ export function DataTable<T extends DataTableValue>({
   resizableColumns = false,
   reorderableColumns = false,
   sortField,
+  sortOrder = 1,
   editMode,
   size = "small",
   maxHeight = "500px",
@@ -188,7 +190,7 @@ export function DataTable<T extends DataTableValue>({
         sortField={sortField}
         sortMode="single"
         removableSort
-        sortOrder={1}
+        sortOrder={sortOrder}
         // Selection
         selection={selection}
         onSelectionChange={(e) => setSelection(e.value)}
