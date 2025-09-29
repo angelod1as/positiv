@@ -81,6 +81,7 @@ export const eventParticipantPropMap = (property: keyof EventParticipant) => {
     created_at: "Criado em",
     notes: "Notas",
     referrals: "Indicações",
+    referred: "Indicade por",
     companions: "Vai acompanhade?",
     bond: "Pode ir só?",
     admin_general_notes: "Notas gerais da administração para este evento",

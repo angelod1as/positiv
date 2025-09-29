@@ -21,7 +21,7 @@ type ParticipantVsEventDataProps = {
 export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   eventParticipant,
 }) => {
-  const { application_date, bond, companions, notes, referrals } =
+  const { application_date, bond, companions, notes, referrals, referred } =
     eventParticipant
 
   const labels = Object.keys(eventParticipant).reduce(
@@ -132,6 +132,12 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             pair={[
               eventParticipantPropMap("referrals"),
               referrals || "não respondeu",
+            ]}
+          />
+          <DataPair
+            pair={[
+              eventParticipantPropMap("referred"),
+              referred || "não respondeu",
             ]}
           />
         </div>
