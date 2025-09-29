@@ -179,6 +179,7 @@ export const applyToEventSchema = zod.object({
   applicationDate: zod.coerce.date(),
   eventId: zod.string(),
   referrals: zod.string().optional(),
+  referred: zod.string(),
   companions: zod.string().optional(),
   bond: zod
     .enum(["Só vou acompanhade.", "Posso ir sozinhe."])
