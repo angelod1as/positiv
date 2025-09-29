@@ -8,6 +8,7 @@ import {
   createTestEventWithParticipants,
   type TestParticipant,
 } from "../../utils/event-helpers"
+import { cleanupTestEvents } from "../../utils/db-cleanup"
 
 test.describe("Admin User Management", () => {
   test.use({
@@ -36,6 +37,9 @@ test.describe("Admin User Management", () => {
       await cleanupTestParticipants(testParticipants)
       testParticipants = []
     }
+
+    // Clean up any test events created during the test
+    await cleanupTestEvents()
   })
 
   test("table inline editing operations", async ({ page }) => {
@@ -45,7 +49,7 @@ test.describe("Admin User Management", () => {
 
     // Create a test event with participants
     const timestamp = Date.now()
-    const eventTitle = `Test Event ${timestamp}`
+    const eventTitle = `[E2E-TEST] Event ${timestamp}`
 
     await adminDashboard.clickCreateEvent()
     await expect(page).toHaveURL("/admin/eventos/novo")
@@ -195,7 +199,7 @@ test.describe("Admin User Management", () => {
 
     // Create a new test event for detail view testing
     const timestamp = Date.now()
-    const eventTitle = `Test Event Detail View ${timestamp}`
+    const eventTitle = `[E2E-TEST] Event Detail View ${timestamp}`
 
     await adminDashboard.clickCreateEvent()
     await expect(page).toHaveURL("/admin/eventos/novo")
