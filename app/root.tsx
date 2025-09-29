@@ -1,4 +1,3 @@
-import { SpeedInsights } from "@vercel/speed-insights/react"
 import { inputFromForm } from "composable-functions"
 import { useEffect, type ReactNode } from "react"
 import {
@@ -253,7 +252,6 @@ export function Layout(props: { children: ReactNode }) {
         {props.children}
         <ScrollRestoration />
         <Scripts />
-        {import.meta.env.VERCEL && <SpeedInsights />}
       </body>
     </html>
   )
