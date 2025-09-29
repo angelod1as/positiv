@@ -19,8 +19,8 @@ test.describe('Admin Event Management', () => {
     
     // Generate unique event name
     const timestamp = Date.now()
-    const eventTitle = `Test Event E2E ${timestamp}`
-    const updatedEventTitle = `Updated Test Event E2E ${timestamp}`
+    const eventTitle = `[E2E-TEST] Event ${timestamp}`
+    const updatedEventTitle = `[E2E-TEST] Updated Event ${timestamp}`
     
     // Navigate to admin dashboard
     await adminDashboard.navigate()
