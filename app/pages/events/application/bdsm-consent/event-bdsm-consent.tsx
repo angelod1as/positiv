@@ -23,11 +23,11 @@ export const EventBdsmConsentPage = () => {
 
       <Alert variant="destructive">
         <AlertDescription>
-          <strong>Importante:</strong> Na edição BDSM, está terminante proibido
-          o uso de qualquer substância que altere a consciência. Nem álcool, nem
-          cigarrinho de artista, nem nadinha. "Ah, mas eu uso como lubrificante
-          social...". Sentimos muito, mas na edição BDSM, seu carisma será
-          colocado à prova na raça.
+          <strong>Importante:</strong> Na edição BDSM, está terminantemente
+          proibido o uso de qualquer substância que altere a consciência. Nem
+          álcool, nem cigarrinho de artista, nem nadinha. "Ah, mas eu uso como
+          lubrificante social...". Sentimos muito, mas na edição BDSM, seu
+          carisma será colocado à prova na raça.
         </AlertDescription>
       </Alert>
 
