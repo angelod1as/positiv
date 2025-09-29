@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
-import { ParticipantEventHistory } from "./participant-event-history"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
+import { ParticipantEventHistory } from "./participant-event-history"
 
-const mockParticipantHistory: Array<ParticipantVsEvent & { time_event_start: string }> = [
+const mockParticipantHistory: Array<
+  ParticipantVsEvent & { time_event_start: string }
+> = [
   {
     id: "1",
     profile_id: "profile-1",
@@ -22,6 +24,7 @@ const mockParticipantHistory: Array<ParticipantVsEvent & { time_event_start: str
     has_paid: false,
     payment: 0,
     referrals: null,
+    referred: "",
     companions: null,
     spot_type: "regular",
     cancellation_date: null,
@@ -46,6 +49,7 @@ const mockParticipantHistory: Array<ParticipantVsEvent & { time_event_start: str
     has_paid: false,
     payment: 0,
     referrals: null,
+    referred: "",
     companions: null,
     spot_type: "regular",
     cancellation_date: null,
@@ -62,8 +66,10 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should render a DataTable with event history", async () => {
-    render(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
-    
+    render(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
     // Wait for the DataTable to render (due to DelayedContent)
     await waitFor(() => {
       expect(screen.getByRole("table")).toBeInTheDocument()
@@ -71,8 +77,10 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should display event information in the table", async () => {
-    render(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
-    
+    render(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
     // Wait for content to load then check for event titles with emojis
     await waitFor(() => {
       expect(screen.getByText(/🌱 Workshop de Introdução/)).toBeInTheDocument()
@@ -81,8 +89,10 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should display status information", async () => {
-    render(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
-    
+    render(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
     // Wait for content to load then check for status values
     await waitFor(() => {
       const finalizadoElements = screen.getAllByText("Finalizado")
@@ -95,8 +105,10 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should display admin notes", async () => {
-    render(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
-    
+    render(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
     await waitFor(() => {
       expect(screen.getByText("Participou ativamente")).toBeInTheDocument()
       expect(screen.getByText("Faltou por motivo de saúde")).toBeInTheDocument()
@@ -107,16 +119,23 @@ describe("ParticipantEventHistory", () => {
     render(<ParticipantEventHistory participantHistory={[]} />)
 
     // Wait for the content to load then check for empty message
-    await waitFor(() => {
-      const emptyMessage = screen.getByText(/Nenhuma inscrição anterior encontrada/i)
-      expect(emptyMessage).toBeInTheDocument()
-    }, { timeout: 1000 }) // Give it a bit more time for the delayed content
+    await waitFor(
+      () => {
+        const emptyMessage = screen.getByText(
+          /Nenhuma inscrição anterior encontrada/i,
+        )
+        expect(emptyMessage).toBeInTheDocument()
+      },
+      { timeout: 1000 },
+    ) // Give it a bit more time for the delayed content
   })
 
   it.skip("should format dates correctly", async () => {
     // Skipping as dates are formatted correctly but are part of a complex cell structure
-    render(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
-    
+    render(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
     // Wait for content to load then check for formatted dates
     await waitFor(() => {
       expect(screen.getByText(/01\/03\/2024/)).toBeInTheDocument()
@@ -125,21 +144,26 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should have sortable columns", () => {
-    render(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
-    
+    render(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
     // Check for sortable column headers
     const eventHeader = screen.getByText("Evento")
-    expect(eventHeader.closest('[role="columnheader"]')).toHaveAttribute("aria-sort")
+    expect(eventHeader.closest('[role="columnheader"]')).toHaveAttribute(
+      "aria-sort",
+    )
   })
 
   it("should have the correct column headers", () => {
-    render(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
-    
+    render(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
     expect(screen.getByText("Evento")).toBeInTheDocument()
     expect(screen.getByText("Status de Inscrição")).toBeInTheDocument()
     expect(screen.getByText("Status de Aprovação")).toBeInTheDocument()
     expect(screen.getByText("Comparecimento")).toBeInTheDocument()
     expect(screen.getByText("Notas do Admin")).toBeInTheDocument()
   })
-
 })
