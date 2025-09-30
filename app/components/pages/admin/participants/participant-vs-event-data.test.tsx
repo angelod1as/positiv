@@ -1,12 +1,15 @@
 import { render, screen } from "@testing-library/react"
-import { describe, expect, it, vi } from "vitest"
-import { ParticipantVsEventData } from "./participant-vs-event-data"
-import type { ParticipantVsEvent } from "~types/database/entities.types"
 import type { ReactNode } from "react"
+import { describe, expect, it, vi } from "vitest"
+import type { ParticipantVsEvent } from "~types/database/entities.types"
+import { ParticipantVsEventData } from "./participant-vs-event-data"
 
 // Mock the SchemaForm component
 vi.mock("~/components/forms/base/schema-form", () => ({
-  SchemaForm: ({ children, options }: { 
+  SchemaForm: ({
+    children,
+    options,
+  }: {
     children: (props: {
       Field: ({ name }: { name: string }) => ReactNode
       Errors: () => null
@@ -52,6 +55,7 @@ const mockEventParticipant: ParticipantVsEvent = {
   companions: "Test companions",
   notes: "Test notes",
   referrals: "Test referrals",
+  referred: "Test referred",
   event_title: "Test Event",
   event_emoji: "🎉",
   is_user_applied: true,
@@ -62,27 +66,29 @@ const mockEventParticipant: ParticipantVsEvent = {
 describe("ParticipantVsEventData", () => {
   it("should render the approved_to_attend field", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
-    
+
     // Check that the approved_to_attend field is rendered
     expect(screen.getByTestId("field-approved_to_attend")).toBeInTheDocument()
   })
 
   it("should pass approved_to_attend options to SchemaForm", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
-    
+
     // Check that approved_to_attend options are passed to SchemaForm
-    expect(screen.getByTestId("has-approved-to-attend-options")).toHaveTextContent("true")
+    expect(
+      screen.getByTestId("has-approved-to-attend-options"),
+    ).toHaveTextContent("true")
   })
 
   it("should render approved_to_attend field after application_status and before spot_type", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
-    
-    const fields = screen.getAllByTestId(/^field-/).map(el => el.textContent)
+
+    const fields = screen.getAllByTestId(/^field-/).map((el) => el.textContent)
     const attendanceIndex = fields.indexOf("attendance_status")
     const applicationIndex = fields.indexOf("application_status")
     const approvedIndex = fields.indexOf("approved_to_attend")
     const spotTypeIndex = fields.indexOf("spot_type")
-    
+
     // Check the order of fields
     expect(attendanceIndex).toBeLessThan(applicationIndex)
     expect(applicationIndex).toBeLessThan(approvedIndex)
@@ -91,7 +97,7 @@ describe("ParticipantVsEventData", () => {
 
   it("should render flag and flag_notes fields", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
-    
+
     // Check that flag fields are rendered
     expect(screen.getByTestId("field-flag")).toBeInTheDocument()
     expect(screen.getByTestId("field-flag_notes")).toBeInTheDocument()
@@ -99,11 +105,11 @@ describe("ParticipantVsEventData", () => {
 
   it("should render flag_notes after flag field", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
-    
-    const fields = screen.getAllByTestId(/^field-/).map(el => el.textContent)
+
+    const fields = screen.getAllByTestId(/^field-/).map((el) => el.textContent)
     const flagIndex = fields.indexOf("flag")
     const flagNotesIndex = fields.indexOf("flag_notes")
-    
+
     // Check the order of fields
     expect(flagIndex).toBeLessThan(flagNotesIndex)
   })
