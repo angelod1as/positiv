@@ -28,6 +28,7 @@ export const profilePropMap = (property: keyof Profile) => {
     gender: "Gênero",
     id: "Id do perfil",
     is_veteran: "É veterane?",
+    became_veteran_date: "Data que se tornou veterane",
     orientation: "Orientação",
     pronouns: "Pronomes",
     user_id: "Id de usuárie",
