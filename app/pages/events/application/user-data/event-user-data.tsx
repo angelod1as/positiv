@@ -74,11 +74,12 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
           applicationDate: new Date(),
           eventId: params.id,
         }}
-        multiline={["notes", "companions", "referrals"]}
+        multiline={["notes", "companions", "referrals", "referred"]}
         labels={{
           notes:
             "Você tem alguma nota ou comentário que gostaria que as pessoas administradoras soubessem?",
           referrals: "Há alguma pessoa que você queira indicar? Por quê?",
+          referred: "Você foi indicade por alguém? Diga nomes!",
           companions:
             "Você pretende ir acompanhade? Se sim, nos diga o nome completo da(s) pessoa(s).",
           bond: "Se a pessoa que você quer ir junte não for, você ainda assim quer ir no evento?",
@@ -87,6 +88,8 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
           notes: "Você tem algum aviso, lembrete, ideia, ou sugestão?",
           referrals:
             "Diga os nomes completos daquelas pessoas que você acha que têm tudo a ver com a gente e que querem muito participar — não esqueça de escrever a razão.",
+          referred:
+            'Se ninguém te indicou, escreva "ninguém". Diga os nomes completos de quem te indicou a Positiv — precisamos saber se foi uma indicação formal ("tem tudo a ver com você") ou informal ("ouvi numa mesa de bar").',
           companions:
             "Diga pra gente se você vai de galera — e quem é esse pessoal.",
           bond: "Se, pra você, tudo bem se você for selecionade e elas não, selecione a caixinha acima.",

@@ -83,7 +83,7 @@ export type Database = {
           {
             foreignKeyName: "event_demographics_history_event_id_fkey"
             columns: ["event_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -107,6 +107,7 @@ export type Database = {
           payment: number
           profile_id: string | null
           referrals: string | null
+          referred: string
           spot_type: Database["public"]["Enums"]["spot_type"]
         }
         Insert: {
@@ -126,6 +127,7 @@ export type Database = {
           payment?: number
           profile_id?: string | null
           referrals?: string | null
+          referred?: string
           spot_type?: Database["public"]["Enums"]["spot_type"]
         }
         Update: {
@@ -145,6 +147,7 @@ export type Database = {
           payment?: number
           profile_id?: string | null
           referrals?: string | null
+          referred?: string
           spot_type?: Database["public"]["Enums"]["spot_type"]
         }
         Relationships: [
@@ -700,6 +703,10 @@ export type Database = {
       update_event_statuses_automatically: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      update_newsletter_segment_counts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       urlencode: {
         Args: { data: Json } | { string: string } | { string: string }
