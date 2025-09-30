@@ -235,10 +235,17 @@ export const updateEventStatus = applySchema(
 
       const participantsResult = await baseQuery
         .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+        .innerJoin("events", "events.id", "event_participants.event_id")
         .select([
           "profiles.date_of_birth",
           "profiles.gender",
-          "profiles.is_veteran",
+          sql<boolean>`
+            CASE
+              WHEN profiles.became_veteran_date IS NULL THEN false
+              WHEN profiles.became_veteran_date < events.time_event_start THEN true
+              ELSE false
+            END
+          `.as("is_veteran"),
           "profiles.orientation",
           "profiles.where_lives",
         ])
@@ -302,10 +309,17 @@ export const updateEventDemographics = applySchema(
 
   const result = await baseQuery
     .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+    .innerJoin("events", "events.id", "event_participants.event_id")
     .select([
       "profiles.date_of_birth",
       "profiles.gender",
-      "profiles.is_veteran",
+      sql<boolean>`
+        CASE
+          WHEN profiles.became_veteran_date IS NULL THEN false
+          WHEN profiles.became_veteran_date < events.time_event_start THEN true
+          ELSE false
+        END
+      `.as("is_veteran"),
       "profiles.orientation",
       "profiles.where_lives",
     ])
