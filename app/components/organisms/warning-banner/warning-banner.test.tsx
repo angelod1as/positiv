@@ -18,7 +18,7 @@ describe("WarningBanner", () => {
     render(<WarningBanner />)
 
     expect(
-      screen.getByText(/Update your warning message here/i),
+      screen.getByText(/Nosso processo de login pode estar com problemas/i),
     ).toBeInTheDocument()
   })
 
@@ -28,7 +28,7 @@ describe("WarningBanner", () => {
     render(<WarningBanner />)
 
     expect(
-      screen.queryByText(/Update your warning message here/i),
+      screen.queryByText(/Nosso processo de login pode estar com problemas/i),
     ).not.toBeInTheDocument()
   })
 
@@ -42,7 +42,7 @@ describe("WarningBanner", () => {
 
     expect(localStorage.getItem(STORAGE_KEY)).toBe("true")
     expect(
-      screen.queryByText(/Update your warning message here/i),
+      screen.queryByText(/Nosso processo de login pode estar com problemas/i),
     ).not.toBeInTheDocument()
   })
 
