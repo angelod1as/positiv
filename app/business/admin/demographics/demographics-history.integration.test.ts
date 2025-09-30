@@ -23,10 +23,13 @@ describe("Demographics History - Integration Tests", () => {
   })
 
   it("should calculate demographics with correct values BEFORE status update in transaction", async () => {
+    const eventDate = new Date("2024-06-01T10:00:00Z")
+
     // Create test event
     const event = await createTestEvent(tracker, kysely, {
       title: "Transaction Test Event",
       event_status: "Registration Open" as EventStatus,
+      time_event_start: eventDate.toISOString(),
     })
 
     // Create participants with different veteran statuses
@@ -35,6 +38,7 @@ describe("Demographics History - Integration Tests", () => {
       user_id: veteranUserId,
       email: `${testPrefix}-vet@test.com`,
       is_veteran: true,
+      became_veteran_date: new Date("2024-01-01T10:00:00Z"),
     })
 
     const newbieUserId = await createTestAuthUser(`${testPrefix}-new@test.com`)
@@ -42,6 +46,7 @@ describe("Demographics History - Integration Tests", () => {
       user_id: newbieUserId,
       email: `${testPrefix}-new@test.com`,
       is_veteran: false,
+      became_veteran_date: null,
     })
 
     // Add participants with PENDING status initially to avoid trigger
@@ -79,14 +84,13 @@ describe("Demographics History - Integration Tests", () => {
         ])
         .execute()
 
-      // At this point, both participants will have is_veteran = true
-      // because the trigger fires when attendance_status = 'attended'
+      // With became_veteran_date logic, demographics reflect historical status
       expect(participants).toHaveLength(2)
       const veteranCount = participants.filter(p => p.is_veteran === true).length
       const newbieCount = participants.filter(p => p.is_veteran === false).length
-      // Both are veterans after the trigger fires
-      expect(veteranCount).toBe(2)
-      expect(newbieCount).toBe(0)
+      // 1 was veteran before this event, 1 was newbie
+      expect(veteranCount).toBe(1)
+      expect(newbieCount).toBe(1)
 
       // Now update the event status
       await trx
@@ -98,16 +102,19 @@ describe("Demographics History - Integration Tests", () => {
       return { veteranCount, newbieCount }
     })
 
-    // Both are veterans after trigger fires
-    expect(result.veteranCount).toBe(2)
-    expect(result.newbieCount).toBe(0)
+    // 1 was veteran before event, 1 was newbie before event
+    expect(result.veteranCount).toBe(1)
+    expect(result.newbieCount).toBe(1)
   })
 
   it("should calculate and store demographics BEFORE updating event status to Completed", async () => {
+    const eventDate = new Date("2024-06-01T10:00:00Z")
+
     // Create test event
     const event = await createTestEvent(tracker, kysely, {
       title: "Test Event for Demographics",
       event_status: "Registration Open" as EventStatus,
+      time_event_start: eventDate.toISOString(),
     })
 
     // Create test users and profiles with different characteristics
@@ -117,6 +124,7 @@ describe("Demographics History - Integration Tests", () => {
       email: `${testPrefix}-veteran@test.com`,
       full_name: "Veteran User",
       is_veteran: true,
+      became_veteran_date: new Date("2024-01-01T10:00:00Z"),
       date_of_birth: "1990-01-01",
       gender: ["Cis Woman"],
       orientation: ["Straight"],
@@ -128,6 +136,7 @@ describe("Demographics History - Integration Tests", () => {
       email: `${testPrefix}-newbie@test.com`,
       full_name: "Newbie User",
       is_veteran: false,
+      became_veteran_date: null,
       date_of_birth: "1995-01-01",
       gender: ["Trans Man"],
       orientation: ["Gay"],
@@ -190,10 +199,9 @@ describe("Demographics History - Integration Tests", () => {
       throw new Error("Demographics data should exist")
     }
     expect(demographics.total).toBe(2)
-    // Both participants have is_veteran = true because they have attended status
-    // The trigger update_veteran_status() sets is_veteran = true for all attended participants
-    expect(demographics.veteran.yes).toBe(100) // Both are veterans after attending
-    expect(demographics.veteran.no).toBe(0)
+    // Demographics now reflect historical veteran status based on became_veteran_date
+    expect(demographics.veteran.yes).toBe(50) // 1 out of 2 was veteran before event
+    expect(demographics.veteran.no).toBe(50) // 1 out of 2 was newbie before event
     // Gender and orientation values may vary based on how test data is stored
     // The key test is that demographics were calculated and stored successfully
     expect(demographics.gender).toBeDefined()
@@ -210,19 +218,23 @@ describe("Demographics History - Integration Tests", () => {
   })
 
   it("should store demographics even when is_veteran is null", async () => {
+    const eventDate = new Date("2024-06-01T10:00:00Z")
+
     // Create test event
     const event = await createTestEvent(tracker, kysely, {
       title: "Test Event for Failed Demographics",
       event_status: "Registration Open" as EventStatus,
+      time_event_start: eventDate.toISOString(),
     })
 
-    // Create a participant with invalid data that might cause calculation issues
+    // Create a participant with null became_veteran_date (will be treated as newbie)
     const userId = await createTestAuthUser(`${testPrefix}-test@test.com`)
     const profile = await createTestProfile(tracker, kysely, {
       user_id: userId,
       email: `${testPrefix}-test@test.com`,
       full_name: "Test User",
-      is_veteran: null as unknown as boolean, // This could cause issues
+      is_veteran: null as unknown as boolean,
+      became_veteran_date: null,
     })
 
     await createTestEventParticipant(tracker, kysely, {
@@ -268,10 +280,11 @@ describe("Demographics History - Integration Tests", () => {
     }
     
     expect(demographicsResult.data).toBeDefined()
-    const demoData = demographicsResult.data || { total: 0, veteran: { yes: 0 } }
+    const demoData = demographicsResult.data || { total: 0, veteran: { yes: 0, no: 0 } }
     expect(demoData.total).toBe(1)
-    // The trigger sets is_veteran = true for attended participants
-    expect(demoData.veteran.yes).toBe(100)
+    // NULL became_veteran_date is treated as newbie (not veteran before this event)
+    expect(demoData.veteran.yes).toBe(0)
+    expect(demoData.veteran.no).toBe(100)
   })
 
   it("should handle concurrent updates correctly using transactions", async () => {
@@ -362,10 +375,13 @@ describe("Demographics History - Integration Tests", () => {
   })
 
   it("should correctly calculate demographics only from attended participants", async () => {
+    const eventDate = new Date("2024-06-01T10:00:00Z")
+
     // Create test event
     const event = await createTestEvent(tracker, kysely, {
       title: "Test Event with Mixed Attendance",
       event_status: "Registration Open" as EventStatus,
+      time_event_start: eventDate.toISOString(),
     })
 
     // Create profiles
@@ -374,12 +390,13 @@ describe("Demographics History - Integration Tests", () => {
       createTestAuthUser(`${testPrefix}-skipped@test.com`),
       createTestAuthUser(`${testPrefix}-noshow@test.com`),
     ])
-    
+
     const attendedProfile = await createTestProfile(tracker, kysely, {
       user_id: attendedUserId,
       email: `${testPrefix}-attended@test.com`,
       full_name: "Attended User",
       is_veteran: true,
+      became_veteran_date: new Date("2024-01-01T10:00:00Z"),
     })
 
     const skippedProfile = await createTestProfile(tracker, kysely, {
@@ -387,6 +404,7 @@ describe("Demographics History - Integration Tests", () => {
       email: `${testPrefix}-skipped@test.com`,
       full_name: "Skipped User",
       is_veteran: false,
+      became_veteran_date: null,
     })
 
     const noShowProfile = await createTestProfile(tracker, kysely, {
@@ -394,6 +412,7 @@ describe("Demographics History - Integration Tests", () => {
       email: `${testPrefix}-noshow@test.com`,
       full_name: "NoShow User",
       is_veteran: false,
+      became_veteran_date: null,
     })
 
     // Create participants with different attendance statuses
@@ -455,5 +474,102 @@ describe("Demographics History - Integration Tests", () => {
     expect(finalDemoData.total).toBe(1) // Only 1 attended
     expect(finalDemoData.veteran.yes).toBe(100) // The attended user is a veteran
     expect(finalDemoData.veteran.no).toBe(0)
+  })
+
+  it("should calculate demographics using became_veteran_date to determine historical veteran status", async () => {
+    const eventDate = new Date("2024-06-01T10:00:00Z")
+
+    // Create test event with specific date
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Historical Veteran Status Test Event",
+      event_status: "Registration Open" as EventStatus,
+      time_event_start: eventDate.toISOString(),
+    })
+
+    // Create a veteran who became veteran BEFORE this event (e.g., 2024-01-01)
+    const veteranUserId = await createTestAuthUser(`${testPrefix}-historical-veteran@test.com`)
+    const veteranProfile = await createTestProfile(tracker, kysely, {
+      user_id: veteranUserId,
+      email: `${testPrefix}-historical-veteran@test.com`,
+      full_name: "Historical Veteran",
+      is_veteran: true,
+      became_veteran_date: new Date("2024-01-01T10:00:00Z"),
+      date_of_birth: "1990-01-01",
+      gender: ["Cis Woman"],
+      orientation: ["Straight"],
+    })
+
+    // Create a newbie who became veteran AFTER this event (or will become veteran at this event)
+    const newbieUserId = await createTestAuthUser(`${testPrefix}-historical-newbie@test.com`)
+    const newbieProfile = await createTestProfile(tracker, kysely, {
+      user_id: newbieUserId,
+      email: `${testPrefix}-historical-newbie@test.com`,
+      full_name: "Historical Newbie",
+      is_veteran: false,
+      became_veteran_date: null,
+      date_of_birth: "1995-01-01",
+      gender: ["Trans Man"],
+      orientation: ["Gay"],
+    })
+
+    // Add both as attended participants
+    await createTestEventParticipant(tracker, kysely, {
+      event_id: event.id,
+      profile_id: veteranProfile.id,
+      attendance_status: "attended",
+      is_user_applied: true,
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      event_id: event.id,
+      profile_id: newbieProfile.id,
+      attendance_status: "attended",
+      is_user_applied: true,
+    })
+
+    const mockSupabase = {} as SupabaseClient
+    const mockHeaders = new Headers()
+
+    const mockContext = {
+      supabase: mockSupabase,
+      supabaseHeaders: mockHeaders,
+      currentUser: {
+        id: "test-user-id",
+        email: "test@example.com",
+      },
+      currentProfile: null,
+      isProdInDev: false,
+      host: null,
+      eventId: event.id,
+      params: {},
+      events: [],
+    }
+
+    // Update event status to Completed
+    const result = await updateEventStatus(
+      { event_status: "Completed" as EventStatus, intent: "update-event-status" },
+      mockContext
+    )
+
+    expect(result.success).toBe(true)
+
+    // Verify demographics show correct historical status
+    const demographicsResult = await getEventDemographicsHistory({ eventId: event.id })
+    expect(demographicsResult.success).toBe(true)
+
+    if (!demographicsResult.success) {
+      throw new Error("Demographics should have been stored")
+    }
+
+    expect(demographicsResult.data).toBeDefined()
+    const demographics = demographicsResult.data
+    if (!demographics) {
+      throw new Error("Demographics data should exist")
+    }
+
+    // Critical assertions: Demographics should reflect status BEFORE the event
+    expect(demographics.total).toBe(2)
+    expect(demographics.veteran.yes).toBe(50) // 1 out of 2 was veteran before event
+    expect(demographics.veteran.no).toBe(50) // 1 out of 2 was newbie before event
   })
 })
