@@ -92,6 +92,7 @@ pnpm email:test   # Start Mailhog for local email testing
 ### Migration Best Practices
 
 1. Handle duplicate object creation gracefully:
+
    ```sql
    -- Use DO blocks with exception handling for types
    DO $$ BEGIN
@@ -105,6 +106,7 @@ pnpm email:test   # Start Mailhog for local email testing
    ```
 
 2. Use proper delimiters for complex SQL in functions:
+
    ```sql
    -- Use $job$ or other delimiters instead of $$ when nesting
    PERFORM cron.schedule('job-name', '*/5 * * * *', $job$
@@ -113,6 +115,7 @@ pnpm email:test   # Start Mailhog for local email testing
    ```
 
 3. Always check if objects exist before dropping:
+
    ```sql
    DROP EXTENSION IF EXISTS pg_net;
    DROP TYPE IF EXISTS "public"."my_type";
@@ -258,6 +261,7 @@ pnpm email:test   # Start Mailhog for local email testing
    - Define the expected behavior
    - Run the test to ensure it fails
    - The failure confirms the test is checking the right thing
+   - The test should test functionality — not missing imports or similar. They should test (and fail) something that can be tested again that relates to the actual code function and not if the file exists or not.
 
 2. **Green Phase**: Write minimal code to pass
    - Implement just enough code to make the test pass
@@ -420,6 +424,7 @@ pnpm test:e2e -- --project=chromium-authenticated-admin # Admin tests
 ### Test Organization
 
 Tests are located in `/e2e/tests/` and organized as:
+
 - `auth/` - Authentication setup and flows
 - `unauthenticated/` - Tests that don't require login
 - `authenticated/` - Tests requiring authentication (user and admin)
