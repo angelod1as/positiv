@@ -2,16 +2,12 @@ import { test, expect } from '@playwright/test'
 import path from 'path'
 import { AdminDashboardPage } from '../../pages/admin/AdminDashboardPage'
 import { EventManagementPage } from '../../pages/admin/EventManagementPage'
-import { cleanupTestEvents } from '../../utils/db-cleanup'
 
 test.describe('Admin Event Management', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/admin.json') })
-  
-  test.afterEach(async () => {
-    // Clean up any test events created during the test
-    // This ensures cleanup even if the test fails
-    await cleanupTestEvents()
-  })
+
+  // Note: Test events are cleaned up in global teardown to avoid
+  // interfering with other tests that may need them
 
   test('admin can navigate to dashboard and manage events', async ({ page }) => {
     const adminDashboard = new AdminDashboardPage(page)

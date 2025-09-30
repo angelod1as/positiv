@@ -66,7 +66,8 @@ export async function createTestApplication(profileId: string, eventId: string):
       .insert({
         profile_id: profileId,
         event_id: eventId,
-        is_user_applied: true
+        is_user_applied: true,
+        referred: 'ninguém'
       })
     
     if (error) {
