@@ -2,26 +2,15 @@
 
 import { X } from "lucide-react"
 import { useEffect, useState } from "react"
+import ReactMarkdown from "react-markdown"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 import { Button } from "~/components/ui/button"
 
 const STORAGE_KEY = "warning-banner-dismissed"
 
-const WARNING_MESSAGE = (
-  <>
-    ⚠️ Nosso processo de login pode estar com problemas. Se tiver dificuldades,
-    contate-nos em{" "}
-    <a
-      href="mailto:contato@positivparty.com"
-      className="underline hover:text-red-800"
-    >
-      contato@positivparty.com
-    </a>
-  </>
-)
-
 export function WarningBanner() {
   const [isDismissed, setIsDismissed] = useState(true)
+  const bannerMessage = import.meta.env.VITE_BANNER_MESSAGE
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY)
@@ -33,7 +22,7 @@ export function WarningBanner() {
     setIsDismissed(true)
   }
 
-  if (isDismissed) {
+  if (!bannerMessage || isDismissed) {
     return null
   }
 
@@ -44,9 +33,9 @@ export function WarningBanner() {
         className="rounded-none border-0 bg-transparent text-red-700 py-3 px-4"
       >
         <AlertDescription className="flex items-center justify-between gap-4 col-span-2">
-          <span className="font-medium text-sm sm:text-base">
-            {WARNING_MESSAGE}
-          </span>
+          <div className="font-medium text-sm sm:text-base prose prose-sm prose-red max-w-none [&_a]:underline [&_a:hover]:text-red-800">
+            <ReactMarkdown>{bannerMessage}</ReactMarkdown>
+          </div>
           <Button
             variant="ghost"
             size="icon"
