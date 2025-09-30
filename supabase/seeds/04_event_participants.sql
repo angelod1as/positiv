@@ -154,7 +154,7 @@ BEGIN
         0,                             -- payment
         NULL,                          -- notes
         NULL,                          -- referrals
-        '',                            -- referred
+        'ninguém',                     -- referred
         NULL,                          -- companions
         NULL,                          -- bond
         'staff',                       -- spot_type
@@ -172,7 +172,7 @@ BEGIN
         15.00,                         -- payment (matches price example)
         'User paid for this closed event', -- notes
         NULL,                          -- referrals
-        '',                            -- referred
+        'ninguém',                     -- referred
         NULL,                          -- companions
         NULL,                          -- bond
         'staff',                       -- spot_type
@@ -228,7 +228,7 @@ BEGIN
         0,                             -- payment
         'Admin decision: no-show history', -- notes
         NULL,                          -- referrals
-        '',                            -- referred
+        'ninguém',                     -- referred
         NULL,                          -- companions
         NULL,                          -- bond
         'regular',                       -- spot_type
@@ -284,7 +284,7 @@ BEGIN
         20.00,                         -- payment
         NULL,                          -- notes
         NULL,                          -- referrals
-        '',                            -- referred
+        'ninguém',                     -- referred
         NULL,                          -- companions
         NULL,                          -- bond
         'regular',                       -- spot_type
@@ -322,7 +322,7 @@ BEGIN
         0,                             -- payment
         'User applied but did not show up', -- notes
         NULL,                          -- referrals
-        '',                            -- referred
+        'ninguém',                     -- referred
         NULL,                          -- companions
         NULL,                          -- bond
         'regular',                       -- spot_type
@@ -377,7 +377,7 @@ BEGIN
         0,                             -- payment
         'User decided they will not go to the event.', -- notes
         NULL,                          -- referrals
-        '',                            -- referred
+        'ninguém',                     -- referred
         NULL,                          -- companions
         NULL,                          -- bond
         'regular',                       -- spot_type
