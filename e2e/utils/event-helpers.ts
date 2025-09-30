@@ -95,7 +95,7 @@ export async function createTestEventWithParticipants(
         | "social"
         | "staff",
       referred:
-        i === 0 ? "João Test - indicação formal" : i === 1 ? "ninguém" : "",
+        i === 0 ? "João Test - indicação formal" : "ninguém",
     }
 
     const { error: participantError } = await supabase
