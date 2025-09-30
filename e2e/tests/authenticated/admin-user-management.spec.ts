@@ -8,7 +8,6 @@ import {
   createTestEventWithParticipants,
   type TestParticipant,
 } from "../../utils/event-helpers"
-import { cleanupTestEvents } from "../../utils/db-cleanup"
 
 test.describe("Admin User Management", () => {
   test.use({
@@ -38,8 +37,8 @@ test.describe("Admin User Management", () => {
       testParticipants = []
     }
 
-    // Clean up any test events created during the test
-    await cleanupTestEvents()
+    // Note: Test events are cleaned up in global teardown to avoid
+    // interfering with other tests that may need them
   })
 
   test("table inline editing operations", async ({ page }) => {
