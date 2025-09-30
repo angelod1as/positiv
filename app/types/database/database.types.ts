@@ -471,6 +471,7 @@ export type Database = {
           allow_marketing_email: boolean | null
           approved_to_attend: Database["public"]["Enums"]["approved_to_attend_enum"]
           basic_data_filled: boolean
+          became_veteran_date: string | null
           cpf: string | null
           created_at: string
           date_of_birth: string | null
@@ -496,6 +497,7 @@ export type Database = {
           allow_marketing_email?: boolean | null
           approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
           basic_data_filled?: boolean
+          became_veteran_date?: string | null
           cpf?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -521,6 +523,7 @@ export type Database = {
           allow_marketing_email?: boolean | null
           approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
           basic_data_filled?: boolean
+          became_veteran_date?: string | null
           cpf?: string | null
           created_at?: string
           date_of_birth?: string | null
