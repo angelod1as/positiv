@@ -172,6 +172,7 @@ export const getParticipantFullEventHistory = composable(
         "events.emoji as event_emoji",
         "events.time_event_start as time_event_start",
         "profiles.is_veteran as is_veteran",
+        "profiles.approved_to_attend as approved_to_attend",
       ])
       .where("event_participants.profile_id", "=", profileId)
       .orderBy("events.time_event_start", "desc")
