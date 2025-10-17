@@ -3,7 +3,7 @@ import type { EventType } from "~types/database/entities.types"
 export const getRulesFormQuestions = (eventType: EventType) => ({
   "leave-no-trace": {
     question:
-      "Sobre limpeza do ambiente e a responsabilidade dos pertences des participantes, é certo dizer:",
+      "Sobre a limpeza do ambiente e a responsabilidade dos pertences des participantes, é certo dizer:",
     answers: {
       correct: [
         "Cada pessoa é responsável por cuidar de seus pertences e por limpar o ambiente, para manter tudo em ordem e no lugar, independente de ter uma equipe de limpeza que irá limpar depois.",
