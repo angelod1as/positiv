@@ -25,7 +25,7 @@ const dayOffsets: Record<DayOffsets, number> = {
   time_application_end: -23,
   time_interviews_start: -21,
   time_interviews_end: -9,
-  time_group_start: -7,
+  time_group_start: -4,
   time_group_end: 30,
   time_payment_start: -21,
   time_payment_end: -9,
