@@ -11,7 +11,7 @@ describe('Google Contacts Helper', () => {
       const profile: ProfileForGoogleContacts = {
         social_name: 'João',
         full_name: 'João Silva',
-        gender: ['cis'],
+        gender: ['Homem cis'],
         pronouns: ['ele/dele'],
       }
 
@@ -23,7 +23,7 @@ describe('Google Contacts Helper', () => {
       const profile: ProfileForGoogleContacts = {
         social_name: null,
         full_name: 'Maria Santos',
-        gender: ['cis'],
+        gender: ['Mulher cis'],
         pronouns: ['ela/dela'],
       }
 
@@ -35,7 +35,7 @@ describe('Google Contacts Helper', () => {
       const profile: ProfileForGoogleContacts = {
         social_name: 'Alexia',
         full_name: 'Alexia Akira Yamamoto',
-        gender: ['mulher trans'],
+        gender: ['Mulher trans'],
         pronouns: ['ela/dela', 'ela/elu'],
       }
 
@@ -47,7 +47,7 @@ describe('Google Contacts Helper', () => {
       const profile: ProfileForGoogleContacts = {
         social_name: 'Pedro',
         full_name: 'Pedro Henrique Costa',
-        gender: ['homem trans'],
+        gender: ['Homem trans'],
         pronouns: ['ele/dele'],
       }
 
@@ -59,19 +59,19 @@ describe('Google Contacts Helper', () => {
       const profile: ProfileForGoogleContacts = {
         social_name: 'Alex',
         full_name: 'Alex Ribeiro',
-        gender: ['agênero'],
+        gender: ['Pessoa agênera'],
         pronouns: ['elu/delu'],
       }
 
       const result = formatParticipantNameForGoogleContacts(profile)
-      expect(result).toBe('Alex (Alex Ribeiro) Ag (elu/delu) Positiv')
+      expect(result).toBe('Alex (Alex Ribeiro) AG (elu/delu) Positiv')
     })
 
     it('should format non-binary participant', () => {
       const profile: ProfileForGoogleContacts = {
         social_name: 'Sam',
         full_name: 'Samuel Oliveira',
-        gender: ['não-binário'],
+        gender: ['Pessoa não binária'],
         pronouns: ['elu/delu', 'ele/dele'],
       }
 
@@ -83,7 +83,7 @@ describe('Google Contacts Helper', () => {
       const profile: ProfileForGoogleContacts = {
         social_name: 'Jordan',
         full_name: 'Jordan Silva',
-        gender: ['não-binário', 'agênero'],
+        gender: ['Pessoa não binária', 'Pessoa agênera'],
         pronouns: ['elu/delu'],
       }
 
@@ -95,7 +95,7 @@ describe('Google Contacts Helper', () => {
       const profile: ProfileForGoogleContacts = {
         social_name: 'Casey',
         full_name: 'Casey Lima',
-        gender: ['não-binário'],
+        gender: ['Pessoa não binária'],
         pronouns: null,
       }
 
