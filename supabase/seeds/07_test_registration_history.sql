@@ -47,8 +47,8 @@ BEGIN
         'test-history@example.com',
         '12345678915',
         5511987654329,
-        ARRAY['non-binary'],
-        ARRAY['they/them'],
+        ARRAY['Pessoa agênera']::text[],
+        ARRAY['elu/delu']::text[],
         FALSE,  -- NOT a veteran
         'approved',
         TRUE
