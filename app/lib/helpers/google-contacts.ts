@@ -19,13 +19,6 @@ const GENDER_ABBREVIATIONS: Record<Gender, string> = {
   Travesti: "TRAV",
 }
 
-function isCisGender(genders: string[] | null): boolean {
-  if (!genders || genders.length === 0) return true
-  return genders.some(
-    (gender) => gender === "Mulher cis" || gender === "Homem cis",
-  )
-}
-
 function getGenderAbbreviation(genders: string[]): string | null {
   for (const gender of genders) {
     const abbreviation = GENDER_ABBREVIATIONS[gender as Gender]
@@ -38,10 +31,6 @@ export function formatParticipantNameForGoogleContacts(
   profile: ProfileForGoogleContacts,
 ): string {
   const name = profile.social_name || profile.full_name || ""
-
-  if (isCisGender(profile.gender)) {
-    return `${name} Positiv`
-  }
 
   const parts = [name]
 

@@ -16,7 +16,7 @@ describe('Google Contacts Helper', () => {
       }
 
       const result = formatParticipantNameForGoogleContacts(profile)
-      expect(result).toBe('João Positiv')
+      expect(result).toBe('João (João Silva) HC (ele/dele) Positiv')
     })
 
     it('should format CIS participant without social name', () => {
@@ -28,7 +28,7 @@ describe('Google Contacts Helper', () => {
       }
 
       const result = formatParticipantNameForGoogleContacts(profile)
-      expect(result).toBe('Maria Santos Positiv')
+      expect(result).toBe('Maria Santos MC (ela/dela) Positiv')
     })
 
     it('should format trans woman participant', () => {
@@ -112,7 +112,7 @@ describe('Google Contacts Helper', () => {
       }
 
       const result = formatParticipantNameForGoogleContacts(profile)
-      expect(result).toBe('Robin Positiv')
+      expect(result).toBe('Robin (Robin Souza) (ela/dela) Positiv')
     })
 
     it('should handle empty arrays for gender and pronouns', () => {
@@ -124,7 +124,7 @@ describe('Google Contacts Helper', () => {
       }
 
       const result = formatParticipantNameForGoogleContacts(profile)
-      expect(result).toBe('Taylor Positiv')
+      expect(result).toBe('Taylor (Taylor Brown) Positiv')
     })
   })
 
