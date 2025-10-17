@@ -3,6 +3,7 @@ import { redirectWithError } from "remix-toast"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
 import { kysely } from "~/kysely"
+import { mapParticipantsToDownloadFormat } from "~/lib/helpers/download-helpers"
 import { downloadXLSX } from "~/lib/helpers/download-xlsx"
 import { getWillGoToEventParticipants } from "~/lib/helpers/get-filtered-participants"
 import { mapToString } from "~/lib/helpers/map-string-array-to-string"
@@ -76,17 +77,8 @@ const AdminDownloadEventParticipants = ({
   }
 
   const handleDownloadNames = async () => {
-    const xlsxData = getWillGoToEventParticipants(
-      participants,
-    ).participants.map(
-      ({ full_name, rg, rg_issuer, social_name, approved_to_attend }) => ({
-        [profilePropMap("approved_to_attend")]: approved_to_attend,
-        [profilePropMap("full_name")]: full_name,
-        [profilePropMap("social_name")]: social_name,
-        [profilePropMap("rg")]: rg,
-        [profilePropMap("rg_issuer")]: rg_issuer,
-      }),
-    )
+    const filteredParticipants = getWillGoToEventParticipants(participants).participants
+    const xlsxData = mapParticipantsToDownloadFormat(filteredParticipants)
     downloadXLSX(xlsxData)
   }
 
