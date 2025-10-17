@@ -49,7 +49,7 @@ export const Header: FC<HeaderProps> = ({
         </div>
       )}
       <div className="fixed top-0 left-0 z-30 w-full">
-        <WarningBanner />
+        {(pathname === "/" || pathname === "/entrar") && <WarningBanner />}
         <header className="flex items-center justify-between p-4 border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 px-[1.75rem]">
           <div className="text-xl font-bold">
             <Link variant="unstyled" to={HOME}>
