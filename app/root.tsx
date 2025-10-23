@@ -14,7 +14,7 @@ import {
 import { getToast } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
-import { NEWS_VERSION, POSITIV_EMAIL } from "~/lib/constants/constants"
+import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
@@ -22,6 +22,7 @@ import { newsCookie } from "./business/session.server"
 import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
+import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
 
 // COMMENT OUT when offline
 export const links: Route.LinksFunction = () => [
