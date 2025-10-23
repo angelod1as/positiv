@@ -1,13 +1,13 @@
 // Re-export authentication and user-related schemas
 export {
-  loginSchema,
-  forgotPasswordSchema,
-  currentUserSchema,
-  currentProfileSchema,
-  getSupabaseSchema,
+  ExtraBasicDataSchema,
   agreeToTermsSchema,
-  genderPronounOrientationSchema,
   applyToEventSchema,
+  currentProfileSchema,
+  currentUserSchema,
+  forgotPasswordSchema,
+  getSupabaseSchema,
+  loginSchema,
 } from "~/business/common"
 
 export { clientContextSchema } from "~/business/auth/auth.client"
