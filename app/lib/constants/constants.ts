@@ -2,38 +2,42 @@ export const POSITIV_URL = "https://www.positivparty.com/"
 
 export const POSITIV_EMAIL = "contato@positivparty.com"
 
-// NEWS_VERSION is a timestamp that triggers the news dialog when updated
-// Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1760688000000 // October 17, 2025 - Spreadsheet improvements, Google Contacts updates, banner optimization, group dates
-
 export const EVENT_PAGE_REGEXP =
   /dashboard\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
 
 export const PHONE_REGEXP = /^(\d{2})?\d{2}\d{8,9}$/
 
 export const GENDERS = [
+  "Homem cis",
+  "Homem trans",
   "Mulher cis",
   "Mulher trans",
-  "Travesti",
-  "Pessoa não binária",
   "Pessoa agênera",
-  "Homem trans",
-  "Homem cis",
+  "Pessoa não binária",
+  "Travesti",
 ] as const
 
 export const ORIENTATIONS = [
-  "Hétero",
-  "Gay",
-  "Lésbica",
-  "Bi",
-  "Pan",
-  "Demi",
   "Ace",
+  "Bi",
+  "Demi",
+  "Gay",
+  "Hétero",
+  "Lésbica",
+  "Pan",
 ] as const
 
 export const PRONOUNS = [
-  "Ele/dele",
   "Ela/dela",
+  "Ele/dele",
   "Elu/delu",
   "Ile/dile",
+] as const
+
+export const RACE_COLOR = [
+  "Amarela",
+  "Branca",
+  "Indígena",
+  "Parda",
+  "Preta",
 ] as const
