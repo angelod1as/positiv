@@ -19,7 +19,8 @@ INSERT INTO public.profiles (
     is_veteran,
     approved_to_attend,
     flag,
-    flag_notes
+    flag_notes,
+    race_color
 )
 SELECT
     usr.id,
@@ -154,10 +155,18 @@ SELECT
     END,
     -- flag_notes
     CASE usr.email
-        WHEN 'user1@example.com' THEN 'Test flag note for yellow flag'
-        WHEN 'user2@example.com' THEN 'Test flag note for red flag'
-        WHEN 'user3@example.com' THEN 'Another test flag note'
-        ELSE NULL
+        WHEN 'user1@example.com' THEN 'Teste de bandeira para a bandeira amarela'
+        WHEN 'user2@example.com' THEN 'Teste de bandeira para a bandeira vermelha'
+        WHEN 'user3@example.com' THEN 'Mais uma nota de teste'
+        ELSE null
+    END,
+    -- race_color
+    CASE usr.email
+        WHEN 'user1@example.com' THEN ARRAY['Branco']::text []
+        WHEN 'user2@example.com' THEN ARRAY['Preta']::text []
+        WHEN 'user3@example.com' THEN ARRAY['Amarela']::text []
+        WHEN 'user4@example.com' THEN ARRAY['Outra cor']::text []
+        ELSE null
     END
 FROM auth.users AS usr
 WHERE usr.email IN (
