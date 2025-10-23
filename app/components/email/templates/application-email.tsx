@@ -7,9 +7,12 @@ import {
   Text,
 } from "@react-email/components"
 import dotenv from "dotenv"
-import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
 import { EmailWrapper } from "~/components/email/common/wrapper"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
+import type {
+  ProfileWithRoles,
+  ViewEvent,
+} from "~types/database/entities.types"
 dotenv.config()
 
 interface ApplicationMailProps {
@@ -70,8 +73,8 @@ const ApplicationMail = ({ profile, event }: ApplicationMailProps) => {
           </li>
           <li>
             Temos políticas de <b>entradas sociais</b> para pessoas trans,
-            negras, indígenas e em vulnerabilidade social. Se você é de um
-            desses grupos e gostaria de participar da festa, fale com Ju ou
+            negras, indígenas e em vulnerabilidade social. Se você faz parte de
+            um desses grupos e gostaria de participar da festa, fale com Ju ou
             Angelo pelo nosso Whatsapp.
           </li>
         </ul>

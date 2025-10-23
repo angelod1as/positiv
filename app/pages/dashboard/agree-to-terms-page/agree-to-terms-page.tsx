@@ -114,6 +114,14 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
           cancelada, caso sua conduta não corresponda com o que nós pregamos.
         </b>
       </p>
+
+      <h2>Entradas sociais</h2>
+      <p>
+        Temos políticas de <b>entradas sociais</b> para pessoas trans, negras,
+        indígenas e em vulnerabilidade social. Se você faz parte de um desses
+        grupos e gostaria de participar da festa, se inscreva e avise na hora da
+        entrevista.
+      </p>
       <h2>Política de reembolso</h2>
       <p>
         Nossa política é simples: ao confirmarmos o número de participantes,
