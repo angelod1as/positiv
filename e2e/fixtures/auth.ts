@@ -79,7 +79,7 @@ export async function performUILogin(page: Page, email: string, password: string
     await expect(page.getByText('Gênero')).toBeVisible()
     await expect(page.getByText('Orientação')).toBeVisible()
     await expect(page.getByText('Pronomes')).toBeVisible()
-    await expect(page.getByText('Raça')).toBeVisible()
+    await expect(page.getByText('Cor ou Raça', { exact: true })).toBeVisible()
     
     // Select checkboxes using label locators for better reliability
     // Gender
