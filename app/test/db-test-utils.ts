@@ -47,9 +47,6 @@ export async function cleanupTestData(
   // Perform batch deletions for each table
   // Order matters due to foreign key constraints - delete in reverse order of dependencies
   const tableOrder = [
-    "newsletter_queue",
-    "newsletter_sends", 
-    "newsletters",
     "event_participants",
     "events",
     "profiles"
@@ -76,24 +73,6 @@ export async function cleanupTestData(
         case "profiles":
           await kysely
             .deleteFrom("profiles")
-            .where("id", "in", ids)
-            .execute()
-          break
-        case "newsletters":
-          await kysely
-            .deleteFrom("newsletters")
-            .where("id", "in", ids)
-            .execute()
-          break
-        case "newsletter_sends":
-          await kysely
-            .deleteFrom("newsletter_sends")
-            .where("id", "in", ids)
-            .execute()
-          break
-        case "newsletter_queue":
-          await kysely
-            .deleteFrom("newsletter_queue")
             .where("id", "in", ids)
             .execute()
           break
