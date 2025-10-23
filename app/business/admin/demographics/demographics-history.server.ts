@@ -1,6 +1,6 @@
 import { composable } from "composable-functions"
-import { kysely } from "~/kysely"
 import type { Transaction } from "kysely"
+import { kysely } from "~/kysely"
 import type { Database } from "~/types/database/kysely.types"
 import type { Demographics } from "./demographics"
 
@@ -29,20 +29,30 @@ export const storeEventDemographicsSnapshot = composable(
           orientation_homo: demographics.orientation.homo,
           orientation_bi_pan: demographics.orientation.biPan,
           orientation_ace_demi: demographics.orientation.aceDemi,
-          orientation_other_percentage: demographics.orientation.other.percentage,
+          orientation_other_percentage:
+            demographics.orientation.other.percentage,
           orientation_other_values: demographics.orientation.other.values || [],
+          race_color_white: demographics.race_color.white,
+          race_color_yellow: demographics.race_color.yellow,
+          race_color_indigenous: demographics.race_color.indigenous,
+          race_color_black: demographics.race_color.black,
+          race_color_brown: demographics.race_color.brown,
+          race_color_other_percentage: demographics.race_color.other.percentage,
+          race_color_other_values: demographics.race_color.other.values || [],
           age_average: demographics.age.average,
           age_min: demographics.age.min,
           age_max: demographics.age.max,
         })
         .returning(["id", "event_id", "calculated_at"])
         .executeTakeFirstOrThrow()
-      
+
       return snapshot
     } catch (error) {
-      throw new Error(`Failed to store demographics snapshot: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(
+        `Failed to store demographics snapshot: ${error instanceof Error ? error.message : "Unknown error"}`,
+      )
     }
-  }
+  },
 )
 
 export const upsertEventDemographicsSnapshot = composable(
@@ -58,7 +68,7 @@ export const upsertEventDemographicsSnapshot = composable(
     try {
       // Use transaction if provided, otherwise use kysely directly
       const db = trx || kysely
-      
+
       // Use atomic UPSERT operation with onConflict to handle race conditions
       const snapshot = await db
         .insertInto("event_demographics_history")
@@ -76,8 +86,16 @@ export const upsertEventDemographicsSnapshot = composable(
           orientation_homo: demographics.orientation.homo,
           orientation_bi_pan: demographics.orientation.biPan,
           orientation_ace_demi: demographics.orientation.aceDemi,
-          orientation_other_percentage: demographics.orientation.other.percentage,
+          orientation_other_percentage:
+            demographics.orientation.other.percentage,
           orientation_other_values: demographics.orientation.other.values || [],
+          race_color_white: demographics.race_color.white,
+          race_color_yellow: demographics.race_color.yellow,
+          race_color_indigenous: demographics.race_color.indigenous,
+          race_color_black: demographics.race_color.black,
+          race_color_brown: demographics.race_color.brown,
+          race_color_other_percentage: demographics.race_color.other.percentage,
+          race_color_other_values: demographics.race_color.other.values || [],
           age_average: demographics.age.average,
           age_min: demographics.age.min,
           age_max: demographics.age.max,
@@ -96,22 +114,34 @@ export const upsertEventDemographicsSnapshot = composable(
             orientation_homo: demographics.orientation.homo,
             orientation_bi_pan: demographics.orientation.biPan,
             orientation_ace_demi: demographics.orientation.aceDemi,
-            orientation_other_percentage: demographics.orientation.other.percentage,
-            orientation_other_values: demographics.orientation.other.values || [],
+            orientation_other_percentage:
+              demographics.orientation.other.percentage,
+            orientation_other_values:
+              demographics.orientation.other.values || [],
+            race_color_white: demographics.race_color.white,
+            race_color_yellow: demographics.race_color.yellow,
+            race_color_indigenous: demographics.race_color.indigenous,
+            race_color_black: demographics.race_color.black,
+            race_color_brown: demographics.race_color.brown,
+            race_color_other_percentage:
+              demographics.race_color.other.percentage,
+            race_color_other_values: demographics.race_color.other.values || [],
             age_average: demographics.age.average,
             age_min: demographics.age.min,
             age_max: demographics.age.max,
             calculated_at: new Date().toISOString(),
-          })
+          }),
         )
         .returning(["id", "event_id", "calculated_at"])
         .executeTakeFirstOrThrow()
-      
+
       return snapshot
     } catch (error) {
-      throw new Error(`Failed to upsert demographics snapshot: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      throw new Error(
+        `Failed to upsert demographics snapshot: ${error instanceof Error ? error.message : "Unknown error"}`,
+      )
     }
-  }
+  },
 )
 
 export const getEventDemographicsHistory = composable(
@@ -123,11 +153,11 @@ export const getEventDemographicsHistory = composable(
       .orderBy("calculated_at", "desc")
       .limit(1)
       .executeTakeFirst()
-    
+
     if (!snapshot) {
       return null
     }
-    
+
     const demographics: Demographics = {
       total: snapshot.total,
       veteran: {
@@ -153,13 +183,24 @@ export const getEventDemographicsHistory = composable(
           values: snapshot.orientation_other_values || [],
         },
       },
+      race_color: {
+        white: Number(snapshot.race_color_white),
+        yellow: Number(snapshot.race_color_yellow),
+        indigenous: Number(snapshot.race_color_indigenous),
+        black: Number(snapshot.race_color_black),
+        brown: Number(snapshot.race_color_brown),
+        other: {
+          percentage: Number(snapshot.race_color_other_percentage),
+          values: snapshot.race_color_other_values || [],
+        },
+      },
       age: {
         average: snapshot.age_average ? Number(snapshot.age_average) : null,
         min: snapshot.age_min,
         max: snapshot.age_max,
       },
     }
-    
+
     return demographics
-  }
+  },
 )
