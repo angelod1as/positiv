@@ -789,7 +789,6 @@ export type Database = {
         Returns: boolean
       }
       text_to_bytea: { Args: { data: string }; Returns: string }
-      trigger_newsletter_processing: { Args: never; Returns: Json }
       update_event_statuses_automatically: { Args: never; Returns: Json }
       update_newsletter_segment_counts: { Args: never; Returns: undefined }
       urlencode:
