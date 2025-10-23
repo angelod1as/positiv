@@ -29,6 +29,13 @@ export type Database = {
           orientation_other_percentage: number
           orientation_other_values: string[] | null
           orientation_straight: number
+          race_color_black: number
+          race_color_brown: number
+          race_color_indigenous: number
+          race_color_other_percentage: number
+          race_color_other_values: string[] | null
+          race_color_white: number
+          race_color_yellow: number
           total: number
           veteran_no: number
           veteran_yes: number
@@ -52,6 +59,13 @@ export type Database = {
           orientation_other_percentage?: number
           orientation_other_values?: string[] | null
           orientation_straight?: number
+          race_color_black?: number
+          race_color_brown?: number
+          race_color_indigenous?: number
+          race_color_other_percentage?: number
+          race_color_other_values?: string[] | null
+          race_color_white?: number
+          race_color_yellow?: number
           total?: number
           veteran_no?: number
           veteran_yes?: number
@@ -75,6 +89,13 @@ export type Database = {
           orientation_other_percentage?: number
           orientation_other_values?: string[] | null
           orientation_straight?: number
+          race_color_black?: number
+          race_color_brown?: number
+          race_color_indigenous?: number
+          race_color_other_percentage?: number
+          race_color_other_values?: string[] | null
+          race_color_white?: number
+          race_color_yellow?: number
           total?: number
           veteran_no?: number
           veteran_yes?: number
