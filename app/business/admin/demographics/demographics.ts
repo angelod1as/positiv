@@ -1,9 +1,14 @@
-import type { Genders, Orientations } from "~types/database/entities.types"
+import type {
+  Genders,
+  Orientations,
+  RaceColor,
+} from "~types/database/entities.types"
 import {
   calculateAge,
   calculateAverage,
   classifySingleGender,
   classifySingleOrientation,
+  classifySingleRaceColor,
 } from "./demographics-utils"
 
 type DemographicRow = {
@@ -12,6 +17,7 @@ type DemographicRow = {
   is_veteran: boolean | null
   orientation: Array<Orientations | string> | null
   where_lives?: string | null
+  race_color: Array<RaceColor | string> | null
 }
 
 type OtherCategoryData = {
@@ -33,6 +39,14 @@ export type Demographics = {
     homo: number
     biPan: number
     aceDemi: number
+    other: OtherCategoryData
+  }
+  race_color: {
+    white: number
+    yellow: number
+    indigenous: number
+    black: number
+    brown: number
     other: OtherCategoryData
   }
   age: { average: number | null; min: number | null; max: number | null }
@@ -170,6 +184,43 @@ function countOrientations(rows: DemographicRow[]) {
     },
   )
 }
+
+function countRaceColor(rows: DemographicRow[]) {
+  return rows.reduce<{
+    white: number
+    yellow: number
+    indigenous: number
+    black: number
+    brown: number
+    other: { count: number; others: string[] }
+  }>(
+    (acc, row) => {
+      const raceColor = row.race_color?.[0]
+      if (raceColor) {
+        const type = classifySingleRaceColor(raceColor)
+        if (type === "other") {
+          acc.other.count++
+          acc.other.others.push(raceColor)
+        } else {
+          acc[type]++
+        }
+      } else {
+        acc.other.count++
+        acc.other.others.push("Not Provided")
+      }
+      return acc
+    },
+    {
+      white: 0,
+      yellow: 0,
+      indigenous: 0,
+      black: 0,
+      brown: 0,
+      other: { count: 0, others: [] },
+    },
+  )
+}
+
 function extractAges(rows: DemographicRow[]): number[] {
   return rows.flatMap((row) => {
     if (row.date_of_birth) {
@@ -236,11 +287,36 @@ function calculateOrientationPercentages(
   }
 }
 
+function calculateRaceColorPercentages(
+  counts: {
+    white: number
+    yellow: number
+    indigenous: number
+    black: number
+    brown: number
+    other: { count: number; others: string[] }
+  },
+  total: number,
+): Demographics["race_color"] {
+  return {
+    white: calculatePercentage(counts.white, total),
+    yellow: calculatePercentage(counts.yellow, total),
+    indigenous: calculatePercentage(counts.indigenous, total),
+    black: calculatePercentage(counts.black, total),
+    brown: calculatePercentage(counts.brown, total),
+    other: {
+      percentage: calculatePercentage(counts.other.count, total),
+      values: counts.other.others,
+    },
+  }
+}
+
 export function calculateDemographics(rows: DemographicRow[]): Demographics {
   const total = rows.length
   const veteranCounts = countVeterans(rows)
   const genderCounts = countGenders(rows)
   const orientationCounts = countOrientations(rows)
+  const raceColorCounts = countRaceColor(rows)
   const ages = extractAges(rows)
 
   return {
@@ -248,6 +324,7 @@ export function calculateDemographics(rows: DemographicRow[]): Demographics {
     veteran: calculateVeteranPercentages(veteranCounts, total),
     gender: calculateGenderPercentages(genderCounts, total),
     orientation: calculateOrientationPercentages(orientationCounts, total),
+    race_color: calculateRaceColorPercentages(raceColorCounts, total),
     age: {
       average: calculateAverage(ages),
       min: ages.length ? Math.min(...ages) : null,

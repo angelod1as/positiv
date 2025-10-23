@@ -240,6 +240,9 @@ export const updateEventStatus = applySchema(
         .select([
           "profiles.date_of_birth",
           "profiles.gender",
+          "profiles.orientation",
+          "profiles.where_lives",
+          "profiles.race_color",
           sql<boolean>`
             CASE
               WHEN profiles.became_veteran_date IS NULL THEN false
@@ -247,8 +250,6 @@ export const updateEventStatus = applySchema(
               ELSE false
             END
           `.as("is_veteran"),
-          "profiles.orientation",
-          "profiles.where_lives",
         ])
         .execute()
 
@@ -260,7 +261,7 @@ export const updateEventStatus = applySchema(
       const { upsertEventDemographicsSnapshot } = await import(
         "./demographics/demographics-history.server"
       )
-      
+
       // Store demographics snapshot using the transaction
       const snapshotResult = await upsertEventDemographicsSnapshot({
         eventId,
@@ -271,7 +272,7 @@ export const updateEventStatus = applySchema(
       if (!snapshotResult.success) {
         // If demographics calculation fails, throw error to rollback transaction
         throw new Error(
-          `Failed to store demographics snapshot for event ${eventId}: ${snapshotResult.errors?.join(", ")}`
+          `Failed to store demographics snapshot for event ${eventId}: ${snapshotResult.errors?.join(", ")}`,
         )
       }
     }
@@ -314,6 +315,9 @@ export const updateEventDemographics = applySchema(
     .select([
       "profiles.date_of_birth",
       "profiles.gender",
+      "profiles.orientation",
+      "profiles.where_lives",
+      "profiles.race_color",
       sql<boolean>`
         CASE
           WHEN profiles.became_veteran_date IS NULL THEN false
@@ -321,8 +325,6 @@ export const updateEventDemographics = applySchema(
           ELSE false
         END
       `.as("is_veteran"),
-      "profiles.orientation",
-      "profiles.where_lives",
     ])
     .execute()
 
