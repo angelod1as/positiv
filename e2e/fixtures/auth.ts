@@ -79,6 +79,7 @@ export async function performUILogin(page: Page, email: string, password: string
     await expect(page.getByText('Gênero')).toBeVisible()
     await expect(page.getByText('Orientação')).toBeVisible()
     await expect(page.getByText('Pronomes')).toBeVisible()
+    await expect(page.getByText('Raça')).toBeVisible()
     
     // Select checkboxes using label locators for better reliability
     // Gender
@@ -95,6 +96,11 @@ export async function performUILogin(page: Page, email: string, password: string
     const pronounsLabel = page.locator('label').filter({ hasText: TEST_USER_PROFILE_DATA.pronouns[0] })
     await expect(pronounsLabel).toBeVisible({ timeout: 10000 })
     await pronounsLabel.click()
+
+    // Race and Color
+    const raceColorLabel = page.locator('label').filter({ hasText: TEST_USER_PROFILE_DATA.race_color[0] })
+    await expect(raceColorLabel).toBeVisible({ timeout: 10000 })
+    await raceColorLabel.click()
     
     // Give a moment for the checkboxes to be checked
     await page.waitForTimeout(500)
