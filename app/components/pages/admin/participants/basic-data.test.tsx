@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { BasicData } from './basic-data'
+import { describe, expect, it, vi } from 'vitest'
 import type { ProfileWithExtraData } from '~/business/admin/admin.server'
+import { BasicData } from './basic-data'
 
 // Mock the AddToGoogleContactsButton
 vi.mock('~/components/atoms/buttons/add-to-google-contacts-button', () => ({
@@ -20,7 +20,7 @@ const renderWithRouter = (component: React.ReactElement) => {
       element: component,
     },
   ])
-  
+
   return render(<RouterProvider router={router} />)
 }
 
@@ -39,6 +39,7 @@ describe('BasicData', () => {
     gender: ['cis'],
     pronouns: ['ele/dele'],
     orientation: ['heterossexual'],
+    race_color: ["Indígena"],
     where_lives: 'São Paulo',
     how_came_to_us: 'Indicação',
     is_veteran: false,
@@ -50,6 +51,7 @@ describe('BasicData', () => {
     basic_data_filled: true,
     created_at: '2023-01-01',
     general_notes: null,
+    became_veteran_date: "2025-07-19 16:00:00+00",
   } as ProfileWithExtraData
 
   it('should render the AddToGoogleContactsButton', () => {
@@ -62,7 +64,7 @@ describe('BasicData', () => {
   it('should pass correct props to AddToGoogleContactsButton', async () => {
     const { AddToGoogleContactsButton } = await import('~/components/atoms/buttons/add-to-google-contacts-button')
     const MockedButton = vi.mocked(AddToGoogleContactsButton)
-    
+
     renderWithRouter(<BasicData profile={mockProfile} />)
 
     // Check that it was called with the expected props (ignoring the second argument)
