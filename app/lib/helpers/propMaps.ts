@@ -36,6 +36,7 @@ export const profilePropMap = (property: keyof Profile) => {
     flag: "Flag",
     flag_notes: "Notas da flag",
     general_notes: "Observações gerais",
+    race_color: "Raça ou cor",
   }[property]
 }
 
