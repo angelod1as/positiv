@@ -4,11 +4,7 @@ import type { z } from "zod"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
-import {
-  basicDataSchema,
-  contextSchema,
-  genderPronounOrientationSchema,
-} from "../common"
+import { basicDataSchema, contextSchema, ExtraBasicDataSchema } from "../common"
 
 const {
   auth: { LOGIN },
@@ -35,43 +31,57 @@ export const basicData = applySchema(
     .single()
 
   // If there's an error other than "no rows", throw it
-  if (orphanedError && orphanedError.code !== 'PGRST116') {
-    throw new Error(`Error checking for orphaned profile: ${orphanedError.message}`)
+  if (orphanedError && orphanedError.code !== "PGRST116") {
+    throw new Error(
+      `Error checking for orphaned profile: ${orphanedError.message}`,
+    )
   }
 
   // Build upsert data with optional id
   const profileId = orphanedProfile?.id || currentProfile?.id
   const existingProfile = orphanedProfile || currentProfile
-  
+
   // Build base upsert data
   interface ProfileUpsertData {
-    [key: string]: string | number | boolean | null | undefined | Date | string[]
+    [key: string]:
+      | string
+      | number
+      | boolean
+      | null
+      | undefined
+      | Date
+      | string[]
     id?: string
     user_id: string
     email: string
     date_of_birth: string | null
     allow_marketing_email?: boolean
   }
-  
+
   const upsertData: ProfileUpsertData = {
     ...data,
     date_of_birth: dateToString(data.date_of_birth),
     user_id: currentUser.id,
     email: currentUser.email,
   }
-  
+
   // Add profile ID if exists
   if (profileId) {
     upsertData.id = profileId
   }
-  
+
   // Preserve marketing email preference if it exists and is a boolean
   // Only preserve explicit true/false values, not null or undefined
-  if (existingProfile && typeof existingProfile.allow_marketing_email === 'boolean') {
+  if (
+    existingProfile &&
+    typeof existingProfile.allow_marketing_email === "boolean"
+  ) {
     upsertData.allow_marketing_email = existingProfile.allow_marketing_email
   }
 
-  const { error: upsertError } = await supabase.from("profiles").upsert(upsertData)
+  const { error: upsertError } = await supabase
+    .from("profiles")
+    .upsert(upsertData)
 
   if (upsertError) {
     const { code, message } = upsertError || {}
@@ -83,8 +93,8 @@ export const basicData = applySchema(
   return context
 })
 
-type GenderPronounsOrientationProps = {
-  formData: z.infer<typeof genderPronounOrientationSchema>
+type ExtraBasicDataProps = {
+  formData: z.infer<typeof ExtraBasicDataSchema>
   context: z.infer<typeof contextSchema>
 }
 
@@ -95,17 +105,17 @@ const {
   },
 } = paths
 
-export const genderPronounsOrientation = async ({
+export const extraBasicData = async ({
   formData,
   context,
-}: GenderPronounsOrientationProps) => {
+}: ExtraBasicDataProps) => {
   const { supabase, currentProfile, supabaseHeaders } = context
 
   if (!currentProfile) {
     throw new Error("Erro ao buscar usuário")
   }
 
-  const formValidation = genderPronounOrientationSchema.safeParse(formData)
+  const formValidation = ExtraBasicDataSchema.safeParse(formData)
 
   if (!formValidation.success) {
     throw await redirectWithError(
