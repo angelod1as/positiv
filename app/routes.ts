@@ -10,7 +10,6 @@ export default [
   // PUBLIC
   index("pages/homepage/homepage.tsx"),
   route("/auth/confirm", "pages/auth/confirm.tsx"),
-  route("unsubscribe/:token", "pages/unsubscribe/unsubscribe-page.tsx"),
 
   layout("pages/auth/layout.tsx", [
     ...prefix("/entrar", [
@@ -98,16 +97,6 @@ export default [
           ),
         ]),
       ]),
-      ...prefix("newsletters", [
-        index("pages/admin/newsletters/index.tsx"),
-        route("/new", "pages/admin/newsletters/new.tsx"),
-        route("/:id", "pages/admin/newsletters/view.tsx"),
-        route("/:id/edit", "pages/admin/newsletters/edit.tsx"),
-      ]),
-    ]),
-    // API Routes
-    ...prefix("api/admin", [
-      route("/newsletters/preview", "routes/api/admin/newsletters/preview.ts"),
     ]),
   ]),
 ] satisfies RouteConfig
