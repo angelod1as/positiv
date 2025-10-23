@@ -59,6 +59,7 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
       gender: profile?.gender || [],
       orientation: profile?.orientation || [],
       pronouns: profile?.pronouns || [],
+      race_color: profile?.race_color || [],
     },
     reValidateMode: "onSubmit",
     resolver: zodResolver(ExtraBasicDataSchema),
