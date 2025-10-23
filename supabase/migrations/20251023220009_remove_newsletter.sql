@@ -28,8 +28,9 @@ EXCEPTION
     RAISE NOTICE 'Error unscheduling cron jobs: %', SQLERRM;
 END $$;
 
--- Step 2: Drop function
+-- Step 2: Drop functions
 DROP FUNCTION IF EXISTS update_newsletter_segment_counts();
+DROP FUNCTION IF EXISTS trigger_newsletter_processing();
 
 -- Step 3: Drop tables (in dependency order)
 -- Drop tables that reference newsletters first
