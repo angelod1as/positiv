@@ -655,6 +655,7 @@ export type Database = {
           orientation: string[]
           phone: number
           pronouns: string[]
+          race_color: string[]
           rg: string
           rg_issuer: string
           roles: string[]

@@ -66,14 +66,14 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
     shouldFocusError: true,
   })
 
-  const onSubmit = (val: FormData) => {
+  const onSubmit = async (val: FormData) => {
     const cleaned: FormData = {
       gender: val.gender.filter(otherFilter),
       orientation: val.orientation.filter(otherFilter),
       pronouns: val.pronouns.filter(otherFilter),
       race_color: val.race_color.filter(otherFilter),
     }
-    submit(cleaned, {
+    await submit(cleaned, {
       method: "POST",
     })
   }
