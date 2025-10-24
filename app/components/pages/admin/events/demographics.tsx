@@ -14,9 +14,10 @@ export const DemographicsData: FC<DemographicsProps> = ({
   fetcher,
   eventId,
 }: DemographicsProps) => {
-  const isUpdating = fetcher?.state === "submitting" && 
+  const isUpdating =
+    fetcher?.state === "submitting" &&
     fetcher?.formData?.get("intent") === "update-demographics"
-  
+
   return (
     <>
       <div className="flex items-center justify-between">
@@ -24,8 +25,8 @@ export const DemographicsData: FC<DemographicsProps> = ({
         {fetcher && eventId && (
           <fetcher.Form method="post">
             <input type="hidden" name="intent" value="update-demographics" />
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               variant="secondary"
               size="sm"
               disabled={isUpdating}
@@ -39,28 +40,52 @@ export const DemographicsData: FC<DemographicsProps> = ({
         <div className="flex flex-col gap-4 sm:grid sm:grid-cols-4">
           <div>
             <h4>Geral</h4>
-            <DataPair suffix=" participantes" pair={["Total", demographics.total]} />
-            <DataPair suffix="%" pair={["Veteranes", demographics.veteran.yes]} />
+            <DataPair
+              suffix=" participantes"
+              pair={["Total", demographics.total]}
+            />
+            <DataPair
+              suffix="%"
+              pair={["Veteranes", demographics.veteran.yes]}
+            />
             <DataPair suffix="%" pair={["Novates", demographics.veteran.no]} />
           </div>
           <div>
             <h4>Gênero</h4>
             <DataPair suffix="%" pair={["Cis", demographics.gender.cis]} />
             <DataPair suffix="%" pair={["Trans", demographics.gender.trans]} />
-            <DataPair suffix="%" pair={["Agênere", demographics.gender.agender]} />
+            <DataPair
+              suffix="%"
+              pair={["Agênere", demographics.gender.agender]}
+            />
             {!!demographics.gender.other.percentage && (
               <>
-                <DataPair suffix="%" pair={["Outros", demographics.gender.other.percentage]} />{" "}
+                <DataPair
+                  suffix="%"
+                  pair={["Outros", demographics.gender.other.percentage]}
+                />{" "}
                 - {demographics.gender.other.values?.join(", ")}
               </>
             )}
           </div>
           <div>
             <h4>Orientação</h4>
-            <DataPair suffix="%" pair={["Héteres", demographics.orientation.straight]} />
-            <DataPair suffix="%" pair={["Bi/Pan", demographics.orientation.biPan]} />
-            <DataPair suffix="%" pair={["Homo", demographics.orientation.homo]} />
-            <DataPair suffix="%" pair={["Ace/Demi", demographics.orientation.aceDemi]} />
+            <DataPair
+              suffix="%"
+              pair={["Héteres", demographics.orientation.straight]}
+            />
+            <DataPair
+              suffix="%"
+              pair={["Bi/Pan", demographics.orientation.biPan]}
+            />
+            <DataPair
+              suffix="%"
+              pair={["Homo", demographics.orientation.homo]}
+            />
+            <DataPair
+              suffix="%"
+              pair={["Ace/Demi", demographics.orientation.aceDemi]}
+            />
             {!!demographics.orientation.other.percentage && (
               <>
                 <DataPair
@@ -72,15 +97,51 @@ export const DemographicsData: FC<DemographicsProps> = ({
             )}
           </div>
           <div>
+            <h4>Raça ou cor</h4>
+            <DataPair
+              suffix="%"
+              pair={["Amarela", demographics.race_color.yellow]}
+            />
+            <DataPair
+              suffix="%"
+              pair={["Branca", demographics.race_color.white]}
+            />
+            <DataPair
+              suffix="%"
+              pair={["Indígena", demographics.race_color.indigenous]}
+            />
+            <DataPair
+              suffix="%"
+              pair={["Parda", demographics.race_color.brown]}
+            />
+            <DataPair
+              suffix="%"
+              pair={["Preta", demographics.race_color.black]}
+            />
+            {!!demographics.race_color.other.percentage && (
+              <>
+                <DataPair
+                  suffix="%"
+                  pair={["Outros", demographics.race_color.other.percentage]}
+                />{" "}
+                - {demographics.race_color.other.values?.join(", ")}
+              </>
+            )}
+          </div>
+          <div>
             <h4>Idades</h4>
             <DataPair suffix=" anos" pair={["Menor", demographics.age.min]} />
-            <DataPair suffix=" anos" pair={["Média", demographics.age.average]} />
+            <DataPair
+              suffix=" anos"
+              pair={["Média", demographics.age.average]}
+            />
             <DataPair suffix=" anos" pair={["Maior", demographics.age.max]} />
           </div>
         </div>
       ) : (
         <div className="text-sm text-muted-foreground">
-          Não há dados demográficos. Clique em 'Atualizar Demografia' para calcular.
+          Não há dados demográficos. Clique em 'Atualizar Demografia' para
+          calcular.
         </div>
       )}
     </>

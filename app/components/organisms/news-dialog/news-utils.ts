@@ -30,7 +30,20 @@ export function hasVisibleNews(
   return filteredNews.length > 0
 }
 
+// NEWS_VERSION is a timestamp that triggers the news dialog when updated
+// Update this to Date.now() whenever adding new news items
+export const NEWS_VERSION = 1761254120462
+
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "race-color",
+    title: "🌈 Informações sobre cor ou raça",
+    content:
+      "Após sugestão de frequentadores, adicionamos nos dados de perfil os dados de cor ou raça. Não utilizaremos essas informações para escolher es participantes, mas elas serão úteis para dados demográficos.",
+    isAdmin: false,
+    createdAt: new Date("2025-10-23T14:00:00"),
+    isActive: true,
+  },
   {
     id: "social-spots",
     title: "🤗 Vagas sociais agora nos termos e condições",

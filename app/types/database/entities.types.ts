@@ -2,7 +2,12 @@ import { z } from "zod"
 
 import type { Selectable } from "kysely"
 import { currentProfileSchema } from "~/business/common"
-import type { GENDERS, ORIENTATIONS, PRONOUNS } from "~/lib/constants/constants"
+import type {
+  GENDERS,
+  ORIENTATIONS,
+  PRONOUNS,
+  RACE_COLOR,
+} from "~/lib/constants/constants"
 import type { Database } from "./database.types"
 
 // TODO: POS-136 selectable, insertable, updateable types
@@ -29,8 +34,7 @@ export type ParticipantAttendanceStatus =
   Database["public"]["Enums"]["attendance_status_enum"]
 export type ProfileApprovedToAttendStatus =
   Database["public"]["Enums"]["approved_to_attend_enum"]
-export type ProfileFlagStatus =
-  Database["public"]["Enums"]["profile_flag_enum"]
+export type ProfileFlagStatus = Database["public"]["Enums"]["profile_flag_enum"]
 
 /** Event Type */
 export type EventType = Database["public"]["Enums"]["event_type_enum"]
@@ -122,6 +126,7 @@ export const profileFlagStatusEnum = z.enum(profileFlagStatus)
 export type Genders = (typeof GENDERS)[number]
 export type Orientations = (typeof ORIENTATIONS)[number]
 export type Pronouns = (typeof PRONOUNS)[number]
+export type RaceColor = (typeof RACE_COLOR)[number]
 
 /////
 // Kysely helpers

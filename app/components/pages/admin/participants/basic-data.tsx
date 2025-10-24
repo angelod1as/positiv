@@ -9,9 +9,9 @@ import {
 import { FlagBadge } from "~/components/atoms/badges/flag-badge"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 
+import { AddToGoogleContactsButton } from "~/components/atoms/buttons/add-to-google-contacts-button"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import { profilePropMap } from "~/lib/helpers/propMaps"
-import { AddToGoogleContactsButton } from "~/components/atoms/buttons/add-to-google-contacts-button"
 
 type BasicDataProps = { profile: ProfileWithExtraData }
 export const BasicData: FC<BasicDataProps> = ({ profile }) => {
@@ -32,6 +32,7 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
     was_admin_skipped_last_event,
     flag,
     flag_notes,
+    race_color,
   } = profile
 
   return (
@@ -69,6 +70,7 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
           )}
         </div>
         <div>
+          <DataPair top pair={[profilePropMap("race_color"), race_color]} />
           <DataPair top pair={[profilePropMap("email"), email]} />
           <DataPair top pair={[profilePropMap("rg"), `${rg} ${rg_issuer}`]} />
           <DataPair top pair={[profilePropMap("cpf"), cpf]} />
