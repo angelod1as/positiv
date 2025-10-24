@@ -115,9 +115,9 @@ export const extraBasicData = async ({
     throw new Error("Erro ao buscar usuário")
   }
 
-  const formValidation = ExtraBasicDataSchema.safeParse(formData)
+  const extraDataValidation = ExtraBasicDataSchema.safeParse(formData)
 
-  if (!formValidation.success) {
+  if (!extraDataValidation.success) {
     throw await redirectWithError(
       GENDER_PRONOUNS_ORIENTATION,
       "Algo deu errado com seu formulário, tente de novo.",
@@ -139,12 +139,10 @@ export const extraBasicData = async ({
   const { error: updateError } = await supabase
     .from("profiles")
     .update({
-      ...formValidation.data,
+      ...extraDataValidation.data,
       basic_data_filled: true,
     })
     .eq("id", currentProfile.id)
-    .select()
-    .single()
 
   if (updateError) {
     const { code, message } = updateError || {}

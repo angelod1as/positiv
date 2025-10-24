@@ -162,6 +162,7 @@ SELECT
     END,
     -- race_color
     CASE usr.email
+        WHEN 'admin@example.com' THEN ARRAY['Branco']::text []
         WHEN 'user1@example.com' THEN ARRAY['Branco']::text []
         WHEN 'user2@example.com' THEN ARRAY['Preta']::text []
         WHEN 'user3@example.com' THEN ARRAY['Amarela']::text []

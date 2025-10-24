@@ -10,6 +10,7 @@ import {
   redirect,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from "react-router"
 import { getToast } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
@@ -23,6 +24,7 @@ import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
+import { ProfileUpdateGuard } from "./components/organisms/profile-update-guard/profile-update-guard"
 
 // COMMENT OUT when offline
 export const links: Route.LinksFunction = () => [
@@ -98,6 +100,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     const shouldShowNews =
       Number(oldNewsVersion) < Number(NEWS_VERSION) || showNews !== "false"
 
+    const needsProfileUpdate = currentProfile
+      ? !currentProfile.race_color || currentProfile.race_color.length === 0
+      : false
+
     return data(
       {
         currentUser,
@@ -105,6 +111,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         toast,
         isProdInDev,
         isThereAnyNews: shouldShowNews,
+        needsProfileUpdate,
       },
       { headers },
     )
@@ -116,6 +123,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       toast: null,
       isProdInDev: null,
       isThereAnyNews: null,
+      needsProfileUpdate: false,
     }
   }
 }
@@ -175,7 +183,10 @@ export default function App({ loaderData }: Route.ComponentProps) {
     toast,
     isProdInDev,
     isThereAnyNews = false,
+    needsProfileUpdate = false,
   } = loaderData
+
+  const location = useLocation()
 
   useEffect(() => {
     if (toast?.type) {
@@ -194,6 +205,11 @@ export default function App({ loaderData }: Route.ComponentProps) {
         profile={currentProfile}
         userEmail={currentUser?.email}
         isThereAnyNews={isThereAnyNews ?? false}
+      />
+      <ProfileUpdateGuard
+        currentProfile={currentProfile}
+        currentPath={location.pathname}
+        needsProfileUpdate={needsProfileUpdate}
       />
       <div className="flex flex-col grow mt-16">
         <Outlet />
