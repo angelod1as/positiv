@@ -66,14 +66,3 @@ export function sanitizeHtml(html: string): string {
   // Additional post-processing if needed
   return sanitized
 }
-
-/**
- * Sanitizes HTML specifically for newsletter content
- * More permissive than general sanitization but still safe
- */
-export function sanitizeNewsletterHtml(html: string): string {
-  if (!html) return ""
-  
-  // Use the general sanitization with newsletter-specific adjustments if needed
-  return sanitizeHtml(html)
-}

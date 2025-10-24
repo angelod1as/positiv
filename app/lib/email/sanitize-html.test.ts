@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { sanitizeHtml, sanitizeNewsletterHtml } from "./sanitize-html"
+import { sanitizeHtml } from "./sanitize-html"
 
 describe("sanitizeHtml", () => {
   describe("XSS Protection", () => {
@@ -148,27 +148,6 @@ describe("sanitizeHtml", () => {
       
       expect(result).toContain('class="container"')
       expect(result).toContain('id="main"')
-    })
-  })
-
-  describe("sanitizeNewsletterHtml", () => {
-    it("should handle empty content", () => {
-      expect(sanitizeNewsletterHtml("")).toBe("")
-      expect(sanitizeNewsletterHtml(null as unknown as string)).toBe("")
-      expect(sanitizeNewsletterHtml(undefined as unknown as string)).toBe("")
-    })
-
-    it("should sanitize newsletter content", () => {
-      const content = `
-        <h1>Newsletter</h1>
-        <script>alert('XSS')</script>
-        <p>Safe content</p>
-      `
-      const result = sanitizeNewsletterHtml(content)
-      
-      expect(result).toContain("<h1>Newsletter</h1>")
-      expect(result).not.toContain("<script")
-      expect(result).toContain("<p>Safe content</p>")
     })
   })
 })
