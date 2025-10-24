@@ -5,6 +5,7 @@ export const TEST_USER_PROFILE_DATA = {
   gender: ['Mulher cis'] as string[],
   orientation: ['Hétero'] as string[],
   pronouns: ['Ela/dela'] as string[],
+  race_color: ['Indígena'] as string[],
   date_of_birth: '1990-01-01',
   rg: '123456789',
   rg_issuer: 'SSP/SP',

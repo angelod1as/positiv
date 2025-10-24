@@ -1,4 +1,4 @@
-import { type Page, type Locator } from '@playwright/test'
+import { type Locator, type Page } from '@playwright/test'
 import { BasePage } from './BasePage'
 
 export class SettingsPage extends BasePage {
@@ -32,10 +32,12 @@ export class SettingsPage extends BasePage {
   readonly genderCheckboxes: Locator
   readonly orientationCheckboxes: Locator
   readonly pronounsCheckboxes: Locator
+  readonly raceColorCheckboxes: Locator
   readonly genderOtherInput: Locator
   readonly orientationOtherInput: Locator
   readonly pronounsOtherInput: Locator
-  readonly genderPronounsSubmitButton: Locator
+  readonly raceColorOtherInput: Locator
+  readonly extraBasicDataButton: Locator
 
   // Change password locators
   readonly newPasswordInput: Locator
@@ -74,10 +76,12 @@ export class SettingsPage extends BasePage {
     this.genderCheckboxes = page.getByRole('group').filter({ hasText: 'Gênero' }).getByRole('checkbox')
     this.orientationCheckboxes = page.getByRole('group').filter({ hasText: 'Orientação' }).getByRole('checkbox')
     this.pronounsCheckboxes = page.getByRole('group').filter({ hasText: 'Pronomes' }).getByRole('checkbox')
+    this.raceColorCheckboxes = page.getByRole('group').filter({ hasText: 'Raça' }).getByRole('checkbox')
     this.genderOtherInput = page.locator('input[name="gender_other"]')
     this.orientationOtherInput = page.locator('input[name="orientation_other"]')
     this.pronounsOtherInput = page.locator('input[name="pronouns_other"]')
-    this.genderPronounsSubmitButton = page.getByRole('button', { name: 'Continuar' })
+    this.raceColorOtherInput = page.locator('input[name="race_color_other"]')
+    this.extraBasicDataButton = page.getByRole('button', { name: 'Continuar' })
 
     // Change password
     this.newPasswordInput = page.getByLabel('Nova senha')
@@ -130,19 +134,19 @@ export class SettingsPage extends BasePage {
   async submitBasicDataForm(): Promise<void> {
     // Click submit and wait for the response
     await this.basicDataSubmitButton.click()
-    
+
     // Wait for either a redirect response or navigation
     await Promise.race([
       // Wait for navigation to gender/pronouns page
       this.page.waitForURL('**/genero-pronomes-orientacao', { timeout: 10000 }).catch(() => null),
       // Or wait for a successful form response
-      this.page.waitForResponse(response => 
-        response.url().includes('dados-basicos') && 
+      this.page.waitForResponse(response =>
+        response.url().includes('dados-basicos') &&
         (response.status() === 302 || response.status() === 303 || response.status() === 200),
         { timeout: 10000 }
       )
     ])
-    
+
     // Check if we got redirected
     const currentUrl = this.page.url()
     if (!currentUrl.includes('genero-pronomes-orientacao')) {
@@ -151,13 +155,15 @@ export class SettingsPage extends BasePage {
     }
   }
 
-  async selectGenderPronounsOrientation(data: {
+  async selectExtraBasicData(data: {
     genders?: string[]
     orientations?: string[]
     pronouns?: string[]
+    raceColor?: string[]
     genderOther?: string
     orientationOther?: string
     pronounsOther?: string
+    raceColorOther?: string
   }): Promise<void> {
     // Select genders
     if (data.genders) {
@@ -203,21 +209,36 @@ export class SettingsPage extends BasePage {
       await pronounsOtherCheckbox.check()
       await this.fillAndVerify(this.pronounsOtherInput, data.pronounsOther)
     }
+
+        // Select race and color
+    if (data.raceColor) {
+      for (const color of data.raceColor) {
+        const checkbox = this.page.getByRole('checkbox', { name: color })
+        await checkbox.check()
+      }
+    }
+    if (data.raceColorOther) {
+      // Use semantic selector to find the "Outro" checkbox in the orientation section
+      const raceColorection = this.page.getByRole('group').filter({ hasText: 'Raça' })
+      const raceColorOtherCheckbox = raceColorection.getByRole('checkbox', { name: 'Outro' })
+      await raceColorOtherCheckbox.check()
+      await this.fillAndVerify(this.raceColorOtherInput, data.raceColorOther)
+    }
   }
 
   async submitGenderPronounsForm(): Promise<void> {
     // Submit and wait for either navigation or response
-    await this.genderPronounsSubmitButton.click()
-    
+    await this.extraBasicDataButton.click()
+
     // Wait for either navigation back to account or a successful response
     await Promise.race([
       this.page.waitForURL('**/conta', { timeout: 10000 }),
-      this.page.waitForResponse(response => 
+      this.page.waitForResponse(response =>
         response.url().includes('profiles') && response.status() === 200,
         { timeout: 10000 }
       )
     ])
-    
+
     await this.page.waitForLoadState('networkidle')
   }
 
@@ -251,14 +272,14 @@ export class SettingsPage extends BasePage {
 
   async navigateToBasicData(): Promise<void> {
     const hasBasicData = await this.hasBasicDataFilled()
-    
+
     if (hasBasicData) {
       // Direct navigation for React Router links
       await this.navigateTo(this.basicDataUrl)
     } else {
       // When basic data is not filled, go to terms first
       await this.navigateTo('/conta/termos-e-condicoes')
-      
+
       // From terms page, continue to basic data
       await this.page.getByRole('button', { name: /continuar|preencher/i }).click()
       await this.page.waitForURL('**/conta/dados-basicos')
@@ -277,7 +298,7 @@ export class SettingsPage extends BasePage {
     rgIssuer?: string
   }> {
     const values: Record<string, string> = {}
-    
+
     if (await this.fullNameInput.isVisible()) {
       values.fullName = await this.fullNameInput.inputValue()
     }
@@ -305,7 +326,7 @@ export class SettingsPage extends BasePage {
     if (await this.rgIssuerInput.isVisible()) {
       values.rgIssuer = await this.rgIssuerInput.inputValue()
     }
-    
+
     return values
   }
 

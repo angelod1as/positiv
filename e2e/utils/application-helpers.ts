@@ -282,9 +282,10 @@ export async function ensureTestUserProfileExists(): Promise<string> {
         gender: ['Mulher cis'],
         orientation: ['Hétero'],
         pronouns: ['Ela/dela'],
+        race_color: ['Indígena'],
         date_of_birth: '1990-01-01',
         where_lives: 'São Paulo',
-        how_came_to_us: 'E2E Tests'
+        how_came_to_us: 'E2E Tests',
       })
       .eq('id', testProfile.id)
     

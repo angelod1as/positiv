@@ -1,5 +1,10 @@
 import { GENDERS } from "~/lib/constants/constants"
 
+// TODO: POS-244 REFACTOR THIS MESS
+// - Consolidate fragile string-matching logic into configuration-based utility
+// - Inconsistency: countRaceColor and countGenders only process first array element [0]
+//   while countOrientations processes ALL elements. Should be consistent.
+
 function isCisGender(gender: string): boolean {
   const lower = gender.toLowerCase()
   return (
@@ -35,6 +40,52 @@ export function classifySingleGender(
   }
   if (isAgender(genderString)) {
     return "agender"
+  }
+  return "other"
+}
+
+function isWhite(raceColor: string): boolean {
+  const lower = raceColor.toLowerCase()
+  return (
+    lower === "branca" || lower === "branco" || /\bbranc[ao]\b/i.test(lower)
+  )
+}
+function isYellow(raceColor: string): boolean {
+  const lower = raceColor.toLowerCase()
+  return (
+    lower === "amarela" || lower === "amarelo" || /\bamarél[ao]\b/i.test(lower)
+  )
+}
+function isIndigenous(raceColor: string): boolean {
+  const lower = raceColor.toLowerCase()
+  return lower === "indígena" || /\bind[ií]gena\b/i.test(lower)
+}
+function isBlack(raceColor: string): boolean {
+  const lower = raceColor.toLowerCase()
+  return lower === "preta" || lower === "preto" || /\bpret[ao]\b/i.test(lower)
+}
+function isBrown(raceColor: string): boolean {
+  const lower = raceColor.toLowerCase()
+  return lower === "parda" || lower === "pardo" || /\bpard[ao]\b/i.test(lower)
+}
+
+export function classifySingleRaceColor(
+  raceColorString: string,
+): "white" | "yellow" | "indigenous" | "black" | "brown" | "other" {
+  if (isWhite(raceColorString)) {
+    return "white"
+  }
+  if (isYellow(raceColorString)) {
+    return "yellow"
+  }
+  if (isIndigenous(raceColorString)) {
+    return "indigenous"
+  }
+  if (isBlack(raceColorString)) {
+    return "black"
+  }
+  if (isBrown(raceColorString)) {
+    return "brown"
   }
   return "other"
 }

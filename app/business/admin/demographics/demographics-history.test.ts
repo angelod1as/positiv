@@ -11,18 +11,26 @@ describe("Event Demographics History", () => {
           cis: 70,
           trans: 20,
           agender: 5,
-          other: { percentage: 5, values: ["Non-binary"] }
+          other: { percentage: 5, values: ["Non-binary"] },
         },
         orientation: {
           straight: 30,
           homo: 25,
           biPan: 25,
           aceDemi: 10,
-          other: { percentage: 10, values: ["Questioning"] }
+          other: { percentage: 10, values: ["Questioning"] },
         },
-        age: { average: 28.5, min: 21, max: 45 }
+        race_color: {
+          white: 40,
+          yellow: 5,
+          indigenous: 3,
+          black: 25,
+          brown: 20,
+          other: { percentage: 7, values: ["Other"] },
+        },
+        age: { average: 28.5, min: 21, max: 45 },
       }
-      
+
       expect(mockDemographics.total).toBe(15)
       expect(mockDemographics.veteran.yes).toBe(60)
       expect(mockDemographics.veteran.no).toBe(40)
@@ -46,11 +54,18 @@ describe("Event Demographics History", () => {
         orientation_ace_demi: 10,
         orientation_other_percentage: 10,
         orientation_other_values: ["Questioning"],
+        race_color_white: 40,
+        race_color_yellow: 5,
+        race_color_indigenous: 3,
+        race_color_black: 25,
+        race_color_brown: 20,
+        race_color_other_percentage: 7,
+        race_color_other_values: ["Other"],
         age_average: 27.5,
         age_min: 22,
-        age_max: 40
+        age_max: 40,
       }
-      
+
       const expectedDemographics: Demographics = {
         total: dbSnapshot.total,
         veteran: {
@@ -76,13 +91,26 @@ describe("Event Demographics History", () => {
             values: dbSnapshot.orientation_other_values || [],
           },
         },
+        race_color: {
+          white: Number(dbSnapshot.race_color_white || 0),
+          yellow: Number(dbSnapshot.race_color_yellow || 0),
+          indigenous: Number(dbSnapshot.race_color_indigenous || 0),
+          black: Number(dbSnapshot.race_color_black || 0),
+          brown: Number(dbSnapshot.race_color_brown || 0),
+          other: {
+            percentage: Number(dbSnapshot.race_color_other_percentage || 0),
+            values: dbSnapshot.race_color_other_values || [],
+          },
+        },
         age: {
-          average: dbSnapshot.age_average ? Number(dbSnapshot.age_average) : null,
+          average: dbSnapshot.age_average
+            ? Number(dbSnapshot.age_average)
+            : null,
           min: dbSnapshot.age_min,
           max: dbSnapshot.age_max,
         },
       }
-      
+
       expect(expectedDemographics.total).toBe(20)
       expect(expectedDemographics.veteran.yes).toBe(70)
       expect(expectedDemographics.veteran.no).toBe(30)

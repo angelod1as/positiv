@@ -64,6 +64,7 @@ export const currentProfileSchema = zod.object({
   date_of_birth: zod.string().nullish(),
   gender: zod.array(zod.string()).nullish(),
   orientation: zod.array(zod.string()).nullish(),
+  race_color: zod.array(zod.string()).nullish(),
   where_lives: zod.string().nullish(),
   how_came_to_us: zod.string().nullish(),
   rg_issuer: zod.string().nullish(),
@@ -157,7 +158,7 @@ export const basicDataSchema = zod
     path: ["phone"],
   })
 
-export const genderPronounOrientationSchema = zod.object({
+export const ExtraBasicDataSchema = zod.object({
   gender: zod
     .array(zod.string())
     .refine((value) => value.some((item) => item), {
@@ -169,6 +170,11 @@ export const genderPronounOrientationSchema = zod.object({
       message: "Você precisa escolher pelo menos um",
     }),
   pronouns: zod
+    .array(zod.string())
+    .refine((value) => value.some((item) => item), {
+      message: "Você precisa escolher pelo menos um",
+    }),
+  race_color: zod
     .array(zod.string())
     .refine((value) => value.some((item) => item), {
       message: "Você precisa escolher pelo menos um",

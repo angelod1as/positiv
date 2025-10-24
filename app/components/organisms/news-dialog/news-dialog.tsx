@@ -1,10 +1,9 @@
 import { BellDotIcon } from "lucide-react"
 import { useFetcher } from "react-router"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
-import { NEWS_VERSION } from "~/lib/constants/constants"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { News } from "./news"
-import { hasVisibleNews, DEFAULT_NEWS_ITEMS } from "./news-utils"
+import { DEFAULT_NEWS_ITEMS, hasVisibleNews, NEWS_VERSION } from "./news-utils"
 
 export const NewsDialog = ({
   isThereAnyNews,
@@ -17,7 +16,7 @@ export const NewsDialog = ({
 }) => {
   const fetcher = useFetcher()
   const isAdmin = currentProfile?.is_admin ?? false
-  
+
   // Check if user has any news they can actually see
   const userHasVisibleNews = hasVisibleNews(isAdmin, DEFAULT_NEWS_ITEMS)
   const shouldShowBell = isThereAnyNews && userHasVisibleNews
