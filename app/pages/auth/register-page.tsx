@@ -1,4 +1,6 @@
+import { Turnstile } from "@marsidev/react-turnstile"
 import { formAction } from "remix-forms"
+import { useLoaderData } from "react-router"
 import { Link } from "~/components/atoms/link/link"
 import {
   Card,
@@ -15,12 +17,18 @@ import { redirectWithSuccess } from "remix-toast"
 import { getContext, registerUser } from "~/business/auth/auth.server"
 import { registerUserSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
 import type { Route } from "./+types/register-page"
 
 const {
   root: { HOME },
   auth: { LOGIN },
 } = paths
+
+export const loader = async () => {
+  const { siteKey } = getTurnstileConfig()
+  return { turnstileSiteKey: siteKey }
+}
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const context = await getContext(request, params)
@@ -43,6 +51,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 }
 
 const RegisterPage = ({}: Route.ComponentProps) => {
+  const { turnstileSiteKey } = useLoaderData<typeof loader>()
+
   return (
     <div className={cn("flex flex-col gap-6")}>
       <Card>
@@ -71,8 +81,31 @@ const RegisterPage = ({}: Route.ComponentProps) => {
               confirmPassword: "password",
               over18: "checkbox",
             }}
+            hiddenFields={["captchaToken"]}
             pendingButtonLabel="Entrando..."
-          />
+          >
+            {({ Field, Button, Errors, setValue }) => (
+              <>
+                <Field name="email" />
+                <Field name="password" />
+                <Field name="confirmPassword" />
+                <Field name="over18" />
+
+                <div className="flex flex-col gap-2">
+                  <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => {
+                      setValue("captchaToken", token)
+                    }}
+                  />
+                  <Field name="captchaToken" />
+                </div>
+
+                <Errors />
+                <Button />
+              </>
+            )}
+          </SchemaForm>
         </CardContent>
         <CardFooter>
           <p className="text-muted-foreground text-sm">
