@@ -16,7 +16,10 @@ export default [
       index("pages/auth/login-page.tsx"),
       route("/esqueci", "pages/auth/forgot-password-page.tsx"),
     ]),
-    route("/registrar", "pages/auth/register-page.tsx"),
+    ...prefix("/registrar", [
+      index("pages/auth/register-page.tsx"),
+      route("/confirmar-email", "pages/auth/confirm-email-message-page.tsx"),
+    ]),
 
     route("/email", "pages/redirect/email-redirect-page.tsx"),
   ]),

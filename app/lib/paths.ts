@@ -5,6 +5,7 @@ const HOME = "/"
 const LOGIN = "/entrar"
 const FORGOT_PASSWORD = `${LOGIN}/esqueci`
 const LOGON = "/registrar"
+const LOGON_EMAIL_MESSAGE = `${LOGON}/confirmar-email`
 const LOGON_CALLBACK = `${LOGON}/callback`
 const LOGON_CONFIRM = `${LOGON}/confirm`
 
@@ -61,6 +62,7 @@ const paths = {
     LOGON,
     LOGON_CALLBACK,
     LOGON_CONFIRM,
+    LOGON_EMAIL_MESSAGE,
   },
   dash: {
     DASHBOARD,

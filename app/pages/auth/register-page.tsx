@@ -13,7 +13,6 @@ import {
 import paths from "~/lib/paths"
 import { cn } from "~/lib/utils"
 
-import { redirectWithSuccess } from "remix-toast"
 import { getContext, registerUser } from "~/business/auth/auth.server"
 import { registerUserSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/base/schema-form"
@@ -21,8 +20,7 @@ import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
 import type { Route } from "./+types/register-page"
 
 const {
-  root: { HOME },
-  auth: { LOGIN },
+  auth: { LOGIN, LOGON_EMAIL_MESSAGE },
 } = paths
 
 export const loader = async () => {
@@ -37,15 +35,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     request,
     schema: registerUserSchema,
     mutation: registerUser,
-    transformResult: async (result) => {
-      if (result.success) {
-        throw await redirectWithSuccess(HOME, {
-          message: "Você precisa confirmar sua conta, veja seu e-mail!",
-          duration: 15_000,
-        })
-      }
-      return result
-    },
+    successPath: LOGON_EMAIL_MESSAGE,
     context,
   })
 }
