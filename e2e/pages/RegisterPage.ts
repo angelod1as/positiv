@@ -106,7 +106,12 @@ export class RegisterPage extends BasePage {
   }
 
   async waitForSuccessRedirect(): Promise<void> {
-    // Wait for redirect to homepage with success message
-    await this.page.waitForURL('/', { waitUntil: 'networkidle' })
+    // Wait for redirect to confirm email message page
+    await this.page.waitForURL('/registrar/confirmar-email', { waitUntil: 'networkidle' })
+  }
+
+  async verifyConfirmEmailPageDisplayed(): Promise<void> {
+    await expect(this.page.getByText('Confirme sua conta')).toBeVisible()
+    await expect(this.page.getByText(/clique no link na mensagem enviada para seu email/i)).toBeVisible()
   }
 }
