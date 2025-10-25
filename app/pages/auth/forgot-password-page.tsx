@@ -43,7 +43,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 const ForgotPasswordPage = ({}: Route.ComponentProps) => {
   return (
     <>
-      <Card>
+      <Card className="my-12">
         <CardHeader>
           <CardTitle className="text-2xl">Resetar senha</CardTitle>{" "}
           <CardDescription>
@@ -63,7 +63,7 @@ const ForgotPasswordPage = ({}: Route.ComponentProps) => {
           />
         </CardContent>
         <CardFooter>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Já tem uma conta? <Link to={LOGIN}>Entre aqui</Link>
           </p>
         </CardFooter>
