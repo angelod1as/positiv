@@ -1,6 +1,6 @@
 import { Turnstile } from "@marsidev/react-turnstile"
-import { formAction } from "remix-forms"
 import { useLoaderData } from "react-router"
+import { formAction } from "remix-forms"
 import { Link } from "~/components/atoms/link/link"
 import {
   Card,
@@ -55,7 +55,7 @@ const RegisterPage = ({}: Route.ComponentProps) => {
 
   return (
     <div className={cn("flex flex-col gap-6")}>
-      <Card>
+      <Card className="my-12">
         <CardHeader>
           <CardTitle className="text-2xl">Inscreva-se</CardTitle>
           <CardDescription>
@@ -108,7 +108,7 @@ const RegisterPage = ({}: Route.ComponentProps) => {
           </SchemaForm>
         </CardContent>
         <CardFooter>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Já tem uma conta? <Link to={LOGIN}>Entre aqui</Link>
           </p>
         </CardFooter>
