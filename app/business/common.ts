@@ -45,6 +45,9 @@ export const registerUserSchema = zod
     over18: zod.boolean().refine((val) => val, {
       message: "Você só pode se inscrever se for maior de 18 anos",
     }),
+    captchaToken: zod
+      .string()
+      .min(1, "Por favor, complete a verificação de segurança"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "As senhas não são iguais",

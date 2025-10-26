@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { applyToEventSchema } from "./common"
+import { applyToEventSchema, registerUserSchema } from "./common"
 
 describe("applyToEventSchema", () => {
   describe("referred field validation", () => {
@@ -126,6 +126,64 @@ describe("applyToEventSchema", () => {
 
       const result = applyToEventSchema.safeParse(data)
       expect(result.success).toBe(false)
+    })
+  })
+})
+
+describe("registerUserSchema", () => {
+  const validData = {
+    email: "test@example.com",
+    password: "password123",
+    confirmPassword: "password123",
+    over18: true,
+    captchaToken: "valid-token",
+  }
+
+  describe("captchaToken field validation", () => {
+    it("should require captchaToken field", () => {
+      const data = {
+        email: "test@example.com",
+        password: "password123",
+        confirmPassword: "password123",
+        over18: true,
+        // Missing captchaToken
+      }
+
+      const result = registerUserSchema.safeParse(data)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const captchaError = result.error.issues.find(
+          (issue) => issue.path[0] === "captchaToken",
+        )
+        expect(captchaError).toBeDefined()
+      }
+    })
+
+    it("should reject empty captchaToken", () => {
+      const data = {
+        ...validData,
+        captchaToken: "",
+      }
+
+      const result = registerUserSchema.safeParse(data)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const captchaError = result.error.issues.find(
+          (issue) => issue.path[0] === "captchaToken",
+        )
+        expect(captchaError).toBeDefined()
+        expect(captchaError?.message).toBe(
+          "Por favor, complete a verificação de segurança",
+        )
+      }
+    })
+
+    it("should accept valid captchaToken", () => {
+      const result = registerUserSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.captchaToken).toBe("valid-token")
+      }
     })
   })
 })

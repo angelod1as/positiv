@@ -54,7 +54,7 @@ export const getContext = async (
 
   if (authError) {
     // Handle errors that indicate invalid/expired tokens
-    if (authError.code === "refresh_token_not_found" || 
+    if (authError.code === "refresh_token_not_found" ||
         authError.code === "user_not_found" ||
         authError.message?.includes("Invalid Refresh Token") ||
         authError.message?.includes("Refresh Token Not Found") ||
@@ -63,7 +63,7 @@ export const getContext = async (
       await supabase.auth.signOut()
       return errorProps
     }
-    
+
     if (!authError.message.includes("Auth session missing!")) {
       console.error("AUTH error", errorProps)
       throw await redirectWithError(
@@ -248,12 +248,17 @@ export const registerUser = applySchema(
 )(async (values, context) => {
   const { supabase, host } = context
 
-  const { over18, confirmPassword, ...data } = values
+  const { over18, confirmPassword, captchaToken, ...data } = values
+
+  const origin = host?.startsWith("http://") || host?.startsWith("https://")
+    ? host
+    : `${host?.includes("localhost") ? "http://" : "https://"}${host}`
 
   const { error } = await supabase.auth.signUp({
     ...data,
     options: {
-      emailRedirectTo: `${host}/${LOGON_CALLBACK}`,
+      captchaToken,
+      emailRedirectTo: `${origin}${LOGON_CALLBACK}`,
     },
   })
 
