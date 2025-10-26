@@ -1,3 +1,5 @@
+import { Turnstile } from "@marsidev/react-turnstile"
+import { useLoaderData } from "react-router"
 import { formAction } from "remix-forms"
 import { Link } from "~/components/atoms/link/link"
 import {
@@ -11,16 +13,20 @@ import {
 import paths from "~/lib/paths"
 import { cn } from "~/lib/utils"
 
-import { redirectWithSuccess } from "remix-toast"
 import { getContext, registerUser } from "~/business/auth/auth.server"
 import { registerUserSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
 import type { Route } from "./+types/register-page"
 
 const {
-  root: { HOME },
-  auth: { LOGIN },
+  auth: { LOGIN, LOGON_EMAIL_MESSAGE },
 } = paths
+
+export const loader = async () => {
+  const { siteKey } = getTurnstileConfig()
+  return { turnstileSiteKey: siteKey }
+}
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const context = await getContext(request, params)
@@ -29,23 +35,17 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     request,
     schema: registerUserSchema,
     mutation: registerUser,
-    transformResult: async (result) => {
-      if (result.success) {
-        throw await redirectWithSuccess(HOME, {
-          message: "Você precisa confirmar sua conta, veja seu e-mail!",
-          duration: 15_000,
-        })
-      }
-      return result
-    },
+    successPath: LOGON_EMAIL_MESSAGE,
     context,
   })
 }
 
 const RegisterPage = ({}: Route.ComponentProps) => {
+  const { turnstileSiteKey } = useLoaderData<typeof loader>()
+
   return (
     <div className={cn("flex flex-col gap-6")}>
-      <Card>
+      <Card className="my-12">
         <CardHeader>
           <CardTitle className="text-2xl">Inscreva-se</CardTitle>
           <CardDescription>
@@ -71,11 +71,36 @@ const RegisterPage = ({}: Route.ComponentProps) => {
               confirmPassword: "password",
               over18: "checkbox",
             }}
+            hiddenFields={["captchaToken"]}
             pendingButtonLabel="Entrando..."
-          />
+          >
+            {({ Field, Button, Errors, setValue }) => (
+              <>
+                <Field name="email" />
+                <Field name="password" />
+                <Field name="confirmPassword" />
+                <Field name="over18" />
+
+                <div className="flex flex-col gap-2">
+                  <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => {
+                      setValue("captchaToken", token)
+                    }}
+                    onExpire={() => setValue("captchaToken", "")}
+                    onError={() => setValue("captchaToken", "")}
+                  />
+                  <Field name="captchaToken" />
+                </div>
+
+                <Errors />
+                <Button />
+              </>
+            )}
+          </SchemaForm>
         </CardContent>
         <CardFooter>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Já tem uma conta? <Link to={LOGIN}>Entre aqui</Link>
           </p>
         </CardFooter>

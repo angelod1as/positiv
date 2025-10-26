@@ -67,7 +67,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
 const LoginPage = ({}: Route.ComponentProps) => {
   return (
     <div className={cn("flex flex-col gap-6")}>
-      <Card>
+      <Card className="my-12">
         <CardHeader>
           <CardTitle className="text-2xl">Entrar</CardTitle>
           <CardDescription>
@@ -93,7 +93,7 @@ const LoginPage = ({}: Route.ComponentProps) => {
           />
         </CardContent>
         <CardFooter>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             <Link to={FORGOT_PASSWORD}>Esqueci minha senha</Link>
           </p>
         </CardFooter>
