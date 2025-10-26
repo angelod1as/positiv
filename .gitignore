@@ -1,3 +1,5 @@
+/linear-api/
+
 # env files
 .env*
 !.env.example
