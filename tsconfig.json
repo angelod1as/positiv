@@ -6,7 +6,8 @@
     ".react-router/types/**/*"
   ],
   "exclude": [
-    "supabase/functions/**/*"
+    "supabase/functions/**/*",
+    "linear-api/**/*"
   ],
   "compilerOptions": {
     "lib": [
