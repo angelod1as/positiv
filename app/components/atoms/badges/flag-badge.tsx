@@ -21,6 +21,7 @@ export const FlagBadge = ({ flag, flagNotes, showTooltip = true }: FlagBadgeProp
   const flagColorClass = {
     yellow: "text-yellow-500",
     red: "text-red-500",
+    gray: "text-gray-500",
     none: "",
   }[flag]
 
