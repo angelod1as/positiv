@@ -250,11 +250,15 @@ export const registerUser = applySchema(
 
   const { over18, confirmPassword, captchaToken, ...data } = values
 
+  const origin = host?.startsWith("http://") || host?.startsWith("https://")
+    ? host
+    : `${host?.includes("localhost") ? "http://" : "https://"}${host}`
+
   const { error } = await supabase.auth.signUp({
     ...data,
     options: {
       captchaToken,
-      emailRedirectTo: `${host}${LOGON_CALLBACK}`,
+      emailRedirectTo: `${origin}${LOGON_CALLBACK}`,
     },
   })
 

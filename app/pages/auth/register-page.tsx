@@ -87,6 +87,8 @@ const RegisterPage = ({}: Route.ComponentProps) => {
                     onSuccess={(token) => {
                       setValue("captchaToken", token)
                     }}
+                    onExpire={() => setValue("captchaToken", "")}
+                    onError={() => setValue("captchaToken", "")}
                   />
                   <Field name="captchaToken" />
                 </div>
