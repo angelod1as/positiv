@@ -13,7 +13,7 @@ const localRulesPlugin = require("./eslint-local-rules/index.cjs")
 
 export default defineConfig([
   // 1. Global Ignores: Files and directories that ESLint should completely ignore.
-  globalIgnores(["./.react-router/*", "./build/*", "./playwright-report/*", "./supabase/functions/**/*"]),
+  globalIgnores(["./.react-router/*", "./build/*", "./playwright-report/*", "./supabase/functions/**/*", "./linear-api/*"]),
 
   // 2. Base Configuration for all files (JS/TS/JSX/TSX) that are not specifically overridden.
   //    This block handles general JS rules, unused imports, and your custom rule.
