@@ -98,6 +98,8 @@ jobs:
           TEST_USER_ADMIN_EMAIL: ${{ secrets.TEST_USER_ADMIN_EMAIL }}
           COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
           UNSUBSCRIBE_SECRET: ${{ secrets.UNSUBSCRIBE_SECRET }}
+          VITE_TURNSTILE_SITE_KEY: ${{ secrets.STAGING_TURNSTILE_SITE_KEY }}
+          SUPABASE_TURNSTILE_SECRET: ${{ secrets.STAGING_TURNSTILE_SECRET }}
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
