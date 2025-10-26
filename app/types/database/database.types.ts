@@ -609,7 +609,7 @@ export type Database = {
         | "Registration Closed"
         | "Registration Open"
       event_type_enum: "regular" | "bdsm"
-      profile_flag_enum: "none" | "yellow" | "red"
+      profile_flag_enum: "none" | "yellow" | "red" | "gray"
       spot_type: "regular" | "social" | "staff"
     }
     CompositeTypes: {
@@ -784,8 +784,9 @@ export const Constants = {
         "Registration Open",
       ],
       event_type_enum: ["regular", "bdsm"],
-      profile_flag_enum: ["none", "yellow", "red"],
+      profile_flag_enum: ["none", "yellow", "red", "gray"],
       spot_type: ["regular", "social", "staff"],
     },
   },
 } as const
+

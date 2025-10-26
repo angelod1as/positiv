@@ -144,6 +144,7 @@ const profileFlagStatus: Record<ProfileFlagStatus, string> = {
   none: "Sem flag",
   yellow: "Flag amarela",
   red: "Flag vermelha",
+  gray: "Flag cinza",
 }
 
 export const participantApplicationStatusPropMap = (
