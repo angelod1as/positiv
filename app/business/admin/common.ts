@@ -148,6 +148,9 @@ export const updateEventParticipantByIdSchema = zod.object({
   is_veteran: parseBoolean.optional(),
   flag: profileFlagStatusEnum.optional(),
   flag_notes: zod.string().nullable().optional(),
+  notes: zod.string().optional(),
+  admin_general_notes: zod.string().optional(),
+  companions: zod.string().optional(),
 }).refine(
   (data) => {
     // If flag is provided and not "none", flag_notes must be provided
