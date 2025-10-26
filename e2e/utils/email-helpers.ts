@@ -175,12 +175,12 @@ export async function verifyApplicationEmail(recipientEmail: string): Promise<vo
     subject: 'Você se inscreveu no evento',
     timeout: 10000
   })
-  
+
   await verifyEmailContent(email, {
     subject: 'Você se inscreveu no evento',
     bodyContains: [
       'Sua inscrição foi recebida',
-      'aguarde nosso contato'
+      'você se inscreveu com sucesso'
     ]
   })
 }
