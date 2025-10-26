@@ -113,6 +113,7 @@ const profileFlagStatus = [
   "none",
   "yellow",
   "red",
+  "gray",
 ] as const satisfies ProfileFlagStatus[]
 
 export const participantAttendanceStatusEnum = z.enum(

@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1761254120462
+export const NEWS_VERSION = 1761506439122
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "gray-flag",
+    title: "⚫ Nova flag cinza disponível",
+    content:
+      "Agora você pode marcar participantes com flag cinza! Use para indicar pessoas que tiveram flags amarela ou vermelha no passado mas que já foram resolvidas. As notas da flag podem explicar o histórico e motivo da liberação.",
+    isAdmin: true,
+    createdAt: new Date("2025-10-26T16:00:00"),
+    isActive: true,
+  },
   {
     id: "race-color",
     title: "🌈 Informações sobre cor ou raça",

@@ -508,4 +508,80 @@ describe("updateEventParticipantById - Integration Tests", () => {
 
     expect(updatedParticipant?.attendance_status).toBe("attended")
   })
+
+  it("should create and update profile with gray flag successfully", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-flag-gray@example.com",
+      full_name: "Test Gray Flag",
+      flag: "gray",
+      flag_notes: "Previously had red flag for behavior in 2023. Cleared after 1 year of good behavior."
+    })
+
+    expect(profile.flag).toBe("gray")
+    expect(profile.flag_notes).toContain("Previously had red flag")
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event Gray Flag",
+      time_event_start: new Date().toISOString()
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      payment: 100,
+      attendance_status: "pending"
+    })
+
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      payment: 150,
+      flag: "gray",
+      flag_notes: "Previously had red flag for behavior in 2023. Cleared after 1 year of good behavior."
+    })
+
+    expect(result.success).toBe(true)
+
+    const updatedProfile = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirst()
+
+    expect(updatedProfile?.flag).toBe("gray")
+    expect(updatedProfile?.flag_notes).toContain("Previously had red flag")
+  })
+
+  it("should require flag_notes when setting gray flag", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-flag-gray-validation@example.com",
+      full_name: "Test Gray Flag No Notes",
+      flag: "none"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event Gray Flag Validation",
+      time_event_start: new Date().toISOString()
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true
+    })
+
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      flag: "gray"
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.errors).toBeDefined()
+  })
 })
