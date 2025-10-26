@@ -20,6 +20,7 @@
     "types": "pnpm db:types",
     "db:types": "./scripts/db-types.sh",
     "email:test": "./scripts/testmail.sh",
+    "worktree": "./scripts/create-worktree.sh",
     "prepare": "husky"
   },
   "dependencies": {
