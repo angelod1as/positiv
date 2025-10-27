@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import { createListmonkClient } from "./listmonk-client.server"
+import { testConnection, addSubscriber, removeSubscriber } from "./listmonk-client.server"
 
 vi.mock("~/env.server", () => ({
   env: vi.fn(() => ({
@@ -9,7 +9,7 @@ vi.mock("~/env.server", () => ({
   })),
 }))
 
-describe("createListmonkClient", () => {
+describe("testConnection", () => {
   let fetchSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
@@ -21,17 +21,15 @@ describe("createListmonkClient", () => {
     vi.clearAllMocks()
   })
 
-  it("should create a client with correct BasicAuth header", async () => {
+  it("should make a request with correct BasicAuth header", async () => {
     fetchSpy.mockResolvedValue({
       ok: true,
       json: async () => ({ data: [] }),
     } as Response)
 
-    const client = createListmonkClient()
+    const result = await testConnection()
 
-    // Try to make a request to verify auth header is set
-    await client.testConnection()
-
+    expect(result.success).toBe(true)
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://listmonk.test/api/subscribers",
       expect.objectContaining({
@@ -42,7 +40,7 @@ describe("createListmonkClient", () => {
     )
   })
 
-  it("should handle missing credentials gracefully", async () => {
+  it("should fail when credentials are missing", async () => {
     const { env } = await import("~/env.server")
     vi.mocked(env).mockReturnValueOnce({
       listmonkApiUrl: undefined,
@@ -50,9 +48,9 @@ describe("createListmonkClient", () => {
       listmonkApiPassword: undefined,
     } as any)
 
-    expect(() => createListmonkClient()).toThrow(
-      "Listmonk API credentials not configured"
-    )
+    const result = await testConnection()
+
+    expect(result.success).toBe(false)
   })
 })
 
@@ -77,9 +75,7 @@ describe("addSubscriber", () => {
       json: async () => ({ data: { id: 123 } }),
     } as Response)
 
-    const client = createListmonkClient()
-
-    await client.addSubscriber({
+    const result = await addSubscriber({
       email: "test@example.com",
       name: "Test User",
       lists: [1, 2],
@@ -89,6 +85,7 @@ describe("addSubscriber", () => {
       },
     })
 
+    expect(result.success).toBe(true)
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://listmonk.test/api/subscribers",
       expect.objectContaining({
@@ -110,47 +107,37 @@ describe("addSubscriber", () => {
     )
   })
 
-  it("should handle API errors gracefully without throwing", async () => {
+  it("should succeed but log error when API returns error", async () => {
     fetchSpy.mockResolvedValue({
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
     } as Response)
 
-    const client = createListmonkClient()
+    const result = await addSubscriber({
+      email: "test@example.com",
+      name: "Test User",
+      lists: [1],
+      attributes: {},
+    })
 
-    await expect(
-      client.addSubscriber({
-        email: "test@example.com",
-        name: "Test User",
-        lists: [1],
-        attributes: {},
-      })
-    ).resolves.not.toThrow()
-
+    expect(result.success).toBe(true)
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("Failed to add subscriber")
     )
   })
 
-  it("should handle network errors gracefully", async () => {
+  it("should fail when network error occurs", async () => {
     fetchSpy.mockRejectedValue(new Error("Network error"))
 
-    const client = createListmonkClient()
+    const result = await addSubscriber({
+      email: "test@example.com",
+      name: "Test User",
+      lists: [1],
+      attributes: {},
+    })
 
-    await expect(
-      client.addSubscriber({
-        email: "test@example.com",
-        name: "Test User",
-        lists: [1],
-        attributes: {},
-      })
-    ).resolves.not.toThrow()
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to add subscriber"),
-      expect.any(Error)
-    )
+    expect(result.success).toBe(false)
   })
 })
 
@@ -175,10 +162,9 @@ describe("removeSubscriber", () => {
       json: async () => ({ data: { id: 123, status: "blocklisted" } }),
     } as Response)
 
-    const client = createListmonkClient()
+    const result = await removeSubscriber(123)
 
-    await client.removeSubscriber(123)
-
+    expect(result.success).toBe(true)
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://listmonk.test/api/subscribers/123/blocklist",
       expect.objectContaining({
@@ -190,32 +176,26 @@ describe("removeSubscriber", () => {
     )
   })
 
-  it("should handle API errors gracefully without throwing", async () => {
+  it("should succeed but log error when API returns error", async () => {
     fetchSpy.mockResolvedValue({
       ok: false,
       status: 404,
       statusText: "Not Found",
     } as Response)
 
-    const client = createListmonkClient()
+    const result = await removeSubscriber(123)
 
-    await expect(client.removeSubscriber(123)).resolves.not.toThrow()
-
+    expect(result.success).toBe(true)
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("Failed to remove subscriber")
     )
   })
 
-  it("should handle network errors gracefully", async () => {
+  it("should fail when network error occurs", async () => {
     fetchSpy.mockRejectedValue(new Error("Network error"))
 
-    const client = createListmonkClient()
+    const result = await removeSubscriber(123)
 
-    await expect(client.removeSubscriber(123)).resolves.not.toThrow()
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to remove subscriber"),
-      expect.any(Error)
-    )
+    expect(result.success).toBe(false)
   })
 })
