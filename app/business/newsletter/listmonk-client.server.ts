@@ -72,3 +72,35 @@ export const removeSubscriber = composable(async (id: number): Promise<void> => 
     )
   }
 })
+
+export const importSubscribers = composable(
+  async (csvData: string): Promise<void> => {
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(`${listmonkApiUrl}/api/import/subscribers`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ data: csvData }),
+    })
+
+    if (!response.ok) {
+      console.error(
+        `Failed to import subscribers: ${response.status} ${response.statusText}`
+      )
+    }
+  }
+)
+
+export const getImportStatus = composable(async (): Promise<void> => {
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+
+  const response = await fetch(`${listmonkApiUrl}/api/import/subscribers`, {
+    headers,
+  })
+
+  if (!response.ok) {
+    console.error(
+      `Failed to get import status: ${response.status} ${response.statusText}`
+    )
+  }
+})
