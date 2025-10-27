@@ -104,3 +104,42 @@ export const getImportStatus = composable(async (): Promise<void> => {
     )
   }
 })
+
+export const createCampaign = composable(
+  async (data: Record<string, unknown>): Promise<void> => {
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(`${listmonkApiUrl}/api/campaigns`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      console.error(
+        `Failed to create campaign: ${response.status} ${response.statusText}`
+      )
+    }
+  }
+)
+
+export const updateCampaignStatus = composable(
+  async (id: number, status: string): Promise<void> => {
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(
+      `${listmonkApiUrl}/api/campaigns/${id}/status`,
+      {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ status }),
+      }
+    )
+
+    if (!response.ok) {
+      console.error(
+        `Failed to update campaign status: ${response.status} ${response.statusText}`
+      )
+    }
+  }
+)
