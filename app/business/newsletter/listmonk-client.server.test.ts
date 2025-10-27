@@ -240,7 +240,7 @@ describe("importSubscribers", () => {
           Authorization: "Basic dGVzdHVzZXI6dGVzdHBhc3M=",
           "Content-Type": "application/json",
         }),
-        body: expect.stringContaining(csvData),
+        body: JSON.stringify({ data: csvData }),
       })
     )
   })
