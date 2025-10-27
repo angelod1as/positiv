@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest"
 import { isValidElement } from "react"
+import { describe, expect, it } from "vitest"
 import { PROFILE_REQUIREMENTS, isExemptPath } from "./profile-update-config"
 
 describe("PROFILE_REQUIREMENTS", () => {
@@ -21,7 +21,7 @@ describe("PROFILE_REQUIREMENTS", () => {
       "/entrar",
       "/entrar/esqueci",
       "/registrar",
-      "/registrar/callback",
+      "/auth/confirm",
       "/registrar/confirm",
       "/conta",
       "/conta/mudar-senha",

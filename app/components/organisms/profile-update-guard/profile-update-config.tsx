@@ -61,7 +61,7 @@ export const PROFILE_REQUIREMENTS = {
     "/entrar",
     "/entrar/esqueci",
     "/registrar",
-    "/registrar/callback",
+    "/auth/confirm",
     "/registrar/confirm",
     "/conta",
     "/conta/mudar-senha",
