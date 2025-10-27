@@ -153,3 +153,69 @@ describe("addSubscriber", () => {
     )
   })
 })
+
+describe("removeSubscriber", () => {
+  let fetchSpy: ReturnType<typeof vi.spyOn>
+  let consoleSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    consoleSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("should blocklist a subscriber by id", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 123, status: "blocklisted" } }),
+    } as Response)
+
+    const client = createListmonkClient()
+
+    await client.removeSubscriber(123)
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://listmonk.test/api/subscribers/123/blocklist",
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({
+          Authorization: "Basic dGVzdHVzZXI6dGVzdHBhc3M=",
+        }),
+      })
+    )
+  })
+
+  it("should handle API errors gracefully without throwing", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+    } as Response)
+
+    const client = createListmonkClient()
+
+    await expect(client.removeSubscriber(123)).resolves.not.toThrow()
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to remove subscriber")
+    )
+  })
+
+  it("should handle network errors gracefully", async () => {
+    fetchSpy.mockRejectedValue(new Error("Network error"))
+
+    const client = createListmonkClient()
+
+    await expect(client.removeSubscriber(123)).resolves.not.toThrow()
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to remove subscriber"),
+      expect.any(Error)
+    )
+  })
+})
