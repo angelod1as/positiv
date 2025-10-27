@@ -16,6 +16,8 @@ import {
   CheckboxCellEditor,
   NumberCellEditor,
   SelectCellEditor,
+  TextEditModalCell,
+  TextViewModalCell,
 } from "~/components/forms/admin"
 import { DataTable } from "~/components/organisms/tables/base/data-table"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
@@ -58,13 +60,13 @@ export const AdminViewEventParticipantsTable: FC<
     const participant = participants.find((p) => p.id === id)
     if (!participant) return
 
+    const originalValue = participant[field]
     participant[field] = value
 
     const result = await composable(async () => {
       const formData = new FormData()
       formData.append("intent", "update-event-participant")
       formData.append("id", id)
-      formData.append("eventId", eventId)
       formData.append("profile_id", participant.profile_id || "")
 
       // Always include flag and flag_notes if they exist to satisfy validation
@@ -96,6 +98,7 @@ export const AdminViewEventParticipantsTable: FC<
     })()
 
     if (!result.success) {
+      participant[field] = originalValue
       throw new Error("Ops, algo deu errado ao salvar seu valor")
     }
   }
@@ -190,7 +193,7 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="is_veteran"
-        header={profilePropMap("is_veteran")}
+        header="Vet ou Nov?"
         body={(values) =>
           values.is_veteran ? <VeteranBadge /> : <RookieBadge />
         }
@@ -384,6 +387,46 @@ export const AdminViewEventParticipantsTable: FC<
         )}
         className="min-w-30"
       />
+      <Column
+        field="companions"
+        header={eventParticipantPropMap("companions")}
+        className="min-w-[30ch]"
+        body={(values) => (
+          <TextViewModalCell
+            value={values.companions}
+            label={eventParticipantPropMap("companions")}
+          />
+        )}
+      />
+      <Column
+        field="notes"
+        header={eventParticipantPropMap("notes")}
+        className="min-w-[30ch]"
+        body={(values) => (
+          <TextEditModalCell
+            value={values.notes}
+            rowData={values}
+            field="notes"
+            onSave={handleSave}
+            label={eventParticipantPropMap("notes")}
+          />
+        )}
+      />
+      <Column
+        field="admin_general_notes"
+        header={eventParticipantPropMap("admin_general_notes")}
+        className="min-w-[30ch]"
+        body={(values) => (
+          <TextEditModalCell
+            value={values.admin_general_notes}
+            rowData={values}
+            field="admin_general_notes"
+            onSave={handleSave}
+            label={eventParticipantPropMap("admin_general_notes")}
+          />
+        )}
+      />
+
       <Column
         field="was_admin_skipped_last_event"
         header="Foi rodízio na última festa?"
