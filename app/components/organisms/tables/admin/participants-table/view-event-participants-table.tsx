@@ -60,6 +60,7 @@ export const AdminViewEventParticipantsTable: FC<
     const participant = participants.find((p) => p.id === id)
     if (!participant) return
 
+    const originalValue = participant[field]
     participant[field] = value
 
     const result = await composable(async () => {
@@ -97,6 +98,7 @@ export const AdminViewEventParticipantsTable: FC<
     })()
 
     if (!result.success) {
+      participant[field] = originalValue
       throw new Error("Ops, algo deu errado ao salvar seu valor")
     }
   }

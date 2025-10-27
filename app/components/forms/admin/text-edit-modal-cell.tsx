@@ -87,16 +87,16 @@ export const TextEditModalCell = <T extends { id: string }, K extends keyof T>({
         </TooltipProvider>
       </div>
 
-      <Dialog open={isOpen} onOpenChange={() => handleClose(true)}>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose(false)}>
         <DialogContent
           aria-describedby={undefined}
           onPointerDownOutside={(e) => {
             e.preventDefault()
-            handleClose(true)
+            handleClose(false)
           }}
           onEscapeKeyDown={(e) => {
             e.preventDefault()
-            handleClose(true)
+            handleClose(false)
           }}
         >
           <DialogHeader>

@@ -70,7 +70,7 @@ describe("TextEditModalCell", () => {
     expect(textarea).toHaveValue(longText)
   })
 
-  it("should save changes when dialog closes", async () => {
+  it("should save changes when save button is clicked", async () => {
     const user = userEvent.setup()
     const longText =
       "This is a very long text that definitely exceeds the limit"
@@ -91,7 +91,7 @@ describe("TextEditModalCell", () => {
     await user.clear(textarea)
     await user.type(textarea, "Updated text content")
 
-    await user.click(screen.getByRole("button", { name: /close/i }))
+    await user.click(screen.getByRole("button", { name: /save/i }))
 
     await waitFor(() => {
       expect(mockSave).toHaveBeenCalledWith("1", "notes", "Updated text content")
@@ -123,6 +123,35 @@ describe("TextEditModalCell", () => {
 
     expect(mockSave).not.toHaveBeenCalled()
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+  })
+
+  it("should NOT save changes when Escape key is pressed", async () => {
+    const user = userEvent.setup()
+    const longText =
+      "This is a very long text that definitely exceeds the limit"
+    const mockSave = vi.fn()
+    const rowData: TestRow = { id: "1", notes: longText }
+
+    render(
+      <TextEditModalCell
+        value={longText}
+        rowData={rowData}
+        field="notes"
+        onSave={mockSave}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: /edit/i }))
+    const textarea = screen.getByRole("textbox")
+    await user.clear(textarea)
+    await user.type(textarea, "Updated text that should be discarded")
+
+    await user.keyboard("{Escape}")
+
+    expect(mockSave).not.toHaveBeenCalled()
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    })
   })
 
   it("should handle empty values gracefully", () => {
