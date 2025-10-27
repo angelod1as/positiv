@@ -5,6 +5,8 @@ import {
   removeSubscriber,
   importSubscribers,
   getImportStatus,
+  createCampaign,
+  updateCampaignStatus,
 } from "./listmonk-client.server"
 
 vi.mock("~/env.server", () => ({
@@ -324,6 +326,135 @@ describe("getImportStatus", () => {
     fetchSpy.mockRejectedValue(new Error("Network error"))
 
     const result = await getImportStatus()
+
+    expect(result.success).toBe(false)
+  })
+})
+
+describe("createCampaign", () => {
+  let fetchSpy: ReturnType<typeof vi.spyOn>
+  let consoleSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    consoleSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("should create a campaign with correct data", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 456 } }),
+    } as Response)
+
+    const campaignData = {
+      name: "Test Campaign",
+      subject: "Test Subject",
+      lists: [1, 2],
+      body: "<p>Test content</p>",
+    }
+
+    const result = await createCampaign(campaignData)
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://listmonk.test/api/campaigns",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          Authorization: "Basic dGVzdHVzZXI6dGVzdHBhc3M=",
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify(campaignData),
+      })
+    )
+  })
+
+  it("should succeed but log error when API returns error", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: "Bad Request",
+    } as Response)
+
+    const result = await createCampaign({ name: "Test", lists: [] })
+
+    expect(result.success).toBe(true)
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to create campaign")
+    )
+  })
+
+  it("should fail when network error occurs", async () => {
+    fetchSpy.mockRejectedValue(new Error("Network error"))
+
+    const result = await createCampaign({ name: "Test", lists: [] })
+
+    expect(result.success).toBe(false)
+  })
+})
+
+describe("updateCampaignStatus", () => {
+  let fetchSpy: ReturnType<typeof vi.spyOn>
+  let consoleSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    consoleSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("should update campaign status", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { id: 456, status: "running" } }),
+    } as Response)
+
+    const result = await updateCampaignStatus(456, "running")
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://listmonk.test/api/campaigns/456/status",
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({
+          Authorization: "Basic dGVzdHVzZXI6dGVzdHBhc3M=",
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({ status: "running" }),
+      })
+    )
+  })
+
+  it("should succeed but log error when API returns error", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 404,
+      statusText: "Not Found",
+    } as Response)
+
+    const result = await updateCampaignStatus(456, "paused")
+
+    expect(result.success).toBe(true)
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to update campaign status")
+    )
+  })
+
+  it("should fail when network error occurs", async () => {
+    fetchSpy.mockRejectedValue(new Error("Network error"))
+
+    const result = await updateCampaignStatus(456, "cancelled")
 
     expect(result.success).toBe(false)
   })
