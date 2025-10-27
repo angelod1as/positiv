@@ -1,3 +1,4 @@
+import { composable } from "composable-functions"
 import { env } from "~/env.server"
 
 interface AddSubscriberParams {
@@ -7,12 +8,7 @@ interface AddSubscriberParams {
   attributes: Record<string, unknown>
 }
 
-interface ListmonkClient {
-  testConnection(): Promise<void>
-  addSubscriber(params: AddSubscriberParams): Promise<void>
-}
-
-export function createListmonkClient(): ListmonkClient {
+function getListmonkConfig() {
   const { listmonkApiUrl, listmonkApiUsername, listmonkApiPassword } = env()
 
   if (!listmonkApiUrl || !listmonkApiUsername || !listmonkApiPassword) {
@@ -28,34 +24,51 @@ export function createListmonkClient(): ListmonkClient {
     "Content-Type": "application/json",
   }
 
-  return {
-    async testConnection(): Promise<void> {
-      await fetch(`${listmonkApiUrl}/api/subscribers`, {
-        headers,
-      })
-    },
-
-    async addSubscriber(params: AddSubscriberParams): Promise<void> {
-      try {
-        const response = await fetch(`${listmonkApiUrl}/api/subscribers`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            email: params.email,
-            name: params.name,
-            lists: params.lists,
-            attribs: params.attributes,
-          }),
-        })
-
-        if (!response.ok) {
-          console.error(
-            `Failed to add subscriber: ${response.status} ${response.statusText}`
-          )
-        }
-      } catch (error) {
-        console.error("Failed to add subscriber", error)
-      }
-    },
-  }
+  return { listmonkApiUrl, headers }
 }
+
+export const testConnection = composable(async (): Promise<void> => {
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+  await fetch(`${listmonkApiUrl}/api/subscribers`, { headers })
+})
+
+export const addSubscriber = composable(
+  async (params: AddSubscriberParams): Promise<void> => {
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(`${listmonkApiUrl}/api/subscribers`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        email: params.email,
+        name: params.name,
+        lists: params.lists,
+        attribs: params.attributes,
+      }),
+    })
+
+    if (!response.ok) {
+      console.error(
+        `Failed to add subscriber: ${response.status} ${response.statusText}`
+      )
+    }
+  }
+)
+
+export const removeSubscriber = composable(async (id: number): Promise<void> => {
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+
+  const response = await fetch(
+    `${listmonkApiUrl}/api/subscribers/${id}/blocklist`,
+    {
+      method: "PUT",
+      headers,
+    }
+  )
+
+  if (!response.ok) {
+    console.error(
+      `Failed to remove subscriber: ${response.status} ${response.statusText}`
+    )
+  }
+})
