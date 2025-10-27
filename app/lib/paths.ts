@@ -6,7 +6,7 @@ const LOGIN = "/entrar"
 const FORGOT_PASSWORD = `${LOGIN}/esqueci`
 const LOGON = "/registrar"
 const LOGON_EMAIL_MESSAGE = `${LOGON}/confirmar-email`
-const LOGON_CALLBACK = `${LOGON}/callback`
+const LOGON_CALLBACK = "/auth/confirm"
 const LOGON_CONFIRM = `${LOGON}/confirm`
 
 ////////

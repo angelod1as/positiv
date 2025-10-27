@@ -1,6 +1,6 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import { getContext, registerUser } from "./auth.server"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { DBClient } from "~/types/utils/utils.types"
+import { getContext, registerUser } from "./auth.server"
 
 vi.mock("~/env.server", () => ({
   env: vi.fn(() => ({ isProdInDev: "false" })),
@@ -31,8 +31,13 @@ describe("getContext", () => {
   })
 
   const createMockSupabase = (
-    error: { message?: string | null; code?: string; name?: string; status?: number } | null,
-    data: { user: null } | null = null
+    error: {
+      message?: string | null
+      code?: string
+      name?: string
+      status?: number
+    } | null,
+    data: { user: null } | null = null,
   ) => ({
     auth: {
       getUser: vi.fn().mockResolvedValue({
@@ -181,7 +186,7 @@ describe("getContext", () => {
         message: "Auth session missing!",
         code: undefined,
       },
-      { user: null } // Return data with null user
+      { user: null }, // Return data with null user
     )
 
     const mockHeaders = new Headers()
@@ -221,7 +226,9 @@ describe("getContext", () => {
     })
 
     // Should not throw even if signOut fails
-    await expect(getContext(mockRequest, mockParams)).rejects.toThrow("SignOut failed")
+    await expect(getContext(mockRequest, mockParams)).rejects.toThrow(
+      "SignOut failed",
+    )
     expect(mockSignOut).toHaveBeenCalledTimes(1)
   })
 })
@@ -259,7 +266,7 @@ describe("registerUser", () => {
       password: "password123",
       options: {
         captchaToken: "test-captcha-token",
-        emailRedirectTo: "http://localhost:5173/registrar/callback",
+        emailRedirectTo: "http://localhost:5173/auth/confirm",
       },
     })
   })
