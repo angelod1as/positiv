@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
+import { describe, expect, it, vi, beforeEach, afterEach, type MockInstance } from "vitest"
 import {
   testConnection,
   addSubscriber,
@@ -18,7 +18,7 @@ vi.mock("~/env.server", () => ({
 }))
 
 describe("testConnection", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
+  let fetchSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
@@ -54,7 +54,7 @@ describe("testConnection", () => {
       listmonkApiUrl: undefined,
       listmonkApiUsername: undefined,
       listmonkApiPassword: undefined,
-    } as any)
+    } as ReturnType<typeof env>)
 
     const result = await testConnection()
 
@@ -63,8 +63,8 @@ describe("testConnection", () => {
 })
 
 describe("addSubscriber", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
-  let consoleSpy: ReturnType<typeof vi.spyOn>
+  let fetchSpy: MockInstance
+  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
@@ -150,8 +150,8 @@ describe("addSubscriber", () => {
 })
 
 describe("removeSubscriber", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
-  let consoleSpy: ReturnType<typeof vi.spyOn>
+  let fetchSpy: MockInstance
+  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
@@ -209,8 +209,8 @@ describe("removeSubscriber", () => {
 })
 
 describe("importSubscribers", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
-  let consoleSpy: ReturnType<typeof vi.spyOn>
+  let fetchSpy: MockInstance
+  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
@@ -272,8 +272,8 @@ describe("importSubscribers", () => {
 })
 
 describe("getImportStatus", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
-  let consoleSpy: ReturnType<typeof vi.spyOn>
+  let fetchSpy: MockInstance
+  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
@@ -332,8 +332,8 @@ describe("getImportStatus", () => {
 })
 
 describe("createCampaign", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
-  let consoleSpy: ReturnType<typeof vi.spyOn>
+  let fetchSpy: MockInstance
+  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
@@ -400,8 +400,8 @@ describe("createCampaign", () => {
 })
 
 describe("updateCampaignStatus", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
-  let consoleSpy: ReturnType<typeof vi.spyOn>
+  let fetchSpy: MockInstance
+  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
