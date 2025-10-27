@@ -229,7 +229,7 @@ BEGIN
         'Admin decision: no-show history', -- notes
         NULL,                          -- referrals
         'ninguém',                     -- referred
-        NULL,                          -- companions
+        'Vou com meu melhor amigo',    -- companions
         NULL,                          -- bond
         'regular',                       -- spot_type
         NULL                           -- admin_general_notes
