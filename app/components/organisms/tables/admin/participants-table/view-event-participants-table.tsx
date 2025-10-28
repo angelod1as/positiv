@@ -1,11 +1,14 @@
 import { composable } from "composable-functions"
 import { EyeIcon } from "lucide-react"
-import { FilterMatchMode } from "primereact/api"
 import { Column } from "primereact/column"
-import { useEffect, useState, type FC } from "react"
+import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
-import { createMultiSelectFilterTemplate } from "~/lib/helpers/create-multi-select-filter-template"
 import { registerMultiSelectFilters } from "~/lib/helpers/register-filter-services"
+import {
+  createFilterTemplates,
+  createOnFilterHandler,
+  useFilterState,
+} from "~/lib/hooks/use-multi-filter-manager"
 import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
@@ -98,86 +101,21 @@ export const AdminViewEventParticipantsTable: FC<
       FILTER_CONFIGS.approved_to_attend.allValues,
     )
 
-  const [filters, setFilters] = useState<{
-    global: { value: null; matchMode: FilterMatchMode }
-    application_status: {
-      value: string[]
-      matchMode: string
-    }
-    attendance_status: {
-      value: string[]
-      matchMode: string
-    }
-    approved_to_attend: {
-      value: string[]
-      matchMode: string
-    }
-  }>({
-    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    application_status: {
-      value: applicationStatusFilter,
-      matchMode: "custom_application_status",
-    },
-    attendance_status: {
-      value: attendanceStatusFilter,
-      matchMode: "custom_attendance_status",
-    },
-    approved_to_attend: {
-      value: approvedStatusFilter,
-      matchMode: "custom_approved_to_attend",
-    },
+  const filterSetters = {
+    application_status: setApplicationStatusFilter,
+    attendance_status: setAttendanceStatusFilter,
+    approved_to_attend: setApprovedStatusFilter,
+  }
+
+  const filterTemplates = createFilterTemplates(FILTER_CONFIGS, filterSetters)
+
+  const filters = useFilterState(FILTER_CONFIGS, {
+    application_status: applicationStatusFilter,
+    attendance_status: attendanceStatusFilter,
+    approved_to_attend: approvedStatusFilter,
   })
 
-  useEffect(() => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      application_status: {
-        value: applicationStatusFilter,
-        matchMode: "custom_application_status",
-      },
-    }))
-  }, [applicationStatusFilter])
-
-  useEffect(() => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      attendance_status: {
-        value: attendanceStatusFilter,
-        matchMode: "custom_attendance_status",
-      },
-    }))
-  }, [attendanceStatusFilter])
-
-  useEffect(() => {
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      approved_to_attend: {
-        value: approvedStatusFilter,
-        matchMode: "custom_approved_to_attend",
-      },
-    }))
-  }, [approvedStatusFilter])
-
-  const applicationStatusFilterTemplate = createMultiSelectFilterTemplate(
-    FILTER_CONFIGS.application_status.options,
-    FILTER_CONFIGS.application_status.storageKey,
-    setApplicationStatusFilter,
-    FILTER_CONFIGS.application_status.allValues,
-  )
-
-  const attendanceStatusFilterTemplate = createMultiSelectFilterTemplate(
-    FILTER_CONFIGS.attendance_status.options,
-    FILTER_CONFIGS.attendance_status.storageKey,
-    setAttendanceStatusFilter,
-    FILTER_CONFIGS.attendance_status.allValues,
-  )
-
-  const approvedStatusFilterTemplate = createMultiSelectFilterTemplate(
-    FILTER_CONFIGS.approved_to_attend.options,
-    FILTER_CONFIGS.approved_to_attend.storageKey,
-    setApprovedStatusFilter,
-    FILTER_CONFIGS.approved_to_attend.allValues,
-  )
+  const handleFilter = createOnFilterHandler(FILTER_CONFIGS, filterSetters)
 
   /**
    * Generic function to save changes to a participant field
@@ -242,46 +180,7 @@ export const AdminViewEventParticipantsTable: FC<
       sortField="social_name"
       globalFilterFields={["full_name"]}
       filters={filters}
-      onFilter={(e) => {
-        const newFilters = e.filters
-
-        setFilters({
-          global: newFilters.global as { value: null; matchMode: FilterMatchMode },
-          application_status: newFilters.application_status as {
-            value: string[]
-            matchMode: string
-          },
-          attendance_status: newFilters.attendance_status as {
-            value: string[]
-            matchMode: string
-          },
-          approved_to_attend: newFilters.approved_to_attend as {
-            value: string[]
-            matchMode: string
-          },
-        })
-
-        const applicationStatus = newFilters.application_status as {
-          value: string[]
-        }
-        if (applicationStatus) {
-          setApplicationStatusFilter(applicationStatus.value)
-        }
-
-        const attendanceStatus = newFilters.attendance_status as {
-          value: string[]
-        }
-        if (attendanceStatus) {
-          setAttendanceStatusFilter(attendanceStatus.value)
-        }
-
-        const approvedStatus = newFilters.approved_to_attend as {
-          value: string[]
-        }
-        if (approvedStatus) {
-          setApprovedStatusFilter(approvedStatus.value)
-        }
-      }}
+      onFilter={handleFilter}
       size="small"
       header={{
         title: "Inscrições",
@@ -398,7 +297,7 @@ export const AdminViewEventParticipantsTable: FC<
         header={eventParticipantPropMap("application_status")}
         filter
         className="min-w-[180px]"
-        filterElement={applicationStatusFilterTemplate}
+        filterElement={filterTemplates.application_status}
         filterField="application_status"
         showFilterMatchModes={false}
         body={(values) => (
@@ -420,7 +319,7 @@ export const AdminViewEventParticipantsTable: FC<
         header={eventParticipantPropMap("attendance_status")}
         filter
         className="min-w-[180px]"
-        filterElement={attendanceStatusFilterTemplate}
+        filterElement={filterTemplates.attendance_status}
         filterField="attendance_status"
         showFilterMatchModes={false}
         body={(values) => (
@@ -442,7 +341,7 @@ export const AdminViewEventParticipantsTable: FC<
         header={profilePropMap("approved_to_attend")}
         filter
         className="min-w-[180px]"
-        filterElement={approvedStatusFilterTemplate}
+        filterElement={filterTemplates.approved_to_attend}
         filterField="approved_to_attend"
         showFilterMatchModes={false}
         body={(values) => (
