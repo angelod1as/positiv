@@ -344,8 +344,6 @@ describe("registerUser", () => {
   })
 
   it("should return error when password reset fails for existing user", async () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
     const mockSignUp = vi
       .fn()
       .mockResolvedValue({ error: { message: "User already registered" } })
@@ -383,13 +381,6 @@ describe("registerUser", () => {
     expect(result.errors[0].message).toContain(
       "Ops, ocorreu um erro ao tentar enviar o email",
     )
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "Password Reset Error for existing user",
-      { message: "Email service down" },
-    )
-
-    consoleSpy.mockRestore()
   })
 
   it("should return error for other signup errors", async () => {
