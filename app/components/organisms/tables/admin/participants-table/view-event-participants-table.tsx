@@ -1,8 +1,9 @@
 import { composable } from "composable-functions"
 import { EyeIcon } from "lucide-react"
-import { FilterMatchMode } from "primereact/api"
+import { FilterMatchMode, FilterService } from "primereact/api"
 import { Column } from "primereact/column"
-import type { FC } from "react"
+import { MultiSelect } from "primereact/multiselect"
+import { useEffect, useState, type FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
@@ -32,13 +33,27 @@ import {
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import { countParticipants } from "./count-participants"
-import { TableInputDropdown } from "./table-input-dropdown"
 
 const {
   admin: {
     events: { ADMIN_EVENT_VIEW_PARTICIPANT },
   },
 } = paths
+
+FilterService.register("custom_application_status", (value, filters) => {
+  if (!filters || filters.length === 0) return true
+  return filters.includes(value)
+})
+
+FilterService.register("custom_attendance_status", (value, filters) => {
+  if (!filters || filters.length === 0) return true
+  return filters.includes(value)
+})
+
+FilterService.register("custom_approved_to_attend", (value, filters) => {
+  if (!filters || filters.length === 0) return true
+  return filters.includes(value)
+})
 
 type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
@@ -49,6 +64,255 @@ type AdminViewEventParticipantsTableProps = {
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId, fetcher }) => {
+  const SESSION_STORAGE_APPLICATION_STATUS =
+    "admin-participants-filter-application-status"
+  const SESSION_STORAGE_ATTENDANCE_STATUS =
+    "admin-participants-filter-attendance-status"
+  const SESSION_STORAGE_APPROVED_STATUS =
+    "admin-participants-filter-approved-to-attend"
+
+  const ALL_APPLICATION_STATUSES = applicationStatusOptions.map(
+    (opt) => opt.value,
+  )
+  const ALL_ATTENDANCE_STATUSES = attendanceStatusOptions.map(
+    (opt) => opt.value,
+  )
+  const ALL_APPROVED_STATUSES = approvedToAttendStatusOptions.map(
+    (opt) => opt.value,
+  )
+
+  const DEFAULT_APPLICATION_STATUSES = ALL_APPLICATION_STATUSES
+  const DEFAULT_ATTENDANCE_STATUSES = ALL_ATTENDANCE_STATUSES
+  const DEFAULT_APPROVED_STATUSES = ALL_APPROVED_STATUSES
+
+  const [applicationStatusFilter, setApplicationStatusFilter] = useState<
+    string[]
+  >(() => {
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(
+        SESSION_STORAGE_APPLICATION_STATUS,
+      )
+      if (savedFilters) {
+        try {
+          return JSON.parse(savedFilters)
+        } catch {
+          return DEFAULT_APPLICATION_STATUSES
+        }
+      }
+    }
+    return DEFAULT_APPLICATION_STATUSES
+  })
+
+  const [attendanceStatusFilter, setAttendanceStatusFilter] = useState<
+    string[]
+  >(() => {
+    if (typeof window !== "undefined") {
+      const savedFilters = sessionStorage.getItem(
+        SESSION_STORAGE_ATTENDANCE_STATUS,
+      )
+      if (savedFilters) {
+        try {
+          return JSON.parse(savedFilters)
+        } catch {
+          return DEFAULT_ATTENDANCE_STATUSES
+        }
+      }
+    }
+    return DEFAULT_ATTENDANCE_STATUSES
+  })
+
+  const [approvedStatusFilter, setApprovedStatusFilter] = useState<string[]>(
+    () => {
+      if (typeof window !== "undefined") {
+        const savedFilters = sessionStorage.getItem(
+          SESSION_STORAGE_APPROVED_STATUS,
+        )
+        if (savedFilters) {
+          try {
+            return JSON.parse(savedFilters)
+          } catch {
+            return DEFAULT_APPROVED_STATUSES
+          }
+        }
+      }
+      return DEFAULT_APPROVED_STATUSES
+    },
+  )
+
+  const [filters, setFilters] = useState<{
+    global: { value: null; matchMode: FilterMatchMode }
+    application_status: {
+      value: string[]
+      matchMode: string
+    }
+    attendance_status: {
+      value: string[]
+      matchMode: string
+    }
+    approved_to_attend: {
+      value: string[]
+      matchMode: string
+    }
+  }>({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+    application_status: {
+      value: applicationStatusFilter,
+      matchMode: "custom_application_status",
+    },
+    attendance_status: {
+      value: attendanceStatusFilter,
+      matchMode: "custom_attendance_status",
+    },
+    approved_to_attend: {
+      value: approvedStatusFilter,
+      matchMode: "custom_approved_to_attend",
+    },
+  })
+
+  useEffect(() => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      application_status: {
+        value: applicationStatusFilter,
+        matchMode: "custom_application_status",
+      },
+    }))
+  }, [applicationStatusFilter])
+
+  useEffect(() => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      attendance_status: {
+        value: attendanceStatusFilter,
+        matchMode: "custom_attendance_status",
+      },
+    }))
+  }, [attendanceStatusFilter])
+
+  useEffect(() => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      approved_to_attend: {
+        value: approvedStatusFilter,
+        matchMode: "custom_approved_to_attend",
+      },
+    }))
+  }, [approvedStatusFilter])
+
+  const applicationStatusFilterTemplate = (options: {
+    value: string[]
+    filterCallback: (value: string[], index?: number) => void
+    index?: number
+  }) => {
+    const selectedCount = options.value ? options.value.length : 0
+    const totalCount = ALL_APPLICATION_STATUSES.length
+
+    return (
+      <MultiSelect
+        value={options.value}
+        options={applicationStatusOptions.map((opt) => ({
+          label: opt.name,
+          value: opt.value,
+        }))}
+        onChange={(e) => {
+          options.filterCallback(e.value, options.index)
+          sessionStorage.setItem(
+            SESSION_STORAGE_APPLICATION_STATUS,
+            JSON.stringify(e.value),
+          )
+          setApplicationStatusFilter(e.value)
+        }}
+        placeholder={
+          selectedCount > 0
+            ? `${selectedCount} de ${totalCount} selecionados`
+            : "Selecionar status"
+        }
+        display="chip"
+        showClear
+        filter
+        filterPlaceholder="Buscar status"
+        className="p-column-filter"
+        maxSelectedLabels={3}
+      />
+    )
+  }
+
+  const attendanceStatusFilterTemplate = (options: {
+    value: string[]
+    filterCallback: (value: string[], index?: number) => void
+    index?: number
+  }) => {
+    const selectedCount = options.value ? options.value.length : 0
+    const totalCount = ALL_ATTENDANCE_STATUSES.length
+
+    return (
+      <MultiSelect
+        value={options.value}
+        options={attendanceStatusOptions.map((opt) => ({
+          label: opt.name,
+          value: opt.value,
+        }))}
+        onChange={(e) => {
+          options.filterCallback(e.value, options.index)
+          sessionStorage.setItem(
+            SESSION_STORAGE_ATTENDANCE_STATUS,
+            JSON.stringify(e.value),
+          )
+          setAttendanceStatusFilter(e.value)
+        }}
+        placeholder={
+          selectedCount > 0
+            ? `${selectedCount} de ${totalCount} selecionados`
+            : "Selecionar status"
+        }
+        display="chip"
+        showClear
+        filter
+        filterPlaceholder="Buscar status"
+        className="p-column-filter"
+        maxSelectedLabels={3}
+      />
+    )
+  }
+
+  const approvedStatusFilterTemplate = (options: {
+    value: string[]
+    filterCallback: (value: string[], index?: number) => void
+    index?: number
+  }) => {
+    const selectedCount = options.value ? options.value.length : 0
+    const totalCount = ALL_APPROVED_STATUSES.length
+
+    return (
+      <MultiSelect
+        value={options.value}
+        options={approvedToAttendStatusOptions.map((opt) => ({
+          label: opt.name,
+          value: opt.value,
+        }))}
+        onChange={(e) => {
+          options.filterCallback(e.value, options.index)
+          sessionStorage.setItem(
+            SESSION_STORAGE_APPROVED_STATUS,
+            JSON.stringify(e.value),
+          )
+          setApprovedStatusFilter(e.value)
+        }}
+        placeholder={
+          selectedCount > 0
+            ? `${selectedCount} de ${totalCount} selecionados`
+            : "Selecionar status"
+        }
+        display="chip"
+        showClear
+        filter
+        filterPlaceholder="Buscar status"
+        className="p-column-filter"
+        maxSelectedLabels={3}
+      />
+    )
+  }
+
   /**
    * Generic function to save changes to a participant field
    */
@@ -111,20 +375,46 @@ export const AdminViewEventParticipantsTable: FC<
       id="participants"
       sortField="social_name"
       globalFilterFields={["full_name"]}
-      filters={{
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        application_status: {
-          value: null,
-          matchMode: FilterMatchMode.EQUALS,
-        },
-        attendance_status: {
-          value: null,
-          matchMode: FilterMatchMode.EQUALS,
-        },
-        approved_to_attend: {
-          value: null,
-          matchMode: FilterMatchMode.EQUALS,
-        },
+      filters={filters}
+      onFilter={(e) => {
+        const newFilters = e.filters
+
+        setFilters({
+          global: newFilters.global as { value: null; matchMode: FilterMatchMode },
+          application_status: newFilters.application_status as {
+            value: string[]
+            matchMode: string
+          },
+          attendance_status: newFilters.attendance_status as {
+            value: string[]
+            matchMode: string
+          },
+          approved_to_attend: newFilters.approved_to_attend as {
+            value: string[]
+            matchMode: string
+          },
+        })
+
+        const applicationStatus = newFilters.application_status as {
+          value: string[]
+        }
+        if (applicationStatus) {
+          setApplicationStatusFilter(applicationStatus.value)
+        }
+
+        const attendanceStatus = newFilters.attendance_status as {
+          value: string[]
+        }
+        if (attendanceStatus) {
+          setAttendanceStatusFilter(attendanceStatus.value)
+        }
+
+        const approvedStatus = newFilters.approved_to_attend as {
+          value: string[]
+        }
+        if (approvedStatus) {
+          setApprovedStatusFilter(approvedStatus.value)
+        }
       }}
       size="small"
       header={{
@@ -242,17 +532,8 @@ export const AdminViewEventParticipantsTable: FC<
         header={eventParticipantPropMap("application_status")}
         filter
         className="min-w-[180px]"
-        filterElement={(options) => (
-          <TableInputDropdown
-            value={options.value}
-            options={applicationStatusOptions}
-            filterCallback={options.filterCallback}
-            index={options.index}
-            placeholder="Selecione"
-            className="p-column-filter"
-            showClear
-          />
-        )}
+        filterElement={applicationStatusFilterTemplate}
+        filterField="application_status"
         showFilterMatchModes={false}
         body={(values) => (
           <SelectCellEditor
@@ -273,17 +554,8 @@ export const AdminViewEventParticipantsTable: FC<
         header={eventParticipantPropMap("attendance_status")}
         filter
         className="min-w-[180px]"
-        filterElement={(options) => (
-          <TableInputDropdown
-            value={options.value}
-            options={attendanceStatusOptions}
-            filterCallback={options.filterCallback}
-            index={options.index}
-            placeholder="Selecione"
-            className="p-column-filter"
-            showClear
-          />
-        )}
+        filterElement={attendanceStatusFilterTemplate}
+        filterField="attendance_status"
         showFilterMatchModes={false}
         body={(values) => (
           <SelectCellEditor
@@ -304,17 +576,8 @@ export const AdminViewEventParticipantsTable: FC<
         header={profilePropMap("approved_to_attend")}
         filter
         className="min-w-[180px]"
-        filterElement={(options) => (
-          <TableInputDropdown
-            value={options.value}
-            options={approvedToAttendStatusOptions}
-            filterCallback={options.filterCallback}
-            index={options.index}
-            placeholder="Selecione"
-            className="p-column-filter"
-            showClear
-          />
-        )}
+        filterElement={approvedStatusFilterTemplate}
+        filterField="approved_to_attend"
         showFilterMatchModes={false}
         body={(values) => (
           <SelectCellEditor
