@@ -92,23 +92,11 @@ export const AdminViewEventParticipantsTable: FC<
       DEFAULT_APPLICATION_STATUSES,
     )
 
-  const [attendanceStatusFilter, setAttendanceStatusFilter] = useState<
-    string[]
-  >(() => {
-    if (typeof window !== "undefined") {
-      const savedFilters = sessionStorage.getItem(
-        SESSION_STORAGE_ATTENDANCE_STATUS,
-      )
-      if (savedFilters) {
-        try {
-          return JSON.parse(savedFilters)
-        } catch {
-          return DEFAULT_ATTENDANCE_STATUSES
-        }
-      }
-    }
-    return DEFAULT_ATTENDANCE_STATUSES
-  })
+  const [attendanceStatusFilter, setAttendanceStatusFilter] =
+    useSessionStorageFilter(
+      SESSION_STORAGE_ATTENDANCE_STATUS,
+      DEFAULT_ATTENDANCE_STATUSES,
+    )
 
   const [approvedStatusFilter, setApprovedStatusFilter] = useState<string[]>(
     () => {
