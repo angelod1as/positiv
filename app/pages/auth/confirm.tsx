@@ -4,10 +4,16 @@ import {
   serializeCookieHeader,
 } from "@supabase/ssr"
 import { type EmailOtpType } from "@supabase/supabase-js"
-import { redirect, type LoaderFunctionArgs } from "react-router"
+import { type LoaderFunctionArgs } from "react-router"
+import { redirectWithError, redirectWithSuccess } from "remix-toast"
+import paths from "~/lib/paths"
 import type { Database } from "~types/database/database.types"
 
 const { VITE_SUPABASE_URL = "", VITE_SUPABASE_ANON_KEY = "" } = import.meta.env
+
+const {
+  auth: { LOGIN },
+} = paths
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const requestUrl = new URL(request.url)
@@ -46,9 +52,33 @@ export async function loader({ request }: LoaderFunctionArgs) {
     })
 
     if (!error) {
-      return redirect(next, { headers })
+      const successMessage =
+        type === "recovery"
+          ? "Senha redefinida com sucesso!"
+          : "E-mail confirmado com sucesso!"
+
+      return redirectWithSuccess(next, successMessage, { headers })
     }
+
+    if (
+      error.message.includes("Token has expired") ||
+      error.message.includes("invalid") ||
+      error.code === "otp_expired"
+    ) {
+      throw await redirectWithError(
+        LOGIN,
+        "Link já utilizado ou expirado. Tente fazer login ou solicite um novo link.",
+      )
+    }
+
+    throw await redirectWithError(
+      LOGIN,
+      `Erro ao confirmar: ${error.message || "link inválido"}`,
+    )
   }
-  // return the user to an error page with instructions
-  throw new Error("You must have a code to access this page")
+
+  throw await redirectWithError(
+    LOGIN,
+    "Link inválido. Por favor, verifique o link no seu e-mail.",
+  )
 }

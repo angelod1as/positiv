@@ -304,4 +304,125 @@ describe("registerUser", () => {
     expect(signUpCall).not.toHaveProperty("captchaToken")
     expect(signUpCall.options?.captchaToken).toBe("test-captcha-token")
   })
+
+  it("should send password reset email when user already registered", async () => {
+    const mockSignUp = vi
+      .fn()
+      .mockResolvedValue({ error: { message: "User already registered" } })
+    const mockResetPassword = vi.fn().mockResolvedValue({ error: null })
+
+    const mockSupabase = {
+      auth: {
+        signUp: mockSignUp,
+        resetPasswordForEmail: mockResetPassword,
+      },
+    }
+
+    const values = {
+      email: "existing@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+      over18: true,
+      captchaToken: "test-captcha-token",
+    }
+
+    const context = {
+      supabase: mockSupabase as unknown as DBClient,
+      host: "http://localhost:5173",
+      supabaseHeaders: new Headers(),
+      currentUser: null,
+      currentProfile: null,
+    }
+
+    const result = await registerUser(values, context)
+
+    expect(mockSignUp).toHaveBeenCalled()
+    expect(mockResetPassword).toHaveBeenCalledWith("existing@example.com", {
+      redirectTo: "http://localhost:5173auth/confirm",
+    })
+    expect(result).toEqual({ success: true, data: values, errors: [] })
+  })
+
+  it("should return error when password reset fails for existing user", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    const mockSignUp = vi
+      .fn()
+      .mockResolvedValue({ error: { message: "User already registered" } })
+    const mockResetPassword = vi
+      .fn()
+      .mockResolvedValue({ error: { message: "Email service down" } })
+
+    const mockSupabase = {
+      auth: {
+        signUp: mockSignUp,
+        resetPasswordForEmail: mockResetPassword,
+      },
+    }
+
+    const values = {
+      email: "existing@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+      over18: true,
+      captchaToken: "test-captcha-token",
+    }
+
+    const context = {
+      supabase: mockSupabase as unknown as DBClient,
+      host: "http://localhost:5173",
+      supabaseHeaders: new Headers(),
+      currentUser: null,
+      currentProfile: null,
+    }
+
+    const result = await registerUser(values, context)
+
+    expect(result.success).toBe(false)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].message).toContain(
+      "Ops, ocorreu um erro ao tentar enviar o email",
+    )
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Password Reset Error for existing user",
+      { message: "Email service down" },
+    )
+
+    consoleSpy.mockRestore()
+  })
+
+  it("should return error for other signup errors", async () => {
+    const mockSignUp = vi
+      .fn()
+      .mockResolvedValue({ error: { message: "Some other error" } })
+
+    const mockSupabase = {
+      auth: {
+        signUp: mockSignUp,
+      },
+    }
+
+    const values = {
+      email: "test@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+      over18: true,
+      captchaToken: "test-captcha-token",
+    }
+
+    const context = {
+      supabase: mockSupabase as unknown as DBClient,
+      host: "http://localhost:5173",
+      supabaseHeaders: new Headers(),
+      currentUser: null,
+      currentProfile: null,
+    }
+
+    const result = await registerUser(values, context)
+
+    expect(result.success).toBe(false)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors[0].message).toContain("Ops, ocorreu um erro")
+  })
 })
