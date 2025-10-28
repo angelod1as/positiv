@@ -54,11 +54,13 @@ export const getContext = async (
 
   if (authError) {
     // Handle errors that indicate invalid/expired tokens
-    if (authError.code === "refresh_token_not_found" ||
-        authError.code === "user_not_found" ||
-        authError.message?.includes("Invalid Refresh Token") ||
-        authError.message?.includes("Refresh Token Not Found") ||
-        authError.message?.includes("User from sub claim in JWT does not exist")) {
+    if (
+      authError.code === "refresh_token_not_found" ||
+      authError.code === "user_not_found" ||
+      authError.message?.includes("Invalid Refresh Token") ||
+      authError.message?.includes("Refresh Token Not Found") ||
+      authError.message?.includes("User from sub claim in JWT does not exist")
+    ) {
       // Clear auth session by signing out properly
       await supabase.auth.signOut()
       return errorProps
@@ -250,9 +252,10 @@ export const registerUser = applySchema(
 
   const { over18, confirmPassword, captchaToken, ...data } = values
 
-  const origin = host?.startsWith("http://") || host?.startsWith("https://")
-    ? host
-    : `${host?.includes("localhost") ? "http://" : "https://"}${host}`
+  const origin =
+    host?.startsWith("http://") || host?.startsWith("https://")
+      ? host
+      : `${host?.includes("localhost") ? "http://" : "https://"}${host}`
 
   const { error } = await supabase.auth.signUp({
     ...data,
@@ -263,6 +266,20 @@ export const registerUser = applySchema(
   })
 
   if (error) {
+    if (error.message === "User already registered") {
+      const resetError = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${origin}auth/confirm`,
+      })
+
+      if (resetError.error) {
+        throw new Error(
+          "Ops, ocorreu um erro ao tentar enviar o email. Contate o administrador.",
+        )
+      }
+
+      return values
+    }
+
     throw new Error(`Ops, ocorreu um erro. Erro: ${error}`)
   }
 
