@@ -4,6 +4,14 @@ This directory contains email templates for [Listmonk](https://listmonk.app), ou
 
 ## Template Files
 
+## Overview
+
+Positiv uses **HTML templates with markdown** for campaigns. This approach provides:
+- Full brand control with gradient backgrounds and custom styling
+- Easy content editing with markdown
+- Reusable HTML snippets for rich components
+- Footer with unsubscribe/view links automatically
+
 ### HTML Templates (Base Wrappers)
 
 These templates provide the outer structure, styling, and brand wrapper:
@@ -24,64 +32,68 @@ These templates provide the outer structure, styling, and brand wrapper:
   - Minimal footer (no unsubscribe needed)
   - For public campaign archives
 
-- **`full.html`** - Test template showing all possible blocks
-  - Reference for available visual editor blocks
+- **`full.html`** - Test template showing all possible HTML/CSS
+  - Reference for testing styles
   - Not meant for production use
 
-### Visual Template JSON
+- **`SNIPPETS.md`** - **→ Copy-paste HTML components**
+  - Buttons (primary, secondary, outline)
+  - Call-out boxes (info, success, warning)
+  - Event cards, quote blocks, dividers
+  - Two-column layouts, stat cards
+  - Social media links, countdown timers
+  - **Use these to build rich campaign emails!**
 
-- **`emailTemplate.json`** - Visual editor template configuration
-  - Defines default starter blocks for new campaigns
-  - Users customize these blocks in Listmonk's visual editor
-  - Maintains Positiv brand consistency
+## Creating Campaigns
 
-## Using the Visual Template
-
-### 1. Import JSON into Listmonk
+### 1. Create Campaign in Listmonk
 
 1. Log into Listmonk admin
-2. Go to **Campaigns** → **Templates**
-3. Create new template or edit existing
-4. Switch to **Visual Editor** mode
-5. Click **Import JSON**
-6. Paste contents of `emailTemplate.json`
-7. Save template
+2. Go to **Campaigns** → **Create New**
+3. Select `default` template
+4. Write content using **markdown**
 
-### 2. Create Campaign with Visual Editor
+### 2. Use Markdown for Content
 
-1. Create new campaign
-2. Select your visual template
-3. Edit content using drag-and-drop interface:
-   - Add/remove blocks (headings, text, buttons, images)
-   - Edit text inline
-   - Adjust spacing
-   - Change colors
-   - Upload images
+The template supports full markdown:
 
-### 3. Blocks Included in Template
+```markdown
+# Main Heading (H1 - Purple)
+## Section Heading (H2 - Blue)
+### Sub-heading (H3)
 
-The default visual template includes:
+**Bold text** and *italic text*
 
-1. **Logo Image** - Positiv logo (centered)
-2. **Hero Heading (H1)** - Purple, bold, centered
-3. **Intro Text** - Welcome paragraph
-4. **CTA Button** - Purple button linking to site
-5. **Body Text** - Additional content with markdown example
-6. **Spacers** - Proper vertical spacing
+- Bullet lists
+1. Numbered lists
 
-### 4. Customization
+[Links](https://www.positivparty.com)
 
-Users can add these additional blocks via visual editor:
+> Blockquotes with purple accent
+```
 
-- **Headings** (H1, H2, H3)
-- **Text** (supports markdown)
-- **Buttons** (with links)
-- **Images** (with optional links)
-- **Dividers** (horizontal rules)
-- **Spacers** (vertical spacing)
-- **Containers** (grouped content)
-- **Columns** (multi-column layouts)
-- **HTML** (custom HTML blocks)
+### 3. Add Rich Components
+
+Copy HTML snippets from `SNIPPETS.md` and paste them into your campaign content:
+
+**Example campaign:**
+```markdown
+# Novo Evento Disponível!
+
+Estamos animados em anunciar nosso próximo evento!
+
+<!-- Paste Event Card snippet here -->
+<div style="background: #ffffff; border: 2px solid #bf03c3;">
+  ...event card HTML...
+</div>
+
+<!-- Paste Button snippet here -->
+<div style="text-align: center;">
+  <a href="..." style="background: #bf03c3;">Inscrever-se</a>
+</div>
+
+Nos vemos lá! 🎉
+```
 
 ## Design System Integration
 
@@ -126,32 +138,36 @@ Available Listmonk variables:
 {{ .Tx.Data.key }}          - Custom data passed to template
 ```
 
-## How Templates Work Together
+## How It Works
 
 1. **Base HTML Template** (`default.html`):
-   - Provides outer wrapper with gradient
-   - Loads fonts and styles
+   - Provides outer wrapper with purple gradient
+   - Loads fonts (Nunito, DM Sans) and styles
    - Contains `{{ template "content" . }}` placeholder
    - Adds footer with unsubscribe links
 
-2. **Visual JSON** (`emailTemplate.json`):
-   - Defines editable content blocks
-   - Renders inside the `{{ template "content" . }}` area
-   - Users edit via visual editor
+2. **Campaign Content** (Markdown + HTML snippets):
+   - Write in markdown for easy formatting
+   - Paste HTML snippets for rich components
+   - Renders inside the template wrapper
 
 3. **Final Email**:
    ```
-   ┌─────────────────────────────┐
-   │  Base Template Wrapper      │
-   │  ┌─────────────────────┐    │
-   │  │  Visual Blocks      │    │
-   │  │  - Logo             │    │
-   │  │  - Heading          │    │
-   │  │  - Text             │    │
-   │  │  - Button           │    │
-   │  └─────────────────────┘    │
-   │  Footer (from base)         │
-   └─────────────────────────────┘
+   ┌──────────────────────────────────┐
+   │  Gradient Background (Purple)    │
+   │  ┌────────────────────────────┐  │
+   │  │  Logo (from template)      │  │
+   │  │                            │  │
+   │  │  Campaign Content:         │  │
+   │  │  - Markdown text           │  │
+   │  │  - HTML snippets           │  │
+   │  │  - Buttons, cards, etc.    │  │
+   │  │                            │  │
+   │  │  Footer (from template)    │  │
+   │  │  - Unsubscribe link        │  │
+   │  │  - View in browser link    │  │
+   │  └────────────────────────────┘  │
+   └──────────────────────────────────┘
    ```
 
 ## Testing Templates
@@ -162,12 +178,12 @@ Available Listmonk variables:
 2. Send test campaign from Listmonk
 3. View email at http://localhost:8025
 
-### Visual Editor Preview
+### Preview in Listmonk
 
-1. Open visual editor in Listmonk
-2. Make changes
-3. Click **Preview** to see rendered email
-4. Send test email to verify
+1. Write your campaign content
+2. Click **Preview** to see rendered email
+3. Send test email to verify
+4. Check rendering in different email clients
 
 ## Markdown Support
 
