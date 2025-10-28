@@ -1,0 +1,144 @@
+{
+  "root": {
+    "type": "EmailLayout",
+    "data": {
+      "backdropColor": "transparent",
+      "canvasColor": "#FFFFFF",
+      "textColor": "#333333",
+      "fontFamily": "MODERN_SANS",
+      "borderRadius": 0,
+      "childrenIds": [
+        "logo-header",
+        "hero-heading",
+        "intro-text",
+        "cta-button",
+        "body-spacer",
+        "body-text",
+        "closing-spacer"
+      ]
+    }
+  },
+  "logo-header": {
+    "type": "Image",
+    "data": {
+      "props": {
+        "url": "https://www.positivparty.com/positiv-logo-colors.png",
+        "alt": "Positiv",
+        "contentAlignment": "middle",
+        "linkHref": null
+      },
+      "style": {
+        "padding": {
+          "top": 30,
+          "bottom": 20,
+          "left": 24,
+          "right": 24
+        }
+      }
+    }
+  },
+  "hero-heading": {
+    "type": "Heading",
+    "data": {
+      "props": {
+        "text": "Bem-vindo à Positiv!",
+        "level": "h1"
+      },
+      "style": {
+        "color": "#bf03c3",
+        "backgroundColor": null,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "padding": {
+          "top": 0,
+          "bottom": 16,
+          "left": 24,
+          "right": 24
+        }
+      }
+    }
+  },
+  "intro-text": {
+    "type": "Text",
+    "data": {
+      "props": {
+        "text": "Estamos felizes em ter você conosco! Esta é uma mensagem de exemplo que você pode personalizar completamente usando o editor visual."
+      },
+      "style": {
+        "color": "#333333",
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "padding": {
+          "top": 0,
+          "bottom": 24,
+          "left": 24,
+          "right": 24
+        }
+      }
+    }
+  },
+  "cta-button": {
+    "type": "Button",
+    "data": {
+      "props": {
+        "text": "Acesse o Site",
+        "url": "https://www.positivparty.com"
+      },
+      "style": {
+        "color": "#FFFFFF",
+        "backgroundColor": "#bf03c3",
+        "fontSize": 16,
+        "fontWeight": "bold",
+        "textAlign": "center",
+        "borderRadius": 8,
+        "padding": {
+          "top": 14,
+          "bottom": 14,
+          "left": 32,
+          "right": 32
+        }
+      }
+    }
+  },
+  "body-spacer": {
+    "type": "Spacer",
+    "data": {
+      "props": {
+        "height": 30
+      },
+      "style": {}
+    }
+  },
+  "body-text": {
+    "type": "Text",
+    "data": {
+      "props": {
+        "text": "Você pode adicionar mais conteúdo aqui usando o editor visual. Arraste novos blocos, edite textos, adicione imagens, botões e muito mais!\n\n**Dica:** Use markdown para formatar o texto - **negrito**, *itálico*, e [links](https://www.positivparty.com)."
+      },
+      "style": {
+        "color": "#333333",
+        "backgroundColor": null,
+        "fontSize": 16,
+        "fontWeight": "normal",
+        "textAlign": "left",
+        "padding": {
+          "top": 0,
+          "bottom": 0,
+          "left": 24,
+          "right": 24
+        }
+      }
+    }
+  },
+  "closing-spacer": {
+    "type": "Spacer",
+    "data": {
+      "props": {
+        "height": 30
+      },
+      "style": {}
+    }
+  }
+}
