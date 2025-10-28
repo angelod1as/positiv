@@ -3,8 +3,6 @@ import {
   testConnection,
   addSubscriber,
   removeSubscriber,
-  importSubscribers,
-  getImportStatus,
   createCampaign,
   updateCampaignStatus,
 } from "./listmonk-client.server"
@@ -203,129 +201,6 @@ describe("removeSubscriber", () => {
     fetchSpy.mockRejectedValue(new Error("Network error"))
 
     const result = await removeSubscriber(123)
-
-    expect(result.success).toBe(false)
-  })
-})
-
-describe("importSubscribers", () => {
-  let fetchSpy: MockInstance
-  let consoleSpy: MockInstance
-
-  beforeEach(() => {
-    fetchSpy = vi.spyOn(global, "fetch")
-    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-  })
-
-  afterEach(() => {
-    fetchSpy.mockRestore()
-    consoleSpy.mockRestore()
-    vi.clearAllMocks()
-  })
-
-  it("should import subscribers with CSV data", async () => {
-    fetchSpy.mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { import_id: "abc-123" } }),
-    } as Response)
-
-    const csvData = "email,name\ntest@example.com,Test User"
-
-    const result = await importSubscribers(csvData)
-
-    expect(result.success).toBe(true)
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://listmonk.test/api/import/subscribers",
-      expect.objectContaining({
-        method: "POST",
-        headers: expect.objectContaining({
-          Authorization: "Basic dGVzdHVzZXI6dGVzdHBhc3M=",
-          "Content-Type": "application/json",
-        }),
-        body: JSON.stringify({ data: csvData }),
-      })
-    )
-  })
-
-  it("should succeed but log error when API returns error", async () => {
-    fetchSpy.mockResolvedValue({
-      ok: false,
-      status: 400,
-      statusText: "Bad Request",
-    } as Response)
-
-    const result = await importSubscribers("invalid,csv")
-
-    expect(result.success).toBe(true)
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to import subscribers")
-    )
-  })
-
-  it("should fail when network error occurs", async () => {
-    fetchSpy.mockRejectedValue(new Error("Network error"))
-
-    const result = await importSubscribers("email,name")
-
-    expect(result.success).toBe(false)
-  })
-})
-
-describe("getImportStatus", () => {
-  let fetchSpy: MockInstance
-  let consoleSpy: MockInstance
-
-  beforeEach(() => {
-    fetchSpy = vi.spyOn(global, "fetch")
-    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-  })
-
-  afterEach(() => {
-    fetchSpy.mockRestore()
-    consoleSpy.mockRestore()
-    vi.clearAllMocks()
-  })
-
-  it("should get import status", async () => {
-    fetchSpy.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        data: { status: "finished", imported: 100, failed: 0 },
-      }),
-    } as Response)
-
-    const result = await getImportStatus()
-
-    expect(result.success).toBe(true)
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://listmonk.test/api/import/subscribers",
-      expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: "Basic dGVzdHVzZXI6dGVzdHBhc3M=",
-        }),
-      })
-    )
-  })
-
-  it("should succeed but log error when API returns error", async () => {
-    fetchSpy.mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
-    } as Response)
-
-    const result = await getImportStatus()
-
-    expect(result.success).toBe(true)
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to get import status")
-    )
-  })
-
-  it("should fail when network error occurs", async () => {
-    fetchSpy.mockRejectedValue(new Error("Network error"))
-
-    const result = await getImportStatus()
 
     expect(result.success).toBe(false)
   })
