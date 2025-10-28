@@ -98,23 +98,11 @@ export const AdminViewEventParticipantsTable: FC<
       DEFAULT_ATTENDANCE_STATUSES,
     )
 
-  const [approvedStatusFilter, setApprovedStatusFilter] = useState<string[]>(
-    () => {
-      if (typeof window !== "undefined") {
-        const savedFilters = sessionStorage.getItem(
-          SESSION_STORAGE_APPROVED_STATUS,
-        )
-        if (savedFilters) {
-          try {
-            return JSON.parse(savedFilters)
-          } catch {
-            return DEFAULT_APPROVED_STATUSES
-          }
-        }
-      }
-      return DEFAULT_APPROVED_STATUSES
-    },
-  )
+  const [approvedStatusFilter, setApprovedStatusFilter] =
+    useSessionStorageFilter(
+      SESSION_STORAGE_APPROVED_STATUS,
+      DEFAULT_APPROVED_STATUSES,
+    )
 
   const [filters, setFilters] = useState<{
     global: { value: null; matchMode: FilterMatchMode }
