@@ -5,6 +5,7 @@ import { Column } from "primereact/column"
 import { MultiSelect } from "primereact/multiselect"
 import { useEffect, useState, type FC } from "react"
 import type { FetcherWithComponents } from "react-router"
+import { createMultiSelectFilterTemplate } from "~/lib/helpers/create-multi-select-filter-template"
 import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
@@ -55,6 +56,24 @@ FilterService.register("custom_approved_to_attend", (value, filters) => {
   if (!filters || filters.length === 0) return true
   return filters.includes(value)
 })
+
+const FILTER_CONFIGS = {
+  application_status: {
+    storageKey: "admin-participants-filter-application-status",
+    options: applicationStatusOptions,
+    matchMode: "custom_application_status",
+  },
+  attendance_status: {
+    storageKey: "admin-participants-filter-attendance-status",
+    options: attendanceStatusOptions,
+    matchMode: "custom_attendance_status",
+  },
+  approved_to_attend: {
+    storageKey: "admin-participants-filter-approved-to-attend",
+    options: approvedToAttendStatusOptions,
+    matchMode: "custom_approved_to_attend",
+  },
+} as const
 
 type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
@@ -164,43 +183,12 @@ export const AdminViewEventParticipantsTable: FC<
     }))
   }, [approvedStatusFilter])
 
-  const applicationStatusFilterTemplate = (options: {
-    value: string[]
-    filterCallback: (value: string[], index?: number) => void
-    index?: number
-  }) => {
-    const selectedCount = options.value ? options.value.length : 0
-    const totalCount = ALL_APPLICATION_STATUSES.length
-
-    return (
-      <MultiSelect
-        value={options.value}
-        options={applicationStatusOptions.map((opt) => ({
-          label: opt.name,
-          value: opt.value,
-        }))}
-        onChange={(e) => {
-          options.filterCallback(e.value, options.index)
-          sessionStorage.setItem(
-            SESSION_STORAGE_APPLICATION_STATUS,
-            JSON.stringify(e.value),
-          )
-          setApplicationStatusFilter(e.value)
-        }}
-        placeholder={
-          selectedCount > 0
-            ? `${selectedCount} de ${totalCount} selecionados`
-            : "Selecionar status"
-        }
-        display="chip"
-        showClear
-        filter
-        filterPlaceholder="Buscar status"
-        className="p-column-filter"
-        maxSelectedLabels={3}
-      />
-    )
-  }
+  const applicationStatusFilterTemplate = createMultiSelectFilterTemplate(
+    FILTER_CONFIGS.application_status.options,
+    FILTER_CONFIGS.application_status.storageKey,
+    setApplicationStatusFilter,
+    ALL_APPLICATION_STATUSES,
+  )
 
   const attendanceStatusFilterTemplate = (options: {
     value: string[]
