@@ -83,43 +83,32 @@ type AdminViewEventParticipantsTableProps = {
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId, fetcher }) => {
-  const SESSION_STORAGE_APPLICATION_STATUS =
-    "admin-participants-filter-application-status"
-  const SESSION_STORAGE_ATTENDANCE_STATUS =
-    "admin-participants-filter-attendance-status"
-  const SESSION_STORAGE_APPROVED_STATUS =
-    "admin-participants-filter-approved-to-attend"
-
-  const ALL_APPLICATION_STATUSES = applicationStatusOptions.map(
+  const ALL_APPLICATION_STATUSES = FILTER_CONFIGS.application_status.options.map(
     (opt) => opt.value,
   )
-  const ALL_ATTENDANCE_STATUSES = attendanceStatusOptions.map(
+  const ALL_ATTENDANCE_STATUSES = FILTER_CONFIGS.attendance_status.options.map(
     (opt) => opt.value,
   )
-  const ALL_APPROVED_STATUSES = approvedToAttendStatusOptions.map(
+  const ALL_APPROVED_STATUSES = FILTER_CONFIGS.approved_to_attend.options.map(
     (opt) => opt.value,
   )
-
-  const DEFAULT_APPLICATION_STATUSES = ALL_APPLICATION_STATUSES
-  const DEFAULT_ATTENDANCE_STATUSES = ALL_ATTENDANCE_STATUSES
-  const DEFAULT_APPROVED_STATUSES = ALL_APPROVED_STATUSES
 
   const [applicationStatusFilter, setApplicationStatusFilter] =
     useSessionStorageFilter(
-      SESSION_STORAGE_APPLICATION_STATUS,
-      DEFAULT_APPLICATION_STATUSES,
+      FILTER_CONFIGS.application_status.storageKey,
+      ALL_APPLICATION_STATUSES,
     )
 
   const [attendanceStatusFilter, setAttendanceStatusFilter] =
     useSessionStorageFilter(
-      SESSION_STORAGE_ATTENDANCE_STATUS,
-      DEFAULT_ATTENDANCE_STATUSES,
+      FILTER_CONFIGS.attendance_status.storageKey,
+      ALL_ATTENDANCE_STATUSES,
     )
 
   const [approvedStatusFilter, setApprovedStatusFilter] =
     useSessionStorageFilter(
-      SESSION_STORAGE_APPROVED_STATUS,
-      DEFAULT_APPROVED_STATUSES,
+      FILTER_CONFIGS.approved_to_attend.storageKey,
+      ALL_APPROVED_STATUSES,
     )
 
   const [filters, setFilters] = useState<{
