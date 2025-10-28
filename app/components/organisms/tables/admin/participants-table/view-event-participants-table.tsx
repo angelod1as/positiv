@@ -2,7 +2,6 @@ import { composable } from "composable-functions"
 import { EyeIcon } from "lucide-react"
 import { FilterMatchMode, FilterService } from "primereact/api"
 import { Column } from "primereact/column"
-import { MultiSelect } from "primereact/multiselect"
 import { useEffect, useState, type FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 import { createMultiSelectFilterTemplate } from "~/lib/helpers/create-multi-select-filter-template"
@@ -197,43 +196,12 @@ export const AdminViewEventParticipantsTable: FC<
     ALL_ATTENDANCE_STATUSES,
   )
 
-  const approvedStatusFilterTemplate = (options: {
-    value: string[]
-    filterCallback: (value: string[], index?: number) => void
-    index?: number
-  }) => {
-    const selectedCount = options.value ? options.value.length : 0
-    const totalCount = ALL_APPROVED_STATUSES.length
-
-    return (
-      <MultiSelect
-        value={options.value}
-        options={approvedToAttendStatusOptions.map((opt) => ({
-          label: opt.name,
-          value: opt.value,
-        }))}
-        onChange={(e) => {
-          options.filterCallback(e.value, options.index)
-          sessionStorage.setItem(
-            SESSION_STORAGE_APPROVED_STATUS,
-            JSON.stringify(e.value),
-          )
-          setApprovedStatusFilter(e.value)
-        }}
-        placeholder={
-          selectedCount > 0
-            ? `${selectedCount} de ${totalCount} selecionados`
-            : "Selecionar status"
-        }
-        display="chip"
-        showClear
-        filter
-        filterPlaceholder="Buscar status"
-        className="p-column-filter"
-        maxSelectedLabels={3}
-      />
-    )
-  }
+  const approvedStatusFilterTemplate = createMultiSelectFilterTemplate(
+    FILTER_CONFIGS.approved_to_attend.options,
+    FILTER_CONFIGS.approved_to_attend.storageKey,
+    setApprovedStatusFilter,
+    ALL_APPROVED_STATUSES,
+  )
 
   /**
    * Generic function to save changes to a participant field
