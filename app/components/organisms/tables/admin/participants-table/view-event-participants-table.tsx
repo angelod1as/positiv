@@ -1,10 +1,11 @@
 import { composable } from "composable-functions"
 import { EyeIcon } from "lucide-react"
-import { FilterMatchMode, FilterService } from "primereact/api"
+import { FilterMatchMode } from "primereact/api"
 import { Column } from "primereact/column"
 import { useEffect, useState, type FC } from "react"
 import type { FetcherWithComponents } from "react-router"
 import { createMultiSelectFilterTemplate } from "~/lib/helpers/create-multi-select-filter-template"
+import { registerMultiSelectFilters } from "~/lib/helpers/register-filter-services"
 import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
@@ -41,38 +42,34 @@ const {
   },
 } = paths
 
-FilterService.register("custom_application_status", (value, filters) => {
-  if (!filters || filters.length === 0) return true
-  return filters.includes(value)
-})
-
-FilterService.register("custom_attendance_status", (value, filters) => {
-  if (!filters || filters.length === 0) return true
-  return filters.includes(value)
-})
-
-FilterService.register("custom_approved_to_attend", (value, filters) => {
-  if (!filters || filters.length === 0) return true
-  return filters.includes(value)
-})
-
 const FILTER_CONFIGS = {
   application_status: {
     storageKey: "admin-participants-filter-application-status",
     options: applicationStatusOptions,
     matchMode: "custom_application_status",
+    get allValues() {
+      return this.options.map((opt) => opt.value)
+    },
   },
   attendance_status: {
     storageKey: "admin-participants-filter-attendance-status",
     options: attendanceStatusOptions,
     matchMode: "custom_attendance_status",
+    get allValues() {
+      return this.options.map((opt) => opt.value)
+    },
   },
   approved_to_attend: {
     storageKey: "admin-participants-filter-approved-to-attend",
     options: approvedToAttendStatusOptions,
     matchMode: "custom_approved_to_attend",
+    get allValues() {
+      return this.options.map((opt) => opt.value)
+    },
   },
 } as const
+
+registerMultiSelectFilters(FILTER_CONFIGS)
 
 type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
@@ -83,32 +80,22 @@ type AdminViewEventParticipantsTableProps = {
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId, fetcher }) => {
-  const ALL_APPLICATION_STATUSES = FILTER_CONFIGS.application_status.options.map(
-    (opt) => opt.value,
-  )
-  const ALL_ATTENDANCE_STATUSES = FILTER_CONFIGS.attendance_status.options.map(
-    (opt) => opt.value,
-  )
-  const ALL_APPROVED_STATUSES = FILTER_CONFIGS.approved_to_attend.options.map(
-    (opt) => opt.value,
-  )
-
   const [applicationStatusFilter, setApplicationStatusFilter] =
     useSessionStorageFilter(
       FILTER_CONFIGS.application_status.storageKey,
-      ALL_APPLICATION_STATUSES,
+      FILTER_CONFIGS.application_status.allValues,
     )
 
   const [attendanceStatusFilter, setAttendanceStatusFilter] =
     useSessionStorageFilter(
       FILTER_CONFIGS.attendance_status.storageKey,
-      ALL_ATTENDANCE_STATUSES,
+      FILTER_CONFIGS.attendance_status.allValues,
     )
 
   const [approvedStatusFilter, setApprovedStatusFilter] =
     useSessionStorageFilter(
       FILTER_CONFIGS.approved_to_attend.storageKey,
-      ALL_APPROVED_STATUSES,
+      FILTER_CONFIGS.approved_to_attend.allValues,
     )
 
   const [filters, setFilters] = useState<{
@@ -175,21 +162,21 @@ export const AdminViewEventParticipantsTable: FC<
     FILTER_CONFIGS.application_status.options,
     FILTER_CONFIGS.application_status.storageKey,
     setApplicationStatusFilter,
-    ALL_APPLICATION_STATUSES,
+    FILTER_CONFIGS.application_status.allValues,
   )
 
   const attendanceStatusFilterTemplate = createMultiSelectFilterTemplate(
     FILTER_CONFIGS.attendance_status.options,
     FILTER_CONFIGS.attendance_status.storageKey,
     setAttendanceStatusFilter,
-    ALL_ATTENDANCE_STATUSES,
+    FILTER_CONFIGS.attendance_status.allValues,
   )
 
   const approvedStatusFilterTemplate = createMultiSelectFilterTemplate(
     FILTER_CONFIGS.approved_to_attend.options,
     FILTER_CONFIGS.approved_to_attend.storageKey,
     setApprovedStatusFilter,
-    ALL_APPROVED_STATUSES,
+    FILTER_CONFIGS.approved_to_attend.allValues,
   )
 
   /**
