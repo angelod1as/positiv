@@ -32,6 +32,7 @@ import {
   approvedToAttendStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
+  PARTICIPANTS_TABLE_FILTER_CONFIGS,
   profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
@@ -45,34 +46,7 @@ const {
   },
 } = paths
 
-const FILTER_CONFIGS = {
-  application_status: {
-    storageKey: "admin-participants-filter-application-status",
-    options: applicationStatusOptions,
-    matchMode: "custom_application_status",
-    get allValues() {
-      return this.options.map((opt) => opt.value)
-    },
-  },
-  attendance_status: {
-    storageKey: "admin-participants-filter-attendance-status",
-    options: attendanceStatusOptions,
-    matchMode: "custom_attendance_status",
-    get allValues() {
-      return this.options.map((opt) => opt.value)
-    },
-  },
-  approved_to_attend: {
-    storageKey: "admin-participants-filter-approved-to-attend",
-    options: approvedToAttendStatusOptions,
-    matchMode: "custom_approved_to_attend",
-    get allValues() {
-      return this.options.map((opt) => opt.value)
-    },
-  },
-} as const
-
-registerMultiSelectFilters(FILTER_CONFIGS)
+registerMultiSelectFilters(PARTICIPANTS_TABLE_FILTER_CONFIGS)
 
 type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
@@ -85,20 +59,20 @@ export const AdminViewEventParticipantsTable: FC<
 > = ({ participants, eventId, fetcher }) => {
   const [applicationStatusFilter, setApplicationStatusFilter] =
     useSessionStorageFilter(
-      FILTER_CONFIGS.application_status.storageKey,
-      FILTER_CONFIGS.application_status.allValues,
+      PARTICIPANTS_TABLE_FILTER_CONFIGS.application_status.storageKey,
+      PARTICIPANTS_TABLE_FILTER_CONFIGS.application_status.allValues,
     )
 
   const [attendanceStatusFilter, setAttendanceStatusFilter] =
     useSessionStorageFilter(
-      FILTER_CONFIGS.attendance_status.storageKey,
-      FILTER_CONFIGS.attendance_status.allValues,
+      PARTICIPANTS_TABLE_FILTER_CONFIGS.attendance_status.storageKey,
+      PARTICIPANTS_TABLE_FILTER_CONFIGS.attendance_status.allValues,
     )
 
   const [approvedStatusFilter, setApprovedStatusFilter] =
     useSessionStorageFilter(
-      FILTER_CONFIGS.approved_to_attend.storageKey,
-      FILTER_CONFIGS.approved_to_attend.allValues,
+      PARTICIPANTS_TABLE_FILTER_CONFIGS.approved_to_attend.storageKey,
+      PARTICIPANTS_TABLE_FILTER_CONFIGS.approved_to_attend.allValues,
     )
 
   const filterSetters = {
@@ -107,15 +81,15 @@ export const AdminViewEventParticipantsTable: FC<
     approved_to_attend: setApprovedStatusFilter,
   }
 
-  const filterTemplates = createFilterTemplates(FILTER_CONFIGS, filterSetters)
+  const filterTemplates = createFilterTemplates(PARTICIPANTS_TABLE_FILTER_CONFIGS, filterSetters)
 
-  const filters = useFilterState(FILTER_CONFIGS, {
+  const filters = useFilterState(PARTICIPANTS_TABLE_FILTER_CONFIGS, {
     application_status: applicationStatusFilter,
     attendance_status: attendanceStatusFilter,
     approved_to_attend: approvedStatusFilter,
   })
 
-  const handleFilter = createOnFilterHandler(FILTER_CONFIGS, filterSetters)
+  const handleFilter = createOnFilterHandler(PARTICIPANTS_TABLE_FILTER_CONFIGS, filterSetters)
 
   /**
    * Generic function to save changes to a participant field
