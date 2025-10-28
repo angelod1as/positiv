@@ -27,15 +27,13 @@
       alt="Logo"
       style="max-width: 100%; height: auto; margin-bottom: 20px"
     />
-    <h2 style="font-family: Arial, sans-serif; color: black">
-      Confirme seu registro
-    </h2>
+    <h2 style="font-family: Arial, sans-serif; color: black">Link Mágico</h2>
     <p style="font-family: Arial, sans-serif; color: black">
-      Clique no link abaixo para confirmar sua nova conta:
+      Siga este link para fazer login:
     </p>
     <p>
       <a
-        href="{{ .SiteURL }}auth/confirm?token_hash={{ .TokenHash }}&type=email"
+        href="{{ .SiteURL }}auth/confirm?token_hash={{ .TokenHash }}&type=magiclink"
         style="
           display: inline-block;
           padding: 10px 20px;
@@ -46,7 +44,7 @@
           border-radius: 5px;
           font-family: Arial, sans-serif;
         "
-        >Confirme seu e-mail</a
+        >Entrar</a
       >
     </p>
   </div>
