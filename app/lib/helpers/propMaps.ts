@@ -184,6 +184,33 @@ export const approvedToAttendStatusOptions: Array<{
   value: value as ProfileApprovedToAttendStatus,
 }))
 
+export const PARTICIPANTS_TABLE_FILTER_CONFIGS = {
+  application_status: {
+    storageKey: "admin-participants-filter-application-status",
+    options: applicationStatusOptions,
+    matchMode: "custom_application_status",
+    get allValues() {
+      return this.options.map((opt) => opt.value)
+    },
+  },
+  attendance_status: {
+    storageKey: "admin-participants-filter-attendance-status",
+    options: attendanceStatusOptions,
+    matchMode: "custom_attendance_status",
+    get allValues() {
+      return this.options.map((opt) => opt.value)
+    },
+  },
+  approved_to_attend: {
+    storageKey: "admin-participants-filter-approved-to-attend",
+    options: approvedToAttendStatusOptions,
+    matchMode: "custom_approved_to_attend",
+    get allValues() {
+      return this.options.map((opt) => opt.value)
+    },
+  },
+} as const
+
 export const flagStatusOptions: Array<{
   name: string
   value: ProfileFlagStatus
