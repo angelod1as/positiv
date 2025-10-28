@@ -5,6 +5,7 @@ import { Column } from "primereact/column"
 import { MultiSelect } from "primereact/multiselect"
 import { useEffect, useState, type FC } from "react"
 import type { FetcherWithComponents } from "react-router"
+import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
   GenderWarning,
@@ -85,23 +86,11 @@ export const AdminViewEventParticipantsTable: FC<
   const DEFAULT_ATTENDANCE_STATUSES = ALL_ATTENDANCE_STATUSES
   const DEFAULT_APPROVED_STATUSES = ALL_APPROVED_STATUSES
 
-  const [applicationStatusFilter, setApplicationStatusFilter] = useState<
-    string[]
-  >(() => {
-    if (typeof window !== "undefined") {
-      const savedFilters = sessionStorage.getItem(
-        SESSION_STORAGE_APPLICATION_STATUS,
-      )
-      if (savedFilters) {
-        try {
-          return JSON.parse(savedFilters)
-        } catch {
-          return DEFAULT_APPLICATION_STATUSES
-        }
-      }
-    }
-    return DEFAULT_APPLICATION_STATUSES
-  })
+  const [applicationStatusFilter, setApplicationStatusFilter] =
+    useSessionStorageFilter(
+      SESSION_STORAGE_APPLICATION_STATUS,
+      DEFAULT_APPLICATION_STATUSES,
+    )
 
   const [attendanceStatusFilter, setAttendanceStatusFilter] = useState<
     string[]
