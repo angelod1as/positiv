@@ -28,26 +28,10 @@
       style="max-width: 100%; height: auto; margin-bottom: 20px"
     />
     <h2 style="font-family: Arial, sans-serif; color: black">
-      Confirme seu registro
+      Confirme a Reautenticação
     </h2>
     <p style="font-family: Arial, sans-serif; color: black">
-      Clique no link abaixo para confirmar sua nova conta:
-    </p>
-    <p>
-      <a
-        href="{{ .SiteURL }}auth/confirm?token_hash={{ .TokenHash }}&type=email"
-        style="
-          display: inline-block;
-          padding: 10px 20px;
-          margin-top: 20px;
-          background-color: black;
-          color: white;
-          text-decoration: none;
-          border-radius: 5px;
-          font-family: Arial, sans-serif;
-        "
-        >Confirme seu e-mail</a
-      >
+      Digite o código: {{ .Token }}
     </p>
   </div>
 </div>

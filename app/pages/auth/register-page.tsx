@@ -84,6 +84,9 @@ const RegisterPage = ({}: Route.ComponentProps) => {
                 <div className="flex flex-col gap-2">
                   <Turnstile
                     siteKey={turnstileSiteKey}
+                    options={{
+                      appearance: "always",
+                    }}
                     onSuccess={(token) => {
                       setValue("captchaToken", token)
                     }}
