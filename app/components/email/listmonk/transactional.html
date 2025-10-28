@@ -1,0 +1,287 @@
+<!-- LISTMONK TRANSACTIONAL TEMPLATE -->
+<!-- Positiv Email Design System - Brand Purple Theme -->
+<!-- Docs: https://listmonk.app/docs/transactional -->
+<!-- Design System: app/components/email/_design-system.md -->
+<!--
+  USAGE:
+  Transactional templates support arbitrary parameters via .Tx.Data.YourParamName
+  Example Subject: Welcome {{ .Subscriber.Name }}
+-->
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Positiv</title>
+    <base target="_blank">
+
+    <!-- Google Fonts: Nunito -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800&family=DM+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+      /* Reset */
+      body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Base Typography - Markdown Support */
+      body {
+        font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333333;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* Headings */
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'DM Sans', Arial, sans-serif;
+        font-weight: 700;
+        margin-top: 0;
+        line-height: 1.3;
+      }
+
+      h1 {
+        font-size: 32px;
+        font-weight: 800;
+        color: #bf03c3;
+        margin-bottom: 16px;
+        line-height: 1.2;
+      }
+
+      h2 {
+        font-size: 24px;
+        color: #4a75d2;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+
+      h3 {
+        font-size: 20px;
+        color: #333333;
+        margin-bottom: 12px;
+      }
+
+      h4 {
+        font-size: 18px;
+        color: #333333;
+        margin-bottom: 12px;
+      }
+
+      h5, h6 {
+        font-size: 16px;
+        color: #333333;
+        margin-bottom: 8px;
+      }
+
+      /* Paragraphs */
+      p {
+        margin: 0 0 16px 0;
+        color: #333333;
+      }
+
+      /* Links */
+      a {
+        color: #4a75d2;
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      /* Strong and Em */
+      strong, b {
+        font-weight: 700;
+      }
+
+      em, i {
+        font-style: italic;
+      }
+
+      /* Lists */
+      ul, ol {
+        margin: 0 0 16px 0;
+        padding-left: 20px;
+      }
+
+      li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+      }
+
+      /* Blockquotes */
+      blockquote {
+        margin: 20px 0;
+        padding: 16px 20px;
+        background: #f9f5ff;
+        border-left: 4px solid #bf03c3;
+        color: #555555;
+        font-style: italic;
+      }
+
+      blockquote p {
+        margin: 0;
+      }
+
+      /* Code */
+      code {
+        background: #f4f4f4;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        color: #bf03c3;
+      }
+
+      pre {
+        background: #f4f4f4;
+        padding: 16px;
+        border-radius: 5px;
+        overflow-x: auto;
+        margin: 0 0 20px 0;
+        border-left: 3px solid #bf03c3;
+      }
+
+      pre code {
+        background: none;
+        padding: 0;
+        color: #333333;
+        line-height: 1.5;
+      }
+
+      /* Horizontal Rules */
+      hr {
+        border: none;
+        border-top: 1px solid #e0e0e0;
+        margin: 30px 0;
+      }
+
+      /* Images */
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      /* Tables */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0 0 20px 0;
+      }
+
+      table td, table th {
+        border: 1px solid #e0e0e0;
+        padding: 8px;
+        text-align: left;
+      }
+
+      table th {
+        background: #f9f9f9;
+        font-weight: 700;
+      }
+
+      /* Mobile Responsiveness */
+      @media screen and (max-width: 600px) {
+        .email-container {
+          border-radius: 0 !important;
+        }
+
+        .email-content {
+          padding: 20px !important;
+        }
+
+        h1 {
+          font-size: 28px !important;
+        }
+
+        h2 {
+          font-size: 22px !important;
+        }
+      }
+    </style>
+  </head>
+
+  <body style="margin: 0; padding: 0; background-color: transparent;">
+
+    <!--
+      THEME SWITCH:
+      Current: Brand Purple (gradient background)
+      To use Clean White theme, replace the div below with:
+      <div style="background: #f0f0f0; padding: 40px 20px; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif; min-height: 100%;">
+    -->
+
+    <!-- Outer Wrapper: Brand Purple Gradient -->
+    <div style="background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif; min-height: 100%;">
+
+      <!-- Email Container -->
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto;">
+        <tr>
+          <td>
+            <div class="email-container" style="background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+
+              <!-- Header with Logo -->
+              <div style="text-align: center; padding: 30px 24px 20px 24px; background: #ffffff;">
+                <img src="https://www.positivparty.com/positiv-logo-colors.png" alt="Positiv" width="250" style="max-width: 250px; height: auto; margin: 0 auto;">
+              </div>
+
+              <!-- Main Content Area -->
+              <div class="email-content" style="padding: 0 24px 30px 24px; color: #333333;">
+
+                <!-- EXAMPLE CONTENT - Replace with your transactional content -->
+                <h1>Olá, {{ .Subscriber.Name }}!</h1>
+
+                <p>
+                  Este é um template de exemplo para emails transacionais. Você pode usar dados personalizados através de variáveis:
+                </p>
+
+                <p>
+                  <strong>Exemplo de dados customizados:</strong><br>
+                  Order ID: <code>{{ .Tx.Data.order_id }}</code><br>
+                  Shipping Date: <code>{{ .Tx.Data.shipping_date }}</code>
+                </p>
+
+                <hr>
+
+                <p>
+                  Para mais informações sobre templates transacionais, consulte a
+                  <a href="https://listmonk.app/docs/transactional">documentação do Listmonk</a>.
+                </p>
+
+                <!-- Example Button -->
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="https://www.positivparty.com" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
+                    Acessar Positiv
+                  </a>
+                </div>
+
+              </div>
+
+              <!-- Footer -->
+              <div style="background: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
+                <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0;">
+                  {{ L.T "public.poweredBy" }}
+                  <a href="https://listmonk.app" target="_blank" rel="noreferrer" style="color: #bf03c3; text-decoration: none; font-weight: 700;">listmonk</a>
+                </p>
+              </div>
+
+            </div>
+          </td>
+        </tr>
+      </table>
+
+    </div>
+
+  </body>
+</html>
