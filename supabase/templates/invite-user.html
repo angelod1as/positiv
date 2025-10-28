@@ -28,14 +28,15 @@
       style="max-width: 100%; height: auto; margin-bottom: 20px"
     />
     <h2 style="font-family: Arial, sans-serif; color: black">
-      Confirme seu registro
+      Você foi convidade
     </h2>
     <p style="font-family: Arial, sans-serif; color: black">
-      Clique no link abaixo para confirmar sua nova conta:
+      Você foi convidade a criar um usuário em {{ .SiteURL }}. Siga este link
+      para aceitar o convite:
     </p>
     <p>
       <a
-        href="{{ .SiteURL }}auth/confirm?token_hash={{ .TokenHash }}&type=email"
+        href="{{ .SiteURL }}auth/confirm?token_hash={{ .TokenHash }}&type=invite"
         style="
           display: inline-block;
           padding: 10px 20px;
@@ -46,7 +47,7 @@
           border-radius: 5px;
           font-family: Arial, sans-serif;
         "
-        >Confirme seu e-mail</a
+        >Aceitar o convite</a
       >
     </p>
   </div>
