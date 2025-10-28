@@ -160,21 +160,25 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+[auth.email.template.invite]
+subject = "Você foi convidade"
+content_path = "./supabase/templates/invite-user.html"
+
 [auth.email.template.confirmation]
-subject = "Signup confirmation?"
+subject = "Confirme seu registro"
 content_path = "./supabase/templates/confirmation.html"
 
 [auth.email.template.recovery]
-subject = "Reset Your Password"
+subject = "Redefinir Senha"
 content_path = "./supabase/templates/recovery.html"
 
 [auth.email.template.email_change]
-subject = "email change?"
+subject = "Confirme a mudança de e-mail"
 content_path = "./supabase/templates/email-change.html"
+
+[auth.email.template.magic_link]
+subject = "Link Mágico"
+content_path = "./supabase/templates/magic-link.html"
 
 
 [auth.sms]
