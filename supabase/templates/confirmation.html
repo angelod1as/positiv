@@ -1,53 +1,37 @@
-<div
-  style="
-    background-color: #f0f0f0;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    width: 100%;
-  "
->
-  <div
-    style="
-      background-color: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      text-align: center;
-      max-width: 400px;
-      width: 100%;
-      margin: auto;
-    "
-  >
-    <img
-      src="https://www.positivparty.com/positiv-logo-colors.png"
-      alt="Logo"
-      style="max-width: 100%; height: auto; margin-bottom: 20px"
-    />
-    <h2 style="font-family: Arial, sans-serif; color: black">
-      Confirme seu registro
-    </h2>
-    <p style="font-family: Arial, sans-serif; color: black">
-      Clique no link abaixo para confirmar sua nova conta:
-    </p>
-    <p>
-      <a
-        href="{{ .SiteURL }}auth/confirm?token_hash={{ .TokenHash }}&type=email"
-        style="
-          display: inline-block;
-          padding: 10px 20px;
-          margin-top: 20px;
-          background-color: black;
-          color: white;
-          text-decoration: none;
-          border-radius: 5px;
-          font-family: Arial, sans-serif;
-        "
-        >Confirme seu e-mail</a
-      >
-    </p>
+<!-- SUPABASE AUTH EMAIL: Confirm Signup -->
+<!-- Subject: Confirme seu cadastro -->
+<!-- Positiv Email Design System - Brand Purple Theme -->
+
+<div style="background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif; min-height: 100vh;">
+  <div style="max-width: 500px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+
+    <!-- Logo -->
+    <div style="text-align: center; padding: 30px 24px 20px 24px;">
+      <img src="https://www.positivparty.com/positiv-logo-colors.png" alt="Positiv" style="max-width: 200px; height: auto; margin: 0 auto; display: block;">
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 0 30px 30px 30px; text-align: center;">
+      <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 28px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2;">
+        Confirme seu cadastro
+      </h1>
+
+      <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; margin: 0 0 24px 0;">
+        Siga este link para confirmar seu usuário e começar a participar dos nossos eventos:
+      </p>
+
+      <!-- Button -->
+      <a href="{{ .SiteURL }}auth/confirm?token_hash={{ .TokenHash }}&type=email" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
+        Confirmar e-mail
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div style="background: #f9f9f9; padding: 20px; text-align: center; border-top: 1px solid #e0e0e0;">
+      <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0;">
+        <a href="https://www.positivparty.com" style="color: #bf03c3; text-decoration: none; font-weight: 700;">Positiv</a>
+      </p>
+    </div>
+
   </div>
 </div>
