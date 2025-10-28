@@ -268,7 +268,7 @@ export const registerUser = applySchema(
   if (error) {
     if (error.message === "User already registered") {
       const resetError = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${origin}auth/confirm`,
+        redirectTo: `${origin}${LOGON_CALLBACK}`,
       })
 
       if (resetError.error) {

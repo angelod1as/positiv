@@ -338,7 +338,7 @@ describe("registerUser", () => {
 
     expect(mockSignUp).toHaveBeenCalled()
     expect(mockResetPassword).toHaveBeenCalledWith("existing@example.com", {
-      redirectTo: "http://localhost:5173auth/confirm",
+      redirectTo: "http://localhost:5173/auth/confirm",
     })
     expect(result).toEqual({ success: true, data: values, errors: [] })
   })
