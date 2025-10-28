@@ -190,43 +190,12 @@ export const AdminViewEventParticipantsTable: FC<
     ALL_APPLICATION_STATUSES,
   )
 
-  const attendanceStatusFilterTemplate = (options: {
-    value: string[]
-    filterCallback: (value: string[], index?: number) => void
-    index?: number
-  }) => {
-    const selectedCount = options.value ? options.value.length : 0
-    const totalCount = ALL_ATTENDANCE_STATUSES.length
-
-    return (
-      <MultiSelect
-        value={options.value}
-        options={attendanceStatusOptions.map((opt) => ({
-          label: opt.name,
-          value: opt.value,
-        }))}
-        onChange={(e) => {
-          options.filterCallback(e.value, options.index)
-          sessionStorage.setItem(
-            SESSION_STORAGE_ATTENDANCE_STATUS,
-            JSON.stringify(e.value),
-          )
-          setAttendanceStatusFilter(e.value)
-        }}
-        placeholder={
-          selectedCount > 0
-            ? `${selectedCount} de ${totalCount} selecionados`
-            : "Selecionar status"
-        }
-        display="chip"
-        showClear
-        filter
-        filterPlaceholder="Buscar status"
-        className="p-column-filter"
-        maxSelectedLabels={3}
-      />
-    )
-  }
+  const attendanceStatusFilterTemplate = createMultiSelectFilterTemplate(
+    FILTER_CONFIGS.attendance_status.options,
+    FILTER_CONFIGS.attendance_status.storageKey,
+    setAttendanceStatusFilter,
+    ALL_ATTENDANCE_STATUSES,
+  )
 
   const approvedStatusFilterTemplate = (options: {
     value: string[]
