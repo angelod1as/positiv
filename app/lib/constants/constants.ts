@@ -41,3 +41,6 @@ export const RACE_COLOR = [
   "Parda",
   "Preta",
 ] as const
+
+export const LISTMONK_REGISTERED_LIST_ID = 1
+export const LISTMONK_TEST_LIST_ID = 2
