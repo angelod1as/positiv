@@ -60,19 +60,19 @@ export const AdminViewEventParticipantsTable: FC<
   const [applicationStatusFilter, setApplicationStatusFilter] =
     useSessionStorageFilter(
       PARTICIPANTS_TABLE_FILTER_CONFIGS.application_status.storageKey,
-      PARTICIPANTS_TABLE_FILTER_CONFIGS.application_status.allValues,
+      [],
     )
 
   const [attendanceStatusFilter, setAttendanceStatusFilter] =
     useSessionStorageFilter(
       PARTICIPANTS_TABLE_FILTER_CONFIGS.attendance_status.storageKey,
-      PARTICIPANTS_TABLE_FILTER_CONFIGS.attendance_status.allValues,
+      [],
     )
 
   const [approvedStatusFilter, setApprovedStatusFilter] =
     useSessionStorageFilter(
       PARTICIPANTS_TABLE_FILTER_CONFIGS.approved_to_attend.storageKey,
-      PARTICIPANTS_TABLE_FILTER_CONFIGS.approved_to_attend.allValues,
+      [],
     )
 
   const filterSetters = {
