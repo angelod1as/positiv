@@ -69,18 +69,27 @@ export function useFilterState<TConfigs extends Record<string, FilterConfig>>(
     return initial
   })
 
-  Object.entries(configs).forEach(([field, config]) => {
-    const filterValue = filterValues[field]
-    useEffect(() => {
-      setFilters((prevFilters) => ({
-        ...prevFilters,
-        [field]: {
-          value: filterValue,
-          matchMode: config.matchMode,
-        },
-      }))
-    }, [filterValue, field, config.matchMode])
-  })
+  useEffect(() => {
+    setFilters((prevFilters) => {
+      let hasChanges = false
+      const newFilters = { ...prevFilters }
+
+      Object.entries(configs).forEach(([field, config]) => {
+        const newValue = filterValues[field] || []
+        const currentValue = prevFilters[field]?.value
+
+        if (JSON.stringify(currentValue) !== JSON.stringify(newValue)) {
+          hasChanges = true
+          newFilters[field] = {
+            value: newValue,
+            matchMode: config.matchMode,
+          }
+        }
+      })
+
+      return hasChanges ? newFilters : prevFilters
+    })
+  }, [filterValues, configs])
 
   return filters
 }
