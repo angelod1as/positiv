@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1761506439122
+export const NEWS_VERSION = 1730206800000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "participants-filters",
+    title: "🔍 Filtros avançados na tabela de participantes",
+    content:
+      "Agora você pode filtrar participantes por múltiplos critérios ao mesmo tempo! Clique no ícone de filtro nas colunas (status de processo, presença, aprovação, gênero e orientação) e selecione vários valores. Os filtros são salvos enquanto você navega. Use o botão 'Limpar filtros' no rodapé da tabela para remover todos de uma vez.",
+    isAdmin: true,
+    createdAt: new Date("2025-10-29T12:00:00"),
+    isActive: true,
+  },
   {
     id: "gray-flag",
     title: "⚫ Nova flag cinza disponível",
