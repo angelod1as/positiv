@@ -1,22 +1,26 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export function useSessionStorageFilter(
   storageKey: string,
   defaultValues: string[],
 ): [string[], (value: string[]) => void] {
-  const [filter, setFilter] = useState<string[]>(() => {
-    if (typeof window !== "undefined") {
-      const savedFilters = sessionStorage.getItem(storageKey)
-      if (savedFilters) {
-        try {
-          return JSON.parse(savedFilters)
-        } catch {
-          return defaultValues
-        }
+  const [filter, setFilter] = useState<string[]>(defaultValues)
+
+  useEffect(() => {
+    const savedFilters = sessionStorage.getItem(storageKey)
+    if (savedFilters) {
+      try {
+        const parsed = JSON.parse(savedFilters)
+        setFilter(parsed)
+      } catch {
+        // Invalid data, keep defaults
       }
     }
-    return defaultValues
-  })
+  }, [storageKey])
+
+  useEffect(() => {
+    sessionStorage.setItem(storageKey, JSON.stringify(filter))
+  }, [filter, storageKey])
 
   return [filter, setFilter]
 }
