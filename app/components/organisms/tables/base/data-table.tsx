@@ -1,4 +1,4 @@
-import { MaximizeIcon, MinimizeIcon, type LucideIcon } from "lucide-react"
+import { FilterXIcon, MaximizeIcon, MinimizeIcon, type LucideIcon } from "lucide-react"
 import { FilterService } from "primereact/api"
 import { Column } from "primereact/column"
 import {
@@ -39,6 +39,7 @@ export interface DataTableProps<T extends DataTableValue> {
   id: string
   filters?: FlexibleFilterMeta
   onFilter?: (event: { filters: FlexibleFilterMeta }) => void
+  onClearFilters?: () => void
   globalFilterFields?: string[]
   header?: DataTableHeader
   children: ReactNode
@@ -54,8 +55,6 @@ export interface DataTableProps<T extends DataTableValue> {
   editMode?: "cell" | "row"
   size?: "small" | "normal" | "large"
   maxHeight?: string | "auto"
-  paginatorLeft?: ReactNode
-  paginatorRight?: ReactNode
 }
 
 // TODO: POS-144 Implement date filtering
@@ -73,6 +72,7 @@ export function DataTable<T extends DataTableValue>({
   id,
   filters: initialFilters,
   onFilter,
+  onClearFilters,
   globalFilterFields = [],
   header,
   children,
@@ -86,8 +86,6 @@ export function DataTable<T extends DataTableValue>({
   size = "small",
   maxHeight = "500px",
   emptyMessage = "Nenhum registro encontrado",
-  paginatorLeft,
-  paginatorRight,
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [filters, setFilters] = useState<FlexibleFilterMeta>(
@@ -100,10 +98,24 @@ export function DataTable<T extends DataTableValue>({
   useEffect(() => {
     if (initialFilters) {
       setFilters(initialFilters)
+      if ("global" in initialFilters && "value" in initialFilters.global) {
+        const globalValue = initialFilters.global.value
+        if (typeof globalValue === "string") {
+          setGlobalFilterValue(globalValue)
+        } else {
+          setGlobalFilterValue("")
+        }
+      }
     }
   }, [initialFilters])
 
   const toggleMaximized = () => setIsMaximized((state) => !state)
+
+  const handleClearFilters = () => {
+    setFilters({})
+    setGlobalFilterValue("")
+    onClearFilters?.()
+  }
 
   const onGlobalFilterChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
@@ -182,8 +194,16 @@ export function DataTable<T extends DataTableValue>({
         rows={25}
         paginator
         rowsPerPageOptions={[5, 10, 25, 50, 100, 150]}
-        paginatorLeft={paginatorLeft}
-        paginatorRight={paginatorRight}
+        paginatorLeft={
+          <Button
+            variant="outline"
+            onClick={handleClearFilters}
+            title="Limpar todos os filtros"
+          >
+            <FilterXIcon className="mr-2 h-4 w-4" />
+            Limpar filtros
+          </Button>
+        }
         // Filters
         filters={filters as DataTableFilterMeta}
         filterDisplay="menu"
