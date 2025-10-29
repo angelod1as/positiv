@@ -1,5 +1,5 @@
 import { composable } from "composable-functions"
-import { EyeIcon } from "lucide-react"
+import { EyeIcon, FilterXIcon } from "lucide-react"
 import { Column } from "primereact/column"
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
@@ -14,6 +14,7 @@ import {
 } from "~/lib/hooks/use-multi-filter-manager"
 import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import { Button } from "~/components/atoms/button/button"
 import {
   GenderWarning,
   OrientationWarning,
@@ -186,6 +187,18 @@ export const AdminViewEventParticipantsTable: FC<
 
   const { acceptedInProcess, applications } = countParticipants(participants)
 
+  const handleClearAllFilters = () => {
+    setApplicationStatusFilter([])
+    setAttendanceStatusFilter([])
+    setApprovedStatusFilter([])
+    setGenderFilter([])
+    setOrientationFilter([])
+
+    Object.values(PARTICIPANTS_TABLE_FILTER_CONFIGS).forEach((config) => {
+      sessionStorage.removeItem(config.storageKey)
+    })
+  }
+
   return (
     <DataTable
       data={participants}
@@ -196,6 +209,16 @@ export const AdminViewEventParticipantsTable: FC<
       filters={filters}
       onFilter={handleFilter}
       size="small"
+      paginatorLeft={
+        <Button
+          variant="outline"
+          onClick={handleClearAllFilters}
+          title="Limpar todos os filtros"
+        >
+          <FilterXIcon className="mr-2 h-4 w-4" />
+          Limpar filtros
+        </Button>
+      }
       header={{
         title: "Inscrições",
         elements: (
