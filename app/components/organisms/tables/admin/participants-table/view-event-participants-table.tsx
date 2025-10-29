@@ -3,7 +3,10 @@ import { EyeIcon } from "lucide-react"
 import { Column } from "primereact/column"
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
-import { registerMultiSelectFilters } from "~/lib/helpers/register-filter-services"
+import {
+  registerArrayMultiSelectFilters,
+  registerMultiSelectFilters,
+} from "~/lib/helpers/register-filter-services"
 import {
   createFilterTemplates,
   createOnFilterHandler,
@@ -32,6 +35,8 @@ import {
   approvedToAttendStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
+  genderFilterOptions,
+  orientationFilterOptions,
   PARTICIPANTS_TABLE_FILTER_CONFIGS,
   profilePropMap,
   spotTypeOptions,
@@ -46,7 +51,15 @@ const {
   },
 } = paths
 
+/**
+ * IMPORTANT: If filters appear broken or empty after code changes,
+ * try clearing sessionStorage in the browser console:
+ * sessionStorage.clear()
+ *
+ * Stale filter data in sessionStorage can cause issues with new filter configurations.
+ */
 registerMultiSelectFilters(PARTICIPANTS_TABLE_FILTER_CONFIGS)
+registerArrayMultiSelectFilters()
 
 type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
@@ -75,18 +88,44 @@ export const AdminViewEventParticipantsTable: FC<
       [],
     )
 
+  const [genderFilter, setGenderFilter] = useSessionStorageFilter(
+    PARTICIPANTS_TABLE_FILTER_CONFIGS.gender.storageKey,
+    [],
+  )
+
+  const [orientationFilter, setOrientationFilter] = useSessionStorageFilter(
+    PARTICIPANTS_TABLE_FILTER_CONFIGS.orientation.storageKey,
+    [],
+  )
+
   const filterSetters = {
     application_status: setApplicationStatusFilter,
     attendance_status: setAttendanceStatusFilter,
     approved_to_attend: setApprovedStatusFilter,
+    gender: setGenderFilter,
+    orientation: setOrientationFilter,
   }
 
-  const filterTemplates = createFilterTemplates(PARTICIPANTS_TABLE_FILTER_CONFIGS, filterSetters)
+  const dynamicFilterConfigs = {
+    ...PARTICIPANTS_TABLE_FILTER_CONFIGS,
+    gender: {
+      ...PARTICIPANTS_TABLE_FILTER_CONFIGS.gender,
+      options: genderFilterOptions(participants),
+    },
+    orientation: {
+      ...PARTICIPANTS_TABLE_FILTER_CONFIGS.orientation,
+      options: orientationFilterOptions(participants),
+    },
+  }
+
+  const filterTemplates = createFilterTemplates(dynamicFilterConfigs, filterSetters)
 
   const filters = useFilterState(PARTICIPANTS_TABLE_FILTER_CONFIGS, {
     application_status: applicationStatusFilter,
     attendance_status: attendanceStatusFilter,
     approved_to_attend: approvedStatusFilter,
+    gender: genderFilter,
+    orientation: orientationFilter,
   })
 
   const handleFilter = createOnFilterHandler(PARTICIPANTS_TABLE_FILTER_CONFIGS, filterSetters)
@@ -152,6 +191,7 @@ export const AdminViewEventParticipantsTable: FC<
       data={participants}
       id="participants"
       sortField="social_name"
+      sortOrder={1}
       globalFilterFields={["full_name"]}
       filters={filters}
       onFilter={handleFilter}
@@ -248,12 +288,21 @@ export const AdminViewEventParticipantsTable: FC<
         field="gender"
         className="min-w-40"
         header={profilePropMap("gender")}
+        filter
+        filterElement={filterTemplates.gender}
+        filterField="gender"
+        showFilterMatchModes={false}
         body={(values) => <GenderWarning genders={values.gender} />}
       />
 
       <Column
         field="orientation"
         header={profilePropMap("orientation")}
+        filter
+        className="min-w-40"
+        filterElement={filterTemplates.orientation}
+        filterField="orientation"
+        showFilterMatchModes={false}
         body={(values) => (
           <OrientationWarning orientations={values.orientation} />
         )}
