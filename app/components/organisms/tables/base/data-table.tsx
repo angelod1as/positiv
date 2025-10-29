@@ -8,7 +8,7 @@ import {
 } from "primereact/datatable"
 
 import { InputText } from "primereact/inputtext"
-import { useState, type ChangeEvent, type ReactNode } from "react"
+import { useEffect, useState, type ChangeEvent, type ReactNode } from "react"
 import type { LinkProps } from "react-router"
 import { Button } from "~/components/atoms/button/button"
 import DelayedContent from "~/lib/helpers/delayed-component"
@@ -54,6 +54,8 @@ export interface DataTableProps<T extends DataTableValue> {
   editMode?: "cell" | "row"
   size?: "small" | "normal" | "large"
   maxHeight?: string | "auto"
+  paginatorLeft?: ReactNode
+  paginatorRight?: ReactNode
 }
 
 // TODO: POS-144 Implement date filtering
@@ -84,6 +86,8 @@ export function DataTable<T extends DataTableValue>({
   size = "small",
   maxHeight = "500px",
   emptyMessage = "Nenhum registro encontrado",
+  paginatorLeft,
+  paginatorRight,
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [filters, setFilters] = useState<FlexibleFilterMeta>(
@@ -92,6 +96,12 @@ export function DataTable<T extends DataTableValue>({
   const [globalFilterValue, setGlobalFilterValue] = useState("")
   const [selection, setSelection] = useState<T[]>([])
   const [values, setValues] = useState(data)
+
+  useEffect(() => {
+    if (initialFilters) {
+      setFilters(initialFilters)
+    }
+  }, [initialFilters])
 
   const toggleMaximized = () => setIsMaximized((state) => !state)
 
@@ -172,6 +182,8 @@ export function DataTable<T extends DataTableValue>({
         rows={25}
         paginator
         rowsPerPageOptions={[5, 10, 25, 50, 100, 150]}
+        paginatorLeft={paginatorLeft}
+        paginatorRight={paginatorRight}
         // Filters
         filters={filters as DataTableFilterMeta}
         filterDisplay="menu"
