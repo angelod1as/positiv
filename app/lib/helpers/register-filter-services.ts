@@ -12,8 +12,13 @@ export function registerMultiSelectFilters(
   Object.values(configs).forEach(({ matchMode }) => {
     if (!registeredMatchModes.has(matchMode)) {
       FilterService.register(matchMode, (value, filters) => {
-        if (!filters || filters.length === 0) return true
-        return filters.includes(value)
+        if (!filters || (Array.isArray(filters) && filters.length === 0)) return true
+        const normalizedRow = String(value).toLowerCase()
+        const list = Array.isArray(filters) ? filters : [filters]
+        return list
+          .filter((v) => v !== undefined && v !== null)
+          .map((v) => String(v).toLowerCase())
+          .includes(normalizedRow)
       })
       registeredMatchModes.add(matchMode)
     }
