@@ -1,4 +1,3 @@
-import { composable } from "composable-functions"
 import { EyeIcon } from "lucide-react"
 import { Column } from "primereact/column"
 import type { FC } from "react"
@@ -7,12 +6,9 @@ import {
   registerArrayMultiSelectFilters,
   registerMultiSelectFilters,
 } from "~/lib/helpers/register-filter-services"
-import {
-  createFilterTemplates,
-  createOnFilterHandler,
-  useFilterState,
-} from "~/lib/hooks/use-multi-filter-manager"
+import { createSaveHandler } from "~/lib/helpers/create-save-handler"
 import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
+import { useTableFilters } from "~/lib/hooks/use-table-filters"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
   GenderWarning,
@@ -98,61 +94,38 @@ export const AdminViewEventParticipantsTable: FC<
     [],
   )
 
-  const filterSetters = {
-    application_status: setApplicationStatusFilter,
-    attendance_status: setAttendanceStatusFilter,
-    approved_to_attend: setApprovedStatusFilter,
-    gender: setGenderFilter,
-    orientation: setOrientationFilter,
-  }
+  const { filters, filterTemplates, handleFilter, handleClearFilters } =
+    useTableFilters(
+      PARTICIPANTS_TABLE_FILTER_CONFIGS,
+      {
+        application_status: [applicationStatusFilter, setApplicationStatusFilter],
+        attendance_status: [attendanceStatusFilter, setAttendanceStatusFilter],
+        approved_to_attend: [approvedStatusFilter, setApprovedStatusFilter],
+        gender: [genderFilter, setGenderFilter],
+        orientation: [orientationFilter, setOrientationFilter],
+      },
+      participants,
+      {
+        gender: genderFilterOptions,
+        orientation: orientationFilterOptions,
+      },
+    )
 
-  const dynamicFilterConfigs = {
-    ...PARTICIPANTS_TABLE_FILTER_CONFIGS,
-    gender: {
-      ...PARTICIPANTS_TABLE_FILTER_CONFIGS.gender,
-      options: genderFilterOptions(participants),
-    },
-    orientation: {
-      ...PARTICIPANTS_TABLE_FILTER_CONFIGS.orientation,
-      options: orientationFilterOptions(participants),
-    },
-  }
-
-  const filterTemplates = createFilterTemplates(dynamicFilterConfigs, filterSetters)
-
-  const filters = useFilterState(dynamicFilterConfigs, {
-    application_status: applicationStatusFilter,
-    attendance_status: attendanceStatusFilter,
-    approved_to_attend: approvedStatusFilter,
-    gender: genderFilter,
-    orientation: orientationFilter,
-  })
-
-  const handleFilter = createOnFilterHandler(dynamicFilterConfigs, filterSetters)
-
-  /**
-   * Generic function to save changes to a participant field
-   */
-  const handleSave = async <K extends keyof ProfileWithExtraData>(
-    id: string,
-    field: K,
-    value: ProfileWithExtraData[K],
-  ) => {
-    const participant = participants.find((p) => p.id === id)
-    if (!participant) return
-
-    const originalValue = participant[field]
-    participant[field] = value
-
-    const result = await composable(async () => {
-      const formData = new FormData()
-      formData.append("intent", "update-event-participant")
-      formData.append("id", id)
-      formData.append("profile_id", participant.profile_id || "")
-
-      // Always include flag and flag_notes if they exist to satisfy validation
+  const handleSave = createSaveHandler({
+    data: participants,
+    fetcher,
+    intent: "update-event-participant",
+    getRequiredFields: (participant) => ({
+      profile_id: participant.profile_id || "",
+      ...(participant.flag && participant.flag !== "none"
+        ? {
+            flag: participant.flag,
+            flag_notes: participant.flag_notes || "",
+          }
+        : {}),
+    }),
+    validateBeforeSave: (participant) => {
       if (participant.flag && participant.flag !== "none") {
-        // Validation requires non-empty flag_notes when flag is set
         if (
           !participant.flag_notes ||
           participant.flag_notes.trim().length === 0
@@ -161,42 +134,11 @@ export const AdminViewEventParticipantsTable: FC<
             "Flag notes são obrigatórias quando uma flag está configurada",
           )
         }
-        formData.append("flag", participant.flag)
-        formData.append("flag_notes", participant.flag_notes)
       }
-
-      // Add the field being updated
-      if (field && value !== undefined && value !== null) {
-        // Handle boolean values specially
-        if (typeof value === "boolean") {
-          formData.append(field, value ? "true" : "false")
-        } else {
-          formData.append(field, String(value))
-        }
-      }
-
-      return await fetcher.submit(formData, { method: "post" })
-    })()
-
-    if (!result.success) {
-      participant[field] = originalValue
-      throw new Error("Ops, algo deu errado ao salvar seu valor")
-    }
-  }
+    },
+  })
 
   const { acceptedInProcess, applications } = countParticipants(participants)
-
-  const handleClearAllFilters = () => {
-    setApplicationStatusFilter([])
-    setAttendanceStatusFilter([])
-    setApprovedStatusFilter([])
-    setGenderFilter([])
-    setOrientationFilter([])
-
-    Object.values(PARTICIPANTS_TABLE_FILTER_CONFIGS).forEach((config) => {
-      sessionStorage.removeItem(config.storageKey)
-    })
-  }
 
   return (
     <DataTable
@@ -207,7 +149,7 @@ export const AdminViewEventParticipantsTable: FC<
       globalFilterFields={["full_name"]}
       filters={filters}
       onFilter={handleFilter}
-      onClearFilters={handleClearAllFilters}
+      onClearFilters={handleClearFilters}
       size="small"
       header={{
         title: "Inscrições",
