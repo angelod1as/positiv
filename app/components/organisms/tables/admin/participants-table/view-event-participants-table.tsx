@@ -1,9 +1,18 @@
 import { composable } from "composable-functions"
 import { EyeIcon } from "lucide-react"
-import { FilterMatchMode } from "primereact/api"
 import { Column } from "primereact/column"
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
+import {
+  registerArrayMultiSelectFilters,
+  registerMultiSelectFilters,
+} from "~/lib/helpers/register-filter-services"
+import {
+  createFilterTemplates,
+  createOnFilterHandler,
+  useFilterState,
+} from "~/lib/hooks/use-multi-filter-manager"
+import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
   GenderWarning,
@@ -26,19 +35,31 @@ import {
   approvedToAttendStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
+  genderFilterOptions,
+  orientationFilterOptions,
+  PARTICIPANTS_TABLE_FILTER_CONFIGS,
   profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import { countParticipants } from "./count-participants"
-import { TableInputDropdown } from "./table-input-dropdown"
 
 const {
   admin: {
     events: { ADMIN_EVENT_VIEW_PARTICIPANT },
   },
 } = paths
+
+/**
+ * IMPORTANT: If filters appear broken or empty after code changes,
+ * try clearing sessionStorage in the browser console:
+ * sessionStorage.clear()
+ *
+ * Stale filter data in sessionStorage can cause issues with new filter configurations.
+ */
+registerMultiSelectFilters(PARTICIPANTS_TABLE_FILTER_CONFIGS)
+registerArrayMultiSelectFilters()
 
 type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
@@ -49,6 +70,66 @@ type AdminViewEventParticipantsTableProps = {
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId, fetcher }) => {
+  const [applicationStatusFilter, setApplicationStatusFilter] =
+    useSessionStorageFilter(
+      PARTICIPANTS_TABLE_FILTER_CONFIGS.application_status.storageKey,
+      [],
+    )
+
+  const [attendanceStatusFilter, setAttendanceStatusFilter] =
+    useSessionStorageFilter(
+      PARTICIPANTS_TABLE_FILTER_CONFIGS.attendance_status.storageKey,
+      [],
+    )
+
+  const [approvedStatusFilter, setApprovedStatusFilter] =
+    useSessionStorageFilter(
+      PARTICIPANTS_TABLE_FILTER_CONFIGS.approved_to_attend.storageKey,
+      [],
+    )
+
+  const [genderFilter, setGenderFilter] = useSessionStorageFilter(
+    PARTICIPANTS_TABLE_FILTER_CONFIGS.gender.storageKey,
+    [],
+  )
+
+  const [orientationFilter, setOrientationFilter] = useSessionStorageFilter(
+    PARTICIPANTS_TABLE_FILTER_CONFIGS.orientation.storageKey,
+    [],
+  )
+
+  const filterSetters = {
+    application_status: setApplicationStatusFilter,
+    attendance_status: setAttendanceStatusFilter,
+    approved_to_attend: setApprovedStatusFilter,
+    gender: setGenderFilter,
+    orientation: setOrientationFilter,
+  }
+
+  const dynamicFilterConfigs = {
+    ...PARTICIPANTS_TABLE_FILTER_CONFIGS,
+    gender: {
+      ...PARTICIPANTS_TABLE_FILTER_CONFIGS.gender,
+      options: genderFilterOptions(participants),
+    },
+    orientation: {
+      ...PARTICIPANTS_TABLE_FILTER_CONFIGS.orientation,
+      options: orientationFilterOptions(participants),
+    },
+  }
+
+  const filterTemplates = createFilterTemplates(dynamicFilterConfigs, filterSetters)
+
+  const filters = useFilterState(dynamicFilterConfigs, {
+    application_status: applicationStatusFilter,
+    attendance_status: attendanceStatusFilter,
+    approved_to_attend: approvedStatusFilter,
+    gender: genderFilter,
+    orientation: orientationFilter,
+  })
+
+  const handleFilter = createOnFilterHandler(dynamicFilterConfigs, filterSetters)
+
   /**
    * Generic function to save changes to a participant field
    */
@@ -105,27 +186,28 @@ export const AdminViewEventParticipantsTable: FC<
 
   const { acceptedInProcess, applications } = countParticipants(participants)
 
+  const handleClearAllFilters = () => {
+    setApplicationStatusFilter([])
+    setAttendanceStatusFilter([])
+    setApprovedStatusFilter([])
+    setGenderFilter([])
+    setOrientationFilter([])
+
+    Object.values(PARTICIPANTS_TABLE_FILTER_CONFIGS).forEach((config) => {
+      sessionStorage.removeItem(config.storageKey)
+    })
+  }
+
   return (
     <DataTable
       data={participants}
       id="participants"
       sortField="social_name"
+      sortOrder={1}
       globalFilterFields={["full_name"]}
-      filters={{
-        global: { value: null, matchMode: FilterMatchMode.CONTAINS },
-        application_status: {
-          value: null,
-          matchMode: FilterMatchMode.EQUALS,
-        },
-        attendance_status: {
-          value: null,
-          matchMode: FilterMatchMode.EQUALS,
-        },
-        approved_to_attend: {
-          value: null,
-          matchMode: FilterMatchMode.EQUALS,
-        },
-      }}
+      filters={filters}
+      onFilter={handleFilter}
+      onClearFilters={handleClearAllFilters}
       size="small"
       header={{
         title: "Inscrições",
@@ -219,12 +301,21 @@ export const AdminViewEventParticipantsTable: FC<
         field="gender"
         className="min-w-40"
         header={profilePropMap("gender")}
+        filter
+        filterElement={filterTemplates.gender}
+        filterField="gender"
+        showFilterMatchModes={false}
         body={(values) => <GenderWarning genders={values.gender} />}
       />
 
       <Column
         field="orientation"
         header={profilePropMap("orientation")}
+        filter
+        className="min-w-40"
+        filterElement={filterTemplates.orientation}
+        filterField="orientation"
+        showFilterMatchModes={false}
         body={(values) => (
           <OrientationWarning orientations={values.orientation} />
         )}
@@ -242,17 +333,8 @@ export const AdminViewEventParticipantsTable: FC<
         header={eventParticipantPropMap("application_status")}
         filter
         className="min-w-[180px]"
-        filterElement={(options) => (
-          <TableInputDropdown
-            value={options.value}
-            options={applicationStatusOptions}
-            filterCallback={options.filterCallback}
-            index={options.index}
-            placeholder="Selecione"
-            className="p-column-filter"
-            showClear
-          />
-        )}
+        filterElement={filterTemplates.application_status}
+        filterField="application_status"
         showFilterMatchModes={false}
         body={(values) => (
           <SelectCellEditor
@@ -273,17 +355,8 @@ export const AdminViewEventParticipantsTable: FC<
         header={eventParticipantPropMap("attendance_status")}
         filter
         className="min-w-[180px]"
-        filterElement={(options) => (
-          <TableInputDropdown
-            value={options.value}
-            options={attendanceStatusOptions}
-            filterCallback={options.filterCallback}
-            index={options.index}
-            placeholder="Selecione"
-            className="p-column-filter"
-            showClear
-          />
-        )}
+        filterElement={filterTemplates.attendance_status}
+        filterField="attendance_status"
         showFilterMatchModes={false}
         body={(values) => (
           <SelectCellEditor
@@ -304,17 +377,8 @@ export const AdminViewEventParticipantsTable: FC<
         header={profilePropMap("approved_to_attend")}
         filter
         className="min-w-[180px]"
-        filterElement={(options) => (
-          <TableInputDropdown
-            value={options.value}
-            options={approvedToAttendStatusOptions}
-            filterCallback={options.filterCallback}
-            index={options.index}
-            placeholder="Selecione"
-            className="p-column-filter"
-            showClear
-          />
-        )}
+        filterElement={filterTemplates.approved_to_attend}
+        filterField="approved_to_attend"
         showFilterMatchModes={false}
         body={(values) => (
           <SelectCellEditor
