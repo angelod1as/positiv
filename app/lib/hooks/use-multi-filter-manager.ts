@@ -76,9 +76,14 @@ export function useFilterState<TConfigs extends Record<string, FilterConfig>>(
 
       Object.entries(configs).forEach(([field, config]) => {
         const newValue = filterValues[field] || []
-        const currentValue = prevFilters[field]?.value
+        const current = prevFilters[field]?.value
 
-        if (JSON.stringify(currentValue) !== JSON.stringify(newValue)) {
+        const arraysEqual =
+          Array.isArray(current) &&
+          current.length === newValue.length &&
+          current.every((v, i) => v === newValue[i])
+
+        if (!arraysEqual) {
           hasChanges = true
           newFilters[field] = {
             value: newValue,
