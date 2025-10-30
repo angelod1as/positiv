@@ -15,10 +15,7 @@ export function registerMultiSelectFilters(
         if (!filters || (Array.isArray(filters) && filters.length === 0)) return true
         const normalizedRow = String(value).toLowerCase()
         const list = Array.isArray(filters) ? filters : [filters]
-        return list
-          .filter((v) => v !== undefined && v !== null)
-          .map((v) => String(v).toLowerCase())
-          .includes(normalizedRow)
+        return list.some((v) => v != null && String(v).toLowerCase() === normalizedRow)
       })
       registeredMatchModes.add(matchMode)
     }
