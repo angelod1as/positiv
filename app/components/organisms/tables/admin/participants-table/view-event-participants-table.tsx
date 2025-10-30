@@ -120,7 +120,7 @@ export const AdminViewEventParticipantsTable: FC<
 
   const filterTemplates = createFilterTemplates(dynamicFilterConfigs, filterSetters)
 
-  const filters = useFilterState(PARTICIPANTS_TABLE_FILTER_CONFIGS, {
+  const filters = useFilterState(dynamicFilterConfigs, {
     application_status: applicationStatusFilter,
     attendance_status: attendanceStatusFilter,
     approved_to_attend: approvedStatusFilter,
@@ -128,7 +128,7 @@ export const AdminViewEventParticipantsTable: FC<
     orientation: orientationFilter,
   })
 
-  const handleFilter = createOnFilterHandler(PARTICIPANTS_TABLE_FILTER_CONFIGS, filterSetters)
+  const handleFilter = createOnFilterHandler(dynamicFilterConfigs, filterSetters)
 
   /**
    * Generic function to save changes to a participant field
