@@ -237,6 +237,40 @@ export const PARTICIPANTS_TABLE_FILTER_CONFIGS = {
   },
 } as const
 
+export const ALL_EVENT_STATUS_OPTIONS: EventStatus[] = [
+  "Draft",
+  "Scheduled",
+  "Registration Open",
+  "Registration Closed",
+  "Cancelled",
+  "Completed",
+]
+
+export const eventStatusOptions = ALL_EVENT_STATUS_OPTIONS.map((status) => ({
+  name: eventStatusMap(status),
+  value: status,
+  label: eventStatusMap(status),
+}))
+
+export const DEFAULT_EVENT_STATUS_FILTER: EventStatus[] = [
+  "Draft",
+  "Scheduled",
+  "Registration Open",
+  "Registration Closed",
+]
+
+export const EVENTS_TABLE_FILTER_CONFIGS = {
+  event_status: {
+    storageKey: "admin-events-filter-status",
+    options: eventStatusOptions,
+    matchMode: "custom_event_status",
+    defaultSelected: DEFAULT_EVENT_STATUS_FILTER,
+    get allValues() {
+      return ALL_EVENT_STATUS_OPTIONS
+    },
+  },
+} as const
+
 export const GENDER_FILTER_CONFIG = {
   storageKey: "admin-participants-filter-gender",
   matchMode: "custom_gender",

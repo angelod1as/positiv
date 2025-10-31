@@ -246,22 +246,22 @@ describe('AdminDashboardEventsTable', () => {
 
   it('should save filter state to sessionStorage when changed', async () => {
     render(<AdminDashboardEventsTable events={mockEvents} />)
-    
+
     // Wait for the table to render
     await waitFor(() => {
       expect(screen.getByText('Draft Event')).toBeInTheDocument()
     }, { timeout: 1000 })
-    
+
     // The DataTable component saves its own state which we see in the first call
     // Our custom filter state is saved separately with key 'admin-events-filter-status'
     // Note: Testing actual filter changes would require mocking PrimeReact's MultiSelect
     // which is complex. The implementation handles this in the onChange handler.
     const calls = (window.sessionStorage.setItem as ReturnType<typeof vi.fn>).mock.calls
-    const hasFilterStatusCall = calls.some((call: string[]) => 
+    const hasFilterStatusCall = calls.some((call: string[]) =>
       call[0] === 'admin-events-filter-status'
     )
-    
-    // On initial render, only DataTable's own state should be saved
-    expect(hasFilterStatusCall).toBe(false)
+
+    // On initial render, filter state IS saved (useSessionStorageFilter persists defaults)
+    expect(hasFilterStatusCall).toBe(true)
   })
 })
