@@ -152,6 +152,33 @@ describe("getContext", () => {
     expect(consoleSpy).not.toHaveBeenCalled()
   })
 
+  it("should handle missing oauth_client_id error gracefully", async () => {
+    const mockRequest = new Request("http://localhost:5173/")
+    const mockParams = {}
+
+    const mockSupabase = createMockSupabase({
+      message: "missing destination name oauth_client_id in *models.Session",
+      code: "unexpected_failure",
+      name: "AuthApiError",
+      status: 500,
+    })
+
+    const mockHeaders = new Headers()
+
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: mockSupabase as unknown as DBClient,
+      headers: mockHeaders,
+    })
+
+    const result = await getContext(mockRequest, mockParams)
+
+    expect(result.currentUser).toBeNull()
+    expect(result.currentProfile).toBeNull()
+    expect(mockSignOut).toHaveBeenCalledTimes(1)
+    expect(consoleSpy).not.toHaveBeenCalled()
+  })
+
   it("should not handle unrelated auth errors", async () => {
     const mockRequest = new Request("http://localhost:5173/")
     const mockParams = {}
