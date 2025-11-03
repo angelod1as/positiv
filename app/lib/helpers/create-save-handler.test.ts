@@ -110,41 +110,19 @@ describe("createSaveHandler", () => {
     expect(formData.get("status")).toBe("completed")
   })
 
-  it("should call validation before save if provided", async () => {
-    const mockValidate = vi.fn()
+  it("should always call fetcher.submit (no client-side validation)", async () => {
+    // Since we removed validateBeforeSave, the fetcher should always be called
+    // Server-side validation will handle all validation logic
     const handleSave = createSaveHandler({
       data: testData,
       fetcher: mockFetcher,
       intent: "update-item",
-      validateBeforeSave: mockValidate,
     })
 
     await handleSave("1", "status", "pending")
 
-    expect(mockValidate).toHaveBeenCalledWith(testData[0], "status", "pending")
+    // Fetcher is always called now
     expect(mockSubmit).toHaveBeenCalled()
-  })
-
-  it("should rollback changes on validation error", async () => {
-    const handleSave = createSaveHandler({
-      data: testData,
-      fetcher: mockFetcher,
-      intent: "update-item",
-      validateBeforeSave: () => {
-        throw new Error("Validation failed")
-      },
-    })
-
-    const originalStatus = testData[0].status
-
-    // Validation errors get caught by composable and return { success: false }
-    // Then our code throws the generic error message
-    await expect(handleSave("1", "status", "invalid")).rejects.toThrow(
-      "Ops, algo deu errado ao salvar seu valor",
-    )
-
-    expect(testData[0].status).toBe(originalStatus)
-    expect(mockSubmit).not.toHaveBeenCalled()
   })
 
   it("should rollback changes on submit error", async () => {

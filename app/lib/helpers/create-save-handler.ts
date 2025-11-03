@@ -7,7 +7,6 @@ type SaveHandlerConfig<T extends { id: string }> = {
   fetcher: FetcherWithComponents<ComposableFetcherData>
   intent: string
   getRequiredFields?: (item: T) => Record<string, string>
-  validateBeforeSave?: (item: T, field: keyof T, value: unknown) => void
 }
 
 /**
@@ -16,10 +15,12 @@ type SaveHandlerConfig<T extends { id: string }> = {
  * This factory function generates a save handler that:
  * - Finds the item being edited
  * - Optimistically updates the local state
- * - Validates before save (optional)
- * - Submits FormData with required fields
+ * - Submits FormData with required fields to server for validation
  * - Handles boolean values specially
- * - Rolls back on error
+ * - Rolls back on server error
+ *
+ * Note: All validation is handled server-side via Zod schemas in action handlers.
+ * This ensures errors flow through fetcher.data → sendToast → toast.error().
  *
  * @param config - Configuration object
  * @returns A save handler function for use with cell editors
@@ -31,11 +32,6 @@ type SaveHandlerConfig<T extends { id: string }> = {
  *   fetcher,
  *   intent: "update-event-participant",
  *   getRequiredFields: (p) => ({ profile_id: p.profile_id || "" }),
- *   validateBeforeSave: (p) => {
- *     if (p.flag && p.flag !== "none" && !p.flag_notes?.trim()) {
- *       throw new Error("Flag notes são obrigatórias")
- *     }
- *   }
  * })
  *
  * // Use with cell editors
@@ -62,11 +58,6 @@ export function createSaveHandler<T extends { id: string }>(
     item[field] = value
 
     const result = await composable(async () => {
-      // Run optional validation
-      if (config.validateBeforeSave) {
-        config.validateBeforeSave(item, field, value)
-      }
-
       const formData = new FormData()
       formData.append("intent", config.intent)
       formData.append("id", id)
