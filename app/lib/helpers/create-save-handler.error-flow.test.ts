@@ -89,7 +89,7 @@ describe("createSaveHandler - Error Flow (sendToast integration)", () => {
     expect(formData.get("flag_notes")).toBe("") // Empty because flag_notes is null
   })
 
-  it("should throw error when fetcher returns success: false (but fetcher WAS called)", async () => {
+  it("should not throw when fetcher returns success: false (error in fetcher.data)", async () => {
     // Simulate server validation failure
     mockSubmit.mockResolvedValue({
       success: false,
@@ -108,12 +108,10 @@ describe("createSaveHandler - Error Flow (sendToast integration)", () => {
       }),
     })
 
-    // This should still throw an error, but only AFTER the fetcher was called
-    await expect(handleSave("2", "flag", "red")).rejects.toThrow(
-      "Ops, algo deu errado ao salvar seu valor",
-    )
+    // Should NOT throw - error is in fetcher.data for sendToast to handle
+    await handleSave("2", "flag", "red")
 
-    // The key difference: the fetcher WAS called, so fetcher.data gets updated
+    // The fetcher WAS called, so fetcher.data gets updated with the error
     // This allows sendToast to see the error and display it
     expect(mockSubmit).toHaveBeenCalledTimes(1)
 
@@ -158,7 +156,8 @@ describe("createSaveHandler - Error Flow (sendToast integration)", () => {
 
     const originalFlag = testData[0].flag
 
-    await expect(handleSave("1", "flag", "blue")).rejects.toThrow()
+    // Should not throw - just rollback and let sendToast handle the error
+    await handleSave("1", "flag", "blue")
 
     // Verify rollback
     expect(testData[0].flag).toBe(originalFlag)
