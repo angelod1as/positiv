@@ -59,7 +59,8 @@ export const getContext = async (
       authError.code === "user_not_found" ||
       authError.message?.includes("Invalid Refresh Token") ||
       authError.message?.includes("Refresh Token Not Found") ||
-      authError.message?.includes("User from sub claim in JWT does not exist")
+      authError.message?.includes("User from sub claim in JWT does not exist") ||
+      authError.message?.includes("missing destination name oauth_client_id")
     ) {
       // Clear auth session by signing out properly
       await supabase.auth.signOut()
