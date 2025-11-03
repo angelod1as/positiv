@@ -83,7 +83,9 @@ export function createSaveHandler<T extends { id: string }>(
 
     if (!result.success) {
       item[field] = originalValue
-      throw new Error("Ops, algo deu errado ao salvar seu valor")
+      // The error is in fetcher.data, which will be handled by sendToast
+      // No need to throw here, as it would get caught and only logged to console
+      return
     }
   }
 }

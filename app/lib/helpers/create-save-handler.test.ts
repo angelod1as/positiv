@@ -125,7 +125,7 @@ describe("createSaveHandler", () => {
     expect(mockSubmit).toHaveBeenCalled()
   })
 
-  it("should rollback changes on submit error", async () => {
+  it("should rollback changes on submit error without throwing", async () => {
     mockSubmit.mockResolvedValue({ success: false, errors: [] })
 
     const handleSave = createSaveHandler({
@@ -136,17 +136,10 @@ describe("createSaveHandler", () => {
 
     const originalStatus = testData[0].status
 
-    try {
-      await handleSave("1", "status", "pending")
-      // Should not reach here
-      expect.fail("Should have thrown an error")
-    } catch (error) {
-      expect(error).toBeInstanceOf(Error)
-      expect((error as Error).message).toBe(
-        "Ops, algo deu errado ao salvar seu valor",
-      )
-    }
+    // Should not throw - error is in fetcher.data for sendToast to handle
+    await handleSave("1", "status", "pending")
 
+    // Verify rollback happened
     expect(testData[0].status).toBe(originalStatus)
   })
 
