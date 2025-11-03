@@ -47,7 +47,7 @@ export const useCellEditor = <T extends { id: string }, K extends keyof T>({
         await new Promise((resolve) => setTimeout(resolve, 500))
 
         // Call the parent save function
-        onSave(rowData.id, field, watchedValue as T[K])
+        await onSave(rowData.id, field, watchedValue as T[K])
       } catch (error) {
         console.error("Error saving data:", error)
       } finally {
