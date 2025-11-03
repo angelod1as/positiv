@@ -302,9 +302,61 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_subscriptions: {
+        Row: {
+          consent_given: boolean
+          consent_given_at: string | null
+          created_at: string
+          id: string
+          last_sync_attempt_at: string | null
+          listmonk_subscriber_id: number | null
+          profile_id: string
+          subscribed_at: string | null
+          subscription_source: string | null
+          sync_status: string | null
+          unsubscribed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          consent_given?: boolean
+          consent_given_at?: string | null
+          created_at?: string
+          id?: string
+          last_sync_attempt_at?: string | null
+          listmonk_subscriber_id?: number | null
+          profile_id: string
+          subscribed_at?: string | null
+          subscription_source?: string | null
+          sync_status?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          consent_given?: boolean
+          consent_given_at?: string | null
+          created_at?: string
+          id?: string
+          last_sync_attempt_at?: string | null
+          listmonk_subscriber_id?: number | null
+          profile_id?: string
+          subscribed_at?: string | null
+          subscription_source?: string | null
+          sync_status?: string | null
+          unsubscribed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
-          allow_marketing_email: boolean | null
           approved_to_attend: Database["public"]["Enums"]["approved_to_attend_enum"]
           basic_data_filled: boolean
           became_veteran_date: string | null
@@ -331,7 +383,6 @@ export type Database = {
           where_lives: string | null
         }
         Insert: {
-          allow_marketing_email?: boolean | null
           approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
           basic_data_filled?: boolean
           became_veteran_date?: string | null
@@ -358,7 +409,6 @@ export type Database = {
           where_lives?: string | null
         }
         Update: {
-          allow_marketing_email?: boolean | null
           approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
           basic_data_filled?: boolean
           became_veteran_date?: string | null
@@ -418,7 +468,6 @@ export type Database = {
       get_profile_with_roles: {
         Args: { user_id_input: string }
         Returns: {
-          allow_marketing_email: boolean
           basic_data_filled: boolean
           cpf: string
           created_at: string
