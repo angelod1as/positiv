@@ -1,6 +1,10 @@
+import { composable } from "composable-functions"
 import { db } from "~/lib/supabase/db.server"
 import { addSubscriber } from "./listmonk-client.server"
-import { subscribeProfile, updateSyncStatus } from "./subscription-helpers.server"
+import {
+  subscribeProfile,
+  updateSyncStatus,
+} from "./subscription-helpers.server"
 
 type SubscriptionSource =
   | "onboarding_auto"
@@ -9,76 +13,63 @@ type SubscriptionSource =
   | "backfill"
   | "admin"
 
-interface SubscriptionResult {
-  success: boolean
-  error?: string
-}
-
 function computeNameFromFullName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] || fullName
 }
 
-export async function subscribeProfileToNewsletter(
-  profileId: string,
-  source: SubscriptionSource
-): Promise<SubscriptionResult> {
-  const profile = await db
-    .selectFrom("profiles")
-    .select([
-      "id",
-      "email",
-      "user_id",
-      "social_name",
-      "full_name",
-      "is_veteran",
-      "approved_to_attend",
-    ])
-    .where("id", "=", profileId)
-    .executeTakeFirst()
+export const subscribeProfileToNewsletter = composable(
+  async (profileId: string, source: SubscriptionSource) => {
+    const profile = await db
+      .selectFrom("profiles")
+      .select([
+        "id",
+        "email",
+        "user_id",
+        "social_name",
+        "full_name",
+        "is_veteran",
+        "approved_to_attend",
+      ])
+      .where("id", "=", profileId)
+      .executeTakeFirst()
 
-  if (!profile) {
-    return {
-      success: false,
-      error: "Profile not found",
+    if (!profile) {
+      throw new Error("Profile not found")
     }
-  }
 
-  const subscriptionResult = await subscribeProfile(profileId, source)
-  if (!subscriptionResult.success) {
-    return {
-      success: false,
-      error: subscriptionResult.error,
+    const subscriptionResult = await subscribeProfile(profileId, source)
+    if (!subscriptionResult.success) {
+      const errorMessage = subscriptionResult.errors.map(e => e.message).join(", ")
+      throw new Error(errorMessage || "Failed to subscribe profile")
     }
-  }
 
-  const computedName =
-    profile.social_name || (profile.full_name ? computeNameFromFullName(profile.full_name) : profile.email)
+    const computedName =
+      profile.social_name ||
+      (profile.full_name
+        ? computeNameFromFullName(profile.full_name)
+        : profile.email)
 
-  const listmonkResult = await addSubscriber({
-    email: profile.email,
-    name: computedName,
-    lists: [1],
-    attributes: {
-      profile_id: profile.id,
-      user_id: profile.user_id,
-      social_name: profile.social_name,
-      full_name: profile.full_name,
+    const listmonkResult = await addSubscriber({
+      email: profile.email,
       name: computedName,
-      is_veteran: profile.is_veteran,
-      approved_to_attend: profile.approved_to_attend,
-      synced_at: new Date().toISOString(),
-    },
-  })
+      lists: [4], // Inscrites List
+      attributes: {
+        profile_id: profile.id,
+        user_id: profile.user_id,
+        social_name: profile.social_name,
+        full_name: profile.full_name,
+        name: computedName,
+        is_veteran: profile.is_veteran,
+        approved_to_attend: profile.approved_to_attend,
+        synced_at: new Date().toISOString(),
+      },
+    })
 
-  if (!listmonkResult.success) {
-    await updateSyncStatus(profileId, "failed")
-    return {
-      success: false,
-      error: "Failed to sync with newsletter service",
+    if (!listmonkResult.success) {
+      await updateSyncStatus(profileId, "failed")
+      throw new Error("Failed to sync with newsletter service")
     }
-  }
 
-  await updateSyncStatus(profileId, "synced")
-
-  return { success: true }
-}
+    await updateSyncStatus(profileId, "synced")
+  },
+)

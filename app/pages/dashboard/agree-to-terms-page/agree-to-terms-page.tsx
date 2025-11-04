@@ -1,6 +1,6 @@
 import { SirenIcon } from "lucide-react"
 import { formAction } from "remix-forms"
-import { redirectWithSuccess } from "remix-toast"
+import { redirectWithSuccess, redirectWithWarning } from "remix-toast"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { agreeToTermsSchema } from "~/business/common"
 import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
@@ -22,8 +22,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // Get newsletter subscription status from the new table
   let mktEmails: boolean | undefined = undefined
   if (currentProfile) {
-    const subscription = await getSubscriptionStatus(currentProfile.id)
-    mktEmails = subscription?.consent_given ?? undefined
+    const result = await getSubscriptionStatus(currentProfile.id)
+    if (result.success && result.data) {
+      mktEmails = result.data.consent_given
+    }
   }
 
   return { mktEmails }
@@ -38,6 +40,22 @@ export async function action({ request, params }: Route.ActionArgs) {
     mutation: agreeToTerms,
     transformResult: async (result) => {
       if (result.success) {
+        const data = result.data as typeof context & { newsletterSubscriptionError?: string }
+
+        if (data.newsletterSubscriptionError) {
+          throw await redirectWithWarning(
+            BASIC_DATA,
+            {
+              message: "Suas escolhas foram salvas, mas você não foi inscrito na newsletter. Por favor, entre em contato: partypositiv@gmail.com",
+              duration: Infinity,
+              closeButton: true,
+            },
+            {
+              headers: context.supabaseHeaders,
+            },
+          )
+        }
+
         throw await redirectWithSuccess(
           BASIC_DATA,
           "Escolhas salvas com sucesso",
