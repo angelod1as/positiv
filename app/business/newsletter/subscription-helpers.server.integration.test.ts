@@ -34,9 +34,12 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
         email: "test@example.com",
       })
 
-      const status = await getSubscriptionStatus(profile.id)
+      const result = await getSubscriptionStatus(profile.id)
 
-      expect(status).toBeNull()
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).toBeNull()
+      }
     })
 
     it("should return subscription status when it exists", async () => {
@@ -59,12 +62,15 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
 
       tracker.track("newsletter_subscriptions", subscription.id)
 
-      const status = await getSubscriptionStatus(profile.id)
+      const result = await getSubscriptionStatus(profile.id)
 
-      expect(status).not.toBeNull()
-      expect(status?.consent_given).toBe(true)
-      expect(status?.subscription_source).toBe("manual_button")
-      expect(status?.sync_status).toBe("pending")
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data).not.toBeNull()
+        expect(result.data?.consent_given).toBe(true)
+        expect(result.data?.subscription_source).toBe("manual_button")
+        expect(result.data?.sync_status).toBe("pending")
+      }
     })
   })
 
@@ -78,14 +84,14 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
       const result = await subscribeProfile(profile.id, "manual_button")
 
       expect(result.success).toBe(true)
-      expect(result.subscription).toBeDefined()
-      expect(result.subscription?.consent_given).toBe(true)
-      expect(result.subscription?.subscription_source).toBe("manual_button")
-      expect(result.subscription?.sync_status).toBe("pending")
+      if (result.success) {
+        expect(result.data).toBeDefined()
+        expect(result.data.consent_given).toBe(true)
+        expect(result.data.subscription_source).toBe("manual_button")
+        expect(result.data.sync_status).toBe("pending")
 
-      // Track for cleanup
-      if (result.subscription) {
-        tracker.track("newsletter_subscriptions", result.subscription.id)
+        // Track for cleanup
+        tracker.track("newsletter_subscriptions", result.data.id)
       }
 
       // Verify in database
@@ -123,9 +129,11 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
       const result = await subscribeProfile(profile.id, "manual_button")
 
       expect(result.success).toBe(true)
-      expect(result.subscription?.consent_given).toBe(true)
-      expect(result.subscription?.sync_status).toBe("pending")
-      expect(result.subscription?.unsubscribed_at).toBeNull()
+      if (result.success) {
+        expect(result.data.consent_given).toBe(true)
+        expect(result.data.sync_status).toBe("pending")
+        expect(result.data.unsubscribed_at).toBeNull()
+      }
     })
 
     it("should return existing subscription if already subscribed", async () => {
@@ -152,9 +160,11 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
       const result = await subscribeProfile(profile.id, "manual_button")
 
       expect(result.success).toBe(true)
-      expect(result.subscription?.id).toBe(existingSubscription.id)
-      expect(result.subscription?.consent_given).toBe(true)
-      expect(result.subscription?.listmonk_subscriber_id).toBe(123)
+      if (result.success) {
+        expect(result.data?.id).toBe(existingSubscription.id)
+        expect(result.data?.consent_given).toBe(true)
+        expect(result.data?.listmonk_subscriber_id).toBe(123)
+      }
     })
   })
 
@@ -182,9 +192,11 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
       const result = await unsubscribeProfile(profile.id)
 
       expect(result.success).toBe(true)
-      expect(result.subscription?.consent_given).toBe(false)
-      expect(result.subscription?.sync_status).toBe("unsubscribed")
-      expect(result.subscription?.unsubscribed_at).not.toBeNull()
+      if (result.success) {
+        expect(result.data?.consent_given).toBe(false)
+        expect(result.data?.sync_status).toBe("unsubscribed")
+        expect(result.data?.unsubscribed_at).not.toBeNull()
+      }
     })
 
     it("should return error when no subscription exists", async () => {
@@ -196,7 +208,7 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
       const result = await unsubscribeProfile(profile.id)
 
       expect(result.success).toBe(false)
-      expect(result.error).toBeDefined()
+      expect(result.errors.length).toBeGreaterThan(0)
     })
 
     it("should handle already unsubscribed subscription", async () => {
@@ -223,7 +235,9 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
       const result = await unsubscribeProfile(profile.id)
 
       expect(result.success).toBe(true)
-      expect(result.subscription?.consent_given).toBe(false)
+      if (result.success) {
+        expect(result.data?.consent_given).toBe(false)
+      }
     })
   })
 
@@ -251,9 +265,11 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
       const result = await updateSyncStatus(profile.id, "synced", 456)
 
       expect(result.success).toBe(true)
-      expect(result.subscription?.sync_status).toBe("synced")
-      expect(result.subscription?.listmonk_subscriber_id).toBe(456)
-      expect(result.subscription?.last_sync_attempt_at).not.toBeNull()
+      if (result.success) {
+        expect(result.data?.sync_status).toBe("synced")
+        expect(result.data?.listmonk_subscriber_id).toBe(456)
+        expect(result.data?.last_sync_attempt_at).not.toBeNull()
+      }
     })
 
     it("should update only sync status without listmonk_subscriber_id", async () => {
@@ -279,9 +295,11 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
       const result = await updateSyncStatus(profile.id, "failed")
 
       expect(result.success).toBe(true)
-      expect(result.subscription?.sync_status).toBe("failed")
-      expect(result.subscription?.listmonk_subscriber_id).toBeNull()
-      expect(result.subscription?.last_sync_attempt_at).not.toBeNull()
+      if (result.success) {
+        expect(result.data?.sync_status).toBe("failed")
+        expect(result.data?.listmonk_subscriber_id).toBeNull()
+        expect(result.data?.last_sync_attempt_at).not.toBeNull()
+      }
     })
 
     it("should return error when no subscription exists", async () => {
@@ -293,7 +311,7 @@ describe("Newsletter Subscription Helpers - Integration Tests", () => {
       const result = await updateSyncStatus(profile.id, "synced")
 
       expect(result.success).toBe(false)
-      expect(result.error).toBeDefined()
+      expect(result.errors.length).toBeGreaterThan(0)
     })
   })
 })

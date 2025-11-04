@@ -3,13 +3,17 @@ import { agreeToTerms } from "./agree-to-terms.server"
 import type { z } from "zod"
 import type { contextSchema } from "../common"
 
-// Mock the subscription helpers
+// Mock the newsletter functions
+vi.mock("../newsletter/auto-subscribe.server", () => ({
+  subscribeProfileToNewsletter: vi.fn(),
+}))
+
 vi.mock("../newsletter/subscription-helpers.server", () => ({
-  subscribeProfile: vi.fn(),
   unsubscribeProfile: vi.fn(),
 }))
 
-import { subscribeProfile, unsubscribeProfile } from "../newsletter/subscription-helpers.server"
+import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
+import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
 
 describe("agreeToTerms", () => {
   let mockFrom: Mock
@@ -30,29 +34,16 @@ describe("agreeToTerms", () => {
       insert: mockInsert,
     }))
 
-    // Setup default mocks for subscription helpers
-    vi.mocked(subscribeProfile).mockResolvedValue({
+    // Setup default mocks for newsletter subscription
+    vi.mocked(subscribeProfileToNewsletter).mockResolvedValue({
       success: true,
-      subscription: {
-        id: "sub-123",
-        profile_id: "profile-123",
-        consent_given: true,
-        first_consent_given_at: new Date().toISOString(),
-        last_consent_given_at: new Date().toISOString(),
-        subscribed_at: new Date().toISOString(),
-        unsubscribed_at: null,
-        subscription_source: "onboarding_auto",
-        listmonk_subscriber_id: null,
-        sync_status: "pending",
-        last_sync_attempt_at: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
+      data: undefined,
+      errors: [],
     })
 
     vi.mocked(unsubscribeProfile).mockResolvedValue({
       success: true,
-      subscription: {
+      data: {
         id: "sub-123",
         profile_id: "profile-123",
         consent_given: false,
@@ -67,6 +58,7 @@ describe("agreeToTerms", () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
+      errors: [],
     })
   })
 
@@ -97,7 +89,7 @@ describe("agreeToTerms", () => {
       email: "test@example.com",
     })
     expect(mockSelect).toHaveBeenCalledWith("id")
-    expect(subscribeProfile).toHaveBeenCalledWith("new-profile-123", "onboarding_auto")
+    expect(subscribeProfileToNewsletter).toHaveBeenCalledWith("new-profile-123", "onboarding_auto")
     expect(unsubscribeProfile).not.toHaveBeenCalled()
   })
 
@@ -134,7 +126,7 @@ describe("agreeToTerms", () => {
 
     expect(mockFrom).not.toHaveBeenCalled()
     expect(unsubscribeProfile).toHaveBeenCalledWith("profile-123")
-    expect(subscribeProfile).not.toHaveBeenCalled()
+    expect(subscribeProfileToNewsletter).not.toHaveBeenCalled()
   })
 
   it("should return error when user is not authenticated", async () => {
@@ -184,7 +176,7 @@ describe("agreeToTerms", () => {
   it("should handle unsubscribe when no subscription exists", async () => {
     vi.mocked(unsubscribeProfile).mockResolvedValue({
       success: false,
-      error: "No subscription found",
+      errors: [new Error("No subscription found")],
     })
 
     const context = createContext({
@@ -253,7 +245,7 @@ describe("agreeToTerms", () => {
 
     await agreeToTerms(values, context)
 
-    expect(subscribeProfile).toHaveBeenCalledWith("profile-123", "onboarding_auto")
+    expect(subscribeProfileToNewsletter).toHaveBeenCalledWith("profile-123", "onboarding_auto")
     expect(unsubscribeProfile).not.toHaveBeenCalled()
   })
 })
