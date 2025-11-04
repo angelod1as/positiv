@@ -1,13 +1,6 @@
 import { composable } from "composable-functions"
 import { db } from "~/lib/supabase/db.server"
-
-type SubscriptionSource =
-  | "onboarding_auto"
-  | "terms_and_conditions"
-  | "manual_button"
-  | "backfill"
-  | "admin"
-type SyncStatus = "pending" | "synced" | "failed" | "unsubscribed"
+import type { SubscriptionSource, SyncStatus } from "./types"
 
 export const getSubscriptionStatus = composable(async (profileId: string) => {
   return await db
@@ -21,11 +14,10 @@ export const getSubscriptionStatus = composable(async (profileId: string) => {
 export const subscribeProfile = composable(
   async (profileId: string, source: SubscriptionSource) => {
     const result = await getSubscriptionStatus(profileId)
-    const existingSubscription = result.success ? result.data : null
 
-    if (existingSubscription) {
-      if (existingSubscription.consent_given) {
-        return existingSubscription
+    if (result.success && result.data) {
+      if (result.data.consent_given) {
+        return result.data
       }
 
       const nowIso = new Date().toISOString()
@@ -71,9 +63,12 @@ export const subscribeProfile = composable(
 
 export const unsubscribeProfile = composable(async (profileId: string) => {
   const result = await getSubscriptionStatus(profileId)
-  const existingSubscription = result.success ? result.data : null
 
-  if (!existingSubscription) {
+  if (!result.success) {
+    throw new Error("No subscription found")
+  }
+
+  if (!result.data) {
     throw new Error("No subscription found")
   }
 
@@ -99,9 +94,12 @@ export const updateSyncStatus = composable(
     listmonkSubscriberId?: number,
   ) => {
     const result = await getSubscriptionStatus(profileId)
-    const existingSubscription = result.success ? result.data : null
 
-    if (!existingSubscription) {
+    if (!result.success) {
+      throw new Error("No subscription found")
+    }
+
+    if (!result.data) {
       throw new Error("No subscription found")
     }
 
