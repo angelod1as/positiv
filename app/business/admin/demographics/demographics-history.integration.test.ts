@@ -74,13 +74,22 @@ describe("Demographics History - Integration Tests", () => {
     // Now test the transaction directly
     const result = await kysely.transaction().execute(async (trx) => {
       // Calculate demographics BEFORE updating status
+      // Use the same CASE statement logic as production code to calculate historical veteran status
       const participants = await trx
         .selectFrom("event_participants")
         .where("event_participants.event_id", "=", event.id)
         .where("attendance_status", "=", "attended")
         .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
-        .select([
-          "profiles.is_veteran",
+        .innerJoin("events", "events.id", "event_participants.event_id")
+        .select(eb => [
+          eb.case()
+            .when("profiles.became_veteran_date", "is", null)
+            .then(false)
+            .when("profiles.became_veteran_date", "<", eb.ref("events.time_event_start"))
+            .then(true)
+            .else(false)
+            .end()
+            .as("is_veteran")
         ])
         .execute()
 
