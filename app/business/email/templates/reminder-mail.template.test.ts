@@ -147,3 +147,164 @@ describe("reminderMailTemplate", () => {
     expect(result).toContain("border-radius: 8px")
   })
 })
+
+describe("reminderMailTemplate - XSS Protection", () => {
+  const createMockEvent = (
+    overrides?: Partial<Omit<ViewEvent, "is_applied">>,
+  ): Omit<ViewEvent, "is_applied"> => ({
+    id: "test-event-id",
+    title: "Test Event",
+    emoji: "🎉",
+    location: "Test Location",
+    time_event_start: "2024-12-25T20:00:00-03:00",
+    time_event_end: "2024-12-26T04:00:00-03:00",
+    time_application_start: "2024-12-01T10:00:00-03:00",
+    time_application_end: "2024-12-20T23:59:59-03:00",
+    time_interviews_start: null,
+    time_interviews_end: null,
+    time_group_start: null,
+    time_group_end: null,
+    time_payment_start: null,
+    time_payment_end: null,
+    description: "Test Description",
+    ticket_price: null,
+    event_status: "Registration Open",
+    ...overrides,
+  })
+
+  describe("Event Title Sanitization", () => {
+    it("should sanitize script tags in event title", () => {
+      const event = createMockEvent({
+        title: '<script>alert("XSS")</script>Party',
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).not.toContain("<script>")
+      expect(html).not.toContain('alert("XSS")')
+      expect(html).toContain("Party")
+    })
+
+    it("should sanitize img tag with onerror in event title", () => {
+      const event = createMockEvent({
+        title: '<img src=x onerror="alert(\'XSS\')">Party',
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).not.toContain("onerror")
+      expect(html).not.toContain('alert(\'XSS\')')
+    })
+
+    it("should escape HTML entities in event title", () => {
+      const event = createMockEvent({
+        title: "Party <New Year's> & More",
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).toContain("&amp;")
+      expect(html).toContain("Party")
+      expect(html).toContain("More")
+      expect(html).not.toContain("<New Year's>")
+    })
+  })
+
+  describe("Event Location Sanitization", () => {
+    it("should sanitize script tags in location", () => {
+      const event = createMockEvent({
+        location: '<script>alert("XSS")</script>São Paulo',
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).not.toContain("<script>")
+      expect(html).not.toContain('alert("XSS")')
+      expect(html).toContain("São Paulo")
+    })
+
+    it("should sanitize onclick event handler in location", () => {
+      const event = createMockEvent({
+        location: '<a href="#" onclick="alert(\'XSS\')">Click</a>',
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).not.toContain("onclick")
+      expect(html).not.toContain('alert(\'XSS\')')
+    })
+
+    it("should escape HTML entities in location", () => {
+      const event = createMockEvent({
+        location: "Street <Main> & Ave",
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).toContain("&amp;")
+      expect(html).toContain("Street")
+      expect(html).toContain("Ave")
+      expect(html).not.toContain("<Main>")
+    })
+  })
+
+  describe("Event Emoji Sanitization", () => {
+    it("should sanitize script tags in emoji field", () => {
+      const event = createMockEvent({
+        emoji: '<script>alert("XSS")</script>🎉',
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).not.toContain("<script>")
+      expect(html).not.toContain('alert("XSS")')
+    })
+
+    it("should allow legitimate emoji characters", () => {
+      const event = createMockEvent({
+        emoji: "🎉",
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).toContain("🎉")
+    })
+  })
+
+  describe("Combined Attack Vectors", () => {
+    it("should sanitize multiple XSS attempts across all fields", () => {
+      const event = createMockEvent({
+        title: '<iframe src="https://evil.com">Party</iframe>',
+        location: '<a onclick="alert(\'loc\')">Place</a>',
+        emoji: '<script>alert("emoji")</script>🎉',
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).not.toContain("<script>")
+      expect(html).not.toContain("<iframe")
+      expect(html).not.toContain("onerror")
+      expect(html).not.toContain("onclick")
+      expect(html).not.toContain("evil.com")
+      expect(html).not.toContain('alert(')
+    })
+  })
+
+  describe("Legitimate Content Preservation", () => {
+    it("should preserve legitimate content after sanitization", () => {
+      const event = createMockEvent({
+        title: "Festa de Ano Novo",
+        location: "São Paulo, SP",
+        emoji: "🎉",
+      })
+
+      const html = reminderMailTemplate(event)
+
+      expect(html).toContain("Festa de Ano Novo")
+      expect(html).toContain("São Paulo, SP")
+      expect(html).toContain("🎉")
+      expect(html).toContain("Inscrições abertas!")
+      expect(html).toContain("Importante!")
+    })
+  })
+})
