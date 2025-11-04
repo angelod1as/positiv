@@ -97,7 +97,8 @@ describe("basicData", () => {
           id: "orphaned-profile-123",
           user_id: "user-123",
           email: "test@example.com",
-        })
+        }),
+        { onConflict: 'user_id' }
       )
     })
 
@@ -130,7 +131,8 @@ describe("basicData", () => {
         expect.objectContaining({
           user_id: "user-123",
           email: "test@example.com",
-        })
+        }),
+        { onConflict: 'user_id' }
       )
       // Verify id is not included when creating new profile
       const upsertCall = mockUpsert.mock.calls[0][0]
@@ -238,13 +240,14 @@ describe("basicData", () => {
       }
 
       const result = await basicData(mockFormData, mockContext)
-      
+
       expect(result.success).toBe(true)
       expect(mockUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
           id: "current-profile-123",
           user_id: "user-123",
-        })
+        }),
+        { onConflict: 'user_id' }
       )
     })
   })
