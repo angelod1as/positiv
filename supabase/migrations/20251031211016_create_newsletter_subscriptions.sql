@@ -8,8 +8,8 @@ CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
   consent_given_at timestamptz,
   subscribed_at timestamptz,
   unsubscribed_at timestamptz,
-  subscription_source text CHECK (subscription_source IN ('onboarding_auto', 'manual_button', 'backfill', 'admin')),
-  listmonk_subscriber_id integer,
+  subscription_source text CHECK (subscription_source IN ('onboarding_auto', 'terms_and_conditions', 'manual_button', 'backfill', 'admin')),
+  listmonk_subscriber_id integer UNIQUE,
   sync_status text DEFAULT 'pending' CHECK (sync_status IN ('pending', 'synced', 'failed', 'unsubscribed')),
   last_sync_attempt_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
@@ -45,14 +45,32 @@ ALTER TABLE newsletter_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own newsletter subscription"
   ON newsletter_subscriptions
   FOR SELECT
-  USING (auth.uid() = profile_id);
+  USING (
+    (
+      SELECT p.user_id
+      FROM profiles p
+      WHERE p.id = newsletter_subscriptions.profile_id
+    ) = auth.uid()
+  );
 
 -- Users can update their own subscription status
 CREATE POLICY "Users can update own newsletter subscription"
   ON newsletter_subscriptions
   FOR UPDATE
-  USING (auth.uid() = profile_id)
-  WITH CHECK (auth.uid() = profile_id);
+  USING (
+    (
+      SELECT p.user_id
+      FROM profiles p
+      WHERE p.id = newsletter_subscriptions.profile_id
+    ) = auth.uid()
+  )
+  WITH CHECK (
+    (
+      SELECT p.user_id
+      FROM profiles p
+      WHERE p.id = newsletter_subscriptions.profile_id
+    ) = auth.uid()
+  );
 
 -- Admins have full access to all subscriptions
 CREATE POLICY "Admins have full access to newsletter subscriptions"
@@ -60,15 +78,17 @@ CREATE POLICY "Admins have full access to newsletter subscriptions"
   FOR ALL
   TO authenticated
   USING (
-    auth.uid() IN (
-      SELECT user_id FROM user_roles
-      WHERE role_name = 'admin'
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      WHERE ur.user_id = auth.uid()
+        AND ur.role_name = 'admin'
     )
   )
   WITH CHECK (
-    auth.uid() IN (
-      SELECT user_id FROM user_roles
-      WHERE role_name = 'admin'
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      WHERE ur.user_id = auth.uid()
+        AND ur.role_name = 'admin'
     )
   );
 
