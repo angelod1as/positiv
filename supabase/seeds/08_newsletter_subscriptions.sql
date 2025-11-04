@@ -4,7 +4,8 @@
 INSERT INTO public.newsletter_subscriptions (
     profile_id,
     consent_given,
-    consent_given_at,
+    first_consent_given_at,
+    last_consent_given_at,
     subscribed_at,
     unsubscribed_at,
     subscription_source,
@@ -22,8 +23,17 @@ SELECT
         WHEN 'user5@example.com' THEN false  -- unsubscribed after initially accepting
         ELSE true
     END as consent_given,
-    -- consent_given_at
-    p.created_at as consent_given_at,
+    -- first_consent_given_at (only set if they ever consented)
+    CASE p.email
+        WHEN 'user2@example.com' THEN NULL  -- never consented
+        ELSE p.created_at
+    END as first_consent_given_at,
+    -- last_consent_given_at
+    CASE p.email
+        WHEN 'user2@example.com' THEN NULL  -- never consented
+        WHEN 'user5@example.com' THEN p.created_at  -- last consented before unsubscribing
+        ELSE p.created_at
+    END as last_consent_given_at,
     -- subscribed_at (only set if they subscribed)
     CASE p.email
         WHEN 'user2@example.com' THEN NULL  -- never subscribed
