@@ -15,7 +15,6 @@ INSERT INTO public.profiles (
     where_lives,
     how_came_to_us,
     rg_issuer,
-    allow_marketing_email,
     is_veteran,
     approved_to_attend,
     flag,
@@ -120,8 +119,6 @@ SELECT
     'Seeded by Supabase',
     -- rg_issuer
     'SSP/SP',
-    -- allow_marketing_email
-    true,
     -- is_veteran (set true for admin, user1, user3, user4, user5; others false)
     CASE usr.email
         WHEN 'admin@example.com' THEN true

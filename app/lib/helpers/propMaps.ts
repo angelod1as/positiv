@@ -12,7 +12,6 @@ import { GENDERS, ORIENTATIONS } from "~/lib/constants/constants"
 
 export const profilePropMap = (property: keyof Profile) => {
   return {
-    allow_marketing_email: "Autorizou email marketing?",
     basic_data_filled: "Dados básico preenchidos?",
     cpf: "CPF",
     created_at: "Criado em",

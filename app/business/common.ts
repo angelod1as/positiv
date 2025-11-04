@@ -71,7 +71,6 @@ export const currentProfileSchema = zod.object({
   where_lives: zod.string().nullish(),
   how_came_to_us: zod.string().nullish(),
   rg_issuer: zod.string().nullish(),
-  allow_marketing_email: zod.boolean().nullish(),
   created_at: zod.string(),
   is_admin: zod.boolean(),
 })

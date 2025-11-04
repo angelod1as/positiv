@@ -19,177 +19,7 @@ describe("basicData", () => {
     rg_issuer: "SSP/SP",
   }
 
-  describe("marketing email preference preservation", () => {
-    it("should preserve existing allow_marketing_email value when updating profile", async () => {
-      const orphanedProfile = {
-        id: "profile-123",
-        email: "test@example.com",
-        allow_marketing_email: true,
-        basic_data_filled: false,
-      }
-
-      const mockSingle = vi.fn().mockResolvedValue({ data: orphanedProfile, error: null })
-      const mockIs = vi.fn().mockReturnValue({ single: mockSingle })
-      const mockEq = vi.fn().mockReturnValue({ is: mockIs })
-      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
-      const mockUpsert = vi.fn().mockResolvedValue({ error: null })
-      const mockFrom = vi.fn().mockReturnValue({
-        select: mockSelect,
-        upsert: mockUpsert,
-      })
-
-      const mockContext: z.infer<typeof contextSchema> = {
-        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
-        currentProfile: null,
-        currentUser: {
-          id: "user-123",
-          email: "test@example.com",
-        },
-        supabaseHeaders: new Headers(),
-        host: "localhost",
-      }
-
-      await basicData(mockFormData, mockContext)
-
-      // Check that upsert was called
-      expect(mockUpsert).toHaveBeenCalled()
-      const upsertData = mockUpsert.mock.calls[0][0]
-      
-      // Verify that allow_marketing_email was preserved from orphaned profile
-      expect(upsertData.allow_marketing_email).toBe(true)
-    })
-
-    it("should preserve allow_marketing_email when value is false", async () => {
-      const orphanedProfile = {
-        id: "profile-123",
-        email: "test@example.com",
-        allow_marketing_email: false,
-        basic_data_filled: false,
-      }
-
-      const mockSingle = vi.fn().mockResolvedValue({ data: orphanedProfile, error: null })
-      const mockIs = vi.fn().mockReturnValue({ single: mockSingle })
-      const mockEq = vi.fn().mockReturnValue({ is: mockIs })
-      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
-      const mockUpsert = vi.fn().mockResolvedValue({ error: null })
-      const mockFrom = vi.fn().mockReturnValue({
-        select: mockSelect,
-        upsert: mockUpsert,
-      })
-
-      const mockContext: z.infer<typeof contextSchema> = {
-        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
-        currentProfile: null,
-        currentUser: {
-          id: "user-123",
-          email: "test@example.com",
-        },
-        supabaseHeaders: new Headers(),
-        host: "localhost",
-      }
-
-      await basicData(mockFormData, mockContext)
-
-      // Check that upsert was called
-      expect(mockUpsert).toHaveBeenCalled()
-      const upsertData = mockUpsert.mock.calls[0][0]
-      
-      // Verify that allow_marketing_email false value was preserved
-      expect(upsertData.allow_marketing_email).toBe(false)
-    })
-
-    it("should not preserve allow_marketing_email when value is null", async () => {
-      const orphanedProfile = {
-        id: "profile-123",
-        email: "test@example.com",
-        allow_marketing_email: null,
-        basic_data_filled: false,
-      }
-
-      const mockSingle = vi.fn().mockResolvedValue({ data: orphanedProfile, error: null })
-      const mockIs = vi.fn().mockReturnValue({ single: mockSingle })
-      const mockEq = vi.fn().mockReturnValue({ is: mockIs })
-      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
-      const mockUpsert = vi.fn().mockResolvedValue({ error: null })
-      const mockFrom = vi.fn().mockReturnValue({
-        select: mockSelect,
-        upsert: mockUpsert,
-      })
-
-      const mockContext: z.infer<typeof contextSchema> = {
-        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
-        currentProfile: null,
-        currentUser: {
-          id: "user-123",
-          email: "test@example.com",
-        },
-        supabaseHeaders: new Headers(),
-        host: "localhost",
-      }
-
-      await basicData(mockFormData, mockContext)
-
-      // Check that upsert was called
-      expect(mockUpsert).toHaveBeenCalled()
-      const upsertData = mockUpsert.mock.calls[0][0]
-      
-      // Verify that allow_marketing_email was NOT included when null
-      expect(upsertData.allow_marketing_email).toBeUndefined()
-    })
-
-    it("should preserve existing allow_marketing_email value for current profile", async () => {
-      const currentProfile = {
-        id: "profile-456",
-        email: "test@example.com",
-        full_name: "Old Name",
-        basic_data_filled: true,
-        social_name: null,
-        pronouns: null,
-        rg: null,
-        cpf: null,
-        phone: null,
-        date_of_birth: null,
-        gender: null,
-        orientation: null,
-        where_lives: null,
-        how_came_to_us: null,
-        rg_issuer: null,
-        allow_marketing_email: false,
-        created_at: "2025-01-01T00:00:00Z",
-        is_admin: false,
-      }
-
-      const mockSingle = vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
-      const mockIs = vi.fn().mockReturnValue({ single: mockSingle })
-      const mockEq = vi.fn().mockReturnValue({ is: mockIs })
-      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq })
-      const mockUpsert = vi.fn().mockResolvedValue({ error: null })
-      const mockFrom = vi.fn().mockReturnValue({
-        select: mockSelect,
-        upsert: mockUpsert,
-      })
-
-      const mockContext: z.infer<typeof contextSchema> = {
-        supabase: { from: mockFrom } as unknown as SupabaseClient<Database>,
-        currentProfile,
-        currentUser: {
-          id: "user-123",
-          email: "test@example.com",
-        },
-        supabaseHeaders: new Headers(),
-        host: "localhost",
-      }
-
-      await basicData(mockFormData, mockContext)
-
-      // Check that upsert was called
-      expect(mockUpsert).toHaveBeenCalled()
-      const upsertData = mockUpsert.mock.calls[0][0]
-      
-      // Verify that allow_marketing_email was preserved from current profile
-      expect(upsertData.allow_marketing_email).toBe(false)
-    })
-  })
+  // Note: marketing email preference tests removed - now managed via newsletter_subscriptions table
 
   describe("orphaned profile handling", () => {
     it("should check for orphaned profiles with matching email", async () => {
@@ -267,7 +97,8 @@ describe("basicData", () => {
           id: "orphaned-profile-123",
           user_id: "user-123",
           email: "test@example.com",
-        })
+        }),
+        { onConflict: 'user_id' }
       )
     })
 
@@ -300,7 +131,8 @@ describe("basicData", () => {
         expect.objectContaining({
           user_id: "user-123",
           email: "test@example.com",
-        })
+        }),
+        { onConflict: 'user_id' }
       )
       // Verify id is not included when creating new profile
       const upsertCall = mockUpsert.mock.calls[0][0]
@@ -398,7 +230,6 @@ describe("basicData", () => {
           where_lives: null,
           how_came_to_us: null,
           rg_issuer: null,
-          allow_marketing_email: null
         },
         currentUser: {
           id: "user-123",
@@ -409,13 +240,14 @@ describe("basicData", () => {
       }
 
       const result = await basicData(mockFormData, mockContext)
-      
+
       expect(result.success).toBe(true)
       expect(mockUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
           id: "current-profile-123",
           user_id: "user-123",
-        })
+        }),
+        { onConflict: 'user_id' }
       )
     })
   })

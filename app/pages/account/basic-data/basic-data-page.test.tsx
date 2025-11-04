@@ -92,7 +92,6 @@ describe("basic-data-page loader", () => {
         where_lives: null,
         how_came_to_us: null,
         rg_issuer: null,
-        allow_marketing_email: null,
       }
 
       vi.mocked(authServer.getUserContext).mockResolvedValue({
