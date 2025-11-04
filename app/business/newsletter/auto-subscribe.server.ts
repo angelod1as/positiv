@@ -31,11 +31,7 @@ export const subscribeProfileToNewsletter = composable(
       throw new Error("Profile not found")
     }
 
-    const subscriptionResult = await subscribeProfile(profileId, source)
-    if (!subscriptionResult.success) {
-      const errorMessage = subscriptionResult.errors.map(e => e.message).join(", ")
-      throw new Error(errorMessage || "Failed to subscribe profile")
-    }
+    await subscribeProfile(profileId, source)
 
     const computedName =
       profile.social_name ||

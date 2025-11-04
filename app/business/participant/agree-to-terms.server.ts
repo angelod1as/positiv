@@ -65,12 +65,12 @@ export const agreeToTerms = applySchema(
     }
   } else {
     const result = await unsubscribeProfile(profileId)
-    // It's ok if unsubscribe fails because no subscription exists
-    if (!result.success) {
-      const errorMessage = result.errors.map(e => e.message).join(", ")
-      if (!errorMessage.includes("No subscription found")) {
-        console.error("Failed to unsubscribe profile:", errorMessage)
-        throw new Error("Problema ao processar preferência de emails")
+    if (!result.success && result.errors.length > 0) {
+      // It's ok if unsubscribe fails because no subscription exists.
+      // For other errors, we should throw.
+      if (!result.errors[0].message.includes("No subscription found")) {
+        console.error("Failed to unsubscribe profile:", result.errors[0].message)
+        throw result.errors[0]
       }
     }
   }
