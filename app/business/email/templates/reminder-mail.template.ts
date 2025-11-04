@@ -18,8 +18,12 @@ export const reminderMailTemplate = (
   const { date: applicationCloseDate, time: applicationCloseTime } =
     formatDateTime(event.time_application_end)
 
+  const sanitizedEmoji = sanitizeHtml(event.emoji || "")
+  const sanitizedTitle = sanitizeHtml(event.title || "")
+  const eventDisplay = [sanitizedEmoji, sanitizedTitle].filter(Boolean).join(" ")
+
   const details = [
-    ["Evento", `${sanitizeHtml(event.emoji || "")} ${sanitizeHtml(event.title || "")}`],
+    ["Evento", eventDisplay],
     ["Local", sanitizeHtml(event.location || "")],
     ["Data do evento", date],
     ["Horário de início", time],
@@ -64,7 +68,7 @@ export const reminderMailTemplate = (
 
               <!-- Intro Paragraph -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                Surpresa! As inscrições para o evento <strong>${sanitizeHtml(event.emoji || "")}&nbsp;${sanitizeHtml(event.title || "")}</strong> estão abertas!
+                Surpresa! As inscrições para o evento <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong> estão abertas!
               </p>
 
               <!-- CTA Button -->

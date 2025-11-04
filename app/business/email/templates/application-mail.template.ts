@@ -15,9 +15,12 @@ export const applicationMailTemplate = (
 ): string => {
   const { date, time } = formatDateTime(event.time_event_start)
   const displayName = sanitizeHtml(profile.social_name || profile.full_name || "")
+  const sanitizedEmoji = sanitizeHtml(event.emoji || "")
+  const sanitizedTitle = sanitizeHtml(event.title || "")
+  const eventDisplay = [sanitizedEmoji, sanitizedTitle].filter(Boolean).join(" ")
 
   const details = [
-    ["Evento", `${sanitizeHtml(event.emoji || "")} ${sanitizeHtml(event.title || "")}`],
+    ["Evento", eventDisplay],
     ["Local", sanitizeHtml(event.location || "")],
     ["Data", date],
     ["Horário de início", time],
@@ -57,7 +60,7 @@ export const applicationMailTemplate = (
 
               <!-- Intro Paragraph -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                ${displayName}, você se inscreveu com sucesso no evento <strong>${sanitizeHtml(event.emoji || "")}&nbsp;${sanitizeHtml(event.title || "")}</strong>!
+                ${displayName}, você se inscreveu com sucesso no evento <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong>!
               </p>
 
               <!-- Event Details Section -->
