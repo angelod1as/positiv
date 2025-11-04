@@ -5,13 +5,7 @@ import {
   subscribeProfile,
   updateSyncStatus,
 } from "./subscription-helpers.server"
-
-type SubscriptionSource =
-  | "onboarding_auto"
-  | "terms_and_conditions"
-  | "manual_button"
-  | "backfill"
-  | "admin"
+import type { SubscriptionSource } from "./types"
 
 function computeNameFromFullName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] || fullName
