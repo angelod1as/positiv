@@ -51,7 +51,6 @@ export async function subscribeProfile(
           subscription_source: source,
           sync_status: "pending" as SyncStatus,
           unsubscribed_at: null,
-          updated_at: new Date().toISOString(),
         })
         .where("profile_id", "=", profileId)
         .returningAll()
@@ -109,7 +108,6 @@ export async function unsubscribeProfile(
         unsubscribed_at: new Date().toISOString(),
         subscription_source: null,
         sync_status: "unsubscribed" as SyncStatus,
-        updated_at: new Date().toISOString(),
       })
       .where("profile_id", "=", profileId)
       .returningAll()
@@ -151,7 +149,6 @@ export async function updateSyncStatus(
         ...(listmonkSubscriberId !== undefined && {
           listmonk_subscriber_id: listmonkSubscriberId,
         }),
-        updated_at: new Date().toISOString(),
       })
       .where("profile_id", "=", profileId)
       .returningAll()
