@@ -47,7 +47,6 @@ describe('BasicData', () => {
     flag: 'none',
     flag_notes: null,
     approved_to_attend: 'approved',
-    allow_marketing_email: true,
     basic_data_filled: true,
     created_at: '2023-01-01',
     general_notes: null,

@@ -240,7 +240,6 @@ export async function createTestAdminUser(
     user_id: userId,
     email,
     full_name: profileData?.full_name || "Test Admin",
-    allow_marketing_email: true,
     ...profileData
   })
   

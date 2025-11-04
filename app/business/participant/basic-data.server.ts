@@ -39,7 +39,6 @@ export const basicData = applySchema(
 
   // Build upsert data with optional id
   const profileId = orphanedProfile?.id || currentProfile?.id
-  const existingProfile = orphanedProfile || currentProfile
 
   // Build base upsert data
   interface ProfileUpsertData {
@@ -55,7 +54,6 @@ export const basicData = applySchema(
     user_id: string
     email: string
     date_of_birth: string | null
-    allow_marketing_email?: boolean
   }
 
   const upsertData: ProfileUpsertData = {
@@ -70,18 +68,12 @@ export const basicData = applySchema(
     upsertData.id = profileId
   }
 
-  // Preserve marketing email preference if it exists and is a boolean
-  // Only preserve explicit true/false values, not null or undefined
-  if (
-    existingProfile &&
-    typeof existingProfile.allow_marketing_email === "boolean"
-  ) {
-    upsertData.allow_marketing_email = existingProfile.allow_marketing_email
-  }
+  // Note: Newsletter subscription preferences are now managed via newsletter_subscriptions table
+  // No need to preserve allow_marketing_email here
 
   const { error: upsertError } = await supabase
     .from("profiles")
-    .upsert(upsertData)
+    .upsert(upsertData, { onConflict: 'user_id' })
 
   if (upsertError) {
     const { code, message } = upsertError || {}

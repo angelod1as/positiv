@@ -4,6 +4,7 @@ import { redirectWithSuccess } from "remix-toast"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { agreeToTermsSchema } from "~/business/common"
 import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
+import { getSubscriptionStatus } from "~/business/newsletter/subscription-helpers.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import paths from "~/lib/paths"
@@ -17,7 +18,15 @@ const {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getUserContext(request, params)
-  return { mktEmails: currentProfile?.allow_marketing_email }
+
+  // Get newsletter subscription status from the new table
+  let mktEmails: boolean | undefined = undefined
+  if (currentProfile) {
+    const subscription = await getSubscriptionStatus(currentProfile.id)
+    mktEmails = subscription?.consent_given ?? undefined
+  }
+
+  return { mktEmails }
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
