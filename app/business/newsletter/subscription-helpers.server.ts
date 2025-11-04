@@ -1,46 +1,23 @@
+import { composable } from "composable-functions"
 import { db } from "~/lib/supabase/db.server"
-import type { Database } from "~/types/database/database.types"
+import type { SubscriptionSource, SyncStatus } from "./types"
 
-type NewsletterSubscription =
-  Database["public"]["Tables"]["newsletter_subscriptions"]["Row"]
-type SubscriptionSource =
-  | "onboarding_auto"
-  | "terms_and_conditions"
-  | "manual_button"
-  | "backfill"
-  | "admin"
-type SyncStatus = "pending" | "synced" | "failed" | "unsubscribed"
-
-interface SubscriptionResult {
-  success: boolean
-  subscription?: NewsletterSubscription
-  error?: string
-}
-
-export async function getSubscriptionStatus(
-  profileId: string,
-): Promise<NewsletterSubscription | null> {
+export const getSubscriptionStatus = composable(async (profileId: string) => {
   return await db
     .selectFrom("newsletter_subscriptions")
     .selectAll()
     .where("profile_id", "=", profileId)
     .executeTakeFirst()
     .then((result) => result ?? null)
-}
+})
 
-export async function subscribeProfile(
-  profileId: string,
-  source: SubscriptionSource,
-): Promise<SubscriptionResult> {
-  try {
-    const existingSubscription = await getSubscriptionStatus(profileId)
+export const subscribeProfile = composable(
+  async (profileId: string, source: SubscriptionSource) => {
+    const result = await getSubscriptionStatus(profileId)
 
-    if (existingSubscription) {
-      if (existingSubscription.consent_given) {
-        return {
-          success: true,
-          subscription: existingSubscription,
-        }
+    if (result.success && result.data) {
+      if (result.data.consent_given) {
+        return result.data
       }
 
       const nowIso = new Date().toISOString()
@@ -62,10 +39,7 @@ export async function subscribeProfile(
         .returningAll()
         .executeTakeFirstOrThrow()
 
-      return {
-        success: true,
-        subscription: updatedSubscription,
-      }
+      return updatedSubscription
     }
 
     const nowIso = new Date().toISOString()
@@ -83,75 +57,54 @@ export async function subscribeProfile(
       .returningAll()
       .executeTakeFirstOrThrow()
 
-    return {
-      success: true,
-      subscription: newSubscription,
-    }
-  } catch (error) {
-    console.error("Error subscribing profile:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    }
+    return newSubscription
+  },
+)
+
+export const unsubscribeProfile = composable(async (profileId: string) => {
+  const result = await getSubscriptionStatus(profileId)
+
+  if (!result.success) {
+    throw new Error("No subscription found")
   }
-}
 
-export async function unsubscribeProfile(
-  profileId: string,
-): Promise<SubscriptionResult> {
-  try {
-    const existingSubscription = await getSubscriptionStatus(profileId)
-
-    if (!existingSubscription) {
-      return {
-        success: false,
-        error: "No subscription found",
-      }
-    }
-
-    const updatedSubscription = await db
-      .updateTable("newsletter_subscriptions")
-      .set({
-        consent_given: false,
-        unsubscribed_at: new Date().toISOString(),
-        subscription_source: null,
-        sync_status: "unsubscribed" as SyncStatus,
-      })
-      .where("profile_id", "=", profileId)
-      .returningAll()
-      .executeTakeFirstOrThrow()
-
-    return {
-      success: true,
-      subscription: updatedSubscription,
-    }
-  } catch (error) {
-    console.error("Error unsubscribing profile:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    }
+  if (!result.data) {
+    throw new Error("No subscription found")
   }
-}
 
-export async function updateSyncStatus(
-  profileId: string,
-  syncStatus: SyncStatus,
-  listmonkSubscriberId?: number,
-): Promise<SubscriptionResult> {
-  try {
-    const existingSubscription = await getSubscriptionStatus(profileId)
+  const updatedSubscription = await db
+    .updateTable("newsletter_subscriptions")
+    .set({
+      consent_given: false,
+      unsubscribed_at: new Date().toISOString(),
+      subscription_source: null,
+      sync_status: "unsubscribed" as SyncStatus,
+    })
+    .where("profile_id", "=", profileId)
+    .returningAll()
+    .executeTakeFirstOrThrow()
 
-    if (!existingSubscription) {
-      return {
-        success: false,
-        error: "No subscription found",
-      }
+  return updatedSubscription
+})
+
+export const updateSyncStatus = composable(
+  async (
+    profileId: string,
+    syncStatus: SyncStatus,
+    listmonkSubscriberId?: number,
+  ) => {
+    const result = await getSubscriptionStatus(profileId)
+
+    if (!result.success) {
+      throw new Error("No subscription found")
+    }
+
+    if (!result.data) {
+      throw new Error("No subscription found")
     }
 
     const nowIso = new Date().toISOString()
 
-    // Build base update payload
     type UpdatePayload = {
       sync_status: SyncStatus
       last_sync_attempt_at: string
@@ -168,7 +121,6 @@ export async function updateSyncStatus(
       }),
     }
 
-    // Keep consent fields consistent with sync status
     if (syncStatus === "unsubscribed") {
       updatePayload.consent_given = false
       updatePayload.unsubscribed_at = nowIso
@@ -184,15 +136,6 @@ export async function updateSyncStatus(
       .returningAll()
       .executeTakeFirstOrThrow()
 
-    return {
-      success: true,
-      subscription: updatedSubscription,
-    }
-  } catch (error) {
-    console.error("Error updating sync status:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-    }
-  }
-}
+    return updatedSubscription
+  },
+)
