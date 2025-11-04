@@ -124,18 +124,6 @@ export const AdminViewEventParticipantsTable: FC<
           }
         : {}),
     }),
-    validateBeforeSave: (participant) => {
-      if (participant.flag && participant.flag !== "none") {
-        if (
-          !participant.flag_notes ||
-          participant.flag_notes.trim().length === 0
-        ) {
-          throw new Error(
-            "Flag notes são obrigatórias quando uma flag está configurada",
-          )
-        }
-      }
-    },
   })
 
   const { acceptedInProcess, applications } = countParticipants(participants)

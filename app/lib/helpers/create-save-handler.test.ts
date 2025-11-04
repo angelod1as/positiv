@@ -110,44 +110,22 @@ describe("createSaveHandler", () => {
     expect(formData.get("status")).toBe("completed")
   })
 
-  it("should call validation before save if provided", async () => {
-    const mockValidate = vi.fn()
+  it("should always call fetcher.submit (no client-side validation)", async () => {
+    // Since we removed validateBeforeSave, the fetcher should always be called
+    // Server-side validation will handle all validation logic
     const handleSave = createSaveHandler({
       data: testData,
       fetcher: mockFetcher,
       intent: "update-item",
-      validateBeforeSave: mockValidate,
     })
 
     await handleSave("1", "status", "pending")
 
-    expect(mockValidate).toHaveBeenCalledWith(testData[0], "status", "pending")
+    // Fetcher is always called now
     expect(mockSubmit).toHaveBeenCalled()
   })
 
-  it("should rollback changes on validation error", async () => {
-    const handleSave = createSaveHandler({
-      data: testData,
-      fetcher: mockFetcher,
-      intent: "update-item",
-      validateBeforeSave: () => {
-        throw new Error("Validation failed")
-      },
-    })
-
-    const originalStatus = testData[0].status
-
-    // Validation errors get caught by composable and return { success: false }
-    // Then our code throws the generic error message
-    await expect(handleSave("1", "status", "invalid")).rejects.toThrow(
-      "Ops, algo deu errado ao salvar seu valor",
-    )
-
-    expect(testData[0].status).toBe(originalStatus)
-    expect(mockSubmit).not.toHaveBeenCalled()
-  })
-
-  it("should rollback changes on submit error", async () => {
+  it("should rollback changes on submit error without throwing", async () => {
     mockSubmit.mockResolvedValue({ success: false, errors: [] })
 
     const handleSave = createSaveHandler({
@@ -158,17 +136,10 @@ describe("createSaveHandler", () => {
 
     const originalStatus = testData[0].status
 
-    try {
-      await handleSave("1", "status", "pending")
-      // Should not reach here
-      expect.fail("Should have thrown an error")
-    } catch (error) {
-      expect(error).toBeInstanceOf(Error)
-      expect((error as Error).message).toBe(
-        "Ops, algo deu errado ao salvar seu valor",
-      )
-    }
+    // Should not throw - error is in fetcher.data for sendToast to handle
+    await handleSave("1", "status", "pending")
 
+    // Verify rollback happened
     expect(testData[0].status).toBe(originalStatus)
   })
 
