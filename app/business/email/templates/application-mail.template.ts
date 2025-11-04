@@ -1,4 +1,5 @@
 import { POSITIV_URL } from "~/lib/constants/constants"
+import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
 
@@ -6,17 +7,18 @@ import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types
  * Application Email Template
  * Positiv Email Design System - Brand Purple Theme
  * Sent when a user successfully applies to an event
+ * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const applicationMailTemplate = (
   profile: NonNullable<ProfileWithRoles>,
   event: Omit<ViewEvent, "is_applied">,
 ): string => {
   const { date, time } = formatDateTime(event.time_event_start)
-  const displayName = profile.social_name || profile.full_name
+  const displayName = sanitizeHtml(profile.social_name || profile.full_name || "")
 
   const details = [
-    ["Evento", `${event.emoji} ${event.title}`],
-    ["Local", event.location],
+    ["Evento", `${sanitizeHtml(event.emoji || "")} ${sanitizeHtml(event.title || "")}`],
+    ["Local", sanitizeHtml(event.location || "")],
     ["Data", date],
     ["Horário de início", time],
   ]
@@ -55,7 +57,7 @@ export const applicationMailTemplate = (
 
               <!-- Intro Paragraph -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                ${displayName}, você se inscreveu com sucesso no evento <strong>${event.emoji}&nbsp;${event.title}</strong>!
+                ${displayName}, você se inscreveu com sucesso no evento <strong>${sanitizeHtml(event.emoji || "")}&nbsp;${sanitizeHtml(event.title || "")}</strong>!
               </p>
 
               <!-- Event Details Section -->

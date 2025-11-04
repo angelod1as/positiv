@@ -1,4 +1,5 @@
 import { POSITIV_URL } from "~/lib/constants/constants"
+import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ViewEvent } from "~types/database/entities.types"
 
@@ -6,6 +7,7 @@ import type { ViewEvent } from "~types/database/entities.types"
  * Reminder Email Template
  * Positiv Email Design System - Brand Purple Theme
  * Sent when event registrations open for users who requested a reminder
+ * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const reminderMailTemplate = (
   event: Omit<ViewEvent, "is_applied">,
@@ -17,8 +19,8 @@ export const reminderMailTemplate = (
     formatDateTime(event.time_application_end)
 
   const details = [
-    ["Evento", `${event.emoji} ${event.title}`],
-    ["Local", event.location],
+    ["Evento", `${sanitizeHtml(event.emoji || "")} ${sanitizeHtml(event.title || "")}`],
+    ["Local", sanitizeHtml(event.location || "")],
     ["Data do evento", date],
     ["Horário de início", time],
     ["Inscrições abrem em", `${applicationOpenDate} às ${applicationOpenTime}`],
@@ -62,7 +64,7 @@ export const reminderMailTemplate = (
 
               <!-- Intro Paragraph -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                Surpresa! As inscrições para o evento <strong>${event.emoji}&nbsp;${event.title}</strong> estão abertas!
+                Surpresa! As inscrições para o evento <strong>${sanitizeHtml(event.emoji || "")}&nbsp;${sanitizeHtml(event.title || "")}</strong> estão abertas!
               </p>
 
               <!-- CTA Button -->
