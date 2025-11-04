@@ -149,15 +149,37 @@ export async function updateSyncStatus(
       }
     }
 
+    const nowIso = new Date().toISOString()
+
+    // Build base update payload
+    type UpdatePayload = {
+      sync_status: SyncStatus
+      last_sync_attempt_at: string
+      listmonk_subscriber_id?: number
+      consent_given?: boolean
+      unsubscribed_at?: string | null
+    }
+
+    const updatePayload: UpdatePayload = {
+      sync_status: syncStatus,
+      last_sync_attempt_at: nowIso,
+      ...(listmonkSubscriberId !== undefined && {
+        listmonk_subscriber_id: listmonkSubscriberId,
+      }),
+    }
+
+    // Keep consent fields consistent with sync status
+    if (syncStatus === "unsubscribed") {
+      updatePayload.consent_given = false
+      updatePayload.unsubscribed_at = nowIso
+    } else if (syncStatus === "synced" || syncStatus === "pending") {
+      updatePayload.consent_given = true
+      updatePayload.unsubscribed_at = null
+    }
+
     const updatedSubscription = await db
       .updateTable("newsletter_subscriptions")
-      .set({
-        sync_status: syncStatus,
-        last_sync_attempt_at: new Date().toISOString(),
-        ...(listmonkSubscriberId !== undefined && {
-          listmonk_subscriber_id: listmonkSubscriberId,
-        }),
-      })
+      .set(updatePayload)
       .where("profile_id", "=", profileId)
       .returningAll()
       .executeTakeFirstOrThrow()
