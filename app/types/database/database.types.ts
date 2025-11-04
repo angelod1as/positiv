@@ -305,9 +305,10 @@ export type Database = {
       newsletter_subscriptions: {
         Row: {
           consent_given: boolean
-          consent_given_at: string | null
           created_at: string
+          first_consent_given_at: string | null
           id: string
+          last_consent_given_at: string | null
           last_sync_attempt_at: string | null
           listmonk_subscriber_id: number | null
           profile_id: string
@@ -319,9 +320,10 @@ export type Database = {
         }
         Insert: {
           consent_given?: boolean
-          consent_given_at?: string | null
           created_at?: string
+          first_consent_given_at?: string | null
           id?: string
+          last_consent_given_at?: string | null
           last_sync_attempt_at?: string | null
           listmonk_subscriber_id?: number | null
           profile_id: string
@@ -333,9 +335,10 @@ export type Database = {
         }
         Update: {
           consent_given?: boolean
-          consent_given_at?: string | null
           created_at?: string
+          first_consent_given_at?: string | null
           id?: string
+          last_consent_given_at?: string | null
           last_sync_attempt_at?: string | null
           listmonk_subscriber_id?: number | null
           profile_id?: string
