@@ -1,6 +1,7 @@
 import { applySchema } from "composable-functions"
 import { agreeToTermsSchema, contextSchema } from "../common"
-import { subscribeProfile, unsubscribeProfile } from "../newsletter/subscription-helpers.server"
+import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
+import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
 
 export const agreeToTerms = applySchema(
   agreeToTermsSchema,
@@ -42,20 +43,35 @@ export const agreeToTerms = applySchema(
   // Determine subscription source based on whether this is initial onboarding
   // or a manual change after completing basic data
   const isOnboarding = !currentProfile || !currentProfile.basic_data_filled
-  const subscriptionSource = isOnboarding ? "onboarding_auto" : "terms_and_conditions"
+  const subscriptionSource = isOnboarding
+    ? "onboarding_auto"
+    : "terms_and_conditions"
 
   if (wantsMarketing) {
-    const result = await subscribeProfile(profileId, subscriptionSource)
+    const result = await subscribeProfileToNewsletter(
+      profileId,
+      subscriptionSource,
+    )
     if (!result.success) {
-      console.error("Failed to subscribe profile:", result.error)
-      throw new Error("Problema ao processar preferência de emails")
+      console.error(
+        "Failed to subscribe profile to newsletter:",
+        result.errors.map(e => e.message).join(", "),
+      )
+      return {
+        ...context,
+        newsletterSubscriptionError:
+          "Não foi possível inscrevê-lo na newsletter. Entre em contato com os administradores em partypositiv@gmail.com",
+      }
     }
   } else {
     const result = await unsubscribeProfile(profileId)
     // It's ok if unsubscribe fails because no subscription exists
-    if (!result.success && result.error !== "No subscription found") {
-      console.error("Failed to unsubscribe profile:", result.error)
-      throw new Error("Problema ao processar preferência de emails")
+    if (!result.success) {
+      const errorMessage = result.errors.map(e => e.message).join(", ")
+      if (!errorMessage.includes("No subscription found")) {
+        console.error("Failed to unsubscribe profile:", errorMessage)
+        throw new Error("Problema ao processar preferência de emails")
+      }
     }
   }
 

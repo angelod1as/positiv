@@ -33,7 +33,7 @@ describe("agreeToTerms", () => {
     // Setup default mocks for subscription helpers
     vi.mocked(subscribeProfile).mockResolvedValue({
       success: true,
-      subscription: {
+      data: {
         id: "sub-123",
         profile_id: "profile-123",
         consent_given: true,
@@ -48,11 +48,12 @@ describe("agreeToTerms", () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
+      errors: [],
     })
 
     vi.mocked(unsubscribeProfile).mockResolvedValue({
       success: true,
-      subscription: {
+      data: {
         id: "sub-123",
         profile_id: "profile-123",
         consent_given: false,
@@ -67,6 +68,7 @@ describe("agreeToTerms", () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
+      errors: [],
     })
   })
 
@@ -184,7 +186,7 @@ describe("agreeToTerms", () => {
   it("should handle unsubscribe when no subscription exists", async () => {
     vi.mocked(unsubscribeProfile).mockResolvedValue({
       success: false,
-      error: "No subscription found",
+      errors: [new Error("No subscription found")],
     })
 
     const context = createContext({

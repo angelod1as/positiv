@@ -144,7 +144,8 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
       const result = await subscribeProfileToNewsletter(profile.id, "onboarding_auto")
 
       expect(result.success).toBe(false)
-      expect(result.error).toContain("Failed to sync")
+      expect(result.errors.length).toBeGreaterThan(0)
+      expect(result.errors[0].message).toContain("Failed to sync")
 
       const subscription = await kysely
         .selectFrom("newsletter_subscriptions")
@@ -164,7 +165,7 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
       )
 
       expect(result.success).toBe(false)
-      expect(result.error).toBeDefined()
+      expect(result.errors.length).toBeGreaterThan(0)
     })
   })
 
