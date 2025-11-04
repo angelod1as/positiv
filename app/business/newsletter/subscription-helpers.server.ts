@@ -43,15 +43,21 @@ export async function subscribeProfile(
         }
       }
 
+      const nowIso = new Date().toISOString()
       const updatedSubscription = await db
         .updateTable("newsletter_subscriptions")
-        .set({
+        .set((eb) => ({
           consent_given: true,
-          subscribed_at: new Date().toISOString(),
+          first_consent_given_at: eb.fn.coalesce(
+            "first_consent_given_at",
+            eb.val(nowIso),
+          ),
+          last_consent_given_at: nowIso,
+          subscribed_at: nowIso,
           subscription_source: source,
           sync_status: "pending" as SyncStatus,
           unsubscribed_at: null,
-        })
+        }))
         .where("profile_id", "=", profileId)
         .returningAll()
         .executeTakeFirstOrThrow()
@@ -62,13 +68,15 @@ export async function subscribeProfile(
       }
     }
 
+    const nowIso = new Date().toISOString()
     const newSubscription = await db
       .insertInto("newsletter_subscriptions")
       .values({
         profile_id: profileId,
         consent_given: true,
-        consent_given_at: new Date().toISOString(),
-        subscribed_at: new Date().toISOString(),
+        first_consent_given_at: nowIso,
+        last_consent_given_at: nowIso,
+        subscribed_at: nowIso,
         subscription_source: source,
         sync_status: "pending" as SyncStatus,
       })
