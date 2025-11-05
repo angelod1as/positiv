@@ -19,6 +19,7 @@ import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
+import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import { newsletterModalCookie, newsCookie } from "./business/session.server"
 import { Link } from "./components/atoms/link/link"
@@ -146,11 +147,46 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ params, request }: Route.ActionArgs) {
   const cookieHeader = request.headers.get("Cookie")
   const cookie = (await newsCookie.parse(cookieHeader)) || {}
   const formData = await inputFromForm(request)
   const { intent, thisUrl, newsVersion: submittedNewsVersion } = formData
+
+  if (intent === "newsletter-subscribe") {
+    const { currentProfile } = await getContext(request, params)
+
+    if (!currentProfile) {
+      return data(
+        { error: "Você precisa estar logado para se inscrever" },
+        { status: 401 },
+      )
+    }
+
+    const result = await subscribeProfileToNewsletter(
+      currentProfile.id,
+      "manual_button",
+    )
+
+    if (!result.success) {
+      return data(
+        { error: "Não foi possível concluir a inscrição. Tente novamente." },
+        { status: 500 },
+      )
+    }
+
+    return redirect(thisUrl as string)
+  }
+
+  if (intent === "newsletter-dismiss") {
+    const newsletterCookie = { dismissed: true }
+
+    return redirect(thisUrl as string, {
+      headers: {
+        "Set-Cookie": await newsletterModalCookie.serialize(newsletterCookie),
+      },
+    })
+  }
 
   if (
     cookie.showNews === "false" &&
