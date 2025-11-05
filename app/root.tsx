@@ -19,7 +19,8 @@ import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
-import { newsCookie } from "./business/session.server"
+import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
+import { newsletterModalCookie, newsCookie } from "./business/session.server"
 import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
@@ -104,6 +105,21 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       ? !currentProfile.race_color || currentProfile.race_color.length === 0
       : false
 
+    let shouldShowNewsletterModal = false
+    if (currentProfile) {
+      const subscriptionResult = await getSubscriptionStatus(currentProfile.id)
+      const subscription = subscriptionResult.success
+        ? subscriptionResult.data
+        : null
+
+      const newsletterCookie =
+        (await newsletterModalCookie.parse(cookieHeader)) || {}
+      const isNotSubscribed = !subscription || !subscription.consent_given
+      const notDismissed = newsletterCookie.dismissed !== true
+
+      shouldShowNewsletterModal = isNotSubscribed && notDismissed
+    }
+
     return data(
       {
         currentUser,
@@ -112,6 +128,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isProdInDev,
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
+        shouldShowNewsletterModal,
       },
       { headers },
     )
@@ -124,6 +141,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isProdInDev: null,
       isThereAnyNews: null,
       needsProfileUpdate: false,
+      shouldShowNewsletterModal: false,
     }
   }
 }
