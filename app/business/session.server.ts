@@ -29,3 +29,5 @@ export const rulesSessionStorage = createCookieSessionStorage<
 export const newsCookie = createCookie("show-news", {
   maxAge: 34560000, // max value
 })
+
+export const newsletterModalCookie = createCookie("newsletter-modal")
