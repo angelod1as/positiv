@@ -26,6 +26,7 @@ import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
+import { NewsletterSubscriptionModal } from "./components/organisms/newsletter-subscription-modal"
 import { ProfileUpdateGuard } from "./components/organisms/profile-update-guard/profile-update-guard"
 
 // COMMENT OUT when offline
@@ -238,6 +239,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     isProdInDev,
     isThereAnyNews = false,
     needsProfileUpdate = false,
+    shouldShowNewsletterModal = false,
   } = loaderData
 
   const location = useLocation()
@@ -252,6 +254,12 @@ export default function App({ loaderData }: Route.ComponentProps) {
     }
   }, [toast])
 
+  const authFlowPaths = ["/login", "/cadastro", "/conta/dados-basicos"]
+  const isAuthFlow = authFlowPaths.some((path) =>
+    location.pathname.startsWith(path),
+  )
+  const showNewsletterModal = shouldShowNewsletterModal && !isAuthFlow
+
   return (
     <>
       <Header
@@ -265,6 +273,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         currentPath={location.pathname}
         needsProfileUpdate={needsProfileUpdate}
       />
+      <NewsletterSubscriptionModal open={showNewsletterModal} />
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
