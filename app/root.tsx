@@ -12,7 +12,11 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router"
-import { getToast } from "remix-toast"
+import {
+  getToast,
+  redirectWithError,
+  redirectWithSuccess,
+} from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
@@ -158,9 +162,9 @@ export async function action({ params, request }: Route.ActionArgs) {
     const { currentProfile } = await getContext(request, params)
 
     if (!currentProfile) {
-      return data(
-        { error: "Você precisa estar logado para se inscrever" },
-        { status: 401 },
+      return redirectWithError(
+        thisUrl as string,
+        "Você precisa estar logado para se inscrever",
       )
     }
 
@@ -170,13 +174,16 @@ export async function action({ params, request }: Route.ActionArgs) {
     )
 
     if (!result.success) {
-      return data(
-        { error: "Não foi possível concluir a inscrição. Tente novamente." },
-        { status: 500 },
+      return redirectWithError(
+        thisUrl as string,
+        "Não foi possível concluir a inscrição. Tente novamente.",
       )
     }
 
-    return redirect(thisUrl as string)
+    return redirectWithSuccess(
+      thisUrl as string,
+      "Inscrição realizada com sucesso!",
+    )
   }
 
   if (intent === "newsletter-dismiss") {
