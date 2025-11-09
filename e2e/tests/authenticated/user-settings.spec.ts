@@ -79,7 +79,15 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     // Go to terms page
     await page.goto('/conta/termos-e-condicoes')
     await expect(page).toHaveURL('/conta/termos-e-condicoes')
-    
+
+    // Dismiss newsletter modal if it appears (sessionStorage not persisted in storageState)
+    const newsletterHeading = page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })
+    const isModalVisible = await newsletterHeading.isVisible().catch(() => false)
+    if (isModalVisible) {
+      await page.getByRole('button', { name: /talvez mais tarde/i }).click()
+      await page.waitForLoadState('networkidle')
+    }
+
     // Ensure required checkboxes are checked first
     const agreeCheckbox = page.getByLabel('Li tudo e estou de acordo!')
     const systemEmailsCheckbox = page.getByLabel('Aceito receber e-mails gerais do sistema')
