@@ -39,15 +39,29 @@ setup('authenticate as user', async ({ page }) => {
   // Create a fresh regular user
   const email = generateTestEmail()
   const password = generateTestPassword()
-  
+
   console.info('Creating test user:', email)
   const testUser = await createTestUser(email, password)
   setupUsers.user = { ...testUser, password }
-  
+
   // User goes through full login flow
   await performUILogin(page, email, password)
-  
+
+  // Navigate to homepage to trigger and dismiss newsletter modal if it appears
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+
+  // Check if newsletter modal appears and dismiss it
+  const newsletterHeading = page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })
+  const isModalVisible = await newsletterHeading.isVisible().catch(() => false)
+
+  if (isModalVisible) {
+    // Click "Talvez mais tarde" to dismiss the modal
+    await page.getByRole('button', { name: /talvez mais tarde/i }).click()
+    await page.waitForLoadState('networkidle')
+  }
+
   await page.context().storageState({ path: userFile })
-  
+
   console.info('✅ User authentication state saved')
 })
