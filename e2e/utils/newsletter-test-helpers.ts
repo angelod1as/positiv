@@ -133,6 +133,7 @@ export async function deleteNewsletterTestUser(userId: string): Promise<void> {
 
     if (error) {
       console.error(`Error deleting newsletter test user ${userId}:`, error)
+      throw new Error(`Failed to delete auth user ${userId}: ${error.message}`)
     }
   } catch (error) {
     console.error(`Failed to delete newsletter test user ${userId}:`, error)
