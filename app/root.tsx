@@ -25,7 +25,10 @@ import "./app.css"
 import { getContext } from "./business/auth/auth.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
-import { newsCookie } from "./business/session.server"
+import {
+  newsCookie,
+  newsletterPreferenceCookie,
+} from "./business/session.server"
 import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
@@ -113,13 +116,29 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
     let shouldShowNewsletterModal = false
     if (currentProfile) {
-      const subscriptionResult = await getSubscriptionStatus(currentProfile.id)
-      const subscription = subscriptionResult.success
-        ? subscriptionResult.data
-        : null
+      const newsletterCookie =
+        (await newsletterPreferenceCookie.parse(cookieHeader)) || {}
 
-      const isNotSubscribed = !subscription || !subscription.consent_given
-      shouldShowNewsletterModal = isNotSubscribed
+      if (newsletterCookie.checked === true) {
+        shouldShowNewsletterModal = newsletterCookie.shouldShow === true
+      } else {
+        const subscriptionResult = await getSubscriptionStatus(
+          currentProfile.id,
+        )
+        const subscription = subscriptionResult.success
+          ? subscriptionResult.data
+          : null
+        const isNotSubscribed = !subscription || !subscription.consent_given
+        shouldShowNewsletterModal = isNotSubscribed
+
+        headers.append(
+          "Set-Cookie",
+          await newsletterPreferenceCookie.serialize({
+            checked: true,
+            shouldShow: isNotSubscribed,
+          }),
+        )
+      }
     }
 
     return data(
@@ -176,9 +195,19 @@ export async function action({ params, request }: Route.ActionArgs) {
       )
     }
 
+    const headers = new Headers()
+    headers.append(
+      "Set-Cookie",
+      await newsletterPreferenceCookie.serialize({
+        checked: true,
+        shouldShow: false,
+      }),
+    )
+
     return redirectWithSuccess(
       thisUrl as string,
       "Inscrição realizada com sucesso!",
+      { headers },
     )
   }
 
