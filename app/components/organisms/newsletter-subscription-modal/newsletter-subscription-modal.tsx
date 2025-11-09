@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import {
   AlertDialog,
@@ -18,6 +19,12 @@ export function NewsletterSubscriptionModal({
 }: NewsletterSubscriptionModalProps) {
   const fetcher = useFetcher()
   const isSubmitting = fetcher.state !== "idle"
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    const dismissed = sessionStorage.getItem("newsletter-modal-dismissed")
+    setIsVisible(open && dismissed !== "true")
+  }, [open])
 
   const handleSubscribe = () => {
     fetcher.submit(
@@ -30,17 +37,12 @@ export function NewsletterSubscriptionModal({
   }
 
   const handleDismiss = () => {
-    fetcher.submit(
-      {
-        intent: "newsletter-dismiss",
-        thisUrl: window.location.href,
-      },
-      { method: "POST" },
-    )
+    sessionStorage.setItem("newsletter-modal-dismissed", "true")
+    setIsVisible(false)
   }
 
   return (
-    <AlertDialog open={open}>
+    <AlertDialog open={isVisible}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Cadastre-se na nossa newsletter!</AlertDialogTitle>
