@@ -25,7 +25,7 @@ import "./app.css"
 import { getContext } from "./business/auth/auth.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
-import { newsletterModalCookie, newsCookie } from "./business/session.server"
+import { newsCookie } from "./business/session.server"
 import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
@@ -118,12 +118,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         ? subscriptionResult.data
         : null
 
-      const newsletterCookie =
-        (await newsletterModalCookie.parse(cookieHeader)) || {}
       const isNotSubscribed = !subscription || !subscription.consent_given
-      const notDismissed = newsletterCookie.dismissed !== true
-
-      shouldShowNewsletterModal = isNotSubscribed && notDismissed
+      shouldShowNewsletterModal = isNotSubscribed
     }
 
     return data(
@@ -184,16 +180,6 @@ export async function action({ params, request }: Route.ActionArgs) {
       thisUrl as string,
       "Inscrição realizada com sucesso!",
     )
-  }
-
-  if (intent === "newsletter-dismiss") {
-    const newsletterCookie = { dismissed: true }
-
-    return redirect(thisUrl as string, {
-      headers: {
-        "Set-Cookie": await newsletterModalCookie.serialize(newsletterCookie),
-      },
-    })
   }
 
   if (
