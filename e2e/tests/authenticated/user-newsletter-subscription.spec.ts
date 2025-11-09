@@ -16,17 +16,6 @@ import {
 test.describe('Newsletter Subscription Modal', () => {
   const createdUsers: NewsletterTestUser[] = []
 
-  test.beforeEach(async ({ page }) => {
-    // Clear existing auth state since we're logging in with dynamic users
-    await page.context().clearCookies()
-    // Navigate to homepage first so localStorage/sessionStorage are accessible
-    await page.goto('/')
-    await page.evaluate(() => {
-      localStorage.clear()
-      sessionStorage.clear()
-    })
-  })
-
   test.afterEach(async () => {
     // Cleanup all users created in this test
     for (const user of createdUsers) {
