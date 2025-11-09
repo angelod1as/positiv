@@ -62,7 +62,9 @@ export const subscribeProfileToNewsletter = composable(
         { profileId, email: profile.email, error: listmonkResult.error },
       )
       // TODO: Add cron job to retry failed syncs - query newsletter_subscriptions where sync_status='failed' and retry Listmonk sync
-      throw new Error("Failed to sync with newsletter service")
+      // Don't throw - allow subscription to succeed even if sync fails
+      // The subscription record is created and can be synced later
+      return
     }
 
     await updateSyncStatus(profileId, "synced")
