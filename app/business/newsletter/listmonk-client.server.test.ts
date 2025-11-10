@@ -76,10 +76,15 @@ describe("addSubscriber", () => {
   })
 
   it("should add a subscriber with correct data", async () => {
-    fetchSpy.mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { id: 123 } }),
-    } as Response)
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { results: [] } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 123 } }),
+      } as Response)
 
     const result = await addSubscriber({
       email: "test@example.com",
@@ -113,12 +118,17 @@ describe("addSubscriber", () => {
     )
   })
 
-  it("should succeed but log error when API returns error", async () => {
-    fetchSpy.mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: "Internal Server Error",
-    } as Response)
+  it("should fail when API returns error for new subscriber", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { results: [] } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+      } as Response)
 
     const result = await addSubscriber({
       email: "test@example.com",
@@ -127,10 +137,8 @@ describe("addSubscriber", () => {
       attributes: {},
     })
 
-    expect(result.success).toBe(true)
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to add subscriber")
-    )
+    expect(result.success).toBe(false)
+    expect(result.errors).toBeDefined()
   })
 
   it("should fail when network error occurs", async () => {
@@ -144,6 +152,137 @@ describe("addSubscriber", () => {
     })
 
     expect(result.success).toBe(false)
+  })
+
+  it("should handle 409 Conflict by checking if subscriber exists first", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { results: [{ id: 456, email: "existing@example.com", lists: [1] }] } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 456 } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 456 } }),
+      } as Response)
+
+    const result = await addSubscriber({
+      email: "existing@example.com",
+      name: "Existing User",
+      lists: [4],
+      attributes: { profile_id: "def-456" },
+    })
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      "https://listmonk.test/api/subscribers?query=subscribers.email='existing@example.com'",
+      expect.objectContaining({
+        method: "GET",
+      })
+    )
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "https://listmonk.test/api/subscribers/lists",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({
+          ids: [456],
+          action: "add",
+          target_list_ids: [4],
+          status: "confirmed",
+        }),
+      })
+    )
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      3,
+      "https://listmonk.test/api/subscribers/456",
+      expect.objectContaining({
+        method: "PUT",
+        body: expect.stringContaining('"profile_id":"def-456"'),
+      })
+    )
+  })
+
+  it("should create new subscriber when email does not exist", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { results: [] } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 789 } }),
+      } as Response)
+
+    const result = await addSubscriber({
+      email: "new@example.com",
+      name: "New User",
+      lists: [4],
+      attributes: { profile_id: "ghi-789" },
+    })
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      "https://listmonk.test/api/subscribers?query=subscribers.email='new@example.com'",
+      expect.objectContaining({
+        method: "GET",
+      })
+    )
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "https://listmonk.test/api/subscribers",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          email: "new@example.com",
+          name: "New User",
+          lists: [4],
+          attribs: { profile_id: "ghi-789" },
+        }),
+      })
+    )
+  })
+
+  it("should preserve existing lists when adding subscriber to new lists", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              { id: 456, email: "existing@example.com", lists: [{ id: 1 }, { id: 2 }] },
+            ],
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 456 } }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 456 } }),
+      } as Response)
+
+    const result = await addSubscriber({
+      email: "existing@example.com",
+      name: "Existing User",
+      lists: [4],
+      attributes: { profile_id: "def-456" },
+    })
+
+    expect(result.success).toBe(true)
+    const updateCall = fetchSpy.mock.calls.find(
+      (call) => call[0] === "https://listmonk.test/api/subscribers/456"
+    )
+    expect(updateCall).toBeDefined()
+    const updateBody = JSON.parse(updateCall?.[1]?.body as string)
+    expect(updateBody.lists).toEqual([1, 2, 4])
   })
 })
 
