@@ -52,22 +52,30 @@ async function getSubscriberByEmail(
   const { listmonkApiUrl, headers } = getListmonkConfig()
   const escapedEmail = email.replace(/'/g, "''")
 
-  const response = await fetch(
-    `${listmonkApiUrl}/api/subscribers?query=subscribers.email='${escapedEmail}'`,
-    {
-      method: "GET",
-      headers,
-    }
-  )
+  const url = `${listmonkApiUrl}/api/subscribers?query=subscribers.email='${escapedEmail}'`
+
+  console.info("[Listmonk Debug] Request URL:", url)
+  console.info("[Listmonk Debug] Request Headers:", JSON.stringify(headers, null, 2))
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers,
+  })
+
+  console.info("[Listmonk Debug] Response Status:", response.status, response.statusText)
 
   if (!response.ok) {
+    const responseText = await response.text()
+    console.error("[Listmonk Debug] Error Response Body:", responseText)
     throw new Error(
-      `Failed to query subscriber: ${response.status} ${response.statusText}`
+      `Failed to query subscriber: ${response.status} ${response.statusText}. Response: ${responseText}`
     )
   }
 
   const data = (await response.json()) as ListmonkSearchResponse
   const subscribers = data.data.results
+
+  console.info("[Listmonk Debug] Found subscribers:", subscribers.length)
 
   return subscribers.length > 0 ? subscribers[0] : null
 }

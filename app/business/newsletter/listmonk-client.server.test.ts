@@ -292,6 +292,7 @@ describe("addSubscriber", () => {
       ok: false,
       status: 500,
       statusText: "Internal Server Error",
+      text: async () => "Internal server error details",
     } as Response)
 
     const result = await addSubscriber({
