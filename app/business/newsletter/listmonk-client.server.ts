@@ -61,10 +61,9 @@ async function getSubscriberByEmail(
   )
 
   if (!response.ok) {
-    console.error(
+    throw new Error(
       `Failed to query subscriber: ${response.status} ${response.statusText}`
     )
-    return null
   }
 
   const data = (await response.json()) as ListmonkSearchResponse
@@ -77,16 +76,19 @@ async function updateSubscriberAttributes(
   id: number,
   name: string,
   attributes: Record<string, unknown>,
-  existingLists: number[]
+  existingLists: number[],
+  existingAttribs?: Record<string, unknown>
 ): Promise<void> {
   const { listmonkApiUrl, headers } = getListmonkConfig()
+
+  const mergedAttribs = { ...(existingAttribs ?? {}), ...attributes }
 
   const response = await fetch(`${listmonkApiUrl}/api/subscribers/${id}`, {
     method: "PUT",
     headers,
     body: JSON.stringify({
       name,
-      attribs: attributes,
+      attribs: mergedAttribs,
       lists: existingLists,
     }),
   })
@@ -110,7 +112,8 @@ export const addSubscriber = composable(
         existingSubscriber.id,
         params.name,
         params.attributes,
-        allListIds
+        allListIds,
+        existingSubscriber.attribs
       )
     } else {
       const { listmonkApiUrl, headers } = getListmonkConfig()
