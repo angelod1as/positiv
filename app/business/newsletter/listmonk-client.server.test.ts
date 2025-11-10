@@ -158,11 +158,7 @@ describe("addSubscriber", () => {
     fetchSpy
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ data: { results: [{ id: 456, email: "existing@example.com", lists: [1] }] } }),
-      } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 456 } }),
+        json: async () => ({ data: { results: [{ id: 456, email: "existing@example.com", lists: [{ id: 1 }] }] } }),
       } as Response)
       .mockResolvedValueOnce({
         ok: true,
@@ -186,25 +182,13 @@ describe("addSubscriber", () => {
     )
     expect(fetchSpy).toHaveBeenNthCalledWith(
       2,
-      "https://listmonk.test/api/subscribers/lists",
-      expect.objectContaining({
-        method: "PUT",
-        body: JSON.stringify({
-          ids: [456],
-          action: "add",
-          target_list_ids: [4],
-          status: "confirmed",
-        }),
-      })
-    )
-    expect(fetchSpy).toHaveBeenNthCalledWith(
-      3,
       "https://listmonk.test/api/subscribers/456",
       expect.objectContaining({
         method: "PUT",
         body: expect.stringContaining('"profile_id":"def-456"'),
       })
     )
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
   })
 
   it("should create new subscriber when email does not exist", async () => {
@@ -264,10 +248,6 @@ describe("addSubscriber", () => {
         ok: true,
         json: async () => ({ data: { id: 456 } }),
       } as Response)
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ data: { id: 456 } }),
-      } as Response)
 
     const result = await addSubscriber({
       email: "existing@example.com",
@@ -277,12 +257,34 @@ describe("addSubscriber", () => {
     })
 
     expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
     const updateCall = fetchSpy.mock.calls.find(
       (call) => call[0] === "https://listmonk.test/api/subscribers/456"
     )
     expect(updateCall).toBeDefined()
     const updateBody = JSON.parse(updateCall?.[1]?.body as string)
     expect(updateBody.lists).toEqual([1, 2, 4])
+  })
+
+  it("should escape single quotes in email addresses for API query", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { results: [] } }),
+    } as Response)
+
+    await addSubscriber({
+      email: "o'connor@example.com",
+      name: "Test User",
+      lists: [1],
+      attributes: {},
+    })
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://listmonk.test/api/subscribers?query=subscribers.email='o''connor@example.com'",
+      expect.objectContaining({
+        method: "GET",
+      })
+    )
   })
 })
 
