@@ -161,23 +161,39 @@ export const addSubscriber = composable(
   }
 )
 
-export const removeSubscriber = composable(async (id: number): Promise<void> => {
-  const { listmonkApiUrl, headers } = getListmonkConfig()
+export const removeSubscriber = composable(
+  async (email: string): Promise<void> => {
+    const existingSubscriber = await getSubscriberByEmail(email)
 
-  const response = await fetch(
-    `${listmonkApiUrl}/api/subscribers/${id}/blocklist`,
-    {
+    if (!existingSubscriber) {
+      return
+    }
+
+    const listIds = existingSubscriber.lists.map((list) => list.id)
+
+    if (listIds.length === 0) {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
       method: "PUT",
       headers,
-    }
-  )
+      body: JSON.stringify({
+        ids: [existingSubscriber.id],
+        action: "remove",
+        target_list_ids: listIds,
+      }),
+    })
 
-  if (!response.ok) {
-    console.error(
-      `Failed to remove subscriber: ${response.status} ${response.statusText}`
-    )
+    if (!response.ok) {
+      throw new Error(
+        `Failed to remove subscriber from lists: ${response.status} ${response.statusText}`
+      )
+    }
   }
-})
+)
 
 export const createCampaign = composable(
   async (data: Record<string, unknown>): Promise<void> => {
