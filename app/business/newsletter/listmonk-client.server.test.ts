@@ -173,9 +173,10 @@ describe("addSubscriber", () => {
     })
 
     expect(result.success).toBe(true)
+    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'existing@example.com'")
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
-      "https://listmonk.test/api/subscribers?query=subscribers.email='existing@example.com'",
+      `https://listmonk.test/api/subscribers?query=${expectedEncodedQuery}`,
       expect.objectContaining({
         method: "GET",
       })
@@ -210,9 +211,10 @@ describe("addSubscriber", () => {
     })
 
     expect(result.success).toBe(true)
+    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'new@example.com'")
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
-      "https://listmonk.test/api/subscribers?query=subscribers.email='new@example.com'",
+      `https://listmonk.test/api/subscribers?query=${expectedEncodedQuery}`,
       expect.objectContaining({
         method: "GET",
       })
@@ -279,8 +281,32 @@ describe("addSubscriber", () => {
       attributes: {},
     })
 
+    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'o''connor@example.com'")
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://listmonk.test/api/subscribers?query=subscribers.email='o''connor@example.com'",
+      `https://listmonk.test/api/subscribers?query=${expectedEncodedQuery}`,
+      expect.objectContaining({
+        method: "GET",
+      })
+    )
+  })
+
+  it("should URL-encode the query parameter", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { results: [] } }),
+    } as Response)
+
+    await addSubscriber({
+      email: "test@example.com",
+      name: "Test User",
+      lists: [1],
+      attributes: {},
+    })
+
+    // The query parameter should be URL-encoded
+    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'test@example.com'")
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `https://listmonk.test/api/subscribers?query=${expectedEncodedQuery}`,
       expect.objectContaining({
         method: "GET",
       })
