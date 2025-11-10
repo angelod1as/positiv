@@ -8,6 +8,20 @@ interface AddSubscriberParams {
   attributes: Record<string, unknown>
 }
 
+interface ListmonkSubscriber {
+  id: number
+  email: string
+  name: string
+  lists: Array<{ id: number }>
+  attribs: Record<string, unknown>
+}
+
+interface ListmonkSearchResponse {
+  data: {
+    results: ListmonkSubscriber[]
+  }
+}
+
 function getListmonkConfig() {
   const { listmonkApiUrl, listmonkApiUsername, listmonkApiPassword } = env()
 
@@ -32,25 +46,94 @@ export const testConnection = composable(async (): Promise<void> => {
   await fetch(`${listmonkApiUrl}/api/subscribers`, { headers })
 })
 
+async function getSubscriberByEmail(
+  email: string
+): Promise<ListmonkSubscriber | null> {
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+  const escapedEmail = email.replace(/'/g, "''")
+
+  const response = await fetch(
+    `${listmonkApiUrl}/api/subscribers?query=subscribers.email='${escapedEmail}'`,
+    {
+      method: "GET",
+      headers,
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to query subscriber: ${response.status} ${response.statusText}`
+    )
+  }
+
+  const data = (await response.json()) as ListmonkSearchResponse
+  const subscribers = data.data.results
+
+  return subscribers.length > 0 ? subscribers[0] : null
+}
+
+async function updateSubscriberAttributes(
+  id: number,
+  name: string,
+  attributes: Record<string, unknown>,
+  existingLists: number[],
+  existingAttribs?: Record<string, unknown>
+): Promise<void> {
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+
+  const mergedAttribs = { ...(existingAttribs ?? {}), ...attributes }
+
+  const response = await fetch(`${listmonkApiUrl}/api/subscribers/${id}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      name,
+      attribs: mergedAttribs,
+      lists: existingLists,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to update subscriber: ${response.status} ${response.statusText}`
+    )
+  }
+}
+
 export const addSubscriber = composable(
   async (params: AddSubscriberParams): Promise<void> => {
-    const { listmonkApiUrl, headers } = getListmonkConfig()
+    const existingSubscriber = await getSubscriberByEmail(params.email)
 
-    const response = await fetch(`${listmonkApiUrl}/api/subscribers`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        email: params.email,
-        name: params.name,
-        lists: params.lists,
-        attribs: params.attributes,
-      }),
-    })
+    if (existingSubscriber) {
+      const existingListIds = existingSubscriber.lists.map((list) => list.id)
+      const allListIds = [...new Set([...existingListIds, ...params.lists])]
 
-    if (!response.ok) {
-      console.error(
-        `Failed to add subscriber: ${response.status} ${response.statusText}`
+      await updateSubscriberAttributes(
+        existingSubscriber.id,
+        params.name,
+        params.attributes,
+        allListIds,
+        existingSubscriber.attribs
       )
+    } else {
+      const { listmonkApiUrl, headers } = getListmonkConfig()
+
+      const response = await fetch(`${listmonkApiUrl}/api/subscribers`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          email: params.email,
+          name: params.name,
+          lists: params.lists,
+          attribs: params.attributes,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(
+          `Failed to add subscriber: ${response.status} ${response.statusText}`
+        )
+      }
     }
   }
 )
