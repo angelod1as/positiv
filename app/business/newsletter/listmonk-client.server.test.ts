@@ -286,6 +286,72 @@ describe("addSubscriber", () => {
       })
     )
   })
+
+  it("should throw error when subscriber lookup fails", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+    } as Response)
+
+    const result = await addSubscriber({
+      email: "test@example.com",
+      name: "Test User",
+      lists: [1],
+      attributes: {},
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.errors?.[0]?.message).toContain("Failed to query subscriber")
+  })
+
+  it("should merge existing attributes when updating subscriber", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              {
+                id: 456,
+                email: "existing@example.com",
+                lists: [{ id: 1 }],
+                attribs: {
+                  existing_field: "old_value",
+                  another_field: "keep_this",
+                },
+              },
+            ],
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { id: 456 } }),
+      } as Response)
+
+    const result = await addSubscriber({
+      email: "existing@example.com",
+      name: "Updated User",
+      lists: [1],
+      attributes: {
+        existing_field: "new_value",
+        new_field: "added",
+      },
+    })
+
+    expect(result.success).toBe(true)
+    const updateCall = fetchSpy.mock.calls.find(
+      (call) => call[0] === "https://listmonk.test/api/subscribers/456"
+    )
+    expect(updateCall).toBeDefined()
+    const updateBody = JSON.parse(updateCall?.[1]?.body as string)
+    expect(updateBody.attribs).toEqual({
+      existing_field: "new_value",
+      another_field: "keep_this",
+      new_field: "added",
+    })
+  })
 })
 
 describe("removeSubscriber", () => {
