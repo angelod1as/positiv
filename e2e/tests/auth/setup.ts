@@ -39,15 +39,32 @@ setup('authenticate as user', async ({ page }) => {
   // Create a fresh regular user
   const email = generateTestEmail()
   const password = generateTestPassword()
-  
+
   console.info('Creating test user:', email)
   const testUser = await createTestUser(email, password)
   setupUsers.user = { ...testUser, password }
-  
+
   // User goes through full login flow
   await performUILogin(page, email, password)
-  
+
+  // Wait a moment for any async operations to complete (like newsletter subscription)
+  await page.waitForLoadState('networkidle')
+
+  // Navigate to homepage to check if newsletter modal appears
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+
+  // If newsletter modal appears, dismiss it to ensure clean state for other tests
+  const newsletterHeading = page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })
+  const isModalVisible = await newsletterHeading.isVisible().catch(() => false)
+
+  if (isModalVisible) {
+    console.info('Newsletter modal detected, dismissing for clean state')
+    await page.getByRole('button', { name: /talvez mais tarde/i }).click()
+    await page.waitForLoadState('networkidle')
+  }
+
   await page.context().storageState({ path: userFile })
-  
+
   console.info('✅ User authentication state saved')
 })

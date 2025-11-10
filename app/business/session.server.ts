@@ -29,3 +29,9 @@ export const rulesSessionStorage = createCookieSessionStorage<
 export const newsCookie = createCookie("show-news", {
   maxAge: 34560000, // max value
 })
+
+export const newsletterPreferenceCookie = createCookie("newsletter-preference", {
+  httpOnly: true,
+  sameSite: "lax",
+  secure: process.env.NODE_ENV === "production",
+})
