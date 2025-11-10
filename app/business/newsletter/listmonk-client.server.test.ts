@@ -479,45 +479,137 @@ describe("removeSubscriber", () => {
     vi.clearAllMocks()
   })
 
-  it("should blocklist a subscriber by id", async () => {
-    fetchSpy.mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { id: 123, status: "blocklisted" } }),
-    } as Response)
+  it("should query for subscriber by email first", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              {
+                id: 456,
+                email: "unsubscribe@example.com",
+                lists: [{ id: 1 }, { id: 4 }],
+              },
+            ],
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      } as Response)
 
-    const result = await removeSubscriber(123)
+    const result = await removeSubscriber("unsubscribe@example.com")
 
     expect(result.success).toBe(true)
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://listmonk.test/api/subscribers/123/blocklist",
+
+    const expectedEncodedQuery = encodeURIComponent(
+      "subscribers.email ILIKE 'unsubscribe@example.com'"
+    )
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      `https://listmonk.test/api/subscribers?query=${expectedEncodedQuery}`,
+      expect.objectContaining({
+        method: "GET",
+      })
+    )
+  })
+
+  it("should remove subscriber from ALL lists using dedicated endpoint", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              {
+                id: 456,
+                email: "unsubscribe@example.com",
+                lists: [{ id: 1 }, { id: 4 }, { id: 7 }],
+              },
+            ],
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({}),
+      } as Response)
+
+    const result = await removeSubscriber("unsubscribe@example.com")
+
+    expect(result.success).toBe(true)
+
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      "https://listmonk.test/api/subscribers/lists",
       expect.objectContaining({
         method: "PUT",
         headers: expect.objectContaining({
           Authorization: "Basic dGVzdHVzZXI6dGVzdHBhc3M=",
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          ids: [456],
+          action: "remove",
+          target_list_ids: [1, 4, 7],
         }),
       })
     )
   })
 
-  it("should succeed but log error when API returns error", async () => {
-    fetchSpy.mockResolvedValue({
-      ok: false,
-      status: 404,
-      statusText: "Not Found",
+  it("should handle subscriber not found gracefully", async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: {
+          results: [],
+        },
+      }),
     } as Response)
 
-    const result = await removeSubscriber(123)
+    const result = await removeSubscriber("nonexistent@example.com")
 
     expect(result.success).toBe(true)
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to remove subscriber")
-    )
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
   })
 
-  it("should fail when network error occurs", async () => {
-    fetchSpy.mockRejectedValue(new Error("Network error"))
+  it("should fail when query fails", async () => {
+    fetchSpy.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      statusText: "Internal Server Error",
+    } as Response)
 
-    const result = await removeSubscriber(123)
+    const result = await removeSubscriber("error@example.com")
+
+    expect(result.success).toBe(false)
+  })
+
+  it("should fail when list removal fails", async () => {
+    fetchSpy
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            results: [
+              {
+                id: 456,
+                email: "unsubscribe@example.com",
+                lists: [{ id: 1 }],
+              },
+            ],
+          },
+        }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        statusText: "Bad Request",
+      } as Response)
+
+    const result = await removeSubscriber("unsubscribe@example.com")
 
     expect(result.success).toBe(false)
   })
