@@ -52,8 +52,11 @@ async function getSubscriberByEmail(
   const { listmonkApiUrl, headers } = getListmonkConfig()
   const escapedEmail = email.replace(/'/g, "''")
 
+  const queryParam = `subscribers.email ILIKE '${escapedEmail}'`
+  const encodedQuery = encodeURIComponent(queryParam)
+
   const response = await fetch(
-    `${listmonkApiUrl}/api/subscribers?query=subscribers.email='${escapedEmail}'`,
+    `${listmonkApiUrl}/api/subscribers?query=${encodedQuery}`,
     {
       method: "GET",
       headers,
