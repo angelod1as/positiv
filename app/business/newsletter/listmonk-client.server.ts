@@ -75,11 +75,34 @@ async function getSubscriberByEmail(
   return subscribers.length > 0 ? subscribers[0] : null
 }
 
+async function addSubscriberToLists(
+  subscriberId: number,
+  listIds: number[]
+): Promise<void> {
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+
+  const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      ids: [subscriberId],
+      action: "add",
+      target_list_ids: listIds,
+      status: "confirmed",
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to add subscriber to lists: ${response.status} ${response.statusText}`
+    )
+  }
+}
+
 async function updateSubscriberAttributes(
   id: number,
   name: string,
   attributes: Record<string, unknown>,
-  existingLists: number[],
   existingAttribs?: Record<string, unknown>
 ): Promise<void> {
   const { listmonkApiUrl, headers } = getListmonkConfig()
@@ -92,7 +115,6 @@ async function updateSubscriberAttributes(
     body: JSON.stringify({
       name,
       attribs: mergedAttribs,
-      lists: existingLists,
     }),
   })
 
@@ -108,16 +130,14 @@ export const addSubscriber = composable(
     const existingSubscriber = await getSubscriberByEmail(params.email)
 
     if (existingSubscriber) {
-      const existingListIds = existingSubscriber.lists.map((list) => list.id)
-      const allListIds = [...new Set([...existingListIds, ...params.lists])]
-
       await updateSubscriberAttributes(
         existingSubscriber.id,
         params.name,
         params.attributes,
-        allListIds,
         existingSubscriber.attribs
       )
+
+      await addSubscriberToLists(existingSubscriber.id, params.lists)
     } else {
       const { listmonkApiUrl, headers } = getListmonkConfig()
 
