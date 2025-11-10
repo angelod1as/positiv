@@ -32,9 +32,15 @@ export async function performUILoginWithPrefilledData(page: Page, email: string,
  * Use this when you specifically need to test the onboarding process.
  * For most tests, use loginAsUser() which uses pre-filled data.
  */
-export async function performUILogin(page: Page, email: string, password: string): Promise<void> {
+export async function performUILogin(
+  page: Page,
+  email: string,
+  password: string,
+  options?: { subscribeToNewsletter?: boolean }
+): Promise<void> {
+  const { subscribeToNewsletter = true } = options || {}
   const loginPage = new LoginPage(page)
-  
+
   // Perform login
   await loginPage.login(email, password)
 
@@ -44,10 +50,18 @@ export async function performUILogin(page: Page, email: string, password: string
     const agreeCheckbox = page.locator('label', { hasText: 'Li tudo e estou de acordo!' })
     await expect(agreeCheckbox).toBeVisible({ timeout: 10000 })
     await agreeCheckbox.click()
-    
+
+    // Handle newsletter subscription checkbox (checked by default in UI)
+    // Only uncheck if explicitly requested
+    if (!subscribeToNewsletter) {
+      const mktEmailsCheckbox = page.locator('label', { hasText: 'Aceito receber e-mails sobre a Positiv' })
+      await expect(mktEmailsCheckbox).toBeVisible({ timeout: 10000 })
+      await mktEmailsCheckbox.click()
+    }
+
     const continueButton = page.getByRole('button', { name: 'Continuar' })
     await expect(continueButton).toBeVisible()
-    
+
     // Click and wait for navigation in a single action
     await continueButton.click()
     await page.waitForURL(/dados-basicos$/, { waitUntil: 'networkidle' })

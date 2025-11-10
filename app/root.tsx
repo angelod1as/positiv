@@ -12,18 +12,28 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router"
-import { getToast } from "remix-toast"
+import {
+  getToast,
+  redirectWithError,
+  redirectWithSuccess,
+} from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
-import { newsCookie } from "./business/session.server"
+import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
+import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
+import {
+  newsCookie,
+  newsletterPreferenceCookie,
+} from "./business/session.server"
 import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
+import { NewsletterSubscriptionModal } from "./components/organisms/newsletter-subscription-modal"
 import { ProfileUpdateGuard } from "./components/organisms/profile-update-guard/profile-update-guard"
 
 // COMMENT OUT when offline
@@ -104,6 +114,33 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       ? !currentProfile.race_color || currentProfile.race_color.length === 0
       : false
 
+    let shouldShowNewsletterModal = false
+    if (currentProfile) {
+      const newsletterCookie =
+        (await newsletterPreferenceCookie.parse(cookieHeader)) || {}
+
+      if (newsletterCookie.checked === true) {
+        shouldShowNewsletterModal = newsletterCookie.shouldShow === true
+      } else {
+        const subscriptionResult = await getSubscriptionStatus(
+          currentProfile.id,
+        )
+        const subscription = subscriptionResult.success
+          ? subscriptionResult.data
+          : null
+        const isNotSubscribed = !subscription || !subscription.consent_given
+        shouldShowNewsletterModal = isNotSubscribed
+
+        headers.append(
+          "Set-Cookie",
+          await newsletterPreferenceCookie.serialize({
+            checked: true,
+            shouldShow: isNotSubscribed,
+          }),
+        )
+      }
+    }
+
     return data(
       {
         currentUser,
@@ -112,6 +149,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         isProdInDev,
         isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
+        shouldShowNewsletterModal,
       },
       { headers },
     )
@@ -124,15 +162,54 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       isProdInDev: null,
       isThereAnyNews: null,
       needsProfileUpdate: false,
+      shouldShowNewsletterModal: false,
     }
   }
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ params, request }: Route.ActionArgs) {
   const cookieHeader = request.headers.get("Cookie")
   const cookie = (await newsCookie.parse(cookieHeader)) || {}
   const formData = await inputFromForm(request)
   const { intent, thisUrl, newsVersion: submittedNewsVersion } = formData
+
+  if (intent === "newsletter-subscribe") {
+    const { currentProfile } = await getContext(request, params)
+
+    if (!currentProfile) {
+      return redirectWithError(
+        thisUrl as string,
+        "Você precisa estar logado para se inscrever",
+      )
+    }
+
+    const result = await subscribeProfileToNewsletter(
+      currentProfile.id,
+      "manual_button",
+    )
+
+    if (!result.success) {
+      return redirectWithError(
+        thisUrl as string,
+        "Não foi possível concluir a inscrição. Tente novamente.",
+      )
+    }
+
+    const headers = new Headers()
+    headers.append(
+      "Set-Cookie",
+      await newsletterPreferenceCookie.serialize({
+        checked: true,
+        shouldShow: false,
+      }),
+    )
+
+    return redirectWithSuccess(
+      thisUrl as string,
+      "Inscrição realizada com sucesso!",
+      { headers },
+    )
+  }
 
   if (
     cookie.showNews === "false" &&
@@ -184,6 +261,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
     isProdInDev,
     isThereAnyNews = false,
     needsProfileUpdate = false,
+    shouldShowNewsletterModal = false,
   } = loaderData
 
   const location = useLocation()
@@ -198,6 +276,12 @@ export default function App({ loaderData }: Route.ComponentProps) {
     }
   }, [toast])
 
+  const authFlowPaths = ["/login", "/cadastro", "/conta/dados-basicos"]
+  const isAuthFlow = authFlowPaths.some((path) =>
+    location.pathname.startsWith(path),
+  )
+  const showNewsletterModal = shouldShowNewsletterModal && !isAuthFlow
+
   return (
     <>
       <Header
@@ -211,6 +295,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         currentPath={location.pathname}
         needsProfileUpdate={needsProfileUpdate}
       />
+      <NewsletterSubscriptionModal open={showNewsletterModal} />
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>

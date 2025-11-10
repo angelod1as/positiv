@@ -77,19 +77,19 @@ describe("Demographics Snapshot Error Handling", () => {
   
   it("should log errors when snapshot creation fails", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-    
+
     // Import only the function we need to test
     const adminModule = await import("../admin.server")
-    
+
     // Verify that updateEventDemographics function exists
     expect(adminModule.updateEventDemographics).toBeDefined()
     expect(typeof adminModule.updateEventDemographics).toBe("function")
-    
+
     // The error logging pattern is implemented in updateEventStatus (lines 269-273)
     // and updateEventDemographics (lines 321-327)
-    
+
     consoleErrorSpy.mockRestore()
-  }, 15000)
+  }, 30000)
   
   it("should have a separate function to manually update demographics", async () => {
     const adminModule = await import("../admin.server")

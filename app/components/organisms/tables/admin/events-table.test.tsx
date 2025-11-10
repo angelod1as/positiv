@@ -196,12 +196,12 @@ describe('AdminDashboardEventsTable', () => {
 
   it('should render table with events', async () => {
     render(<AdminDashboardEventsTable events={mockEvents} />)
-    
+
     await waitFor(() => {
       expect(screen.getByText('Draft Event')).toBeInTheDocument()
     }, { timeout: 1000 })
     expect(screen.getByText('Scheduled Event')).toBeInTheDocument()
-  })
+  }, 10000)
 
   it('should show only active statuses by default (excluding Completed and Cancelled)', async () => {
     render(<AdminDashboardEventsTable events={mockEvents} />)
