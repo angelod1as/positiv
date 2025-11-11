@@ -201,7 +201,8 @@ describe("addSubscriber", () => {
         body: JSON.stringify({
           ids: [456],
           action: "add",
-          target_list_ids: [4],
+          target_list_ids: [1, 4],
+          status: "confirmed",
         }),
       })
     )
@@ -289,7 +290,8 @@ describe("addSubscriber", () => {
     expect(listBody).toEqual({
       ids: [456],
       action: "add",
-      target_list_ids: [4],
+      target_list_ids: [1, 2, 4],
+      status: "confirmed",
     })
   })
 
@@ -455,7 +457,8 @@ describe("addSubscriber", () => {
         body: JSON.stringify({
           ids: [789],
           action: "add",
-          target_list_ids: [4],
+          target_list_ids: [1, 2, 4],
+          status: "confirmed",
         }),
       })
     )
