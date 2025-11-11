@@ -202,7 +202,6 @@ describe("addSubscriber", () => {
           ids: [456],
           action: "add",
           target_list_ids: [4],
-          status: "confirmed",
         }),
       })
     )
@@ -291,7 +290,6 @@ describe("addSubscriber", () => {
       ids: [456],
       action: "add",
       target_list_ids: [4],
-      status: "confirmed",
     })
   })
 
@@ -458,7 +456,6 @@ describe("addSubscriber", () => {
           ids: [789],
           action: "add",
           target_list_ids: [4],
-          status: "confirmed",
         }),
       })
     )

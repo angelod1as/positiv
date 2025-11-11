@@ -89,7 +89,6 @@ async function addSubscriberToLists(
       ids: [subscriberId],
       action: "add",
       target_list_ids: listIds,
-      status: "confirmed",
     }),
   })
 
