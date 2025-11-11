@@ -89,6 +89,7 @@ async function addSubscriberToLists(
       ids: [subscriberId],
       action: "add",
       target_list_ids: listIds,
+      status: "confirmed",
     }),
   })
 
@@ -142,7 +143,10 @@ export const addSubscriber = composable(
         existingSubscriber.attribs
       )
 
-      await addSubscriberToLists(existingSubscriber.id, params.lists)
+      const existingListIds = existingSubscriber.lists.map((list) => list.id)
+      const allListIds = [...new Set([...existingListIds, ...params.lists])]
+
+      await addSubscriberToLists(existingSubscriber.id, allListIds)
     } else {
       const { listmonkApiUrl, headers } = getListmonkConfig()
 
