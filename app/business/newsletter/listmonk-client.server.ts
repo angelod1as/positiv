@@ -50,10 +50,18 @@ async function getSubscriberByEmail(
   email: string
 ): Promise<ListmonkSubscriber | null> {
   const { listmonkApiUrl, headers } = getListmonkConfig()
-  const escapedEmail = email.replace(/'/g, "''")
+
+  const sanitizedEmail = email
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "''")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
+
+  const queryParam = `subscribers.email ILIKE '${sanitizedEmail}' ESCAPE '\\'`
+  const encodedQuery = encodeURIComponent(queryParam)
 
   const response = await fetch(
-    `${listmonkApiUrl}/api/subscribers?query=subscribers.email='${escapedEmail}'`,
+    `${listmonkApiUrl}/api/subscribers?query=${encodedQuery}`,
     {
       method: "GET",
       headers,
@@ -61,8 +69,9 @@ async function getSubscriberByEmail(
   )
 
   if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
     throw new Error(
-      `Failed to query subscriber: ${response.status} ${response.statusText}`
+      `Failed to query subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
     )
   }
 
@@ -72,11 +81,44 @@ async function getSubscriberByEmail(
   return subscribers.length > 0 ? subscribers[0] : null
 }
 
+async function addSubscriberToLists(
+  subscriberId: number,
+  listIds: number[]
+): Promise<void> {
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+
+  const uniqueIds = Array.from(
+    new Set(listIds.filter((id) => Number.isInteger(id) && id > 0))
+  )
+
+  if (uniqueIds.length === 0) {
+    return
+  }
+
+  const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      ids: [subscriberId],
+      action: "add",
+      target_list_ids: uniqueIds,
+      status: "confirmed",
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
+    throw new Error(
+      `Failed to add subscriber to lists: ${response.status} ${response.statusText}. Response: ${errorBody}`
+    )
+  }
+}
+
 async function updateSubscriberAttributes(
   id: number,
+  email: string,
   name: string,
   attributes: Record<string, unknown>,
-  existingLists: number[],
   existingAttribs?: Record<string, unknown>
 ): Promise<void> {
   const { listmonkApiUrl, headers } = getListmonkConfig()
@@ -87,15 +129,16 @@ async function updateSubscriberAttributes(
     method: "PUT",
     headers,
     body: JSON.stringify({
+      email,
       name,
       attribs: mergedAttribs,
-      lists: existingLists,
     }),
   })
 
   if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
     throw new Error(
-      `Failed to update subscriber: ${response.status} ${response.statusText}`
+      `Failed to update subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
     )
   }
 }
@@ -105,16 +148,18 @@ export const addSubscriber = composable(
     const existingSubscriber = await getSubscriberByEmail(params.email)
 
     if (existingSubscriber) {
+      await updateSubscriberAttributes(
+        existingSubscriber.id,
+        params.email,
+        params.name,
+        params.attributes,
+        existingSubscriber.attribs
+      )
+
       const existingListIds = existingSubscriber.lists.map((list) => list.id)
       const allListIds = [...new Set([...existingListIds, ...params.lists])]
 
-      await updateSubscriberAttributes(
-        existingSubscriber.id,
-        params.name,
-        params.attributes,
-        allListIds,
-        existingSubscriber.attribs
-      )
+      await addSubscriberToLists(existingSubscriber.id, allListIds)
     } else {
       const { listmonkApiUrl, headers } = getListmonkConfig()
 
@@ -130,31 +175,49 @@ export const addSubscriber = composable(
       })
 
       if (!response.ok) {
+        const errorBody = await response.text().catch(() => "Unable to read error body")
         throw new Error(
-          `Failed to add subscriber: ${response.status} ${response.statusText}`
+          `Failed to add subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
         )
       }
     }
   }
 )
 
-export const removeSubscriber = composable(async (id: number): Promise<void> => {
-  const { listmonkApiUrl, headers } = getListmonkConfig()
+export const removeSubscriber = composable(
+  async (email: string): Promise<void> => {
+    const existingSubscriber = await getSubscriberByEmail(email)
 
-  const response = await fetch(
-    `${listmonkApiUrl}/api/subscribers/${id}/blocklist`,
-    {
+    if (!existingSubscriber) {
+      return
+    }
+
+    const listIds = existingSubscriber.lists.map((list) => list.id)
+
+    if (listIds.length === 0) {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
       method: "PUT",
       headers,
-    }
-  )
+      body: JSON.stringify({
+        ids: [existingSubscriber.id],
+        action: "remove",
+        target_list_ids: listIds,
+      }),
+    })
 
-  if (!response.ok) {
-    console.error(
-      `Failed to remove subscriber: ${response.status} ${response.statusText}`
-    )
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "Unable to read error body")
+      throw new Error(
+        `Failed to remove subscriber from lists: ${response.status} ${response.statusText}. Response: ${errorBody}`
+      )
+    }
   }
-})
+)
 
 export const createCampaign = composable(
   async (data: Record<string, unknown>): Promise<void> => {
