@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { describe, it, expect, vi, beforeEach } from "vitest"
 import { loader, action } from "./unsubscribe"
 import type { Route } from "./+types/unsubscribe"
 
@@ -37,10 +37,6 @@ vi.mock("remix-toast", () => ({
 describe("Newsletter Unsubscribe Page - Loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
   })
 
   it("should fail - loader requires profileId param", async () => {
@@ -171,10 +167,6 @@ describe("Newsletter Unsubscribe Page - Loader", () => {
 describe("Newsletter Unsubscribe Page - Action", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
   })
 
   it("should fail - action requires profileId param", async () => {
