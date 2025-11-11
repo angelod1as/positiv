@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { loader, action } from "./unsubscribe"
 import type { Route } from "./+types/unsubscribe"
+import * as subscriptionHelpers from "~/business/newsletter/subscription-helpers.server"
 
 vi.mock("~/business/newsletter/subscription-helpers.server", () => ({
   getSubscriptionStatus: vi.fn(),
@@ -52,11 +53,7 @@ describe("Newsletter Unsubscribe Page - Loader", () => {
   })
 
   it("should fail - loader validates profileId exists in database", async () => {
-    const { getSubscriptionStatus } = await import(
-      "~/business/newsletter/subscription-helpers.server"
-    )
-
-    vi.mocked(getSubscriptionStatus).mockResolvedValueOnce({
+    vi.mocked(subscriptionHelpers.getSubscriptionStatus).mockResolvedValueOnce({
       success: false,
       errors: [{ message: "No subscription found" }],
     } as never)
@@ -75,9 +72,6 @@ describe("Newsletter Unsubscribe Page - Loader", () => {
   })
 
   it("should fail - loader returns subscriber email and status", async () => {
-    const { getSubscriptionStatus } = await import(
-      "~/business/newsletter/subscription-helpers.server"
-    )
     const { db } = await import("~/lib/supabase/db.server")
 
     const mockSubscription = {
@@ -86,7 +80,7 @@ describe("Newsletter Unsubscribe Page - Loader", () => {
       sync_status: "synced" as const,
     }
 
-    vi.mocked(getSubscriptionStatus).mockResolvedValueOnce({
+    vi.mocked(subscriptionHelpers.getSubscriptionStatus).mockResolvedValueOnce({
       success: true,
       data: mockSubscription,
     } as never)
@@ -122,9 +116,6 @@ describe("Newsletter Unsubscribe Page - Loader", () => {
   })
 
   it("should fail - loader handles already unsubscribed state", async () => {
-    const { getSubscriptionStatus } = await import(
-      "~/business/newsletter/subscription-helpers.server"
-    )
     const { db } = await import("~/lib/supabase/db.server")
 
     const mockSubscription = {
@@ -133,7 +124,7 @@ describe("Newsletter Unsubscribe Page - Loader", () => {
       sync_status: "unsubscribed" as const,
     }
 
-    vi.mocked(getSubscriptionStatus).mockResolvedValueOnce({
+    vi.mocked(subscriptionHelpers.getSubscriptionStatus).mockResolvedValueOnce({
       success: true,
       data: mockSubscription,
     } as never)
@@ -187,11 +178,7 @@ describe("Newsletter Unsubscribe Page - Action", () => {
   })
 
   it("should fail - action calls unsubscribeProfile with correct profileId", async () => {
-    const { unsubscribeProfile } = await import(
-      "~/business/newsletter/subscription-helpers.server"
-    )
-
-    vi.mocked(unsubscribeProfile).mockResolvedValueOnce({
+    vi.mocked(subscriptionHelpers.unsubscribeProfile).mockResolvedValueOnce({
       success: true,
       data: {
         profile_id: "test-profile-id",
@@ -219,15 +206,13 @@ describe("Newsletter Unsubscribe Page - Action", () => {
       } as unknown as Route.ActionArgs)
     ).rejects.toThrow() // Should redirect
 
-    expect(unsubscribeProfile).toHaveBeenCalledWith("test-profile-id")
+    expect(subscriptionHelpers.unsubscribeProfile).toHaveBeenCalledWith(
+      "test-profile-id"
+    )
   })
 
   it("should fail - action handles unsubscribe errors gracefully", async () => {
-    const { unsubscribeProfile } = await import(
-      "~/business/newsletter/subscription-helpers.server"
-    )
-
-    vi.mocked(unsubscribeProfile).mockResolvedValueOnce({
+    vi.mocked(subscriptionHelpers.unsubscribeProfile).mockResolvedValueOnce({
       success: false,
       errors: [{ message: "Listmonk API error" }],
     } as never)
