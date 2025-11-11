@@ -1,5 +1,6 @@
 import { composable } from "composable-functions"
 import { db } from "~/lib/supabase/db.server"
+import { removeSubscriber } from "./listmonk-client.server"
 import type { SubscriptionSource, SyncStatus } from "./types"
 
 export const getSubscriptionStatus = composable(async (profileId: string) => {
@@ -72,13 +73,33 @@ export const unsubscribeProfile = composable(async (profileId: string) => {
     throw new Error("No subscription found")
   }
 
+  const profile = await db
+    .selectFrom("profiles")
+    .select("email")
+    .where("id", "=", profileId)
+    .executeTakeFirstOrThrow()
+
+  const removeResult = await removeSubscriber(profile.email)
+
+  const now = new Date().toISOString()
+  let syncStatus: SyncStatus = "unsubscribed"
+
+  if (!removeResult.success) {
+    syncStatus = "failed"
+    console.error(
+      "Failed to remove subscriber from Listmonk:",
+      removeResult.errors.map((e) => e.message).join(", "),
+    )
+  }
+
   const updatedSubscription = await db
     .updateTable("newsletter_subscriptions")
     .set({
       consent_given: false,
-      unsubscribed_at: new Date().toISOString(),
+      unsubscribed_at: now,
       subscription_source: null,
-      sync_status: "unsubscribed" as SyncStatus,
+      sync_status: syncStatus,
+      ...(syncStatus === "failed" && { last_sync_attempt_at: now }),
     })
     .where("profile_id", "=", profileId)
     .returningAll()
