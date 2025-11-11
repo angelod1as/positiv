@@ -187,14 +187,17 @@ describe("Newsletter Unsubscribe Page - Action", () => {
       },
     } as never)
 
-    const formData = new FormData()
+    const formData = new URLSearchParams()
     formData.append("profileId", "test-profile-id")
 
     const request = new Request(
       "https://positiv.com/newsletter/unsubscribe",
       {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
       }
     )
     const params = {}
@@ -217,14 +220,17 @@ describe("Newsletter Unsubscribe Page - Action", () => {
       errors: [{ message: "Listmonk API error" }],
     } as never)
 
-    const formData = new FormData()
+    const formData = new URLSearchParams()
     formData.append("profileId", "test-profile-id")
 
     const request = new Request(
       "https://positiv.com/newsletter/unsubscribe",
       {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
       }
     )
     const params = {}
