@@ -64,8 +64,9 @@ async function getSubscriberByEmail(
   )
 
   if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
     throw new Error(
-      `Failed to query subscriber: ${response.status} ${response.statusText}`
+      `Failed to query subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
     )
   }
 
@@ -93,14 +94,16 @@ async function addSubscriberToLists(
   })
 
   if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
     throw new Error(
-      `Failed to add subscriber to lists: ${response.status} ${response.statusText}`
+      `Failed to add subscriber to lists: ${response.status} ${response.statusText}. Response: ${errorBody}`
     )
   }
 }
 
 async function updateSubscriberAttributes(
   id: number,
+  email: string,
   name: string,
   attributes: Record<string, unknown>,
   existingAttribs?: Record<string, unknown>
@@ -113,14 +116,16 @@ async function updateSubscriberAttributes(
     method: "PUT",
     headers,
     body: JSON.stringify({
+      email,
       name,
       attribs: mergedAttribs,
     }),
   })
 
   if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
     throw new Error(
-      `Failed to update subscriber: ${response.status} ${response.statusText}`
+      `Failed to update subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
     )
   }
 }
@@ -132,6 +137,7 @@ export const addSubscriber = composable(
     if (existingSubscriber) {
       await updateSubscriberAttributes(
         existingSubscriber.id,
+        params.email,
         params.name,
         params.attributes,
         existingSubscriber.attribs
@@ -153,8 +159,9 @@ export const addSubscriber = composable(
       })
 
       if (!response.ok) {
+        const errorBody = await response.text().catch(() => "Unable to read error body")
         throw new Error(
-          `Failed to add subscriber: ${response.status} ${response.statusText}`
+          `Failed to add subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
         )
       }
     }
@@ -188,8 +195,9 @@ export const removeSubscriber = composable(
     })
 
     if (!response.ok) {
+      const errorBody = await response.text().catch(() => "Unable to read error body")
       throw new Error(
-        `Failed to remove subscriber from lists: ${response.status} ${response.statusText}`
+        `Failed to remove subscriber from lists: ${response.status} ${response.statusText}. Response: ${errorBody}`
       )
     }
   }
