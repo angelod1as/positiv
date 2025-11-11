@@ -177,7 +177,7 @@ describe("addSubscriber", () => {
     })
 
     expect(result.success).toBe(true)
-    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'existing@example.com'")
+    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'existing@example.com' ESCAPE '\\'")
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
       `https://listmonk.test/api/subscribers?query=${expectedEncodedQuery}`,
@@ -228,7 +228,7 @@ describe("addSubscriber", () => {
     })
 
     expect(result.success).toBe(true)
-    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'new@example.com'")
+    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'new@example.com' ESCAPE '\\'")
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
       `https://listmonk.test/api/subscribers?query=${expectedEncodedQuery}`,
@@ -308,7 +308,7 @@ describe("addSubscriber", () => {
       attributes: {},
     })
 
-    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'o''connor@example.com'")
+    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'o''connor@example.com' ESCAPE '\\'")
     expect(fetchSpy).toHaveBeenCalledWith(
       `https://listmonk.test/api/subscribers?query=${expectedEncodedQuery}`,
       expect.objectContaining({
@@ -331,7 +331,7 @@ describe("addSubscriber", () => {
     })
 
     // The query parameter should be URL-encoded
-    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'test@example.com'")
+    const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'test@example.com' ESCAPE '\\'")
     expect(fetchSpy).toHaveBeenCalledWith(
       `https://listmonk.test/api/subscribers?query=${expectedEncodedQuery}`,
       expect.objectContaining({
@@ -506,7 +506,7 @@ describe("removeSubscriber", () => {
     expect(result.success).toBe(true)
 
     const expectedEncodedQuery = encodeURIComponent(
-      "subscribers.email ILIKE 'unsubscribe@example.com'"
+      "subscribers.email ILIKE 'unsubscribe@example.com' ESCAPE '\\'"
     )
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,

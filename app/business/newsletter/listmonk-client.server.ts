@@ -50,9 +50,14 @@ async function getSubscriberByEmail(
   email: string
 ): Promise<ListmonkSubscriber | null> {
   const { listmonkApiUrl, headers } = getListmonkConfig()
-  const escapedEmail = email.replace(/'/g, "''")
 
-  const queryParam = `subscribers.email ILIKE '${escapedEmail}'`
+  const sanitizedEmail = email
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "''")
+    .replace(/%/g, "\\%")
+    .replace(/_/g, "\\_")
+
+  const queryParam = `subscribers.email ILIKE '${sanitizedEmail}' ESCAPE '\\'`
   const encodedQuery = encodeURIComponent(queryParam)
 
   const response = await fetch(
@@ -82,13 +87,21 @@ async function addSubscriberToLists(
 ): Promise<void> {
   const { listmonkApiUrl, headers } = getListmonkConfig()
 
+  const uniqueIds = Array.from(
+    new Set(listIds.filter((id) => Number.isInteger(id) && id > 0))
+  )
+
+  if (uniqueIds.length === 0) {
+    return
+  }
+
   const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
     method: "PUT",
     headers,
     body: JSON.stringify({
       ids: [subscriberId],
       action: "add",
-      target_list_ids: listIds,
+      target_list_ids: uniqueIds,
       status: "confirmed",
     }),
   })
