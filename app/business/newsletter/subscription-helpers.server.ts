@@ -79,34 +79,31 @@ export const unsubscribeProfile = composable(async (profileId: string) => {
     .where("id", "=", profileId)
     .executeTakeFirstOrThrow()
 
-  const updatedSubscription = await db
-    .updateTable("newsletter_subscriptions")
-    .set({
-      consent_given: false,
-      unsubscribed_at: new Date().toISOString(),
-      subscription_source: null,
-      sync_status: "unsubscribed" as SyncStatus,
-    })
-    .where("profile_id", "=", profileId)
-    .returningAll()
-    .executeTakeFirstOrThrow()
-
   const removeResult = await removeSubscriber(profile.email)
 
+  const now = new Date().toISOString()
+  let syncStatus: SyncStatus = "unsubscribed"
+
   if (!removeResult.success) {
+    syncStatus = "failed"
     console.error(
       "Failed to remove subscriber from Listmonk:",
       removeResult.errors.map((e) => e.message).join(", "),
     )
-    await db
-      .updateTable("newsletter_subscriptions")
-      .set({
-        sync_status: "failed" as SyncStatus,
-        last_sync_attempt_at: new Date().toISOString(),
-      })
-      .where("profile_id", "=", profileId)
-      .execute()
   }
+
+  const updatedSubscription = await db
+    .updateTable("newsletter_subscriptions")
+    .set({
+      consent_given: false,
+      unsubscribed_at: now,
+      subscription_source: null,
+      sync_status: syncStatus,
+      ...(syncStatus === "failed" && { last_sync_attempt_at: now }),
+    })
+    .where("profile_id", "=", profileId)
+    .returningAll()
+    .executeTakeFirstOrThrow()
 
   return updatedSubscription
 })
