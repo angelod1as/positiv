@@ -134,7 +134,7 @@ export const AdminViewEventParticipantsTable: FC<
       id="participants"
       sortField="social_name"
       sortOrder={1}
-      globalFilterFields={["full_name"]}
+      globalFilterFields={["full_name", "social_name"]}
       filters={filters}
       onFilter={handleFilter}
       onClearFilters={handleClearFilters}
@@ -225,7 +225,7 @@ export const AdminViewEventParticipantsTable: FC<
       <Column
         field="pronouns"
         header={profilePropMap("pronouns")}
-        body={(values) => values.pronouns.join(", ")}
+        body={(values) => values.pronouns?.join(", ") || "-"}
       />
       <Column
         field="gender"
