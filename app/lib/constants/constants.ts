@@ -1,4 +1,5 @@
 export const POSITIV_URL = "https://www.positivparty.com/"
+export const DASHBOARD_URL = `${POSITIV_URL}/dashboard`
 
 export const POSITIV_EMAIL = "contato@positivparty.com"
 

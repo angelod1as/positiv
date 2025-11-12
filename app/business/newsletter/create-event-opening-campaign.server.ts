@@ -1,9 +1,9 @@
 import { composable } from "composable-functions"
-import {
-  LISTMONK_EVENT_OPENING_TEMPLATE_ID,
-  POSITIV_URL,
-} from "~/lib/constants/constants"
 import { env } from "~/env.server"
+import {
+  DASHBOARD_URL,
+  LISTMONK_EVENT_OPENING_TEMPLATE_ID,
+} from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ViewEvent } from "~types/database/entities.types"
@@ -31,7 +31,7 @@ function getListmonkConfig() {
   }
 
   const basicAuthHeader = `Basic ${Buffer.from(
-    `${listmonkApiUsername}:${listmonkApiPassword}`
+    `${listmonkApiUsername}:${listmonkApiPassword}`,
   ).toString("base64")}`
 
   const headers = {
@@ -53,25 +53,23 @@ function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
   const sanitizedTitle = sanitizeHtml(event.title || "")
   const sanitizedLocation = sanitizeHtml(event.location || "")
 
-  const eventDisplay = [sanitizedEmoji, sanitizedTitle].filter(Boolean).join(" ")
-
   return `
 <div style="text-align: center; margin-bottom: 30px;">
   <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2;">
-    Novo evento disponível! 🎉
+    <span style="display: inline-block; line-height: 1;">🎉</span> Inscrições Abertas <span style="display: inline-block; line-height: 1;">🎉</span>
   </h1>
 </div>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-  As inscrições para <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong> acabam de abrir!
+  As inscrições para o evento <strong>${sanitizedEmoji ? `<span style="display: inline-block; line-height: 1;">${sanitizedEmoji}</span> ` : ""}${sanitizedTitle}</strong> acabaram de abrir!
 </p>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-  Corra e garanta sua vaga enquanto há tempo! ⚡
+  Corra já e garanta a sua vaga!
 </p>
 
 <div style="text-align: center; margin: 30px 0;">
-  <a href="${POSITIV_URL}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
+  <a href="${DASHBOARD_URL}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
     Inscreva-se agora!
   </a>
 </div>
@@ -79,7 +77,7 @@ function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
 <div style="background: #f9f9f9; border-radius: 8px; padding: 16px; margin: 0 0 20px 0;">
   <div style="margin-bottom: 8px; font-size: 14px;">
     <span style="color: #666;">Evento:</span>
-    <strong style="color: #333;">${eventDisplay}</strong>
+    <strong style="color: #333;">${sanitizedTitle}</strong>
   </div>
   <div style="margin-bottom: 8px; font-size: 14px;">
     <span style="color: #666;">Local:</span>
@@ -155,9 +153,11 @@ export const createEventOpeningCampaign = composable(
     })
 
     if (!response.ok) {
-      const errorBody = await response.text().catch(() => "Unable to read error body")
+      const errorBody = await response
+        .text()
+        .catch(() => "Unable to read error body")
       throw new Error(
-        `Failed to create campaign: ${response.status} ${response.statusText}. Response: ${errorBody}`
+        `Failed to create campaign: ${response.status} ${response.statusText}. Response: ${errorBody}`,
       )
     }
 
@@ -176,5 +176,5 @@ export const createEventOpeningCampaign = composable(
     }
 
     return result
-  }
+  },
 )
