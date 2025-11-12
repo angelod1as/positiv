@@ -46,3 +46,7 @@ export const RACE_COLOR = [
 
 export const LISTMONK_REGISTERED_LIST_ID = 1
 export const LISTMONK_TEST_LIST_ID = 2
+
+// Template IDs for Listmonk campaigns
+// TODO POS-257: Replace with actual template ID after creating template in Listmonk UI
+export const LISTMONK_EVENT_OPENING_TEMPLATE_ID = "REPLACE_WITH_TEMPLATE_ID"
