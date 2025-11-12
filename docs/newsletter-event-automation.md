@@ -111,6 +111,12 @@ export const checkEventStatus = (event_status: EventStatus) => ({
 })
 ```
 
+## Campaign Template
+
+Event opening emails use `event-opening.template.html` (duplicate of default wrapper).
+Template ID 7 stored in `LISTMONK_EVENT_OPENING_TEMPLATE_ID` constant.
+Campaign body (event data) gets injected via `{{ template "content" . }}` placeholder.
+
 ## Implementation Timeline
 
 - **POS-256** ✓ - Trigger documentation + Listmonk template creation
