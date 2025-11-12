@@ -225,7 +225,7 @@ export const AdminViewEventParticipantsTable: FC<
       <Column
         field="pronouns"
         header={profilePropMap("pronouns")}
-        body={(values) => values.pronouns.join(", ")}
+        body={(values) => values.pronouns?.join(", ") || "-"}
       />
       <Column
         field="gender"
