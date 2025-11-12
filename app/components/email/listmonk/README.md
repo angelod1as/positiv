@@ -128,10 +128,26 @@ Available Listmonk variables:
 
 ### System Variables
 ```
-{{ UnsubscribeURL }}        - Unsubscribe link
+{{ UnsubscribeURL }}        - Unsubscribe link (DO NOT USE - see below)
 {{ MessageURL }}            - View in browser link
 {{ TrackView }}             - Tracking pixel
 ```
+
+### ⚠️ Important: Custom Unsubscribe URL
+
+**DO NOT use `{{ UnsubscribeURL }}`** - Listmonk's built-in unsubscribe doesn't sync with the Positiv database.
+
+**ALWAYS use this pattern instead:**
+```html
+<a href="https://www.positivparty.com/newsletter/unsubscribe?id={{ .Subscriber.Attribs.profile_id }}">
+  Cancelar inscrição
+</a>
+```
+
+**Why:** We need to track unsubscribes in the Positiv database (`newsletter_subscriptions` table), not just Listmonk. The custom endpoint at `/newsletter/unsubscribe` handles both systems atomically:
+1. Updates Positiv database
+2. Calls Listmonk API to remove subscriber
+3. Syncs both systems correctly
 
 ### Transactional Data (transactional.html only)
 ```
