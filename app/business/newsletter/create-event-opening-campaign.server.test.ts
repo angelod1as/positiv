@@ -78,7 +78,7 @@ describe("createEventOpeningCampaign", () => {
       expect(callBody.type).toBe("regular")
       expect(callBody.content_type).toBe("html")
       expect(callBody.template_id).toBe(7)
-      expect(callBody.body).toContain("Novo evento disponível!")
+      expect(callBody.body).toContain("Inscrições Abertas")
     })
 
     it("should send campaign immediately when sendImmediately is true", async () => {
@@ -154,7 +154,7 @@ describe("createEventOpeningCampaign", () => {
       })
 
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(callBody.body).toContain("🎉&nbsp;Test Event")
+      expect(callBody.body).toContain('<span style="display: inline-block; line-height: 1;">🎉</span> Test Event')
     })
 
     it("should include event location", async () => {

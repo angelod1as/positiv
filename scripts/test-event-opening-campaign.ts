@@ -1,3 +1,4 @@
+import "dotenv/config"
 import { createEventOpeningCampaign } from "~/business/newsletter/create-event-opening-campaign.server"
 import { kysely } from "~/kysely"
 import { LISTMONK_TEST_LIST_ID } from "~/lib/constants/constants"
