@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import type { FetcherWithComponents } from 'react-router'
 import { AdminViewEventParticipantsTable } from './view-event-participants-table'
 import type { ProfileWithExtraData } from '~/business/admin/admin.server'
+import type { ComposableFetcherData } from '~types/database/entities.types'
 
 vi.mock('react-router', () => ({
   Link: ({
@@ -59,16 +61,16 @@ describe('AdminViewEventParticipantsTable - Search Functionality', () => {
     submit: vi.fn(),
     load: vi.fn(),
     state: 'idle' as const,
-    data: { success: true, data: null },
+    data: { success: true, intent: 'test', data: null },
     formData: undefined,
     formMethod: undefined,
     formAction: undefined,
     formEncType: undefined,
     text: undefined,
     json: undefined,
-  } as any
+  } as unknown as FetcherWithComponents<ComposableFetcherData>
 
-  const mockParticipants: ProfileWithExtraData[] = [
+  const mockParticipants: Partial<ProfileWithExtraData>[] = [
     {
       profile_id: '1',
       full_name: 'João Silva',
@@ -79,35 +81,26 @@ describe('AdminViewEventParticipantsTable - Search Functionality', () => {
       gender: ['Cisgênero'],
       orientation: ['Heterossexual'],
       pronouns: null,
-      birthday: null,
-      city: null,
-      state: null,
+      date_of_birth: null,
+      where_lives: null,
       race_color: null,
-      is_admin: false,
-      occupation: null,
-      about_me: null,
-      how_found: null,
+      rg: null,
+      rg_issuer: null,
+      general_notes: null,
+      how_came_to_us: null,
+      basic_data_filled: true,
+      became_veteran_date: null,
+      user_id: null,
       created_at: '2025-01-01T00:00:00Z',
-      whatsapp_optin: false,
-      newsletter_optin: false,
-      terms_accepted: true,
-      profile_complete: true,
-      event_participant_id: 'ep1',
+      id: 'ep1',
       application_status: 'finalised',
       attendance_status: 'attended',
       spot_type: 'regular',
       approved_to_attend: 'approved',
-      number_on_list: 1,
       flag: 'none',
       flag_notes: null,
       notes: null,
       is_veteran: false,
-      is_rookie: true,
-      participant_last_event_id: null,
-      participant_last_event_title: null,
-      participant_last_event_date: null,
-      participant_last_application_status: null,
-      participant_last_attendance_status: null,
     },
     {
       profile_id: '2',
@@ -118,36 +111,27 @@ describe('AdminViewEventParticipantsTable - Search Functionality', () => {
       cpf: null,
       gender: ['Cisgênero'],
       orientation: ['Heterossexual'],
-      pronouns: ['ela/dela'],
-      birthday: null,
-      city: null,
-      state: null,
+      pronouns: null,
+      date_of_birth: null,
+      where_lives: null,
       race_color: null,
-      is_admin: false,
-      occupation: null,
-      about_me: null,
-      how_found: null,
+      rg: null,
+      rg_issuer: null,
+      general_notes: null,
+      how_came_to_us: null,
+      basic_data_filled: true,
+      became_veteran_date: null,
+      user_id: null,
       created_at: '2025-01-01T00:00:00Z',
-      whatsapp_optin: false,
-      newsletter_optin: false,
-      terms_accepted: true,
-      profile_complete: true,
-      event_participant_id: 'ep2',
+      id: 'ep2',
       application_status: 'finalised',
       attendance_status: 'not-attended',
       spot_type: 'regular',
       approved_to_attend: 'approved',
-      number_on_list: 2,
       flag: 'none',
       flag_notes: null,
       notes: null,
       is_veteran: false,
-      is_rookie: false,
-      participant_last_event_id: null,
-      participant_last_event_title: null,
-      participant_last_event_date: null,
-      participant_last_application_status: null,
-      participant_last_attendance_status: null,
     },
     {
       profile_id: '3',
@@ -158,43 +142,34 @@ describe('AdminViewEventParticipantsTable - Search Functionality', () => {
       cpf: null,
       gender: ['Transgênero'],
       orientation: ['Pansexual'],
-      pronouns: ['ela/dela'],
-      birthday: null,
-      city: null,
-      state: null,
+      pronouns: null,
+      date_of_birth: null,
+      where_lives: null,
       race_color: null,
-      is_admin: false,
-      occupation: null,
-      about_me: null,
-      how_found: null,
+      rg: null,
+      rg_issuer: null,
+      general_notes: null,
+      how_came_to_us: null,
+      basic_data_filled: true,
+      became_veteran_date: null,
+      user_id: null,
       created_at: '2025-01-01T00:00:00Z',
-      whatsapp_optin: false,
-      newsletter_optin: false,
-      terms_accepted: true,
-      profile_complete: true,
-      event_participant_id: 'ep3',
+      id: 'ep3',
       application_status: 'pending',
       attendance_status: 'pending',
       spot_type: 'regular',
       approved_to_attend: 'rejected',
-      number_on_list: 3,
       flag: 'none',
       flag_notes: null,
       notes: null,
       is_veteran: true,
-      is_rookie: false,
-      participant_last_event_id: 'prev-event-1',
-      participant_last_event_title: 'Previous Event',
-      participant_last_event_date: '2024-12-01',
-      participant_last_application_status: 'finalised',
-      participant_last_attendance_status: 'attended',
     },
   ]
 
   it('should render table with participants', () => {
     render(
       <AdminViewEventParticipantsTable
-        participants={mockParticipants}
+        participants={mockParticipants as ProfileWithExtraData[]}
         eventId="event-1"
         fetcher={mockFetcher}
       />
@@ -208,7 +183,7 @@ describe('AdminViewEventParticipantsTable - Search Functionality', () => {
   it('should include full_name in search fields', () => {
     const { container } = render(
       <AdminViewEventParticipantsTable
-        participants={mockParticipants}
+        participants={mockParticipants as ProfileWithExtraData[]}
         eventId="event-1"
         fetcher={mockFetcher}
       />
@@ -221,7 +196,7 @@ describe('AdminViewEventParticipantsTable - Search Functionality', () => {
   it('should include social_name in search fields for comprehensive participant search', () => {
     const { container } = render(
       <AdminViewEventParticipantsTable
-        participants={mockParticipants}
+        participants={mockParticipants as ProfileWithExtraData[]}
         eventId="event-1"
         fetcher={mockFetcher}
       />
@@ -239,7 +214,7 @@ describe('AdminViewEventParticipantsTable - Search Functionality', () => {
     expect(() => {
       render(
         <AdminViewEventParticipantsTable
-          participants={participantsWithNullSocialName}
+          participants={participantsWithNullSocialName as ProfileWithExtraData[]}
           eventId="event-1"
           fetcher={mockFetcher}
         />
@@ -252,7 +227,7 @@ describe('AdminViewEventParticipantsTable - Search Functionality', () => {
   it('should display both full_name and social_name for participants who have both', () => {
     render(
       <AdminViewEventParticipantsTable
-        participants={mockParticipants}
+        participants={mockParticipants as ProfileWithExtraData[]}
         eventId="event-1"
         fetcher={mockFetcher}
       />
