@@ -1,17 +1,22 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
+import { BrowserRouter } from "react-router"
 import { FloatingWhatsappButton } from "./floating-whatsapp-button"
 import { POSITIV_WHATSAPP } from "~/lib/constants/constants"
 
+const renderWithRouter = (component: React.ReactElement) => {
+  return render(<BrowserRouter>{component}</BrowserRouter>)
+}
+
 describe("FloatingWhatsappButton", () => {
   it("should render the component", () => {
-    render(<FloatingWhatsappButton />)
+    renderWithRouter(<FloatingWhatsappButton />)
     const link = screen.getByRole("link", { name: /fale conosco/i })
     expect(link).toBeInTheDocument()
   })
 
   it("should have correct WhatsApp link with phone number", () => {
-    render(<FloatingWhatsappButton />)
+    renderWithRouter(<FloatingWhatsappButton />)
     const link = screen.getByRole("link", { name: /fale conosco/i })
     expect(link).toHaveAttribute("href")
     const href = link.getAttribute("href")
@@ -19,7 +24,7 @@ describe("FloatingWhatsappButton", () => {
   })
 
   it("should include pre-filled message in Portuguese", () => {
-    render(<FloatingWhatsappButton />)
+    renderWithRouter(<FloatingWhatsappButton />)
     const link = screen.getByRole("link", { name: /fale conosco/i })
     const href = link.getAttribute("href")
     expect(href).toContain("text=")
@@ -27,20 +32,20 @@ describe("FloatingWhatsappButton", () => {
   })
 
   it("should open in new tab", () => {
-    render(<FloatingWhatsappButton />)
+    renderWithRouter(<FloatingWhatsappButton />)
     const link = screen.getByRole("link", { name: /fale conosco/i })
     expect(link).toHaveAttribute("target", "_blank")
     expect(link).toHaveAttribute("rel", "noopener noreferrer")
   })
 
   it("should have proper accessibility attributes", () => {
-    render(<FloatingWhatsappButton />)
+    renderWithRouter(<FloatingWhatsappButton />)
     const link = screen.getByRole("link", { name: /fale conosco/i })
     expect(link).toHaveAccessibleName()
   })
 
   it("should display WhatsApp icon", () => {
-    render(<FloatingWhatsappButton />)
+    renderWithRouter(<FloatingWhatsappButton />)
     const link = screen.getByRole("link", { name: /fale conosco/i })
     const img = link.querySelector("img")
     expect(img).toBeInTheDocument()
@@ -48,7 +53,7 @@ describe("FloatingWhatsappButton", () => {
   })
 
   it("should have fixed positioning classes", () => {
-    const { container } = render(<FloatingWhatsappButton />)
+    const { container } = renderWithRouter(<FloatingWhatsappButton />)
     const button = container.firstChild as HTMLElement
     expect(button.className).toContain("fixed")
   })
