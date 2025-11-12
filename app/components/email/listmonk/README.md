@@ -2,11 +2,14 @@
 
 This directory contains email templates for [Listmonk](https://listmonk.app), our newsletter and campaign management system.
 
+These HTMLs are NOT used by our system, but imported manually into Listmonk.
+
 ## Template Files
 
 ## Overview
 
 Positiv uses **HTML templates with markdown** for campaigns. This approach provides:
+
 - Full brand control with gradient backgrounds and custom styling
 - Easy content editing with markdown
 - Reusable HTML snippets for rich components
@@ -77,6 +80,7 @@ The template supports full markdown:
 Copy HTML snippets from `SNIPPETS.md` and paste them into your campaign content:
 
 **Example campaign:**
+
 ```markdown
 # Novo Evento Disponível!
 
@@ -112,6 +116,7 @@ See `/app/components/email/_design-system.md` for complete specifications.
 Available Listmonk variables:
 
 ### Campaign Variables
+
 ```
 {{ .Campaign.Subject }}     - Campaign subject line
 {{ .Campaign.FromEmail }}   - Sender email
@@ -119,6 +124,7 @@ Available Listmonk variables:
 ```
 
 ### Subscriber Variables
+
 ```
 {{ .Subscriber.Email }}     - Subscriber email
 {{ .Subscriber.Name }}      - Subscriber name
@@ -127,6 +133,7 @@ Available Listmonk variables:
 ```
 
 ### System Variables
+
 ```
 {{ UnsubscribeURL }}        - Unsubscribe link (DO NOT USE - see below)
 {{ MessageURL }}            - View in browser link
@@ -138,6 +145,7 @@ Available Listmonk variables:
 **DO NOT use `{{ UnsubscribeURL }}`** - Listmonk's built-in unsubscribe doesn't sync with the Positiv database.
 
 **ALWAYS use this pattern instead:**
+
 ```html
 <a href="https://www.positivparty.com/newsletter/unsubscribe?id={{ .Subscriber.Attribs.profile_id }}">
   Cancelar inscrição
@@ -145,11 +153,13 @@ Available Listmonk variables:
 ```
 
 **Why:** We need to track unsubscribes in the Positiv database (`newsletter_subscriptions` table), not just Listmonk. The custom endpoint at `/newsletter/unsubscribe` handles both systems atomically:
+
 1. Updates Positiv database
 2. Calls Listmonk API to remove subscriber
 3. Syncs both systems correctly
 
 ### Transactional Data (transactional.html only)
+
 ```
 {{ .Tx.Data.key }}          - Custom data passed to template
 ```
@@ -168,6 +178,7 @@ Available Listmonk variables:
    - Renders inside the template wrapper
 
 3. **Final Email**:
+
    ```
    ┌──────────────────────────────────┐
    │  Gradient Background (Purple)    │
@@ -192,7 +203,7 @@ Available Listmonk variables:
 
 1. Start Mailhog: `pnpm email:test`
 2. Send test campaign from Listmonk
-3. View email at http://localhost:8025
+3. View email at <http://localhost:8025>
 
 ### Preview in Listmonk
 
@@ -225,6 +236,7 @@ The `default.html` template includes full markdown support:
 ## Support
 
 For questions about:
+
 - **Template structure**: See `/app/components/email/_design-system.md`
 - **Listmonk configuration**: See Listmonk docs
 - **Brand guidelines**: Contact design team
