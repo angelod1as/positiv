@@ -2,6 +2,8 @@ export const POSITIV_URL = "https://www.positivparty.com/"
 
 export const POSITIV_EMAIL = "contato@positivparty.com"
 
+export const POSITIV_WHATSAPP = "5511945970336"
+
 export const EVENT_PAGE_REGEXP =
   /dashboard\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/
 
