@@ -204,9 +204,14 @@ export async function action({ params, request }: Route.ActionArgs) {
       }),
     )
 
+    const successMessage =
+      result.data?.syncStatus === "failed"
+        ? "Inscrição realizada! Houve um problema temporário com o sistema de emails, mas entraremos em contato em breve."
+        : "Inscrição realizada com sucesso!"
+
     return redirectWithSuccess(
       thisUrl as string,
-      "Inscrição realizada com sucesso!",
+      successMessage,
       { headers },
     )
   }
