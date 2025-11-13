@@ -38,6 +38,9 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
       )
 
       expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.syncStatus).toBe("synced")
+      }
       expect(addSubscriberSpy).toHaveBeenCalledOnce()
 
       const callArgs = addSubscriberSpy.mock.calls[0][0]
@@ -111,6 +114,9 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
       const result = await subscribeProfileToNewsletter(profile.id, "manual_button")
 
       expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.syncStatus).toBe("synced")
+      }
 
       const subscription = await kysely
         .selectFrom("newsletter_subscriptions")
@@ -144,6 +150,9 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
       const result = await subscribeProfileToNewsletter(profile.id, "onboarding_auto")
 
       expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.syncStatus).toBe("failed")
+      }
 
       const subscription = await kysely
         .selectFrom("newsletter_subscriptions")
