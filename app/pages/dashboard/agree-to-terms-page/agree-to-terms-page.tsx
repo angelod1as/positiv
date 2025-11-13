@@ -3,8 +3,8 @@ import { formAction } from "remix-forms"
 import { redirectWithSuccess, redirectWithWarning } from "remix-toast"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { agreeToTermsSchema } from "~/business/common"
-import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
 import { getSubscriptionStatus } from "~/business/newsletter/subscription-helpers.server"
+import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import paths from "~/lib/paths"
@@ -40,13 +40,16 @@ export async function action({ request, params }: Route.ActionArgs) {
     mutation: agreeToTerms,
     transformResult: async (result) => {
       if (result.success) {
-        const data = result.data as typeof context & { newsletterSubscriptionError?: string }
+        const data = result.data as typeof context & {
+          newsletterSubscriptionError?: string
+        }
 
         if (data.newsletterSubscriptionError) {
           throw await redirectWithWarning(
             BASIC_DATA,
             {
-              message: "Suas escolhas foram salvas, mas você não foi inscrito na newsletter. Por favor, entre em contato: partypositiv@gmail.com",
+              message:
+                "Suas escolhas foram salvas, mas você não foi inscrito na newsletter. Por favor, entre em contato: partypositiv@gmail.com",
               duration: Infinity,
               closeButton: true,
             },
@@ -130,7 +133,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
           organizadores - Angelo ou Ju
         </li>
         <li>
-          Se passar na entrevista, participar de um grupo de Whatsapp com todes
+          Se passar na entrevista, participar de um grupo de WhatsApp com todes
           es participantes da festa, que fica aberto durante uma semana antes da
           festa, para as pessoas criarem conexões e irem se conhecendo.
         </li>
@@ -154,7 +157,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         Nossa política é simples: ao confirmarmos o número de participantes,
         pedimos o pagamento em até 15 dias antes do evento. Após o pagamento ser
         efetuado, seu lugar está garantido e você será adicionado no grupo do
-        Whatsapp do evento.
+        WhatsApp do evento.
       </p>
       <p>
         Se você precisar cancelar sua presença, temos regras específicas para

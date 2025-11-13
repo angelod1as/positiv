@@ -97,7 +97,7 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
           date_of_birth: "Data de nascimento",
           where_lives: "Em que cidade você mora?",
           how_came_to_us: "Como chegou até nós?",
-          phone: "Whatsapp",
+          phone: "WhatsApp",
           confirm_phone: "Confirme seu whatsapp",
           cpf: "CPF",
           rg: "RG",
