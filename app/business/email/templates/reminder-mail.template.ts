@@ -20,7 +20,9 @@ export const reminderMailTemplate = (
 
   const sanitizedEmoji = sanitizeHtml(event.emoji || "")
   const sanitizedTitle = sanitizeHtml(event.title || "")
-  const eventDisplay = [sanitizedEmoji, sanitizedTitle].filter(Boolean).join(" ")
+  const eventDisplay = [sanitizedEmoji, sanitizedTitle]
+    .filter(Boolean)
+    .join(" ")
 
   const details = [
     ["Evento", eventDisplay],
@@ -124,7 +126,7 @@ export const reminderMailTemplate = (
                   Inscrever-se no formulário <strong>não significa</strong> que você será selecionade para participar do evento;
                 </li>
                 <li style="margin-bottom: 8px;">
-                  Temos políticas de <strong>entradas sociais</strong> para pessoas trans, negras, indígenas e em vulnerabilidade social. Se você é de um desses grupos e gostaria de participar da festa, fale com Ju ou Angelo pelo nosso Whatsapp.
+                  Temos políticas de <strong>entradas sociais</strong> para pessoas trans, negras, indígenas e em vulnerabilidade social. Se você é de um desses grupos e gostaria de participar da festa, fale com Ju ou Angelo pelo nosso WhatsApp.
                 </li>
               </ul>
 

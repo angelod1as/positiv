@@ -1,3 +1,4 @@
+import { GENDERS, ORIENTATIONS } from "~/lib/constants/constants"
 import {
   type Event,
   type EventParticipant,
@@ -8,7 +9,6 @@ import {
   type ProfileApprovedToAttendStatus,
   type ProfileFlagStatus,
 } from "~types/database/entities.types"
-import { GENDERS, ORIENTATIONS } from "~/lib/constants/constants"
 
 export const profilePropMap = (property: keyof Profile) => {
   return {
@@ -21,7 +21,7 @@ export const profilePropMap = (property: keyof Profile) => {
     social_name: "Nome social ou apelido",
     where_lives: "Em que cidade você mora?",
     how_came_to_us: "Como chegou até nós?",
-    phone: "Whatsapp",
+    phone: "WhatsApp",
     confirm_phone: "Confirme seu whatsapp",
     rg: "RG",
     rg_issuer: "Emissor do RG",
@@ -214,7 +214,11 @@ export const PARTICIPANTS_TABLE_FILTER_CONFIGS = {
     options: [
       { name: "Homem cis", label: "Homem cis", value: "homem cis" },
       { name: "Mulher cis", label: "Mulher cis", value: "mulher cis" },
-      { name: "Pessoa não binária", label: "Pessoa não binária", value: "pessoa não binária" },
+      {
+        name: "Pessoa não binária",
+        label: "Pessoa não binária",
+        value: "pessoa não binária",
+      },
     ] as Array<{ name: string; value: string; label: string }>,
     matchMode: "custom_gender",
     get allValues() {
