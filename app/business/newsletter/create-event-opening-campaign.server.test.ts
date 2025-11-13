@@ -154,7 +154,7 @@ describe("createEventOpeningCampaign", () => {
       })
 
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(callBody.body).toContain('<span style="display: inline-block; line-height: 1;">🎉</span> Test Event')
+      expect(callBody.body).toContain('<span style="display: inline-block; line-height: 1;">🎉</span>&nbsp;Test Event')
     })
 
     it("should include event location", async () => {
