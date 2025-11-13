@@ -1,5 +1,5 @@
 pnpm lint
-pnpm test
+pnpm test:all
 
 BRANCH=`git rev-parse --abbrev-ref HEAD`
 PROTECTED_BRANCHES="^(master|main)"
