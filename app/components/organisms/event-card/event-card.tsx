@@ -31,7 +31,6 @@ export const EventCard: FC<EventCardProps> = ({
     ticket_price,
     title,
     is_applied,
-    is_set_reminder,
   } = event
 
   return (
@@ -68,7 +67,6 @@ export const EventCard: FC<EventCardProps> = ({
           event_status={event_status}
           googleLink={googleLink}
           is_applied={is_applied}
-          is_set_reminder={is_set_reminder}
           dataTestId={dataTestId}
         />
       </CardFooter>

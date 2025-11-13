@@ -4,7 +4,6 @@ export {
   eventSchema,
   updateEventStatusSchema,
   updateEventDemographicsSchema,
-  sendEventRemindersSchema,
   updateParticipantVsEventSchema,
   updateEventParticipantByIdSchema,
 } from "~/business/admin/common"
