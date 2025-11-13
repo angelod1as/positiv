@@ -64,39 +64,43 @@ function countVeterans(rows: DemographicRow[]) {
 }
 
 function countGenders(rows: DemographicRow[]) {
-  return rows.reduce<{
+  const result = rows.reduce<{
     cis: number
     trans: number
     agender: number
-    other: { count: number; others: string[] }
+    other: { count: number; othersSet: Set<string> }
   }>(
     (acc, row) => {
-      const gender = row.gender?.[0]
-      if (gender) {
-        const type = classifySingleGender(gender)
-        if (type === "other") {
-          acc.other.count++
-          acc.other.others.push(gender)
-        } else {
-          acc[type]++
-        }
-      } else {
+      const gender = row.gender?.[0] ?? "Not Provided"
+      const type = classifySingleGender(gender)
+
+      if (type === "other") {
         acc.other.count++
-        acc.other.others.push("Not Provided")
+        acc.other.othersSet.add(gender)
+      } else {
+        acc[type]++
       }
       return acc
     },
-    { cis: 0, trans: 0, agender: 0, other: { count: 0, others: [] } },
+    { cis: 0, trans: 0, agender: 0, other: { count: 0, othersSet: new Set<string>() } },
   )
+
+  return {
+    ...result,
+    other: {
+      count: result.other.count,
+      others: Array.from(result.other.othersSet),
+    },
+  }
 }
 
 function countOrientations(rows: DemographicRow[]) {
-  return rows.reduce<{
+  const result = rows.reduce<{
     straight: number
     homo: number
     biPan: number
     aceDemi: number
-    other: { count: number; others: string[] }
+    other: { count: number; othersSet: Set<string> }
   }>(
     (acc, row) => {
       // Use a Set to store unique orientation types for the current person
@@ -137,10 +141,10 @@ function countOrientations(rows: DemographicRow[]) {
           personOtherOrientationsValues.length > 0
         ) {
           acc.other.count++
-          // Add only unique 'other' orientation values to avoid repetitions
-          acc.other.others.push(
-            ...Array.from(new Set(personOtherOrientationsValues)),
-          )
+          // Add unique 'other' orientation values to the Set for global deduplication
+          for (const value of personOtherOrientationsValues) {
+            acc.other.othersSet.add(value)
+          }
         } else if (
           !hasPrimaryClassification &&
           personOrientationTypes.has("aceDemi") &&
@@ -149,19 +153,19 @@ function countOrientations(rows: DemographicRow[]) {
           // If the only primary classification is aceDemi and there are no other classifications,
           // the original logic treated it as 'other' as well.
           acc.other.count++
-          acc.other.others.push("Ace/Demi Unaccompanied (Treated as Other)")
+          acc.other.othersSet.add("Ace/Demi Unaccompanied (Treated as Other)")
         } else if (
           !hasPrimaryClassification &&
           personOtherOrientationsValues.length === 0
         ) {
           // If no primary orientation was found and no specific 'other' values were listed
           acc.other.count++
-          acc.other.others.push("Unclassified/Multiple Not Primary")
+          acc.other.othersSet.add("Unclassified/Multiple Not Primary")
         }
       } else {
         // If orientation was not provided
         acc.other.count++
-        acc.other.others.push("Not Provided")
+        acc.other.othersSet.add("Not Provided")
       }
 
       // Now, increment the overall counters based on the unique types identified for this person.
@@ -180,33 +184,37 @@ function countOrientations(rows: DemographicRow[]) {
       homo: 0,
       biPan: 0,
       aceDemi: 0,
-      other: { count: 0, others: [] },
+      other: { count: 0, othersSet: new Set<string>() },
     },
   )
+
+  return {
+    ...result,
+    other: {
+      count: result.other.count,
+      others: Array.from(result.other.othersSet),
+    },
+  }
 }
 
 function countRaceColor(rows: DemographicRow[]) {
-  return rows.reduce<{
+  const result = rows.reduce<{
     white: number
     yellow: number
     indigenous: number
     black: number
     brown: number
-    other: { count: number; others: string[] }
+    other: { count: number; othersSet: Set<string> }
   }>(
     (acc, row) => {
-      const raceColor = row.race_color?.[0]
-      if (raceColor) {
-        const type = classifySingleRaceColor(raceColor)
-        if (type === "other") {
-          acc.other.count++
-          acc.other.others.push(raceColor)
-        } else {
-          acc[type]++
-        }
-      } else {
+      const raceColor = row.race_color?.[0] ?? "Not Provided"
+      const type = classifySingleRaceColor(raceColor)
+
+      if (type === "other") {
         acc.other.count++
-        acc.other.others.push("Not Provided")
+        acc.other.othersSet.add(raceColor)
+      } else {
+        acc[type]++
       }
       return acc
     },
@@ -216,9 +224,17 @@ function countRaceColor(rows: DemographicRow[]) {
       indigenous: 0,
       black: 0,
       brown: 0,
-      other: { count: 0, others: [] },
+      other: { count: 0, othersSet: new Set<string>() },
     },
   )
+
+  return {
+    ...result,
+    other: {
+      count: result.other.count,
+      others: Array.from(result.other.othersSet),
+    },
+  }
 }
 
 function extractAges(rows: DemographicRow[]): number[] {
