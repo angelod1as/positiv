@@ -1,3 +1,5 @@
+import "dotenv/config"
+import { composable, type Composable } from "composable-functions"
 import { spawn } from "child_process"
 import { writeFileSync, readFileSync, appendFileSync } from "fs"
 import { join } from "path"
@@ -40,8 +42,35 @@ function median(values: number[]): number {
 /**
  * Extract metrics from Lighthouse result
  */
-function extractMetrics(result: any): LighthouseMetrics {
+type ExtractMetrics = Composable<(result: any) => LighthouseMetrics>
+
+const extractMetrics: ExtractMetrics = composable((result) => {
+  if (!result || !result.lhr || !result.lhr.audits) {
+    throw new Error("Invalid Lighthouse result")
+  }
+
   const audits = result.lhr.audits
+
+  // Check if all required audits exist
+  const requiredAudits = [
+    "first-contentful-paint",
+    "largest-contentful-paint",
+    "interactive",
+    "total-blocking-time",
+    "cumulative-layout-shift",
+    "speed-index",
+  ]
+
+  for (const auditName of requiredAudits) {
+    if (!audits[auditName] || audits[auditName].numericValue === undefined) {
+      throw new Error(`Missing or invalid audit: ${auditName}`)
+    }
+  }
+
+  if (!result.lhr.categories?.performance?.score) {
+    throw new Error("Missing performance score")
+  }
+
   return {
     fcp: audits["first-contentful-paint"].numericValue,
     lcp: audits["largest-contentful-paint"].numericValue,
@@ -51,7 +80,7 @@ function extractMetrics(result: any): LighthouseMetrics {
     speedIndex: audits["speed-index"].numericValue,
     performanceScore: result.lhr.categories.performance.score * 100,
   }
-}
+})
 
 /**
  * Calculate median metrics from multiple runs
@@ -71,10 +100,11 @@ function calculateMedianMetrics(runs: LighthouseMetrics[]): LighthouseMetrics {
 /**
  * Run Lighthouse test on a URL
  */
-async function runLighthouse(
-  url: string,
-  authCookies?: any[],
-): Promise<LighthouseMetrics> {
+type RunLighthouse = Composable<
+  (url: string, authCookies?: any[]) => LighthouseMetrics
+>
+
+const runLighthouse: RunLighthouse = composable(async (url, authCookies) => {
   const chrome = await chromeLauncher.launch({ chromeFlags: ["--headless"] })
 
   try {
@@ -108,34 +138,63 @@ async function runLighthouse(
       throw new Error("Lighthouse returned no result")
     }
 
-    return extractMetrics(result)
+    const metricsResult = await extractMetrics(result)
+    if (!metricsResult.success) {
+      throw new Error(
+        `Failed to extract metrics: ${JSON.stringify(metricsResult.errors)}`,
+      )
+    }
+
+    return metricsResult.data
   } finally {
     await chrome.kill()
   }
-}
+})
 
 /**
  * Run Lighthouse tests 3 times and return median values
  */
-async function runTestSuite(
-  page: string,
-  url: string,
-  authType?: "user" | "admin",
-): Promise<TestResult> {
+type RunTestSuite = Composable<
+  (page: string, url: string, authType?: "user" | "admin") => TestResult
+>
+
+const runTestSuite: RunTestSuite = composable(async (page, url, authType) => {
   console.log(`\nTesting ${page}...`)
   console.log(`URL: ${url}`)
 
-  const authCookies = authType ? getAuthCookiesArray(authType) : undefined
+  let authCookies: any[] | undefined
+  if (authType) {
+    const cookiesResult = await getAuthCookiesArray(authType)
+    if (!cookiesResult.success) {
+      throw new Error(
+        `Failed to get auth cookies: ${JSON.stringify(cookiesResult.errors)}`,
+      )
+    }
+    authCookies = cookiesResult.data
+  }
 
   const runs: LighthouseMetrics[] = []
 
   for (let i = 1; i <= 3; i++) {
     console.log(`  Run ${i}/3...`)
-    const metrics = await runLighthouse(url, authCookies)
+    const metricsResult = await runLighthouse(url, authCookies)
+
+    if (!metricsResult.success) {
+      console.error(
+        `    ❌ Run ${i} failed: ${JSON.stringify(metricsResult.errors)} - skipping`,
+      )
+      continue
+    }
+
+    const metrics = metricsResult.data
     runs.push(metrics)
     console.log(
       `    FCP: ${metrics.fcp.toFixed(0)}ms, LCP: ${metrics.lcp.toFixed(0)}ms, Score: ${metrics.performanceScore.toFixed(1)}`,
     )
+  }
+
+  if (runs.length === 0) {
+    throw new Error(`All 3 runs failed for ${page}`)
   }
 
   const medianMetrics = calculateMedianMetrics(runs)
@@ -155,7 +214,7 @@ async function runTestSuite(
     runs,
     median: medianMetrics,
   }
-}
+})
 
 /**
  * Write results to baseline.md
@@ -238,13 +297,17 @@ async function main() {
 
   // Step 1: Get active event ID
   console.log("\n1️⃣  Getting active event ID from database...")
-  const eventId = await getActiveEventId()
+  const eventIdResult = await getActiveEventId()
 
-  if (!eventId) {
-    console.error("❌ No active event found. Please ensure database is seeded.")
+  if (!eventIdResult.success) {
+    console.error(
+      "❌ No active event found. Please ensure database is seeded.",
+      eventIdResult.errors,
+    )
     process.exit(1)
   }
 
+  const eventId = eventIdResult.data
   console.log(`✅ Found event ID: ${eventId}`)
 
   // Step 2: Build production app
@@ -285,38 +348,54 @@ async function main() {
     const results: TestResult[] = []
 
     // Test 1: Homepage (unauthenticated)
-    results.push(
-      await runTestSuite("Homepage (/)", `${BASE_URL}/`),
-    )
+    const homepage = await runTestSuite("Homepage (/)", `${BASE_URL}/`)
+    if (homepage.success) {
+      results.push(homepage.data)
+    } else {
+      console.error("❌ Homepage test failed:", homepage.errors)
+    }
 
     // Test 2: Dashboard (user authenticated)
     console.log("\n⚠️  For Dashboard test: Manual login may be required")
-    results.push(
-      await runTestSuite(
-        "Dashboard (/dashboard)",
-        `${BASE_URL}/dashboard`,
-        "user",
-      ),
+    const dashboard = await runTestSuite(
+      "Dashboard (/dashboard)",
+      `${BASE_URL}/dashboard`,
+      "user",
     )
+    if (dashboard.success) {
+      results.push(dashboard.data)
+    } else {
+      console.error("❌ Dashboard test failed:", dashboard.errors)
+    }
 
     // Test 3: Admin Event Management (admin authenticated)
     console.log("\n⚠️  For Admin test: Manual admin login may be required")
-    results.push(
-      await runTestSuite(
-        "Admin Event Management (/admin/eventos)",
-        `${BASE_URL}/admin/eventos`,
-        "admin",
-      ),
+    const admin = await runTestSuite(
+      "Admin Event Management (/admin/eventos)",
+      `${BASE_URL}/admin/eventos`,
+      "admin",
     )
+    if (admin.success) {
+      results.push(admin.data)
+    } else {
+      console.error("❌ Admin test failed:", admin.errors)
+    }
 
     // Test 4: Event Details (user authenticated + event ID)
-    results.push(
-      await runTestSuite(
-        `Event Details Page`,
-        `${BASE_URL}/dashboard/${eventId}/`,
-        "user",
-      ),
+    const eventDetails = await runTestSuite(
+      `Event Details Page`,
+      `${BASE_URL}/dashboard/${eventId}/`,
+      "user",
     )
+    if (eventDetails.success) {
+      results.push(eventDetails.data)
+    } else {
+      console.error("❌ Event Details test failed:", eventDetails.errors)
+    }
+
+    if (results.length === 0) {
+      throw new Error("All tests failed - no results to write")
+    }
 
     // Step 5: Write results
     console.log("\n5️⃣  Writing results to documentation...")
