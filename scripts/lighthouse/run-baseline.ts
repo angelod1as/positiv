@@ -42,14 +42,22 @@ function median(values: number[]): number {
 /**
  * Extract metrics from Lighthouse result
  */
-type ExtractMetrics = Composable<(result: any) => LighthouseMetrics>
+type ExtractMetrics = Composable<(result: unknown) => LighthouseMetrics>
 
 const extractMetrics: ExtractMetrics = composable((result) => {
-  if (!result || !result.lhr || !result.lhr.audits) {
+  // Type assertion after runtime validation
+  const typedResult = result as {
+    lhr?: {
+      audits?: Record<string, { numericValue?: number }>
+      categories?: { performance?: { score?: number } }
+    }
+  }
+
+  if (!typedResult.lhr || !typedResult.lhr.audits) {
     throw new Error("Invalid Lighthouse result")
   }
 
-  const audits = result.lhr.audits
+  const audits = typedResult.lhr.audits
 
   // Check if all required audits exist
   const requiredAudits = [
@@ -67,18 +75,39 @@ const extractMetrics: ExtractMetrics = composable((result) => {
     }
   }
 
-  if (!result.lhr.categories?.performance?.score) {
+  const performanceScore = typedResult.lhr.categories?.performance?.score
+  if (!performanceScore) {
     throw new Error("Missing performance score")
   }
 
+  // Extract validated values
+  const fcp = audits["first-contentful-paint"].numericValue
+  const lcp = audits["largest-contentful-paint"].numericValue
+  const tti = audits["interactive"].numericValue
+  const tbt = audits["total-blocking-time"].numericValue
+  const cls = audits["cumulative-layout-shift"].numericValue
+  const speedIndex = audits["speed-index"].numericValue
+
+  // TypeScript now knows these are defined due to validation above
+  if (
+    fcp === undefined ||
+    lcp === undefined ||
+    tti === undefined ||
+    tbt === undefined ||
+    cls === undefined ||
+    speedIndex === undefined
+  ) {
+    throw new Error("Audit values were validated but are still undefined")
+  }
+
   return {
-    fcp: audits["first-contentful-paint"].numericValue,
-    lcp: audits["largest-contentful-paint"].numericValue,
-    tti: audits["interactive"].numericValue,
-    tbt: audits["total-blocking-time"].numericValue,
-    cls: audits["cumulative-layout-shift"].numericValue,
-    speedIndex: audits["speed-index"].numericValue,
-    performanceScore: result.lhr.categories.performance.score * 100,
+    fcp,
+    lcp,
+    tti,
+    tbt,
+    cls,
+    speedIndex,
+    performanceScore: performanceScore * 100,
   }
 })
 
@@ -101,7 +130,7 @@ function calculateMedianMetrics(runs: LighthouseMetrics[]): LighthouseMetrics {
  * Run Lighthouse test on a URL
  */
 type RunLighthouse = Composable<
-  (url: string, authCookies?: any[]) => LighthouseMetrics
+  (url: string, authCookies?: unknown[]) => LighthouseMetrics
 >
 
 const runLighthouse: RunLighthouse = composable(async (url, authCookies) => {
@@ -159,10 +188,10 @@ type RunTestSuite = Composable<
 >
 
 const runTestSuite: RunTestSuite = composable(async (page, url, authType) => {
-  console.log(`\nTesting ${page}...`)
-  console.log(`URL: ${url}`)
+  console.info(`\nTesting ${page}...`)
+  console.info(`URL: ${url}`)
 
-  let authCookies: any[] | undefined
+  let authCookies: unknown[] | undefined
   if (authType) {
     const cookiesResult = await getAuthCookiesArray(authType)
     if (!cookiesResult.success) {
@@ -176,7 +205,7 @@ const runTestSuite: RunTestSuite = composable(async (page, url, authType) => {
   const runs: LighthouseMetrics[] = []
 
   for (let i = 1; i <= 3; i++) {
-    console.log(`  Run ${i}/3...`)
+    console.info(`  Run ${i}/3...`)
     const metricsResult = await runLighthouse(url, authCookies)
 
     if (!metricsResult.success) {
@@ -188,7 +217,7 @@ const runTestSuite: RunTestSuite = composable(async (page, url, authType) => {
 
     const metrics = metricsResult.data
     runs.push(metrics)
-    console.log(
+    console.info(
       `    FCP: ${metrics.fcp.toFixed(0)}ms, LCP: ${metrics.lcp.toFixed(0)}ms, Score: ${metrics.performanceScore.toFixed(1)}`,
     )
   }
@@ -199,14 +228,14 @@ const runTestSuite: RunTestSuite = composable(async (page, url, authType) => {
 
   const medianMetrics = calculateMedianMetrics(runs)
 
-  console.log(`  Median Results:`)
-  console.log(
+  console.info(`  Median Results:`)
+  console.info(
     `    FCP: ${medianMetrics.fcp.toFixed(0)}ms, LCP: ${medianMetrics.lcp.toFixed(0)}ms, TTI: ${medianMetrics.tti.toFixed(0)}ms`,
   )
-  console.log(
+  console.info(
     `    TBT: ${medianMetrics.tbt.toFixed(0)}ms, CLS: ${medianMetrics.cls.toFixed(3)}, SI: ${medianMetrics.speedIndex.toFixed(0)}ms`,
   )
-  console.log(`    Performance Score: ${medianMetrics.performanceScore.toFixed(1)}`)
+  console.info(`    Performance Score: ${medianMetrics.performanceScore.toFixed(1)}`)
 
   return {
     page,
@@ -269,7 +298,7 @@ function writeBaselineResults(results: TestResult[]) {
   }
 
   writeFileSync(baselinePath, content)
-  console.log(`\n✅ Updated ${baselinePath}`)
+  console.info(`\n✅ Updated ${baselinePath}`)
 }
 
 /**
@@ -285,7 +314,7 @@ function appendToMetricsCSV(results: TestResult[]) {
     appendFileSync(csvPath, row)
   }
 
-  console.log(`✅ Updated ${csvPath}`)
+  console.info(`✅ Updated ${csvPath}`)
 }
 
 /**
@@ -313,11 +342,11 @@ function findServerPath(): string {
  * Main execution
  */
 async function main() {
-  console.log("🚀 Starting Performance Baseline Tests")
-  console.log("=" .repeat(60))
+  console.info("🚀 Starting Performance Baseline Tests")
+  console.info("=" .repeat(60))
 
   // Step 1: Get active event ID
-  console.log("\n1️⃣  Getting active event ID from database...")
+  console.info("\n1️⃣  Getting active event ID from database...")
   const eventIdResult = await getActiveEventId()
 
   if (!eventIdResult.success) {
@@ -329,15 +358,15 @@ async function main() {
   }
 
   const eventId = eventIdResult.data
-  console.log(`✅ Found event ID: ${eventId}`)
+  console.info(`✅ Found event ID: ${eventId}`)
 
   // Step 2: Build production app
-  console.log("\n2️⃣  Building production app...")
+  console.info("\n2️⃣  Building production app...")
   await new Promise<void>((resolve, reject) => {
     const build = spawn("pnpm", ["build"], { stdio: "inherit" })
     build.on("close", (code) => {
       if (code === 0) {
-        console.log("✅ Build completed")
+        console.info("✅ Build completed")
         resolve()
       } else {
         reject(new Error(`Build failed with code ${code}`))
@@ -346,9 +375,9 @@ async function main() {
   })
 
   // Step 3: Start production server
-  console.log("\n3️⃣  Starting production server...")
+  console.info("\n3️⃣  Starting production server...")
   const serverPath = findServerPath()
-  console.log(`   Using server build: ${serverPath}`)
+  console.info(`   Using server build: ${serverPath}`)
 
   const server = spawn("pnpm", ["react-router-serve", serverPath], {
     stdio: ["ignore", "pipe", "pipe"],
@@ -361,7 +390,7 @@ async function main() {
 
   // Capture server output for debugging
   server.stdout?.on("data", (data) => {
-    console.log(`   [server] ${data.toString().trim()}`)
+    console.info(`   [server] ${data.toString().trim()}`)
   })
 
   server.stderr?.on("data", (data) => {
@@ -373,7 +402,7 @@ async function main() {
   })
 
   // Wait for server to be ready with health check
-  console.log("   Waiting for server to respond...")
+  console.info("   Waiting for server to respond...")
   let serverReady = false
   const maxRetries = 30
   for (let i = 0; i < maxRetries; i++) {
@@ -383,7 +412,7 @@ async function main() {
         serverReady = true
         break
       }
-    } catch (error) {
+    } catch (_error) {
       // Server not ready yet, wait and retry
     }
     await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -393,12 +422,12 @@ async function main() {
     throw new Error("Server failed to start after 30 seconds")
   }
 
-  console.log("✅ Server started and responding")
+  console.info("✅ Server started and responding")
 
   try {
     // Step 4: Run Lighthouse tests
-    console.log("\n4️⃣  Running Lighthouse tests...")
-    console.log("⚠️  Note: Authenticated pages may show login screen if auth injection fails")
+    console.info("\n4️⃣  Running Lighthouse tests...")
+    console.info("⚠️  Note: Authenticated pages may show login screen if auth injection fails")
 
     const results: TestResult[] = []
 
@@ -411,7 +440,7 @@ async function main() {
     }
 
     // Test 2: Dashboard (user authenticated)
-    console.log("\n⚠️  For Dashboard test: Manual login may be required")
+    console.info("\n⚠️  For Dashboard test: Manual login may be required")
     const dashboard = await runTestSuite(
       "Dashboard (/dashboard)",
       `${BASE_URL}/dashboard`,
@@ -424,7 +453,7 @@ async function main() {
     }
 
     // Test 3: Admin Event Management (admin authenticated)
-    console.log("\n⚠️  For Admin test: Manual admin login may be required")
+    console.info("\n⚠️  For Admin test: Manual admin login may be required")
     const admin = await runTestSuite(
       "Admin Event Management (/admin/eventos)",
       `${BASE_URL}/admin/eventos`,
@@ -453,21 +482,21 @@ async function main() {
     }
 
     // Step 5: Write results
-    console.log("\n5️⃣  Writing results to documentation...")
+    console.info("\n5️⃣  Writing results to documentation...")
     writeBaselineResults(results)
     appendToMetricsCSV(results)
 
-    console.log("\n" + "=".repeat(60))
-    console.log("✅ Performance baseline tests completed successfully!")
-    console.log("\nNext steps:")
-    console.log("1. Review docs/performance-upgrade/baseline.md")
-    console.log("2. Review docs/performance-upgrade/metrics.csv")
-    console.log("3. Commit the results")
+    console.info("\n" + "=".repeat(60))
+    console.info("✅ Performance baseline tests completed successfully!")
+    console.info("\nNext steps:")
+    console.info("1. Review docs/performance-upgrade/baseline.md")
+    console.info("2. Review docs/performance-upgrade/metrics.csv")
+    console.info("3. Commit the results")
   } finally {
     // Step 6: Cleanup - kill server
-    console.log("\n6️⃣  Cleaning up...")
+    console.info("\n6️⃣  Cleaning up...")
     server.kill()
-    console.log("✅ Server stopped")
+    console.info("✅ Server stopped")
   }
 }
 
