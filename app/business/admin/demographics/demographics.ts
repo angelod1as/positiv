@@ -71,18 +71,14 @@ function countGenders(rows: DemographicRow[]) {
     other: { count: number; othersSet: Set<string> }
   }>(
     (acc, row) => {
-      const gender = row.gender?.[0]
-      if (gender) {
-        const type = classifySingleGender(gender)
-        if (type === "other") {
-          acc.other.count++
-          acc.other.othersSet.add(gender)
-        } else {
-          acc[type]++
-        }
-      } else {
+      const gender = row.gender?.[0] ?? "Not Provided"
+      const type = classifySingleGender(gender)
+
+      if (type === "other") {
         acc.other.count++
-        acc.other.othersSet.add("Not Provided")
+        acc.other.othersSet.add(gender)
+      } else {
+        acc[type]++
       }
       return acc
     },
@@ -211,18 +207,14 @@ function countRaceColor(rows: DemographicRow[]) {
     other: { count: number; othersSet: Set<string> }
   }>(
     (acc, row) => {
-      const raceColor = row.race_color?.[0]
-      if (raceColor) {
-        const type = classifySingleRaceColor(raceColor)
-        if (type === "other") {
-          acc.other.count++
-          acc.other.othersSet.add(raceColor)
-        } else {
-          acc[type]++
-        }
-      } else {
+      const raceColor = row.race_color?.[0] ?? "Not Provided"
+      const type = classifySingleRaceColor(raceColor)
+
+      if (type === "other") {
         acc.other.count++
-        acc.other.othersSet.add("Not Provided")
+        acc.other.othersSet.add(raceColor)
+      } else {
+        acc[type]++
       }
       return acc
     },
