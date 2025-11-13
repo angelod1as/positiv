@@ -128,7 +128,7 @@ export const EventBdsmConsentPage = () => {
         , que é um sentimento de depressão, tristeza, vazio profundo. Se ele
         acontecer após a cena, converse com as pessoas envolvidas, peça carinho,
         converse e ponha pra fora esse sentimento. Se ele ocorrer no dia
-        seguinte à Positiv, conte com o grupo do Whatsapp para expor como se
+        seguinte à Positiv, conte com o grupo do WhatsApp para expor como se
         sente, fale com Angelo ou Ju, peça ajuda às pessoas que participaram das
         práticas contigo. Alimente-se bem, beba água, assista a algo leve na
         televisão, se a concentração permitir, leia algo. Basicamente, tire o

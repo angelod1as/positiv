@@ -1,4 +1,4 @@
-export const stringToWhatsapp = (phone: string): string => {
+export const stringToWhatsApp = (phone: string): string => {
   const cleanedPhone = phone.replace(/\D/g, "")
 
   let countryCode = "55" // Default BR

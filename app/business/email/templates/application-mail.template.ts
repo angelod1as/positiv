@@ -1,7 +1,10 @@
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
+import type {
+  ProfileWithRoles,
+  ViewEvent,
+} from "~types/database/entities.types"
 
 /**
  * Application Email Template
@@ -14,10 +17,14 @@ export const applicationMailTemplate = (
   event: Omit<ViewEvent, "is_applied">,
 ): string => {
   const { date, time } = formatDateTime(event.time_event_start)
-  const displayName = sanitizeHtml(profile.social_name || profile.full_name || "")
+  const displayName = sanitizeHtml(
+    profile.social_name || profile.full_name || "",
+  )
   const sanitizedEmoji = sanitizeHtml(event.emoji || "")
   const sanitizedTitle = sanitizeHtml(event.title || "")
-  const eventDisplay = [sanitizedEmoji, sanitizedTitle].filter(Boolean).join(" ")
+  const eventDisplay = [sanitizedEmoji, sanitizedTitle]
+    .filter(Boolean)
+    .join(" ")
 
   const details = [
     ["Evento", eventDisplay],
@@ -100,7 +107,7 @@ export const applicationMailTemplate = (
                   Inscrever-se no formulário <strong>não significa</strong> que você será selecionade para participar do evento;
                 </li>
                 <li style="margin-bottom: 8px;">
-                  Temos políticas de <strong>entradas sociais</strong> para pessoas trans, negras, indígenas e em vulnerabilidade social. Se você faz parte de um desses grupos e gostaria de participar da festa, fale com Ju ou Angelo pelo nosso Whatsapp.
+                  Temos políticas de <strong>entradas sociais</strong> para pessoas trans, negras, indígenas e em vulnerabilidade social. Se você faz parte de um desses grupos e gostaria de participar da festa, fale com Ju ou Angelo pelo nosso WhatsApp.
                 </li>
               </ul>
 

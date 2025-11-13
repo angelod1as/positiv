@@ -1,5 +1,5 @@
 import { getContext } from "~/business/auth/auth.server"
-import { FloatingWhatsappButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
+import { FloatingWhatsAppButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
 import { HomePageAbout } from "~/components/pages/homepage/about/about"
 import { HomePageCtaBanner } from "~/components/pages/homepage/cta-banner/home-page-cta-banner"
 import { HomePageFounders } from "~/components/pages/homepage/founders/home-page-founders"
@@ -34,7 +34,7 @@ export default function Homepage({ loaderData }: Route.ComponentProps) {
         <HomePageCtaBanner isLoggedIn={isLoggedIn} />
         <HomePageFounders />
       </div>
-      <FloatingWhatsappButton />
+      <FloatingWhatsAppButton />
     </>
   )
 }

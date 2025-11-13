@@ -78,7 +78,7 @@ export const RulesText = () => {
           <AlertTitle>🤫 Ninguém sabe até todo mundo saber 🤫</AlertTitle>
           <AlertDescription className="flex flex-col gap-4">
             <p>
-              Nunca falamos quem vai à uma festa antes do grupo do Whatsapp ser
+              Nunca falamos quem vai à uma festa antes do grupo do WhatsApp ser
               criado. Assim, todo mundo fica sabendo — ao mesmo tempo — quem vai
               ao mesmo evento.
             </p>
@@ -88,7 +88,7 @@ export const RulesText = () => {
             </p>
             <p>
               "Ah, mas como vou saber se meu chefe vai estar na mesma festa que
-              eu?" Do mesmo jeito que todo mundo: entrando no grupo do Whatsapp
+              eu?" Do mesmo jeito que todo mundo: entrando no grupo do WhatsApp
               e lhe vendo lá. Falar para você que elu está na festa é um baita
               problema de privacidade, não acha?
             </p>

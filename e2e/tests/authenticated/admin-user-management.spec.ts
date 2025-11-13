@@ -251,7 +251,7 @@ test.describe("Admin User Management", () => {
 
     // Test WhatsApp button if available
     const whatsappButton = firstRow
-      .locator('button:has(img[alt="Whatsapp"])')
+      .locator('button:has(img[alt="WhatsApp"])')
       .first()
     const hasWhatsApp = (await whatsappButton.count()) > 0
 
