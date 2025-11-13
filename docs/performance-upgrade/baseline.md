@@ -1,8 +1,8 @@
 # Performance Baseline (POS-278)
 
 **Task:** Document performance baseline with Lighthouse
-**Date:** 2025-11-13
-**Tester:** Automated Lighthouse Script
+**Date:** _[To be filled]_
+**Tester:** _[To be filled]_
 **Build:** Production (`pnpm build`)
 
 ## Test Environment
@@ -43,13 +43,13 @@
 - **Performance Score:** _[0-100]_
 
 ### Median Values
-- **FCP:** 4395ms
-- **LCP:** 5520ms
-- **TTI:** 5632ms
-- **TBT:** 0ms
-- **CLS:** 0.000
-- **Speed Index:** 4879ms
-- **Performance Score:** 68.0
+- **FCP:** _[ms]_
+- **LCP:** _[ms]_
+- **TTI:** _[ms]_
+- **TBT:** _[ms]_
+- **CLS:** _[score]_
+- **Speed Index:** _[ms]_
+- **Performance Score:** _[0-100]_
 
 ---
 
@@ -83,13 +83,13 @@
 - **Performance Score:** _[0-100]_
 
 ### Median Values
-- **FCP:** 3437ms
-- **LCP:** 3517ms
-- **TTI:** 3524ms
-- **TBT:** 0ms
-- **CLS:** 0.000
-- **Speed Index:** 3442ms
-- **Performance Score:** 83.0
+- **FCP:** _[ms]_
+- **LCP:** _[ms]_
+- **TTI:** _[ms]_
+- **TBT:** _[ms]_
+- **CLS:** _[score]_
+- **Speed Index:** _[ms]_
+- **Performance Score:** _[0-100]_
 
 ---
 
@@ -123,13 +123,13 @@
 - **Performance Score:** _[0-100]_
 
 ### Median Values
-- **FCP:** 3590ms
-- **LCP:** 3665ms
-- **TTI:** 3673ms
-- **TBT:** 0ms
-- **CLS:** 0.000
-- **Speed Index:** 4552ms
-- **Performance Score:** 80.0
+- **FCP:** _[ms]_
+- **LCP:** _[ms]_
+- **TTI:** _[ms]_
+- **TBT:** _[ms]_
+- **CLS:** _[score]_
+- **Speed Index:** _[ms]_
+- **Performance Score:** _[0-100]_
 
 ---
 
@@ -165,13 +165,13 @@
 - **Performance Score:** _[0-100]_
 
 ### Median Values
-- **FCP:** 3597ms
-- **LCP:** 3672ms
-- **TTI:** 3679ms
-- **TBT:** 0ms
-- **CLS:** 0.000
-- **Speed Index:** 3597ms
-- **Performance Score:** 82.0
+- **FCP:** _[ms]_
+- **LCP:** _[ms]_
+- **TTI:** _[ms]_
+- **TBT:** _[ms]_
+- **CLS:** _[score]_
+- **Speed Index:** _[ms]_
+- **Performance Score:** _[0-100]_
 
 ---
 

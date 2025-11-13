@@ -1,5 +1,1 @@
 Task ID,Task Name,Date,Page,FCP (ms),LCP (ms),TTI (ms),TBT (ms),CLS,Speed Index (ms),Performance Score,Notes
-POS-278,Baseline - Homepage (/),2025-11-13,Homepage (/),4395,5520,5632,0,0.000,4879,68.0,Initial baseline measurement
-POS-278,Baseline - Dashboard (/dashboard),2025-11-13,Dashboard (/dashboard),3437,3517,3524,0,0.000,3442,83.0,Initial baseline measurement
-POS-278,Baseline - Admin Event Management (/admin/eventos),2025-11-13,Admin Event Management (/admin/eventos),3590,3665,3673,0,0.000,4552,80.0,Initial baseline measurement
-POS-278,Baseline - Event Details Page,2025-11-13,Event Details Page,3597,3672,3679,0,0.000,3597,82.0,Initial baseline measurement
