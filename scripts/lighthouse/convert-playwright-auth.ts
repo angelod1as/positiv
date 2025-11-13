@@ -74,8 +74,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   getAuthCookies(authType)
     .then((result) => {
       if (result.success) {
-        console.log(`Cookies for ${authType}:`)
-        console.log(result.data)
+        console.info(`Cookies for ${authType}:`)
+        console.info(result.data)
         process.exit(0)
       } else {
         console.error("Failed to extract cookies:", result.errors)

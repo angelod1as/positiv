@@ -28,7 +28,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   getActiveEventId()
     .then((result) => {
       if (result.success) {
-        console.log(result.data)
+        console.info(result.data)
         process.exit(0)
       } else {
         console.error("No active event found:", result.errors)
