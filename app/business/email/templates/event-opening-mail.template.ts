@@ -1,4 +1,4 @@
-import { POSITIV_URL } from "~/lib/constants/constants"
+import { DASHBOARD_URL, POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ViewEvent } from "~types/database/entities.types"
@@ -82,7 +82,7 @@ export const eventOpeningMailTemplate = (
 
               <!-- CTA Button -->
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${POSITIV_URL}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
+                <a href="${DASHBOARD_URL}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
                   Inscreva-se agora!
                 </a>
               </div>
