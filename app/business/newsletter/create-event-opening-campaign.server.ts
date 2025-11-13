@@ -53,6 +53,15 @@ function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
   const sanitizedTitle = sanitizeHtml(event.title || "")
   const sanitizedLocation = sanitizeHtml(event.location || "")
 
+  const eventDisplay = [
+    sanitizedEmoji
+      ? `<span style="display: inline-block; line-height: 1;">${sanitizedEmoji}</span>`
+      : "",
+    sanitizedTitle,
+  ]
+    .filter(Boolean)
+    .join("&nbsp;")
+
   return `
 <div style="text-align: center; margin-bottom: 30px;">
   <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2;">
@@ -61,7 +70,7 @@ function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
 </div>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-  As inscrições para o evento <strong>${sanitizedEmoji ? `<span style="display: inline-block; line-height: 1;">${sanitizedEmoji}</span> ` : ""}${sanitizedTitle}</strong> acabaram de abrir!
+  As inscrições para o evento <strong>${eventDisplay}</strong> acabaram de abrir!
 </p>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
