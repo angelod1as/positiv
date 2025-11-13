@@ -110,6 +110,59 @@ export type Database = {
           },
         ]
       }
+      event_newsletter_campaigns: {
+        Row: {
+          campaign_creation_time: string | null
+          campaign_id: string | null
+          campaign_is_created: boolean
+          campaign_is_sent: boolean
+          campaign_sent_time: string | null
+          created_at: string
+          event_id: string
+          id: string
+          last_attempt: string | null
+          last_error: Json | null
+          times_attempted: number
+          updated_at: string
+        }
+        Insert: {
+          campaign_creation_time?: string | null
+          campaign_id?: string | null
+          campaign_is_created?: boolean
+          campaign_is_sent?: boolean
+          campaign_sent_time?: string | null
+          created_at?: string
+          event_id: string
+          id?: string
+          last_attempt?: string | null
+          last_error?: Json | null
+          times_attempted?: number
+          updated_at?: string
+        }
+        Update: {
+          campaign_creation_time?: string | null
+          campaign_id?: string | null
+          campaign_is_created?: boolean
+          campaign_is_sent?: boolean
+          campaign_sent_time?: string | null
+          created_at?: string
+          event_id?: string
+          id?: string
+          last_attempt?: string | null
+          last_error?: Json | null
+          times_attempted?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_newsletter_campaigns_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_participants: {
         Row: {
           admin_general_notes: string | null
@@ -181,48 +234,6 @@ export type Database = {
           },
           {
             foreignKeyName: "event_participants_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      event_reminders: {
-        Row: {
-          created_at: string
-          email_sent: boolean
-          email_sent_date: string | null
-          event_id: string
-          id: string
-          profile_id: string
-        }
-        Insert: {
-          created_at?: string
-          email_sent?: boolean
-          email_sent_date?: string | null
-          event_id: string
-          id?: string
-          profile_id: string
-        }
-        Update: {
-          created_at?: string
-          email_sent?: boolean
-          email_sent_date?: string | null
-          event_id?: string
-          id?: string
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_reminders_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_reminders_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
