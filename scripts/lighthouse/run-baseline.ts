@@ -1,7 +1,7 @@
 import "dotenv/config"
 import { composable, type Composable } from "composable-functions"
 import { spawn } from "child_process"
-import { writeFileSync, readFileSync, appendFileSync } from "fs"
+import { writeFileSync, readFileSync, appendFileSync, existsSync, readdirSync } from "fs"
 import { join } from "path"
 import lighthouse from "lighthouse"
 import * as chromeLauncher from "chrome-launcher"
@@ -289,6 +289,27 @@ function appendToMetricsCSV(results: TestResult[]) {
 }
 
 /**
+ * Find the correct server build path (handles both standard and Vercel builds)
+ */
+function findServerPath(): string {
+  const serverDir = join(process.cwd(), "build", "server")
+  const standardBuildPath = join(serverDir, "index.js")
+
+  if (existsSync(standardBuildPath)) {
+    return standardBuildPath
+  }
+
+  // Vercel build - look for the encoded directory
+  const vercelDir = readdirSync(serverDir).find(dir => dir.startsWith("nodejs_"))
+
+  if (!vercelDir) {
+    throw new Error("Could not find server build output (tried standard and Vercel paths)")
+  }
+
+  return join(serverDir, vercelDir, "index.js")
+}
+
+/**
  * Main execution
  */
 async function main() {
@@ -326,7 +347,9 @@ async function main() {
 
   // Step 3: Start production server
   console.log("\n3️⃣  Starting production server...")
-  const server = spawn("pnpm", ["start"], { stdio: "pipe" })
+  const serverPath = findServerPath()
+  console.log(`   Using server build: ${serverPath}`)
+  const server = spawn("pnpm", ["react-router-serve", serverPath], { stdio: "pipe" })
 
   // Wait for server to be ready
   await new Promise<void>((resolve) => {
