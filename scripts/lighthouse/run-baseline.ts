@@ -351,17 +351,28 @@ async function main() {
   console.log(`   Using server build: ${serverPath}`)
   const server = spawn("pnpm", ["react-router-serve", serverPath], { stdio: "pipe" })
 
-  // Wait for server to be ready
-  await new Promise<void>((resolve) => {
-    server.stdout?.on("data", (data) => {
-      if (data.toString().includes("localhost") || data.toString().includes("5173")) {
-        resolve()
+  // Wait for server to be ready with health check
+  console.log("   Waiting for server to respond...")
+  let serverReady = false
+  const maxRetries = 30
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(BASE_URL)
+      if (response.status === 200 || response.status === 304) {
+        serverReady = true
+        break
       }
-    })
-    setTimeout(resolve, 5000) // Fallback timeout
-  })
+    } catch (error) {
+      // Server not ready yet, wait and retry
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
 
-  console.log("✅ Server started")
+  if (!serverReady) {
+    throw new Error("Server failed to start after 30 seconds")
+  }
+
+  console.log("✅ Server started and responding")
 
   try {
     // Step 4: Run Lighthouse tests
