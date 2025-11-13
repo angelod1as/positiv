@@ -349,7 +349,28 @@ async function main() {
   console.log("\n3️⃣  Starting production server...")
   const serverPath = findServerPath()
   console.log(`   Using server build: ${serverPath}`)
-  const server = spawn("pnpm", ["react-router-serve", serverPath], { stdio: "pipe" })
+
+  const server = spawn("pnpm", ["react-router-serve", serverPath], {
+    stdio: ["ignore", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      PORT: "5173",
+      NODE_ENV: "production",
+    },
+  })
+
+  // Capture server output for debugging
+  server.stdout?.on("data", (data) => {
+    console.log(`   [server] ${data.toString().trim()}`)
+  })
+
+  server.stderr?.on("data", (data) => {
+    console.error(`   [server error] ${data.toString().trim()}`)
+  })
+
+  server.on("error", (error) => {
+    console.error(`   [server spawn error]`, error)
+  })
 
   // Wait for server to be ready with health check
   console.log("   Waiting for server to respond...")
