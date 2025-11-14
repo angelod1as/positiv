@@ -80,7 +80,9 @@ describe("Campaign Tracking - Integration Tests", () => {
       const result = await getPendingCampaigns()
 
       expect(result.success).toBe(true)
-      expect(result.data).toHaveLength(2)
+      if (result.success) {
+        expect(result.data).toHaveLength(2)
+      }
     })
 
     it("should return campaigns where campaign_is_sent is false", async () => {
@@ -96,7 +98,9 @@ describe("Campaign Tracking - Integration Tests", () => {
       const result = await getPendingCampaigns()
 
       expect(result.success).toBe(true)
-      expect(result.data).toHaveLength(1)
+      if (result.success) {
+        expect(result.data).toHaveLength(1)
+      }
     })
 
     it("should exclude campaigns with times_attempted >= 3", async () => {
@@ -115,8 +119,10 @@ describe("Campaign Tracking - Integration Tests", () => {
       const result = await getPendingCampaigns()
 
       expect(result.success).toBe(true)
-      expect(result.data).toHaveLength(1)
-      expect(result.data?.[0].event_id).toBe(event2.id)
+      if (result.success) {
+        expect(result.data).toHaveLength(1)
+        expect(result.data[0].event_id).toBe(event2.id)
+      }
     })
 
     it("should exclude fully completed campaigns", async () => {
@@ -135,7 +141,9 @@ describe("Campaign Tracking - Integration Tests", () => {
       const result = await getPendingCampaigns()
 
       expect(result.success).toBe(true)
-      expect(result.data).toHaveLength(0)
+      if (result.success) {
+        expect(result.data).toHaveLength(0)
+      }
     })
   })
 

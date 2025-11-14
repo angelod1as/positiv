@@ -55,13 +55,14 @@ describe("Campaign Automation - Integration Tests", () => {
           },
         },
         errors: [],
-        inputErrors: [],
       })
 
       const result = await createCampaignForEvent(event.id)
 
       expect(result.success).toBe(true)
-      expect(result.data).toBe(mockCampaignId)
+      if (result.success) {
+        expect(result.data).toBe(mockCampaignId)
+      }
 
       // Verify tracking row was updated
       const tracking = await db
@@ -103,9 +104,7 @@ describe("Campaign Automation - Integration Tests", () => {
       // Mock Listmonk API failure
       vi.spyOn(campaignCreator, "createEventOpeningCampaign").mockResolvedValue({
         success: false,
-        data: undefined,
         errors: [{ message: "API rate limit exceeded", name: "APIError" }],
-        inputErrors: [],
       })
 
       const result = await createCampaignForEvent(event.id)
@@ -271,7 +270,6 @@ describe("Campaign Automation - Integration Tests", () => {
           },
         },
         errors: [],
-        inputErrors: [],
       })
 
       // Mock campaign sending
@@ -314,9 +312,7 @@ describe("Campaign Automation - Integration Tests", () => {
       // Mock campaign creation failure
       vi.spyOn(campaignCreator, "createEventOpeningCampaign").mockResolvedValue({
         success: false,
-        data: undefined,
         errors: [{ message: "API error", name: "APIError" }],
-        inputErrors: [],
       })
 
       const result = await processCampaignForEvent(event.id)

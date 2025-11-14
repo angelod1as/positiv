@@ -85,7 +85,7 @@ export async function cleanupEventReminders(userId: string, throwOnError: boolea
   const supabase = createSupabaseAdminClient()
   
   const { error } = await supabase
-    .from('event_reminders')
+    .from('event_newsletter_campaigns')
     .delete()
     .eq('profile_id', userId)
   
@@ -262,7 +262,7 @@ export async function cleanupTestEvents(): Promise<void> {
   
   // Delete associated event reminders
   const { error: remindersError } = await supabase
-    .from('event_reminders')
+    .from('event_newsletter_campaigns')
     .delete()
     .in('event_id', eventIds)
   

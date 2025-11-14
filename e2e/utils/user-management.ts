@@ -75,11 +75,8 @@ export async function deleteTestUser(userId: string): Promise<void> {
         .delete()
         .eq('profile_id', profile.id)
 
-      // Delete event reminders
-      await supabase
-        .from('event_reminders')
-        .delete()
-        .eq('profile_id', profile.id)
+      // Note: event_newsletter_campaigns is event-based, not profile-based
+      // It will be cleaned up when events are deleted (CASCADE)
 
       // Delete profile
       await supabase

@@ -117,7 +117,7 @@ export async function deleteNewsletterTestUser(userId: string): Promise<void> {
 
       // Delete event reminders
       await supabase
-        .from('event_reminders')
+        .from('event_newsletter_campaigns')
         .delete()
         .eq('profile_id', profile.id)
 
