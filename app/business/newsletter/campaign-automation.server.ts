@@ -1,7 +1,7 @@
 import { composable } from "composable-functions"
 import { kysely } from "~/kysely"
 import { env } from "~/env.server"
-import { LISTMONK_ALL_SUBSCRIBERS_LIST_ID } from "~/lib/constants/constants"
+import { LISTMONK_REGISTERED_LIST_ID } from "~/lib/constants/constants"
 import { createEventOpeningCampaign } from "./create-event-opening-campaign.server"
 import {
   updateCampaignCreated,
@@ -48,7 +48,7 @@ export const createCampaignForEvent = composable(
     // Create campaign using existing function
     const campaignResult = await createEventOpeningCampaign({
       event,
-      listIds: [LISTMONK_ALL_SUBSCRIBERS_LIST_ID],
+      listIds: [LISTMONK_REGISTERED_LIST_ID],
       sendImmediately: false,
     })
 
