@@ -15,7 +15,7 @@ type ButtonProps = {
   event: Event
   fetcher: FetcherWithComponents<ComposableFetcherData>
 }
-export const Buttons: FC<ButtonProps> = ({ event, fetcher }) => {
+export const Buttons: FC<ButtonProps> = ({ event, fetcher: _fetcher }) => {
   const { id } = event
 
   return (
