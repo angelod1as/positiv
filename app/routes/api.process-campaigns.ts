@@ -1,5 +1,4 @@
 import type { ActionFunctionArgs } from "react-router"
-import { json } from "react-router"
 import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
 
@@ -12,7 +11,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const authHeader = request.headers.get("Authorization")
 
   if (!authHeader || !authHeader.includes("service_role")) {
-    return json({ error: "Unauthorized" }, { status: 401 })
+    return Response.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
@@ -20,7 +19,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const pendingResult = await getPendingCampaigns()
 
     if (!pendingResult.success || !pendingResult.data) {
-      return json(
+      return Response.json(
         {
           success: false,
           error: "Failed to fetch pending campaigns",
@@ -51,7 +50,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const successCount = results.filter((r) => r.success).length
     const failureCount = results.filter((r) => !r.success).length
 
-    return json({
+    return Response.json({
       success: true,
       processed: pending.length,
       succeeded: successCount,
@@ -61,7 +60,7 @@ export async function action({ request }: ActionFunctionArgs) {
   } catch (error) {
     console.error("Error processing campaigns:", error)
 
-    return json(
+    return Response.json(
       {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
