@@ -1,7 +1,7 @@
 import "dotenv/config"
 import { composable, type Composable } from "composable-functions"
 import { spawn } from "child_process"
-import { writeFileSync, readFileSync, appendFileSync, existsSync, readdirSync } from "fs"
+import { appendFileSync, existsSync, readdirSync } from "fs"
 import { join } from "path"
 import lighthouse from "lighthouse"
 import * as chromeLauncher from "chrome-launcher"
@@ -76,7 +76,7 @@ const extractMetrics: ExtractMetrics = composable((result) => {
   }
 
   const performanceScore = typedResult.lhr.categories?.performance?.score
-  if (!performanceScore) {
+  if (performanceScore === undefined || performanceScore === null) {
     throw new Error("Missing performance score")
   }
 
@@ -244,62 +244,6 @@ const runTestSuite: RunTestSuite = composable(async (page, url, authType) => {
     median: medianMetrics,
   }
 })
-
-/**
- * Write results to baseline.md
- */
-function writeBaselineResults(results: TestResult[]) {
-  const baselinePath = join(DOCS_DIR, "baseline.md")
-  let content = readFileSync(baselinePath, "utf-8")
-
-  const date = new Date().toISOString().split("T")[0]
-
-  // Fill in the test environment info
-  content = content.replace(/Date:\*\* _\[To be filled\]_/, `Date:** ${date}`)
-  content = content.replace(
-    /Tester:\*\* _\[To be filled\]_/,
-    `Tester:** Automated Lighthouse Script`,
-  )
-
-  // Fill in results for each page
-  for (const result of results) {
-    const m = result.median
-    const pageSection = result.page.replace(/[()]/g, "\\$&")
-
-    // Fill median values
-    content = content.replace(
-      new RegExp(`(${pageSection}[\\s\\S]*?### Median Values[\\s\\S]*?)- \\*\\*FCP:\\*\\* _\\[ms\\]_`, "i"),
-      `$1- **FCP:** ${m.fcp.toFixed(0)}ms`,
-    )
-    content = content.replace(
-      new RegExp(`(${pageSection}[\\s\\S]*?### Median Values[\\s\\S]*?FCP[\\s\\S]*?)- \\*\\*LCP:\\*\\* _\\[ms\\]_`, "i"),
-      `$1- **LCP:** ${m.lcp.toFixed(0)}ms`,
-    )
-    content = content.replace(
-      new RegExp(`(${pageSection}[\\s\\S]*?### Median Values[\\s\\S]*?LCP[\\s\\S]*?)- \\*\\*TTI:\\*\\* _\\[ms\\]_`, "i"),
-      `$1- **TTI:** ${m.tti.toFixed(0)}ms`,
-    )
-    content = content.replace(
-      new RegExp(`(${pageSection}[\\s\\S]*?### Median Values[\\s\\S]*?TTI[\\s\\S]*?)- \\*\\*TBT:\\*\\* _\\[ms\\]_`, "i"),
-      `$1- **TBT:** ${m.tbt.toFixed(0)}ms`,
-    )
-    content = content.replace(
-      new RegExp(`(${pageSection}[\\s\\S]*?### Median Values[\\s\\S]*?TBT[\\s\\S]*?)- \\*\\*CLS:\\*\\* _\\[score\\]_`, "i"),
-      `$1- **CLS:** ${m.cls.toFixed(3)}`,
-    )
-    content = content.replace(
-      new RegExp(`(${pageSection}[\\s\\S]*?### Median Values[\\s\\S]*?CLS[\\s\\S]*?)- \\*\\*Speed Index:\\*\\* _\\[ms\\]_`, "i"),
-      `$1- **Speed Index:** ${m.speedIndex.toFixed(0)}ms`,
-    )
-    content = content.replace(
-      new RegExp(`(${pageSection}[\\s\\S]*?### Median Values[\\s\\S]*?Speed Index[\\s\\S]*?)- \\*\\*Performance Score:\\*\\* _\\[0-100\\]_`, "i"),
-      `$1- **Performance Score:** ${m.performanceScore.toFixed(1)}`,
-    )
-  }
-
-  writeFileSync(baselinePath, content)
-  console.info(`\n✅ Updated ${baselinePath}`)
-}
 
 /**
  * Append results to metrics.csv
@@ -482,16 +426,14 @@ async function main() {
     }
 
     // Step 5: Write results
-    console.info("\n5️⃣  Writing results to documentation...")
-    writeBaselineResults(results)
+    console.info("\n5️⃣  Writing results to CSV...")
     appendToMetricsCSV(results)
 
     console.info("\n" + "=".repeat(60))
     console.info("✅ Performance baseline tests completed successfully!")
     console.info("\nNext steps:")
-    console.info("1. Review docs/performance-upgrade/baseline.md")
-    console.info("2. Review docs/performance-upgrade/metrics.csv")
-    console.info("3. Commit the results")
+    console.info("1. Review docs/performance-upgrade/metrics.csv")
+    console.info("2. Commit the results")
   } finally {
     // Step 6: Cleanup - kill server
     console.info("\n6️⃣  Cleaning up...")
