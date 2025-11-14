@@ -3,9 +3,7 @@ import { sql } from "kysely"
 import type { Params } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
-import { sendEmail, type MailOptions } from "~/business/email/send-email"
 import { kysely } from "~/kysely"
-import { chunkArray } from "~/lib/helpers/chunk-array"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
 import type {
@@ -19,7 +17,6 @@ import { getUserContext } from "../auth/auth.server"
 import {
   adminContextSchema,
   eventFormSchema,
-  sendEventRemindersSchema,
   updateEventDemographicsSchema,
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,

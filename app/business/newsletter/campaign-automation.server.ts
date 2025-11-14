@@ -1,4 +1,4 @@
-import { composable, sequence } from "composable-functions"
+import { composable } from "composable-functions"
 import { kysely } from "~/kysely"
 import { env } from "~/env.server"
 import { LISTMONK_ALL_SUBSCRIBERS_LIST_ID } from "~/lib/constants/constants"
@@ -8,8 +8,6 @@ import {
   updateCampaignSent,
   updateCampaignError,
 } from "./campaign-tracking.server"
-
-type CampaignErrorStep = "campaign_creation" | "send_signal"
 
 function getListmonkConfig() {
   const { listmonkApiUrl, listmonkApiUsername, listmonkApiPassword } = env()
