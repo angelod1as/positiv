@@ -7,10 +7,11 @@ import { processCampaignForEvent } from "~/business/newsletter/campaign-automati
  * Called by Supabase Edge Function via pg_cron
  */
 export async function action({ request }: ActionFunctionArgs) {
-  // Verify request is from Supabase Edge Function (check for service_role key)
+  // Verify request is from authorized internal source using secret token
   const authHeader = request.headers.get("Authorization")
+  const expectedToken = `Bearer ${process.env.INTERNAL_JOB_SECRET}`
 
-  if (!authHeader || !authHeader.includes("service_role")) {
+  if (!authHeader || authHeader !== expectedToken) {
     return Response.json({ error: "Unauthorized" }, { status: 401 })
   }
 
