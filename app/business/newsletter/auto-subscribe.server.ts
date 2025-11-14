@@ -64,9 +64,10 @@ export const subscribeProfileToNewsletter = composable(
       // TODO POS-262: Add cron job to retry failed syncs - query newsletter_subscriptions where sync_status='failed' and retry Listmonk sync
       // Don't throw - allow subscription to succeed even if sync fails
       // The subscription record is created and can be synced later
-      return
+      return { syncStatus: "failed" as const }
     }
 
     await updateSyncStatus(profileId, "synced")
+    return { syncStatus: "synced" as const }
   },
 )

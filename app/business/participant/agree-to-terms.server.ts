@@ -63,6 +63,12 @@ export const agreeToTerms = applySchema(
           "Não foi possível inscrevê-lo na newsletter. Entre em contato com os administradores em partypositiv@gmail.com",
       }
     }
+    if (result.data?.syncStatus === "failed") {
+      console.warn(
+        "Newsletter subscription created but sync failed. Will be retried by cron job.",
+        { profileId, subscriptionSource },
+      )
+    }
   } else {
     const result = await unsubscribeProfile(profileId)
     if (!result.success && result.errors.length > 0) {
