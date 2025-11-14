@@ -79,8 +79,8 @@ test.describe('Newsletter Subscription Modal', () => {
     // Wait for submission to complete
     await page.waitForLoadState('networkidle')
 
-    // Verify success toast appears (accepts both full success and graceful degradation messages)
-    await expect(page.locator('text=/inscrição realizada/i')).toBeVisible()
+    // Verify success toast appears
+    await expect(page.locator('text=/inscrição realizada com sucesso/i')).toBeVisible()
 
     // Verify modal closes (heading should not be visible)
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
@@ -218,7 +218,7 @@ test.describe('Newsletter Subscription Modal', () => {
     // Wait for submission to complete
     await page.waitForLoadState('networkidle')
 
-    // Verify success (accepts both full success and graceful degradation messages)
-    await expect(page.locator('text=/inscrição realizada/i')).toBeVisible()
+    // Verify success
+    await expect(page.locator('text=/inscrição realizada com sucesso/i')).toBeVisible()
   })
 })
