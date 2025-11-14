@@ -1,5 +1,6 @@
 import { composable } from "composable-functions"
 import { kysely } from "~/kysely"
+import { json } from "~/lib/helpers/kysely-helpers"
 
 type CampaignErrorData = {
   step: "campaign_creation" | "send_signal"
@@ -76,7 +77,7 @@ export const updateCampaignError = composable(
       .set((eb) => ({
         times_attempted: eb("times_attempted", "+", 1),
         last_attempt: new Date().toISOString(),
-        last_error: JSON.stringify(errorData),
+        last_error: json(errorData),
         updated_at: new Date().toISOString(),
       }))
       .where("event_id", "=", eventId)
