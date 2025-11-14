@@ -100,6 +100,9 @@ jobs:
           UNSUBSCRIBE_SECRET: ${{ secrets.UNSUBSCRIBE_SECRET }}
           VITE_TURNSTILE_SITE_KEY: ${{ secrets.STAGING_TURNSTILE_SITE_KEY }}
           SUPABASE_TURNSTILE_SECRET: ${{ secrets.STAGING_TURNSTILE_SECRET }}
+          LISTMONK_API_URL: ${{ secrets.LISTMONK_API_URL }}
+          LISTMONK_API_USERNAME: ${{ secrets.LISTMONK_API_USERNAME }}
+          LISTMONK_API_PASSWORD: ${{ secrets.LISTMONK_API_PASSWORD }}
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:

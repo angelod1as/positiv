@@ -37,7 +37,7 @@ describe("agreeToTerms", () => {
     // Setup default mocks for newsletter subscription
     vi.mocked(subscribeProfileToNewsletter).mockResolvedValue({
       success: true,
-      data: undefined,
+      data: { syncStatus: "synced" },
       errors: [],
     })
 
