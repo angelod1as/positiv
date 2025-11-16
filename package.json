@@ -21,6 +21,7 @@
     "db:types": "./scripts/db-types.sh",
     "email:test": "./scripts/testmail.sh",
     "worktree": "./scripts/create-worktree.sh",
+    "perf:baseline": "tsx scripts/lighthouse/run-baseline.ts",
     "prepare": "husky"
   },
   "dependencies": {
@@ -103,6 +104,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "@vitest/coverage-v8": "^3.2.4",
     "@vitest/ui": "^3.2.4",
+    "chrome-launcher": "^1.2.1",
     "eslint": "^9.25.1",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-unused-imports": "^4.1.4",
@@ -111,6 +113,8 @@
     "install": "^0.13.0",
     "jsdom": "^26.1.0",
     "kysely-supabase": "^0.2.0",
+    "lighthouse": "^13.0.1",
+    "puppeteer": "^24.30.0",
     "react-router-devtools": "^5.0.5",
     "supabase": "^2.47.2",
     "tailwindcss": "^4.0.0",
