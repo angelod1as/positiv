@@ -8,3 +8,5 @@ POS-278,Baseline - Dashboard (/dashboard),2025-11-14,Dashboard (/dashboard),3461
 POS-278,Baseline - Admin Event Management (/admin/eventos),2025-11-14,Admin Event Management (/admin/eventos),3616,3691,3698,0,0.000,3616,81.0,Initial baseline measurement
 POS-278,Baseline - Event Details Page,2025-11-14,Event Details Page,3608,3683,3691,0,0.000,3608,81.0,Initial baseline measurement
 POS-278,Baseline - Homepage (/),2025-11-16,Homepage (/),4387,5512,5624,0,0.000,4889,68.0,Initial baseline measurement
+POS-278,Baseline - Homepage (/),2025-11-16,Homepage (/),3464,3692,3715,0,0.119,3464,78.0,Initial baseline measurement
+POS-263,Self-host Google Fonts,2025-11-16,Homepage (/),3467,3696,3719,0,0.119,3467,78.0,Self-hosted DM Sans and Nunito (weights 400/500/700). FCP improved by 920ms (21% faster) vs baseline 4387ms. LCP improved by 1816ms (33% faster) vs baseline 5512ms.

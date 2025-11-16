@@ -36,19 +36,20 @@ import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
 import { NewsletterSubscriptionModal } from "./components/organisms/newsletter-subscription-modal"
 import { ProfileUpdateGuard } from "./components/organisms/profile-update-guard/profile-update-guard"
 
-// COMMENT OUT when offline
-export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
-  {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
-  },
-  {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap",
-  },
-]
+import "@fontsource/dm-sans/400.css"
+import "@fontsource/dm-sans/400-italic.css"
+import "@fontsource/dm-sans/500.css"
+import "@fontsource/dm-sans/500-italic.css"
+import "@fontsource/dm-sans/700.css"
+import "@fontsource/dm-sans/700-italic.css"
+import "@fontsource/nunito/400.css"
+import "@fontsource/nunito/400-italic.css"
+import "@fontsource/nunito/500.css"
+import "@fontsource/nunito/500-italic.css"
+import "@fontsource/nunito/700.css"
+import "@fontsource/nunito/700-italic.css"
+
+export const links: Route.LinksFunction = () => []
 
 export function meta({}: Route.MetaArgs) {
   return [
