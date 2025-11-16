@@ -503,6 +503,7 @@ export type Database = {
           where_lives: string
         }[]
       }
+      get_vault_secret: { Args: { secret_name: string }; Returns: string }
       http: {
         Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
         Returns: Database["public"]["CompositeTypes"]["http_response"]
