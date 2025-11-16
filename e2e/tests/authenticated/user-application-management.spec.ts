@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { MyApplicationsPage } from '../../pages/MyApplicationsPage'
-import { 
-  createTestApplication, 
-  verifyApplicationExists, 
+import {
+  createTestApplication,
+  deleteTestApplication,
+  verifyApplicationExists,
   verifyApplicationCanceled,
   getFirstOpenEvent,
   ensureEventIsOpen,
@@ -15,18 +16,19 @@ test.describe('POS-191: Application Management Tests', () => {
   let myApplicationsPage: MyApplicationsPage
   let testEvent: { id: string; title: string } | null
   let profileId: string | null
+  const createdApplications: Array<{ profileId: string; eventId: string }> = []
 
   test.beforeEach(async ({ page }) => {
     myApplicationsPage = new MyApplicationsPage(page)
-    
+
     // Get the test user's profile ID
     profileId = await ensureTestUserProfileExists()
     expect(profileId).toBeTruthy()
-    
+
     // Navigate to dashboard
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    
+
     // Check if we need to complete onboarding
     const currentUrl = page.url()
     if (currentUrl.includes('agree-to-terms')) {
@@ -36,15 +38,23 @@ test.describe('POS-191: Application Management Tests', () => {
       await page.waitForURL('/dashboard')
       await page.waitForLoadState('networkidle')
     }
-    
+
     // Get or create an open event
     testEvent = await getFirstOpenEvent()
     if (!testEvent) {
       throw new Error('No open events available for testing')
     }
-    
+
     // Ensure the event is open for applications
     await ensureEventIsOpen(testEvent.id)
+  })
+
+  test.afterEach(async () => {
+    // Cleanup all applications created during this test
+    for (const app of createdApplications) {
+      await deleteTestApplication(app.profileId, app.eventId)
+    }
+    createdApplications.length = 0
   })
 
   test('Complete application lifecycle: view → cancel → verify → reapply', async ({ page: _page }) => {
@@ -55,7 +65,8 @@ test.describe('POS-191: Application Management Tests', () => {
     
     // Setup: Create an application directly in the database
     await createTestApplication(profileId, testEvent.id)
-    
+    createdApplications.push({ profileId, eventId: testEvent.id })
+
     // Navigate to dashboard
     await myApplicationsPage.goto()
     
@@ -121,8 +132,10 @@ test.describe('POS-191: Application Management Tests', () => {
     
     // Create applications for both events
     await createTestApplication(profileId, testEvent.id)
+    createdApplications.push({ profileId, eventId: testEvent.id })
     await createTestApplication(profileId, secondEvent.id)
-    
+    createdApplications.push({ profileId, eventId: secondEvent.id })
+
     // Navigate to dashboard
     await myApplicationsPage.goto()
     
