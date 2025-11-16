@@ -17,7 +17,6 @@ const {
 
 type EventCardFooterProps = {
   is_applied: boolean | undefined
-  is_set_reminder: boolean | undefined
   event_status: EventStatus
   googleLink: string | undefined
   eventId: string
@@ -29,7 +28,6 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   // googleLink,
   eventId,
   dataTestId,
-  is_set_reminder,
 }) => {
   const fetcher = useFetcher()
 
@@ -48,73 +46,13 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     closeDialog()
   }
 
-  const handleAddReminder = async (closeDialog: () => void) => {
-    await fetcher.submit(
-      { eventId, fetchId: "handleAddReminder" },
-      { method: "POST" },
-    )
-    closeDialog()
-  }
-
-  const handleRemoveReminder = async (closeDialog: () => void) => {
-    await fetcher.submit(
-      { eventId, fetchId: "handleRemoveReminder" },
-      { method: "POST" },
-    )
-    closeDialog()
-  }
-
   const { isClosed, isOpen, isScheduled } = checkEventStatus(event_status)
 
   if (isScheduled) {
-    if (is_set_reminder) {
-      return (
-        <fetcher.Form method="post">
-          <ConfirmDialog
-            title="Cancelar lembrete"
-            description={
-              <div>
-                <p>
-                  Se você confirmar, vamos cancelar seu e-mail lembrete e você{" "}
-                  <b>não</b> será avisade quando esse evento abrir inscrições.
-                </p>
-              </div>
-            }
-            confirmLabel="😢 Cancelar"
-            cancelLabel="🎉 Voltar"
-            isLoading={fetcher.state !== "idle"}
-            onConfirm={handleRemoveReminder}
-          >
-            <ConfirmDialog.Trigger variant="outline" className="w-full">
-              Cancelar aviso
-            </ConfirmDialog.Trigger>
-          </ConfirmDialog>
-        </fetcher.Form>
-      )
-    }
-
     return (
-      <fetcher.Form method="post">
-        <ConfirmDialog
-          title="Receber um lembrete"
-          description={
-            <div>
-              <p>
-                Se você confirmar, te enviaremos um email quando as inscrições
-                abrirem. Massa, né?
-              </p>
-            </div>
-          }
-          confirmLabel="📅 Lembre-me!"
-          cancelLabel="Voltar"
-          isLoading={fetcher.state !== "idle"}
-          onConfirm={handleAddReminder}
-        >
-          <ConfirmDialog.Trigger variant="default" className="w-full">
-            Me avise quando as inscrições abrirem
-          </ConfirmDialog.Trigger>
-        </ConfirmDialog>
-      </fetcher.Form>
+      <Button data-testid={dataTestId} disabled={true}>
+        Inscrições em breve
+      </Button>
     )
   }
 
@@ -189,14 +127,6 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     return (
       <Button data-testid={dataTestId} to={EVENT_VIEW(eventId)}>
         Fazer inscrição
-      </Button>
-    )
-  }
-
-  if (isScheduled) {
-    return (
-      <Button data-testid={dataTestId} disabled={true}>
-        Inscrições encerradas
       </Button>
     )
   }

@@ -17,7 +17,7 @@ export const getNextEvents: GetNextEvents = composable(
     let query = kysely.selectFrom("events").selectAll("events")
 
     if (profileId) {
-      query = query.select((eb) => [
+      query = query.select((eb) =>
         eb
           .exists(
             eb
@@ -28,16 +28,7 @@ export const getNextEvents: GetNextEvents = composable(
               .where("is_user_applied", "=", true),
           )
           .as("is_applied"),
-        eb
-          .exists(
-            eb
-              .selectFrom("event_reminders")
-              .select("event_reminders.event_id")
-              .whereRef("event_reminders.event_id", "=", "events.id")
-              .where("event_reminders.profile_id", "=", profileId),
-          )
-          .as("is_set_reminder"),
-      ])
+      )
     }
 
     const homepageStatus: EventStatus[] = ["Registration Open", "Scheduled"]

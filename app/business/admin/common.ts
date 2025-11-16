@@ -93,12 +93,6 @@ export const updateEventDemographicsSchema = zod.object({
   intent: zod.string(),
 })
 
-export const sendEventRemindersSchema = zod.object({
-  intent: zod.string(),
-  event_id: zod.string(),
-  event_status: zod.custom<EventStatus>(),
-})
-
 const spotTypeEnum = zod.enum(["regular", "social", "staff"])
 
 export const updateParticipantVsEventSchema = zod.object({

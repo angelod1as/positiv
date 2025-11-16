@@ -7,16 +7,13 @@ import { z as zod } from "zod"
 import {
   getAdminContext,
   getAdminEventById,
-  getAdminReminderCountByEventId,
   getEventDemographicsById,
   getProfilesWithExtraDataById,
-  sendEventReminders,
   updateEventParticipantById,
   updateEventStatus,
   updateEventDemographics,
 } from "~/business/admin/admin.server"
 import {
-  sendEventRemindersSchema,
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
 } from "~/business/admin/common"
@@ -47,15 +44,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       request,
       schema: updateEventParticipantByIdSchema,
       mutation: updateEventParticipantById,
-      transformResult: (result) => ({ ...result, intent }),
-    })
-  }
-
-  if (intent === "send-reminders") {
-    return await formAction({
-      request,
-      mutation: sendEventReminders,
-      schema: sendEventRemindersSchema,
       transformResult: (result) => ({ ...result, intent }),
     })
   }
@@ -104,7 +92,6 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const resultCollect = await collect({
     participants: getProfilesWithExtraDataById,
-    reminderCount: getAdminReminderCountByEventId,
     demographics: eventDemographics,
   })({
     eventId,
@@ -113,14 +100,13 @@ export async function loader({ params }: Route.LoaderArgs) {
   })
 
   if (!resultCollect.success) {
-    return { event, reminderCount: 0, participants: [] }
+    return { event, participants: [] }
   }
 
-  const { participants, reminderCount, demographics } = resultCollect.data
+  const { participants, demographics } = resultCollect.data
 
   return {
     event,
-    reminderCount,
     participants,
     demographics,
   }
@@ -133,7 +119,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     sendToast(fetcher.data)
   }, [fetcher.data])
 
-  const { event, reminderCount, participants, demographics } = loaderData
+  const { event, participants, demographics } = loaderData
 
   const { title, emoji, time_event_start } = event
 
@@ -142,7 +128,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       <h1>
         {emoji} {title}
       </h1>
-      <Buttons event={event} fetcher={fetcher} reminderCount={reminderCount} />
+      <Buttons event={event} fetcher={fetcher} />
 
       <p className="font-bold">
         Data: {formatDateTime(time_event_start, "long").full}
