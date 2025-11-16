@@ -42,10 +42,10 @@ export async function verifyApplicationCanceled(profileId: string, eventId: stri
 
 export async function createTestApplication(profileId: string, eventId: string): Promise<void> {
   const supabase = createSupabaseAdminClient()
-  
+
   // First check if an application already exists
   const existing = await getApplicationState(profileId, eventId)
-  
+
   if (existing) {
     // Update existing application to be active
     const { error } = await supabase
@@ -55,7 +55,7 @@ export async function createTestApplication(profileId: string, eventId: string):
         cancellation_date: null
       })
       .eq('id', existing.id)
-    
+
     if (error) {
       throw new Error(`Failed to update application: ${error.message}`)
     }
@@ -69,10 +69,25 @@ export async function createTestApplication(profileId: string, eventId: string):
         is_user_applied: true,
         referred: 'ninguém'
       })
-    
+
     if (error) {
       throw new Error(`Failed to create application: ${error.message}`)
     }
+  }
+}
+
+export async function deleteTestApplication(profileId: string, eventId: string): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+
+  const { error } = await supabase
+    .from('event_participants')
+    .delete()
+    .eq('profile_id', profileId)
+    .eq('event_id', eventId)
+
+  if (error) {
+    console.error(`Failed to delete test application: ${error.message}`)
+    // Don't throw - cleanup should be best-effort
   }
 }
 

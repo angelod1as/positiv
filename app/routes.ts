@@ -7,6 +7,9 @@ import {
 } from "@react-router/dev/routes"
 
 export default [
+  // API ROUTES (internal endpoints)
+  route("/api/process-campaigns", "routes/api.process-campaigns.ts"),
+
   // PUBLIC
   index("pages/homepage/homepage.tsx"),
   route("/auth/confirm", "pages/auth/confirm.tsx"),

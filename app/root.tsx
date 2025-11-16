@@ -281,7 +281,13 @@ export default function App({ loaderData }: Route.ComponentProps) {
     }
   }, [toast])
 
-  const authFlowPaths = ["/login", "/cadastro", "/conta/dados-basicos"]
+  const authFlowPaths = [
+    "/entrar",
+    "/registrar",
+    "/conta/dados-basicos",
+    "/conta/dados-basicos-cont",
+    "/conta/termos-e-condicoes",
+  ]
   const isAuthFlow = authFlowPaths.some((path) =>
     location.pathname.startsWith(path),
   )
