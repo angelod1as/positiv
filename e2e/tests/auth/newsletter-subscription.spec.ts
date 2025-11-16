@@ -116,8 +116,8 @@ test.describe('Newsletter Subscription Modal', () => {
     // Verify modal closes
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
 
-    // Navigate to another page
-    await page.goto('/eventos')
+    // Navigate to another page (dashboard)
+    await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
 
     // Navigate back to homepage
@@ -179,7 +179,7 @@ test.describe('Newsletter Subscription Modal', () => {
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
 
     // Navigate to login page
-    await page.goto('/login')
+    await page.goto('/entrar')
     await page.waitForLoadState('networkidle')
 
     // Verify modal does NOT appear
