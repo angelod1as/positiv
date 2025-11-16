@@ -2,10 +2,6 @@ import type { FC, ReactNode } from "react"
 import { redirectWithInfo } from "remix-toast"
 import { getContext } from "~/business/auth/auth.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
-import {
-  addUserToReminderList,
-  removeUserFromReminderList,
-} from "~/business/participant/manage-reminder-list"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import paths from "~/lib/paths"
@@ -89,29 +85,6 @@ export async function action({ request, params }: Route.ClientActionArgs) {
       )
     }
 
-    return
-  }
-
-  if (fetchId === "handleAddReminder") {
-    const result = await addUserToReminderList(request, params)
-    if (!result.success) {
-      console.error(result.errors)
-      return {
-        error:
-          "Um erro ocorreu ao adicionar o seu lembrete, contate o administrador.",
-      }
-    }
-    return
-  }
-
-  if (fetchId === "handleRemoveReminder") {
-    const result = await removeUserFromReminderList(request, params)
-    if (!result.success) {
-      return {
-        error:
-          "Um erro ocorreu ao remover o seu lembrete, contate o administrador.",
-      }
-    }
     return
   }
 
