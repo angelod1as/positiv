@@ -116,8 +116,8 @@ test.describe('Newsletter Subscription Modal', () => {
     // Verify modal closes
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
 
-    // Navigate to another page
-    await page.goto('/eventos')
+    // Navigate to another page (dashboard)
+    await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
 
     // Navigate back to homepage
@@ -175,11 +175,11 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.goto('/conta/dados-basicos')
     await page.waitForLoadState('networkidle')
 
-    // Verify modal does NOT appear
+    // Verify modal does NOT appear on auth flow pages
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
 
-    // Navigate to login page
-    await page.goto('/login')
+    // Navigate to terms page (another auth flow page)
+    await page.goto('/conta/termos-e-condicoes')
     await page.waitForLoadState('networkidle')
 
     // Verify modal does NOT appear
