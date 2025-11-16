@@ -175,11 +175,11 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.goto('/conta/dados-basicos')
     await page.waitForLoadState('networkidle')
 
-    // Verify modal does NOT appear
+    // Verify modal does NOT appear on auth flow pages
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
 
-    // Navigate to login page
-    await page.goto('/entrar')
+    // Navigate to terms page (another auth flow page)
+    await page.goto('/conta/termos-e-condicoes')
     await page.waitForLoadState('networkidle')
 
     // Verify modal does NOT appear
