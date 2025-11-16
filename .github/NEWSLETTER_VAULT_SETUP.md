@@ -24,9 +24,10 @@ SELECT vault.create_secret(
   'Production application URL'
 );
 
--- Add production internal job secret (from Vercel env vars)
+-- Add production internal job secret
+-- Get the value from Vercel: Settings → Environment Variables → INTERNAL_JOB_SECRET (Production)
 SELECT vault.create_secret(
-  'e0f0c409ede7ad7ade58a8334106b52553e07a4679a6434315d15e0d8ba64203',
+  '<COPY_FROM_VERCEL_PRODUCTION_ENV>',
   'internal_job_secret',
   'Production API bearer token'
 );
@@ -53,8 +54,9 @@ SELECT * FROM cron.job WHERE jobname = 'process-newsletter-campaigns';
 
 **Manual testing in staging:**
 ```bash
+# Get INTERNAL_JOB_SECRET from Vercel staging environment variables
 curl -X POST https://<your-staging-url>.vercel.app/api/process-campaigns \
-  -H "Authorization: Bearer 94ac875bfaa00ace0c940cdab5fea5f5428258a6f3dc4bdd3fa1ac442609c763" \
+  -H "Authorization: Bearer <STAGING_INTERNAL_JOB_SECRET>" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -63,9 +65,10 @@ curl -X POST https://<your-staging-url>.vercel.app/api/process-campaigns \
 
 No Vault setup needed! The cron job automatically skips creation in local development.
 
-Add this to your `.env` file for local testing:
+Add this to your `.env` file for local API testing:
 ```bash
-INTERNAL_JOB_SECRET=94ac875bfaa00ace0c940cdab5fea5f5428258a6f3dc4bdd3fa1ac442609c763
+# Copy the staging value from Vercel or use any test value
+INTERNAL_JOB_SECRET=<your-local-test-secret>
 ```
 
 ## Updating Secrets
