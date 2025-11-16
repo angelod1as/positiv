@@ -5,8 +5,6 @@ import { appendFileSync, existsSync, readdirSync } from "fs"
 import { join } from "path"
 import lighthouse from "lighthouse"
 import * as chromeLauncher from "chrome-launcher"
-import { getActiveEventId } from "./get-active-event-id"
-import { getAuthCookiesArray } from "./convert-playwright-auth"
 
 interface LighthouseMetrics {
   fcp: number
@@ -129,16 +127,14 @@ function calculateMedianMetrics(runs: LighthouseMetrics[]): LighthouseMetrics {
 /**
  * Run Lighthouse test on a URL
  */
-type RunLighthouse = Composable<
-  (url: string, authCookies?: unknown[]) => LighthouseMetrics
->
+type RunLighthouse = Composable<(url: string) => LighthouseMetrics>
 
-const runLighthouse: RunLighthouse = composable(async (url, authCookies) => {
+const runLighthouse: RunLighthouse = composable(async (url) => {
   const chrome = await chromeLauncher.launch({ chromeFlags: ["--headless"] })
 
   try {
     const options = {
-      logLevel: "info" as const,
+      logLevel: "error" as const,
       output: "json" as const,
       port: chrome.port,
       throttling: {
@@ -150,15 +146,6 @@ const runLighthouse: RunLighthouse = composable(async (url, authCookies) => {
         cpuSlowdownMultiplier: 4,
       },
       onlyCategories: ["performance"],
-    }
-
-    // If we have auth cookies, inject them
-    if (authCookies && authCookies.length > 0) {
-      // Note: Setting cookies in Lighthouse is tricky
-      // For now, we'll rely on manual login or pre-authenticated Chrome profile
-      console.warn(
-        "Auth cookie injection not fully implemented - pages may require manual auth",
-      )
     }
 
     const result = await lighthouse(url, options)
@@ -183,30 +170,17 @@ const runLighthouse: RunLighthouse = composable(async (url, authCookies) => {
 /**
  * Run Lighthouse tests 3 times and return median values
  */
-type RunTestSuite = Composable<
-  (page: string, url: string, authType?: "user" | "admin") => TestResult
->
+type RunTestSuite = Composable<(page: string, url: string) => TestResult>
 
-const runTestSuite: RunTestSuite = composable(async (page, url, authType) => {
+const runTestSuite: RunTestSuite = composable(async (page, url) => {
   console.info(`\nTesting ${page}...`)
   console.info(`URL: ${url}`)
-
-  let authCookies: unknown[] | undefined
-  if (authType) {
-    const cookiesResult = await getAuthCookiesArray(authType)
-    if (!cookiesResult.success) {
-      throw new Error(
-        `Failed to get auth cookies: ${JSON.stringify(cookiesResult.errors)}`,
-      )
-    }
-    authCookies = cookiesResult.data
-  }
 
   const runs: LighthouseMetrics[] = []
 
   for (let i = 1; i <= 3; i++) {
     console.info(`  Run ${i}/3...`)
-    const metricsResult = await runLighthouse(url, authCookies)
+    const metricsResult = await runLighthouse(url)
 
     if (!metricsResult.success) {
       console.error(
@@ -289,23 +263,8 @@ async function main() {
   console.info("🚀 Starting Performance Baseline Tests")
   console.info("=" .repeat(60))
 
-  // Step 1: Get active event ID
-  console.info("\n1️⃣  Getting active event ID from database...")
-  const eventIdResult = await getActiveEventId()
-
-  if (!eventIdResult.success) {
-    console.error(
-      "❌ No active event found. Please ensure database is seeded.",
-      eventIdResult.errors,
-    )
-    process.exit(1)
-  }
-
-  const eventId = eventIdResult.data
-  console.info(`✅ Found event ID: ${eventId}`)
-
-  // Step 2: Build production app
-  console.info("\n2️⃣  Building production app...")
+  // Step 1: Build production app
+  console.info("\n1️⃣  Building production app...")
   await new Promise<void>((resolve, reject) => {
     const build = spawn("pnpm", ["build"], { stdio: "inherit" })
     build.on("close", (code) => {
@@ -318,8 +277,8 @@ async function main() {
     })
   })
 
-  // Step 3: Start production server
-  console.info("\n3️⃣  Starting production server...")
+  // Step 2: Start production server
+  console.info("\n2️⃣  Starting production server...")
   const serverPath = findServerPath()
   console.info(`   Using server build: ${serverPath}`)
 
@@ -369,13 +328,13 @@ async function main() {
   console.info("✅ Server started and responding")
 
   try {
-    // Step 4: Run Lighthouse tests
-    console.info("\n4️⃣  Running Lighthouse tests...")
-    console.info("⚠️  Note: Authenticated pages may show login screen if auth injection fails")
+    // Step 3: Run Lighthouse tests
+    console.info("\n3️⃣  Running Lighthouse tests...")
+    console.info("   Testing unauthenticated pages only (see POS-281 for authenticated pages)")
 
     const results: TestResult[] = []
 
-    // Test 1: Homepage (unauthenticated)
+    // Test: Homepage (unauthenticated)
     const homepage = await runTestSuite("Homepage (/)", `${BASE_URL}/`)
     if (homepage.success) {
       results.push(homepage.data)
@@ -383,50 +342,12 @@ async function main() {
       console.error("❌ Homepage test failed:", homepage.errors)
     }
 
-    // Test 2: Dashboard (user authenticated)
-    console.info("\n⚠️  For Dashboard test: Manual login may be required")
-    const dashboard = await runTestSuite(
-      "Dashboard (/dashboard)",
-      `${BASE_URL}/dashboard`,
-      "user",
-    )
-    if (dashboard.success) {
-      results.push(dashboard.data)
-    } else {
-      console.error("❌ Dashboard test failed:", dashboard.errors)
-    }
-
-    // Test 3: Admin Event Management (admin authenticated)
-    console.info("\n⚠️  For Admin test: Manual admin login may be required")
-    const admin = await runTestSuite(
-      "Admin Event Management (/admin/eventos)",
-      `${BASE_URL}/admin/eventos`,
-      "admin",
-    )
-    if (admin.success) {
-      results.push(admin.data)
-    } else {
-      console.error("❌ Admin test failed:", admin.errors)
-    }
-
-    // Test 4: Event Details (user authenticated + event ID)
-    const eventDetails = await runTestSuite(
-      `Event Details Page`,
-      `${BASE_URL}/dashboard/${eventId}/`,
-      "user",
-    )
-    if (eventDetails.success) {
-      results.push(eventDetails.data)
-    } else {
-      console.error("❌ Event Details test failed:", eventDetails.errors)
-    }
-
     if (results.length === 0) {
-      throw new Error("All tests failed - no results to write")
+      throw new Error("Homepage test failed - no results to write")
     }
 
-    // Step 5: Write results
-    console.info("\n5️⃣  Writing results to CSV...")
+    // Step 4: Write results
+    console.info("\n4️⃣  Writing results to CSV...")
     appendToMetricsCSV(results)
 
     console.info("\n" + "=".repeat(60))
@@ -435,8 +356,8 @@ async function main() {
     console.info("1. Review docs/performance-upgrade/metrics.csv")
     console.info("2. Commit the results")
   } finally {
-    // Step 6: Cleanup - kill server
-    console.info("\n6️⃣  Cleaning up...")
+    // Step 5: Cleanup - kill server
+    console.info("\n5️⃣  Cleaning up...")
     server.kill()
     console.info("✅ Server stopped")
   }

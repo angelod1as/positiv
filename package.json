@@ -114,6 +114,7 @@
     "jsdom": "^26.1.0",
     "kysely-supabase": "^0.2.0",
     "lighthouse": "^13.0.1",
+    "puppeteer": "^24.30.0",
     "react-router-devtools": "^5.0.5",
     "supabase": "^2.47.2",
     "tailwindcss": "^4.0.0",
