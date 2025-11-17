@@ -1,7 +1,15 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "@testing-library/react"
-import { createMemoryRouter, RouterProvider, Outlet } from "react-router"
 import { useRootData } from "./use-root-data"
+import { useMatches } from "react-router"
+
+vi.mock("react-router", async () => {
+  const actual = await vi.importActual("react-router")
+  return {
+    ...actual,
+    useMatches: vi.fn(),
+  }
+})
 
 function TestComponent({ testId }: { testId: string }) {
   const rootData = useRootData()
@@ -13,7 +21,7 @@ function TestComponent({ testId }: { testId: string }) {
 }
 
 describe("useRootData", () => {
-  it("should return root loader data", async () => {
+  it("should return root loader data", () => {
     const mockRootData = {
       currentUser: { id: "user-123", email: "test@example.com" },
       currentProfile: {
@@ -21,60 +29,70 @@ describe("useRootData", () => {
         email: "test@example.com",
         social_name: "Test User",
         is_admin: false,
+        created_at: "2025-01-01T00:00:00Z",
+        basic_data_filled: true,
       },
       isProdInDev: false,
     }
 
-    const router = createMemoryRouter(
-      [
-        {
-          id: "root",
-          path: "/",
-          loader: () => mockRootData,
-          Component: () => <Outlet />,
-          children: [
-            {
-              index: true,
-              Component: () => <TestComponent testId="test-output" />,
-            },
-          ],
-        },
-      ],
-      { initialEntries: ["/"] },
-    )
+    vi.mocked(useMatches).mockReturnValue([
+      {
+        id: "root",
+        pathname: "/",
+        params: {},
+        data: mockRootData,
+        handle: undefined,
+      },
+    ])
 
-    render(<RouterProvider router={router} />)
+    render(<TestComponent testId="test-output" />)
 
-    expect(await screen.findByText("test@example.com")).toBeInTheDocument()
+    expect(screen.getByText("test@example.com")).toBeInTheDocument()
   })
 
-  it("should handle missing currentUser", async () => {
+  it("should handle missing currentUser", () => {
     const mockRootData = {
       currentUser: null,
       currentProfile: null,
       isProdInDev: false,
     }
 
-    const router = createMemoryRouter(
-      [
-        {
-          id: "root",
-          path: "/",
-          loader: () => mockRootData,
-          Component: () => <Outlet />,
-          children: [
-            {
-              index: true,
-              Component: () => <TestComponent testId="test-output" />,
-            },
-          ],
-        },
-      ],
-      { initialEntries: ["/"] },
+    vi.mocked(useMatches).mockReturnValue([
+      {
+        id: "root",
+        pathname: "/",
+        params: {},
+        data: mockRootData,
+        handle: undefined,
+      },
+    ])
+
+    render(<TestComponent testId="test-output" />)
+
+    expect(screen.getByText("no-user")).toBeInTheDocument()
+  })
+
+  it("should throw error when root match not found", () => {
+    vi.mocked(useMatches).mockReturnValue([])
+
+    expect(() => render(<TestComponent testId="test-output" />)).toThrow(
+      "useRootData must be used within a route that has root as an ancestor"
     )
+  })
 
-    render(<RouterProvider router={router} />)
+  it("should throw error when root match has no data", () => {
+    vi.mocked(useMatches).mockReturnValue([
+      {
+        id: "root",
+        pathname: "/",
+        params: {},
+        data: undefined,
+        handle: undefined,
+      },
+    ])
 
-    expect(await screen.findByText("no-user")).toBeInTheDocument()
+    expect(() => render(<TestComponent testId="test-output" />)).toThrow(
+      "useRootData must be used within a route that has root as an ancestor"
+    )
   })
 })
