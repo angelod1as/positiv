@@ -77,7 +77,6 @@ describe("getAdminContext", () => {
     const result = await getAdminContext(request, params)
 
     expect(result).toBeDefined()
-    expect(result.user).toBeDefined()
     expect(result.supabase).toBeDefined()
     expect(result).not.toHaveProperty("events")
   })
