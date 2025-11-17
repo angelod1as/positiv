@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest"
-import { applyToEventSchema, registerUserSchema } from "./common"
+import {
+	applyToEventSchema,
+	minimalContextSchema,
+	minimalProfileSchema,
+	registerUserSchema,
+} from "./common"
 
 describe("applyToEventSchema", () => {
   describe("referred field validation", () => {
@@ -186,4 +191,150 @@ describe("registerUserSchema", () => {
       }
     })
   })
+})
+
+describe("minimalProfileSchema", () => {
+	const validMinimalProfile = {
+		id: "550e8400-e29b-41d4-a716-446655440000",
+		email: "test@example.com",
+		full_name: "Test User",
+		social_name: "Testy",
+		race_color: ["branco"],
+		is_admin: false,
+	}
+
+	describe("complete schema validation", () => {
+		it("should accept valid minimal profile data with all fields", () => {
+			const result = minimalProfileSchema.safeParse(validMinimalProfile)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.id).toBe(validMinimalProfile.id)
+				expect(result.data.email).toBe(validMinimalProfile.email)
+				expect(result.data.full_name).toBe(validMinimalProfile.full_name)
+				expect(result.data.social_name).toBe(validMinimalProfile.social_name)
+				expect(result.data.race_color).toEqual(validMinimalProfile.race_color)
+				expect(result.data.is_admin).toBe(false)
+			}
+		})
+
+		it("should accept admin profile with is_admin true", () => {
+			const adminProfile = {
+				...validMinimalProfile,
+				is_admin: true,
+			}
+			const result = minimalProfileSchema.safeParse(adminProfile)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.is_admin).toBe(true)
+			}
+		})
+
+		it("should accept profile with nullable social_name", () => {
+			const profileWithoutSocialName = {
+				...validMinimalProfile,
+				social_name: null,
+			}
+			const result = minimalProfileSchema.safeParse(profileWithoutSocialName)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.social_name).toBeNull()
+			}
+		})
+
+		it("should accept profile with nullable race_color", () => {
+			const profileWithoutRace = {
+				...validMinimalProfile,
+				race_color: null,
+			}
+			const result = minimalProfileSchema.safeParse(profileWithoutRace)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.race_color).toBeNull()
+			}
+		})
+
+		it("should reject profile missing required id field", () => {
+			const { id, ...profileWithoutId } = validMinimalProfile
+			const result = minimalProfileSchema.safeParse(profileWithoutId)
+			expect(result.success).toBe(false)
+		})
+
+		it("should reject profile missing required email field", () => {
+			const { email, ...profileWithoutEmail } = validMinimalProfile
+			const result = minimalProfileSchema.safeParse(profileWithoutEmail)
+			expect(result.success).toBe(false)
+		})
+
+		it("should reject profile missing required full_name field", () => {
+			const { full_name, ...profileWithoutName } = validMinimalProfile
+			const result = minimalProfileSchema.safeParse(profileWithoutName)
+			expect(result.success).toBe(false)
+		})
+
+		it("should reject profile missing required is_admin field", () => {
+			const { is_admin, ...profileWithoutAdmin } = validMinimalProfile
+			const result = minimalProfileSchema.safeParse(profileWithoutAdmin)
+			expect(result.success).toBe(false)
+		})
+
+		it("should reject profile with invalid data types", () => {
+			const invalidProfile = {
+				...validMinimalProfile,
+				is_admin: "not a boolean",
+			}
+			const result = minimalProfileSchema.safeParse(invalidProfile)
+			expect(result.success).toBe(false)
+		})
+	})
+})
+
+describe("minimalContextSchema", () => {
+	const validMinimalProfile = {
+		id: "550e8400-e29b-41d4-a716-446655440000",
+		email: "test@example.com",
+		full_name: "Test User",
+		social_name: "Testy",
+		race_color: ["branco"],
+		is_admin: false,
+	}
+
+	describe("context with profile", () => {
+		it("should accept valid context with minimal profile", () => {
+			const context = {
+				currentProfile: validMinimalProfile,
+			}
+			const result = minimalContextSchema.safeParse(context)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.currentProfile).toEqual(validMinimalProfile)
+			}
+		})
+
+		it("should accept context with null profile", () => {
+			const context = {
+				currentProfile: null,
+			}
+			const result = minimalContextSchema.safeParse(context)
+			expect(result.success).toBe(true)
+			if (result.success) {
+				expect(result.data.currentProfile).toBeNull()
+			}
+		})
+
+		it("should reject context with invalid profile structure", () => {
+			const context = {
+				currentProfile: {
+					id: "550e8400-e29b-41d4-a716-446655440000",
+				},
+			}
+			const result = minimalContextSchema.safeParse(context)
+			expect(result.success).toBe(false)
+		})
+
+		it("should reject context missing currentProfile field", () => {
+			const context = {}
+			const result = minimalContextSchema.safeParse(context)
+			expect(result.success).toBe(false)
+		})
+	})
 })
