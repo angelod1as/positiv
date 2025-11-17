@@ -75,17 +75,6 @@ export const currentProfileSchema = zod.object({
   is_admin: zod.boolean(),
 })
 
-export const minimalProfileSchema = zod.object({
-  id: zod.string(),
-  email: zod.string(),
-  full_name: zod.string(),
-  social_name: zod.string().nullable(),
-  race_color: zod.array(zod.string()).nullable(),
-  is_admin: zod.boolean(),
-  created_at: zod.string(),
-  basic_data_filled: zod.boolean(),
-})
-
 export const getSupabaseSchema = zod.object({
   supabase: zod.custom<SupabaseClient<Database, "public">>(),
   supabaseHeaders: zod.custom<Headers>(),
@@ -100,12 +89,6 @@ export const contextSchema = getSupabaseSchema.extend({
 
 export const userContextSchema = contextSchema.extend({
   currentUser: currentUserSchema,
-})
-
-export const minimalContextSchema = zod.object({
-  currentUser: currentUserSchema.nullable(),
-  currentProfile: minimalProfileSchema.nullable(),
-  isProdInDev: zod.boolean().optional(),
 })
 
 /* DASHBOARD */

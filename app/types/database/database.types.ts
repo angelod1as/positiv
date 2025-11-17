@@ -479,19 +479,6 @@ export type Database = {
       }
       bytea_to_text: { Args: { data: string }; Returns: string }
       get_admin_user_ids: { Args: never; Returns: string[] }
-      get_minimal_auth: {
-        Args: { user_id_input: string }
-        Returns: {
-          basic_data_filled: boolean
-          created_at: string
-          email: string
-          full_name: string
-          id: string
-          is_admin: boolean
-          race_color: string[]
-          social_name: string
-        }[]
-      }
       get_profile_with_roles: {
         Args: { user_id_input: string }
         Returns: {

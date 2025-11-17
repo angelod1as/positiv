@@ -5,7 +5,7 @@ import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 import { createBrowserClient } from "~/lib/supabase/client"
 import type { Database } from "~types/database/database.types"
-import { currentUserSchema, minimalProfileSchema } from "../common"
+import { currentProfileSchema, currentUserSchema } from "../common"
 
 const {
   dash: { DASHBOARD },
@@ -14,7 +14,7 @@ const {
 export const clientContextSchema = zod.object({
   supabase: zod.custom<SupabaseClient<Database, "public">>(),
   currentUser: currentUserSchema.nullable(),
-  currentProfile: minimalProfileSchema.nullable(),
+  currentProfile: currentProfileSchema.nullable(),
 })
 
 export const getClientContext = async (): Promise<
@@ -51,7 +51,7 @@ export const getClientContext = async (): Promise<
   const currentUser = { id: userId, email }
 
   const { data: profileData, error: profileError } = await supabase
-    .rpc("get_minimal_auth", { user_id_input: userId })
+    .rpc("get_profile_with_roles", { user_id_input: userId })
     .single()
 
   if (profileError) {
