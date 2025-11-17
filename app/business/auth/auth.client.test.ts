@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "~/types/database/database.types"
+import { getClientContext } from "./auth.client"
 
 // Mock import.meta.env
 vi.stubGlobal("import", {
@@ -46,8 +47,6 @@ describe("getClientContext", () => {
 	})
 
 	it("should call get_minimal_auth RPC instead of get_profile_with_roles", async () => {
-		const { getClientContext } = await import("./auth.client")
-
 		const mockProfile = {
 			id: "profile-123",
 			email: "test@example.com",
@@ -86,8 +85,6 @@ describe("getClientContext", () => {
 	})
 
 	it("should return minimal profile schema with 8 fields", async () => {
-		const { getClientContext } = await import("./auth.client")
-
 		const mockProfile = {
 			id: "profile-123",
 			email: "test@example.com",
@@ -130,8 +127,6 @@ describe("getClientContext", () => {
 	})
 
 	it("should handle null user", async () => {
-		const { getClientContext } = await import("./auth.client")
-
 		mockSupabaseAuth.getUser.mockResolvedValue({
 			data: { user: null },
 			error: null,
@@ -145,8 +140,6 @@ describe("getClientContext", () => {
 	})
 
 	it("should handle RPC error gracefully", async () => {
-		const { getClientContext } = await import("./auth.client")
-
 		mockSupabaseAuth.getUser.mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -176,8 +169,6 @@ describe("getClientContext", () => {
 	})
 
 	it("should handle empty profile result without error", async () => {
-		const { getClientContext } = await import("./auth.client")
-
 		mockSupabaseAuth.getUser.mockResolvedValue({
 			data: { user: mockUser },
 			error: null,
@@ -204,8 +195,6 @@ describe("getClientContext", () => {
 	})
 
 	it("should return profile with nullable social_name and race_color", async () => {
-		const { getClientContext } = await import("./auth.client")
-
 		const mockProfile = {
 			id: "profile-123",
 			email: "test@example.com",
