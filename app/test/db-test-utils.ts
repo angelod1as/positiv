@@ -11,13 +11,22 @@ interface TrackedEntity {
 
 export class TestDataTracker {
   private trackedData: TrackedEntity[] = []
+  private authUserEmails: string[] = []
 
   track(table: string, id: string): void {
     this.trackedData.push({ table, id })
   }
 
+  trackAuthUser(email: string): void {
+    this.authUserEmails.push(email)
+  }
+
   getTrackedData(): TrackedEntity[] {
     return [...this.trackedData]
+  }
+
+  getAuthUserEmails(): string[] {
+    return [...this.authUserEmails]
   }
 
   getTrackedDataForCleanup(): TrackedEntity[] {
@@ -26,6 +35,7 @@ export class TestDataTracker {
 
   clear(): void {
     this.trackedData = []
+    this.authUserEmails = []
   }
 }
 
@@ -48,14 +58,16 @@ export async function cleanupTestData(
   // Order matters due to foreign key constraints - delete in reverse order of dependencies
   const tableOrder = [
     "event_participants",
+    "event_demographics_history",
     "events",
+    "user_roles",
     "profiles"
   ]
-  
+
   for (const table of tableOrder) {
     const ids = groupedData[table]
     if (!ids || ids.length === 0) continue
-    
+
     try {
       switch (table) {
         case "event_participants":
@@ -64,10 +76,22 @@ export async function cleanupTestData(
             .where("id", "in", ids)
             .execute()
           break
+        case "event_demographics_history":
+          await kysely
+            .deleteFrom("event_demographics_history")
+            .where("event_id", "in", ids)
+            .execute()
+          break
         case "events":
           await kysely
             .deleteFrom("events")
             .where("id", "in", ids)
+            .execute()
+          break
+        case "user_roles":
+          await kysely
+            .deleteFrom("user_roles")
+            .where("user_id", "in", ids)
             .execute()
           break
         case "profiles":
@@ -85,7 +109,10 @@ export async function cleanupTestData(
       console.error(`Failed to delete ${ids.length} records from ${table}:`, error)
     }
   }
-  
+
+  const authEmails = tracker.getAuthUserEmails()
+  await cleanupTestAuthUsers(authEmails)
+
   tracker.clear()
 }
 
@@ -175,20 +202,25 @@ export function getTestSupabaseClient() {
  */
 export async function createTestAuthUser(
   email: string,
-  password: string = 'test1234'
+  password: string = 'test1234',
+  tracker?: TestDataTracker
 ): Promise<string> {
   const supabase = getTestSupabaseClient()
-  
+
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password,
     email_confirm: true
   })
-  
+
   if (error) {
     throw new Error(`Failed to create test auth user: ${error.message}`)
   }
-  
+
+  if (tracker) {
+    tracker.trackAuthUser(email)
+  }
+
   return data.user.id
 }
 

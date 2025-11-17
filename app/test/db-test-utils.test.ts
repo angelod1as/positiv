@@ -103,6 +103,37 @@ describe("cleanupTestData", () => {
   })
 })
 
+describe("Auth user cleanup", () => {
+  it("should track auth user emails and clean them up", async () => {
+    const { TestDataTracker } = await import("./db-test-utils")
+    const tracker = new TestDataTracker()
+
+    tracker.trackAuthUser("test1@example.com")
+    tracker.trackAuthUser("test2@example.com")
+
+    const authEmails = tracker.getAuthUserEmails()
+    expect(authEmails).toHaveLength(2)
+    expect(authEmails).toContain("test1@example.com")
+    expect(authEmails).toContain("test2@example.com")
+  })
+
+  it("should clear auth user emails when tracker is cleared", async () => {
+    const { TestDataTracker } = await import("./db-test-utils")
+    const tracker = new TestDataTracker()
+
+    tracker.trackAuthUser("test@example.com")
+    tracker.track("profiles", "profile-id-1")
+
+    expect(tracker.getAuthUserEmails()).toHaveLength(1)
+    expect(tracker.getTrackedData()).toHaveLength(1)
+
+    tracker.clear()
+
+    expect(tracker.getAuthUserEmails()).toHaveLength(0)
+    expect(tracker.getTrackedData()).toHaveLength(0)
+  })
+})
+
 describe("Test data creation utilities", () => {
   it("should create a test profile and track it", async () => {
     const { createTestProfile, TestDataTracker } = await import("./db-test-utils")
