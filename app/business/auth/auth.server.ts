@@ -24,6 +24,12 @@ const {
   },
 } = paths
 
+// Cache for auth context per request to avoid redundant DB queries
+const authCache = new WeakMap<
+  Request,
+  Promise<z.infer<typeof contextSchema>>
+>()
+
 export const getSupabase = async (
   request: Request,
   _params: Params,
@@ -32,10 +38,10 @@ export const getSupabase = async (
   return { supabaseHeaders, supabase }
 }
 
-export const getContext = async (
+async function _fetchContext(
   request: Request,
   params: Params,
-): Promise<z.infer<typeof contextSchema>> => {
+): Promise<z.infer<typeof contextSchema>> {
   const { isProdInDev } = env()
 
   const { supabase, supabaseHeaders } = await getSupabase(request, params)
@@ -125,6 +131,23 @@ export const getContext = async (
     isProdInDev: isProdInDev === "true",
     host,
   }
+}
+
+export const getContext = async (
+  request: Request,
+  params: Params,
+): Promise<z.infer<typeof contextSchema>> => {
+  // Check cache first
+  const cached = authCache.get(request)
+  if (cached) {
+    return cached
+  }
+
+  // Create promise and cache immediately to handle concurrent calls
+  const promise = _fetchContext(request, params)
+  authCache.set(request, promise)
+
+  return promise
 }
 
 export const getUserContext = async (
