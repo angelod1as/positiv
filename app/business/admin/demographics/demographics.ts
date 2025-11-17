@@ -95,6 +95,14 @@ function countGenders(rows: DemographicRow[]) {
 }
 
 function countOrientations(rows: DemographicRow[]) {
+  const ORIENTATION_PRIORITY = {
+    biPan: 1,
+    homo: 2,
+    aceDemi: 3,
+    straight: 4,
+    other: 5,
+  } as const
+
   const result = rows.reduce<{
     straight: number
     homo: number
@@ -103,16 +111,12 @@ function countOrientations(rows: DemographicRow[]) {
     other: { count: number; othersSet: Set<string> }
   }>(
     (acc, row) => {
-      // Use a Set to store unique orientation types for the current person
-      // This prevents double-counting if a person lists multiple orientations that
-      // fall under the same primary category (e.g., "Bi" and "Pan" for "biPan").
       const personOrientationTypes = new Set<
         "straight" | "homo" | "biPan" | "aceDemi" | "other"
       >()
       const personOtherOrientationsValues: string[] = []
 
       if (row.orientation?.length) {
-        let hasPrimaryClassification = false
         for (const o of row.orientation) {
           const classifiedTypes = classifySingleOrientation(o)
           for (const t of classifiedTypes) {
@@ -123,58 +127,45 @@ function countOrientations(rows: DemographicRow[]) {
               t === "aceDemi"
             ) {
               personOrientationTypes.add(t)
-              // Mark that we found at least one primary classification.
-              // Ace/Demi is not considered a primary orientation in the context of excluding others.
-              if (t !== "aceDemi") {
-                hasPrimaryClassification = true
-              }
             } else if (t === "other") {
               personOtherOrientationsValues.push(o)
             }
           }
         }
 
-        // If the person has no primary classifications (straight, homo, biPan)
-        // but has other orientations that fell into 'other' or 'aceDemi' alone
-        if (
-          !hasPrimaryClassification &&
-          personOtherOrientationsValues.length > 0
-        ) {
-          acc.other.count++
-          // Add unique 'other' orientation values to the Set for global deduplication
-          for (const value of personOtherOrientationsValues) {
-            acc.other.othersSet.add(value)
+        if (personOrientationTypes.size === 0) {
+          if (personOtherOrientationsValues.length > 0) {
+            acc.other.count++
+            for (const value of personOtherOrientationsValues) {
+              acc.other.othersSet.add(value)
+            }
+          } else {
+            acc.other.count++
+            acc.other.othersSet.add("Not Provided")
           }
-        } else if (
-          !hasPrimaryClassification &&
-          personOrientationTypes.has("aceDemi") &&
-          personOrientationTypes.size === 1
-        ) {
-          // If the only primary classification is aceDemi and there are no other classifications,
-          // the original logic treated it as 'other' as well.
-          acc.other.count++
-          acc.other.othersSet.add("Ace/Demi Unaccompanied (Treated as Other)")
-        } else if (
-          !hasPrimaryClassification &&
-          personOtherOrientationsValues.length === 0
-        ) {
-          // If no primary orientation was found and no specific 'other' values were listed
-          acc.other.count++
-          acc.other.othersSet.add("Unclassified/Multiple Not Primary")
+        } else {
+          let highestPriorityType: keyof typeof ORIENTATION_PRIORITY | null =
+            null
+          let lowestPriorityValue = Infinity
+
+          for (const type of personOrientationTypes) {
+            const priority = ORIENTATION_PRIORITY[type]
+            if (priority < lowestPriorityValue) {
+              lowestPriorityValue = priority
+              highestPriorityType = type
+            }
+          }
+
+          if (highestPriorityType) {
+            if (highestPriorityType === "straight") acc.straight++
+            else if (highestPriorityType === "homo") acc.homo++
+            else if (highestPriorityType === "biPan") acc.biPan++
+            else if (highestPriorityType === "aceDemi") acc.aceDemi++
+          }
         }
       } else {
-        // If orientation was not provided
         acc.other.count++
         acc.other.othersSet.add("Not Provided")
-      }
-
-      // Now, increment the overall counters based on the unique types identified for this person.
-      // This is crucial to prevent double-counting individuals in the same category.
-      for (const type of personOrientationTypes) {
-        if (type === "straight") acc.straight++
-        else if (type === "homo") acc.homo++
-        else if (type === "biPan") acc.biPan++
-        else if (type === "aceDemi") acc.aceDemi++
       }
 
       return acc
@@ -238,10 +229,15 @@ function countRaceColor(rows: DemographicRow[]) {
 }
 
 function extractAges(rows: DemographicRow[]): number[] {
+  const MIN_VALID_AGE = 1
+  const MAX_VALID_AGE = 120
+
   return rows.flatMap((row) => {
     if (row.date_of_birth) {
       const age = calculateAge(row.date_of_birth)
-      return age !== null ? [age] : []
+      if (age !== null && age >= MIN_VALID_AGE && age <= MAX_VALID_AGE) {
+        return [age]
+      }
     }
     return []
   })
