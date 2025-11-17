@@ -95,12 +95,10 @@ function countGenders(rows: DemographicRow[]) {
 }
 
 function countOrientations(rows: DemographicRow[]) {
-  const ORIENTATION_PRIORITY = {
+  const TIER1_PRIORITY = {
     biPan: 1,
     homo: 2,
-    aceDemi: 3,
-    straight: 4,
-    other: 5,
+    straight: 3,
   } as const
 
   const result = rows.reduce<{
@@ -111,45 +109,46 @@ function countOrientations(rows: DemographicRow[]) {
     other: { count: number; othersSet: Set<string> }
   }>(
     (acc, row) => {
-      const personOrientationTypes = new Set<
-        "straight" | "homo" | "biPan" | "aceDemi" | "other"
-      >()
+      const personTier1Types = new Set<"straight" | "homo" | "biPan">()
+      let personHasAceDemi = false
       const personOtherOrientationsValues: string[] = []
 
       if (row.orientation?.length) {
         for (const o of row.orientation) {
           const classifiedTypes = classifySingleOrientation(o)
           for (const t of classifiedTypes) {
-            if (
-              t === "biPan" ||
-              t === "homo" ||
-              t === "straight" ||
-              t === "aceDemi"
-            ) {
-              personOrientationTypes.add(t)
+            if (t === "biPan" || t === "homo" || t === "straight") {
+              personTier1Types.add(t)
+            } else if (t === "aceDemi") {
+              personHasAceDemi = true
             } else if (t === "other") {
               personOtherOrientationsValues.push(o)
             }
           }
         }
 
-        if (personOrientationTypes.size === 0) {
+        if (personHasAceDemi) {
+          acc.aceDemi++
+        }
+
+        if (personTier1Types.size === 0) {
           if (personOtherOrientationsValues.length > 0) {
             acc.other.count++
             for (const value of personOtherOrientationsValues) {
               acc.other.othersSet.add(value)
             }
+          } else if (personHasAceDemi) {
+            acc.other.count++
           } else {
             acc.other.count++
             acc.other.othersSet.add("Not Provided")
           }
         } else {
-          let highestPriorityType: keyof typeof ORIENTATION_PRIORITY | null =
-            null
+          let highestPriorityType: keyof typeof TIER1_PRIORITY | null = null
           let lowestPriorityValue = Infinity
 
-          for (const type of personOrientationTypes) {
-            const priority = ORIENTATION_PRIORITY[type]
+          for (const type of personTier1Types) {
+            const priority = TIER1_PRIORITY[type]
             if (priority < lowestPriorityValue) {
               lowestPriorityValue = priority
               highestPriorityType = type
@@ -160,7 +159,6 @@ function countOrientations(rows: DemographicRow[]) {
             if (highestPriorityType === "straight") acc.straight++
             else if (highestPriorityType === "homo") acc.homo++
             else if (highestPriorityType === "biPan") acc.biPan++
-            else if (highestPriorityType === "aceDemi") acc.aceDemi++
           }
         }
       } else {
