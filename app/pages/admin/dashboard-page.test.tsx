@@ -31,6 +31,7 @@ vi.mock("~/business/admin/admin.server", () => ({
 describe("Dashboard Page Loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.resetModules()
   })
 
   it("should load events with only required fields", async () => {
@@ -52,7 +53,7 @@ describe("Dashboard Page Loader", () => {
     }
   })
 
-  it("should sort events by time_event_start", async () => {
+  it("should return events sorted by time_event_start in descending order", async () => {
     const { loader } = await import("./dashboard-page")
 
     const result = await loader()
@@ -62,7 +63,7 @@ describe("Dashboard Page Loader", () => {
       const secondEventTime = result.events[1].time_event_start
 
       if (firstEventTime && secondEventTime) {
-        expect(new Date(firstEventTime).getTime()).toBeLessThanOrEqual(
+        expect(new Date(firstEventTime).getTime()).toBeGreaterThanOrEqual(
           new Date(secondEventTime).getTime(),
         )
       }

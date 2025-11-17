@@ -5,18 +5,7 @@ import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/e
 
 export async function loader() {
   const events = await getEventsForDashboard()
-
-  const sorted = events.sort((a, b) => {
-    const startA = a.time_event_start
-    const startB = b.time_event_start
-    if (!startA || !startB) {
-      return -1
-    }
-
-    return new Date(startA).getTime() - new Date(startB).getTime()
-  })
-
-  return { events: sorted }
+  return { events }
 }
 
 const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
