@@ -1,8 +1,10 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { createTestProfile } from "~/test/db-test-utils"
 import { createClient } from "@supabase/supabase-js"
 import { env } from "~/env.server"
+import type { Database } from "~/types/database/database.types"
+
+type MinimalAuthResult = Database["public"]["Functions"]["get_minimal_auth"]["Returns"][0]
 
 describe("get_minimal_auth RPC - Integration Tests", () => {
 	const { tracker, kysely } = setupIntegrationTest()
@@ -60,7 +62,7 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 			social_name: "user1",
 			is_admin: false,
 		})
-		expect(data?.race_color).toBeDefined()
+		expect((data as MinimalAuthResult).race_color).toBeDefined()
 	})
 
 	it("should return is_admin=true for admin users", async () => {
@@ -78,7 +80,7 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 
 		expect(error).toBeNull()
 		expect(data).toBeDefined()
-		expect(data?.is_admin).toBe(true)
+		expect((data as MinimalAuthResult).is_admin).toBe(true)
 	})
 
 	it("should return is_admin=false for regular users", async () => {
@@ -96,7 +98,7 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 
 		expect(error).toBeNull()
 		expect(data).toBeDefined()
-		expect(data?.is_admin).toBe(false)
+		expect((data as MinimalAuthResult).is_admin).toBe(false)
 	})
 
 	it("should handle profiles with all required fields", async () => {
@@ -113,8 +115,8 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 
 		expect(error).toBeNull()
 		expect(data).toBeDefined()
-		expect(data?.social_name).toBe("user3")
-		expect(data?.full_name).toBe("User Three Full Name")
+		expect((data as MinimalAuthResult).social_name).toBe("user3")
+		expect((data as MinimalAuthResult).full_name).toBe("User Three Full Name")
 	})
 
 	it("should return empty result for non-existent user", async () => {

@@ -22,7 +22,7 @@ import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
-import { getContext } from "./business/auth/auth.server"
+import { getMinimalContext } from "./business/auth/auth.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
 import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
@@ -98,7 +98,7 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   try {
-    const { currentProfile, currentUser, isProdInDev } = await getContext(
+    const { currentProfile, currentUser, isProdInDev } = await getMinimalContext(
       request,
       params,
     )
@@ -175,7 +175,7 @@ export async function action({ params, request }: Route.ActionArgs) {
   const { intent, thisUrl, newsVersion: submittedNewsVersion } = formData
 
   if (intent === "newsletter-subscribe") {
-    const { currentProfile } = await getContext(request, params)
+    const { currentProfile } = await getMinimalContext(request, params)
 
     if (!currentProfile) {
       return redirectWithError(
