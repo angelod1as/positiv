@@ -298,41 +298,76 @@ describe("minimalContextSchema", () => {
 		is_admin: false,
 	}
 
+	const validCurrentUser = {
+		id: "user-123",
+		email: "test@example.com",
+	}
+
 	describe("context with profile", () => {
-		it("should accept valid context with minimal profile", () => {
+		it("should accept valid context with minimal profile and user", () => {
 			const context = {
+				currentUser: validCurrentUser,
 				currentProfile: validMinimalProfile,
+				isProdInDev: false,
 			}
 			const result = minimalContextSchema.safeParse(context)
 			expect(result.success).toBe(true)
 			if (result.success) {
+				expect(result.data.currentUser).toEqual(validCurrentUser)
 				expect(result.data.currentProfile).toEqual(validMinimalProfile)
+				expect(result.data.isProdInDev).toBe(false)
 			}
 		})
 
-		it("should accept context with null profile", () => {
+		it("should accept context with null profile and user", () => {
 			const context = {
+				currentUser: null,
 				currentProfile: null,
+				isProdInDev: false,
 			}
 			const result = minimalContextSchema.safeParse(context)
 			expect(result.success).toBe(true)
 			if (result.success) {
+				expect(result.data.currentUser).toBeNull()
 				expect(result.data.currentProfile).toBeNull()
 			}
 		})
 
+		it("should accept context without isProdInDev (optional)", () => {
+			const context = {
+				currentUser: validCurrentUser,
+				currentProfile: validMinimalProfile,
+			}
+			const result = minimalContextSchema.safeParse(context)
+			expect(result.success).toBe(true)
+		})
+
 		it("should reject context with invalid profile structure", () => {
 			const context = {
+				currentUser: validCurrentUser,
 				currentProfile: {
 					id: "550e8400-e29b-41d4-a716-446655440000",
 				},
+				isProdInDev: false,
 			}
 			const result = minimalContextSchema.safeParse(context)
 			expect(result.success).toBe(false)
 		})
 
 		it("should reject context missing currentProfile field", () => {
-			const context = {}
+			const context = {
+				currentUser: validCurrentUser,
+				isProdInDev: false,
+			}
+			const result = minimalContextSchema.safeParse(context)
+			expect(result.success).toBe(false)
+		})
+
+		it("should reject context missing currentUser field", () => {
+			const context = {
+				currentProfile: validMinimalProfile,
+				isProdInDev: false,
+			}
 			const result = minimalContextSchema.safeParse(context)
 			expect(result.success).toBe(false)
 		})

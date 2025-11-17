@@ -101,7 +101,9 @@ export const userContextSchema = contextSchema.extend({
 })
 
 export const minimalContextSchema = zod.object({
+  currentUser: currentUserSchema.nullable(),
   currentProfile: minimalProfileSchema.nullable(),
+  isProdInDev: zod.boolean().optional(),
 })
 
 /* DASHBOARD */

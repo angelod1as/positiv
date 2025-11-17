@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { DBClient } from "~/types/utils/utils.types"
 import { getMinimalContext } from "./auth.server"
 
+vi.mock("~/env.server", () => ({
+	env: vi.fn(() => ({ isProdInDev: "false" })),
+}))
+
 vi.mock("~/lib/supabase/server", () => ({
 	createServerClient: vi.fn(),
 }))
@@ -53,7 +57,9 @@ describe("getMinimalContext", () => {
 
 		const result = await getMinimalContext(mockRequest, mockParams)
 
+		expect(result.currentUser).toBeNull()
 		expect(result.currentProfile).toBeNull()
+		expect(result.isProdInDev).toBe(false)
 	})
 
 	it("should return minimal profile for authenticated user", async () => {
@@ -84,7 +90,9 @@ describe("getMinimalContext", () => {
 
 		const result = await getMinimalContext(mockRequest, mockParams)
 
+		expect(result.currentUser).toEqual({ id: "user-123", email: "test@example.com" })
 		expect(result.currentProfile).toEqual(mockProfileData)
+		expect(result.isProdInDev).toBe(false)
 		expect(mockSupabase.rpc).toHaveBeenCalledWith("get_minimal_auth", {
 			user_id_input: "user-123",
 		})
@@ -110,7 +118,9 @@ describe("getMinimalContext", () => {
 
 		const result = await getMinimalContext(mockRequest, mockParams)
 
+		expect(result.currentUser).toEqual({ id: "user-123", email: "test@example.com" })
 		expect(result.currentProfile).toBeNull()
+		expect(result.isProdInDev).toBe(false)
 	})
 
 	it("should return null profile when RPC has error", async () => {
@@ -133,7 +143,9 @@ describe("getMinimalContext", () => {
 
 		const result = await getMinimalContext(mockRequest, mockParams)
 
+		expect(result.currentUser).toEqual({ id: "user-123", email: "test@example.com" })
 		expect(result.currentProfile).toBeNull()
+		expect(result.isProdInDev).toBe(false)
 		expect(consoleSpy).toHaveBeenCalledWith("getMinimalContext", {
 			details: "Some RPC error",
 		})
@@ -167,8 +179,10 @@ describe("getMinimalContext", () => {
 
 		const result = await getMinimalContext(mockRequest, mockParams)
 
+		expect(result.currentUser).toEqual({ id: "admin-123", email: "admin@example.com" })
 		expect(result.currentProfile).toEqual(mockAdminProfile)
 		expect(result.currentProfile?.is_admin).toBe(true)
+		expect(result.isProdInDev).toBe(false)
 	})
 
 	it("should handle nullable social_name and race_color", async () => {
@@ -199,9 +213,11 @@ describe("getMinimalContext", () => {
 
 		const result = await getMinimalContext(mockRequest, mockParams)
 
+		expect(result.currentUser).toEqual({ id: "user-123", email: "test@example.com" })
 		expect(result.currentProfile).toEqual(mockProfileData)
 		expect(result.currentProfile?.social_name).toBeNull()
 		expect(result.currentProfile?.race_color).toBeNull()
+		expect(result.isProdInDev).toBe(false)
 	})
 
 	it("should return null profile when auth session is missing", async () => {
@@ -223,6 +239,8 @@ describe("getMinimalContext", () => {
 
 		const result = await getMinimalContext(mockRequest, mockParams)
 
+		expect(result.currentUser).toBeNull()
 		expect(result.currentProfile).toBeNull()
+		expect(result.isProdInDev).toBe(false)
 	})
 })
