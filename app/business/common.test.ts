@@ -201,6 +201,8 @@ describe("minimalProfileSchema", () => {
 		social_name: "Testy",
 		race_color: ["branco"],
 		is_admin: false,
+		created_at: "2024-01-01T00:00:00Z",
+		basic_data_filled: true,
 	}
 
 	describe("complete schema validation", () => {
@@ -296,6 +298,8 @@ describe("minimalContextSchema", () => {
 		social_name: "Testy",
 		race_color: ["branco"],
 		is_admin: false,
+		created_at: "2024-01-01T00:00:00Z",
+		basic_data_filled: true,
 	}
 
 	const validCurrentUser = {
