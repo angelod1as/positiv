@@ -210,7 +210,7 @@ describe("calculateDemographics", () => {
       expect(result.age.max).not.toBeGreaterThan(120)
     })
 
-    it("should only include valid ages (1-120) in min/max/avg calculations", () => {
+    it("should only include valid ages (18-120) in min/max/avg calculations", () => {
       const testData = [
         {
           date_of_birth: "1990-01-01",
