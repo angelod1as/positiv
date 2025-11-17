@@ -1,6 +1,6 @@
 import { redirectWithError } from "remix-toast"
 import paths from "~/lib/paths"
-import type { contextSchema } from "./common"
+import type { contextSchema } from "~/business/common"
 import type { z } from "zod"
 
 const {

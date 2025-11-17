@@ -1,5 +1,5 @@
 import { useMatches } from "react-router"
-import type { Route } from "~/+types/root"
+import type { Route } from "../../+types/root"
 
 export function useRootData() {
   const matches = useMatches()
@@ -9,5 +9,5 @@ export function useRootData() {
     throw new Error("useRootData must be used within a route that has root as an ancestor")
   }
 
-  return rootMatch.data as Route.LoaderData
+  return rootMatch.data as Route.ComponentProps["loaderData"]
 }
