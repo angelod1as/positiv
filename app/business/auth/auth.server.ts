@@ -11,6 +11,7 @@ import {
   forgotPasswordSchema,
   getSupabaseSchema,
   loginSchema,
+  minimalContextSchema,
   registerUserSchema,
   userContextSchema,
 } from "../common"
@@ -139,6 +140,47 @@ export const getUserContext = async (
     )
   }
   return { ...context, currentUser }
+}
+
+export const getMinimalContext = async (
+  request: Request,
+  params: Params,
+): Promise<z.infer<typeof minimalContextSchema>> => {
+  const { supabase } = await getSupabase(request, params)
+
+  const { data: authData, error: authError } = await supabase.auth.getUser()
+
+  if (authError || !authData.user) {
+    return {
+      currentProfile: null,
+    }
+  }
+
+  const { id: userId } = authData.user
+
+  const { data: profileData, error: profileError } = await supabase
+    .rpc("get_minimal_auth", { user_id_input: userId })
+    .single()
+
+  if (profileError) {
+    if (profileError.details !== "The result contains 0 rows") {
+      console.error("getMinimalContext", profileError)
+    }
+
+    return {
+      currentProfile: null,
+    }
+  }
+
+  if (!profileData) {
+    return {
+      currentProfile: null,
+    }
+  }
+
+  return {
+    currentProfile: profileData,
+  }
 }
 
 export const loginUser = applySchema(
