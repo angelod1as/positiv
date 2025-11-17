@@ -229,7 +229,7 @@ function countRaceColor(rows: DemographicRow[]) {
 }
 
 function extractAges(rows: DemographicRow[]): number[] {
-  const MIN_VALID_AGE = 1
+  const MIN_VALID_AGE = 18
   const MAX_VALID_AGE = 120
 
   return rows.flatMap((row) => {
