@@ -3,7 +3,7 @@ import { Separator } from "~/components/ui/separator"
 import type { Route } from "./+types/dashboard-page"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
 
-export async function loader({ request, params }: Route.LoaderArgs) {
+export async function loader() {
   const events = await getEventsForDashboard()
 
   const sorted = events.sort((a, b) => {

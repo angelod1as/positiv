@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest"
+import type { SupabaseClient } from "@supabase/supabase-js"
 
 // Mock the getAdminContext to return without events
 vi.mock("~/business/admin/admin.server", () => ({
@@ -7,7 +8,7 @@ vi.mock("~/business/admin/admin.server", () => ({
       id: "test-user-id",
       email: "admin@test.com",
     },
-    supabase: {} as any,
+    supabase: {} as SupabaseClient,
   })),
   getEventsForDashboard: vi.fn(async () => [
     {
@@ -35,10 +36,7 @@ describe("Dashboard Page Loader", () => {
   it("should load events with only required fields", async () => {
     const { loader } = await import("./dashboard-page")
 
-    const request = new Request("http://localhost/admin/dashboard")
-    const params = {}
-
-    const result = await loader({ request, params } as any)
+    const result = await loader()
 
     expect(result).toBeDefined()
     expect(result.events).toBeDefined()
@@ -57,10 +55,7 @@ describe("Dashboard Page Loader", () => {
   it("should sort events by time_event_start", async () => {
     const { loader } = await import("./dashboard-page")
 
-    const request = new Request("http://localhost/admin/dashboard")
-    const params = {}
-
-    const result = await loader({ request, params } as any)
+    const result = await loader()
 
     if (result.events && result.events.length > 1) {
       const firstEventTime = result.events[0].time_event_start

@@ -1,11 +1,9 @@
 import { applySchema, composable } from "composable-functions"
 import { sql } from "kysely"
 import type { Params } from "react-router"
-import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { kysely } from "~/kysely"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
-import paths from "~/lib/paths"
 import type {
   EventParticipant,
   ParticipantVsEvent,
@@ -22,10 +20,6 @@ import {
   updateEventStatusSchema,
   updateParticipantVsEventSchema,
 } from "./common"
-
-const {
-  admin: { ADMIN_DASHBOARD },
-} = paths
 
 export const getAdminContext = async (
   request: Request,
