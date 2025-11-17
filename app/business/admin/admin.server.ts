@@ -32,18 +32,7 @@ export const getAdminContext = async (
   params: Params,
 ): Promise<z.infer<typeof adminContextSchema>> => {
   const context = await getUserContext(request, params)
-  const { error, data } = await context.supabase.from("events").select("*")
-
-  if (error) {
-    throw await redirectWithError(
-      ADMIN_DASHBOARD,
-      "Ocorreu um erro ao buscar eventos",
-    )
-  }
-
-  const events = data
-
-  return { ...context, events }
+  return context
 }
 
 export const getEventsForDashboard = async () => {
