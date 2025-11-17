@@ -82,6 +82,8 @@ export const minimalProfileSchema = zod.object({
   social_name: zod.string().nullable(),
   race_color: zod.array(zod.string()).nullable(),
   is_admin: zod.boolean(),
+  created_at: zod.string(),
+  basic_data_filled: zod.boolean(),
 })
 
 export const getSupabaseSchema = zod.object({

@@ -8,7 +8,9 @@ RETURNS TABLE (
     full_name text,
     social_name text,
     race_color text[],
-    is_admin boolean
+    is_admin boolean,
+    created_at text,
+    basic_data_filled boolean
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -28,7 +30,9 @@ BEGIN
             FROM user_roles ur
             WHERE ur.user_id = user_id_input
             AND ur.role_name = 'admin'
-        ) AS is_admin
+        ) AS is_admin,
+        p.created_at::text,
+        p.basic_data_filled
     FROM profiles p
     WHERE p.user_id = user_id_input;
 END;

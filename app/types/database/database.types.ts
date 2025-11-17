@@ -482,6 +482,8 @@ export type Database = {
       get_minimal_auth: {
         Args: { user_id_input: string }
         Returns: {
+          basic_data_filled: boolean
+          created_at: string
           email: string
           full_name: string
           id: string
