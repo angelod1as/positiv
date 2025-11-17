@@ -122,7 +122,9 @@ describe("TextEditModalCell", () => {
     await user.click(screen.getByRole("button", { name: /cancel/i }))
 
     expect(mockSave).not.toHaveBeenCalled()
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+    })
   })
 
   it("should NOT save changes when Escape key is pressed", async () => {
