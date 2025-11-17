@@ -252,7 +252,7 @@ describe("calculateDemographics", () => {
   })
 
   describe("orientation demographics with priority-based assignment", () => {
-    it("should count each person in only ONE orientation category", () => {
+    it("should count each person in only ONE Tier 1 orientation category", () => {
       const testData = [
         {
           date_of_birth: "1990-01-01",
@@ -279,14 +279,13 @@ describe("calculateDemographics", () => {
 
       const result = calculateDemographics(testData)
 
-      const totalPercentage =
+      const tier1Total =
         result.orientation.straight +
         result.orientation.homo +
         result.orientation.biPan +
-        result.orientation.aceDemi +
         (result.orientation.other?.percentage || 0)
 
-      expect(totalPercentage).toBe(100)
+      expect(tier1Total).toBeCloseTo(100, 1)
     })
 
     it("should prioritize Bi/Pan over Hétero when person has both", () => {
@@ -306,7 +305,7 @@ describe("calculateDemographics", () => {
       expect(result.orientation.straight).toBe(0)
     })
 
-    it("should prioritize Bi/Pan over Ace/Demi when person has both", () => {
+    it("should count Bi/Pan in Tier 1 AND Ace/Demi separately when person has both", () => {
       const testData = [
         {
           date_of_birth: "1990-01-01",
@@ -327,7 +326,7 @@ describe("calculateDemographics", () => {
       const result = calculateDemographics(testData)
 
       expect(result.orientation.biPan).toBe(100)
-      expect(result.orientation.aceDemi).toBe(0)
+      expect(result.orientation.aceDemi).toBe(100)
     })
 
     it("should prioritize Bi/Pan over Homo (Lésbica) when person has both", () => {
@@ -347,7 +346,7 @@ describe("calculateDemographics", () => {
       expect(result.orientation.homo).toBe(0)
     })
 
-    it("should handle complex multi-orientation scenarios with correct priority", () => {
+    it("should handle complex multi-orientation scenarios with two-tier counting", () => {
       const testData = [
         {
           date_of_birth: "1990-01-01",
@@ -391,16 +390,170 @@ describe("calculateDemographics", () => {
       expect(result.orientation.straight).toBe(20)
       expect(result.orientation.biPan).toBe(40)
       expect(result.orientation.homo).toBe(20)
-      expect(result.orientation.aceDemi).toBe(20)
+      expect(result.orientation.aceDemi).toBe(40)
+      expect(result.orientation.other?.percentage).toBe(20)
 
-      const totalPercentage =
+      const tier1Total =
         result.orientation.straight +
         result.orientation.homo +
         result.orientation.biPan +
-        result.orientation.aceDemi +
         (result.orientation.other?.percentage || 0)
 
-      expect(totalPercentage).toBe(100)
+      expect(tier1Total).toBe(100)
+    })
+  })
+
+  describe("ace/demi dual counting (two-tier system)", () => {
+    it("should count person with Bi + Demi in BOTH BiPan AND AceDemi", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["Homem cis"],
+          is_veteran: false,
+          orientation: ["Bi", "Demi"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.orientation.biPan).toBe(100)
+      expect(result.orientation.aceDemi).toBe(100)
+    })
+
+    it("should count person with Gay + Ace in BOTH Homo AND AceDemi", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["Homem cis"],
+          is_veteran: false,
+          orientation: ["Gay", "Ace"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.orientation.homo).toBe(100)
+      expect(result.orientation.aceDemi).toBe(100)
+    })
+
+    it("should count person with ONLY Demi in Other (Tier 1) AND AceDemi", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["Homem cis"],
+          is_veteran: false,
+          orientation: ["Demi"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.orientation.other?.percentage).toBe(100)
+      expect(result.orientation.aceDemi).toBe(100)
+    })
+
+    it("should have Tier 1 (Straight + Homo + BiPan + Other) sum to ~100%", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["Homem cis"],
+          is_veteran: false,
+          orientation: ["Hétero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1991-01-01",
+          gender: ["Mulher cis"],
+          is_veteran: false,
+          orientation: ["Bi", "Demi"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1992-01-01",
+          gender: ["Homem cis"],
+          is_veteran: false,
+          orientation: ["Gay"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1993-01-01",
+          gender: ["Mulher cis"],
+          is_veteran: false,
+          orientation: ["Ace"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      const tier1Total =
+        result.orientation.straight +
+        result.orientation.homo +
+        result.orientation.biPan +
+        (result.orientation.other?.percentage || 0)
+
+      expect(tier1Total).toBeCloseTo(100, 1)
+      expect(result.orientation.aceDemi).toBe(50)
+    })
+
+    it("should handle person with Bi + Hétero + Demi counting as BiPan AND Demi", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["Homem cis"],
+          is_veteran: false,
+          orientation: ["Bi", "Hétero", "Demi"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.orientation.biPan).toBe(100)
+      expect(result.orientation.straight).toBe(0)
+      expect(result.orientation.aceDemi).toBe(100)
+    })
+
+    it("should calculate AceDemi independently as percentage of total people", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["Homem cis"],
+          is_veteran: false,
+          orientation: ["Hétero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1991-01-01",
+          gender: ["Mulher cis"],
+          is_veteran: false,
+          orientation: ["Bi"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1992-01-01",
+          gender: ["Homem cis"],
+          is_veteran: false,
+          orientation: ["Pan", "Ace"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1993-01-01",
+          gender: ["Mulher cis"],
+          is_veteran: false,
+          orientation: ["Gay", "Demi"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.orientation.aceDemi).toBe(50)
+      expect(result.orientation.biPan).toBe(50)
+      expect(result.orientation.homo).toBe(25)
     })
   })
 })
