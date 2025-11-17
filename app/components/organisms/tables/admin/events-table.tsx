@@ -23,8 +23,13 @@ const {
 
 registerMultiSelectFilters(EVENTS_TABLE_FILTER_CONFIGS)
 
+export type DashboardEvent = Pick<
+  Event,
+  "id" | "title" | "emoji" | "event_status" | "time_event_start"
+>
+
 type AdminDashboardEventsTableProps = {
-  events: Event[]
+  events: Event[] | DashboardEvent[]
 }
 export const AdminDashboardEventsTable: FC<AdminDashboardEventsTableProps> = ({
   events,
