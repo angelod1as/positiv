@@ -3,14 +3,14 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 // Mock the getAdminContext to return without events
 vi.mock("~/business/admin/admin.server", () => ({
-  getAdminContext: vi.fn(async () => ({
+  getAdminContext: vi.fn().mockResolvedValue({
     user: {
       id: "test-user-id",
       email: "admin@test.com",
     },
     supabase: {} as SupabaseClient,
-  })),
-  getEventsForDashboard: vi.fn(async () => [
+  }),
+  getEventsForDashboard: vi.fn().mockResolvedValue([
     {
       id: "event-1",
       title: "Test Event 1",
