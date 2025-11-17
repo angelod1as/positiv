@@ -33,7 +33,7 @@ describe("Demographics History - Integration Tests", () => {
     })
 
     // Create participants with different veteran statuses
-    const veteranUserId = await createTestAuthUser(`${testPrefix}-vet@test.com`)
+    const veteranUserId = await createTestAuthUser(`${testPrefix}-vet@test.com`, 'test1234', tracker)
     const veteranProfile = await createTestProfile(tracker, kysely, {
       user_id: veteranUserId,
       email: `${testPrefix}-vet@test.com`,
@@ -41,7 +41,7 @@ describe("Demographics History - Integration Tests", () => {
       became_veteran_date: new Date("2024-01-01T10:00:00Z"),
     })
 
-    const newbieUserId = await createTestAuthUser(`${testPrefix}-new@test.com`)
+    const newbieUserId = await createTestAuthUser(`${testPrefix}-new@test.com`, 'test1234', tracker)
     const newbieProfile = await createTestProfile(tracker, kysely, {
       user_id: newbieUserId,
       email: `${testPrefix}-new@test.com`,
@@ -127,7 +127,7 @@ describe("Demographics History - Integration Tests", () => {
     })
 
     // Create test users and profiles with different characteristics
-    const veteranUserId = await createTestAuthUser(`${testPrefix}-veteran@test.com`)
+    const veteranUserId = await createTestAuthUser(`${testPrefix}-veteran@test.com`, 'test1234', tracker)
     const veteranProfile = await createTestProfile(tracker, kysely, {
       user_id: veteranUserId,
       email: `${testPrefix}-veteran@test.com`,
@@ -139,7 +139,7 @@ describe("Demographics History - Integration Tests", () => {
       orientation: ["Straight"],
     })
 
-    const newbieUserId = await createTestAuthUser(`${testPrefix}-newbie@test.com`)
+    const newbieUserId = await createTestAuthUser(`${testPrefix}-newbie@test.com`, 'test1234', tracker)
     const newbieProfile = await createTestProfile(tracker, kysely, {
       user_id: newbieUserId,
       email: `${testPrefix}-newbie@test.com`,
@@ -237,7 +237,7 @@ describe("Demographics History - Integration Tests", () => {
     })
 
     // Create a participant with null became_veteran_date (will be treated as newbie)
-    const userId = await createTestAuthUser(`${testPrefix}-test@test.com`)
+    const userId = await createTestAuthUser(`${testPrefix}-test@test.com`, 'test1234', tracker)
     const profile = await createTestProfile(tracker, kysely, {
       user_id: userId,
       email: `${testPrefix}-test@test.com`,
@@ -305,8 +305,8 @@ describe("Demographics History - Integration Tests", () => {
 
     // Create multiple participants
     const [userId1, userId2] = await Promise.all([
-      createTestAuthUser(`${testPrefix}-user1@test.com`),
-      createTestAuthUser(`${testPrefix}-user2@test.com`),
+      createTestAuthUser(`${testPrefix}-user1@test.com`, 'test1234', tracker),
+      createTestAuthUser(`${testPrefix}-user2@test.com`, 'test1234', tracker),
     ])
     
     const profiles = await Promise.all([
@@ -395,9 +395,9 @@ describe("Demographics History - Integration Tests", () => {
 
     // Create profiles
     const [attendedUserId, skippedUserId, noShowUserId] = await Promise.all([
-      createTestAuthUser(`${testPrefix}-attended@test.com`),
-      createTestAuthUser(`${testPrefix}-skipped@test.com`),
-      createTestAuthUser(`${testPrefix}-noshow@test.com`),
+      createTestAuthUser(`${testPrefix}-attended@test.com`, 'test1234', tracker),
+      createTestAuthUser(`${testPrefix}-skipped@test.com`, 'test1234', tracker),
+      createTestAuthUser(`${testPrefix}-noshow@test.com`, 'test1234', tracker),
     ])
 
     const attendedProfile = await createTestProfile(tracker, kysely, {
@@ -496,7 +496,7 @@ describe("Demographics History - Integration Tests", () => {
     })
 
     // Create a veteran who became veteran BEFORE this event (e.g., 2024-01-01)
-    const veteranUserId = await createTestAuthUser(`${testPrefix}-historical-veteran@test.com`)
+    const veteranUserId = await createTestAuthUser(`${testPrefix}-historical-veteran@test.com`, 'test1234', tracker)
     const veteranProfile = await createTestProfile(tracker, kysely, {
       user_id: veteranUserId,
       email: `${testPrefix}-historical-veteran@test.com`,
@@ -509,7 +509,7 @@ describe("Demographics History - Integration Tests", () => {
     })
 
     // Create a newbie who became veteran AFTER this event (or will become veteran at this event)
-    const newbieUserId = await createTestAuthUser(`${testPrefix}-historical-newbie@test.com`)
+    const newbieUserId = await createTestAuthUser(`${testPrefix}-historical-newbie@test.com`, 'test1234', tracker)
     const newbieProfile = await createTestProfile(tracker, kysely, {
       user_id: newbieUserId,
       email: `${testPrefix}-historical-newbie@test.com`,
