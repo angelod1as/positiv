@@ -1,23 +1,11 @@
-import { getAdminContext } from "~/business/admin/admin.server"
+import { getEventsForDashboard } from "~/business/admin/admin.server"
 import { Separator } from "~/components/ui/separator"
-import type { Event } from "~types/database/entities.types"
 import type { Route } from "./+types/dashboard-page"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const { events } = await getAdminContext(request, params)
-  if (!events) return { events: undefined }
-
-  const sorted = events.sort((a, b) => {
-    const startA = a.time_event_start
-    const startB = b.time_event_start
-    if (!startA || !startB) {
-      return -1
-    }
-
-    return new Date(startA).getTime() - new Date(startB).getTime()
-  })
-  return { events: sorted as Event[] }
+export async function loader() {
+  const events = await getEventsForDashboard()
+  return { events }
 }
 
 const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {

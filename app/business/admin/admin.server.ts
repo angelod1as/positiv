@@ -1,11 +1,9 @@
 import { applySchema, composable } from "composable-functions"
 import { sql } from "kysely"
 import type { Params } from "react-router"
-import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { kysely } from "~/kysely"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
-import paths from "~/lib/paths"
 import type {
   EventParticipant,
   ParticipantVsEvent,
@@ -23,27 +21,23 @@ import {
   updateParticipantVsEventSchema,
 } from "./common"
 
-const {
-  admin: { ADMIN_DASHBOARD },
-} = paths
-
 export const getAdminContext = async (
   request: Request,
   params: Params,
 ): Promise<z.infer<typeof adminContextSchema>> => {
   const context = await getUserContext(request, params)
-  const { error, data } = await context.supabase.from("events").select("*")
+  return context
+}
 
-  if (error) {
-    throw await redirectWithError(
-      ADMIN_DASHBOARD,
-      "Ocorreu um erro ao buscar eventos",
-    )
-  }
+export const getEventsForDashboard = async () => {
+  const events = await kysely
+    .selectFrom("events")
+    .select(["id", "title", "emoji", "event_status", "time_event_start"])
+    .orderBy("time_event_start", "desc")
+    .limit(50)
+    .execute()
 
-  const events = data
-
-  return { ...context, events }
+  return events
 }
 
 export const getAdminEventById = composable(
