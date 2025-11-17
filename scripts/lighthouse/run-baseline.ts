@@ -220,15 +220,42 @@ const runTestSuite: RunTestSuite = composable(async (page, url) => {
 })
 
 /**
+ * Parse CLI arguments
+ */
+function parseArguments(): { taskId: string; taskName: string } {
+  const args = process.argv.slice(2)
+  let taskId = "POS-278"
+  let taskName = "Baseline"
+
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === "--task-id" && args[i + 1]) {
+      taskId = args[i + 1]
+      i++
+    } else if (args[i] === "--task-name" && args[i + 1]) {
+      taskName = args[i + 1]
+      i++
+    }
+  }
+
+  return { taskId, taskName }
+}
+
+/**
  * Append results to metrics.csv
  */
-function appendToMetricsCSV(results: TestResult[]) {
+function appendToMetricsCSV(
+  results: TestResult[],
+  taskId: string,
+  taskName: string,
+) {
   const csvPath = join(DOCS_DIR, "metrics.csv")
   const date = new Date().toISOString().split("T")[0]
 
   for (const result of results) {
     const m = result.median
-    const row = `POS-278,Baseline - ${result.page},${date},${result.page},${m.fcp.toFixed(0)},${m.lcp.toFixed(0)},${m.tti.toFixed(0)},${m.tbt.toFixed(0)},${m.cls.toFixed(3)},${m.speedIndex.toFixed(0)},${m.performanceScore.toFixed(1)},Initial baseline measurement\n`
+    const displayName =
+      taskId === "POS-278" ? `Baseline - ${result.page}` : taskName
+    const row = `${taskId},${displayName},${date},${result.page},${m.fcp.toFixed(0)},${m.lcp.toFixed(0)},${m.tti.toFixed(0)},${m.tbt.toFixed(0)},${m.cls.toFixed(3)},${m.speedIndex.toFixed(0)},${m.performanceScore.toFixed(1)},\n`
     appendFileSync(csvPath, row)
   }
 
@@ -260,8 +287,11 @@ function findServerPath(): string {
  * Main execution
  */
 async function main() {
+  const { taskId, taskName } = parseArguments()
+
   console.info("🚀 Starting Performance Baseline Tests")
   console.info("=" .repeat(60))
+  console.info(`Task: ${taskId} - ${taskName}`)
 
   // Step 1: Build production app
   console.info("\n1️⃣  Building production app...")
@@ -348,7 +378,7 @@ async function main() {
 
     // Step 4: Write results
     console.info("\n4️⃣  Writing results to CSV...")
-    appendToMetricsCSV(results)
+    appendToMetricsCSV(results, taskId, taskName)
 
     console.info("\n" + "=".repeat(60))
     console.info("✅ Performance baseline tests completed successfully!")
