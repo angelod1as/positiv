@@ -26,7 +26,7 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 		await cleanupAfterTest(tracker, kysely)
 	})
 
-	it("should return exactly 6 fields for a regular user", async () => {
+	it("should return exactly 8 fields for a regular user", async () => {
 		// Use seeded user1@example.com (not an admin)
 		const profile = await kysely
 			.selectFrom("profiles")
@@ -42,10 +42,12 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 		expect(error).toBeNull()
 		expect(data).toBeDefined()
 
-		// Verify exactly 6 fields are returned
+		// Verify exactly 8 fields are returned
 		const keys = Object.keys(data as object)
-		expect(keys).toHaveLength(6)
+		expect(keys).toHaveLength(8)
 		expect(keys.sort()).toEqual([
+			"basic_data_filled",
+			"created_at",
 			"email",
 			"full_name",
 			"id",
@@ -61,8 +63,10 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 			full_name: "User One Full Name",
 			social_name: "user1",
 			is_admin: false,
+			basic_data_filled: true,
 		})
 		expect((data as MinimalAuthResult).race_color).toBeDefined()
+		expect((data as MinimalAuthResult).created_at).toBeDefined()
 	})
 
 	it("should return is_admin=true for admin users", async () => {
