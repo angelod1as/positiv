@@ -24,10 +24,7 @@ All performance measurements must be done consistently:
    - Use throttling: "Simulated Slow 4G, 4x CPU Slowdown"
 
 2. **Pages to Test:**
-   - Homepage (/)
-   - Dashboard (/dashboard)
-   - Admin Event Management (/admin/eventos)
-   - Event Details Page (pick a recent event)
+   - Homepage (/) - Primary test page for all performance tasks
 
 3. **Metrics to Record:**
    - First Contentful Paint (FCP)
@@ -39,21 +36,22 @@ All performance measurements must be done consistently:
    - Overall Performance Score
 
 4. **Process:**
-   - Run Lighthouse 3 times per page
+   - Run Lighthouse 3 times on Homepage (/)
    - Record the median values
    - Add results to `metrics.csv`
 
 ### Adding Results to CSV
 
 After completing each task:
-1. Run the Lighthouse tests as described above
+1. Run the Lighthouse tests as described above (Homepage only)
 2. Calculate median values for each metric
 3. Add a new row to `metrics.csv` with:
    - Task ID (e.g., POS-263)
    - Task name (e.g., "Self-host Google Fonts")
    - Date of measurement
+   - Page: "Homepage (/)"
    - All metric values
-   - Notes about what changed
+   - Notes about what changed and performance improvements vs baseline
 
 ## Task List
 
@@ -149,12 +147,12 @@ After completing each task:
 
 For each task:
 1. ✅ Complete the implementation
-2. ✅ Run Lighthouse tests (as described above)
+2. ✅ Run Lighthouse tests on Homepage (/) only
 3. ✅ Add metrics to `metrics.csv`
 4. ✅ Update task status in this README
 5. ✅ Document any unexpected findings
 
-**No task can be closed without adding measurements to the CSV.**
+**No task can be closed without adding Homepage measurements to the CSV.**
 
 ## Progress Tracking
 
