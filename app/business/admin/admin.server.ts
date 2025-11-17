@@ -46,6 +46,17 @@ export const getAdminContext = async (
   return { ...context, events }
 }
 
+export const getEventsForDashboard = async () => {
+  const events = await kysely
+    .selectFrom("events")
+    .select(["id", "title", "emoji", "event_status", "time_event_start"])
+    .orderBy("time_event_start", "desc")
+    .limit(50)
+    .execute()
+
+  return events
+}
+
 export const getAdminEventById = composable(
   async ({ eventId }: { eventId: string }) => {
     return await kysely
