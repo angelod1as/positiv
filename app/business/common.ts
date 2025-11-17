@@ -126,12 +126,32 @@ export const basicDataSchema = zod
     rg: zod.string().min(2),
     rg_issuer: zod.string().min(2),
     cpf: zod.string().min(2),
-    date_of_birth: zod.string({ message: "Obrigatório" }).pipe(
-      zod.coerce.date({
-        invalid_type_error: "Data inválida",
-        required_error: "Obrigatório",
-      }),
-    ),
+    date_of_birth: zod
+      .string({ message: "Obrigatório" })
+      .pipe(
+        zod.coerce.date({
+          invalid_type_error: "Data inválida",
+          required_error: "Obrigatório",
+        }),
+      )
+      .refine(
+        (date) => {
+          const now = new Date()
+          const birthDate = new Date(date)
+          let age = now.getFullYear() - birthDate.getFullYear()
+          const monthDifference = now.getMonth() - birthDate.getMonth()
+          if (
+            monthDifference < 0 ||
+            (monthDifference === 0 && now.getDate() < birthDate.getDate())
+          ) {
+            age--
+          }
+          return age >= 18
+        },
+        {
+          message: "Você precisa ter pelo menos 18 anos",
+        },
+      ),
     phone: zod.coerce
       .number({
         invalid_type_error: "Você tem certeza que digitou um número?",
