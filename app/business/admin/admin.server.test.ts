@@ -1,4 +1,27 @@
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi, beforeEach } from "vitest"
+import type { SupabaseClient } from "@supabase/supabase-js"
+
+// Mock getUserContext to return a basic user context
+vi.mock("../auth/auth.server", () => ({
+  getUserContext: vi.fn(async () => ({
+    user: {
+      id: "test-user-id",
+      email: "admin@test.com",
+      user_metadata: { admin: true },
+    },
+    supabase: {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          error: null,
+          data: [
+            { id: "event-1", title: "Test Event 1" },
+            { id: "event-2", title: "Test Event 2" },
+          ],
+        })),
+      })),
+    } as unknown as SupabaseClient,
+  })),
+}))
 
 // Mock the database module
 vi.mock("~/lib/supabase/db.server", () => ({
@@ -40,16 +63,31 @@ vi.mock("~/lib/supabase/db.server", () => ({
   },
 }))
 
+describe("getAdminContext", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("should return admin context without events array", async () => {
+    const { getAdminContext } = await import("./admin.server")
+
+    const request = new Request("http://localhost/admin")
+    const params = {}
+
+    const result = await getAdminContext(request, params)
+
+    expect(result).toBeDefined()
+    expect(result.user).toBeDefined()
+    expect(result.supabase).toBeDefined()
+    expect(result).not.toHaveProperty("events")
+  })
+})
+
 describe("getParticipantFullEventHistory", () => {
   it("should be defined with correct function signature", () => {
-    // This test will fail until we create the function
-    // We're testing that the function exists and returns the expected shape
     import("./admin.server").then((module) => {
       expect(module.getParticipantFullEventHistory).toBeDefined()
       expect(typeof module.getParticipantFullEventHistory).toBe("function")
     })
   })
-
-  // Integration tests for this function have been moved to admin.server.integration.test.ts
-  // These tests require database access and are now properly tested with a real database connection
 })
