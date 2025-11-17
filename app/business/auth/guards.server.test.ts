@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest"
 import { requireUser, requireAdmin } from "./guards.server"
-import paths from "~/lib/paths"
-
-const {
-  auth: { LOGIN },
-} = paths
 
 describe("requireUser", () => {
   it("should return user when currentUser exists", () => {
@@ -27,6 +22,8 @@ describe("requireAdmin", () => {
       email: "admin@example.com",
       social_name: "Admin",
       is_admin: true,
+      created_at: "2025-01-01T00:00:00Z",
+      basic_data_filled: true,
     }
 
     const result = requireAdmin(mockProfile)
@@ -44,6 +41,8 @@ describe("requireAdmin", () => {
       email: "user@example.com",
       social_name: "User",
       is_admin: false,
+      created_at: "2025-01-01T00:00:00Z",
+      basic_data_filled: true,
     }
 
     expect(() => requireAdmin(mockProfile)).toThrow()
