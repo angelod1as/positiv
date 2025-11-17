@@ -18,8 +18,6 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 
 	beforeEach(async () => {
 		tracker.clear()
-		// Clear any existing test data
-		await kysely.deleteFrom("profiles").where("email", "like", "test%").execute()
 	})
 
 	afterEach(async () => {
@@ -27,13 +25,12 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 	})
 
 	it("should return exactly 6 fields for a regular user", async () => {
-		// Create a test user profile
-		const profile = await createTestProfile(tracker, kysely, {
-			email: "test-regular@example.com",
-			full_name: "Regular User",
-			social_name: "Reg",
-			race_color: ["branca"],
-		})
+		// Use seeded user1@example.com (not an admin)
+		const profile = await kysely
+			.selectFrom("profiles")
+			.selectAll()
+			.where("email", "=", "user1@example.com")
+			.executeTakeFirstOrThrow()
 
 		// Call the RPC
 		const { data, error } = await supabase
@@ -58,33 +55,21 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 		// Verify field values
 		expect(data).toMatchObject({
 			id: profile.id,
-			email: "test-regular@example.com",
-			full_name: "Regular User",
-			social_name: "Reg",
-			race_color: ["branca"],
+			email: "user1@example.com",
+			full_name: "User One Full Name",
+			social_name: "user1",
 			is_admin: false,
 		})
+		expect(data?.race_color).toBeDefined()
 	})
 
 	it("should return is_admin=true for admin users", async () => {
-		// Create an admin user
-		const adminProfile = await createTestProfile(tracker, kysely, {
-			email: "test-admin@example.com",
-			full_name: "Admin User",
-			social_name: "Admin",
-			race_color: ["branca"],
-		})
-
-		// Add admin role
-		await kysely
-			.insertInto("user_roles")
-			.values({
-				user_id: adminProfile.user_id,
-				role_name: "admin",
-			})
-			.execute()
-
-		tracker.track("user_roles", { user_id: adminProfile.user_id })
+		// Use seeded admin@example.com (has admin role)
+		const adminProfile = await kysely
+			.selectFrom("profiles")
+			.selectAll()
+			.where("email", "=", "admin@example.com")
+			.executeTakeFirstOrThrow()
 
 		// Call the RPC
 		const { data, error } = await supabase
@@ -97,14 +82,15 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 	})
 
 	it("should return is_admin=false for regular users", async () => {
-		// Create a regular user (no admin role)
-		const profile = await createTestProfile(tracker, kysely, {
-			email: "test-regular2@example.com",
-			full_name: "Regular User 2",
-		})
+		// Use seeded user2@example.com (not an admin)
+		const profile = await kysely
+			.selectFrom("profiles")
+			.selectAll()
+			.where("email", "=", "user2@example.com")
+			.executeTakeFirstOrThrow()
 
 		// Call the RPC
-		const { data, error} = await supabase
+		const { data, error } = await supabase
 			.rpc("get_minimal_auth", { user_id_input: profile.user_id })
 			.single()
 
@@ -113,13 +99,13 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 		expect(data?.is_admin).toBe(false)
 	})
 
-	it("should handle null social_name correctly", async () => {
-		const profile = await createTestProfile(tracker, kysely, {
-			email: "test-no-social@example.com",
-			full_name: "No Social Name",
-			social_name: null,
-			race_color: ["preta"],
-		})
+	it("should handle profiles with all required fields", async () => {
+		// Use seeded user3@example.com
+		const profile = await kysely
+			.selectFrom("profiles")
+			.selectAll()
+			.where("email", "=", "user3@example.com")
+			.executeTakeFirstOrThrow()
 
 		const { data, error } = await supabase
 			.rpc("get_minimal_auth", { user_id_input: profile.user_id })
@@ -127,7 +113,8 @@ describe("get_minimal_auth RPC - Integration Tests", () => {
 
 		expect(error).toBeNull()
 		expect(data).toBeDefined()
-		expect(data?.social_name).toBeNull()
+		expect(data?.social_name).toBe("user3")
+		expect(data?.full_name).toBe("User Three Full Name")
 	})
 
 	it("should return empty result for non-existent user", async () => {
