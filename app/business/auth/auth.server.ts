@@ -146,17 +146,21 @@ export const getMinimalContext = async (
   request: Request,
   params: Params,
 ): Promise<z.infer<typeof minimalContextSchema>> => {
+  const { isProdInDev } = env()
   const { supabase } = await getSupabase(request, params)
 
   const { data: authData, error: authError } = await supabase.auth.getUser()
 
   if (authError || !authData.user) {
     return {
+      currentUser: null,
       currentProfile: null,
+      isProdInDev: isProdInDev === "true",
     }
   }
 
-  const { id: userId } = authData.user
+  const { id: userId, email } = authData.user
+  const currentUser = { id: userId, email }
 
   const { data: profileData, error: profileError } = await supabase
     .rpc("get_minimal_auth", { user_id_input: userId })
@@ -168,18 +172,24 @@ export const getMinimalContext = async (
     }
 
     return {
+      currentUser,
       currentProfile: null,
+      isProdInDev: isProdInDev === "true",
     }
   }
 
   if (!profileData) {
     return {
+      currentUser,
       currentProfile: null,
+      isProdInDev: isProdInDev === "true",
     }
   }
 
   return {
+    currentUser,
     currentProfile: profileData,
+    isProdInDev: isProdInDev === "true",
   }
 }
 
