@@ -258,6 +258,185 @@ describe("getContext", () => {
     )
     expect(mockSignOut).toHaveBeenCalledTimes(1)
   })
+
+  it("should cache auth results per request", async () => {
+    const mockRequest = new Request("http://localhost:5173/")
+    const mockParams = {}
+
+    const mockUser = {
+      id: "test-user-id",
+      email: "test@example.com",
+    }
+
+    const mockProfile = {
+      id: "test-profile-id",
+      email: "test@example.com",
+      is_admin: false,
+      basic_data_filled: true,
+      created_at: "2025-01-01",
+    }
+
+    const mockGetUser = vi.fn().mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    })
+
+    const mockRpc = vi.fn().mockReturnValue({
+      single: vi.fn().mockResolvedValue({
+        data: mockProfile,
+        error: null,
+      }),
+    })
+
+    const mockSupabase = {
+      auth: {
+        getUser: mockGetUser,
+        signOut: mockSignOut,
+      },
+      rpc: mockRpc,
+    }
+
+    const mockHeaders = new Headers()
+
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: mockSupabase as unknown as DBClient,
+      headers: mockHeaders,
+    })
+
+    // First call
+    const result1 = await getContext(mockRequest, mockParams)
+
+    // Second call with same request - should use cache
+    const result2 = await getContext(mockRequest, mockParams)
+
+    // Should only call DB once
+    expect(mockGetUser).toHaveBeenCalledTimes(1)
+    expect(mockRpc).toHaveBeenCalledTimes(1)
+
+    // Results should be identical
+    expect(result1).toEqual(result2)
+    expect(result1.currentUser?.id).toBe("test-user-id")
+    expect(result1.currentProfile?.id).toBe("test-profile-id")
+  })
+
+  it("should not share cache between different requests", async () => {
+    const mockRequest1 = new Request("http://localhost:5173/page1")
+    const mockRequest2 = new Request("http://localhost:5173/page2")
+    const mockParams = {}
+
+    const mockUser = {
+      id: "test-user-id",
+      email: "test@example.com",
+    }
+
+    const mockProfile = {
+      id: "test-profile-id",
+      email: "test@example.com",
+      is_admin: false,
+      basic_data_filled: true,
+      created_at: "2025-01-01",
+    }
+
+    const mockGetUser = vi.fn().mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    })
+
+    const mockRpc = vi.fn().mockReturnValue({
+      single: vi.fn().mockResolvedValue({
+        data: mockProfile,
+        error: null,
+      }),
+    })
+
+    const mockSupabase = {
+      auth: {
+        getUser: mockGetUser,
+        signOut: mockSignOut,
+      },
+      rpc: mockRpc,
+    }
+
+    const mockHeaders = new Headers()
+
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: mockSupabase as unknown as DBClient,
+      headers: mockHeaders,
+    })
+
+    // Call with first request
+    await getContext(mockRequest1, mockParams)
+
+    // Call with second request - should NOT use cache
+    await getContext(mockRequest2, mockParams)
+
+    // Should call DB twice (once per request)
+    expect(mockGetUser).toHaveBeenCalledTimes(2)
+    expect(mockRpc).toHaveBeenCalledTimes(2)
+  })
+
+  it("should handle concurrent calls to same request correctly", async () => {
+    const mockRequest = new Request("http://localhost:5173/")
+    const mockParams = {}
+
+    const mockUser = {
+      id: "test-user-id",
+      email: "test@example.com",
+    }
+
+    const mockProfile = {
+      id: "test-profile-id",
+      email: "test@example.com",
+      is_admin: false,
+      basic_data_filled: true,
+      created_at: "2025-01-01",
+    }
+
+    const mockGetUser = vi.fn().mockResolvedValue({
+      data: { user: mockUser },
+      error: null,
+    })
+
+    const mockRpc = vi.fn().mockReturnValue({
+      single: vi.fn().mockResolvedValue({
+        data: mockProfile,
+        error: null,
+      }),
+    })
+
+    const mockSupabase = {
+      auth: {
+        getUser: mockGetUser,
+        signOut: mockSignOut,
+      },
+      rpc: mockRpc,
+    }
+
+    const mockHeaders = new Headers()
+
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: mockSupabase as unknown as DBClient,
+      headers: mockHeaders,
+    })
+
+    // Make concurrent calls
+    const [result1, result2, result3] = await Promise.all([
+      getContext(mockRequest, mockParams),
+      getContext(mockRequest, mockParams),
+      getContext(mockRequest, mockParams),
+    ])
+
+    // Should only call DB once despite 3 concurrent calls
+    expect(mockGetUser).toHaveBeenCalledTimes(1)
+    expect(mockRpc).toHaveBeenCalledTimes(1)
+
+    // All results should be identical
+    expect(result1).toEqual(result2)
+    expect(result2).toEqual(result3)
+  })
 })
 
 describe("registerUser", () => {
