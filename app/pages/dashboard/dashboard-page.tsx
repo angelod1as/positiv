@@ -22,12 +22,11 @@ async function loadEvents(profileId: string) {
   const result = await getNextEvents(profileId, 12)
 
   if (!result.success) {
-    return {
-      error: result.errors,
-      registrationOpen: [],
-      scheduled: [],
-      registrationClosed: [],
-    }
+    // Throwing an error allows the <Await> component's errorElement to catch it
+    throw new Error(
+      result.errors.map((e) => e.message).join(", ") ||
+        "Failed to load events.",
+    )
   }
 
   return splitEvents(result.data)
@@ -166,10 +165,6 @@ const EventsContent: FC<{
 }
 
 const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
-  if (!loaderData) {
-    return <EventListSkeleton />
-  }
-
   return (
     <Suspense fallback={<EventListSkeleton />}>
       <Await resolve={loaderData.events}>
