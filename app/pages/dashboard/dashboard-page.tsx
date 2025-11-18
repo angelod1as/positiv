@@ -1,13 +1,16 @@
 import type { FC, ReactNode } from "react"
+import { Await } from "react-router"
+import { Suspense } from "react"
 import { redirectWithInfo } from "remix-toast"
 import { getContext } from "~/business/auth/auth.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
-import { checkEventStatus } from "~/lib/helpers/check-event-status"
+import { EventListSkeleton } from "~/components/organisms/event-list/event-list-skeleton"
 import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/database/entities.types"
 import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
+import { splitEvents } from "./utils/split-events"
 
 const {
   dash: {
@@ -15,30 +18,18 @@ const {
   },
 } = paths
 
-const splitEvents = (events: ViewEvent[] | undefined) => {
-  const empty: {
-    registrationOpen: ViewEvent[]
-    scheduled: ViewEvent[]
-    registrationClosed: ViewEvent[]
-  } = {
-    registrationOpen: [],
-    scheduled: [],
-    registrationClosed: [],
+async function loadEvents(profileId: string) {
+  const result = await getNextEvents(profileId, 12)
+
+  if (!result.success) {
+    // Throwing an error allows the <Await> component's errorElement to catch it
+    throw new Error(
+      result.errors.map((e) => e.message).join(", ") ||
+        "Failed to load events.",
+    )
   }
 
-  if (!events || events.length < 1) return empty
-
-  return events.reduce((acc, event) => {
-    const { isOpen, isClosed } = checkEventStatus(event.event_status)
-    if (isOpen) {
-      acc.registrationOpen.push(event)
-    } else if (isClosed) {
-      acc.registrationClosed.push(event)
-    } else {
-      acc.scheduled.push(event)
-    }
-    return acc
-  }, empty)
+  return splitEvents(result.data)
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -51,18 +42,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
 
-  const result = await getNextEvents(currentProfile.id, 12)
-
-  if (!result.success) {
-    return {
-      error: result.errors,
-      registrationOpen: [],
-      scheduled: undefined,
-      registrationClosed: undefined,
-    }
+  // Return object with unawaited promise for streaming
+  // No defer() wrapper needed in React Router 7
+  return {
+    events: loadEvents(currentProfile.id),
   }
-
-  return splitEvents(result.data)
 }
 
 export async function action({ request, params }: Route.ClientActionArgs) {
@@ -132,8 +116,14 @@ const Wrapper: FC<WrapperProps> = ({
   )
 }
 
-const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
-  const { registrationOpen, registrationClosed, scheduled } = loaderData
+const EventsContent: FC<{
+  events: {
+    registrationOpen: ViewEvent[]
+    registrationClosed: ViewEvent[]
+    scheduled: ViewEvent[]
+  }
+}> = ({ events }) => {
+  const { registrationOpen, registrationClosed, scheduled } = events
 
   return (
     <Wrapper
@@ -171,6 +161,16 @@ const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
         ))
       }
     />
+  )
+}
+
+const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
+  return (
+    <Suspense fallback={<EventListSkeleton />}>
+      <Await resolve={loaderData.events}>
+        {(events) => <EventsContent events={events} />}
+      </Await>
+    </Suspense>
   )
 }
 
