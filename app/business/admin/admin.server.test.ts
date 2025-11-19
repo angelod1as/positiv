@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 // Mock getUserContext to return a basic user context
@@ -63,14 +63,11 @@ vi.mock("~/lib/supabase/db.server", () => ({
   },
 }))
 
+// Import after mocking
+import { getAdminContext, getParticipantFullEventHistory } from "./admin.server"
+
 describe("getAdminContext", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   it("should return admin context without events array", async () => {
-    const { getAdminContext } = await import("./admin.server")
-
     const request = new Request("http://localhost/admin")
     const params = {}
 
@@ -84,9 +81,7 @@ describe("getAdminContext", () => {
 
 describe("getParticipantFullEventHistory", () => {
   it("should be defined with correct function signature", () => {
-    import("./admin.server").then((module) => {
-      expect(module.getParticipantFullEventHistory).toBeDefined()
-      expect(typeof module.getParticipantFullEventHistory).toBe("function")
-    })
+    expect(getParticipantFullEventHistory).toBeDefined()
+    expect(typeof getParticipantFullEventHistory).toBe("function")
   })
 })

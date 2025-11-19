@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { Database } from '../../app/types/database/database.types'
 import { TEST_USERS } from '../fixtures/test-users'
 import { TEST_USER_PROFILE_DATA } from '../fixtures/test-data'
+import { removeSubscriber } from '../../app/business/newsletter/listmonk-client.server'
 
 // Custom error class for database cleanup operations
 export class CleanupError extends Error {
@@ -290,5 +291,51 @@ export async function cleanupTestEvents(): Promise<void> {
     console.warn(`⚠️ Cleaned up ${testEvents.length} test events with some non-critical errors`)
   } else {
     console.info(`✅ Cleaned up ${testEvents.length} test events`)
+  }
+}
+
+/**
+ * Cleans up Listmonk newsletter subscribers for test users
+ * This removes test users from all Listmonk mailing lists
+ * Non-throwing: Logs errors but continues (Listmonk might be unavailable or not configured)
+ */
+export async function cleanupListmonkSubscribers(): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+
+  // Get all profiles with @example.com email (test users)
+  const { data: profiles, error: fetchError } = await supabase
+    .from('profiles')
+    .select('email')
+    .ilike('email', '%@example.com')
+
+  if (fetchError) {
+    console.warn('[Non-critical] Failed to fetch test user emails for Listmonk cleanup:', fetchError)
+    return
+  }
+
+  if (!profiles || profiles.length === 0) {
+    console.info('✅ No test users found for Listmonk cleanup')
+    return
+  }
+
+  const emails = profiles.map(p => p.email)
+  let successCount = 0
+  let errorCount = 0
+
+  for (const email of emails) {
+    const result = await removeSubscriber(email, { force: true })
+
+    if (result.success) {
+      successCount++
+    } else {
+      console.warn(`[Non-critical] Failed to remove ${email} from Listmonk:`, result.errors?.map(e => e.message).join(", "))
+      errorCount++
+    }
+  }
+
+  if (errorCount > 0) {
+    console.warn(`⚠️ Listmonk cleanup: ${successCount} succeeded, ${errorCount} failed`)
+  } else {
+    console.info(`✅ Cleaned up ${successCount} Listmonk subscribers`)
   }
 }

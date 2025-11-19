@@ -69,6 +69,12 @@ export async function deleteTestUser(userId: string): Promise<void> {
       .single()
 
     if (profile) {
+      // Delete newsletter subscriptions
+      await supabase
+        .from('newsletter_subscriptions')
+        .delete()
+        .eq('profile_id', profile.id)
+
       // Delete event participations
       await supabase
         .from('event_participants')
