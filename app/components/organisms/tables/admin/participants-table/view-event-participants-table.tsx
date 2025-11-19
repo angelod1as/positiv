@@ -40,6 +40,7 @@ import {
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import { countParticipants } from "./count-participants"
+import { ParticipantsTableSkeleton } from "./participants-table-skeleton"
 
 const {
   admin: {
@@ -139,6 +140,7 @@ export const AdminViewEventParticipantsTable: FC<
       onFilter={handleFilter}
       onClearFilters={handleClearFilters}
       size="small"
+      loadingComponent={<ParticipantsTableSkeleton />}
       header={{
         title: "Inscrições",
         elements: (

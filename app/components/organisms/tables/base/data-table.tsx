@@ -55,6 +55,7 @@ export interface DataTableProps<T extends DataTableValue> {
   editMode?: "cell" | "row"
   size?: "small" | "normal" | "large"
   maxHeight?: string | "auto"
+  loadingComponent?: ReactNode
 }
 
 // TODO: POS-144 Implement date filtering
@@ -86,6 +87,7 @@ export function DataTable<T extends DataTableValue>({
   size = "small",
   maxHeight = "500px",
   emptyMessage = "Nenhum registro encontrado",
+  loadingComponent,
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [filters, setFilters] = useState<FlexibleFilterMeta>(
@@ -173,7 +175,7 @@ export function DataTable<T extends DataTableValue>({
   // }
 
   return (
-    <DelayedContent>
+    <DelayedContent loadingComponent={loadingComponent}>
       <PrimeReactDataTable
         value={values}
         className={cn(isMaximized && "maximized-table")}
