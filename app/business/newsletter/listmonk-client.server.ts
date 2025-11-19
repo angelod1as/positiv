@@ -189,8 +189,8 @@ export const addSubscriber = composable(
 )
 
 export const removeSubscriber = composable(
-  async (email: string): Promise<void> => {
-    if (process.env.E2E_MODE === "true") {
+  async (email: string, options?: { force?: boolean }): Promise<void> => {
+    if (!options?.force && process.env.E2E_MODE === "true") {
       return
     }
 
