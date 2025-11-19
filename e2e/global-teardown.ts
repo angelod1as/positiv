@@ -1,6 +1,6 @@
 import type { FullConfig } from "@playwright/test"
 import { deleteAllTestUsers } from "./utils/user-management"
-import { cleanupTestEvents } from "./utils/db-cleanup"
+import { cleanupTestEvents, cleanupListmonkSubscribers } from "./utils/db-cleanup"
 
 async function globalTeardown(_config: FullConfig) {
   console.info("🧹 Running global teardown for E2E tests...")
@@ -26,6 +26,10 @@ async function globalTeardown(_config: FullConfig) {
     // Delete all test events first (before users, due to foreign key constraints)
     await cleanupTestEvents()
     console.info("✅ Test events cleaned up successfully")
+
+    // Clean up Listmonk subscribers before deleting users (needs email addresses)
+    await cleanupListmonkSubscribers()
+    console.info("✅ Listmonk subscribers cleaned up")
 
     // Delete all test users created during the test run
     await deleteAllTestUsers()
