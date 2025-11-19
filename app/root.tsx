@@ -24,7 +24,6 @@ import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
 import { subscribeProfileToNewsletter } from "./business/newsletter/auto-subscribe.server"
-import { getSubscriptionStatus } from "./business/newsletter/subscription-helpers.server"
 import {
   newsCookie,
   newsletterPreferenceCookie,
@@ -103,42 +102,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     )
     const { toast, headers } = await getToast(request)
 
-    const cookieHeader = request.headers.get("Cookie")
-
-    let shouldShowNewsletterModal = false
-    if (currentProfile) {
-      const newsletterCookie =
-        (await newsletterPreferenceCookie.parse(cookieHeader)) || {}
-
-      if (newsletterCookie.checked === true) {
-        shouldShowNewsletterModal = newsletterCookie.shouldShow === true
-      } else {
-        const subscriptionResult = await getSubscriptionStatus(
-          currentProfile.id,
-        )
-        const subscription = subscriptionResult.success
-          ? subscriptionResult.data
-          : null
-        const isNotSubscribed = !subscription || !subscription.consent_given
-        shouldShowNewsletterModal = isNotSubscribed
-
-        headers.append(
-          "Set-Cookie",
-          await newsletterPreferenceCookie.serialize({
-            checked: true,
-            shouldShow: isNotSubscribed,
-          }),
-        )
-      }
-    }
-
     return data(
       {
         currentUser,
         currentProfile,
         toast,
         isProdInDev,
-        shouldShowNewsletterModal,
       },
       { headers },
     )
@@ -149,7 +118,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       currentProfile: null,
       toast: null,
       isProdInDev: null,
-      shouldShowNewsletterModal: false,
     }
   }
 }
@@ -246,13 +214,7 @@ export function Layout(props: { children: ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  const {
-    currentUser,
-    currentProfile,
-    toast,
-    isProdInDev,
-    shouldShowNewsletterModal = false,
-  } = loaderData
+  const { currentUser, currentProfile, toast, isProdInDev } = loaderData
 
   const location = useLocation()
 
@@ -266,18 +228,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
     }
   }, [toast])
 
-  const authFlowPaths = [
-    "/entrar",
-    "/registrar",
-    "/conta/dados-basicos",
-    "/conta/dados-basicos-cont",
-    "/conta/termos-e-condicoes",
-  ]
-  const isAuthFlow = authFlowPaths.some((path) =>
-    location.pathname.startsWith(path),
-  )
-  const showNewsletterModal = shouldShowNewsletterModal && !isAuthFlow
-
   return (
     <>
       <Header
@@ -289,7 +239,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
         currentProfile={currentProfile}
         currentPath={location.pathname}
       />
-      <NewsletterSubscriptionModal open={showNewsletterModal} />
+      <NewsletterSubscriptionModal />
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { useFetcher } from "react-router"
+import { useFetcher, useLocation } from "react-router"
 import {
   AlertDialog,
   AlertDialogContent,
@@ -9,17 +9,28 @@ import {
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog"
 import { Button } from "~/components/atoms/button/button"
+import { useNewsletterStatus } from "~/lib/hooks/use-newsletter-status"
+import { useRootData } from "~/lib/hooks/use-root-data"
 
-interface NewsletterSubscriptionModalProps {
-  open: boolean
-}
-
-export function NewsletterSubscriptionModal({
-  open,
-}: NewsletterSubscriptionModalProps) {
+export function NewsletterSubscriptionModal() {
   const fetcher = useFetcher()
   const isSubmitting = fetcher.state !== "idle"
   const [isVisible, setIsVisible] = useState(false)
+  const { currentProfile } = useRootData()
+  const shouldShowNewsletterModal = useNewsletterStatus(currentProfile)
+  const location = useLocation()
+
+  const authFlowPaths = [
+    "/entrar",
+    "/registrar",
+    "/conta/dados-basicos",
+    "/conta/dados-basicos-cont",
+    "/conta/termos-e-condicoes",
+  ]
+  const isAuthFlow = authFlowPaths.some((path) =>
+    location.pathname.startsWith(path),
+  )
+  const open = shouldShowNewsletterModal && !isAuthFlow
 
   useEffect(() => {
     const dismissed = sessionStorage.getItem("newsletter-modal-dismissed")
