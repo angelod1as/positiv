@@ -1,4 +1,4 @@
-import { collect, inputFromForm } from "composable-functions"
+import { inputFromForm } from "composable-functions"
 import { useEffect } from "react"
 import { useFetcher } from "react-router"
 import { formAction } from "remix-forms"
@@ -69,6 +69,24 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 }
 
+async function loadParticipants(
+  eventId: string,
+  isOpen: boolean,
+  isScheduled: boolean,
+) {
+  const result = await getProfilesWithExtraDataById({
+    eventId,
+    isOpen,
+    isScheduled,
+  })
+
+  if (!result.success) {
+    throw new Error("Falha ao carregar participantes")
+  }
+
+  return result.data
+}
+
 /** LOADER */
 export async function loader({ params }: Route.LoaderArgs) {
   const eventId = params.id
@@ -83,32 +101,15 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const { isOpen, isScheduled } = checkEventStatus(event.event_status)
 
-  const eventDemographics =
+  const demographics =
     event.event_status === "Completed"
-      ? getEventDemographicsById
-      : () => {
-          return
-        }
-
-  const resultCollect = await collect({
-    participants: getProfilesWithExtraDataById,
-    demographics: eventDemographics,
-  })({
-    eventId,
-    isScheduled,
-    isOpen,
-  })
-
-  if (!resultCollect.success) {
-    return { event, participants: [] }
-  }
-
-  const { participants, demographics } = resultCollect.data
+      ? await getEventDemographicsById({ eventId })
+      : undefined
 
   return {
     event,
-    participants,
-    demographics,
+    participants: loadParticipants(eventId, isOpen, isScheduled),
+    demographics: demographics?.success ? demographics.data : undefined,
   }
 }
 
