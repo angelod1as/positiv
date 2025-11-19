@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 // Mock the getAdminContext to return without events
@@ -28,15 +28,11 @@ vi.mock("~/business/admin/admin.server", () => ({
   ]),
 }))
 
+// Import after mocking
+import { loader } from "./dashboard-page"
+
 describe("Dashboard Page Loader", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    vi.resetModules()
-  })
-
   it("should load events with only required fields", async () => {
-    const { loader } = await import("./dashboard-page")
-
     const result = await loader()
 
     expect(result).toBeDefined()
@@ -54,8 +50,6 @@ describe("Dashboard Page Loader", () => {
   })
 
   it("should return events sorted by time_event_start in descending order", async () => {
-    const { loader } = await import("./dashboard-page")
-
     const result = await loader()
 
     if (result.events && result.events.length > 1) {
