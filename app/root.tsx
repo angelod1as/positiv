@@ -32,7 +32,6 @@ import {
 import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
-import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
 import { NewsletterSubscriptionModal } from "./components/organisms/newsletter-subscription-modal"
 import { ProfileUpdateGuard } from "./components/organisms/profile-update-guard/profile-update-guard"
 
@@ -105,11 +104,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     const { toast, headers } = await getToast(request)
 
     const cookieHeader = request.headers.get("Cookie")
-    const cookie = (await newsCookie.parse(cookieHeader)) || {}
-
-    const { showNews, newsVersion: oldNewsVersion } = cookie
-    const shouldShowNews =
-      Number(oldNewsVersion) < Number(NEWS_VERSION) || showNews !== "false"
 
     const needsProfileUpdate = currentProfile
       ? !currentProfile.race_color || currentProfile.race_color.length === 0
@@ -148,7 +142,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         currentProfile,
         toast,
         isProdInDev,
-        isThereAnyNews: shouldShowNews,
         needsProfileUpdate,
         shouldShowNewsletterModal,
       },
@@ -161,7 +154,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       currentProfile: null,
       toast: null,
       isProdInDev: null,
-      isThereAnyNews: null,
       needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
     }
@@ -265,7 +257,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
     currentProfile,
     toast,
     isProdInDev,
-    isThereAnyNews = false,
     needsProfileUpdate = false,
     shouldShowNewsletterModal = false,
   } = loaderData
@@ -300,7 +291,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
         isProdInDev={Boolean(isProdInDev)}
         profile={currentProfile}
         userEmail={currentUser?.email}
-        isThereAnyNews={isThereAnyNews ?? false}
       />
       <ProfileUpdateGuard
         currentProfile={currentProfile}
@@ -311,10 +301,7 @@ export default function App({ loaderData }: Route.ComponentProps) {
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
-      <Footer
-        isThereAnyNews={isThereAnyNews ?? false}
-        currentProfile={currentProfile}
-      />
+      <Footer currentProfile={currentProfile} />
     </>
   )
 }
@@ -358,7 +345,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <div className="flex flex-col grow mt-16">
-      <Header profile={null} isThereAnyNews={false} />
+      <Header profile={null} />
       <main className="grow flex flex-col justify-center items-center">
         <div className="max-w-2xl">
           <h1>{message}</h1>
@@ -370,7 +357,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           )}
         </div>
       </main>
-      <Footer isThereAnyNews={false} currentProfile={null} />
+      <Footer currentProfile={null} />
     </div>
   )
 }

@@ -2,11 +2,16 @@ import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useFetcher } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { useNewsStatus } from "~/lib/hooks/use-news-status"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "./news-dialog"
 
 vi.mock("react-router", () => ({
   useFetcher: vi.fn(),
+}))
+
+vi.mock("~/lib/hooks/use-news-status", () => ({
+  useNewsStatus: vi.fn(),
 }))
 
 vi.mock("./news", () => ({
@@ -58,6 +63,9 @@ describe("NewsDialog", () => {
       submit: mockSubmit,
     } as unknown as ReturnType<typeof useFetcher>)
 
+    // Default mock: news should be shown
+    vi.mocked(useNewsStatus).mockReturnValue(true)
+
     Object.defineProperty(window, "location", {
       value: { href: "http://localhost:3000/test" },
       writable: true,
@@ -66,13 +74,9 @@ describe("NewsDialog", () => {
 
   describe("Dialog visibility based on NEWS_VERSION", () => {
     it("should show bell icon in header when there is news", () => {
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={true}
-          currentProfile={null}
-        />,
-      )
+      vi.mocked(useNewsStatus).mockReturnValue(true)
+
+      render(<NewsDialog isHeader={true} currentProfile={null} />)
 
       const button = screen.getByRole("button")
       expect(button).toBeInTheDocument()
@@ -80,13 +84,9 @@ describe("NewsDialog", () => {
     })
 
     it("should not show bell icon in header when there is no news", () => {
-      render(
-        <NewsDialog
-          isThereAnyNews={false}
-          isHeader={true}
-          currentProfile={null}
-        />,
-      )
+      vi.mocked(useNewsStatus).mockReturnValue(false)
+
+      render(<NewsDialog isHeader={true} currentProfile={null} />)
 
       expect(screen.queryByRole("button")).not.toBeInTheDocument()
     })
@@ -97,6 +97,8 @@ describe("NewsDialog", () => {
       vi.mocked(hasVisibleNews).mockImplementation(
         (isAdmin: boolean) => isAdmin,
       )
+
+      vi.mocked(useNewsStatus).mockReturnValue(true)
 
       const regularProfile: ProfileWithRoles = {
         id: "1",
@@ -118,13 +120,7 @@ describe("NewsDialog", () => {
         created_at: "2024-01-01",
       }
 
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={true}
-          currentProfile={regularProfile}
-        />,
-      )
+      render(<NewsDialog isHeader={true} currentProfile={regularProfile} />)
 
       expect(screen.queryByRole("button")).not.toBeInTheDocument()
 
@@ -133,13 +129,9 @@ describe("NewsDialog", () => {
     })
 
     it("should show footer link regardless of news status", () => {
-      render(
-        <NewsDialog
-          isThereAnyNews={false}
-          isHeader={false}
-          currentProfile={null}
-        />,
-      )
+      vi.mocked(useNewsStatus).mockReturnValue(false)
+
+      render(<NewsDialog isHeader={false} currentProfile={null} />)
 
       expect(screen.getByText("Veja as novidades do site")).toBeInTheDocument()
     })
@@ -167,13 +159,7 @@ describe("NewsDialog", () => {
         created_at: "2024-01-01",
       }
 
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={false}
-          currentProfile={regularProfile}
-        />,
-      )
+      render(<NewsDialog isHeader={false} currentProfile={regularProfile} />)
 
       const user = userEvent.setup()
       await user.click(screen.getByText("Veja as novidades do site"))
@@ -203,13 +189,7 @@ describe("NewsDialog", () => {
         created_at: "2024-01-01",
       }
 
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={false}
-          currentProfile={adminProfile}
-        />,
-      )
+      render(<NewsDialog isHeader={false} currentProfile={adminProfile} />)
 
       const user = userEvent.setup()
       await user.click(screen.getByText("Veja as novidades do site"))
@@ -221,13 +201,7 @@ describe("NewsDialog", () => {
 
   describe("User interaction", () => {
     it('should submit form when clicking "don\'t show again"', async () => {
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={false}
-          currentProfile={null}
-        />,
-      )
+      render(<NewsDialog isHeader={false} currentProfile={null} />)
 
       const user = userEvent.setup()
       await user.click(screen.getByText("Veja as novidades do site"))
