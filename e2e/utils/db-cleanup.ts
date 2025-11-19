@@ -322,20 +322,29 @@ export async function cleanupListmonkSubscribers(): Promise<void> {
   let successCount = 0
   let errorCount = 0
 
-  for (const email of emails) {
-    try {
-      const result = await removeSubscriber(email)
+  // Temporarily disable E2E_MODE to allow Listmonk API calls for cleanup
+  const originalE2EMode = process.env.E2E_MODE
+  process.env.E2E_MODE = "false"
 
-      if (result.success) {
-        successCount++
-      } else {
-        console.warn(`[Non-critical] Failed to remove ${email} from Listmonk:`, result.errors)
+  try {
+    for (const email of emails) {
+      try {
+        const result = await removeSubscriber(email)
+
+        if (result.success) {
+          successCount++
+        } else {
+          console.warn(`[Non-critical] Failed to remove ${email} from Listmonk:`, result.errors)
+          errorCount++
+        }
+      } catch (error) {
+        console.warn(`[Non-critical] Error removing ${email} from Listmonk:`, error)
         errorCount++
       }
-    } catch (error) {
-      console.warn(`[Non-critical] Error removing ${email} from Listmonk:`, error)
-      errorCount++
     }
+  } finally {
+    // Restore original E2E_MODE
+    process.env.E2E_MODE = originalE2EMode
   }
 
   if (errorCount > 0) {
