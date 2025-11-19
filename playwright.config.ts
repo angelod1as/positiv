@@ -5,6 +5,9 @@ import path from "path"
 
 dotenv.config({ path: path.resolve(import.meta.dirname, ".env") })
 
+// Set E2E_MODE to skip external API calls during tests
+process.env.E2E_MODE = "true"
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  * 
