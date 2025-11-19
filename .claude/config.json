@@ -1,6 +1,6 @@
 {
   "directories": [
     ".",
-    "../positiv-worktrees"
+    "../worktrees"
   ]
 }
