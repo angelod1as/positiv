@@ -145,6 +145,10 @@ async function updateSubscriberAttributes(
 
 export const addSubscriber = composable(
   async (params: AddSubscriberParams): Promise<void> => {
+    if (process.env.E2E_MODE === "true") {
+      return
+    }
+
     const existingSubscriber = await getSubscriberByEmail(params.email)
 
     if (existingSubscriber) {
@@ -185,7 +189,11 @@ export const addSubscriber = composable(
 )
 
 export const removeSubscriber = composable(
-  async (email: string): Promise<void> => {
+  async (email: string, options?: { force?: boolean }): Promise<void> => {
+    if (!options?.force && process.env.E2E_MODE === "true") {
+      return
+    }
+
     const existingSubscriber = await getSubscriberByEmail(email)
 
     if (!existingSubscriber) {

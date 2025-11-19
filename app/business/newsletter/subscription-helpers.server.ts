@@ -88,7 +88,7 @@ export const unsubscribeProfile = composable(async (profileId: string) => {
     syncStatus = "failed"
     console.error(
       "Failed to remove subscriber from Listmonk:",
-      removeResult.errors.map((e) => e.message).join(", "),
+      removeResult.errors?.map(e => e.message).join(", ") ?? "Unknown error",
     )
   }
 
