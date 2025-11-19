@@ -323,17 +323,12 @@ export async function cleanupListmonkSubscribers(): Promise<void> {
   let errorCount = 0
 
   for (const email of emails) {
-    try {
-      const result = await removeSubscriber(email, { force: true })
+    const result = await removeSubscriber(email, { force: true })
 
-      if (result.success) {
-        successCount++
-      } else {
-        console.warn(`[Non-critical] Failed to remove ${email} from Listmonk:`, result.errors)
-        errorCount++
-      }
-    } catch (error) {
-      console.warn(`[Non-critical] Error removing ${email} from Listmonk:`, error)
+    if (result.success) {
+      successCount++
+    } else {
+      console.warn(`[Non-critical] Failed to remove ${email} from Listmonk:`, result.errors?.map(e => e.message).join(", "))
       errorCount++
     }
   }
