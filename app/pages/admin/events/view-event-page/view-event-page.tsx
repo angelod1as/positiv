@@ -1,6 +1,6 @@
-import { collect, inputFromForm } from "composable-functions"
-import { useEffect } from "react"
-import { useFetcher } from "react-router"
+import { inputFromForm } from "composable-functions"
+import { Suspense, useEffect } from "react"
+import { Await, useFetcher } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
 import { z as zod } from "zod"
@@ -17,7 +17,6 @@ import {
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
 } from "~/business/admin/common"
-import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
@@ -29,6 +28,7 @@ import { EventStatusForm } from "~/components/pages/admin/events/event-status-fo
 import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { sendToast } from "./send-toast"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
+import { ParticipantsTableSkeleton } from "~/components/organisms/tables/admin/participants-table/participants-table-skeleton"
 
 const {
   admin: { ADMIN_DASHBOARD },
@@ -69,6 +69,16 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 }
 
+async function loadParticipants(eventId: string) {
+  const result = await getProfilesWithExtraDataById({ eventId })
+
+  if (!result.success) {
+    throw new Error("Falha ao carregar participantes")
+  }
+
+  return result.data
+}
+
 /** LOADER */
 export async function loader({ params }: Route.LoaderArgs) {
   const eventId = params.id
@@ -81,34 +91,15 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
   const event = result.data
 
-  const { isOpen, isScheduled } = checkEventStatus(event.event_status)
-
-  const eventDemographics =
+  const demographics =
     event.event_status === "Completed"
-      ? getEventDemographicsById
-      : () => {
-          return
-        }
-
-  const resultCollect = await collect({
-    participants: getProfilesWithExtraDataById,
-    demographics: eventDemographics,
-  })({
-    eventId,
-    isScheduled,
-    isOpen,
-  })
-
-  if (!resultCollect.success) {
-    return { event, participants: [] }
-  }
-
-  const { participants, demographics } = resultCollect.data
+      ? await getEventDemographicsById({ eventId })
+      : undefined
 
   return {
     event,
-    participants,
-    demographics,
+    participants: loadParticipants(eventId),
+    demographics: demographics?.success ? demographics.data : undefined,
   }
 }
 
@@ -137,19 +128,32 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       <EventStatusForm {...event} fetcher={fetcher} />
 
       {demographics && (
-        <DemographicsData 
-          demographics={demographics} 
+        <DemographicsData
+          demographics={demographics}
           fetcher={fetcher}
           eventId={event.id}
         />
       )}
 
       <div className="max-h-[600px]">
-        <AdminViewEventParticipantsTable
-          participants={participants}
-          eventId={event.id}
-          fetcher={fetcher}
-        />
+        <Suspense fallback={<ParticipantsTableSkeleton />}>
+          <Await
+            resolve={participants}
+            errorElement={
+              <div className="text-red-500">
+                Erro ao carregar participantes. Por favor, recarregue a página.
+              </div>
+            }
+          >
+            {(resolvedParticipants) => (
+              <AdminViewEventParticipantsTable
+                participants={resolvedParticipants}
+                eventId={event.id}
+                fetcher={fetcher}
+              />
+            )}
+          </Await>
+        </Suspense>
       </div>
 
       <GeneralData {...event} />
