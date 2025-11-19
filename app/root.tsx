@@ -105,10 +105,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
     const cookieHeader = request.headers.get("Cookie")
 
-    const needsProfileUpdate = currentProfile
-      ? !currentProfile.race_color || currentProfile.race_color.length === 0
-      : false
-
     let shouldShowNewsletterModal = false
     if (currentProfile) {
       const newsletterCookie =
@@ -142,7 +138,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         currentProfile,
         toast,
         isProdInDev,
-        needsProfileUpdate,
         shouldShowNewsletterModal,
       },
       { headers },
@@ -154,7 +149,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       currentProfile: null,
       toast: null,
       isProdInDev: null,
-      needsProfileUpdate: false,
       shouldShowNewsletterModal: false,
     }
   }
@@ -257,7 +251,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
     currentProfile,
     toast,
     isProdInDev,
-    needsProfileUpdate = false,
     shouldShowNewsletterModal = false,
   } = loaderData
 
@@ -295,7 +288,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
       <ProfileUpdateGuard
         currentProfile={currentProfile}
         currentPath={location.pathname}
-        needsProfileUpdate={needsProfileUpdate}
       />
       <NewsletterSubscriptionModal open={showNewsletterModal} />
       <div className="flex flex-col grow mt-16">

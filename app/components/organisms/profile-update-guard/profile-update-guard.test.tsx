@@ -20,11 +20,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 describe("ProfileUpdateGuard", () => {
   it("should not render modal when user is not logged in", () => {
     render(
-      <ProfileUpdateGuard
-        currentProfile={null}
-        currentPath="/dashboard"
-        needsProfileUpdate={true}
-      />,
+      <ProfileUpdateGuard currentProfile={null} currentPath="/dashboard" />,
       { wrapper },
     )
 
@@ -36,7 +32,6 @@ describe("ProfileUpdateGuard", () => {
       <ProfileUpdateGuard
         currentProfile={mockProfile}
         currentPath="/conta/dados-basicos"
-        needsProfileUpdate={true}
       />,
       { wrapper },
     )
@@ -45,11 +40,15 @@ describe("ProfileUpdateGuard", () => {
   })
 
   it("should not render modal when profile does not need update", () => {
+    const profileWithRaceColor: ProfileWithRoles = {
+      ...mockProfile,
+      race_color: ["white"],
+    }
+
     render(
       <ProfileUpdateGuard
-        currentProfile={mockProfile}
+        currentProfile={profileWithRaceColor}
         currentPath="/dashboard"
-        needsProfileUpdate={false}
       />,
       { wrapper },
     )
@@ -62,7 +61,6 @@ describe("ProfileUpdateGuard", () => {
       <ProfileUpdateGuard
         currentProfile={mockProfile}
         currentPath="/dashboard"
-        needsProfileUpdate={true}
       />,
       { wrapper },
     )
@@ -72,11 +70,7 @@ describe("ProfileUpdateGuard", () => {
 
   it("should not render modal on home page (exempt)", () => {
     render(
-      <ProfileUpdateGuard
-        currentProfile={mockProfile}
-        currentPath="/"
-        needsProfileUpdate={true}
-      />,
+      <ProfileUpdateGuard currentProfile={mockProfile} currentPath="/" />,
       { wrapper },
     )
 
@@ -85,11 +79,7 @@ describe("ProfileUpdateGuard", () => {
 
   it("should not render modal on login page (exempt)", () => {
     render(
-      <ProfileUpdateGuard
-        currentProfile={mockProfile}
-        currentPath="/entrar"
-        needsProfileUpdate={true}
-      />,
+      <ProfileUpdateGuard currentProfile={mockProfile} currentPath="/entrar" />,
       { wrapper },
     )
 
