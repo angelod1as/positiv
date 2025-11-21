@@ -31,7 +31,7 @@ export const newsCookie = createCookie("show-news", {
 })
 
 export const newsletterPreferenceCookie = createCookie("newsletter-preference", {
-  httpOnly: true,
   sameSite: "lax",
   secure: process.env.NODE_ENV === "production",
+  maxAge: 60 * 60 * 24 * 365, // 1 year
 })
