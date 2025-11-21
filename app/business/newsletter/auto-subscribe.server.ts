@@ -39,6 +39,17 @@ export const subscribeProfileToNewsletter = composable(
         ? computeNameFromFullName(profile.full_name)
         : profile.email)
 
+    if (!profile.full_name && !profile.social_name) {
+      console.warn(
+        "Newsletter sync: Profile has no full_name or social_name, using email as name",
+        {
+          profileId: profile.id,
+          email: profile.email,
+          source,
+        },
+      )
+    }
+
     const listmonkResult = await addSubscriber({
       email: profile.email,
       name: computedName,
