@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useFetcher, useLocation } from "react-router"
 import {
   AlertDialog,
@@ -19,6 +19,19 @@ export function NewsletterSubscriptionModal() {
   const { currentProfile } = useRootData()
   const shouldShowNewsletterModal = useNewsletterStatus(currentProfile)
   const location = useLocation()
+  const prevFetcherState = useRef(fetcher.state)
+
+  // Close modal when subscription completes successfully
+  useEffect(() => {
+    if (
+      prevFetcherState.current !== "idle" &&
+      fetcher.state === "idle" &&
+      isVisible
+    ) {
+      setIsVisible(false)
+    }
+    prevFetcherState.current = fetcher.state
+  }, [fetcher.state, isVisible])
 
   const authFlowPaths = [
     "/entrar",
