@@ -116,8 +116,7 @@ describe("Basic Data Newsletter Re-sync - Integration Tests", () => {
         expect(redirectOrError).toHaveProperty("status", 302)
       }
 
-      // Assert that addSubscriber was called again to re-sync
-      // (This test should FAIL initially because the re-sync functionality doesn't exist yet)
+      // Assert that addSubscriber was called again to re-sync with updated name
       expect(addSubscriberSpy).toHaveBeenCalledOnce()
 
       // Assert it was called with the real name (Maria), not the email
