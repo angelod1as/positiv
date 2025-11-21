@@ -5,6 +5,8 @@ import { dateToString } from "~/lib/helpers/date-to-string"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import paths from "~/lib/paths"
 import { basicDataSchema, contextSchema, ExtraBasicDataSchema } from "../common"
+import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
+import type { SubscriptionSource } from "../newsletter/types"
 
 const {
   auth: { LOGIN },
@@ -140,6 +142,20 @@ export const extraBasicData = async ({
     const { code, message } = updateError || {}
     throw new Error(
       `Erro atualizando o usuário — Código: "${code}" — Mensagem: "${message}"`,
+    )
+  }
+
+  const { data: subscription } = await supabase
+    .from("newsletter_subscriptions")
+    .select("consent_given, subscription_source")
+    .eq("profile_id", currentProfile.id)
+    .eq("consent_given", true)
+    .maybeSingle()
+
+  if (subscription && subscription.subscription_source) {
+    await subscribeProfileToNewsletter(
+      currentProfile.id,
+      subscription.subscription_source as SubscriptionSource,
     )
   }
 
