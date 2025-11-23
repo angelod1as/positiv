@@ -3,6 +3,7 @@ import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
+import { db } from "~/lib/supabase/db.server"
 import paths from "~/lib/paths"
 import { basicDataSchema, contextSchema, ExtraBasicDataSchema } from "../common"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
@@ -104,7 +105,7 @@ export const extraBasicData = async ({
   formData,
   context,
 }: ExtraBasicDataProps) => {
-  const { supabase, currentProfile, supabaseHeaders } = context
+  const { currentProfile, supabaseHeaders } = context
 
   if (!currentProfile) {
     throw new Error("Erro ao buscar usuário")
@@ -131,32 +132,28 @@ export const extraBasicData = async ({
     )
   }
 
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({
-      ...extraDataValidation.data,
-      basic_data_filled: true,
-    })
-    .eq("id", currentProfile.id)
-    .select()
-    .single()
-
-  if (updateError) {
-    const code = updateError?.code ?? "UNKNOWN"
-    const message = updateError?.message ?? String(updateError)
-    throw new Error(
-      `Erro atualizando o usuário — Código: "${code}" — Mensagem: "${message}"`,
-    )
+  try {
+    await db
+      .updateTable("profiles")
+      .set({
+        ...extraDataValidation.data,
+        basic_data_filled: true,
+      })
+      .where("id", "=", currentProfile.id)
+      .execute()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(`Erro atualizando o usuário: ${message}`)
   }
 
-  const { data: subscription } = await supabase
-    .from("newsletter_subscriptions")
-    .select("consent_given, subscription_source")
-    .eq("profile_id", currentProfile.id)
-    .eq("consent_given", true)
-    .maybeSingle()
+  const subscription = await db
+    .selectFrom("newsletter_subscriptions")
+    .select(["consent_given", "subscription_source"])
+    .where("profile_id", "=", currentProfile.id)
+    .where("consent_given", "=", true)
+    .executeTakeFirst()
 
-  if (subscription && subscription.subscription_source) {
+  if (subscription?.subscription_source) {
     await subscribeProfileToNewsletter(
       currentProfile.id,
       subscription.subscription_source as SubscriptionSource,

@@ -76,19 +76,15 @@ describe("Basic Data Newsletter Re-sync - Integration Tests", () => {
         .execute()
 
       // Add small delay to ensure database operations are settled
-      // This prevents race conditions between Kysely and Supabase operations
+      // This prevents race conditions when rapidly updating the same row
       await new Promise(resolve => setTimeout(resolve, 100))
 
-      // Fetch updated profile using Supabase (not Kysely) to avoid client mixing issues
-      const { data: updatedProfile, error: fetchError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", profile.id)
-        .single()
-
-      if (fetchError || !updatedProfile) {
-        throw new Error(`Failed to fetch updated profile: ${fetchError?.message}`)
-      }
+      // Fetch updated profile using Kysely
+      const updatedProfile = await kysely
+        .selectFrom("profiles")
+        .selectAll()
+        .where("id", "=", profile.id)
+        .executeTakeFirstOrThrow()
 
       // Then call extraBasicData to set basic_data_filled = true
       // This will throw a redirect response, which is expected behavior
