@@ -132,19 +132,14 @@ export const extraBasicData = async ({
     )
   }
 
-  try {
-    await db
-      .updateTable("profiles")
-      .set({
-        ...extraDataValidation.data,
-        basic_data_filled: true,
-      })
-      .where("id", "=", currentProfile.id)
-      .execute()
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    throw new Error(`Erro atualizando o usuário: ${message}`)
-  }
+  await db
+    .updateTable("profiles")
+    .set({
+      ...extraDataValidation.data,
+      basic_data_filled: true,
+    })
+    .where("id", "=", currentProfile.id)
+    .execute()
 
   const subscription = await db
     .selectFrom("newsletter_subscriptions")
