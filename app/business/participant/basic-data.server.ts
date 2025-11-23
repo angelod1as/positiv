@@ -78,7 +78,8 @@ export const basicData = applySchema(
     .upsert(upsertData, { onConflict: 'user_id' })
 
   if (upsertError) {
-    const { code, message } = upsertError || {}
+    const code = upsertError?.code ?? "UNKNOWN"
+    const message = upsertError?.message ?? String(upsertError)
     throw new Error(
       `Erro atualizando o perfil — Código: "${code}" — Mensagem: "${message}"`,
     )
@@ -137,9 +138,12 @@ export const extraBasicData = async ({
       basic_data_filled: true,
     })
     .eq("id", currentProfile.id)
+    .select()
+    .single()
 
   if (updateError) {
-    const { code, message } = updateError || {}
+    const code = updateError?.code ?? "UNKNOWN"
+    const message = updateError?.message ?? String(updateError)
     throw new Error(
       `Erro atualizando o usuário — Código: "${code}" — Mensagem: "${message}"`,
     )
