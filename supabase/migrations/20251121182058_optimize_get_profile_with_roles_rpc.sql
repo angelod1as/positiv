@@ -37,11 +37,14 @@ RETURNS TABLE (
     is_admin boolean,
     roles text [] -- Return array of all role names
 )
-LANGUAGE sql
+LANGUAGE plpgsql
 SECURITY DEFINER -- Function runs with postgres privileges to bypass RLS
-STABLE -- Function doesn't modify database and returns same result for same input
-SET search_path = public
 AS $$
+BEGIN
+    -- Set search path for security
+    SET search_path = public;
+
+    RETURN QUERY
     SELECT
         p.id,
         p.email,
@@ -77,6 +80,7 @@ AS $$
     ) user_roles_agg ON true
 
     WHERE p.user_id = user_id_input;
+END;
 $$;
 
 -- Ensure the function has correct permissions
