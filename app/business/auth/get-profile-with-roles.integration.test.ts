@@ -25,6 +25,7 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       .selectFrom("profiles")
       .select("user_id as id")
       .where("user_id", "is not", null)
+      .orderBy("user_id", "asc")
       .limit(1)
       .executeTakeFirst()
 

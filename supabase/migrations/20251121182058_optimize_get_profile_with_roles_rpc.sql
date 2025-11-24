@@ -1,7 +1,7 @@
 -- Optimize get_profile_with_roles RPC function
 --
 -- Performance improvements:
--- 1. Convert from PL/pgSQL to SQL language (removes procedural overhead)
+-- 1. Use PL/pgSQL to allow SET search_path for security
 -- 2. Use LATERAL JOIN to fetch roles once instead of two separate subqueries
 -- 3. Compute both is_admin and roles array from same result set
 --
@@ -88,4 +88,4 @@ GRANT EXECUTE ON FUNCTION public.get_profile_with_roles(uuid) TO authenticated;
 
 -- Add comment documenting the optimization
 COMMENT ON FUNCTION public.get_profile_with_roles(uuid) IS
-'Optimized RPC function to fetch profile with roles. Uses SQL language with LATERAL JOIN to reduce query overhead. POS-271';
+'Optimized RPC function to fetch profile with roles. Uses PL/pgSQL with LATERAL JOIN to reduce query overhead. POS-271';
