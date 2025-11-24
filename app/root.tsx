@@ -1,4 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { inputFromForm } from "composable-functions"
 import { useEffect, useState, type ReactNode } from "react"
@@ -256,6 +257,7 @@ export function Layout(props: { children: ReactNode }) {
           <Toaster richColors position="top-center" />
           <GlobalLoading />
           {props.children}
+          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
           <ScrollRestoration />
           <Scripts />
           {import.meta.env.VERCEL && <SpeedInsights />}
