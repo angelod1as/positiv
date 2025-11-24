@@ -3,6 +3,7 @@ import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
+import { db } from "~/lib/supabase/db.server"
 import paths from "~/lib/paths"
 import { basicDataSchema, contextSchema, ExtraBasicDataSchema } from "../common"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
@@ -78,7 +79,8 @@ export const basicData = applySchema(
     .upsert(upsertData, { onConflict: 'user_id' })
 
   if (upsertError) {
-    const { code, message } = upsertError || {}
+    const code = upsertError?.code ?? "UNKNOWN"
+    const message = upsertError?.message ?? String(upsertError)
     throw new Error(
       `Erro atualizando o perfil — Código: "${code}" — Mensagem: "${message}"`,
     )
@@ -103,7 +105,7 @@ export const extraBasicData = async ({
   formData,
   context,
 }: ExtraBasicDataProps) => {
-  const { supabase, currentProfile, supabaseHeaders } = context
+  const { currentProfile, supabaseHeaders } = context
 
   if (!currentProfile) {
     throw new Error("Erro ao buscar usuário")
@@ -130,29 +132,23 @@ export const extraBasicData = async ({
     )
   }
 
-  const { error: updateError } = await supabase
-    .from("profiles")
-    .update({
+  await db
+    .updateTable("profiles")
+    .set({
       ...extraDataValidation.data,
       basic_data_filled: true,
     })
-    .eq("id", currentProfile.id)
+    .where("id", "=", currentProfile.id)
+    .execute()
 
-  if (updateError) {
-    const { code, message } = updateError || {}
-    throw new Error(
-      `Erro atualizando o usuário — Código: "${code}" — Mensagem: "${message}"`,
-    )
-  }
+  const subscription = await db
+    .selectFrom("newsletter_subscriptions")
+    .select(["consent_given", "subscription_source"])
+    .where("profile_id", "=", currentProfile.id)
+    .where("consent_given", "=", true)
+    .executeTakeFirst()
 
-  const { data: subscription } = await supabase
-    .from("newsletter_subscriptions")
-    .select("consent_given, subscription_source")
-    .eq("profile_id", currentProfile.id)
-    .eq("consent_given", true)
-    .maybeSingle()
-
-  if (subscription && subscription.subscription_source) {
+  if (subscription?.subscription_source) {
     await subscribeProfileToNewsletter(
       currentProfile.id,
       subscription.subscription_source as SubscriptionSource,

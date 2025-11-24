@@ -7,11 +7,13 @@ import * as listmonkClient from "../newsletter/listmonk-client.server"
 
 describe("Basic Data Newsletter Re-sync - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
-  const supabase = getTestSupabaseClient()
+  let supabase: ReturnType<typeof getTestSupabaseClient>
 
   beforeEach(async () => {
     tracker.clear()
     vi.clearAllMocks()
+    // Create a fresh Supabase client for each test to avoid connection state issues
+    supabase = getTestSupabaseClient()
   })
 
   afterEach(async () => {
@@ -73,7 +75,11 @@ describe("Basic Data Newsletter Re-sync - Integration Tests", () => {
         .where("id", "=", profile.id)
         .execute()
 
-      // Fetch updated profile for context
+      // Add small delay to ensure database operations are settled
+      // This prevents race conditions when rapidly updating the same row
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Fetch updated profile using Kysely
       const updatedProfile = await kysely
         .selectFrom("profiles")
         .selectAll()
