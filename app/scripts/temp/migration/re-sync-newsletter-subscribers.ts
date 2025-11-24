@@ -34,7 +34,7 @@ const db = new Kysely<Database>({
   dialect: new PostgresDialect({
     pool: new Pool({
       connectionString,
-      ssl: isRemote ? { rejectUnauthorized: false } : undefined,
+      ssl: isRemote ? true : undefined,
     }),
   }),
 })
@@ -106,7 +106,7 @@ function generateCSV(subscribers: SubscriberRow[]): string {
     const attributesJSON = JSON.stringify(sub.attributes)
     const escapedEmail = escapeCSVField(sub.email)
     const escapedName = escapeCSVField(sub.name)
-    const escapedAttributes = `"${attributesJSON.replace(/"/g, '""')}"`
+    const escapedAttributes = escapeCSVField(attributesJSON)
     return `${escapedEmail},${escapedName},${escapedAttributes}`
   })
   return header + rows.join('\n')
