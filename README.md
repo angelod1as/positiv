@@ -189,7 +189,7 @@ This project is licensed under the Creative Commons Attribution-NonCommercial Li
 
 ## Architectural Decision Records
 
-We use [Log4Brains](https://github.com/thomvaill/log4brains) to manage our ADRs. Check our [Decisions](./docs/decisions/index.md) folder or:
+We use [Log4Brains](https://github.com/thomvaill/log4brains) to manage our ADRs. Check our [Decisions](./docs/architecture/decisions/index.md) folder or:
 
 1. Install Log4Brains: `pnpm install -g log4brains`
 2. Run `log4brains preview`
