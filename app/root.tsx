@@ -318,7 +318,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
         isThereAnyNews={isThereAnyNews ?? false}
       />
       <ProfileUpdateGuard
-        currentProfile={currentProfile}
         currentPath={location.pathname}
         needsProfileUpdate={needsProfileUpdate}
       />
