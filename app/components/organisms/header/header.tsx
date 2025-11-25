@@ -66,7 +66,7 @@ export const Header: FC<HeaderProps> = ({
                   {!!displayName && (
                     <p className="hidden sm:block">Olá, {displayName}</p>
                   )}
-                  <NewsDialog isThereAnyNews={isThereAnyNews} isHeader={true} currentProfile={profile} />
+                  <NewsDialog isThereAnyNews={isThereAnyNews} isHeader={true} />
                   <Button
                     asChild
                     variant="outline"
