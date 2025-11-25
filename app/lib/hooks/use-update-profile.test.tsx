@@ -37,21 +37,23 @@ describe("useUpdateProfile", () => {
 		const mockSupabase = {
 			from: vi.fn().mockReturnValue({
 				update: vi.fn().mockReturnValue({
-					eq: vi.fn().mockReturnValue({
-						select: vi.fn().mockReturnValue({
-							single: vi.fn().mockResolvedValue({
-								data: {
-									id: "profile-123",
-									full_name: "Updated Name",
-									race_color: ["Branca"],
-									created_at: new Date().toISOString(),
-									basic_data_filled: true,
-									is_admin: false,
-								},
-								error: null,
-							}),
-						}),
+					eq: vi.fn().mockResolvedValue({
+						data: null,
+						error: null,
 					}),
+				}),
+			}),
+			rpc: vi.fn().mockReturnValue({
+				single: vi.fn().mockResolvedValue({
+					data: {
+						id: "profile-123",
+						full_name: "Updated Name",
+						race_color: ["Branca"],
+						created_at: new Date().toISOString(),
+						basic_data_filled: true,
+						is_admin: false,
+					},
+					error: null,
 				}),
 			}),
 		} as unknown as SupabaseClient<Database>
@@ -79,6 +81,9 @@ describe("useUpdateProfile", () => {
 		await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
 		expect(mockSupabase.from).toHaveBeenCalledWith("profiles")
+		expect(mockSupabase.rpc).toHaveBeenCalledWith("get_profile_with_roles", {
+			user_id_input: "user-123",
+		})
 		expect(result.current.data).toEqual(
 			expect.objectContaining({
 				id: "profile-123",
@@ -93,20 +98,22 @@ describe("useUpdateProfile", () => {
 		const mockSupabase = {
 			from: vi.fn().mockReturnValue({
 				update: vi.fn().mockReturnValue({
-					eq: vi.fn().mockReturnValue({
-						select: vi.fn().mockReturnValue({
-							single: vi.fn().mockResolvedValue({
-								data: {
-									id: "profile-123",
-									full_name: "Updated Name",
-									created_at: new Date().toISOString(),
-									basic_data_filled: true,
-									is_admin: false,
-								},
-								error: null,
-							}),
-						}),
+					eq: vi.fn().mockResolvedValue({
+						data: null,
+						error: null,
 					}),
+				}),
+			}),
+			rpc: vi.fn().mockReturnValue({
+				single: vi.fn().mockResolvedValue({
+					data: {
+						id: "profile-123",
+						full_name: "Updated Name",
+						created_at: new Date().toISOString(),
+						basic_data_filled: true,
+						is_admin: false,
+					},
+					error: null,
 				}),
 			}),
 		} as unknown as SupabaseClient<Database>
@@ -155,16 +162,12 @@ describe("useUpdateProfile", () => {
 		const mockSupabase = {
 			from: vi.fn().mockReturnValue({
 				update: vi.fn().mockReturnValue({
-					eq: vi.fn().mockReturnValue({
-						select: vi.fn().mockReturnValue({
-							single: vi.fn().mockResolvedValue({
-								data: null,
-								error: {
-									message: "Database connection failed",
-									code: "PGRST116",
-								},
-							}),
-						}),
+					eq: vi.fn().mockResolvedValue({
+						data: null,
+						error: {
+							message: "Database connection failed",
+							code: "PGRST116",
+						},
 					}),
 				}),
 			}),
@@ -197,25 +200,24 @@ describe("useUpdateProfile", () => {
 
 	it("should support optimistic updates", async () => {
 		const { getClientContext } = await import("~/business/auth/auth.client")
+
+		// Use a promise to control when the server response arrives
+		let resolveServerUpdate!: (value: unknown) => void
+		const serverUpdatePromise = new Promise((resolve) => {
+			resolveServerUpdate = resolve
+		})
+
 		const mockSupabase = {
 			from: vi.fn().mockReturnValue({
 				update: vi.fn().mockReturnValue({
-					eq: vi.fn().mockReturnValue({
-						select: vi.fn().mockReturnValue({
-							single: vi.fn().mockResolvedValue({
-								data: {
-									id: "profile-123",
-									full_name: "Server Updated Name",
-									race_color: ["Branca"],
-									created_at: new Date().toISOString(),
-									basic_data_filled: true,
-									is_admin: false,
-								},
-								error: null,
-							}),
-						}),
+					eq: vi.fn().mockResolvedValue({
+						data: null,
+						error: null,
 					}),
 				}),
+			}),
+			rpc: vi.fn().mockReturnValue({
+				single: vi.fn().mockReturnValue(serverUpdatePromise),
 			}),
 		} as unknown as SupabaseClient<Database>
 
@@ -251,12 +253,27 @@ describe("useUpdateProfile", () => {
 			race_color: ["Branca"],
 		})
 
-		// Immediately after mutation (before server response), cache should show optimistic update
-		const optimisticProfile = queryClient.getQueryData<ProfileWithRoles>([
-			"profile",
-			"current",
-		])
-		expect(optimisticProfile?.full_name).toBe("Optimistic Name")
+		// Wait for optimistic update to be applied (before server responds)
+		await waitFor(() => {
+			const optimisticProfile = queryClient.getQueryData<ProfileWithRoles>([
+				"profile",
+				"current",
+			])
+			expect(optimisticProfile?.full_name).toBe("Optimistic Name")
+		})
+
+		// Now resolve the server response
+		resolveServerUpdate({
+			data: {
+				id: "profile-123",
+				full_name: "Server Updated Name",
+				race_color: ["Branca"],
+				created_at: new Date().toISOString(),
+				basic_data_filled: true,
+				is_admin: false,
+			},
+			error: null,
+		})
 
 		// Wait for mutation to complete
 		await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -274,16 +291,12 @@ describe("useUpdateProfile", () => {
 		const mockSupabase = {
 			from: vi.fn().mockReturnValue({
 				update: vi.fn().mockReturnValue({
-					eq: vi.fn().mockReturnValue({
-						select: vi.fn().mockReturnValue({
-							single: vi.fn().mockResolvedValue({
-								data: null,
-								error: {
-									message: "Update failed",
-									code: "23505",
-								},
-							}),
-						}),
+					eq: vi.fn().mockResolvedValue({
+						data: null,
+						error: {
+							message: "Update failed",
+							code: "23505",
+						},
 					}),
 				}),
 			}),
@@ -333,7 +346,7 @@ describe("useUpdateProfile", () => {
 
 	it("should provide loading state during mutation", async () => {
 		const { getClientContext } = await import("~/business/auth/auth.client")
-		let resolveUpdate: (value: unknown) => void
+		let resolveUpdate!: (value: unknown) => void
 		const updatePromise = new Promise((resolve) => {
 			resolveUpdate = resolve
 		})
@@ -341,12 +354,14 @@ describe("useUpdateProfile", () => {
 		const mockSupabase = {
 			from: vi.fn().mockReturnValue({
 				update: vi.fn().mockReturnValue({
-					eq: vi.fn().mockReturnValue({
-						select: vi.fn().mockReturnValue({
-							single: vi.fn().mockReturnValue(updatePromise),
-						}),
+					eq: vi.fn().mockResolvedValue({
+						data: null,
+						error: null,
 					}),
 				}),
+			}),
+			rpc: vi.fn().mockReturnValue({
+				single: vi.fn().mockReturnValue(updatePromise),
 			}),
 		} as unknown as SupabaseClient<Database>
 
