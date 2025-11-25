@@ -314,7 +314,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
     <>
       <Header
         isProdInDev={Boolean(isProdInDev)}
-        profile={currentProfile}
         userEmail={currentUser?.email}
         isThereAnyNews={isThereAnyNews ?? false}
       />
@@ -374,7 +373,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <div className="flex flex-col grow mt-16">
-      <Header profile={null} isThereAnyNews={false} />
+      <Header isThereAnyNews={false} />
       <main className="grow flex flex-col justify-center items-center">
         <div className="max-w-2xl">
           <h1>{message}</h1>
