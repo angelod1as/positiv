@@ -321,6 +321,7 @@ export interface AsaasPayment {
   billingType: 'PIX' | 'CREDIT_CARD';
   value: number;
   netValue: number;
+  externalReference?: string;  // Our payment_link_token (used to identify participant)
   confirmedDate?: string;
   paymentDate?: string;
   installmentCount?: number;
@@ -1204,37 +1205,15 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 /**
- * PAYMENT_RECEIVED: Create pending payment transaction
+ * PAYMENT_RECEIVED: Precursor event to PAYMENT_CONFIRMED
+ *
+ * We do not handle this event to avoid creating orphaned pending transactions
+ * with empty foreign keys that would violate NOT NULL constraints.
+ * All transaction creation logic is handled in PAYMENT_CONFIRMED.
  */
 async function handlePaymentReceived(payload: AsaasWebhookPayload) {
-  const payment = payload.payment;
-
-  // Find participant by payment externalReference (our token)
-  // Note: externalReference is stored in Asaas charge, we need to query by payment ID
-
-  // For now, we'll create the transaction as pending
-  // It will be linked to participant in PAYMENT_CONFIRMED
-
-  await kysely
-    .insertInto('payment_transactions')
-    .values({
-      asaas_payment_id: payment.id,
-      asaas_charge_id: payment.id,  // Will be updated with actual charge ID
-      amount: payment.value,
-      payment_method: payment.billingType === 'PIX' ? 'pix' : 'credit_card',
-      installments: payment.installmentCount || null,
-      status: 'pending',
-      asaas_data: payment as any,
-      event_participant_id: '',  // Will be set in PAYMENT_CONFIRMED
-      profile_id: '',  // Will be set in PAYMENT_CONFIRMED
-    })
-    .onConflict((oc) =>
-      oc.column('asaas_payment_id').doUpdateSet({
-        status: 'pending',
-        asaas_data: payment as any,
-      })
-    )
-    .execute();
+  console.log('Ignoring PAYMENT_RECEIVED event, will be handled by PAYMENT_CONFIRMED.');
+  // Do nothing - all logic handled in PAYMENT_CONFIRMED
 }
 
 /**
@@ -1243,30 +1222,32 @@ async function handlePaymentReceived(payload: AsaasWebhookPayload) {
 async function handlePaymentConfirmed(payload: AsaasWebhookPayload) {
   const payment = payload.payment;
 
-  await kysely.transaction().execute(async (trx) => {
-    // Find participant by checking payment externalReference
-    // We need to get the charge first to find externalReference
+  // The externalReference from Asaas contains our payment_link_token
+  const paymentLinkToken = payment.externalReference;
 
-    // For MVP: Find by matching payment amount and recent token generation
+  if (!paymentLinkToken) {
+    console.error('Webhook payload missing externalReference for payment:', payment.id);
+    return;
+  }
+
+  await kysely.transaction().execute(async (trx) => {
+    // Find the participant using the unique payment_link_token
     const participant = await trx
       .selectFrom('event_participants')
       .innerJoin('profiles', 'profiles.id', 'event_participants.profile_id')
       .innerJoin('events', 'events.id', 'event_participants.event_id')
       .select([
         'event_participants.id',
-        'event_participants.payment_link_token',
         'profiles.id as profile_id',
         'profiles.email',
         'profiles.name as profile_name',
         'events.name as event_name',
       ])
-      .where('event_participants.payment_transaction_id', 'is', null)
-      .where('event_participants.spot_type', '=', 'regular')
-      .orderBy('event_participants.payment_link_generated_at', 'desc')
+      .where('event_participants.payment_link_token', '=', paymentLinkToken)
       .executeTakeFirst();
 
     if (!participant) {
-      console.error('No matching participant found for payment:', payment.id);
+      console.error('No participant found for payment_link_token:', paymentLinkToken);
       return;
     }
 
@@ -1400,20 +1381,37 @@ async function handlePaymentFailed(payload: AsaasWebhookPayload) {
 }
 
 /**
- * PAYMENT_REFUNDED: Update transaction status
+ * PAYMENT_REFUNDED: Update transaction status and unlink from participant
  */
 async function handlePaymentRefunded(payload: AsaasWebhookPayload) {
   const payment = payload.payment;
 
-  await kysely
-    .updateTable('payment_transactions')
-    .set({
-      status: 'refunded',
-      refunded_at: new Date(),
-      asaas_data: payment as any,
-    })
-    .where('asaas_payment_id', '=', payment.id)
-    .execute();
+  await kysely.transaction().execute(async (trx) => {
+    // Update the transaction to 'refunded'
+    const transaction = await trx
+      .updateTable('payment_transactions')
+      .set({
+        status: 'refunded',
+        refunded_at: new Date(),
+        asaas_data: payment as any,
+      })
+      .where('asaas_payment_id', '=', payment.id)
+      .where('status', '=', 'confirmed') // Ensure we only refund confirmed payments
+      .returning('id')
+      .executeTakeFirst();
+
+    if (!transaction) {
+      console.warn(`Refund webhook for non-confirmed/non-existent transaction: ${payment.id}`);
+      return;
+    }
+
+    // Unlink the transaction from the participant to allow them to pay again
+    await trx
+      .updateTable('event_participants')
+      .set({ payment_transaction_id: null })
+      .where('payment_transaction_id', '=', transaction.id)
+      .execute();
+  });
 
   // Note: Refunds initiated from our admin don't need email
   // Asaas sends their own refund confirmation
@@ -1883,41 +1881,34 @@ export async function refundPayment(params: {
   reason: string;
   adminId: string;
 }): Promise<void> {
-  await kysely.transaction().execute(async (trx) => {
-    // Get transaction
-    const transaction = await trx
-      .selectFrom('payment_transactions')
-      .selectAll()
-      .where('id', '=', params.paymentTransactionId)
-      .executeTakeFirstOrThrow();
+  // Note: This function only INITIATES the refund via Asaas API.
+  // The database update is handled by the PAYMENT_REFUNDED webhook
+  // to ensure consistency with the payment provider's state.
 
-    if (transaction.status !== 'confirmed') {
-      throw new Error('Can only refund confirmed payments');
-    }
+  // Get transaction
+  const transaction = await kysely
+    .selectFrom('payment_transactions')
+    .select(['id', 'status', 'asaas_payment_id'])
+    .where('id', '=', params.paymentTransactionId)
+    .executeTakeFirstOrThrow();
 
-    // Call Asaas refund API
-    await asaasRefund({
-      paymentId: transaction.asaas_payment_id,
-      description: params.reason,
-    });
+  if (transaction.status !== 'confirmed') {
+    throw new Error('Can only refund confirmed payments');
+  }
 
-    // Update transaction status
-    await trx
-      .updateTable('payment_transactions')
-      .set({
-        status: 'refunded',
-        refunded_at: new Date(),
-        refund_reason: params.reason,
-      })
-      .where('id', '=', params.paymentTransactionId)
-      .execute();
+  // Store refund reason in transaction for webhook handler to use
+  await kysely
+    .updateTable('payment_transactions')
+    .set({ refund_reason: params.reason })
+    .where('id', '=', params.paymentTransactionId)
+    .execute();
 
-    // Unlink from participant
-    await trx
-      .updateTable('event_participants')
-      .set({ payment_transaction_id: null })
-      .where('payment_transaction_id', '=', params.paymentTransactionId)
-      .execute();
+  // Call Asaas refund API to initiate the refund process
+  // The rest of the logic (updating status, unlinking from participant)
+  // is handled by the handlePaymentRefunded webhook handler
+  await asaasRefund({
+    paymentId: transaction.asaas_payment_id,
+    description: params.reason,
   });
 }
 ```
