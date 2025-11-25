@@ -1,7 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js"
 import { QueryClient } from "@tanstack/react-query"
 import { describe, expect, it } from "vitest"
-import type { Database } from "~/types/database/database.types"
 import type { ProfileWithRoles } from "./types/database/entities.types"
 
 describe("Root Cache Hydration", () => {

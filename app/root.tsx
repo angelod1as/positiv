@@ -1,4 +1,7 @@
-import { QueryClientProvider } from "@tanstack/react-query"
+import {
+	QueryClientProvider,
+	useQueryClient,
+} from "@tanstack/react-query"
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { inputFromForm } from "composable-functions"
@@ -279,6 +282,11 @@ export default function App({ loaderData }: Route.ComponentProps) {
   } = loaderData
 
   const location = useLocation()
+  const queryClient = useQueryClient()
+
+  useEffect(() => {
+    queryClient.setQueryData(["profile", "current"], currentProfile)
+  }, [currentProfile, queryClient])
 
   useEffect(() => {
     if (toast?.type) {
