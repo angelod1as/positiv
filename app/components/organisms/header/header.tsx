@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query"
 import { CalendarIcon, Table2Icon, UserIcon } from "lucide-react"
 import type { FC } from "react"
 import { useLocation } from "react-router"
@@ -32,6 +33,7 @@ export const Header: FC<HeaderProps> = ({
 }) => {
   const { pathname } = useLocation()
   const { data: profile } = useProfile()
+  const queryClient = useQueryClient()
 
   const showButton = pathname !== "/entrar"
   const displayName = profile
@@ -39,6 +41,32 @@ export const Header: FC<HeaderProps> = ({
     : userEmail || undefined
   const isAdmin = profile?.is_admin
   const showButtons = profile || userEmail
+
+  const handleDashboardHover = () => {
+    queryClient.prefetchQuery({
+      queryKey: ["events", "dashboard"],
+      queryFn: async () => {
+        const response = await fetch("/api/events")
+        if (!response.ok) throw new Error("Failed to prefetch events")
+        const data = await response.json()
+        return data.events
+      },
+      staleTime: 300000, // 5 minutes
+    })
+  }
+
+  const handleAdminDashboardHover = () => {
+    queryClient.prefetchQuery({
+      queryKey: ["events", "admin"],
+      queryFn: async () => {
+        const response = await fetch("/api/admin/events")
+        if (!response.ok) throw new Error("Failed to prefetch admin events")
+        const data = await response.json()
+        return data.events
+      },
+      staleTime: 300000, // 5 minutes
+    })
+  }
 
   return (
     <>
@@ -72,6 +100,7 @@ export const Header: FC<HeaderProps> = ({
                     variant="outline"
                     title="Dashboard"
                     to={DASHBOARD}
+                    onMouseEnter={handleDashboardHover}
                   >
                     <CalendarIcon />
                   </Button>
@@ -81,6 +110,7 @@ export const Header: FC<HeaderProps> = ({
                       variant="outline"
                       title="Área Admin"
                       to={ADMIN_DASHBOARD}
+                      onMouseEnter={handleAdminDashboardHover}
                     >
                       <Table2Icon />
                     </Button>

@@ -1,36 +1,19 @@
 import type { FC, ReactNode } from "react"
-import { Await } from "react-router"
-import { Suspense } from "react"
 import { redirectWithInfo } from "remix-toast"
 import { getContext } from "~/business/auth/auth.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { EventListSkeleton } from "~/components/organisms/event-list/event-list-skeleton"
+import { useEvents } from "~/lib/hooks/use-events"
 import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/database/entities.types"
-import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
-import { splitEvents } from "./utils/split-events"
 
 const {
   dash: {
     participant: { AGREE_TO_TERMS },
   },
 } = paths
-
-async function loadEvents(profileId: string) {
-  const result = await getNextEvents(profileId, 12)
-
-  if (!result.success) {
-    // Throwing an error allows the <Await> component's errorElement to catch it
-    throw new Error(
-      result.errors.map((e) => e.message).join(", ") ||
-        "Failed to load events.",
-    )
-  }
-
-  return splitEvents(result.data)
-}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getContext(request, params)
@@ -42,11 +25,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
 
-  // Return object with unawaited promise for streaming
-  // No defer() wrapper needed in React Router 7
-  return {
-    events: loadEvents(currentProfile.id),
-  }
+  return null
 }
 
 export async function action({ request, params }: Route.ClientActionArgs) {
@@ -164,14 +143,28 @@ const EventsContent: FC<{
   )
 }
 
-const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
-  return (
-    <Suspense fallback={<EventListSkeleton />}>
-      <Await resolve={loaderData.events}>
-        {(events) => <EventsContent events={events} />}
-      </Await>
-    </Suspense>
-  )
+const DashboardPage = () => {
+  const { data: events, isLoading, isError, error } = useEvents()
+
+  if (isLoading) {
+    return <EventListSkeleton />
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <p className="text-red-500">
+          {error instanceof Error ? error.message : "Erro ao carregar eventos"}
+        </p>
+      </div>
+    )
+  }
+
+  if (!events) {
+    return <EventListSkeleton />
+  }
+
+  return <EventsContent events={events} />
 }
 
 export default DashboardPage

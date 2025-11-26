@@ -1,15 +1,13 @@
-import { getEventsForDashboard } from "~/business/admin/admin.server"
 import { Separator } from "~/components/ui/separator"
-import type { Route } from "./+types/dashboard-page"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
+import { useAdminEvents } from "~/lib/hooks/use-admin-events"
 
 export async function loader() {
-  const events = await getEventsForDashboard()
-  return { events }
+  return null
 }
 
-const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
-  const { events } = loaderData
+const AdminDashboard = () => {
+  const { data: events, isLoading, isError, error } = useAdminEvents()
 
   return (
     <>
@@ -17,10 +15,18 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
       <div>
         <h2>Eventos</h2>
 
-        {events ? (
+        {isLoading && <p>Carregando eventos...</p>}
+
+        {isError && (
+          <p className="text-red-500">
+            {error instanceof Error ? error.message : "Erro ao carregar eventos"}
+          </p>
+        )}
+
+        {events && events.length > 0 ? (
           <AdminDashboardEventsTable events={events} />
         ) : (
-          "Nenhum evento encontrado"
+          !isLoading && "Nenhum evento encontrado"
         )}
       </div>
       <Separator />

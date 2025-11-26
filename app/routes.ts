@@ -9,6 +9,8 @@ import {
 export default [
   // API ROUTES (internal endpoints)
   route("/api/process-campaigns", "routes/api.process-campaigns.ts"),
+  route("/api/events", "routes/api.events.ts"),
+  route("/api/admin/events", "routes/api.admin.events.ts"),
 
   // PUBLIC
   index("pages/homepage/homepage.tsx"),
