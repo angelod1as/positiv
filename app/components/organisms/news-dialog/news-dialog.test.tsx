@@ -9,6 +9,10 @@ vi.mock("react-router", () => ({
   useFetcher: vi.fn(),
 }))
 
+vi.mock("~/lib/hooks/use-profile", () => ({
+  useProfile: vi.fn(),
+}))
+
 vi.mock("./news", () => ({
   News: vi.fn(({ isAdmin }: { isAdmin: boolean }) => {
     const mockNewsItems = [
@@ -52,11 +56,16 @@ vi.mock("./news-utils", () => ({
 describe("NewsDialog", () => {
   const mockSubmit = vi.fn()
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks()
     vi.mocked(useFetcher).mockReturnValue({
       submit: mockSubmit,
     } as unknown as ReturnType<typeof useFetcher>)
+
+    const { useProfile } = await import("~/lib/hooks/use-profile")
+    vi.mocked(useProfile).mockReturnValue({
+      data: null,
+    } as unknown as ReturnType<typeof useProfile>)
 
     Object.defineProperty(window, "location", {
       value: { href: "http://localhost:3000/test" },
@@ -66,13 +75,7 @@ describe("NewsDialog", () => {
 
   describe("Dialog visibility based on NEWS_VERSION", () => {
     it("should show bell icon in header when there is news", () => {
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={true}
-          currentProfile={null}
-        />,
-      )
+      render(<NewsDialog isThereAnyNews={true} isHeader={true} />)
 
       const button = screen.getByRole("button")
       expect(button).toBeInTheDocument()
@@ -80,19 +83,15 @@ describe("NewsDialog", () => {
     })
 
     it("should not show bell icon in header when there is no news", () => {
-      render(
-        <NewsDialog
-          isThereAnyNews={false}
-          isHeader={true}
-          currentProfile={null}
-        />,
-      )
+      render(<NewsDialog isThereAnyNews={false} isHeader={true} />)
 
       expect(screen.queryByRole("button")).not.toBeInTheDocument()
     })
 
     it("should not show bell icon for regular user when only admin news exist", async () => {
       const { hasVisibleNews } = await import("./news-utils")
+      const { useProfile } = await import("~/lib/hooks/use-profile")
+
       // Mock hasVisibleNews to return false for regular users
       vi.mocked(hasVisibleNews).mockImplementation(
         (isAdmin: boolean) => isAdmin,
@@ -116,15 +115,14 @@ describe("NewsDialog", () => {
         how_came_to_us: null,
         rg_issuer: null,
         created_at: "2024-01-01",
+        race_color: null,
       }
 
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={true}
-          currentProfile={regularProfile}
-        />,
-      )
+      vi.mocked(useProfile).mockReturnValue({
+        data: regularProfile,
+      } as unknown as ReturnType<typeof useProfile>)
+
+      render(<NewsDialog isThereAnyNews={true} isHeader={true} />)
 
       expect(screen.queryByRole("button")).not.toBeInTheDocument()
 
@@ -133,13 +131,7 @@ describe("NewsDialog", () => {
     })
 
     it("should show footer link regardless of news status", () => {
-      render(
-        <NewsDialog
-          isThereAnyNews={false}
-          isHeader={false}
-          currentProfile={null}
-        />,
-      )
+      render(<NewsDialog isThereAnyNews={false} isHeader={false} />)
 
       expect(screen.getByText("Veja as novidades do site")).toBeInTheDocument()
     })
@@ -147,6 +139,8 @@ describe("NewsDialog", () => {
 
   describe("Role-based content filtering", () => {
     it("should pass isAdmin=false for regular users", async () => {
+      const { useProfile } = await import("~/lib/hooks/use-profile")
+
       const regularProfile: ProfileWithRoles = {
         id: "1",
         email: "user@test.com",
@@ -165,15 +159,14 @@ describe("NewsDialog", () => {
         how_came_to_us: null,
         rg_issuer: null,
         created_at: "2024-01-01",
+        race_color: null,
       }
 
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={false}
-          currentProfile={regularProfile}
-        />,
-      )
+      vi.mocked(useProfile).mockReturnValue({
+        data: regularProfile,
+      } as unknown as ReturnType<typeof useProfile>)
+
+      render(<NewsDialog isThereAnyNews={true} isHeader={false} />)
 
       const user = userEvent.setup()
       await user.click(screen.getByText("Veja as novidades do site"))
@@ -183,6 +176,8 @@ describe("NewsDialog", () => {
     })
 
     it("should pass isAdmin=true for admin users", async () => {
+      const { useProfile } = await import("~/lib/hooks/use-profile")
+
       const adminProfile: ProfileWithRoles = {
         id: "1",
         email: "admin@test.com",
@@ -201,15 +196,14 @@ describe("NewsDialog", () => {
         how_came_to_us: null,
         rg_issuer: null,
         created_at: "2024-01-01",
+        race_color: null,
       }
 
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={false}
-          currentProfile={adminProfile}
-        />,
-      )
+      vi.mocked(useProfile).mockReturnValue({
+        data: adminProfile,
+      } as unknown as ReturnType<typeof useProfile>)
+
+      render(<NewsDialog isThereAnyNews={true} isHeader={false} />)
 
       const user = userEvent.setup()
       await user.click(screen.getByText("Veja as novidades do site"))
@@ -221,13 +215,7 @@ describe("NewsDialog", () => {
 
   describe("User interaction", () => {
     it('should submit form when clicking "don\'t show again"', async () => {
-      render(
-        <NewsDialog
-          isThereAnyNews={true}
-          isHeader={false}
-          currentProfile={null}
-        />,
-      )
+      render(<NewsDialog isThereAnyNews={true} isHeader={false} />)
 
       const user = userEvent.setup()
       await user.click(screen.getByText("Veja as novidades do site"))

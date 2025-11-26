@@ -2,16 +2,14 @@ import { GithubIcon } from "lucide-react"
 import type { FC } from "react"
 import Instagram from "~/assets/social/instagram.svg"
 import { Link } from "~/components/atoms/link/link"
-import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
 
 const BUG_TRACKER_URL = "https://forms.gle/ys6W6W54YTcoBHrJA"
 
-type FooterProps = { 
+type FooterProps = {
   isThereAnyNews: boolean
-  currentProfile?: ProfileWithRoles | null
 }
-export const Footer: FC<FooterProps> = ({ isThereAnyNews, currentProfile }) => {
+export const Footer: FC<FooterProps> = ({ isThereAnyNews }) => {
   return (
     <footer className="text-xs w-full p-3 bg-gray-100 border">
       <div className="px-4 md:px-6">
@@ -42,7 +40,7 @@ export const Footer: FC<FooterProps> = ({ isThereAnyNews, currentProfile }) => {
             </p>
           </div>
           <div>
-            <NewsDialog isThereAnyNews={isThereAnyNews} currentProfile={currentProfile} />
+            <NewsDialog isThereAnyNews={isThereAnyNews} />
             <div className="flex justify-center items-center space-x-4">
               <Link
                 target="_blank"
