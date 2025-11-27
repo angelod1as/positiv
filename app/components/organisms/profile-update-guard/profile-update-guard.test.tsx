@@ -1,12 +1,8 @@
 import { render, screen } from "@testing-library/react"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import { ProfileUpdateGuard } from "./profile-update-guard"
 import { BrowserRouter } from "react-router"
 import type { ProfileWithRoles } from "~types/database/entities.types"
-
-vi.mock("~/lib/hooks/use-profile", () => ({
-  useProfile: vi.fn(),
-}))
 
 const mockProfile: ProfileWithRoles = {
   id: "123",
@@ -22,28 +18,26 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 )
 
 describe("ProfileUpdateGuard", () => {
-  beforeEach(async () => {
-    vi.clearAllMocks()
-    const { useProfile } = await import("~/lib/hooks/use-profile")
-    vi.mocked(useProfile).mockReturnValue({
-      data: mockProfile,
-    } as unknown as ReturnType<typeof useProfile>)
-  })
-
-  it("should not render modal when user is not logged in", async () => {
-    const { useProfile } = await import("~/lib/hooks/use-profile")
-    vi.mocked(useProfile).mockReturnValue({
-      data: null,
-    } as unknown as ReturnType<typeof useProfile>)
-
-    render(<ProfileUpdateGuard currentPath="/dashboard" needsProfileUpdate={true} />, { wrapper })
+  it("should not render modal when user is not logged in", () => {
+    render(
+      <ProfileUpdateGuard
+        currentProfile={null}
+        currentPath="/dashboard"
+        needsProfileUpdate={true}
+      />,
+      { wrapper },
+    )
 
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
   })
 
   it("should not render modal when on exempt path", () => {
     render(
-      <ProfileUpdateGuard currentPath="/conta/dados-basicos" needsProfileUpdate={true} />,
+      <ProfileUpdateGuard
+        currentProfile={mockProfile}
+        currentPath="/conta/dados-basicos"
+        needsProfileUpdate={true}
+      />,
       { wrapper },
     )
 
@@ -52,7 +46,11 @@ describe("ProfileUpdateGuard", () => {
 
   it("should not render modal when profile does not need update", () => {
     render(
-      <ProfileUpdateGuard currentPath="/dashboard" needsProfileUpdate={false} />,
+      <ProfileUpdateGuard
+        currentProfile={mockProfile}
+        currentPath="/dashboard"
+        needsProfileUpdate={false}
+      />,
       { wrapper },
     )
 
@@ -61,7 +59,11 @@ describe("ProfileUpdateGuard", () => {
 
   it("should render modal when logged in, not exempt path, and needs update", () => {
     render(
-      <ProfileUpdateGuard currentPath="/dashboard" needsProfileUpdate={true} />,
+      <ProfileUpdateGuard
+        currentProfile={mockProfile}
+        currentPath="/dashboard"
+        needsProfileUpdate={true}
+      />,
       { wrapper },
     )
 
@@ -69,13 +71,27 @@ describe("ProfileUpdateGuard", () => {
   })
 
   it("should not render modal on home page (exempt)", () => {
-    render(<ProfileUpdateGuard currentPath="/" needsProfileUpdate={true} />, { wrapper })
+    render(
+      <ProfileUpdateGuard
+        currentProfile={mockProfile}
+        currentPath="/"
+        needsProfileUpdate={true}
+      />,
+      { wrapper },
+    )
 
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
   })
 
   it("should not render modal on login page (exempt)", () => {
-    render(<ProfileUpdateGuard currentPath="/entrar" needsProfileUpdate={true} />, { wrapper })
+    render(
+      <ProfileUpdateGuard
+        currentProfile={mockProfile}
+        currentPath="/entrar"
+        needsProfileUpdate={true}
+      />,
+      { wrapper },
+    )
 
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
   })
