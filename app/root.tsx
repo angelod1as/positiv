@@ -1,8 +1,6 @@
-import { QueryClientProvider } from "@tanstack/react-query"
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { inputFromForm } from "composable-functions"
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, type ReactNode } from "react"
 import {
   data,
   isRouteErrorResponse,
@@ -22,7 +20,6 @@ import {
 import { toast as notify, Toaster } from "sonner"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
-import { createQueryClient } from "~/lib/query-client"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
@@ -242,8 +239,6 @@ export async function action({ params, request }: Route.ActionArgs) {
 }
 
 export function Layout(props: { children: ReactNode }) {
-  const [queryClient] = useState(() => createQueryClient())
-
   return (
     <html lang="pt-BR">
       <head>
@@ -253,15 +248,12 @@ export function Layout(props: { children: ReactNode }) {
         <Links />
       </head>
       <body className="h-screen flex flex-col">
-        <QueryClientProvider client={queryClient}>
-          <Toaster richColors position="top-center" />
-          <GlobalLoading />
-          {props.children}
-          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-          <ScrollRestoration />
-          <Scripts />
-          {import.meta.env.VERCEL && <SpeedInsights />}
-        </QueryClientProvider>
+        <Toaster richColors position="top-center" />
+        <GlobalLoading />
+        {props.children}
+        <ScrollRestoration />
+        <Scripts />
+        {import.meta.env.VERCEL && <SpeedInsights />}
       </body>
     </html>
   )
