@@ -1,19 +1,20 @@
 import { BellDotIcon } from "lucide-react"
 import { useFetcher } from "react-router"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
-import { useProfile } from "~/lib/hooks/use-profile"
+import type { ProfileWithRoles } from "~types/database/entities.types"
 import { News } from "./news"
 import { DEFAULT_NEWS_ITEMS, hasVisibleNews, NEWS_VERSION } from "./news-utils"
 
 export const NewsDialog = ({
   isThereAnyNews,
   isHeader,
+  currentProfile,
 }: {
   isThereAnyNews: boolean
   isHeader?: boolean
+  currentProfile?: ProfileWithRoles | null
 }) => {
   const fetcher = useFetcher()
-  const { data: currentProfile } = useProfile()
   const isAdmin = currentProfile?.is_admin ?? false
 
   // Check if user has any news they can actually see
