@@ -56,7 +56,6 @@ export type ProfileWithExtraData = Profile &
   }
 
 // Main query to get event_participants information along with if they were skipped in the last event
-// Optimized to use correlated subquery instead of window function (POS-275)
 const profilesWithExtraDataQuery = kysely
   .selectFrom("event_participants as current_ep")
   .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
