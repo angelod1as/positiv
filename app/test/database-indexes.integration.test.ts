@@ -116,7 +116,8 @@ describe("Database Indexes - Integration Tests", () => {
         // If using an index, verify it's one of our expected indexes
         const validIndexes = [
           "idx_event_participants_profile_event_applied",
-          "idx_event_participants_profile_attendance"
+          "idx_event_participants_profile_attendance",
+          "idx_event_participants_profile_history"
         ]
         expect(validIndexes).toContain(plan["Index Name"])
       }
