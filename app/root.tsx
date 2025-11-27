@@ -1,11 +1,6 @@
-import {
-	QueryClientProvider,
-	useQueryClient,
-} from "@tanstack/react-query"
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { inputFromForm } from "composable-functions"
-import { useEffect, useState, type ReactNode } from "react"
+import { useEffect, type ReactNode } from "react"
 import {
   data,
   isRouteErrorResponse,
@@ -25,7 +20,6 @@ import {
 import { toast as notify, Toaster } from "sonner"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
-import { createQueryClient } from "~/lib/query-client"
 import type { Route } from "./+types/root"
 import "./app.css"
 import { getContext } from "./business/auth/auth.server"
@@ -245,8 +239,6 @@ export async function action({ params, request }: Route.ActionArgs) {
 }
 
 export function Layout(props: { children: ReactNode }) {
-  const [queryClient] = useState(() => createQueryClient())
-
   return (
     <html lang="pt-BR">
       <head>
@@ -256,15 +248,12 @@ export function Layout(props: { children: ReactNode }) {
         <Links />
       </head>
       <body className="h-screen flex flex-col">
-        <QueryClientProvider client={queryClient}>
-          <Toaster richColors position="top-center" />
-          <GlobalLoading />
-          {props.children}
-          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-          <ScrollRestoration />
-          <Scripts />
-          {import.meta.env.VERCEL && <SpeedInsights />}
-        </QueryClientProvider>
+        <Toaster richColors position="top-center" />
+        <GlobalLoading />
+        {props.children}
+        <ScrollRestoration />
+        <Scripts />
+        {import.meta.env.VERCEL && <SpeedInsights />}
       </body>
     </html>
   )
@@ -282,11 +271,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
   } = loaderData
 
   const location = useLocation()
-  const queryClient = useQueryClient()
-
-  useEffect(() => {
-    queryClient.setQueryData(["profile", "current"], currentProfile)
-  }, [currentProfile, queryClient])
 
   useEffect(() => {
     if (toast?.type) {
@@ -314,10 +298,12 @@ export default function App({ loaderData }: Route.ComponentProps) {
     <>
       <Header
         isProdInDev={Boolean(isProdInDev)}
+        profile={currentProfile}
         userEmail={currentUser?.email}
         isThereAnyNews={isThereAnyNews ?? false}
       />
       <ProfileUpdateGuard
+        currentProfile={currentProfile}
         currentPath={location.pathname}
         needsProfileUpdate={needsProfileUpdate}
       />
@@ -325,7 +311,10 @@ export default function App({ loaderData }: Route.ComponentProps) {
       <div className="flex flex-col grow mt-16">
         <Outlet />
       </div>
-      <Footer isThereAnyNews={isThereAnyNews ?? false} />
+      <Footer
+        isThereAnyNews={isThereAnyNews ?? false}
+        currentProfile={currentProfile}
+      />
     </>
   )
 }
@@ -369,7 +358,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 
   return (
     <div className="flex flex-col grow mt-16">
-      <Header isThereAnyNews={false} />
+      <Header profile={null} isThereAnyNews={false} />
       <main className="grow flex flex-col justify-center items-center">
         <div className="max-w-2xl">
           <h1>{message}</h1>
@@ -381,7 +370,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           )}
         </div>
       </main>
-      <Footer isThereAnyNews={false} />
+      <Footer isThereAnyNews={false} currentProfile={null} />
     </div>
   )
 }

@@ -4,8 +4,8 @@ import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
-import { useProfile } from "~/lib/hooks/use-profile"
 import paths from "~/lib/paths"
+import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
 import { WarningBanner } from "../warning-banner/warning-banner"
 
@@ -20,18 +20,19 @@ const {
 } = paths
 
 type HeaderProps = {
+  profile: ProfileWithRoles | null
   userEmail?: string | null
   isProdInDev?: boolean
   isThereAnyNews: boolean
 }
 
 export const Header: FC<HeaderProps> = ({
+  profile,
   userEmail,
   isProdInDev,
   isThereAnyNews,
 }) => {
   const { pathname } = useLocation()
-  const { data: profile } = useProfile()
 
   const showButton = pathname !== "/entrar"
   const displayName = profile
@@ -66,7 +67,7 @@ export const Header: FC<HeaderProps> = ({
                   {!!displayName && (
                     <p className="hidden sm:block">Olá, {displayName}</p>
                   )}
-                  <NewsDialog isThereAnyNews={isThereAnyNews} isHeader={true} />
+                  <NewsDialog isThereAnyNews={isThereAnyNews} isHeader={true} currentProfile={profile} />
                   <Button
                     asChild
                     variant="outline"
