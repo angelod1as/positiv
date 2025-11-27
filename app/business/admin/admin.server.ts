@@ -52,40 +52,27 @@ export const getAdminEventById = composable(
 
 export type ProfileWithExtraData = Profile &
   EventParticipant & {
-    was_admin_skipped_last_event?: boolean
+    was_admin_skipped_last_event?: boolean | null
   }
 
 // Main query to get event_participants information along with if they were skipped in the last event
 const profilesWithExtraDataQuery = kysely
   .selectFrom("event_participants as current_ep")
   .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
-  .leftJoin(
-    (eb) =>
-      eb
-        .selectFrom("event_participants as ep")
-        .innerJoin("events as e", "ep.event_id", "e.id")
-        .select([
-          "ep.profile_id",
-          "ep.application_status",
-          "ep.attendance_status",
-          "ep.has_paid",
-          sql<number>`row_number() over (
-            partition by ep.profile_id
-            order by e.time_event_start desc
-          )`.as("rn"),
-        ])
-        .where("ep.is_user_applied", "=", true)
-        .as("ranked_events"),
-    (join) =>
-      join
-        .onRef("ranked_events.profile_id", "=", "current_ep.profile_id")
-        .on("ranked_events.rn", "=", 2),
-  )
+  .innerJoin("events as current_event", "current_ep.event_id", "current_event.id")
   .selectAll(["p", "current_ep"])
-  .select([
-    sql<boolean>`ranked_events.attendance_status = 'skipped'`.as(
-      "was_admin_skipped_last_event",
-    ),
+  .select((eb) => [
+    eb
+      .selectFrom("event_participants as ep")
+      .innerJoin("events as e", "ep.event_id", "e.id")
+      .select(sql<boolean>`ep.attendance_status = 'skipped'`.as("is_skipped"))
+      .whereRef("ep.profile_id", "=", "current_ep.profile_id")
+      .where("ep.is_user_applied", "=", true)
+      .where("ep.application_status", "=", "finalised")
+      .whereRef("e.time_event_start", "<", "current_event.time_event_start")
+      .orderBy("e.time_event_start", "desc")
+      .limit(1)
+      .as("was_admin_skipped_last_event"),
   ])
 
 export const getProfileWithExtraDataById = composable(
