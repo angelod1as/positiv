@@ -464,6 +464,7 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
           .select(sql<boolean>`ep.attendance_status = 'skipped'`.as("is_skipped"))
           .whereRef("ep.profile_id", "=", "current_ep.profile_id")
           .where("ep.is_user_applied", "=", true)
+          .where("ep.application_status", "=", "finalised")
           .whereRef("e.time_event_start", "<", "current_event.time_event_start")
           .orderBy("e.time_event_start", "desc")
           .limit(1)
@@ -492,6 +493,133 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
 
     // Test still passes - we're just measuring performance
     expect(explainResult.rows.length).toBeGreaterThan(0)
+  })
+
+  it("should only consider finalized applications for was_admin_skipped_last_event", async () => {
+    // Create profile with multiple past events:
+    // - Most recent event: application_status = "pending" (should be IGNORED)
+    // - Older event: application_status = "finalised" with attendance_status = "skipped" (should be USED)
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-query-opt-finalized-only@example.com",
+      full_name: "Test Profile - Finalized Check",
+    })
+
+    // Oldest event (60 days ago) - finalised and skipped - THIS should be considered
+    const oldestEvent = await createTestEvent(tracker, kysely, {
+      title: "Oldest Event - Finalised",
+      emoji: "📅",
+      location: "Location 1",
+      description: "Description 1",
+      event_status: "Completed",
+      event_type: "regular",
+      time_event_start: new Date(
+        Date.now() - 60 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+      time_event_end: new Date(
+        Date.now() - 60 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+      ).toISOString(),
+      time_application_start: new Date(
+        Date.now() - 74 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+      time_application_end: new Date(
+        Date.now() - 62 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+      ticket_price: 100,
+      total_spots: 50,
+    })
+
+    // More recent event (30 days ago) - NOT finalised - THIS should be IGNORED
+    const recentEvent = await createTestEvent(tracker, kysely, {
+      title: "Recent Event - Not Finalised",
+      emoji: "⏱️",
+      location: "Location 2",
+      description: "Description 2",
+      event_status: "Completed",
+      event_type: "regular",
+      time_event_start: new Date(
+        Date.now() - 30 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+      time_event_end: new Date(
+        Date.now() - 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+      ).toISOString(),
+      time_application_start: new Date(
+        Date.now() - 44 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+      time_application_end: new Date(
+        Date.now() - 32 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+      ticket_price: 150,
+      total_spots: 30,
+    })
+
+    // Current event (30 days in future)
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Event",
+      emoji: "🎉",
+      location: "Location 3",
+      description: "Description 3",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+      time_event_end: new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+      ).toISOString(),
+      time_application_start: new Date().toISOString(),
+      time_application_end: new Date(
+        Date.now() + 14 * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+      ticket_price: 200,
+      total_spots: 40,
+    })
+
+    // Oldest event: finalised and skipped
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: oldestEvent.id,
+      is_user_applied: true,
+      application_status: "finalised",
+      attendance_status: "skipped",
+    })
+
+    // Recent event: pending (not finalised) - even though attended, should be IGNORED
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: recentEvent.id,
+      is_user_applied: true,
+      application_status: "pending", // NOT finalised
+      attendance_status: "attended", // Even though attended, should be ignored
+    })
+
+    // Current event: pending
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      is_user_applied: true,
+      application_status: "pending",
+      attendance_status: "pending",
+    })
+
+    const result = await getProfilesWithExtraDataById({
+      eventId: currentEvent.id,
+    })
+
+    if (!result.success) {
+      console.error("Query failed:", result.errors)
+    }
+
+    expect(result.success).toBe(true)
+
+    if (result.success) {
+      const profileData = result.data.find((p) => p.profile_id === profile.id)
+      expect(profileData).toBeDefined()
+
+      // Should return true (skipped) from oldestEvent, NOT false (attended) from recentEvent
+      // Because recentEvent has application_status = "pending" (not finalised)
+      expect(profileData?.was_admin_skipped_last_event).toBe(true)
+    }
   })
 
   it("should correctly identify was_admin_skipped_last_event for edge cases", async () => {

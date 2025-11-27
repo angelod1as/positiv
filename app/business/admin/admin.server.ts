@@ -68,6 +68,7 @@ const profilesWithExtraDataQuery = kysely
       .select(sql<boolean>`ep.attendance_status = 'skipped'`.as("is_skipped"))
       .whereRef("ep.profile_id", "=", "current_ep.profile_id")
       .where("ep.is_user_applied", "=", true)
+      .where("ep.application_status", "=", "finalised")
       .whereRef("e.time_event_start", "<", "current_event.time_event_start")
       .orderBy("e.time_event_start", "desc")
       .limit(1)
