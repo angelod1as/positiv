@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import type { PrefetchBehavior } from "react-router"
 
+type PrefetchBehavior = "intent" | "render" | "none" | "viewport"
 type ConnectionType = "slow-2g" | "2g" | "3g" | "4g" | "unknown"
 
 interface NetworkInformation extends EventTarget {
@@ -35,7 +35,7 @@ export function useSmartPrefetch(): PrefetchBehavior {
       if (saveData) {
         setPrefetchStrategy("none")
         if (import.meta.env.DEV) {
-          console.log("[Prefetch] Data saver mode enabled, prefetch disabled")
+          console.info("[Prefetch] Data saver mode enabled, prefetch disabled")
         }
         return
       }
@@ -43,21 +43,21 @@ export function useSmartPrefetch(): PrefetchBehavior {
       if (effectiveType === "slow-2g" || effectiveType === "2g") {
         setPrefetchStrategy("none")
         if (import.meta.env.DEV) {
-          console.log(
+          console.info(
             `[Prefetch] Slow connection detected (${effectiveType}), prefetch disabled`,
           )
         }
       } else if (effectiveType === "3g") {
         setPrefetchStrategy("intent")
         if (import.meta.env.DEV) {
-          console.log(
+          console.info(
             `[Prefetch] Moderate connection (${effectiveType}), using intent prefetch`,
           )
         }
       } else {
         setPrefetchStrategy("intent")
         if (import.meta.env.DEV) {
-          console.log(
+          console.info(
             `[Prefetch] Fast connection (${effectiveType}), using intent prefetch`,
           )
         }
