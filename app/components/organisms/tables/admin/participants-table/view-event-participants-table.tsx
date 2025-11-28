@@ -179,6 +179,7 @@ export const AdminViewEventParticipantsTable: FC<
           },
           title: "Ver participante",
           key: "id",
+          prefetch: "intent",
         },
       ]}
     >

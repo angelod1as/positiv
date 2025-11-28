@@ -125,7 +125,11 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
 
   if (isOpen) {
     return (
-      <Button data-testid={dataTestId} to={EVENT_VIEW(eventId)}>
+      <Button
+        data-testid={dataTestId}
+        to={EVENT_VIEW(eventId)}
+        linkProps={{ prefetch: "intent" }}
+      >
         Fazer inscrição
       </Button>
     )

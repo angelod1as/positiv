@@ -25,6 +25,8 @@ type buttonProps = {
   Icon: LucideIcon
   /** Link target */
   target?: LinkProps["target"]
+  /** Prefetch strategy for the link */
+  prefetch?: LinkProps["prefetch"]
 }
 
 export type DataTableHeader = {
@@ -254,27 +256,26 @@ export function DataTable<T extends DataTableValue>({
             body={(value: T) => {
               return (
                 <div className="flex gap-2 justify-self-end">
-                  {buttons.map(({ Icon, title, to, key = "id", target }) => {
-                    return (
-                      <Button
-                        to={
-                          typeof to === "function" ? key && to(value[key]) : to
-                        }
-                        key={title}
-                        aria-label={title}
-                        variant="outline"
-                        linkProps={
-                          target
-                            ? {
-                                target,
-                              }
-                            : undefined
-                        }
-                      >
-                        <Icon />
-                      </Button>
-                    )
-                  })}
+                  {buttons.map(
+                    ({ Icon, title, to, key = "id", target, prefetch }) => {
+                      return (
+                        <Button
+                          to={
+                            typeof to === "function" ? key && to(value[key]) : to
+                          }
+                          key={title}
+                          aria-label={title}
+                          variant="outline"
+                          linkProps={{
+                            ...(target && { target }),
+                            ...(prefetch && { prefetch }),
+                          }}
+                        >
+                          <Icon />
+                        </Button>
+                      )
+                    },
+                  )}
                 </div>
               )
             }}
