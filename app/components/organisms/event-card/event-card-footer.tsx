@@ -5,6 +5,7 @@ import { Button } from "~/components/atoms/button/button"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
+import { useSmartPrefetch } from "~/lib/hooks/use-smart-prefetch"
 import paths from "~/lib/paths"
 import type { EventStatus } from "~types/database/entities.types"
 
@@ -30,6 +31,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   dataTestId,
 }) => {
   const fetcher = useFetcher()
+  const prefetchStrategy = useSmartPrefetch()
 
   useEffect(() => {
     if (fetcher.data?.error) {
@@ -128,7 +130,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
       <Button
         data-testid={dataTestId}
         to={EVENT_VIEW(eventId)}
-        linkProps={{ prefetch: "intent" }}
+        linkProps={{ prefetch: prefetchStrategy }}
       >
         Fazer inscrição
       </Button>

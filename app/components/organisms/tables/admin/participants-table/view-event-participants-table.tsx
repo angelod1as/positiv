@@ -8,6 +8,7 @@ import {
 } from "~/lib/helpers/register-filter-services"
 import { createSaveHandler } from "~/lib/helpers/create-save-handler"
 import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
+import { useSmartPrefetch } from "~/lib/hooks/use-smart-prefetch"
 import { useTableFilters } from "~/lib/hooks/use-table-filters"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
@@ -67,6 +68,8 @@ type AdminViewEventParticipantsTableProps = {
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId, fetcher }) => {
+  const prefetchStrategy = useSmartPrefetch()
+
   const [applicationStatusFilter, setApplicationStatusFilter] =
     useSessionStorageFilter(
       PARTICIPANTS_TABLE_FILTER_CONFIGS.application_status.storageKey,
@@ -179,7 +182,7 @@ export const AdminViewEventParticipantsTable: FC<
           },
           title: "Ver participante",
           key: "id",
-          prefetch: "intent",
+          prefetch: prefetchStrategy,
         },
       ]}
     >
