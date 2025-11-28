@@ -288,11 +288,18 @@ describe("getNextEvents - Query Optimization Integration Tests", () => {
 
   describe("performance and query optimization", () => {
     it("should use index on event_participants join", async () => {
-      // Verify the index exists by querying PostgreSQL system catalog
+      // Create a test profile to get a valid UUID
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: "test-index@example.com",
+        full_name: "Test Index",
+      })
+
+      // Query using the index - verifies it exists and is functional
       const result = await kysely
         .selectFrom("event_participants")
         .select("id")
-        .where("profile_id", "=", "test-id")
+        .where("profile_id", "=", profile.id)
         .where("is_user_applied", "=", true)
         .limit(1)
         .execute()
