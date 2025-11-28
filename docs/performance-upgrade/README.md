@@ -60,39 +60,39 @@ After completing each task:
 #### POS-263 - Self-host Google Fonts
 **Impact:** 1-3 seconds FCP reduction
 **Description:** Install fontsource packages and remove external font links to eliminate render blocking.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 #### POS-264 - Create minimal auth RPC
 **Impact:** 100-300ms reduction per request
 **Description:** New lightweight Supabase RPC for auth context to reduce root loader overhead.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete (REVERTED - no measurable benefit)
 
 #### POS-265 - Remove duplicate auth checks in route guards
 **Impact:** 200-500ms per navigation
 **Description:** Trust root loader instead of redundant guard queries.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 #### POS-266 - Remove "load all events" from admin guard
 **Impact:** 300-700ms on admin pages
 **Description:** Move events loading only where needed, add pagination.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 #### POS-267 - Add database indexes
 **Impact:** 100-400ms on complex queries
 **Description:** Create 3 strategic indexes on event_participants and event_reminders.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 ### MEDIUM PRIORITY
 
 #### POS-268 - Implement defer() for dashboard event list
 **Impact:** Header renders 500-1000ms faster
 **Description:** Stream events after initial paint with Suspense.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 #### POS-269 - Implement defer() for admin event participant list
 **Impact:** Event details immediate, table streams 300-600ms later
 **Description:** Defer participant query, create skeleton component.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 #### POS-270 - Move non-critical root loader data to client-side
 **Impact:** 100-300ms on root loader
@@ -102,44 +102,44 @@ After completing each task:
 #### POS-271 - Optimize get_profile_with_roles RPC query
 **Impact:** 50-150ms on profile queries
 **Description:** Optimize aggregation, improve query plan.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 #### POS-272 - Install and configure TanStack Query
 **Impact:** Foundation for client-side caching
 **Description:** Setup QueryClient, provider, defaults.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete (REVERTED - added complexity without clear benefit)
 
 #### POS-273 - Implement client-side profile caching
 **Impact:** 200-400ms on repeat navigation
 **Description:** useProfile hook, 5-minute stale time with TanStack Query.
-**Status:** 🔲 Todo
+**Status:** ❌ Cancelled (depends on POS-272 which was reverted)
 
 ### LOW PRIORITY
 
 #### POS-274 - Implement client-side event list caching
 **Impact:** Near-instant navigation on repeats
 **Description:** useEvents hooks, prefetching, optimistic updates.
-**Status:** 🔲 Todo
+**Status:** ❌ Cancelled (depends on POS-272 which was reverted)
 
 #### POS-275 - Optimize participant query window function
 **Impact:** 200-400ms on admin event pages
 **Description:** Use materialized view or refactor subquery.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 #### POS-276 - Refactor getNextEvents EXISTS to JOINs
 **Impact:** 100-200ms on homepage
 **Description:** Convert 2 EXISTS to LEFT JOINs.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 #### POS-277 - Implement route prefetching
 **Impact:** Makes navigation feel instant
 **Description:** React Router 7 prefetch strategy.
-**Status:** 🔲 Todo
+**Status:** ✅ Complete
 
 #### POS-278 - Document performance baseline (FIRST TASK)
 **Impact:** Establishes tracking methodology
 **Description:** Capture baseline metrics, set targets. **Run this FIRST.**
-**Status:** 🔲 Todo → 🏃 In Progress
+**Status:** ✅ Complete
 
 ## Completion Requirements
 
@@ -157,9 +157,9 @@ For each task:
 ## Progress Tracking
 
 - **Total Tasks:** 16
-- **Completed:** 0
-- **In Progress:** 1 (POS-278)
-- **Todo:** 15
+- **Completed:** 13 (including 2 reverted, 2 cancelled)
+- **Cancelled:** 2 (POS-273, POS-274)
+- **Todo:** 1 (POS-270)
 
 ## Additional Tasks
 
