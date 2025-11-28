@@ -16,7 +16,7 @@ interface NavigatorWithConnection extends Navigator {
 
 export function useSmartPrefetch(): PrefetchBehavior {
   const [prefetchStrategy, setPrefetchStrategy] =
-    useState<PrefetchBehavior>("intent")
+    useState<PrefetchBehavior>("none")
 
   useEffect(() => {
     const nav = navigator as NavigatorWithConnection
@@ -24,7 +24,11 @@ export function useSmartPrefetch(): PrefetchBehavior {
       nav.connection || nav.mozConnection || nav.webkitConnection
 
     if (!connection) {
-      setPrefetchStrategy("intent")
+      if (import.meta.env.DEV) {
+        console.info(
+          "[Prefetch] Network Information API not supported, prefetch disabled for safety",
+        )
+      }
       return
     }
 

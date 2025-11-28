@@ -57,14 +57,14 @@ describe("useSmartPrefetch", () => {
     expect(result.current).toBe("none")
   })
 
-  it("should return 'intent' when connection is not available", () => {
+  it("should return 'none' when connection API is not available (Safari)", () => {
     Object.defineProperty(navigator, "connection", {
       configurable: true,
       writable: true,
       value: undefined,
     })
     const { result } = renderHook(() => useSmartPrefetch())
-    expect(result.current).toBe("intent")
+    expect(result.current).toBe("none")
   })
 
   it("should register event listener for connection changes", () => {
