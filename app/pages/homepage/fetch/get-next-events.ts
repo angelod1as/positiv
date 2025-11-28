@@ -17,18 +17,22 @@ export const getNextEvents: GetNextEvents = composable(
     let query = kysely.selectFrom("events").selectAll("events")
 
     if (profileId) {
-      query = query.select((eb) =>
-        eb
-          .exists(
-            eb
-              .selectFrom("event_participants")
-              .select("event_participants.event_id")
-              .whereRef("event_participants.event_id", "=", "events.id")
-              .where("event_participants.profile_id", "=", profileId)
-              .where("is_user_applied", "=", true),
-          )
-          .as("is_applied"),
-      )
+      query = query
+        .leftJoin("event_participants", (join) =>
+          join
+            .onRef("event_participants.event_id", "=", "events.id")
+            .on("event_participants.profile_id", "=", profileId)
+            .on("event_participants.is_user_applied", "=", true),
+        )
+        .select((eb) =>
+          eb
+            .case()
+            .when("event_participants.id", "is not", null)
+            .then(true)
+            .else(false)
+            .end()
+            .as("is_applied"),
+        )
     }
 
     const homepageStatus: EventStatus[] = ["Registration Open", "Scheduled"]
