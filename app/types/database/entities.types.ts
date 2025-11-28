@@ -46,7 +46,6 @@ export type Event = Omit<
 > & {
   event_status: EventStatus
   is_applied?: boolean
-  is_set_reminder?: boolean
 }
 
 /** Participant information */
@@ -78,7 +77,6 @@ export type ViewEvent = Pick<
 > & {
   event_status: EventStatus
   is_applied?: boolean
-  is_set_reminder?: boolean
 }
 
 const participantApplicationStatus = [
