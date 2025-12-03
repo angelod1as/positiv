@@ -155,10 +155,17 @@ GRANT USAGE ON SCHEMA net TO service_role;
 COMMENT ON SCHEMA extensions IS 'Schema for PostgreSQL extensions to avoid cluttering public schema';
 
 -- ============================================================================
--- PART 4: Optimize RLS policies for performance
+-- PART 4: Performance optimizations
 -- ============================================================================
 -- Fix auth.uid() calls to use (select auth.uid()) to avoid re-evaluation per row
 -- Fix multiple permissive policies on newsletter_subscriptions
+-- Add missing index on user_roles foreign key
+
+-- ----------------------------------------------------------------------------
+-- 4.0: Add missing index on user_roles.user_id (foreign key)
+-- ----------------------------------------------------------------------------
+
+CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles(user_id);
 
 -- ----------------------------------------------------------------------------
 -- 4.1: Fix event_demographics_history policies
