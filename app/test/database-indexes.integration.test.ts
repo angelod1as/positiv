@@ -118,7 +118,8 @@ describe("Database Indexes - Integration Tests", () => {
           "idx_event_participants_profile_event_applied",
           "idx_event_participants_profile_attendance",
           "idx_event_participants_profile_history",
-          "idx_event_participants_event_id"
+          "idx_event_participants_event_id",
+          "idx_event_participants_profile_id"
         ]
         expect(validIndexes).toContain(plan["Index Name"])
       }
@@ -200,7 +201,8 @@ describe("Database Indexes - Integration Tests", () => {
         const validIndexes = [
           "idx_event_participants_profile_event_applied",
           "idx_event_participants_profile_attendance",
-          "idx_event_participants_event_id"
+          "idx_event_participants_event_id",
+          "idx_event_participants_profile_id"
         ]
         expect(validIndexes).toContain(indexScan["Index Name"])
       }
