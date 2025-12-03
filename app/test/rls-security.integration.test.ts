@@ -65,80 +65,36 @@ describe("RLS Security - Integration Tests", () => {
   })
 
   describe("Function search_path security", () => {
-    it("should have search_path set to public for update_newsletter_subscriptions_updated_at", async () => {
-      const { rows } = await sql<{ proconfig: string[] | null }>`
-        SELECT p.proconfig
-        FROM pg_proc p
-        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE n.nspname = 'public'
-        AND p.proname = 'update_newsletter_subscriptions_updated_at'
-      `.execute(db)
+    const functionsToTest = [
+      "add_user_role",
+      "update_profile_email",
+      "get_admin_user_ids",
+      "update_newsletter_subscriptions_updated_at",
+      "update_event_statuses_automatically",
+      "get_vault_secret",
+      "update_veteran_status",
+      "get_profile_with_roles",
+    ]
 
-      const result = rows[0]
-      expect(result).toBeDefined()
-      expect(result?.proconfig).toBeDefined()
+    functionsToTest.forEach((functionName) => {
+      it(`should have search_path set to empty string for ${functionName}`, async () => {
+        const { rows } = await sql<{ proconfig: string[] | null }>`
+          SELECT p.proconfig
+          FROM pg_proc p
+          INNER JOIN pg_namespace n ON n.oid = p.pronamespace
+          WHERE n.nspname = 'public'
+          AND p.proname = ${functionName}
+        `.execute(db)
 
-      const hasSearchPath = result?.proconfig?.some((config: string) =>
-        config.includes("search_path=public")
-      )
-      expect(hasSearchPath).toBe(true)
-    })
+        const result = rows[0]
+        expect(result).toBeDefined()
+        expect(result?.proconfig).toBeDefined()
 
-    it("should have search_path set to public for get_vault_secret", async () => {
-      const { rows } = await sql<{ proconfig: string[] | null }>`
-        SELECT p.proconfig
-        FROM pg_proc p
-        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE n.nspname = 'public'
-        AND p.proname = 'get_vault_secret'
-      `.execute(db)
-
-      const result = rows[0]
-      expect(result).toBeDefined()
-      expect(result?.proconfig).toBeDefined()
-
-      const hasSearchPath = result?.proconfig?.some((config: string) =>
-        config.includes("search_path=public")
-      )
-      expect(hasSearchPath).toBe(true)
-    })
-
-    it("should have search_path set to public for update_veteran_status", async () => {
-      const { rows } = await sql<{ proconfig: string[] | null }>`
-        SELECT p.proconfig
-        FROM pg_proc p
-        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE n.nspname = 'public'
-        AND p.proname = 'update_veteran_status'
-      `.execute(db)
-
-      const result = rows[0]
-      expect(result).toBeDefined()
-      expect(result?.proconfig).toBeDefined()
-
-      const hasSearchPath = result?.proconfig?.some((config: string) =>
-        config.includes("search_path=public")
-      )
-      expect(hasSearchPath).toBe(true)
-    })
-
-    it("should have search_path set to public for get_profile_with_roles", async () => {
-      const { rows } = await sql<{ proconfig: string[] | null }>`
-        SELECT p.proconfig
-        FROM pg_proc p
-        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
-        WHERE n.nspname = 'public'
-        AND p.proname = 'get_profile_with_roles'
-      `.execute(db)
-
-      const result = rows[0]
-      expect(result).toBeDefined()
-      expect(result?.proconfig).toBeDefined()
-
-      const hasSearchPath = result?.proconfig?.some((config: string) =>
-        config.includes("search_path=public")
-      )
-      expect(hasSearchPath).toBe(true)
+        const hasEmptySearchPath = result?.proconfig?.some((config: string) =>
+          config === 'search_path=""'
+        )
+        expect(hasEmptySearchPath).toBe(true)
+      })
     })
   })
 
