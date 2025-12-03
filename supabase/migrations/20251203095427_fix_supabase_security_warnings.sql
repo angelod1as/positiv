@@ -186,74 +186,68 @@ DROP POLICY IF EXISTS "Users can view own newsletter subscription" ON public.new
 DROP POLICY IF EXISTS "Users can update own newsletter subscription" ON public.newsletter_subscriptions;
 DROP POLICY IF EXISTS "Admins have full access to newsletter subscriptions" ON public.newsletter_subscriptions;
 
--- Recreate user policies with optimized auth.uid()
-CREATE POLICY "Users can view own newsletter subscription"
+-- Combine admin and user SELECT into single policy to avoid multiple permissive policies
+CREATE POLICY "Authenticated users can select newsletter subscriptions"
   ON public.newsletter_subscriptions
   FOR SELECT
   TO authenticated
   USING (
+    -- Users can view their own subscription
     (
       SELECT p.user_id
       FROM profiles p
       WHERE p.id = newsletter_subscriptions.profile_id
     ) = (select auth.uid())
+    OR
+    -- Admins can view all subscriptions
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      WHERE ur.user_id = (select auth.uid())
+        AND ur.role_name = 'admin'
+    )
   );
 
-CREATE POLICY "Users can update own newsletter subscription"
+-- Combine admin and user UPDATE into single policy to avoid multiple permissive policies
+CREATE POLICY "Authenticated users can update newsletter subscriptions"
   ON public.newsletter_subscriptions
   FOR UPDATE
   TO authenticated
   USING (
+    -- Users can update their own subscription
     (
       SELECT p.user_id
       FROM profiles p
       WHERE p.id = newsletter_subscriptions.profile_id
     ) = (select auth.uid())
+    OR
+    -- Admins can update all subscriptions
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      WHERE ur.user_id = (select auth.uid())
+        AND ur.role_name = 'admin'
+    )
   )
   WITH CHECK (
+    -- Users can update their own subscription
     (
       SELECT p.user_id
       FROM profiles p
       WHERE p.id = newsletter_subscriptions.profile_id
     ) = (select auth.uid())
+    OR
+    -- Admins can update all subscriptions
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      WHERE ur.user_id = (select auth.uid())
+        AND ur.role_name = 'admin'
+    )
   );
 
--- Split admin policy into specific actions to avoid multiple permissive policies
+-- Admin-only policies (no conflict with user policies)
 CREATE POLICY "Admins can insert newsletter subscriptions"
   ON public.newsletter_subscriptions
   FOR INSERT
   TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      WHERE ur.user_id = (select auth.uid())
-        AND ur.role_name = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can select newsletter subscriptions"
-  ON public.newsletter_subscriptions
-  FOR SELECT
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      WHERE ur.user_id = (select auth.uid())
-        AND ur.role_name = 'admin'
-    )
-  );
-
-CREATE POLICY "Admins can update newsletter subscriptions"
-  ON public.newsletter_subscriptions
-  FOR UPDATE
-  TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      WHERE ur.user_id = (select auth.uid())
-        AND ur.role_name = 'admin'
-    )
-  )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM user_roles ur
