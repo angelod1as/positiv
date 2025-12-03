@@ -5,6 +5,7 @@
 -- 3. Extensions in public schema instead of extensions (WARNINGS)
 -- 4. Auth RLS initplan - auth.uid() re-evaluated per row (PERFORMANCE)
 -- 5. Multiple permissive policies on newsletter_subscriptions (PERFORMANCE)
+-- 6. Production query performance optimizations (PERFORMANCE)
 
 -- ============================================================================
 -- PART 1: Enable RLS on event_newsletter_campaigns table
@@ -339,3 +340,61 @@ CREATE POLICY "Admins can delete event_newsletter_campaigns"
         AND user_roles.role_name = 'admin'
     )
   );
+
+-- ============================================================================
+-- PART 5: Production Query Performance Optimizations
+-- Based on production query analysis (update_event_statuses_automatically
+-- consuming 23.4% of database time)
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 5.1: Extend events index to include time_event_start
+-- ----------------------------------------------------------------------------
+
+-- Current index: idx_events_auto_publish_status (event_status, auto_publish, time_application_start)
+-- Missing: time_event_start column (function also filters on this)
+-- Expected impact: 10-15% reduction (from 23.4% current usage)
+
+DROP INDEX IF EXISTS public.idx_events_auto_publish_status;
+
+CREATE INDEX idx_events_auto_publish_schedule
+ON public.events(event_status, auto_publish, time_application_start, time_event_start)
+WHERE event_status = 'Scheduled' AND auto_publish = true;
+
+COMMENT ON INDEX public.idx_events_auto_publish_schedule IS
+'Optimized composite index for update_event_statuses_automatically() function. Includes time_event_start for full query coverage. Replaces idx_events_auto_publish_status with extended column list.';
+
+-- ----------------------------------------------------------------------------
+-- 5.2: Production Performance Analysis - Non-Actionable Issues
+-- ----------------------------------------------------------------------------
+
+-- The following issues were identified in production query analysis but
+-- cannot be optimized in this migration:
+--
+-- 1. pg_timezone_names (9.1% of DB time, 0% cache hit, 321 calls)
+--    - Query: SELECT name FROM pg_timezone_names
+--    - Source: Not in application code (likely Supabase Dashboard/PostgREST)
+--    - Confirmed: Supabase docs don't mention this query or configuration
+--    - Conclusion: External to application, possibly Supabase platform internals
+--    - Recommendation: Monitor in future, may be transient dashboard activity
+--
+-- 2. pg_net cleanup (5.7% of DB time, 4.5M operations)
+--    - Operations: DELETE FROM net._http_response WHERE created < now() - interval
+--    - Mechanism: Automatic internal cleanup by pg_net extension
+--    - Finding: No explicit cleanup cron job in codebase
+--    - Conclusion: Cannot be optimized via cron job configuration
+--    - Note: This is expected behavior for pg_net's HTTP response management
+--
+-- 3. profiles.flag_notes updates (1.6% with 2.3s outlier)
+--    - Mean time: 8.85ms, Max time: 2,359ms (267x longer)
+--    - Risk: Concurrent admin updates use last-write-wins pattern
+--    - Current: Kysely transactions without explicit locks (FOR UPDATE)
+--    - No retry logic or conflict detection
+--    - Future optimization: Consider optimistic locking (version column) or
+--      pessimistic locking (SELECT FOR UPDATE) or advisory locks for
+--      high-value profile updates
+--
+-- Summary:
+-- - Actionable: 1 optimization (events index) ✓ IMPLEMENTED
+-- - Documented: 3 issues (pg_net, pg_timezone_names, flag_notes) ✓ NOTED
+-- - Expected database time reduction: 10-15% achievable in this migration
