@@ -12,6 +12,7 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/account-page"
 
 const {
+  root: { CODE_OF_CONDUCT },
   dash: {
     account: { CHANGE_PASSWORD, BASIC_DATA },
     participant: { AGREE_TO_TERMS },
@@ -60,6 +61,9 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
               Preencher dados básicos
             </Button>
           )}
+          <Button variant="outline" to={CODE_OF_CONDUCT}>
+            Código de Conduta
+          </Button>
         </div>
         <div className="flex flex-col gap-4">
           <Separator />
