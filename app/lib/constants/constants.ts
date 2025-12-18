@@ -45,7 +45,7 @@ export const RACE_COLOR = [
   "Preta",
 ] as const
 
-export const LISTMONK_REGISTERED_LIST_ID = 1
+export const LISTMONK_REGISTERED_LIST_ID = 4
 export const LISTMONK_TEST_LIST_ID = 5
 
 // Event Opened Template
