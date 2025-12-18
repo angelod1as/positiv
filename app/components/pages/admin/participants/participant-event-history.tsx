@@ -1,5 +1,6 @@
 import { Column } from "primereact/column"
 import { type FC } from "react"
+import { Link } from "react-router"
 import { DataTable } from "~/components/organisms/tables/base/data-table"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
@@ -7,7 +8,14 @@ import {
   attendanceStatusOptions,
   approvedToAttendStatusOptions,
 } from "~/lib/helpers/propMaps"
+import paths from "~/lib/paths"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
+
+const {
+  admin: {
+    events: { ADMIN_EVENT_VIEW_PARTICIPANT },
+  },
+} = paths
 
 type ParticipantEventHistoryProps = {
   participantHistory: Array<ParticipantVsEvent & { time_event_start: string }>
@@ -18,11 +26,26 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
 }) => {
   const eventBodyTemplate = (rowData: ParticipantVsEvent & { time_event_start: string }) => {
     const eventDate = formatDateTime(rowData.time_event_start).date
+
+    if (!rowData.event_id || !rowData.profile_id) {
+      return (
+        <div>
+          <div className="font-medium">
+            {rowData.event_emoji} {rowData.event_title}
+          </div>
+          <div className="text-sm text-gray-500">{eventDate}</div>
+        </div>
+      )
+    }
+
     return (
       <div>
-        <div className="font-medium">
+        <Link
+          to={ADMIN_EVENT_VIEW_PARTICIPANT(rowData.event_id, rowData.profile_id)}
+          className="font-medium hover:underline text-blue-600"
+        >
           {rowData.event_emoji} {rowData.event_title}
-        </div>
+        </Link>
         <div className="text-sm text-gray-500">{eventDate}</div>
       </div>
     )
