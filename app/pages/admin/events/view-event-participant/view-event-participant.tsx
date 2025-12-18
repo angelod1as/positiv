@@ -59,9 +59,10 @@ export async function loader({ params }: Route.LoaderArgs) {
   })
 
   if (!profileResult.success) {
-    console.dir(profileResult, { depth: null })
-    throw new Error(
-      "Houve um erro procurando o participante. Notifique o administrador.",
+    console.error("Error fetching profile:", profileResult.errors)
+    return redirectWithError(
+      "Participante não encontrade ou não inscrite neste evento.",
+      ADMIN_VIEW_EVENT(eventId),
     )
   }
 
@@ -74,9 +75,10 @@ export async function loader({ params }: Route.LoaderArgs) {
   })
 
   if (!currentEventResult.success) {
-    console.dir(currentEventResult, { depth: null })
-    throw new Error(
-      "Houve um erro procurando o evento. Notifique o administrador.",
+    console.error("Error fetching event history:", currentEventResult.errors)
+    return redirectWithError(
+      "Erro ao carregar histórico do evento.",
+      ADMIN_VIEW_EVENT(eventId),
     )
   }
 
