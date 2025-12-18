@@ -1,7 +1,12 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestEvent, createTestEventParticipant, createTestProfile } from "~/test/db-test-utils"
-import { getParticipantFullEventHistory, updateEventParticipantById } from "./admin.server"
+import {
+  getParticipantFullEventHistory,
+  updateEventParticipantById,
+  getProfileWithExtraDataById,
+  getEventParticipantHistoryById
+} from "./admin.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -364,6 +369,198 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     const result = await getParticipantFullEventHistory({
       profileId: profile.id,
       excludeEventId: undefined
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toHaveLength(0)
+    }
+  })
+})
+
+describe("getProfileWithExtraDataById - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-%")
+      )
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should fetch profile data using profileId and eventId", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-profile-lookup@example.com",
+      full_name: "Test Profile Lookup"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event for Profile",
+      emoji: "🔍",
+      location: "Test Location",
+      description: "Test Description",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      time_application_start: new Date().toISOString(),
+      time_application_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_price: 100,
+      total_spots: 50
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      application_status: "finalised",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfileWithExtraDataById({
+      profileId: profile.id,
+      eventId: event.id
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toBeDefined()
+      expect(result.data.profile_id).toBe(profile.id)
+      expect(result.data.event_id).toBe(event.id)
+      expect(result.data.full_name).toBe("Test Profile Lookup")
+    }
+  })
+
+  it("should return error when profile has no registration for event", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-no-registration@example.com",
+      full_name: "Test No Registration"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event No Registration",
+      emoji: "❌",
+      location: "Test Location",
+      description: "Test Description",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      time_application_start: new Date().toISOString(),
+      time_application_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_price: 100,
+      total_spots: 50
+    })
+
+    const result = await getProfileWithExtraDataById({
+      profileId: profile.id,
+      eventId: event.id
+    })
+
+    expect(result.success).toBe(false)
+  })
+})
+
+describe("getEventParticipantHistoryById - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-%")
+      )
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should fetch event participant history using profileId and eventId", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-history-lookup@example.com",
+      full_name: "Test History Lookup"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event History",
+      emoji: "📜",
+      location: "Test Location",
+      description: "Test Description",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      time_application_start: new Date().toISOString(),
+      time_application_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_price: 100,
+      total_spots: 50
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      application_status: "finalised",
+      attendance_status: "attended",
+      admin_general_notes: "Great participant"
+    })
+
+    const result = await getEventParticipantHistoryById({
+      profileId: profile.id,
+      eventId: event.id
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(Array.isArray(result.data)).toBe(true)
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].profile_id).toBe(profile.id)
+      expect(result.data[0].event_id).toBe(event.id)
+      expect(result.data[0].event_title).toBe("Test Event History")
+      expect(result.data[0].admin_general_notes).toBe("Great participant")
+    }
+  })
+
+  it("should return empty array when profile has no registration for event", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-no-history@example.com",
+      full_name: "Test No History"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event No History",
+      emoji: "🚫",
+      location: "Test Location",
+      description: "Test Description",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      time_application_start: new Date().toISOString(),
+      time_application_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      ticket_price: 100,
+      total_spots: 50
+    })
+
+    const result = await getEventParticipantHistoryById({
+      profileId: profile.id,
+      eventId: event.id
     })
 
     expect(result.success).toBe(true)

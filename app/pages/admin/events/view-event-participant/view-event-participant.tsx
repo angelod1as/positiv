@@ -41,12 +41,12 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ params }: Route.LoaderArgs) {
-  const { eventId, eventParticipantId } = params
+  const { eventId, profileId } = params
 
   if (!eventId) {
     return redirectWithError("Evento não encontrado", ADMIN_EVENTS)
   }
-  if (!eventParticipantId) {
+  if (!profileId) {
     return redirectWithError(
       "Participante não encontrade",
       ADMIN_VIEW_EVENT(eventId),
@@ -54,7 +54,8 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
 
   const profileResult = await getProfileWithExtraDataById({
-    eventParticipantId: eventParticipantId,
+    profileId: profileId,
+    eventId: eventId,
   })
 
   if (!profileResult.success) {
@@ -68,7 +69,8 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   // Get current event data
   const currentEventResult = await getEventParticipantHistoryById({
-    eventParticipantId: eventParticipantId,
+    profileId: profileId,
+    eventId: eventId,
   })
 
   if (!currentEventResult.success) {

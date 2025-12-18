@@ -102,7 +102,7 @@ export default [
           route("/:id/baixar", "pages/admin/events/download-data.tsx"),
           // Participante vs Evento
           route(
-            "/:eventId/participantes/:eventParticipantId",
+            "/:eventId/participantes/:profileId",
             "pages/admin/events/view-event-participant/view-event-participant.tsx",
           ),
         ]),
