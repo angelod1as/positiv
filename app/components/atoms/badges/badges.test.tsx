@@ -168,6 +168,44 @@ describe('VeteranBadge with event count', () => {
     expect(screen.getByText('Veterane')).toBeInTheDocument()
     expect(screen.getByText('100')).toBeInTheDocument()
   })
+
+  describe('gradient colors based on event count', () => {
+    it('should apply lightest color (indigo-100) with dark text for 1-2 events', () => {
+      render(<VeteranBadge eventCount={1} />)
+      const countElement = screen.getByText('1')
+      expect(countElement).toHaveClass('bg-indigo-100', 'text-indigo-900')
+    })
+
+    it('should apply light color (indigo-300) with dark text for 3-4 events', () => {
+      render(<VeteranBadge eventCount={3} />)
+      const countElement = screen.getByText('3')
+      expect(countElement).toHaveClass('bg-indigo-300', 'text-indigo-900')
+    })
+
+    it('should apply medium color (indigo-500) with white text for 5-6 events', () => {
+      render(<VeteranBadge eventCount={5} />)
+      const countElement = screen.getByText('5')
+      expect(countElement).toHaveClass('bg-indigo-500', 'text-white')
+    })
+
+    it('should apply dark color (indigo-600) with white text for 7-8 events', () => {
+      render(<VeteranBadge eventCount={7} />)
+      const countElement = screen.getByText('7')
+      expect(countElement).toHaveClass('bg-indigo-600', 'text-white')
+    })
+
+    it('should apply darkest color (indigo-700) with white text for 9+ events', () => {
+      render(<VeteranBadge eventCount={9} />)
+      const countElement = screen.getByText('9')
+      expect(countElement).toHaveClass('bg-indigo-700', 'text-white')
+    })
+
+    it('should apply darkest color (indigo-700) with white text for 10+ events', () => {
+      render(<VeteranBadge eventCount={15} />)
+      const countElement = screen.getByText('15')
+      expect(countElement).toHaveClass('bg-indigo-700', 'text-white')
+    })
+  })
 })
 
 describe('RookieBadge', () => {
