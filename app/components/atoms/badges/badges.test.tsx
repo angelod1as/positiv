@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { GenderWarning, OrientationWarning } from './badges'
+import { GenderWarning, OrientationWarning, VeteranBadge, RookieBadge } from './badges'
 
 describe('GenderWarning', () => {
   it('should highlight trans genders with blue color', () => {
@@ -129,5 +129,50 @@ describe('OrientationWarning', () => {
   it('should render nothing when orientations is empty array', () => {
     const { container } = render(<OrientationWarning orientations={[]} />)
     expect(container.firstChild).toBeNull()
+  })
+})
+
+describe('VeteranBadge with event count', () => {
+  it('should render badge without count when eventCount is undefined', () => {
+    render(<VeteranBadge />)
+    expect(screen.getByText('Veterane')).toBeInTheDocument()
+    expect(screen.queryByText(/\d+/)).not.toBeInTheDocument()
+  })
+
+  it('should render badge without count when eventCount is null', () => {
+    render(<VeteranBadge eventCount={null} />)
+    expect(screen.getByText('Veterane')).toBeInTheDocument()
+    expect(screen.queryByText(/\d+/)).not.toBeInTheDocument()
+  })
+
+  it('should render badge with count of 0', () => {
+    render(<VeteranBadge eventCount={0} />)
+    expect(screen.getByText('Veterane')).toBeInTheDocument()
+    expect(screen.getByText('0')).toBeInTheDocument()
+  })
+
+  it('should render badge with single digit count', () => {
+    render(<VeteranBadge eventCount={5} />)
+    expect(screen.getByText('Veterane')).toBeInTheDocument()
+    expect(screen.getByText('5')).toBeInTheDocument()
+  })
+
+  it('should render badge with double-digit count', () => {
+    render(<VeteranBadge eventCount={12} />)
+    expect(screen.getByText('Veterane')).toBeInTheDocument()
+    expect(screen.getByText('12')).toBeInTheDocument()
+  })
+
+  it('should render badge with triple-digit count', () => {
+    render(<VeteranBadge eventCount={100} />)
+    expect(screen.getByText('Veterane')).toBeInTheDocument()
+    expect(screen.getByText('100')).toBeInTheDocument()
+  })
+})
+
+describe('RookieBadge', () => {
+  it('should render Novate badge', () => {
+    render(<RookieBadge />)
+    expect(screen.getByText('Novate')).toBeInTheDocument()
   })
 })
