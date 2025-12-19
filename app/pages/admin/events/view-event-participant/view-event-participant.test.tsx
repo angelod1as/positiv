@@ -33,7 +33,7 @@ describe("ViewEventParticipant", () => {
     return createMemoryRouter([
       {
         path: "/",
-        element: <ViewEventParticipant loaderData={loaderData} params={{ eventId: "test-event", eventParticipantId: "test-participant" }} matches={[] as any} />,
+        element: <ViewEventParticipant loaderData={loaderData} params={{ eventId: "test-event", profileId: "test-profile" }} matches={[] as any} />,
       },
     ])
   }

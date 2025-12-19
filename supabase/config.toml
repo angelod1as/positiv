@@ -128,8 +128,9 @@ minimum_password_length = 6
 password_requirements = ""
 
 # Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
+# Disabled for local development and E2E tests to avoid captcha verification issues
 [auth.captcha]
-enabled = true
+enabled = false
 provider = "turnstile"
 secret = "env(SUPABASE_TURNSTILE_SECRET)"
 

@@ -181,7 +181,7 @@ export const AdminViewEventParticipantsTable: FC<
             return ADMIN_EVENT_VIEW_PARTICIPANT(eventId, id)
           },
           title: "Ver participante",
-          key: "id",
+          key: "profile_id",
           prefetch: prefetchStrategy,
         },
       ]}

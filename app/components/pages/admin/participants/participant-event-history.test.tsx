@@ -1,4 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react"
+import type React from "react"
+import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it } from "vitest"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
 import { ParticipantEventHistory } from "./participant-event-history"
@@ -58,15 +60,26 @@ const mockParticipantHistory: Array<
   },
 ]
 
+// Helper to render with router context
+const renderWithRouter = (ui: React.ReactElement) => {
+  const router = createMemoryRouter([
+    {
+      path: "/",
+      element: ui,
+    },
+  ])
+  return render(<RouterProvider router={router} />)
+}
+
 describe("ParticipantEventHistory", () => {
   it("should render the history section title as 'Histórico de Inscrições'", () => {
-    render(<ParticipantEventHistory participantHistory={[]} />)
+    renderWithRouter(<ParticipantEventHistory participantHistory={[]} />)
 
     expect(screen.getByText("Histórico de Inscrições")).toBeInTheDocument()
   })
 
   it("should render a DataTable with event history", async () => {
-    render(
+    renderWithRouter(
       <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
@@ -77,7 +90,7 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should display event information in the table", async () => {
-    render(
+    renderWithRouter(
       <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
@@ -89,7 +102,7 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should display status information", async () => {
-    render(
+    renderWithRouter(
       <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
@@ -105,7 +118,7 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should display admin notes", async () => {
-    render(
+    renderWithRouter(
       <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
@@ -116,7 +129,7 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should show 'Nenhuma inscrição anterior encontrada' when history is empty", async () => {
-    render(<ParticipantEventHistory participantHistory={[]} />)
+    renderWithRouter(<ParticipantEventHistory participantHistory={[]} />)
 
     // Wait for the content to load then check for empty message
     await waitFor(
@@ -132,7 +145,7 @@ describe("ParticipantEventHistory", () => {
 
   it.skip("should format dates correctly", async () => {
     // Skipping as dates are formatted correctly but are part of a complex cell structure
-    render(
+    renderWithRouter(
       <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
@@ -144,7 +157,7 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should have sortable columns", () => {
-    render(
+    renderWithRouter(
       <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
@@ -156,7 +169,7 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should have the correct column headers", () => {
-    render(
+    renderWithRouter(
       <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
@@ -165,5 +178,25 @@ describe("ParticipantEventHistory", () => {
     expect(screen.getByText("Status de Aprovação")).toBeInTheDocument()
     expect(screen.getByText("Comparecimento")).toBeInTheDocument()
     expect(screen.getByText("Notas do Admin")).toBeInTheDocument()
+  })
+
+  it("should render event titles as clickable links", async () => {
+    renderWithRouter(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
+
+    // Wait for the table to render
+    await waitFor(() => {
+      expect(screen.getByRole("table")).toBeInTheDocument()
+    })
+
+    // Check that event titles are rendered as links
+    const firstEventLink = screen.getByRole("link", { name: /🌱 Workshop de Introdução/ })
+    const secondEventLink = screen.getByRole("link", { name: /💬 Roda de Conversa/ })
+
+    expect(firstEventLink).toBeInTheDocument()
+    expect(secondEventLink).toBeInTheDocument()
+
+    // Verify the links have the correct href
+    expect(firstEventLink).toHaveAttribute("href", "/admin/eventos/event-1/participantes/profile-1")
+    expect(secondEventLink).toHaveAttribute("href", "/admin/eventos/event-2/participantes/profile-1")
   })
 })
