@@ -53,6 +53,9 @@ export const getAdminEventById = composable(
 export type ProfileWithExtraData = Profile &
   EventParticipant & {
     was_admin_skipped_last_event?: boolean | null
+    attended_events_count?: number | null
+    last_attended_event_title?: string | null
+    last_attended_event_date?: string | null
   }
 
 // Main query to get event_participants information along with if they were skipped in the last event
@@ -73,6 +76,40 @@ const profilesWithExtraDataQuery = kysely
       .orderBy("e.time_event_start", "desc")
       .limit(1)
       .as("was_admin_skipped_last_event"),
+    eb
+      .selectFrom("event_participants as ep_count")
+      .innerJoin("events as e_count", "ep_count.event_id", "e_count.id")
+      .select(sql<number>`COUNT(*)::int`.as("count"))
+      .whereRef("ep_count.profile_id", "=", "current_ep.profile_id")
+      .where("ep_count.attendance_status", "=", "attended")
+      .where("ep_count.application_status", "=", "finalised")
+      .where("e_count.event_status", "!=", "Cancelled")
+      .whereRef("ep_count.event_id", "!=", "current_ep.event_id")
+      .as("attended_events_count"),
+    eb
+      .selectFrom("event_participants as ep_last")
+      .innerJoin("events as e_last", "ep_last.event_id", "e_last.id")
+      .select("e_last.title")
+      .whereRef("ep_last.profile_id", "=", "current_ep.profile_id")
+      .where("ep_last.attendance_status", "=", "attended")
+      .where("ep_last.application_status", "=", "finalised")
+      .where("e_last.event_status", "!=", "Cancelled")
+      .whereRef("ep_last.event_id", "!=", "current_ep.event_id")
+      .orderBy("e_last.time_event_start", "desc")
+      .limit(1)
+      .as("last_attended_event_title"),
+    eb
+      .selectFrom("event_participants as ep_last_date")
+      .innerJoin("events as e_last_date", "ep_last_date.event_id", "e_last_date.id")
+      .select("e_last_date.time_event_start")
+      .whereRef("ep_last_date.profile_id", "=", "current_ep.profile_id")
+      .where("ep_last_date.attendance_status", "=", "attended")
+      .where("ep_last_date.application_status", "=", "finalised")
+      .where("e_last_date.event_status", "!=", "Cancelled")
+      .whereRef("ep_last_date.event_id", "!=", "current_ep.event_id")
+      .orderBy("e_last_date.time_event_start", "desc")
+      .limit(1)
+      .as("last_attended_event_date"),
   ])
 
 export const getProfileWithExtraDataById = composable(
