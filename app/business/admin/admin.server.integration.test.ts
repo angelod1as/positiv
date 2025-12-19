@@ -5,7 +5,8 @@ import {
   getParticipantFullEventHistory,
   updateEventParticipantById,
   getProfileWithExtraDataById,
-  getEventParticipantHistoryById
+  getEventParticipantHistoryById,
+  getProfilesWithExtraDataById
 } from "./admin.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {
@@ -780,5 +781,273 @@ describe("updateEventParticipantById - Integration Tests", () => {
 
     expect(result.success).toBe(false)
     expect(result.errors).toBeDefined()
+  })
+})
+
+describe("getProfilesWithExtraDataById - Event Count and Last Event - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-event-count-%")
+      )
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should calculate attended events count excluding current event", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-event-count-1@example.com",
+      full_name: "Test Event Count User"
+    })
+
+    const completedEvent1 = await createTestEvent(tracker, kysely, {
+      title: "Completed Event 1",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const completedEvent2 = await createTestEvent(tracker, kysely, {
+      title: "Completed Event 2",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvent1.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvent2.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "finalised",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant).toBeDefined()
+      expect(participant?.attended_events_count).toBe(2)
+    }
+  })
+
+  it("should exclude cancelled events from count", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-event-count-cancelled@example.com",
+      full_name: "Test Cancelled Events"
+    })
+
+    const completedEvent = await createTestEvent(tracker, kysely, {
+      title: "Completed Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const cancelledEvent = await createTestEvent(tracker, kysely, {
+      title: "Cancelled Event",
+      event_status: "Cancelled",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: cancelledEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant?.attended_events_count).toBe(1)
+    }
+  })
+
+  it("should only count attended and finalised events", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-event-count-status@example.com",
+      full_name: "Test Event Status"
+    })
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const attendedEvent = await createTestEvent(tracker, kysely, {
+      title: "Attended Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const notAttendedEvent = await createTestEvent(tracker, kysely, {
+      title: "Not Attended Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: attendedEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: notAttendedEvent.id,
+      application_status: "finalised",
+      attendance_status: "not-attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant?.attended_events_count).toBe(1)
+    }
+  })
+
+  it("should return most recent attended event as last event", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last-event@example.com",
+      full_name: "Test Last Event"
+    })
+
+    const olderEvent = await createTestEvent(tracker, kysely, {
+      title: "Older Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const recentEvent = await createTestEvent(tracker, kysely, {
+      title: "Most Recent Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: olderEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: recentEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant?.last_attended_event_title).toBe("Most Recent Event")
+      expect(participant?.last_attended_event_date).toBeDefined()
+    }
+  })
+
+  it("should return null for last event when no previous events exist", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-no-last-event@example.com",
+      full_name: "Test No Last Event"
+    })
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "First Event Ever",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant?.attended_events_count).toBe(0)
+      expect(participant?.last_attended_event_title).toBeNull()
+      expect(participant?.last_attended_event_date).toBeNull()
+    }
   })
 })
