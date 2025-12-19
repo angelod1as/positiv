@@ -2,7 +2,7 @@ import { formatInTimeZone } from "date-fns-tz"
 import { ptBR } from "date-fns/locale"
 
 // Define the type for length options
-type DateLengthOption = "long" | "short"
+type DateLengthOption = "long" | "short" | "numeric"
 
 export function formatDateTime(
   dateString: string | null | undefined,
@@ -20,6 +20,9 @@ export function formatDateTime(
   const timePattern = "HH'h'"
 
   switch (lengthOption) {
+    case "numeric":
+      datePattern = "dd/MM/yy"
+      break
     case "short":
       datePattern = "dd MMM. yy"
       break
