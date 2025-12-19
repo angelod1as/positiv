@@ -76,11 +76,17 @@ const profilesWithExtraDataQuery = kysely
   ])
 
 export const getProfileWithExtraDataById = composable(
-  async ({ eventParticipantId }: { eventParticipantId: string }) => {
+  async ({ profileId, eventId }: { profileId: string; eventId: string }) => {
     const profile = await profilesWithExtraDataQuery
-      .where("current_ep.id", "=", eventParticipantId)
+      .where("current_ep.profile_id", "=", profileId)
+      .where("current_ep.event_id", "=", eventId)
       .where("current_ep.is_user_applied", "=", true)
       .executeTakeFirst()
+
+    if (!profile) {
+      throw new Error("No registration found for this profile in this event")
+    }
+
     return profile
   },
 )
@@ -108,9 +114,11 @@ export const getAdminProfileById = composable(
 
 export const getEventParticipantHistoryById = composable(
   async ({
-    eventParticipantId,
+    profileId,
+    eventId,
   }: {
-    eventParticipantId: string
+    profileId: string
+    eventId: string
   }): Promise<Array<ParticipantVsEvent>> => {
     return await kysely
       .selectFrom("event_participants")
@@ -125,7 +133,8 @@ export const getEventParticipantHistoryById = composable(
         "profiles.flag as flag",
         "profiles.flag_notes as flag_notes",
       ])
-      .where("event_participants.id", "=", eventParticipantId)
+      .where("event_participants.profile_id", "=", profileId)
+      .where("event_participants.event_id", "=", eventId)
       .orderBy("events.time_event_start", "desc")
       .execute()
   },

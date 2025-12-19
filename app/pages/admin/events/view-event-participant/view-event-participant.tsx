@@ -41,12 +41,12 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export async function loader({ params }: Route.LoaderArgs) {
-  const { eventId, eventParticipantId } = params
+  const { eventId, profileId } = params
 
   if (!eventId) {
     return redirectWithError("Evento não encontrado", ADMIN_EVENTS)
   }
-  if (!eventParticipantId) {
+  if (!profileId) {
     return redirectWithError(
       "Participante não encontrade",
       ADMIN_VIEW_EVENT(eventId),
@@ -54,13 +54,15 @@ export async function loader({ params }: Route.LoaderArgs) {
   }
 
   const profileResult = await getProfileWithExtraDataById({
-    eventParticipantId: eventParticipantId,
+    profileId: profileId,
+    eventId: eventId,
   })
 
   if (!profileResult.success) {
-    console.dir(profileResult, { depth: null })
-    throw new Error(
-      "Houve um erro procurando o participante. Notifique o administrador.",
+    console.error("Error fetching profile:", profileResult.errors)
+    return redirectWithError(
+      "Participante não encontrade ou não inscrite neste evento.",
+      ADMIN_VIEW_EVENT(eventId),
     )
   }
 
@@ -68,13 +70,15 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   // Get current event data
   const currentEventResult = await getEventParticipantHistoryById({
-    eventParticipantId: eventParticipantId,
+    profileId: profileId,
+    eventId: eventId,
   })
 
   if (!currentEventResult.success) {
-    console.dir(currentEventResult, { depth: null })
-    throw new Error(
-      "Houve um erro procurando o evento. Notifique o administrador.",
+    console.error("Error fetching event history:", currentEventResult.errors)
+    return redirectWithError(
+      "Erro ao carregar histórico do evento.",
+      ADMIN_VIEW_EVENT(eventId),
     )
   }
 
