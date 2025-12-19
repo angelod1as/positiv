@@ -1,6 +1,6 @@
 import { Column } from "primereact/column"
 import { type FC } from "react"
-import { Link } from "react-router"
+import { Link } from "~/components/atoms/link/link"
 import { DataTable } from "~/components/organisms/tables/base/data-table"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
@@ -41,8 +41,10 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
     return (
       <div>
         <Link
-          to={ADMIN_EVENT_VIEW_PARTICIPANT(rowData.event_id, rowData.profile_id)}
-          className="font-medium hover:underline text-blue-600"
+          to={ADMIN_EVENT_VIEW_PARTICIPANT(
+            rowData.event_id,
+            rowData.profile_id,
+          )}
         >
           {rowData.event_emoji} {rowData.event_title}
         </Link>
