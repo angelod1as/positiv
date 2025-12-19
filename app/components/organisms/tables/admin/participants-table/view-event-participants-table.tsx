@@ -7,6 +7,7 @@ import {
   registerMultiSelectFilters,
 } from "~/lib/helpers/register-filter-services"
 import { createSaveHandler } from "~/lib/helpers/create-save-handler"
+import { formatLastEvent } from "~/lib/helpers/format-last-event"
 import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
 import { useSmartPrefetch } from "~/lib/hooks/use-smart-prefetch"
 import { useTableFilters } from "~/lib/hooks/use-table-filters"
@@ -213,9 +214,22 @@ export const AdminViewEventParticipantsTable: FC<
         field="is_veteran"
         header="Vet ou Nov?"
         body={(values) =>
-          values.is_veteran ? <VeteranBadge /> : <RookieBadge />
+          values.is_veteran
+            ? <VeteranBadge eventCount={values.attended_events_count} />
+            : <RookieBadge />
         }
         className="min-w-30"
+      />
+
+      <Column
+        field="last_attended_event"
+        header="Último Evento"
+        body={(values) => formatLastEvent(
+          values.last_attended_event_title,
+          values.last_attended_event_date
+        )}
+        className="min-w-40"
+        sortable
       />
 
       <Column
