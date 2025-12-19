@@ -56,6 +56,7 @@ export type ProfileWithExtraData = Profile &
     attended_events_count?: number | null
     last_attended_event_title?: string | null
     last_attended_event_date?: string | null
+    last_attended_event_id?: string | null
   }
 
 // Main query to get event_participants information along with if they were skipped in the last event
@@ -110,6 +111,18 @@ const profilesWithExtraDataQuery = kysely
       .orderBy("e_last_date.time_event_start", "desc")
       .limit(1)
       .as("last_attended_event_date"),
+    eb
+      .selectFrom("event_participants as ep_last_id")
+      .innerJoin("events as e_last_id", "ep_last_id.event_id", "e_last_id.id")
+      .select("e_last_id.id")
+      .whereRef("ep_last_id.profile_id", "=", "current_ep.profile_id")
+      .where("ep_last_id.attendance_status", "=", "attended")
+      .where("ep_last_id.application_status", "=", "finalised")
+      .where("e_last_id.event_status", "!=", "Cancelled")
+      .whereRef("ep_last_id.event_id", "!=", "current_ep.event_id")
+      .orderBy("e_last_id.time_event_start", "desc")
+      .limit(1)
+      .as("last_attended_event_id"),
   ])
 
 export const getProfileWithExtraDataById = composable(
