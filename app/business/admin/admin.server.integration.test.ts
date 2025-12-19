@@ -1018,6 +1018,7 @@ describe("getProfilesWithExtraDataById - Event Count and Last Event - Integratio
       const participant = result.data.find(p => p.profile_id === profile.id)
       expect(participant?.last_attended_event_title).toBe("Most Recent Event")
       expect(participant?.last_attended_event_date).toBeDefined()
+      expect(participant?.last_attended_event_id).toBe(recentEvent.id)
     }
   })
 
@@ -1048,6 +1049,7 @@ describe("getProfilesWithExtraDataById - Event Count and Last Event - Integratio
       expect(participant?.attended_events_count).toBe(0)
       expect(participant?.last_attended_event_title).toBeNull()
       expect(participant?.last_attended_event_date).toBeNull()
+      expect(participant?.last_attended_event_id).toBeNull()
     }
   })
 })
