@@ -132,4 +132,43 @@ describe("formatDateTime - GMT-3 Timezone Verification", () => {
       expect(result.date).toBe("15 de julho de 2024")
     })
   })
+
+  describe("Date format with 'numeric' option", () => {
+    it("should format date in DD/MM/YY format", () => {
+      const dateString = "2025-01-17T20:00:00-03:00"
+      const result = formatDateTime(dateString, "numeric")
+
+      expect(result.date).toBe("17/01/25")
+    })
+
+    it("should handle single digit day and month with padding", () => {
+      const dateString = "2025-03-05T15:00:00-03:00"
+      const result = formatDateTime(dateString, "numeric")
+
+      expect(result.date).toBe("05/03/25")
+    })
+
+    it("should handle dates at year boundaries", () => {
+      const dec31 = "2024-12-31T23:59:59-03:00"
+      const jan01 = "2025-01-01T00:00:00-03:00"
+
+      expect(formatDateTime(dec31, "numeric").date).toBe("31/12/24")
+      expect(formatDateTime(jan01, "numeric").date).toBe("01/01/25")
+    })
+
+    it("should handle timezone conversion for numeric format", () => {
+      const utcDate = "2025-01-17T23:00:00Z"
+      const result = formatDateTime(utcDate, "numeric")
+
+      expect(result.time).toBe("20h")
+      expect(result.date).toBe("17/01/25")
+    })
+
+    it("should include time in full datetime string with numeric date", () => {
+      const dateString = "2025-01-17T20:00:00-03:00"
+      const result = formatDateTime(dateString, "numeric")
+
+      expect(result.full).toBe("17/01/25, às 20h")
+    })
+  })
 })
