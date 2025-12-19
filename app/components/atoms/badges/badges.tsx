@@ -1,7 +1,14 @@
 import { Badge } from "~/components/ui/badge"
 import { cn } from "~/lib/utils"
 
-export const VeteranBadge = () => <Badge variant="veteran">Veterane</Badge>
+export const VeteranBadge = ({ eventCount }: { eventCount?: number | null } = {}) => (
+  <div className="flex items-center gap-1.5">
+    <Badge variant="veteran">Veterane</Badge>
+    {eventCount !== undefined && eventCount !== null && (
+      <span className="text-sm font-medium text-gray-700">{eventCount}</span>
+    )}
+  </div>
+)
 
 export const RookieBadge = () => <Badge variant="rookie">Novate</Badge>
 
