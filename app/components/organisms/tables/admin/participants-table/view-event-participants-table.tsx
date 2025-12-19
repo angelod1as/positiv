@@ -1,13 +1,20 @@
-import { EyeIcon } from "lucide-react"
+import { EyeIcon, Info } from "lucide-react"
 import { Column } from "primereact/column"
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
+import { Link } from "~/components/atoms/link/link"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip"
 import {
   registerArrayMultiSelectFilters,
   registerMultiSelectFilters,
 } from "~/lib/helpers/register-filter-services"
 import { createSaveHandler } from "~/lib/helpers/create-save-handler"
-import { formatLastEvent } from "~/lib/helpers/format-last-event"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
 import { useSmartPrefetch } from "~/lib/hooks/use-smart-prefetch"
 import { useTableFilters } from "~/lib/hooks/use-table-filters"
@@ -212,7 +219,23 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="is_veteran"
-        header="Vet ou Nov?"
+        header={
+          <div className="flex items-center gap-1">
+            <span>Vet ou Nov?</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-gray-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">
+                    O número ao lado da badge Veterane indica quantos eventos finalizados a pessoa já participou (excluindo o evento atual e eventos cancelados).
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        }
         body={(values) =>
           values.is_veteran
             ? <VeteranBadge eventCount={values.attended_events_count} />
@@ -224,10 +247,37 @@ export const AdminViewEventParticipantsTable: FC<
       <Column
         field="last_attended_event"
         header="Último Evento"
-        body={(values) => formatLastEvent(
-          values.last_attended_event_title,
-          values.last_attended_event_date
-        )}
+        body={(values) => {
+          if (!values.last_attended_event_title || !values.last_attended_event_date) {
+            return "-"
+          }
+
+          const formattedDate = formatDateTime(values.last_attended_event_date, "numeric").date
+          if (!formattedDate) return "-"
+
+          const maxTitleLength = 20
+          const truncatedTitle = values.last_attended_event_title.length > maxTitleLength
+            ? `${values.last_attended_event_title.substring(0, maxTitleLength)}…`
+            : values.last_attended_event_title
+
+          if (values.last_attended_event_id && values.profile_id) {
+            return (
+              <div>
+                <div className="text-sm text-gray-500">{formattedDate}</div>
+                <Link
+                  to={ADMIN_EVENT_VIEW_PARTICIPANT(
+                    values.last_attended_event_id,
+                    values.profile_id,
+                  )}
+                >
+                  {truncatedTitle}
+                </Link>
+              </div>
+            )
+          }
+
+          return `${formattedDate} - ${truncatedTitle}`
+        }}
         className="min-w-40"
         sortable
       />
