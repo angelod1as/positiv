@@ -14,10 +14,15 @@ import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calend
 import type { ViewEvent } from "~types/database/entities.types"
 import { EventCardFooter } from "./event-card-footer"
 
-type EventCardProps = { event: ViewEvent; "data-testid": string }
+type EventCardProps = {
+  event: ViewEvent
+  "data-testid": string
+  isAdmin?: boolean
+}
 export const EventCard: FC<EventCardProps> = ({
   event,
   "data-testid": dataTestId,
+  isAdmin,
 }) => {
   const googleLink = generateGoogleCalendarLink(event)
 
@@ -68,6 +73,7 @@ export const EventCard: FC<EventCardProps> = ({
           googleLink={googleLink}
           is_applied={is_applied}
           dataTestId={dataTestId}
+          isAdmin={isAdmin}
         />
       </CardFooter>
     </Card>

@@ -11,7 +11,7 @@ export class AdminDashboardPage extends BasePage {
   constructor(page: Page) {
     super(page)
     this.pageTitle = page.getByRole('heading', { name: 'Visão geral' })
-    this.eventsTitle = page.getByRole('heading', { name: 'Eventos' })
+    this.eventsTitle = page.getByRole('heading', { name: 'Eventos', exact: true })
     this.eventsTable = page.locator('table').first() // PrimeReact DataTable
     this.createEventButton = page.getByRole('link', { name: 'Criar evento' })
     this.participantsTitle = page.getByRole('heading', { name: 'Participantes (em breve)' })

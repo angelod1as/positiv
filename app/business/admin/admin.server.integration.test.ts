@@ -6,7 +6,8 @@ import {
   updateEventParticipantById,
   getProfileWithExtraDataById,
   getEventParticipantHistoryById,
-  getProfilesWithExtraDataById
+  getProfilesWithExtraDataById,
+  getEventsForDashboard
 } from "./admin.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {
@@ -1051,5 +1052,92 @@ describe("getProfilesWithExtraDataById - Event Count and Last Event - Integratio
       expect(participant?.last_attended_event_date).toBeNull()
       expect(participant?.last_attended_event_id).toBeNull()
     }
+  })
+})
+
+describe("getEventsForDashboard - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should return all ViewEvent fields needed for EventCard display", async () => {
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Full Event Data Test",
+      emoji: "🎉",
+      description: "This is a full test event",
+      location: "Test Location",
+      ticket_price: 100,
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      time_application_start: new Date().toISOString(),
+      time_application_end: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      time_interviews_start: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(),
+      time_interviews_end: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
+      time_group_start: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+      time_group_end: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(),
+      time_payment_start: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      time_payment_end: new Date(Date.now() + 13 * 24 * 60 * 60 * 1000).toISOString(),
+      total_spots: 50
+    })
+
+    const events = await getEventsForDashboard()
+
+    expect(events).toBeDefined()
+    expect(Array.isArray(events)).toBe(true)
+
+    const createdEvent = events.find(e => e.id === event.id)
+    expect(createdEvent).toBeDefined()
+
+    // Verify all ViewEvent fields are present
+    expect(createdEvent).toHaveProperty("id")
+    expect(createdEvent).toHaveProperty("title")
+    expect(createdEvent).toHaveProperty("description")
+    expect(createdEvent).toHaveProperty("emoji")
+    expect(createdEvent).toHaveProperty("event_status")
+    expect(createdEvent).toHaveProperty("location")
+    expect(createdEvent).toHaveProperty("ticket_price")
+    expect(createdEvent).toHaveProperty("time_event_start")
+    expect(createdEvent).toHaveProperty("time_event_end")
+    expect(createdEvent).toHaveProperty("time_application_start")
+    expect(createdEvent).toHaveProperty("time_application_end")
+    expect(createdEvent).toHaveProperty("time_interviews_start")
+    expect(createdEvent).toHaveProperty("time_interviews_end")
+    expect(createdEvent).toHaveProperty("time_group_start")
+    expect(createdEvent).toHaveProperty("time_group_end")
+    expect(createdEvent).toHaveProperty("time_payment_start")
+    expect(createdEvent).toHaveProperty("time_payment_end")
+  })
+
+  it("should order events by time_event_start descending", async () => {
+    const olderEvent = await createTestEvent(tracker, kysely, {
+      title: "Older Event",
+      time_event_start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+
+    const newerEvent = await createTestEvent(tracker, kysely, {
+      title: "Newer Event",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    })
+
+    const events = await getEventsForDashboard()
+
+    const olderIndex = events.findIndex(e => e.id === olderEvent.id)
+    const newerIndex = events.findIndex(e => e.id === newerEvent.id)
+
+    expect(newerIndex).toBeLessThan(olderIndex)
+  })
+
+  it("should limit results to 50 events", async () => {
+    const events = await getEventsForDashboard()
+
+    expect(events.length).toBeLessThanOrEqual(50)
   })
 })

@@ -32,7 +32,25 @@ export const getAdminContext = async (
 export const getEventsForDashboard = async () => {
   const events = await kysely
     .selectFrom("events")
-    .select(["id", "title", "emoji", "event_status", "time_event_start"])
+    .select([
+      "id",
+      "title",
+      "description",
+      "emoji",
+      "event_status",
+      "location",
+      "ticket_price",
+      "time_event_start",
+      "time_event_end",
+      "time_application_start",
+      "time_application_end",
+      "time_interviews_start",
+      "time_interviews_end",
+      "time_group_start",
+      "time_group_end",
+      "time_payment_start",
+      "time_payment_end",
+    ])
     .orderBy("time_event_start", "desc")
     .limit(50)
     .execute()
