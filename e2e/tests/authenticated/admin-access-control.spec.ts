@@ -27,7 +27,23 @@ test.describe('Admin Access Control', () => {
     
     // Verify admin panel content
     await expect(page.getByRole('heading', { name: 'Visão geral' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Eventos' })).toBeVisible()
+
+    // Check for open events cards section
+    const openEventsHeading = page.getByRole('heading', { name: 'Eventos com inscrições abertas', exact: true })
+    const openEventsCards = page.getByTestId('admin-event-card')
+    const openEventsCount = await openEventsCards.count()
+
+    if (openEventsCount > 0) {
+      // If there are open events, verify the section appears
+      await expect(openEventsHeading).toBeVisible()
+      // Should have between 1 and 3 cards
+      expect(openEventsCount).toBeGreaterThanOrEqual(1)
+      expect(openEventsCount).toBeLessThanOrEqual(3)
+    }
+
+    // Check for events table section (always present)
+    await expect(page.getByRole('heading', { name: 'Eventos', exact: true })).toBeVisible()
+    await expect(page.locator('table')).toBeVisible()
     
     // Test 3: Account page access (allowed)
     await page.goto('/conta')

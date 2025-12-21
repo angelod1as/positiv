@@ -1,3 +1,4 @@
+import { EyeIcon, PencilIcon } from "lucide-react"
 import { useEffect, type FC } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
@@ -14,6 +15,9 @@ const {
     // participant: { DOWNLOAD_CALENDAR },
     events: { EVENT_VIEW },
   },
+  admin: {
+    events: { ADMIN_VIEW_EVENT, ADMIN_EDIT_EVENT },
+  },
 } = paths
 
 type EventCardFooterProps = {
@@ -22,6 +26,7 @@ type EventCardFooterProps = {
   googleLink: string | undefined
   eventId: string
   dataTestId: string | undefined
+  isAdmin?: boolean
 }
 export const EventCardFooter: FC<EventCardFooterProps> = ({
   is_applied,
@@ -29,7 +34,23 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   // googleLink,
   eventId,
   dataTestId,
+  isAdmin,
 }) => {
+  if (isAdmin) {
+    return (
+      <div className="flex flex-row gap-4 w-full">
+        <Button to={ADMIN_VIEW_EVENT(eventId)}>
+          <EyeIcon className="h-4 w-4 mr-2" />
+          Ver evento
+        </Button>
+        <Button to={ADMIN_EDIT_EVENT(eventId)}>
+          <PencilIcon className="h-4 w-4 mr-2" />
+          Editar evento
+        </Button>
+      </div>
+    )
+  }
+
   const fetcher = useFetcher()
   const prefetchStrategy = useSmartPrefetch()
 
