@@ -106,6 +106,11 @@ export const AdminViewEventParticipantsTable: FC<
     [],
   )
 
+  const [isVeteranFilter, setIsVeteranFilter] = useSessionStorageFilter(
+    PARTICIPANTS_TABLE_FILTER_CONFIGS.is_veteran.storageKey,
+    [],
+  )
+
   const { filters, filterTemplates, handleFilter, handleClearFilters } =
     useTableFilters(
       PARTICIPANTS_TABLE_FILTER_CONFIGS,
@@ -115,6 +120,7 @@ export const AdminViewEventParticipantsTable: FC<
         approved_to_attend: [approvedStatusFilter, setApprovedStatusFilter],
         gender: [genderFilter, setGenderFilter],
         orientation: [orientationFilter, setOrientationFilter],
+        is_veteran: [isVeteranFilter, setIsVeteranFilter],
       },
       participants,
       {
@@ -236,6 +242,10 @@ export const AdminViewEventParticipantsTable: FC<
             </TooltipProvider>
           </div>
         }
+        filter
+        filterElement={filterTemplates.is_veteran}
+        filterField="is_veteran"
+        showFilterMatchModes={false}
         body={(values) =>
           values.is_veteran
             ? <VeteranBadge eventCount={values.attended_events_count} />
