@@ -16,6 +16,7 @@ import { InputText } from "primereact/inputtext"
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react"
 import type { LinkProps } from "react-router"
 import { Button } from "~/components/atoms/button/button"
+import { TooltipProvider } from "~/components/ui/tooltip"
 import DelayedContent from "~/lib/helpers/delayed-component"
 import { cn } from "~/lib/utils"
 
@@ -184,8 +185,9 @@ export function DataTable<T extends DataTableValue>({
   // }
 
   return (
-    <DelayedContent loadingComponent={loadingComponent}>
-      <PrimeReactDataTable
+    <TooltipProvider delayDuration={0}>
+      <DelayedContent loadingComponent={loadingComponent}>
+        <PrimeReactDataTable
         value={values}
         className={cn(isMaximized && "maximized-table")}
         style={{
@@ -292,5 +294,6 @@ export function DataTable<T extends DataTableValue>({
         )}
       </PrimeReactDataTable>
     </DelayedContent>
+    </TooltipProvider>
   )
 }
