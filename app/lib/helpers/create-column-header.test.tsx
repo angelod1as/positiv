@@ -80,7 +80,7 @@ describe("createColumnHeader", () => {
       if (!trigger) throw new Error("Trigger not found")
       await user.hover(trigger)
 
-      const maxWElements = document.querySelectorAll("div.max-w-xs")
+      const maxWElements = document.querySelectorAll("div.max-w-md")
       expect(maxWElements.length).toBeGreaterThan(0)
     })
 
