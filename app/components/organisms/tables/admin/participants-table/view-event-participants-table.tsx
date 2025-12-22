@@ -19,6 +19,7 @@ import {
   TextViewModalCell,
 } from "~/components/forms/admin"
 import { DataTable } from "~/components/organisms/tables/base/data-table"
+import { FLAG_COLORS } from "~/lib/constants/flag-constants"
 import { createColumnHeader } from "~/lib/helpers/create-column-header"
 import { createSaveHandler } from "~/lib/helpers/create-save-handler"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
@@ -317,7 +318,9 @@ export const AdminViewEventParticipantsTable: FC<
               <p>
                 <b>
                   Flag Vermelha{" "}
-                  <FlagIcon className="size-4 text-red-500 inline-block" />
+                  <FlagIcon
+                    className={`size-4 ${FLAG_COLORS.red} inline-block`}
+                  />
                 </b>{" "}
                 — a pessoa fez algo MUITO relevante e impactante - assédio,
                 abuso, violências físicas ou verbais... Não vai mais na festa.
@@ -325,7 +328,9 @@ export const AdminViewEventParticipantsTable: FC<
               <p>
                 <b>
                   Flag Amarela{" "}
-                  <FlagIcon className="size-4 text-yellow-500 inline-block" />
+                  <FlagIcon
+                    className={`size-4 ${FLAG_COLORS.yellow} inline-block`}
+                  />
                 </b>{" "}
                 — a pessoa precisa de algum tipo de monitoramento por
                 comportamentos complicados - pode ter sido uma crise numa festa,
@@ -336,7 +341,9 @@ export const AdminViewEventParticipantsTable: FC<
               <p>
                 <b>
                   Flag cinza{" "}
-                  <FlagIcon className="size-4 text-gray-500 inline-block" />
+                  <FlagIcon
+                    className={`size-4 ${FLAG_COLORS.gray} inline-block`}
+                  />
                 </b>{" "}
                 — representa uma pessoa que já teve uma flag vermelha ou
                 amarela, mas que, numa segunda chance, mudou o comportamento.
@@ -581,7 +588,7 @@ export const AdminViewEventParticipantsTable: FC<
                 valor.
               </p>
               <p>
-                <b>Staff</b> — vagas para pessoas que trabalham conosco, ou tem
+                <b>Staff</b> — vagas para pessoas que trabalham conosco, ou têm
                 algum tipo de permuta.
               </p>
               <p>
