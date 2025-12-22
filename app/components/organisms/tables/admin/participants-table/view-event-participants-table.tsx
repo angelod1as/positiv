@@ -1,23 +1,7 @@
-import { EyeIcon, Info } from "lucide-react"
+import { EyeIcon } from "lucide-react"
 import { Column } from "primereact/column"
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
-import { Link } from "~/components/atoms/link/link"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~/components/ui/tooltip"
-import {
-  registerArrayMultiSelectFilters,
-  registerMultiSelectFilters,
-} from "~/lib/helpers/register-filter-services"
-import { createSaveHandler } from "~/lib/helpers/create-save-handler"
-import { formatDateTime } from "~/lib/helpers/format-date-time"
-import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
-import { useSmartPrefetch } from "~/lib/hooks/use-smart-prefetch"
-import { useTableFilters } from "~/lib/hooks/use-table-filters"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
   GenderWarning,
@@ -26,6 +10,7 @@ import {
   VeteranBadge,
 } from "~/components/atoms/badges/badges"
 import { FlagBadge } from "~/components/atoms/badges/flag-badge"
+import { Link } from "~/components/atoms/link/link"
 import {
   CheckboxCellEditor,
   NumberCellEditor,
@@ -34,6 +19,9 @@ import {
   TextViewModalCell,
 } from "~/components/forms/admin"
 import { DataTable } from "~/components/organisms/tables/base/data-table"
+import { createColumnHeader } from "~/lib/helpers/create-column-header"
+import { createSaveHandler } from "~/lib/helpers/create-save-handler"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import {
   applicationStatusOptions,
@@ -46,6 +34,13 @@ import {
   profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
+import {
+  registerArrayMultiSelectFilters,
+  registerMultiSelectFilters,
+} from "~/lib/helpers/register-filter-services"
+import { useSessionStorageFilter } from "~/lib/hooks/use-session-storage-filter"
+import { useSmartPrefetch } from "~/lib/hooks/use-smart-prefetch"
+import { useTableFilters } from "~/lib/hooks/use-table-filters"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import { countParticipants } from "./count-participants"
@@ -115,7 +110,10 @@ export const AdminViewEventParticipantsTable: FC<
     useTableFilters(
       PARTICIPANTS_TABLE_FILTER_CONFIGS,
       {
-        application_status: [applicationStatusFilter, setApplicationStatusFilter],
+        application_status: [
+          applicationStatusFilter,
+          setApplicationStatusFilter,
+        ],
         attendance_status: [attendanceStatusFilter, setAttendanceStatusFilter],
         approved_to_attend: [approvedStatusFilter, setApprovedStatusFilter],
         gender: [genderFilter, setGenderFilter],
@@ -225,31 +223,20 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="is_veteran"
-        header={
-          <div className="flex items-center gap-1">
-            <span>Vet ou Nov?</span>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-3.5 w-3.5 text-gray-500 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">
-                    O número ao lado da badge Veterane indica quantos eventos finalizados a pessoa já participou (excluindo o evento atual e eventos cancelados).
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-        }
+        header={createColumnHeader("Vet ou Nov?", {
+          tooltip:
+            "O número ao lado da badge Veterane indica quantos eventos finalizados a pessoa já participou (excluindo o evento atual e eventos cancelados).",
+        })}
         filter
         filterElement={filterTemplates.is_veteran}
         filterField="is_veteran"
         showFilterMatchModes={false}
         body={(values) =>
-          values.is_veteran
-            ? <VeteranBadge eventCount={values.attended_events_count} />
-            : <RookieBadge />
+          values.is_veteran ? (
+            <VeteranBadge eventCount={values.attended_events_count} />
+          ) : (
+            <RookieBadge />
+          )
         }
         className="min-w-30"
       />
@@ -258,17 +245,24 @@ export const AdminViewEventParticipantsTable: FC<
         field="last_attended_event"
         header="Último Evento"
         body={(values) => {
-          if (!values.last_attended_event_title || !values.last_attended_event_date) {
+          if (
+            !values.last_attended_event_title ||
+            !values.last_attended_event_date
+          ) {
             return "-"
           }
 
-          const formattedDate = formatDateTime(values.last_attended_event_date, "numeric").date
+          const formattedDate = formatDateTime(
+            values.last_attended_event_date,
+            "numeric",
+          ).date
           if (!formattedDate) return "-"
 
           const maxTitleLength = 20
-          const truncatedTitle = values.last_attended_event_title.length > maxTitleLength
-            ? `${values.last_attended_event_title.substring(0, maxTitleLength)}…`
-            : values.last_attended_event_title
+          const truncatedTitle =
+            values.last_attended_event_title.length > maxTitleLength
+              ? `${values.last_attended_event_title.substring(0, maxTitleLength)}…`
+              : values.last_attended_event_title
 
           if (values.last_attended_event_id && values.profile_id) {
             return (
