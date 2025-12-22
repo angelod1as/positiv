@@ -1,5 +1,5 @@
-import type { ComponentType } from "react"
 import { Info } from "lucide-react"
+import type { ComponentType, ReactNode } from "react"
 import {
   Tooltip,
   TooltipContent,
@@ -8,7 +8,7 @@ import {
 } from "~/components/ui/tooltip"
 
 type ColumnHeaderOptions = {
-  tooltip?: string
+  tooltip?: ReactNode
   icon?: ComponentType<{ className?: string }>
   tooltipMaxWidth?: string
   delayDuration?: number
@@ -19,7 +19,7 @@ export function createColumnHeader(
   options?: ColumnHeaderOptions,
 ) {
   if (!options?.tooltip) {
-    return <span>{text}</span>
+    return <span className="text-sm">{text}</span>
   }
 
   const Icon = options.icon || Info
@@ -27,7 +27,7 @@ export function createColumnHeader(
   const delayDuration = options.delayDuration ?? 0
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 text-sm">
       <span>{text}</span>
       <TooltipProvider delayDuration={delayDuration}>
         <Tooltip>
@@ -35,7 +35,7 @@ export function createColumnHeader(
             <Icon className="h-3.5 w-3.5 text-gray-500 cursor-help" />
           </TooltipTrigger>
           <TooltipContent>
-            <p className={tooltipMaxWidth}>{options.tooltip}</p>
+            <div className={tooltipMaxWidth}>{options.tooltip}</div>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

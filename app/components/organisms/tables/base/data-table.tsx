@@ -1,4 +1,9 @@
-import { FilterXIcon, MaximizeIcon, MinimizeIcon, type LucideIcon } from "lucide-react"
+import {
+  FilterXIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+  type LucideIcon,
+} from "lucide-react"
 import { FilterService } from "primereact/api"
 import { Column } from "primereact/column"
 import {
@@ -34,7 +39,9 @@ export type DataTableHeader = {
   elements?: ReactNode
 }
 
-type FlexibleFilterMeta = DataTableFilterMeta | Record<string, { value: unknown; matchMode: string }>
+type FlexibleFilterMeta =
+  | DataTableFilterMeta
+  | Record<string, { value: unknown; matchMode: string }>
 
 export interface DataTableProps<T extends DataTableValue> {
   data: T[]
@@ -261,7 +268,9 @@ export function DataTable<T extends DataTableValue>({
                       return (
                         <Button
                           to={
-                            typeof to === "function" ? key && to(value[key]) : to
+                            typeof to === "function"
+                              ? key && to(value[key])
+                              : to
                           }
                           key={title}
                           aria-label={title}

@@ -80,8 +80,36 @@ describe("createColumnHeader", () => {
       if (!trigger) throw new Error("Trigger not found")
       await user.hover(trigger)
 
-      const maxWElements = document.querySelectorAll("p.max-w-xs")
+      const maxWElements = document.querySelectorAll("div.max-w-xs")
       expect(maxWElements.length).toBeGreaterThan(0)
+    })
+
+    it("should render ReactNode tooltip content with formatting", async () => {
+      const user = userEvent.setup()
+      const header = createColumnHeader("Test", {
+        tooltip: (
+          <>
+            <p>First paragraph</p>
+            <p>
+              <b>Bold text</b> in second paragraph
+            </p>
+          </>
+        ),
+      })
+      const { container } = render(<div>{header}</div>)
+
+      const trigger = container.querySelector(".cursor-help")
+      expect(trigger).toBeInTheDocument()
+
+      if (!trigger) throw new Error("Trigger not found")
+      await user.hover(trigger)
+
+      const firstParagraphs = await screen.findAllByText("First paragraph")
+      expect(firstParagraphs.length).toBeGreaterThan(0)
+
+      const boldTexts = await screen.findAllByText("Bold text")
+      expect(boldTexts.length).toBeGreaterThan(0)
+      expect(boldTexts[0].tagName).toBe("B")
     })
 
     it("should use flex layout with gap when tooltip present", () => {
@@ -137,7 +165,7 @@ describe("createColumnHeader", () => {
       if (!trigger) throw new Error("Trigger not found")
       await user.hover(trigger)
 
-      const tooltipContent = document.querySelector("p.max-w-md")
+      const tooltipContent = document.querySelector("div.max-w-md")
       expect(tooltipContent).toBeInTheDocument()
     })
 
