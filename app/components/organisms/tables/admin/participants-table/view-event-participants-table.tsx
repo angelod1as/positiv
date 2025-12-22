@@ -202,7 +202,7 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="social_name"
-        header="Nome"
+        header={createColumnHeader("Nome")}
         sortable
         frozen={true}
         style={{
@@ -217,15 +217,19 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="full_name"
-        header={profilePropMap("full_name")}
+        header={createColumnHeader(profilePropMap("full_name"))}
         className="min-w-40"
       />
 
       <Column
         field="is_veteran"
         header={createColumnHeader("Vet ou Nov?", {
-          tooltip:
-            "O número ao lado da badge Veterane indica quantos eventos finalizados a pessoa já participou (excluindo o evento atual e eventos cancelados).",
+          tooltip: (
+            <>
+              <p>O número ao lado da badge 'Veterane' indica quantos eventos finalizados a pessoa já participou.</p>
+              <p><b>Importante:</b> Essa conta é feita a partir de quando o sistema foi criado, em agosto de 2025.</p>
+            </>
+          ),
         })}
         filter
         filterElement={filterTemplates.is_veteran}
@@ -243,7 +247,10 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="last_attended_event"
-        header="Último Evento"
+        header={createColumnHeader("Último Evento", {
+          tooltip:
+            "Trata-se do último evento que a pessoa se inscreveu e participou.",
+        })}
         body={(values) => {
           if (
             !values.last_attended_event_title ||
@@ -288,7 +295,16 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="flag"
-        header={profilePropMap("flag")}
+        header={createColumnHeader(profilePropMap("flag"), {
+          tooltip: (
+            <>
+              <p>Adicionamos flags às pessoas que representam algum tipo de ameaça ao ecossistema.</p>
+              <p><b>Flag Vermelha</b> - a pessoa fez algo MUITO relevante e impactante - assédio, abuso, violências físicas ou verbais... Não vai mais na festa.</p>
+              <p><b>Flag Amarela</b> - a pessoa precisa de algum tipo de monitoramento por comportamentos complicados - pode ter sido uma crise numa festa, pessoas que não chegaram a assediar, mas que apresentam um comportamento meio invasivo. Pode ir à festa, dependendo do contexto.</p>
+              <p><b>Flag cinza</b> - representa uma pessoa que já teve uma flag vermelha ou amarela, mas que, numa segunda chance, mudou o comportamento.</p>
+            </>
+          ),
+        })}
         body={(values) => (
           <FlagBadge flag={values.flag} flagNotes={values.flag_notes} />
         )}
@@ -298,13 +314,13 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="pronouns"
-        header={profilePropMap("pronouns")}
+        header={createColumnHeader(profilePropMap("pronouns"))}
         body={(values) => values.pronouns?.join(", ") || "-"}
       />
       <Column
         field="gender"
         className="min-w-40"
-        header={profilePropMap("gender")}
+        header={createColumnHeader(profilePropMap("gender"))}
         filter
         filterElement={filterTemplates.gender}
         filterField="gender"
@@ -314,7 +330,7 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="orientation"
-        header={profilePropMap("orientation")}
+        header={createColumnHeader(profilePropMap("orientation"))}
         filter
         className="min-w-40"
         filterElement={filterTemplates.orientation}
@@ -327,14 +343,25 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="phone"
-        header={profilePropMap("phone")}
+        header={createColumnHeader(profilePropMap("phone"))}
         body={(values) => <PhoneButton phone={values.phone} />}
         sortable={false}
       />
 
       <Column
         field="application_status"
-        header={eventParticipantPropMap("application_status")}
+        header={createColumnHeader(eventParticipantPropMap("application_status"), {
+          tooltip: (
+            <>
+              <p>Representa o status do processo de seleção da pessoa.</p>
+              <p><b>Conversando</b> - está fazendo a entrevista pelo whatsapp - se aplica apenas a novates.</p>
+              <p><b>Dados de pagto enviados</b> - se aplica a novates e veteranes. Significa que a pessoa já foi aceita para participar nessa festa e que contamos com seu pagto.</p>
+              <p><b>Regras enviadas</b> - se aplica a novates e veteranes. Significa que a pessoa já pagou e enviou o comprovante. Enviamos as regras A TODES, não importa quantas vezes as pessoas já foram.</p>
+              <p><b>Pensar melhor</b> - É um status para novates e veteranes e significa pessoas que ainda estamos em dúvida se serão aceitas para a festa específica.</p>
+              <p><b>Finalizado</b> - se aplica a novates e veteranes e é usado quando o processo de seleção está finalizado, seja pq a pessoa disse que não poderá participar, porque já pagou e leu as regras, ou porque é uma pessoa que não aprovamos.</p>
+            </>
+          ),
+        })}
         filter
         className="min-w-[180px]"
         filterElement={filterTemplates.application_status}
@@ -356,7 +383,17 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="attendance_status"
-        header={eventParticipantPropMap("attendance_status")}
+        header={createColumnHeader(eventParticipantPropMap("attendance_status"), {
+          tooltip: (
+            <>
+              <p>Representa a presença da pessoa na festa.</p>
+              <p><b>Pendente</b> - a festa ainda não ocorreu e o processo de seleção está acontecendo.</p>
+              <p><b>Não compareceu</b> - a festa já aconteceu e a pessoa, que estava confirmada, não foi.</p>
+              <p><b>Pulade (rodízio)</b> - aplicado quando a pessoa caiu no rodízio.</p>
+              <p><b>Não vai</b> - aplicado para pessoas não aceitas no processo, ou que já disseram que não poderão ir.</p>
+            </>
+          ),
+        })}
         filter
         className="min-w-[180px]"
         filterElement={filterTemplates.attendance_status}
@@ -378,7 +415,17 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="approved_to_attend"
-        header={profilePropMap("approved_to_attend")}
+        header={createColumnHeader(profilePropMap("approved_to_attend"), {
+          tooltip: (
+            <>
+              <p>Representa o status da pessoa na POSITIV e não na festa específica.</p>
+              <p><b>Pendente</b> - a pessoa ainda não passou por entrevista.</p>
+              <p><b>Aprovade</b> - a pessoa passou por entrevista e foi aprovada.</p>
+              <p><b>Aprovade com ressalvas</b> - a pessoa apresenta algum tipo de problema, que não será aceita em todas as festas.</p>
+              <p><b>Rejeitade</b> - a pessoa passou por entrevista e foi REJEITADA para participar de qualquer festa.</p>
+            </>
+          ),
+        })}
         filter
         className="min-w-[180px]"
         filterElement={filterTemplates.approved_to_attend}
@@ -400,7 +447,7 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="has_paid"
-        header={eventParticipantPropMap("has_paid")}
+        header={createColumnHeader(eventParticipantPropMap("has_paid"))}
         dataType="boolean"
         body={(values) => (
           <CheckboxCellEditor
@@ -414,7 +461,7 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="payment"
-        header={eventParticipantPropMap("payment")}
+        header={createColumnHeader(eventParticipantPropMap("payment"))}
         body={(values) => (
           <NumberCellEditor
             value={values.payment}
@@ -426,7 +473,15 @@ export const AdminViewEventParticipantsTable: FC<
       />
       <Column
         field="spot_type"
-        header={eventParticipantPropMap("spot_type")}
+        header={createColumnHeader(eventParticipantPropMap("spot_type"), {
+          tooltip: (
+            <>
+              <p><b>Regular</b> - vaga para pessoas que pagam integralmente o valor.</p>
+              <p><b>Staff</b> - vagas para pessoas que trabalham conosco, ou tem algum tipo de permuta.</p>
+              <p><b>Social</b> - vaga para pessoas que pagam porcentagens diferentes de 100% do valor.</p>
+            </>
+          ),
+        })}
         className="min-w-[130px]"
         body={(values) => (
           <SelectCellEditor
@@ -443,7 +498,7 @@ export const AdminViewEventParticipantsTable: FC<
       />
       <Column
         field="is_veteran"
-        header={profilePropMap("is_veteran")}
+        header={createColumnHeader(profilePropMap("is_veteran"))}
         dataType="boolean"
         body={(values) => (
           <CheckboxCellEditor
@@ -457,7 +512,7 @@ export const AdminViewEventParticipantsTable: FC<
       />
       <Column
         field="companions"
-        header={eventParticipantPropMap("companions")}
+        header={createColumnHeader(eventParticipantPropMap("companions"))}
         className="min-w-[30ch]"
         body={(values) => (
           <TextViewModalCell
@@ -468,7 +523,7 @@ export const AdminViewEventParticipantsTable: FC<
       />
       <Column
         field="notes"
-        header={eventParticipantPropMap("notes")}
+        header={createColumnHeader(eventParticipantPropMap("notes"))}
         className="min-w-[30ch]"
         body={(values) => (
           <TextEditModalCell
@@ -482,7 +537,7 @@ export const AdminViewEventParticipantsTable: FC<
       />
       <Column
         field="admin_general_notes"
-        header={eventParticipantPropMap("admin_general_notes")}
+        header={createColumnHeader(eventParticipantPropMap("admin_general_notes"))}
         className="min-w-[30ch]"
         body={(values) => (
           <TextEditModalCell
@@ -497,7 +552,7 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="was_admin_skipped_last_event"
-        header="Foi rodízio na última festa?"
+        header={createColumnHeader("Foi rodízio na última festa?")}
         dataType="boolean"
         className="min-w-40"
         body={({ was_admin_skipped_last_event }) =>
