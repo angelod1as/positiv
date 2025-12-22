@@ -23,7 +23,7 @@ export function createColumnHeader(
   }
 
   const Icon = options.icon || Info
-  const tooltipMaxWidth = options.tooltipMaxWidth || "max-w-xs"
+  const tooltipMaxWidth = options.tooltipMaxWidth || "max-w-md"
   const delayDuration = options.delayDuration ?? 0
 
   return (
@@ -34,7 +34,7 @@ export function createColumnHeader(
           <TooltipTrigger asChild>
             <Icon className="h-3.5 w-3.5 text-gray-500 cursor-help" />
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent className="font-normal text-sm">
             <div className={tooltipMaxWidth}>{options.tooltip}</div>
           </TooltipContent>
         </Tooltip>

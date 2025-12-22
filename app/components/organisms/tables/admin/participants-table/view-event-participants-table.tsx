@@ -1,4 +1,4 @@
-import { EyeIcon } from "lucide-react"
+import { EyeIcon, FlagIcon } from "lucide-react"
 import { Column } from "primereact/column"
 import type { FC } from "react"
 import type { FetcherWithComponents } from "react-router"
@@ -226,8 +226,17 @@ export const AdminViewEventParticipantsTable: FC<
         header={createColumnHeader("Vet ou Nov?", {
           tooltip: (
             <>
-              <p>O número ao lado da badge 'Veterane' indica quantos eventos finalizados a pessoa já participou.</p>
-              <p><b>Importante:</b> Essa conta é feita a partir de quando o sistema foi criado, em agosto de 2025.</p>
+              <p>
+                <b>
+                  O número ao lado da badge 'Veterane' indica quantos eventos
+                  finalizados a pessoa já participou.
+                </b>
+              </p>
+              <br />
+              <p>
+                <b>Importante:</b> Essa conta é feita a partir de quando o
+                sistema foi criado, em agosto de 2025.
+              </p>
             </>
           ),
         })}
@@ -298,10 +307,40 @@ export const AdminViewEventParticipantsTable: FC<
         header={createColumnHeader(profilePropMap("flag"), {
           tooltip: (
             <>
-              <p>Adicionamos flags às pessoas que representam algum tipo de ameaça ao ecossistema.</p>
-              <p><b>Flag Vermelha</b> - a pessoa fez algo MUITO relevante e impactante - assédio, abuso, violências físicas ou verbais... Não vai mais na festa.</p>
-              <p><b>Flag Amarela</b> - a pessoa precisa de algum tipo de monitoramento por comportamentos complicados - pode ter sido uma crise numa festa, pessoas que não chegaram a assediar, mas que apresentam um comportamento meio invasivo. Pode ir à festa, dependendo do contexto.</p>
-              <p><b>Flag cinza</b> - representa uma pessoa que já teve uma flag vermelha ou amarela, mas que, numa segunda chance, mudou o comportamento.</p>
+              <p>
+                <b>
+                  Adicionamos flags às pessoas que representam algum tipo de
+                  ameaça ao ecossistema.
+                </b>
+              </p>
+              <br />
+              <p>
+                <b>
+                  Flag Vermelha{" "}
+                  <FlagIcon className="size-4 text-red-500 inline-block" />
+                </b>{" "}
+                — a pessoa fez algo MUITO relevante e impactante - assédio,
+                abuso, violências físicas ou verbais... Não vai mais na festa.
+              </p>
+              <p>
+                <b>
+                  Flag Amarela{" "}
+                  <FlagIcon className="size-4 text-yellow-500 inline-block" />
+                </b>{" "}
+                — a pessoa precisa de algum tipo de monitoramento por
+                comportamentos complicados - pode ter sido uma crise numa festa,
+                pessoas que não chegaram a assediar, mas que apresentam um
+                comportamento meio invasivo. Pode ir à festa, dependendo do
+                contexto.
+              </p>
+              <p>
+                <b>
+                  Flag cinza{" "}
+                  <FlagIcon className="size-4 text-gray-500 inline-block" />
+                </b>{" "}
+                — representa uma pessoa que já teve uma flag vermelha ou
+                amarela, mas que, numa segunda chance, mudou o comportamento.
+              </p>
             </>
           ),
         })}
@@ -350,18 +389,45 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="application_status"
-        header={createColumnHeader(eventParticipantPropMap("application_status"), {
-          tooltip: (
-            <>
-              <p>Representa o status do processo de seleção da pessoa.</p>
-              <p><b>Conversando</b> - está fazendo a entrevista pelo whatsapp - se aplica apenas a novates.</p>
-              <p><b>Dados de pagto enviados</b> - se aplica a novates e veteranes. Significa que a pessoa já foi aceita para participar nessa festa e que contamos com seu pagto.</p>
-              <p><b>Regras enviadas</b> - se aplica a novates e veteranes. Significa que a pessoa já pagou e enviou o comprovante. Enviamos as regras A TODES, não importa quantas vezes as pessoas já foram.</p>
-              <p><b>Pensar melhor</b> - É um status para novates e veteranes e significa pessoas que ainda estamos em dúvida se serão aceitas para a festa específica.</p>
-              <p><b>Finalizado</b> - se aplica a novates e veteranes e é usado quando o processo de seleção está finalizado, seja pq a pessoa disse que não poderá participar, porque já pagou e leu as regras, ou porque é uma pessoa que não aprovamos.</p>
-            </>
-          ),
-        })}
+        header={createColumnHeader(
+          eventParticipantPropMap("application_status"),
+          {
+            tooltip: (
+              <>
+                <p>
+                  <b>Representa o status do processo de seleção da pessoa.</b>
+                </p>
+                <br />
+                <p>
+                  <b>Conversando</b> — está fazendo a entrevista pelo whatsapp -
+                  se aplica apenas a novates.
+                </p>
+                <p>
+                  <b>Dados de pagto enviados</b> — se aplica a novates e
+                  veteranes. Significa que a pessoa já foi aceita para
+                  participar nessa festa e que contamos com seu pagto.
+                </p>
+                <p>
+                  <b>Regras enviadas</b> — se aplica a novates e veteranes.
+                  Significa que a pessoa já pagou e enviou o comprovante.
+                  Enviamos as regras A TODES, não importa quantas vezes as
+                  pessoas já foram.
+                </p>
+                <p>
+                  <b>Pensar melhor</b> — É um status para novates e veteranes e
+                  significa pessoas que ainda estamos em dúvida se serão aceitas
+                  para a festa específica.
+                </p>
+                <p>
+                  <b>Finalizado</b> — se aplica a novates e veteranes e é usado
+                  quando o processo de seleção está finalizado, seja pq a pessoa
+                  disse que não poderá participar, porque já pagou e leu as
+                  regras, ou porque é uma pessoa que não aprovamos.
+                </p>
+              </>
+            ),
+          },
+        )}
         filter
         className="min-w-[180px]"
         filterElement={filterTemplates.application_status}
@@ -383,17 +449,35 @@ export const AdminViewEventParticipantsTable: FC<
 
       <Column
         field="attendance_status"
-        header={createColumnHeader(eventParticipantPropMap("attendance_status"), {
-          tooltip: (
-            <>
-              <p>Representa a presença da pessoa na festa.</p>
-              <p><b>Pendente</b> - a festa ainda não ocorreu e o processo de seleção está acontecendo.</p>
-              <p><b>Não compareceu</b> - a festa já aconteceu e a pessoa, que estava confirmada, não foi.</p>
-              <p><b>Pulade (rodízio)</b> - aplicado quando a pessoa caiu no rodízio.</p>
-              <p><b>Não vai</b> - aplicado para pessoas não aceitas no processo, ou que já disseram que não poderão ir.</p>
-            </>
-          ),
-        })}
+        header={createColumnHeader(
+          eventParticipantPropMap("attendance_status"),
+          {
+            tooltip: (
+              <>
+                <p>
+                  <b>Representa a presença da pessoa na festa.</b>
+                </p>
+                <br />
+                <p>
+                  <b>Pendente</b> — a festa ainda não ocorreu e o processo de
+                  seleção está acontecendo.
+                </p>
+                <p>
+                  <b>Não compareceu</b> — a festa já aconteceu e a pessoa, que
+                  estava confirmada, não foi.
+                </p>
+                <p>
+                  <b>Pulade (rodízio)</b> — aplicado quando a pessoa caiu no
+                  rodízio.
+                </p>
+                <p>
+                  <b>Não vai</b> — aplicado para pessoas não aceitas no
+                  processo, ou que já disseram que não poderão ir.
+                </p>
+              </>
+            ),
+          },
+        )}
         filter
         className="min-w-[180px]"
         filterElement={filterTemplates.attendance_status}
@@ -418,11 +502,27 @@ export const AdminViewEventParticipantsTable: FC<
         header={createColumnHeader(profilePropMap("approved_to_attend"), {
           tooltip: (
             <>
-              <p>Representa o status da pessoa na POSITIV e não na festa específica.</p>
-              <p><b>Pendente</b> - a pessoa ainda não passou por entrevista.</p>
-              <p><b>Aprovade</b> - a pessoa passou por entrevista e foi aprovada.</p>
-              <p><b>Aprovade com ressalvas</b> - a pessoa apresenta algum tipo de problema, que não será aceita em todas as festas.</p>
-              <p><b>Rejeitade</b> - a pessoa passou por entrevista e foi REJEITADA para participar de qualquer festa.</p>
+              <p>
+                <b>
+                  Representa o status da pessoa na POSITIV e não na festa
+                  específica.
+                </b>
+              </p>
+              <br />
+              <p>
+                <b>Pendente</b> — a pessoa ainda não passou por entrevista.
+              </p>
+              <p>
+                <b>Aprovade</b> — a pessoa passou por entrevista e foi aprovada.
+              </p>
+              <p>
+                <b>Aprovade com ressalvas</b> — a pessoa apresenta algum tipo de
+                problema, que não será aceita em todas as festas.
+              </p>
+              <p>
+                <b>Rejeitade</b> — a pessoa passou por entrevista e foi
+                REJEITADA para participar de qualquer festa.
+              </p>
             </>
           ),
         })}
@@ -476,9 +576,18 @@ export const AdminViewEventParticipantsTable: FC<
         header={createColumnHeader(eventParticipantPropMap("spot_type"), {
           tooltip: (
             <>
-              <p><b>Regular</b> - vaga para pessoas que pagam integralmente o valor.</p>
-              <p><b>Staff</b> - vagas para pessoas que trabalham conosco, ou tem algum tipo de permuta.</p>
-              <p><b>Social</b> - vaga para pessoas que pagam porcentagens diferentes de 100% do valor.</p>
+              <p>
+                <b>Regular</b> — vaga para pessoas que pagam integralmente o
+                valor.
+              </p>
+              <p>
+                <b>Staff</b> — vagas para pessoas que trabalham conosco, ou tem
+                algum tipo de permuta.
+              </p>
+              <p>
+                <b>Social</b> — vaga para pessoas que pagam porcentagens
+                diferentes de 100% do valor.
+              </p>
             </>
           ),
         })}
@@ -537,7 +646,9 @@ export const AdminViewEventParticipantsTable: FC<
       />
       <Column
         field="admin_general_notes"
-        header={createColumnHeader(eventParticipantPropMap("admin_general_notes"))}
+        header={createColumnHeader(
+          eventParticipantPropMap("admin_general_notes"),
+        )}
         className="min-w-[30ch]"
         body={(values) => (
           <TextEditModalCell
