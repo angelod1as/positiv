@@ -1,7 +1,16 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import type { ReactNode } from "react"
 import { describe, expect, it } from "vitest"
+import { TooltipProvider } from "~/components/ui/tooltip"
 import { createColumnHeader } from "./create-column-header"
+
+// Wrapper to provide TooltipProvider for tests
+function renderWithTooltip(ui: ReactNode) {
+  return render(
+    <TooltipProvider delayDuration={0}>{ui}</TooltipProvider>,
+  )
+}
 
 describe("createColumnHeader", () => {
   describe("simple header without tooltip", () => {
@@ -27,7 +36,7 @@ describe("createColumnHeader", () => {
       const header = createColumnHeader("Vet ou Nov?", {
         tooltip: "O número ao lado da badge...",
       })
-      const { container } = render(<div>{header}</div>)
+      const { container } = renderWithTooltip(<div>{header}</div>)
 
       expect(screen.getByText("Vet ou Nov?")).toBeInTheDocument()
       const icon = container.querySelector(".cursor-help")
@@ -42,7 +51,7 @@ describe("createColumnHeader", () => {
       const header = createColumnHeader("Vet ou Nov?", {
         tooltip: tooltipText,
       })
-      const { container } = render(<div>{header}</div>)
+      const { container } = renderWithTooltip(<div>{header}</div>)
 
       const trigger = container.querySelector(".cursor-help")
       expect(trigger).toBeInTheDocument()
@@ -58,7 +67,7 @@ describe("createColumnHeader", () => {
       const header = createColumnHeader("Test", {
         tooltip: "Test tooltip",
       })
-      const { container } = render(<div>{header}</div>)
+      const { container } = renderWithTooltip(<div>{header}</div>)
 
       const icon = container.querySelector("svg")
       expect(icon).toHaveClass("h-3.5")
@@ -72,7 +81,7 @@ describe("createColumnHeader", () => {
       const header = createColumnHeader("Test", {
         tooltip: "Long tooltip text",
       })
-      const { container } = render(<div>{header}</div>)
+      const { container } = renderWithTooltip(<div>{header}</div>)
 
       const trigger = container.querySelector(".cursor-help")
       expect(trigger).toBeInTheDocument()
@@ -96,7 +105,7 @@ describe("createColumnHeader", () => {
           </>
         ),
       })
-      const { container } = render(<div>{header}</div>)
+      const { container } = renderWithTooltip(<div>{header}</div>)
 
       const trigger = container.querySelector(".cursor-help")
       expect(trigger).toBeInTheDocument()
@@ -116,7 +125,7 @@ describe("createColumnHeader", () => {
       const header = createColumnHeader("Test", {
         tooltip: "Tooltip",
       })
-      const { container } = render(<div>{header}</div>)
+      const { container } = renderWithTooltip(<div>{header}</div>)
 
       const wrapper = container.querySelector(".flex.items-center.gap-1")
       expect(wrapper).toBeInTheDocument()
@@ -141,7 +150,7 @@ describe("createColumnHeader", () => {
         tooltip: "Tooltip",
         icon: CustomIcon,
       })
-      const { container } = render(<div>{header}</div>)
+      const { container } = renderWithTooltip(<div>{header}</div>)
 
       const customIcon = container.querySelector('[data-testid="custom-icon"]')
       expect(customIcon).toBeInTheDocument()
@@ -157,7 +166,7 @@ describe("createColumnHeader", () => {
         tooltip: "Tooltip",
         tooltipMaxWidth: "max-w-md",
       })
-      const { container } = render(<div>{header}</div>)
+      const { container } = renderWithTooltip(<div>{header}</div>)
 
       const trigger = container.querySelector(".cursor-help")
       expect(trigger).toBeInTheDocument()
@@ -167,18 +176,6 @@ describe("createColumnHeader", () => {
 
       const tooltipContent = document.querySelector("div.max-w-md")
       expect(tooltipContent).toBeInTheDocument()
-    })
-
-    it("should apply custom delayDuration", () => {
-      const header = createColumnHeader("Test", {
-        tooltip: "Tooltip",
-        delayDuration: 500,
-      })
-      render(<div>{header}</div>)
-
-      // We can't easily test the delay duration in the test,
-      // but we can at least verify the component renders without error
-      expect(screen.getByText("Test")).toBeInTheDocument()
     })
   })
 })
