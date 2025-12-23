@@ -4,41 +4,36 @@ services:
       context: .
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       - NODE_ENV=production
       - PORT=3000
-    expose:
-      - "3000"
-    networks:
-      - positiv-network
+      - ENABLE_EVENT_SCHEDULER=true
+    # Traefik labels for Coolify routing and SSL
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.positiv.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.services.positiv.loadbalancer.server.port=3000"
+      - "traefik.http.routers.positiv.entrypoints=websecure"
+      - "traefik.http.routers.positiv.tls.certresolver=letsencrypt"
+    # Resource limits (optional - can also configure in Coolify UI)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+    # Logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Health check (inherited from Dockerfile)
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {r.statusCode === 200 ? process.exit(0) : process.exit(1)})"]
       interval: 30s
       timeout: 3s
       retries: 3
       start_period: 40s
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - positiv-network
-    depends_on:
-      - app
-
-networks:
-  positiv-network:
-    driver: bridge
-
-volumes:
-  caddy_data:
-  caddy_config:

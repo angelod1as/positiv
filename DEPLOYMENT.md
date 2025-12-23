@@ -1,287 +1,306 @@
-# Positiv VPS Deployment Guide
+# Deployment Guide
 
-This guide explains how to deploy Positiv to a VPS using Docker and Caddy.
+Deploy Positiv to your VPS using Coolify with Docker Compose.
 
 ## Prerequisites
 
-### VPS Requirements
-- Ubuntu 22.04 LTS or Debian 12
-- Minimum 2GB RAM (4GB recommended)
-- 20GB disk space minimum
-- Root or sudo access
-- Open ports: 22 (SSH), 80 (HTTP), 443 (HTTPS)
+- Coolify installed on your VPS ([installation guide](https://coolify.io/docs/installation))
+- Repository connected to Coolify
+- Domain configured with DNS A record pointing to your VPS IP
 
-### Domain Setup
-- A domain name pointing to your VPS IP address
-- DNS A record configured
+## Files Overview
 
-## Quick Setup
+Required files in repository:
 
-### 1. Initial VPS Setup
-
-SSH into your VPS and run the setup script:
-
-```bash
-# Download and run setup script
-curl -fsSL https://raw.githubusercontent.com/your-repo/main/scripts/setup-vps.sh -o setup-vps.sh
-sudo bash setup-vps.sh yourdomain.com
+```
+docker-compose.yml  ← Defines app service with Traefik labels
+Dockerfile          ← Builds the Node.js application
+.env.example        ← Documents required environment variables
 ```
 
-This script will:
-- Install Docker and Docker Compose
-- Set up the application directory
-- Configure firewall rules
-- Create systemd service
-- Set up log rotation
-- Optionally create a deployment user
+**Note:** Coolify uses Traefik for reverse proxy and automatic SSL, so no Caddy/Nginx configuration needed.
+
+---
+
+## Setup in Coolify
+
+### 1. Create Application
+
+1. **New Resource** → **Docker Compose**
+2. Connect your Git repository
+3. Select branch (usually `main`)
+4. Specify compose file: `docker-compose.yml`
 
 ### 2. Configure Environment Variables
 
-Edit the `.env` file created from the template:
+In Coolify dashboard → **Environment Variables**, add:
 
 ```bash
-sudo nano /opt/positiv/.env
+# Supabase
+VITE_SUPABASE_URL=https://xxx.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJxxx...
+SUPABASE_SERVICE_ROLE_KEY=eyJxxx...
+
+# Email (AWS SES)
+EMAIL_HOST=email-smtp.us-east-1.amazonaws.com
+EMAIL_PORT=587
+EMAIL_USER=AKIAXXXXXXX
+EMAIL_PASSWORD=xxx
+
+# Scheduler
+NODE_ENV=production
+ENABLE_EVENT_SCHEDULER=true
+
+# Domain (used in docker-compose.yml)
+DOMAIN=yourdomain.com
 ```
 
-Required variables:
-- **DOMAIN**: Your domain (for Caddy automatic HTTPS)
-- **Supabase credentials**: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, etc.
-- **Contentful credentials**: If using CMS
-- **AWS SES credentials**: For email sending
-- **Other secrets**: As needed
+**Complete list:** See `.env.example` in repository
 
-### 3. GitHub Actions Setup
+### 3. Configure Domain
 
-Add the following secrets to your GitHub repository:
+In Coolify dashboard → **Domains** tab:
 
-1. Go to Settings → Secrets and variables → Actions
-2. Add these secrets:
-   - `VPS_HOST`: Your VPS IP or domain
-   - `VPS_USER`: `deploy` or `root`
-   - `VPS_SSH_KEY`: Private SSH key for deployment
-   - `VPS_PORT`: SSH port (default: 22)
-   - `VPS_APP_PATH`: `/opt/positiv`
+1. Add your domain
+2. Coolify automatically handles SSL via Let's Encrypt
 
-## Manual Deployment
+### 4. Deploy
 
-### Build and Deploy Locally
+Click **Deploy** or enable **Auto Deploy** for automatic deployments on git push.
 
-```bash
-cd /opt/positiv
+---
 
-# Build the application
-docker compose build
+## docker-compose.yml Configuration
 
-# Start services
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+Your compose file should define only the **app service**. Coolify's Traefik handles reverse proxy.
 
-# Check status
-docker compose ps
-
-# View logs
-docker compose logs -f
-```
-
-### Zero-Downtime Deployment
-
-```bash
-# Pull latest code
-git pull origin main
-
-# Build and update app container only
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --no-deps --build app
-
-# Reload Caddy if config changed
-docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
-```
-
-## Maintenance
-
-### Viewing Logs
-
-```bash
-# All services
-docker compose logs -f
-
-# Specific service
-docker compose logs -f app
-docker compose logs -f caddy
-
-# Last 100 lines
-docker compose logs --tail=100 app
-```
-
-### Backup
-
-```bash
-# Backup environment file
-cp /opt/positiv/.env /opt/positiv/.env.backup
-
-# Backup Caddy certificates (automatic with volumes)
-docker run --rm -v positiv_caddy_data:/data -v $(pwd):/backup alpine tar czf /backup/caddy-data-backup.tar.gz /data
-```
-
-### Monitoring
-
-```bash
-# Check health endpoint
-curl http://localhost:3000/health
-
-# Check Docker resource usage
-docker stats
-
-# Check disk usage
-df -h
-
-# System resources
-htop
-```
-
-### Troubleshooting
-
-#### App not starting
-```bash
-# Check logs
-docker compose logs app
-
-# Verify environment variables
-docker compose exec app env
-
-# Shell into container
-docker compose exec app sh
-```
-
-#### SSL certificates not working
-```bash
-# Check Caddy logs
-docker compose logs caddy
-
-# Verify domain DNS
-dig yourdomain.com
-
-# Force certificate renewal
-docker compose exec caddy caddy renew --force
-```
-
-#### Port conflicts
-```bash
-# Check what's using ports
-sudo lsof -i :80
-sudo lsof -i :443
-
-# Stop conflicting services
-sudo systemctl stop nginx  # if nginx is running
-sudo systemctl stop apache2  # if apache is running
-```
-
-## Security Best Practices
-
-1. **Keep system updated**
-   ```bash
-   sudo apt update && sudo apt upgrade -y
-   ```
-
-2. **Configure firewall**
-   ```bash
-   sudo ufw status
-   ```
-
-3. **Set up fail2ban**
-   ```bash
-   sudo apt install fail2ban
-   sudo systemctl enable fail2ban
-   ```
-
-4. **Regular backups**
-   - Set up automated backups for your data
-   - Test restore procedures
-
-5. **Monitor logs**
-   - Check logs regularly for suspicious activity
-   - Set up log aggregation if needed
-
-## Scaling
-
-### Horizontal Scaling
-To run multiple app instances:
+**Required Traefik labels:**
 
 ```yaml
-# In docker-compose.prod.yml
-services:
-  app:
-    deploy:
-      replicas: 3
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.positiv.rule=Host(`${DOMAIN}`)"
+  - "traefik.http.services.positiv.loadbalancer.server.port=3000"
+  - "traefik.http.routers.positiv.entrypoints=websecure"
+  - "traefik.http.routers.positiv.tls.certresolver=letsencrypt"
 ```
 
-### Resource Limits
-Already configured in `docker-compose.prod.yml`:
-- CPU: 2 cores limit, 1 core reserved
-- Memory: 2GB limit, 1GB reserved
+Coolify automatically injects:
 
-## Rollback
+- `coolify.managed=true`
+- `coolify.applicationId=<id>`
+- Network configuration
+- Health monitoring
 
-If deployment fails:
+---
+
+## Monitoring
+
+### Health Check
+
+The app exposes a health endpoint:
 
 ```bash
-# Stop current deployment
-docker compose down
-
-# Checkout previous version
-git checkout HEAD~1
-
-# Redeploy
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+curl https://yourdomain.com/health
 ```
 
-## Future Enhancements
+Response:
 
-### Preview Deployments (Planned)
-Deploy branches to subdomains for testing:
-- `feature-branch.yourdomain.com`
-- Automatic cleanup on PR merge
-- Isolated environments
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "uptime": 86400,
+  "responseTime": 5,
+  "environment": "production"
+}
+```
 
-### Database Migration (Planned)
-When migrating from Supabase to local PostgreSQL:
-1. Add PostgreSQL service to docker-compose.yml
-2. Run migration scripts
-3. Update environment variables
-4. Test thoroughly before switching
+### Application Logs
 
-### Monitoring Stack (Planned)
-- Prometheus for metrics
-- Grafana for visualization
-- Loki for log aggregation
+View in Coolify dashboard → **Logs** tab, or filter for events:
+
+**Scheduler activity:**
+
+```
+[Scheduler] Starting event auto-publish scheduler
+[Scheduler] Running event auto-publish check
+[Scheduler] Found 2 event(s) to publish
+[Scheduler] Published event: Summer Party (abc-123)
+[Scheduler] Sent reminder emails for: Summer Party
+[Scheduler] Completed: {published: 2, emailsSent: 2, errors: 0}
+```
+
+---
+
+## Scheduled Jobs
+
+The app runs automatic event publishing every 5 minutes using node-cron.
+
+**Requirements:**
+
+- `NODE_ENV=production` ✓
+- `ENABLE_EVENT_SCHEDULER=true` ✓
+
+**Manual trigger** (if scheduler fails):
+
+```bash
+POST /api/admin/auto-publish-events
+# Requires admin authentication
+```
+
+**Troubleshooting:**
+
+1. Verify environment variables are set in Coolify
+2. Restart service after changing variables
+3. Check logs for `[Scheduler]` startup messages
+
+**Implementation details:** See [Scheduled Jobs Guide](docs/guides/development/scheduled-jobs.md)
+
+---
+
+## Troubleshooting
+
+### App Won't Start
+
+**Check build logs:**
+
+1. Coolify dashboard → **Deployments** → Latest → **Build Logs**
+2. Look for errors during build or startup
+
+**Common issues:**
+
+- Missing environment variables
+- Invalid Supabase credentials
+- Port conflicts (ensure 3000 is exposed)
+- Dockerfile build errors
+
+### Scheduler Not Running
+
+**Verify environment variables:**
+
+```bash
+# In Coolify, check Environment Variables tab
+NODE_ENV=production
+ENABLE_EVENT_SCHEDULER=true
+```
+
+**Restart** the service after changing environment variables.
+
+**Check logs:**
+Should see `[Scheduler] Starting event auto-publish scheduler` on startup.
+
+### Events Not Publishing
+
+**Event must meet ALL criteria:**
+
+- Event status = "Scheduled"
+- `auto_publish = true`
+- Registration start time has passed (`time_application_start <= NOW()`)
+- Event hasn't started yet (`time_event_start > NOW()`)
+
+**Verify with SQL:**
+
+```sql
+SELECT id, title, event_status, auto_publish,
+       time_application_start, time_event_start
+FROM events
+WHERE event_status = 'Scheduled' AND auto_publish = true;
+```
+
+### SSL Not Working
+
+**Check DNS:**
+
+```bash
+dig yourdomain.com
+# Should point to your VPS IP
+```
+
+**Common issues:**
+
+- DNS not propagated (wait up to 24 hours)
+- Ports 80/443 not open on VPS
+- Check Coolify logs for Let's Encrypt errors
+
+---
+
+## Updates
+
+### Deploy New Changes
+
+**Automatic:** With auto-deploy enabled, pushing to GitHub triggers deployment.
+
+**Manual:** Coolify dashboard → **Redeploy**
+
+### Rollback
+
+1. **Deployments** tab → Select previous deployment
+2. Click **Redeploy**
+
+---
+
+## Resource Management
+
+### Recommended Limits
+
+Configure in Coolify or docker-compose.yml:
+
+- **Memory**: 2GB limit, 1GB reservation
+- **CPU**: 2 cores limit, 1 core reservation
+
+### Scaling
+
+For multiple instances, use Coolify's horizontal scaling feature.
+
+---
+
+## Migration Notes
+
+### From Vercel to Coolify
+
+1. Export environment variables from Vercel
+2. Import to Coolify Environment Variables
+3. Update DNS to point to VPS
+4. Deploy via Coolify
+
+### From Supabase pg_cron to node-cron
+
+The app now uses node-cron for scheduled jobs instead of Supabase pg_cron.
+
+**Disable old cron job** in Supabase SQL Editor:
+
+```sql
+SELECT cron.unschedule('update-event-statuses-automatically');
+```
+
+**Benefits of node-cron:**
+
+- ✅ Sends reminder emails automatically
+- ✅ Works with any database (not Supabase-specific)
+- ✅ Easier to test and monitor
+- ✅ Visible in application logs
+- ✅ Manual trigger endpoint available
+
+---
 
 ## Support
 
-For issues or questions:
-1. Check logs: `docker compose logs`
-2. Review this documentation
-3. Check GitHub Issues
-4. Contact the development team
-
-## Quick Reference
+**Check logs:**
 
 ```bash
-# Start services
-systemctl start positiv
-
-# Stop services
-systemctl stop positiv
-
-# Restart services
-systemctl restart positiv
-
-# View status
-systemctl status positiv
-
-# Update and redeploy
-cd /opt/positiv && git pull && docker compose up -d --build
-
-# Emergency stop
-docker compose kill
-
-# Clean up
-docker system prune -af
+# In Coolify dashboard → Logs tab
+# Filter for specific events
 ```
+
+**Health check:**
+
+```bash
+curl https://yourdomain.com/health
+```
+
+**Resources:**
+
+- [Coolify Documentation](https://coolify.io/docs)
+- [Scheduled Jobs Guide](docs/guides/development/scheduled-jobs.md)
+- Repository issues
