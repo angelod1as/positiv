@@ -183,6 +183,21 @@ export const approvedToAttendStatusOptions: Array<{
   value: value as ProfileApprovedToAttendStatus,
 }))
 
+const isVeteranStatusMap: Record<string, string> = {
+  true: "Veterano",
+  false: "Novate",
+}
+
+export const isVeteranOptions: Array<{
+  name: string
+  value: string
+  label: string
+}> = Object.entries(isVeteranStatusMap).map(([value, name]) => ({
+  name: name,
+  label: name,
+  value: value,
+}))
+
 export const PARTICIPANTS_TABLE_FILTER_CONFIGS = {
   application_status: {
     storageKey: "admin-participants-filter-application-status",
@@ -233,6 +248,14 @@ export const PARTICIPANTS_TABLE_FILTER_CONFIGS = {
       { name: "Assexual", label: "Assexual", value: "assexual" },
     ] as Array<{ name: string; value: string; label: string }>,
     matchMode: "custom_orientation",
+    get allValues() {
+      return this.options.map((opt) => opt.value)
+    },
+  },
+  is_veteran: {
+    storageKey: "admin-participants-filter-is-veteran",
+    options: isVeteranOptions,
+    matchMode: "custom_is_veteran",
     get allValues() {
       return this.options.map((opt) => opt.value)
     },
