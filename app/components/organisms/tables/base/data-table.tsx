@@ -1,4 +1,9 @@
-import { FilterXIcon, MaximizeIcon, MinimizeIcon, type LucideIcon } from "lucide-react"
+import {
+  FilterXIcon,
+  MaximizeIcon,
+  MinimizeIcon,
+  type LucideIcon,
+} from "lucide-react"
 import { FilterService } from "primereact/api"
 import { Column } from "primereact/column"
 import {
@@ -11,6 +16,7 @@ import { InputText } from "primereact/inputtext"
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react"
 import type { LinkProps } from "react-router"
 import { Button } from "~/components/atoms/button/button"
+import { TooltipProvider } from "~/components/ui/tooltip"
 import DelayedContent from "~/lib/helpers/delayed-component"
 import { cn } from "~/lib/utils"
 
@@ -34,7 +40,9 @@ export type DataTableHeader = {
   elements?: ReactNode
 }
 
-type FlexibleFilterMeta = DataTableFilterMeta | Record<string, { value: unknown; matchMode: string }>
+type FlexibleFilterMeta =
+  | DataTableFilterMeta
+  | Record<string, { value: unknown; matchMode: string }>
 
 export interface DataTableProps<T extends DataTableValue> {
   data: T[]
@@ -177,8 +185,9 @@ export function DataTable<T extends DataTableValue>({
   // }
 
   return (
-    <DelayedContent loadingComponent={loadingComponent}>
-      <PrimeReactDataTable
+    <TooltipProvider delayDuration={0}>
+      <DelayedContent loadingComponent={loadingComponent}>
+        <PrimeReactDataTable
         value={values}
         className={cn(isMaximized && "maximized-table")}
         style={{
@@ -261,7 +270,9 @@ export function DataTable<T extends DataTableValue>({
                       return (
                         <Button
                           to={
-                            typeof to === "function" ? key && to(value[key]) : to
+                            typeof to === "function"
+                              ? key && to(value[key])
+                              : to
                           }
                           key={title}
                           aria-label={title}
@@ -283,5 +294,6 @@ export function DataTable<T extends DataTableValue>({
         )}
       </PrimeReactDataTable>
     </DelayedContent>
+    </TooltipProvider>
   )
 }

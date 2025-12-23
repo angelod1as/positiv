@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1731426000000
+export const NEWS_VERSION = 1734894000000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "column-tooltips",
+    title: "ℹ️ Ícones de ajuda nas colunas da tabela",
+    content:
+      "Agora várias colunas da tabela de participantes têm um ícone de informação (ℹ️) ao lado do título. Passe o mouse sobre eles para ver explicações detalhadas sobre o que cada coluna significa - como os diferentes tipos de flags, status de processo, status de presença, e muito mais. Isso vai facilitar o entendimento e uso da tabela!",
+    isAdmin: true,
+    createdAt: new Date("2025-12-22T14:00:00"),
+    isActive: true,
+  },
   {
     id: "whatsapp-button",
     title: "💬 Novo botão de contato via WhatsApp",
