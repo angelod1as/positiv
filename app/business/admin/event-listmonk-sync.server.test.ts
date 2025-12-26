@@ -1,45 +1,38 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 
-const mockKysely = {
-  selectFrom: vi.fn().mockReturnThis(),
-  innerJoin: vi.fn().mockReturnThis(),
-  leftJoin: vi.fn().mockReturnThis(),
-  selectAll: vi.fn().mockReturnThis(),
-  select: vi.fn().mockReturnThis(),
-  where: vi.fn().mockReturnThis(),
-  whereRef: vi.fn().mockReturnThis(),
-  orderBy: vi.fn().mockReturnThis(),
-  limit: vi.fn().mockReturnThis(),
-  updateTable: vi.fn().mockReturnThis(),
-  set: vi.fn().mockReturnThis(),
-  execute: vi.fn().mockResolvedValue([]),
-  executeTakeFirst: vi.fn().mockResolvedValue(undefined),
-  executeTakeFirstOrThrow: vi.fn().mockResolvedValue({
-    id: "event-123",
-    title: "Test Event",
-    listmonk_list_id: null,
-    listmonk_list_synced_at: null,
-  }),
-}
-
-vi.mock("~/kysely", () => ({
-  kysely: mockKysely,
-}))
-
-const mockCreateList = vi.fn()
-const mockDeleteList = vi.fn()
-const mockGetListById = vi.fn()
+vi.mock("~/kysely", () => {
+  const mockChain = {
+    selectFrom: vi.fn().mockReturnThis(),
+    innerJoin: vi.fn().mockReturnThis(),
+    leftJoin: vi.fn().mockReturnThis(),
+    selectAll: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    where: vi.fn().mockReturnThis(),
+    whereRef: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    updateTable: vi.fn().mockReturnThis(),
+    set: vi.fn().mockReturnThis(),
+    execute: vi.fn().mockResolvedValue([]),
+    executeTakeFirst: vi.fn().mockResolvedValue(undefined),
+    executeTakeFirstOrThrow: vi.fn().mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: null,
+      listmonk_list_synced_at: null,
+    }),
+  }
+  return { kysely: mockChain }
+})
 
 vi.mock("../newsletter/listmonk-lists.server", () => ({
-  createList: mockCreateList,
-  deleteList: mockDeleteList,
-  getListById: mockGetListById,
+  createList: vi.fn(),
+  deleteList: vi.fn(),
+  getListById: vi.fn(),
 }))
 
-const mockAddSubscriber = vi.fn()
-
 vi.mock("../newsletter/listmonk-client.server", () => ({
-  addSubscriber: mockAddSubscriber,
+  addSubscriber: vi.fn(),
 }))
 
 import {
@@ -48,6 +41,15 @@ import {
   updateEventListmonkList,
   getEventListStaleness,
 } from "./event-listmonk-sync.server"
+import { kysely } from "~/kysely"
+import { createList, deleteList, getListById } from "../newsletter/listmonk-lists.server"
+import { addSubscriber } from "../newsletter/listmonk-client.server"
+
+const mockKysely = vi.mocked(kysely)
+const mockCreateList = vi.mocked(createList)
+const mockDeleteList = vi.mocked(deleteList)
+const mockGetListById = vi.mocked(getListById)
+const mockAddSubscriber = vi.mocked(addSubscriber)
 
 describe("createEventListmonkList", () => {
   beforeEach(() => {
@@ -113,7 +115,7 @@ describe("createEventListmonkList", () => {
     expect(mockAddSubscriber).toHaveBeenCalledTimes(2)
   })
 
-  it("should exclude rejected participants", async () => {
+  it("should query for non-rejected participants only", async () => {
     mockCreateList.mockResolvedValue({
       success: true,
       data: { id: 456, name: "Inscrites - Test Event" },
@@ -126,13 +128,6 @@ describe("createEventListmonkList", () => {
         full_name: "User One Full",
         approved_to_attend: "approved",
       },
-      {
-        profile_id: "profile-2",
-        email: "rejected@example.com",
-        social_name: "Rejected User",
-        full_name: "Rejected User Full",
-        approved_to_attend: "rejected",
-      },
     ])
     mockAddSubscriber.mockResolvedValue({ success: true })
 
@@ -140,6 +135,7 @@ describe("createEventListmonkList", () => {
 
     expect(result.success).toBe(true)
     expect(result.data?.subscribersAdded).toBe(1)
+    expect(mockKysely.where).toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
     expect(mockAddSubscriber).toHaveBeenCalledTimes(1)
     expect(mockAddSubscriber).toHaveBeenCalledWith(
       expect.objectContaining({
