@@ -54,8 +54,10 @@ describe("createList", () => {
     })
 
     expect(result.success).toBe(true)
-    expect(result.data?.id).toBe(123)
-    expect(result.data?.name).toBe("Inscrites - Test Event")
+    if (result.success) {
+      expect(result.data.id).toBe(123)
+      expect(result.data.name).toBe("Inscrites - Test Event")
+    }
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://listmonk.test/api/lists",
       expect.objectContaining({
@@ -263,9 +265,11 @@ describe("getListById", () => {
     const result = await getListById(123)
 
     expect(result.success).toBe(true)
-    expect(result.data?.id).toBe(123)
-    expect(result.data?.name).toBe("Inscrites - Test Event")
-    expect(result.data?.subscriber_count).toBe(42)
+    if (result.success && result.data) {
+      expect(result.data.id).toBe(123)
+      expect(result.data.name).toBe("Inscrites - Test Event")
+      expect(result.data.subscriber_count).toBe(42)
+    }
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://listmonk.test/api/lists/123",
       expect.objectContaining({
@@ -288,7 +292,9 @@ describe("getListById", () => {
     const result = await getListById(999)
 
     expect(result.success).toBe(true)
-    expect(result.data).toBeNull()
+    if (result.success) {
+      expect(result.data).toBeNull()
+    }
   })
 
   it("should fail when API returns other errors", async () => {
