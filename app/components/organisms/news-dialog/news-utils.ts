@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1734894000000
+export const NEWS_VERSION = 1735235400000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "event-listmonk-sync",
+    title: "📧 Sincronização automática com listas de e-mail",
+    content:
+      "Agora as listas de e-mail do Listmonk são gerenciadas automaticamente! Quando um evento fecha inscrições, uma lista é criada automaticamente com todes es participantes aprovades. Você também pode criar ou atualizar a lista manualmente usando o botão 'Criar Lista' ou 'Atualizar Lista' na página do evento. Se houver alterações nos participantes, um aviso amarelo aparecerá indicando que a lista precisa ser sincronizada.",
+    isAdmin: true,
+    createdAt: new Date("2025-12-26T18:30:00"),
+    isActive: true,
+  },
   {
     id: "column-tooltips",
     title: "ℹ️ Ícones de ajuda nas colunas da tabela",
