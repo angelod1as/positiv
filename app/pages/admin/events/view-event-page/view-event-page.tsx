@@ -14,6 +14,10 @@ import {
   updateEventDemographics,
 } from "~/business/admin/admin.server"
 import {
+  getEventListStaleness,
+  updateEventListmonkList,
+} from "~/business/admin/event-listmonk-sync.server"
+import {
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
 } from "~/business/admin/common"
@@ -67,6 +71,16 @@ export async function action({ request, params }: Route.ActionArgs) {
       transformResult: (result) => ({ ...result, intent }),
     })
   }
+
+  if (intent === "sync-listmonk-list") {
+    const eventId = params.id
+    if (!eventId) {
+      return { success: false, errors: [{ message: "Event ID not found" }], intent }
+    }
+
+    const result = await updateEventListmonkList(eventId)
+    return { ...result, intent }
+  }
 }
 
 async function loadParticipants(eventId: string) {
@@ -96,10 +110,13 @@ export async function loader({ params }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
+  const listStaleness = await getEventListStaleness(eventId)
+
   return {
     event,
     participants: loadParticipants(eventId),
     demographics: demographics?.success ? demographics.data : undefined,
+    isListStale: listStaleness.success ? listStaleness.data?.isStale ?? false : false,
   }
 }
 
@@ -110,7 +127,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     sendToast(fetcher.data)
   }, [fetcher.data])
 
-  const { event, participants, demographics } = loaderData
+  const { event, participants, demographics, isListStale } = loaderData
 
   const { title, emoji, time_event_start } = event
 
@@ -119,7 +136,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       <h1>
         {emoji} {title}
       </h1>
-      <Buttons event={event} fetcher={fetcher} />
+      <Buttons event={event} isListStale={isListStale} fetcher={fetcher} />
 
       <p className="font-bold">
         Data: {formatDateTime(time_event_start, "long").full}

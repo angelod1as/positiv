@@ -15,17 +15,26 @@ export interface StalenessResult {
   staleParticipantCount: number
 }
 
-async function getEventById(eventId: string) {
-  return await kysely
+interface EventWithListmonk {
+  id: string
+  title: string
+  listmonk_list_id: number | null
+  listmonk_list_synced_at: Date | string | null
+}
+
+async function getEventById(eventId: string): Promise<EventWithListmonk> {
+  const event = await kysely
     .selectFrom("events")
     .select([
       "id",
       "title",
-      "listmonk_list_id",
-      "listmonk_list_synced_at",
+      sql<number | null>`listmonk_list_id`.as("listmonk_list_id"),
+      sql<Date | null>`listmonk_list_synced_at`.as("listmonk_list_synced_at"),
     ])
     .where("id", "=", eventId)
     .executeTakeFirstOrThrow()
+
+  return event as EventWithListmonk
 }
 
 async function getNonRejectedParticipants(eventId: string) {
@@ -49,14 +58,12 @@ async function updateEventListmonkFields(
   listmonkListId: number | null,
   syncedAt: Date | null
 ) {
-  await kysely
-    .updateTable("events")
-    .set({
-      listmonk_list_id: listmonkListId,
-      listmonk_list_synced_at: syncedAt,
-    })
-    .where("id", "=", eventId)
-    .execute()
+  await sql`
+    UPDATE events
+    SET listmonk_list_id = ${listmonkListId},
+        listmonk_list_synced_at = ${syncedAt}
+    WHERE id = ${eventId}
+  `.execute(kysely)
 }
 
 async function addParticipantsToList(
@@ -64,7 +71,7 @@ async function addParticipantsToList(
     profile_id: string
     email: string
     social_name: string | null
-    full_name: string
+    full_name: string | null
     approved_to_attend: string | null
   }>,
   listId: number
@@ -73,7 +80,7 @@ async function addParticipantsToList(
   let subscribersFailed = 0
 
   for (const participant of participants) {
-    const name = participant.social_name || participant.full_name || participant.email
+    const name = participant.social_name ?? participant.full_name ?? participant.email
     const result = await addSubscriber({
       email: participant.email,
       name,
@@ -203,18 +210,15 @@ export const getEventListStaleness = composable(
 
     const syncTime = new Date(event.listmonk_list_synced_at)
 
-    const result = await kysely
-      .selectFrom("event_participants as ep")
-      .innerJoin("profiles as p", "ep.profile_id", "p.id")
-      .select([
-        sql<Date | null>`MAX(ep.updated_at)`.as("max_updated_at"),
-        sql<number>`COUNT(CASE WHEN ep.updated_at > ${syncTime} THEN 1 END)::int`.as(
-          "count"
-        ),
-      ])
-      .where("ep.event_id", "=", eventId)
-      .where("p.approved_to_attend", "!=", "rejected")
-      .executeTakeFirst()
+    const result = await sql<{ max_updated_at: Date | null; count: number }>`
+      SELECT
+        MAX(ep.updated_at) as max_updated_at,
+        COUNT(CASE WHEN ep.updated_at > ${syncTime} THEN 1 END)::int as count
+      FROM event_participants ep
+      INNER JOIN profiles p ON ep.profile_id = p.id
+      WHERE ep.event_id = ${eventId}
+      AND p.approved_to_attend != 'rejected'
+    `.execute(kysely).then(r => r.rows[0])
 
     if (!result || !result.max_updated_at) {
       return {
