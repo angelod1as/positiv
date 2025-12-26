@@ -279,7 +279,7 @@ export const updateEventStatus = applySchema(
   if (!eventId) return null
 
   // Use transaction to ensure atomicity
-  return await kysely.transaction().execute(async (trx) => {
+  const transactionResult = await kysely.transaction().execute(async (trx) => {
     // Only calculate and store demographics when status is changing TO Completed
     if (values.event_status === "Completed") {
       // Calculate demographics FIRST, before updating status
@@ -342,6 +342,32 @@ export const updateEventStatus = applySchema(
 
     return result.length > 0
   })
+
+  // Sync with Listmonk AFTER the transaction completes successfully
+  // This is done outside the transaction because it's an external API call
+  // and we don't want it to block or fail the status update
+  if (transactionResult) {
+    try {
+      if (values.event_status === "Registration Closed") {
+        const { createEventListmonkList } = await import(
+          "./event-listmonk-sync.server"
+        )
+        await createEventListmonkList(eventId)
+      } else if (
+        values.event_status === "Completed" ||
+        values.event_status === "Cancelled"
+      ) {
+        const { deleteEventListmonkList } = await import(
+          "./event-listmonk-sync.server"
+        )
+        await deleteEventListmonkList(eventId)
+      }
+    } catch (error) {
+      console.error("Failed to sync with Listmonk:", error)
+    }
+  }
+
+  return transactionResult
 })
 
 export const updateEventDemographics = applySchema(
