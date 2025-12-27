@@ -347,23 +347,25 @@ export const updateEventStatus = applySchema(
   // This is done outside the transaction because it's an external API call
   // and we don't want it to block or fail the status update
   if (transactionResult) {
-    try {
-      if (values.event_status === "Registration Closed") {
-        const { createEventListmonkList } = await import(
-          "./event-listmonk-sync.server"
-        )
-        await createEventListmonkList(eventId)
-      } else if (
-        values.event_status === "Completed" ||
-        values.event_status === "Cancelled"
-      ) {
-        const { deleteEventListmonkList } = await import(
-          "./event-listmonk-sync.server"
-        )
-        await deleteEventListmonkList(eventId)
+    if (values.event_status === "Registration Closed") {
+      const { createEventListmonkList } = await import(
+        "./event-listmonk-sync.server"
+      )
+      const syncResult = await createEventListmonkList(eventId)
+      if (!syncResult.success) {
+        console.error("Failed to create Listmonk list:", syncResult.errors)
       }
-    } catch (error) {
-      console.error("Failed to sync with Listmonk:", error)
+    } else if (
+      values.event_status === "Completed" ||
+      values.event_status === "Cancelled"
+    ) {
+      const { deleteEventListmonkList } = await import(
+        "./event-listmonk-sync.server"
+      )
+      const syncResult = await deleteEventListmonkList(eventId)
+      if (!syncResult.success) {
+        console.error("Failed to delete Listmonk list:", syncResult.errors)
+      }
     }
   }
 
