@@ -61,6 +61,7 @@ const mockEventParticipant: ParticipantVsEvent = {
   is_user_applied: true,
   cancellation_date: null,
   created_at: "2024-01-01",
+  updated_at: "2024-01-01",
 }
 
 describe("ParticipantVsEventData", () => {

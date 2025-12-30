@@ -32,6 +32,7 @@ const mockParticipantHistory: Array<
     cancellation_date: null,
     is_veteran: true,
     approved_to_attend: "approved",
+    updated_at: "2024-02-15T10:00:00",
   },
   {
     id: "2",
@@ -57,6 +58,7 @@ const mockParticipantHistory: Array<
     cancellation_date: null,
     is_veteran: true,
     approved_to_attend: "approved",
+    updated_at: "2024-02-01T10:00:00",
   },
 ]
 

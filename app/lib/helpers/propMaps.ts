@@ -64,6 +64,8 @@ export const eventPropNameMap = (property: keyof Event) => {
     title: "Nome",
     total_spots: "Lotação",
     is_applied: "Inscrite",
+    listmonk_list_id: "ID da lista Listmonk",
+    listmonk_list_synced_at: "Última sincronização da lista",
   }[property]
 }
 
@@ -91,6 +93,7 @@ export const eventParticipantPropMap = (property: keyof EventParticipant) => {
     spot_type: "Tipo de vaga",
     flag: "Flag",
     flag_notes: "Notas da Flag",
+    updated_at: "Atualizado em",
   }[property]
 }
 
