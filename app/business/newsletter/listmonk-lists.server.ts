@@ -1,5 +1,5 @@
 import { composable } from "composable-functions"
-import { env } from "~/env.server"
+import { getListmonkConfig } from "./listmonk-client.server"
 
 export interface ListmonkList {
   id: number
@@ -19,25 +19,6 @@ export interface CreateListParams {
   optin: "single" | "double"
   description?: string
   tags?: string[]
-}
-
-function getListmonkConfig() {
-  const { listmonkApiUrl, listmonkApiUsername, listmonkApiPassword } = env()
-
-  if (!listmonkApiUrl || !listmonkApiUsername || !listmonkApiPassword) {
-    throw new Error("Listmonk API credentials not configured")
-  }
-
-  const basicAuthHeader = `Basic ${Buffer.from(
-    `${listmonkApiUsername}:${listmonkApiPassword}`
-  ).toString("base64")}`
-
-  const headers = {
-    Authorization: basicAuthHeader,
-    "Content-Type": "application/json",
-  }
-
-  return { listmonkApiUrl, headers }
 }
 
 export const createList = composable(

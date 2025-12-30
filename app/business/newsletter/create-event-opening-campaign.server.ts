@@ -1,5 +1,4 @@
 import { composable } from "composable-functions"
-import { env } from "~/env.server"
 import {
   DASHBOARD_URL,
   LISTMONK_EVENT_OPENING_TEMPLATE_ID,
@@ -7,6 +6,7 @@ import {
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ViewEvent } from "~types/database/entities.types"
+import { getListmonkConfig } from "./listmonk-client.server"
 
 interface CreateCampaignParams {
   event: Omit<ViewEvent, "is_applied">
@@ -21,25 +21,6 @@ interface CampaignResponse {
     subject: string
     status: string
   }
-}
-
-function getListmonkConfig() {
-  const { listmonkApiUrl, listmonkApiUsername, listmonkApiPassword } = env()
-
-  if (!listmonkApiUrl || !listmonkApiUsername || !listmonkApiPassword) {
-    throw new Error("Listmonk API credentials not configured")
-  }
-
-  const basicAuthHeader = `Basic ${Buffer.from(
-    `${listmonkApiUsername}:${listmonkApiPassword}`,
-  ).toString("base64")}`
-
-  const headers = {
-    Authorization: basicAuthHeader,
-    "Content-Type": "application/json",
-  }
-
-  return { listmonkApiUrl, headers }
 }
 
 function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {

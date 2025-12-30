@@ -1,6 +1,5 @@
 import { composable } from "composable-functions"
 import { kysely } from "~/kysely"
-import { env } from "~/env.server"
 import { LISTMONK_REGISTERED_LIST_ID } from "~/lib/constants/constants"
 import { createEventOpeningCampaign } from "./create-event-opening-campaign.server"
 import {
@@ -8,25 +7,7 @@ import {
   updateCampaignSent,
   updateCampaignError,
 } from "./campaign-tracking.server"
-
-function getListmonkConfig() {
-  const { listmonkApiUrl, listmonkApiUsername, listmonkApiPassword } = env()
-
-  if (!listmonkApiUrl || !listmonkApiUsername || !listmonkApiPassword) {
-    throw new Error("Listmonk API credentials not configured")
-  }
-
-  const basicAuthHeader = `Basic ${Buffer.from(
-    `${listmonkApiUsername}:${listmonkApiPassword}`,
-  ).toString("base64")}`
-
-  const headers = {
-    Authorization: basicAuthHeader,
-    "Content-Type": "application/json",
-  }
-
-  return { listmonkApiUrl, headers }
-}
+import { getListmonkConfig } from "./listmonk-client.server"
 
 /**
  * Creates a campaign in Listmonk for the given event

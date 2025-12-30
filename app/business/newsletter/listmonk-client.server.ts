@@ -22,7 +22,7 @@ interface ListmonkSearchResponse {
   }
 }
 
-function getListmonkConfig() {
+export function getListmonkConfig() {
   const { listmonkApiUrl, listmonkApiUsername, listmonkApiPassword } = env()
 
   if (!listmonkApiUrl || !listmonkApiUsername || !listmonkApiPassword) {
