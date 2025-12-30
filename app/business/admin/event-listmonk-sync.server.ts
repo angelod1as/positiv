@@ -61,6 +61,10 @@ async function updateEventListmonkFields(
     .execute()
 }
 
+// TODO: POS-358 - Optimize subscriber addition using bulk API
+// Currently adds subscribers one-by-one. Should use Listmonk's bulk API:
+// PUT /api/subscribers/lists with listmonk_subscriber_id instead of
+// individual addSubscriber calls. See: https://listmonk.app/docs/apis/subscribers/#put-apisubscriberslists
 async function addParticipantsToList(
   participants: Array<{
     profile_id: string
