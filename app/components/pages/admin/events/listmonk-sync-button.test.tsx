@@ -16,22 +16,9 @@ describe("ListmonkSyncButton", () => {
     vi.clearAllMocks()
   })
 
-  it("should not render when event status is Draft", () => {
-    render(
-      <ListmonkSyncButton
-        eventStatus="Draft"
-        listmonkListId={null}
-        isStale={false}
-      />
-    )
-
-    expect(screen.queryByRole("button")).not.toBeInTheDocument()
-  })
-
   it("should render 'Criar Lista' when no list exists", () => {
     render(
       <ListmonkSyncButton
-        eventStatus="Registration Open"
         listmonkListId={null}
         isStale={false}
       />
@@ -43,7 +30,6 @@ describe("ListmonkSyncButton", () => {
   it("should render 'Atualizar Lista' when list exists", () => {
     render(
       <ListmonkSyncButton
-        eventStatus="Registration Closed"
         listmonkListId={123}
         isStale={false}
       />
@@ -55,7 +41,6 @@ describe("ListmonkSyncButton", () => {
   it("should show warning icon when list is stale", () => {
     render(
       <ListmonkSyncButton
-        eventStatus="Registration Closed"
         listmonkListId={123}
         isStale={true}
       />
@@ -67,7 +52,6 @@ describe("ListmonkSyncButton", () => {
   it("should not show warning icon when list is not stale", () => {
     render(
       <ListmonkSyncButton
-        eventStatus="Registration Closed"
         listmonkListId={123}
         isStale={false}
       />
@@ -76,58 +60,9 @@ describe("ListmonkSyncButton", () => {
     expect(screen.queryByTestId("stale-warning")).not.toBeInTheDocument()
   })
 
-  it("should render for Scheduled status", () => {
-    render(
-      <ListmonkSyncButton
-        eventStatus="Scheduled"
-        listmonkListId={null}
-        isStale={false}
-      />
-    )
-
-    expect(screen.getByRole("button")).toBeInTheDocument()
-  })
-
-  it("should render for Registration Closed status", () => {
-    render(
-      <ListmonkSyncButton
-        eventStatus="Registration Closed"
-        listmonkListId={null}
-        isStale={false}
-      />
-    )
-
-    expect(screen.getByRole("button")).toBeInTheDocument()
-  })
-
-  it("should render for Completed status", () => {
-    render(
-      <ListmonkSyncButton
-        eventStatus="Completed"
-        listmonkListId={null}
-        isStale={false}
-      />
-    )
-
-    expect(screen.getByRole("button")).toBeInTheDocument()
-  })
-
-  it("should render for Cancelled status", () => {
-    render(
-      <ListmonkSyncButton
-        eventStatus="Cancelled"
-        listmonkListId={null}
-        isStale={false}
-      />
-    )
-
-    expect(screen.getByRole("button")).toBeInTheDocument()
-  })
-
   it("should have correct form intent", async () => {
     render(
       <ListmonkSyncButton
-        eventStatus="Registration Open"
         listmonkListId={null}
         isStale={false}
       />

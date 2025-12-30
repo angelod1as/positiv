@@ -27,11 +27,12 @@ export const Buttons: FC<ButtonProps> = ({ event, isListStale, fetcher: _fetcher
     <div className="flex gap-2 mb-4 items-center">
       <Button to={ADMIN_EDIT_EVENT(id)}>Editar</Button>
       <Button to={ADMIN_DOWNLOAD_EVENT(id)}>Baixar dados</Button>
-      <ListmonkSyncButton
-        eventStatus={event_status}
-        listmonkListId={listmonkListId}
-        isStale={isListStale}
-      />
+      {event_status !== "Draft" && (
+        <ListmonkSyncButton
+          listmonkListId={listmonkListId}
+          isStale={isListStale}
+        />
+      )}
     </div>
   )
 }
