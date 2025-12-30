@@ -17,24 +17,17 @@ export interface StalenessResult {
 
 interface EventWithListmonk {
   id: string
-  title: string
+  title: string | null
   listmonk_list_id: number | null
-  listmonk_list_synced_at: Date | string | null
+  listmonk_list_synced_at: string | null
 }
 
 async function getEventById(eventId: string): Promise<EventWithListmonk> {
-  const event = await kysely
+  return await kysely
     .selectFrom("events")
-    .select([
-      "id",
-      "title",
-      sql<number | null>`listmonk_list_id`.as("listmonk_list_id"),
-      sql<Date | null>`listmonk_list_synced_at`.as("listmonk_list_synced_at"),
-    ])
+    .select(["id", "title", "listmonk_list_id", "listmonk_list_synced_at"])
     .where("id", "=", eventId)
     .executeTakeFirstOrThrow()
-
-  return event as EventWithListmonk
 }
 
 async function getNonRejectedParticipants(eventId: string) {
@@ -58,12 +51,14 @@ async function updateEventListmonkFields(
   listmonkListId: number | null,
   syncedAt: Date | null
 ) {
-  await sql`
-    UPDATE events
-    SET listmonk_list_id = ${listmonkListId},
-        listmonk_list_synced_at = ${syncedAt}
-    WHERE id = ${eventId}
-  `.execute(kysely)
+  await kysely
+    .updateTable("events")
+    .set({
+      listmonk_list_id: listmonkListId,
+      listmonk_list_synced_at: syncedAt?.toISOString() ?? null,
+    })
+    .where("id", "=", eventId)
+    .execute()
 }
 
 async function addParticipantsToList(
@@ -106,7 +101,7 @@ export const createEventListmonkList = composable(
     const event = await getEventById(eventId)
 
     const listResult = await createList({
-      name: `Inscrites - ${event.title}`,
+      name: `Inscrites - ${event.title ?? "Evento sem título"}`,
       type: "private",
       optin: "single",
     })
@@ -210,15 +205,18 @@ export const getEventListStaleness = composable(
 
     const syncTime = new Date(event.listmonk_list_synced_at)
 
-    const result = await sql<{ max_updated_at: Date | null; count: number }>`
-      SELECT
-        MAX(ep.updated_at) as max_updated_at,
-        COUNT(CASE WHEN ep.updated_at > ${syncTime} THEN 1 END)::int as count
-      FROM event_participants ep
-      INNER JOIN profiles p ON ep.profile_id = p.id
-      WHERE ep.event_id = ${eventId}
-      AND p.approved_to_attend != 'rejected'
-    `.execute(kysely).then(r => r.rows[0])
+    const result = await kysely
+      .selectFrom("event_participants as ep")
+      .innerJoin("profiles as p", "ep.profile_id", "p.id")
+      .where("ep.event_id", "=", eventId)
+      .where("p.approved_to_attend", "!=", "rejected")
+      .select((eb) => [
+        eb.fn.max("ep.updated_at").as("max_updated_at"),
+        sql<number>`COUNT(CASE WHEN ep.updated_at > ${syncTime} THEN 1 END)::int`.as(
+          "count"
+        ),
+      ])
+      .executeTakeFirst()
 
     if (!result || !result.max_updated_at) {
       return {
