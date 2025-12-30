@@ -195,18 +195,17 @@ describe("createEventListmonkList", () => {
     )
   })
 
-  it("should update event with listmonk_list_id via SQL", async () => {
+  it("should update event with listmonk_list_id via Kysely updateTable", async () => {
     mockCreateList.mockResolvedValue({
       success: true,
       data: createMockListmonkList({ id: 789 }),
       errors: [],
     })
     mockExecute.mockResolvedValue([])
-    mockSqlExecute.mockResolvedValue({ rows: [] })
 
     await createEventListmonkList("event-123")
 
-    expect(mockSqlExecute).toHaveBeenCalled()
+    expect(mockExecute).toHaveBeenCalled()
   })
 
   it("should fail gracefully when list creation fails", async () => {
@@ -274,7 +273,7 @@ describe("deleteEventListmonkList", () => {
       listmonk_list_synced_at: "2024-01-01T00:00:00Z",
     })
     mockDeleteList.mockResolvedValue({ success: true, data: undefined, errors: [] })
-    mockSqlExecute.mockResolvedValue({ rows: [] })
+    mockExecute.mockResolvedValue([])
 
     const result = await deleteEventListmonkList("event-123")
 
@@ -282,7 +281,7 @@ describe("deleteEventListmonkList", () => {
     expect(mockDeleteList).toHaveBeenCalledWith(456)
   })
 
-  it("should clear listmonk fields via SQL", async () => {
+  it("should clear listmonk fields via Kysely updateTable", async () => {
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
       title: "Test Event",
@@ -290,11 +289,11 @@ describe("deleteEventListmonkList", () => {
       listmonk_list_synced_at: "2024-01-01T00:00:00Z",
     })
     mockDeleteList.mockResolvedValue({ success: true, data: undefined, errors: [] })
-    mockSqlExecute.mockResolvedValue({ rows: [] })
+    mockExecute.mockResolvedValue([])
 
     await deleteEventListmonkList("event-123")
 
-    expect(mockSqlExecute).toHaveBeenCalled()
+    expect(mockExecute).toHaveBeenCalled()
   })
 
   it("should succeed when event has no list", async () => {
@@ -304,7 +303,7 @@ describe("deleteEventListmonkList", () => {
       listmonk_list_id: null,
       listmonk_list_synced_at: null,
     })
-    mockSqlExecute.mockResolvedValue({ rows: [] })
+    mockExecute.mockResolvedValue([])
 
     const result = await deleteEventListmonkList("event-123")
 
@@ -320,7 +319,7 @@ describe("deleteEventListmonkList", () => {
       listmonk_list_synced_at: "2024-01-01T00:00:00Z",
     })
     mockDeleteList.mockResolvedValue({ success: true, data: undefined, errors: [] })
-    mockSqlExecute.mockResolvedValue({ rows: [] })
+    mockExecute.mockResolvedValue([])
 
     const result = await deleteEventListmonkList("event-123")
 
@@ -350,7 +349,6 @@ describe("updateEventListmonkList", () => {
       errors: [],
     })
     mockExecute.mockResolvedValue([])
-    mockSqlExecute.mockResolvedValue({ rows: [] })
 
     const result = await updateEventListmonkList("event-123")
 
@@ -380,7 +378,6 @@ describe("updateEventListmonkList", () => {
       },
     ])
     mockAddSubscriber.mockResolvedValue({ success: true, data: undefined, errors: [] })
-    mockSqlExecute.mockResolvedValue({ rows: [] })
 
     const result = await updateEventListmonkList("event-123")
 
@@ -389,7 +386,7 @@ describe("updateEventListmonkList", () => {
     expect(mockAddSubscriber).toHaveBeenCalled()
   })
 
-  it("should update listmonk_list_synced_at timestamp via SQL", async () => {
+  it("should update listmonk_list_synced_at timestamp via Kysely updateTable", async () => {
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
       title: "Test Event",
@@ -402,11 +399,10 @@ describe("updateEventListmonkList", () => {
       errors: [],
     })
     mockExecute.mockResolvedValue([])
-    mockSqlExecute.mockResolvedValue({ rows: [] })
 
     await updateEventListmonkList("event-123")
 
-    expect(mockSqlExecute).toHaveBeenCalled()
+    expect(mockExecute).toHaveBeenCalled()
   })
 })
 
@@ -427,11 +423,9 @@ describe("getEventListStaleness", () => {
       listmonk_list_id: 456,
       listmonk_list_synced_at: syncTime.toISOString(),
     })
-    mockSqlExecute.mockResolvedValue({
-      rows: [{
-        max_updated_at: new Date("2024-01-10T00:00:00Z"),
-        count: 0,
-      }],
+    mockExecuteTakeFirst.mockResolvedValue({
+      max_updated_at: new Date("2024-01-10T00:00:00Z"),
+      count: 0,
     })
 
     const result = await getEventListStaleness("event-123")
@@ -451,11 +445,9 @@ describe("getEventListStaleness", () => {
       listmonk_list_id: 456,
       listmonk_list_synced_at: syncTime.toISOString(),
     })
-    mockSqlExecute.mockResolvedValue({
-      rows: [{
-        max_updated_at: new Date("2024-01-20T00:00:00Z"),
-        count: 3,
-      }],
+    mockExecuteTakeFirst.mockResolvedValue({
+      max_updated_at: new Date("2024-01-20T00:00:00Z"),
+      count: 3,
     })
 
     const result = await getEventListStaleness("event-123")
@@ -491,11 +483,9 @@ describe("getEventListStaleness", () => {
       listmonk_list_id: 456,
       listmonk_list_synced_at: syncTime.toISOString(),
     })
-    mockSqlExecute.mockResolvedValue({
-      rows: [{
-        max_updated_at: null,
-        count: 0,
-      }],
+    mockExecuteTakeFirst.mockResolvedValue({
+      max_updated_at: null,
+      count: 0,
     })
 
     const result = await getEventListStaleness("event-123")
