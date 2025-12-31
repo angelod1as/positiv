@@ -52,7 +52,7 @@ async function getSubscriberByEmail(email: string) {
   const { listmonkApiUrl, headers } = getListmonkConfig()
 
   const response = await fetch(
-    `${listmonkApiUrl}/api/subscribers?query=subscribers.email='${email}'`,
+    `${listmonkApiUrl}/api/subscribers?query=subscribers.email='${encodeURIComponent(email)}'`,
     { headers }
   )
 
