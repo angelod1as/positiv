@@ -22,7 +22,7 @@ interface ListmonkSearchResponse {
   }
 }
 
-function getListmonkConfig() {
+export function getListmonkConfig() {
   const { listmonkApiUrl, listmonkApiUsername, listmonkApiPassword } = env()
 
   if (!listmonkApiUrl || !listmonkApiUsername || !listmonkApiPassword) {
@@ -110,6 +110,34 @@ async function addSubscriberToLists(
     const errorBody = await response.text().catch(() => "Unable to read error body")
     throw new Error(
       `Failed to add subscriber to lists: ${response.status} ${response.statusText}. Response: ${errorBody}`
+    )
+  }
+}
+
+export async function removeSubscriberFromList(
+  subscriberId: number,
+  listId: number
+): Promise<void> {
+  if (process.env.E2E_MODE === "true") {
+    return
+  }
+
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+
+  const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({
+      ids: [subscriberId],
+      action: "remove",
+      target_list_ids: [listId],
+    }),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
+    throw new Error(
+      `Failed to remove subscriber from list: ${response.status} ${response.statusText}. Response: ${errorBody}`
     )
   }
 }

@@ -183,6 +183,7 @@ export type Database = {
           referrals: string | null
           referred: string
           spot_type: Database["public"]["Enums"]["spot_type"]
+          updated_at: string
         }
         Insert: {
           admin_general_notes?: string | null
@@ -203,6 +204,7 @@ export type Database = {
           referrals?: string | null
           referred?: string
           spot_type?: Database["public"]["Enums"]["spot_type"]
+          updated_at?: string
         }
         Update: {
           admin_general_notes?: string | null
@@ -223,6 +225,7 @@ export type Database = {
           referrals?: string | null
           referred?: string
           spot_type?: Database["public"]["Enums"]["spot_type"]
+          updated_at?: string
         }
         Relationships: [
           {
@@ -250,6 +253,8 @@ export type Database = {
           event_status: Database["public"]["Enums"]["event_status"]
           event_type: Database["public"]["Enums"]["event_type_enum"]
           id: string
+          listmonk_list_id: number | null
+          listmonk_list_synced_at: string | null
           location: string | null
           ticket_price: number | null
           time_application_end: string | null
@@ -273,6 +278,8 @@ export type Database = {
           event_status?: Database["public"]["Enums"]["event_status"]
           event_type?: Database["public"]["Enums"]["event_type_enum"]
           id?: string
+          listmonk_list_id?: number | null
+          listmonk_list_synced_at?: string | null
           location?: string | null
           ticket_price?: number | null
           time_application_end?: string | null
@@ -296,6 +303,8 @@ export type Database = {
           event_status?: Database["public"]["Enums"]["event_status"]
           event_type?: Database["public"]["Enums"]["event_type_enum"]
           id?: string
+          listmonk_list_id?: number | null
+          listmonk_list_synced_at?: string | null
           location?: string | null
           ticket_price?: number | null
           time_application_end?: string | null
@@ -477,7 +486,6 @@ export type Database = {
         Args: { p_role_name: string; p_user_id: string }
         Returns: undefined
       }
-      bytea_to_text: { Args: { data: string }; Returns: string }
       get_admin_user_ids: { Args: never; Returns: string[] }
       get_profile_with_roles: {
         Args: { user_id_input: string }
@@ -504,147 +512,7 @@ export type Database = {
         }[]
       }
       get_vault_secret: { Args: { secret_name: string }; Returns: string }
-      http: {
-        Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "http_request"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_delete:
-        | {
-            Args: { uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { content: string; content_type: string; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-      http_get:
-        | {
-            Args: { uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { data: Json; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-      http_head: {
-        Args: { uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "*"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_header: {
-        Args: { field: string; value: string }
-        Returns: Database["public"]["CompositeTypes"]["http_header"]
-        SetofOptions: {
-          from: "*"
-          to: "http_header"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_list_curlopt: {
-        Args: never
-        Returns: {
-          curlopt: string
-          value: string
-        }[]
-      }
-      http_patch: {
-        Args: { content: string; content_type: string; uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "*"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_post:
-        | {
-            Args: { content: string; content_type: string; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { data: Json; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-      http_put: {
-        Args: { content: string; content_type: string; uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "*"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_reset_curlopt: { Args: never; Returns: boolean }
-      http_set_curlopt: {
-        Args: { curlopt: string; value: string }
-        Returns: boolean
-      }
-      text_to_bytea: { Args: { data: string }; Returns: string }
       update_event_statuses_automatically: { Args: never; Returns: Json }
-      urlencode:
-        | { Args: { data: Json }; Returns: string }
-        | {
-            Args: { string: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { string: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
     }
     Enums: {
       application_status_enum:
@@ -677,23 +545,7 @@ export type Database = {
       spot_type: "regular" | "social" | "staff"
     }
     CompositeTypes: {
-      http_header: {
-        field: string | null
-        value: string | null
-      }
-      http_request: {
-        method: unknown
-        uri: string | null
-        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
-        content_type: string | null
-        content: string | null
-      }
-      http_response: {
-        status: number | null
-        content_type: string | null
-        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
-        content: string | null
-      }
+      [_ in never]: never
     }
   }
 }

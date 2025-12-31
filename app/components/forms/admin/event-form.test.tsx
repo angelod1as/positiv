@@ -183,6 +183,8 @@ describe("EventForm", () => {
       time_group_end: null,
       time_payment_start: null,
       time_payment_end: null,
+      listmonk_list_id: null,
+      listmonk_list_synced_at: null,
     }
 
     it("populates form fields with existing event data", () => {
