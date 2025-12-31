@@ -155,7 +155,7 @@ describe("createEventListmonkList", () => {
         approved_to_attend: "pending",
       },
     ])
-    mockAddSubscriber.mockResolvedValue({ success: true, data: undefined, errors: [] })
+    mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
 
     const result = await createEventListmonkList("event-123")
 
@@ -181,7 +181,7 @@ describe("createEventListmonkList", () => {
         approved_to_attend: "approved",
       },
     ])
-    mockAddSubscriber.mockResolvedValue({ success: true, data: undefined, errors: [] })
+    mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
 
     const result = await createEventListmonkList("event-123")
 
@@ -246,7 +246,7 @@ describe("createEventListmonkList", () => {
       },
     ])
     mockAddSubscriber
-      .mockResolvedValueOnce({ success: true, data: undefined, errors: [] })
+      .mockResolvedValueOnce({ success: true, data: { subscriberId: 123 }, errors: [] })
       .mockResolvedValueOnce({ success: false, errors: [{ name: "Error", message: "Failed" }] } as Awaited<ReturnType<typeof addSubscriber>>)
 
     const result = await createEventListmonkList("event-123")
@@ -385,7 +385,7 @@ describe("updateEventListmonkList", () => {
         approved_to_attend: "approved",
       },
     ])
-    mockAddSubscriber.mockResolvedValue({ success: true, data: undefined, errors: [] })
+    mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
 
     const result = await updateEventListmonkList("event-123")
 
@@ -423,7 +423,7 @@ describe("updateEventListmonkList", () => {
         approved_to_attend: "approved",
       },
     ])
-    mockAddSubscriber.mockResolvedValue({ success: true, data: undefined, errors: [] })
+    mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
 
     const result = await updateEventListmonkList("event-123")
 
