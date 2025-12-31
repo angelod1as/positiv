@@ -104,6 +104,16 @@ export const createEventListmonkList = composable(
   async (eventId: string): Promise<SyncResult> => {
     const event = await getEventById(eventId)
 
+    if (event.listmonk_list_id) {
+      const result = await updateEventListmonkList(eventId)
+      if (!result.success || !result.data) {
+        throw new Error(
+          result.errors?.[0]?.message || "Failed to sync existing Listmonk list"
+        )
+      }
+      return result.data
+    }
+
     const listResult = await createList({
       name: `Inscrites - ${event.title ?? "Evento sem título"}`,
       type: "private",
@@ -139,8 +149,16 @@ export const deleteEventListmonkList = composable(
   async (eventId: string): Promise<void> => {
     const event = await getEventById(eventId)
 
-    if (event.listmonk_list_id) {
-      await deleteList(event.listmonk_list_id)
+    if (!event.listmonk_list_id) {
+      await updateEventListmonkFields(eventId, null, null)
+      return
+    }
+
+    const deleteResult = await deleteList(event.listmonk_list_id)
+    if (!deleteResult.success) {
+      throw new Error(
+        deleteResult.errors?.[0]?.message || "Failed to delete Listmonk list"
+      )
     }
 
     await updateEventListmonkFields(eventId, null, null)
