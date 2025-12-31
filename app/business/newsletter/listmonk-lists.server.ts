@@ -23,6 +23,20 @@ export interface CreateListParams {
 
 export const createList = composable(
   async (params: CreateListParams): Promise<ListmonkList> => {
+    if (process.env.E2E_MODE === "true") {
+      return {
+        id: -1,
+        uuid: "e2e-mock-uuid",
+        name: params.name,
+        type: params.type,
+        optin: params.optin,
+        tags: params.tags || [],
+        subscriber_count: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    }
+
     const { listmonkApiUrl, headers } = getListmonkConfig()
 
     const body: Record<string, unknown> = {
@@ -59,8 +73,13 @@ export const createList = composable(
   }
 )
 
-export const deleteList = composable(async (listId: number): Promise<void> => {
-  const { listmonkApiUrl, headers } = getListmonkConfig()
+export const deleteList = composable(
+  async (listId: number, options?: { force?: boolean }): Promise<void> => {
+    if (!options?.force && process.env.E2E_MODE === "true") {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
 
   const response = await fetch(`${listmonkApiUrl}/api/lists/${listId}`, {
     method: "DELETE",
@@ -83,6 +102,10 @@ export const deleteList = composable(async (listId: number): Promise<void> => {
 
 export const getListById = composable(
   async (listId: number): Promise<ListmonkList | null> => {
+    if (process.env.E2E_MODE === "true") {
+      return null
+    }
+
     const { listmonkApiUrl, headers } = getListmonkConfig()
 
     const response = await fetch(`${listmonkApiUrl}/api/lists/${listId}`, {
