@@ -1,18 +1,13 @@
 import { composable } from "composable-functions"
-import { sql } from "kysely"
 import { kysely } from "~/kysely"
-import { createList, deleteList, getListById } from "../newsletter/listmonk-lists.server"
-import { addSubscriber } from "../newsletter/listmonk-client.server"
+import { createList, deleteList, getListById, getListSubscribers } from "../newsletter/listmonk-lists.server"
+import { addSubscriber, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
 
 export interface SyncResult {
   listId: number
   subscribersAdded: number
   subscribersFailed: number
-}
-
-export interface StalenessResult {
-  isStale: boolean
-  staleParticipantCount: number
+  subscribersRemoved: number
 }
 
 interface EventWithListmonk {
@@ -141,6 +136,7 @@ export const createEventListmonkList = composable(
       listId,
       subscribersAdded,
       subscribersFailed,
+      subscribersRemoved: 0,
     }
   }
 )
@@ -164,6 +160,36 @@ export const deleteEventListmonkList = composable(
     await updateEventListmonkFields(eventId, null, null)
   }
 )
+
+async function removeIneligibleSubscribers(
+  listId: number,
+  eligibleEmails: Set<string>
+): Promise<number> {
+  const subscribersResult = await getListSubscribers(listId)
+
+  if (!subscribersResult.success || !subscribersResult.data) {
+    return 0
+  }
+
+  const currentSubscribers = subscribersResult.data
+  let removedCount = 0
+
+  for (const subscriber of currentSubscribers) {
+    if (!eligibleEmails.has(subscriber.email.toLowerCase())) {
+      try {
+        await removeSubscriberFromList(subscriber.id, listId)
+        removedCount++
+      } catch (error) {
+        console.error(
+          `Failed to remove subscriber ${subscriber.email} from list ${listId}:`,
+          error
+        )
+      }
+    }
+  }
+
+  return removedCount
+}
 
 export const updateEventListmonkList = composable(
   async (eventId: string): Promise<SyncResult> => {
@@ -198,6 +224,14 @@ export const updateEventListmonkList = composable(
     }
 
     const participants = await getNonRejectedParticipants(eventId)
+    const eligibleEmails = new Set(
+      participants.map((p) => p.email.toLowerCase())
+    )
+
+    const subscribersRemoved = await removeIneligibleSubscribers(
+      event.listmonk_list_id,
+      eligibleEmails
+    )
 
     const { subscribersAdded, subscribersFailed } = await addParticipantsToList(
       participants,
@@ -210,50 +244,8 @@ export const updateEventListmonkList = composable(
       listId: event.listmonk_list_id,
       subscribersAdded,
       subscribersFailed,
+      subscribersRemoved,
     }
   }
 )
 
-export const getEventListStaleness = composable(
-  async (eventId: string): Promise<StalenessResult> => {
-    const event = await getEventById(eventId)
-
-    if (!event.listmonk_list_synced_at) {
-      return {
-        isStale: false,
-        staleParticipantCount: 0,
-      }
-    }
-
-    const syncTime = new Date(event.listmonk_list_synced_at)
-
-    const result = await kysely
-      .selectFrom("event_participants as ep")
-      .innerJoin("profiles as p", "ep.profile_id", "p.id")
-      .where("ep.event_id", "=", eventId)
-      .where("p.approved_to_attend", "!=", "rejected")
-      .select((eb) => [
-        eb.fn.max("ep.updated_at").as("max_updated_at"),
-        sql<number>`COUNT(CASE WHEN ep.updated_at > ${syncTime} THEN 1 END)::int`.as(
-          "count"
-        ),
-      ])
-      .executeTakeFirst()
-
-    if (!result || !result.max_updated_at) {
-      return {
-        isStale: false,
-        staleParticipantCount: 0,
-      }
-    }
-
-    const maxUpdatedAt = new Date(result.max_updated_at)
-    const isStale = maxUpdatedAt > syncTime
-    const staleParticipantCount = result.count || 0
-
-    return {
-      isStale,
-      staleParticipantCount,
-    }
-  }
-)

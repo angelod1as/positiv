@@ -1,5 +1,5 @@
 import { inputFromForm } from "composable-functions"
-import { Suspense, useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { Await, useFetcher } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
@@ -13,10 +13,7 @@ import {
   updateEventStatus,
   updateEventDemographics,
 } from "~/business/admin/admin.server"
-import {
-  getEventListStaleness,
-  updateEventListmonkList,
-} from "~/business/admin/event-listmonk-sync.server"
+import { updateEventListmonkList } from "~/business/admin/event-listmonk-sync.server"
 import {
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
@@ -116,24 +113,32 @@ export async function loader({ params }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
-  const listStaleness = await getEventListStaleness(eventId)
-
   return {
     event,
     participants: loadParticipants(eventId),
     demographics: demographics?.success ? demographics.data : undefined,
-    isListStale: listStaleness.success ? listStaleness.data?.isStale ?? false : false,
   }
 }
 
 const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
   const fetcher = useFetcher<ComposableFetcherData>()
+  const [isListStale, setIsListStale] = useState(false)
 
   useEffect(() => {
     sendToast(fetcher.data)
+
+    if (!fetcher.data) return
+
+    if (fetcher.data.intent === "update-event-participant" && fetcher.data.success) {
+      setIsListStale(true)
+    }
+
+    if (fetcher.data.intent === "sync-listmonk-list" && fetcher.data.success) {
+      setIsListStale(false)
+    }
   }, [fetcher.data])
 
-  const { event, participants, demographics, isListStale } = loaderData
+  const { event, participants, demographics } = loaderData
 
   const { title, emoji, time_event_start } = event
 

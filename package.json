@@ -20,7 +20,6 @@
     "types": "pnpm db:types",
     "db:types": "./scripts/db-types.sh",
     "email:test": "./scripts/testmail.sh",
-    "listmonk:setup-test-users": "tsx scripts/setup-listmonk-test-users.ts",
     "worktree": "./scripts/create-worktree.sh",
     "perf:baseline": "tsx scripts/lighthouse/run-baseline.ts",
     "prepare": "husky"

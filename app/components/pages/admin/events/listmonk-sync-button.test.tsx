@@ -1,41 +1,52 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi, beforeEach } from "vitest"
+import type { FetcherWithComponents } from "react-router"
 import { ListmonkSyncButton } from "./listmonk-sync-button"
+import type { ComposableFetcherData } from "~types/database/entities.types"
 
-vi.mock("react-router", () => ({
-  useFetcher: () => ({
+function createMockFetcher(state: "idle" | "submitting" | "loading" = "idle") {
+  return {
     Form: ({ children, ...props }: { children: React.ReactNode }) => (
       <form {...props}>{children}</form>
     ),
-    state: "idle",
-  }),
-}))
+    state,
+    data: undefined,
+    formData: undefined,
+    formMethod: undefined,
+    formAction: undefined,
+    formEncType: undefined,
+    submit: vi.fn(),
+    load: vi.fn(),
+  } as unknown as FetcherWithComponents<ComposableFetcherData>
+}
 
 describe("ListmonkSyncButton", () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it("should render 'Criar Lista' when no list exists", () => {
+  it("should render 'Criar lista da newsletter' when no list exists", () => {
     render(
       <ListmonkSyncButton
         listmonkListId={null}
         isStale={false}
+        fetcher={createMockFetcher()}
       />
     )
 
-    expect(screen.getByRole("button", { name: /criar lista/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /criar lista da newsletter/i })).toBeInTheDocument()
   })
 
-  it("should render 'Atualizar Lista' when list exists", () => {
+  it("should render 'Atualizar lista da newsletter' when list exists", () => {
     render(
       <ListmonkSyncButton
         listmonkListId={123}
         isStale={false}
+        fetcher={createMockFetcher()}
       />
     )
 
-    expect(screen.getByRole("button", { name: /atualizar lista/i })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: /atualizar lista da newsletter/i })).toBeInTheDocument()
   })
 
   it("should show warning icon when list is stale", () => {
@@ -43,6 +54,7 @@ describe("ListmonkSyncButton", () => {
       <ListmonkSyncButton
         listmonkListId={123}
         isStale={true}
+        fetcher={createMockFetcher()}
       />
     )
 
@@ -54,6 +66,7 @@ describe("ListmonkSyncButton", () => {
       <ListmonkSyncButton
         listmonkListId={123}
         isStale={false}
+        fetcher={createMockFetcher()}
       />
     )
 
@@ -65,10 +78,37 @@ describe("ListmonkSyncButton", () => {
       <ListmonkSyncButton
         listmonkListId={null}
         isStale={false}
+        fetcher={createMockFetcher()}
       />
     )
 
     const intentInput = document.querySelector('input[name="intent"]')
     expect(intentInput).toHaveValue("sync-listmonk-list")
+  })
+
+  it("should show 'Atualizando...' when submitting with existing list", () => {
+    render(
+      <ListmonkSyncButton
+        listmonkListId={123}
+        isStale={false}
+        fetcher={createMockFetcher("submitting")}
+      />
+    )
+
+    expect(screen.getByRole("button", { name: /atualizando.../i })).toBeInTheDocument()
+    expect(screen.getByRole("button")).toBeDisabled()
+  })
+
+  it("should show 'Criando...' when submitting without existing list", () => {
+    render(
+      <ListmonkSyncButton
+        listmonkListId={null}
+        isStale={false}
+        fetcher={createMockFetcher("submitting")}
+      />
+    )
+
+    expect(screen.getByRole("button", { name: /criando.../i })).toBeInTheDocument()
+    expect(screen.getByRole("button")).toBeDisabled()
   })
 })

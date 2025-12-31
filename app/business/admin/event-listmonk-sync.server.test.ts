@@ -60,25 +60,28 @@ vi.mock("../newsletter/listmonk-lists.server", () => ({
   createList: vi.fn(),
   deleteList: vi.fn(),
   getListById: vi.fn(),
+  getListSubscribers: vi.fn(),
 }))
 
 vi.mock("../newsletter/listmonk-client.server", () => ({
   addSubscriber: vi.fn(),
+  removeSubscriberFromList: vi.fn(),
 }))
 
 import {
   createEventListmonkList,
   deleteEventListmonkList,
   updateEventListmonkList,
-  getEventListStaleness,
 } from "./event-listmonk-sync.server"
-import { createList, deleteList, getListById } from "../newsletter/listmonk-lists.server"
-import { addSubscriber } from "../newsletter/listmonk-client.server"
+import { createList, deleteList, getListById, getListSubscribers } from "../newsletter/listmonk-lists.server"
+import { addSubscriber, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
 
 const mockCreateList = vi.mocked(createList)
 const mockDeleteList = vi.mocked(deleteList)
 const mockGetListById = vi.mocked(getListById)
+const mockGetListSubscribers = vi.mocked(getListSubscribers)
 const mockAddSubscriber = vi.mocked(addSubscriber)
+const mockRemoveSubscriberFromList = vi.mocked(removeSubscriberFromList)
 
 function createMockListmonkList(overrides: Partial<ListmonkList> = {}): ListmonkList {
   return {
@@ -368,6 +371,11 @@ describe("updateEventListmonkList", () => {
       data: createMockListmonkList(),
       errors: [],
     })
+    mockGetListSubscribers.mockResolvedValue({
+      success: true,
+      data: [],
+      errors: [],
+    })
     mockExecute.mockResolvedValue([
       {
         profile_id: "profile-1",
@@ -386,6 +394,46 @@ describe("updateEventListmonkList", () => {
     expect(mockAddSubscriber).toHaveBeenCalled()
   })
 
+  it("should remove subscribers who are no longer eligible", async () => {
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: 456,
+      listmonk_list_synced_at: "2024-01-01T00:00:00Z",
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: createMockListmonkList(),
+      errors: [],
+    })
+    mockGetListSubscribers.mockResolvedValue({
+      success: true,
+      data: [
+        { id: 100, email: "rejected@example.com", name: "Rejected User", status: "confirmed" },
+        { id: 101, email: "user1@example.com", name: "User One", status: "confirmed" },
+      ],
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([
+      {
+        profile_id: "profile-1",
+        email: "user1@example.com",
+        social_name: "User One",
+        full_name: "User One Full",
+        approved_to_attend: "approved",
+      },
+    ])
+    mockAddSubscriber.mockResolvedValue({ success: true, data: undefined, errors: [] })
+
+    const result = await updateEventListmonkList("event-123")
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.subscribersRemoved).toBe(1)
+    }
+    expect(mockRemoveSubscriberFromList).toHaveBeenCalledWith(100, 456)
+  })
+
   it("should update listmonk_list_synced_at timestamp via Kysely updateTable", async () => {
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
@@ -398,101 +446,15 @@ describe("updateEventListmonkList", () => {
       data: createMockListmonkList(),
       errors: [],
     })
+    mockGetListSubscribers.mockResolvedValue({
+      success: true,
+      data: [],
+      errors: [],
+    })
     mockExecute.mockResolvedValue([])
 
     await updateEventListmonkList("event-123")
 
     expect(mockExecute).toHaveBeenCalled()
-  })
-})
-
-describe("getEventListStaleness", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
-  it("should return not stale when no participants were updated after sync", async () => {
-    const syncTime = new Date("2024-01-15T00:00:00Z")
-    mockExecuteTakeFirstOrThrow.mockResolvedValue({
-      id: "event-123",
-      title: "Test Event",
-      listmonk_list_id: 456,
-      listmonk_list_synced_at: syncTime.toISOString(),
-    })
-    mockExecuteTakeFirst.mockResolvedValue({
-      max_updated_at: new Date("2024-01-10T00:00:00Z"),
-      count: 0,
-    })
-
-    const result = await getEventListStaleness("event-123")
-
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.isStale).toBe(false)
-      expect(result.data.staleParticipantCount).toBe(0)
-    }
-  })
-
-  it("should return stale when participants were updated after sync", async () => {
-    const syncTime = new Date("2024-01-15T00:00:00Z")
-    mockExecuteTakeFirstOrThrow.mockResolvedValue({
-      id: "event-123",
-      title: "Test Event",
-      listmonk_list_id: 456,
-      listmonk_list_synced_at: syncTime.toISOString(),
-    })
-    mockExecuteTakeFirst.mockResolvedValue({
-      max_updated_at: new Date("2024-01-20T00:00:00Z"),
-      count: 3,
-    })
-
-    const result = await getEventListStaleness("event-123")
-
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.isStale).toBe(true)
-      expect(result.data.staleParticipantCount).toBe(3)
-    }
-  })
-
-  it("should return not stale when list has never been synced", async () => {
-    mockExecuteTakeFirstOrThrow.mockResolvedValue({
-      id: "event-123",
-      title: "Test Event",
-      listmonk_list_id: null,
-      listmonk_list_synced_at: null,
-    })
-
-    const result = await getEventListStaleness("event-123")
-
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.isStale).toBe(false)
-    }
-  })
-
-  it("should return not stale when there are no participants", async () => {
-    const syncTime = new Date("2024-01-15T00:00:00Z")
-    mockExecuteTakeFirstOrThrow.mockResolvedValue({
-      id: "event-123",
-      title: "Test Event",
-      listmonk_list_id: 456,
-      listmonk_list_synced_at: syncTime.toISOString(),
-    })
-    mockExecuteTakeFirst.mockResolvedValue({
-      max_updated_at: null,
-      count: 0,
-    })
-
-    const result = await getEventListStaleness("event-123")
-
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.isStale).toBe(false)
-    }
   })
 })
