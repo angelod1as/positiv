@@ -17,7 +17,7 @@ type ButtonProps = {
   isListStale: boolean
   fetcher: FetcherWithComponents<ComposableFetcherData>
 }
-export const Buttons: FC<ButtonProps> = ({ event, isListStale, fetcher: _fetcher }) => {
+export const Buttons: FC<ButtonProps> = ({ event, isListStale, fetcher }) => {
   const { id, event_status, listmonk_list_id } = event
 
   return (
@@ -28,6 +28,7 @@ export const Buttons: FC<ButtonProps> = ({ event, isListStale, fetcher: _fetcher
         <ListmonkSyncButton
           listmonkListId={listmonk_list_id}
           isStale={isListStale}
+          fetcher={fetcher}
         />
       )}
     </div>

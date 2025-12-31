@@ -1,17 +1,19 @@
 import { AlertTriangleIcon, RefreshCwIcon, PlusIcon } from "lucide-react"
-import { useFetcher } from "react-router"
+import type { FetcherWithComponents } from "react-router"
 import { Button } from "~/components/atoms/button/button"
+import type { ComposableFetcherData } from "~types/database/entities.types"
 
 interface ListmonkSyncButtonProps {
   listmonkListId: number | null
   isStale: boolean
+  fetcher: FetcherWithComponents<ComposableFetcherData>
 }
 
 export function ListmonkSyncButton({
   listmonkListId,
   isStale,
+  fetcher,
 }: ListmonkSyncButtonProps) {
-  const fetcher = useFetcher()
   const hasExistingList = listmonkListId !== null
   const isSubmitting = fetcher.state !== "idle"
 
@@ -33,12 +35,12 @@ export function ListmonkSyncButton({
         {hasExistingList ? (
           <>
             <RefreshCwIcon className="h-4 w-4" />
-            {isSubmitting ? "Atualizando..." : "Atualizar Lista"}
+            {isSubmitting ? "Atualizando..." : "Atualizar lista da newsletter"}
           </>
         ) : (
           <>
             <PlusIcon className="h-4 w-4" />
-            {isSubmitting ? "Criando..." : "Criar Lista"}
+            {isSubmitting ? "Criando..." : "Criar lista da newsletter"}
           </>
         )}
       </Button>
