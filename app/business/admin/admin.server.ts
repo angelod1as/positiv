@@ -21,8 +21,8 @@ import {
   updateParticipantVsEventSchema,
 } from "./common"
 import {
-  createEventListmonkList,
   deleteEventListmonkList,
+  updateEventListmonkList,
 } from "./event-listmonk-sync.server"
 
 export const getAdminContext = async (
@@ -352,16 +352,22 @@ export const updateEventStatus = applySchema(
   // and we don't want it to block or fail the status update
   if (transactionResult) {
     if (values.event_status === "Registration Closed") {
-      const syncResult = await createEventListmonkList(eventId)
+      const syncResult = await updateEventListmonkList(eventId)
       if (!syncResult.success) {
-        console.error("Failed to create Listmonk list:", syncResult.errors)
+        console.error("Failed to sync Listmonk list:", {
+          eventId,
+          errors: syncResult.errors,
+        })
       }
     } else if (values.event_status === "Cancelled") {
       // Only delete immediately for Cancelled events
       // Completed events have their lists deleted via cron job after time_group_end
       const syncResult = await deleteEventListmonkList(eventId)
       if (!syncResult.success) {
-        console.error("Failed to delete Listmonk list:", syncResult.errors)
+        console.error("Failed to delete Listmonk list:", {
+          eventId,
+          errors: syncResult.errors,
+        })
       }
     }
   }
