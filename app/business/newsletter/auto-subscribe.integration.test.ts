@@ -67,6 +67,7 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
       expect(subscription?.consent_given).toBe(true)
       expect(subscription?.sync_status).toBe("synced")
       expect(subscription?.subscription_source).toBe("onboarding_auto")
+      expect(subscription?.listmonk_subscriber_id).toBe(123)
     })
 
     it("should compute name from full_name when social_name is null", async () => {
