@@ -1,5 +1,5 @@
 import { inputFromForm } from "composable-functions"
-import { Suspense, useEffect } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { Await, useFetcher } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
@@ -13,6 +13,7 @@ import {
   updateEventStatus,
   updateEventDemographics,
 } from "~/business/admin/admin.server"
+import { updateEventListmonkList } from "~/business/admin/event-listmonk-sync.server"
 import {
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
@@ -67,6 +68,22 @@ export async function action({ request, params }: Route.ActionArgs) {
       transformResult: (result) => ({ ...result, intent }),
     })
   }
+
+  if (intent === "sync-listmonk-list") {
+    const eventId = params.id
+    if (!eventId) {
+      return { success: false, errors: [{ message: "Event ID not found" }], intent }
+    }
+
+    const result = await updateEventListmonkList(eventId)
+    return { ...result, intent }
+  }
+
+  return {
+    success: false,
+    errors: [{ message: "Unknown intent" }],
+    intent,
+  }
 }
 
 async function loadParticipants(eventId: string) {
@@ -105,9 +122,20 @@ export async function loader({ params }: Route.LoaderArgs) {
 
 const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
   const fetcher = useFetcher<ComposableFetcherData>()
+  const [isListStale, setIsListStale] = useState(false)
 
   useEffect(() => {
     sendToast(fetcher.data)
+
+    if (!fetcher.data) return
+
+    if (fetcher.data.intent === "update-event-participant" && fetcher.data.success) {
+      setIsListStale(true)
+    }
+
+    if (fetcher.data.intent === "sync-listmonk-list" && fetcher.data.success) {
+      setIsListStale(false)
+    }
   }, [fetcher.data])
 
   const { event, participants, demographics } = loaderData
@@ -119,7 +147,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       <h1>
         {emoji} {title}
       </h1>
-      <Buttons event={event} fetcher={fetcher} />
+      <Buttons event={event} isListStale={isListStale} fetcher={fetcher} />
 
       <p className="font-bold">
         Data: {formatDateTime(time_event_start, "long").full}

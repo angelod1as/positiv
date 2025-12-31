@@ -3,6 +3,7 @@ import type { Database } from '../../app/types/database/database.types'
 import { TEST_USERS } from '../fixtures/test-users'
 import { TEST_USER_PROFILE_DATA } from '../fixtures/test-data'
 import { removeSubscriber } from '../../app/business/newsletter/listmonk-client.server'
+import { deleteList } from '../../app/business/newsletter/listmonk-lists.server'
 
 // Custom error class for database cleanup operations
 export class CleanupError extends Error {
@@ -228,13 +229,13 @@ export async function cleanupAllTestUsers(): Promise<void> {
 
 export async function cleanupTestEvents(): Promise<void> {
   const supabase = createSupabaseAdminClient()
-  
+
   // Delete only events with the specific E2E test prefix - don't delete seed events
   const { data: testEvents, error: fetchError } = await supabase
     .from('events')
-    .select('id, title')
+    .select('id, title, listmonk_list_id')
     .ilike('title', '[E2E-TEST]%')
-  
+
   if (fetchError) {
     throw new CleanupError(
       'Failed to fetch test events for cleanup',
@@ -242,11 +243,34 @@ export async function cleanupTestEvents(): Promise<void> {
       fetchError
     )
   }
-  
+
   if (!testEvents || testEvents.length === 0) {
     return
   }
-  
+
+  // Delete Listmonk lists first (before removing events from DB)
+  // Skip mock list IDs (<=0) which are created in E2E_MODE
+  // Also skip protected seed list IDs (3, 4, 5) which are permanent fixtures
+  const PROTECTED_LIST_IDS = [3, 4, 5]
+  const eventsWithLists = testEvents.filter(
+    (e): e is typeof e & { listmonk_list_id: number } =>
+      e.listmonk_list_id != null &&
+      e.listmonk_list_id > 0 &&
+      !PROTECTED_LIST_IDS.includes(e.listmonk_list_id)
+  )
+  for (const event of eventsWithLists) {
+    const result = await deleteList(event.listmonk_list_id, { force: true })
+    if (!result.success) {
+      console.warn(
+        `[Non-critical] Failed to delete Listmonk list ${event.listmonk_list_id} for event "${event.title}":`,
+        result.errors
+      )
+    }
+  }
+  if (eventsWithLists.length > 0) {
+    console.info(`✅ Cleaned up ${eventsWithLists.length} Listmonk lists`)
+  }
+
   // Delete associated event participants first (due to foreign key constraints)
   const eventIds = testEvents.map(event => event.id)
   let hasErrors = false

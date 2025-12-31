@@ -65,7 +65,9 @@ describe('AdminDashboardEventsTable', () => {
       time_presentations_end: null,
       time_presentations_start: null,
       time_payment_end: null,
-      time_payment_start: null
+      time_payment_start: null,
+      listmonk_list_id: null,
+      listmonk_list_synced_at: null
     } as Event,
     {
       id: '2',
@@ -90,7 +92,9 @@ describe('AdminDashboardEventsTable', () => {
       time_presentations_end: null,
       time_presentations_start: null,
       time_payment_end: null,
-      time_payment_start: null
+      time_payment_start: null,
+      listmonk_list_id: null,
+      listmonk_list_synced_at: null
     } as Event,
     {
       id: '3',
@@ -115,7 +119,9 @@ describe('AdminDashboardEventsTable', () => {
       time_presentations_end: null,
       time_presentations_start: null,
       time_payment_end: null,
-      time_payment_start: null
+      time_payment_start: null,
+      listmonk_list_id: null,
+      listmonk_list_synced_at: null
     } as Event,
     {
       id: '4',
@@ -140,7 +146,9 @@ describe('AdminDashboardEventsTable', () => {
       time_presentations_end: null,
       time_presentations_start: null,
       time_payment_end: null,
-      time_payment_start: null
+      time_payment_start: null,
+      listmonk_list_id: null,
+      listmonk_list_synced_at: null
     } as Event,
     {
       id: '5',
@@ -165,7 +173,9 @@ describe('AdminDashboardEventsTable', () => {
       time_presentations_end: null,
       time_presentations_start: null,
       time_payment_end: null,
-      time_payment_start: null
+      time_payment_start: null,
+      listmonk_list_id: null,
+      listmonk_list_synced_at: null
     } as Event,
     {
       id: '6',
@@ -190,7 +200,9 @@ describe('AdminDashboardEventsTable', () => {
       time_presentations_end: null,
       time_presentations_start: null,
       time_payment_end: null,
-      time_payment_start: null
+      time_payment_start: null,
+      listmonk_list_id: null,
+      listmonk_list_synced_at: null
     } as Event
   ]
 

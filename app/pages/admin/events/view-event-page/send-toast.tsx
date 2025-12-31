@@ -40,6 +40,13 @@ export const sendToast = (fetcherData: ComposableFetcherData) => {
     return toast.success("Demografia atualizada com sucesso")
   }
 
+  if (fetcherData.intent === "sync-listmonk-list") {
+    if (!fetcherData.success) {
+      return toast.error("Erro ao atualizar lista da newsletter")
+    }
+    return toast.success("Lista da newsletter atualizada com sucesso")
+  }
+
   return toast.info(
     "A função foi executada mas não há um intent configurado para mostrar uma mensagem compatível",
   )
