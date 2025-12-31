@@ -11,7 +11,13 @@ import { kysely } from "~/kysely"
 export async function action({ request }: ActionFunctionArgs) {
   // Verify request is from authorized internal source using secret token
   const authHeader = request.headers.get("Authorization")
-  const expectedToken = `Bearer ${process.env.INTERNAL_JOB_SECRET}`
+  const secret = process.env.INTERNAL_JOB_SECRET
+
+  if (!secret) {
+    return Response.json({ error: "Server misconfigured" }, { status: 500 })
+  }
+
+  const expectedToken = `Bearer ${secret}`
 
   if (!authHeader || authHeader !== expectedToken) {
     return Response.json({ error: "Unauthorized" }, { status: 401 })
