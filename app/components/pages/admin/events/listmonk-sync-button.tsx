@@ -15,7 +15,9 @@ export function ListmonkSyncButton({
   fetcher,
 }: ListmonkSyncButtonProps) {
   const hasExistingList = listmonkListId !== null
-  const isSubmitting = fetcher.state !== "idle"
+  const isSubmitting =
+    fetcher.state !== "idle" &&
+    fetcher.formData?.get("intent") === "sync-listmonk-list"
 
   return (
     <fetcher.Form method="post">
