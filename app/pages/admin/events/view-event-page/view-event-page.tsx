@@ -81,6 +81,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     const result = await updateEventListmonkList(eventId)
     return { ...result, intent }
   }
+
+  return {
+    success: false,
+    errors: [{ message: "Unknown intent" }],
+    intent,
+  }
 }
 
 async function loadParticipants(eventId: string) {
