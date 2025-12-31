@@ -13,15 +13,12 @@ const {
 } = paths
 
 type ButtonProps = {
-  event: Event & {
-    listmonk_list_id?: number | null
-  }
+  event: Event
   isListStale: boolean
   fetcher: FetcherWithComponents<ComposableFetcherData>
 }
 export const Buttons: FC<ButtonProps> = ({ event, isListStale, fetcher: _fetcher }) => {
-  const { id, event_status } = event
-  const listmonkListId = (event as { listmonk_list_id?: number | null }).listmonk_list_id ?? null
+  const { id, event_status, listmonk_list_id } = event
 
   return (
     <div className="flex gap-2 mb-4 items-center">
@@ -29,7 +26,7 @@ export const Buttons: FC<ButtonProps> = ({ event, isListStale, fetcher: _fetcher
       <Button to={ADMIN_DOWNLOAD_EVENT(id)}>Baixar dados</Button>
       {event_status !== "Draft" && (
         <ListmonkSyncButton
-          listmonkListId={listmonkListId}
+          listmonkListId={listmonk_list_id}
           isStale={isListStale}
         />
       )}
