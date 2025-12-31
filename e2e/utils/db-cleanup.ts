@@ -249,13 +249,22 @@ export async function cleanupTestEvents(): Promise<void> {
   }
 
   // Delete Listmonk lists first (before removing events from DB)
+  // Skip mock list IDs (<=0) which are created in E2E_MODE
+  // Also skip protected seed list IDs (3, 4, 5) which are permanent fixtures
+  const PROTECTED_LIST_IDS = [3, 4, 5]
   const eventsWithLists = testEvents.filter(
-    (e): e is typeof e & { listmonk_list_id: number } => e.listmonk_list_id != null
+    (e): e is typeof e & { listmonk_list_id: number } =>
+      e.listmonk_list_id != null &&
+      e.listmonk_list_id > 0 &&
+      !PROTECTED_LIST_IDS.includes(e.listmonk_list_id)
   )
   for (const event of eventsWithLists) {
     const result = await deleteList(event.listmonk_list_id, { force: true })
     if (!result.success) {
-      console.warn(`[Non-critical] Failed to delete Listmonk list ${event.listmonk_list_id} for event "${event.title}":`, result.errors)
+      console.warn(
+        `[Non-critical] Failed to delete Listmonk list ${event.listmonk_list_id} for event "${event.title}":`,
+        result.errors
+      )
     }
   }
   if (eventsWithLists.length > 0) {

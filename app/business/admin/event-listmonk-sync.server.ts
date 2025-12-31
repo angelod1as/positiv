@@ -225,7 +225,10 @@ export const updateEventListmonkList = composable(
 
     const participants = await getNonRejectedParticipants(eventId)
     const eligibleEmails = new Set(
-      participants.map((p) => p.email.toLowerCase())
+      participants
+        .map((p) => p.email?.trim())
+        .filter((email): email is string => Boolean(email))
+        .map((email) => email.toLowerCase())
     )
 
     const subscribersRemoved = await removeIneligibleSubscribers(
