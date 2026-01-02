@@ -69,6 +69,10 @@ vi.mock("../newsletter/listmonk-client.server", () => ({
   removeSubscriberFromList: vi.fn(),
 }))
 
+vi.mock("../newsletter/subscription-helpers.server", () => ({
+  updateSyncStatus: vi.fn(),
+}))
+
 import {
   createEventListmonkList,
   deleteEventListmonkList,
@@ -76,6 +80,7 @@ import {
 } from "./event-listmonk-sync.server"
 import { createList, deleteList, getListById, getListSubscribers } from "../newsletter/listmonk-lists.server"
 import { addSubscriber, addSubscribersToListBulk, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
+import { updateSyncStatus } from "../newsletter/subscription-helpers.server"
 
 const mockCreateList = vi.mocked(createList)
 const mockDeleteList = vi.mocked(deleteList)
@@ -84,6 +89,7 @@ const mockGetListSubscribers = vi.mocked(getListSubscribers)
 const mockAddSubscriber = vi.mocked(addSubscriber)
 const mockAddSubscribersToListBulk = vi.mocked(addSubscribersToListBulk)
 const mockRemoveSubscriberFromList = vi.mocked(removeSubscriberFromList)
+const mockUpdateSyncStatus = vi.mocked(updateSyncStatus)
 
 function createMockListmonkList(overrides: Partial<ListmonkList> = {}): ListmonkList {
   return {
@@ -201,6 +207,30 @@ describe("createEventListmonkList", () => {
         email: "user1@example.com",
       })
     )
+  })
+
+  it("should save new subscriber IDs for future bulk operations", async () => {
+    mockCreateList.mockResolvedValue({
+      success: true,
+      data: createMockListmonkList(),
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([
+      {
+        profile_id: "profile-1",
+        email: "user1@example.com",
+        social_name: "User One",
+        full_name: "User One Full",
+        approved_to_attend: "approved",
+        listmonk_subscriber_id: null,
+      },
+    ])
+    mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 789 }, errors: [] })
+
+    const result = await createEventListmonkList("event-123")
+
+    expect(result.success).toBe(true)
+    expect(mockUpdateSyncStatus).toHaveBeenCalledWith("profile-1", "synced", 789)
   })
 
   it("should update event with listmonk_list_id via Kysely updateTable", async () => {

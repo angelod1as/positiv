@@ -2,6 +2,7 @@ import { composable } from "composable-functions"
 import { kysely } from "~/kysely"
 import { createList, deleteList, getListById, getListSubscribers } from "../newsletter/listmonk-lists.server"
 import { addSubscriber, addSubscribersToListBulk, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
+import { updateSyncStatus } from "../newsletter/subscription-helpers.server"
 
 export interface SyncResult {
   listId: number
@@ -125,8 +126,14 @@ async function addParticipantsToList(
       },
     })
 
-    if (result.success) {
+    if (result.success && result.data) {
       subscribersAdded++
+      // Save the new subscriber ID for future bulk operations
+      await updateSyncStatus(
+        participant.profile_id,
+        "synced",
+        result.data.subscriberId
+      )
     } else {
       subscribersFailed++
     }
