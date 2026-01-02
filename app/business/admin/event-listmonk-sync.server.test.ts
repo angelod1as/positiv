@@ -65,6 +65,7 @@ vi.mock("../newsletter/listmonk-lists.server", () => ({
 
 vi.mock("../newsletter/listmonk-client.server", () => ({
   addSubscriber: vi.fn(),
+  addSubscribersToListBulk: vi.fn(),
   removeSubscriberFromList: vi.fn(),
 }))
 
@@ -74,13 +75,14 @@ import {
   updateEventListmonkList,
 } from "./event-listmonk-sync.server"
 import { createList, deleteList, getListById, getListSubscribers } from "../newsletter/listmonk-lists.server"
-import { addSubscriber, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
+import { addSubscriber, addSubscribersToListBulk, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
 
 const mockCreateList = vi.mocked(createList)
 const mockDeleteList = vi.mocked(deleteList)
 const mockGetListById = vi.mocked(getListById)
 const mockGetListSubscribers = vi.mocked(getListSubscribers)
 const mockAddSubscriber = vi.mocked(addSubscriber)
+const mockAddSubscribersToListBulk = vi.mocked(addSubscribersToListBulk)
 const mockRemoveSubscriberFromList = vi.mocked(removeSubscriberFromList)
 
 function createMockListmonkList(overrides: Partial<ListmonkList> = {}): ListmonkList {
@@ -146,6 +148,7 @@ describe("createEventListmonkList", () => {
         social_name: "User One",
         full_name: "User One Full",
         approved_to_attend: "approved",
+        listmonk_subscriber_id: null,
       },
       {
         profile_id: "profile-2",
@@ -153,6 +156,7 @@ describe("createEventListmonkList", () => {
         social_name: "User Two",
         full_name: "User Two Full",
         approved_to_attend: "pending",
+        listmonk_subscriber_id: null,
       },
     ])
     mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
@@ -179,6 +183,7 @@ describe("createEventListmonkList", () => {
         social_name: "User One",
         full_name: "User One Full",
         approved_to_attend: "approved",
+        listmonk_subscriber_id: null,
       },
     ])
     mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
@@ -236,6 +241,7 @@ describe("createEventListmonkList", () => {
         social_name: "User One",
         full_name: "User One Full",
         approved_to_attend: "approved",
+        listmonk_subscriber_id: null,
       },
       {
         profile_id: "profile-2",
@@ -243,6 +249,7 @@ describe("createEventListmonkList", () => {
         social_name: "User Two",
         full_name: "User Two Full",
         approved_to_attend: "approved",
+        listmonk_subscriber_id: null,
       },
     ])
     mockAddSubscriber
@@ -383,6 +390,7 @@ describe("updateEventListmonkList", () => {
         social_name: "User One",
         full_name: "User One Full",
         approved_to_attend: "approved",
+        listmonk_subscriber_id: null,
       },
     ])
     mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
@@ -421,9 +429,10 @@ describe("updateEventListmonkList", () => {
         social_name: "User One",
         full_name: "User One Full",
         approved_to_attend: "approved",
+        listmonk_subscriber_id: 101,
       },
     ])
-    mockAddSubscriber.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
+    mockAddSubscribersToListBulk.mockResolvedValue({ success: true, data: undefined, errors: [] })
 
     const result = await updateEventListmonkList("event-123")
 
