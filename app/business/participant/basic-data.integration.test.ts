@@ -24,7 +24,7 @@ describe("Basic Data Newsletter Re-sync - Integration Tests", () => {
   describe("Newsletter re-sync when basic data is filled", () => {
     it("should re-sync newsletter with real name when profile completes basic data", async () => {
       const addSubscriberSpy = vi.spyOn(listmonkClient, "addSubscriber")
-      addSubscriberSpy.mockResolvedValue({ success: true, data: undefined, errors: [] })
+      addSubscriberSpy.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
 
       const email = "test-newsletter-resync@example.com"
 

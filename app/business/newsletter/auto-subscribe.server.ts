@@ -82,7 +82,8 @@ export const subscribeProfileToNewsletter = composable(
       return { syncStatus: "failed" as const }
     }
 
-    await updateSyncStatus(profileId, "synced")
+    const { subscriberId } = listmonkResult.data
+    await updateSyncStatus(profileId, "synced", subscriberId)
     return { syncStatus: "synced" as const }
   },
 )

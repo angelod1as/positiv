@@ -21,7 +21,7 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
   describe("Success scenarios", () => {
     it("should create subscription and call Listmonk API with all attributes when user consents", async () => {
       const addSubscriberSpy = vi.spyOn(listmonkClient, "addSubscriber")
-      addSubscriberSpy.mockResolvedValue({ success: true, data: undefined, errors: [] })
+      addSubscriberSpy.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
 
       const profile = await createTestProfile(tracker, kysely, {
         email: "test@example.com",
@@ -67,11 +67,12 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
       expect(subscription?.consent_given).toBe(true)
       expect(subscription?.sync_status).toBe("synced")
       expect(subscription?.subscription_source).toBe("onboarding_auto")
+      expect(subscription?.listmonk_subscriber_id).toBe(123)
     })
 
     it("should compute name from full_name when social_name is null", async () => {
       const addSubscriberSpy = vi.spyOn(listmonkClient, "addSubscriber")
-      addSubscriberSpy.mockResolvedValue({ success: true, data: undefined, errors: [] })
+      addSubscriberSpy.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
 
       const profile = await createTestProfile(tracker, kysely, {
         email: "test2@example.com",
@@ -91,7 +92,7 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
 
     it("should update existing subscription when profile already has one", async () => {
       const addSubscriberSpy = vi.spyOn(listmonkClient, "addSubscriber")
-      addSubscriberSpy.mockResolvedValue({ success: true, data: undefined, errors: [] })
+      addSubscriberSpy.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
 
       const profile = await createTestProfile(tracker, kysely, {
         email: "test3@example.com",
@@ -179,7 +180,7 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
   describe("Attribute computation", () => {
     it("should include all required attributes with correct types", async () => {
       const addSubscriberSpy = vi.spyOn(listmonkClient, "addSubscriber")
-      addSubscriberSpy.mockResolvedValue({ success: true, data: undefined, errors: [] })
+      addSubscriberSpy.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
 
       const profile = await createTestProfile(tracker, kysely, {
         email: "test5@example.com",
