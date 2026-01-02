@@ -18,7 +18,7 @@ export function getTestKysely(): Kysely<Database> {
     if (!connectionString) {
       throw new Error("SUPABASE_CONNECT_URL environment variable is not set")
     }
-    
+
     testKysely = new Kysely<Database>({
       dialect: new PostgresDialect({
         pool: new Pool({
@@ -57,19 +57,8 @@ export async function cleanupAfterTest(
   await cleanupTestData(tracker, kysely)
 }
 
-// Helper to create test user in auth system
-export async function createTestAuthUser(
-  email: string,
-  _password: string = "test1234"
-): Promise<{ id: string; email: string }> {
-  // This would need to use Supabase Admin API
-  // For now, we'll use existing test users from seeds
-  // In a real implementation, we'd use createSupabaseTestClient like E2E tests
-  return {
-    id: `test-user-${Date.now()}`,
-    email
-  }
-}
+// Note: For creating test auth users, use createTestAuthUser from db-test-utils.ts
+// which uses the Supabase Admin API to create real auth users.
 
 // Vitest setup hook for integration tests
 export function setupIntegrationTestHooks() {

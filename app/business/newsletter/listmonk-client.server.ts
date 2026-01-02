@@ -171,10 +171,16 @@ async function updateSubscriberAttributes(
   }
 }
 
+interface AddSubscriberResponse {
+  data: {
+    id: number
+  }
+}
+
 export const addSubscriber = composable(
-  async (params: AddSubscriberParams): Promise<void> => {
+  async (params: AddSubscriberParams): Promise<{ subscriberId: number }> => {
     if (process.env.E2E_MODE === "true") {
-      return
+      return { subscriberId: 0 }
     }
 
     const existingSubscriber = await getSubscriberByEmail(params.email)
@@ -192,6 +198,8 @@ export const addSubscriber = composable(
       const allListIds = [...new Set([...existingListIds, ...params.lists])]
 
       await addSubscriberToLists(existingSubscriber.id, allListIds)
+
+      return { subscriberId: existingSubscriber.id }
     } else {
       const { listmonkApiUrl, headers } = getListmonkConfig()
 
@@ -212,6 +220,9 @@ export const addSubscriber = composable(
           `Failed to add subscriber: ${response.status} ${response.statusText}. Response: ${errorBody}`
         )
       }
+
+      const responseData = await response.json() as AddSubscriberResponse
+      return { subscriberId: responseData.data.id }
     }
   }
 )

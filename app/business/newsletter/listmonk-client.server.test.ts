@@ -75,7 +75,7 @@ describe("addSubscriber", () => {
     vi.clearAllMocks()
   })
 
-  it("should add a subscriber with correct data", async () => {
+  it("should add a subscriber with correct data and return subscriber ID", async () => {
     fetchSpy
       .mockResolvedValueOnce({
         ok: true,
@@ -97,6 +97,9 @@ describe("addSubscriber", () => {
     })
 
     expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toEqual({ subscriberId: 123 })
+    }
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://listmonk.test/api/subscribers",
       expect.objectContaining({
@@ -154,7 +157,7 @@ describe("addSubscriber", () => {
     expect(result.success).toBe(false)
   })
 
-  it("should handle 409 Conflict by checking if subscriber exists first", async () => {
+  it("should return existing subscriber ID when subscriber already exists", async () => {
     fetchSpy
       .mockResolvedValueOnce({
         ok: true,
@@ -177,6 +180,9 @@ describe("addSubscriber", () => {
     })
 
     expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toEqual({ subscriberId: 456 })
+    }
     const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'existing@example.com' ESCAPE '\\'")
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
@@ -209,7 +215,7 @@ describe("addSubscriber", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(3)
   })
 
-  it("should create new subscriber when email does not exist", async () => {
+  it("should create new subscriber and return ID when email does not exist", async () => {
     fetchSpy
       .mockResolvedValueOnce({
         ok: true,
@@ -228,6 +234,9 @@ describe("addSubscriber", () => {
     })
 
     expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data).toEqual({ subscriberId: 789 })
+    }
     const expectedEncodedQuery = encodeURIComponent("subscribers.email ILIKE 'new@example.com' ESCAPE '\\'")
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
