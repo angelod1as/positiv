@@ -3,8 +3,14 @@ import type { Database } from "~/types/database/kysely.types"
 
 export type UpdateResult = {
   success: boolean
-  count: number
-  updated: string[]
+  status_updates: {
+    count: number
+    updated: string[]
+  }
+  group_closing_tracking: {
+    count: number
+    created: string[]
+  }
   timestamp: string
 }
 
@@ -21,20 +27,26 @@ export async function updateEventStatusesAutomatically(
 
     // The database function returns JSONB, which kysely parses for us
     const parsedResult = result.result as UpdateResult
-    
+
     // Validate the result structure
     if (!parsedResult || typeof parsedResult.success !== 'boolean') {
       throw new Error('Invalid response from database function')
     }
-    
+
     return parsedResult
   } catch (error) {
     console.error('Failed to update event statuses automatically:', error)
     // Return a safe default result on error
     return {
       success: false,
-      count: 0,
-      updated: [],
+      status_updates: {
+        count: 0,
+        updated: [],
+      },
+      group_closing_tracking: {
+        count: 0,
+        created: [],
+      },
       timestamp: new Date().toISOString()
     }
   }

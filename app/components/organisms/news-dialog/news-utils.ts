@@ -32,7 +32,7 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1736020800000
+export const NEWS_VERSION = 1767555619111
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
@@ -42,6 +42,15 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
       "Agora você pode clicar diretamente nas linhas da tabela de eventos para visualizar os detalhes! Não é mais necessário procurar pelo botão de visualização - basta clicar em qualquer lugar da linha do evento que você deseja ver.",
     isAdmin: true,
     createdAt: new Date("2026-01-04T18:00:00"),
+    isActive: true,
+  },
+  {
+    id: "group-closing-email",
+    title: "📩 Email automático no fechamento do grupo",
+    content:
+      "Agora enviamos emails automáticos quando o grupo fecha (4 dias antes do evento). Todes es participantes não-rejetades recebem um aviso de que o grupo fechou e a lista está finalizada.",
+    isAdmin: true,
+    createdAt: new Date("2026-01-04T16:30:00"),
     isActive: true,
   },
   {
