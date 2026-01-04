@@ -292,7 +292,8 @@ describe('AdminDashboardEventsTable', () => {
     }, { timeout: 1000 })
 
     const row = screen.getByText('Draft Event').closest('tr')
-    await user.click(row!)
+    if (!row) throw new Error('Row not found')
+    await user.click(row)
 
     expect(mockNavigate).toHaveBeenCalledTimes(1)
     expect(mockNavigate).toHaveBeenCalledWith('/admin/eventos/1')
