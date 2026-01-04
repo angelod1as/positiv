@@ -2,11 +2,15 @@ import type { ActionFunctionArgs } from "react-router"
 import { deleteEventListmonkList } from "~/business/admin/event-listmonk-sync.server"
 import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
+import { getPendingGroupClosingEmails } from "~/business/email/group-closing-tracking.server"
+import { sendGroupClosingEmailsForEvent } from "~/business/email/send-group-closing-emails.server"
 import { kysely } from "~/kysely"
 
 /**
- * Internal API endpoint for processing newsletter campaigns
- * Called by Supabase Edge Function via pg_cron
+ * Internal API endpoint for processing automated emails
+ * - Newsletter campaigns (via Listmonk)
+ * - Group closing transactional emails (via Nodemailer)
+ * Called by Supabase pg_cron every 30 minutes
  */
 export async function action({ request }: ActionFunctionArgs) {
   // Verify request is from authorized internal source using secret token
@@ -59,15 +63,56 @@ export async function action({ request }: ActionFunctionArgs) {
     const successCount = results.filter((r) => r.success).length
     const failureCount = results.filter((r) => !r.success).length
 
+    // Process group closing emails
+    const groupClosingResult = await getPendingGroupClosingEmails()
+    const groupClosingResults: Array<{
+      eventId: string
+      success: boolean
+      error?: string
+      recipientCount?: number
+    }> = []
+
+    if (groupClosingResult.success && groupClosingResult.data) {
+      const pendingGroupClosing = groupClosingResult.data
+
+      for (const tracking of pendingGroupClosing) {
+        const result = await sendGroupClosingEmailsForEvent(tracking.event_id)
+
+        groupClosingResults.push({
+          eventId: tracking.event_id,
+          success: result.success,
+          recipientCount: result.success ? result.data : undefined,
+          error: result.success
+            ? undefined
+            : result.errors?.[0]?.message || "Unknown error",
+        })
+      }
+    }
+
+    const groupClosingSuccessCount = groupClosingResults.filter(
+      (r) => r.success,
+    ).length
+    const groupClosingFailureCount = groupClosingResults.filter(
+      (r) => !r.success,
+    ).length
+
     // Cleanup lists for completed events where time_group_end has passed
     const cleanupResults = await cleanupCompletedEventLists()
 
     return Response.json({
       success: true,
-      processed: pending.length,
-      succeeded: successCount,
-      failed: failureCount,
-      results,
+      campaigns: {
+        processed: pending.length,
+        succeeded: successCount,
+        failed: failureCount,
+        results,
+      },
+      groupClosingEmails: {
+        processed: groupClosingResults.length,
+        succeeded: groupClosingSuccessCount,
+        failed: groupClosingFailureCount,
+        results: groupClosingResults,
+      },
       listCleanup: cleanupResults,
     })
   } catch (error) {

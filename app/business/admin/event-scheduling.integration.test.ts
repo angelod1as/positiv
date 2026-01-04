@@ -42,8 +42,8 @@ describe("Event Scheduling - Integration Tests", () => {
         .executeTakeFirstOrThrow()
 
       expect(updatedEvent.event_status).toBe("Registration Open")
-      expect(result.updated).toContain(scheduledEvent.id)
-      expect(result.count).toBe(1)
+      expect(result.status_updates.updated).toContain(scheduledEvent.id)
+      expect(result.status_updates.count).toBe(1)
     })
 
     it("should not transition events when auto_publish is false", async () => {
@@ -71,8 +71,8 @@ describe("Event Scheduling - Integration Tests", () => {
         .executeTakeFirstOrThrow()
 
       expect(unchangedEvent.event_status).toBe("Scheduled")
-      expect(result.updated).not.toContain(scheduledEvent.id)
-      expect(result.count).toBe(0)
+      expect(result.status_updates.updated).not.toContain(scheduledEvent.id)
+      expect(result.status_updates.count).toBe(0)
     })
 
     it("should not transition events when application time is in the future", async () => {
@@ -100,8 +100,8 @@ describe("Event Scheduling - Integration Tests", () => {
         .executeTakeFirstOrThrow()
 
       expect(unchangedEvent.event_status).toBe("Scheduled")
-      expect(result.updated).not.toContain(scheduledEvent.id)
-      expect(result.count).toBe(0)
+      expect(result.status_updates.updated).not.toContain(scheduledEvent.id)
+      expect(result.status_updates.count).toBe(0)
     })
 
     it("should handle multiple events correctly", async () => {
@@ -137,10 +137,10 @@ describe("Event Scheduling - Integration Tests", () => {
       const result = await updateEventStatusesAutomatically(kysely)
 
       // Check results
-      expect(result.count).toBe(2)
-      expect(result.updated).toContain(event1.id)
-      expect(result.updated).toContain(event2.id)
-      expect(result.updated).not.toContain(event3.id)
+      expect(result.status_updates.count).toBe(2)
+      expect(result.status_updates.updated).toContain(event1.id)
+      expect(result.status_updates.updated).toContain(event2.id)
+      expect(result.status_updates.updated).not.toContain(event3.id)
 
       // Verify individual event statuses
       const events = await kysely
@@ -174,8 +174,8 @@ describe("Event Scheduling - Integration Tests", () => {
       const result = await updateEventStatusesAutomatically(kysely)
 
       // Should not be in the updated list
-      expect(result.updated).not.toContain(openEvent.id)
-      expect(result.count).toBe(0)
+      expect(result.status_updates.updated).not.toContain(openEvent.id)
+      expect(result.status_updates.count).toBe(0)
     })
 
     it("should create campaign tracking rows for newly opened events", async () => {
@@ -198,8 +198,8 @@ describe("Event Scheduling - Integration Tests", () => {
       const result = await updateEventStatusesAutomatically(kysely)
 
       // Verify event was opened
-      expect(result.updated).toContain(scheduledEvent.id)
-      expect(result.count).toBe(1)
+      expect(result.status_updates.updated).toContain(scheduledEvent.id)
+      expect(result.status_updates.count).toBe(1)
 
       // Verify campaign tracking row was created
       const trackingRow = await kysely

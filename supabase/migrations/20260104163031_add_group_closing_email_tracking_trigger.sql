@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION public.update_event_statuses_automatically()
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = ''
 AS $$
 DECLARE
   updated_ids uuid[];
