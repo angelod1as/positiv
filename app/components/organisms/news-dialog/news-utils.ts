@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1735235400000
+export const NEWS_VERSION = 1767555619111
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "group-closing-email",
+    title: "📩 Email automático no fechamento do grupo",
+    content:
+      "Agora enviamos emails automáticos quando o grupo fecha (4 dias antes do evento). Todes es participantes não-rejetades recebem um aviso de que o grupo fechou e a lista está finalizada.",
+    isAdmin: true,
+    createdAt: new Date("2026-01-04T16:30:00"),
+    isActive: true,
+  },
   {
     id: "event-listmonk-sync",
     title: "📧 Sincronização automática com listas de e-mail",
@@ -51,24 +60,6 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
       "Agora várias colunas da tabela de participantes têm um ícone de informação (ℹ️) ao lado do título. Passe o mouse sobre eles para ver explicações detalhadas sobre o que cada coluna significa - como os diferentes tipos de flags, status de processo, status de presença, e muito mais. Isso vai facilitar o entendimento e uso da tabela!",
     isAdmin: true,
     createdAt: new Date("2025-12-22T14:00:00"),
-    isActive: true,
-  },
-  {
-    id: "whatsapp-button",
-    title: "💬 Novo botão de contato via WhatsApp",
-    content:
-      "Agora você pode falar conosco diretamente pelo WhatsApp! Procure pelo botão verde flutuante no canto inferior direito da página inicial. Clique nele para abrir uma conversa com a equipe da Positiv.",
-    isAdmin: false,
-    createdAt: new Date("2025-11-12T12:30:00"),
-    isActive: true,
-  },
-  {
-    id: "participants-filters",
-    title: "🔍 Filtros avançados na tabela de participantes",
-    content:
-      "Agora você pode filtrar participantes por múltiplos critérios ao mesmo tempo! Clique no ícone de filtro nas colunas (status de processo, presença, aprovação, gênero e orientação) e selecione vários valores. Os filtros são salvos enquanto você navega. Use o botão 'Limpar filtros' no rodapé da tabela para remover todos de uma vez.",
-    isAdmin: true,
-    createdAt: new Date("2025-10-29T12:00:00"),
     isActive: true,
   },
 ]
