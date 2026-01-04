@@ -1,7 +1,8 @@
 import { composable } from "composable-functions"
 import { kysely } from "~/kysely"
 import { createList, deleteList, getListById, getListSubscribers } from "../newsletter/listmonk-lists.server"
-import { addSubscriber, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
+import { addSubscriber, addSubscribersToListBulk, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
+import { updateSyncStatus } from "../newsletter/subscription-helpers.server"
 
 export interface SyncResult {
   listId: number
@@ -29,12 +30,14 @@ async function getNonRejectedParticipants(eventId: string) {
   return await kysely
     .selectFrom("event_participants as ep")
     .innerJoin("profiles as p", "ep.profile_id", "p.id")
+    .leftJoin("newsletter_subscriptions as ns", "ns.profile_id", "p.id")
     .select([
       "p.id as profile_id",
       "p.email",
       "p.social_name",
       "p.full_name",
       "p.approved_to_attend",
+      "ns.listmonk_subscriber_id",
     ])
     .where("ep.event_id", "=", eventId)
     .where("p.approved_to_attend", "!=", "rejected")
@@ -56,10 +59,11 @@ async function updateEventListmonkFields(
     .execute()
 }
 
-// TODO: POS-358 - Optimize subscriber addition using bulk API
-// Currently adds subscribers one-by-one. Should use Listmonk's bulk API:
-// PUT /api/subscribers/lists with listmonk_subscriber_id instead of
-// individual addSubscriber calls. See: https://listmonk.app/docs/apis/subscribers/#put-apisubscriberslists
+/**
+ * Add participants to a Listmonk list using the bulk API when possible.
+ * - Participants WITH existing listmonk_subscriber_id: Added via bulk API (single call)
+ * - Participants WITHOUT listmonk_subscriber_id: Created individually (new subscribers)
+ */
 async function addParticipantsToList(
   participants: Array<{
     profile_id: string
@@ -67,13 +71,50 @@ async function addParticipantsToList(
     social_name: string | null
     full_name: string | null
     approved_to_attend: string | null
+    listmonk_subscriber_id: number | null
   }>,
   listId: number
 ) {
   let subscribersAdded = 0
   let subscribersFailed = 0
 
-  for (const participant of participants) {
+  // Separate participants by whether they have an existing Listmonk subscriber ID
+  const withSubscriberId = participants.filter(p => p.listmonk_subscriber_id !== null)
+  const withoutSubscriberId = participants.filter(p => p.listmonk_subscriber_id === null)
+
+  // BULK ADD: Add existing subscribers to the list in a single API call
+  if (withSubscriberId.length > 0) {
+    const subscriberIds = withSubscriberId.map(p => p.listmonk_subscriber_id as number)
+    const bulkResult = await addSubscribersToListBulk(subscriberIds, listId)
+
+    if (bulkResult.success) {
+      subscribersAdded += withSubscriberId.length
+    } else {
+      // If bulk add fails, fall back to individual adds
+      console.warn("Bulk subscriber add failed, falling back to individual adds:", bulkResult.errors)
+      for (const participant of withSubscriberId) {
+        const name = participant.social_name ?? participant.full_name ?? participant.email
+        const result = await addSubscriber({
+          email: participant.email,
+          name,
+          lists: [listId],
+          attributes: {
+            profile_id: participant.profile_id,
+            synced_at: new Date().toISOString(),
+          },
+        })
+
+        if (result.success) {
+          subscribersAdded++
+        } else {
+          subscribersFailed++
+        }
+      }
+    }
+  }
+
+  // INDIVIDUAL ADD: Create new subscribers who don't have a Listmonk ID yet
+  for (const participant of withoutSubscriberId) {
     const name = participant.social_name ?? participant.full_name ?? participant.email
     const result = await addSubscriber({
       email: participant.email,
@@ -85,8 +126,14 @@ async function addParticipantsToList(
       },
     })
 
-    if (result.success) {
+    if (result.success && result.data) {
       subscribersAdded++
+      // Save the new subscriber ID for future bulk operations
+      await updateSyncStatus(
+        participant.profile_id,
+        "synced",
+        result.data.subscriberId
+      )
     } else {
       subscribersFailed++
     }
