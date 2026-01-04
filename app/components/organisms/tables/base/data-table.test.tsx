@@ -26,7 +26,8 @@ describe("DataTable - Row Click Functionality", () => {
     const firstRow = screen.getByText("Test Item 1").closest("tr")
     expect(firstRow).toBeInTheDocument()
 
-    await user.click(firstRow!)
+    if (!firstRow) throw new Error("Row not found")
+    await user.click(firstRow)
 
     expect(mockOnRowClick).toHaveBeenCalledTimes(1)
     expect(mockOnRowClick).toHaveBeenCalledWith(
