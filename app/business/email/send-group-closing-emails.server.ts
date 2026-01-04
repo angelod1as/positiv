@@ -85,21 +85,13 @@ export const sendGroupClosingEmailsForEvent = composable(
           html: html,
         }
 
-        try {
-          const result = await sendEmail(options)
-          return {
-            email: participant.email,
-            success: result.success,
-            error: result.success
-              ? null
-              : result.errors?.[0]?.message || "Unknown error",
-          }
-        } catch (error) {
-          return {
-            email: participant.email,
-            success: false,
-            error: error instanceof Error ? error.message : "Unknown error",
-          }
+        const result = await sendEmail(options)
+        return {
+          email: participant.email,
+          success: result.success,
+          error: result.success
+            ? null
+            : result.errors?.[0]?.message || "Unknown error",
         }
       })
 
