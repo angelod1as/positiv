@@ -53,54 +53,87 @@ export const sendGroupClosingEmailsForEvent = composable(
       throw error
     }
 
-    // Send emails to each participant
+    // Filter out participants without email
+    const validParticipants = participants.filter((p) => p.email !== null)
+
+    // Format email template once (same for all recipients)
+    const { html, text } = await formatGroupClosingMail(event)
+    const emailSubject = `Fechamos o grupo - ${event.emoji || ""} ${event.title}`.trim()
+
+    // Send emails in batches of 20 for parallel processing
+    const BATCH_SIZE = 20
     let successCount = 0
     let failureCount = 0
     const errors: string[] = []
 
-    for (const participant of participants) {
-      try {
-        if (!participant.email) {
-          continue
-        }
+    for (let i = 0; i < validParticipants.length; i += BATCH_SIZE) {
+      const batch = validParticipants.slice(i, i + BATCH_SIZE)
 
-        const { html, text } = await formatGroupClosingMail(event)
+      const emailPromises = batch.map(async (participant) => {
+        if (!participant.email) {
+          return {
+            email: "unknown",
+            success: false,
+            error: "Email address is null",
+          }
+        }
 
         const options: MailOptions = {
           to: participant.email,
-          subject: `Fechamos o grupo - ${event.emoji || ""} ${event.title}`.trim(),
+          subject: emailSubject,
           text: text,
           html: html,
         }
 
-        const result = await sendEmail(options)
-
-        if (result.success) {
-          successCount++
-        } else {
-          failureCount++
-          const errorMessage =
-            result.errors?.[0]?.message || "Unknown error"
-          errors.push(`Failed to send to ${participant.email}: ${errorMessage}`)
+        try {
+          const result = await sendEmail(options)
+          return {
+            email: participant.email,
+            success: result.success,
+            error: result.success
+              ? null
+              : result.errors?.[0]?.message || "Unknown error",
+          }
+        } catch (error) {
+          return {
+            email: participant.email,
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error",
+          }
         }
-      } catch (error) {
-        failureCount++
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error"
-        errors.push(`Failed to send to ${participant.email}: ${errorMessage}`)
-      }
+      })
+
+      const results = await Promise.allSettled(emailPromises)
+
+      // Process batch results
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          if (result.value.success) {
+            successCount++
+          } else {
+            failureCount++
+            errors.push(
+              `Failed to send to ${result.value.email}: ${result.value.error}`,
+            )
+          }
+        } else {
+          // Promise rejected (shouldn't happen with our try-catch, but defensive)
+          failureCount++
+          errors.push(`Unexpected error: ${result.reason}`)
+        }
+      })
     }
 
     // Update tracking based on results
     if (failureCount === 0) {
       // All emails sent successfully (or no participants)
-      await updateGroupClosingSent(eventId, participants.length)
-      return participants.length
+      await updateGroupClosingSent(eventId, validParticipants.length)
+      return validParticipants.length
     } else if (successCount > 0) {
       // Partial success - some emails sent, some failed
       const errorData = {
         step: "email_send",
-        message: `Sent ${successCount}/${participants.length} emails. Errors: ${errors.join("; ")}`,
+        message: `Sent ${successCount}/${validParticipants.length} emails. Errors: ${errors.join("; ")}`,
         timestamp: new Date().toISOString(),
       }
       await updateGroupClosingError(eventId, errorData)
