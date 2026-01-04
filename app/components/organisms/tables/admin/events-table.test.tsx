@@ -1,12 +1,16 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { AdminDashboardEventsTable } from './events-table'
 import type { Event } from '~types/database/entities.types'
 
+const mockNavigate = vi.fn()
+
 vi.mock('react-router', () => ({
   Link: ({ children, to, ...props }: { children: React.ReactNode, to: string }) => (
     <a href={to} {...props}>{children}</a>
-  )
+  ),
+  useNavigate: () => mockNavigate
 }))
 
 vi.mock('~/components/atoms/button/button', () => ({
@@ -38,6 +42,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.clearAllMocks()
   mockSessionStorage.clear()
+  mockNavigate.mockClear()
 })
 
 describe('AdminDashboardEventsTable', () => {
@@ -275,5 +280,32 @@ describe('AdminDashboardEventsTable', () => {
 
     // On initial render, filter state IS saved (useSessionStorageFilter persists defaults)
     expect(hasFilterStatusCall).toBe(true)
+  })
+
+  it('should navigate to view event page when row is clicked', async () => {
+    const user = userEvent.setup()
+
+    render(<AdminDashboardEventsTable events={mockEvents} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Draft Event')).toBeInTheDocument()
+    }, { timeout: 1000 })
+
+    const row = screen.getByText('Draft Event').closest('tr')
+    await user.click(row!)
+
+    expect(mockNavigate).toHaveBeenCalledTimes(1)
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/eventos/1')
+  })
+
+  it('should not render action buttons column', async () => {
+    render(<AdminDashboardEventsTable events={mockEvents} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('Draft Event')).toBeInTheDocument()
+    }, { timeout: 1000 })
+
+    expect(screen.queryByLabelText('Ver evento')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Editar evento')).not.toBeInTheDocument()
   })
 })
