@@ -155,7 +155,7 @@ describe("Send Group Closing Emails - Integration Tests", () => {
 
       const emailOptions = vi.mocked(sendEmail).mock.calls[0][0]
       expect(emailOptions.to).toBe("user@test.com")
-      expect(emailOptions.subject).toContain("Fechamos o grupo")
+      expect(emailOptions.subject).toContain("Seleção encerrada")
       expect(emailOptions.subject).toContain("Festa Test")
       expect(emailOptions.html).toContain("Seleção encerrada")
       expect(emailOptions.html).toContain("WhatsApp")

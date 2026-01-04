@@ -58,7 +58,7 @@ export const sendGroupClosingEmailsForEvent = composable(
 
     // Format email template once (same for all recipients)
     const { html, text } = await formatGroupClosingMail(event)
-    const emailSubject = `Fechamos o grupo - ${event.emoji || ""} ${event.title}`.trim()
+    const emailSubject = `Seleção encerrada - ${event.emoji || ""} ${event.title}`.trim()
 
     // Send emails in batches of 20 for parallel processing
     const BATCH_SIZE = 20
