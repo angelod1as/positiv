@@ -285,10 +285,11 @@ export const registerUser = applySchema(
   // This prevents duplicate profiles when users try to register with emails
   // that were imported as orphaned profiles (user_id = NULL).
   // Admins must manually link such profiles to new users.
+  const normalizedEmail = data.email.toLowerCase().trim()
   const existingProfile = await kysely
     .selectFrom("profiles")
     .select("id")
-    .where("email", "=", data.email)
+    .where("email", "=", normalizedEmail)
     .executeTakeFirst()
 
   if (existingProfile) {
