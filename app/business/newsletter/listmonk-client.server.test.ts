@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach, type MockInstance } fr
 import {
   testConnection,
   addSubscriber,
+  addSubscribersToListBulk,
   removeSubscriber,
   createCampaign,
   updateCampaignStatus,
@@ -471,6 +472,127 @@ describe("addSubscriber", () => {
         }),
       })
     )
+  })
+})
+
+describe("addSubscribersToListBulk", () => {
+  let fetchSpy: MockInstance
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(global, "fetch")
+  })
+
+  afterEach(() => {
+    fetchSpy.mockRestore()
+    vi.clearAllMocks()
+  })
+
+  it("should add multiple subscribers to a list in a single API call", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: true }),
+    } as Response)
+
+    const result = await addSubscribersToListBulk([1, 2, 3, 4, 5], 10)
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://listmonk.test/api/subscribers/lists",
+      expect.objectContaining({
+        method: "PUT",
+        headers: expect.objectContaining({
+          Authorization: "Basic dGVzdHVzZXI6dGVzdHBhc3M=",
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          ids: [1, 2, 3, 4, 5],
+          action: "add",
+          target_list_ids: [10],
+          status: "confirmed",
+        }),
+      })
+    )
+  })
+
+  it("should handle empty subscriber list gracefully", async () => {
+    const result = await addSubscribersToListBulk([], 10)
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it("should fail when API returns error", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: false,
+      status: 400,
+      statusText: "Bad Request",
+      text: async () => "Invalid subscriber IDs",
+    } as Response)
+
+    const result = await addSubscribersToListBulk([1, 2, 3], 10)
+
+    expect(result.success).toBe(false)
+    expect(result.errors?.[0]?.message).toContain("Failed to add subscribers to list")
+  })
+
+  it("should filter out invalid subscriber IDs (negative, zero, non-integer)", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: true }),
+    } as Response)
+
+    const result = await addSubscribersToListBulk([1, -1, 0, 2.5, 3, NaN], 10)
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://listmonk.test/api/subscribers/lists",
+      expect.objectContaining({
+        body: JSON.stringify({
+          ids: [1, 3],
+          action: "add",
+          target_list_ids: [10],
+          status: "confirmed",
+        }),
+      })
+    )
+  })
+
+  it("should return success with no API call if all IDs are invalid", async () => {
+    const result = await addSubscribersToListBulk([-1, 0, NaN], 10)
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it("should deduplicate subscriber IDs", async () => {
+    fetchSpy.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: true }),
+    } as Response)
+
+    const result = await addSubscribersToListBulk([1, 2, 1, 3, 2, 3], 10)
+
+    expect(result.success).toBe(true)
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://listmonk.test/api/subscribers/lists",
+      expect.objectContaining({
+        body: JSON.stringify({
+          ids: [1, 2, 3],
+          action: "add",
+          target_list_ids: [10],
+          status: "confirmed",
+        }),
+      })
+    )
+  })
+
+  it("should handle network errors", async () => {
+    fetchSpy.mockRejectedValue(new Error("Network error"))
+
+    const result = await addSubscribersToListBulk([1, 2, 3], 10)
+
+    expect(result.success).toBe(false)
   })
 })
 

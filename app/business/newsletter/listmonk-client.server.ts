@@ -114,6 +114,46 @@ async function addSubscriberToLists(
   }
 }
 
+/**
+ * Add multiple subscribers to a list in a single bulk API call
+ * This is much more efficient than adding subscribers one-by-one
+ */
+export const addSubscribersToListBulk = composable(
+  async (subscriberIds: number[], listId: number): Promise<void> => {
+    if (process.env.E2E_MODE === "true") {
+      return
+    }
+
+    const validIds = Array.from(
+      new Set(subscriberIds.filter((id) => Number.isInteger(id) && id > 0))
+    )
+
+    if (validIds.length === 0) {
+      return
+    }
+
+    const { listmonkApiUrl, headers } = getListmonkConfig()
+
+    const response = await fetch(`${listmonkApiUrl}/api/subscribers/lists`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        ids: validIds,
+        action: "add",
+        target_list_ids: [listId],
+        status: "confirmed",
+      }),
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.text().catch(() => "Unable to read error body")
+      throw new Error(
+        `Failed to add subscribers to list: ${response.status} ${response.statusText}. Response: ${errorBody}`
+      )
+    }
+  }
+)
+
 export async function removeSubscriberFromList(
   subscriberId: number,
   listId: number
