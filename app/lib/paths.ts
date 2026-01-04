@@ -6,6 +6,7 @@ const LOGIN = "/entrar"
 const FORGOT_PASSWORD = `${LOGIN}/esqueci`
 const LOGON = "/registrar"
 const LOGON_EMAIL_MESSAGE = `${LOGON}/confirmar-email`
+const REGISTRATION_ERROR = `${LOGON}/erro`
 const LOGON_CALLBACK = "/auth/confirm"
 const LOGON_CONFIRM = `${LOGON}/confirm`
 const CODE_OF_CONDUCT = `/codigo-de-conduta`
@@ -65,6 +66,7 @@ const paths = {
     LOGON_CALLBACK,
     LOGON_CONFIRM,
     LOGON_EMAIL_MESSAGE,
+    REGISTRATION_ERROR,
   },
   dash: {
     DASHBOARD,
