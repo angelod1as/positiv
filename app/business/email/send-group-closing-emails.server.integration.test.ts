@@ -9,7 +9,11 @@ import { createGroupClosingTracking } from "./group-closing-tracking.server"
 
 // Mock the sendEmail module
 vi.mock("./send-email", () => ({
-  sendEmail: vi.fn().mockResolvedValue({ success: true }),
+  sendEmail: vi.fn().mockResolvedValue({
+    success: true,
+    data: undefined,
+    errors: [],
+  }),
 }))
 
 import { sendEmail } from "./send-email"
@@ -22,7 +26,11 @@ describe("Send Group Closing Emails - Integration Tests", () => {
     await db.deleteFrom("event_transactional_emails").execute()
     await db.deleteFrom("event_participants").execute()
     vi.mocked(sendEmail).mockClear()
-    vi.mocked(sendEmail).mockResolvedValue({ success: true })
+    vi.mocked(sendEmail).mockResolvedValue({
+      success: true,
+      data: undefined,
+      errors: [],
+    })
   })
 
   afterEach(async () => {
@@ -39,21 +47,25 @@ describe("Send Group Closing Emails - Integration Tests", () => {
 
       // Create profiles with different approval statuses
       const approvedProfile = await createTestProfile(tracker, db, {
+        user_id: null,
         email: "approved@test.com",
         full_name: "Approved User",
         approved_to_attend: "approved",
       })
       const pendingProfile = await createTestProfile(tracker, db, {
+        user_id: null,
         email: "pending@test.com",
         full_name: "Pending User",
         approved_to_attend: "pending",
       })
       const reservationsProfile = await createTestProfile(tracker, db, {
+        user_id: null,
         email: "reservations@test.com",
         full_name: "Reservations User",
         approved_to_attend: "approved_with_reservations",
       })
       const rejectedProfile = await createTestProfile(tracker, db, {
+        user_id: null,
         email: "rejected@test.com",
         full_name: "Rejected User",
         approved_to_attend: "rejected",
@@ -91,7 +103,9 @@ describe("Send Group Closing Emails - Integration Tests", () => {
       const result = await sendGroupClosingEmailsForEvent(event.id)
 
       expect(result.success).toBe(true)
-      expect(result.data).toBe(3) // recipientCount
+      if (result.success) {
+        expect(result.data).toBe(3) // recipientCount
+      }
       // Should send to 3 participants (approved, pending, approved_with_reservations)
       // Should NOT send to rejected
       expect(vi.mocked(sendEmail)).toHaveBeenCalledTimes(3)
@@ -118,6 +132,7 @@ describe("Send Group Closing Emails - Integration Tests", () => {
       })
 
       const profile = await createTestProfile(tracker, db, {
+        user_id: null,
         email: "user@test.com",
         full_name: "Test User",
         approved_to_attend: "approved",
@@ -157,10 +172,12 @@ describe("Send Group Closing Emails - Integration Tests", () => {
       })
 
       const profile1 = await createTestProfile(tracker, db, {
+        user_id: null,
         email: "user1@test.com",
         approved_to_attend: "approved",
       })
       const profile2 = await createTestProfile(tracker, db, {
+        user_id: null,
         email: "user2@test.com",
         approved_to_attend: "pending",
       })
@@ -207,6 +224,7 @@ describe("Send Group Closing Emails - Integration Tests", () => {
       })
 
       const profile = await createTestProfile(tracker, db, {
+        user_id: null,
         email: "user@test.com",
         approved_to_attend: "approved",
       })
@@ -223,7 +241,10 @@ describe("Send Group Closing Emails - Integration Tests", () => {
       await createGroupClosingTracking(event.id)
 
       // Mock sendEmail to fail for this test
-      vi.mocked(sendEmail).mockResolvedValueOnce({ success: false, error: "SMTP error" })
+      vi.mocked(sendEmail).mockResolvedValueOnce({
+        success: false,
+        errors: [{ message: "SMTP error", name: "SMTPError" }],
+      })
 
       const result = await sendGroupClosingEmailsForEvent(event.id)
 
@@ -277,6 +298,7 @@ describe("Send Group Closing Emails - Integration Tests", () => {
       })
 
       const profile = await createTestProfile(tracker, db, {
+        user_id: null,
         email: "rejected@test.com",
         approved_to_attend: "rejected",
       })

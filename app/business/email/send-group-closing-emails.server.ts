@@ -60,10 +60,14 @@ export const sendGroupClosingEmailsForEvent = composable(
 
     for (const participant of participants) {
       try {
+        if (!participant.email) {
+          continue
+        }
+
         const { html, text } = await formatGroupClosingMail(event)
 
         const options: MailOptions = {
-          to: participant.email!,
+          to: participant.email,
           subject: `Fechamos o grupo - ${event.emoji || ""} ${event.title}`.trim(),
           text: text,
           html: html,
@@ -75,7 +79,9 @@ export const sendGroupClosingEmailsForEvent = composable(
           successCount++
         } else {
           failureCount++
-          errors.push(`Failed to send to ${participant.email}: ${result.error || "Unknown error"}`)
+          const errorMessage =
+            result.errors?.[0]?.message || "Unknown error"
+          errors.push(`Failed to send to ${participant.email}: ${errorMessage}`)
         }
       } catch (error) {
         failureCount++

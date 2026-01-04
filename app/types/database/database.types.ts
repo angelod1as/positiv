@@ -244,6 +244,56 @@ export type Database = {
           },
         ]
       }
+      event_transactional_emails: {
+        Row: {
+          created_at: string
+          email_type: string
+          emails_sent: boolean
+          event_id: string
+          id: string
+          last_attempt: string | null
+          last_error: Json | null
+          recipient_count: number | null
+          sent_time: string | null
+          times_attempted: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_type: string
+          emails_sent?: boolean
+          event_id: string
+          id?: string
+          last_attempt?: string | null
+          last_error?: Json | null
+          recipient_count?: number | null
+          sent_time?: string | null
+          times_attempted?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          emails_sent?: boolean
+          event_id?: string
+          id?: string
+          last_attempt?: string | null
+          last_error?: Json | null
+          recipient_count?: number | null
+          sent_time?: string | null
+          times_attempted?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_transactional_emails_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           auto_publish: boolean
