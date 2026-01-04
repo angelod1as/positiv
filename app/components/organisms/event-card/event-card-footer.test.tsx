@@ -46,7 +46,7 @@ vi.mock("~/lib/hooks/use-smart-prefetch", () => ({
 
 describe("EventCardFooter", () => {
   describe("when isAdmin is true", () => {
-    it("should render view and edit buttons", () => {
+    it("should only render view button for admin users", () => {
       render(
         <EventCardFooter
           eventId="test-event-id"
@@ -59,13 +59,12 @@ describe("EventCardFooter", () => {
       )
 
       const viewButton = screen.getByText(/Ver evento/i)
-      const editButton = screen.getByText(/Editar evento/i)
 
       expect(viewButton).toBeInTheDocument()
-      expect(editButton).toBeInTheDocument()
+      expect(screen.queryByText(/Editar evento/i)).not.toBeInTheDocument()
     })
 
-    it("should link to admin event view and edit paths", () => {
+    it("should link to admin event view path", () => {
       render(
         <EventCardFooter
           eventId="test-event-123"
@@ -78,13 +77,8 @@ describe("EventCardFooter", () => {
       )
 
       const viewButton = screen.getByText(/Ver evento/i)
-      const editButton = screen.getByText(/Editar evento/i)
 
       expect(viewButton).toHaveAttribute("href", "/admin/eventos/test-event-123")
-      expect(editButton).toHaveAttribute(
-        "href",
-        "/admin/eventos/novo/test-event-123",
-      )
     })
   })
 
