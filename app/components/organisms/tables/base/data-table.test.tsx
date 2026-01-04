@@ -33,4 +33,16 @@ describe("DataTable - Row Click Functionality", () => {
       expect.objectContaining({ data: mockData[0] }),
     )
   })
+
+  it("should render table without onRowClick prop", () => {
+    const mockData = [{ id: "1", name: "Test" }]
+
+    render(
+      <DataTable data={mockData} id="test-table">
+        <Column field="name" header="Name" />
+      </DataTable>,
+    )
+
+    expect(screen.getByText("Test")).toBeInTheDocument()
+  })
 })
