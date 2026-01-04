@@ -32,8 +32,8 @@ describe("formatGroupClosingMail", () => {
   it("should return HTML containing the group closing template content", async () => {
     const result = await formatGroupClosingMail(mockEvent)
     expect(result.html).toContain("<!DOCTYPE html>")
-    expect(result.html).toContain("Fechamos o grupo!")
-    expect(result.html).toContain("Quem entrou, entrou")
+    expect(result.html).toContain("Seleção encerrada")
+    expect(result.html).toContain("WhatsApp")
   })
 
   it("should convert HTML to plain text without HTML tags", async () => {
@@ -45,8 +45,8 @@ describe("formatGroupClosingMail", () => {
 
   it("should include key content in plain text version", async () => {
     const result = await formatGroupClosingMail(mockEvent)
-    expect(result.text).toContain("FECHAMOS O GRUPO!")
-    expect(result.text).toContain("Quem entrou, entrou")
+    expect(result.text).toContain("SELEÇÃO ENCERRADA")
+    expect(result.text).toContain("WhatsApp")
     expect(result.text).toContain("Test Event")
   })
 })

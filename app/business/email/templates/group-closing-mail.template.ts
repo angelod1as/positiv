@@ -7,7 +7,7 @@ import type { ViewEvent } from "~types/database/entities.types"
  * Group Closing Email Template
  * Positiv Email Design System - Brand Purple Theme
  * Sent when group closes (4 days before event) to all non-rejected participants
- * Announces that the approval process has ended
+ * Announces that selection has ended and provides WhatsApp contact instructions
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const groupClosingMailTemplate = (
@@ -33,7 +33,7 @@ export const groupClosingMailTemplate = (
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Fechamos o grupo - Positiv</title>
+  <title>Seleção encerrada - Positiv</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
 
@@ -56,17 +56,20 @@ export const groupClosingMailTemplate = (
 
               <!-- H1 -->
               <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2; text-align: center;">
-                Fechamos o grupo! 🔒
+                Seleção encerrada
               </h1>
 
               <!-- Main Message -->
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 18px; line-height: 1.6; margin: 0 0 16px 0; color: #333; text-align: center; font-weight: 600;">
-                Quem entrou, entrou. Quem não entrou, que peninha! 😢
+              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
+                A seleção para o evento <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong> foi encerrada.
               </p>
 
-              <!-- Explanation Paragraph -->
+              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
+                Se você <strong>recebeu uma mensagem</strong> da nossa equipe no seu WhatsApp, continue a conversa por lá. Porém, se <strong>não recebeu</strong>, isso significa que infelizmente você não foi selecionade desta vez.
+              </p>
+
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; color: #333;">
-                O processo de aprovação para o evento <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong> foi encerrado. A lista de participantes está fechada e não serão aceitas novas inscrições ou aprovações.
+                Sabemos que não ser selecionade é um acontecimento frustrante, mas lembre-se que somos uma equipe pequena e nosso evento recebe muiiiito mais inscrições que vagas.
               </p>
 
               <!-- Event Details Section -->
@@ -83,9 +86,9 @@ export const groupClosingMailTemplate = (
                   .join("")}
               </div>
 
-              <!-- Next Steps -->
+              <!-- Encouraging Message -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 12px 0; color: #333;">
-                Se você foi aprovade para participar, fique atento aos próximos e-mails com informações sobre pagamento e confirmação de presença.
+                Fique ligade! Novas inscrições para próximos eventos abrem já já e você pode tentar novamente!
               </p>
 
             </div>

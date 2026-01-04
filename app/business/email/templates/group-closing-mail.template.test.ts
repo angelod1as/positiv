@@ -47,25 +47,41 @@ describe("groupClosingMailTemplate", () => {
     expect(result).toContain("positiv-logo-colors.png")
   })
 
-  it("should include main heading 'Fechamos o grupo!'", () => {
+  it("should include main heading 'Seleção encerrada'", () => {
     const result = groupClosingMailTemplate(mockEvent)
-    expect(result).toContain("Fechamos o grupo!")
+    expect(result).toContain("Seleção encerrada")
   })
 
-  it("should include lock emoji 🔒 in heading or content", () => {
+  it("should include message about event selection being closed", () => {
     const result = groupClosingMailTemplate(mockEvent)
-    expect(result).toContain("🔒")
+    expect(result).toContain("seleção para o evento")
+    expect(result).toContain("foi encerrada")
   })
 
-  it("should include main message 'Quem entrou, entrou. Quem não entrou, que peninha!'", () => {
+  it("should include WhatsApp contact instructions", () => {
     const result = groupClosingMailTemplate(mockEvent)
-    expect(result).toContain("Quem entrou, entrou")
-    expect(result).toContain("Quem não entrou, que peninha")
+    expect(result).toContain("recebeu uma mensagem")
+    expect(result).toContain("WhatsApp")
+    expect(result).toContain("continue a conversa por lá")
   })
 
-  it("should include sad emoji 😢 in message", () => {
+  it("should include message for non-selected participants", () => {
     const result = groupClosingMailTemplate(mockEvent)
-    expect(result).toContain("😢")
+    expect(result).toContain("não recebeu")
+    expect(result).toContain("não foi selecionade")
+  })
+
+  it("should include encouraging message about future events", () => {
+    const result = groupClosingMailTemplate(mockEvent)
+    expect(result).toContain("Fique ligade")
+    expect(result).toContain("próximos eventos")
+    expect(result).toContain("tentar novamente")
+  })
+
+  it("should include acknowledgment of frustration", () => {
+    const result = groupClosingMailTemplate(mockEvent)
+    expect(result).toContain("frustrante")
+    expect(result).toContain("equipe pequena")
   })
 
   it("should include event title with emoji", () => {
@@ -97,10 +113,10 @@ describe("groupClosingMailTemplate", () => {
     expect(result).toContain("Horário de início:")
   })
 
-  it("should include explanation about approval process ending", () => {
+  it("should include explanation about selection process", () => {
     const result = groupClosingMailTemplate(mockEvent)
-    expect(result).toContain("processo de aprovação")
-    expect(result).toContain("encerrado")
+    expect(result).toContain("seleção")
+    expect(result).toContain("encerrada")
   })
 
   it("should include footer with Positiv link", () => {
@@ -271,8 +287,8 @@ describe("groupClosingMailTemplate - XSS Protection", () => {
       expect(html).toContain("Festa de Ano Novo")
       expect(html).toContain("São Paulo, SP")
       expect(html).toContain("🎉")
-      expect(html).toContain("Fechamos o grupo!")
-      expect(html).toContain("Quem entrou, entrou")
+      expect(html).toContain("Seleção encerrada")
+      expect(html).toContain("WhatsApp")
     })
   })
 })
