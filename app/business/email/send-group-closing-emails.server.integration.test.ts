@@ -157,9 +157,9 @@ describe("Send Group Closing Emails - Integration Tests", () => {
       expect(emailOptions.to).toBe("user@test.com")
       expect(emailOptions.subject).toContain("Fechamos o grupo")
       expect(emailOptions.subject).toContain("Festa Test")
-      expect(emailOptions.html).toContain("Fechamos o grupo!")
-      expect(emailOptions.html).toContain("Quem entrou, entrou")
-      expect(emailOptions.text).toContain("FECHAMOS O GRUPO!")
+      expect(emailOptions.html).toContain("Seleção encerrada")
+      expect(emailOptions.html).toContain("WhatsApp")
+      expect(emailOptions.text).toContain("SELEÇÃO ENCERRADA")
     })
   })
 
