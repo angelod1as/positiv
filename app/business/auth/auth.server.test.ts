@@ -16,6 +16,12 @@ vi.mock("remix-toast", () => ({
   }),
 }))
 
+vi.mock("~/kysely", () => ({
+  kysely: {
+    selectFrom: vi.fn(),
+  },
+}))
+
 describe("getContext", () => {
   let mockSignOut: ReturnType<typeof vi.fn>
   let consoleSpy: ReturnType<typeof vi.spyOn>
@@ -440,6 +446,18 @@ describe("getContext", () => {
 })
 
 describe("registerUser", () => {
+  // Set up default Kysely mock to return no existing profile
+  beforeEach(async () => {
+    const { kysely } = await import("~/kysely")
+    vi.mocked(kysely.selectFrom).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          executeTakeFirst: vi.fn().mockResolvedValue(undefined),
+        }),
+      }),
+    } as never)
+  })
+
   it("should pass captchaToken to Supabase signUp options", async () => {
     const mockSignUp = vi.fn().mockResolvedValue({ error: null })
 
@@ -621,5 +639,105 @@ describe("registerUser", () => {
     expect(result.success).toBe(false)
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0].message).toContain("Ops, ocorreu um erro")
+  })
+
+  it("should redirect to error page when email already exists in profiles", async () => {
+    const mockSignUp = vi.fn().mockResolvedValue({ error: null })
+
+    const mockSupabase = {
+      auth: {
+        signUp: mockSignUp,
+      },
+    }
+
+    // Mock Kysely to return an existing profile
+    const { kysely } = await import("~/kysely")
+    const mockExecuteTakeFirst = vi
+      .fn()
+      .mockResolvedValue({ id: "existing-profile-id" })
+    vi.mocked(kysely.selectFrom).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          executeTakeFirst: mockExecuteTakeFirst,
+        }),
+      }),
+    } as never)
+
+    const values = {
+      email: "existing@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+      over18: true,
+      captchaToken: "test-captcha-token",
+    }
+
+    const context = {
+      supabase: mockSupabase as unknown as DBClient,
+      host: "http://localhost:5173",
+      supabaseHeaders: new Headers(),
+      currentUser: null,
+      currentProfile: null,
+    }
+
+    // composable-functions catches thrown Responses and wraps them in a result
+    const result = await registerUser(values, context)
+
+    // Should return a failure (the thrown Response is wrapped in an Error)
+    expect(result.success).toBe(false)
+    expect(result.errors).toHaveLength(1)
+    // The error message is "{}" (stringified Response)
+    expect((result.errors[0] as Error).message).toBe("{}")
+
+    // Kysely should have been called to check for existing profile
+    expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
+
+    // signUp should NOT have been called because we throw before reaching it
+    expect(mockSignUp).not.toHaveBeenCalled()
+  })
+
+  it("should proceed with signup when email does not exist in profiles", async () => {
+    const mockSignUp = vi.fn().mockResolvedValue({ error: null })
+
+    const mockSupabase = {
+      auth: {
+        signUp: mockSignUp,
+      },
+    }
+
+    // Mock Kysely to return no existing profile
+    const { kysely } = await import("~/kysely")
+    const mockExecuteTakeFirst = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(kysely.selectFrom).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          executeTakeFirst: mockExecuteTakeFirst,
+        }),
+      }),
+    } as never)
+
+    const values = {
+      email: "new@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+      over18: true,
+      captchaToken: "test-captcha-token",
+    }
+
+    const context = {
+      supabase: mockSupabase as unknown as DBClient,
+      host: "http://localhost:5173",
+      supabaseHeaders: new Headers(),
+      currentUser: null,
+      currentProfile: null,
+    }
+
+    const result = await registerUser(values, context)
+
+    // Kysely should have been called to check for existing profile
+    expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
+
+    // signUp should have been called because no existing profile was found
+    expect(mockSignUp).toHaveBeenCalled()
+    expect(result.success).toBe(true)
   })
 })

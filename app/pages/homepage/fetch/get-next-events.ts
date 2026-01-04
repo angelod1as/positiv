@@ -14,10 +14,27 @@ export const getNextEvents: GetNextEvents = composable(
   async (profileId, limit = 3, isHomepage = false) => {
     const now = new Date().toISOString()
 
-    let query = kysely.selectFrom("events").selectAll("events")
+    const homepageStatus: EventStatus[] = ["Registration Open", "Scheduled"]
+    const dashboardStatus: EventStatus[] = [
+      "Registration Open",
+      "Scheduled",
+      "Registration Closed",
+    ]
+
+    const baseQuery = kysely
+      .selectFrom("events")
+      .where("events.time_event_start", ">=", now)
+      .where(
+        "events.event_status",
+        "in",
+        isHomepage ? homepageStatus : dashboardStatus,
+      )
+      .orderBy("events.time_event_start", "asc")
+      .limit(limit)
 
     if (profileId) {
-      query = query
+      const data = await baseQuery
+        .selectAll("events")
         .leftJoin("event_participants", (join) =>
           join
             .onRef("event_participants.event_id", "=", "events.id")
@@ -33,27 +50,12 @@ export const getNextEvents: GetNextEvents = composable(
             .end()
             .as("is_applied"),
         )
+        .execute()
+
+      return data
     }
 
-    const homepageStatus: EventStatus[] = ["Registration Open", "Scheduled"]
-    const dashboardStatus: EventStatus[] = [
-      "Registration Open",
-      "Scheduled",
-      "Registration Closed",
-    ]
-
-    query = query
-      .where("events.time_event_start", ">=", now)
-      .where(
-        "events.event_status",
-        "in",
-        isHomepage ? homepageStatus : dashboardStatus,
-      )
-      .orderBy("events.time_event_start", "asc")
-      .limit(limit)
-
-    const data = await query.execute()
-
+    const data = await baseQuery.selectAll("events").execute()
     return data
   },
 )

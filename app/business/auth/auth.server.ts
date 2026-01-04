@@ -3,6 +3,7 @@ import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { env } from "~/env.server"
+import { kysely } from "~/kysely"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import {
@@ -17,7 +18,7 @@ import {
 
 const {
   root: { HOME },
-  auth: { LOGIN, LOGON_CALLBACK },
+  auth: { LOGIN, LOGON_CALLBACK, REGISTRATION_ERROR },
   dash: {
     DASHBOARD,
     account: { CHANGE_PASSWORD },
@@ -279,6 +280,21 @@ export const registerUser = applySchema(
   const { supabase, host } = context
 
   const { over18, confirmPassword, captchaToken, ...data } = values
+
+  // POS-360: Block registration if email already exists in profiles table.
+  // This prevents duplicate profiles when users try to register with emails
+  // that were imported as orphaned profiles (user_id = NULL).
+  // Admins must manually link such profiles to new users.
+  const normalizedEmail = data.email.toLowerCase().trim()
+  const existingProfile = await kysely
+    .selectFrom("profiles")
+    .select("id")
+    .where("email", "=", normalizedEmail)
+    .executeTakeFirst()
+
+  if (existingProfile) {
+    throw redirect(REGISTRATION_ERROR)
+  }
 
   const origin =
     host?.startsWith("http://") || host?.startsWith("https://")
