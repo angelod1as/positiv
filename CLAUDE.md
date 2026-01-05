@@ -210,6 +210,8 @@ pnpm email:test   # Start Mailhog for local email testing
 
 6. Do not add comments to the code unless it's a particularly complex method
 
+7. Avoid barrel exports (index.ts) - import directly from source files instead of re-exporting through index files
+
 ### Common Tasks
 
 **Adding a new page**:
