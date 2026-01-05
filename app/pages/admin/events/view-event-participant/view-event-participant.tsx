@@ -28,13 +28,11 @@ export function shouldRevalidate({
   nextParams,
   defaultShouldRevalidate,
 }: ShouldRevalidateFunctionArgs): boolean {
-  if (currentParams.eventId !== nextParams.eventId) {
-    return true
-  }
-  if (currentParams.profileId !== nextParams.profileId) {
-    return true
-  }
-  return defaultShouldRevalidate
+  const hasParamsChanged =
+    currentParams.eventId !== nextParams.eventId ||
+    currentParams.profileId !== nextParams.profileId
+
+  return hasParamsChanged || defaultShouldRevalidate
 }
 
 export async function action({ request }: Route.ActionArgs) {
