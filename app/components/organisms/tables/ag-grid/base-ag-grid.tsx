@@ -6,7 +6,14 @@ import {
 import { AgGridReact } from "ag-grid-react"
 import { cn } from "~/lib/utils"
 
-ModuleRegistry.registerModules([AllCommunityModule])
+let modulesRegistered = false
+
+function ensureModulesRegistered() {
+  if (!modulesRegistered) {
+    ModuleRegistry.registerModules([AllCommunityModule])
+    modulesRegistered = true
+  }
+}
 
 interface BaseAgGridProps<TData> {
   rowData: TData[]
@@ -19,8 +26,10 @@ export function BaseAgGrid<TData>({
   columnDefs,
   className,
 }: BaseAgGridProps<TData>) {
+  ensureModulesRegistered()
+
   return (
-    <div className={cn("ag-theme-quartz", className)} style={{ height: 400 }}>
+    <div className={cn("ag-theme-quartz h-[400px]", className)}>
       <AgGridReact rowData={rowData} columnDefs={columnDefs} />
     </div>
   )
