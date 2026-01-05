@@ -130,8 +130,7 @@ export const basicDataSchema = zod
       .string({ message: "Obrigatório" })
       .pipe(
         zod.coerce.date({
-          invalid_type_error: "Data inválida",
-          required_error: "Obrigatório",
+          error: "Data inválida",
         }),
       )
       .refine(
@@ -154,14 +153,14 @@ export const basicDataSchema = zod
       ),
     phone: zod.coerce
       .number({
-        invalid_type_error: "Você tem certeza que digitou um número?",
+        error: "Você tem certeza que digitou um número?",
       })
       .refine((value) => PHONE_REGEXP.test(value.toString()), {
         message: "Número inválido",
       }),
     confirm_phone: zod.coerce
       .number({
-        invalid_type_error: "Você tem certeza que digitou um número?",
+        error: "Você tem certeza que digitou um número?",
       })
       .refine((value) => PHONE_REGEXP.test(value.toString()), {
         message: "Número inválido",
