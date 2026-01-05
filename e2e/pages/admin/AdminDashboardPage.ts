@@ -39,19 +39,9 @@ export class AdminDashboardPage extends BasePage {
     if (!(await this.isEventInList(eventTitle))) {
       throw new Error(`Event "${eventTitle}" not found in list`)
     }
-    
-    const eventRow = this.page.getByRole('row').filter({ hasText: eventTitle })
-    await eventRow.getByRole('link', { name: 'Ver evento' }).click()
-  }
 
-  async clickEditEvent(eventTitle: string): Promise<void> {
-    // Make sure event is visible on current page
-    if (!(await this.isEventInList(eventTitle))) {
-      throw new Error(`Event "${eventTitle}" not found in list`)
-    }
-    
     const eventRow = this.page.getByRole('row').filter({ hasText: eventTitle })
-    await eventRow.getByRole('link', { name: 'Editar evento' }).click()
+    await eventRow.click()
   }
 
   async isEventInList(eventTitle: string): Promise<boolean> {
