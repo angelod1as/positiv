@@ -1,4 +1,12 @@
-import type { ColDef } from "ag-grid-community"
+import {
+  AllCommunityModule,
+  type ColDef,
+  ModuleRegistry,
+} from "ag-grid-community"
+import { AgGridReact } from "ag-grid-react"
+import { cn } from "~/lib/utils"
+
+ModuleRegistry.registerModules([AllCommunityModule])
 
 interface BaseAgGridProps<TData> {
   rowData: TData[]
@@ -6,7 +14,14 @@ interface BaseAgGridProps<TData> {
   className?: string
 }
 
-export function BaseAgGrid<TData>(_props: BaseAgGridProps<TData>) {
-  // Skeleton: returns empty div to make tests fail on assertions
-  return <div>Skeleton</div>
+export function BaseAgGrid<TData>({
+  rowData,
+  columnDefs,
+  className,
+}: BaseAgGridProps<TData>) {
+  return (
+    <div className={cn("ag-theme-quartz", className)} style={{ height: 400 }}>
+      <AgGridReact rowData={rowData} columnDefs={columnDefs} />
+    </div>
+  )
 }
