@@ -35,7 +35,7 @@ describe("DataTable - Row Click Functionality", () => {
     )
   })
 
-  it("should render table without onRowClick prop", () => {
+  it("should render table without onRowClick prop and not have pointer cursor", () => {
     const mockData = [{ id: "1", name: "Test" }]
 
     render(
@@ -44,7 +44,11 @@ describe("DataTable - Row Click Functionality", () => {
       </DataTable>,
     )
 
-    expect(screen.getByText("Test")).toBeInTheDocument()
+    const row = screen.getByText("Test").closest("tr")
+    expect(row).toBeInTheDocument()
+
+    const dataTableDiv = row?.closest(".p-datatable")
+    expect(dataTableDiv).not.toHaveClass("cursor-pointer")
   })
 
   it("should not enable selection mode when onRowClick is provided", async () => {

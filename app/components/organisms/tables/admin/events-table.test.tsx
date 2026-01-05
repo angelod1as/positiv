@@ -293,6 +293,10 @@ describe('AdminDashboardEventsTable', () => {
 
     const row = screen.getByText('Draft Event').closest('tr')
     if (!row) throw new Error('Row not found')
+
+    const dataTableDiv = row.closest('.p-datatable')
+    expect(dataTableDiv).toHaveClass('cursor-pointer')
+
     await user.click(row)
 
     expect(mockNavigate).toHaveBeenCalledTimes(1)
