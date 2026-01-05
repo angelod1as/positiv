@@ -24,8 +24,17 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   const { application_date, bond, companions, notes, referrals, referred } =
     eventParticipant
 
+  const profileFieldLabels = {
+    approved_to_attend: profilePropMap("approved_to_attend"),
+    flag: profilePropMap("flag"),
+    flag_notes: profilePropMap("flag_notes"),
+  }
+
   const labels = Object.keys(eventParticipant).reduce(
     (acc, curr) => {
+      if (curr in profileFieldLabels) {
+        return acc
+      }
       return {
         ...acc,
         [curr]: eventParticipantPropMap(
@@ -33,11 +42,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
         ),
       }
     },
-    {
-      approved_to_attend: profilePropMap("approved_to_attend"),
-      flag: profilePropMap("flag"),
-      flag_notes: profilePropMap("flag_notes"),
-    },
+    profileFieldLabels,
   )
 
   return (
@@ -48,6 +53,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
           <h3>Administração</h3>
 
           <SchemaForm
+            key={`${eventParticipant.event_id}-${eventParticipant.profile_id}`}
             schema={updateParticipantVsEventSchema}
             buttonLabel="Salvar"
             hiddenFields={["intent", "event_id", "profile_id"]}

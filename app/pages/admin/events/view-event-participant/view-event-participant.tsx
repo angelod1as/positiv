@@ -1,5 +1,6 @@
 import { inputFromForm } from "composable-functions"
 import { formAction } from "remix-forms"
+import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import {
   getEventParticipantHistoryById,
@@ -21,6 +22,18 @@ const {
     events: { ADMIN_EVENTS, ADMIN_VIEW_EVENT },
   },
 } = paths
+
+export function shouldRevalidate({
+  currentParams,
+  nextParams,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs): boolean {
+  const hasParamsChanged =
+    currentParams.eventId !== nextParams.eventId ||
+    currentParams.profileId !== nextParams.profileId
+
+  return hasParamsChanged || defaultShouldRevalidate
+}
 
 export async function action({ request }: Route.ActionArgs) {
   const { intent } = await inputFromForm(request)
