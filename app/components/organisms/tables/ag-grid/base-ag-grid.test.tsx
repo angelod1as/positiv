@@ -9,8 +9,8 @@ describe("BaseAgGrid", () => {
   ]
 
   const mockColumnDefs = [
-    { field: "name", headerName: "Name" },
-    { field: "value", headerName: "Value" },
+    { field: "name" as const, headerName: "Name" },
+    { field: "value" as const, headerName: "Value" },
   ]
 
   it("should render with ag-theme-quartz class", () => {
