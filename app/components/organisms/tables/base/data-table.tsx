@@ -244,15 +244,19 @@ export function DataTable<T extends DataTableValue>({
         removableSort
         sortOrder={sortOrder}
         // Selection
-        selection={onRowClick ? undefined : selection}
-        onSelectionChange={onRowClick ? undefined : (e) => setSelection(e.value)}
-        selectionMode={onRowClick ? undefined : "checkbox"}
+        selection={onRowClick ? ([] as T[]) : selection}
+        onSelectionChange={
+          onRowClick
+            ? undefined
+            : (e: { value: T[] }) => setSelection(e.value as T[])
+        }
+        selectionMode={onRowClick ? null : "checkbox"}
         // Resize
         resizableColumns={resizableColumns}
         columnResizeMode="fit"
         // Reorder
         reorderableColumns={reorderableColumns}
-        onRowReorder={(e) => setValues(e.value)}
+        onRowReorder={(e) => setValues(e.value as T[])}
       >
         {selectable && (
           <Column
