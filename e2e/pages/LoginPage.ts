@@ -46,15 +46,18 @@ export class LoginPage extends BasePage {
     await this.goto()
     await this.emailInput.fill(email)
     await this.passwordInput.fill(password)
-    
-    // Submit and wait for navigation
+
+    // Submit and wait for navigation with explicit timeout for CI
     await Promise.all([
       this.page.waitForURL(url => {
         const pathname = new URL(url).pathname
         return pathname === '/dashboard' || pathname === '/conta/termos-e-condicoes'
-      }),
+      }, { timeout: 30000 }),
       this.submitButton.click()
     ])
+
+    // Wait for page to fully load after navigation
+    await this.page.waitForLoadState('networkidle')
   }
   
   async verifyLoginPageDisplayed(): Promise<void> {
