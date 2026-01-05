@@ -93,4 +93,31 @@ describe("AGDataTable", () => {
       })
     })
   })
+
+  describe("Empty State", () => {
+    it("should show default empty message when data is empty", async () => {
+      render(
+        <AGDataTable id="test-table" data={[]} columnDefs={mockColumnDefs} />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Nenhum registro encontrado")).toBeInTheDocument()
+      })
+    })
+
+    it("should show custom empty message when provided", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={[]}
+          columnDefs={mockColumnDefs}
+          emptyMessage="Sem dados disponíveis"
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Sem dados disponíveis")).toBeInTheDocument()
+      })
+    })
+  })
 })
