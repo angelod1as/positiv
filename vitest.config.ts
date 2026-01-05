@@ -9,6 +9,14 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './app/test/setup.ts',
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        minForks: process.env.VITEST_MIN_FORKS ? Number(process.env.VITEST_MIN_FORKS) : 1,
+        maxForks: process.env.VITEST_MAX_FORKS ? Number(process.env.VITEST_MAX_FORKS) : 3,
+        isolate: true,
+      },
+    },
     coverage: {
       reporter: ['text', 'json', 'html'],
       exclude: [
