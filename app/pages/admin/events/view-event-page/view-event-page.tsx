@@ -13,7 +13,7 @@ import {
   updateEventStatus,
   updateEventDemographics,
 } from "~/business/admin/admin.server"
-import { updateEventListmonkList } from "~/business/admin/event-listmonk-sync.server"
+import { updateEventListmonkList, listmonkSyncFiltersSchema } from "~/business/admin/event-listmonk-sync.server"
 import {
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
@@ -75,7 +75,27 @@ export async function action({ request, params }: Route.ActionArgs) {
       return { success: false, errors: [{ message: "Event ID not found" }], intent }
     }
 
-    const result = await updateEventListmonkList(eventId)
+    const formData = await request.formData()
+    const approvalStatuses = formData.getAll("approvalStatuses")
+    const applicationStatuses = formData.getAll("applicationStatuses")
+    const attendanceStatuses = formData.getAll("attendanceStatuses")
+
+    const filtersValidation = listmonkSyncFiltersSchema.safeParse({
+      approvalStatuses: approvalStatuses.length > 0 ? approvalStatuses : undefined,
+      applicationStatuses: applicationStatuses.length > 0 ? applicationStatuses : undefined,
+      attendanceStatuses: attendanceStatuses.length > 0 ? attendanceStatuses : undefined,
+    })
+
+    if (!filtersValidation.success) {
+      return {
+        success: false,
+        errors: filtersValidation.error.errors.map((e) => ({ message: e.message })),
+        intent,
+      }
+    }
+
+    const filters = filtersValidation.data
+    const result = await updateEventListmonkList(eventId, filters)
     return { ...result, intent }
   }
 
