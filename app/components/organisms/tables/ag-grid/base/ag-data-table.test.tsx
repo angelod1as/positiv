@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import userEvent from "@testing-library/user-event"
+import { describe, expect, it, vi } from "vitest"
 import { AGDataTable } from "./ag-data-table"
 
 describe("AGDataTable", () => {
@@ -155,6 +156,40 @@ describe("AGDataTable", () => {
 
       const checkboxes = container.querySelectorAll(".ag-checkbox-input")
       expect(checkboxes.length).toBeGreaterThan(0)
+    })
+
+    it("should call onRowSelectionChange when row is selected", async () => {
+      const user = userEvent.setup()
+      const handleSelectionChange = vi.fn()
+
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          rowSelection="multiple"
+          onRowSelectionChange={handleSelectionChange}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const firstRowCheckbox = container.querySelector(
+        ".ag-row:first-child .ag-checkbox-input",
+      ) as HTMLElement
+      expect(firstRowCheckbox).toBeInTheDocument()
+
+      await user.click(firstRowCheckbox)
+
+      await waitFor(() => {
+        expect(handleSelectionChange).toHaveBeenCalled()
+      })
+
+      const lastCallArgs = handleSelectionChange.mock.calls.at(-1)?.[0]
+      expect(lastCallArgs).toHaveLength(1)
+      expect(lastCallArgs[0]).toMatchObject({ id: "1", name: "Item 1" })
     })
   })
 
