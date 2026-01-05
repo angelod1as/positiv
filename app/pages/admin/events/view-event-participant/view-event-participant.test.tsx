@@ -2,7 +2,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { createMemoryRouter, RouterProvider } from "react-router"
-import ViewEventParticipant from "./view-event-participant"
+import ViewEventParticipant, { shouldRevalidate } from "./view-event-participant"
 
 // Mock child components that might cause router issues
 vi.mock("~/components/pages/admin/participants/basic-data", () => ({
@@ -155,5 +155,68 @@ describe("ViewEventParticipant", () => {
     // Should not render anything
     expect(screen.queryByText("Histórico de Participações")).not.toBeInTheDocument()
     expect(screen.queryByText(/João/)).not.toBeInTheDocument()
+  })
+})
+
+describe("shouldRevalidate", () => {
+  const baseArgs = {
+    currentUrl: new URL("http://localhost/admin/eventos/event-a/participantes/profile-1"),
+    nextUrl: new URL("http://localhost/admin/eventos/event-b/participantes/profile-1"),
+    formMethod: undefined,
+    formAction: undefined,
+    formEncType: undefined,
+    text: undefined,
+    formData: undefined,
+    json: undefined,
+    actionStatus: undefined,
+    actionResult: undefined,
+  }
+
+  it("should return true when eventId changes", () => {
+    const result = shouldRevalidate({
+      ...baseArgs,
+      currentParams: { eventId: "event-a", profileId: "profile-1" },
+      nextParams: { eventId: "event-b", profileId: "profile-1" },
+      defaultShouldRevalidate: false,
+    })
+    expect(result).toBe(true)
+  })
+
+  it("should return true when profileId changes", () => {
+    const result = shouldRevalidate({
+      ...baseArgs,
+      currentParams: { eventId: "event-a", profileId: "profile-1" },
+      nextParams: { eventId: "event-a", profileId: "profile-2" },
+      defaultShouldRevalidate: false,
+    })
+    expect(result).toBe(true)
+  })
+
+  it("should return true when both eventId and profileId change", () => {
+    const result = shouldRevalidate({
+      ...baseArgs,
+      currentParams: { eventId: "event-a", profileId: "profile-1" },
+      nextParams: { eventId: "event-b", profileId: "profile-2" },
+      defaultShouldRevalidate: false,
+    })
+    expect(result).toBe(true)
+  })
+
+  it("should return defaultShouldRevalidate when params unchanged", () => {
+    const resultFalse = shouldRevalidate({
+      ...baseArgs,
+      currentParams: { eventId: "event-a", profileId: "profile-1" },
+      nextParams: { eventId: "event-a", profileId: "profile-1" },
+      defaultShouldRevalidate: false,
+    })
+    expect(resultFalse).toBe(false)
+
+    const resultTrue = shouldRevalidate({
+      ...baseArgs,
+      currentParams: { eventId: "event-a", profileId: "profile-1" },
+      nextParams: { eventId: "event-a", profileId: "profile-1" },
+      defaultShouldRevalidate: true,
+    })
+    expect(resultTrue).toBe(true)
   })
 })
