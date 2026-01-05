@@ -326,4 +326,96 @@ test.describe("Admin User Management", () => {
     )
     expect(statusUpdated).toBe(true)
   })
+
+  /**
+   * POS-362: Test that navigating between events via participant history
+   * correctly updates the displayed status data (fixes stale data bug).
+   *
+   * Uses seed data:
+   * - User3 (user3@example.com / "Cissa User Three")
+   * - "Evento Com Inscrições Abertas 1": application_status='sent_payment_data', attendance_status='pending'
+   * - "Evento Concluído 1": application_status='finalised', attendance_status='attended'
+   */
+  test("participant history navigation shows correct data (POS-362)", async ({
+    page,
+  }) => {
+    // Navigate to the Registration Open event using seed data
+    await page.goto("/admin")
+    await page.waitForLoadState("networkidle")
+
+    // Find and click on "Evento Com Inscrições Abertas 1" in the events table
+    const eventRow = page.locator("tr", {
+      hasText: "Evento Com Inscrições Abertas 1",
+    })
+    await eventRow.waitFor({ state: "visible", timeout: 10000 })
+
+    const viewLink = eventRow.locator("a").first()
+    await viewLink.click()
+    await page.waitForLoadState("networkidle")
+
+    // Wait for participants table to load
+    await userManagement.waitForTableToLoad()
+
+    // Find the row for User3 (Cissa User Three) - seed data participant with history
+    const participantRow =
+      await userManagement.findRowByParticipantName("Cissa User Three")
+
+    // Click to view participant details
+    await userManagement.clickViewParticipantButton(participantRow)
+    await userManagement.waitForDetailView()
+
+    // Store the current URL to verify navigation later
+    const currentEventUrl = page.url()
+    expect(currentEventUrl).toContain("/participantes/")
+
+    // Verify we're on the correct event page by checking the header
+    await expect(
+      page.getByText("🤗 Evento Com Inscrições Abertas 1"),
+    ).toBeVisible()
+
+    // Verify current event's status values
+    const applicationStatusSelect = page.locator('[name="application_status"]')
+    const attendanceStatusSelect = page.locator('[name="attendance_status"]')
+
+    await expect(applicationStatusSelect).toHaveValue("sent_payment_data")
+    await expect(attendanceStatusSelect).toHaveValue("pending")
+
+    // Find and click on a different event in the history section
+    const historySection = page
+      .locator("text=Histórico de Participações")
+      .locator("..")
+    await expect(historySection).toBeVisible({ timeout: 5000 })
+
+    // Click on the completed event link in history
+    const historyEventLink = page.getByRole("link", {
+      name: /Evento Concluído 1/i,
+    })
+    await historyEventLink.click()
+    await page.waitForLoadState("networkidle")
+
+    // Verify URL changed (different event ID)
+    const newUrl = page.url()
+    expect(newUrl).not.toEqual(currentEventUrl)
+    expect(newUrl).toContain("/participantes/")
+
+    // KEY ASSERTION: Verify the page now shows the completed event's data
+    // This is what was broken in POS-362 - it showed stale data from previous event
+    await expect(page.getByText("🥳 Evento Concluído 1")).toBeVisible()
+
+    // Verify the status values updated to the completed event's values
+    // User3 attended the completed event with finalised status
+    await expect(applicationStatusSelect).toHaveValue("finalised")
+    await expect(attendanceStatusSelect).toHaveValue("attended")
+
+    // Test browser back navigation also works correctly
+    await page.goBack()
+    await page.waitForLoadState("networkidle")
+
+    // Should show the original event data again
+    await expect(
+      page.getByText("🤗 Evento Com Inscrições Abertas 1"),
+    ).toBeVisible()
+    await expect(applicationStatusSelect).toHaveValue("sent_payment_data")
+    await expect(attendanceStatusSelect).toHaveValue("pending")
+  })
 })
