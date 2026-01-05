@@ -23,6 +23,9 @@ export function AGDataTable<TData>({
   columnDefs,
   loading,
   emptyMessage,
+  pagination = false,
+  paginationPageSize = 25,
+  paginationPageSizeSelector,
   className,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
@@ -39,6 +42,9 @@ export function AGDataTable<TData>({
         columnDefs={columnDefs}
         loading={loading}
         overlayNoRowsTemplate={noRowsTemplate}
+        pagination={pagination}
+        paginationPageSize={paginationPageSize}
+        paginationPageSizeSelector={paginationPageSizeSelector}
       />
     </div>
   )
