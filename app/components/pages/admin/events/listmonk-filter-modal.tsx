@@ -19,12 +19,13 @@ import type {
   ParticipantApplicationStatus,
   ParticipantAttendanceStatus,
   ProfileApprovedToAttendStatus,
+  ComposableFetcherData,
 } from "~/types/database/entities.types"
 
 interface ListmonkFilterModalProps {
   isOpen: boolean
   onClose: () => void
-  fetcher: FetcherWithComponents<unknown>
+  fetcher: FetcherWithComponents<ComposableFetcherData>
   hasExistingList: boolean
 }
 
@@ -75,6 +76,16 @@ export function ListmonkFilterModal({
     }
   }, [isOpen])
 
+  useEffect(() => {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.success === true &&
+      fetcher.data.intent === "sync-listmonk-list"
+    ) {
+      onClose()
+    }
+  }, [fetcher.state, fetcher.data, onClose])
+
   const handleApprovalToggle = (value: ProfileApprovedToAttendStatus) => {
     setApprovalStatuses((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
@@ -110,7 +121,6 @@ export function ListmonkFilterModal({
     })
 
     fetcher.submit(formData, { method: "POST" })
-    onClose()
   }
 
   const isSubmitting = fetcher.state === "submitting"
@@ -215,7 +225,7 @@ export function ListmonkFilterModal({
             onClick={onClose}
             disabled={isSubmitting}
           >
-            Cancel
+            Cancelar
           </Button>
           <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting ? "Sincronizando..." : "Sincronizar"}

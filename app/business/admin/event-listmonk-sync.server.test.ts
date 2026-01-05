@@ -682,16 +682,17 @@ describe("updateEventListmonkList with filters", () => {
     expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
   })
 
-  it("should use default filter when empty approval statuses array provided", async () => {
+  it("should skip approval filter when empty array provided", async () => {
+    const existingList = createMockListmonkList()
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
       title: "Test Event",
-      listmonk_list_id: null,
+      listmonk_list_id: existingList.id,
       listmonk_list_synced_at: null,
     })
-    mockCreateList.mockResolvedValue({
+    mockGetListById.mockResolvedValue({
       success: true,
-      data: createMockListmonkList(),
+      data: existingList,
       errors: [],
     })
     mockExecute.mockResolvedValue([])
@@ -700,6 +701,105 @@ describe("updateEventListmonkList with filters", () => {
       approvalStatuses: [],
     })
 
+    expect(mockWhere).not.toHaveBeenCalledWith("p.approved_to_attend", "in", [])
+    expect(mockWhere).not.toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
+  })
+
+  it("should skip application filter when empty array provided", async () => {
+    const existingList = createMockListmonkList()
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: existingList.id,
+      listmonk_list_synced_at: null,
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: existingList,
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([])
+
+    await updateEventListmonkList("event-123", {
+      applicationStatuses: [],
+    })
+
     expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.application_status", "in", [])
+  })
+
+  it("should skip attendance filter when empty array provided", async () => {
+    const existingList = createMockListmonkList()
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: existingList.id,
+      listmonk_list_synced_at: null,
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: existingList,
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([])
+
+    await updateEventListmonkList("event-123", {
+      attendanceStatuses: [],
+    })
+
+    expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.attendance_status", "in", [])
+  })
+
+  it("should apply non-empty filters and skip empty ones", async () => {
+    const existingList = createMockListmonkList()
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: existingList.id,
+      listmonk_list_synced_at: null,
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: existingList,
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([])
+
+    await updateEventListmonkList("event-123", {
+      approvalStatuses: ["approved"],
+      applicationStatuses: [],
+      attendanceStatuses: ["attended"],
+    })
+
+    expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "in", ["approved"])
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.application_status", "in", expect.anything())
+    expect(mockWhere).toHaveBeenCalledWith("ep.attendance_status", "in", ["attended"])
+  })
+
+  it("should skip all filters when all arrays are empty", async () => {
+    const existingList = createMockListmonkList()
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: existingList.id,
+      listmonk_list_synced_at: null,
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: existingList,
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([])
+
+    await updateEventListmonkList("event-123", {
+      approvalStatuses: [],
+      applicationStatuses: [],
+      attendanceStatuses: [],
+    })
+
+    expect(mockWhere).not.toHaveBeenCalledWith("p.approved_to_attend", expect.anything(), expect.anything())
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.application_status", expect.anything(), expect.anything())
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.attendance_status", expect.anything(), expect.anything())
   })
 })
