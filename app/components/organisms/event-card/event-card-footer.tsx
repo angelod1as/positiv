@@ -1,4 +1,4 @@
-import { EyeIcon, PencilIcon } from "lucide-react"
+import { EyeIcon } from "lucide-react"
 import { useEffect, type FC } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
@@ -16,7 +16,7 @@ const {
     events: { EVENT_VIEW },
   },
   admin: {
-    events: { ADMIN_VIEW_EVENT, ADMIN_EDIT_EVENT },
+    events: { ADMIN_VIEW_EVENT },
   },
 } = paths
 
@@ -42,10 +42,6 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
         <Button to={ADMIN_VIEW_EVENT(eventId)}>
           <EyeIcon className="h-4 w-4 mr-2" />
           Ver evento
-        </Button>
-        <Button to={ADMIN_EDIT_EVENT(eventId)}>
-          <PencilIcon className="h-4 w-4 mr-2" />
-          Editar evento
         </Button>
       </div>
     )
