@@ -193,6 +193,38 @@ describe("AGDataTable", () => {
     })
   })
 
+  describe("Quick Filter", () => {
+    it("should filter rows based on quickFilterText", async () => {
+      const { rerender } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+      expect(screen.getByText("Item 2")).toBeInTheDocument()
+
+      rerender(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          quickFilterText="Item 1"
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.queryByText("Item 2")).not.toBeInTheDocument()
+      })
+
+      expect(screen.getByText("Item 1")).toBeInTheDocument()
+    })
+  })
+
   describe("Pagination", () => {
     const manyRows = Array.from({ length: 30 }, (_, i) => ({
       id: String(i),

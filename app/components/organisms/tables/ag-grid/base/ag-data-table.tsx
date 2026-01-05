@@ -29,6 +29,7 @@ export function AGDataTable<TData>({
   paginationPageSizeSelector,
   rowSelection,
   onRowSelectionChange,
+  quickFilterText,
   className,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
@@ -64,6 +65,7 @@ export function AGDataTable<TData>({
         paginationPageSizeSelector={paginationPageSizeSelector}
         rowSelection={rowSelectionConfig}
         onSelectionChanged={handleSelectionChanged}
+        quickFilterText={quickFilterText}
       />
     </div>
   )
