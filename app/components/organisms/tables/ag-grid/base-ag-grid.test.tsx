@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 import { BaseAgGrid } from "./base-ag-grid"
 
@@ -18,25 +18,29 @@ describe("BaseAgGrid", () => {
       <BaseAgGrid rowData={mockRowData} columnDefs={mockColumnDefs} />,
     )
 
-    const gridContainer = screen.getByRole("treegrid").closest(".ag-theme-quartz")
+    const gridContainer = screen.getByRole("grid").closest(".ag-theme-quartz")
     expect(gridContainer).toBeInTheDocument()
   })
 
-  it("should display row data in the grid", () => {
+  it("should display row data in the grid", async () => {
     render(
       <BaseAgGrid rowData={mockRowData} columnDefs={mockColumnDefs} />,
     )
 
-    expect(screen.getByText("Item 1")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText("Item 1")).toBeInTheDocument()
+    })
     expect(screen.getByText("Item 2")).toBeInTheDocument()
   })
 
-  it("should render column headers from columnDefs", () => {
+  it("should render column headers from columnDefs", async () => {
     render(
       <BaseAgGrid rowData={mockRowData} columnDefs={mockColumnDefs} />,
     )
 
-    expect(screen.getByText("Name")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText("Name")).toBeInTheDocument()
+    })
     expect(screen.getByText("Value")).toBeInTheDocument()
   })
 
@@ -49,7 +53,7 @@ describe("BaseAgGrid", () => {
       />,
     )
 
-    const gridContainer = screen.getByRole("treegrid").closest(".custom-class")
+    const gridContainer = screen.getByRole("grid").closest(".custom-class")
     expect(gridContainer).toBeInTheDocument()
   })
 })
