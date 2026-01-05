@@ -193,6 +193,68 @@ describe("AGDataTable", () => {
     })
   })
 
+  describe("Styling Props", () => {
+    it("should apply custom height when provided", async () => {
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          height="600px"
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const gridContainer = container.querySelector(
+        '[data-testid="ag-data-table-test-table"]',
+      )
+      expect(gridContainer).toHaveStyle({ height: "600px" })
+    })
+
+    it("should use default height when not provided", async () => {
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const gridContainer = container.querySelector(
+        '[data-testid="ag-data-table-test-table"]',
+      )
+      expect(gridContainer).toHaveClass("h-[400px]")
+    })
+
+    it("should merge custom className with default classes", async () => {
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          className="custom-class"
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const gridContainer = container.querySelector(
+        '[data-testid="ag-data-table-test-table"]',
+      )
+      expect(gridContainer).toHaveClass("ag-theme-quartz")
+      expect(gridContainer).toHaveClass("custom-class")
+    })
+  })
+
   describe("Column Features", () => {
     it("should make columns sortable by default", async () => {
       const { container } = render(
