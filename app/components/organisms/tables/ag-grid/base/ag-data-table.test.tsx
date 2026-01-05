@@ -126,6 +126,27 @@ describe("AGDataTable", () => {
         expect(screen.getByText("Sem dados disponíveis")).toBeInTheDocument()
       })
     })
+
+    it("should escape HTML in custom empty message to prevent XSS", async () => {
+      const { container } = render(
+        <AGDataTable<DataItem>
+          id="test-table"
+          data={[]}
+          columnDefs={mockColumnDefs}
+          emptyMessage="<script>alert('xss')</script>"
+        />,
+      )
+
+      await waitFor(() => {
+        const overlay = container.querySelector(".ag-overlay")
+        expect(overlay).toBeInTheDocument()
+      })
+
+      const scriptElements = container.querySelectorAll("script")
+      expect(scriptElements).toHaveLength(0)
+
+      expect(container.innerHTML).toContain("&lt;script&gt;")
+    })
   })
 
   describe("Row Selection", () => {
@@ -144,6 +165,23 @@ describe("AGDataTable", () => {
 
       const checkboxes = container.querySelectorAll(".ag-checkbox-input")
       expect(checkboxes).toHaveLength(0)
+    })
+
+    it("should enable single row selection when rowSelection is single", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          rowSelection="single"
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      expect(screen.getByRole("grid")).toBeInTheDocument()
     })
 
     it("should show row checkboxes when rowSelection is multiple", async () => {
