@@ -7,6 +7,7 @@ test.describe('User Access Control', () => {
   test('user can access allowed areas and is blocked from admin areas', async ({ page }) => {
     // Test 1: Direct dashboard access (allowed - may redirect to terms first)
     await page.goto('/dashboard')
+    await page.waitForLoadState('networkidle')
     const currentUrl = page.url()
     
     // Accept either dashboard or terms page (common redirect for new users)
@@ -36,7 +37,8 @@ test.describe('User Access Control', () => {
 
   test('user navigation shows correct menu items', async ({ page }) => {
     await page.goto('/dashboard')
-    
+    await page.waitForLoadState('networkidle')
+
     // Handle potential terms redirect
     const currentUrl = page.url()
     if (currentUrl.includes('/conta/termos-e-condicoes')) {
