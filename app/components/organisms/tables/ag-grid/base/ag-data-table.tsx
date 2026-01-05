@@ -31,6 +31,7 @@ export function AGDataTable<TData>({
   onRowSelectionChange,
   quickFilterText,
   className,
+  height,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
 
@@ -53,7 +54,8 @@ export function AGDataTable<TData>({
   return (
     <div
       data-testid={`ag-data-table-${id}`}
-      className={cn("ag-theme-quartz h-[400px]", className)}
+      className={cn("ag-theme-quartz", !height && "h-[400px]", className)}
+      style={height ? { height } : undefined}
     >
       <AgGridReact
         rowData={data}
