@@ -32,10 +32,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           auto_publish: "Publicar automaticamente",
           time_event_start: "Início do evento",
           time_event_end: "Fim do evento",
-          time_application_start: "Abertura",
-          time_application_end: "Encerramento",
-          time_interviews_start: "Abertura",
-          time_interviews_end: "Encerramento",
+          time_application_start: "Abertura das inscrições",
           time_group_start: "Início",
           time_group_end: "Encerramento",
           time_payment_start: "Início",
@@ -50,9 +47,6 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           time_event_start: "datetime-local",
           time_event_end: "datetime-local",
           time_application_start: "datetime-local",
-          time_application_end: "datetime-local",
-          time_interviews_start: "datetime-local",
-          time_interviews_end: "datetime-local",
           time_group_start: "datetime-local",
           time_group_end: "datetime-local",
           time_payment_end: "datetime-local",
@@ -163,17 +157,6 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                 <h6 className="pt-4 col-span-12">Inscrições</h6>
                 <div className="sm:col-span-6 col-span-12">
                   <Field name="time_application_start" />
-                </div>
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_application_end" />
-                </div>
-
-                <h6 className="pt-4 col-span-12">Entrevistas</h6>
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_interviews_start" />
-                </div>
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_interviews_end" />
                 </div>
 
                 <h6 className="pt-4 col-span-12">Grupo</h6>

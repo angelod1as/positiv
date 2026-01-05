@@ -22,9 +22,6 @@ const dayOffsets: Record<DayOffsets, number> = {
   time_event_start: 0,
   time_event_end: 0,
   time_application_start: -30,
-  time_application_end: -23,
-  time_interviews_start: -21,
-  time_interviews_end: -9,
   time_group_start: -4,
   time_group_end: 30,
   time_payment_start: -21,
@@ -55,13 +52,10 @@ export const calculateDerivedDates = (
         break
       case "time_application_start":
       case "time_group_start":
-      case "time_interviews_start":
       case "time_payment_start":
         value = setHours(value, 8)
         break
-      case "time_application_end":
       case "time_group_end":
-      case "time_interviews_end":
       case "time_payment_end":
         value = setHours(value, 22)
         break

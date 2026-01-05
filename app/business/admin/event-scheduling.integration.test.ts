@@ -26,7 +26,6 @@ describe("Event Scheduling - Integration Tests", () => {
         title: "Test Scheduled Event",
         event_status: "Scheduled",
         time_application_start: pastTime,
-        time_application_end: futureTime,
         time_event_start: futureTime,
         auto_publish: true
       })
@@ -55,7 +54,6 @@ describe("Event Scheduling - Integration Tests", () => {
         title: "Test Manual Event",
         event_status: "Scheduled",
         time_application_start: pastTime,
-        time_application_end: futureTime,
         time_event_start: futureTime,
         auto_publish: false
       })
@@ -84,7 +82,6 @@ describe("Event Scheduling - Integration Tests", () => {
         title: "Test Future Event",
         event_status: "Scheduled",
         time_application_start: futureApplicationTime,
-        time_application_end: futureEventTime,
         time_event_start: futureEventTime,
         auto_publish: true
       })
@@ -189,7 +186,6 @@ describe("Event Scheduling - Integration Tests", () => {
         title: "Test Event for Campaign Tracking",
         event_status: "Scheduled",
         time_application_start: pastTime,
-        time_application_end: futureTime,
         time_event_start: futureTime,
         auto_publish: true
       })
@@ -225,7 +221,6 @@ describe("Event Scheduling - Integration Tests", () => {
         title: "Test Event for Duplicate Check",
         event_status: "Scheduled",
         time_application_start: pastTime,
-        time_application_end: futureTime,
         time_event_start: futureTime,
         auto_publish: true
       })

@@ -13,9 +13,6 @@ export class EventManagementPage extends BasePage {
   readonly eventStartInput: Locator
   readonly eventEndInput: Locator
   readonly applicationStartInput: Locator
-  readonly applicationEndInput: Locator
-  readonly interviewsStartInput: Locator
-  readonly interviewsEndInput: Locator
   readonly groupStartInput: Locator
   readonly groupEndInput: Locator
   readonly paymentStartInput: Locator
@@ -49,20 +46,15 @@ export class EventManagementPage extends BasePage {
     this.eventEndInput = page.getByLabel('Fim do evento')
     
     // Application period
-    this.applicationStartInput = page.getByLabel('Abertura', { exact: true }).first()
-    this.applicationEndInput = page.getByLabel('Encerramento').first()
-    
-    // Interviews period
-    this.interviewsStartInput = page.getByLabel('Abertura', { exact: true }).nth(1)
-    this.interviewsEndInput = page.getByLabel('Encerramento').nth(1)
-    
+    this.applicationStartInput = page.locator('#time_application_start')
+
     // Group period
     this.groupStartInput = page.locator('#time_group_start')
-    this.groupEndInput = page.getByLabel('Encerramento').nth(2)
-    
+    this.groupEndInput = page.locator('#time_group_end')
+
     // Payment period
     this.paymentStartInput = page.locator('#time_payment_start')
-    this.paymentEndInput = page.getByLabel('Encerramento').nth(3)
+    this.paymentEndInput = page.locator('#time_payment_end')
     
     // Buttons
     this.calculateDatesButton = page.getByRole('button', { name: 'Calcular datas automaticamente' })
@@ -112,22 +104,19 @@ export class EventManagementPage extends BasePage {
     const dateInputs = [
       this.eventEndInput,
       this.applicationStartInput,
-      this.applicationEndInput,
-      this.interviewsStartInput,
-      this.interviewsEndInput,
       this.groupStartInput,
       this.groupEndInput,
       this.paymentStartInput,
       this.paymentEndInput
     ]
-    
+
     for (const input of dateInputs) {
       const value = await input.inputValue()
       if (!value) {
         return false
       }
     }
-    
+
     return true
   }
 

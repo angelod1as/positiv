@@ -16,8 +16,6 @@ export const eventOpeningMailTemplate = (
   const { date, time } = formatDateTime(event.time_event_start)
   const { date: applicationOpenDate, time: applicationOpenTime } =
     formatDateTime(event.time_application_start)
-  const { date: applicationCloseDate, time: applicationCloseTime } =
-    formatDateTime(event.time_application_end)
 
   const sanitizedEmoji = sanitizeHtml(event.emoji || "")
   const sanitizedTitle = sanitizeHtml(event.title || "")
@@ -31,10 +29,6 @@ export const eventOpeningMailTemplate = (
     ["Data do evento", date],
     ["Horário de início", time],
     ["Inscrições abrem em", `${applicationOpenDate} às ${applicationOpenTime}`],
-    [
-      "Inscrições fecham em",
-      `${applicationCloseDate} às ${applicationCloseTime}`,
-    ],
   ]
 
   const unsubscribeUrl = `${POSITIV_URL}newsletter/unsubscribe?id=${encodeURIComponent(profileId)}`

@@ -14,9 +14,6 @@ INSERT INTO public.events (
     time_event_start,
     time_event_end,
     time_application_start,
-    time_application_end,
-    time_interviews_start,
-    time_interviews_end,
     time_group_start,
     time_group_end,
     time_payment_start,
@@ -36,9 +33,6 @@ VALUES
     now() + interval '1 month',                         -- time_event_start
     now() + interval '1 month' + interval '2 hours',    -- time_event_end
     now() + interval '3 weeks',                         -- time_application_start
-    now() + interval '4 weeks',                         -- time_application_end
-    now() + interval '3 weeks' - interval '21 days',    -- time_interviews_start
-    now() + interval '1 month' + interval '2 hours',    -- time_interviews_end
     now() + interval '1 month' - interval '7 days',     -- time_group_start
     now() + interval '1 month' + interval '30 days',    -- time_group_end
     now() + interval '1 month' - interval '21 days',    -- time_payment_start
@@ -57,9 +51,6 @@ VALUES
     now() + interval '2 months',                              -- time_event_start
     now() + interval '2 months' + interval '3 hours',         -- time_event_end
     now() + interval '1 month',                              -- time_application_start
-    now() + interval '1 month' + interval '3 hours',         -- time_application_end
-    now() + interval '1 month' - interval '21 days',          -- time_interviews_start
-    now() + interval '2 months' + interval '3 hours',         -- time_interviews_end
     now() + interval '2 months' - interval '7 days',          -- time_group_start
     now() + interval '2 months' + interval '30 days',         -- time_group_end
     now() + interval '2 months' - interval '21 days',         -- time_payment_start
@@ -78,9 +69,6 @@ VALUES
     now() + interval '5 months', -- time_event_start (1 month after BDSM)
     now() + interval '5 months' + interval '4 hours', -- time_event_end
     now() - interval '2 week', -- time_application_start
-    now() + interval '4 months', -- time_application_end
-    now() + interval '4 months' - interval '21 days',  -- time_interviews_start
-    now() + interval '5 months' + interval '4 hours',   -- time_interviews_end
     now() + interval '5 months' - interval '7 days',   -- time_group_start
     now() + interval '5 months' + interval '30 days',  -- time_group_end
     now() + interval '5 months' - interval '21 days',  -- time_payment_start
@@ -99,9 +87,6 @@ VALUES
     now() + interval '4 months', -- time_event_start (1 month after Abertas 1)
     now() + interval '4 months' + interval '5 hours', -- time_event_end
     now() - interval '1 week', -- time_application_start
-    now() + interval '14 weeks', -- time_application_end
-    now() + interval '14 weeks' - interval '21 days',  -- time_interviews_start
-    now() + interval '4 months' + interval '5 hours',   -- time_interviews_end
     now() + interval '4 months' - interval '7 days',   -- time_group_start
     now() + interval '4 months' + interval '30 days',  -- time_group_end
     now() + interval '4 months' - interval '21 days',  -- time_payment_start
@@ -119,9 +104,6 @@ VALUES
     now() + interval '3 months', -- time_event_start
     now() + interval '3 months' + interval '4 hours', -- time_event_end
     now() - interval '1 week', -- time_application_start
-    now() + interval '2 months', -- time_application_end
-    now() + interval '2 months' - interval '21 days',  -- time_interviews_start
-    now() + interval '3 months' + interval '4 hours',   -- time_interviews_end
     now() + interval '3 months' - interval '7 days',   -- time_group_start
     now() + interval '3 months' + interval '30 days',  -- time_group_end
     now() + interval '3 months' - interval '21 days',  -- time_payment_start
@@ -140,9 +122,6 @@ VALUES
     now() + interval '6 months', -- time_event_start
     now() + interval '6 months' + interval '1 hour', -- time_event_end
     now() - interval '2 months', -- time_application_start
-    now() - interval '1 week', -- time_application_end
-    now() - interval '1 week' - interval '21 days',  -- time_interviews_start
-    now() + interval '6 months' + interval '1 hour', -- time_interviews_end
     now() + interval '6 months' - interval '7 days', -- time_group_start
     now() + interval '6 months' + interval '30 days', -- time_group_end
     now() + interval '6 months' - interval '21 days', -- time_payment_start
@@ -161,9 +140,6 @@ VALUES
     now() - interval '1 hour', -- time_event_start
     now() + interval '2 hours', -- time_event_end
     now() - interval '1 month', -- time_application_start
-    now() - interval '2 days', -- time_application_end
-    now() - interval '2 days' - interval '21 days',  -- time_interviews_start
-    now() + interval '2 hours',                      -- time_interviews_end
     now() - interval '1 hour' - interval '7 days',   -- time_group_start
     now() - interval '1 hour' + interval '30 days',  -- time_group_end
     now() - interval '1 hour' - interval '21 days',  -- time_payment_start
@@ -182,9 +158,6 @@ VALUES
     now() - interval '1 month', -- time_event_start
     now() - interval '1 month' + interval '3 hours', -- time_event_end
     now() - interval '3 months', -- time_application_start
-    now() - interval '2 months', -- time_application_end
-    now() - interval '2 months' - interval '21 days',  -- time_interviews_start
-    now() - interval '1 month' + interval '3 hours',   -- time_interviews_end
     now() - interval '1 month' - interval '7 days',    -- time_group_start
     now() - interval '1 month' + interval '30 days',   -- time_group_end
     now() - interval '1 month' - interval '21 days',   -- time_payment_start
@@ -203,9 +176,6 @@ VALUES
     now() + interval '6 months', -- time_event_start
     now() + interval '6 months' + interval '2 hours', -- time_event_end
     now() + interval '1 week', -- time_application_start
-    now() + interval '1 month', -- time_application_end
-    now() + interval '1 month' - interval '21 days',   -- time_interviews_start
-    now() + interval '6 months' + interval '2 hours',  -- time_interviews_end
     now() + interval '6 months' - interval '7 days',   -- time_group_start
     now() + interval '6 months' + interval '30 days',  -- time_group_end
     now() + interval '6 months' - interval '21 days',  -- time_payment_start
@@ -224,9 +194,6 @@ VALUES
     now() + interval '7 months', -- time_event_start
     now() + interval '7 months' + interval '1 hour', -- time_event_end
     now() + interval '6 months', -- time_application_start
-    now() + interval '6 months' + interval '2 weeks', -- time_application_end
-    now() + interval '6 months' + interval '2 weeks' - interval '21 days',  -- time_interviews_start
-    now() + interval '7 months' + interval '1 hour',   -- time_interviews_end
     now() + interval '7 months' - interval '7 days',   -- time_group_start
     now() + interval '7 months' + interval '30 days',  -- time_group_end
     now() + interval '7 months' - interval '21 days',  -- time_payment_start

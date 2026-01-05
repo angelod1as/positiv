@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1736020800000
+export const NEWS_VERSION = 1736099400000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "removed-unused-date-fields",
+    title: "🗑️ Campos de data removidos do formulário de evento",
+    content:
+      "O formulário de criação/edição de evento foi simplificado! Removemos 3 campos que nunca foram utilizados: 'Data final de inscrições', 'Data de início das entrevistas' e 'Data final das entrevistas'. O fechamento de inscrições continua sendo controlado pelo status do evento.",
+    isAdmin: true,
+    createdAt: new Date("2026-01-05T17:30:00"),
+    isActive: true,
+  },
   {
     id: "clickable-event-rows",
     title: "🖱️ Clique nas linhas da tabela de eventos",
