@@ -682,24 +682,29 @@ describe("updateEventListmonkList with filters", () => {
     expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
   })
 
-  it("should use default filter when empty approval statuses array provided", async () => {
+  it("should return no results when empty approval statuses array provided", async () => {
+    const existingList = createMockListmonkList()
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
       title: "Test Event",
-      listmonk_list_id: null,
+      listmonk_list_id: existingList.id,
       listmonk_list_synced_at: null,
     })
-    mockCreateList.mockResolvedValue({
+    mockGetListById.mockResolvedValue({
       success: true,
-      data: createMockListmonkList(),
+      data: existingList,
       errors: [],
     })
     mockExecute.mockResolvedValue([])
 
-    await updateEventListmonkList("event-123", {
+    const result = await updateEventListmonkList("event-123", {
       approvalStatuses: [],
     })
 
-    expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.subscribersAdded).toBe(0)
+      expect(result.data.subscribersRemoved).toBe(0)
+    }
   })
 })
