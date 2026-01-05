@@ -67,9 +67,10 @@ test.describe('POS-191: Application Management Tests', () => {
     await createTestApplication(profileId, testEvent.id)
     createdApplications.push({ profileId, eventId: testEvent.id })
 
-    // Navigate to dashboard
+    // Navigate to dashboard and wait for UI to reflect application status
     await myApplicationsPage.goto()
-    
+    await myApplicationsPage.waitForApplicationStatusChange(testEvent.title, 'applied')
+
     // Step 1: Verify the event shows as applied
     const initialStatus = await myApplicationsPage.getApplicationStatus(testEvent.title)
     expect(initialStatus).toBe('applied')
@@ -136,13 +137,15 @@ test.describe('POS-191: Application Management Tests', () => {
     await createTestApplication(profileId, secondEvent.id)
     createdApplications.push({ profileId, eventId: secondEvent.id })
 
-    // Navigate to dashboard
+    // Navigate to dashboard and wait for UI to reflect application status
     await myApplicationsPage.goto()
-    
+    await myApplicationsPage.waitForApplicationStatusChange(testEvent.title, 'applied')
+    await myApplicationsPage.waitForApplicationStatusChange(secondEvent.title, 'applied')
+
     // Verify both events show as applied
     const status1 = await myApplicationsPage.getApplicationStatus(testEvent.title)
     const status2 = await myApplicationsPage.getApplicationStatus(secondEvent.title)
-    
+
     expect(status1).toBe('applied')
     expect(status2).toBe('applied')
     
