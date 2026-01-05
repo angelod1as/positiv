@@ -52,17 +52,17 @@ Object.defineProperty(window, 'matchMedia', {
 class IntersectionObserver {
   callback: IntersectionObserverCallback
   options?: IntersectionObserverInit
-  
+
   constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
     this.callback = callback
     this.options = options
   }
-  
+
   observe = vi.fn()
   disconnect = vi.fn()
   unobserve = vi.fn()
   takeRecords = vi.fn(() => [])
-  
+
   root = null
   rootMargin = '0px'
   thresholds = [0]
@@ -73,3 +73,40 @@ Object.defineProperty(window, 'IntersectionObserver', {
   configurable: true,
   value: IntersectionObserver,
 })
+
+// Mock ResizeObserver - Required for Radix UI components
+class ResizeObserver {
+  callback: ResizeObserverCallback
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback
+  }
+
+  observe = vi.fn()
+  disconnect = vi.fn()
+  unobserve = vi.fn()
+}
+
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  configurable: true,
+  value: ResizeObserver,
+})
+
+// Mock requestAnimationFrame and cancelAnimationFrame - Required for Radix UI animations
+Object.defineProperty(global, 'requestAnimationFrame', {
+  writable: true,
+  configurable: true,
+  value: (cb: FrameRequestCallback) => setTimeout(cb, 0) as unknown as number,
+})
+
+Object.defineProperty(global, 'cancelAnimationFrame', {
+  writable: true,
+  configurable: true,
+  value: (id: number) => clearTimeout(id),
+})
+
+// Create portal container for Radix UI portals (Dialogs, Popovers, etc.)
+const portalRoot = document.createElement('div')
+portalRoot.setAttribute('id', 'radix-portal-container')
+document.body.appendChild(portalRoot)
