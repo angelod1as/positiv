@@ -14,6 +14,9 @@ Welcome to the Positiv project documentation. This directory contains all techni
 ### 🔧 Development
 - [CLAUDE.md](../CLAUDE.md) - Claude Code configuration and guidelines
 
+### 📋 Planning Documents
+- [AG Grid Migration Plan](./ag-grid-migration-plan.md) - Comprehensive planning for AG Grid integration
+
 ## About This Documentation
 
 This documentation follows these principles:
