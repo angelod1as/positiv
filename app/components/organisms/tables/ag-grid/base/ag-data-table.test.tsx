@@ -120,4 +120,44 @@ describe("AGDataTable", () => {
       })
     })
   })
+
+  describe("Pagination", () => {
+    const manyRows = Array.from({ length: 30 }, (_, i) => ({
+      id: String(i),
+      name: `Item ${i}`,
+      value: i * 100,
+    }))
+
+    it("should render data when pagination is disabled", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={manyRows}
+          columnDefs={mockColumnDefs}
+          pagination={false}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 0")).toBeInTheDocument()
+      })
+    })
+
+    it("should render data when pagination is enabled", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={manyRows}
+          columnDefs={mockColumnDefs}
+          pagination={true}
+          paginationPageSize={10}
+          paginationPageSizeSelector={[10, 20, 30]}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 0")).toBeInTheDocument()
+      })
+    })
+  })
 })
