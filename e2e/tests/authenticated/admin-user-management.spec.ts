@@ -326,4 +326,111 @@ test.describe("Admin User Management", () => {
     )
     expect(statusUpdated).toBe(true)
   })
+
+  /**
+   * POS-362: Test that navigating between events via participant history
+   * correctly updates the displayed status data (fixes stale data bug).
+   *
+   * Uses seed data:
+   * - User3 (user3@example.com / social_name: "user3")
+   * - "Evento Com Inscrições Abertas 1": application_status='sent_payment_data', attendance_status='pending'
+   * - "Evento Concluído 1": application_status='finalised', attendance_status='attended'
+   */
+  test("participant history navigation shows correct data (POS-362)", async ({
+    page,
+  }) => {
+    // Navigate to the Registration Open event using seed data
+    await adminDashboard.navigate()
+    await adminDashboard.verifyAdminAccess()
+
+    // Click on "Evento Com Inscrições Abertas 1" in the events table
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+
+    // Wait for participants table to load
+    await userManagement.waitForTableToLoad()
+
+    // Find the row for User3 (social_name: "user3") - seed data participant with history
+    const participantRow =
+      await userManagement.findRowByParticipantName("user3")
+
+    // Click to view participant details
+    await userManagement.clickViewParticipantButton(participantRow)
+
+    // Wait for navigation to participant detail page
+    await page.waitForURL(/\/participantes\//)
+    await userManagement.waitForDetailView()
+
+    // Store the current URL to verify navigation later
+    const currentEventUrl = page.url()
+    expect(currentEventUrl).toContain("/participantes/")
+
+    // Verify we're on the correct event page by checking the "No evento" paragraph
+    await expect(
+      page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
+    ).toBeVisible()
+
+    // Verify current event's status values
+    const applicationStatusSelect = page.locator('[name="application_status"]')
+    const attendanceStatusSelect = page.locator('[name="attendance_status"]')
+
+    await expect(applicationStatusSelect).toHaveValue("sent_payment_data")
+    await expect(attendanceStatusSelect).toHaveValue("pending")
+
+    // Find and click on a different event in the history section
+    const historySection = page.getByRole("heading", {
+      name: "Histórico de Inscrições",
+    })
+    await expect(historySection).toBeVisible({ timeout: 5000 })
+
+    // Click on the completed event link in history and wait for navigation
+    const historyEventLink = page.getByRole("link", {
+      name: /Evento Concluído 1/i,
+    })
+    await expect(historyEventLink).toBeVisible()
+
+    // Extract event ID from current URL to detect change
+    const currentEventId = currentEventUrl.split("/eventos/")[1].split("/")[0]
+
+    // Click the link
+    await historyEventLink.click()
+
+    // Wait for URL to change to a different event
+    await page.waitForFunction(
+      (oldEventId) => {
+        const url = window.location.href
+        const match = url.match(/\/eventos\/([^/]+)/)
+        return match && match[1] !== oldEventId
+      },
+      currentEventId,
+      { timeout: 10000 },
+    )
+
+    await page.waitForLoadState("networkidle")
+
+    // Verify URL changed (different event ID)
+    const newUrl = page.url()
+    expect(newUrl).not.toEqual(currentEventUrl)
+    expect(newUrl).toContain("/participantes/")
+
+    // KEY ASSERTION: Verify the page now shows the completed event's data
+    // This is what was broken in POS-362 - it showed stale data from previous event
+    // Use the "No evento" paragraph to specifically target the header, not the history link
+    await expect(page.getByText(/No evento.*Evento Concluído 1/)).toBeVisible()
+
+    // Verify the status values updated to the completed event's values
+    // User3 attended the completed event with finalised status
+    await expect(applicationStatusSelect).toHaveValue("finalised")
+    await expect(attendanceStatusSelect).toHaveValue("attended")
+
+    // Test browser back navigation also works correctly
+    await page.goBack()
+    await page.waitForLoadState("networkidle")
+
+    // Should show the original event data again
+    await expect(
+      page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
+    ).toBeVisible()
+    await expect(applicationStatusSelect).toHaveValue("sent_payment_data")
+    await expect(attendanceStatusSelect).toHaveValue("pending")
+  })
 })

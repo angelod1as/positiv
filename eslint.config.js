@@ -131,6 +131,7 @@ export default defineConfig([
             "action",
             "clientLoader",
             "clientAction",
+            "shouldRevalidate",
           ],
         },
       ],
