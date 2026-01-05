@@ -701,10 +701,112 @@ describe("updateEventListmonkList with filters", () => {
       approvalStatuses: [],
     })
 
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data.subscribersAdded).toBe(0)
-      expect(result.data.subscribersRemoved).toBe(0)
-    }
+    expect(result).toMatchObject({
+      success: true,
+      data: { subscribersAdded: 0, subscribersRemoved: 0 },
+    })
+  })
+
+  it("should return no results when empty application statuses array provided", async () => {
+    const existingList = createMockListmonkList()
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: existingList.id,
+      listmonk_list_synced_at: null,
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: existingList,
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([])
+
+    const result = await updateEventListmonkList("event-123", {
+      applicationStatuses: [],
+    })
+
+    expect(result).toMatchObject({
+      success: true,
+      data: { subscribersAdded: 0, subscribersRemoved: 0 },
+    })
+  })
+
+  it("should return no results when empty attendance statuses array provided", async () => {
+    const existingList = createMockListmonkList()
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: existingList.id,
+      listmonk_list_synced_at: null,
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: existingList,
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([])
+
+    const result = await updateEventListmonkList("event-123", {
+      attendanceStatuses: [],
+    })
+
+    expect(result).toMatchObject({
+      success: true,
+      data: { subscribersAdded: 0, subscribersRemoved: 0 },
+    })
+  })
+
+  it("should return no results when one filter is empty even if others are populated", async () => {
+    const existingList = createMockListmonkList()
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: existingList.id,
+      listmonk_list_synced_at: null,
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: existingList,
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([])
+
+    const result = await updateEventListmonkList("event-123", {
+      approvalStatuses: [],
+      applicationStatuses: ["pending"],
+    })
+
+    expect(result).toMatchObject({
+      success: true,
+      data: { subscribersAdded: 0, subscribersRemoved: 0 },
+    })
+  })
+
+  it("should return no results when all filters are empty", async () => {
+    const existingList = createMockListmonkList()
+    mockExecuteTakeFirstOrThrow.mockResolvedValue({
+      id: "event-123",
+      title: "Test Event",
+      listmonk_list_id: existingList.id,
+      listmonk_list_synced_at: null,
+    })
+    mockGetListById.mockResolvedValue({
+      success: true,
+      data: existingList,
+      errors: [],
+    })
+    mockExecute.mockResolvedValue([])
+
+    const result = await updateEventListmonkList("event-123", {
+      approvalStatuses: [],
+      applicationStatuses: [],
+      attendanceStatuses: [],
+    })
+
+    expect(result).toMatchObject({
+      success: true,
+      data: { subscribersAdded: 0, subscribersRemoved: 0 },
+    })
   })
 })

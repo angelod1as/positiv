@@ -19,12 +19,13 @@ import type {
   ParticipantApplicationStatus,
   ParticipantAttendanceStatus,
   ProfileApprovedToAttendStatus,
+  ComposableFetcherData,
 } from "~/types/database/entities.types"
 
 interface ListmonkFilterModalProps {
   isOpen: boolean
   onClose: () => void
-  fetcher: FetcherWithComponents<unknown>
+  fetcher: FetcherWithComponents<ComposableFetcherData>
   hasExistingList: boolean
 }
 
@@ -76,7 +77,11 @@ export function ListmonkFilterModal({
   }, [isOpen])
 
   useEffect(() => {
-    if (fetcher.state === "idle" && fetcher.data) {
+    if (
+      fetcher.state === "idle" &&
+      fetcher.data?.success === true &&
+      fetcher.data.intent === "sync-listmonk-list"
+    ) {
       onClose()
     }
   }, [fetcher.state, fetcher.data, onClose])
