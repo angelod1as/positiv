@@ -133,14 +133,13 @@ describe("EventForm", () => {
 
     it("renders date fields with correct type", () => {
       render(<EventForm />)
-      
+
       const dateFields = [
         "time_event_start",
         "time_event_end",
         "time_application_start",
-        "time_application_end",
       ]
-      
+
       dateFields.forEach(field => {
         const input = screen.getByTestId(`field-${field}`) as HTMLInputElement
         expect(input.type).toBe("datetime-local")
@@ -176,9 +175,6 @@ describe("EventForm", () => {
       time_event_start: "2024-02-01T10:00:00",
       time_event_end: "2024-02-01T14:00:00",
       time_application_start: null,
-      time_application_end: null,
-      time_interviews_start: null,
-      time_interviews_end: null,
       time_group_start: null,
       time_group_end: null,
       time_payment_start: null,
@@ -315,12 +311,11 @@ describe("EventForm", () => {
   describe("form sections", () => {
     it("renders all date sections with proper labels", () => {
       render(<EventForm />)
-      
+
       // Check section headings
       expect(screen.getByText("Dados gerais")).toBeInTheDocument()
       expect(screen.getByText("Datas")).toBeInTheDocument()
       expect(screen.getByText("Inscrições")).toBeInTheDocument()
-      expect(screen.getByText("Entrevistas")).toBeInTheDocument()
       expect(screen.getByText("Grupo")).toBeInTheDocument()
       expect(screen.getByText("Pagamentos")).toBeInTheDocument()
     })

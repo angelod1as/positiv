@@ -67,9 +67,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       time_application_start: new Date(
         Date.now() - 74 * 24 * 60 * 60 * 1000,
       ).toISOString(),
-      time_application_end: new Date(
-        Date.now() - 62 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 100,
       total_spots: 50,
     })
@@ -90,9 +87,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       time_application_start: new Date(
         Date.now() - 44 * 24 * 60 * 60 * 1000,
       ).toISOString(),
-      time_application_end: new Date(
-        Date.now() - 32 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 150,
       total_spots: 30,
     })
@@ -111,9 +105,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
         Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
       ).toISOString(),
       time_application_start: new Date().toISOString(),
-      time_application_end: new Date(
-        Date.now() + 14 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 200,
       total_spots: 40,
     })
@@ -253,9 +244,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
           time_application_start: new Date(
             Date.now() - (74 - i * 10) * 24 * 60 * 60 * 1000,
           ).toISOString(),
-          time_application_end: new Date(
-            Date.now() - (62 - i * 10) * 24 * 60 * 60 * 1000,
-          ).toISOString(),
           ticket_price: 100,
           total_spots: 50,
         }),
@@ -277,9 +265,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
         Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
       ).toISOString(),
       time_application_start: new Date().toISOString(),
-      time_application_end: new Date(
-        Date.now() + 14 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 200,
       total_spots: 40,
     })
@@ -398,9 +383,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
           time_application_start: new Date(
             Date.now() - (74 - i * 10) * 24 * 60 * 60 * 1000,
           ).toISOString(),
-          time_application_end: new Date(
-            Date.now() - (62 - i * 10) * 24 * 60 * 60 * 1000,
-          ).toISOString(),
           ticket_price: 100,
           total_spots: 50,
         }),
@@ -422,9 +404,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
         Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
       ).toISOString(),
       time_application_start: new Date().toISOString(),
-      time_application_end: new Date(
-        Date.now() + 14 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 200,
       total_spots: 40,
     })
@@ -522,9 +501,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       time_application_start: new Date(
         Date.now() - 74 * 24 * 60 * 60 * 1000,
       ).toISOString(),
-      time_application_end: new Date(
-        Date.now() - 62 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 100,
       total_spots: 50,
     })
@@ -546,9 +522,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       time_application_start: new Date(
         Date.now() - 44 * 24 * 60 * 60 * 1000,
       ).toISOString(),
-      time_application_end: new Date(
-        Date.now() - 32 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 150,
       total_spots: 30,
     })
@@ -568,9 +541,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
         Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
       ).toISOString(),
       time_application_start: new Date().toISOString(),
-      time_application_end: new Date(
-        Date.now() + 14 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 200,
       total_spots: 40,
     })
@@ -653,9 +623,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       time_application_start: new Date(
         Date.now() - 44 * 24 * 60 * 60 * 1000,
       ).toISOString(),
-      time_application_end: new Date(
-        Date.now() - 32 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 100,
       total_spots: 50,
     })
@@ -674,9 +641,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
         Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
       ).toISOString(),
       time_application_start: new Date().toISOString(),
-      time_application_end: new Date(
-        Date.now() + 14 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
       ticket_price: 200,
       total_spots: 40,
     })

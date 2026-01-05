@@ -11,9 +11,6 @@ describe("eventOpeningMailTemplate", () => {
     time_event_start: "2024-12-25T20:00:00-03:00",
     time_event_end: "2024-12-26T04:00:00-03:00",
     time_application_start: "2024-12-01T10:00:00-03:00",
-    time_application_end: "2024-12-20T23:59:59-03:00",
-    time_interviews_start: null,
-    time_interviews_end: null,
     time_group_start: null,
     time_group_end: null,
     time_payment_start: null,
@@ -100,16 +97,6 @@ describe("eventOpeningMailTemplate", () => {
     expect(result).toContain("10h")
   })
 
-  it("should format application close date", () => {
-    const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
-    expect(result).toContain("20 de dezembro de 2024")
-  })
-
-  it("should format application close time", () => {
-    const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
-    expect(result).toContain("23h")
-  })
-
   it("should include all event details labels", () => {
     const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
     expect(result).toContain("Evento:")
@@ -117,7 +104,6 @@ describe("eventOpeningMailTemplate", () => {
     expect(result).toContain("Data do evento:")
     expect(result).toContain("Horário de início:")
     expect(result).toContain("Inscrições abrem em:")
-    expect(result).toContain("Inscrições fecham em:")
   })
 
   it("should include important notes section", () => {
@@ -169,9 +155,6 @@ describe("eventOpeningMailTemplate - XSS Protection", () => {
     time_event_start: "2024-12-25T20:00:00-03:00",
     time_event_end: "2024-12-26T04:00:00-03:00",
     time_application_start: "2024-12-01T10:00:00-03:00",
-    time_application_end: "2024-12-20T23:59:59-03:00",
-    time_interviews_start: null,
-    time_interviews_end: null,
     time_group_start: null,
     time_group_end: null,
     time_payment_start: null,

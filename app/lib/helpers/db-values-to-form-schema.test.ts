@@ -123,7 +123,7 @@ describe("dbValuesToFormSchema", () => {
       time_event_start: new Date("2024-02-01T10:00:00"),
       time_event_end: "2024-02-01T14:00:00",
       time_application_start: "2024-02-01T09:00",
-      time_application_end: null,
+      time_group_start: null,
     }
 
     const result = dbValuesToFormSchema(input)
@@ -131,7 +131,7 @@ describe("dbValuesToFormSchema", () => {
     expect(result.time_event_start).toBe("2024-02-01T10:00")
     expect(result.time_event_end).toBe("2024-02-01T14:00")
     expect(result.time_application_start).toBe("2024-02-01T09:00")
-    expect(result.time_application_end).toBeUndefined()
+    expect(result.time_group_start).toBeUndefined()
   })
 })
 
