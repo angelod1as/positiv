@@ -7,6 +7,12 @@
   layer(primereact);
 /* End PrimeReact DataTable */
 
+/* For AG Grid DataTable */
+@layer ag-grid;
+@import "ag-grid-community/styles/ag-grid.css" layer(ag-grid);
+@import "ag-grid-community/styles/ag-theme-quartz.css" layer(ag-grid);
+/* End AG Grid DataTable */
+
 @media not (prefers-reduced-motion: reduce) {
   @view-transition {
     navigation: auto;
