@@ -46,4 +46,30 @@ describe("DataTable - Row Click Functionality", () => {
 
     expect(screen.getByText("Test")).toBeInTheDocument()
   })
+
+  it("should not enable selection mode when onRowClick is provided", async () => {
+    const user = userEvent.setup()
+    const mockOnRowClick = vi.fn()
+    const mockData = [
+      { id: "1", name: "Test Item 1" },
+      { id: "2", name: "Test Item 2" },
+    ]
+
+    render(
+      <DataTable
+        data={mockData}
+        id="test-table"
+        onRowClick={mockOnRowClick}
+      >
+        <Column field="name" header="Name" />
+      </DataTable>,
+    )
+
+    const firstRow = screen.getByText("Test Item 1").closest("tr")
+    if (!firstRow) throw new Error("Row not found")
+
+    await user.click(firstRow)
+
+    expect(firstRow).not.toHaveClass("p-highlight")
+  })
 })

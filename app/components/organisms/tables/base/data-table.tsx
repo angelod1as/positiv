@@ -244,9 +244,9 @@ export function DataTable<T extends DataTableValue>({
         removableSort
         sortOrder={sortOrder}
         // Selection
-        selection={selection}
-        onSelectionChange={(e) => setSelection(e.value)}
-        selectionMode="checkbox"
+        selection={onRowClick ? undefined : selection}
+        onSelectionChange={onRowClick ? undefined : (e) => setSelection(e.value)}
+        selectionMode={onRowClick ? undefined : "checkbox"}
         // Resize
         resizableColumns={resizableColumns}
         columnResizeMode="fit"
