@@ -18,6 +18,17 @@ function ensureModulesRegistered() {
 
 const DEFAULT_EMPTY_MESSAGE = "Nenhum registro encontrado"
 
+function escapeHtml(text: string): string {
+  const htmlEscapes: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }
+  return text.replace(/[&<>"']/g, (char) => htmlEscapes[char])
+}
+
 export function AGDataTable<TData>({
   id,
   data,
@@ -37,7 +48,8 @@ export function AGDataTable<TData>({
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
 
-  const noRowsTemplate = `<span>${emptyMessage || DEFAULT_EMPTY_MESSAGE}</span>`
+  const safeMessage = escapeHtml(emptyMessage || DEFAULT_EMPTY_MESSAGE)
+  const noRowsTemplate = `<span>${safeMessage}</span>`
 
   const rowSelectionConfig = rowSelection
     ? {
