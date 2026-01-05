@@ -56,4 +56,41 @@ describe("AGDataTable", () => {
       expect(screen.getByTestId("ag-data-table-test-table")).toBeInTheDocument()
     })
   })
+
+  describe("Loading State", () => {
+    it("should not show loading overlay by default", async () => {
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const loadingOverlay = container.querySelector(".ag-overlay-loading-center")
+      expect(loadingOverlay).not.toBeInTheDocument()
+    })
+
+    it("should show loading overlay when loading is true", async () => {
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          loading={true}
+        />,
+      )
+
+      await waitFor(() => {
+        const loadingOverlay = container.querySelector(
+          ".ag-overlay-loading-center",
+        )
+        expect(loadingOverlay).toBeInTheDocument()
+      })
+    })
+  })
 })
