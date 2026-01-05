@@ -58,25 +58,17 @@ async function getNonRejectedParticipants(
     ])
     .where("ep.event_id", "=", eventId)
 
-  if (
-    (filters?.approvalStatuses && filters.approvalStatuses.length === 0) ||
-    (filters?.applicationStatuses && filters.applicationStatuses.length === 0) ||
-    (filters?.attendanceStatuses && filters.attendanceStatuses.length === 0)
-  ) {
-    return []
-  }
-
-  if (filters?.approvalStatuses) {
+  if (filters?.approvalStatuses && filters.approvalStatuses.length > 0) {
     query = query.where("p.approved_to_attend", "in", filters.approvalStatuses)
-  } else {
+  } else if (!filters?.approvalStatuses) {
     query = query.where("p.approved_to_attend", "!=", "rejected")
   }
 
-  if (filters?.applicationStatuses) {
+  if (filters?.applicationStatuses && filters.applicationStatuses.length > 0) {
     query = query.where("ep.application_status", "in", filters.applicationStatuses)
   }
 
-  if (filters?.attendanceStatuses) {
+  if (filters?.attendanceStatuses && filters.attendanceStatuses.length > 0) {
     query = query.where("ep.attendance_status", "in", filters.attendanceStatuses)
   }
 

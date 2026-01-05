@@ -682,7 +682,7 @@ describe("updateEventListmonkList with filters", () => {
     expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
   })
 
-  it("should return no results when empty approval statuses array provided", async () => {
+  it("should skip approval filter when empty array provided", async () => {
     const existingList = createMockListmonkList()
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
@@ -697,17 +697,15 @@ describe("updateEventListmonkList with filters", () => {
     })
     mockExecute.mockResolvedValue([])
 
-    const result = await updateEventListmonkList("event-123", {
+    await updateEventListmonkList("event-123", {
       approvalStatuses: [],
     })
 
-    expect(result).toMatchObject({
-      success: true,
-      data: { subscribersAdded: 0, subscribersRemoved: 0 },
-    })
+    expect(mockWhere).not.toHaveBeenCalledWith("p.approved_to_attend", "in", [])
+    expect(mockWhere).not.toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
   })
 
-  it("should return no results when empty application statuses array provided", async () => {
+  it("should skip application filter when empty array provided", async () => {
     const existingList = createMockListmonkList()
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
@@ -722,17 +720,15 @@ describe("updateEventListmonkList with filters", () => {
     })
     mockExecute.mockResolvedValue([])
 
-    const result = await updateEventListmonkList("event-123", {
+    await updateEventListmonkList("event-123", {
       applicationStatuses: [],
     })
 
-    expect(result).toMatchObject({
-      success: true,
-      data: { subscribersAdded: 0, subscribersRemoved: 0 },
-    })
+    expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.application_status", "in", [])
   })
 
-  it("should return no results when empty attendance statuses array provided", async () => {
+  it("should skip attendance filter when empty array provided", async () => {
     const existingList = createMockListmonkList()
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
@@ -747,17 +743,15 @@ describe("updateEventListmonkList with filters", () => {
     })
     mockExecute.mockResolvedValue([])
 
-    const result = await updateEventListmonkList("event-123", {
+    await updateEventListmonkList("event-123", {
       attendanceStatuses: [],
     })
 
-    expect(result).toMatchObject({
-      success: true,
-      data: { subscribersAdded: 0, subscribersRemoved: 0 },
-    })
+    expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "!=", "rejected")
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.attendance_status", "in", [])
   })
 
-  it("should return no results when one filter is empty even if others are populated", async () => {
+  it("should apply non-empty filters and skip empty ones", async () => {
     const existingList = createMockListmonkList()
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
@@ -772,18 +766,18 @@ describe("updateEventListmonkList with filters", () => {
     })
     mockExecute.mockResolvedValue([])
 
-    const result = await updateEventListmonkList("event-123", {
-      approvalStatuses: [],
-      applicationStatuses: ["pending"],
+    await updateEventListmonkList("event-123", {
+      approvalStatuses: ["approved"],
+      applicationStatuses: [],
+      attendanceStatuses: ["attended"],
     })
 
-    expect(result).toMatchObject({
-      success: true,
-      data: { subscribersAdded: 0, subscribersRemoved: 0 },
-    })
+    expect(mockWhere).toHaveBeenCalledWith("p.approved_to_attend", "in", ["approved"])
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.application_status", "in", expect.anything())
+    expect(mockWhere).toHaveBeenCalledWith("ep.attendance_status", "in", ["attended"])
   })
 
-  it("should return no results when all filters are empty", async () => {
+  it("should skip all filters when all arrays are empty", async () => {
     const existingList = createMockListmonkList()
     mockExecuteTakeFirstOrThrow.mockResolvedValue({
       id: "event-123",
@@ -798,15 +792,14 @@ describe("updateEventListmonkList with filters", () => {
     })
     mockExecute.mockResolvedValue([])
 
-    const result = await updateEventListmonkList("event-123", {
+    await updateEventListmonkList("event-123", {
       approvalStatuses: [],
       applicationStatuses: [],
       attendanceStatuses: [],
     })
 
-    expect(result).toMatchObject({
-      success: true,
-      data: { subscribersAdded: 0, subscribersRemoved: 0 },
-    })
+    expect(mockWhere).not.toHaveBeenCalledWith("p.approved_to_attend", expect.anything(), expect.anything())
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.application_status", expect.anything(), expect.anything())
+    expect(mockWhere).not.toHaveBeenCalledWith("ep.attendance_status", expect.anything(), expect.anything())
   })
 })
