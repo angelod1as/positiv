@@ -9,6 +9,7 @@ import { Column } from "primereact/column"
 import {
   DataTable as PrimeReactDataTable,
   type DataTableFilterMeta,
+  type DataTableRowClickEvent,
   type DataTableValue,
 } from "primereact/datatable"
 
@@ -66,6 +67,7 @@ export interface DataTableProps<T extends DataTableValue> {
   size?: "small" | "normal" | "large"
   maxHeight?: string | "auto"
   loadingComponent?: ReactNode
+  onRowClick?: (event: DataTableRowClickEvent) => void
 }
 
 // TODO: POS-144 Implement date filtering
@@ -98,6 +100,7 @@ export function DataTable<T extends DataTableValue>({
   maxHeight = "500px",
   emptyMessage = "Nenhum registro encontrado",
   loadingComponent,
+  onRowClick,
 }: DataTableProps<T>) {
   const [isMaximized, setIsMaximized] = useState(false)
   const [filters, setFilters] = useState<FlexibleFilterMeta>(
@@ -189,7 +192,10 @@ export function DataTable<T extends DataTableValue>({
       <DelayedContent loadingComponent={loadingComponent}>
         <PrimeReactDataTable
         value={values}
-        className={cn(isMaximized && "maximized-table")}
+        className={cn(
+          isMaximized && "maximized-table",
+          onRowClick && "cursor-pointer",
+        )}
         style={{
           maxHeight: isMaximized ? undefined : maxHeight,
         }}
@@ -203,6 +209,7 @@ export function DataTable<T extends DataTableValue>({
         rowHover
         editMode={editMode}
         size={size}
+        onRowClick={onRowClick}
         // Pagination
         rows={25}
         paginator
@@ -237,15 +244,19 @@ export function DataTable<T extends DataTableValue>({
         removableSort
         sortOrder={sortOrder}
         // Selection
-        selection={selection}
-        onSelectionChange={(e) => setSelection(e.value)}
-        selectionMode="checkbox"
+        selection={onRowClick ? ([] as T[]) : selection}
+        onSelectionChange={
+          onRowClick
+            ? undefined
+            : (e: { value: T[] }) => setSelection(e.value as T[])
+        }
+        selectionMode={onRowClick ? null : "checkbox"}
         // Resize
         resizableColumns={resizableColumns}
         columnResizeMode="fit"
         // Reorder
         reorderableColumns={reorderableColumns}
-        onRowReorder={(e) => setValues(e.value)}
+        onRowReorder={(e) => setValues(e.value as T[])}
       >
         {selectable && (
           <Column
