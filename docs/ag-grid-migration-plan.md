@@ -1,5 +1,15 @@
 # AG Grid Community Migration Plan
 
+> **⚠️ PLAN MAINTENANCE REQUIRED**
+>
+> This plan must be kept in sync with Linear. When completing a task:
+> 1. Update the task status in Linear to "Done"
+> 2. Mark the corresponding task in this plan as ✅ DONE
+>
+> **Current Progress:** 1/40 tasks completed (POS-317 ✅)
+
+---
+
 ## Decision Summary
 
 **Migration Path:** PrimeReact → AG Grid Community
@@ -682,7 +692,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 1 Tasks
 
-**Task 1: [ag-grid] Install AG Grid and Configure Theme**
+**Task 1: [ag-grid] Install AG Grid and Configure Theme** — POS-317 ✅ DONE
 
 - Install ag-grid-react and ag-grid-community packages
 - Configure AG Grid theme in app.css
@@ -690,7 +700,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 2-3 hours
 - **Dependencies:** None
 
-**Task 2: [ag-grid] Create Base AG Grid Wrapper Component**
+**Task 2: [ag-grid] Create Base AG Grid Wrapper Component** — POS-318
 
 - Build ag-data-table.tsx with generic types
 - Implement pagination, sorting, row selection
@@ -698,7 +708,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 4-6 hours
 - **Dependencies:** Task 1
 
-**Task 3: [ag-grid] Implement Session Storage Integration**
+**Task 3: [ag-grid] Implement Session Storage Integration** — POS-319
 
 - Create use-grid-state.ts hook
 - Add versioning for state invalidation
@@ -706,7 +716,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 3-4 hours
 - **Dependencies:** Task 2
 
-**Task 4: [ag-grid] Create TypeScript Types and Grid Config**
+**Task 4: [ag-grid] Create TypeScript Types and Grid Config** — POS-320
 
 - Define GridState, CustomFilterParams types
 - Create grid-config.ts with default options
@@ -717,7 +727,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 2 Tasks
 
-**Task 5: [ag-grid] Build Base Multi-Select Filter Component**
+**Task 5: [ag-grid] Build Base Multi-Select Filter Component** — POS-321
 
 - Create base-multi-select-filter.tsx
 - Implement AG Grid filter interface (getModel, setModel, doesFilterPass)
@@ -726,42 +736,42 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 6-8 hours
 - **Dependencies:** Task 4
 
-**Task 6: [ag-grid] Create Application Status Filter**
+**Task 6: [ag-grid] Create Application Status Filter** — POS-322
 
 - Build application-status-filter.tsx using base component
 - Define filter options (pending, approved, rejected)
 - **Estimate:** 1-2 hours
 - **Dependencies:** Task 5
 
-**Task 7: [ag-grid] Create Attendance Status Filter**
+**Task 7: [ag-grid] Create Attendance Status Filter** — POS-323
 
 - Build attendance-status-filter.tsx using base component
 - Define attendance status options
 - **Estimate:** 1-2 hours
 - **Dependencies:** Task 5
 
-**Task 8: [ag-grid] Create Approved to Attend Filter**
+**Task 8: [ag-grid] Create Approved to Attend Filter** — POS-324
 
 - Build approved-to-attend-filter.tsx using base component
 - Define boolean options
 - **Estimate:** 1-2 hours
 - **Dependencies:** Task 5
 
-**Task 9: [ag-grid] Create Gender Filter with Array Matching**
+**Task 9: [ag-grid] Create Gender Filter with Array Matching** — POS-325
 
 - Build gender-filter.tsx with special array matching logic
 - Implement Array.some() matching
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 5
 
-**Task 10: [ag-grid] Create Orientation Filter with Array Matching**
+**Task 10: [ag-grid] Create Orientation Filter with Array Matching** — POS-326
 
 - Build orientation-filter.tsx with array matching
 - Mirror gender filter logic
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 5
 
-**Task 11: [ag-grid] Register All Filters in Grid Config**
+**Task 11: [ag-grid] Register All Filters in Grid Config** — POS-327
 
 - Update grid-config.ts with frameworkComponents
 - Test filter registration
@@ -772,7 +782,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 3 Tasks
 
-**Task 12: [ag-grid] Build Select Cell Editor**
+**Task 12: [ag-grid] Build Select Cell Editor** — POS-328
 
 - Create select-cell-editor.tsx with Radix Select
 - Implement auto-save with 500ms debounce
@@ -780,7 +790,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 4-5 hours
 - **Dependencies:** Task 4
 
-**Task 13: [ag-grid] Build Checkbox Cell Editor**
+**Task 13: [ag-grid] Build Checkbox Cell Editor** — POS-329
 
 - Create checkbox-cell-editor.tsx
 - Implement immediate save on toggle
@@ -788,7 +798,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 4
 
-**Task 14: [ag-grid] Build Number Cell Editor**
+**Task 14: [ag-grid] Build Number Cell Editor** — POS-330
 
 - Create number-cell-editor.tsx
 - Add validation and min/max constraints
@@ -796,7 +806,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 3-4 hours
 - **Dependencies:** Task 4
 
-**Task 15: [ag-grid] Build Text Edit Modal Editor**
+**Task 15: [ag-grid] Build Text Edit Modal Editor** — POS-331
 
 - Create text-edit-modal-editor.tsx using Radix Dialog
 - Add textarea for long text
@@ -804,14 +814,14 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 4-5 hours
 - **Dependencies:** Task 4
 
-**Task 16: [ag-grid] Build Text View Modal Renderer**
+**Task 16: [ag-grid] Build Text View Modal Renderer** — POS-332
 
 - Create text-view-modal-renderer.tsx
 - Implement read-only modal display
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 4
 
-**Task 17: [ag-grid] Create Save Handler Factory**
+**Task 17: [ag-grid] Create Save Handler Factory** — POS-333
 
 - Build create-ag-grid-save-handler.ts
 - Implement debouncing, API calls, optimistic updates
@@ -823,35 +833,35 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 4 Tasks
 
-**Task 18: [ag-grid] Build Badge Renderer (Veteran/Rookie)**
+**Task 18: [ag-grid] Build Badge Renderer (Veteran/Rookie)** — POS-334
 
 - Create badge-renderer.tsx
 - Use existing Badge component
 - **Estimate:** 1-2 hours
 - **Dependencies:** Task 4
 
-**Task 19: [ag-grid] Build Flag Badge Renderer with Tooltips**
+**Task 19: [ag-grid] Build Flag Badge Renderer with Tooltips** — POS-335
 
 - Create flag-badge-renderer.tsx
 - Add tooltip support
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 4
 
-**Task 20: [ag-grid] Build Warning Indicator Renderer**
+**Task 20: [ag-grid] Build Warning Indicator Renderer** — POS-336
 
 - Create warning-indicator-renderer.tsx
 - Style for demographics warnings
 - **Estimate:** 2 hours
 - **Dependencies:** Task 4
 
-**Task 21: [ag-grid] Build Phone Button Renderer with WhatsApp**
+**Task 21: [ag-grid] Build Phone Button Renderer with WhatsApp** — POS-337
 
 - Create phone-button-renderer.tsx
 - Add WhatsApp link generation
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 4
 
-**Task 22: [ag-grid] Build Linked Event History Renderer**
+**Task 22: [ag-grid] Build Linked Event History Renderer** — POS-338
 
 - Create linked-event-renderer.tsx
 - Implement routing links
@@ -862,7 +872,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 5 Tasks
 
-**Task 23: [ag-grid] Migrate Events Table (Proof of Concept)**
+**Task 23: [ag-grid] Migrate Events Table (Proof of Concept)** — POS-339
 
 - Create events-table-ag.tsx
 - Define 3 column definitions
@@ -871,7 +881,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 4-6 hours
 - **Dependencies:** Tasks 2-4, 11, 17
 
-**Task 24: [ag-grid] Migrate Participant Event History Table**
+**Task 24: [ag-grid] Migrate Participant Event History Table** — POS-340
 
 - Create participant-event-history-ag.tsx
 - Define 5 column definitions
@@ -880,7 +890,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 6-8 hours
 - **Dependencies:** Tasks 2-4, 11, 17-22
 
-**Task 25: [ag-grid] Migrate Participants Table (Complex)**
+**Task 25: [ag-grid] Migrate Participants Table (Complex)** — POS-341
 
 - Create view-event-participants-table-ag.tsx
 - Define 20+ column definitions
@@ -893,7 +903,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 2-3 days
 - **Dependencies:** All previous tasks
 
-**Task 26: [ag-grid] Performance Test with Large Datasets**
+**Task 26: [ag-grid] Performance Test with Large Datasets** — POS-342
 
 - Test participants table with 100+ rows
 - Verify row virtualization
@@ -905,7 +915,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 6 Tasks
 
-**Task 27: [ag-grid] Write Unit Tests for Filters**
+**Task 27: [ag-grid] Write Unit Tests for Filters** — POS-343
 
 - Test base-multi-select-filter logic
 - Test application-status-filter
@@ -913,7 +923,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 4-6 hours
 - **Dependencies:** Tasks 5-10
 
-**Task 28: [ag-grid] Write Unit Tests for Cell Editors**
+**Task 28: [ag-grid] Write Unit Tests for Cell Editors** — POS-344
 
 - Test select-cell-editor save logic
 - Test checkbox-cell-editor
@@ -921,7 +931,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 4-6 hours
 - **Dependencies:** Tasks 12-16
 
-**Task 29: [ag-grid] Write Integration Tests for Tables**
+**Task 29: [ag-grid] Write Integration Tests for Tables** — POS-345
 
 - Test events-table-ag pagination/sorting
 - Test participant-event-history-ag
@@ -929,7 +939,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 6-8 hours
 - **Dependencies:** Tasks 23-25
 
-**Task 30: [ag-grid] Update E2E Tests for AG Grid**
+**Task 30: [ag-grid] Update E2E Tests for AG Grid** — POS-346
 
 - Update admin-event-management.spec.ts
 - Test critical workflows (filter + edit + refresh)
@@ -941,28 +951,28 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 7 Tasks
 
-**Task 31: [ag-grid] Audit and Remove All PrimeReact Imports**
+**Task 31: [ag-grid] Audit and Remove All PrimeReact Imports** — POS-347
 
 - Search codebase for all PrimeReact usage
 - Document what needs to be removed
 - **Estimate:** 1-2 hours
 - **Dependencies:** Tasks 23-25
 
-**Task 32: [ag-grid] Remove PrimeReact Dependencies**
+**Task 32: [ag-grid] Remove PrimeReact Dependencies** — POS-348
 
 - Run pnpm remove primereact primeicons
 - Test that build still works
 - **Estimate:** 30 minutes
 - **Dependencies:** Task 31
 
-**Task 33: [ag-grid] Delete Old PrimeReact Table Files**
+**Task 33: [ag-grid] Delete Old PrimeReact Table Files** — POS-349
 
 - Remove app/components/organisms/tables/base/
 - Remove old table implementations
 - **Estimate:** 30 minutes
 - **Dependencies:** Task 32
 
-**Task 34: [ag-grid] Clean Up Old Helper Files**
+**Task 34: [ag-grid] Clean Up Old Helper Files** — POS-350
 
 - Remove/replace use-table-filters.ts
 - Remove use-session-storage-filter.ts
@@ -971,14 +981,14 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 33
 
-**Task 35: [ag-grid] Update All Table Imports**
+**Task 35: [ag-grid] Update All Table Imports** — POS-351
 
 - Search and replace DataTable imports
 - Update to AGDataTable imports
 - **Estimate:** 1-2 hours
 - **Dependencies:** Task 33
 
-**Task 36: [ag-grid] Clean Up CSS and Themes**
+**Task 36: [ag-grid] Clean Up CSS and Themes** — POS-352
 
 - Remove PrimeReact CSS imports from app.css
 - Remove PrimeReact theme variables
@@ -990,14 +1000,14 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 8 Tasks
 
-**Task 37: [ag-grid] Implement Maximize/Minimize Toggle**
+**Task 37: [ag-grid] Implement Maximize/Minimize Toggle** — POS-353
 
 - Add toggle button to ag-data-table.tsx
 - Implement fullscreen mode
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 2
 
-**Task 38: [ag-grid] Performance Optimizations**
+**Task 38: [ag-grid] Performance Optimizations** — POS-354
 
 - Review row virtualization settings
 - Optimize cell renderers with React.memo
@@ -1005,7 +1015,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 3-4 hours
 - **Dependencies:** Task 26
 
-**Task 39: [ag-grid] Accessibility Audit**
+**Task 39: [ag-grid] Accessibility Audit** — POS-355
 
 - Test keyboard navigation
 - Verify screen reader compatibility
@@ -1013,7 +1023,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 3-4 hours
 - **Dependencies:** Tasks 23-25
 
-**Task 40: [ag-grid] Write AG Grid Documentation**
+**Task 40: [ag-grid] Write AG Grid Documentation** — POS-356
 
 - Create README.md for ag-grid components
 - Document how to create new tables
