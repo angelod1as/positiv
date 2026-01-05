@@ -3,6 +3,12 @@ import { resolve } from "path"
 import tsconfigPaths from "vite-tsconfig-paths"
 import { defineConfig } from "vitest/config"
 
+// CI environments get unlimited workers (Vitest auto-detects CPU count)
+// Local development gets limited workers to save memory (~8GB instead of 12GB+)
+const isCI = process.env.CI === "true"
+const defaultMaxForks = isCI ? undefined : 2
+const defaultMinForks = isCI ? undefined : 1
+
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   test: {
@@ -12,8 +18,12 @@ export default defineConfig({
     pool: "forks",
     poolOptions: {
       forks: {
-        minForks: Number(process.env.VITEST_MIN_FORKS ?? 1),
-        maxForks: Number(process.env.VITEST_MAX_FORKS ?? 3),
+        minForks: process.env.VITEST_MIN_FORKS
+          ? Number(process.env.VITEST_MIN_FORKS)
+          : defaultMinForks,
+        maxForks: process.env.VITEST_MAX_FORKS
+          ? Number(process.env.VITEST_MAX_FORKS)
+          : defaultMaxForks,
         isolate: true,
       },
     },
