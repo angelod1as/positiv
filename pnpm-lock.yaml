@@ -162,8 +162,8 @@ importers:
         specifier: ^7.6.0
         version: 7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       remix-forms:
-        specifier: ^3.1.0
-        version: 3.1.1(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@4.3.5)
+        specifier: ^4.0.0
+        version: 4.0.0(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@4.3.5)
       remix-toast:
         specifier: ^3.1.0
         version: 3.1.0(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -1097,11 +1097,6 @@ packages:
 
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
-
-  '@hookform/resolvers@2.9.11':
-    resolution: {integrity: sha512-bA3aZ79UgcHj7tFV7RlgThzwSSHZgvfbt2wprldRkYBcMopdMvHyO17Wwp/twcJasNFischFfS7oz8Katz8DdQ==}
-    peerDependencies:
-      react-hook-form: ^7.0.0
 
   '@hookform/resolvers@5.1.1':
     resolution: {integrity: sha512-J/NVING3LMAEvexJkyTLjruSm7aOFx7QX21pzkiJfMoNG0wl5aFEjLTl7ay7IQb9EWY6AkrBy7tHL2Alijpdcg==}
@@ -5331,14 +5326,14 @@ packages:
   remark-rehype@11.1.2:
     resolution: {integrity: sha512-Dh7l57ianaEoIpzbp0PC9UKAdCSVklD8E5Rpw7ETfbTl3FqcOOgq5q2LVDhgGCkaBv7p24JXikPdvhhmHvKMsw==}
 
-  remix-forms@3.1.1:
-    resolution: {integrity: sha512-LEXVklA3mcsqJBHHAp97Ejyc1pN2TPxGOai+uwbVlpmIVa4qLwJtmS5bmF2egqlfEP6aS4cFgZJtfCOvDZdS8A==}
+  remix-forms@4.0.0:
+    resolution: {integrity: sha512-JxhUsBOeHpiuhYoetMXXUloCr7s1qwD+mlME9PrcAeGJU6E+yOjcbinWuH18j1+WOgHM4ny+MkyN4y/BB5kpBg==}
     peerDependencies:
       composable-functions: '>=4'
       react: '>=16.8'
       react-hook-form: '>=7.27'
       react-router: '>=7'
-      zod: '>=3.12'
+      zod: '>=4.0.0'
 
   remix-toast@3.1.0:
     resolution: {integrity: sha512-qCXyoGt2aoYUQal9P3B+w5LkQ4dGnftH1Kk4Txeb5dmBp03YEdrKOETnQDklmvPSpSDyGYyxkC7L4JqzDlrwRw==}
@@ -7265,10 +7260,6 @@ snapshots:
   '@formatjs/intl-localematcher@0.6.2':
     dependencies:
       tslib: 2.8.1
-
-  '@hookform/resolvers@2.9.11(react-hook-form@7.59.0(react@19.1.0))':
-    dependencies:
-      react-hook-form: 7.59.0(react@19.1.0)
 
   '@hookform/resolvers@5.1.1(react-hook-form@7.59.0(react@19.1.0))':
     dependencies:
@@ -12275,9 +12266,8 @@ snapshots:
       unified: 11.0.5
       vfile: 6.0.3
 
-  remix-forms@3.1.1(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@4.3.5):
+  remix-forms@4.0.0(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@4.3.5):
     dependencies:
-      '@hookform/resolvers': 2.9.11(react-hook-form@7.59.0(react@19.1.0))
       composable-functions: 5.0.0
       react: 19.1.0
       react-hook-form: 7.59.0(react@19.1.0)
