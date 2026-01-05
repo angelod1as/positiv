@@ -257,14 +257,11 @@ export type Database = {
           listmonk_list_synced_at: string | null
           location: string | null
           ticket_price: number | null
-          time_application_end: string | null
           time_application_start: string | null
           time_event_end: string | null
           time_event_start: string | null
           time_group_end: string | null
           time_group_start: string | null
-          time_interviews_end: string | null
-          time_interviews_start: string | null
           time_payment_end: string | null
           time_payment_start: string | null
           title: string | null
@@ -282,14 +279,11 @@ export type Database = {
           listmonk_list_synced_at?: string | null
           location?: string | null
           ticket_price?: number | null
-          time_application_end?: string | null
           time_application_start?: string | null
           time_event_end?: string | null
           time_event_start?: string | null
           time_group_end?: string | null
           time_group_start?: string | null
-          time_interviews_end?: string | null
-          time_interviews_start?: string | null
           time_payment_end?: string | null
           time_payment_start?: string | null
           title?: string | null
@@ -307,14 +301,11 @@ export type Database = {
           listmonk_list_synced_at?: string | null
           location?: string | null
           ticket_price?: number | null
-          time_application_end?: string | null
           time_application_start?: string | null
           time_event_end?: string | null
           time_event_start?: string | null
           time_group_end?: string | null
           time_group_start?: string | null
-          time_interviews_end?: string | null
-          time_interviews_start?: string | null
           time_payment_end?: string | null
           time_payment_start?: string | null
           title?: string | null

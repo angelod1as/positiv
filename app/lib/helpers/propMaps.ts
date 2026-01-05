@@ -44,7 +44,6 @@ export const eventPropNameMap = (property: keyof Event) => {
   return {
     created_at: "Criado em",
     id: "Id do evento",
-    time_application_end: "Fim das inscrições",
     time_application_start: "Início das inscrições",
     description: "Descrição",
     emoji: "Emoji",
@@ -54,8 +53,6 @@ export const eventPropNameMap = (property: keyof Event) => {
     auto_publish: "Publicação automática",
     time_group_end: "Fechamento do grupo",
     time_group_start: "Abertura do grupo",
-    time_interviews_end: "Fim das entrevistas",
-    time_interviews_start: "Início das entrevistas",
     location: "Locação",
     time_payment_start: "Fim do pagamento",
     time_payment_end: "Início do pagamento",
