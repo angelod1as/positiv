@@ -9,7 +9,11 @@ z.config({
         }
         return `Tipos incorretos. Esperado: ${issue.expected}. Recebido: ${issue.received}`
       case "invalid_format":
-        if ("validation" in issue && issue.validation === "datetime") {
+        if (
+          "validation" in issue &&
+          typeof issue.validation === "string" &&
+          issue.validation === "datetime"
+        ) {
           return "Formato de data inválido"
         }
         return "Formato inválido"
