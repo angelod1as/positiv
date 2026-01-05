@@ -193,6 +193,43 @@ describe("AGDataTable", () => {
     })
   })
 
+  describe("Grid Ready and Cell Value Changed", () => {
+    it("should call onGridReady when grid is ready", async () => {
+      const handleGridReady = vi.fn()
+
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          onGridReady={handleGridReady}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      expect(handleGridReady).toHaveBeenCalled()
+      expect(handleGridReady.mock.calls[0][0]).toHaveProperty("api")
+    })
+
+    it("should accept onCellValueChanged prop", () => {
+      const handleCellValueChanged = vi.fn()
+
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          onCellValueChanged={handleCellValueChanged}
+        />,
+      )
+
+      expect(container.querySelector(".ag-root-wrapper")).toBeInTheDocument()
+    })
+  })
+
   describe("Styling Props", () => {
     it("should apply custom height when provided", async () => {
       const { container } = render(
