@@ -121,6 +121,43 @@ describe("AGDataTable", () => {
     })
   })
 
+  describe("Row Selection", () => {
+    it("should not show checkboxes when rowSelection is not set", async () => {
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const checkboxes = container.querySelectorAll(".ag-checkbox-input")
+      expect(checkboxes).toHaveLength(0)
+    })
+
+    it("should show row checkboxes when rowSelection is multiple", async () => {
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          rowSelection="multiple"
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const checkboxes = container.querySelectorAll(".ag-checkbox-input")
+      expect(checkboxes.length).toBeGreaterThan(0)
+    })
+  })
+
   describe("Pagination", () => {
     const manyRows = Array.from({ length: 30 }, (_, i) => ({
       id: String(i),
