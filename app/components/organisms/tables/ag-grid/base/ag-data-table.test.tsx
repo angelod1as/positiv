@@ -193,6 +193,45 @@ describe("AGDataTable", () => {
     })
   })
 
+  describe("Column Features", () => {
+    it("should make columns sortable by default", async () => {
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const headerCells = container.querySelectorAll(".ag-header-cell")
+      const firstHeaderCell = headerCells[0]
+      expect(firstHeaderCell).toHaveClass("ag-header-cell-sortable")
+    })
+
+    it("should make columns resizable by default", async () => {
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const resizeHandles = container.querySelectorAll(
+        ".ag-header-cell-resize",
+      )
+      expect(resizeHandles.length).toBeGreaterThan(0)
+    })
+  })
+
   describe("Quick Filter", () => {
     it("should filter rows based on quickFilterText", async () => {
       const { rerender } = render(
