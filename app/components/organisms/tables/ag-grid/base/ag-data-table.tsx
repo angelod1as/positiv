@@ -1,6 +1,7 @@
 import {
   AllCommunityModule,
   ModuleRegistry,
+  type SelectionChangedEvent,
 } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
 import { cn } from "~/lib/utils"
@@ -27,6 +28,7 @@ export function AGDataTable<TData>({
   paginationPageSize = 25,
   paginationPageSizeSelector,
   rowSelection,
+  onRowSelectionChange,
   className,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
@@ -39,6 +41,13 @@ export function AGDataTable<TData>({
         checkboxes: rowSelection === "multiple",
       }
     : undefined
+
+  const handleSelectionChanged = (event: SelectionChangedEvent<TData>) => {
+    if (onRowSelectionChange) {
+      const selectedRows = event.api.getSelectedRows()
+      onRowSelectionChange(selectedRows)
+    }
+  }
 
   return (
     <div
@@ -54,6 +63,7 @@ export function AGDataTable<TData>({
         paginationPageSize={paginationPageSize}
         paginationPageSizeSelector={paginationPageSizeSelector}
         rowSelection={rowSelectionConfig}
+        onSelectionChanged={handleSelectionChanged}
       />
     </div>
   )
