@@ -118,10 +118,19 @@ const EventRulesPage = ({}: Route.ComponentProps) => {
     shouldFocusError: true,
   })
 
-  const onSubmit: SubmitHandler<z.infer<typeof validationSchema>> = (data) =>
-    submit(data, {
+  const onSubmit: SubmitHandler<z.infer<typeof validationSchema>> = (data) => {
+    const formData = new FormData()
+    Object.entries(data).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach((item) => formData.append(key, String(item)))
+      } else {
+        formData.append(key, String(value))
+      }
+    })
+    submit(formData, {
       method: "POST",
     })
+  }
 
   const shuffledQuestions = useMemo(() => shuffleQuestions(eventType), [eventType])
 
