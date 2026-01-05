@@ -30,6 +30,8 @@ export function AGDataTable<TData>({
   rowSelection,
   onRowSelectionChange,
   quickFilterText,
+  onCellValueChanged,
+  onGridReady,
   className,
   height,
 }: AGDataTableProps<TData>) {
@@ -68,6 +70,8 @@ export function AGDataTable<TData>({
         rowSelection={rowSelectionConfig}
         onSelectionChanged={handleSelectionChanged}
         quickFilterText={quickFilterText}
+        onCellValueChanged={onCellValueChanged}
+        onGridReady={onGridReady}
       />
     </div>
   )
