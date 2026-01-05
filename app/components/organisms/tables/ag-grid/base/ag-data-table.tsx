@@ -19,6 +19,7 @@ export function AGDataTable<TData>({
   id,
   data,
   columnDefs,
+  loading,
   className,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
@@ -28,7 +29,7 @@ export function AGDataTable<TData>({
       data-testid={`ag-data-table-${id}`}
       className={cn("ag-theme-quartz h-[400px]", className)}
     >
-      <AgGridReact rowData={data} columnDefs={columnDefs} />
+      <AgGridReact rowData={data} columnDefs={columnDefs} loading={loading} />
     </div>
   )
 }
