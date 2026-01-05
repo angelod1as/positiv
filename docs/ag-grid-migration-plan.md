@@ -6,7 +6,7 @@
 > 1. Update the task status in Linear to "Done"
 > 2. Mark the corresponding task in this plan as ✅ DONE
 >
-> **Current Progress:** 1/40 tasks completed (POS-317 ✅)
+> **Current Progress:** 1/40 tasks completed (POS-317 ✅, POS-318 🔄 In Progress)
 
 ---
 
