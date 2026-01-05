@@ -60,7 +60,7 @@ async function getNonRejectedParticipants(
 
   if (filters?.approvalStatuses && filters.approvalStatuses.length > 0) {
     query = query.where("p.approved_to_attend", "in", filters.approvalStatuses)
-  } else {
+  } else if (!filters?.approvalStatuses) {
     query = query.where("p.approved_to_attend", "!=", "rejected")
   }
 

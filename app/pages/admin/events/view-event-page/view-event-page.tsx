@@ -81,15 +81,15 @@ export async function action({ request, params }: Route.ActionArgs) {
     const attendanceStatuses = formData.getAll("attendanceStatuses")
 
     const filtersValidation = listmonkSyncFiltersSchema.safeParse({
-      approvalStatuses: approvalStatuses.length > 0 ? approvalStatuses : undefined,
-      applicationStatuses: applicationStatuses.length > 0 ? applicationStatuses : undefined,
-      attendanceStatuses: attendanceStatuses.length > 0 ? attendanceStatuses : undefined,
+      approvalStatuses,
+      applicationStatuses,
+      attendanceStatuses,
     })
 
     if (!filtersValidation.success) {
       return {
         success: false,
-        errors: filtersValidation.error.errors.map((e) => ({ message: e.message })),
+        errors: filtersValidation.error.issues.map((e) => ({ message: e.message })),
         intent,
       }
     }
