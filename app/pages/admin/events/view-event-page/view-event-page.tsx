@@ -89,7 +89,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     if (!filtersValidation.success) {
       return {
         success: false,
-        errors: filtersValidation.error.errors.map((e) => ({ message: e.message })),
+        errors: filtersValidation.error.issues.map((e) => ({ message: e.message })),
         intent,
       }
     }
