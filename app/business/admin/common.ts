@@ -44,10 +44,7 @@ export const eventFormSchema = zod.object({
 
   time_event_start: datetime,
   time_event_end: datetime,
-  time_application_end: datetime,
   time_application_start: datetime,
-  time_interviews_end: datetime,
-  time_interviews_start: datetime,
   time_group_start: datetime,
   time_group_end: datetime,
   time_payment_start: datetime,
@@ -69,10 +66,7 @@ export const eventSchema = zod.object({
 
   time_event_start: datetime.nullish(),
   time_event_end: datetime.nullish(),
-  time_application_end: datetime.nullish(),
   time_application_start: datetime.nullish(),
-  time_interviews_end: datetime.nullish(),
-  time_interviews_start: datetime.nullish(),
   time_group_start: datetime.nullish(),
   time_group_end: datetime.nullish(),
   time_payment_start: datetime.nullish(),

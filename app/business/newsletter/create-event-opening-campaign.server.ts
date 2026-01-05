@@ -27,8 +27,6 @@ function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
   const { date, time } = formatDateTime(event.time_event_start)
   const { date: applicationOpenDate, time: applicationOpenTime } =
     formatDateTime(event.time_application_start)
-  const { date: applicationCloseDate, time: applicationCloseTime } =
-    formatDateTime(event.time_application_end)
 
   const sanitizedEmoji = sanitizeHtml(event.emoji || "")
   const sanitizedTitle = sanitizeHtml(event.title || "")
@@ -84,10 +82,6 @@ function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
   <div style="margin-bottom: 8px; font-size: 14px;">
     <span style="color: #666;">Inscrições abrem em:</span>
     <strong style="color: #333;">${applicationOpenDate} às ${applicationOpenTime}</strong>
-  </div>
-  <div style="margin-bottom: 8px; font-size: 14px;">
-    <span style="color: #666;">Inscrições fecham em:</span>
-    <strong style="color: #333;">${applicationCloseDate} às ${applicationCloseTime}</strong>
   </div>
 </div>
 

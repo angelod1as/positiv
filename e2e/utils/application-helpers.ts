@@ -162,7 +162,6 @@ async function createTestEvent(): Promise<{ id: string; title: string }> {
     time_event_start: futureDate.toISOString(),
     time_event_end: new Date(futureDate.getTime() + 3 * 60 * 60 * 1000).toISOString(), // 3 hours later
     time_application_start: new Date().toISOString(),
-    time_application_end: futureDate.toISOString(),
     description: 'Automated test event for E2E testing',
     location: 'Test Location - São Paulo, SP',
     ticket_price: 50,
@@ -214,7 +213,6 @@ export async function createClosedEvent(): Promise<{ id: string; title: string }
     time_event_start: futureDate.toISOString(), // Event is in the future
     time_event_end: new Date(futureDate.getTime() + 3 * 60 * 60 * 1000).toISOString(),
     time_application_start: new Date(pastDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    time_application_end: pastDate.toISOString(), // Registration already ended
     description: 'Automated test event for E2E testing - closed',
     location: 'Test Location - São Paulo, SP',
     ticket_price: 50,
