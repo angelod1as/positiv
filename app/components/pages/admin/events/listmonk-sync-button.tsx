@@ -1,7 +1,9 @@
 import { AlertTriangleIcon, RefreshCwIcon, PlusIcon } from "lucide-react"
+import { useState } from "react"
 import type { FetcherWithComponents } from "react-router"
 import { Button } from "~/components/atoms/button/button"
 import type { ComposableFetcherData } from "~types/database/entities.types"
+import { ListmonkFilterModal } from "./listmonk-filter-modal"
 
 interface ListmonkSyncButtonProps {
   listmonkListId: number | null
@@ -14,18 +16,19 @@ export function ListmonkSyncButton({
   isStale,
   fetcher,
 }: ListmonkSyncButtonProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const hasExistingList = listmonkListId !== null
   const isSubmitting =
     fetcher.state !== "idle" &&
     fetcher.formData?.get("intent") === "sync-listmonk-list"
 
   return (
-    <fetcher.Form method="post">
-      <input type="hidden" name="intent" value="sync-listmonk-list" />
+    <>
       <Button
-        type="submit"
+        type="button"
         variant="outline"
         disabled={isSubmitting}
+        onClick={() => setIsModalOpen(true)}
         className="flex items-center gap-2"
       >
         {isStale && (
@@ -46,6 +49,13 @@ export function ListmonkSyncButton({
           </>
         )}
       </Button>
-    </fetcher.Form>
+
+      <ListmonkFilterModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        fetcher={fetcher}
+        hasExistingList={hasExistingList}
+      />
+    </>
   )
 }

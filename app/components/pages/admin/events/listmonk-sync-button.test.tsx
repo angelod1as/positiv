@@ -80,19 +80,6 @@ describe("ListmonkSyncButton", () => {
     expect(screen.queryByTestId("stale-warning")).not.toBeInTheDocument()
   })
 
-  it("should have correct form intent", async () => {
-    render(
-      <ListmonkSyncButton
-        listmonkListId={null}
-        isStale={false}
-        fetcher={createMockFetcher()}
-      />
-    )
-
-    const intentInput = document.querySelector('input[name="intent"]')
-    expect(intentInput).toHaveValue("sync-listmonk-list")
-  })
-
   it("should show 'Atualizando...' when submitting with existing list", () => {
     render(
       <ListmonkSyncButton
