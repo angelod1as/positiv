@@ -96,9 +96,15 @@ describe("AGDataTable", () => {
   })
 
   describe("Empty State", () => {
+    type DataItem = { id: string; name: string; value: number }
+
     it("should show default empty message when data is empty", async () => {
       render(
-        <AGDataTable id="test-table" data={[]} columnDefs={mockColumnDefs} />,
+        <AGDataTable<DataItem>
+          id="test-table"
+          data={[]}
+          columnDefs={mockColumnDefs}
+        />,
       )
 
       await waitFor(() => {
@@ -108,7 +114,7 @@ describe("AGDataTable", () => {
 
     it("should show custom empty message when provided", async () => {
       render(
-        <AGDataTable
+        <AGDataTable<DataItem>
           id="test-table"
           data={[]}
           columnDefs={mockColumnDefs}
