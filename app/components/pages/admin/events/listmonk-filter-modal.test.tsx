@@ -197,15 +197,15 @@ describe("ListmonkFilterModal", () => {
       expect(approvalStatuses).not.toContain("rejected")
     })
 
-    it("should close modal after successful submission", async () => {
-      const user = userEvent.setup()
+    it("should close modal after successful submission", () => {
       const onClose = vi.fn()
-      render(<ListmonkFilterModal {...defaultProps} onClose={onClose} />)
+      const fetcher = createMockFetcher()
+      fetcher.state = "idle"
+      fetcher.data = { success: true, intent: "sync-listmonk-list" }
 
-      const submitButton = screen.getByRole("button", {
-        name: /sincronizar/i,
-      })
-      await user.click(submitButton)
+      render(
+        <ListmonkFilterModal {...defaultProps} onClose={onClose} fetcher={fetcher} />
+      )
 
       expect(onClose).toHaveBeenCalledTimes(1)
     })
