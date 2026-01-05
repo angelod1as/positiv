@@ -163,7 +163,7 @@ importers:
         version: 7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       remix-forms:
         specifier: ^3.1.0
-        version: 3.1.1(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@3.25.67)
+        version: 3.1.1(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@4.3.5)
       remix-toast:
         specifier: ^3.1.0
         version: 3.1.0(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -183,8 +183,8 @@ importers:
         specifier: ^0.18.5
         version: 0.18.5
       zod:
-        specifier: ^3.24.3
-        version: 3.25.67
+        specifier: ^4.3.5
+        version: 4.3.5
     devDependencies:
       '@eslint/css':
         specifier: ^0.7.0
@@ -5709,6 +5709,9 @@ packages:
   third-party-web@0.27.0:
     resolution: {integrity: sha512-h0JYX+dO2Zr3abCQpS6/uFjujaOjA1DyDzGQ41+oFn9VW/ARiq9g5ln7qEP9+BTzDpOMyIfsfj4OvfgXAsMUSA==}
 
+  third-party-web@0.29.0:
+    resolution: {integrity: sha512-nBDSJw5B7Sl1YfsATG2XkW5qgUPODbJhXw++BKygi9w6O/NKS98/uY/nR/DxDq2axEjL6halHW1v+jhm/j1DBQ==}
+
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
@@ -6223,6 +6226,9 @@ packages:
 
   zod@3.25.67:
     resolution: {integrity: sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw==}
+
+  zod@4.3.5:
+    resolution: {integrity: sha512-k7Nwx6vuWx1IJ9Bjuf4Zt1PEllcwe7cls3VNzm4CQ1/hgtFUK2bRNG3rvnpPUhFjmqJKAKtjV576KnUkHocg/g==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -7771,7 +7777,7 @@ snapshots:
   '@paulirish/trace_engine@0.0.61':
     dependencies:
       legacy-javascript: 0.0.1
-      third-party-web: 0.27.0
+      third-party-web: 0.29.0
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
@@ -12269,14 +12275,14 @@ snapshots:
       unified: 11.0.5
       vfile: 6.0.3
 
-  remix-forms@3.1.1(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@3.25.67):
+  remix-forms@3.1.1(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@4.3.5):
     dependencies:
       '@hookform/resolvers': 2.9.11(react-hook-form@7.59.0(react@19.1.0))
       composable-functions: 5.0.0
       react: 19.1.0
       react-hook-form: 7.59.0(react@19.1.0)
       react-router: 7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      zod: 3.25.67
+      zod: 4.3.5
 
   remix-toast@3.1.0(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)):
     dependencies:
@@ -12740,6 +12746,8 @@ snapshots:
       - react-native-b4a
 
   third-party-web@0.27.0: {}
+
+  third-party-web@0.29.0: {}
 
   tinybench@2.9.0: {}
 
@@ -13244,5 +13252,7 @@ snapshots:
   yoctocolors-cjs@2.1.2: {}
 
   zod@3.25.67: {}
+
+  zod@4.3.5: {}
 
   zwitch@2.0.4: {}
