@@ -17,12 +17,14 @@ vi.mock("~/components/atoms/button/button", () => ({
   Button: ({
     children,
     to,
+    linkProps,
     ...props
   }: {
     children: React.ReactNode
     to?: string
+    linkProps?: Record<string, unknown>
   }) => (
-    <a href={to} {...props}>
+    <a href={to} {...props} {...linkProps}>
       {children}
     </a>
   ),
