@@ -26,11 +26,19 @@ export function AGDataTable<TData>({
   pagination = false,
   paginationPageSize = 25,
   paginationPageSizeSelector,
+  rowSelection,
   className,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
 
   const noRowsTemplate = `<span>${emptyMessage || DEFAULT_EMPTY_MESSAGE}</span>`
+
+  const rowSelectionConfig = rowSelection
+    ? {
+        mode: rowSelection === "multiple" ? ("multiRow" as const) : ("singleRow" as const),
+        checkboxes: rowSelection === "multiple",
+      }
+    : undefined
 
   return (
     <div
@@ -45,6 +53,7 @@ export function AGDataTable<TData>({
         pagination={pagination}
         paginationPageSize={paginationPageSize}
         paginationPageSizeSelector={paginationPageSizeSelector}
+        rowSelection={rowSelectionConfig}
       />
     </div>
   )
