@@ -53,6 +53,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
           <h3>Administração</h3>
 
           <SchemaForm
+            key={`${eventParticipant.event_id}-${eventParticipant.profile_id}`}
             schema={updateParticipantVsEventSchema}
             buttonLabel="Salvar"
             hiddenFields={["intent", "event_id", "profile_id"]}
