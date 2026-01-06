@@ -1,4 +1,5 @@
 import type { ColDef, GridOptions } from "ag-grid-community"
+import { BaseMultiSelectFilter } from "../filters/base-multi-select-filter"
 
 export const defaultColDef: ColDef = {
   sortable: true,
@@ -14,4 +15,6 @@ export const defaultGridOptions: GridOptions = {
   enableCellTextSelection: true,
 }
 
-export const frameworkComponents: GridOptions["components"] = {}
+export const frameworkComponents: GridOptions["components"] = {
+  baseMultiSelectFilter: BaseMultiSelectFilter,
+}

@@ -40,8 +40,9 @@ describe("grid-config", () => {
   })
 
   describe("frameworkComponents", () => {
-    it("should be an empty object for registering custom components", () => {
-      expect(frameworkComponents).toEqual({})
+    it("should register baseMultiSelectFilter component", () => {
+      expect(frameworkComponents).toHaveProperty("baseMultiSelectFilter")
+      expect(typeof frameworkComponents?.baseMultiSelectFilter).toBe("function")
     })
   })
 })
