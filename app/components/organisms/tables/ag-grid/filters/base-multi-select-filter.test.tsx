@@ -376,4 +376,158 @@ describe("BaseMultiSelectFilter", () => {
       expect(screen.getByText("0 de 3 selecionados")).toBeInTheDocument()
     })
   })
+
+  describe("Array Matching Mode (matchMode='array')", () => {
+    const genderOptions = [
+      { value: "homem cis", label: "Homem cis" },
+      { value: "mulher cis", label: "Mulher cis" },
+      { value: "pessoa não binária", label: "Pessoa não binária" },
+    ]
+
+    it("passes when selected value exists in row array", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          model={["homem cis"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const matchingNode = {
+        data: { gender: ["homem cis", "pessoa não binária"] },
+      } as IRowNode
+
+      expect(doesFilterPass({ node: matchingNode })).toBe(true)
+    })
+
+    it("fails when selected value not in row array", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          model={["mulher cis"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const nonMatchingNode = {
+        data: { gender: ["homem cis", "pessoa não binária"] },
+      } as IRowNode
+
+      expect(doesFilterPass({ node: nonMatchingNode })).toBe(false)
+    })
+
+    it("handles case-insensitive matching", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          model={["homem cis"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const mixedCaseNode = {
+        data: { gender: ["Homem Cis", "Pessoa Não Binária"] },
+      } as IRowNode
+
+      expect(doesFilterPass({ node: mixedCaseNode })).toBe(true)
+    })
+
+    it("returns false when row value is not an array", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          model={["homem cis"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const nonArrayNode = { data: { gender: "homem cis" } } as IRowNode
+
+      expect(doesFilterPass({ node: nonArrayNode })).toBe(false)
+    })
+
+    it("returns true when no selections (filter inactive)", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          model={null}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const anyNode = {
+        data: { gender: ["homem cis"] },
+      } as IRowNode
+
+      expect(doesFilterPass({ node: anyNode })).toBe(true)
+    })
+
+    it("matches when ANY selected value exists in row array", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          model={["mulher cis", "pessoa não binária"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const partialMatchNode = {
+        data: { gender: ["pessoa não binária"] },
+      } as IRowNode
+
+      expect(doesFilterPass({ node: partialMatchNode })).toBe(true)
+    })
+
+    it("returns false when row array is empty", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          model={["homem cis"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const emptyArrayNode = { data: { gender: [] } } as IRowNode
+
+      expect(doesFilterPass({ node: emptyArrayNode })).toBe(false)
+    })
+
+    it("returns false when row value is null", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          model={["homem cis"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const nullNode = { data: { gender: null } } as IRowNode
+
+      expect(doesFilterPass({ node: nullNode })).toBe(false)
+    })
+  })
 })
