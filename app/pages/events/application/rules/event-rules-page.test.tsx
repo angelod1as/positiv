@@ -8,8 +8,8 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/kysely", () => ({
-  kysely: {
+vi.mock("~/kysely-db", () => ({
+  kyselyDb: {
     selectFrom: vi.fn(),
   },
 }))
