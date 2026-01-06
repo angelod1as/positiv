@@ -1,9 +1,37 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi, beforeEach } from "vitest"
 import { AGDataTable } from "./ag-data-table"
 
+const mockSessionStorage = (() => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key]
+    }),
+    clear: vi.fn(() => {
+      store = {}
+    }),
+    get store() {
+      return store
+    },
+  }
+})()
+
+Object.defineProperty(window, "sessionStorage", {
+  value: mockSessionStorage,
+})
+
 describe("AGDataTable", () => {
+  beforeEach(() => {
+    mockSessionStorage.clear()
+    vi.clearAllMocks()
+  })
+
   const mockData = [
     { id: "1", name: "Item 1", value: 100 },
     { id: "2", name: "Item 2", value: 200 },
@@ -444,6 +472,95 @@ describe("AGDataTable", () => {
       await waitFor(() => {
         expect(screen.getByText("Item 0")).toBeInTheDocument()
       })
+    })
+  })
+
+  describe("State Persistence", () => {
+    it("should accept persistState and stateVersion props", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          persistState={true}
+          stateVersion={2}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      expect(screen.getByTestId("ag-data-table-test-table")).toBeInTheDocument()
+    })
+
+    it("should call onStateUpdated callback when state changes", async () => {
+      const user = userEvent.setup()
+      const handleStateUpdated = vi.fn()
+
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          onStateUpdated={handleStateUpdated}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      // Click on the Name header to trigger a sort (state change)
+      const nameHeader = container.querySelector(
+        '.ag-header-cell[col-id="name"]',
+      ) as HTMLElement
+      expect(nameHeader).toBeInTheDocument()
+
+      await user.click(nameHeader)
+
+      await waitFor(() => {
+        expect(handleStateUpdated).toHaveBeenCalled()
+      })
+    })
+
+    it("should still call onGridReady when persistState is enabled", async () => {
+      const handleGridReady = vi.fn()
+
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          persistState={true}
+          stateVersion={1}
+          onGridReady={handleGridReady}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      expect(handleGridReady).toHaveBeenCalled()
+      expect(handleGridReady.mock.calls[0][0]).toHaveProperty("api")
+    })
+
+    it("should render correctly with default stateVersion when not provided", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          persistState={true}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      expect(screen.getByTestId("ag-data-table-test-table")).toBeInTheDocument()
     })
   })
 })
