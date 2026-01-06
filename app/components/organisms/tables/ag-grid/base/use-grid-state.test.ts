@@ -170,6 +170,44 @@ describe("useGridState", () => {
         "ag-grid-state-test-table"
       )
     })
+
+    it("should not clear storage when api.setState throws non-parse error", () => {
+      const mockState = {
+        filter: { status: { filterType: "text" } },
+        columnOrder: { orderedColIds: ["col1"] },
+        sort: { sortModel: [] },
+      } as unknown as GridState
+
+      const storedState = {
+        version: 1,
+        savedAt: Date.now(),
+        gridState: mockState,
+      }
+
+      mockSessionStorage.setItem(
+        "ag-grid-state-test-table",
+        JSON.stringify(storedState)
+      )
+
+      const mockApi = {
+        ...createMockGridApi(),
+        setState: vi.fn(() => {
+          throw new Error("Grid API error")
+        }),
+      }
+
+      const { result } = renderHook(() =>
+        useGridState("test-table", { version: 1 })
+      )
+
+      act(() => {
+        result.current.restoreState(mockApi as unknown as GridApi)
+      })
+
+      // Storage should NOT be cleared when api.setState fails (only on parse errors)
+      expect(mockSessionStorage.removeItem).not.toHaveBeenCalled()
+      expect(result.current.isRestored).toBe(true)
+    })
   })
 
   describe("saveState", () => {
@@ -264,6 +302,34 @@ describe("useGridState", () => {
         "ag-grid-state-test-table"
       )
     })
+
+    it("should cancel pending debounced save to prevent race condition", () => {
+      const { result } = renderHook(() =>
+        useGridState("test-table", { version: 1, debounceMs: 500 })
+      )
+
+      const mockState = { filter: { test: true } } as unknown as GridState
+
+      act(() => {
+        result.current.saveState(mockState)
+        // Don't advance timers - save is still pending
+      })
+
+      act(() => {
+        result.current.clearState()
+      })
+
+      // Now advance timers past the debounce delay
+      act(() => {
+        vi.advanceTimersByTime(1000)
+      })
+
+      // Save should NOT have been called because clearState cancelled the pending timer
+      expect(mockSessionStorage.setItem).not.toHaveBeenCalled()
+      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(
+        "ag-grid-state-test-table"
+      )
+    })
   })
 
   describe("storage key generation", () => {
@@ -283,6 +349,32 @@ describe("useGridState", () => {
         "ag-grid-state-my-unique-table",
         expect.any(String)
       )
+    })
+  })
+
+  describe("cleanup", () => {
+    it("should cleanup debounce timer on unmount to prevent memory leaks", () => {
+      const { result, unmount } = renderHook(() =>
+        useGridState("test-table", { version: 1, debounceMs: 500 })
+      )
+
+      const mockState = { filter: { test: true } } as unknown as GridState
+
+      act(() => {
+        result.current.saveState(mockState)
+        // Don't advance timers - save is still pending
+      })
+
+      // Unmount the hook
+      unmount()
+
+      // Now advance timers past the debounce delay
+      act(() => {
+        vi.advanceTimersByTime(1000)
+      })
+
+      // Save should NOT have been called because unmount cancelled the pending timer
+      expect(mockSessionStorage.setItem).not.toHaveBeenCalled()
     })
   })
 
