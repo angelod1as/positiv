@@ -33,7 +33,6 @@ const defaultProps = {
   onModelChange: vi.fn(),
   getValue: mockGetValue,
   options: mockOptions,
-  field: "status",
 }
 
 describe("BaseMultiSelectFilter", () => {
@@ -239,6 +238,26 @@ describe("BaseMultiSelectFilter", () => {
 
       expect(doesFilterPass({ node: mockNode })).toBe(false)
     })
+
+    it("doesFilterPass returns false when cell value is null", () => {
+      render(<BaseMultiSelectFilter {...defaultProps} model={["approved"]} />)
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const mockNode = { data: { status: null } } as IRowNode
+      mockGetValue.mockReturnValueOnce(null)
+
+      expect(doesFilterPass({ node: mockNode })).toBe(false)
+    })
+
+    it("doesFilterPass returns false when cell value is undefined", () => {
+      render(<BaseMultiSelectFilter {...defaultProps} model={["approved"]} />)
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const mockNode = { data: {} } as IRowNode
+      mockGetValue.mockReturnValueOnce(undefined)
+
+      expect(doesFilterPass({ node: mockNode })).toBe(false)
+    })
   })
 
   describe("Checkbox Visual State", () => {
@@ -262,6 +281,45 @@ describe("BaseMultiSelectFilter", () => {
       const checkbox = approvedItem?.querySelector('[data-testid="checkbox"]')
 
       expect(checkbox).not.toHaveClass("bg-primary")
+    })
+  })
+
+  describe("Custom Labels", () => {
+    it("uses custom placeholder when provided", () => {
+      render(
+        <BaseMultiSelectFilter {...defaultProps} placeholder="Search items..." />
+      )
+
+      expect(screen.getByPlaceholderText("Search items...")).toBeInTheDocument()
+    })
+
+    it("uses custom selectAllLabel when provided", () => {
+      render(
+        <BaseMultiSelectFilter {...defaultProps} selectAllLabel="Select All" />
+      )
+
+      expect(screen.getByRole("button", { name: /select all/i })).toBeInTheDocument()
+    })
+
+    it("uses custom clearLabel when provided", () => {
+      render(
+        <BaseMultiSelectFilter {...defaultProps} clearLabel="Clear All" />
+      )
+
+      expect(screen.getByRole("button", { name: /clear all/i })).toBeInTheDocument()
+    })
+
+    it("uses custom noResultsLabel when provided", async () => {
+      const user = userEvent.setup()
+
+      render(
+        <BaseMultiSelectFilter {...defaultProps} noResultsLabel="Nothing found" />
+      )
+
+      const searchInput = screen.getByPlaceholderText("Buscar...")
+      await user.type(searchInput, "xyz123")
+
+      expect(screen.getByText("Nothing found")).toBeInTheDocument()
     })
   })
 })
