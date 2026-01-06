@@ -22,6 +22,8 @@ interface BaseMultiSelectFilterProps {
   model?: string[] | null
   /** Callback when model changes (optional - uses internal state if not provided) */
   onModelChange?: (model: string[] | null) => void
+  /** How to match values: 'exact' for single values, 'array' for array fields (gender/orientation) */
+  matchMode?: "exact" | "array"
   placeholder?: string
   selectAllLabel?: string
   clearLabel?: string
@@ -34,6 +36,7 @@ export function BaseMultiSelectFilter({
   getValue: getValueProp,
   model: controlledModel,
   onModelChange: controlledOnModelChange,
+  matchMode = "exact",
   placeholder = "Buscar...",
   selectAllLabel = "Selecionar Todos",
   clearLabel = "Limpar",
@@ -64,9 +67,23 @@ export function BaseMultiSelectFilter({
       if (values.length === 0) return true
       const cellValue = getValue(node)
       if (cellValue === null || cellValue === undefined) return false
-      return values.includes(String(cellValue))
+
+      if (matchMode === "array") {
+        if (!Array.isArray(cellValue) || cellValue.length === 0) return false
+        const normalizedCellValues = new Set(
+          cellValue
+            .filter((v): v is NonNullable<typeof v> => v !== null && v !== undefined)
+            .map((v) => String(v).toLowerCase())
+        )
+        return values.some((selected) =>
+          normalizedCellValues.has(selected.toLowerCase())
+        )
+      }
+
+      const normalizedCellValue = String(cellValue).toLowerCase()
+      return values.some((v) => v.toLowerCase() === normalizedCellValue)
     },
-    [model, getValue]
+    [model, getValue, matchMode]
   )
 
   useGridFilter({ doesFilterPass })
