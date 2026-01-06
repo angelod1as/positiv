@@ -7,7 +7,7 @@ import { NewsDialog } from "../news-dialog/news-dialog"
 
 const BUG_TRACKER_URL = "https://forms.gle/ys6W6W54YTcoBHrJA"
 
-type FooterProps = { 
+type FooterProps = {
   isThereAnyNews: boolean
   currentProfile?: ProfileWithRoles | null
 }
@@ -39,10 +39,14 @@ export const Footer: FC<FooterProps> = ({ isThereAnyNews, currentProfile }) => {
             <p>
               Encontrou um bug?{" "}
               <Link to={BUG_TRACKER_URL}>Clique aqui e nos avise</Link>.
+              Testando essa joça
             </p>
           </div>
           <div>
-            <NewsDialog isThereAnyNews={isThereAnyNews} currentProfile={currentProfile} />
+            <NewsDialog
+              isThereAnyNews={isThereAnyNews}
+              currentProfile={currentProfile}
+            />
             <div className="flex justify-center items-center space-x-4">
               <Link
                 target="_blank"
