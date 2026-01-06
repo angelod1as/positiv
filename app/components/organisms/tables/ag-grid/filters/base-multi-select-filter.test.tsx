@@ -3,13 +3,6 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import type { IRowNode } from "ag-grid-community"
 
-// Mock ResizeObserver for cmdk Command component
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
-
 // Mock AG Grid's useGridFilter hook
 const mockUseGridFilter = vi.fn()
 vi.mock("ag-grid-react", () => ({
