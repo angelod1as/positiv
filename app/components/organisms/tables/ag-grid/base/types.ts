@@ -52,3 +52,8 @@ export interface UseGridStateReturn {
   clearState: () => void
   isRestored: boolean
 }
+
+export interface CustomFilterParams {
+  options: Array<{ value: string; label: string }>
+  field: string
+}
