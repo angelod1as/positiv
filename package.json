@@ -83,7 +83,8 @@
     "tailwind-merge": "^3.2.0",
     "xlsx": "^0.18.5",
     "zod": "^4.3.5",
-    "kysely-supabase": "^0.2.0"
+    "kysely-supabase": "^0.2.0",
+    "jsdom": "^26.1.0"
   },
   "devDependencies": {
     "@types/dompurify": "^3.2.0",
@@ -116,7 +117,6 @@
     "globals": "^16.0.0",
     "husky": "^9.1.7",
     "install": "^0.13.0",
-    "jsdom": "^26.1.0",
     "lighthouse": "^13.0.1",
     "puppeteer": "^24.30.0",
     "react-router-devtools": "^5.0.5",
