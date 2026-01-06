@@ -1,4 +1,11 @@
-import type { CellValueChangedEvent, ColDef, GridReadyEvent } from "ag-grid-community"
+import type {
+  CellValueChangedEvent,
+  ColDef,
+  GridApi,
+  GridReadyEvent,
+  GridState,
+  StateUpdatedEvent,
+} from "ag-grid-community"
 
 export interface AGDataTableProps<TData> {
   id: string
@@ -19,7 +26,29 @@ export interface AGDataTableProps<TData> {
 
   onCellValueChanged?: (params: CellValueChangedEvent<TData>) => void
   onGridReady?: (params: GridReadyEvent<TData>) => void
+  onStateUpdated?: (params: StateUpdatedEvent<TData>) => void
 
   className?: string
   height?: string
+
+  persistState?: boolean
+  stateVersion?: number
+}
+
+export interface UseGridStateOptions {
+  version: number
+  debounceMs?: number
+}
+
+export interface StoredGridState {
+  version: number
+  savedAt: number
+  gridState: GridState
+}
+
+export interface UseGridStateReturn {
+  restoreState: (api: GridApi) => void
+  saveState: (state: GridState) => void
+  clearState: () => void
+  isRestored: boolean
 }
