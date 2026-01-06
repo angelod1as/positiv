@@ -1,5 +1,4 @@
 import type { ColDef, GridOptions } from "ag-grid-community"
-import { ApplicationStatusFilter } from "../filters/application-status-filter"
 import { BaseMultiSelectFilter } from "../filters/base-multi-select-filter"
 
 export const defaultColDef: ColDef = {
@@ -17,6 +16,5 @@ export const defaultGridOptions: GridOptions = {
 }
 
 export const frameworkComponents: GridOptions["components"] = {
-  applicationStatusFilter: ApplicationStatusFilter,
   baseMultiSelectFilter: BaseMultiSelectFilter,
 }
