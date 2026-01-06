@@ -57,4 +57,8 @@ export interface UseGridStateReturn {
 export interface CustomFilterParams extends IFilterParams {
   options: Array<{ value: string; label: string }>
   field: string
+  placeholder?: string
+  selectAllLabel?: string
+  clearLabel?: string
+  noResultsLabel?: string
 }
