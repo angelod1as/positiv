@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { GridApi, GridState } from "ag-grid-community"
 import type {
   UseGridStateOptions,
@@ -39,6 +39,15 @@ export function useGridState(
   const [isRestored, setIsRestored] = useState(false)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Cleanup debounce timer on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+    }
+  }, [])
+
   const restoreState = useCallback(
     (api: GridApi) => {
       try {
@@ -59,8 +68,11 @@ export function useGridState(
 
         api.setState(parsed.gridState)
         setIsRestored(true)
-      } catch {
-        sessionStorage.removeItem(storageKey)
+      } catch (error) {
+        // Only clear storage on parse errors, not on api.setState failures
+        if (error instanceof SyntaxError) {
+          sessionStorage.removeItem(storageKey)
+        }
         setIsRestored(true)
       }
     },
@@ -91,6 +103,11 @@ export function useGridState(
   )
 
   const clearState = useCallback(() => {
+    // Cancel any pending debounced save to prevent race condition
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+      debounceTimerRef.current = null
+    }
     sessionStorage.removeItem(storageKey)
   }, [storageKey])
 
