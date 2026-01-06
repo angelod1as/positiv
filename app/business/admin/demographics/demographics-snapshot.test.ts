@@ -24,8 +24,8 @@ const createMockKysely = () => {
 
 const mockKysely = createMockKysely()
 
-vi.mock("~/kysely", () => ({
-  kysely: mockKysely,
+vi.mock("~/kysely-db", () => ({
+  kyselyDb: mockKysely,
 }))
 
 vi.mock("kysely", () => ({

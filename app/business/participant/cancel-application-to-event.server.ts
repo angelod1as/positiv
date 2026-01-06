@@ -1,5 +1,5 @@
 import { composable } from "composable-functions"
-import { kysely } from "~/kysely"
+import { kyselyDb } from "~/kysely-db"
 import { dateToString } from "~/lib/helpers/date-to-string"
 
 type CancelApplicationToEventProps = { profileId?: string; eventId?: string }
@@ -9,7 +9,7 @@ export const cancelApplicationToEvent = composable(
       throw new Error("Algo deu errado no seu cancelamento. Tente mais tarde.")
     }
 
-    return await kysely
+    return await kyselyDb
       .updateTable("event_participants")
       .set({
         is_user_applied: false,

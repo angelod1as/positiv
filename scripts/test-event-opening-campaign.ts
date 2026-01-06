@@ -1,6 +1,6 @@
 import "dotenv/config"
 import { createEventOpeningCampaign } from "~/business/newsletter/create-event-opening-campaign.server"
-import { kysely } from "~/kysely"
+import { kyselyDb } from "~/kysely-db"
 import { LISTMONK_TEST_LIST_ID } from "~/lib/constants/constants"
 
 async function main() {
@@ -8,18 +8,24 @@ async function main() {
   const sendImmediately = process.argv.includes("--send")
 
   if (!eventId) {
-    console.error("Usage: pnpm tsx scripts/test-event-opening-campaign.ts <event-id> [--send]")
+    console.error(
+      "Usage: pnpm tsx scripts/test-event-opening-campaign.ts <event-id> [--send]",
+    )
     console.error("\nOptions:")
-    console.error("  --send    Send the campaign immediately (default: create as draft)")
+    console.error(
+      "  --send    Send the campaign immediately (default: create as draft)",
+    )
     console.error("\nExample:")
     console.error("  pnpm tsx scripts/test-event-opening-campaign.ts abc-123")
-    console.error("  pnpm tsx scripts/test-event-opening-campaign.ts abc-123 --send")
+    console.error(
+      "  pnpm tsx scripts/test-event-opening-campaign.ts abc-123 --send",
+    )
     process.exit(1)
   }
 
   console.info(`\n🔍 Fetching event: ${eventId}`)
 
-  const event = await kysely
+  const event = await kyselyDb
     .selectFrom("events")
     .selectAll("events")
     .where("id", "=", eventId)
@@ -33,7 +39,9 @@ async function main() {
   console.info(`✅ Found event: ${event.emoji || ""} ${event.title}`)
   console.info(`   Location: ${event.location}`)
   console.info(`   Status: ${event.event_status}`)
-  console.info(`\n📧 Creating campaign for TEST_LIST (ID: ${LISTMONK_TEST_LIST_ID})`)
+  console.info(
+    `\n📧 Creating campaign for TEST_LIST (ID: ${LISTMONK_TEST_LIST_ID})`,
+  )
 
   if (sendImmediately) {
     console.info(`⚠️  Campaign will be sent IMMEDIATELY`)

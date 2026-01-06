@@ -6,9 +6,13 @@ import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { getUserContext } from "~/business/auth/auth.server"
 import { rulesSessionStorage } from "~/business/session.server"
-import { kysely } from "~/kysely"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/base/error"
+import { MultipleSelect } from "~/components/forms/custom/rules/multiple-select"
+import { getRulesFormSchema } from "~/components/forms/custom/rules/rules-form-schema"
+import { shuffleQuestions } from "~/components/forms/custom/rules/shuffle-questions"
+import { SingleSelect } from "~/components/forms/custom/rules/single-select"
+import { RulesText } from "~/components/pages/events/rules/rules-text"
 import {
   Card,
   CardContent,
@@ -16,15 +20,11 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
-import { MultipleSelect } from "~/components/forms/custom/rules/multiple-select"
-import { getRulesFormSchema } from "~/components/forms/custom/rules/rules-form-schema"
-import { shuffleQuestions } from "~/components/forms/custom/rules/shuffle-questions"
-import { SingleSelect } from "~/components/forms/custom/rules/single-select"
-import { RulesText } from "~/components/pages/events/rules/rules-text"
 
 const {
   dash: {
@@ -40,17 +40,17 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!params.id) return redirect(DASHBOARD)
-  
+
   await getUserContext(request, params)
-  
-  const event = await kysely
+
+  const event = await kyselyDb
     .selectFrom("events")
     .select("event_type")
     .where("id", "=", params.id)
     .executeTakeFirst()
-  
+
   if (!event) return redirect(DASHBOARD)
-  
+
   return { eventType: event.event_type }
 }
 
@@ -102,10 +102,16 @@ export function HydrateFallback() {
 const EventRulesPage = ({}: Route.ComponentProps) => {
   const submit = useSubmit()
   const { eventType } = useLoaderData<typeof loader>()
-  
-  const rulesFormSchema = useMemo(() => getRulesFormSchema(eventType), [eventType])
-  const validationSchema = useMemo(() => zod.object(rulesFormSchema), [rulesFormSchema])
-  
+
+  const rulesFormSchema = useMemo(
+    () => getRulesFormSchema(eventType),
+    [eventType],
+  )
+  const validationSchema = useMemo(
+    () => zod.object(rulesFormSchema),
+    [rulesFormSchema],
+  )
+
   const {
     control,
     formState: { errors },
@@ -132,7 +138,10 @@ const EventRulesPage = ({}: Route.ComponentProps) => {
     })
   }
 
-  const shuffledQuestions = useMemo(() => shuffleQuestions(eventType), [eventType])
+  const shuffledQuestions = useMemo(
+    () => shuffleQuestions(eventType),
+    [eventType],
+  )
 
   const handleChange = () => {
     clearErrors()

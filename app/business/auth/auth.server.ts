@@ -3,7 +3,7 @@ import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { env } from "~/env.server"
-import { kysely } from "~/kysely"
+import { kyselyDb } from "~/kysely-db"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import {
@@ -26,10 +26,7 @@ const {
 } = paths
 
 // Cache for auth context per request to avoid redundant DB queries
-const authCache = new WeakMap<
-  Request,
-  Promise<z.infer<typeof contextSchema>>
->()
+const authCache = new WeakMap<Request, Promise<z.infer<typeof contextSchema>>>()
 
 export const getSupabase = async (
   request: Request,
@@ -286,7 +283,7 @@ export const registerUser = applySchema(
   // that were imported as orphaned profiles (user_id = NULL).
   // Admins must manually link such profiles to new users.
   const normalizedEmail = data.email.toLowerCase().trim()
-  const existingProfile = await kysely
+  const existingProfile = await kyselyDb
     .selectFrom("profiles")
     .select("id")
     .where("email", "=", normalizedEmail)

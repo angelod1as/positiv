@@ -1,1 +1,1 @@
-export { kysely as db } from "~/kysely"
+export { kyselyDb as db } from "~/kysely-db"

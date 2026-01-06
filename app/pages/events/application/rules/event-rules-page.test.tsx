@@ -1,15 +1,15 @@
 import { redirect } from "react-router"
-import { describe, expect, it, vi, beforeEach } from "vitest"
-import { loader } from "./event-rules-page"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { Route } from "./+types/event-rules-page"
+import { loader } from "./event-rules-page"
 
 // Mock dependencies
 vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
-vi.mock("~/kysely", () => ({
-  kysely: {
+vi.mock("~/kysely-db", () => ({
+  kyselyDb: {
     selectFrom: vi.fn(),
   },
 }))
@@ -23,10 +23,10 @@ vi.mock("react-router", async (importOriginal) => {
 })
 
 import { getUserContext } from "~/business/auth/auth.server"
-import { kysely } from "~/kysely"
+import { kyselyDb } from "~/kysely-db"
 
 const _mockGetUserContext = vi.mocked(getUserContext)
-const mockKysely = vi.mocked(kysely)
+const mockKysely = vi.mocked(kyselyDb)
 const mockRedirect = vi.mocked(redirect)
 
 describe("event-rules-page loader", () => {
@@ -38,7 +38,10 @@ describe("event-rules-page loader", () => {
     const mockRequest = new Request("http://localhost")
     const mockParams = {} as Route.LoaderArgs["params"]
 
-    await loader({ request: mockRequest, params: mockParams } as Route.LoaderArgs)
+    await loader({
+      request: mockRequest,
+      params: mockParams,
+    } as Route.LoaderArgs)
 
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
@@ -57,7 +60,10 @@ describe("event-rules-page loader", () => {
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
 
-    await loader({ request: mockRequest, params: mockParams } as Route.LoaderArgs)
+    await loader({
+      request: mockRequest,
+      params: mockParams,
+    } as Route.LoaderArgs)
 
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
@@ -66,7 +72,9 @@ describe("event-rules-page loader", () => {
     const mockSelectFrom = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          executeTakeFirst: vi.fn().mockResolvedValue({ event_type: "regular" }),
+          executeTakeFirst: vi
+            .fn()
+            .mockResolvedValue({ event_type: "regular" }),
         }),
       }),
     })
@@ -76,12 +84,19 @@ describe("event-rules-page loader", () => {
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
 
-    const result = await loader({ request: mockRequest, params: mockParams } as Route.LoaderArgs)
+    const result = await loader({
+      request: mockRequest,
+      params: mockParams,
+    } as Route.LoaderArgs)
 
     expect(result).toEqual({ eventType: "regular" })
     expect(mockSelectFrom).toHaveBeenCalledWith("events")
     expect(mockSelectFrom().select).toHaveBeenCalledWith("event_type")
-    expect(mockSelectFrom().select().where).toHaveBeenCalledWith("id", "=", "123")
+    expect(mockSelectFrom().select().where).toHaveBeenCalledWith(
+      "id",
+      "=",
+      "123",
+    )
   })
 
   it("should return event type for bdsm event", async () => {
@@ -98,7 +113,10 @@ describe("event-rules-page loader", () => {
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
 
-    const result = await loader({ request: mockRequest, params: mockParams } as Route.LoaderArgs)
+    const result = await loader({
+      request: mockRequest,
+      params: mockParams,
+    } as Route.LoaderArgs)
 
     expect(result).toEqual({ eventType: "bdsm" })
   })
