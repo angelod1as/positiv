@@ -40,9 +40,8 @@ describe("grid-config", () => {
   })
 
   describe("frameworkComponents", () => {
-    it("should be an object for registering custom components", () => {
-      expect(frameworkComponents).toBeDefined()
-      expect(typeof frameworkComponents).toBe("object")
+    it("should be an empty object for registering custom components", () => {
+      expect(frameworkComponents).toEqual({})
     })
   })
 })

@@ -14,4 +14,4 @@ export const defaultGridOptions: GridOptions = {
   enableCellTextSelection: true,
 }
 
-export const frameworkComponents: Record<string, unknown> = {}
+export const frameworkComponents: GridOptions["components"] = {}
