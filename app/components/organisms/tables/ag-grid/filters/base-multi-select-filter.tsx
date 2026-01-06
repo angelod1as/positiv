@@ -36,12 +36,13 @@ export function BaseMultiSelectFilter({
 
   const doesFilterPass = useCallback(
     ({ node }: { node: IRowNode }) => {
-      if (selectedValues.length === 0) return true
+      const values = model || []
+      if (values.length === 0) return true
       const cellValue = getValue(node)
       if (cellValue === null || cellValue === undefined) return false
-      return selectedValues.includes(String(cellValue))
+      return values.includes(String(cellValue))
     },
-    [selectedValues, getValue]
+    [model, getValue]
   )
 
   useGridFilter({ doesFilterPass })
