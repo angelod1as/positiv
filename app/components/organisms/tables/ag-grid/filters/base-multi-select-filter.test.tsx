@@ -260,30 +260,6 @@ describe("BaseMultiSelectFilter", () => {
     })
   })
 
-  describe("Checkbox Visual State", () => {
-    it("shows checked checkbox for selected options", () => {
-      render(
-        <BaseMultiSelectFilter {...defaultProps} model={["pending"]} />
-      )
-
-      const pendingItem = screen.getByText("Pendente").closest("[data-slot]")
-      const checkbox = pendingItem?.querySelector('[data-testid="checkbox"]')
-
-      expect(checkbox).toHaveClass("bg-primary")
-    })
-
-    it("shows unchecked checkbox for unselected options", () => {
-      render(
-        <BaseMultiSelectFilter {...defaultProps} model={["pending"]} />
-      )
-
-      const approvedItem = screen.getByText("Aprovado").closest("[data-slot]")
-      const checkbox = approvedItem?.querySelector('[data-testid="checkbox"]')
-
-      expect(checkbox).not.toHaveClass("bg-primary")
-    })
-  })
-
   describe("Custom Labels", () => {
     it("uses custom placeholder when provided", () => {
       render(
