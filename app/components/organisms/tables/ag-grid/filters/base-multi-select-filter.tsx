@@ -16,7 +16,10 @@ interface BaseMultiSelectFilterProps {
   onModelChange: (model: string[] | null) => void
   getValue: (node: IRowNode) => unknown
   options: Array<{ value: string; label: string }>
-  field: string
+  placeholder?: string
+  selectAllLabel?: string
+  clearLabel?: string
+  noResultsLabel?: string
 }
 
 export function BaseMultiSelectFilter({
@@ -24,6 +27,10 @@ export function BaseMultiSelectFilter({
   onModelChange,
   getValue,
   options,
+  placeholder = "Buscar...",
+  selectAllLabel = "Selecionar Todos",
+  clearLabel = "Limpar",
+  noResultsLabel = "Nenhum resultado",
 }: BaseMultiSelectFilterProps) {
   const selectedValues = model || []
 
@@ -31,6 +38,7 @@ export function BaseMultiSelectFilter({
     ({ node }: { node: IRowNode }) => {
       if (selectedValues.length === 0) return true
       const cellValue = getValue(node)
+      if (cellValue === null || cellValue === undefined) return false
       return selectedValues.includes(String(cellValue))
     },
     [selectedValues, getValue]
@@ -56,7 +64,10 @@ export function BaseMultiSelectFilter({
   return (
     <div className="ag-custom-component-popup w-64 bg-popover border rounded-md shadow-md">
       <Command>
-        <CommandInput placeholder="Buscar..." />
+        <CommandInput
+          placeholder={placeholder}
+          aria-label="Buscar opções de filtro"
+        />
         <div className="flex gap-2 p-2 border-b">
           <Button
             variant="outline"
@@ -64,7 +75,7 @@ export function BaseMultiSelectFilter({
             onClick={handleSelectAll}
             type="button"
           >
-            Selecionar Todos
+            {selectAllLabel}
           </Button>
           <Button
             variant="outline"
@@ -72,11 +83,11 @@ export function BaseMultiSelectFilter({
             onClick={handleClear}
             type="button"
           >
-            Limpar
+            {clearLabel}
           </Button>
         </div>
         <CommandList>
-          <CommandEmpty>Nenhum resultado</CommandEmpty>
+          <CommandEmpty>{noResultsLabel}</CommandEmpty>
           {options.map((option) => (
             <CommandItem
               key={option.value}
@@ -85,7 +96,8 @@ export function BaseMultiSelectFilter({
             >
               <Checkbox
                 checked={selectedValues.includes(option.value)}
-                readOnly
+                aria-hidden="true"
+                tabIndex={-1}
               />
               <span className="ml-2">{option.label}</span>
             </CommandItem>
