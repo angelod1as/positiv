@@ -4,6 +4,7 @@ import type {
   GridApi,
   GridReadyEvent,
   GridState,
+  IFilterParams,
   StateUpdatedEvent,
 } from "ag-grid-community"
 
@@ -51,4 +52,9 @@ export interface UseGridStateReturn {
   saveState: (state: GridState) => void
   clearState: () => void
   isRestored: boolean
+}
+
+export interface CustomFilterParams extends IFilterParams {
+  options: Array<{ value: string; label: string }>
+  field: string
 }
