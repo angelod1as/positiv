@@ -6,7 +6,7 @@
 > 1. Update the task status in Linear to "Done"
 > 2. Mark the corresponding task in this plan as ✅ DONE
 >
-> **Current Progress:** 4/40 tasks completed (POS-317 ✅, POS-318 ✅, POS-319 ✅, POS-320 ✅)
+> **Current Progress:** 10/40 tasks completed (POS-317 ✅ through POS-327 ✅)
 
 ---
 
@@ -71,12 +71,7 @@ app/components/organisms/tables/ag-grid/
 │   ├── use-grid-state.ts           # Session storage integration
 │   └── grid-config.ts              # Default grid options
 ├── filters/
-│   ├── base-multi-select-filter.tsx     # Reusable multi-select base
-│   ├── application-status-filter.tsx
-│   ├── attendance-status-filter.tsx
-│   ├── approved-to-attend-filter.tsx
-│   ├── gender-filter.tsx
-│   └── orientation-filter.tsx
+│   └── base-multi-select-filter.tsx     # Reusable multi-select (supports exact + array matching via matchMode prop)
 ├── editors/
 │   ├── select-cell-editor.tsx
 │   ├── checkbox-cell-editor.tsx
@@ -727,7 +722,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 2 Tasks
 
-**Task 5: [ag-grid] Build Base Multi-Select Filter Component** — POS-321
+**Task 5: [ag-grid] Build Base Multi-Select Filter Component** — POS-321 ✅ DONE
 
 - Create base-multi-select-filter.tsx
 - Implement AG Grid filter interface (getModel, setModel, doesFilterPass)
@@ -736,47 +731,28 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 6-8 hours
 - **Dependencies:** Task 4
 
-**Task 6: [ag-grid] Create Application Status Filter** — POS-322
+**Task 6: [ag-grid] Create Application Status Filter** — POS-322 ✅ DONE
 
 - Build application-status-filter.tsx using base component
 - Define filter options (pending, approved, rejected)
 - **Estimate:** 1-2 hours
 - **Dependencies:** Task 5
 
-**Task 7: [ag-grid] Create Attendance Status Filter** — POS-323
+**Task 7: [ag-grid] Create Attendance Status Filter** — POS-323 ✅ DONE (consolidated)
 
-- Build attendance-status-filter.tsx using base component
-- Define attendance status options
-- **Estimate:** 1-2 hours
-- **Dependencies:** Task 5
+**Task 8: [ag-grid] Create Approved to Attend Filter** — POS-324 ✅ DONE (consolidated)
 
-**Task 8: [ag-grid] Create Approved to Attend Filter** — POS-324
+**Task 9: [ag-grid] Create Gender Filter with Array Matching** — POS-325 ✅ DONE (consolidated)
 
-- Build approved-to-attend-filter.tsx using base component
-- Define boolean options
-- **Estimate:** 1-2 hours
-- **Dependencies:** Task 5
+**Task 10: [ag-grid] Create Orientation Filter with Array Matching** — POS-326 ✅ DONE (consolidated)
 
-**Task 9: [ag-grid] Create Gender Filter with Array Matching** — POS-325
+**Task 11: [ag-grid] Register All Filters in Grid Config** — POS-327 ✅ DONE (consolidated)
 
-- Build gender-filter.tsx with special array matching logic
-- Implement Array.some() matching
-- **Estimate:** 2-3 hours
-- **Dependencies:** Task 5
-
-**Task 10: [ag-grid] Create Orientation Filter with Array Matching** — POS-326
-
-- Build orientation-filter.tsx with array matching
-- Mirror gender filter logic
-- **Estimate:** 2-3 hours
-- **Dependencies:** Task 5
-
-**Task 11: [ag-grid] Register All Filters in Grid Config** — POS-327
-
-- Update grid-config.ts with frameworkComponents
-- Test filter registration
-- **Estimate:** 1 hour
-- **Dependencies:** Tasks 6-10
+> **📝 Note:** Tasks 7-11 (POS-323 through POS-327) were consolidated into a single PR.
+> With POS-322's enhancement to support uncontrolled mode via `field` prop, individual
+> wrapper components are no longer needed. The base filter now supports:
+> - **Simple fields** (application_status, attendance_status, approved_to_attend): Use `field` prop directly
+> - **Array fields** (gender, orientation): Use `field` prop + `matchMode: 'array'`
 
 ---
 
