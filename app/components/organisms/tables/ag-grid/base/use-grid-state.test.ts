@@ -11,7 +11,8 @@ const mockSessionStorage = (() => {
       store[key] = value
     }),
     removeItem: vi.fn((key: string) => {
-      delete store[key]
+      const { [key]: _, ...rest } = store
+      store = rest
     }),
     clear: vi.fn(() => {
       store = {}
@@ -68,11 +69,11 @@ describe("useGridState", () => {
 
   describe("restoreState", () => {
     it("should restore state from sessionStorage when version matches", () => {
-      const mockState: GridState = {
+      const mockState = {
         filter: { status: { filterType: "text", filter: "active" } },
         columnOrder: { orderedColIds: ["col1", "col2"] },
         sort: { sortModel: [{ colId: "name", sort: "asc" }] },
-      }
+      } as unknown as GridState
 
       const storedState = {
         version: 1,
@@ -177,11 +178,11 @@ describe("useGridState", () => {
         useGridState("test-table", { version: 1 })
       )
 
-      const mockState: GridState = {
+      const mockState = {
         filter: { status: { filterType: "text" } },
         columnOrder: { orderedColIds: ["col1"] },
         sort: { sortModel: [] },
-      }
+      } as unknown as GridState
 
       act(() => {
         result.current.saveState(mockState)
