@@ -16,8 +16,8 @@ vi.mock("remix-toast", () => ({
   }),
 }))
 
-vi.mock("~/kysely", () => ({
-  kysely: {
+vi.mock("~/kysely-db", () => ({
+  kyselyDb: {
     selectFrom: vi.fn(),
   },
 }))
