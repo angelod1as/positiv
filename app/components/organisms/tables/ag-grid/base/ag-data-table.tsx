@@ -4,6 +4,7 @@ import {
   type SelectionChangedEvent,
 } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
+import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
 import type { AGDataTableProps } from "./types"
 
@@ -17,17 +18,6 @@ function ensureModulesRegistered() {
 }
 
 const DEFAULT_EMPTY_MESSAGE = "Nenhum registro encontrado"
-
-function escapeHtml(text: string): string {
-  const htmlEscapes: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  }
-  return text.replace(/[&<>"']/g, (char) => htmlEscapes[char])
-}
 
 export function AGDataTable<TData>({
   id,
