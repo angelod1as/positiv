@@ -2,7 +2,7 @@ import { applySchema, composable } from "composable-functions"
 import { sql } from "kysely"
 import type { Params } from "react-router"
 import type { z } from "zod"
-import { kysely } from "~/kysely"
+import { kyselyDb } from "~/kysely-db"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import type {
   EventParticipant,
@@ -34,7 +34,7 @@ export const getAdminContext = async (
 }
 
 export const getEventsForDashboard = async () => {
-  const events = await kysely
+  const events = await kyselyDb
     .selectFrom("events")
     .select([
       "id",
@@ -61,7 +61,7 @@ export const getEventsForDashboard = async () => {
 
 export const getAdminEventById = composable(
   async ({ eventId }: { eventId: string }) => {
-    return await kysely
+    return await kyselyDb
       .selectFrom("events")
       .selectAll()
       .where("id", "=", eventId)
@@ -79,10 +79,14 @@ export type ProfileWithExtraData = Profile &
   }
 
 // Main query to get event_participants information along with if they were skipped in the last event
-const profilesWithExtraDataQuery = kysely
+const profilesWithExtraDataQuery = kyselyDb
   .selectFrom("event_participants as current_ep")
   .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
-  .innerJoin("events as current_event", "current_ep.event_id", "current_event.id")
+  .innerJoin(
+    "events as current_event",
+    "current_ep.event_id",
+    "current_event.id",
+  )
   .selectAll(["p", "current_ep"])
   .select((eb) => [
     eb
@@ -120,7 +124,11 @@ const profilesWithExtraDataQuery = kysely
       .as("last_attended_event_title"),
     eb
       .selectFrom("event_participants as ep_last_date")
-      .innerJoin("events as e_last_date", "ep_last_date.event_id", "e_last_date.id")
+      .innerJoin(
+        "events as e_last_date",
+        "ep_last_date.event_id",
+        "e_last_date.id",
+      )
       .select("e_last_date.time_event_start")
       .whereRef("ep_last_date.profile_id", "=", "current_ep.profile_id")
       .where("ep_last_date.attendance_status", "=", "attended")
@@ -173,7 +181,7 @@ export const getProfilesWithExtraDataById = composable(
 
 export const getAdminProfileById = composable(
   async ({ profileId }: { profileId: string }) => {
-    return await kysely
+    return await kyselyDb
       .selectFrom("profiles")
       .selectAll()
       .where("id", "=", profileId)
@@ -189,7 +197,7 @@ export const getEventParticipantHistoryById = composable(
     profileId: string
     eventId: string
   }): Promise<Array<ParticipantVsEvent>> => {
-    return await kysely
+    return await kyselyDb
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
@@ -217,7 +225,7 @@ export const getParticipantFullEventHistory = composable(
     profileId: string
     excludeEventId?: string
   }): Promise<Array<ParticipantVsEvent & { time_event_start: string }>> => {
-    let query = kysely
+    let query = kyselyDb
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
@@ -280,69 +288,71 @@ export const updateEventStatus = applySchema(
   if (!eventId) return null
 
   // Use transaction to ensure atomicity
-  const transactionResult = await kysely.transaction().execute(async (trx) => {
-    // Only calculate and store demographics when status is changing TO Completed
-    if (values.event_status === "Completed") {
-      // Calculate demographics FIRST, before updating status
-      const baseQuery = trx
-        .selectFrom("event_participants")
-        .where("event_participants.event_id", "=", eventId)
-        .where("attendance_status", "=", "attended")
+  const transactionResult = await kyselyDb
+    .transaction()
+    .execute(async (trx) => {
+      // Only calculate and store demographics when status is changing TO Completed
+      if (values.event_status === "Completed") {
+        // Calculate demographics FIRST, before updating status
+        const baseQuery = trx
+          .selectFrom("event_participants")
+          .where("event_participants.event_id", "=", eventId)
+          .where("attendance_status", "=", "attended")
 
-      const participantsResult = await baseQuery
-        .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
-        .innerJoin("events", "events.id", "event_participants.event_id")
-        .select([
-          "profiles.date_of_birth",
-          "profiles.gender",
-          "profiles.orientation",
-          "profiles.where_lives",
-          "profiles.race_color",
-          sql<boolean>`
+        const participantsResult = await baseQuery
+          .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+          .innerJoin("events", "events.id", "event_participants.event_id")
+          .select([
+            "profiles.date_of_birth",
+            "profiles.gender",
+            "profiles.orientation",
+            "profiles.where_lives",
+            "profiles.race_color",
+            sql<boolean>`
             CASE
               WHEN profiles.became_veteran_date IS NULL THEN false
               WHEN profiles.became_veteran_date < events.time_event_start THEN true
               ELSE false
             END
           `.as("is_veteran"),
-        ])
+          ])
+          .execute()
+
+        const { calculateDemographics } = await import(
+          "./demographics/demographics"
+        )
+        const demographics = calculateDemographics(participantsResult)
+
+        const { upsertEventDemographicsSnapshot } = await import(
+          "./demographics/demographics-history.server"
+        )
+
+        // Store demographics snapshot using the transaction
+        const snapshotResult = await upsertEventDemographicsSnapshot({
+          eventId,
+          demographics,
+          trx,
+        })
+
+        if (!snapshotResult.success) {
+          // If demographics calculation fails, throw error to rollback transaction
+          throw new Error(
+            `Failed to store demographics snapshot for event ${eventId}: ${snapshotResult.errors?.join(", ")}`,
+          )
+        }
+      }
+
+      // Update event status AFTER demographics are successfully stored
+      const result = await trx
+        .updateTable("events")
+        .set({
+          event_status: values.event_status,
+        })
+        .where("id", "=", eventId)
         .execute()
 
-      const { calculateDemographics } = await import(
-        "./demographics/demographics"
-      )
-      const demographics = calculateDemographics(participantsResult)
-
-      const { upsertEventDemographicsSnapshot } = await import(
-        "./demographics/demographics-history.server"
-      )
-
-      // Store demographics snapshot using the transaction
-      const snapshotResult = await upsertEventDemographicsSnapshot({
-        eventId,
-        demographics,
-        trx,
-      })
-
-      if (!snapshotResult.success) {
-        // If demographics calculation fails, throw error to rollback transaction
-        throw new Error(
-          `Failed to store demographics snapshot for event ${eventId}: ${snapshotResult.errors?.join(", ")}`,
-        )
-      }
-    }
-
-    // Update event status AFTER demographics are successfully stored
-    const result = await trx
-      .updateTable("events")
-      .set({
-        event_status: values.event_status,
-      })
-      .where("id", "=", eventId)
-      .execute()
-
-    return result.length > 0
-  })
+      return result.length > 0
+    })
 
   // Sync with Listmonk AFTER the transaction completes successfully
   // This is done outside the transaction because it's an external API call
@@ -386,7 +396,7 @@ export const updateEventDemographics = applySchema(
   }
 
   // Calculate current demographics from database
-  const baseQuery = kysely
+  const baseQuery = kyselyDb
     .selectFrom("event_participants")
     .where("event_participants.event_id", "=", eventId)
     .where("attendance_status", "=", "attended")
@@ -462,7 +472,7 @@ export const updateParticipantVsEvent = applySchema(
     ...data
   } = formData
 
-  return await kysely.transaction().execute(async (transaction) => {
+  return await kyselyDb.transaction().execute(async (transaction) => {
     await transaction
       .updateTable("event_participants")
       .where("event_id", "=", event_id)
@@ -512,7 +522,7 @@ export const updateEventParticipantById = applySchema(
     ...data
   } = formData
 
-  return await kysely.transaction().execute(async (transaction) => {
+  return await kyselyDb.transaction().execute(async (transaction) => {
     if (
       typeof is_veteran === "boolean" ||
       !!approved_to_attend ||

@@ -1,6 +1,6 @@
-import "dotenv/config"
 import { composable, type Composable } from "composable-functions"
-import { kysely } from "../../app/kysely"
+import "dotenv/config"
+import { kyselyDb } from "../../app/kysely-db"
 
 /**
  * Get the ID of an active event from the database
@@ -9,7 +9,7 @@ import { kysely } from "../../app/kysely"
 type GetActiveEventId = Composable<() => string>
 
 export const getActiveEventId: GetActiveEventId = composable(async () => {
-  const event = await kysely
+  const event = await kyselyDb
     .selectFrom("events")
     .select("id")
     .where("event_status", "=", "Registration Open")

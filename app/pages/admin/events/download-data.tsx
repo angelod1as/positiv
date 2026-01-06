@@ -2,7 +2,7 @@ import { composable } from "composable-functions"
 import { redirectWithError } from "remix-toast"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
-import { kysely } from "~/kysely"
+import { kyselyDb } from "~/kysely-db"
 import { mapParticipantsToDownloadFormat } from "~/lib/helpers/download-helpers"
 import { downloadXLSX } from "~/lib/helpers/download-xlsx"
 import { getWillGoToEventParticipants } from "~/lib/helpers/get-filtered-participants"
@@ -24,7 +24,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   }
 
   const result = await composable(async () => {
-    return kysely
+    return kyselyDb
       .selectFrom("event_participants as ep")
       .innerJoin("profiles as p", "p.id", "ep.profile_id")
       .selectAll(["ep", "p"])
@@ -77,7 +77,8 @@ const AdminDownloadEventParticipants = ({
   }
 
   const handleDownloadNames = async () => {
-    const filteredParticipants = getWillGoToEventParticipants(participants).participants
+    const filteredParticipants =
+      getWillGoToEventParticipants(participants).participants
     const xlsxData = mapParticipantsToDownloadFormat(filteredParticipants)
     downloadXLSX(xlsxData)
   }

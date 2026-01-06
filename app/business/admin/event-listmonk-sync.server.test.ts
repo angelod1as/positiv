@@ -36,7 +36,7 @@ vi.mock("kysely", async () => {
   }
 })
 
-vi.mock("~/kysely", () => {
+vi.mock("~/kysely-db", () => {
   const chain = {
     selectFrom: vi.fn().mockReturnThis(),
     innerJoin: vi.fn().mockReturnThis(),
@@ -53,7 +53,7 @@ vi.mock("~/kysely", () => {
     executeTakeFirst: mockExecuteTakeFirst,
     executeTakeFirstOrThrow: mockExecuteTakeFirstOrThrow,
   }
-  return { kysely: chain }
+  return { kyselyDb: chain }
 })
 
 vi.mock("../newsletter/listmonk-lists.server", () => ({
