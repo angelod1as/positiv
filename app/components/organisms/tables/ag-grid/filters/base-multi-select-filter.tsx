@@ -70,14 +70,18 @@ export function BaseMultiSelectFilter({
 
       if (matchMode === "array") {
         if (!Array.isArray(cellValue) || cellValue.length === 0) return false
+        const normalizedCellValues = new Set(
+          cellValue
+            .filter((v): v is NonNullable<typeof v> => v !== null && v !== undefined)
+            .map((v) => String(v).toLowerCase())
+        )
         return values.some((selected) =>
-          cellValue.some(
-            (v) => String(v).toLowerCase() === selected.toLowerCase()
-          )
+          normalizedCellValues.has(selected.toLowerCase())
         )
       }
 
-      return values.includes(String(cellValue))
+      const normalizedCellValue = String(cellValue).toLowerCase()
+      return values.some((v) => v.toLowerCase() === normalizedCellValue)
     },
     [model, getValue, matchMode]
   )

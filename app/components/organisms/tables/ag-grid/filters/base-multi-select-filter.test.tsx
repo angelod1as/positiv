@@ -529,5 +529,64 @@ describe("BaseMultiSelectFilter", () => {
 
       expect(doesFilterPass({ node: nullNode })).toBe(false)
     })
+
+    it("filters out null/undefined values within arrays", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          model={["homem cis"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const arrayWithNulls = {
+        data: { gender: ["homem cis", null, undefined] },
+      } as IRowNode
+
+      expect(doesFilterPass({ node: arrayWithNulls })).toBe(true)
+    })
+
+    it("does not match 'null' or 'undefined' strings from null/undefined values", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={[{ value: "null", label: "Null" }]}
+          field="gender"
+          matchMode="array"
+          model={["null"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const arrayWithActualNull = {
+        data: { gender: [null, undefined] },
+      } as IRowNode
+
+      expect(doesFilterPass({ node: arrayWithActualNull })).toBe(false)
+    })
+  })
+
+  describe("Exact Matching Mode - Case Sensitivity", () => {
+    it("matches case-insensitively in exact mode", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          matchMode="exact"
+          model={["pending"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const upperCaseNode = { data: { status: "PENDING" } } as IRowNode
+      const mixedCaseNode = { data: { status: "Pending" } } as IRowNode
+
+      expect(doesFilterPass({ node: upperCaseNode })).toBe(true)
+      expect(doesFilterPass({ node: mixedCaseNode })).toBe(true)
+    })
   })
 })
