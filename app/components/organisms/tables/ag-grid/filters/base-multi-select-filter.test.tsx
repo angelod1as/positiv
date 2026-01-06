@@ -3,13 +3,6 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import type { IRowNode } from "ag-grid-community"
 
-// Mock ResizeObserver for cmdk Command component
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
-
 // Mock AG Grid's useGridFilter hook
 const mockUseGridFilter = vi.fn()
 vi.mock("ag-grid-react", () => ({
@@ -296,6 +289,91 @@ describe("BaseMultiSelectFilter", () => {
       await user.type(searchInput, "xyz123")
 
       expect(screen.getByText("Nothing found")).toBeInTheDocument()
+    })
+  })
+
+  describe("Field Prop (filterParams mode)", () => {
+    it("uses field prop to extract value from row data", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          model={["pending"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const matchingNode = { data: { status: "pending" } } as IRowNode
+      const nonMatchingNode = { data: { status: "approved" } } as IRowNode
+
+      expect(doesFilterPass({ node: matchingNode })).toBe(true)
+      expect(doesFilterPass({ node: nonMatchingNode })).toBe(false)
+    })
+
+    it("prefers getValue over field when both provided", () => {
+      const customGetValue = vi.fn((node: IRowNode) => node.data?.customField)
+
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          getValue={customGetValue}
+          model={["pending"]}
+          onModelChange={vi.fn()}
+        />
+      )
+
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
+      const mockNode = { data: { status: "approved", customField: "pending" } } as IRowNode
+
+      doesFilterPass({ node: mockNode })
+
+      expect(customGetValue).toHaveBeenCalledWith(mockNode)
+    })
+  })
+
+  describe("Uncontrolled Mode (internal state)", () => {
+    it("manages internal state when model/onModelChange not provided", async () => {
+      const user = userEvent.setup()
+
+      render(<BaseMultiSelectFilter options={mockOptions} field="status" />)
+
+      expect(screen.getByText("0 de 3 selecionados")).toBeInTheDocument()
+
+      await user.click(screen.getByText("Pendente"))
+
+      expect(screen.getByText("1 de 3 selecionados")).toBeInTheDocument()
+    })
+
+    it("doesFilterPass correctly filters nodes when filter is active", async () => {
+      const user = userEvent.setup()
+
+      render(<BaseMultiSelectFilter options={mockOptions} field="status" />)
+
+      await user.click(screen.getByText("Pendente"))
+
+      // Get the latest doesFilterPass after state update
+      const lastCallIndex = mockUseGridFilter.mock.calls.length - 1
+      const { doesFilterPass } = mockUseGridFilter.mock.calls[lastCallIndex][0]
+
+      const matchingNode = { data: { status: "pending" } } as IRowNode
+      const nonMatchingNode = { data: { status: "approved" } } as IRowNode
+
+      expect(doesFilterPass({ node: matchingNode })).toBe(true)
+      expect(doesFilterPass({ node: nonMatchingNode })).toBe(false)
+    })
+
+    it("clears filter with Limpar button in uncontrolled mode", async () => {
+      const user = userEvent.setup()
+
+      render(<BaseMultiSelectFilter options={mockOptions} field="status" />)
+
+      await user.click(screen.getByText("Pendente"))
+      expect(screen.getByText("1 de 3 selecionados")).toBeInTheDocument()
+
+      await user.click(screen.getByRole("button", { name: /limpar/i }))
+      expect(screen.getByText("0 de 3 selecionados")).toBeInTheDocument()
     })
   })
 })

@@ -1,4 +1,4 @@
-import { useCallback } from "react"
+import { useState, useCallback } from "react"
 import { useGridFilter } from "ag-grid-react"
 import type { IRowNode } from "ag-grid-community"
 import {
@@ -12,10 +12,16 @@ import { Checkbox } from "~/components/ui/checkbox"
 import { Button } from "~/components/ui/button"
 
 interface BaseMultiSelectFilterProps {
-  model: string[] | null
-  onModelChange: (model: string[] | null) => void
-  getValue: (node: IRowNode) => unknown
+  /** Filter options to display */
   options: Array<{ value: string; label: string }>
+  /** Field name to extract value from row data (alternative to getValue) */
+  field?: string
+  /** Custom function to extract value from row (alternative to field) */
+  getValue?: (node: IRowNode) => unknown
+  /** Controlled model state (optional - uses internal state if not provided) */
+  model?: string[] | null
+  /** Callback when model changes (optional - uses internal state if not provided) */
+  onModelChange?: (model: string[] | null) => void
   placeholder?: string
   selectAllLabel?: string
   clearLabel?: string
@@ -23,15 +29,33 @@ interface BaseMultiSelectFilterProps {
 }
 
 export function BaseMultiSelectFilter({
-  model,
-  onModelChange,
-  getValue,
   options,
+  field,
+  getValue: getValueProp,
+  model: controlledModel,
+  onModelChange: controlledOnModelChange,
   placeholder = "Buscar...",
   selectAllLabel = "Selecionar Todos",
   clearLabel = "Limpar",
   noResultsLabel = "Nenhum resultado",
 }: BaseMultiSelectFilterProps) {
+  // Internal state for uncontrolled mode (when used directly via filterParams)
+  const [internalModel, setInternalModel] = useState<string[] | null>(null)
+
+  // Use controlled or internal state
+  const model = controlledModel !== undefined ? controlledModel : internalModel
+  const onModelChange = controlledOnModelChange ?? setInternalModel
+
+  // Create getValue from field prop if getValue not provided
+  const getValue = useCallback(
+    (node: IRowNode) => {
+      if (getValueProp) return getValueProp(node)
+      if (field) return node.data?.[field]
+      return undefined
+    },
+    [getValueProp, field]
+  )
+
   const selectedValues = model || []
 
   const doesFilterPass = useCallback(
