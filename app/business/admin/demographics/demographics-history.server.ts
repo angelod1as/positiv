@@ -1,6 +1,6 @@
 import { composable } from "composable-functions"
 import type { Transaction } from "kysely"
-import { kysely } from "~/kysely"
+import { kyselyDb } from "~/kysely-db"
 import type { Database } from "~/types/database/kysely.types"
 import type { Demographics } from "./demographics"
 
@@ -13,7 +13,7 @@ export const storeEventDemographicsSnapshot = composable(
     demographics: Demographics
   }) => {
     try {
-      const snapshot = await kysely
+      const snapshot = await kyselyDb
         .insertInto("event_demographics_history")
         .values({
           event_id: eventId,
@@ -67,7 +67,7 @@ export const upsertEventDemographicsSnapshot = composable(
   }) => {
     try {
       // Use transaction if provided, otherwise use kysely directly
-      const db = trx || kysely
+      const db = trx || kyselyDb
 
       // Use atomic UPSERT operation with onConflict to handle race conditions
       const snapshot = await db
@@ -146,7 +146,7 @@ export const upsertEventDemographicsSnapshot = composable(
 
 export const getEventDemographicsHistory = composable(
   async ({ eventId }: { eventId: string }) => {
-    const snapshot = await kysely
+    const snapshot = await kyselyDb
       .selectFrom("event_demographics_history")
       .selectAll()
       .where("event_id", "=", eventId)

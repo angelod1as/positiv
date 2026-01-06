@@ -1,8 +1,8 @@
 import type { ActionFunctionArgs } from "react-router"
 import { deleteEventListmonkList } from "~/business/admin/event-listmonk-sync.server"
-import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
-import { kysely } from "~/kysely"
+import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
+import { kyselyDb } from "~/kysely-db"
 
 /**
  * Internal API endpoint for processing newsletter campaigns
@@ -40,8 +40,11 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     const pending = pendingResult.data
-    const results: Array<{ eventId: string; success: boolean; error?: string }> =
-      []
+    const results: Array<{
+      eventId: string
+      success: boolean
+      error?: string
+    }> = []
 
     // Process each campaign
     for (const campaign of pending) {
@@ -86,7 +89,7 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 async function cleanupCompletedEventLists() {
-  const eventsToCleanup = await kysely
+  const eventsToCleanup = await kyselyDb
     .selectFrom("events")
     .select(["id", "listmonk_list_id"])
     .where("event_status", "=", "Completed")

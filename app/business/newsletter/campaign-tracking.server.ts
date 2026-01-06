@@ -1,5 +1,5 @@
 import { composable } from "composable-functions"
-import { kysely } from "~/kysely"
+import { kyselyDb } from "~/kysely-db"
 import { json } from "~/lib/helpers/kysely-helpers"
 
 type CampaignErrorData = {
@@ -9,7 +9,7 @@ type CampaignErrorData = {
 }
 
 export const createCampaignTracking = composable(async (eventId: string) => {
-  await kysely
+  await kyselyDb
     .insertInto("event_newsletter_campaigns")
     .values({
       event_id: eventId,
@@ -24,7 +24,7 @@ export const createCampaignTracking = composable(async (eventId: string) => {
 })
 
 export const getPendingCampaigns = composable(async () => {
-  const campaigns = await kysely
+  const campaigns = await kyselyDb
     .selectFrom("event_newsletter_campaigns")
     .selectAll()
     .where("times_attempted", "<", 3)
@@ -41,7 +41,7 @@ export const getPendingCampaigns = composable(async () => {
 
 export const updateCampaignCreated = composable(
   async (eventId: string, campaignId: string) => {
-    await kysely
+    await kyselyDb
       .updateTable("event_newsletter_campaigns")
       .set({
         campaign_is_created: true,
@@ -57,7 +57,7 @@ export const updateCampaignCreated = composable(
 )
 
 export const updateCampaignSent = composable(async (eventId: string) => {
-  await kysely
+  await kyselyDb
     .updateTable("event_newsletter_campaigns")
     .set({
       campaign_is_sent: true,
@@ -72,7 +72,7 @@ export const updateCampaignSent = composable(async (eventId: string) => {
 
 export const updateCampaignError = composable(
   async (eventId: string, errorData: CampaignErrorData) => {
-    await kysely
+    await kyselyDb
       .updateTable("event_newsletter_campaigns")
       .set((eb) => ({
         times_attempted: eb("times_attempted", "+", 1),

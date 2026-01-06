@@ -448,7 +448,7 @@ describe("getContext", () => {
 describe("registerUser", () => {
   // Set up default Kysely mock to return no existing profile
   beforeEach(async () => {
-    const { kysely } = await import("~/kysely")
+    const { kyselyDb: kysely } = await import("~/kysely-db")
     vi.mocked(kysely.selectFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
@@ -651,7 +651,7 @@ describe("registerUser", () => {
     }
 
     // Mock Kysely to return an existing profile
-    const { kysely } = await import("~/kysely")
+    const { kyselyDb: kysely } = await import("~/kysely-db")
     const mockExecuteTakeFirst = vi
       .fn()
       .mockResolvedValue({ id: "existing-profile-id" })
@@ -705,7 +705,7 @@ describe("registerUser", () => {
     }
 
     // Mock Kysely to return no existing profile
-    const { kysely } = await import("~/kysely")
+    const { kyselyDb: kysely } = await import("~/kysely-db")
     const mockExecuteTakeFirst = vi.fn().mockResolvedValue(undefined)
     vi.mocked(kysely.selectFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({

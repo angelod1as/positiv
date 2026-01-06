@@ -1,13 +1,22 @@
 import { composable } from "composable-functions"
 import { z } from "zod"
-import { kysely } from "~/kysely"
+import { kyselyDb } from "~/kysely-db"
 import {
   participantApplicationStatusEnum,
   participantAttendanceStatusEnum,
   profileApprovedToAttendStatusEnum,
 } from "~/types/database/entities.types"
-import { createList, deleteList, getListById, getListSubscribers } from "../newsletter/listmonk-lists.server"
-import { addSubscriber, addSubscribersToListBulk, removeSubscriberFromList } from "../newsletter/listmonk-client.server"
+import {
+  addSubscriber,
+  addSubscribersToListBulk,
+  removeSubscriberFromList,
+} from "../newsletter/listmonk-client.server"
+import {
+  createList,
+  deleteList,
+  getListById,
+  getListSubscribers,
+} from "../newsletter/listmonk-lists.server"
 import { updateSyncStatus } from "../newsletter/subscription-helpers.server"
 
 export const listmonkSyncFiltersSchema = z.object({
@@ -33,7 +42,7 @@ interface EventWithListmonk {
 }
 
 async function getEventById(eventId: string): Promise<EventWithListmonk> {
-  return await kysely
+  return await kyselyDb
     .selectFrom("events")
     .select(["id", "title", "listmonk_list_id", "listmonk_list_synced_at"])
     .where("id", "=", eventId)
@@ -42,9 +51,9 @@ async function getEventById(eventId: string): Promise<EventWithListmonk> {
 
 async function getNonRejectedParticipants(
   eventId: string,
-  filters?: ListmonkSyncFilters
+  filters?: ListmonkSyncFilters,
 ) {
-  let query = kysely
+  let query = kyselyDb
     .selectFrom("event_participants as ep")
     .innerJoin("profiles as p", "ep.profile_id", "p.id")
     .leftJoin("newsletter_subscriptions as ns", "ns.profile_id", "p.id")
@@ -65,11 +74,19 @@ async function getNonRejectedParticipants(
   }
 
   if (filters?.applicationStatuses && filters.applicationStatuses.length > 0) {
-    query = query.where("ep.application_status", "in", filters.applicationStatuses)
+    query = query.where(
+      "ep.application_status",
+      "in",
+      filters.applicationStatuses,
+    )
   }
 
   if (filters?.attendanceStatuses && filters.attendanceStatuses.length > 0) {
-    query = query.where("ep.attendance_status", "in", filters.attendanceStatuses)
+    query = query.where(
+      "ep.attendance_status",
+      "in",
+      filters.attendanceStatuses,
+    )
   }
 
   return await query.execute()
@@ -78,9 +95,9 @@ async function getNonRejectedParticipants(
 async function updateEventListmonkFields(
   eventId: string,
   listmonkListId: number | null,
-  syncedAt: Date | null
+  syncedAt: Date | null,
 ) {
-  await kysely
+  await kyselyDb
     .updateTable("events")
     .set({
       listmonk_list_id: listmonkListId,
@@ -104,27 +121,37 @@ async function addParticipantsToList(
     approved_to_attend: string | null
     listmonk_subscriber_id: number | null
   }>,
-  listId: number
+  listId: number,
 ) {
   let subscribersAdded = 0
   let subscribersFailed = 0
 
   // Separate participants by whether they have an existing Listmonk subscriber ID
-  const withSubscriberId = participants.filter(p => p.listmonk_subscriber_id !== null)
-  const withoutSubscriberId = participants.filter(p => p.listmonk_subscriber_id === null)
+  const withSubscriberId = participants.filter(
+    (p) => p.listmonk_subscriber_id !== null,
+  )
+  const withoutSubscriberId = participants.filter(
+    (p) => p.listmonk_subscriber_id === null,
+  )
 
   // BULK ADD: Add existing subscribers to the list in a single API call
   if (withSubscriberId.length > 0) {
-    const subscriberIds = withSubscriberId.map(p => p.listmonk_subscriber_id as number)
+    const subscriberIds = withSubscriberId.map(
+      (p) => p.listmonk_subscriber_id as number,
+    )
     const bulkResult = await addSubscribersToListBulk(subscriberIds, listId)
 
     if (bulkResult.success) {
       subscribersAdded += withSubscriberId.length
     } else {
       // If bulk add fails, fall back to individual adds
-      console.warn("Bulk subscriber add failed, falling back to individual adds:", bulkResult.errors)
+      console.warn(
+        "Bulk subscriber add failed, falling back to individual adds:",
+        bulkResult.errors,
+      )
       for (const participant of withSubscriberId) {
-        const name = participant.social_name ?? participant.full_name ?? participant.email
+        const name =
+          participant.social_name ?? participant.full_name ?? participant.email
         const result = await addSubscriber({
           email: participant.email,
           name,
@@ -146,7 +173,8 @@ async function addParticipantsToList(
 
   // INDIVIDUAL ADD: Create new subscribers who don't have a Listmonk ID yet
   for (const participant of withoutSubscriberId) {
-    const name = participant.social_name ?? participant.full_name ?? participant.email
+    const name =
+      participant.social_name ?? participant.full_name ?? participant.email
     const result = await addSubscriber({
       email: participant.email,
       name,
@@ -163,7 +191,7 @@ async function addParticipantsToList(
       await updateSyncStatus(
         participant.profile_id,
         "synced",
-        result.data.subscriberId
+        result.data.subscriberId,
       )
     } else {
       subscribersFailed++
@@ -174,14 +202,18 @@ async function addParticipantsToList(
 }
 
 export const createEventListmonkList = composable(
-  async (eventId: string, filters?: ListmonkSyncFilters): Promise<SyncResult> => {
+  async (
+    eventId: string,
+    filters?: ListmonkSyncFilters,
+  ): Promise<SyncResult> => {
     const event = await getEventById(eventId)
 
     if (event.listmonk_list_id) {
       const result = await updateEventListmonkList(eventId, filters)
       if (!result.success || !result.data) {
         throw new Error(
-          result.errors?.[0]?.message || "Failed to sync existing Listmonk list"
+          result.errors?.[0]?.message ||
+            "Failed to sync existing Listmonk list",
         )
       }
       return result.data
@@ -195,7 +227,7 @@ export const createEventListmonkList = composable(
 
     if (!listResult.success || !listResult.data) {
       throw new Error(
-        listResult.errors?.[0]?.message || "Failed to create Listmonk list"
+        listResult.errors?.[0]?.message || "Failed to create Listmonk list",
       )
     }
 
@@ -205,7 +237,7 @@ export const createEventListmonkList = composable(
 
     const { subscribersAdded, subscribersFailed } = await addParticipantsToList(
       participants,
-      listId
+      listId,
     )
 
     await updateEventListmonkFields(eventId, listId, new Date())
@@ -216,7 +248,7 @@ export const createEventListmonkList = composable(
       subscribersFailed,
       subscribersRemoved: 0,
     }
-  }
+  },
 )
 
 export const deleteEventListmonkList = composable(
@@ -231,17 +263,17 @@ export const deleteEventListmonkList = composable(
     const deleteResult = await deleteList(event.listmonk_list_id)
     if (!deleteResult.success) {
       throw new Error(
-        deleteResult.errors?.[0]?.message || "Failed to delete Listmonk list"
+        deleteResult.errors?.[0]?.message || "Failed to delete Listmonk list",
       )
     }
 
     await updateEventListmonkFields(eventId, null, null)
-  }
+  },
 )
 
 async function removeIneligibleSubscribers(
   listId: number,
-  eligibleEmails: Set<string>
+  eligibleEmails: Set<string>,
 ): Promise<number> {
   const subscribersResult = await getListSubscribers(listId)
 
@@ -260,7 +292,7 @@ async function removeIneligibleSubscribers(
       } catch (error) {
         console.error(
           `Failed to remove subscriber ${subscriber.email} from list ${listId}:`,
-          error
+          error,
         )
       }
     }
@@ -270,14 +302,17 @@ async function removeIneligibleSubscribers(
 }
 
 export const updateEventListmonkList = composable(
-  async (eventId: string, filters?: ListmonkSyncFilters): Promise<SyncResult> => {
+  async (
+    eventId: string,
+    filters?: ListmonkSyncFilters,
+  ): Promise<SyncResult> => {
     const event = await getEventById(eventId)
 
     if (!event.listmonk_list_id) {
       const result = await createEventListmonkList(eventId, filters)
       if (!result.success || !result.data) {
         throw new Error(
-          result.errors?.[0]?.message || "Failed to create Listmonk list"
+          result.errors?.[0]?.message || "Failed to create Listmonk list",
         )
       }
       return result.data
@@ -287,7 +322,7 @@ export const updateEventListmonkList = composable(
 
     if (!listResult.success) {
       throw new Error(
-        listResult.errors?.[0]?.message || "Failed to get Listmonk list"
+        listResult.errors?.[0]?.message || "Failed to get Listmonk list",
       )
     }
 
@@ -295,7 +330,7 @@ export const updateEventListmonkList = composable(
       const result = await createEventListmonkList(eventId, filters)
       if (!result.success || !result.data) {
         throw new Error(
-          result.errors?.[0]?.message || "Failed to create Listmonk list"
+          result.errors?.[0]?.message || "Failed to create Listmonk list",
         )
       }
       return result.data
@@ -306,17 +341,17 @@ export const updateEventListmonkList = composable(
       participants
         .map((p) => p.email?.trim())
         .filter((email): email is string => Boolean(email))
-        .map((email) => email.toLowerCase())
+        .map((email) => email.toLowerCase()),
     )
 
     const subscribersRemoved = await removeIneligibleSubscribers(
       event.listmonk_list_id,
-      eligibleEmails
+      eligibleEmails,
     )
 
     const { subscribersAdded, subscribersFailed } = await addParticipantsToList(
       participants,
-      event.listmonk_list_id
+      event.listmonk_list_id,
     )
 
     await updateEventListmonkFields(eventId, event.listmonk_list_id, new Date())
@@ -327,6 +362,5 @@ export const updateEventListmonkList = composable(
       subscribersFailed,
       subscribersRemoved,
     }
-  }
+  },
 )
-
