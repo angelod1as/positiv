@@ -39,7 +39,6 @@ export const Footer: FC<FooterProps> = ({ isThereAnyNews, currentProfile }) => {
             <p>
               Encontrou um bug?{" "}
               <Link to={BUG_TRACKER_URL}>Clique aqui e nos avise</Link>.
-              Testando essa joça
             </p>
           </div>
           <div>
