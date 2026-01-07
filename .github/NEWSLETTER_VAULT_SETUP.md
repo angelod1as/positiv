@@ -7,7 +7,7 @@ This document explains how to configure Supabase Vault secrets for the newslette
 The cron job requires two secrets to be stored in Supabase Vault:
 
 1. **app_url** - The application URL (e.g., `https://www.positivparty.com`)
-2. **internal_job_secret** - Bearer token for API authentication (matches Vercel's `INTERNAL_JOB_SECRET`)
+2. **internal_job_secret** - Bearer token for API authentication (matches `INTERNAL_JOB_SECRET` env var)
 
 ## Setup Instructions
 
@@ -25,9 +25,9 @@ SELECT vault.create_secret(
 );
 
 -- Add production internal job secret
--- Get the value from Vercel: Settings → Environment Variables → INTERNAL_JOB_SECRET (Production)
+-- Get the value from your hosting environment variables (INTERNAL_JOB_SECRET)
 SELECT vault.create_secret(
-  '<COPY_FROM_VERCEL_PRODUCTION_ENV>',
+  '<COPY_FROM_PRODUCTION_ENV>',
   'internal_job_secret',
   'Production API bearer token'
 );
@@ -48,14 +48,14 @@ SELECT * FROM cron.job WHERE jobname = 'process-newsletter-campaigns';
 **Staging setup is NOT needed.** The cron job will automatically skip creation when Vault secrets are not present.
 
 **Why skip staging?**
-- Vercel staging URLs are dynamic (change per branch/deployment)
+- Staging URLs may be dynamic (change per branch/deployment)
 - Automated cron processing isn't necessary for staging
 - Manual testing is sufficient: use `curl` to test the API endpoint directly
 
 **Manual testing in staging:**
 ```bash
-# Get INTERNAL_JOB_SECRET from Vercel staging environment variables
-curl -X POST https://<your-staging-url>.vercel.app/api/process-campaigns \
+# Get INTERNAL_JOB_SECRET from your staging environment variables
+curl -X POST https://<your-staging-url>/api/process-campaigns \
   -H "Authorization: Bearer <STAGING_INTERNAL_JOB_SECRET>" \
   -H "Content-Type: application/json" \
   -d '{}'
@@ -67,7 +67,7 @@ No Vault setup needed! The cron job automatically skips creation in local develo
 
 Add this to your `.env` file for local API testing:
 ```bash
-# Copy the staging value from Vercel or use any test value
+# Copy the staging value or use any test value
 INTERNAL_JOB_SECRET=<your-local-test-secret>
 ```
 
@@ -115,7 +115,7 @@ $$);
 SELECT cron.unschedule('test-newsletter-now');
 ```
 
-3. Check Vercel logs to see if API endpoint received the request
+3. Check server logs to see if API endpoint received the request
 
 ## Troubleshooting
 
@@ -125,7 +125,7 @@ SELECT cron.unschedule('test-newsletter-now');
 - Check pg_cron logs in Supabase Dashboard
 
 **API returns 401 Unauthorized:**
-- Verify `internal_job_secret` in Vault matches `INTERNAL_JOB_SECRET` in Vercel
+- Verify `internal_job_secret` in Vault matches `INTERNAL_JOB_SECRET` environment variable
 - Check case sensitivity and whitespace in secrets
 
 **Local development:**

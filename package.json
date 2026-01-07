@@ -49,8 +49,6 @@
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-table": "^8.21.3",
-    "@vercel/react-router": "^1.1.0",
-    "@vercel/speed-insights": "^1.2.0",
     "ag-grid-community": "^35.0.0",
     "ag-grid-react": "^35.0.0",
     "class-variance-authority": "^0.7.1",
