@@ -1,3 +1,4 @@
+import { useCallback } from "react"
 import {
   AllCommunityModule,
   ModuleRegistry,
@@ -66,33 +67,45 @@ export function AGDataTable<TData>({
       }
     : undefined
 
-  const handleSelectionChanged = (event: SelectionChangedEvent<TData>) => {
-    if (onRowSelectionChange) {
-      const selectedRows = event.api.getSelectedRows()
-      onRowSelectionChange(selectedRows)
-    }
-  }
+  const handleSelectionChanged = useCallback(
+    (event: SelectionChangedEvent<TData>) => {
+      if (onRowSelectionChange) {
+        const selectedRows = event.api.getSelectedRows()
+        onRowSelectionChange(selectedRows)
+      }
+    },
+    [onRowSelectionChange]
+  )
 
-  const handleCellValueChanged = (event: CellValueChangedEvent<TData>) => {
-    if (onSave) {
-      autoSaveHandler(event)
-    }
-    onCellValueChanged?.(event)
-  }
+  const handleCellValueChanged = useCallback(
+    (event: CellValueChangedEvent<TData>) => {
+      if (onSave) {
+        autoSaveHandler(event)
+      }
+      onCellValueChanged?.(event)
+    },
+    [onSave, autoSaveHandler, onCellValueChanged]
+  )
 
-  const handleGridReady = (event: GridReadyEvent<TData>) => {
-    if (persistState) {
-      restoreState(event.api)
-    }
-    onGridReady?.(event)
-  }
+  const handleGridReady = useCallback(
+    (event: GridReadyEvent<TData>) => {
+      if (persistState) {
+        restoreState(event.api)
+      }
+      onGridReady?.(event)
+    },
+    [persistState, restoreState, onGridReady]
+  )
 
-  const handleStateUpdated = (event: StateUpdatedEvent<TData>) => {
-    if (persistState) {
-      saveState(event.state)
-    }
-    onStateUpdated?.(event)
-  }
+  const handleStateUpdated = useCallback(
+    (event: StateUpdatedEvent<TData>) => {
+      if (persistState) {
+        saveState(event.state)
+      }
+      onStateUpdated?.(event)
+    },
+    [persistState, saveState, onStateUpdated]
+  )
 
   return (
     <div
