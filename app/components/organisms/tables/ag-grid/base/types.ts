@@ -8,6 +8,19 @@ import type {
   StateUpdatedEvent,
 } from "ag-grid-community"
 
+export interface AutoSaveParams {
+  field: string
+  oldValue: unknown
+  newValue: unknown
+  rowData: unknown
+  rowId: string | undefined
+}
+
+export interface AutoSaveOptions {
+  debounceMs?: number
+  errorMessage?: string
+}
+
 export interface AGDataTableProps<TData> {
   id: string
   data: TData[]
@@ -24,6 +37,9 @@ export interface AGDataTableProps<TData> {
   onRowSelectionChange?: (selectedRows: TData[]) => void
 
   quickFilterText?: string
+
+  onSave?: (params: AutoSaveParams) => Promise<void>
+  autoSaveOptions?: AutoSaveOptions
 
   onCellValueChanged?: (params: CellValueChangedEvent<TData>) => void
   onGridReady?: (params: GridReadyEvent<TData>) => void

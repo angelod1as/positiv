@@ -140,6 +140,7 @@ export function BaseMultiSelectFilter({
                 checked={selectedValues.includes(option.value)}
                 aria-hidden="true"
                 tabIndex={-1}
+                readOnly
               />
               <span className="ml-2">{option.label}</span>
             </CommandItem>
