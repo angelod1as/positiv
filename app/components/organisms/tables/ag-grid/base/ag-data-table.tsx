@@ -79,7 +79,7 @@ export function AGDataTable<TData>({
 
   const handleCellValueChanged = useCallback(
     (event: CellValueChangedEvent<TData>) => {
-      if (onSave) {
+      if (onSave && event.oldValue !== event.newValue) {
         autoSaveHandler(event)
       }
       onCellValueChanged?.(event)

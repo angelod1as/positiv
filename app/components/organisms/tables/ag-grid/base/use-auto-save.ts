@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, useEffect } from "react"
-import type { CellValueChangedEvent } from "ag-grid-community"
+import type { CellValueChangedEvent, GridApi } from "ag-grid-community"
 import { toast } from "sonner"
 import type { AutoSaveParams } from "./types"
 
@@ -14,6 +14,15 @@ export interface UseAutoSaveReturn {
   isSaving: boolean
 }
 
+interface SaveSnapshot {
+  field: string
+  oldValue: unknown
+  newValue: unknown
+  rowData: unknown
+  rowId: string | undefined
+  api: GridApi
+}
+
 const DEFAULT_DEBOUNCE_MS = 500
 const DEFAULT_ERROR_MESSAGE = "Erro ao salvar alteração"
 
@@ -25,18 +34,16 @@ export function useAutoSave({
   const [isSaving, setIsSaving] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Pass event directly via closure to avoid race condition with ref
   const executeSave = useCallback(
-    async (event: CellValueChangedEvent) => {
+    async (snapshot: SaveSnapshot) => {
       if (!onSave) return
 
-      const field = event.colDef.field || event.column.getColId()
       const params: AutoSaveParams = {
-        field,
-        oldValue: event.oldValue,
-        newValue: event.newValue,
-        rowData: event.data,
-        rowId: event.node.id,
+        field: snapshot.field,
+        oldValue: snapshot.oldValue,
+        newValue: snapshot.newValue,
+        rowData: snapshot.rowData,
+        rowId: snapshot.rowId,
       }
 
       setIsSaving(true)
@@ -44,18 +51,29 @@ export function useAutoSave({
       try {
         await onSave(params)
       } catch (error) {
-        // Log error for debugging
-        console.error("Auto-save failed:", { error, field, rowId: event.node.id })
+        console.error("Auto-save failed:", {
+          error,
+          field: snapshot.field,
+          rowId: snapshot.rowId,
+        })
 
-        // Rollback to old value
-        const nodeId = event.node.id
-        if (nodeId) {
-          const rowNode = event.api.getRowNode(nodeId)
-          if (rowNode) {
-            rowNode.setDataValue(field, event.oldValue)
+        if (!snapshot.rowId) {
+          console.warn("Cannot rollback change: node.id is undefined", {
+            field: snapshot.field,
+          })
+        } else {
+          const rowNode = snapshot.api.getRowNode(snapshot.rowId)
+          const currentValue =
+            rowNode?.data?.[snapshot.field as keyof typeof rowNode.data]
+
+          if (rowNode && currentValue === snapshot.newValue) {
+            rowNode.setDataValue(snapshot.field, snapshot.oldValue)
           }
         }
-        toast.error(errorMessage)
+
+        const errorDescription =
+          error instanceof Error ? error.message : undefined
+        toast.error(errorMessage, { description: errorDescription })
       } finally {
         setIsSaving(false)
       }
@@ -72,9 +90,19 @@ export function useAutoSave({
         clearTimeout(timerRef.current)
       }
 
-      // Set new timer - capture event in closure to avoid race condition
+      // Snapshot event data to avoid AG Grid reusing/mutating the event object
+      const field = event.colDef.field || event.column.getColId()
+      const snapshot: SaveSnapshot = {
+        field,
+        oldValue: event.oldValue,
+        newValue: event.newValue,
+        rowData: event.data,
+        rowId: event.node.id,
+        api: event.api,
+      }
+
       timerRef.current = setTimeout(() => {
-        executeSave(event)
+        executeSave(snapshot)
       }, debounceMs)
     },
     [onSave, debounceMs, executeSave]
