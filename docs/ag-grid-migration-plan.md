@@ -6,7 +6,7 @@
 > 1. Update the task status in Linear to "Done"
 > 2. Mark the corresponding task in this plan as ✅ DONE
 >
-> **Current Progress:** 14/40 tasks completed (POS-317 ✅ through POS-331 ✅, POS-329/330 superseded)
+> **Current Progress:** 16/38 tasks completed (POS-317 ✅ through POS-333 ✅, POS-329/330 superseded, POS-332 skipped)
 
 ---
 
@@ -785,20 +785,28 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 2-3 hours (reduced from 4-5)
 - **Dependencies:** Task 4
 
-**Task 16: [ag-grid] Build Text View Modal Renderer** — POS-332
+**Task 16: [ag-grid] Build Text View Modal Renderer** — POS-332 ✅ SKIPPED
 
-- Create text-view-modal-renderer.tsx
-- Implement read-only modal display
-- **Estimate:** 2-3 hours
-- **Dependencies:** Task 4
+> **📝 Skipped:** Data analysis showed tooltip (TruncatedTextRenderer) is sufficient for the `companions` field:
+> - median=17 chars, p95=106 chars, max=1041 chars
+> - 95%+ of entries fit comfortably in a tooltip
+> - Modal pattern not needed for this read-only field
 
-**Task 17: [ag-grid] Create Save Handler Factory** — POS-333
+- ~~Create text-view-modal-renderer.tsx~~ → Using TruncatedTextRenderer instead
+- **Status:** Cancelled in Linear
 
-- Build create-ag-grid-save-handler.ts
-- Implement debouncing, API calls, optimistic updates
-- Add error rollback logic
-- **Estimate:** 3-4 hours
-- **Dependencies:** Tasks 12-16
+**Task 17: [ag-grid] Create Save Handler Factory** — POS-333 ✅ DONE
+
+> **📝 Already Implemented:** `createSaveHandler` already exists at `app/lib/helpers/create-save-handler.ts` with all required functionality:
+> - ✅ Optimistic updates
+> - ✅ Error rollback
+> - ✅ FormData submission via fetcher
+> - ✅ Boolean value handling
+>
+> For AG Grid integration, `useAutoSave` hook handles debouncing and can use the existing `createSaveHandler` pattern.
+
+- ~~Build create-ag-grid-save-handler.ts~~ → Using existing `createSaveHandler`
+- **Status:** Marked as Done in Linear (already implemented)
 
 ---
 
