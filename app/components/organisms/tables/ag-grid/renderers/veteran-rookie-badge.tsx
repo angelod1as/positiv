@@ -6,7 +6,7 @@ export function VeteranRookieBadge(params: ICellRendererParams) {
 
   return (
     <Badge variant={isVeteran ? "veteran" : "rookie"}>
-      {isVeteran ? "Veterano" : "Novato"}
+      {isVeteran ? "Veterane" : "Novate"}
     </Badge>
   )
 }

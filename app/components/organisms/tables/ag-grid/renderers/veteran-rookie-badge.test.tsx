@@ -28,24 +28,24 @@ function createMockParams(
 
 describe("VeteranRookieBadge", () => {
   describe("when value is true (veteran)", () => {
-    it("renders Veterano badge with veteran variant", () => {
+    it("renders Veterane badge with veteran variant", () => {
       const params = createMockParams(true)
 
       render(<VeteranRookieBadge {...params} />)
 
-      const badge = screen.getByText("Veterano")
+      const badge = screen.getByText("Veterane")
       expect(badge).toBeInTheDocument()
       expect(badge).toHaveAttribute("data-slot", "badge")
     })
   })
 
   describe("when value is false (rookie)", () => {
-    it("renders Novato badge with rookie variant", () => {
+    it("renders Novate badge with rookie variant", () => {
       const params = createMockParams(false)
 
       render(<VeteranRookieBadge {...params} />)
 
-      const badge = screen.getByText("Novato")
+      const badge = screen.getByText("Novate")
       expect(badge).toBeInTheDocument()
       expect(badge).toHaveAttribute("data-slot", "badge")
     })
@@ -57,7 +57,7 @@ describe("VeteranRookieBadge", () => {
 
       render(<VeteranRookieBadge {...params} />)
 
-      expect(screen.getByText("Novato")).toBeInTheDocument()
+      expect(screen.getByText("Novate")).toBeInTheDocument()
     })
 
     it("handles undefined value gracefully (defaults to rookie)", () => {
@@ -65,7 +65,7 @@ describe("VeteranRookieBadge", () => {
 
       render(<VeteranRookieBadge {...params} />)
 
-      expect(screen.getByText("Novato")).toBeInTheDocument()
+      expect(screen.getByText("Novate")).toBeInTheDocument()
     })
   })
 })
