@@ -335,4 +335,66 @@ describe("useAutoSave", () => {
       expect(event.api.applyTransaction).not.toHaveBeenCalled()
     })
   })
+
+  describe("Field Resolution", () => {
+    it("uses column.getColId() when colDef.field is undefined", async () => {
+      const onSave = vi.fn().mockResolvedValue(undefined)
+
+      const { result } = renderHook(() =>
+        useAutoSave({ onSave, debounceMs: 500 })
+      )
+
+      const event = createMockEvent("old", "new", "myColumn")
+      // Force fallback by removing field from colDef
+      event.colDef.field = undefined
+
+      act(() => {
+        result.current.handleCellValueChanged(event)
+      })
+
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({ field: "myColumn" }) // From getColId()
+      )
+    })
+  })
+
+  describe("Error Logging", () => {
+    it("logs error to console on save failure", async () => {
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+      const saveError = new Error("Network error")
+      const onSave = vi.fn().mockRejectedValue(saveError)
+
+      const { result } = renderHook(() =>
+        useAutoSave({ onSave, debounceMs: 500 })
+      )
+
+      act(() => {
+        result.current.handleCellValueChanged(createMockEvent("old", "new"))
+      })
+
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+
+      await act(async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Auto-save failed:",
+        expect.objectContaining({
+          error: saveError,
+          field: "status",
+          rowId: "row-1",
+        })
+      )
+
+      consoleErrorSpy.mockRestore()
+    })
+  })
 })
