@@ -1967,18 +1967,12 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 ```
 
-#### Update `vercel.json`
+#### Configure Cron Job
 
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/expire-payment-links",
-      "schedule": "0 2 * * *"
-    }
-  ]
-}
-```
+Set up a cron job in your hosting platform (Coolify, external cron service, or system cron) to call:
+- **Endpoint**: `/api/cron/expire-payment-links`
+- **Schedule**: `0 2 * * *` (daily at 2 AM)
+- **Method**: POST with `Authorization: Bearer <CRON_SECRET>`
 
 Add to `.env.example`:
 ```bash
