@@ -6,7 +6,7 @@
 > 1. Update the task status in Linear to "Done"
 > 2. Mark the corresponding task in this plan as ✅ DONE
 >
-> **Current Progress:** 10/40 tasks completed (POS-317 ✅ through POS-327 ✅)
+> **Current Progress:** 13/40 tasks completed (POS-317 ✅ through POS-328 ✅, POS-329/330 superseded)
 
 ---
 
@@ -758,29 +758,23 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 3 Tasks
 
-**Task 12: [ag-grid] Build Select Cell Editor** — POS-328
+**Task 12: [ag-grid] Configure Native Cell Editors with Auto-Save** — POS-328 ✅ DONE
 
-- Create select-cell-editor.tsx with Radix Select
-- Implement auto-save with 500ms debounce
+> **📝 Scope Change:** Using AG Grid's built-in editors (`agSelectCellEditor`, `agCheckboxCellEditor`, `agNumberCellEditor`) instead of custom Radix components. Created `useAutoSave` hook for debounced persistence with optimistic updates and error rollback.
+
+- ~~Create select-cell-editor.tsx with Radix Select~~ → Use native `agSelectCellEditor`
+- Implement auto-save with 500ms debounce via `useAutoSave` hook
 - Add optimistic updates with error rollback
-- **Estimate:** 4-5 hours
-- **Dependencies:** Task 4
-
-**Task 13: [ag-grid] Build Checkbox Cell Editor** — POS-329
-
-- Create checkbox-cell-editor.tsx
-- Implement immediate save on toggle
-- Add visual feedback during save
-- **Estimate:** 2-3 hours
-- **Dependencies:** Task 4
-
-**Task 14: [ag-grid] Build Number Cell Editor** — POS-330
-
-- Create number-cell-editor.tsx
-- Add validation and min/max constraints
-- Implement debounced auto-save
 - **Estimate:** 3-4 hours
 - **Dependencies:** Task 4
+
+**Task 13: [ag-grid] Build Checkbox Cell Editor** — POS-329 ✅ SUPERSEDED
+
+> **Superseded by POS-328** — Using native `agCheckboxCellEditor` instead of custom component.
+
+**Task 14: [ag-grid] Build Number Cell Editor** — POS-330 ✅ SUPERSEDED
+
+> **Superseded by POS-328** — Using native `agNumberCellEditor` instead of custom component.
 
 **Task 15: [ag-grid] Build Text Edit Modal Editor** — POS-331
 
