@@ -58,8 +58,8 @@ describe("TruncatedTextRenderer", () => {
 
       render(<TruncatedTextRenderer {...params} />)
 
-      // Should show first 25 chars + "..."
-      expect(screen.getByText("This is a very long text ...")).toBeInTheDocument()
+      // Should show first 25 chars trimmed + "..."
+      expect(screen.getByText("This is a very long text...")).toBeInTheDocument()
       expect(screen.queryByText(longText)).not.toBeInTheDocument()
     })
 
@@ -70,7 +70,7 @@ describe("TruncatedTextRenderer", () => {
 
       render(<TruncatedTextRenderer {...params} />)
 
-      const truncatedElement = screen.getByText("This is a very long text ...")
+      const truncatedElement = screen.getByText("This is a very long text...")
       await user.hover(truncatedElement)
 
       // Tooltip should appear with full text
