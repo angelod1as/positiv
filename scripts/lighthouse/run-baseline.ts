@@ -1,7 +1,7 @@
 import "dotenv/config"
 import { composable, type Composable } from "composable-functions"
 import { spawn } from "child_process"
-import { appendFileSync, existsSync, readdirSync } from "fs"
+import { appendFileSync, existsSync } from "fs"
 import { join } from "path"
 import lighthouse from "lighthouse"
 import * as chromeLauncher from "chrome-launcher"
@@ -263,24 +263,16 @@ function appendToMetricsCSV(
 }
 
 /**
- * Find the correct server build path (handles both standard and Vercel builds)
+ * Find the server build path
  */
 function findServerPath(): string {
-  const serverDir = join(process.cwd(), "build", "server")
-  const standardBuildPath = join(serverDir, "index.js")
+  const serverPath = join(process.cwd(), "build", "server", "index.js")
 
-  if (existsSync(standardBuildPath)) {
-    return standardBuildPath
+  if (!existsSync(serverPath)) {
+    throw new Error("Could not find server build output at build/server/index.js")
   }
 
-  // Vercel build - look for the encoded directory
-  const vercelDir = readdirSync(serverDir).find(dir => dir.startsWith("nodejs_"))
-
-  if (!vercelDir) {
-    throw new Error("Could not find server build output (tried standard and Vercel paths)")
-  }
-
-  return join(serverDir, vercelDir, "index.js")
+  return serverPath
 }
 
 /**
