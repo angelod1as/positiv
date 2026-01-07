@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process"
 import type { ChildProcess } from "node:child_process"
-import { existsSync, readdirSync, statSync } from "node:fs"
+import { existsSync, statSync } from "node:fs"
 import { join, resolve, isAbsolute } from "node:path"
 
 const PORT = 5173
@@ -45,28 +45,9 @@ function validateServerPath(filePath: string, expectedDir: string): string {
 }
 
 async function startProductionServer() {
-  // Check if we have a standard build or Vercel build
   const serverDir = join(process.cwd(), "build", "server")
-  const standardBuildPath = join(serverDir, "index.js")
-  
-  let serverPath: string
-  
-  if (existsSync(standardBuildPath)) {
-    // Standard build
-    serverPath = validateServerPath(standardBuildPath, serverDir)
-  } else {
-    // Vercel build - look for the encoded directory
-    const vercelDir = readdirSync(serverDir).find(dir => dir.startsWith("nodejs_"))
-    
-    if (!vercelDir) {
-      throw new Error("Could not find server build output")
-    }
-    
-    const vercelPath = join(serverDir, vercelDir, "index.js")
-    serverPath = validateServerPath(vercelPath, serverDir)
-  }
-  
-  // Use react-router-serve for both standard and Vercel builds
+  const serverPath = validateServerPath(join(serverDir, "index.js"), serverDir)
+
   return new Promise<void>((resolve, reject) => {
     serverProcess = spawn("pnpm", ["react-router-serve", serverPath], {
       stdio: ["ignore", "pipe", "pipe"],
