@@ -29,6 +29,7 @@ describe("useAutoSave", () => {
       applyTransaction: vi.fn(),
       getRowNode: vi.fn().mockReturnValue({
         setDataValue: vi.fn(),
+        data: { id: "row-1", [field]: newValue }, // Include data for rollback check
       }),
     } as unknown as GridApi
 
@@ -273,7 +274,125 @@ describe("useAutoSave", () => {
         await Promise.resolve()
       })
 
-      expect(toast.error).toHaveBeenCalledWith("Falha ao salvar alteração")
+      expect(toast.error).toHaveBeenCalledWith("Falha ao salvar alteração", {
+        description: "Failed",
+      })
+    })
+
+    it("shows error description from Error instance", async () => {
+      const { toast } = await import("sonner")
+      const onSave = vi.fn().mockRejectedValue(new Error("Connection timeout"))
+
+      const { result } = renderHook(() =>
+        useAutoSave({ onSave, debounceMs: 500 })
+      )
+
+      act(() => {
+        result.current.handleCellValueChanged(createMockEvent("old", "new"))
+      })
+
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+
+      await act(async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+
+      expect(toast.error).toHaveBeenCalledWith(
+        "Erro ao salvar alteração",
+        expect.objectContaining({ description: "Connection timeout" })
+      )
+    })
+
+    it("does not rollback when current value differs from failed newValue", async () => {
+      const onSave = vi.fn().mockRejectedValue(new Error("Save failed"))
+
+      const { result } = renderHook(() =>
+        useAutoSave({ onSave, debounceMs: 500 })
+      )
+
+      // Create mock where getRowNode returns a node with different current value
+      const mockSetDataValue = vi.fn()
+      const mockApi = {
+        applyTransaction: vi.fn(),
+        getRowNode: vi.fn().mockReturnValue({
+          setDataValue: mockSetDataValue,
+          data: { id: "row-1", status: "different-value" }, // Current value differs
+        }),
+      } as unknown as GridApi
+
+      const event = {
+        oldValue: "pending",
+        newValue: "approved",
+        colDef: { field: "status" },
+        data: { id: "row-1", status: "approved" },
+        node: { id: "row-1", data: { id: "row-1", status: "approved" } },
+        api: mockApi,
+        column: { getColId: () => "status" },
+      } as unknown as CellValueChangedEvent
+
+      act(() => {
+        result.current.handleCellValueChanged(event)
+      })
+
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+
+      await act(async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+
+      // Should NOT rollback because current value differs from failed newValue
+      expect(mockSetDataValue).not.toHaveBeenCalled()
+    })
+
+    it("warns when nodeId is undefined and cannot rollback", async () => {
+      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+      const onSave = vi.fn().mockRejectedValue(new Error("Save failed"))
+
+      const { result } = renderHook(() =>
+        useAutoSave({ onSave, debounceMs: 500 })
+      )
+
+      // Create event with undefined node.id
+      const mockApi = {
+        applyTransaction: vi.fn(),
+        getRowNode: vi.fn(),
+      } as unknown as GridApi
+
+      const event = {
+        oldValue: "old",
+        newValue: "new",
+        colDef: { field: "status" },
+        data: { id: "row-1", status: "new" },
+        node: { id: undefined, data: { id: "row-1", status: "new" } },
+        api: mockApi,
+        column: { getColId: () => "status" },
+      } as unknown as CellValueChangedEvent
+
+      act(() => {
+        result.current.handleCellValueChanged(event)
+      })
+
+      await act(async () => {
+        vi.advanceTimersByTime(500)
+      })
+
+      await act(async () => {
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        "Cannot rollback change: node.id is undefined",
+        { field: "status" }
+      )
+
+      consoleWarnSpy.mockRestore()
     })
   })
 
