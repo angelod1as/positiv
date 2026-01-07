@@ -98,6 +98,9 @@ export const applicationMailTemplate = (
 
               <ul style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0; padding-left: 20px; color: #333;">
                 <li style="margin-bottom: 8px;">
+                  Nosso processo é artesanal, manual e cuidadoso. Tenha paciência com nosso cronograma e empatia com as pessoas que fazem isso tudo acontecer. Contamos com você!
+                </li>
+                <li style="margin-bottom: 8px;">
                   Ter participado de edições anteriores <strong>não garante</strong> a sua participação em outras festas;
                 </li>
                 <li style="margin-bottom: 8px;">
