@@ -6,7 +6,7 @@
 > 1. Update the task status in Linear to "Done"
 > 2. Mark the corresponding task in this plan as ✅ DONE
 >
-> **Current Progress:** 13/40 tasks completed (POS-317 ✅ through POS-328 ✅, POS-329/330 superseded)
+> **Current Progress:** 14/40 tasks completed (POS-317 ✅ through POS-331 ✅, POS-329/330 superseded)
 
 ---
 
@@ -776,12 +776,13 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 > **Superseded by POS-328** — Using native `agNumberCellEditor` instead of custom component.
 
-**Task 15: [ag-grid] Build Text Edit Modal Editor** — POS-331
+**Task 15: [ag-grid] Build Text Edit Modal Editor** — POS-331 ✅ DONE
 
-- Create text-edit-modal-editor.tsx using Radix Dialog
-- Add textarea for long text
-- Implement save/cancel actions
-- **Estimate:** 4-5 hours
+> **📝 Scope Change:** Using native AG Grid `agLargeTextCellEditor` (included in `AllCommunityModule`) for editing, and a custom `TruncatedTextRenderer` for display with truncation + tooltip preview. This follows the pattern from POS-328 of leveraging native editors.
+
+- ~~Create text-edit-modal-editor.tsx using Radix Dialog~~ → Use native `agLargeTextCellEditor` with `cellEditorPopup: true`
+- Created `truncated-text-renderer.tsx` for display with truncation and tooltip
+- **Estimate:** 2-3 hours (reduced from 4-5)
 - **Dependencies:** Task 4
 
 **Task 16: [ag-grid] Build Text View Modal Renderer** — POS-332
