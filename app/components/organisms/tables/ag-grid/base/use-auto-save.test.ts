@@ -279,7 +279,7 @@ describe("useAutoSave", () => {
 
   describe("Save State", () => {
     it("exposes isSaving state", async () => {
-      let resolvePromise: () => void
+      let resolvePromise: () => void = () => {}
       const savePromise = new Promise<void>((resolve) => {
         resolvePromise = resolve
       })
@@ -307,7 +307,7 @@ describe("useAutoSave", () => {
       expect(result.current.isSaving).toBe(true)
 
       await act(async () => {
-        resolvePromise!()
+        resolvePromise()
         await Promise.resolve()
         await Promise.resolve()
       })

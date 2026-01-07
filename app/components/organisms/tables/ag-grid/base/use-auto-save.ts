@@ -52,9 +52,12 @@ export function useAutoSave({
       await onSave(params)
     } catch {
       // Rollback to old value
-      const rowNode = event.api.getRowNode(event.node.id!)
-      if (rowNode) {
-        rowNode.setDataValue(field, event.oldValue)
+      const nodeId = event.node.id
+      if (nodeId) {
+        const rowNode = event.api.getRowNode(nodeId)
+        if (rowNode) {
+          rowNode.setDataValue(field, event.oldValue)
+        }
       }
       toast.error(errorMessage)
     } finally {
