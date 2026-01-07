@@ -19,7 +19,7 @@ export function TruncatedTextRenderer(
   const text = String(value ?? "")
   const shouldTruncate = text.length > truncateLength
   const displayText = shouldTruncate
-    ? text.slice(0, truncateLength) + "..."
+    ? text.slice(0, truncateLength).trim() + "..."
     : text
 
   if (!shouldTruncate) {
@@ -30,7 +30,9 @@ export function TruncatedTextRenderer(
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="cursor-help">{displayText}</span>
+          <span className="cursor-help" tabIndex={0} aria-label={text}>
+            {displayText}
+          </span>
         </TooltipTrigger>
         <TooltipContent>
           <p className="max-w-xs whitespace-pre-wrap">{text}</p>
