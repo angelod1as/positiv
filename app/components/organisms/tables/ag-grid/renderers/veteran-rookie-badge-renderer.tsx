@@ -1,12 +1,6 @@
 import type { ICellRendererParams } from "ag-grid-community"
-import { Badge } from "~/components/ui/badge"
+import { VeteranRookieBadge } from "~/components/atoms/badges/veteran-rookie-badge"
 
 export function VeteranRookieBadgeRenderer(params: ICellRendererParams) {
-  const isVeteran = Boolean(params.value)
-
-  return (
-    <Badge variant={isVeteran ? "veteran" : "rookie"}>
-      {isVeteran ? "Veterane" : "Novate"}
-    </Badge>
-  )
+  return <VeteranRookieBadge isVeteran={Boolean(params.value)} />
 }

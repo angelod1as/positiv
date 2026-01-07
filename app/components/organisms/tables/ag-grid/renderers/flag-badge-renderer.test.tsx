@@ -5,21 +5,21 @@ import type { ProfileFlagStatus } from "~/types/database/entities.types"
 import { FlagBadgeRenderer } from "./flag-badge-renderer"
 
 function createMockParams(
-  flag: ProfileFlagStatus,
+  flag: ProfileFlagStatus | undefined,
   flagNotes?: string | null
 ): ICellRendererParams {
   return {
     value: flag,
-    valueFormatted: flag,
+    valueFormatted: flag ?? "",
     data: { id: "1", flag, flag_notes: flagNotes },
     node: {} as ICellRendererParams["node"],
     colDef: { field: "flag" },
     column: {} as ICellRendererParams["column"],
     api: {} as ICellRendererParams["api"],
     context: {},
-    getValue: () => flag,
+    getValue: () => flag ?? "",
     setValue: () => {},
-    formatValue: () => flag,
+    formatValue: () => flag ?? "",
     refreshCell: () => {},
     eGridCell: document.createElement("div"),
     eParentOfValue: document.createElement("div"),
@@ -100,6 +100,14 @@ describe("FlagBadgeRenderer", () => {
 
       const flag = screen.getByRole("img", { name: /flag cinza/i })
       expect(flag).toBeInTheDocument()
+    })
+
+    it("renders nothing when flag value is undefined", () => {
+      const params = createMockParams(undefined)
+
+      const { container } = render(<FlagBadgeRenderer {...params} />)
+
+      expect(container).toBeEmptyDOMElement()
     })
   })
 })
