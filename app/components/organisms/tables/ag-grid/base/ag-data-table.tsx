@@ -1,6 +1,7 @@
 import {
   AllCommunityModule,
   ModuleRegistry,
+  type CellValueChangedEvent,
   type GridReadyEvent,
   type SelectionChangedEvent,
   type StateUpdatedEvent,
@@ -9,6 +10,7 @@ import { AgGridReact } from "ag-grid-react"
 import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
 import type { AGDataTableProps } from "./types"
+import { useAutoSave } from "./use-auto-save"
 import { useGridState } from "./use-grid-state"
 
 let modulesRegistered = false
@@ -34,6 +36,8 @@ export function AGDataTable<TData>({
   rowSelection,
   onRowSelectionChange,
   quickFilterText,
+  onSave,
+  autoSaveOptions,
   onCellValueChanged,
   onGridReady,
   onStateUpdated,
@@ -45,6 +49,12 @@ export function AGDataTable<TData>({
   ensureModulesRegistered()
 
   const { restoreState, saveState } = useGridState(id, { version: stateVersion })
+
+  const { handleCellValueChanged: autoSaveHandler } = useAutoSave({
+    onSave,
+    debounceMs: autoSaveOptions?.debounceMs,
+    errorMessage: autoSaveOptions?.errorMessage,
+  })
 
   const safeMessage = escapeHtml(emptyMessage || DEFAULT_EMPTY_MESSAGE)
   const noRowsTemplate = `<span>${safeMessage}</span>`
@@ -61,6 +71,13 @@ export function AGDataTable<TData>({
       const selectedRows = event.api.getSelectedRows()
       onRowSelectionChange(selectedRows)
     }
+  }
+
+  const handleCellValueChanged = (event: CellValueChangedEvent<TData>) => {
+    if (onSave) {
+      autoSaveHandler(event)
+    }
+    onCellValueChanged?.(event)
   }
 
   const handleGridReady = (event: GridReadyEvent<TData>) => {
@@ -94,7 +111,7 @@ export function AGDataTable<TData>({
         rowSelection={rowSelectionConfig}
         onSelectionChanged={handleSelectionChanged}
         quickFilterText={quickFilterText}
-        onCellValueChanged={onCellValueChanged}
+        onCellValueChanged={handleCellValueChanged}
         onGridReady={handleGridReady}
         onStateUpdated={handleStateUpdated}
       />
