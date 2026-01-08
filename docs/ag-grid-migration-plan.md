@@ -6,7 +6,7 @@
 > 1. Update the task status in Linear to "Done"
 > 2. Mark the corresponding task in this plan as ✅ DONE
 >
-> **Current Progress:** 17/38 tasks completed (POS-317 ✅ through POS-334 ✅, POS-329/330 superseded, POS-332 skipped)
+> **Current Progress:** 20/38 tasks completed
 
 ---
 
@@ -826,21 +826,21 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 4
 
-**Task 20: [ag-grid] Build Warning Indicator Renderer** — POS-336
+**Task 20: [ag-grid] Build Warning Indicator Renderer** — POS-336 ✅ DONE
 
 - Create warning-indicator-renderer.tsx
 - Style for demographics warnings
 - **Estimate:** 2 hours
 - **Dependencies:** Task 4
 
-**Task 21: [ag-grid] Build Phone Button Renderer with WhatsApp** — POS-337
+**Task 21: [ag-grid] Build Phone Button Renderer with WhatsApp** — POS-337 ✅ DONE
 
 - Create phone-button-renderer.tsx
 - Add WhatsApp link generation
 - **Estimate:** 2-3 hours
 - **Dependencies:** Task 4
 
-**Task 22: [ag-grid] Build Linked Event History Renderer** — POS-338
+**Task 22: [ag-grid] Build Linked Event History Renderer** — POS-338 ✅ DONE
 
 - Create linked-event-renderer.tsx
 - Implement routing links
