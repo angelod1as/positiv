@@ -6,7 +6,7 @@
 > 1. Update the task status in Linear to "Done"
 > 2. Mark the corresponding task in this plan as ✅ DONE
 >
-> **Current Progress:** 20/38 tasks completed
+> **Current Progress:** 22/38 tasks completed
 
 ---
 
@@ -819,7 +819,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 - **Estimate:** 1-2 hours
 - **Dependencies:** Task 4
 
-**Task 19: [ag-grid] Build Flag Badge Renderer with Tooltips** — POS-335
+**Task 19: [ag-grid] Build Flag Badge Renderer with Tooltips** — POS-335 ✅ DONE
 
 - Create flag-badge-renderer.tsx
 - Add tooltip support
@@ -851,7 +851,7 @@ Example: `[ag-grid] Install AG Grid and Configure Theme`
 
 ### Phase 5 Tasks
 
-**Task 23: [ag-grid] Migrate Events Table (Proof of Concept)** — POS-339
+**Task 23: [ag-grid] Migrate Events Table (Proof of Concept)** — POS-339 ✅ DONE
 
 - Create events-table-ag.tsx
 - Define 3 column definitions
