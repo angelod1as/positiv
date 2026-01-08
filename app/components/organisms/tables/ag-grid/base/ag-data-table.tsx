@@ -1,13 +1,16 @@
-import { useCallback } from "react"
+import { AG_GRID_LOCALE_BR } from "@ag-grid-community/locale"
 import {
   AllCommunityModule,
   ModuleRegistry,
+  themeQuartz,
   type CellValueChangedEvent,
+  type GridOptions,
   type GridReadyEvent,
   type SelectionChangedEvent,
   type StateUpdatedEvent,
 } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
+import { useCallback } from "react"
 import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
 import type { AGDataTableProps } from "./types"
@@ -24,6 +27,14 @@ function ensureModulesRegistered() {
 }
 
 const DEFAULT_EMPTY_MESSAGE = "Nenhum registro encontrado"
+
+const gridTheme = themeQuartz.withParams({
+  rowBorder: true,
+  columnBorder: true,
+  headerRowBorder: true,
+  headerColumnBorder: true,
+  spacing: 7,
+})
 
 export function AGDataTable<TData>({
   id,
@@ -50,7 +61,9 @@ export function AGDataTable<TData>({
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
 
-  const { restoreState, saveState } = useGridState(id, { version: stateVersion })
+  const { restoreState, saveState } = useGridState(id, {
+    version: stateVersion,
+  })
 
   const { handleCellValueChanged: autoSaveHandler } = useAutoSave({
     onSave,
@@ -63,7 +76,10 @@ export function AGDataTable<TData>({
 
   const rowSelectionConfig = rowSelection
     ? {
-        mode: rowSelection === "multiple" ? ("multiRow" as const) : ("singleRow" as const),
+        mode:
+          rowSelection === "multiple"
+            ? ("multiRow" as const)
+            : ("singleRow" as const),
         checkboxes: rowSelection === "multiple",
       }
     : undefined
@@ -75,7 +91,7 @@ export function AGDataTable<TData>({
         onRowSelectionChange(selectedRows)
       }
     },
-    [onRowSelectionChange]
+    [onRowSelectionChange],
   )
 
   const handleCellValueChanged = useCallback(
@@ -85,7 +101,7 @@ export function AGDataTable<TData>({
       }
       onCellValueChanged?.(event)
     },
-    [onSave, autoSaveHandler, onCellValueChanged]
+    [onSave, autoSaveHandler, onCellValueChanged],
   )
 
   const handleGridReady = useCallback(
@@ -95,7 +111,7 @@ export function AGDataTable<TData>({
       }
       onGridReady?.(event)
     },
-    [persistState, restoreState, onGridReady]
+    [persistState, restoreState, onGridReady],
   )
 
   const handleStateUpdated = useCallback(
@@ -105,19 +121,33 @@ export function AGDataTable<TData>({
       }
       onStateUpdated?.(event)
     },
-    [persistState, saveState, onStateUpdated]
+    [persistState, saveState, onStateUpdated],
   )
+
+  const gridOptions: GridOptions<TData> = {
+    defaultColDef: {
+      flex: 1,
+      minWidth: 100,
+    },
+    columnDefs,
+    paginationAutoPageSize: true,
+    pagination: true,
+  }
 
   return (
     <div
       data-testid={`ag-data-table-${id}`}
-      className={cn("ag-theme-quartz", !height && "h-[400px]", className)}
+      className={cn(!height && "h-[400px]", className)}
       style={height ? { height } : undefined}
     >
       <AgGridReact
+        gridOptions={gridOptions}
+        theme={gridTheme}
+        localeText={AG_GRID_LOCALE_BR}
         rowData={data}
         columnDefs={columnDefs}
         loading={loading}
+        rowStyle={onRowClicked ? { cursor: "pointer" } : undefined}
         overlayNoRowsTemplate={noRowsTemplate}
         pagination={pagination}
         paginationPageSize={paginationPageSize}
