@@ -150,6 +150,23 @@ describe("LinkedEventRenderer", () => {
       const link = screen.getByRole("link")
       expect(link).toHaveTextContent("🎉 Short Title")
     })
+
+    it("handles extremely long titles without breaking", () => {
+      const veryLongTitle = "A".repeat(100)
+      const params = createMockParams({
+        event_id: "event-123",
+        profile_id: "profile-456",
+        event_emoji: "🎉",
+        event_title: veryLongTitle,
+        time_event_start: "2025-01-15T18:00:00Z",
+      })
+
+      renderWithRouter(<LinkedEventRenderer {...params} />)
+
+      const link = screen.getByRole("link")
+      expect(link).toHaveTextContent("🎉 AAAAAAAAAAAAAAAAAAAA…")
+      expect(link).toHaveAttribute("title", veryLongTitle)
+    })
   })
 
   describe("edge cases", () => {

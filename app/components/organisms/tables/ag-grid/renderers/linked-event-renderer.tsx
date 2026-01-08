@@ -9,6 +9,7 @@ const {
   },
 } = paths
 
+// Truncate titles to 20 characters to fit grid cell width
 const MAX_TITLE_LENGTH = 20
 
 interface LinkedEventRowData {
@@ -42,7 +43,7 @@ export function LinkedEventRenderer(params: ICellRendererParams) {
   return (
     <div>
       {canLink ? (
-        <Link to={ADMIN_EVENT_VIEW_PARTICIPANT(event_id, profile_id)}>
+        <Link to={ADMIN_EVENT_VIEW_PARTICIPANT(event_id, profile_id)} title={event_title}>
           {displayText}
         </Link>
       ) : (
