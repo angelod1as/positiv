@@ -1,15 +1,15 @@
-import { useMemo, useState, useEffect, useCallback } from "react"
-import { useNavigate } from "react-router"
 import type { ColDef, RowClickedEvent } from "ag-grid-community"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { useNavigate } from "react-router"
+import { Button } from "~/components/atoms/button/button"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
-import { Button } from "~/components/atoms/button/button"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
+  DEFAULT_EVENT_STATUS_FILTER,
   eventStatusMap,
   eventStatusOptions,
-  DEFAULT_EVENT_STATUS_FILTER,
 } from "~/lib/helpers/propMaps"
-import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { Event, EventStatus } from "~types/database/entities.types"
 
 export type DashboardEventAG = Pick<
@@ -41,7 +41,7 @@ export function AdminDashboardEventsTableAG({
 }: AdminDashboardEventsTableAGProps) {
   const navigate = useNavigate()
   const [filterModel, setFilterModel] = useState<string[] | null>(
-    getInitialFilterValues
+    getInitialFilterValues,
   )
 
   useEffect(() => {
@@ -52,9 +52,7 @@ export function AdminDashboardEventsTableAG({
 
   const filteredEvents = useMemo(() => {
     if (!filterModel || filterModel.length === 0) return events
-    return events.filter((event) =>
-      filterModel.includes(event.event_status)
-    )
+    return events.filter((event) => filterModel.includes(event.event_status))
   }, [events, filterModel])
 
   const columnDefs: ColDef<DashboardEventAG>[] = useMemo(
@@ -62,15 +60,10 @@ export function AdminDashboardEventsTableAG({
       {
         field: "title",
         headerName: "Nome",
-        pinned: "left",
-        sortable: true,
-        minWidth: 200,
-        flex: 1,
       },
       {
         field: "event_status",
         headerName: "Status",
-        sortable: true,
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: eventStatusOptions,
@@ -80,18 +73,16 @@ export function AdminDashboardEventsTableAG({
         },
         cellRenderer: (params: { value: EventStatus }) =>
           eventStatusMap(params.value),
-        minWidth: 150,
       },
       {
         field: "time_event_start",
         headerName: "Início do evento",
-        sortable: true,
+        sort: "desc",
         cellRenderer: (params: { value: string | null }) =>
           formatDateTime(params.value)?.full ?? "",
-        minWidth: 200,
       },
     ],
-    [filterModel]
+    [filterModel],
   )
 
   const handleRowClicked = useCallback(
@@ -100,7 +91,7 @@ export function AdminDashboardEventsTableAG({
         navigate(`/admin/eventos/${event.data.id}`)
       }
     },
-    [navigate]
+    [navigate],
   )
 
   return (
@@ -120,6 +111,7 @@ export function AdminDashboardEventsTableAG({
         paginationPageSizeSelector={[10, 25, 50, 100]}
         onRowClicked={handleRowClicked}
         emptyMessage="Nenhum evento encontrado"
+        persistState
       />
     </div>
   )

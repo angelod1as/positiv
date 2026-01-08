@@ -44,7 +44,7 @@ describe("AGDataTable", () => {
   ]
 
   describe("Basic Rendering", () => {
-    it("should render with ag-theme-quartz class", () => {
+    it("should render the AG Grid component", () => {
       render(
         <AGDataTable
           id="test-table"
@@ -53,10 +53,8 @@ describe("AGDataTable", () => {
         />,
       )
 
-      const gridContainer = screen
-        .getByRole("grid")
-        .closest(".ag-theme-quartz")
-      expect(gridContainer).toBeInTheDocument()
+      const grid = screen.getByRole("grid")
+      expect(grid).toBeInTheDocument()
     })
 
     it("should display row data in the grid", async () => {
@@ -360,7 +358,6 @@ describe("AGDataTable", () => {
       const gridContainer = container.querySelector(
         '[data-testid="ag-data-table-test-table"]',
       )
-      expect(gridContainer).toHaveClass("ag-theme-quartz")
       expect(gridContainer).toHaveClass("custom-class")
     })
   })

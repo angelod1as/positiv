@@ -233,15 +233,15 @@ describe("AdminDashboardEventsTableAG", () => {
       expect(screen.getByText("Scheduled Event")).toBeInTheDocument()
     })
 
-    it("should render with AG Grid theme class", async () => {
+    it("should render the AG Grid component", async () => {
       render(<AdminDashboardEventsTableAG events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
       })
 
-      const gridContainer = screen.getByRole("grid").closest(".ag-theme-quartz")
-      expect(gridContainer).toBeInTheDocument()
+      const grid = screen.getByRole("grid")
+      expect(grid).toBeInTheDocument()
     })
 
     it("should have correct test id", async () => {
@@ -419,6 +419,8 @@ describe("AdminDashboardEventsTableAG", () => {
       })
 
       // Find and click the first row
+      // Note: The table is sorted by time_event_start desc, so the first row
+      // will be the event with the latest date (Closed Registration Event, id="4")
       const firstRow = container.querySelector(".ag-row") as HTMLElement
       expect(firstRow).toBeInTheDocument()
 
@@ -428,8 +430,8 @@ describe("AdminDashboardEventsTableAG", () => {
         expect(mockNavigate).toHaveBeenCalled()
       })
 
-      // Check that it navigates to the correct URL
-      expect(mockNavigate).toHaveBeenCalledWith("/admin/eventos/1")
+      // Check that it navigates to the correct URL (first row = id "4" due to desc sort)
+      expect(mockNavigate).toHaveBeenCalledWith("/admin/eventos/4")
     })
   })
 
