@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { describe, expect, it } from "vitest"
-import { VeteranRookieBadge } from "./veteran-rookie-badge"
+import { VeteranRookieBadgeRenderer } from "./veteran-rookie-badge-renderer"
 
 function createMockParams(
   value: boolean | null | undefined
@@ -26,12 +26,12 @@ function createMockParams(
   }
 }
 
-describe("VeteranRookieBadge", () => {
+describe("VeteranRookieBadgeRenderer", () => {
   describe("when value is true (veteran)", () => {
     it("renders Veterane badge with veteran variant", () => {
       const params = createMockParams(true)
 
-      render(<VeteranRookieBadge {...params} />)
+      render(<VeteranRookieBadgeRenderer {...params} />)
 
       const badge = screen.getByText("Veterane")
       expect(badge).toBeInTheDocument()
@@ -43,7 +43,7 @@ describe("VeteranRookieBadge", () => {
     it("renders Novate badge with rookie variant", () => {
       const params = createMockParams(false)
 
-      render(<VeteranRookieBadge {...params} />)
+      render(<VeteranRookieBadgeRenderer {...params} />)
 
       const badge = screen.getByText("Novate")
       expect(badge).toBeInTheDocument()
@@ -55,7 +55,7 @@ describe("VeteranRookieBadge", () => {
     it("handles null value gracefully (defaults to rookie)", () => {
       const params = createMockParams(null)
 
-      render(<VeteranRookieBadge {...params} />)
+      render(<VeteranRookieBadgeRenderer {...params} />)
 
       expect(screen.getByText("Novate")).toBeInTheDocument()
     })
@@ -63,7 +63,7 @@ describe("VeteranRookieBadge", () => {
     it("handles undefined value gracefully (defaults to rookie)", () => {
       const params = createMockParams(undefined)
 
-      render(<VeteranRookieBadge {...params} />)
+      render(<VeteranRookieBadgeRenderer {...params} />)
 
       expect(screen.getByText("Novate")).toBeInTheDocument()
     })

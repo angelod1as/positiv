@@ -1,9 +1,10 @@
-import type { ICellRendererParams } from "ag-grid-community"
 import { Badge } from "~/components/ui/badge"
 
-export function VeteranRookieBadge(params: ICellRendererParams) {
-  const isVeteran = Boolean(params.value)
+interface VeteranRookieBadgeProps {
+  isVeteran: boolean
+}
 
+export function VeteranRookieBadge({ isVeteran }: VeteranRookieBadgeProps) {
   return (
     <Badge variant={isVeteran ? "veteran" : "rookie"}>
       {isVeteran ? "Veterane" : "Novate"}
