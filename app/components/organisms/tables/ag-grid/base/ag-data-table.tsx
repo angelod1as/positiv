@@ -42,6 +42,7 @@ export function AGDataTable<TData>({
   onCellValueChanged,
   onGridReady,
   onStateUpdated,
+  onRowClicked,
   className,
   height,
   persistState = false,
@@ -127,6 +128,7 @@ export function AGDataTable<TData>({
         onCellValueChanged={handleCellValueChanged}
         onGridReady={handleGridReady}
         onStateUpdated={handleStateUpdated}
+        onRowClicked={onRowClicked}
       />
     </div>
   )
