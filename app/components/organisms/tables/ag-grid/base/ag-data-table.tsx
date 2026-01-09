@@ -3,6 +3,7 @@ import {
   AllCommunityModule,
   ModuleRegistry,
   themeQuartz,
+  type CellClassParams,
   type CellValueChangedEvent,
   type GridApi,
   type GridReadyEvent,
@@ -142,10 +143,17 @@ export function AGDataTable<TData>({
   const defaultColDef = useMemo(
     () => ({
       minWidth: 30,
-      tooltipShowMode: "whenTruncated",
+      tooltipValueGetter: (params: { value?: unknown }) => params.value,
+      cellStyle: (params: CellClassParams) => {
+        if (params.colDef?.editable === true) {
+          return { backgroundColor: "rgba(148, 163, 184, 0.15)" }
+        }
+        return undefined
+      },
     }),
     [],
   )
+
 
   const containerClasses = cn(
     isFullscreen && "fixed inset-0 z-50 bg-background flex flex-col",
@@ -182,6 +190,8 @@ export function AGDataTable<TData>({
           onStateUpdated={handleStateUpdated}
           onRowClicked={onRowClicked}
           maintainColumnOrder={persistState}
+          tooltipShowMode="whenTruncated"
+          tooltipShowDelay={0}
           autoSizeStrategy={
             hasSavedState
               ? undefined

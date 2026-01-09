@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useFetcher } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
-import { TextModalEditor } from "~/components/organisms/tables/ag-grid/editors/text-modal-editor"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { ActionButtonsRenderer } from "~/components/organisms/tables/ag-grid/renderers/action-buttons-renderer"
 import { BooleanTextRenderer } from "~/components/organisms/tables/ag-grid/renderers/boolean-text-renderer"
@@ -210,6 +209,7 @@ export const AdminViewEventParticipantsTableAG: FC<
       {
         field: "is_veteran",
         headerName: "Vet ou Nov?",
+        headerTooltip: "Veterane ou Novate",
         cellRenderer: (params: { value: boolean | null }) =>
           params.value ? "Veterane" : "Novate",
         cellClass: (params) => getVeteranRookieColors(params.value),
@@ -224,6 +224,7 @@ export const AdminViewEventParticipantsTableAG: FC<
       {
         field: "attended_events_count",
         headerName: "Eventos",
+        headerTooltip: "Quantidade de eventos",
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,
@@ -237,6 +238,7 @@ export const AdminViewEventParticipantsTableAG: FC<
       {
         field: "flag",
         headerName: profilePropMap("flag"),
+        headerTooltip: "Flag de atenção",
         cellRenderer: FlagBadgeRenderer,
         sortable: true,
         ...compactCell,
@@ -245,12 +247,16 @@ export const AdminViewEventParticipantsTableAG: FC<
         field: "pronouns",
         headerName: profilePropMap("pronouns"),
         cellRenderer: PronounsRenderer,
+        valueFormatter: (params) =>
+          Array.isArray(params.value) ? params.value.join(", ") : "",
       },
       {
         field: "gender",
         headerName: profilePropMap("gender"),
         cellRenderer: WarningIndicatorRenderer,
         cellRendererParams: { type: "gender" },
+        valueFormatter: (params) =>
+          Array.isArray(params.value) ? params.value.join(", ") : "",
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: genderFilterOptions(participants),
@@ -265,6 +271,8 @@ export const AdminViewEventParticipantsTableAG: FC<
         headerName: profilePropMap("orientation"),
         cellRenderer: WarningIndicatorRenderer,
         cellRendererParams: { type: "orientation" },
+        valueFormatter: (params) =>
+          Array.isArray(params.value) ? params.value.join(", ") : "",
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: orientationFilterOptions(participants),
@@ -385,6 +393,7 @@ export const AdminViewEventParticipantsTableAG: FC<
         colId: "is_veteran_edit",
         field: "is_veteran",
         headerName: "Veterane?",
+        headerTooltip: "Marcar como veterane",
         editable: true,
         cellEditor: "agCheckboxCellEditor",
         cellRenderer: "agCheckboxCellRenderer",
@@ -398,12 +407,26 @@ export const AdminViewEventParticipantsTableAG: FC<
       {
         field: "notes",
         headerName: eventParticipantPropMap("notes"),
-        cellRenderer: TextModalEditor,
+        editable: true,
+        cellEditor: "agLargeTextCellEditor",
+        cellEditorParams: {
+          maxLength: 1000,
+          rows: 10,
+          cols: 50,
+        },
+        cellEditorPopup: true,
       },
       {
         field: "admin_general_notes",
         headerName: eventParticipantPropMap("admin_general_notes"),
-        cellRenderer: TextModalEditor,
+        editable: true,
+        cellEditor: "agLargeTextCellEditor",
+        cellEditorParams: {
+          maxLength: 1000,
+          rows: 10,
+          cols: 50,
+        },
+        cellEditorPopup: true,
       },
       {
         field: "was_admin_skipped_last_event",
