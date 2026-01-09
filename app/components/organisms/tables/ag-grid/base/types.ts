@@ -52,6 +52,9 @@ export interface AGDataTableProps<TData> {
 
   persistState?: boolean
   stateVersion?: number
+
+  showToolbar?: boolean
+  onClearFilters?: () => void
 }
 
 export interface UseGridStateOptions {
