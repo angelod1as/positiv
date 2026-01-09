@@ -30,6 +30,21 @@ export function AGIconButton({
   const combinedClassName = cn(baseStyles, className)
 
   if (href) {
+    const isSafeHref =
+      href.startsWith("/") ||
+      href.startsWith("https://") ||
+      href.startsWith("http://") ||
+      href.startsWith("mailto:") ||
+      href.startsWith("tel:")
+
+    if (!isSafeHref) {
+      return (
+        <span title={title} className={combinedClassName}>
+          {children}
+        </span>
+      )
+    }
+
     return (
       <a
         href={href}

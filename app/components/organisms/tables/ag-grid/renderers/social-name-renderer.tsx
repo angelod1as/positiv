@@ -15,7 +15,7 @@ export function SocialNameRenderer(
     return <>{socialName}</>
   }
 
-  const firstName = fullName.split(" ")[0]
+  const firstName = fullName.trim().split(/\s+/)[0]
 
   if (!firstName) {
     return <>-</>

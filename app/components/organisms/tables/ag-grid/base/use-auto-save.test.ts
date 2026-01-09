@@ -38,7 +38,11 @@ describe("useAutoSave", () => {
       newValue,
       colDef: { field },
       data: { id: "row-1", [field]: newValue },
-      node: { id: "row-1", data: { id: "row-1", [field]: newValue } },
+      node: {
+        id: "row-1",
+        data: { id: "row-1", [field]: newValue },
+        setDataValue: vi.fn(),
+      },
       api: mockApi,
       column: { getColId: () => field },
     } as unknown as CellValueChangedEvent
@@ -332,7 +336,11 @@ describe("useAutoSave", () => {
         newValue: "approved",
         colDef: { field: "status" },
         data: { id: "row-1", status: "approved" },
-        node: { id: "row-1", data: { id: "row-1", status: "approved" } },
+        node: {
+          id: "row-1",
+          data: { id: "row-1", status: "approved" },
+          setDataValue: vi.fn(),
+        },
         api: mockApi,
         column: { getColId: () => "status" },
       } as unknown as CellValueChangedEvent
@@ -354,15 +362,16 @@ describe("useAutoSave", () => {
       expect(mockSetDataValue).not.toHaveBeenCalled()
     })
 
-    it("does not attempt rollback when nodeId is undefined", async () => {
+    it("uses node fallback for rollback when nodeId is undefined", async () => {
       const onSave = vi.fn().mockRejectedValue(new Error("Save failed"))
 
       const { result } = renderHook(() =>
         useAutoSave({ onSave, debounceMs: 500 }),
       )
 
-      // Create event with undefined node.id
+      // Create event with undefined node.id but with setDataValue
       const mockGetRowNode = vi.fn()
+      const mockSetDataValue = vi.fn()
       const mockApi = {
         applyTransaction: vi.fn(),
         getRowNode: mockGetRowNode,
@@ -373,7 +382,11 @@ describe("useAutoSave", () => {
         newValue: "new",
         colDef: { field: "status" },
         data: { id: "row-1", status: "new" },
-        node: { id: undefined, data: { id: "row-1", status: "new" } },
+        node: {
+          id: undefined,
+          data: { id: "row-1", status: "new" },
+          setDataValue: mockSetDataValue,
+        },
         api: mockApi,
         column: { getColId: () => "status" },
       } as unknown as CellValueChangedEvent
@@ -391,8 +404,10 @@ describe("useAutoSave", () => {
         await Promise.resolve()
       })
 
-      // Should not attempt to get row node for rollback when id is undefined
+      // Should not attempt to get row node when id is undefined
       expect(mockGetRowNode).not.toHaveBeenCalled()
+      // Should use fallback node.setDataValue to rollback
+      expect(mockSetDataValue).toHaveBeenCalledWith("status", "old")
     })
   })
 

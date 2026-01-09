@@ -22,6 +22,7 @@ interface SaveSnapshot {
   rowData: unknown
   rowId: string | undefined
   api: GridApi
+  node: { setDataValue: (field: string, value: unknown) => void; data?: unknown }
 }
 
 const DEFAULT_DEBOUNCE_MS = 500
@@ -55,7 +56,15 @@ export function useAutoSave({
         await onSave(params)
       } catch (error) {
         if (!snapshot.rowId) {
-          // Cannot rollback without row ID
+          // Fallback rollback when row ID is unavailable
+          if (snapshot.node) {
+            const currentValue = (snapshot.node.data as Record<string, unknown>)?.[
+              snapshot.field
+            ]
+            if (currentValue === snapshot.newValue) {
+              snapshot.node.setDataValue(snapshot.field, snapshot.oldValue)
+            }
+          }
         } else {
           const rowNode = snapshot.api.getRowNode(snapshot.rowId)
           const currentValue =
@@ -94,6 +103,7 @@ export function useAutoSave({
         rowData: event.data,
         rowId: event.node.id,
         api: event.api,
+        node: event.node,
       }
 
       setHasPendingSave(true)

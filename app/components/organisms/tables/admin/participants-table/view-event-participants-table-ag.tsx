@@ -135,19 +135,21 @@ export const AdminViewEventParticipantsTableAG: FC<
   // AG Grid handles the filtering internally for better performance.
 
   const handleSave = useCallback(
-    async (id: string, field: string, value: unknown) => {
-      const participant = participants.find((p) => p.id === id)
-      if (!participant) return
-
+    async (
+      id: string,
+      profileId: string | null | undefined,
+      field: string,
+      value: unknown,
+    ) => {
       const formData = new FormData()
       formData.append("intent", "update-event-participant")
       formData.append("id", id)
-      formData.append("profile_id", participant.profile_id || "")
+      formData.append("profile_id", profileId ?? "")
       formData.append(field, String(value ?? ""))
 
       fetcher.submit(formData, { method: "POST" })
     },
-    [participants, fetcher],
+    [fetcher],
   )
 
   const columnDefs: ColDef<ProfileWithExtraData>[] = useMemo(
@@ -468,7 +470,12 @@ export const AdminViewEventParticipantsTableAG: FC<
         onSave={async (params) => {
           const rowData = params.rowData as ProfileWithExtraData | undefined
           if (rowData?.id) {
-            await handleSave(rowData.id, params.field, params.newValue)
+            await handleSave(
+              rowData.id,
+              rowData.profile_id,
+              params.field,
+              params.newValue,
+            )
           }
         }}
       />

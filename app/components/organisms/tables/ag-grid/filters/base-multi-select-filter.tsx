@@ -190,17 +190,24 @@ export function BaseMultiSelectFilter({
           displayedOptions.map((option) => (
             <div
               key={option.value}
+              role="checkbox"
+              aria-checked={selectedValues.includes(option.value)}
+              tabIndex={0}
               className={cn(
-                "flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent",
-                selectedValues.includes(option.value) && "bg-accent/50"
+                "flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring",
+                selectedValues.includes(option.value) && "bg-accent/50",
               )}
               onClick={() => handleToggle(option.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  handleToggle(option.value)
+                }
+              }}
             >
               <Checkbox
                 checked={selectedValues.includes(option.value)}
                 readOnly
-                tabIndex={-1}
-                aria-hidden="true"
               />
               <span className="text-sm">{option.label}</span>
             </div>

@@ -76,9 +76,15 @@ export async function action({ request, params }: Route.ActionArgs) {
     }
 
     const formData = await request.formData()
-    const approvalStatuses = formData.getAll("approvalStatuses")
-    const applicationStatuses = formData.getAll("applicationStatuses")
-    const attendanceStatuses = formData.getAll("attendanceStatuses")
+    const approvalStatuses = formData
+      .getAll("approvalStatuses")
+      .map((v) => String(v))
+    const applicationStatuses = formData
+      .getAll("applicationStatuses")
+      .map((v) => String(v))
+    const attendanceStatuses = formData
+      .getAll("attendanceStatuses")
+      .map((v) => String(v))
 
     const filtersValidation = listmonkSyncFiltersSchema.safeParse({
       approvalStatuses,
