@@ -253,7 +253,7 @@ export const AdminViewEventParticipantsTableAG: FC<
         cellRendererParams: { type: "gender" },
         filter: BaseMultiSelectFilter,
         filterParams: {
-          options: genderFilterOptions,
+          options: genderFilterOptions(participants),
           field: "gender",
           model: genderFilter,
           onModelChange: setGenderFilter,
@@ -267,7 +267,7 @@ export const AdminViewEventParticipantsTableAG: FC<
         cellRendererParams: { type: "orientation" },
         filter: BaseMultiSelectFilter,
         filterParams: {
-          options: orientationFilterOptions,
+          options: orientationFilterOptions(participants),
           field: "orientation",
           model: orientationFilter,
           onModelChange: setOrientationFilter,
@@ -415,6 +415,7 @@ export const AdminViewEventParticipantsTableAG: FC<
       },
     ],
     [
+      participants,
       applicationStatusFilter,
       attendanceStatusFilter,
       approvedToAttendFilter,
