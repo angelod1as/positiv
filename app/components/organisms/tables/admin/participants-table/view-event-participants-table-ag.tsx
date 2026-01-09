@@ -15,8 +15,11 @@ import { PhoneButtonRenderer } from "~/components/organisms/tables/ag-grid/rende
 import { PronounsRenderer } from "~/components/organisms/tables/ag-grid/renderers/pronouns-renderer"
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { TextViewModalRenderer } from "~/components/organisms/tables/ag-grid/renderers/text-view-modal-renderer"
-import { VeteranRookieBadgeRenderer } from "~/components/organisms/tables/ag-grid/renderers/veteran-rookie-badge-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
+import {
+  getEventCountColors,
+  getVeteranRookieColors,
+} from "~/lib/helpers/cell-colors"
 import {
   applicationStatusOptions,
   approvedToAttendStatusOptions,
@@ -44,15 +47,6 @@ const compactCell = {
   suppressSizeToFit: true,
   cellClass: "ag-cell-compact",
   width: 40,
-}
-
-function getEventCountCellClass(count: number | null | undefined): string {
-  if (count === null || count === undefined) return ""
-  if (count <= 2) return "bg-indigo-100 text-indigo-900"
-  if (count <= 4) return "bg-indigo-300 text-indigo-900"
-  if (count <= 6) return "bg-indigo-500 text-white"
-  if (count <= 8) return "bg-indigo-600 text-white"
-  return "bg-indigo-700 text-white"
 }
 
 function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
@@ -216,7 +210,9 @@ export const AdminViewEventParticipantsTableAG: FC<
       {
         field: "is_veteran",
         headerName: "Vet ou Nov?",
-        cellRenderer: VeteranRookieBadgeRenderer,
+        cellRenderer: (params: { value: boolean | null }) =>
+          params.value ? "Veterane" : "Novate",
+        cellClass: (params) => getVeteranRookieColors(params.value),
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: isVeteranOptions,
@@ -230,7 +226,7 @@ export const AdminViewEventParticipantsTableAG: FC<
         headerName: "Eventos",
         ...compactCell,
         cellClass: (params) =>
-          `ag-cell-compact ${getEventCountCellClass(params.value)}`,
+          `ag-cell-compact ${getEventCountColors(params.value)}`,
       },
       {
         field: "last_attended_event_title",
