@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   applicationStatusOptions,
   isVeteranOptions,
+  notesFilterOptions,
   PARTICIPANTS_TABLE_FILTER_CONFIGS,
 } from "./propMaps"
 
@@ -79,6 +80,24 @@ describe("propMaps", () => {
         "application_status",
       )
       expect(applicationStatusOptions.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe("notesFilterOptions", () => {
+    it("should have exactly 2 options", () => {
+      expect(notesFilterOptions).toHaveLength(2)
+    })
+
+    it("should have has-notes option", () => {
+      const option = notesFilterOptions.find((o) => o.value === "has-notes")
+      expect(option).toBeDefined()
+      expect(option?.label).toBe("Com notas")
+    })
+
+    it("should have no-notes option", () => {
+      const option = notesFilterOptions.find((o) => o.value === "no-notes")
+      expect(option).toBeDefined()
+      expect(option?.label).toBe("Sem notas")
     })
   })
 })

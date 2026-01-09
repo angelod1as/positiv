@@ -57,9 +57,9 @@ export function AGDataTable<TData>({
   onRowClicked,
   className,
   height,
-  persistState = false,
+  persistState = true,
   stateVersion = 1,
-  showToolbar = false,
+  showToolbar = true,
   onClearFilters,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
@@ -173,6 +173,7 @@ export function AGDataTable<TData>({
           onGridReady={handleGridReady}
           onStateUpdated={handleStateUpdated}
           onRowClicked={onRowClicked}
+          maintainColumnOrder={persistState}
         />
       </div>
       {showToolbar && (

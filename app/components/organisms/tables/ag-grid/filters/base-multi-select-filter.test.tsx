@@ -589,4 +589,175 @@ describe("BaseMultiSelectFilter", () => {
       expect(doesFilterPass({ node: mixedCaseNode })).toBe(true)
     })
   })
+
+  describe("Filter to Existing Values", () => {
+    const createMockApi = (rows: Array<Record<string, unknown>>) => ({
+      forEachNode: (callback: (node: IRowNode) => void) => {
+        rows.forEach((data) => callback({ data } as IRowNode))
+      },
+    })
+
+    it("only shows options that exist in data when filterToExistingValues=true (default)", () => {
+      const mockApi = createMockApi([
+        { status: "pending" },
+        { status: "approved" },
+      ])
+
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          api={mockApi as never}
+          model={null}
+          onModelChange={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByText("Pendente")).toBeInTheDocument()
+      expect(screen.getByText("Aprovado")).toBeInTheDocument()
+      expect(screen.queryByText("Rejeitado")).not.toBeInTheDocument()
+      expect(screen.getByText("0 de 2 selecionados")).toBeInTheDocument()
+    })
+
+    it("shows all options when filterToExistingValues=false", () => {
+      const mockApi = createMockApi([
+        { status: "pending" },
+        { status: "approved" },
+      ])
+
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          api={mockApi as never}
+          filterToExistingValues={false}
+          model={null}
+          onModelChange={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByText("Pendente")).toBeInTheDocument()
+      expect(screen.getByText("Aprovado")).toBeInTheDocument()
+      expect(screen.getByText("Rejeitado")).toBeInTheDocument()
+      expect(screen.getByText("0 de 3 selecionados")).toBeInTheDocument()
+    })
+
+    it("shows all options when api is not provided", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          model={null}
+          onModelChange={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByText("Pendente")).toBeInTheDocument()
+      expect(screen.getByText("Aprovado")).toBeInTheDocument()
+      expect(screen.getByText("Rejeitado")).toBeInTheDocument()
+    })
+
+    it("handles case-insensitive matching for existing values", () => {
+      const mockApi = createMockApi([
+        { status: "PENDING" },
+        { status: "Approved" },
+      ])
+
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          api={mockApi as never}
+          model={null}
+          onModelChange={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByText("Pendente")).toBeInTheDocument()
+      expect(screen.getByText("Aprovado")).toBeInTheDocument()
+      expect(screen.queryByText("Rejeitado")).not.toBeInTheDocument()
+    })
+
+    it("handles array matchMode for existing values", () => {
+      const genderOptions = [
+        { value: "homem cis", label: "Homem cis" },
+        { value: "mulher cis", label: "Mulher cis" },
+        { value: "pessoa não binária", label: "Pessoa não binária" },
+      ]
+
+      const mockApi = createMockApi([
+        { gender: ["homem cis", "pessoa não binária"] },
+        { gender: ["mulher cis"] },
+      ])
+
+      render(
+        <BaseMultiSelectFilter
+          options={genderOptions}
+          field="gender"
+          matchMode="array"
+          api={mockApi as never}
+          model={null}
+          onModelChange={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByText("Homem cis")).toBeInTheDocument()
+      expect(screen.getByText("Mulher cis")).toBeInTheDocument()
+      expect(screen.getByText("Pessoa não binária")).toBeInTheDocument()
+    })
+
+    it("select all only selects filtered options", async () => {
+      const user = userEvent.setup()
+      const onModelChange = vi.fn()
+      const mockApi = createMockApi([
+        { status: "pending" },
+        { status: "approved" },
+      ])
+
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          api={mockApi as never}
+          model={null}
+          onModelChange={onModelChange}
+        />,
+      )
+
+      await user.click(screen.getByRole("button", { name: /selecionar todos/i }))
+
+      expect(onModelChange).toHaveBeenCalledWith(["pending", "approved"])
+    })
+
+    it("uses custom getValue function for filtering existing values", () => {
+      const customGetValue = vi.fn((node: IRowNode) => {
+        const notes = node.data?.notes as string | null
+        return notes && notes.trim() ? "has-notes" : "no-notes"
+      })
+
+      const notesOptions = [
+        { value: "has-notes", label: "Com notas" },
+        { value: "no-notes", label: "Sem notas" },
+      ]
+
+      const mockApi = createMockApi([
+        { notes: "Some notes" },
+        { notes: "More notes" },
+        { notes: "" },
+      ])
+
+      render(
+        <BaseMultiSelectFilter
+          options={notesOptions}
+          getValue={customGetValue}
+          api={mockApi as never}
+          model={null}
+          onModelChange={vi.fn()}
+        />,
+      )
+
+      expect(screen.getByText("Com notas")).toBeInTheDocument()
+      expect(screen.getByText("Sem notas")).toBeInTheDocument()
+    })
+  })
 })

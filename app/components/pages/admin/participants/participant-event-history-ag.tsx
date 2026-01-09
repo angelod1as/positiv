@@ -1,13 +1,18 @@
-import type { ColDef, ICellRendererParams } from "ag-grid-community"
+import type { ColDef, ICellRendererParams, IRowNode } from "ag-grid-community"
 import type { FC } from "react"
 import { useMemo } from "react"
 import { Link } from "~/components/atoms/link/link"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
+import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
   approvedToAttendStatusOptions,
+  eventParticipantPropMap,
+  eventPropNameMap,
+  notesFilterOptions,
+  profilePropMap,
 } from "~/lib/helpers/propMaps"
 import paths from "~/lib/paths"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
@@ -88,32 +93,55 @@ export const ParticipantEventHistoryAG: FC<ParticipantEventHistoryAGProps> = ({
     () => [
       {
         field: "event_title",
-        headerName: "Evento",
+        headerName: eventPropNameMap("title"),
         cellRenderer: EventRenderer,
         sortable: true,
       },
       {
         field: "application_status",
-        headerName: "Status de Inscrição",
+        headerName: eventParticipantPropMap("application_status"),
         cellRenderer: ApplicationStatusRenderer,
         sortable: true,
+        filter: BaseMultiSelectFilter,
+        filterParams: {
+          options: applicationStatusOptions,
+          field: "application_status",
+        },
       },
       {
         field: "approved_to_attend",
-        headerName: "Status de Aprovação",
+        headerName: profilePropMap("approved_to_attend"),
         cellRenderer: ApprovalStatusRenderer,
         sortable: true,
+        filter: BaseMultiSelectFilter,
+        filterParams: {
+          options: approvedToAttendStatusOptions,
+          field: "approved_to_attend",
+        },
       },
       {
         field: "attendance_status",
-        headerName: "Comparecimento",
+        headerName: eventParticipantPropMap("attendance_status"),
         cellRenderer: AttendanceStatusRenderer,
         sortable: true,
+        filter: BaseMultiSelectFilter,
+        filterParams: {
+          options: attendanceStatusOptions,
+          field: "attendance_status",
+        },
       },
       {
         field: "admin_general_notes",
-        headerName: "Notas do Admin",
+        headerName: eventParticipantPropMap("admin_general_notes"),
         sortable: true,
+        filter: BaseMultiSelectFilter,
+        filterParams: {
+          options: notesFilterOptions,
+          getValue: (node: IRowNode<ParticipantEventHistoryData>) => {
+            const notes = node.data?.admin_general_notes
+            return notes && notes.trim() ? "has-notes" : "no-notes"
+          },
+        },
       },
     ],
     [],
