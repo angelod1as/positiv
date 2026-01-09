@@ -1,4 +1,5 @@
 import type { ColDef } from "ag-grid-community"
+import { DollarSign } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useFetcher } from "react-router"
@@ -39,6 +40,12 @@ const STORAGE_KEYS = {
   isVeteran: "participants-ag-filter-is_veteran",
 }
 
+const compactCell = {
+  suppressSizeToFit: true,
+  cellClass: "ag-cell-compact",
+  width: 40,
+}
+
 function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
   if (typeof window === "undefined") return defaultValue
   const stored = sessionStorage.getItem(key)
@@ -63,35 +70,44 @@ export const AdminViewEventParticipantsTableAG: FC<
 > = ({ participants, eventId }) => {
   const fetcher = useFetcher<ComposableFetcherData>()
 
-  const [applicationStatusFilter, setApplicationStatusFilter] = useState<string[]>(() =>
-    getStoredFilter(STORAGE_KEYS.applicationStatus)
-  )
-  const [attendanceStatusFilter, setAttendanceStatusFilter] = useState<string[]>(() =>
-    getStoredFilter(STORAGE_KEYS.attendanceStatus)
-  )
-  const [approvedToAttendFilter, setApprovedToAttendFilter] = useState<string[]>(() =>
-    getStoredFilter(STORAGE_KEYS.approvedToAttend)
-  )
+  const [applicationStatusFilter, setApplicationStatusFilter] = useState<
+    string[]
+  >(() => getStoredFilter(STORAGE_KEYS.applicationStatus))
+  const [attendanceStatusFilter, setAttendanceStatusFilter] = useState<
+    string[]
+  >(() => getStoredFilter(STORAGE_KEYS.attendanceStatus))
+  const [approvedToAttendFilter, setApprovedToAttendFilter] = useState<
+    string[]
+  >(() => getStoredFilter(STORAGE_KEYS.approvedToAttend))
   const [genderFilter, setGenderFilter] = useState<string[]>(() =>
-    getStoredFilter(STORAGE_KEYS.gender)
+    getStoredFilter(STORAGE_KEYS.gender),
   )
   const [orientationFilter, setOrientationFilter] = useState<string[]>(() =>
-    getStoredFilter(STORAGE_KEYS.orientation)
+    getStoredFilter(STORAGE_KEYS.orientation),
   )
   const [isVeteranFilter, setIsVeteranFilter] = useState<string[]>(() =>
-    getStoredFilter(STORAGE_KEYS.isVeteran)
+    getStoredFilter(STORAGE_KEYS.isVeteran),
   )
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.applicationStatus, JSON.stringify(applicationStatusFilter))
+    sessionStorage.setItem(
+      STORAGE_KEYS.applicationStatus,
+      JSON.stringify(applicationStatusFilter),
+    )
   }, [applicationStatusFilter])
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.attendanceStatus, JSON.stringify(attendanceStatusFilter))
+    sessionStorage.setItem(
+      STORAGE_KEYS.attendanceStatus,
+      JSON.stringify(attendanceStatusFilter),
+    )
   }, [attendanceStatusFilter])
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.approvedToAttend, JSON.stringify(approvedToAttendFilter))
+    sessionStorage.setItem(
+      STORAGE_KEYS.approvedToAttend,
+      JSON.stringify(approvedToAttendFilter),
+    )
   }, [approvedToAttendFilter])
 
   useEffect(() => {
@@ -99,33 +115,45 @@ export const AdminViewEventParticipantsTableAG: FC<
   }, [genderFilter])
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.orientation, JSON.stringify(orientationFilter))
+    sessionStorage.setItem(
+      STORAGE_KEYS.orientation,
+      JSON.stringify(orientationFilter),
+    )
   }, [orientationFilter])
 
   useEffect(() => {
-    sessionStorage.setItem(STORAGE_KEYS.isVeteran, JSON.stringify(isVeteranFilter))
+    sessionStorage.setItem(
+      STORAGE_KEYS.isVeteran,
+      JSON.stringify(isVeteranFilter),
+    )
   }, [isVeteranFilter])
 
   const filteredParticipants = useMemo(() => {
     let result = participants
 
     if (applicationStatusFilter.length > 0) {
-      result = result.filter((p) => applicationStatusFilter.includes(p.application_status || ""))
+      result = result.filter((p) =>
+        applicationStatusFilter.includes(p.application_status || ""),
+      )
     }
     if (attendanceStatusFilter.length > 0) {
-      result = result.filter((p) => attendanceStatusFilter.includes(p.attendance_status || ""))
+      result = result.filter((p) =>
+        attendanceStatusFilter.includes(p.attendance_status || ""),
+      )
     }
     if (approvedToAttendFilter.length > 0) {
-      result = result.filter((p) => approvedToAttendFilter.includes(p.approved_to_attend || ""))
+      result = result.filter((p) =>
+        approvedToAttendFilter.includes(p.approved_to_attend || ""),
+      )
     }
     if (genderFilter.length > 0) {
       result = result.filter((p) =>
-        p.gender?.some((g) => genderFilter.includes(g))
+        p.gender?.some((g) => genderFilter.includes(g)),
       )
     }
     if (orientationFilter.length > 0) {
       result = result.filter((p) =>
-        p.orientation?.some((o) => orientationFilter.includes(o))
+        p.orientation?.some((o) => orientationFilter.includes(o)),
       )
     }
     if (isVeteranFilter.length > 0) {
@@ -159,7 +187,7 @@ export const AdminViewEventParticipantsTableAG: FC<
 
       fetcher.submit(formData, { method: "POST" })
     },
-    [participants, fetcher]
+    [participants, fetcher],
   )
 
   const columnDefs: ColDef<ProfileWithExtraData>[] = useMemo(
@@ -170,13 +198,11 @@ export const AdminViewEventParticipantsTableAG: FC<
         pinned: "left",
         cellRenderer: SocialNameRenderer,
         sortable: true,
-        width: 150,
       },
       {
         field: "full_name",
         headerName: profilePropMap("full_name"),
         sortable: true,
-        width: 200,
       },
       {
         field: "is_veteran",
@@ -189,32 +215,29 @@ export const AdminViewEventParticipantsTableAG: FC<
           model: isVeteranFilter,
           onModelChange: setIsVeteranFilter,
         },
-        width: 120,
       },
       {
         field: "attended_events_count",
         headerName: "Eventos",
-        width: 90,
+        ...compactCell,
       },
       {
         field: "last_attended_event_title",
         headerName: "Último Evento",
         cellRenderer: LastAttendedEventRenderer,
         sortable: true,
-        width: 180,
       },
       {
         field: "flag",
         headerName: profilePropMap("flag"),
         cellRenderer: FlagBadgeRenderer,
         sortable: true,
-        width: 100,
+        ...compactCell,
       },
       {
         field: "pronouns",
         headerName: profilePropMap("pronouns"),
         cellRenderer: PronounsRenderer,
-        width: 120,
       },
       {
         field: "gender",
@@ -229,7 +252,6 @@ export const AdminViewEventParticipantsTableAG: FC<
           onModelChange: setGenderFilter,
           matchMode: "array",
         },
-        width: 150,
       },
       {
         field: "orientation",
@@ -244,13 +266,12 @@ export const AdminViewEventParticipantsTableAG: FC<
           onModelChange: setOrientationFilter,
           matchMode: "array",
         },
-        width: 150,
       },
       {
         field: "phone",
-        headerName: profilePropMap("phone"),
+        headerName: "",
         cellRenderer: PhoneButtonRenderer,
-        width: 140,
+        ...compactCell,
       },
       {
         field: "application_status",
@@ -261,7 +282,9 @@ export const AdminViewEventParticipantsTableAG: FC<
           values: applicationStatusOptions.map((o) => o.value),
         },
         valueFormatter: (params) => {
-          const option = applicationStatusOptions.find((o) => o.value === params.value)
+          const option = applicationStatusOptions.find(
+            (o) => o.value === params.value,
+          )
           return option?.name || params.value
         },
         filter: BaseMultiSelectFilter,
@@ -271,7 +294,6 @@ export const AdminViewEventParticipantsTableAG: FC<
           model: applicationStatusFilter,
           onModelChange: setApplicationStatusFilter,
         },
-        width: 180,
       },
       {
         field: "attendance_status",
@@ -282,7 +304,9 @@ export const AdminViewEventParticipantsTableAG: FC<
           values: attendanceStatusOptions.map((o) => o.value),
         },
         valueFormatter: (params) => {
-          const option = attendanceStatusOptions.find((o) => o.value === params.value)
+          const option = attendanceStatusOptions.find(
+            (o) => o.value === params.value,
+          )
           return option?.name || params.value
         },
         filter: BaseMultiSelectFilter,
@@ -292,7 +316,6 @@ export const AdminViewEventParticipantsTableAG: FC<
           model: attendanceStatusFilter,
           onModelChange: setAttendanceStatusFilter,
         },
-        width: 180,
       },
       {
         field: "approved_to_attend",
@@ -303,7 +326,9 @@ export const AdminViewEventParticipantsTableAG: FC<
           values: approvedToAttendStatusOptions.map((o) => o.value),
         },
         valueFormatter: (params) => {
-          const option = approvedToAttendStatusOptions.find((o) => o.value === params.value)
+          const option = approvedToAttendStatusOptions.find(
+            (o) => o.value === params.value,
+          )
           return option?.name || params.value
         },
         filter: BaseMultiSelectFilter,
@@ -313,22 +338,22 @@ export const AdminViewEventParticipantsTableAG: FC<
           model: approvedToAttendFilter,
           onModelChange: setApprovedToAttendFilter,
         },
-        width: 180,
       },
       {
         field: "has_paid",
-        headerName: eventParticipantPropMap("has_paid"),
+        headerName: "",
+        headerComponent: () => <DollarSign className="h-4 w-4" />,
+        headerClass: "ag-header-compact",
         editable: true,
         cellEditor: "agCheckboxCellEditor",
         cellRenderer: "agCheckboxCellRenderer",
-        width: 100,
+        ...compactCell,
       },
       {
         field: "payment",
         headerName: eventParticipantPropMap("payment"),
         editable: true,
         cellEditor: "agNumberCellEditor",
-        width: 100,
       },
       {
         field: "spot_type",
@@ -342,49 +367,44 @@ export const AdminViewEventParticipantsTableAG: FC<
           const option = spotTypeOptions.find((o) => o.value === params.value)
           return option?.name || params.value
         },
-        width: 130,
       },
       {
         colId: "is_veteran_edit",
         field: "is_veteran",
-        headerName: profilePropMap("is_veteran"),
+        headerName: "Veterane?",
         editable: true,
         cellEditor: "agCheckboxCellEditor",
         cellRenderer: "agCheckboxCellRenderer",
-        width: 100,
+        ...compactCell,
       },
       {
         field: "companions",
         headerName: eventParticipantPropMap("companions"),
         cellRenderer: TextViewModalRenderer,
-        width: 200,
       },
       {
         field: "notes",
         headerName: eventParticipantPropMap("notes"),
         cellRenderer: TextModalEditor,
-        width: 200,
       },
       {
         field: "admin_general_notes",
         headerName: eventParticipantPropMap("admin_general_notes"),
         cellRenderer: TextModalEditor,
-        width: 200,
       },
       {
         field: "was_admin_skipped_last_event",
         headerName: "Foi rodízio na última festa?",
         cellRenderer: BooleanTextRenderer,
-        width: 150,
       },
       {
         colId: "actions",
         headerName: "",
         cellRenderer: ActionButtonsRenderer,
         pinned: "right",
-        width: 60,
         sortable: false,
         filter: false,
+        ...compactCell,
       },
     ],
     [
@@ -394,7 +414,7 @@ export const AdminViewEventParticipantsTableAG: FC<
       genderFilter,
       orientationFilter,
       isVeteranFilter,
-    ]
+    ],
   )
 
   const handleClearFilters = useCallback(() => {
