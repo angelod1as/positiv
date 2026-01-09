@@ -1,8 +1,8 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi } from "vitest"
-import { ProfileUpdateModal } from "./profile-update-modal"
 import * as ReactRouter from "react-router"
+import { describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
+import { ProfileUpdateModal } from "./profile-update-modal"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")

@@ -1,11 +1,11 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { WarningIndicatorRenderer } from "./warning-indicator-renderer"
 
 function createMockParams(
   value: string[] | null | undefined,
-  field: string
+  field: string,
 ): ICellRendererParams {
   return {
     value,

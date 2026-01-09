@@ -152,7 +152,7 @@ SELECT
     END,
     -- flag_notes
     CASE usr.email
-        WHEN 'user1@example.com' THEN 'Teste de bandeira para a bandeira amarela'
+        WHEN 'user1@example.com' THEN 'Esta é uma nota de bandeira muito longa para testar se o tooltip está sendo cortado pelo header da tabela ou pelo container principal. A nota contém várias linhas de texto para verificar o comportamento do z-index e do posicionamento do tooltip quando ultrapassa os limites da célula.'
         WHEN 'user2@example.com' THEN 'Teste de bandeira para a bandeira vermelha'
         WHEN 'user3@example.com' THEN 'Mais uma nota de teste'
         ELSE null

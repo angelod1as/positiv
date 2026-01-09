@@ -1,6 +1,7 @@
 import type {
   CellValueChangedEvent,
   ColDef,
+  GetRowIdParams,
   GridApi,
   GridReadyEvent,
   GridState,
@@ -8,6 +9,7 @@ import type {
   RowClickedEvent,
   StateUpdatedEvent,
 } from "ag-grid-community"
+import type { FetcherWithComponents } from "react-router"
 
 export interface AutoSaveParams {
   field: string
@@ -26,6 +28,8 @@ export interface AGDataTableProps<TData> {
   id: string
   data: TData[]
   columnDefs: ColDef<TData>[]
+  context?: Record<string, unknown>
+  getRowId?: (params: GetRowIdParams<TData>) => string
 
   loading?: boolean
   emptyMessage?: string
@@ -41,6 +45,7 @@ export interface AGDataTableProps<TData> {
 
   onSave?: (params: AutoSaveParams) => Promise<void>
   autoSaveOptions?: AutoSaveOptions
+  fetcher?: FetcherWithComponents<{ success?: boolean; error?: string }>
 
   onCellValueChanged?: (params: CellValueChangedEvent<TData>) => void
   onGridReady?: (params: GridReadyEvent<TData>) => void
@@ -73,6 +78,7 @@ export interface UseGridStateReturn {
   saveState: (state: GridState) => void
   clearState: () => void
   isRestored: boolean
+  hasSavedState: boolean
 }
 
 export interface CustomFilterParams extends IFilterParams {

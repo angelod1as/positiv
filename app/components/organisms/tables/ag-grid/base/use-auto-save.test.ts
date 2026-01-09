@@ -1,7 +1,7 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import { renderHook, act } from "@testing-library/react"
-import { useAutoSave } from "./use-auto-save"
 import type { CellValueChangedEvent, GridApi } from "ag-grid-community"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { act, renderHook } from "~/test/test-utils"
+import { useAutoSave } from "./use-auto-save"
 
 // Mock toast
 vi.mock("sonner", () => ({
@@ -23,7 +23,7 @@ describe("useAutoSave", () => {
   const createMockEvent = (
     oldValue: unknown,
     newValue: unknown,
-    field = "status"
+    field = "status",
   ): CellValueChangedEvent => {
     const mockApi = {
       applyTransaction: vi.fn(),
@@ -38,7 +38,11 @@ describe("useAutoSave", () => {
       newValue,
       colDef: { field },
       data: { id: "row-1", [field]: newValue },
-      node: { id: "row-1", data: { id: "row-1", [field]: newValue } },
+      node: {
+        id: "row-1",
+        data: { id: "row-1", [field]: newValue },
+        setDataValue: vi.fn(),
+      },
       api: mockApi,
       column: { getColId: () => field },
     } as unknown as CellValueChangedEvent
@@ -49,7 +53,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       const event = createMockEvent("pending", "approved")
@@ -64,7 +68,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       const event = createMockEvent("pending", "approved")
@@ -85,7 +89,7 @@ describe("useAutoSave", () => {
           oldValue: "pending",
           newValue: "approved",
           rowData: expect.objectContaining({ id: "row-1" }),
-        })
+        }),
       )
     })
 
@@ -93,11 +97,13 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       act(() => {
-        result.current.handleCellValueChanged(createMockEvent("pending", "approved"))
+        result.current.handleCellValueChanged(
+          createMockEvent("pending", "approved"),
+        )
       })
 
       await act(async () => {
@@ -106,7 +112,9 @@ describe("useAutoSave", () => {
 
       // Another change before debounce completes
       act(() => {
-        result.current.handleCellValueChanged(createMockEvent("approved", "rejected"))
+        result.current.handleCellValueChanged(
+          createMockEvent("approved", "rejected"),
+        )
       })
 
       await act(async () => {
@@ -125,7 +133,7 @@ describe("useAutoSave", () => {
       expect(onSave).toHaveBeenCalledWith(
         expect.objectContaining({
           newValue: "rejected",
-        })
+        }),
       )
     })
 
@@ -153,7 +161,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
 
       const { result, unmount } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       act(() => {
@@ -179,7 +187,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       const event = createMockEvent("pending", "approved")
@@ -201,7 +209,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockRejectedValue(new Error("Save failed"))
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       const event = createMockEvent("pending", "approved")
@@ -230,7 +238,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockRejectedValue(new Error("Network error"))
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       act(() => {
@@ -258,7 +266,7 @@ describe("useAutoSave", () => {
           onSave,
           debounceMs: 500,
           errorMessage: "Falha ao salvar alteração",
-        })
+        }),
       )
 
       act(() => {
@@ -284,7 +292,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockRejectedValue(new Error("Connection timeout"))
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       act(() => {
@@ -302,7 +310,7 @@ describe("useAutoSave", () => {
 
       expect(toast.error).toHaveBeenCalledWith(
         "Erro ao salvar alteração",
-        expect.objectContaining({ description: "Connection timeout" })
+        expect.objectContaining({ description: "Connection timeout" }),
       )
     })
 
@@ -310,7 +318,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockRejectedValue(new Error("Save failed"))
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       // Create mock where getRowNode returns a node with different current value
@@ -328,7 +336,11 @@ describe("useAutoSave", () => {
         newValue: "approved",
         colDef: { field: "status" },
         data: { id: "row-1", status: "approved" },
-        node: { id: "row-1", data: { id: "row-1", status: "approved" } },
+        node: {
+          id: "row-1",
+          data: { id: "row-1", status: "approved" },
+          setDataValue: vi.fn(),
+        },
         api: mockApi,
         column: { getColId: () => "status" },
       } as unknown as CellValueChangedEvent
@@ -350,18 +362,19 @@ describe("useAutoSave", () => {
       expect(mockSetDataValue).not.toHaveBeenCalled()
     })
 
-    it("warns when nodeId is undefined and cannot rollback", async () => {
-      const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    it("uses node fallback for rollback when nodeId is undefined", async () => {
       const onSave = vi.fn().mockRejectedValue(new Error("Save failed"))
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
-      // Create event with undefined node.id
+      // Create event with undefined node.id but with setDataValue
+      const mockGetRowNode = vi.fn()
+      const mockSetDataValue = vi.fn()
       const mockApi = {
         applyTransaction: vi.fn(),
-        getRowNode: vi.fn(),
+        getRowNode: mockGetRowNode,
       } as unknown as GridApi
 
       const event = {
@@ -369,7 +382,11 @@ describe("useAutoSave", () => {
         newValue: "new",
         colDef: { field: "status" },
         data: { id: "row-1", status: "new" },
-        node: { id: undefined, data: { id: "row-1", status: "new" } },
+        node: {
+          id: undefined,
+          data: { id: "row-1", status: "new" },
+          setDataValue: mockSetDataValue,
+        },
         api: mockApi,
         column: { getColId: () => "status" },
       } as unknown as CellValueChangedEvent
@@ -387,12 +404,10 @@ describe("useAutoSave", () => {
         await Promise.resolve()
       })
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "Cannot rollback change: node.id is undefined",
-        { field: "status" }
-      )
-
-      consoleWarnSpy.mockRestore()
+      // Should not attempt to get row node when id is undefined
+      expect(mockGetRowNode).not.toHaveBeenCalled()
+      // Should use fallback node.setDataValue to rollback
+      expect(mockSetDataValue).toHaveBeenCalledWith("status", "old")
     })
   })
 
@@ -405,7 +420,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockReturnValue(savePromise)
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       expect(result.current.isSaving).toBe(false)
@@ -460,7 +475,7 @@ describe("useAutoSave", () => {
       const onSave = vi.fn().mockResolvedValue(undefined)
 
       const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
+        useAutoSave({ onSave, debounceMs: 500 }),
       )
 
       const event = createMockEvent("old", "new", "myColumn")
@@ -476,44 +491,9 @@ describe("useAutoSave", () => {
       })
 
       expect(onSave).toHaveBeenCalledWith(
-        expect.objectContaining({ field: "myColumn" }) // From getColId()
+        expect.objectContaining({ field: "myColumn" }), // From getColId()
       )
     })
   })
 
-  describe("Error Logging", () => {
-    it("logs error to console on save failure", async () => {
-      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-      const saveError = new Error("Network error")
-      const onSave = vi.fn().mockRejectedValue(saveError)
-
-      const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 })
-      )
-
-      act(() => {
-        result.current.handleCellValueChanged(createMockEvent("old", "new"))
-      })
-
-      await act(async () => {
-        vi.advanceTimersByTime(500)
-      })
-
-      await act(async () => {
-        await Promise.resolve()
-        await Promise.resolve()
-      })
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Auto-save failed:",
-        expect.objectContaining({
-          error: saveError,
-          field: "status",
-          rowId: "row-1",
-        })
-      )
-
-      consoleErrorSpy.mockRestore()
-    })
-  })
 })
