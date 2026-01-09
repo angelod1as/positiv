@@ -1,15 +1,19 @@
-import { useCallback } from "react"
+import { AG_GRID_LOCALE_BR } from "@ag-grid-community/locale"
 import {
   AllCommunityModule,
   ModuleRegistry,
+  themeQuartz,
   type CellValueChangedEvent,
+  type GridApi,
   type GridReadyEvent,
   type SelectionChangedEvent,
   type StateUpdatedEvent,
 } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
+import { useCallback, useState } from "react"
 import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
+import { AGDataTableToolbar } from "./ag-data-table-toolbar"
 import type { AGDataTableProps } from "./types"
 import { useAutoSave } from "./use-auto-save"
 import { useGridState } from "./use-grid-state"
@@ -24,6 +28,14 @@ function ensureModulesRegistered() {
 }
 
 const DEFAULT_EMPTY_MESSAGE = "Nenhum registro encontrado"
+
+const gridTheme = themeQuartz.withParams({
+  rowBorder: true,
+  columnBorder: true,
+  headerRowBorder: true,
+  headerColumnBorder: true,
+  spacing: 7,
+})
 
 export function AGDataTable<TData>({
   id,
@@ -42,14 +54,22 @@ export function AGDataTable<TData>({
   onCellValueChanged,
   onGridReady,
   onStateUpdated,
+  onRowClicked,
   className,
   height,
   persistState = false,
   stateVersion = 1,
+  showToolbar = false,
+  onClearFilters,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
 
-  const { restoreState, saveState } = useGridState(id, { version: stateVersion })
+  const [gridApi, setGridApi] = useState<GridApi | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  const { restoreState, saveState, clearState } = useGridState(id, {
+    version: stateVersion,
+  })
 
   const { handleCellValueChanged: autoSaveHandler } = useAutoSave({
     onSave,
@@ -62,7 +82,10 @@ export function AGDataTable<TData>({
 
   const rowSelectionConfig = rowSelection
     ? {
-        mode: rowSelection === "multiple" ? ("multiRow" as const) : ("singleRow" as const),
+        mode:
+          rowSelection === "multiple"
+            ? ("multiRow" as const)
+            : ("singleRow" as const),
         checkboxes: rowSelection === "multiple",
       }
     : undefined
@@ -74,7 +97,7 @@ export function AGDataTable<TData>({
         onRowSelectionChange(selectedRows)
       }
     },
-    [onRowSelectionChange]
+    [onRowSelectionChange],
   )
 
   const handleCellValueChanged = useCallback(
@@ -84,18 +107,23 @@ export function AGDataTable<TData>({
       }
       onCellValueChanged?.(event)
     },
-    [onSave, autoSaveHandler, onCellValueChanged]
+    [onSave, autoSaveHandler, onCellValueChanged],
   )
 
   const handleGridReady = useCallback(
     (event: GridReadyEvent<TData>) => {
+      setGridApi(event.api)
       if (persistState) {
         restoreState(event.api)
       }
       onGridReady?.(event)
     },
-    [persistState, restoreState, onGridReady]
+    [persistState, restoreState, onGridReady],
   )
+
+  const handleToggleFullscreen = useCallback(() => {
+    setIsFullscreen((prev) => !prev)
+  }, [])
 
   const handleStateUpdated = useCallback(
     (event: StateUpdatedEvent<TData>) => {
@@ -104,30 +132,60 @@ export function AGDataTable<TData>({
       }
       onStateUpdated?.(event)
     },
-    [persistState, saveState, onStateUpdated]
+    [persistState, saveState, onStateUpdated],
+  )
+
+  const defaultColDef = {
+    flex: 1,
+    minWidth: 100,
+  }
+
+  const containerClasses = cn(
+    isFullscreen && "fixed inset-0 z-50 bg-background flex flex-col",
+    !isFullscreen && !height && "h-[400px]",
+    isFullscreen && "h-full",
+    className,
   )
 
   return (
     <div
       data-testid={`ag-data-table-${id}`}
-      className={cn("ag-theme-quartz", !height && "h-[400px]", className)}
-      style={height ? { height } : undefined}
+      className={containerClasses}
+      style={height && !isFullscreen ? { height } : undefined}
     >
-      <AgGridReact
-        rowData={data}
-        columnDefs={columnDefs}
-        loading={loading}
-        overlayNoRowsTemplate={noRowsTemplate}
-        pagination={pagination}
-        paginationPageSize={paginationPageSize}
-        paginationPageSizeSelector={paginationPageSizeSelector}
-        rowSelection={rowSelectionConfig}
-        onSelectionChanged={handleSelectionChanged}
-        quickFilterText={quickFilterText}
-        onCellValueChanged={handleCellValueChanged}
-        onGridReady={handleGridReady}
-        onStateUpdated={handleStateUpdated}
-      />
+      <div className={cn(isFullscreen && "flex-1", !isFullscreen && "h-full")}>
+        <AgGridReact
+          theme={gridTheme}
+          localeText={AG_GRID_LOCALE_BR}
+          defaultColDef={defaultColDef}
+          rowData={data}
+          columnDefs={columnDefs}
+          loading={loading}
+          rowStyle={onRowClicked ? { cursor: "pointer" } : undefined}
+          overlayNoRowsTemplate={noRowsTemplate}
+          pagination={pagination}
+          paginationPageSize={paginationPageSize}
+          paginationPageSizeSelector={paginationPageSizeSelector}
+          rowSelection={rowSelectionConfig}
+          onSelectionChanged={handleSelectionChanged}
+          quickFilterText={quickFilterText}
+          onCellValueChanged={handleCellValueChanged}
+          onGridReady={handleGridReady}
+          onStateUpdated={handleStateUpdated}
+          onRowClicked={onRowClicked}
+        />
+      </div>
+      {showToolbar && (
+        <div className="mt-2 flex justify-end">
+          <AGDataTableToolbar
+            gridApi={gridApi}
+            clearState={clearState}
+            onClearFilters={onClearFilters}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={handleToggleFullscreen}
+          />
+        </div>
+      )}
     </div>
   )
 }

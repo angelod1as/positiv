@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@ag-grid-community/locale':
+        specifier: ^35.0.0
+        version: 35.0.0
       '@aws-sdk/client-sesv2':
         specifier: ^3.810.0
         version: 3.839.0
@@ -317,6 +320,9 @@ packages:
 
   '@adobe/css-tools@4.4.3':
     resolution: {integrity: sha512-VQKMkwriZbaOgVCby1UDY/LDk5fIjhQicCvVPFqfe+69fWaPWydbWJ3wRt59/YzIwda1I81loas3oCoHxnqvdA==}
+
+  '@ag-grid-community/locale@35.0.0':
+    resolution: {integrity: sha512-WzCa7VdX2D2XMifDCG8pBXUOdrpnYGd6gT/J+HLH3oGnQAXLk31r7WvvVmgKuFD6xGetPzg4hWX79GdJssVxTQ==}
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -6175,6 +6181,8 @@ packages:
 snapshots:
 
   '@adobe/css-tools@4.4.3': {}
+
+  '@ag-grid-community/locale@35.0.0': {}
 
   '@ampproject/remapping@2.3.0':
     dependencies:

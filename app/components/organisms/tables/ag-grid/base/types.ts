@@ -5,6 +5,7 @@ import type {
   GridReadyEvent,
   GridState,
   IFilterParams,
+  RowClickedEvent,
   StateUpdatedEvent,
 } from "ag-grid-community"
 
@@ -44,12 +45,16 @@ export interface AGDataTableProps<TData> {
   onCellValueChanged?: (params: CellValueChangedEvent<TData>) => void
   onGridReady?: (params: GridReadyEvent<TData>) => void
   onStateUpdated?: (params: StateUpdatedEvent<TData>) => void
+  onRowClicked?: (params: RowClickedEvent<TData>) => void
 
   className?: string
   height?: string
 
   persistState?: boolean
   stateVersion?: number
+
+  showToolbar?: boolean
+  onClearFilters?: () => void
 }
 
 export interface UseGridStateOptions {
