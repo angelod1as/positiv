@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import type { GridApi, GridState } from "ag-grid-community"
 import type {
   UseGridStateOptions,
@@ -39,6 +39,17 @@ export function useGridState(
 
   const [isRestored, setIsRestored] = useState(false)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const hasSavedState = useMemo(() => {
+    try {
+      const storedData = localStorage.getItem(storageKey)
+      if (!storedData) return false
+      const parsed: StoredGridState = JSON.parse(storedData)
+      return parsed.version === version
+    } catch {
+      return false
+    }
+  }, [storageKey, version])
 
   // Cleanup debounce timer on unmount to prevent memory leaks
   useEffect(() => {
@@ -117,5 +128,6 @@ export function useGridState(
     saveState,
     clearState,
     isRestored,
+    hasSavedState,
   }
 }
