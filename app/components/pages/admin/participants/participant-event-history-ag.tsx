@@ -27,6 +27,16 @@ type ParticipantEventHistoryData = ParticipantVsEvent & {
   time_event_start: string
 }
 
+const applicationStatusMap = new Map<string, string>(
+  applicationStatusOptions.map((opt) => [opt.value, opt.name]),
+)
+const approvalStatusMap = new Map<string, string>(
+  approvedToAttendStatusOptions.map((opt) => [opt.value, opt.name]),
+)
+const attendanceStatusMap = new Map<string, string>(
+  attendanceStatusOptions.map((opt) => [opt.value, opt.name]),
+)
+
 type ParticipantEventHistoryAGProps = {
   participantHistory: Array<ParticipantEventHistoryData>
 }
@@ -64,8 +74,7 @@ function ApplicationStatusRenderer(
 ) {
   const value = params.value as string | undefined
   if (!value) return null
-  const status = applicationStatusOptions.find((opt) => opt.value === value)
-  return status?.name || value
+  return applicationStatusMap.get(value) || value
 }
 
 function ApprovalStatusRenderer(
@@ -73,8 +82,7 @@ function ApprovalStatusRenderer(
 ) {
   const value = params.value as string | undefined
   if (!value) return null
-  const status = approvedToAttendStatusOptions.find((opt) => opt.value === value)
-  return status?.name || value
+  return approvalStatusMap.get(value) || value
 }
 
 function AttendanceStatusRenderer(
@@ -82,8 +90,7 @@ function AttendanceStatusRenderer(
 ) {
   const value = params.value as string | undefined
   if (!value) return null
-  const status = attendanceStatusOptions.find((opt) => opt.value === value)
-  return status?.name || value
+  return attendanceStatusMap.get(value) || value
 }
 
 export const ParticipantEventHistoryAG: FC<ParticipantEventHistoryAGProps> = ({
