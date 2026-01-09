@@ -80,7 +80,13 @@ export const AdminViewEventParticipantsTableAG: FC<
   >(() => getStoredFilter(STORAGE_KEYS.attendanceStatus))
   const [approvedToAttendFilter, setApprovedToAttendFilter] = useState<
     string[]
-  >(() => getStoredFilter(STORAGE_KEYS.approvedToAttend))
+  >(() =>
+    getStoredFilter(STORAGE_KEYS.approvedToAttend, [
+      "pending",
+      "approved",
+      "approved_with_reservations",
+    ]),
+  )
   const [genderFilter, setGenderFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.gender),
   )
