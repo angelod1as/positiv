@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it, vi } from "vitest"
+import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { AdminViewEventParticipantsTableAG } from "./view-event-participants-table-ag"
 
 vi.mock("react-router", async () => {
@@ -43,7 +44,7 @@ const mockParticipants = [
     admin_general_notes: null,
     was_admin_skipped_last_event: false,
   },
-]
+] as unknown as ProfileWithExtraData[]
 
 function renderWithRouter() {
   return render(

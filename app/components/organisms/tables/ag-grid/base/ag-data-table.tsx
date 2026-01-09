@@ -41,6 +41,7 @@ export function AGDataTable<TData>({
   id,
   data,
   columnDefs,
+  context,
   loading,
   emptyMessage,
   pagination = false,
@@ -160,6 +161,7 @@ export function AGDataTable<TData>({
           defaultColDef={defaultColDef}
           rowData={data}
           columnDefs={columnDefs}
+          context={context}
           loading={loading}
           rowStyle={onRowClicked ? { cursor: "pointer" } : undefined}
           overlayNoRowsTemplate={noRowsTemplate}

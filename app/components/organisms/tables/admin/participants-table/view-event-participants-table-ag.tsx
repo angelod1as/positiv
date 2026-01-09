@@ -22,7 +22,7 @@ import {
   attendanceStatusOptions,
   eventParticipantPropMap,
   genderFilterOptions,
-  isVeteranFilterOptions,
+  isVeteranOptions,
   orientationFilterOptions,
   profilePropMap,
   spotTypeOptions,
@@ -151,15 +151,13 @@ export const AdminViewEventParticipantsTableAG: FC<
       const participant = participants.find((p) => p.id === id)
       if (!participant) return
 
-      fetcher.submit(
-        {
-          intent: "update-event-participant",
-          id,
-          profile_id: participant.profile_id || "",
-          [field]: value,
-        },
-        { method: "POST" }
-      )
+      const formData = new FormData()
+      formData.append("intent", "update-event-participant")
+      formData.append("id", id)
+      formData.append("profile_id", participant.profile_id || "")
+      formData.append(field, String(value ?? ""))
+
+      fetcher.submit(formData, { method: "POST" })
     },
     [participants, fetcher]
   )
@@ -186,7 +184,7 @@ export const AdminViewEventParticipantsTableAG: FC<
         cellRenderer: VeteranRookieBadgeRenderer,
         filter: BaseMultiSelectFilter,
         filterParams: {
-          options: isVeteranFilterOptions,
+          options: isVeteranOptions,
           field: "is_veteran",
           model: isVeteranFilter,
           onModelChange: setIsVeteranFilter,
@@ -452,7 +450,9 @@ export const AdminViewEventParticipantsTableAG: FC<
         showToolbar
         onClearFilters={handleClearFilters}
         onSave={async (params) => {
-          await handleSave(params.rowId, params.field, params.newValue)
+          if (params.rowId) {
+            await handleSave(params.rowId, params.field, params.newValue)
+          }
         }}
       />
     </div>

@@ -26,6 +26,7 @@ export interface AGDataTableProps<TData> {
   id: string
   data: TData[]
   columnDefs: ColDef<TData>[]
+  context?: Record<string, unknown>
 
   loading?: boolean
   emptyMessage?: string
