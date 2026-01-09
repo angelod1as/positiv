@@ -11,10 +11,11 @@ import {
   type StateUpdatedEvent,
 } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
 import { AGDataTableToolbar } from "./ag-data-table-toolbar"
+import { SaveStatusIndicator, type SaveStatus } from "./save-status-indicator"
 import type { AGDataTableProps } from "./types"
 import { useAutoSave } from "./use-auto-save"
 import { useGridState } from "./use-grid-state"
@@ -43,6 +44,7 @@ export function AGDataTable<TData>({
   data,
   columnDefs,
   context,
+  getRowId,
   loading,
   emptyMessage,
   pagination = false,
@@ -53,6 +55,7 @@ export function AGDataTable<TData>({
   quickFilterText,
   onSave,
   autoSaveOptions,
+  fetcher,
   onCellValueChanged,
   onGridReady,
   onStateUpdated,
@@ -76,11 +79,43 @@ export function AGDataTable<TData>({
     },
   )
 
-  const { handleCellValueChanged: autoSaveHandler } = useAutoSave({
-    onSave,
-    debounceMs: autoSaveOptions?.debounceMs,
-    errorMessage: autoSaveOptions?.errorMessage,
-  })
+  const { handleCellValueChanged: autoSaveHandler, hasPendingSave, isSaving } =
+    useAutoSave({
+      onSave,
+      debounceMs: autoSaveOptions?.debounceMs,
+      errorMessage: autoSaveOptions?.errorMessage,
+    })
+
+  // Derive save status from fetcher state and local state
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
+
+  useEffect(() => {
+    if (hasPendingSave || isSaving) {
+      setSaveStatus("saving")
+      return
+    }
+
+    if (fetcher?.state === "submitting" || fetcher?.state === "loading") {
+      setSaveStatus("saving")
+      return
+    }
+
+    if (fetcher?.data?.success === false) {
+      setSaveStatus("error")
+      // Reset to idle after 3 seconds
+      const timer = setTimeout(() => setSaveStatus("idle"), 3000)
+      return () => clearTimeout(timer)
+    }
+
+    if (fetcher?.data?.success === true) {
+      setSaveStatus("success")
+      // Reset to idle after 5 seconds
+      const timer = setTimeout(() => setSaveStatus("idle"), 5000)
+      return () => clearTimeout(timer)
+    }
+
+    setSaveStatus("idle")
+  }, [hasPendingSave, isSaving, fetcher?.state, fetcher?.data])
 
   const safeMessage = escapeHtml(emptyMessage || DEFAULT_EMPTY_MESSAGE)
   const noRowsTemplate = `<span>${safeMessage}</span>`
@@ -165,7 +200,7 @@ export function AGDataTable<TData>({
   return (
     <div
       data-testid={`ag-data-table-${id}`}
-      className={containerClasses}
+      className={cn(containerClasses, "relative")}
       style={height && !isFullscreen ? { height } : undefined}
     >
       <div className={cn(isFullscreen && "flex-1", !isFullscreen && "h-full")}>
@@ -176,6 +211,7 @@ export function AGDataTable<TData>({
           rowData={data}
           columnDefs={columnDefs}
           context={context}
+          getRowId={getRowId}
           loading={loading}
           rowStyle={onRowClicked ? { cursor: "pointer" } : undefined}
           overlayNoRowsTemplate={noRowsTemplate}
@@ -213,6 +249,7 @@ export function AGDataTable<TData>({
           />
         </div>
       )}
+      {fetcher && <SaveStatusIndicator status={saveStatus} />}
     </div>
   )
 }
