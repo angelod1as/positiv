@@ -41,15 +41,12 @@ export async function action({ request, params }: Route.ActionArgs) {
   const { intent } = await inputFromForm(request)
 
   if (intent === "update-event-participant") {
-    console.info("[Action] update-event-participant: starting")
-    const result = await formAction({
+    return await formAction({
       request,
       schema: updateEventParticipantByIdSchema,
       mutation: updateEventParticipantById,
       transformResult: (result) => ({ ...result, intent }),
     })
-    console.info("[Action] update-event-participant: result", result)
-    return result
   }
 
   if (intent === "update-event-status") {

@@ -179,24 +179,13 @@ export const AdminViewEventParticipantsTableAG: FC<
   const handleSave = useCallback(
     async (id: string, field: string, value: unknown) => {
       const participant = participants.find((p) => p.id === id)
-      if (!participant) {
-        console.error("[ParticipantsTable] Participant not found:", id)
-        return
-      }
+      if (!participant) return
 
       const formData = new FormData()
       formData.append("intent", "update-event-participant")
       formData.append("id", id)
       formData.append("profile_id", participant.profile_id || "")
       formData.append(field, String(value ?? ""))
-
-      console.info("[ParticipantsTable] handleSave:", {
-        intent: "update-event-participant",
-        id,
-        profile_id: participant.profile_id,
-        field,
-        value,
-      })
 
       fetcher.submit(formData, { method: "POST" })
     },
