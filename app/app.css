@@ -7,21 +7,13 @@
   layer(primereact);
 /* End PrimeReact DataTable */
 
-/* For AG Grid DataTable */
-@layer ag-grid;
-@import "ag-grid-community/styles/ag-grid.css" layer(ag-grid);
-@import "ag-grid-community/styles/ag-theme-quartz.css" layer(ag-grid);
+/* For AG Grid DataTable - using Theming API (themeQuartz), no legacy CSS imports needed */
 
 /* AG Grid custom cell styles */
 .ag-cell-compact,
 .ag-header-compact {
   --ag-cell-horizontal-padding: 0;
   @apply flex items-center justify-center;
-}
-
-/* Visual indication for editable cells */
-.ag-cell.ag-cell-editable {
-  @apply border border-dashed border-gray-300;
 }
 
 /* .ag-header-cell.ag-header-compact {
