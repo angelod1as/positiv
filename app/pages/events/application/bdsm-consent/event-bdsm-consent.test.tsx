@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { EventBdsmConsentPage } from "./event-bdsm-consent"
 
 // Mock the SchemaForm component to avoid React Router dependencies in tests

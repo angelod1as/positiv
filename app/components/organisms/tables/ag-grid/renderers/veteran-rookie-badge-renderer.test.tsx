@@ -1,10 +1,10 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { VeteranRookieBadgeRenderer } from "./veteran-rookie-badge-renderer"
 
 function createMockParams(
-  value: boolean | null | undefined
+  value: boolean | null | undefined,
 ): ICellRendererParams {
   return {
     value,

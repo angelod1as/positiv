@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react"
 import { EyeIcon } from "lucide-react"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { AGIconButton } from "./ag-icon-button"
 
 function renderWithRouter(element: React.ReactElement) {
@@ -14,7 +14,7 @@ describe("AGIconButton", () => {
       renderWithRouter(
         <AGIconButton to="/test" title="Test">
           <EyeIcon data-testid="eye-icon" />
-        </AGIconButton>
+        </AGIconButton>,
       )
 
       expect(screen.getByTestId("eye-icon")).toBeInTheDocument()
@@ -24,7 +24,7 @@ describe("AGIconButton", () => {
       renderWithRouter(
         <AGIconButton to="/admin/test" title="View">
           <EyeIcon />
-        </AGIconButton>
+        </AGIconButton>,
       )
 
       const link = screen.getByRole("link")
@@ -35,7 +35,7 @@ describe("AGIconButton", () => {
       renderWithRouter(
         <AGIconButton href="https://wa.me/123" title="WhatsApp" external>
           <EyeIcon />
-        </AGIconButton>
+        </AGIconButton>,
       )
 
       const link = screen.getByRole("link")
@@ -50,7 +50,7 @@ describe("AGIconButton", () => {
       renderWithRouter(
         <AGIconButton to="/test" title="Test">
           <EyeIcon />
-        </AGIconButton>
+        </AGIconButton>,
       )
 
       const link = screen.getByRole("link")
@@ -61,7 +61,7 @@ describe("AGIconButton", () => {
       renderWithRouter(
         <AGIconButton to="/test" title="Test">
           <EyeIcon />
-        </AGIconButton>
+        </AGIconButton>,
       )
 
       const link = screen.getByRole("link")
@@ -72,7 +72,7 @@ describe("AGIconButton", () => {
       renderWithRouter(
         <AGIconButton to="/test" title="Test">
           <EyeIcon />
-        </AGIconButton>
+        </AGIconButton>,
       )
 
       const link = screen.getByRole("link")
@@ -85,7 +85,7 @@ describe("AGIconButton", () => {
       renderWithRouter(
         <AGIconButton to="/test" title="View participant">
           <EyeIcon />
-        </AGIconButton>
+        </AGIconButton>,
       )
 
       const link = screen.getByRole("link")

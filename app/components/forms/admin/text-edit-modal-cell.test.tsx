@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
+import { render, screen, waitFor } from "~/test/test-utils"
 import { TextEditModalCell } from "./text-edit-modal-cell"
 
 type TestRow = {
@@ -94,7 +94,11 @@ describe("TextEditModalCell", () => {
     await user.click(screen.getByRole("button", { name: /save/i }))
 
     await waitFor(() => {
-      expect(mockSave).toHaveBeenCalledWith("1", "notes", "Updated text content")
+      expect(mockSave).toHaveBeenCalledWith(
+        "1",
+        "notes",
+        "Updated text content",
+      )
     })
   })
 

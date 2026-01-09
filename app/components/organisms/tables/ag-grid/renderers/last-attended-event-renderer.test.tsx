@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { LastAttendedEventRenderer } from "./last-attended-event-renderer"
 
 interface LastAttendedEventData {
@@ -36,7 +36,7 @@ function renderWithRouter(params: ICellRendererParams) {
   return render(
     <MemoryRouter>
       <LastAttendedEventRenderer {...params} />
-    </MemoryRouter>
+    </MemoryRouter>,
   )
 }
 
@@ -55,7 +55,7 @@ describe("LastAttendedEventRenderer", () => {
       expect(screen.getByText("Retiro de Verão")).toBeInTheDocument()
       expect(screen.getByRole("link")).toHaveAttribute(
         "href",
-        "/admin/eventos/event-123/participantes/profile-456"
+        "/admin/eventos/event-123/participantes/profile-456",
       )
     })
 

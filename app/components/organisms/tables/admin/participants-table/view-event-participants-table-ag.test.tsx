@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it, vi } from "vitest"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import { render, screen } from "~/test/test-utils"
 import { AdminViewEventParticipantsTableAG } from "./view-event-participants-table-ag"
 
 vi.mock("react-router", async () => {
@@ -53,7 +53,7 @@ function renderWithRouter() {
         participants={mockParticipants}
         eventId="event-123"
       />
-    </MemoryRouter>
+    </MemoryRouter>,
   )
 }
 
@@ -82,14 +82,18 @@ describe("AdminViewEventParticipantsTableAG", () => {
     it("renders social_name column pinned left", () => {
       const { container } = renderWithRouter()
 
-      const pinnedLeftCols = container.querySelector(".ag-pinned-left-cols-container")
+      const pinnedLeftCols = container.querySelector(
+        ".ag-pinned-left-cols-container",
+      )
       expect(pinnedLeftCols).toBeInTheDocument()
     })
 
     it("renders actions column pinned right", () => {
       const { container } = renderWithRouter()
 
-      const pinnedRightCols = container.querySelector(".ag-pinned-right-cols-container")
+      const pinnedRightCols = container.querySelector(
+        ".ag-pinned-right-cols-container",
+      )
       expect(pinnedRightCols).toBeInTheDocument()
     })
   })

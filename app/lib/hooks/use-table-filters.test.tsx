@@ -1,7 +1,7 @@
-import { render } from "@testing-library/react"
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import { useTableFilters } from "./use-table-filters"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { render } from "~/test/test-utils"
 import type { FilterConfig } from "./use-table-filters"
+import { useTableFilters } from "./use-table-filters"
 
 // Mock dependencies
 vi.mock("~/lib/hooks/use-multi-filter-manager", () => ({
@@ -253,9 +253,7 @@ describe("useTableFilters", () => {
 
     expect(setStatusFilter).toHaveBeenCalledWith([])
     expect(setCategoryFilter).toHaveBeenCalledWith([])
-    expect(window.sessionStorage.removeItem).toHaveBeenCalledWith(
-      "test-status",
-    )
+    expect(window.sessionStorage.removeItem).toHaveBeenCalledWith("test-status")
     expect(window.sessionStorage.removeItem).toHaveBeenCalledWith(
       "test-category",
     )

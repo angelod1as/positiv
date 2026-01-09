@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
+import { render, screen, waitFor } from "~/test/test-utils"
 import { BaseAgGrid } from "./base-ag-grid"
 
 describe("BaseAgGrid", () => {
@@ -14,18 +14,14 @@ describe("BaseAgGrid", () => {
   ]
 
   it("should render with ag-theme-quartz class", () => {
-    render(
-      <BaseAgGrid rowData={mockRowData} columnDefs={mockColumnDefs} />,
-    )
+    render(<BaseAgGrid rowData={mockRowData} columnDefs={mockColumnDefs} />)
 
     const gridContainer = screen.getByRole("grid").closest(".ag-theme-quartz")
     expect(gridContainer).toBeInTheDocument()
   })
 
   it("should display row data in the grid", async () => {
-    render(
-      <BaseAgGrid rowData={mockRowData} columnDefs={mockColumnDefs} />,
-    )
+    render(<BaseAgGrid rowData={mockRowData} columnDefs={mockColumnDefs} />)
 
     await waitFor(() => {
       expect(screen.getByText("Item 1")).toBeInTheDocument()
@@ -34,9 +30,7 @@ describe("BaseAgGrid", () => {
   })
 
   it("should render column headers from columnDefs", async () => {
-    render(
-      <BaseAgGrid rowData={mockRowData} columnDefs={mockColumnDefs} />,
-    )
+    render(<BaseAgGrid rowData={mockRowData} columnDefs={mockColumnDefs} />)
 
     await waitFor(() => {
       expect(screen.getByText("Name")).toBeInTheDocument()

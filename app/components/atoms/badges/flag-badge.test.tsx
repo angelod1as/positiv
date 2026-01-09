@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen } from "~/test/test-utils"
 import { describe, expect, it } from "vitest"
 import { FlagBadge } from "./flag-badge"
 import type { ProfileFlagStatus } from "~/types/database/entities.types"

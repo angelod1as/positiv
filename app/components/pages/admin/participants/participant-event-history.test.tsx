@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react"
 import type React from "react"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it } from "vitest"
+import { render, screen, waitFor } from "~/test/test-utils"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
 import { ParticipantEventHistory } from "./participant-event-history"
 
@@ -183,7 +183,9 @@ describe("ParticipantEventHistory", () => {
   })
 
   it("should render event titles as clickable links", async () => {
-    renderWithRouter(<ParticipantEventHistory participantHistory={mockParticipantHistory} />)
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
 
     // Wait for the table to render
     await waitFor(() => {
@@ -191,14 +193,24 @@ describe("ParticipantEventHistory", () => {
     })
 
     // Check that event titles are rendered as links
-    const firstEventLink = screen.getByRole("link", { name: /🌱 Workshop de Introdução/ })
-    const secondEventLink = screen.getByRole("link", { name: /💬 Roda de Conversa/ })
+    const firstEventLink = screen.getByRole("link", {
+      name: /🌱 Workshop de Introdução/,
+    })
+    const secondEventLink = screen.getByRole("link", {
+      name: /💬 Roda de Conversa/,
+    })
 
     expect(firstEventLink).toBeInTheDocument()
     expect(secondEventLink).toBeInTheDocument()
 
     // Verify the links have the correct href
-    expect(firstEventLink).toHaveAttribute("href", "/admin/eventos/event-1/participantes/profile-1")
-    expect(secondEventLink).toHaveAttribute("href", "/admin/eventos/event-2/participantes/profile-1")
+    expect(firstEventLink).toHaveAttribute(
+      "href",
+      "/admin/eventos/event-1/participantes/profile-1",
+    )
+    expect(secondEventLink).toHaveAttribute(
+      "href",
+      "/admin/eventos/event-2/participantes/profile-1",
+    )
   })
 })

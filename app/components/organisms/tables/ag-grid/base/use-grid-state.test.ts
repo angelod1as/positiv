@@ -1,7 +1,7 @@
-import { renderHook, act } from "@testing-library/react"
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import { useGridState } from "./use-grid-state"
 import type { GridApi, GridState } from "ag-grid-community"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { act, renderHook } from "~/test/test-utils"
+import { useGridState } from "./use-grid-state"
 
 const mockLocalStorage = (() => {
   let store: Record<string, string> = {}
@@ -50,7 +50,7 @@ describe("useGridState", () => {
   describe("initialization", () => {
     it("should initialize with isRestored as false", () => {
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       expect(result.current.isRestored).toBe(false)
@@ -58,7 +58,7 @@ describe("useGridState", () => {
 
     it("should return restoreState, saveState, and clearState functions", () => {
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       expect(typeof result.current.restoreState).toBe("function")
@@ -83,12 +83,12 @@ describe("useGridState", () => {
 
       mockLocalStorage.setItem(
         "ag-grid-state-test-table",
-        JSON.stringify(storedState)
+        JSON.stringify(storedState),
       )
 
       const mockApi = createMockGridApi()
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       act(() => {
@@ -108,12 +108,12 @@ describe("useGridState", () => {
 
       mockLocalStorage.setItem(
         "ag-grid-state-test-table",
-        JSON.stringify(storedState)
+        JSON.stringify(storedState),
       )
 
       const mockApi = createMockGridApi()
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 2 })
+        useGridState("test-table", { version: 2 }),
       )
 
       act(() => {
@@ -129,7 +129,7 @@ describe("useGridState", () => {
 
       const mockApi = createMockGridApi()
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       act(() => {
@@ -143,7 +143,7 @@ describe("useGridState", () => {
     it("should handle missing storage gracefully", () => {
       const mockApi = createMockGridApi()
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       act(() => {
@@ -159,7 +159,7 @@ describe("useGridState", () => {
 
       const mockApi = createMockGridApi()
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       act(() => {
@@ -167,7 +167,7 @@ describe("useGridState", () => {
       })
 
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-        "ag-grid-state-test-table"
+        "ag-grid-state-test-table",
       )
     })
 
@@ -186,7 +186,7 @@ describe("useGridState", () => {
 
       mockLocalStorage.setItem(
         "ag-grid-state-test-table",
-        JSON.stringify(storedState)
+        JSON.stringify(storedState),
       )
 
       const mockApi = {
@@ -197,7 +197,7 @@ describe("useGridState", () => {
       }
 
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       act(() => {
@@ -213,7 +213,7 @@ describe("useGridState", () => {
   describe("saveState", () => {
     it("should save state to localStorage with correct format", () => {
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       const mockState = {
@@ -228,7 +228,7 @@ describe("useGridState", () => {
       })
 
       const savedData = JSON.parse(
-        mockLocalStorage.store["ag-grid-state-test-table"]
+        mockLocalStorage.store["ag-grid-state-test-table"],
       )
 
       expect(savedData.version).toBe(1)
@@ -238,7 +238,7 @@ describe("useGridState", () => {
 
     it("should debounce multiple rapid saves", () => {
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1, debounceMs: 300 })
+        useGridState("test-table", { version: 1, debounceMs: 300 }),
       )
 
       const state1 = { filter: { a: 1 } } as unknown as GridState
@@ -256,14 +256,14 @@ describe("useGridState", () => {
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledTimes(1)
       const savedData = JSON.parse(
-        mockLocalStorage.store["ag-grid-state-test-table"]
+        mockLocalStorage.store["ag-grid-state-test-table"],
       )
       expect(savedData.gridState).toEqual(state3)
     })
 
     it("should use custom debounce delay", () => {
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1, debounceMs: 1000 })
+        useGridState("test-table", { version: 1, debounceMs: 1000 }),
       )
 
       const mockState = { filter: {} } as unknown as GridState
@@ -287,11 +287,11 @@ describe("useGridState", () => {
     it("should remove state from localStorage", () => {
       mockLocalStorage.setItem(
         "ag-grid-state-test-table",
-        JSON.stringify({ version: 1, gridState: {} })
+        JSON.stringify({ version: 1, gridState: {} }),
       )
 
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       act(() => {
@@ -299,13 +299,13 @@ describe("useGridState", () => {
       })
 
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-        "ag-grid-state-test-table"
+        "ag-grid-state-test-table",
       )
     })
 
     it("should cancel pending debounced save to prevent race condition", () => {
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1, debounceMs: 500 })
+        useGridState("test-table", { version: 1, debounceMs: 500 }),
       )
 
       const mockState = { filter: { test: true } } as unknown as GridState
@@ -327,7 +327,7 @@ describe("useGridState", () => {
       // Save should NOT have been called because clearState cancelled the pending timer
       expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-        "ag-grid-state-test-table"
+        "ag-grid-state-test-table",
       )
     })
   })
@@ -335,7 +335,7 @@ describe("useGridState", () => {
   describe("storage key generation", () => {
     it("should use table id in storage key", () => {
       const { result } = renderHook(() =>
-        useGridState("my-unique-table", { version: 1 })
+        useGridState("my-unique-table", { version: 1 }),
       )
 
       const mockState = { filter: {} } as unknown as GridState
@@ -347,7 +347,7 @@ describe("useGridState", () => {
 
       expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         "ag-grid-state-my-unique-table",
-        expect.any(String)
+        expect.any(String),
       )
     })
   })
@@ -355,7 +355,7 @@ describe("useGridState", () => {
   describe("cleanup", () => {
     it("should cleanup debounce timer on unmount to prevent memory leaks", () => {
       const { result, unmount } = renderHook(() =>
-        useGridState("test-table", { version: 1, debounceMs: 500 })
+        useGridState("test-table", { version: 1, debounceMs: 500 }),
       )
 
       const mockState = { filter: { test: true } } as unknown as GridState
@@ -388,12 +388,12 @@ describe("useGridState", () => {
 
       mockLocalStorage.setItem(
         "ag-grid-state-test-table",
-        JSON.stringify(storedState)
+        JSON.stringify(storedState),
       )
 
       const mockApi = createMockGridApi()
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 2 })
+        useGridState("test-table", { version: 2 }),
       )
 
       act(() => {
@@ -402,7 +402,7 @@ describe("useGridState", () => {
 
       expect(mockApi.setState).not.toHaveBeenCalled()
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-        "ag-grid-state-test-table"
+        "ag-grid-state-test-table",
       )
     })
   })
@@ -417,11 +417,11 @@ describe("useGridState", () => {
 
       mockLocalStorage.setItem(
         "ag-grid-state-test-table",
-        JSON.stringify(storedState)
+        JSON.stringify(storedState),
       )
 
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       expect(result.current.hasSavedState).toBe(true)
@@ -429,7 +429,7 @@ describe("useGridState", () => {
 
     it("should return false when no saved state exists", () => {
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       expect(result.current.hasSavedState).toBe(false)
@@ -444,11 +444,11 @@ describe("useGridState", () => {
 
       mockLocalStorage.setItem(
         "ag-grid-state-test-table",
-        JSON.stringify(storedState)
+        JSON.stringify(storedState),
       )
 
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 2 })
+        useGridState("test-table", { version: 2 }),
       )
 
       expect(result.current.hasSavedState).toBe(false)
@@ -458,7 +458,7 @@ describe("useGridState", () => {
       mockLocalStorage.setItem("ag-grid-state-test-table", "invalid json{{{")
 
       const { result } = renderHook(() =>
-        useGridState("test-table", { version: 1 })
+        useGridState("test-table", { version: 1 }),
       )
 
       expect(result.current.hasSavedState).toBe(false)

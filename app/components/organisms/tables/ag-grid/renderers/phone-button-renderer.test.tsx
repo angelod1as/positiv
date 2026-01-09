@@ -1,10 +1,12 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
-import { describe, expect, it } from "vitest"
 import { MemoryRouter } from "react-router"
+import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { PhoneButtonRenderer } from "./phone-button-renderer"
 
-function createMockParams(phone: number | null | undefined): ICellRendererParams {
+function createMockParams(
+  phone: number | null | undefined,
+): ICellRendererParams {
   return {
     value: phone,
     valueFormatted: String(phone ?? ""),
@@ -72,7 +74,9 @@ describe("PhoneButtonRenderer", () => {
     it("renders nothing when phone is null", () => {
       const params = createMockParams(null)
 
-      const { container } = renderWithRouter(<PhoneButtonRenderer {...params} />)
+      const { container } = renderWithRouter(
+        <PhoneButtonRenderer {...params} />,
+      )
 
       expect(container).toBeEmptyDOMElement()
     })
@@ -80,7 +84,9 @@ describe("PhoneButtonRenderer", () => {
     it("renders nothing when phone is undefined", () => {
       const params = createMockParams(undefined)
 
-      const { container } = renderWithRouter(<PhoneButtonRenderer {...params} />)
+      const { container } = renderWithRouter(
+        <PhoneButtonRenderer {...params} />,
+      )
 
       expect(container).toBeEmptyDOMElement()
     })

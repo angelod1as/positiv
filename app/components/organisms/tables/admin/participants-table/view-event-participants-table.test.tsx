@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen } from '~/test/test-utils'
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import type { FetcherWithComponents } from 'react-router'
 import { AdminViewEventParticipantsTable } from './view-event-participants-table'

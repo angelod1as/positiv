@@ -1,8 +1,8 @@
-import { render, screen } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
-import { ProfileUpdateGuard } from "./profile-update-guard"
 import { BrowserRouter } from "react-router"
+import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import type { ProfileWithRoles } from "~types/database/entities.types"
+import { ProfileUpdateGuard } from "./profile-update-guard"
 
 const mockProfile: ProfileWithRoles = {
   id: "123",

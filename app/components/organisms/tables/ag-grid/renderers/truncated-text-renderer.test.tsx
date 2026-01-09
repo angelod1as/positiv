@@ -1,12 +1,12 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ICellRendererParams } from "ag-grid-community"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { TruncatedTextRenderer } from "./truncated-text-renderer"
 
 function createMockParams(
   value: string | null | undefined,
-  truncateLength?: number
+  truncateLength?: number,
 ): ICellRendererParams & { truncateLength?: number } {
   return {
     value,
@@ -59,13 +59,16 @@ describe("TruncatedTextRenderer", () => {
       render(<TruncatedTextRenderer {...params} />)
 
       // Should show first 25 chars trimmed + "..."
-      expect(screen.getByText("This is a very long text...")).toBeInTheDocument()
+      expect(
+        screen.getByText("This is a very long text..."),
+      ).toBeInTheDocument()
       expect(screen.queryByText(longText)).not.toBeInTheDocument()
     })
 
     it("shows tooltip with full text on hover", async () => {
       const user = userEvent.setup()
-      const longText = "This is a very long text that should be truncated and show tooltip"
+      const longText =
+        "This is a very long text that should be truncated and show tooltip"
       const params = createMockParams(longText)
 
       render(<TruncatedTextRenderer {...params} />)

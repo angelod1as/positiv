@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react"
 import type React from "react"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it } from "vitest"
+import { render, screen, waitFor } from "~/test/test-utils"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
 import { ParticipantEventHistoryAG } from "./participant-event-history-ag"
 

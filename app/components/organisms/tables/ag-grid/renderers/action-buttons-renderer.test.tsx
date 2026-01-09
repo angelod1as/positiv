@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { ActionButtonsRenderer } from "./action-buttons-renderer"
 
 interface ActionButtonsRowData {
@@ -14,7 +14,7 @@ interface ActionButtonsContext {
 
 function createMockParams(
   data: ActionButtonsRowData,
-  context: ActionButtonsContext = {}
+  context: ActionButtonsContext = {},
 ): ICellRendererParams {
   return {
     value: null,
@@ -40,7 +40,7 @@ function renderWithRouter(params: ICellRendererParams) {
   return render(
     <MemoryRouter>
       <ActionButtonsRenderer {...params} />
-    </MemoryRouter>
+    </MemoryRouter>,
   )
 }
 
@@ -49,7 +49,7 @@ describe("ActionButtonsRenderer", () => {
     it("renders eye icon as a link to participant view", () => {
       const params = createMockParams(
         { profile_id: "profile-456" },
-        { eventId: "event-123" }
+        { eventId: "event-123" },
       )
 
       renderWithRouter(params)
@@ -57,28 +57,28 @@ describe("ActionButtonsRenderer", () => {
       const link = screen.getByRole("link")
       expect(link).toHaveAttribute(
         "href",
-        "/admin/eventos/event-123/participantes/profile-456"
+        "/admin/eventos/event-123/participantes/profile-456",
       )
     })
 
     it("renders with accessible title", () => {
       const params = createMockParams(
         { profile_id: "profile-456" },
-        { eventId: "event-123" }
+        { eventId: "event-123" },
       )
 
       renderWithRouter(params)
 
-      expect(screen.getByRole("link")).toHaveAttribute("title", "Ver participante")
+      expect(screen.getByRole("link")).toHaveAttribute(
+        "title",
+        "Ver participante",
+      )
     })
   })
 
   describe("when required data is missing", () => {
     it("renders nothing when eventId is missing from context", () => {
-      const params = createMockParams(
-        { profile_id: "profile-456" },
-        {}
-      )
+      const params = createMockParams({ profile_id: "profile-456" }, {})
 
       const { container } = renderWithRouter(params)
 
@@ -89,7 +89,7 @@ describe("ActionButtonsRenderer", () => {
     it("renders nothing when profile_id is missing from data", () => {
       const params = createMockParams(
         { profile_id: null },
-        { eventId: "event-123" }
+        { eventId: "event-123" },
       )
 
       const { container } = renderWithRouter(params)

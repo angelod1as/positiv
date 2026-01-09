@@ -1,28 +1,40 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { render, screen } from "@testing-library/react"
-import { describe, expect, it, vi, beforeEach } from "vitest"
 import { createMemoryRouter, RouterProvider } from "react-router"
-import ViewEventParticipant, { shouldRevalidate } from "./view-event-participant"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
+import ViewEventParticipant, {
+  shouldRevalidate,
+} from "./view-event-participant"
 
 // Mock child components that might cause router issues
 vi.mock("~/components/pages/admin/participants/basic-data", () => ({
   BasicData: () => <div>Basic Data</div>,
 }))
 
-vi.mock("~/components/pages/admin/participants/participant-vs-event-data", () => ({
-  ParticipantVsEventData: () => <div>Participant Vs Event Data</div>,
-}))
+vi.mock(
+  "~/components/pages/admin/participants/participant-vs-event-data",
+  () => ({
+    ParticipantVsEventData: () => <div>Participant Vs Event Data</div>,
+  }),
+)
 
-vi.mock("~/components/pages/admin/participants/participant-event-history", () => ({
-  ParticipantEventHistory: ({ participantHistory }: { participantHistory: any[] }) => (
-    <div>
-      <h2>Histórico de Participações</h2>
-      {participantHistory.map((p, i) => (
-        <div key={i}>{p.event_title}</div>
-      ))}
-    </div>
-  ),
-}))
+vi.mock(
+  "~/components/pages/admin/participants/participant-event-history",
+  () => ({
+    ParticipantEventHistory: ({
+      participantHistory,
+    }: {
+      participantHistory: any[]
+    }) => (
+      <div>
+        <h2>Histórico de Participações</h2>
+        {participantHistory.map((p, i) => (
+          <div key={i}>{p.event_title}</div>
+        ))}
+      </div>
+    ),
+  }),
+)
 
 describe("ViewEventParticipant", () => {
   beforeEach(() => {
@@ -33,7 +45,13 @@ describe("ViewEventParticipant", () => {
     return createMemoryRouter([
       {
         path: "/",
-        element: <ViewEventParticipant loaderData={loaderData} params={{ eventId: "test-event", profileId: "test-profile" }} matches={[] as any} />,
+        element: (
+          <ViewEventParticipant
+            loaderData={loaderData}
+            params={{ eventId: "test-event", profileId: "test-profile" }}
+            matches={[] as any}
+          />
+        ),
       },
     ])
   }
@@ -47,16 +65,20 @@ describe("ViewEventParticipant", () => {
         date_of_birth: "1990-01-01",
         is_veteran: true,
       },
-      participantHistory: [{
-        event_title: "Workshop BDSM",
-        event_emoji: "🌱",
-      }],
-      fullHistory: [{
-        id: "event-2",
-        event_title: "Previous Event",
-        event_emoji: "💬",
-        time_event_start: "2024-02-15T14:00:00",
-      }],
+      participantHistory: [
+        {
+          event_title: "Workshop BDSM",
+          event_emoji: "🌱",
+        },
+      ],
+      fullHistory: [
+        {
+          id: "event-2",
+          event_title: "Previous Event",
+          event_emoji: "💬",
+          time_event_start: "2024-02-15T14:00:00",
+        },
+      ],
     }
 
     const router = createTestRouter(mockLoaderData)
@@ -75,10 +97,12 @@ describe("ViewEventParticipant", () => {
         date_of_birth: "1990-01-01",
         is_veteran: false,
       },
-      participantHistory: [{
-        event_title: "Workshop BDSM",
-        event_emoji: "🌱",
-      }],
+      participantHistory: [
+        {
+          event_title: "Workshop BDSM",
+          event_emoji: "🌱",
+        },
+      ],
       fullHistory: [],
     }
 
@@ -86,7 +110,9 @@ describe("ViewEventParticipant", () => {
     render(<RouterProvider router={router} />)
 
     // Should NOT show the history section title
-    expect(screen.queryByText("Histórico de Participações")).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("Histórico de Participações"),
+    ).not.toBeInTheDocument()
   })
 
   it("should NOT display participant history section for veteran with empty history", () => {
@@ -98,10 +124,12 @@ describe("ViewEventParticipant", () => {
         date_of_birth: "1990-01-01",
         is_veteran: true,
       },
-      participantHistory: [{
-        event_title: "Workshop BDSM",
-        event_emoji: "🌱",
-      }],
+      participantHistory: [
+        {
+          event_title: "Workshop BDSM",
+          event_emoji: "🌱",
+        },
+      ],
       fullHistory: [], // Empty history
     }
 
@@ -109,7 +137,9 @@ describe("ViewEventParticipant", () => {
     render(<RouterProvider router={router} />)
 
     // Should NOT show the history section title even for veterans with no history
-    expect(screen.queryByText("Histórico de Participações")).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("Histórico de Participações"),
+    ).not.toBeInTheDocument()
   })
 
   it("should display basic participant information regardless of veteran status", () => {
@@ -121,10 +151,12 @@ describe("ViewEventParticipant", () => {
         date_of_birth: "1990-01-01",
         is_veteran: true,
       },
-      participantHistory: [{
-        event_title: "Workshop BDSM",
-        event_emoji: "🌱",
-      }],
+      participantHistory: [
+        {
+          event_title: "Workshop BDSM",
+          event_emoji: "🌱",
+        },
+      ],
       fullHistory: [],
     }
 
@@ -133,7 +165,7 @@ describe("ViewEventParticipant", () => {
 
     // Should show participant name and age
     expect(screen.getByText(/João, \d+/)).toBeInTheDocument()
-    
+
     // Should show event info
     expect(screen.getByText(/No evento/)).toBeInTheDocument()
     expect(screen.getByText(/🌱 Workshop BDSM/)).toBeInTheDocument()
@@ -142,10 +174,12 @@ describe("ViewEventParticipant", () => {
   it("should handle null profile gracefully", () => {
     const mockLoaderData = {
       profile: null,
-      participantHistory: [{
-        event_title: "Workshop BDSM",
-        event_emoji: "🌱",
-      }],
+      participantHistory: [
+        {
+          event_title: "Workshop BDSM",
+          event_emoji: "🌱",
+        },
+      ],
       fullHistory: [],
     }
 
@@ -153,15 +187,21 @@ describe("ViewEventParticipant", () => {
     render(<RouterProvider router={router} />)
 
     // Should not render anything
-    expect(screen.queryByText("Histórico de Participações")).not.toBeInTheDocument()
+    expect(
+      screen.queryByText("Histórico de Participações"),
+    ).not.toBeInTheDocument()
     expect(screen.queryByText(/João/)).not.toBeInTheDocument()
   })
 })
 
 describe("shouldRevalidate", () => {
   const baseArgs = {
-    currentUrl: new URL("http://localhost/admin/eventos/event-a/participantes/profile-1"),
-    nextUrl: new URL("http://localhost/admin/eventos/event-b/participantes/profile-1"),
+    currentUrl: new URL(
+      "http://localhost/admin/eventos/event-a/participantes/profile-1",
+    ),
+    nextUrl: new URL(
+      "http://localhost/admin/eventos/event-b/participantes/profile-1",
+    ),
     formMethod: undefined,
     formAction: undefined,
     formEncType: undefined,
