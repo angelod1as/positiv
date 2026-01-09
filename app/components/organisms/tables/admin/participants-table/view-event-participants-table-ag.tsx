@@ -361,6 +361,12 @@ export const AdminViewEventParticipantsTableAG: FC<
         headerName: eventParticipantPropMap("payment"),
         editable: true,
         cellEditor: "agNumberCellEditor",
+        cellDataType: "number",
+        valueParser: (params) => {
+          const val = params.newValue
+          if (val === null || val === undefined || val === "") return null
+          return Number(val)
+        },
       },
       {
         field: "spot_type",
