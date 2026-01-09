@@ -1,8 +1,8 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi, beforeEach } from "vitest"
-import { AGDataTableToolbar } from "./ag-data-table-toolbar"
 import type { GridApi } from "ag-grid-community"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
+import { AGDataTableToolbar } from "./ag-data-table-toolbar"
 
 describe("AGDataTableToolbar", () => {
   const mockGridApi = {

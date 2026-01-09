@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen } from "~/test/test-utils"
 import { BrowserRouter } from "react-router"
 import { describe, expect, it } from "vitest"
 import { POSITIV_WHATSAPP } from "~/lib/constants/constants"

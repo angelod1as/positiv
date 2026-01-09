@@ -1,8 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import { AdminDashboardEventsTableAG } from "./events-table-ag"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen, waitFor } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
+import { AdminDashboardEventsTableAG } from "./events-table-ag"
 
 const mockNavigate = vi.fn()
 
@@ -228,7 +228,7 @@ describe("AdminDashboardEventsTableAG", () => {
         () => {
           expect(screen.getByText("Draft Event")).toBeInTheDocument()
         },
-        { timeout: 2000 }
+        { timeout: 2000 },
       )
       expect(screen.getByText("Scheduled Event")).toBeInTheDocument()
     })
@@ -252,7 +252,7 @@ describe("AdminDashboardEventsTableAG", () => {
       })
 
       expect(
-        screen.getByTestId("ag-data-table-admin-events-ag")
+        screen.getByTestId("ag-data-table-admin-events-ag"),
       ).toBeInTheDocument()
     })
 
@@ -327,9 +327,14 @@ describe("AdminDashboardEventsTableAG", () => {
 
     it("should load filter state from sessionStorage on mount", async () => {
       // Set initial state in sessionStorage to include Completed but not Cancelled
-      mockSessionStorage.store["admin-events-ag-filter-status"] = JSON.stringify(
-        ["Draft", "Scheduled", "Registration Open", "Registration Closed", "Completed"]
-      )
+      mockSessionStorage.store["admin-events-ag-filter-status"] =
+        JSON.stringify([
+          "Draft",
+          "Scheduled",
+          "Registration Open",
+          "Registration Closed",
+          "Completed",
+        ])
 
       render(<AdminDashboardEventsTableAG events={mockEvents} />)
 
@@ -350,7 +355,7 @@ describe("AdminDashboardEventsTableAG", () => {
   describe("Sorting", () => {
     it("should have sortable columns", async () => {
       const { container } = render(
-        <AdminDashboardEventsTableAG events={mockEvents} />
+        <AdminDashboardEventsTableAG events={mockEvents} />,
       )
 
       await waitFor(() => {
@@ -360,7 +365,7 @@ describe("AdminDashboardEventsTableAG", () => {
       // Check that header cells have sortable class
       const headerCells = container.querySelectorAll(".ag-header-cell")
       const titleHeader = Array.from(headerCells).find((cell) =>
-        cell.textContent?.includes("Nome")
+        cell.textContent?.includes("Nome"),
       )
       expect(titleHeader).toHaveClass("ag-header-cell-sortable")
     })
@@ -368,7 +373,7 @@ describe("AdminDashboardEventsTableAG", () => {
     it("should sort events when clicking on column header", async () => {
       const user = userEvent.setup()
       const { container } = render(
-        <AdminDashboardEventsTableAG events={mockEvents} />
+        <AdminDashboardEventsTableAG events={mockEvents} />,
       )
 
       await waitFor(() => {
@@ -377,7 +382,7 @@ describe("AdminDashboardEventsTableAG", () => {
 
       // Click on the Nome header to trigger a sort
       const nameHeader = container.querySelector(
-        '.ag-header-cell[col-id="title"]'
+        '.ag-header-cell[col-id="title"]',
       ) as HTMLElement
       expect(nameHeader).toBeInTheDocument()
 
@@ -394,7 +399,7 @@ describe("AdminDashboardEventsTableAG", () => {
   describe("Pagination", () => {
     it("should render with pagination enabled", async () => {
       const { container } = render(
-        <AdminDashboardEventsTableAG events={mockEvents} />
+        <AdminDashboardEventsTableAG events={mockEvents} />,
       )
 
       await waitFor(() => {
@@ -411,7 +416,7 @@ describe("AdminDashboardEventsTableAG", () => {
     it("should navigate to view event page when row is clicked", async () => {
       const user = userEvent.setup()
       const { container } = render(
-        <AdminDashboardEventsTableAG events={mockEvents} />
+        <AdminDashboardEventsTableAG events={mockEvents} />,
       )
 
       await waitFor(() => {
@@ -466,7 +471,7 @@ describe("AdminDashboardEventsTableAG", () => {
       const createButton = screen.getByText("Criar evento")
       expect(createButton.closest("a")).toHaveAttribute(
         "href",
-        "/admin/eventos/criar"
+        "/admin/eventos/criar",
       )
     })
   })
@@ -476,9 +481,7 @@ describe("AdminDashboardEventsTableAG", () => {
       render(<AdminDashboardEventsTableAG events={[]} />)
 
       await waitFor(() => {
-        expect(
-          screen.getByText("Nenhum evento encontrado")
-        ).toBeInTheDocument()
+        expect(screen.getByText("Nenhum evento encontrado")).toBeInTheDocument()
       })
     })
   })

@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { useFetcher } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "./news-dialog"
 

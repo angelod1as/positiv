@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ICellRendererParams } from "ag-grid-community"
 import { describe, expect, it, vi } from "vitest"
+import { render, screen, waitFor } from "~/test/test-utils"
 import { TextModalEditor } from "./text-modal-editor"
 
 interface RowData {
@@ -16,7 +16,7 @@ interface TextModalEditorContext {
 function createMockParams(
   value: string | null | undefined,
   context: TextModalEditorContext = {},
-  label?: string
+  label?: string,
 ): ICellRendererParams {
   return {
     value,
@@ -46,7 +46,9 @@ describe("TextModalEditor", () => {
 
       render(<TextModalEditor {...params} />)
 
-      expect(screen.getByText(/This is a very long text .../)).toBeInTheDocument()
+      expect(
+        screen.getByText(/This is a very long text .../),
+      ).toBeInTheDocument()
     })
 
     it("renders full text when text is short", () => {
@@ -62,7 +64,9 @@ describe("TextModalEditor", () => {
 
       const { container } = render(<TextModalEditor {...params} />)
 
-      expect(screen.getByRole("button", { name: "Edit text" })).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: "Edit text" }),
+      ).toBeInTheDocument()
       expect(container.querySelector(".truncate")?.textContent).toBe("")
     })
   })
@@ -73,7 +77,9 @@ describe("TextModalEditor", () => {
 
       render(<TextModalEditor {...params} />)
 
-      expect(screen.getByRole("button", { name: "Edit text" })).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: "Edit text" }),
+      ).toBeInTheDocument()
     })
 
     it("opens modal when edit button is clicked", async () => {

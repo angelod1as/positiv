@@ -193,6 +193,7 @@ export function AGDataTable<TData>({
   const containerClasses = cn(
     isFullscreen && "fixed inset-0 z-50 bg-background flex flex-col",
     !isFullscreen && !height && "h-[400px]",
+    !isFullscreen && "relative",
     isFullscreen && "h-full",
     className,
   )
@@ -200,7 +201,7 @@ export function AGDataTable<TData>({
   return (
     <div
       data-testid={`ag-data-table-${id}`}
-      className={cn(containerClasses, "relative")}
+      className={containerClasses}
       style={height && !isFullscreen ? { height } : undefined}
     >
       <div className={cn(isFullscreen && "flex-1", !isFullscreen && "h-full")}>

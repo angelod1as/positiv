@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi, beforeEach } from "vitest"
 import type { IRowNode } from "ag-grid-community"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
 
 // Mock AG Grid's useGridFilter hook
 const mockUseGridFilter = vi.fn()
@@ -52,9 +52,11 @@ describe("BaseMultiSelectFilter", () => {
       render(<BaseMultiSelectFilter {...defaultProps} />)
 
       expect(
-        screen.getByRole("button", { name: /selecionar todos/i })
+        screen.getByRole("button", { name: /selecionar todos/i }),
       ).toBeInTheDocument()
-      expect(screen.getByRole("button", { name: /limpar/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /limpar/i }),
+      ).toBeInTheDocument()
     })
 
     it('shows selection count: "X de Y selecionados"', () => {
@@ -80,7 +82,7 @@ describe("BaseMultiSelectFilter", () => {
           {...defaultProps}
           model={null}
           onModelChange={onModelChange}
-        />
+        />,
       )
 
       await user.click(screen.getByText("Pendente"))
@@ -97,7 +99,7 @@ describe("BaseMultiSelectFilter", () => {
           {...defaultProps}
           model={["pending", "approved"]}
           onModelChange={onModelChange}
-        />
+        />,
       )
 
       await user.click(screen.getByText("Pendente"))
@@ -114,10 +116,12 @@ describe("BaseMultiSelectFilter", () => {
           {...defaultProps}
           model={null}
           onModelChange={onModelChange}
-        />
+        />,
       )
 
-      await user.click(screen.getByRole("button", { name: /selecionar todos/i }))
+      await user.click(
+        screen.getByRole("button", { name: /selecionar todos/i }),
+      )
 
       expect(onModelChange).toHaveBeenCalledWith([
         "pending",
@@ -135,7 +139,7 @@ describe("BaseMultiSelectFilter", () => {
           {...defaultProps}
           model={["pending", "approved"]}
           onModelChange={onModelChange}
-        />
+        />,
       )
 
       await user.click(screen.getByRole("button", { name: /limpar/i }))
@@ -152,7 +156,7 @@ describe("BaseMultiSelectFilter", () => {
           {...defaultProps}
           model={["pending"]}
           onModelChange={onModelChange}
-        />
+        />,
       )
 
       await user.click(screen.getByText("Pendente"))
@@ -194,7 +198,7 @@ describe("BaseMultiSelectFilter", () => {
       expect(mockUseGridFilter).toHaveBeenCalledWith(
         expect.objectContaining({
           doesFilterPass: expect.any(Function),
-        })
+        }),
       )
     })
 
@@ -212,7 +216,7 @@ describe("BaseMultiSelectFilter", () => {
         <BaseMultiSelectFilter
           {...defaultProps}
           model={["pending", "approved"]}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -256,7 +260,10 @@ describe("BaseMultiSelectFilter", () => {
   describe("Custom Labels", () => {
     it("uses custom placeholder when provided", () => {
       render(
-        <BaseMultiSelectFilter {...defaultProps} placeholder="Search items..." />
+        <BaseMultiSelectFilter
+          {...defaultProps}
+          placeholder="Search items..."
+        />,
       )
 
       expect(screen.getByPlaceholderText("Search items...")).toBeInTheDocument()
@@ -264,25 +271,30 @@ describe("BaseMultiSelectFilter", () => {
 
     it("uses custom selectAllLabel when provided", () => {
       render(
-        <BaseMultiSelectFilter {...defaultProps} selectAllLabel="Select All" />
+        <BaseMultiSelectFilter {...defaultProps} selectAllLabel="Select All" />,
       )
 
-      expect(screen.getByRole("button", { name: /select all/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /select all/i }),
+      ).toBeInTheDocument()
     })
 
     it("uses custom clearLabel when provided", () => {
-      render(
-        <BaseMultiSelectFilter {...defaultProps} clearLabel="Clear All" />
-      )
+      render(<BaseMultiSelectFilter {...defaultProps} clearLabel="Clear All" />)
 
-      expect(screen.getByRole("button", { name: /clear all/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /clear all/i }),
+      ).toBeInTheDocument()
     })
 
     it("uses custom noResultsLabel when provided", async () => {
       const user = userEvent.setup()
 
       render(
-        <BaseMultiSelectFilter {...defaultProps} noResultsLabel="Nothing found" />
+        <BaseMultiSelectFilter
+          {...defaultProps}
+          noResultsLabel="Nothing found"
+        />,
       )
 
       const searchInput = screen.getByPlaceholderText("Buscar...")
@@ -300,7 +312,7 @@ describe("BaseMultiSelectFilter", () => {
           field="status"
           model={["pending"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -321,11 +333,13 @@ describe("BaseMultiSelectFilter", () => {
           getValue={customGetValue}
           model={["pending"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
-      const mockNode = { data: { status: "approved", customField: "pending" } } as IRowNode
+      const mockNode = {
+        data: { status: "approved", customField: "pending" },
+      } as IRowNode
 
       doesFilterPass({ node: mockNode })
 
@@ -392,7 +406,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={["homem cis"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -411,7 +425,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={["mulher cis"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -430,7 +444,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={["homem cis"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -449,7 +463,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={["homem cis"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -466,7 +480,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={null}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -485,7 +499,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={["mulher cis", "pessoa não binária"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -504,7 +518,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={["homem cis"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -521,7 +535,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={["homem cis"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -538,7 +552,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={["homem cis"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -557,7 +571,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="array"
           model={["null"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -578,7 +592,7 @@ describe("BaseMultiSelectFilter", () => {
           matchMode="exact"
           model={["pending"]}
           onModelChange={vi.fn()}
-        />
+        />,
       )
 
       const { doesFilterPass } = mockUseGridFilter.mock.calls[0][0]
@@ -726,7 +740,9 @@ describe("BaseMultiSelectFilter", () => {
         />,
       )
 
-      await user.click(screen.getByRole("button", { name: /selecionar todos/i }))
+      await user.click(
+        screen.getByRole("button", { name: /selecionar todos/i }),
+      )
 
       expect(onModelChange).toHaveBeenCalledWith(["pending", "approved"])
     })

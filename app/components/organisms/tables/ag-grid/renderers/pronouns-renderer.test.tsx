@@ -1,9 +1,11 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { PronounsRenderer } from "./pronouns-renderer"
 
-function createMockParams(pronouns: string[] | null | undefined): ICellRendererParams {
+function createMockParams(
+  pronouns: string[] | null | undefined,
+): ICellRendererParams {
   return {
     value: pronouns,
     valueFormatted: String(pronouns?.join(", ") ?? ""),
@@ -47,7 +49,9 @@ describe("PronounsRenderer", () => {
 
       render(<PronounsRenderer {...params} />)
 
-      expect(screen.getByText("ela/dela, ele/dele, elu/delu")).toBeInTheDocument()
+      expect(
+        screen.getByText("ela/dela, ele/dele, elu/delu"),
+      ).toBeInTheDocument()
     })
   })
 

@@ -1,9 +1,11 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { BooleanTextRenderer } from "./boolean-text-renderer"
 
-function createMockParams(value: boolean | null | undefined): ICellRendererParams {
+function createMockParams(
+  value: boolean | null | undefined,
+): ICellRendererParams {
   return {
     value,
     valueFormatted: String(value ?? ""),

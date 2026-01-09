@@ -1,13 +1,13 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi, beforeEach } from "vitest"
 import type { FetcherWithComponents } from "react-router"
-import { ListmonkFilterModal } from "./listmonk-filter-modal"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import type { ComposableFetcherData } from "~types/database/entities.types"
+import { ListmonkFilterModal } from "./listmonk-filter-modal"
 
 function createMockFetcher(
   state: "idle" | "submitting" | "loading" = "idle",
-  intent?: string
+  intent?: string,
 ) {
   const formData = intent ? new FormData() : undefined
   if (formData && intent) {
@@ -75,37 +75,59 @@ describe("ListmonkFilterModal", () => {
       render(<ListmonkFilterModal {...defaultProps} />)
 
       expect(
-        screen.getByRole("checkbox", { name: /Status de Processo: Pendente/i })
+        screen.getByRole("checkbox", { name: /Status de Processo: Pendente/i }),
       ).toBeChecked()
       expect(
-        screen.getByRole("checkbox", { name: /Status de Processo: Conversando/i })
+        screen.getByRole("checkbox", {
+          name: /Status de Processo: Conversando/i,
+        }),
       ).toBeChecked()
       expect(
-        screen.getByRole("checkbox", { name: /Status de Processo: Dados de pagto enviados/i })
+        screen.getByRole("checkbox", {
+          name: /Status de Processo: Dados de pagto enviados/i,
+        }),
       ).toBeChecked()
       expect(
-        screen.getByRole("checkbox", { name: /Status de Processo: Regras enviadas/i })
+        screen.getByRole("checkbox", {
+          name: /Status de Processo: Regras enviadas/i,
+        }),
       ).toBeChecked()
       expect(
-        screen.getByRole("checkbox", { name: /Status de Processo: Pensar melhor/i })
+        screen.getByRole("checkbox", {
+          name: /Status de Processo: Pensar melhor/i,
+        }),
       ).toBeChecked()
       expect(
-        screen.getByRole("checkbox", { name: /Status de Processo: Finalizado/i })
+        screen.getByRole("checkbox", {
+          name: /Status de Processo: Finalizado/i,
+        }),
       ).toBeChecked()
     })
 
     it("should render all attendance status checkboxes checked by default", () => {
       render(<ListmonkFilterModal {...defaultProps} />)
 
-      expect(screen.getByRole("checkbox", { name: /Status de Presença: Pendente/i })).toBeChecked()
-      expect(screen.getByRole("checkbox", { name: /Status de Presença: Compareceu/i })).toBeChecked()
       expect(
-        screen.getByRole("checkbox", { name: /Status de Presença: Não compareceu/i })
+        screen.getByRole("checkbox", { name: /Status de Presença: Pendente/i }),
       ).toBeChecked()
       expect(
-        screen.getByRole("checkbox", { name: /Status de Presença: Pulade \(rodízio\)/i })
+        screen.getByRole("checkbox", {
+          name: /Status de Presença: Compareceu/i,
+        }),
       ).toBeChecked()
-      expect(screen.getByRole("checkbox", { name: /Status de Presença: Não vai/i })).toBeChecked()
+      expect(
+        screen.getByRole("checkbox", {
+          name: /Status de Presença: Não compareceu/i,
+        }),
+      ).toBeChecked()
+      expect(
+        screen.getByRole("checkbox", {
+          name: /Status de Presença: Pulade \(rodízio\)/i,
+        }),
+      ).toBeChecked()
+      expect(
+        screen.getByRole("checkbox", { name: /Status de Presença: Não vai/i }),
+      ).toBeChecked()
     })
 
     it("should not render modal when isOpen is false", () => {
@@ -204,7 +226,11 @@ describe("ListmonkFilterModal", () => {
       fetcher.data = { success: true, intent: "sync-listmonk-list" }
 
       render(
-        <ListmonkFilterModal {...defaultProps} onClose={onClose} fetcher={fetcher} />
+        <ListmonkFilterModal
+          {...defaultProps}
+          onClose={onClose}
+          fetcher={fetcher}
+        />,
       )
 
       expect(onClose).toHaveBeenCalledTimes(1)
@@ -217,7 +243,11 @@ describe("ListmonkFilterModal", () => {
       fetcher.data = { success: true, intent: "update-event-participant" }
 
       render(
-        <ListmonkFilterModal {...defaultProps} onClose={onClose} fetcher={fetcher} />
+        <ListmonkFilterModal
+          {...defaultProps}
+          onClose={onClose}
+          fetcher={fetcher}
+        />,
       )
 
       expect(onClose).not.toHaveBeenCalled()
@@ -230,7 +260,11 @@ describe("ListmonkFilterModal", () => {
       fetcher.data = { success: false, intent: "sync-listmonk-list" }
 
       render(
-        <ListmonkFilterModal {...defaultProps} onClose={onClose} fetcher={fetcher} />
+        <ListmonkFilterModal
+          {...defaultProps}
+          onClose={onClose}
+          fetcher={fetcher}
+        />,
       )
 
       expect(onClose).not.toHaveBeenCalled()
@@ -241,7 +275,11 @@ describe("ListmonkFilterModal", () => {
       const fetcher = createMockFetcher("submitting", "sync-listmonk-list")
 
       render(
-        <ListmonkFilterModal {...defaultProps} onClose={onClose} fetcher={fetcher} />
+        <ListmonkFilterModal
+          {...defaultProps}
+          onClose={onClose}
+          fetcher={fetcher}
+        />,
       )
 
       expect(onClose).not.toHaveBeenCalled()
@@ -296,7 +334,7 @@ describe("ListmonkFilterModal", () => {
       render(<ListmonkFilterModal {...defaultProps} fetcher={fetcher} />)
 
       expect(
-        screen.getByRole("button", { name: /sincronizando/i })
+        screen.getByRole("button", { name: /sincronizando/i }),
       ).toBeInTheDocument()
     })
   })

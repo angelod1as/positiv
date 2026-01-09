@@ -1,12 +1,14 @@
-import { render, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { ParticipantsTableSkeleton } from "./participants-table-skeleton"
 
 describe("ParticipantsTableSkeleton", () => {
   it("should render skeleton with correct structure", () => {
     render(<ParticipantsTableSkeleton />)
 
-    expect(screen.getByTestId("participants-table-skeleton")).toBeInTheDocument()
+    expect(
+      screen.getByTestId("participants-table-skeleton"),
+    ).toBeInTheDocument()
   })
 
   it("should have accessibility attributes", () => {

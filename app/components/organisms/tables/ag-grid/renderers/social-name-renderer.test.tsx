@@ -1,11 +1,11 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { SocialNameRenderer } from "./social-name-renderer"
 
 function createMockParams(
   socialName: string | null | undefined,
-  fullName: string
+  fullName: string,
 ): ICellRendererParams {
   return {
     value: socialName,

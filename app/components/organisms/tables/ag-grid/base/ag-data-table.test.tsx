@@ -1,6 +1,6 @@
-import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen, waitFor } from "~/test/test-utils"
 import { AGDataTable } from "./ag-data-table"
 
 const mockLocalStorage = (() => {
@@ -99,7 +99,9 @@ describe("AGDataTable", () => {
         expect(screen.getByText("Item 1")).toBeInTheDocument()
       })
 
-      const loadingOverlay = container.querySelector(".ag-overlay-loading-center")
+      const loadingOverlay = container.querySelector(
+        ".ag-overlay-loading-center",
+      )
       expect(loadingOverlay).not.toBeInTheDocument()
     })
 
@@ -135,7 +137,9 @@ describe("AGDataTable", () => {
       )
 
       await waitFor(() => {
-        expect(screen.getByText("Nenhum registro encontrado")).toBeInTheDocument()
+        expect(
+          screen.getByText("Nenhum registro encontrado"),
+        ).toBeInTheDocument()
       })
     })
 
@@ -394,9 +398,7 @@ describe("AGDataTable", () => {
         expect(screen.getByText("Item 1")).toBeInTheDocument()
       })
 
-      const resizeHandles = container.querySelectorAll(
-        ".ag-header-cell-resize",
-      )
+      const resizeHandles = container.querySelectorAll(".ag-header-cell-resize")
       expect(resizeHandles.length).toBeGreaterThan(0)
     })
   })
@@ -593,7 +595,9 @@ describe("AGDataTable", () => {
         expect(screen.getByText("Item 1")).toBeInTheDocument()
       })
 
-      const nameColumn = container.querySelector('.ag-header-cell[col-id="name"]')
+      const nameColumn = container.querySelector(
+        '.ag-header-cell[col-id="name"]',
+      )
       expect(nameColumn).toBeInTheDocument()
       expect(nameColumn).not.toHaveStyle({ flex: "1" })
     })

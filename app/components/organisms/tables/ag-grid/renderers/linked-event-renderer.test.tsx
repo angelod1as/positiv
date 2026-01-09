@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
-import { describe, expect, it } from "vitest"
 import { MemoryRouter } from "react-router"
+import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { LinkedEventRenderer } from "./linked-event-renderer"
 
 interface MockRowData {
@@ -69,7 +69,7 @@ describe("LinkedEventRenderer", () => {
       const link = screen.getByRole("link")
       expect(link).toHaveAttribute(
         "href",
-        "/admin/eventos/event-123/participantes/profile-456"
+        "/admin/eventos/event-123/participantes/profile-456",
       )
     })
 
@@ -126,7 +126,8 @@ describe("LinkedEventRenderer", () => {
         event_id: "event-123",
         profile_id: "profile-456",
         event_emoji: "🎉",
-        event_title: "This is a very long event title that exceeds twenty characters",
+        event_title:
+          "This is a very long event title that exceeds twenty characters",
         time_event_start: "2025-01-15T18:00:00Z",
       })
 
@@ -179,7 +180,9 @@ describe("LinkedEventRenderer", () => {
         time_event_start: "2025-01-15T18:00:00Z",
       })
 
-      const { container } = renderWithRouter(<LinkedEventRenderer {...params} />)
+      const { container } = renderWithRouter(
+        <LinkedEventRenderer {...params} />,
+      )
 
       expect(container).toBeEmptyDOMElement()
     })

@@ -1,15 +1,13 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import type { ReactNode } from "react"
 import { describe, expect, it } from "vitest"
 import { TooltipProvider } from "~/components/ui/tooltip"
+import { render, screen } from "~/test/test-utils"
 import { createColumnHeader } from "./create-column-header"
 
 // Wrapper to provide TooltipProvider for tests
 function renderWithTooltip(ui: ReactNode) {
-  return render(
-    <TooltipProvider delayDuration={0}>{ui}</TooltipProvider>,
-  )
+  return render(<TooltipProvider delayDuration={0}>{ui}</TooltipProvider>)
 }
 
 describe("createColumnHeader", () => {

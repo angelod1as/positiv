@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react"
 import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { Button } from "./button"
 
 describe("Button", () => {
@@ -10,7 +10,7 @@ describe("Button", () => {
         <Button to="/test" linkProps={{ prefetch: "intent" }}>
           Test Button
         </Button>
-      </MemoryRouter>
+      </MemoryRouter>,
     )
 
     const link = screen.getByRole("link", { name: "Test Button" })
@@ -32,7 +32,7 @@ describe("Button", () => {
         <Button to="/dashboard" linkProps={{ prefetch: "render" }}>
           Go to Dashboard
         </Button>
-      </MemoryRouter>
+      </MemoryRouter>,
     )
 
     const link = screen.getByRole("link", { name: "Go to Dashboard" })
