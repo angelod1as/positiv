@@ -11,7 +11,6 @@ import {
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip"
 import type { BaseCellEditorProps } from "./use-cell-editor"
@@ -65,26 +64,24 @@ export const TextEditModalCell = <T extends { id: string }, K extends keyof T>({
     <>
       <div className="flex items-center justify-between gap-2">
         <span className="truncate">{displayText}</span>
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleOpen}
-                aria-label="Edit text"
-              >
-                <PencilIcon className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            {currentValue && (
-              <TooltipContent>
-                <p className="max-w-xs whitespace-pre-wrap">{currentValue}</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleOpen}
+              aria-label="Edit text"
+            >
+              <PencilIcon className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          {currentValue && (
+            <TooltipContent>
+              <p className="max-w-xs whitespace-pre-wrap">{currentValue}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
       </div>
 
       <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose(false)}>
