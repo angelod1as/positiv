@@ -48,24 +48,14 @@ export function useAutoSave({
         rowId: snapshot.rowId,
       }
 
-      console.info("[AutoSave] Executing save:", params)
       setHasPendingSave(false)
       setIsSaving(true)
 
       try {
         await onSave(params)
-        console.info("[AutoSave] Save completed successfully")
       } catch (error) {
-        console.error("Auto-save failed:", {
-          error,
-          field: snapshot.field,
-          rowId: snapshot.rowId,
-        })
-
         if (!snapshot.rowId) {
-          console.warn("Cannot rollback change: node.id is undefined", {
-            field: snapshot.field,
-          })
+          // Cannot rollback without row ID
         } else {
           const rowNode = snapshot.api.getRowNode(snapshot.rowId)
           const currentValue =
@@ -105,13 +95,6 @@ export function useAutoSave({
         rowId: event.node.id,
         api: event.api,
       }
-
-      console.info("[AutoSave] Cell changed:", {
-        field,
-        oldValue: event.oldValue,
-        newValue: event.newValue,
-        rowId: event.node.id,
-      })
 
       setHasPendingSave(true)
       timerRef.current = setTimeout(() => {

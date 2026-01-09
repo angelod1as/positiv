@@ -354,10 +354,7 @@ describe("useAutoSave", () => {
       expect(mockSetDataValue).not.toHaveBeenCalled()
     })
 
-    it("warns when nodeId is undefined and cannot rollback", async () => {
-      const consoleWarnSpy = vi
-        .spyOn(console, "warn")
-        .mockImplementation(() => {})
+    it("does not attempt rollback when nodeId is undefined", async () => {
       const onSave = vi.fn().mockRejectedValue(new Error("Save failed"))
 
       const { result } = renderHook(() =>
@@ -365,9 +362,10 @@ describe("useAutoSave", () => {
       )
 
       // Create event with undefined node.id
+      const mockGetRowNode = vi.fn()
       const mockApi = {
         applyTransaction: vi.fn(),
-        getRowNode: vi.fn(),
+        getRowNode: mockGetRowNode,
       } as unknown as GridApi
 
       const event = {
@@ -393,12 +391,8 @@ describe("useAutoSave", () => {
         await Promise.resolve()
       })
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        "Cannot rollback change: node.id is undefined",
-        { field: "status" },
-      )
-
-      consoleWarnSpy.mockRestore()
+      // Should not attempt to get row node for rollback when id is undefined
+      expect(mockGetRowNode).not.toHaveBeenCalled()
     })
   })
 
@@ -487,41 +481,4 @@ describe("useAutoSave", () => {
     })
   })
 
-  describe("Error Logging", () => {
-    it("logs error to console on save failure", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {})
-      const saveError = new Error("Network error")
-      const onSave = vi.fn().mockRejectedValue(saveError)
-
-      const { result } = renderHook(() =>
-        useAutoSave({ onSave, debounceMs: 500 }),
-      )
-
-      act(() => {
-        result.current.handleCellValueChanged(createMockEvent("old", "new"))
-      })
-
-      await act(async () => {
-        vi.advanceTimersByTime(500)
-      })
-
-      await act(async () => {
-        await Promise.resolve()
-        await Promise.resolve()
-      })
-
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Auto-save failed:",
-        expect.objectContaining({
-          error: saveError,
-          field: "status",
-          rowId: "row-1",
-        }),
-      )
-
-      consoleErrorSpy.mockRestore()
-    })
-  })
 })
