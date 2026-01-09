@@ -3,7 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import { useGridState } from "./use-grid-state"
 import type { GridApi, GridState } from "ag-grid-community"
 
-const mockSessionStorage = (() => {
+const mockLocalStorage = (() => {
   let store: Record<string, string> = {}
   return {
     getItem: vi.fn((key: string) => store[key] ?? null),
@@ -23,8 +23,8 @@ const mockSessionStorage = (() => {
   }
 })()
 
-Object.defineProperty(window, "sessionStorage", {
-  value: mockSessionStorage,
+Object.defineProperty(window, "localStorage", {
+  value: mockLocalStorage,
 })
 
 const createMockGridApi = (): Partial<GridApi> => ({
@@ -38,7 +38,7 @@ const createMockGridApi = (): Partial<GridApi> => ({
 
 describe("useGridState", () => {
   beforeEach(() => {
-    mockSessionStorage.clear()
+    mockLocalStorage.clear()
     vi.clearAllMocks()
     vi.useFakeTimers()
   })
@@ -68,7 +68,7 @@ describe("useGridState", () => {
   })
 
   describe("restoreState", () => {
-    it("should restore state from sessionStorage when version matches", () => {
+    it("should restore state from localStorage when version matches", () => {
       const mockState = {
         filter: { status: { filterType: "text", filter: "active" } },
         columnOrder: { orderedColIds: ["col1", "col2"] },
@@ -81,7 +81,7 @@ describe("useGridState", () => {
         gridState: mockState,
       }
 
-      mockSessionStorage.setItem(
+      mockLocalStorage.setItem(
         "ag-grid-state-test-table",
         JSON.stringify(storedState)
       )
@@ -106,7 +106,7 @@ describe("useGridState", () => {
         gridState: { filter: {} },
       }
 
-      mockSessionStorage.setItem(
+      mockLocalStorage.setItem(
         "ag-grid-state-test-table",
         JSON.stringify(storedState)
       )
@@ -125,7 +125,7 @@ describe("useGridState", () => {
     })
 
     it("should handle corrupted JSON gracefully", () => {
-      mockSessionStorage.setItem("ag-grid-state-test-table", "invalid json{{{")
+      mockLocalStorage.setItem("ag-grid-state-test-table", "invalid json{{{")
 
       const mockApi = createMockGridApi()
       const { result } = renderHook(() =>
@@ -155,7 +155,7 @@ describe("useGridState", () => {
     })
 
     it("should clear corrupted state from storage", () => {
-      mockSessionStorage.setItem("ag-grid-state-test-table", "invalid json")
+      mockLocalStorage.setItem("ag-grid-state-test-table", "invalid json")
 
       const mockApi = createMockGridApi()
       const { result } = renderHook(() =>
@@ -166,7 +166,7 @@ describe("useGridState", () => {
         result.current.restoreState(mockApi as GridApi)
       })
 
-      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
         "ag-grid-state-test-table"
       )
     })
@@ -184,7 +184,7 @@ describe("useGridState", () => {
         gridState: mockState,
       }
 
-      mockSessionStorage.setItem(
+      mockLocalStorage.setItem(
         "ag-grid-state-test-table",
         JSON.stringify(storedState)
       )
@@ -205,13 +205,13 @@ describe("useGridState", () => {
       })
 
       // Storage should NOT be cleared when api.setState fails (only on parse errors)
-      expect(mockSessionStorage.removeItem).not.toHaveBeenCalled()
+      expect(mockLocalStorage.removeItem).not.toHaveBeenCalled()
       expect(result.current.isRestored).toBe(true)
     })
   })
 
   describe("saveState", () => {
-    it("should save state to sessionStorage with correct format", () => {
+    it("should save state to localStorage with correct format", () => {
       const { result } = renderHook(() =>
         useGridState("test-table", { version: 1 })
       )
@@ -228,7 +228,7 @@ describe("useGridState", () => {
       })
 
       const savedData = JSON.parse(
-        mockSessionStorage.store["ag-grid-state-test-table"]
+        mockLocalStorage.store["ag-grid-state-test-table"]
       )
 
       expect(savedData.version).toBe(1)
@@ -254,9 +254,9 @@ describe("useGridState", () => {
         vi.advanceTimersByTime(300)
       })
 
-      expect(mockSessionStorage.setItem).toHaveBeenCalledTimes(1)
+      expect(mockLocalStorage.setItem).toHaveBeenCalledTimes(1)
       const savedData = JSON.parse(
-        mockSessionStorage.store["ag-grid-state-test-table"]
+        mockLocalStorage.store["ag-grid-state-test-table"]
       )
       expect(savedData.gridState).toEqual(state3)
     })
@@ -273,19 +273,19 @@ describe("useGridState", () => {
         vi.advanceTimersByTime(500)
       })
 
-      expect(mockSessionStorage.setItem).not.toHaveBeenCalled()
+      expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
 
       act(() => {
         vi.advanceTimersByTime(500)
       })
 
-      expect(mockSessionStorage.setItem).toHaveBeenCalled()
+      expect(mockLocalStorage.setItem).toHaveBeenCalled()
     })
   })
 
   describe("clearState", () => {
-    it("should remove state from sessionStorage", () => {
-      mockSessionStorage.setItem(
+    it("should remove state from localStorage", () => {
+      mockLocalStorage.setItem(
         "ag-grid-state-test-table",
         JSON.stringify({ version: 1, gridState: {} })
       )
@@ -298,7 +298,7 @@ describe("useGridState", () => {
         result.current.clearState()
       })
 
-      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
         "ag-grid-state-test-table"
       )
     })
@@ -325,8 +325,8 @@ describe("useGridState", () => {
       })
 
       // Save should NOT have been called because clearState cancelled the pending timer
-      expect(mockSessionStorage.setItem).not.toHaveBeenCalled()
-      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(
+      expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
         "ag-grid-state-test-table"
       )
     })
@@ -345,7 +345,7 @@ describe("useGridState", () => {
         vi.advanceTimersByTime(500)
       })
 
-      expect(mockSessionStorage.setItem).toHaveBeenCalledWith(
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
         "ag-grid-state-my-unique-table",
         expect.any(String)
       )
@@ -374,7 +374,7 @@ describe("useGridState", () => {
       })
 
       // Save should NOT have been called because unmount cancelled the pending timer
-      expect(mockSessionStorage.setItem).not.toHaveBeenCalled()
+      expect(mockLocalStorage.setItem).not.toHaveBeenCalled()
     })
   })
 
@@ -386,7 +386,7 @@ describe("useGridState", () => {
         gridState: { filter: { old: true } },
       }
 
-      mockSessionStorage.setItem(
+      mockLocalStorage.setItem(
         "ag-grid-state-test-table",
         JSON.stringify(storedState)
       )
@@ -401,7 +401,7 @@ describe("useGridState", () => {
       })
 
       expect(mockApi.setState).not.toHaveBeenCalled()
-      expect(mockSessionStorage.removeItem).toHaveBeenCalledWith(
+      expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
         "ag-grid-state-test-table"
       )
     })
