@@ -1,40 +1,55 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { EventForm } from "./event-form"
+import { render, screen } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
+import { EventForm } from "./event-form"
 
 // Mock the SchemaForm component to avoid React Router dependencies
 let mockFormValues: Record<string, unknown> = {}
 let mockSetValueCalls: Array<[string, unknown]> = []
 
 vi.mock("../base/schema-form", () => ({
-  SchemaForm: ({ children, _schema, values, labels, options, descriptions, inputTypes }: {
+  SchemaForm: ({
+    children,
+    _schema,
+    values,
+    labels,
+    options,
+    descriptions,
+    inputTypes,
+  }: {
     children: (props: {
       Field: React.FC<{ name: string }>
       Button: React.FC<{ children: React.ReactNode }>
       Errors: React.FC
       clearErrors: () => void
       getValues: (field: string) => unknown
-      setError: (field: string, error: { message: string, type: string }) => void
-      setValue: (field: string, value: unknown, options?: { shouldValidate: boolean }) => void
+      setError: (
+        field: string,
+        error: { message: string; type: string },
+      ) => void
+      setValue: (
+        field: string,
+        value: unknown,
+        options?: { shouldValidate: boolean },
+      ) => void
     }) => React.ReactNode
     _schema: unknown
     values?: Record<string, unknown>
     labels?: Record<string, string>
-    options?: Record<string, Array<{ value: string, name: string }>>
+    options?: Record<string, Array<{ value: string; name: string }>>
     descriptions?: Record<string, string>
     inputTypes?: Record<string, string>
   }) => {
     mockFormValues = values || {}
-    
+
     const renderProps = {
       Field: ({ name }: { name: string }) => {
         const fieldType = inputTypes?.[name] || "text"
         const fieldLabel = labels?.[name] || name
         const fieldDescription = descriptions?.[name]
         const fieldOptions = options?.[name]
-        
+
         if (fieldType === "select" && fieldOptions) {
           return (
             <div>
@@ -46,7 +61,7 @@ vi.mock("../base/schema-form", () => ({
                 defaultValue={(mockFormValues[name] as string) || ""}
                 data-testid={`field-${name}`}
               >
-                {fieldOptions.map((opt: { value: string, name: string }) => (
+                {fieldOptions.map((opt: { value: string; name: string }) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.name}
                   </option>
@@ -55,7 +70,7 @@ vi.mock("../base/schema-form", () => ({
             </div>
           )
         }
-        
+
         return (
           <div>
             <label htmlFor={name}>{fieldLabel}</label>
@@ -82,7 +97,7 @@ vi.mock("../base/schema-form", () => ({
         mockFormValues[field] = value
       },
     }
-    
+
     return <form>{children(renderProps)}</form>
   },
 }))
@@ -97,7 +112,7 @@ describe("EventForm", () => {
   describe("rendering", () => {
     it("renders all form fields with correct labels", () => {
       render(<EventForm />)
-      
+
       // Check main fields
       expect(screen.getByLabelText("Nome da festa")).toBeInTheDocument()
       expect(screen.getByLabelText("Emoji")).toBeInTheDocument()
@@ -110,15 +125,17 @@ describe("EventForm", () => {
 
     it("renders event type field as a select with correct options", () => {
       render(<EventForm />)
-      
-      const eventTypeSelect = screen.getByTestId("field-event_type") as HTMLSelectElement
+
+      const eventTypeSelect = screen.getByTestId(
+        "field-event_type",
+      ) as HTMLSelectElement
       expect(eventTypeSelect.tagName).toBe("SELECT")
-      
-      const options = Array.from(eventTypeSelect.options).map(opt => ({
+
+      const options = Array.from(eventTypeSelect.options).map((opt) => ({
         value: opt.value,
         text: opt.text,
       }))
-      
+
       expect(options).toEqual([
         { value: "regular", text: "Regular" },
         { value: "bdsm", text: "BDSM" },
@@ -127,8 +144,12 @@ describe("EventForm", () => {
 
     it("displays event type description", () => {
       render(<EventForm />)
-      
-      expect(screen.getByText("Edições BDSM têm uma página de consentimento adicional")).toBeInTheDocument()
+
+      expect(
+        screen.getByText(
+          "Edições BDSM têm uma página de consentimento adicional",
+        ),
+      ).toBeInTheDocument()
     })
 
     it("renders date fields with correct type", () => {
@@ -140,7 +161,7 @@ describe("EventForm", () => {
         "time_application_start",
       ]
 
-      dateFields.forEach(field => {
+      dateFields.forEach((field) => {
         const input = screen.getByTestId(`field-${field}`) as HTMLInputElement
         expect(input.type).toBe("datetime-local")
       })
@@ -148,14 +169,16 @@ describe("EventForm", () => {
 
     it("renders submit button", () => {
       render(<EventForm />)
-      
+
       expect(screen.getByRole("button", { name: "Salvar" })).toBeInTheDocument()
     })
 
     it("renders 'Calcular datas automaticamente' button", () => {
       render(<EventForm />)
-      
-      expect(screen.getByRole("button", { name: "Calcular datas automaticamente" })).toBeInTheDocument()
+
+      expect(
+        screen.getByRole("button", { name: "Calcular datas automaticamente" }),
+      ).toBeInTheDocument()
     })
   })
 
@@ -185,53 +208,66 @@ describe("EventForm", () => {
 
     it("populates form fields with existing event data", () => {
       render(<EventForm event={mockEvent} />)
-      
+
       expect(screen.getByTestId("field-title")).toHaveValue("Test BDSM Event")
       expect(screen.getByTestId("field-emoji")).toHaveValue("🔒")
-      expect(screen.getByTestId("field-description")).toHaveValue("A test BDSM event")
+      expect(screen.getByTestId("field-description")).toHaveValue(
+        "A test BDSM event",
+      )
       expect(screen.getByTestId("field-location")).toHaveValue("Test Location")
       expect(screen.getByTestId("field-event_type")).toHaveValue("bdsm")
     })
 
     it("preserves event type when editing existing BDSM event", () => {
       render(<EventForm event={mockEvent} />)
-      
-      const eventTypeSelect = screen.getByTestId("field-event_type") as HTMLSelectElement
+
+      const eventTypeSelect = screen.getByTestId(
+        "field-event_type",
+      ) as HTMLSelectElement
       expect(eventTypeSelect.value).toBe("bdsm")
     })
 
     it("preserves event type when editing existing regular event", () => {
       const regularEvent = { ...mockEvent, event_type: "regular" as const }
       render(<EventForm event={regularEvent} />)
-      
-      const eventTypeSelect = screen.getByTestId("field-event_type") as HTMLSelectElement
+
+      const eventTypeSelect = screen.getByTestId(
+        "field-event_type",
+      ) as HTMLSelectElement
       expect(eventTypeSelect.value).toBe("regular")
     })
 
     it("preserves dates when editing existing event", () => {
       render(<EventForm event={mockEvent} />)
-      
+
       // Check that dates are transformed properly
-      const startDateField = screen.getByTestId("field-time_event_start") as HTMLInputElement
-      const endDateField = screen.getByTestId("field-time_event_end") as HTMLInputElement
-      
+      const startDateField = screen.getByTestId(
+        "field-time_event_start",
+      ) as HTMLInputElement
+      const endDateField = screen.getByTestId(
+        "field-time_event_end",
+      ) as HTMLInputElement
+
       // The dates should be formatted for datetime-local input
       expect(startDateField.value).toBe("2024-02-01T10:00")
       expect(endDateField.value).toBe("2024-02-01T14:00")
     })
 
-
     it("handles dates without seconds from database", () => {
       const eventWithoutSeconds = {
         ...mockEvent,
         time_event_start: "2024-02-01T10:00",
-        time_event_end: "2024-02-01T14:00"
+        time_event_end: "2024-02-01T14:00",
       }
       render(<EventForm event={eventWithoutSeconds} />)
-      
-      const startDateField = screen.getByTestId("field-time_event_start") as HTMLInputElement
-      const endDateField = screen.getByTestId("field-time_event_end") as HTMLInputElement
-      
+
+      const startDateField = screen.getByTestId(
+        "field-time_event_start",
+      ) as HTMLInputElement
+      const endDateField = screen.getByTestId(
+        "field-time_event_end",
+      ) as HTMLInputElement
+
       // Now that regex is fixed, dates without seconds should still be formatted
       expect(startDateField.value).toBe("2024-02-01T10:00")
       expect(endDateField.value).toBe("2024-02-01T14:00")
@@ -242,28 +278,32 @@ describe("EventForm", () => {
     it("shows error when trying to generate dates without start date", async () => {
       const user = userEvent.setup()
       render(<EventForm />)
-      
-      const generateButton = screen.getByRole("button", { name: "Calcular datas automaticamente" })
+
+      const generateButton = screen.getByRole("button", {
+        name: "Calcular datas automaticamente",
+      })
       await user.click(generateButton)
-      
+
       // Since we mocked setError, we can't test the actual error display
       // but in a real test we would verify the error message appears
     })
 
     it("generates derived dates when start date is provided", async () => {
       const user = userEvent.setup()
-      
+
       // Since our mock doesn't simulate the actual component behavior,
       // we can only test that the button exists and is clickable
       render(<EventForm />)
-      
-      const generateButton = screen.getByRole("button", { name: "Calcular datas automaticamente" })
+
+      const generateButton = screen.getByRole("button", {
+        name: "Calcular datas automaticamente",
+      })
       expect(generateButton).toBeInTheDocument()
-      
+
       // In a real implementation with proper mocking of the handleDates function,
       // we would test the actual date generation logic
       await user.click(generateButton)
-      
+
       // The test passes if no errors are thrown
     })
   })
@@ -275,12 +315,12 @@ describe("EventForm", () => {
         ...({} as Event),
         event_type: "regular",
       }
-      
+
       render(<EventForm event={regularEvent} />)
-      
+
       const eventTypeSelect = screen.getByTestId("field-event_type")
       await user.selectOptions(eventTypeSelect, "bdsm")
-      
+
       expect(eventTypeSelect).toHaveValue("bdsm")
     })
 
@@ -290,19 +330,21 @@ describe("EventForm", () => {
         ...({} as Event),
         event_type: "bdsm",
       }
-      
+
       render(<EventForm event={bdsmEvent} />)
-      
+
       const eventTypeSelect = screen.getByTestId("field-event_type")
       await user.selectOptions(eventTypeSelect, "regular")
-      
+
       expect(eventTypeSelect).toHaveValue("regular")
     })
 
     it("defaults to regular event type for new events", () => {
       render(<EventForm />)
-      
-      const eventTypeSelect = screen.getByTestId("field-event_type") as HTMLSelectElement
+
+      const eventTypeSelect = screen.getByTestId(
+        "field-event_type",
+      ) as HTMLSelectElement
       // The select element defaults to the first option when no value is provided
       expect(eventTypeSelect.value).toBe("regular")
     })
@@ -322,11 +364,11 @@ describe("EventForm", () => {
 
     it("groups related fields together", () => {
       render(<EventForm />)
-      
+
       // Event info section should contain basic fields
       const titleField = screen.getByLabelText("Nome da festa")
       const eventTypeField = screen.getByLabelText("Tipo de evento")
-      
+
       // Both should be in the DOM (layout testing would require more specific queries)
       expect(titleField).toBeInTheDocument()
       expect(eventTypeField).toBeInTheDocument()

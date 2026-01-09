@@ -5,7 +5,6 @@ import { profileFlagStatusMap } from "~/lib/helpers/propMaps"
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip"
 
@@ -44,23 +43,21 @@ export const FlagBadge = ({ flag, flagNotes, showTooltip = true }: FlagBadgeProp
   }
 
   return (
-    <TooltipProvider delayDuration={0}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span 
-            role="img" 
-            aria-label={ariaLabel}
-            className="inline-flex cursor-default"
-          >
-            <Flag 
-              className={cn("size-4", flagColorClass)}
-            />
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p className="max-w-xs">{flagNotes}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          role="img"
+          aria-label={ariaLabel}
+          className="inline-flex cursor-default"
+        >
+          <Flag
+            className={cn("size-4", flagColorClass)}
+          />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-sm">
+        <p className="whitespace-pre-wrap break-words">{flagNotes}</p>
+      </TooltipContent>
+    </Tooltip>
   )
 }

@@ -12,6 +12,7 @@ export interface UseAutoSaveOptions {
 export interface UseAutoSaveReturn {
   handleCellValueChanged: (event: CellValueChangedEvent) => void
   isSaving: boolean
+  hasPendingSave: boolean
 }
 
 interface SaveSnapshot {
@@ -21,6 +22,7 @@ interface SaveSnapshot {
   rowData: unknown
   rowId: string | undefined
   api: GridApi
+  node: { setDataValue: (field: string, value: unknown) => void; data?: unknown }
 }
 
 const DEFAULT_DEBOUNCE_MS = 500
@@ -32,6 +34,7 @@ export function useAutoSave({
   errorMessage = DEFAULT_ERROR_MESSAGE,
 }: UseAutoSaveOptions = {}): UseAutoSaveReturn {
   const [isSaving, setIsSaving] = useState(false)
+  const [hasPendingSave, setHasPendingSave] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const executeSave = useCallback(
@@ -46,21 +49,22 @@ export function useAutoSave({
         rowId: snapshot.rowId,
       }
 
+      setHasPendingSave(false)
       setIsSaving(true)
 
       try {
         await onSave(params)
       } catch (error) {
-        console.error("Auto-save failed:", {
-          error,
-          field: snapshot.field,
-          rowId: snapshot.rowId,
-        })
-
         if (!snapshot.rowId) {
-          console.warn("Cannot rollback change: node.id is undefined", {
-            field: snapshot.field,
-          })
+          // Fallback rollback when row ID is unavailable
+          if (snapshot.node) {
+            const currentValue = (snapshot.node.data as Record<string, unknown>)?.[
+              snapshot.field
+            ]
+            if (currentValue === snapshot.newValue) {
+              snapshot.node.setDataValue(snapshot.field, snapshot.oldValue)
+            }
+          }
         } else {
           const rowNode = snapshot.api.getRowNode(snapshot.rowId)
           const currentValue =
@@ -99,8 +103,10 @@ export function useAutoSave({
         rowData: event.data,
         rowId: event.node.id,
         api: event.api,
+        node: event.node,
       }
 
+      setHasPendingSave(true)
       timerRef.current = setTimeout(() => {
         executeSave(snapshot)
       }, debounceMs)
@@ -120,5 +126,6 @@ export function useAutoSave({
   return {
     handleCellValueChanged,
     isSaving,
+    hasPendingSave,
   }
 }

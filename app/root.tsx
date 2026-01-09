@@ -18,6 +18,7 @@ import {
 } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
+import { TooltipProvider } from "~/components/ui/tooltip"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
@@ -247,11 +248,13 @@ export function Layout(props: { children: ReactNode }) {
         <Links />
       </head>
       <body className="h-screen flex flex-col">
-        <Toaster richColors position="top-center" />
-        <GlobalLoading />
-        {props.children}
-        <ScrollRestoration />
-        <Scripts />
+        <TooltipProvider delayDuration={0}>
+          <Toaster richColors position="top-center" />
+          <GlobalLoading />
+          {props.children}
+          <ScrollRestoration />
+          <Scripts />
+        </TooltipProvider>
       </body>
     </html>
   )

@@ -3,6 +3,7 @@ import {
   AllCommunityModule,
   ModuleRegistry,
   themeQuartz,
+  type CellClassParams,
   type CellValueChangedEvent,
   type GridApi,
   type GridReadyEvent,
@@ -10,10 +11,11 @@ import {
   type StateUpdatedEvent,
 } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
 import { AGDataTableToolbar } from "./ag-data-table-toolbar"
+import { SaveStatusIndicator, type SaveStatus } from "./save-status-indicator"
 import type { AGDataTableProps } from "./types"
 import { useAutoSave } from "./use-auto-save"
 import { useGridState } from "./use-grid-state"
@@ -41,6 +43,8 @@ export function AGDataTable<TData>({
   id,
   data,
   columnDefs,
+  context,
+  getRowId,
   loading,
   emptyMessage,
   pagination = false,
@@ -51,6 +55,7 @@ export function AGDataTable<TData>({
   quickFilterText,
   onSave,
   autoSaveOptions,
+  fetcher,
   onCellValueChanged,
   onGridReady,
   onStateUpdated,
@@ -67,15 +72,69 @@ export function AGDataTable<TData>({
   const [gridApi, setGridApi] = useState<GridApi | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const { restoreState, saveState, clearState } = useGridState(id, {
-    version: stateVersion,
-  })
+  const { restoreState, saveState, clearState, hasSavedState } = useGridState(
+    id,
+    {
+      version: stateVersion,
+    },
+  )
 
-  const { handleCellValueChanged: autoSaveHandler } = useAutoSave({
-    onSave,
-    debounceMs: autoSaveOptions?.debounceMs,
-    errorMessage: autoSaveOptions?.errorMessage,
-  })
+  const { handleCellValueChanged: autoSaveHandler, hasPendingSave, isSaving } =
+    useAutoSave({
+      onSave,
+      debounceMs: autoSaveOptions?.debounceMs,
+      errorMessage: autoSaveOptions?.errorMessage,
+    })
+
+  // Derive save status from fetcher state and local state
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
+  const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (saveStatusTimerRef.current) {
+      clearTimeout(saveStatusTimerRef.current)
+      saveStatusTimerRef.current = null
+    }
+
+    if (hasPendingSave || isSaving) {
+      setSaveStatus("saving")
+      return
+    }
+
+    if (fetcher?.state === "submitting" || fetcher?.state === "loading") {
+      setSaveStatus("saving")
+      return
+    }
+
+    if (fetcher?.data?.success === false) {
+      setSaveStatus("error")
+      saveStatusTimerRef.current = setTimeout(() => {
+        setSaveStatus("idle")
+        saveStatusTimerRef.current = null
+      }, 3000)
+      return
+    }
+
+    if (fetcher?.data?.success === true) {
+      setSaveStatus("success")
+      saveStatusTimerRef.current = setTimeout(() => {
+        setSaveStatus("idle")
+        saveStatusTimerRef.current = null
+      }, 5000)
+      return
+    }
+
+    setSaveStatus("idle")
+  }, [hasPendingSave, isSaving, fetcher?.state, fetcher?.data])
+
+  useEffect(() => {
+    return () => {
+      if (saveStatusTimerRef.current) {
+        clearTimeout(saveStatusTimerRef.current)
+        saveStatusTimerRef.current = null
+      }
+    }
+  }, [])
 
   const safeMessage = escapeHtml(emptyMessage || DEFAULT_EMPTY_MESSAGE)
   const noRowsTemplate = `<span>${safeMessage}</span>`
@@ -135,14 +194,25 @@ export function AGDataTable<TData>({
     [persistState, saveState, onStateUpdated],
   )
 
-  const defaultColDef = {
-    flex: 1,
-    minWidth: 100,
-  }
+  const defaultColDef = useMemo(
+    () => ({
+      minWidth: 30,
+      tooltipValueGetter: (params: { value?: unknown }) => params.value,
+      cellStyle: (params: CellClassParams) => {
+        if (params.colDef?.editable === true) {
+          return { backgroundColor: "rgba(148, 163, 184, 0.15)" }
+        }
+        return undefined
+      },
+    }),
+    [],
+  )
+
 
   const containerClasses = cn(
     isFullscreen && "fixed inset-0 z-50 bg-background flex flex-col",
     !isFullscreen && !height && "h-[400px]",
+    !isFullscreen && "relative",
     isFullscreen && "h-full",
     className,
   )
@@ -160,6 +230,8 @@ export function AGDataTable<TData>({
           defaultColDef={defaultColDef}
           rowData={data}
           columnDefs={columnDefs}
+          context={context}
+          getRowId={getRowId}
           loading={loading}
           rowStyle={onRowClicked ? { cursor: "pointer" } : undefined}
           overlayNoRowsTemplate={noRowsTemplate}
@@ -174,6 +246,16 @@ export function AGDataTable<TData>({
           onStateUpdated={handleStateUpdated}
           onRowClicked={onRowClicked}
           maintainColumnOrder={persistState}
+          tooltipShowMode="whenTruncated"
+          tooltipShowDelay={0}
+          autoSizeStrategy={
+            hasSavedState
+              ? undefined
+              : {
+                  type: "fitCellContents",
+                  defaultMinWidth: 30,
+                }
+          }
         />
       </div>
       {showToolbar && (
@@ -187,6 +269,7 @@ export function AGDataTable<TData>({
           />
         </div>
       )}
+      {fetcher && <SaveStatusIndicator status={saveStatus} />}
     </div>
   )
 }

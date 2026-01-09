@@ -1,15 +1,10 @@
 import { useState, useCallback, useMemo, useEffect } from "react"
 import { useGridFilter } from "ag-grid-react"
 import type { GridApi, IRowNode } from "ag-grid-community"
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandItem,
-  CommandEmpty,
-} from "~/components/ui/command"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Button } from "~/components/ui/button"
+import { Input } from "~/components/ui/input"
+import { cn } from "~/lib/utils"
 
 interface BaseMultiSelectFilterProps {
   /** Filter options to display */
@@ -149,50 +144,76 @@ export function BaseMultiSelectFilter({
     onModelChange(null)
   }
 
+  const [searchTerm, setSearchTerm] = useState("")
+
+  const displayedOptions = useMemo(() => {
+    if (!searchTerm) return filteredOptions
+    const term = searchTerm.toLowerCase()
+    return filteredOptions.filter((opt) =>
+      opt.label.toLowerCase().includes(term)
+    )
+  }, [filteredOptions, searchTerm])
+
   return (
     <div className="ag-custom-component-popup w-64 bg-popover border rounded-md shadow-md">
-      <Command>
-        <CommandInput
+      <div className="p-2 border-b">
+        <Input
           placeholder={placeholder}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           aria-label="Buscar opções de filtro"
+          className="h-8"
         />
-        <div className="flex gap-2 p-2 border-b">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSelectAll}
-            type="button"
-          >
-            {selectAllLabel}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClear}
-            type="button"
-          >
-            {clearLabel}
-          </Button>
-        </div>
-        <CommandList>
-          <CommandEmpty>{noResultsLabel}</CommandEmpty>
-          {filteredOptions.map((option) => (
-            <CommandItem
+      </div>
+      <div className="flex gap-2 p-2 border-b">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleSelectAll}
+          type="button"
+        >
+          {selectAllLabel}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleClear}
+          type="button"
+        >
+          {clearLabel}
+        </Button>
+      </div>
+      <div className="max-h-60 overflow-y-auto">
+        {displayedOptions.length === 0 ? (
+          <div className="p-2 text-sm text-muted-foreground">{noResultsLabel}</div>
+        ) : (
+          displayedOptions.map((option) => (
+            <div
               key={option.value}
-              value={option.label}
-              onSelect={() => handleToggle(option.value)}
+              role="checkbox"
+              aria-checked={selectedValues.includes(option.value)}
+              tabIndex={0}
+              className={cn(
+                "flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring",
+                selectedValues.includes(option.value) && "bg-accent/50",
+              )}
+              onClick={() => handleToggle(option.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault()
+                  handleToggle(option.value)
+                }
+              }}
             >
               <Checkbox
                 checked={selectedValues.includes(option.value)}
-                aria-hidden="true"
-                tabIndex={-1}
                 readOnly
               />
-              <span className="ml-2">{option.label}</span>
-            </CommandItem>
-          ))}
-        </CommandList>
-      </Command>
+              <span className="text-sm">{option.label}</span>
+            </div>
+          ))
+        )}
+      </div>
       <div className="text-xs text-muted-foreground p-2 border-t">
         {selectedValues.length} de {filteredOptions.length} selecionados
       </div>

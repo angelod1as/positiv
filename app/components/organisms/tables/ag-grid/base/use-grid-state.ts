@@ -10,10 +10,11 @@ const STORAGE_KEY_PREFIX = "ag-grid-state-"
 const DEFAULT_DEBOUNCE_MS = 500
 
 /**
- * Hook for persisting AG Grid state to session storage.
+ * Hook for persisting AG Grid state to local storage.
  *
  * Handles saving and restoring grid state (column widths, sort, filters)
  * with automatic versioning for state invalidation when schema changes.
+ * Uses localStorage for persistence across browser sessions.
  *
  * @param tableId - Unique identifier for the table (used as storage key)
  * @param options - Configuration options including version number
@@ -37,7 +38,23 @@ export function useGridState(
   const storageKey = `${STORAGE_KEY_PREFIX}${tableId}`
 
   const [isRestored, setIsRestored] = useState(false)
+  const [hasSavedState, setHasSavedState] = useState(false)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const storedData = localStorage.getItem(storageKey)
+      if (!storedData) {
+        setHasSavedState(false)
+        return
+      }
+      const parsed: StoredGridState = JSON.parse(storedData)
+      setHasSavedState(parsed.version === version)
+    } catch {
+      setHasSavedState(false)
+    }
+  }, [storageKey, version])
 
   // Cleanup debounce timer on unmount to prevent memory leaks
   useEffect(() => {
@@ -51,7 +68,7 @@ export function useGridState(
   const restoreState = useCallback(
     (api: GridApi) => {
       try {
-        const storedData = sessionStorage.getItem(storageKey)
+        const storedData = localStorage.getItem(storageKey)
 
         if (!storedData) {
           setIsRestored(true)
@@ -61,7 +78,7 @@ export function useGridState(
         const parsed: StoredGridState = JSON.parse(storedData)
 
         if (parsed.version !== version) {
-          sessionStorage.removeItem(storageKey)
+          localStorage.removeItem(storageKey)
           setIsRestored(true)
           return
         }
@@ -71,7 +88,7 @@ export function useGridState(
       } catch (error) {
         // Only clear storage on parse errors, not on api.setState failures
         if (error instanceof SyntaxError) {
-          sessionStorage.removeItem(storageKey)
+          localStorage.removeItem(storageKey)
         }
         setIsRestored(true)
       }
@@ -93,7 +110,7 @@ export function useGridState(
         }
 
         try {
-          sessionStorage.setItem(storageKey, JSON.stringify(dataToStore))
+          localStorage.setItem(storageKey, JSON.stringify(dataToStore))
         } catch {
           // Storage full or other error - fail silently
         }
@@ -108,7 +125,7 @@ export function useGridState(
       clearTimeout(debounceTimerRef.current)
       debounceTimerRef.current = null
     }
-    sessionStorage.removeItem(storageKey)
+    localStorage.removeItem(storageKey)
   }, [storageKey])
 
   return {
@@ -116,5 +133,6 @@ export function useGridState(
     saveState,
     clearState,
     isRestored,
+    hasSavedState,
   }
 }

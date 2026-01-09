@@ -1,7 +1,7 @@
-import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { Column } from "primereact/column"
 import { describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { DataTable } from "./data-table"
 
 describe("DataTable - Row Click Functionality", () => {
@@ -14,11 +14,7 @@ describe("DataTable - Row Click Functionality", () => {
     ]
 
     render(
-      <DataTable
-        data={mockData}
-        id="test-table"
-        onRowClick={mockOnRowClick}
-      >
+      <DataTable data={mockData} id="test-table" onRowClick={mockOnRowClick}>
         <Column field="name" header="Name" />
       </DataTable>,
     )
@@ -60,11 +56,7 @@ describe("DataTable - Row Click Functionality", () => {
     ]
 
     render(
-      <DataTable
-        data={mockData}
-        id="test-table"
-        onRowClick={mockOnRowClick}
-      >
+      <DataTable data={mockData} id="test-table" onRowClick={mockOnRowClick}>
         <Column field="name" header="Name" />
       </DataTable>,
     )

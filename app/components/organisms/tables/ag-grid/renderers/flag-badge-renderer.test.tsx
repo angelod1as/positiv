@@ -1,12 +1,12 @@
-import { render, screen } from "@testing-library/react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import type { ProfileFlagStatus } from "~/types/database/entities.types"
 import { FlagBadgeRenderer } from "./flag-badge-renderer"
 
 function createMockParams(
   flag: ProfileFlagStatus | undefined,
-  flagNotes?: string | null
+  flagNotes?: string | null,
 ): ICellRendererParams {
   return {
     value: flag,
@@ -74,7 +74,10 @@ describe("FlagBadgeRenderer", () => {
 
   describe("when flagNotes is provided", () => {
     it("passes flagNotes to FlagBadge for tooltip display", () => {
-      const params = createMockParams("yellow", "Important note about this participant")
+      const params = createMockParams(
+        "yellow",
+        "Important note about this participant",
+      )
 
       render(<FlagBadgeRenderer {...params} />)
 

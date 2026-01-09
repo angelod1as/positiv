@@ -1,12 +1,12 @@
-import { render, screen } from "@testing-library/react"
-import { describe, expect, it, vi, beforeEach } from "vitest"
 import type { FetcherWithComponents } from "react-router"
-import { ListmonkSyncButton } from "./listmonk-sync-button"
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import type { ComposableFetcherData } from "~types/database/entities.types"
+import { ListmonkSyncButton } from "./listmonk-sync-button"
 
 function createMockFetcher(
   state: "idle" | "submitting" | "loading" = "idle",
-  intent?: string
+  intent?: string,
 ) {
   const formData = intent ? new FormData() : undefined
   if (formData && intent) {
@@ -38,10 +38,12 @@ describe("ListmonkSyncButton", () => {
         listmonkListId={null}
         isStale={false}
         fetcher={createMockFetcher()}
-      />
+      />,
     )
 
-    expect(screen.getByRole("button", { name: /criar lista da newsletter/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /criar lista da newsletter/i }),
+    ).toBeInTheDocument()
   })
 
   it("should render 'Atualizar lista da newsletter' when list exists", () => {
@@ -50,10 +52,12 @@ describe("ListmonkSyncButton", () => {
         listmonkListId={123}
         isStale={false}
         fetcher={createMockFetcher()}
-      />
+      />,
     )
 
-    expect(screen.getByRole("button", { name: /atualizar lista da newsletter/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /atualizar lista da newsletter/i }),
+    ).toBeInTheDocument()
   })
 
   it("should show warning icon when list is stale", () => {
@@ -62,7 +66,7 @@ describe("ListmonkSyncButton", () => {
         listmonkListId={123}
         isStale={true}
         fetcher={createMockFetcher()}
-      />
+      />,
     )
 
     expect(screen.getByTestId("stale-warning")).toBeInTheDocument()
@@ -74,7 +78,7 @@ describe("ListmonkSyncButton", () => {
         listmonkListId={123}
         isStale={false}
         fetcher={createMockFetcher()}
-      />
+      />,
     )
 
     expect(screen.queryByTestId("stale-warning")).not.toBeInTheDocument()
@@ -86,10 +90,12 @@ describe("ListmonkSyncButton", () => {
         listmonkListId={123}
         isStale={false}
         fetcher={createMockFetcher("submitting", "sync-listmonk-list")}
-      />
+      />,
     )
 
-    expect(screen.getByRole("button", { name: /atualizando.../i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /atualizando.../i }),
+    ).toBeInTheDocument()
     expect(screen.getByRole("button")).toBeDisabled()
   })
 
@@ -99,10 +105,12 @@ describe("ListmonkSyncButton", () => {
         listmonkListId={null}
         isStale={false}
         fetcher={createMockFetcher("submitting", "sync-listmonk-list")}
-      />
+      />,
     )
 
-    expect(screen.getByRole("button", { name: /criando.../i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /criando.../i }),
+    ).toBeInTheDocument()
     expect(screen.getByRole("button")).toBeDisabled()
   })
 
@@ -112,10 +120,12 @@ describe("ListmonkSyncButton", () => {
         listmonkListId={123}
         isStale={false}
         fetcher={createMockFetcher("submitting", "update-event-participant")}
-      />
+      />,
     )
 
-    expect(screen.getByRole("button", { name: /atualizar lista da newsletter/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: /atualizar lista da newsletter/i }),
+    ).toBeInTheDocument()
     expect(screen.getByRole("button")).not.toBeDisabled()
   })
 })

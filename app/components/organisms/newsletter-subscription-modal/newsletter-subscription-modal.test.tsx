@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { NewsletterSubscriptionModal } from "./newsletter-subscription-modal"
 
 describe("NewsletterSubscriptionModal", () => {
@@ -54,7 +54,9 @@ describe("NewsletterSubscriptionModal", () => {
     const router = createTestRouter(true)
     render(<RouterProvider router={router} />)
 
-    const subscribeButton = screen.getByRole("button", { name: /inscrever-me/i })
+    const subscribeButton = screen.getByRole("button", {
+      name: /inscrever-me/i,
+    })
     expect(subscribeButton).not.toBeDisabled()
   })
 })

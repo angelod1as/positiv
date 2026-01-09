@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from "vitest"
-import { render, screen } from "@testing-library/react"
-import { useRootData } from "./use-root-data"
 import { useMatches } from "react-router"
+import { describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
+import { useRootData } from "./use-root-data"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -76,7 +76,7 @@ describe("useRootData", () => {
     vi.mocked(useMatches).mockReturnValue([])
 
     expect(() => render(<TestComponent testId="test-output" />)).toThrow(
-      "useRootData must be used within a route that has root as an ancestor"
+      "useRootData must be used within a route that has root as an ancestor",
     )
   })
 
@@ -92,7 +92,7 @@ describe("useRootData", () => {
     ])
 
     expect(() => render(<TestComponent testId="test-output" />)).toThrow(
-      "useRootData must be used within a route that has root as an ancestor"
+      "useRootData must be used within a route that has root as an ancestor",
     )
   })
 })

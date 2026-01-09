@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react"
 import type { ReactNode } from "react"
 import { describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
 

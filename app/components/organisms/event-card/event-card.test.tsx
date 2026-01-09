@@ -1,7 +1,7 @@
-import { render } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import { EventCard } from "./event-card"
+import { render } from "~/test/test-utils"
 import type { ViewEvent } from "~types/database/entities.types"
+import { EventCard } from "./event-card"
 
 const mockEvent: ViewEvent = {
   id: "test-event-id",

@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
+import { render, screen } from "~/test/test-utils"
 import { EventCardFooter } from "./event-card-footer"
 
 vi.mock("react-router", () => ({
@@ -80,7 +80,10 @@ describe("EventCardFooter", () => {
 
       const viewButton = screen.getByText(/Ver evento/i)
 
-      expect(viewButton).toHaveAttribute("href", "/admin/eventos/test-event-123")
+      expect(viewButton).toHaveAttribute(
+        "href",
+        "/admin/eventos/test-event-123",
+      )
     })
   })
 

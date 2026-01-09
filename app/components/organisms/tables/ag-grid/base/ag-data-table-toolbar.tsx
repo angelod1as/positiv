@@ -4,7 +4,6 @@ import { Button } from "~/components/ui/button"
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip"
 
@@ -46,26 +45,24 @@ export function AGDataTableToolbar({
         Limpar filtros
       </Button>
 
-      <TooltipProvider delayDuration={300}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleResetTable}
-            >
-              <RotateCcwIcon className="mr-2 h-4 w-4" />
-              Resetar tabela
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="max-w-xs">
-              Limpa todos os dados salvos da organização da tabela, como
-              filtros, posições de colunas e paginação
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleResetTable}
+          >
+            <RotateCcwIcon className="mr-2 h-4 w-4" />
+            Resetar tabela
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="max-w-xs">
+            Limpa todos os dados salvos da organização da tabela, como
+            filtros, posições de colunas e paginação
+          </p>
+        </TooltipContent>
+      </Tooltip>
 
       <Button
         variant="outline"
