@@ -46,6 +46,15 @@ const compactCell = {
   width: 40,
 }
 
+function getEventCountCellClass(count: number | null | undefined): string {
+  if (count === null || count === undefined) return ""
+  if (count <= 2) return "bg-indigo-100 text-indigo-900"
+  if (count <= 4) return "bg-indigo-300 text-indigo-900"
+  if (count <= 6) return "bg-indigo-500 text-white"
+  if (count <= 8) return "bg-indigo-600 text-white"
+  return "bg-indigo-700 text-white"
+}
+
 function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
   if (typeof window === "undefined") return defaultValue
   const stored = sessionStorage.getItem(key)
@@ -220,6 +229,8 @@ export const AdminViewEventParticipantsTableAG: FC<
         field: "attended_events_count",
         headerName: "Eventos",
         ...compactCell,
+        cellClass: (params) =>
+          `ag-cell-compact ${getEventCountCellClass(params.value)}`,
       },
       {
         field: "last_attended_event_title",
