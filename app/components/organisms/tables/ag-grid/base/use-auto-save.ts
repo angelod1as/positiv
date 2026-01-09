@@ -12,6 +12,7 @@ export interface UseAutoSaveOptions {
 export interface UseAutoSaveReturn {
   handleCellValueChanged: (event: CellValueChangedEvent) => void
   isSaving: boolean
+  hasPendingSave: boolean
 }
 
 interface SaveSnapshot {
@@ -32,6 +33,7 @@ export function useAutoSave({
   errorMessage = DEFAULT_ERROR_MESSAGE,
 }: UseAutoSaveOptions = {}): UseAutoSaveReturn {
   const [isSaving, setIsSaving] = useState(false)
+  const [hasPendingSave, setHasPendingSave] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const executeSave = useCallback(
@@ -46,10 +48,13 @@ export function useAutoSave({
         rowId: snapshot.rowId,
       }
 
+      console.info("[AutoSave] Executing save:", params)
+      setHasPendingSave(false)
       setIsSaving(true)
 
       try {
         await onSave(params)
+        console.info("[AutoSave] Save completed successfully")
       } catch (error) {
         console.error("Auto-save failed:", {
           error,
@@ -101,6 +106,14 @@ export function useAutoSave({
         api: event.api,
       }
 
+      console.info("[AutoSave] Cell changed:", {
+        field,
+        oldValue: event.oldValue,
+        newValue: event.newValue,
+        rowId: event.node.id,
+      })
+
+      setHasPendingSave(true)
       timerRef.current = setTimeout(() => {
         executeSave(snapshot)
       }, debounceMs)
@@ -120,5 +133,6 @@ export function useAutoSave({
   return {
     handleCellValueChanged,
     isSaving,
+    hasPendingSave,
   }
 }

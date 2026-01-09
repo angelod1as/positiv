@@ -179,13 +179,24 @@ export const AdminViewEventParticipantsTableAG: FC<
   const handleSave = useCallback(
     async (id: string, field: string, value: unknown) => {
       const participant = participants.find((p) => p.id === id)
-      if (!participant) return
+      if (!participant) {
+        console.error("[ParticipantsTable] Participant not found:", id)
+        return
+      }
 
       const formData = new FormData()
       formData.append("intent", "update-event-participant")
       formData.append("id", id)
       formData.append("profile_id", participant.profile_id || "")
       formData.append(field, String(value ?? ""))
+
+      console.info("[ParticipantsTable] handleSave:", {
+        intent: "update-event-participant",
+        id,
+        profile_id: participant.profile_id,
+        field,
+        value,
+      })
 
       fetcher.submit(formData, { method: "POST" })
     },
@@ -498,6 +509,7 @@ export const AdminViewEventParticipantsTableAG: FC<
         data={filteredParticipants}
         columnDefs={columnDefs}
         context={{ eventId, onSave: handleSave }}
+        getRowId={(params) => params.data.id}
         pagination
         paginationPageSize={25}
         paginationPageSizeSelector={[10, 25, 50, 100]}
@@ -505,9 +517,11 @@ export const AdminViewEventParticipantsTableAG: FC<
         persistState
         showToolbar
         onClearFilters={handleClearFilters}
+        fetcher={fetcher}
         onSave={async (params) => {
-          if (params.rowId) {
-            await handleSave(params.rowId, params.field, params.newValue)
+          const rowData = params.rowData as ProfileWithExtraData | undefined
+          if (rowData?.id) {
+            await handleSave(rowData.id, params.field, params.newValue)
           }
         }}
       />
