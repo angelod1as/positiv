@@ -1,7 +1,7 @@
 import type { ICellRendererParams } from "ag-grid-community"
 import { EyeIcon } from "lucide-react"
-import { Link } from "~/components/atoms/link/link"
 import paths from "~/lib/paths"
+import { AGIconButton } from "./ag-icon-button"
 
 const {
   admin: {
@@ -29,12 +29,11 @@ export function ActionButtonsRenderer(params: ICellRendererParams) {
   }
 
   return (
-    <Link
+    <AGIconButton
       to={ADMIN_EVENT_VIEW_PARTICIPANT(eventId, profileId)}
       title="Ver participante"
-      className="inline-flex items-center justify-center p-1 hover:bg-gray-100 rounded"
     >
       <EyeIcon className="h-4 w-4" />
-    </Link>
+    </AGIconButton>
   )
 }

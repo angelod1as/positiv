@@ -11,6 +11,21 @@
 @layer ag-grid;
 @import "ag-grid-community/styles/ag-grid.css" layer(ag-grid);
 @import "ag-grid-community/styles/ag-theme-quartz.css" layer(ag-grid);
+
+/* AG Grid custom cell styles */
+.ag-cell-compact,
+.ag-header-compact {
+  --ag-cell-horizontal-padding: 0;
+  @apply flex items-center justify-center;
+}
+
+/* .ag-header-cell.ag-header-compact {
+  --ag-cell-horizontal-padding: 0;
+} */
+
+.ag-header-cell.ag-header-compact .ag-header-cell-comp-wrapper {
+  @apply flex items-center justify-center;
+}
 /* End AG Grid DataTable */
 
 @media not (prefers-reduced-motion: reduce) {

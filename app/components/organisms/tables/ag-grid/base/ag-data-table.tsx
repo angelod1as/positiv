@@ -68,9 +68,12 @@ export function AGDataTable<TData>({
   const [gridApi, setGridApi] = useState<GridApi | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const { restoreState, saveState, clearState, hasSavedState } = useGridState(id, {
-    version: stateVersion,
-  })
+  const { restoreState, saveState, clearState, hasSavedState } = useGridState(
+    id,
+    {
+      version: stateVersion,
+    },
+  )
 
   const { handleCellValueChanged: autoSaveHandler } = useAutoSave({
     onSave,
@@ -138,10 +141,10 @@ export function AGDataTable<TData>({
 
   const defaultColDef = useMemo(
     () => ({
-      minWidth: 100,
-      ...(hasSavedState ? {} : { flex: 1 }),
+      minWidth: 30,
+      tooltipShowMode: "whenTruncated",
     }),
-    [hasSavedState],
+    [],
   )
 
   const containerClasses = cn(
@@ -179,6 +182,14 @@ export function AGDataTable<TData>({
           onStateUpdated={handleStateUpdated}
           onRowClicked={onRowClicked}
           maintainColumnOrder={persistState}
+          autoSizeStrategy={
+            hasSavedState
+              ? undefined
+              : {
+                  type: "fitCellContents",
+                  defaultMinWidth: 30,
+                }
+          }
         />
       </div>
       {showToolbar && (
