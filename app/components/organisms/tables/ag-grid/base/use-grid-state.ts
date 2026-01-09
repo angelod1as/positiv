@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import type { GridApi, GridState } from "ag-grid-community"
 import type {
   UseGridStateOptions,
@@ -38,17 +38,21 @@ export function useGridState(
   const storageKey = `${STORAGE_KEY_PREFIX}${tableId}`
 
   const [isRestored, setIsRestored] = useState(false)
+  const [hasSavedState, setHasSavedState] = useState(false)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const hasSavedState = useMemo(() => {
-    if (typeof window === "undefined") return false
+  useEffect(() => {
+    if (typeof window === "undefined") return
     try {
       const storedData = localStorage.getItem(storageKey)
-      if (!storedData) return false
+      if (!storedData) {
+        setHasSavedState(false)
+        return
+      }
       const parsed: StoredGridState = JSON.parse(storedData)
-      return parsed.version === version
+      setHasSavedState(parsed.version === version)
     } catch {
-      return false
+      setHasSavedState(false)
     }
   }, [storageKey, version])
 

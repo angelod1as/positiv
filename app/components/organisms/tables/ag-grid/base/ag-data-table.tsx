@@ -11,7 +11,7 @@ import {
   type StateUpdatedEvent,
 } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
 import { AGDataTableToolbar } from "./ag-data-table-toolbar"
@@ -88,8 +88,14 @@ export function AGDataTable<TData>({
 
   // Derive save status from fetcher state and local state
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
+  const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
+    if (saveStatusTimerRef.current) {
+      clearTimeout(saveStatusTimerRef.current)
+      saveStatusTimerRef.current = null
+    }
+
     if (hasPendingSave || isSaving) {
       setSaveStatus("saving")
       return
@@ -102,20 +108,33 @@ export function AGDataTable<TData>({
 
     if (fetcher?.data?.success === false) {
       setSaveStatus("error")
-      // Reset to idle after 3 seconds
-      const timer = setTimeout(() => setSaveStatus("idle"), 3000)
-      return () => clearTimeout(timer)
+      saveStatusTimerRef.current = setTimeout(() => {
+        setSaveStatus("idle")
+        saveStatusTimerRef.current = null
+      }, 3000)
+      return
     }
 
     if (fetcher?.data?.success === true) {
       setSaveStatus("success")
-      // Reset to idle after 5 seconds
-      const timer = setTimeout(() => setSaveStatus("idle"), 5000)
-      return () => clearTimeout(timer)
+      saveStatusTimerRef.current = setTimeout(() => {
+        setSaveStatus("idle")
+        saveStatusTimerRef.current = null
+      }, 5000)
+      return
     }
 
     setSaveStatus("idle")
   }, [hasPendingSave, isSaving, fetcher?.state, fetcher?.data])
+
+  useEffect(() => {
+    return () => {
+      if (saveStatusTimerRef.current) {
+        clearTimeout(saveStatusTimerRef.current)
+        saveStatusTimerRef.current = null
+      }
+    }
+  }, [])
 
   const safeMessage = escapeHtml(emptyMessage || DEFAULT_EMPTY_MESSAGE)
   const noRowsTemplate = `<span>${safeMessage}</span>`
