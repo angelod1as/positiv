@@ -86,6 +86,7 @@ export function TextModalEditor(params: ICellRendererParams) {
           <textarea
             value={editedValue}
             onChange={(e) => setEditedValue(e.target.value)}
+            aria-label={label || "Edit text"}
             className="min-h-40 w-full rounded border border-gray-300 p-2"
             rows={6}
           />

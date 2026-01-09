@@ -198,7 +198,9 @@ export function BaseMultiSelectFilter({
             >
               <Checkbox
                 checked={selectedValues.includes(option.value)}
-                onChange={() => {}}
+                readOnly
+                tabIndex={-1}
+                aria-hidden="true"
               />
               <span className="text-sm">{option.label}</span>
             </div>

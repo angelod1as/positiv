@@ -34,6 +34,7 @@ export function AGIconButton({
       <a
         href={href}
         title={title}
+        aria-label={title}
         className={combinedClassName}
         {...(external && { target: "_blank", rel: "noopener noreferrer" })}
       >
@@ -44,7 +45,7 @@ export function AGIconButton({
 
   if (to) {
     return (
-      <Link to={to} title={title} className={combinedClassName}>
+      <Link to={to} title={title} aria-label={title} className={combinedClassName}>
         {children}
       </Link>
     )

@@ -130,51 +130,9 @@ export const AdminViewEventParticipantsTableAG: FC<
     )
   }, [isVeteranFilter])
 
-  const filteredParticipants = useMemo(() => {
-    let result = participants
-
-    if (applicationStatusFilter.length > 0) {
-      result = result.filter((p) =>
-        applicationStatusFilter.includes(p.application_status || ""),
-      )
-    }
-    if (attendanceStatusFilter.length > 0) {
-      result = result.filter((p) =>
-        attendanceStatusFilter.includes(p.attendance_status || ""),
-      )
-    }
-    if (approvedToAttendFilter.length > 0) {
-      result = result.filter((p) =>
-        approvedToAttendFilter.includes(p.approved_to_attend || ""),
-      )
-    }
-    if (genderFilter.length > 0) {
-      result = result.filter((p) =>
-        p.gender?.some((g) => genderFilter.includes(g)),
-      )
-    }
-    if (orientationFilter.length > 0) {
-      result = result.filter((p) =>
-        p.orientation?.some((o) => orientationFilter.includes(o)),
-      )
-    }
-    if (isVeteranFilter.length > 0) {
-      result = result.filter((p) => {
-        const veteranValue = p.is_veteran ? "true" : "false"
-        return isVeteranFilter.includes(veteranValue)
-      })
-    }
-
-    return result
-  }, [
-    participants,
-    applicationStatusFilter,
-    attendanceStatusFilter,
-    approvedToAttendFilter,
-    genderFilter,
-    orientationFilter,
-    isVeteranFilter,
-  ])
+  // Note: Filtering is now delegated to AG Grid via BaseMultiSelectFilter's doesFilterPass.
+  // The filter state (applicationStatusFilter, etc.) is passed to filterParams and
+  // AG Grid handles the filtering internally for better performance.
 
   const handleSave = useCallback(
     async (id: string, field: string, value: unknown) => {
@@ -495,7 +453,7 @@ export const AdminViewEventParticipantsTableAG: FC<
       </div>
       <AGDataTable
         id="participants-table-ag"
-        data={filteredParticipants}
+        data={participants}
         columnDefs={columnDefs}
         context={{ eventId, onSave: handleSave }}
         getRowId={(params) => params.data.id}

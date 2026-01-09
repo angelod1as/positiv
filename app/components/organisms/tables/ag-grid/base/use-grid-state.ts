@@ -41,6 +41,7 @@ export function useGridState(
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const hasSavedState = useMemo(() => {
+    if (typeof window === "undefined") return false
     try {
       const storedData = localStorage.getItem(storageKey)
       if (!storedData) return false
