@@ -1,13 +1,6 @@
 import { Badge } from "~/components/ui/badge"
+import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { cn } from "~/lib/utils"
-
-const getEventCountColors = (count: number): string => {
-  if (count <= 2) return "bg-indigo-100 text-indigo-900"
-  if (count <= 4) return "bg-indigo-300 text-indigo-900"
-  if (count <= 6) return "bg-indigo-500 text-white"
-  if (count <= 8) return "bg-indigo-600 text-white"
-  return "bg-indigo-700 text-white"
-}
 
 export const VeteranBadge = ({ eventCount }: { eventCount?: number | null } = {}) => (
   <div className="flex items-center gap-1.5">
