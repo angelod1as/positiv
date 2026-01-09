@@ -595,6 +595,8 @@ describe("BaseMultiSelectFilter", () => {
       forEachNode: (callback: (node: IRowNode) => void) => {
         rows.forEach((data) => callback({ data } as IRowNode))
       },
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
     })
 
     it("only shows options that exist in data when filterToExistingValues=true (default)", () => {

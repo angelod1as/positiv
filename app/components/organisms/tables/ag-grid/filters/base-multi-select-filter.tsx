@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { useGridFilter } from "ag-grid-react"
 import type { GridApi, IRowNode } from "ag-grid-community"
 import {
@@ -50,6 +50,21 @@ export function BaseMultiSelectFilter({
 }: BaseMultiSelectFilterProps) {
   // Internal state for uncontrolled mode (when used directly via filterParams)
   const [internalModel, setInternalModel] = useState<string[] | null>(null)
+  const [dataVersion, setDataVersion] = useState(0)
+
+  // Listen for data changes to refresh filter options
+  useEffect(() => {
+    if (!api || !filterToExistingValues) return
+
+    const onRowDataUpdated = () => {
+      setDataVersion((prev) => prev + 1)
+    }
+
+    api.addEventListener("rowDataUpdated", onRowDataUpdated)
+    return () => {
+      api.removeEventListener("rowDataUpdated", onRowDataUpdated)
+    }
+  }, [api, filterToExistingValues])
 
   // Use controlled or internal state
   const model = controlledModel !== undefined ? controlledModel : internalModel
@@ -88,7 +103,7 @@ export function BaseMultiSelectFilter({
     return options.filter((opt) =>
       existingValues.has(opt.value.toLowerCase()),
     )
-  }, [api, options, getValue, matchMode, filterToExistingValues])
+  }, [api, options, getValue, matchMode, filterToExistingValues, dataVersion])
 
   const selectedValues = model || []
 
