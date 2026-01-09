@@ -406,4 +406,62 @@ describe("useGridState", () => {
       )
     })
   })
+
+  describe("hasSavedState", () => {
+    it("should return true when valid saved state exists with matching version", () => {
+      const storedState = {
+        version: 1,
+        savedAt: Date.now(),
+        gridState: { filter: {} },
+      }
+
+      mockLocalStorage.setItem(
+        "ag-grid-state-test-table",
+        JSON.stringify(storedState)
+      )
+
+      const { result } = renderHook(() =>
+        useGridState("test-table", { version: 1 })
+      )
+
+      expect(result.current.hasSavedState).toBe(true)
+    })
+
+    it("should return false when no saved state exists", () => {
+      const { result } = renderHook(() =>
+        useGridState("test-table", { version: 1 })
+      )
+
+      expect(result.current.hasSavedState).toBe(false)
+    })
+
+    it("should return false when saved state has different version", () => {
+      const storedState = {
+        version: 1,
+        savedAt: Date.now(),
+        gridState: { filter: {} },
+      }
+
+      mockLocalStorage.setItem(
+        "ag-grid-state-test-table",
+        JSON.stringify(storedState)
+      )
+
+      const { result } = renderHook(() =>
+        useGridState("test-table", { version: 2 })
+      )
+
+      expect(result.current.hasSavedState).toBe(false)
+    })
+
+    it("should return false when saved state is corrupted JSON", () => {
+      mockLocalStorage.setItem("ag-grid-state-test-table", "invalid json{{{")
+
+      const { result } = renderHook(() =>
+        useGridState("test-table", { version: 1 })
+      )
+
+      expect(result.current.hasSavedState).toBe(false)
+    })
+  })
 })

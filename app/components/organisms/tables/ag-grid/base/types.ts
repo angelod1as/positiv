@@ -74,6 +74,7 @@ export interface UseGridStateReturn {
   saveState: (state: GridState) => void
   clearState: () => void
   isRestored: boolean
+  hasSavedState: boolean
 }
 
 export interface CustomFilterParams extends IFilterParams {
