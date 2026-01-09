@@ -98,6 +98,11 @@ export default [
             "/:id?",
             "pages/admin/events/view-event-page/view-event-page.tsx",
           ),
+          // AG Grid Test Page - Ver evento
+          route(
+            "/:id/ag-grid",
+            "pages/admin/events/view-event-page-ag/view-event-page-ag.tsx",
+          ),
           // Criar ou Editar
           route("/novo/:id?", "pages/admin/events/create-edit-event.tsx"),
           // Baixar dados
