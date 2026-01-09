@@ -33,6 +33,9 @@ import {
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import { countParticipants } from "./count-participants"
 
+// Filter state uses sessionStorage (clears when tab closes) - intentional so admins
+// start fresh each session. Grid layout state uses localStorage (persists across sessions)
+// via use-grid-state.ts, so column widths and order are preserved.
 const STORAGE_KEYS = {
   applicationStatus: "participants-ag-filter-application_status",
   attendanceStatus: "participants-ag-filter-attendance_status",
@@ -41,6 +44,18 @@ const STORAGE_KEYS = {
   orientation: "participants-ag-filter-orientation",
   isVeteran: "participants-ag-filter-is_veteran",
 }
+
+const EDITABLE_FIELDS = [
+  "application_status",
+  "attendance_status",
+  "approved_to_attend",
+  "has_paid",
+  "payment",
+  "spot_type",
+  "is_veteran",
+  "notes",
+  "admin_general_notes",
+] as const
 
 const compactCell = {
   suppressSizeToFit: true,
@@ -136,6 +151,13 @@ export const AdminViewEventParticipantsTableAG: FC<
       const rowData = params.rowData as ProfileWithExtraData | undefined
       if (!rowData?.id) return
 
+      // Validate field against whitelist to prevent parameter tampering
+      if (
+        !EDITABLE_FIELDS.includes(params.field as (typeof EDITABLE_FIELDS)[number])
+      ) {
+        return
+      }
+
       const formData = new FormData()
       formData.append("intent", "update-event-participant")
       formData.append("id", rowData.id)
@@ -145,6 +167,16 @@ export const AdminViewEventParticipantsTableAG: FC<
       fetcher.submit(formData, { method: "POST" })
     },
     [fetcher],
+  )
+
+  // Memoize dynamic filter options to prevent recalculation on every render
+  const memoizedGenderOptions = useMemo(
+    () => genderFilterOptions(participants),
+    [participants],
+  )
+  const memoizedOrientationOptions = useMemo(
+    () => orientationFilterOptions(participants),
+    [participants],
   )
 
   const columnDefs: ColDef<ProfileWithExtraData>[] = useMemo(
@@ -214,7 +246,7 @@ export const AdminViewEventParticipantsTableAG: FC<
           Array.isArray(params.value) ? params.value.join(", ") : "",
         filter: BaseMultiSelectFilter,
         filterParams: {
-          options: genderFilterOptions(participants),
+          options: memoizedGenderOptions,
           field: "gender",
           model: genderFilter,
           onModelChange: setGenderFilter,
@@ -230,7 +262,7 @@ export const AdminViewEventParticipantsTableAG: FC<
           Array.isArray(params.value) ? params.value.join(", ") : "",
         filter: BaseMultiSelectFilter,
         filterParams: {
-          options: orientationFilterOptions(participants),
+          options: memoizedOrientationOptions,
           field: "orientation",
           model: orientationFilter,
           onModelChange: setOrientationFilter,
@@ -398,7 +430,8 @@ export const AdminViewEventParticipantsTableAG: FC<
       },
     ],
     [
-      participants,
+      memoizedGenderOptions,
+      memoizedOrientationOptions,
       applicationStatusFilter,
       attendanceStatusFilter,
       approvedToAttendFilter,
