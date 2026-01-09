@@ -91,61 +91,56 @@ export const AdminViewEventParticipantsTableAG: FC<
     getStoredFilter(STORAGE_KEYS.isVeteran),
   )
 
+  // Persist all filter states to sessionStorage
   useEffect(() => {
     sessionStorage.setItem(
       STORAGE_KEYS.applicationStatus,
       JSON.stringify(applicationStatusFilter),
     )
-  }, [applicationStatusFilter])
-
-  useEffect(() => {
     sessionStorage.setItem(
       STORAGE_KEYS.attendanceStatus,
       JSON.stringify(attendanceStatusFilter),
     )
-  }, [attendanceStatusFilter])
-
-  useEffect(() => {
     sessionStorage.setItem(
       STORAGE_KEYS.approvedToAttend,
       JSON.stringify(approvedToAttendFilter),
     )
-  }, [approvedToAttendFilter])
-
-  useEffect(() => {
     sessionStorage.setItem(STORAGE_KEYS.gender, JSON.stringify(genderFilter))
-  }, [genderFilter])
-
-  useEffect(() => {
     sessionStorage.setItem(
       STORAGE_KEYS.orientation,
       JSON.stringify(orientationFilter),
     )
-  }, [orientationFilter])
-
-  useEffect(() => {
     sessionStorage.setItem(
       STORAGE_KEYS.isVeteran,
       JSON.stringify(isVeteranFilter),
     )
-  }, [isVeteranFilter])
+  }, [
+    applicationStatusFilter,
+    attendanceStatusFilter,
+    approvedToAttendFilter,
+    genderFilter,
+    orientationFilter,
+    isVeteranFilter,
+  ])
 
   // Note: Filtering is now delegated to AG Grid via BaseMultiSelectFilter's doesFilterPass.
   // The filter state (applicationStatusFilter, etc.) is passed to filterParams and
   // AG Grid handles the filtering internally for better performance.
 
   const handleSave = useCallback(
-    async (
-      id: string,
-      profileId: string | null | undefined,
-      field: string,
-      value: unknown,
-    ) => {
+    async (params: {
+      field: string
+      newValue: unknown
+      rowData: unknown
+    }) => {
+      const rowData = params.rowData as ProfileWithExtraData | undefined
+      if (!rowData?.id) return
+
       const formData = new FormData()
       formData.append("intent", "update-event-participant")
-      formData.append("id", id)
-      formData.append("profile_id", profileId ?? "")
-      formData.append(field, String(value ?? ""))
+      formData.append("id", rowData.id)
+      formData.append("profile_id", rowData.profile_id ?? "")
+      formData.append(params.field, String(params.newValue ?? ""))
 
       fetcher.submit(formData, { method: "POST" })
     },
@@ -457,7 +452,7 @@ export const AdminViewEventParticipantsTableAG: FC<
         id="participants-table-ag"
         data={participants}
         columnDefs={columnDefs}
-        context={{ eventId, onSave: handleSave }}
+        context={{ eventId }}
         getRowId={(params) => params.data.id}
         pagination
         paginationPageSize={25}
@@ -467,17 +462,7 @@ export const AdminViewEventParticipantsTableAG: FC<
         showToolbar
         onClearFilters={handleClearFilters}
         fetcher={fetcher}
-        onSave={async (params) => {
-          const rowData = params.rowData as ProfileWithExtraData | undefined
-          if (rowData?.id) {
-            await handleSave(
-              rowData.id,
-              rowData.profile_id,
-              params.field,
-              params.newValue,
-            )
-          }
-        }}
+        onSave={handleSave}
       />
     </div>
   )

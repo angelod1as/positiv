@@ -1,6 +1,7 @@
 import type { ICellRendererParams } from "ag-grid-community"
 import { PencilIcon } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "~/components/ui/button"
 import {
   Dialog,
@@ -12,24 +13,14 @@ import {
 
 const TRUNCATE_LENGTH = 25
 
-interface RowData {
-  id: string
-  [key: string]: unknown
-}
-
-interface TextModalEditorContext {
-  onSave?: (id: string, field: string, value: string) => Promise<void>
-}
-
 export function TextModalEditor(params: ICellRendererParams) {
   const value = params.value as string | null | undefined
-  const data = params.data as RowData | undefined
-  const context = params.context as TextModalEditorContext | undefined
   const field = params.colDef?.field
   const label = params.colDef?.headerName
 
   const [isOpen, setIsOpen] = useState(false)
   const [editedValue, setEditedValue] = useState("")
+  const [originalValue, setOriginalValue] = useState("")
 
   const text = value || ""
   const shouldTruncate = text.length > TRUNCATE_LENGTH
@@ -37,20 +28,48 @@ export function TextModalEditor(params: ICellRendererParams) {
     ? text.slice(0, TRUNCATE_LENGTH) + "..."
     : text
 
+  const isDirty = editedValue !== originalValue
+
   const handleOpen = () => {
     setEditedValue(text)
+    setOriginalValue(text)
     setIsOpen(true)
   }
 
   const handleCancel = () => {
+    if (isDirty) {
+      const confirmed = window.confirm(
+        "Você tem alterações não salvas. Deseja descartá-las?",
+      )
+      if (!confirmed) {
+        return
+      }
+    }
     setIsOpen(false)
   }
 
-  const handleSave = async () => {
-    if (context?.onSave && data?.id && field) {
-      await context.onSave(data.id, field, editedValue)
+  const handleSave = () => {
+    if (!field) {
+      setIsOpen(false)
+      return
     }
-    setIsOpen(false)
+
+    // Only save if value actually changed
+    if (editedValue === originalValue) {
+      setIsOpen(false)
+      return
+    }
+
+    try {
+      // Use AG Grid's setDataValue to trigger auto-save system
+      params.node.setDataValue(field, editedValue)
+      setIsOpen(false)
+    } catch (error) {
+      toast.error("Erro ao salvar alteração", {
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+      })
+      // Keep modal open on error
+    }
   }
 
   return (

@@ -1,8 +1,15 @@
 import userEvent from "@testing-library/user-event"
-import type { ICellRendererParams } from "ag-grid-community"
+import type { ICellRendererParams, IRowNode } from "ag-grid-community"
 import { describe, expect, it, vi } from "vitest"
 import { render, screen, waitFor } from "~/test/test-utils"
 import { TextModalEditor } from "./text-modal-editor"
+
+// Mock toast
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+  },
+}))
 
 interface RowData {
   id: string
@@ -17,12 +24,19 @@ function createMockParams(
   value: string | null | undefined,
   context: TextModalEditorContext = {},
   label?: string,
+  nodeOverrides: Partial<IRowNode> = {},
 ): ICellRendererParams {
+  const mockNode = {
+    setDataValue: vi.fn(),
+    data: { id: "row-123", notes: value },
+    ...nodeOverrides,
+  } as unknown as IRowNode
+
   return {
     value,
     valueFormatted: String(value ?? ""),
     data: { id: "row-123", notes: value } as RowData,
-    node: {} as ICellRendererParams["node"],
+    node: mockNode,
     colDef: { field: "notes", headerName: label },
     column: {} as ICellRendererParams["column"],
     api: {} as ICellRendererParams["api"],
@@ -105,10 +119,9 @@ describe("TextModalEditor", () => {
       expect(screen.getByRole("textbox")).toHaveValue("Current value")
     })
 
-    it("calls onSave from context when save button is clicked", async () => {
+    it("calls node.setDataValue when save button is clicked", async () => {
       const user = userEvent.setup()
-      const mockOnSave = vi.fn().mockResolvedValue(undefined)
-      const params = createMockParams("Original", { onSave: mockOnSave })
+      const params = createMockParams("Original")
 
       render(<TextModalEditor {...params} />)
 
@@ -118,14 +131,13 @@ describe("TextModalEditor", () => {
       await user.click(screen.getByRole("button", { name: "Save" }))
 
       await waitFor(() => {
-        expect(mockOnSave).toHaveBeenCalledWith("row-123", "notes", "New value")
+        expect(params.node.setDataValue).toHaveBeenCalledWith("notes", "New value")
       })
     })
 
     it("closes modal after saving", async () => {
       const user = userEvent.setup()
-      const mockOnSave = vi.fn().mockResolvedValue(undefined)
-      const params = createMockParams("Original", { onSave: mockOnSave })
+      const params = createMockParams("Original")
 
       render(<TextModalEditor {...params} />)
 
@@ -139,10 +151,107 @@ describe("TextModalEditor", () => {
       })
     })
 
-    it("closes modal when cancel button is clicked without saving", async () => {
+    it("closes modal when cancel button is clicked without making changes", async () => {
       const user = userEvent.setup()
-      const mockOnSave = vi.fn()
-      const params = createMockParams("Original", { onSave: mockOnSave })
+      const params = createMockParams("Original")
+
+      render(<TextModalEditor {...params} />)
+
+      await user.click(screen.getByRole("button", { name: "Edit text" }))
+      // Don't make any changes
+      await user.click(screen.getByRole("button", { name: "Cancel" }))
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+      expect(params.node.setDataValue).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("auto-save integration", () => {
+    it("uses node.setDataValue to trigger auto-save system", async () => {
+      const user = userEvent.setup()
+      const params = createMockParams("Original")
+
+      render(<TextModalEditor {...params} />)
+
+      await user.click(screen.getByRole("button", { name: "Edit text" }))
+      await user.clear(screen.getByRole("textbox"))
+      await user.type(screen.getByRole("textbox"), "New value")
+      await user.click(screen.getByRole("button", { name: "Save" }))
+
+      await waitFor(() => {
+        expect(params.node.setDataValue).toHaveBeenCalledWith("notes", "New value")
+      })
+    })
+
+    it("does not call setDataValue when value is unchanged", async () => {
+      const user = userEvent.setup()
+      const params = createMockParams("Original")
+
+      render(<TextModalEditor {...params} />)
+
+      await user.click(screen.getByRole("button", { name: "Edit text" }))
+      // Don't change the text
+      await user.click(screen.getByRole("button", { name: "Save" }))
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+      })
+      expect(params.node.setDataValue).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("error handling", () => {
+    it("shows error toast when setDataValue throws", async () => {
+      const { toast } = await import("sonner")
+      const user = userEvent.setup()
+      const mockSetDataValue = vi.fn().mockImplementation(() => {
+        throw new Error("Save failed")
+      })
+      const params = createMockParams("Original", {}, "Notas", {
+        setDataValue: mockSetDataValue,
+      })
+
+      render(<TextModalEditor {...params} />)
+
+      await user.click(screen.getByRole("button", { name: "Edit text" }))
+      await user.clear(screen.getByRole("textbox"))
+      await user.type(screen.getByRole("textbox"), "New value")
+      await user.click(screen.getByRole("button", { name: "Save" }))
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalled()
+      })
+    })
+
+    it("keeps modal open when save fails", async () => {
+      const user = userEvent.setup()
+      const mockSetDataValue = vi.fn().mockImplementation(() => {
+        throw new Error("Save failed")
+      })
+      const params = createMockParams("Original", {}, "Notas", {
+        setDataValue: mockSetDataValue,
+      })
+
+      render(<TextModalEditor {...params} />)
+
+      await user.click(screen.getByRole("button", { name: "Edit text" }))
+      await user.clear(screen.getByRole("textbox"))
+      await user.type(screen.getByRole("textbox"), "New value")
+      await user.click(screen.getByRole("button", { name: "Save" }))
+
+      // Modal should stay open
+      await waitFor(() => {
+        expect(screen.getByRole("dialog")).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe("dirty state warning", () => {
+    it("shows confirmation when closing with unsaved changes", async () => {
+      // Mock window.confirm
+      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false)
+      const user = userEvent.setup()
+      const params = createMockParams("Original")
 
       render(<TextModalEditor {...params} />)
 
@@ -151,8 +260,61 @@ describe("TextModalEditor", () => {
       await user.type(screen.getByRole("textbox"), "Modified")
       await user.click(screen.getByRole("button", { name: "Cancel" }))
 
+      expect(confirmSpy).toHaveBeenCalledWith(
+        "Você tem alterações não salvas. Deseja descartá-las?",
+      )
+      confirmSpy.mockRestore()
+    })
+
+    it("does not close modal when user rejects confirmation", async () => {
+      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false)
+      const user = userEvent.setup()
+      const params = createMockParams("Original")
+
+      render(<TextModalEditor {...params} />)
+
+      await user.click(screen.getByRole("button", { name: "Edit text" }))
+      await user.clear(screen.getByRole("textbox"))
+      await user.type(screen.getByRole("textbox"), "Modified")
+      await user.click(screen.getByRole("button", { name: "Cancel" }))
+
+      // Modal should stay open
+      expect(screen.getByRole("dialog")).toBeInTheDocument()
+      confirmSpy.mockRestore()
+    })
+
+    it("closes modal when user confirms discarding changes", async () => {
+      const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true)
+      const user = userEvent.setup()
+      const params = createMockParams("Original")
+
+      render(<TextModalEditor {...params} />)
+
+      await user.click(screen.getByRole("button", { name: "Edit text" }))
+      await user.clear(screen.getByRole("textbox"))
+      await user.type(screen.getByRole("textbox"), "Modified")
+      await user.click(screen.getByRole("button", { name: "Cancel" }))
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+      })
+      confirmSpy.mockRestore()
+    })
+
+    it("does not show confirmation when no changes were made", async () => {
+      const confirmSpy = vi.spyOn(window, "confirm")
+      const user = userEvent.setup()
+      const params = createMockParams("Original")
+
+      render(<TextModalEditor {...params} />)
+
+      await user.click(screen.getByRole("button", { name: "Edit text" }))
+      // Don't make any changes
+      await user.click(screen.getByRole("button", { name: "Cancel" }))
+
+      expect(confirmSpy).not.toHaveBeenCalled()
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-      expect(mockOnSave).not.toHaveBeenCalled()
+      confirmSpy.mockRestore()
     })
   })
 })
