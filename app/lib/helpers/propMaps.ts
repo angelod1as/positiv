@@ -384,6 +384,11 @@ function buildFilterOptions(
   return options
 }
 
+export const notesFilterOptions = [
+  { value: "has-notes", label: "Com notas", name: "Com notas" },
+  { value: "no-notes", label: "Sem notas", name: "Sem notas" },
+]
+
 export function genderFilterOptions(
   participants: Array<{ gender: string[] | null }>,
 ): Array<{ name: string; value: string; label: string }> {

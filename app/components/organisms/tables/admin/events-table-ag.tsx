@@ -7,6 +7,7 @@ import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/fil
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   DEFAULT_EVENT_STATUS_FILTER,
+  eventPropNameMap,
   eventStatusMap,
   eventStatusOptions,
 } from "~/lib/helpers/propMaps"
@@ -62,11 +63,11 @@ export function AdminDashboardEventsTableAG({
     () => [
       {
         field: "title",
-        headerName: "Nome",
+        headerName: eventPropNameMap("title"),
       },
       {
         field: "event_status",
-        headerName: "Status",
+        headerName: eventPropNameMap("event_status"),
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: eventStatusOptions,
@@ -79,7 +80,7 @@ export function AdminDashboardEventsTableAG({
       },
       {
         field: "time_event_start",
-        headerName: "Início do evento",
+        headerName: eventPropNameMap("time_event_start"),
         sort: "desc",
         cellRenderer: (params: { value: string | null }) =>
           formatDateTime(params.value)?.full ?? "",

@@ -107,6 +107,11 @@ export default [
             "/:eventId/participantes/:profileId",
             "pages/admin/events/view-event-participant/view-event-participant.tsx",
           ),
+          // AG Grid Test Page
+          route(
+            "/:eventId/participantes/:profileId/ag-grid",
+            "pages/admin/events/view-event-participant-ag/view-event-participant-ag.tsx",
+          ),
         ]),
       ]),
     ]),
