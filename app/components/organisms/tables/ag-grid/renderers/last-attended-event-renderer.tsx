@@ -41,15 +41,16 @@ export function LastAttendedEventRenderer(params: ICellRendererParams) {
   const canLink = eventId && profileId
 
   return (
-    <div>
-      <div className="text-sm text-gray-500">{formattedDate}</div>
+    <span>
+      <span className="text-gray-500">{formattedDate}</span>
+      {" - "}
       {canLink ? (
         <Link to={ADMIN_EVENT_VIEW_PARTICIPANT(eventId, profileId)} title={title}>
           {truncatedTitle}
         </Link>
       ) : (
-        <span>{truncatedTitle}</span>
+        truncatedTitle
       )}
-    </div>
+    </span>
   )
 }
