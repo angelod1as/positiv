@@ -561,4 +561,128 @@ describe("AGDataTable", () => {
       expect(screen.getByTestId("ag-data-table-test-table")).toBeInTheDocument()
     })
   })
+
+  describe("Toolbar", () => {
+    it("should not render toolbar by default", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      expect(
+        screen.queryByRole("button", { name: /limpar filtros/i }),
+      ).not.toBeInTheDocument()
+    })
+
+    it("should render toolbar when showToolbar is true", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showToolbar
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      expect(
+        screen.getByRole("button", { name: /limpar filtros/i }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /resetar tabela/i }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /tela cheia/i }),
+      ).toBeInTheDocument()
+    })
+
+    it("should toggle fullscreen mode when fullscreen button is clicked", async () => {
+      const user = userEvent.setup()
+
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showToolbar
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const tableContainer = container.querySelector(
+        '[data-testid="ag-data-table-test-table"]',
+      )
+      expect(tableContainer).not.toHaveClass("fixed")
+
+      await user.click(screen.getByRole("button", { name: /tela cheia/i }))
+
+      expect(tableContainer).toHaveClass("fixed")
+      expect(
+        screen.getByRole("button", { name: /minimizar/i }),
+      ).toBeInTheDocument()
+
+      await user.click(screen.getByRole("button", { name: /minimizar/i }))
+
+      expect(tableContainer).not.toHaveClass("fixed")
+    })
+
+    it("should call onClearFilters when clear filters button is clicked", async () => {
+      const user = userEvent.setup()
+      const handleClearFilters = vi.fn()
+
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showToolbar
+          onClearFilters={handleClearFilters}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole("button", { name: /limpar filtros/i }))
+
+      expect(handleClearFilters).toHaveBeenCalled()
+    })
+
+    it("should call onClearFilters when reset table button is clicked", async () => {
+      const user = userEvent.setup()
+      const handleClearFilters = vi.fn()
+
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showToolbar
+          onClearFilters={handleClearFilters}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      await user.click(screen.getByRole("button", { name: /resetar tabela/i }))
+
+      expect(handleClearFilters).toHaveBeenCalled()
+    })
+  })
 })

@@ -28,9 +28,12 @@ function getInitialFilterValues(): EventStatus[] {
   const stored = sessionStorage.getItem(STORAGE_KEY)
   if (stored) {
     try {
-      return JSON.parse(stored)
+      const parsed = JSON.parse(stored)
+      if (Array.isArray(parsed)) {
+        return parsed
+      }
     } catch {
-      return DEFAULT_EVENT_STATUS_FILTER
+      // Error parsing, fall back to default
     }
   }
   return DEFAULT_EVENT_STATUS_FILTER
@@ -94,6 +97,11 @@ export function AdminDashboardEventsTableAG({
     [navigate],
   )
 
+  const handleClearFilters = useCallback(() => {
+    setFilterModel(DEFAULT_EVENT_STATUS_FILTER)
+    sessionStorage.removeItem(STORAGE_KEY)
+  }, [])
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -112,6 +120,8 @@ export function AdminDashboardEventsTableAG({
         onRowClicked={handleRowClicked}
         emptyMessage="Nenhum evento encontrado"
         persistState
+        showToolbar
+        onClearFilters={handleClearFilters}
       />
     </div>
   )
