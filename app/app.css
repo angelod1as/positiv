@@ -19,6 +19,11 @@
   @apply flex items-center justify-center;
 }
 
+/* Visual indication for editable cells */
+.ag-cell.ag-cell-editable {
+  @apply border border-dashed border-gray-300;
+}
+
 /* .ag-header-cell.ag-header-compact {
   --ag-cell-horizontal-padding: 0;
 } */
