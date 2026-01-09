@@ -145,11 +145,13 @@ describe("ParticipantEventHistoryAG", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText("Evento")).toBeInTheDocument()
-      expect(screen.getByText("Status de Inscrição")).toBeInTheDocument()
+      expect(screen.getByText("Nome")).toBeInTheDocument()
+      expect(screen.getByText("Status de Processo")).toBeInTheDocument()
       expect(screen.getByText("Status de Aprovação")).toBeInTheDocument()
-      expect(screen.getByText("Comparecimento")).toBeInTheDocument()
-      expect(screen.getByText("Notas do Admin")).toBeInTheDocument()
+      expect(screen.getByText("Status de Presença")).toBeInTheDocument()
+      expect(
+        screen.getByText("Notas gerais da administração para este evento"),
+      ).toBeInTheDocument()
     })
   })
 

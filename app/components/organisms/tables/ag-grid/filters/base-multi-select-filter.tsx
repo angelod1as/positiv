@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { useGridFilter } from "ag-grid-react"
-import type { IRowNode } from "ag-grid-community"
+import type { GridApi, IRowNode } from "ag-grid-community"
 import {
   Command,
   CommandInput,
@@ -24,6 +24,10 @@ interface BaseMultiSelectFilterProps {
   onModelChange?: (model: string[] | null) => void
   /** How to match values: 'exact' for single values, 'array' for array fields (gender/orientation) */
   matchMode?: "exact" | "array"
+  /** Only show options that exist in the data (default: true) */
+  filterToExistingValues?: boolean
+  /** Grid API - passed automatically by AG Grid */
+  api?: GridApi
   placeholder?: string
   selectAllLabel?: string
   clearLabel?: string
@@ -37,6 +41,8 @@ export function BaseMultiSelectFilter({
   model: controlledModel,
   onModelChange: controlledOnModelChange,
   matchMode = "exact",
+  filterToExistingValues = true,
+  api,
   placeholder = "Buscar...",
   selectAllLabel = "Selecionar Todos",
   clearLabel = "Limpar",
@@ -56,8 +62,33 @@ export function BaseMultiSelectFilter({
       if (field) return node.data?.[field]
       return undefined
     },
-    [getValueProp, field]
+    [getValueProp, field],
   )
+
+  // Filter options to only show values that exist in the data
+  const filteredOptions = useMemo(() => {
+    if (!filterToExistingValues || !api) return options
+
+    const existingValues = new Set<string>()
+    api.forEachNode((node) => {
+      const value = getValue(node)
+      if (value !== null && value !== undefined) {
+        if (matchMode === "array" && Array.isArray(value)) {
+          value.forEach((v) => {
+            if (v !== null && v !== undefined) {
+              existingValues.add(String(v).toLowerCase())
+            }
+          })
+        } else {
+          existingValues.add(String(value).toLowerCase())
+        }
+      }
+    })
+
+    return options.filter((opt) =>
+      existingValues.has(opt.value.toLowerCase()),
+    )
+  }, [api, options, getValue, matchMode, filterToExistingValues])
 
   const selectedValues = model || []
 
@@ -96,7 +127,7 @@ export function BaseMultiSelectFilter({
   }
 
   const handleSelectAll = () => {
-    onModelChange(options.map((o) => o.value))
+    onModelChange(filteredOptions.map((o) => o.value))
   }
 
   const handleClear = () => {
@@ -130,7 +161,7 @@ export function BaseMultiSelectFilter({
         </div>
         <CommandList>
           <CommandEmpty>{noResultsLabel}</CommandEmpty>
-          {options.map((option) => (
+          {filteredOptions.map((option) => (
             <CommandItem
               key={option.value}
               value={option.label}
@@ -148,7 +179,7 @@ export function BaseMultiSelectFilter({
         </CommandList>
       </Command>
       <div className="text-xs text-muted-foreground p-2 border-t">
-        {selectedValues.length} de {options.length} selecionados
+        {selectedValues.length} de {filteredOptions.length} selecionados
       </div>
     </div>
   )

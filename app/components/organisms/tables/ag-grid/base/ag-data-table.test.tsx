@@ -563,7 +563,7 @@ describe("AGDataTable", () => {
   })
 
   describe("Toolbar", () => {
-    it("should not render toolbar by default", async () => {
+    it("should render toolbar by default", async () => {
       render(
         <AGDataTable
           id="test-table"
@@ -577,17 +577,42 @@ describe("AGDataTable", () => {
       })
 
       expect(
-        screen.queryByRole("button", { name: /limpar filtros/i }),
-      ).not.toBeInTheDocument()
+        screen.getByRole("button", { name: /limpar filtros/i }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /resetar tabela/i }),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByRole("button", { name: /tela cheia/i }),
+      ).toBeInTheDocument()
     })
 
-    it("should render toolbar when showToolbar is true", async () => {
+    it("should not render toolbar when showToolbar is false", async () => {
       render(
         <AGDataTable
           id="test-table"
           data={mockData}
           columnDefs={mockColumnDefs}
-          showToolbar
+          showToolbar={false}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      expect(
+        screen.queryByRole("button", { name: /limpar filtros/i }),
+      ).not.toBeInTheDocument()
+    })
+
+    it("should render toolbar when showToolbar is explicitly true", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showToolbar={true}
         />,
       )
 
