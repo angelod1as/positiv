@@ -59,7 +59,7 @@ describe("LastAttendedEventRenderer", () => {
       )
     })
 
-    it("displays the formatted date below the title", () => {
+    it("displays date and title on single line with separator", () => {
       const params = createMockParams({
         last_attended_event_id: "event-123",
         last_attended_event_title: "Retiro de Verão",
@@ -67,9 +67,12 @@ describe("LastAttendedEventRenderer", () => {
         profile_id: "profile-456",
       })
 
-      renderWithRouter(params)
+      const { container } = renderWithRouter(params)
 
-      expect(screen.getByText("15/06/24")).toBeInTheDocument()
+      const dateSpan = container.querySelector("span.text-gray-500")
+      expect(dateSpan).toBeInTheDocument()
+      expect(dateSpan).toHaveTextContent("15/06/24")
+      expect(container.textContent).toContain("15/06/24 - Retiro de Verão")
     })
 
     it("truncates long titles to 20 characters with ellipsis", () => {
@@ -138,9 +141,9 @@ describe("LastAttendedEventRenderer", () => {
         profile_id: "profile-456",
       })
 
-      renderWithRouter(params)
+      const { container } = renderWithRouter(params)
 
-      expect(screen.getByText("Retiro de Verão")).toBeInTheDocument()
+      expect(container.textContent).toContain("Retiro de Verão")
       expect(screen.queryByRole("link")).not.toBeInTheDocument()
     })
 
@@ -152,9 +155,9 @@ describe("LastAttendedEventRenderer", () => {
         profile_id: null,
       })
 
-      renderWithRouter(params)
+      const { container } = renderWithRouter(params)
 
-      expect(screen.getByText("Retiro de Verão")).toBeInTheDocument()
+      expect(container.textContent).toContain("Retiro de Verão")
       expect(screen.queryByRole("link")).not.toBeInTheDocument()
     })
   })
