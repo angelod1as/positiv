@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { AGDataTable } from "./ag-data-table"
 
-const mockSessionStorage = (() => {
+const mockLocalStorage = (() => {
   let store: Record<string, string> = {}
   return {
     getItem: vi.fn((key: string) => store[key] ?? null),
@@ -23,13 +23,13 @@ const mockSessionStorage = (() => {
   }
 })()
 
-Object.defineProperty(window, "sessionStorage", {
-  value: mockSessionStorage,
+Object.defineProperty(window, "localStorage", {
+  value: mockLocalStorage,
 })
 
 describe("AGDataTable", () => {
   beforeEach(() => {
-    mockSessionStorage.clear()
+    mockLocalStorage.clear()
     vi.clearAllMocks()
   })
 
@@ -559,6 +559,43 @@ describe("AGDataTable", () => {
       })
 
       expect(screen.getByTestId("ag-data-table-test-table")).toBeInTheDocument()
+    })
+
+    it("should not apply flex when saved state exists to respect saved widths", async () => {
+      const savedState = {
+        version: 1,
+        savedAt: Date.now(),
+        gridState: {
+          columnSizing: {
+            columnSizingModel: [
+              { colId: "name", width: 250 },
+              { colId: "value", width: 150 },
+            ],
+          },
+        },
+      }
+      mockLocalStorage.setItem(
+        "ag-grid-state-test-table",
+        JSON.stringify(savedState),
+      )
+
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          persistState={true}
+          stateVersion={1}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const nameColumn = container.querySelector('.ag-header-cell[col-id="name"]')
+      expect(nameColumn).toBeInTheDocument()
+      expect(nameColumn).not.toHaveStyle({ flex: "1" })
     })
   })
 

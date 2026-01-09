@@ -10,7 +10,7 @@ import {
   type StateUpdatedEvent,
 } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
-import { useCallback, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
 import { AGDataTableToolbar } from "./ag-data-table-toolbar"
@@ -68,7 +68,7 @@ export function AGDataTable<TData>({
   const [gridApi, setGridApi] = useState<GridApi | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
 
-  const { restoreState, saveState, clearState } = useGridState(id, {
+  const { restoreState, saveState, clearState, hasSavedState } = useGridState(id, {
     version: stateVersion,
   })
 
@@ -136,10 +136,13 @@ export function AGDataTable<TData>({
     [persistState, saveState, onStateUpdated],
   )
 
-  const defaultColDef = {
-    flex: 1,
-    minWidth: 100,
-  }
+  const defaultColDef = useMemo(
+    () => ({
+      minWidth: 100,
+      ...(hasSavedState ? {} : { flex: 1 }),
+    }),
+    [hasSavedState],
+  )
 
   const containerClasses = cn(
     isFullscreen && "fixed inset-0 z-50 bg-background flex flex-col",
