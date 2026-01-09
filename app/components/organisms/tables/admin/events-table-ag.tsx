@@ -99,7 +99,6 @@ export function AdminDashboardEventsTableAG({
 
   const handleClearFilters = useCallback(() => {
     setFilterModel(DEFAULT_EVENT_STATUS_FILTER)
-    sessionStorage.removeItem(STORAGE_KEY)
   }, [])
 
   return (
