@@ -1,6 +1,6 @@
 # AG Grid Community Migration Plan
 
-> **Current Progress:** 26 Done / 4 Canceled / 12 Todo
+> **Current Progress:** 27 Done / 4 Canceled / 11 Todo
 >
 > Last synced with Linear: 2026-01-10
 
@@ -91,12 +91,14 @@
 
 | Task | Linear | Title | Status |
 |------|--------|-------|--------|
-| 31 | POS-347 | Audit and Remove All PrimeReact Imports | Todo |
+| 31 | POS-347 | Replace PrimeReact Tables with AG Grid | Done |
 | 32 | POS-348 | Remove PrimeReact Dependencies | Todo |
 | 33 | POS-349 | Delete Old PrimeReact Table Files | Todo |
 | 34 | POS-350 | Clean Up Old Helper Files | Todo |
 | 35 | POS-351 | Update All Table Imports | Todo |
 | 36 | POS-352 | Clean Up CSS and Themes | Todo |
+
+> **Note (POS-347):** Replaced PrimeReact tables in 3 admin pages (dashboard, view-event, view-participant), removed AG Grid test pages/routes, and updated E2E tests with AG Grid selectors.
 
 ### Phase 8: Polish & Optimization
 
@@ -165,10 +167,13 @@ app/components/organisms/tables/ag-grid/
 - Session storage persists table state
 - Pagination and sorting work
 - Maximize/minimize toggle implemented
+- PrimeReact tables replaced with AG Grid in admin pages (POS-347)
+- E2E page objects updated for AG Grid selectors
+- AG Grid E2E helper utilities created
+- AG Grid sorting, filtering, accessibility E2E tests added
 
 ### Remaining
 - Unit tests for filters and editors
 - Integration tests for tables
-- E2E test updates
-- PrimeReact removal and cleanup
+- PrimeReact removal and cleanup (dependencies, old files, CSS)
 - Performance optimizations

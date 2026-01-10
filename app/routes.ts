@@ -87,7 +87,6 @@ export default [
     ...prefix("admin", [
       layout("pages/admin/layout.tsx", [
         index("pages/admin/dashboard-page.tsx"),
-        route("/eventos-ag", "pages/admin/eventos-ag-page.tsx"),
       ]),
       ...prefix("eventos", [
         layout("pages/admin/events/layout.tsx", [
@@ -98,11 +97,6 @@ export default [
             "/:id?",
             "pages/admin/events/view-event-page/view-event-page.tsx",
           ),
-          // AG Grid Test Page - Ver evento
-          route(
-            "/:id/ag-grid",
-            "pages/admin/events/view-event-page-ag/view-event-page-ag.tsx",
-          ),
           // Criar ou Editar
           route("/novo/:id?", "pages/admin/events/create-edit-event.tsx"),
           // Baixar dados
@@ -111,11 +105,6 @@ export default [
           route(
             "/:eventId/participantes/:profileId",
             "pages/admin/events/view-event-participant/view-event-participant.tsx",
-          ),
-          // AG Grid Test Page
-          route(
-            "/:eventId/participantes/:profileId/ag-grid",
-            "pages/admin/events/view-event-participant-ag/view-event-participant-ag.tsx",
           ),
         ]),
       ]),
