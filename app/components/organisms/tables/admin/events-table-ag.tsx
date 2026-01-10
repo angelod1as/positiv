@@ -120,7 +120,7 @@ export function AdminDashboardEventsTableAG({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Todos os eventos</h2>
-        <Button to="/admin/eventos/criar" linkProps={{ prefetch: "intent" }}>
+        <Button to="/admin/eventos/novo" linkProps={{ prefetch: "intent" }}>
           Criar evento
         </Button>
       </div>

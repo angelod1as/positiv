@@ -11,10 +11,16 @@ export class UserManagementPage extends BasePage {
 
   constructor(page: Page) {
     super(page)
-    this.participantsTable = page
-      .locator('[data-testid="participants-table"], table')
-      .first()
-    this.tableRows = page.locator(".p-datatable-tbody tr")
+    // AG Grid table container
+    this.participantsTable = page.locator(
+      '[data-testid="ag-data-table-participants-table-ag"]',
+    )
+    // AG Grid rows in center viewport only (excludes pinned left/right duplicates)
+    // AG Grid renders separate row elements for each pinned section, so we must
+    // target only center viewport to get accurate row count
+    this.tableRows = this.participantsTable.locator(
+      ".ag-center-cols-container .ag-row",
+    )
     this.viewParticipantButtons = page.locator('[title="Ver participante"]')
     this.whatsappButtons = page.locator('button:has(img[alt="WhatsApp"])')
     this.saveButton = page.getByRole("button", { name: "Salvar" })
@@ -35,85 +41,26 @@ export class UserManagementPage extends BasePage {
 
   async findRowByParticipantName(name: string): Promise<Locator> {
     await this.waitForTableToLoad()
-    const row = this.tableRows.filter({ hasText: name }).first()
-    await row.waitFor({ state: "visible" })
-    return row
-  }
+    // social_name is in pinned left section, so we need to search there first
+    // then return the center row with matching row-index
+    const pinnedLeftRow = this.participantsTable
+      .locator(".ag-pinned-left-cols-container .ag-row")
+      .filter({ hasText: name })
+      .first()
+    await pinnedLeftRow.waitFor({ state: "visible" })
 
-  async getRowIndex(row: Locator, retries: number = 3): Promise<number> {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        // Wait for the row to be attached to DOM before proceeding
-        await row.waitFor({ state: "attached", timeout: 5000 }).catch(() => {
-          // If row is not attached, it might have been removed from DOM
-          throw new Error("Row is not attached to DOM")
-        })
-
-        // Get fresh references to avoid stale elements
-        const rows = await this.tableRows.all()
-        const targetElement = await row.elementHandle()
-
-        if (!targetElement) {
-          // This might be a timing issue, wait and retry
-          if (attempt < retries) {
-            await this.page.waitForTimeout(500 * attempt) // Progressive wait
-            continue
-          }
-          // After retries, provide more context about the failure
-          const rowText = await row.textContent().catch(() => "unknown")
-          throw new Error(
-            `Could not get element handle for row with text: ${rowText}. This may indicate the row is no longer in the DOM.`,
-          )
-        }
-
-        // Use a more robust comparison that handles stale elements
-        for (let i = 0; i < rows.length; i++) {
-          try {
-            const isMatch = await rows[i].evaluate(
-              (el, targetRow) => el === targetRow,
-              targetElement,
-            )
-            if (isMatch) return i
-          } catch (evalError) {
-            // Element might have become stale during evaluation, skip and continue
-            console.warn(`Skipping stale element at index ${i}:`, evalError)
-            continue
-          }
-        }
-
-        // If we reach here, the row wasn't found in the current attempt
-        if (attempt < retries) {
-          await this.page.waitForTimeout(500 * attempt)
-          continue
-        }
-      } catch (error) {
-        // Log the specific error for debugging
-        console.warn(`Attempt ${attempt} failed:`, error)
-
-        if (attempt === retries) {
-          // Provide comprehensive error information
-          const rowText = await row.textContent().catch(() => "unknown")
-          const rowCount = await this.tableRows.count().catch(() => "unknown")
-          const errorMessage =
-            error instanceof Error ? error.message : String(error)
-
-          throw new Error(
-            `Failed to get row index after ${retries} attempts.\n` +
-              `Last error: ${errorMessage}\n` +
-              `Row text: ${rowText}\n` +
-              `Total rows in table: ${rowCount}`,
-          )
-        }
-        await this.page.waitForTimeout(500 * attempt)
-      }
+    // Get the row-index to find the corresponding center row
+    const rowIndex = await pinnedLeftRow.getAttribute("row-index")
+    if (!rowIndex) {
+      throw new Error("Could not get row-index from pinned left row")
     }
 
-    // This should never be reached due to the throw in the catch block
-    const rowText = await row.textContent().catch(() => "unknown")
-    const rowCount = await this.tableRows.count()
-    throw new Error(
-      `Row not found in table after ${retries} attempts. Row text: ${rowText}, Total rows: ${rowCount}`,
-    )
+    // Return the center row with the same row-index
+    const centerRow = this.participantsTable
+      .locator(`.ag-center-cols-container .ag-row[row-index="${rowIndex}"]`)
+      .first()
+    await centerRow.waitFor({ state: "visible" })
+    return centerRow
   }
 
   async editSelectCell(
@@ -121,16 +68,37 @@ export class UserManagementPage extends BasePage {
     fieldName: string,
     value: string,
   ): Promise<void> {
-    const cell = row.locator(`td:has([name="${fieldName}"])`).first()
-    await cell.click()
+    // Get the row-index from the row element to find cells in the same logical row
+    // across all AG Grid viewports (left pinned, center, right pinned)
+    const rowIndex = await row.getAttribute("row-index")
+    if (!rowIndex) {
+      throw new Error("Could not get row-index attribute from row")
+    }
 
-    // Wait for dropdown to appear
-    const dropdown = cell.locator("select").first()
-    await dropdown.waitFor({ state: "visible" })
-    await dropdown.selectOption(value)
+    // Find the cell with the given field in the same row (using row-index)
+    const cell = this.participantsTable
+      .locator(`.ag-row[row-index="${rowIndex}"] .ag-cell[col-id="${fieldName}"]`)
+      .first()
 
-    // Click outside to save
-    await this.page.locator("body").click({ position: { x: 0, y: 0 } })
+    // Scroll cell into view if needed
+    await cell.scrollIntoViewIfNeeded()
+
+    // Double-click to enter edit mode in AG Grid
+    await cell.dblclick()
+
+    // AG Grid agSelectCellEditor uses a custom component with role="combobox"
+    // Click to open the dropdown, then select from the listbox
+    const dropdown = cell.getByRole("combobox")
+    await dropdown.waitFor({ state: "visible", timeout: 5000 })
+    await dropdown.click()
+
+    // Wait for the listbox (dropdown options) to appear and select the option
+    // Use exact: true to avoid matching partial names (e.g., "Compareceu" vs "Não compareceu")
+    const option = this.page.getByRole("option", { name: value, exact: true })
+    await option.waitFor({ state: "visible", timeout: 5000 })
+    await option.click()
+
+    // Wait for edit mode to close and auto-save to trigger
     await this.page.waitForLoadState("networkidle")
   }
 
@@ -139,8 +107,19 @@ export class UserManagementPage extends BasePage {
     fieldName: string,
     checked: boolean,
   ): Promise<void> {
-    const cell = row.locator(`td:has([name="${fieldName}"])`).first()
-    const checkbox = cell.locator('input[type="checkbox"]').first()
+    // Get the row-index from the row element
+    const rowIndex = await row.getAttribute("row-index")
+    if (!rowIndex) {
+      throw new Error("Could not get row-index attribute from row")
+    }
+
+    // Find the cell with the given field in the same row (using row-index)
+    const cell = this.participantsTable
+      .locator(`.ag-row[row-index="${rowIndex}"] .ag-cell[col-id="${fieldName}"]`)
+      .first()
+
+    // AG Grid checkbox renderer uses this wrapper structure
+    const checkbox = cell.locator(".ag-checkbox-input").first()
 
     const isChecked = await checkbox.isChecked()
     if (isChecked !== checked) {
@@ -154,16 +133,34 @@ export class UserManagementPage extends BasePage {
     fieldName: string,
     value: string,
   ): Promise<void> {
-    const cell = row.locator(`td:has([name="${fieldName}"])`).first()
-    await cell.click()
+    // Get the row-index from the row element
+    const rowIndex = await row.getAttribute("row-index")
+    if (!rowIndex) {
+      throw new Error("Could not get row-index attribute from row")
+    }
 
-    const input = cell.locator('input[type="number"]').first()
-    await input.waitFor({ state: "visible" })
+    // Find the cell with the given field in the same row (using row-index)
+    const cell = this.participantsTable
+      .locator(`.ag-row[row-index="${rowIndex}"] .ag-cell[col-id="${fieldName}"]`)
+      .first()
+
+    // Scroll cell into view if needed
+    await cell.scrollIntoViewIfNeeded()
+
+    // Double-click to enter edit mode in AG Grid
+    await cell.dblclick()
+
+    // Wait for AG Grid number editor input to appear (in cell or popup)
+    const input = cell
+      .locator("input")
+      .first()
+      .or(this.page.locator(".ag-popup-editor input").first())
+    await input.waitFor({ state: "visible", timeout: 5000 })
     await input.clear()
     await input.fill(value)
 
     // Press Tab to trigger save (more reliable than Enter for number inputs)
-    await input.press("Tab")
+    await this.page.keyboard.press("Tab")
 
     // Wait for the auto-save to complete by waiting for network idle with timeout
     try {
@@ -179,9 +176,22 @@ export class UserManagementPage extends BasePage {
     fieldName: string,
     expectedValue: string,
   ): Promise<boolean> {
-    const cell = row.locator(`td:has([name="${fieldName}"])`).first()
-    const content = await cell.textContent()
-    return content?.includes(expectedValue) ?? false
+    // Get the row-index from the row element
+    const rowIndex = await row.getAttribute("row-index")
+    if (!rowIndex) {
+      throw new Error("Could not get row-index attribute from row")
+    }
+
+    // Find the cell with the given field - search across all viewports (left, center, right)
+    // because AG Grid renders rows in separate containers for pinned columns
+    const cell = this.participantsTable
+      .locator(`.ag-row[row-index="${rowIndex}"] .ag-cell[col-id="${fieldName}"]`)
+      .first()
+
+    // Wait for cell to be visible (it might be in a different viewport)
+    await cell.waitFor({ state: "visible", timeout: 5000 }).catch(() => {})
+    const content = (await cell.textContent())?.trim() ?? ""
+    return content.includes(expectedValue.trim())
   }
 
   async clickViewParticipantButton(row: Locator): Promise<void> {
@@ -194,9 +204,18 @@ export class UserManagementPage extends BasePage {
       await this.page.waitForTimeout(500)
     }
 
-    // Now find and click the view participant link in the last cell
-    const lastCell = row.locator("td:last-child")
-    const viewButton = lastCell.locator("a").first()
+    // Get the row-index from the row element
+    const rowIndex = await row.getAttribute("row-index")
+    if (!rowIndex) {
+      throw new Error("Could not get row-index attribute from row")
+    }
+
+    // Find and click the view participant link in the actions cell (using row-index)
+    // AG Grid actions column has col-id="actions"
+    const actionsCell = this.participantsTable
+      .locator(`.ag-row[row-index="${rowIndex}"] .ag-cell[col-id="actions"]`)
+      .first()
+    const viewButton = actionsCell.locator("a").first()
     await viewButton.scrollIntoViewIfNeeded()
     await viewButton.click()
     await this.page.waitForLoadState("networkidle")
@@ -260,8 +279,15 @@ export class UserManagementPage extends BasePage {
 
   // WhatsApp integration methods
   async clickWhatsAppButton(row: Locator): Promise<void> {
-    const whatsappButton = row
-      .locator('button:has(img[alt="WhatsApp"])')
+    // Get the row-index from the row element
+    const rowIndex = await row.getAttribute("row-index")
+    if (!rowIndex) {
+      throw new Error("Could not get row-index attribute from row")
+    }
+
+    // Find the WhatsApp button in the same row (using row-index)
+    const whatsappButton = this.participantsTable
+      .locator(`.ag-row[row-index="${rowIndex}"] button:has(img[alt="WhatsApp"])`)
       .first()
     await whatsappButton.waitFor({ state: "visible" })
 

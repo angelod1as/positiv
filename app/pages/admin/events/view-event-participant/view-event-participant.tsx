@@ -15,7 +15,7 @@ import type { Route } from "./+types/view-event-participant"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
 import { BasicData } from "~/components/pages/admin/participants/basic-data"
 import { ParticipantVsEventData } from "~/components/pages/admin/participants/participant-vs-event-data"
-import { ParticipantEventHistory } from "~/components/pages/admin/participants/participant-event-history"
+import { ParticipantEventHistoryAG } from "~/components/pages/admin/participants/participant-event-history-ag"
 
 const {
   admin: {
@@ -143,7 +143,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
       <BasicData profile={profile} />
       <ParticipantVsEventData eventParticipant={thisEvent} />
       {fullHistory.length > 0 && (
-        <ParticipantEventHistory participantHistory={fullHistory} />
+        <ParticipantEventHistoryAG participantHistory={fullHistory} />
       )}
     </>
   )

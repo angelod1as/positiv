@@ -1,6 +1,6 @@
 import { inputFromForm } from "composable-functions"
 import { Suspense, useEffect, useState } from "react"
-import { Await, useFetcher } from "react-router"
+import { Await, useFetcher, type ShouldRevalidateFunctionArgs } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
 import { z as zod } from "zod"
@@ -28,7 +28,7 @@ import { DemographicsData } from "~/components/pages/admin/events/demographics"
 import { EventStatusForm } from "~/components/pages/admin/events/event-status-form"
 import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { sendToast } from "./send-toast"
-import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
+import { AdminViewEventParticipantsTableAG } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table-ag"
 import { ParticipantsTableSkeleton } from "~/components/organisms/tables/admin/participants-table/participants-table-skeleton"
 
 const {
@@ -104,6 +104,21 @@ export async function action({ request, params }: Route.ActionArgs) {
     errors: [{ message: "Unknown intent" }],
     intent,
   }
+}
+
+/** SHOULD REVALIDATE
+ * Prevents loader revalidation after inline participant edits.
+ * This stops AG Grid from re-sorting when a cell value is updated.
+ */
+export function shouldRevalidate({
+  actionResult,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs): boolean {
+  const result = actionResult as { intent?: string } | undefined
+  if (result?.intent === "update-event-participant") {
+    return false
+  }
+  return defaultShouldRevalidate
 }
 
 async function loadParticipants(eventId: string) {
@@ -194,10 +209,9 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
             }
           >
             {(resolvedParticipants) => (
-              <AdminViewEventParticipantsTable
+              <AdminViewEventParticipantsTableAG
                 participants={resolvedParticipants}
                 eventId={event.id}
-                fetcher={fetcher}
               />
             )}
           </Await>
