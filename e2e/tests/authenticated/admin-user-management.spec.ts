@@ -116,7 +116,8 @@ test.describe("Admin User Management", () => {
       "application_status",
       "Regras enviadas",
     )
-    await page.waitForTimeout(1000) // Allow for auto-save
+    // Wait for auto-save to complete
+    await page.waitForLoadState("networkidle").catch(() => {})
 
     // Verify the change shows immediately - look for the cell in the grid that has our value
     // AG Grid renders rows in multiple containers, so we search the whole grid for the status
@@ -137,7 +138,8 @@ test.describe("Admin User Management", () => {
       "attendance_status",
       "Compareceu",
     )
-    await page.waitForTimeout(1000)
+    // Wait for auto-save to complete
+    await page.waitForLoadState("networkidle").catch(() => {})
 
     // Test 3: Data persistence - Refresh page and verify changes persist
     await page.reload()
@@ -601,7 +603,9 @@ test.describe("Admin User Management", () => {
     // Test arrow key navigation
     // Press right arrow to move to next cell
     await page.keyboard.press("ArrowRight")
-    // Verify focus moved (the focused cell will have a specific class or attribute)
+    // Verify focus moved - AG Grid adds ag-cell-focus class to focused cell
+    const focusedCell = grid.locator(".ag-cell-focus")
+    await expect(focusedCell).toBeVisible()
 
     // Press down arrow to move to row below
     await page.keyboard.press("ArrowDown")
