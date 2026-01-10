@@ -5,11 +5,6 @@ import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { render, screen, waitFor } from "~/test/test-utils"
 import { AdminViewEventParticipantsTableAG } from "./view-event-participants-table-ag"
 
-// NOTE: This is a mock table component that replaces PrimeReact DataTable.
-// These unit tests verify the AG Grid implementation works correctly.
-// E2E tests for this table may need updating when the page structure changes.
-// See POS-346 for E2E test updates.
-
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
   return {

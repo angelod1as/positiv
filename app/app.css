@@ -1,12 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* For PrimeReact DataTable */
-@layer primereact;
-@import "primereact/resources/themes/lara-light-indigo/theme.css"
-  layer(primereact);
-/* End PrimeReact DataTable */
-
 /* For AG Grid DataTable - using Theming API (themeQuartz), no legacy CSS imports needed */
 
 /* AG Grid custom cell styles */
