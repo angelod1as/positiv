@@ -13,7 +13,7 @@ export class UserManagementPage extends BasePage {
     super(page)
     // AG Grid table container
     this.participantsTable = page.locator(
-      '[data-testid="ag-data-table-participants-table-ag"]',
+      '[data-testid="ag-data-table-participants-table"]',
     )
     // AG Grid rows in center viewport only (excludes pinned left/right duplicates)
     // AG Grid renders separate row elements for each pinned section, so we must

@@ -420,7 +420,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for AG Grid to be ready
-    const grid = await waitForAGGridReady(page, "participants-table-ag")
+    const grid = await waitForAGGridReady(page, "participants-table")
     await expect(grid).toBeVisible()
 
     // Test sorting by full_name column ascending
@@ -446,7 +446,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for grid to be ready
-    const grid = await waitForAGGridReady(page, "participants-table-ag")
+    const grid = await waitForAGGridReady(page, "participants-table")
     const initialRowCount = await grid.locator(".ag-row").count()
     expect(initialRowCount).toBeGreaterThan(0)
 
@@ -471,7 +471,7 @@ test.describe("Admin User Management", () => {
 
     // Reload page
     await page.reload()
-    await waitForAGGridReady(page, "participants-table-ag")
+    await waitForAGGridReady(page, "participants-table")
 
     // Verify grid is still visible after reload
     await expect(grid).toBeVisible()
@@ -485,7 +485,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for grid to be ready
-    const grid = await waitForAGGridReady(page, "participants-table-ag")
+    const grid = await waitForAGGridReady(page, "participants-table")
 
     // Get the first row from pinned left section (where social_name is)
     // AG Grid renders rows in separate containers for each pinned section
@@ -530,7 +530,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for grid to be ready
-    const grid = await waitForAGGridReady(page, "participants-table-ag")
+    const grid = await waitForAGGridReady(page, "participants-table")
 
     // Check if pagination panel exists
     const paginationPanel = grid.locator(".ag-paging-panel")
@@ -561,7 +561,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for AG Grid to be ready
-    const grid = await waitForAGGridReady(page, "participants-table-ag")
+    const grid = await waitForAGGridReady(page, "participants-table")
 
     // Verify grid has proper ARIA role
     const gridRole = grid.locator('[role="grid"]')
@@ -600,7 +600,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for AG Grid to be ready
-    const grid = await waitForAGGridReady(page, "participants-table-ag")
+    const grid = await waitForAGGridReady(page, "participants-table")
 
     // Focus on the first cell
     const firstCell = grid.locator(".ag-cell").first()
@@ -644,7 +644,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for AG Grid to be ready
-    const grid = await waitForAGGridReady(page, "participants-table-ag")
+    const grid = await waitForAGGridReady(page, "participants-table")
 
     // Find the fullscreen toggle button
     const fullscreenButton = page.getByRole("button", {

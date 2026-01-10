@@ -28,7 +28,7 @@ import { DemographicsData } from "~/components/pages/admin/events/demographics"
 import { EventStatusForm } from "~/components/pages/admin/events/event-status-form"
 import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { sendToast } from "./send-toast"
-import { AdminViewEventParticipantsTableAG } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table-ag"
+import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
 
 const {
   admin: { ADMIN_DASHBOARD },
@@ -200,7 +200,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       )}
 
       <div className="max-h-[600px]">
-        <AdminViewEventParticipantsTableAG
+        <AdminViewEventParticipantsTable
           participants={participants}
           eventId={event.id}
         />

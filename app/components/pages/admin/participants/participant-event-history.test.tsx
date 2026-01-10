@@ -3,7 +3,7 @@ import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it } from "vitest"
 import { render, screen, waitFor } from "~/test/test-utils"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
-import { ParticipantEventHistoryAG } from "./participant-event-history-ag"
+import { ParticipantEventHistory } from "./participant-event-history"
 
 const mockParticipantHistory: Array<
   ParticipantVsEvent & { time_event_start: string }
@@ -72,16 +72,16 @@ const renderWithRouter = (ui: React.ReactElement) => {
   return render(<RouterProvider router={router} />)
 }
 
-describe("ParticipantEventHistoryAG", () => {
+describe("ParticipantEventHistory", () => {
   it("should render the history section title as 'Histórico de Inscrições'", () => {
-    renderWithRouter(<ParticipantEventHistoryAG participantHistory={[]} />)
+    renderWithRouter(<ParticipantEventHistory participantHistory={[]} />)
 
     expect(screen.getByText("Histórico de Inscrições")).toBeInTheDocument()
   })
 
   it("should render an AG Grid table with event history", async () => {
     renderWithRouter(
-      <ParticipantEventHistoryAG participantHistory={mockParticipantHistory} />,
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
     await waitFor(() => {
@@ -91,7 +91,7 @@ describe("ParticipantEventHistoryAG", () => {
 
   it("should display event information in the table", async () => {
     renderWithRouter(
-      <ParticipantEventHistoryAG participantHistory={mockParticipantHistory} />,
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
     await waitFor(() => {
@@ -102,7 +102,7 @@ describe("ParticipantEventHistoryAG", () => {
 
   it("should display status information with Portuguese labels", async () => {
     renderWithRouter(
-      <ParticipantEventHistoryAG participantHistory={mockParticipantHistory} />,
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
     await waitFor(() => {
@@ -117,7 +117,7 @@ describe("ParticipantEventHistoryAG", () => {
 
   it("should display admin notes", async () => {
     renderWithRouter(
-      <ParticipantEventHistoryAG participantHistory={mockParticipantHistory} />,
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
     await waitFor(() => {
@@ -127,7 +127,7 @@ describe("ParticipantEventHistoryAG", () => {
   })
 
   it("should show empty message when history is empty", async () => {
-    renderWithRouter(<ParticipantEventHistoryAG participantHistory={[]} />)
+    renderWithRouter(<ParticipantEventHistory participantHistory={[]} />)
 
     await waitFor(
       () => {
@@ -141,7 +141,7 @@ describe("ParticipantEventHistoryAG", () => {
 
   it("should have the correct column headers", async () => {
     renderWithRouter(
-      <ParticipantEventHistoryAG participantHistory={mockParticipantHistory} />,
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
     await waitFor(() => {
@@ -157,7 +157,7 @@ describe("ParticipantEventHistoryAG", () => {
 
   it("should render event titles as clickable links", async () => {
     renderWithRouter(
-      <ParticipantEventHistoryAG participantHistory={mockParticipantHistory} />,
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
     await waitFor(() => {

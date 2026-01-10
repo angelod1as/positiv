@@ -19,9 +19,9 @@ vi.mock(
 )
 
 vi.mock(
-  "~/components/pages/admin/participants/participant-event-history-ag",
+  "~/components/pages/admin/participants/participant-event-history",
   () => ({
-    ParticipantEventHistoryAG: ({
+    ParticipantEventHistory: ({
       participantHistory,
     }: {
       participantHistory: any[]

@@ -43,7 +43,7 @@ test.describe('Admin Access Control', () => {
 
     // Check for events table section (always present) - AG Grid uses "Todos os eventos" header
     await expect(page.getByRole('heading', { name: 'Todos os eventos', exact: true })).toBeVisible()
-    await expect(page.locator('[data-testid="ag-data-table-admin-events-ag"]')).toBeVisible()
+    await expect(page.locator('[data-testid="ag-data-table-admin-events"]')).toBeVisible()
     
     // Test 3: Account page access (allowed)
     await page.goto('/conta')

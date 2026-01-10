@@ -2,7 +2,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { render, screen, waitFor } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
-import { AdminDashboardEventsTableAG } from "./events-table-ag"
+import { AdminDashboardEventsTable } from "./events-table"
 
 const mockNavigate = vi.fn()
 
@@ -63,7 +63,7 @@ Object.defineProperty(window, "sessionStorage", {
   value: mockSessionStorage,
 })
 
-describe("AdminDashboardEventsTableAG", () => {
+describe("AdminDashboardEventsTable", () => {
   const mockEvents: Event[] = [
     {
       id: "1",
@@ -222,7 +222,7 @@ describe("AdminDashboardEventsTableAG", () => {
 
   describe("Basic Rendering", () => {
     it("should render table with events", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(
         () => {
@@ -234,7 +234,7 @@ describe("AdminDashboardEventsTableAG", () => {
     })
 
     it("should render the AG Grid component", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
@@ -245,19 +245,19 @@ describe("AdminDashboardEventsTableAG", () => {
     })
 
     it("should have correct test id", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
       })
 
       expect(
-        screen.getByTestId("ag-data-table-admin-events-ag"),
+        screen.getByTestId("ag-data-table-admin-events"),
       ).toBeInTheDocument()
     })
 
     it("should render all three column headers", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
@@ -271,7 +271,7 @@ describe("AdminDashboardEventsTableAG", () => {
 
   describe("Column Rendering", () => {
     it("should display event titles in the title column", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
@@ -282,7 +282,7 @@ describe("AdminDashboardEventsTableAG", () => {
     })
 
     it("should display mapped status values in Portuguese", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Rascunho")).toBeInTheDocument()
@@ -293,7 +293,7 @@ describe("AdminDashboardEventsTableAG", () => {
     })
 
     it("should display formatted dates", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
@@ -309,7 +309,7 @@ describe("AdminDashboardEventsTableAG", () => {
 
   describe("Filtering", () => {
     it("should show only active statuses by default (excluding Completed and Cancelled)", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
@@ -327,7 +327,7 @@ describe("AdminDashboardEventsTableAG", () => {
 
     it("should load filter state from sessionStorage on mount", async () => {
       // Set initial state in sessionStorage to include Completed but not Cancelled
-      mockSessionStorage.store["admin-events-ag-filter-status"] =
+      mockSessionStorage.store["admin-events-filter-status"] =
         JSON.stringify([
           "Draft",
           "Scheduled",
@@ -336,7 +336,7 @@ describe("AdminDashboardEventsTableAG", () => {
           "Completed",
         ])
 
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
@@ -355,7 +355,7 @@ describe("AdminDashboardEventsTableAG", () => {
   describe("Sorting", () => {
     it("should have sortable columns", async () => {
       const { container } = render(
-        <AdminDashboardEventsTableAG events={mockEvents} />,
+        <AdminDashboardEventsTable events={mockEvents} />,
       )
 
       await waitFor(() => {
@@ -373,7 +373,7 @@ describe("AdminDashboardEventsTableAG", () => {
     it("should sort events when clicking on column header", async () => {
       const user = userEvent.setup()
       const { container } = render(
-        <AdminDashboardEventsTableAG events={mockEvents} />,
+        <AdminDashboardEventsTable events={mockEvents} />,
       )
 
       await waitFor(() => {
@@ -399,7 +399,7 @@ describe("AdminDashboardEventsTableAG", () => {
   describe("Pagination", () => {
     it("should render with pagination enabled", async () => {
       const { container } = render(
-        <AdminDashboardEventsTableAG events={mockEvents} />,
+        <AdminDashboardEventsTable events={mockEvents} />,
       )
 
       await waitFor(() => {
@@ -416,7 +416,7 @@ describe("AdminDashboardEventsTableAG", () => {
     it("should navigate to view event page when row is clicked", async () => {
       const user = userEvent.setup()
       const { container } = render(
-        <AdminDashboardEventsTableAG events={mockEvents} />,
+        <AdminDashboardEventsTable events={mockEvents} />,
       )
 
       await waitFor(() => {
@@ -442,7 +442,7 @@ describe("AdminDashboardEventsTableAG", () => {
 
   describe("Header", () => {
     it("should render header with title", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
@@ -452,7 +452,7 @@ describe("AdminDashboardEventsTableAG", () => {
     })
 
     it("should render create event button", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
@@ -462,7 +462,7 @@ describe("AdminDashboardEventsTableAG", () => {
     })
 
     it("should have create event button linking to create event page", async () => {
-      render(<AdminDashboardEventsTableAG events={mockEvents} />)
+      render(<AdminDashboardEventsTable events={mockEvents} />)
 
       await waitFor(() => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
@@ -478,7 +478,7 @@ describe("AdminDashboardEventsTableAG", () => {
 
   describe("Empty State", () => {
     it("should show empty message when no events", async () => {
-      render(<AdminDashboardEventsTableAG events={[]} />)
+      render(<AdminDashboardEventsTable events={[]} />)
 
       await waitFor(() => {
         expect(screen.getByText("Nenhum evento encontrado")).toBeInTheDocument()
