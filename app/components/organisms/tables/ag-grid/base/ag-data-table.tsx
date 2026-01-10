@@ -50,6 +50,7 @@ export function AGDataTable<TData>({
   pagination = false,
   paginationPageSize = 25,
   paginationPageSizeSelector,
+  paginationAutoPageSize,
   rowSelection,
   onRowSelectionChange,
   quickFilterText,
@@ -66,6 +67,7 @@ export function AGDataTable<TData>({
   stateVersion = 1,
   showToolbar = true,
   onClearFilters,
+  headerContent,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
 
@@ -223,6 +225,11 @@ export function AGDataTable<TData>({
       className={containerClasses}
       style={height && !isFullscreen ? { height } : undefined}
     >
+      {headerContent && (
+        <div className={cn("mb-2", isFullscreen && "px-4 pt-4")}>
+          {headerContent}
+        </div>
+      )}
       <div className={cn(isFullscreen && "flex-1", !isFullscreen && "h-full")}>
         <AgGridReact
           theme={gridTheme}
@@ -238,6 +245,7 @@ export function AGDataTable<TData>({
           pagination={pagination}
           paginationPageSize={paginationPageSize}
           paginationPageSizeSelector={paginationPageSizeSelector}
+          paginationAutoPageSize={paginationAutoPageSize}
           rowSelection={rowSelectionConfig}
           onSelectionChanged={handleSelectionChanged}
           quickFilterText={quickFilterText}

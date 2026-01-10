@@ -30,6 +30,7 @@ export function AGDataTableToolbar({
   const handleResetTable = () => {
     clearState()
     gridApi?.setFilterModel(null)
+    gridApi?.resetColumnState()
     onClearFilters?.()
   }
 
