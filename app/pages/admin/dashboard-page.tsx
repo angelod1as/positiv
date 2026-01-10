@@ -2,7 +2,7 @@ import { getEventsForDashboard } from "~/business/admin/admin.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { Separator } from "~/components/ui/separator"
 import type { Route } from "./+types/dashboard-page"
-import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
+import { AdminDashboardEventsTableAG } from "~/components/organisms/tables/admin/events-table-ag"
 
 export async function loader() {
   const events = await getEventsForDashboard()
@@ -36,15 +36,7 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
         </div>
       )}
 
-      <div>
-        <h2>Eventos</h2>
-
-        {events ? (
-          <AdminDashboardEventsTable events={events} />
-        ) : (
-          "Nenhum evento encontrado"
-        )}
-      </div>
+      {events && <AdminDashboardEventsTableAG events={events} />}
       <Separator />
       <div>
         <h2>Participantes (em breve)</h2>
