@@ -1,6 +1,6 @@
 import { inputFromForm } from "composable-functions"
 import { Suspense, useEffect, useState } from "react"
-import { Await, useFetcher } from "react-router"
+import { Await, useFetcher, type ShouldRevalidateFunctionArgs } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
 import { z as zod } from "zod"
@@ -104,6 +104,21 @@ export async function action({ request, params }: Route.ActionArgs) {
     errors: [{ message: "Unknown intent" }],
     intent,
   }
+}
+
+/** SHOULD REVALIDATE
+ * Prevents loader revalidation after inline participant edits.
+ * This stops AG Grid from re-sorting when a cell value is updated.
+ */
+export function shouldRevalidate({
+  actionResult,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs): boolean {
+  const result = actionResult as { intent?: string } | undefined
+  if (result?.intent === "update-event-participant") {
+    return false
+  }
+  return defaultShouldRevalidate
 }
 
 async function loadParticipants(eventId: string) {
