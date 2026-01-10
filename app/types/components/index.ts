@@ -6,7 +6,6 @@
 // export type { FooterProps } from "~/components/organisms/footer/footer"
 // export type { EventCardProps } from "~/components/organisms/event-card/event-card"
 // export type { EventCardFooterProps } from "~/components/organisms/event-card/event-card-footer"
-export type { DataTableProps } from "~/components/organisms/tables/base/data-table"
 // export type { ConfirmDialogProps } from "~/components/molecules/confirm-dialog/confirm-dialog"
 // export type { NewsProps } from "~/components/organisms/news-dialog/news"
 

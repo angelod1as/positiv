@@ -1,6 +1,6 @@
 import { inputFromForm } from "composable-functions"
-import { Suspense, useEffect, useState } from "react"
-import { Await, useFetcher, type ShouldRevalidateFunctionArgs } from "react-router"
+import { useEffect, useState } from "react"
+import { useFetcher, type ShouldRevalidateFunctionArgs } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
 import { z as zod } from "zod"
@@ -29,7 +29,6 @@ import { EventStatusForm } from "~/components/pages/admin/events/event-status-fo
 import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { sendToast } from "./send-toast"
 import { AdminViewEventParticipantsTableAG } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table-ag"
-import { ParticipantsTableSkeleton } from "~/components/organisms/tables/admin/participants-table/participants-table-skeleton"
 
 const {
   admin: { ADMIN_DASHBOARD },
@@ -148,9 +147,11 @@ export async function loader({ params }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
+  const participants = await loadParticipants(eventId)
+
   return {
     event,
-    participants: loadParticipants(eventId),
+    participants,
     demographics: demographics?.success ? demographics.data : undefined,
   }
 }
@@ -199,23 +200,10 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       )}
 
       <div className="max-h-[600px]">
-        <Suspense fallback={<ParticipantsTableSkeleton />}>
-          <Await
-            resolve={participants}
-            errorElement={
-              <div className="text-red-500">
-                Erro ao carregar participantes. Por favor, recarregue a página.
-              </div>
-            }
-          >
-            {(resolvedParticipants) => (
-              <AdminViewEventParticipantsTableAG
-                participants={resolvedParticipants}
-                eventId={event.id}
-              />
-            )}
-          </Await>
-        </Suspense>
+        <AdminViewEventParticipantsTableAG
+          participants={participants}
+          eventId={event.id}
+        />
       </div>
 
       <GeneralData {...event} />
