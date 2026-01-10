@@ -86,18 +86,24 @@ export async function setCellValue(
     await cell.dblclick()
 
     if (editorType === "select") {
-      const dropdown = page.locator(".ag-popup-editor select").first()
+      // agSelectCellEditor uses a custom component with role="combobox"
+      // Click to open dropdown, then select from listbox
+      const dropdown = cell.getByRole("combobox")
       await dropdown.waitFor({ state: "visible" })
-      await dropdown.selectOption(String(value))
+      await dropdown.click()
+      // Use exact: true to avoid matching partial names
+      const option = page.getByRole("option", { name: String(value), exact: true })
+      await option.waitFor({ state: "visible" })
+      await option.click()
     } else {
-      const input = page.locator(".ag-popup-editor input").first()
+      // Text/number editors render an input inside the cell
+      const input = cell.getByRole("textbox").or(cell.locator("input").first())
       await input.waitFor({ state: "visible" })
       await input.clear()
       await input.fill(String(value))
+      // Exit edit mode for text/number
+      await page.keyboard.press("Tab")
     }
-
-    // Exit edit mode
-    await page.keyboard.press("Tab")
   }
 
   // Wait for potential auto-save
