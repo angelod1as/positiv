@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { render, screen, waitFor } from "~/test/test-utils"
-import { AdminViewEventParticipantsTableAG } from "./view-event-participants-table-ag"
+import { AdminViewEventParticipantsTable } from "./view-event-participants-table"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -110,7 +110,7 @@ function renderWithRouter(
 ) {
   return render(
     <MemoryRouter>
-      <AdminViewEventParticipantsTableAG
+      <AdminViewEventParticipantsTable
         participants={participants}
         eventId="event-123"
       />
@@ -118,7 +118,7 @@ function renderWithRouter(
   )
 }
 
-describe("AdminViewEventParticipantsTableAG", () => {
+describe("AdminViewEventParticipantsTable", () => {
   beforeEach(() => {
     mockSessionStorage.clear()
     vi.clearAllMocks()
@@ -275,7 +275,7 @@ describe("AdminViewEventParticipantsTableAG", () => {
       })
 
       // The table has showToolbar=true, so it should render toolbar elements
-      const testId = screen.getByTestId("ag-data-table-participants-table-ag")
+      const testId = screen.getByTestId("ag-data-table-participants-table")
       expect(testId).toBeInTheDocument()
     })
   })

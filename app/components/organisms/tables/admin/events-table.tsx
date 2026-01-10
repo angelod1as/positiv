@@ -18,16 +18,16 @@ import {
 } from "~/lib/helpers/propMaps"
 import type { Event, EventStatus } from "~types/database/entities.types"
 
-export type DashboardEventAG = Pick<
+export type DashboardEvent = Pick<
   Event,
   "id" | "title" | "emoji" | "event_status" | "time_event_start"
 >
 
-interface AdminDashboardEventsTableAGProps {
-  events: DashboardEventAG[]
+interface AdminDashboardEventsTableProps {
+  events: DashboardEvent[]
 }
 
-const STORAGE_KEY = "admin-events-ag-filter-status"
+const STORAGE_KEY = "admin-events-filter-status"
 
 function getInitialFilterValues(): EventStatus[] {
   if (typeof window === "undefined") return DEFAULT_EVENT_STATUS_FILTER
@@ -45,9 +45,9 @@ function getInitialFilterValues(): EventStatus[] {
   return DEFAULT_EVENT_STATUS_FILTER
 }
 
-export function AdminDashboardEventsTableAG({
+export function AdminDashboardEventsTable({
   events,
-}: AdminDashboardEventsTableAGProps) {
+}: AdminDashboardEventsTableProps) {
   const navigate = useNavigate()
   const [filterModel, setFilterModel] = useState<string[] | null>(
     getInitialFilterValues,
@@ -64,7 +64,7 @@ export function AdminDashboardEventsTableAG({
     return events.filter((event) => filterModel.includes(event.event_status))
   }, [events, filterModel])
 
-  const columnDefs: ColDef<DashboardEventAG>[] = useMemo(
+  const columnDefs: ColDef<DashboardEvent>[] = useMemo(
     () => [
       {
         field: "title",
@@ -95,7 +95,7 @@ export function AdminDashboardEventsTableAG({
   )
 
   const handleRowClicked = useCallback(
-    (event: RowClickedEvent<DashboardEventAG>) => {
+    (event: RowClickedEvent<DashboardEvent>) => {
       if (event.data?.id) {
         navigate(`/admin/eventos/${event.data.id}`)
       }
@@ -116,7 +116,7 @@ export function AdminDashboardEventsTableAG({
         </Button>
       </div>
       <AGDataTable
-        id="admin-events-ag"
+        id="admin-events"
         data={filteredEvents}
         columnDefs={columnDefs}
         pagination

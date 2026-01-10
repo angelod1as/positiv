@@ -44,14 +44,14 @@ import { countParticipants } from "./count-participants"
 // start fresh each session. Grid layout state uses localStorage (persists across sessions)
 // via use-grid-state.ts, so column widths and order are preserved.
 const STORAGE_KEYS = {
-  applicationStatus: "participants-ag-filter-application_status",
-  attendanceStatus: "participants-ag-filter-attendance_status",
-  approvedToAttend: "participants-ag-filter-approved_to_attend",
-  gender: "participants-ag-filter-gender",
-  orientation: "participants-ag-filter-orientation",
-  isVeteran: "participants-ag-filter-is_veteran",
-  hasPaid: "participants-ag-filter-has_paid",
-  spotType: "participants-ag-filter-spot_type",
+  applicationStatus: "participants-filter-application_status",
+  attendanceStatus: "participants-filter-attendance_status",
+  approvedToAttend: "participants-filter-approved_to_attend",
+  gender: "participants-filter-gender",
+  orientation: "participants-filter-orientation",
+  isVeteran: "participants-filter-is_veteran",
+  hasPaid: "participants-filter-has_paid",
+  spotType: "participants-filter-spot_type",
 }
 
 const EDITABLE_FIELDS = [
@@ -86,13 +86,13 @@ function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
   return defaultValue
 }
 
-type AdminViewEventParticipantsTableAGProps = {
+type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
   eventId: string
 }
 
-export const AdminViewEventParticipantsTableAG: FC<
-  AdminViewEventParticipantsTableAGProps
+export const AdminViewEventParticipantsTable: FC<
+  AdminViewEventParticipantsTableProps
 > = ({ participants, eventId }) => {
   const fetcher = useFetcher<ComposableFetcherData>()
 
@@ -534,7 +534,7 @@ export const AdminViewEventParticipantsTableAG: FC<
     <div className="space-y-4">
       <h2 className="text-2xl font-bold">Inscrições</h2>
       <AGDataTable
-        id="participants-table-ag"
+        id="participants-table"
         data={participants}
         columnDefs={columnDefs}
         context={{ eventId }}
