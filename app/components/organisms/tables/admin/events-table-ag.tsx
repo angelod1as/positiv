@@ -1,3 +1,17 @@
+/**
+ * AG Grid Events Table - Admin Dashboard
+ *
+ * NOTE: This is a mock table component that replaces PrimeReact DataTable.
+ * While this implementation uses AG Grid's features (filtering, sorting, pagination),
+ * the underlying data structure and page layout may change in the future.
+ *
+ * TODO: E2E tests (admin-event-management.spec.ts) will need updating when:
+ * - The page structure changes significantly
+ * - New AG Grid features are added (column resizing, row grouping, etc.)
+ * - Filter behavior changes
+ *
+ * @see POS-346 - AG Grid migration E2E test updates
+ */
 import type { ColDef, RowClickedEvent } from "ag-grid-community"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router"
