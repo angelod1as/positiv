@@ -8,6 +8,10 @@ import { type Page, type Locator, expect } from "@playwright/test"
  * nature of grid rendering.
  */
 
+// Timeout constants for AG Grid animations and transitions
+const SORT_ANIMATION_DELAY_MS = 200
+const PAGE_TRANSITION_DELAY_MS = 200
+
 /**
  * Wait for AG Grid to be fully rendered and ready for interaction
  * @param page - Playwright page object
@@ -30,10 +34,11 @@ export async function waitForAGGridReady(
   await rowsOrEmpty.first().waitFor({ state: "visible", timeout })
 
   // Wait for any loading overlays to disappear
+  // Note: Loading overlay may not appear if data loads quickly, so we catch and ignore
+  // timeout errors rather than failing the test. This is intentional - the grid is
+  // still ready for interaction even if no loading overlay was shown.
   const loadingOverlay = grid.locator(".ag-overlay-loading-center")
-  await loadingOverlay.waitFor({ state: "hidden", timeout }).catch(() => {
-    // Loading overlay may not appear, ignore
-  })
+  await loadingOverlay.waitFor({ state: "hidden", timeout }).catch(() => {})
 
   return grid
 }
@@ -106,10 +111,11 @@ export async function setCellValue(
     }
   }
 
-  // Wait for potential auto-save
-  await page.waitForLoadState("networkidle").catch(() => {
-    // Timeout is acceptable, might not have network activity
-  })
+  // Wait for potential auto-save network requests
+  // Note: This may timeout if the edit doesn't trigger network activity (e.g., local-only state).
+  // We catch and ignore the timeout error to avoid failing tests in cases where auto-save
+  // is not applicable or the save completes too quickly to detect.
+  await page.waitForLoadState("networkidle").catch(() => {})
 }
 
 /**
@@ -143,7 +149,7 @@ export async function sortByColumn(
   for (let i = 0; i < clicks; i++) {
     await header.click()
     // Small delay between clicks for sort animation
-    await grid.page().waitForTimeout(200)
+    await grid.page().waitForTimeout(SORT_ANIMATION_DELAY_MS)
   }
 }
 
@@ -261,7 +267,7 @@ export async function goToPage(
     const nextPageButton = paginationPanel.getByRole("button", { name: "Next Page" })
     for (let i = 1; i < pageNumber; i++) {
       await nextPageButton.click()
-      await grid.page().waitForTimeout(200)
+      await grid.page().waitForTimeout(PAGE_TRANSITION_DELAY_MS)
     }
   }
 }
