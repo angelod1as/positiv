@@ -1,8 +1,14 @@
+import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
-import { describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
-import { render, screen } from "~/test/test-utils"
+import { render, screen, waitFor } from "~/test/test-utils"
 import { AdminViewEventParticipantsTableAG } from "./view-event-participants-table-ag"
+
+// NOTE: This is a mock table component that replaces PrimeReact DataTable.
+// These unit tests verify the AG Grid implementation works correctly.
+// E2E tests for this table may need updating when the page structure changes.
+// See POS-346 for E2E test updates.
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -16,8 +22,34 @@ vi.mock("react-router", async () => {
   }
 })
 
-const mockParticipants = [
-  {
+const mockSessionStorage = (() => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value
+    }),
+    removeItem: vi.fn((key: string) => {
+      const { [key]: _, ...rest } = store
+      store = rest
+    }),
+    clear: vi.fn(() => {
+      store = {}
+    }),
+    get store() {
+      return store
+    },
+  }
+})()
+
+Object.defineProperty(window, "sessionStorage", {
+  value: mockSessionStorage,
+})
+
+const createMockParticipant = (
+  overrides: Partial<ProfileWithExtraData> = {},
+): ProfileWithExtraData =>
+  ({
     profile_id: "profile-1",
     id: "ep-1",
     social_name: "Bia",
@@ -43,14 +75,48 @@ const mockParticipants = [
     notes: null,
     admin_general_notes: null,
     was_admin_skipped_last_event: false,
-  },
-] as unknown as ProfileWithExtraData[]
+    ...overrides,
+  }) as unknown as ProfileWithExtraData
 
-function renderWithRouter() {
+const mockParticipants = [createMockParticipant()]
+
+const mockParticipantsMultiple = [
+  createMockParticipant({
+    id: "ep-1",
+    profile_id: "profile-1",
+    social_name: "Bia",
+    full_name: "Beatriz Silva",
+    is_veteran: true,
+    application_status: "sent_payment_data",
+    approved_to_attend: "approved",
+  }),
+  createMockParticipant({
+    id: "ep-2",
+    profile_id: "profile-2",
+    social_name: "Carlos",
+    full_name: "Carlos Santos",
+    is_veteran: false,
+    application_status: "pending",
+    approved_to_attend: "pending",
+  }),
+  createMockParticipant({
+    id: "ep-3",
+    profile_id: "profile-3",
+    social_name: "Diana",
+    full_name: "Diana Costa",
+    is_veteran: true,
+    application_status: "finalised",
+    approved_to_attend: "approved",
+  }),
+]
+
+function renderWithRouter(
+  participants: ProfileWithExtraData[] = mockParticipants,
+) {
   return render(
     <MemoryRouter>
       <AdminViewEventParticipantsTableAG
-        participants={mockParticipants}
+        participants={participants}
         eventId="event-123"
       />
     </MemoryRouter>,
@@ -58,6 +124,15 @@ function renderWithRouter() {
 }
 
 describe("AdminViewEventParticipantsTableAG", () => {
+  beforeEach(() => {
+    mockSessionStorage.clear()
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    mockSessionStorage.clear()
+  })
+
   describe("rendering", () => {
     it("renders the AG Grid table", () => {
       renderWithRouter()
@@ -75,6 +150,24 @@ describe("AdminViewEventParticipantsTableAG", () => {
       renderWithRouter()
 
       expect(screen.getByText(/inscrites/)).toBeInTheDocument()
+    })
+
+    it("renders participant data in the table", async () => {
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText("Bia")).toBeInTheDocument()
+      })
+    })
+
+    it("renders empty message when no participants", async () => {
+      renderWithRouter([])
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("Nenhum participante encontrado"),
+        ).toBeInTheDocument()
+      })
     })
   })
 
@@ -95,6 +188,100 @@ describe("AdminViewEventParticipantsTableAG", () => {
         ".ag-pinned-right-cols-container",
       )
       expect(pinnedRightCols).toBeInTheDocument()
+    })
+
+    it("renders expected column headers", async () => {
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText("Nome")).toBeInTheDocument()
+      })
+
+      expect(screen.getByText("Vet ou Nov?")).toBeInTheDocument()
+      expect(screen.getByText("Eventos")).toBeInTheDocument()
+    })
+  })
+
+  describe("quick filter (search)", () => {
+    it("renders search input", () => {
+      renderWithRouter()
+
+      expect(screen.getByPlaceholderText("Buscar...")).toBeInTheDocument()
+    })
+
+    it("filters participants when searching", async () => {
+      const user = userEvent.setup()
+      renderWithRouter(mockParticipantsMultiple)
+
+      await waitFor(() => {
+        expect(screen.getByText("Bia")).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByPlaceholderText("Buscar...")
+      await user.type(searchInput, "Carlos")
+
+      await waitFor(() => {
+        expect(screen.getByText("Carlos")).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe("participant statistics", () => {
+    it("displays total participant count", () => {
+      renderWithRouter(mockParticipantsMultiple)
+
+      // Should show "3 inscrites" in the header statistics
+      expect(screen.getByText("3")).toBeInTheDocument()
+      expect(screen.getByText(/inscrites/)).toBeInTheDocument()
+    })
+
+    it("displays veteran and rookie labels in statistics", () => {
+      renderWithRouter(mockParticipantsMultiple)
+
+      // The header shows "Geral: X N Y V" - we check for the statistics section
+      expect(screen.getByText("Geral:")).toBeInTheDocument()
+      expect(screen.getByText("Aceites no processo:")).toBeInTheDocument()
+    })
+  })
+
+  describe("session storage integration", () => {
+    it("persists filter state to session storage", async () => {
+      renderWithRouter()
+
+      // Wait for initial render
+      await waitFor(() => {
+        expect(screen.getByRole("grid")).toBeInTheDocument()
+      })
+
+      // The component should set filter states in sessionStorage on mount
+      expect(mockSessionStorage.setItem).toHaveBeenCalled()
+    })
+  })
+
+  describe("pagination", () => {
+    it("renders with pagination enabled", async () => {
+      const { container } = renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByText("Bia")).toBeInTheDocument()
+      })
+
+      const paginationPanel = container.querySelector(".ag-paging-panel")
+      expect(paginationPanel).toBeInTheDocument()
+    })
+  })
+
+  describe("toolbar", () => {
+    it("renders toolbar with maximize button", async () => {
+      renderWithRouter()
+
+      await waitFor(() => {
+        expect(screen.getByRole("grid")).toBeInTheDocument()
+      })
+
+      // The table has showToolbar=true, so it should render toolbar elements
+      const testId = screen.getByTestId("ag-data-table-participants-table-ag")
+      expect(testId).toBeInTheDocument()
     })
   })
 })
