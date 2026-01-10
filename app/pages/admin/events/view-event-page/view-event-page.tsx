@@ -28,7 +28,7 @@ import { DemographicsData } from "~/components/pages/admin/events/demographics"
 import { EventStatusForm } from "~/components/pages/admin/events/event-status-form"
 import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { sendToast } from "./send-toast"
-import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
+import { AdminViewEventParticipantsTableAG } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table-ag"
 import { ParticipantsTableSkeleton } from "~/components/organisms/tables/admin/participants-table/participants-table-skeleton"
 
 const {
@@ -194,10 +194,9 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
             }
           >
             {(resolvedParticipants) => (
-              <AdminViewEventParticipantsTable
+              <AdminViewEventParticipantsTableAG
                 participants={resolvedParticipants}
                 eventId={event.id}
-                fetcher={fetcher}
               />
             )}
           </Await>
