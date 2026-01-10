@@ -1,5 +1,5 @@
 import type { ColDef } from "ag-grid-community"
-import { DollarSign } from "lucide-react"
+import { Search } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useFetcher } from "react-router"
@@ -15,6 +15,7 @@ import { PronounsRenderer } from "~/components/organisms/tables/ag-grid/renderer
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { TextViewModalRenderer } from "~/components/organisms/tables/ag-grid/renderers/text-view-modal-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
+import { Input } from "~/components/ui/input"
 import {
   getEventCountColors,
   getVeteranRookieColors,
@@ -25,6 +26,7 @@ import {
   attendanceStatusOptions,
   eventParticipantPropMap,
   genderFilterOptions,
+  hasPaidOptions,
   isVeteranOptions,
   orientationFilterOptions,
   profilePropMap,
@@ -43,6 +45,8 @@ const STORAGE_KEYS = {
   gender: "participants-ag-filter-gender",
   orientation: "participants-ag-filter-orientation",
   isVeteran: "participants-ag-filter-is_veteran",
+  hasPaid: "participants-ag-filter-has_paid",
+  spotType: "participants-ag-filter-spot_type",
 }
 
 const EDITABLE_FIELDS = [
@@ -105,6 +109,13 @@ export const AdminViewEventParticipantsTableAG: FC<
   const [isVeteranFilter, setIsVeteranFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.isVeteran),
   )
+  const [hasPaidFilter, setHasPaidFilter] = useState<string[]>(() =>
+    getStoredFilter(STORAGE_KEYS.hasPaid),
+  )
+  const [spotTypeFilter, setSpotTypeFilter] = useState<string[]>(() =>
+    getStoredFilter(STORAGE_KEYS.spotType),
+  )
+  const [searchText, setSearchText] = useState("")
 
   // Persist all filter states to sessionStorage
   useEffect(() => {
@@ -129,6 +140,11 @@ export const AdminViewEventParticipantsTableAG: FC<
       STORAGE_KEYS.isVeteran,
       JSON.stringify(isVeteranFilter),
     )
+    sessionStorage.setItem(STORAGE_KEYS.hasPaid, JSON.stringify(hasPaidFilter))
+    sessionStorage.setItem(
+      STORAGE_KEYS.spotType,
+      JSON.stringify(spotTypeFilter),
+    )
   }, [
     applicationStatusFilter,
     attendanceStatusFilter,
@@ -136,6 +152,8 @@ export const AdminViewEventParticipantsTableAG: FC<
     genderFilter,
     orientationFilter,
     isVeteranFilter,
+    hasPaidFilter,
+    spotTypeFilter,
   ])
 
   // Note: Filtering is now delegated to AG Grid via BaseMultiSelectFilter's doesFilterPass.
@@ -343,13 +361,18 @@ export const AdminViewEventParticipantsTableAG: FC<
       },
       {
         field: "has_paid",
-        headerName: "",
-        headerComponent: () => <DollarSign className="h-4 w-4" />,
-        headerClass: "ag-header-compact",
+        headerName: "Pago?",
+        headerTooltip: "Pagamento realizado",
         editable: true,
         cellEditor: "agCheckboxCellEditor",
         cellRenderer: "agCheckboxCellRenderer",
-        ...compactCell,
+        filter: BaseMultiSelectFilter,
+        filterParams: {
+          options: hasPaidOptions,
+          field: "has_paid",
+          model: hasPaidFilter,
+          onModelChange: setHasPaidFilter,
+        },
       },
       {
         field: "payment",
@@ -373,6 +396,13 @@ export const AdminViewEventParticipantsTableAG: FC<
         valueFormatter: (params) => {
           const option = spotTypeOptions.find((o) => o.value === params.value)
           return option?.name || params.value
+        },
+        filter: BaseMultiSelectFilter,
+        filterParams: {
+          options: spotTypeOptions,
+          field: "spot_type",
+          model: spotTypeFilter,
+          onModelChange: setSpotTypeFilter,
         },
       },
       {
@@ -438,6 +468,8 @@ export const AdminViewEventParticipantsTableAG: FC<
       genderFilter,
       orientationFilter,
       isVeteranFilter,
+      hasPaidFilter,
+      spotTypeFilter,
     ],
   )
 
@@ -448,39 +480,54 @@ export const AdminViewEventParticipantsTableAG: FC<
     setGenderFilter([])
     setOrientationFilter([])
     setIsVeteranFilter([])
+    setHasPaidFilter([])
+    setSpotTypeFilter([])
   }, [])
 
   const { acceptedInProcess, applications } = countParticipants(participants)
 
+  const tableHeader = (
+    <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="relative w-full max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Buscar..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+      <div className="flex items-center gap-4 text-sm flex-wrap">
+        <p>
+          <b>{applications.total}</b> inscrites
+        </p>
+        <p>
+          <b>{acceptedInProcess.total}</b> aceites no processo
+        </p>
+        <span>|</span>
+        <p>Geral:</p>
+        <p>
+          <b>{applications.rookies}</b> N
+        </p>
+        <p>
+          <b>{applications.veterans}</b> V
+        </p>
+        <span>|</span>
+        <p>Aceites no processo:</p>
+        <p>
+          <b>{acceptedInProcess.rookies}</b> N
+        </p>
+        <p>
+          <b>{acceptedInProcess.veterans}</b> V
+        </p>
+      </div>
+    </div>
+  )
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <h2 className="text-2xl font-bold">Inscrições</h2>
-        <div className="flex items-center gap-4 text-sm">
-          <p>
-            <b>{applications.total}</b> inscrites
-          </p>
-          <p>
-            <b>{acceptedInProcess.total}</b> aceites no processo
-          </p>
-          <span>|</span>
-          <p>Geral:</p>
-          <p>
-            <b>{applications.rookies}</b> N
-          </p>
-          <p>
-            <b>{applications.veterans}</b> V
-          </p>
-          <span>|</span>
-          <p>Aceites no processo:</p>
-          <p>
-            <b>{acceptedInProcess.rookies}</b> N
-          </p>
-          <p>
-            <b>{acceptedInProcess.veterans}</b> V
-          </p>
-        </div>
-      </div>
+      <h2 className="text-2xl font-bold">Inscrições</h2>
       <AGDataTable
         id="participants-table-ag"
         data={participants}
@@ -488,14 +535,15 @@ export const AdminViewEventParticipantsTableAG: FC<
         context={{ eventId }}
         getRowId={(params) => params.data.id}
         pagination
-        paginationPageSize={25}
-        paginationPageSizeSelector={[10, 25, 50, 100]}
+        paginationAutoPageSize
+        quickFilterText={searchText}
         emptyMessage="Nenhum participante encontrado"
         persistState
         showToolbar
         onClearFilters={handleClearFilters}
         fetcher={fetcher}
         onSave={handleSave}
+        headerContent={tableHeader}
       />
     </div>
   )

@@ -198,6 +198,21 @@ export const isVeteranOptions: Array<{
   value: value,
 }))
 
+const hasPaidStatusMap: Record<string, string> = {
+  true: "Sim",
+  false: "Não",
+}
+
+export const hasPaidOptions: Array<{
+  name: string
+  value: string
+  label: string
+}> = Object.entries(hasPaidStatusMap).map(([value, name]) => ({
+  name: name,
+  label: name,
+  value: value,
+}))
+
 export const PARTICIPANTS_TABLE_FILTER_CONFIGS = {
   application_status: {
     storageKey: "admin-participants-filter-application-status",

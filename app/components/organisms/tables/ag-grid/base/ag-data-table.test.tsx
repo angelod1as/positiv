@@ -473,6 +473,22 @@ describe("AGDataTable", () => {
         expect(screen.getByText("Item 0")).toBeInTheDocument()
       })
     })
+
+    it("should render data when paginationAutoPageSize is enabled", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={manyRows}
+          columnDefs={mockColumnDefs}
+          pagination={true}
+          paginationAutoPageSize={true}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 0")).toBeInTheDocument()
+      })
+    })
   })
 
   describe("State Persistence", () => {
