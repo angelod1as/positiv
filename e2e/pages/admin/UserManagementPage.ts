@@ -11,10 +11,12 @@ export class UserManagementPage extends BasePage {
 
   constructor(page: Page) {
     super(page)
-    this.participantsTable = page
-      .locator('[data-testid="participants-table"], table')
-      .first()
-    this.tableRows = page.locator(".p-datatable-tbody tr")
+    // AG Grid table container
+    this.participantsTable = page.locator(
+      '[data-testid="ag-data-table-participants-table-ag"]',
+    )
+    // AG Grid rows (excluding header rows)
+    this.tableRows = this.participantsTable.locator(".ag-row:not(.ag-row-group)")
     this.viewParticipantButtons = page.locator('[title="Ver participante"]')
     this.whatsappButtons = page.locator('button:has(img[alt="WhatsApp"])')
     this.saveButton = page.getByRole("button", { name: "Salvar" })
@@ -121,16 +123,18 @@ export class UserManagementPage extends BasePage {
     fieldName: string,
     value: string,
   ): Promise<void> {
-    const cell = row.locator(`td:has([name="${fieldName}"])`).first()
-    await cell.click()
+    // AG Grid cells use col-id attribute for field identification
+    const cell = row.locator(`.ag-cell[col-id="${fieldName}"]`).first()
+    // Double-click to enter edit mode in AG Grid
+    await cell.dblclick()
 
-    // Wait for dropdown to appear
-    const dropdown = cell.locator("select").first()
-    await dropdown.waitFor({ state: "visible" })
+    // Wait for AG Grid select editor to appear
+    const dropdown = this.page.locator(".ag-popup-editor select").first()
+    await dropdown.waitFor({ state: "visible", timeout: 5000 })
     await dropdown.selectOption(value)
 
-    // Click outside to save
-    await this.page.locator("body").click({ position: { x: 0, y: 0 } })
+    // Press Tab to confirm selection and trigger auto-save
+    await this.page.keyboard.press("Tab")
     await this.page.waitForLoadState("networkidle")
   }
 
@@ -139,8 +143,10 @@ export class UserManagementPage extends BasePage {
     fieldName: string,
     checked: boolean,
   ): Promise<void> {
-    const cell = row.locator(`td:has([name="${fieldName}"])`).first()
-    const checkbox = cell.locator('input[type="checkbox"]').first()
+    // AG Grid cells use col-id attribute for field identification
+    const cell = row.locator(`.ag-cell[col-id="${fieldName}"]`).first()
+    // AG Grid checkbox renderer uses this wrapper structure
+    const checkbox = cell.locator(".ag-checkbox-input").first()
 
     const isChecked = await checkbox.isChecked()
     if (isChecked !== checked) {
@@ -154,11 +160,14 @@ export class UserManagementPage extends BasePage {
     fieldName: string,
     value: string,
   ): Promise<void> {
-    const cell = row.locator(`td:has([name="${fieldName}"])`).first()
-    await cell.click()
+    // AG Grid cells use col-id attribute for field identification
+    const cell = row.locator(`.ag-cell[col-id="${fieldName}"]`).first()
+    // Double-click to enter edit mode in AG Grid
+    await cell.dblclick()
 
-    const input = cell.locator('input[type="number"]').first()
-    await input.waitFor({ state: "visible" })
+    // Wait for AG Grid number editor input to appear in popup
+    const input = this.page.locator(".ag-popup-editor input").first()
+    await input.waitFor({ state: "visible", timeout: 5000 })
     await input.clear()
     await input.fill(value)
 
@@ -179,7 +188,8 @@ export class UserManagementPage extends BasePage {
     fieldName: string,
     expectedValue: string,
   ): Promise<boolean> {
-    const cell = row.locator(`td:has([name="${fieldName}"])`).first()
+    // AG Grid cells use col-id attribute for field identification
+    const cell = row.locator(`.ag-cell[col-id="${fieldName}"]`).first()
     const content = await cell.textContent()
     return content?.includes(expectedValue) ?? false
   }
@@ -194,9 +204,10 @@ export class UserManagementPage extends BasePage {
       await this.page.waitForTimeout(500)
     }
 
-    // Now find and click the view participant link in the last cell
-    const lastCell = row.locator("td:last-child")
-    const viewButton = lastCell.locator("a").first()
+    // Find and click the view participant link in the actions cell
+    // AG Grid actions column has col-id="actions"
+    const actionsCell = row.locator('.ag-cell[col-id="actions"]')
+    const viewButton = actionsCell.locator("a").first()
     await viewButton.scrollIntoViewIfNeeded()
     await viewButton.click()
     await this.page.waitForLoadState("networkidle")
