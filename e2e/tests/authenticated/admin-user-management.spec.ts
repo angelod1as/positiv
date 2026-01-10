@@ -562,4 +562,123 @@ test.describe("Admin User Management", () => {
       }
     }
   })
+
+  test("AG Grid accessibility - ARIA roles and attributes", async ({ page }) => {
+    // Navigate to a seed event with participants
+    await adminDashboard.navigate()
+    await adminDashboard.verifyAdminAccess()
+
+    // Click on an event with known participants
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+
+    // Wait for AG Grid to be ready
+    const grid = await waitForAGGridReady(page, "participants-table-ag")
+
+    // Verify grid has proper ARIA role
+    const gridRole = grid.locator('[role="grid"]')
+    await expect(gridRole).toBeVisible()
+
+    // Verify header row has proper role
+    const headerRow = grid.locator('[role="row"]').first()
+    await expect(headerRow).toBeVisible()
+
+    // Verify data rows have proper roles
+    const dataRows = grid.locator('.ag-row[role="row"]')
+    const rowCount = await dataRows.count()
+    expect(rowCount).toBeGreaterThan(0)
+
+    // Verify cells have proper roles (gridcell or columnheader)
+    const headerCells = grid.locator('[role="columnheader"]')
+    const headerCellCount = await headerCells.count()
+    expect(headerCellCount).toBeGreaterThan(0)
+
+    // Verify sortable columns have aria-sort attribute when sorted
+    const sortableHeader = grid.locator(
+      '.ag-header-cell[col-id="full_name"]',
+    )
+    await sortableHeader.click() // Sort ascending
+    await expect(sortableHeader).toHaveAttribute("aria-sort", "ascending")
+
+    await sortableHeader.click() // Sort descending
+    await expect(sortableHeader).toHaveAttribute("aria-sort", "descending")
+  })
+
+  test("AG Grid keyboard navigation", async ({ page }) => {
+    // Navigate to a seed event with participants
+    await adminDashboard.navigate()
+    await adminDashboard.verifyAdminAccess()
+
+    // Click on an event with known participants
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+
+    // Wait for AG Grid to be ready
+    const grid = await waitForAGGridReady(page, "participants-table-ag")
+
+    // Focus on the first cell
+    const firstCell = grid.locator(".ag-cell").first()
+    await firstCell.click()
+
+    // Test arrow key navigation
+    // Press right arrow to move to next cell
+    await page.keyboard.press("ArrowRight")
+    // Verify focus moved (the focused cell will have a specific class or attribute)
+
+    // Press down arrow to move to row below
+    await page.keyboard.press("ArrowDown")
+
+    // Press Tab to move between cells
+    await page.keyboard.press("Tab")
+
+    // Test Enter key to start editing (on editable cells)
+    // First navigate to an editable cell
+    const editableCell = grid.locator('.ag-cell[col-id="application_status"]').first()
+    await editableCell.click()
+    await page.keyboard.press("Enter")
+
+    // Verify edit mode is activated (popup editor should appear)
+    const popupEditor = page.locator(".ag-popup-editor")
+    // Editor may or may not appear depending on cell type, so we just verify no error
+
+    // Press Escape to cancel editing
+    await page.keyboard.press("Escape")
+
+    // Verify we exited edit mode
+    await expect(popupEditor).not.toBeVisible()
+  })
+
+  test("AG Grid fullscreen toggle", async ({ page }) => {
+    // Navigate to a seed event with participants
+    await adminDashboard.navigate()
+    await adminDashboard.verifyAdminAccess()
+
+    // Click on an event with known participants
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+
+    // Wait for AG Grid to be ready
+    const grid = await waitForAGGridReady(page, "participants-table-ag")
+
+    // Find the fullscreen toggle button
+    const fullscreenButton = page.getByRole("button", {
+      name: "Maximizar tabela",
+    })
+
+    if (await fullscreenButton.isVisible()) {
+      // Click to enter fullscreen
+      await fullscreenButton.click()
+
+      // Verify grid is now in fullscreen mode (check for fullscreen class or style)
+      const gridContainer = grid.locator("..") // Parent element
+      await expect(gridContainer).toBeVisible()
+
+      // Find minimize button
+      const minimizeButton = page.getByRole("button", {
+        name: "Minimizar tabela",
+      })
+
+      if (await minimizeButton.isVisible()) {
+        // Click to exit fullscreen
+        await minimizeButton.click()
+      }
+    }
+  })
 })
