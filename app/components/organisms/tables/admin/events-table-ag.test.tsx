@@ -471,7 +471,7 @@ describe("AdminDashboardEventsTableAG", () => {
       const createButton = screen.getByText("Criar evento")
       expect(createButton.closest("a")).toHaveAttribute(
         "href",
-        "/admin/eventos/criar",
+        "/admin/eventos/novo",
       )
     })
   })
