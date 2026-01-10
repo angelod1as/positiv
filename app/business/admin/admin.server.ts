@@ -258,6 +258,17 @@ export const getAllProfiles = composable(
       query = query.where("p.approved_to_attend", "in", filters.approved_to_attend)
     }
 
+    // Default ordering for consistent results
+    query = query.orderBy("p.full_name", "asc")
+
+    // Pagination
+    if (filters?.limit !== undefined) {
+      query = query.limit(filters.limit)
+    }
+    if (filters?.offset !== undefined) {
+      query = query.offset(filters.offset)
+    }
+
     return await query.execute()
   },
 )

@@ -1574,4 +1574,93 @@ describe("getAllProfiles - Integration Tests", () => {
       expect(foundProfile?.last_attended_event_id).toBeNull()
     }
   })
+
+  it("should handle empty filter arrays without errors", async () => {
+    await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-empty-filters@example.com",
+      full_name: "Test Empty Filters"
+    })
+
+    const result = await getAllProfiles({
+      gender: [],
+      orientation: [],
+      flag: [],
+      approved_to_attend: []
+    })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(Array.isArray(result.data)).toBe(true)
+    }
+  })
+
+  it("should support pagination with limit", async () => {
+    for (let i = 0; i < 5; i++) {
+      await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `test-global-pagination-${i}@example.com`,
+        full_name: `Test Pagination ${i}`
+      })
+    }
+
+    const result = await getAllProfiles({ limit: 3 })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(result.data.length).toBeLessThanOrEqual(3)
+    }
+  })
+
+  it("should support pagination with offset", async () => {
+    const profiles = []
+    for (let i = 0; i < 3; i++) {
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `test-global-offset-${i}@example.com`,
+        full_name: `AAA Test Offset ${i}` // AAA prefix to ensure they come first in ordering
+      })
+      profiles.push(profile)
+    }
+
+    const firstPage = await getAllProfiles({ limit: 2, offset: 0 })
+    const secondPage = await getAllProfiles({ limit: 2, offset: 2 })
+
+    expect(firstPage).toHaveProperty("success", true)
+    expect(secondPage).toHaveProperty("success", true)
+
+    if (firstPage.success && secondPage.success) {
+      // Ensure results are different (offset working)
+      const firstPageIds = firstPage.data.map(p => p.id)
+      const secondPageIds = secondPage.data.map(p => p.id)
+      const overlap = firstPageIds.filter(id => secondPageIds.includes(id))
+      expect(overlap).toHaveLength(0)
+    }
+  })
+
+  it("should return results ordered by full_name", async () => {
+    await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-order-z@example.com",
+      full_name: "Zzzz Last Name"
+    })
+
+    await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-order-a@example.com",
+      full_name: "Aaaa First Name"
+    })
+
+    const result = await getAllProfiles()
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const testProfiles = result.data.filter(p => p.email?.startsWith("test-global-order-"))
+      if (testProfiles.length >= 2) {
+        const firstIndex = result.data.findIndex(p => p.email === "test-global-order-a@example.com")
+        const lastIndex = result.data.findIndex(p => p.email === "test-global-order-z@example.com")
+        expect(firstIndex).toBeLessThan(lastIndex)
+      }
+    }
+  })
 })
