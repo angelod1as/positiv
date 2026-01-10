@@ -139,7 +139,11 @@ export type ParticipantVsEvent = EventParticipant & {
   approved_to_attend: Profile["approved_to_attend"]
 }
 
-/** Global profile with aggregated event data (no event scope) */
+/**
+ * Global profile with aggregated event data (no event scope)
+ * Note: attended_events_count uses COALESCE(0) in query so effectively never null,
+ * but Kysely's type inference keeps it nullable. Safe to use ?? 0 if needed.
+ */
 export type ProfileGlobal = Profile & {
   attended_events_count: number | null
   last_attended_event_title: string | null
@@ -147,7 +151,7 @@ export type ProfileGlobal = Profile & {
   last_attended_event_id: string | null
 }
 
-/** Filters for getAllProfiles query */
+/** Filters and pagination for getAllProfiles query */
 export type GetAllProfilesFilters = {
   gender?: string[]
   orientation?: string[]
@@ -155,4 +159,6 @@ export type GetAllProfilesFilters = {
   flag?: ProfileFlagStatus[]
   where_lives?: string
   approved_to_attend?: ProfileApprovedToAttendStatus[]
+  limit?: number
+  offset?: number
 }
