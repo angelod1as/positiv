@@ -357,8 +357,9 @@ test.describe("Admin User Management", () => {
     })
     await expect(historyEventLink).toBeVisible()
 
-    // Extract event ID from current URL to detect change
-    const currentEventId = currentEventUrl.split("/eventos/")[1].split("/")[0]
+    // Extract event ID from current URL to detect change (using URL API for robustness)
+    const currentEventId =
+      new URL(currentEventUrl).pathname.match(/\/eventos\/([^/]+)/)?.[1] ?? ""
 
     // Click the link
     await historyEventLink.click()
