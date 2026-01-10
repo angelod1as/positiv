@@ -138,3 +138,21 @@ export type ParticipantVsEvent = EventParticipant & {
   is_veteran: Profile["is_veteran"]
   approved_to_attend: Profile["approved_to_attend"]
 }
+
+/** Global profile with aggregated event data (no event scope) */
+export type ProfileGlobal = Profile & {
+  attended_events_count: number | null
+  last_attended_event_title: string | null
+  last_attended_event_date: string | null
+  last_attended_event_id: string | null
+}
+
+/** Filters for getAllProfiles query */
+export type GetAllProfilesFilters = {
+  gender?: string[]
+  orientation?: string[]
+  is_veteran?: boolean
+  flag?: ProfileFlagStatus[]
+  where_lives?: string
+  approved_to_attend?: ProfileApprovedToAttendStatus[]
+}
