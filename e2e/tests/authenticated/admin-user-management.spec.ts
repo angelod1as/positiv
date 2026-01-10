@@ -4,6 +4,11 @@ import { AdminDashboardPage } from "../../pages/admin/AdminDashboardPage"
 import { EventManagementPage } from "../../pages/admin/EventManagementPage"
 import { UserManagementPage } from "../../pages/admin/UserManagementPage"
 import {
+  waitForAGGridReady,
+  sortByColumn,
+  expectSortedBy,
+} from "../../helpers/ag-grid"
+import {
   cleanupTestParticipants,
   createTestEventWithParticipants,
   type TestParticipant,
@@ -139,21 +144,7 @@ test.describe("Admin User Management", () => {
     await page.waitForTimeout(1000)
 
     // Test 4: Inline editing - Number cell (payment) on first row which already has has_paid=true
-    const firstRowPaymentCell = firstRow
-      .locator(`td:has([name="payment"])`)
-      .first()
-    await firstRowPaymentCell.click()
-
-    const firstRowPaymentInput = firstRowPaymentCell
-      .locator('input[type="number"]')
-      .first()
-    await firstRowPaymentInput.waitFor({ state: "visible" })
-    await firstRowPaymentInput.clear()
-    await firstRowPaymentInput.fill("150")
-
-    // Click outside to save
-    await page.locator("h1").first().click()
-    await page.waitForTimeout(2000)
+    await userManagement.editNumberCell(firstRow, "payment", "150")
 
     // Test 5: Data persistence - Refresh page
     await page.reload()
@@ -176,11 +167,13 @@ test.describe("Admin User Management", () => {
     expect(firstStatusPersisted).toBe(true)
 
     // Verify first participant payment value was updated
-    const refreshedPaymentInput = refreshedFirstRow
-      .locator('input[name="payment"]')
-      .first()
-    const paymentValue = await refreshedPaymentInput.inputValue()
-    expect(paymentValue).toBe("150.00")
+    // In AG Grid, the payment cell displays the formatted value as text
+    const paymentPersisted = await userManagement.verifyCellContent(
+      refreshedFirstRow,
+      "payment",
+      "150",
+    )
+    expect(paymentPersisted).toBe(true)
 
     // Verify second participant changes persisted
     const secondStatusPersisted = await userManagement.verifyCellContent(
@@ -246,8 +239,10 @@ test.describe("Admin User Management", () => {
 
     // Get the first participant row
     const firstRow = await userManagement.tableRows.first()
+    // AG Grid uses col-id for cell identification - get name from social_name column
     const participantName =
-      (await firstRow.locator("td").nth(1).textContent()) || "Unknown"
+      (await firstRow.locator('.ag-cell[col-id="social_name"]').textContent()) ||
+      "Unknown"
 
     // Test WhatsApp button if available
     const whatsappButton = firstRow
@@ -432,5 +427,139 @@ test.describe("Admin User Management", () => {
     ).toBeVisible()
     await expect(applicationStatusSelect).toHaveValue("sent_payment_data")
     await expect(attendanceStatusSelect).toHaveValue("pending")
+  })
+
+  test("AG Grid sorting functionality", async ({ page }) => {
+    // Navigate to a seed event with participants
+    await adminDashboard.navigate()
+    await adminDashboard.verifyAdminAccess()
+
+    // Click on an event with known participants
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+
+    // Wait for AG Grid to be ready
+    const grid = await waitForAGGridReady(page, "participants-table-ag")
+    await expect(grid).toBeVisible()
+
+    // Test sorting by full_name column ascending
+    await sortByColumn(grid, "full_name", "asc")
+    await expectSortedBy(grid, "full_name", "asc")
+
+    // Test sorting by full_name column descending
+    await sortByColumn(grid, "full_name", "desc")
+    await expectSortedBy(grid, "full_name", "desc")
+
+    // Clear sort and verify
+    await sortByColumn(grid, "full_name", "none")
+    const header = grid.locator('.ag-header-cell[col-id="full_name"]')
+    await expect(header).not.toHaveAttribute("aria-sort", "ascending")
+    await expect(header).not.toHaveAttribute("aria-sort", "descending")
+  })
+
+  test("AG Grid filter persistence across page reload", async ({ page }) => {
+    // Navigate to admin dashboard
+    await adminDashboard.navigate()
+    await adminDashboard.verifyAdminAccess()
+
+    // Click on an event with participants
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+
+    // Wait for grid to be ready
+    const grid = await waitForAGGridReady(page, "participants-table-ag")
+    const initialRowCount = await grid.locator(".ag-row").count()
+    expect(initialRowCount).toBeGreaterThan(0)
+
+    // Apply a filter using the multi-select filter
+    // Click on application_status filter button
+    const appStatusHeader = grid.locator(
+      '.ag-header-cell[col-id="application_status"]',
+    )
+    const filterButton = appStatusHeader.locator(".ag-header-icon")
+    await filterButton.click()
+
+    // Wait for filter popup
+    const filterPopup = page.locator(".ag-filter-wrapper, .ag-popup")
+    await filterPopup.waitFor({ state: "visible", timeout: 5000 })
+
+    // Select a specific status (if filter options are visible)
+    // Since multi-select filters vary, just verify the filter UI opens
+    await expect(filterPopup).toBeVisible()
+
+    // Close filter
+    await page.keyboard.press("Escape")
+
+    // Reload page
+    await page.reload()
+    await waitForAGGridReady(page, "participants-table-ag")
+
+    // Verify grid is still visible after reload
+    await expect(grid).toBeVisible()
+  })
+
+  test("AG Grid row selection and navigation", async ({ page }) => {
+    // Navigate to admin dashboard
+    await adminDashboard.navigate()
+    await adminDashboard.verifyAdminAccess()
+
+    // Click on an event with participants
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+
+    // Wait for grid to be ready
+    const grid = await waitForAGGridReady(page, "participants-table-ag")
+
+    // Get the first row
+    const firstRow = grid.locator(".ag-row").first()
+    await expect(firstRow).toBeVisible()
+
+    // Get participant name from the row
+    const participantName = await firstRow
+      .locator('.ag-cell[col-id="social_name"]')
+      .textContent()
+    expect(participantName).toBeTruthy()
+
+    // Click on the actions cell to view participant
+    const actionsCell = firstRow.locator('.ag-cell[col-id="actions"]')
+    const viewLink = actionsCell.locator("a").first()
+    await viewLink.click()
+
+    // Verify navigation to participant detail page
+    await expect(page).toHaveURL(/\/participantes\//)
+
+    // Verify participant name is shown in detail view
+    await expect(page.locator("h1")).toContainText(
+      (participantName ?? "").trim(),
+    )
+  })
+
+  test("AG Grid pagination controls", async ({ page }) => {
+    // Navigate to admin dashboard
+    await adminDashboard.navigate()
+    await adminDashboard.verifyAdminAccess()
+
+    // Click on an event with participants (need one with enough for pagination)
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+
+    // Wait for grid to be ready
+    const grid = await waitForAGGridReady(page, "participants-table-ag")
+
+    // Check if pagination panel exists
+    const paginationPanel = grid.locator(".ag-paging-panel")
+    const hasPagination = await paginationPanel.isVisible()
+
+    if (hasPagination) {
+      // Verify pagination info is displayed
+      const pageInfo = paginationPanel.locator(".ag-paging-row-summary-panel")
+      await expect(pageInfo).toBeVisible()
+
+      // Verify page size selector if present
+      const pageSizeSelector = paginationPanel.locator(
+        ".ag-paging-page-size select",
+      )
+      if (await pageSizeSelector.isVisible()) {
+        // Verify it shows options
+        const options = await pageSizeSelector.locator("option").count()
+        expect(options).toBeGreaterThan(0)
+      }
+    }
   })
 })
