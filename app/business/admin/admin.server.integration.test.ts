@@ -7,7 +7,8 @@ import {
   getProfileWithExtraDataById,
   getEventParticipantHistoryById,
   getProfilesWithExtraDataById,
-  getEventsForDashboard
+  getEventsForDashboard,
+  getAllProfiles
 } from "./admin.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {
@@ -1120,5 +1121,457 @@ describe("getEventsForDashboard - Integration Tests", () => {
     const events = await getEventsForDashboard()
 
     expect(events.length).toBeLessThanOrEqual(50)
+  })
+})
+
+describe("getAllProfiles - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-global-%")
+      )
+      .execute()
+
+    await kysely
+      .deleteFrom("profiles")
+      .where("email", "like", "test-global-%")
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should return all profiles with computed fields", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-basic@example.com",
+      full_name: "Test Global Basic",
+      gender: ["man"],
+      orientation: ["heterosexual"],
+      where_lives: "São Paulo",
+      flag: "none",
+      approved_to_attend: "approved"
+    })
+
+    const result = await getAllProfiles()
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const foundProfile = result.data.find(p => p.id === profile.id)
+      expect(foundProfile).toBeDefined()
+      expect(foundProfile).toHaveProperty("id")
+      expect(foundProfile).toHaveProperty("email", "test-global-basic@example.com")
+      expect(foundProfile).toHaveProperty("full_name", "Test Global Basic")
+      expect(foundProfile).toHaveProperty("attended_events_count")
+      expect(foundProfile).toHaveProperty("last_attended_event_title")
+      expect(foundProfile).toHaveProperty("last_attended_event_date")
+      expect(foundProfile).toHaveProperty("last_attended_event_id")
+    }
+  })
+
+  it("should calculate attended_events_count correctly", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-count@example.com",
+      full_name: "Test Global Count"
+    })
+
+    const completedEvent1 = await createTestEvent(tracker, kysely, {
+      title: "Completed Event 1",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const completedEvent2 = await createTestEvent(tracker, kysely, {
+      title: "Completed Event 2",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvent1.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvent2.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    const result = await getAllProfiles()
+
+    if (result.success) {
+      const foundProfile = result.data.find(p => p.id === profile.id)
+      expect(foundProfile?.attended_events_count).toBe(2)
+    }
+  })
+
+  it("should return last_attended_event fields correctly", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-last-event@example.com",
+      full_name: "Test Global Last Event"
+    })
+
+    const olderEvent = await createTestEvent(tracker, kysely, {
+      title: "Older Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const recentEvent = await createTestEvent(tracker, kysely, {
+      title: "Most Recent Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: olderEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: recentEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    const result = await getAllProfiles()
+
+    if (result.success) {
+      const foundProfile = result.data.find(p => p.id === profile.id)
+      expect(foundProfile?.last_attended_event_title).toBe("Most Recent Event")
+      expect(foundProfile?.last_attended_event_id).toBe(recentEvent.id)
+      expect(foundProfile?.last_attended_event_date).toBeDefined()
+    }
+  })
+
+  it("should filter by gender (array contains)", async () => {
+    const manProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-gender-man@example.com",
+      full_name: "Test Gender Man",
+      gender: ["man"]
+    })
+
+    const womanProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-gender-woman@example.com",
+      full_name: "Test Gender Woman",
+      gender: ["woman"]
+    })
+
+    const result = await getAllProfiles({ gender: ["man"] })
+
+    if (result.success) {
+      const foundMan = result.data.find(p => p.id === manProfile.id)
+      const foundWoman = result.data.find(p => p.id === womanProfile.id)
+      expect(foundMan).toBeDefined()
+      expect(foundWoman).toBeUndefined()
+    }
+  })
+
+  it("should filter by orientation (array contains)", async () => {
+    const heteroProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-orientation-hetero@example.com",
+      full_name: "Test Orientation Hetero",
+      orientation: ["heterosexual"]
+    })
+
+    const biProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-orientation-bi@example.com",
+      full_name: "Test Orientation Bi",
+      orientation: ["bisexual"]
+    })
+
+    const result = await getAllProfiles({ orientation: ["bisexual"] })
+
+    if (result.success) {
+      const foundHetero = result.data.find(p => p.id === heteroProfile.id)
+      const foundBi = result.data.find(p => p.id === biProfile.id)
+      expect(foundHetero).toBeUndefined()
+      expect(foundBi).toBeDefined()
+    }
+  })
+
+  it("should filter by is_veteran", async () => {
+    const veteranProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-veteran@example.com",
+      full_name: "Test Veteran",
+      is_veteran: true
+    })
+
+    const rookieProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-rookie@example.com",
+      full_name: "Test Rookie",
+      is_veteran: false
+    })
+
+    const result = await getAllProfiles({ is_veteran: true })
+
+    if (result.success) {
+      const foundVeteran = result.data.find(p => p.id === veteranProfile.id)
+      const foundRookie = result.data.find(p => p.id === rookieProfile.id)
+      expect(foundVeteran).toBeDefined()
+      expect(foundRookie).toBeUndefined()
+    }
+  })
+
+  it("should filter by flag", async () => {
+    const yellowFlagProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-flag-yellow@example.com",
+      full_name: "Test Yellow Flag",
+      flag: "yellow",
+      flag_notes: "Test notes"
+    })
+
+    const noFlagProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-flag-none@example.com",
+      full_name: "Test No Flag",
+      flag: "none"
+    })
+
+    const result = await getAllProfiles({ flag: ["yellow"] })
+
+    if (result.success) {
+      const foundYellow = result.data.find(p => p.id === yellowFlagProfile.id)
+      const foundNone = result.data.find(p => p.id === noFlagProfile.id)
+      expect(foundYellow).toBeDefined()
+      expect(foundNone).toBeUndefined()
+    }
+  })
+
+  it("should filter by where_lives (partial match)", async () => {
+    const spProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-city-sp@example.com",
+      full_name: "Test SP City",
+      where_lives: "São Paulo"
+    })
+
+    const rjProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-city-rj@example.com",
+      full_name: "Test RJ City",
+      where_lives: "Rio de Janeiro"
+    })
+
+    const result = await getAllProfiles({ where_lives: "Paulo" })
+
+    if (result.success) {
+      const foundSP = result.data.find(p => p.id === spProfile.id)
+      const foundRJ = result.data.find(p => p.id === rjProfile.id)
+      expect(foundSP).toBeDefined()
+      expect(foundRJ).toBeUndefined()
+    }
+  })
+
+  it("should filter by approved_to_attend", async () => {
+    const approvedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-approved@example.com",
+      full_name: "Test Approved",
+      approved_to_attend: "approved"
+    })
+
+    const pendingProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-pending@example.com",
+      full_name: "Test Pending",
+      approved_to_attend: "pending"
+    })
+
+    const result = await getAllProfiles({ approved_to_attend: ["approved"] })
+
+    if (result.success) {
+      const foundApproved = result.data.find(p => p.id === approvedProfile.id)
+      const foundPending = result.data.find(p => p.id === pendingProfile.id)
+      expect(foundApproved).toBeDefined()
+      expect(foundPending).toBeUndefined()
+    }
+  })
+
+  it("should combine multiple filters", async () => {
+    const matchingProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-multi-match@example.com",
+      full_name: "Test Multi Match",
+      gender: ["man"],
+      is_veteran: true,
+      flag: "none",
+      approved_to_attend: "approved"
+    })
+
+    const nonMatchingProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-multi-nomatch@example.com",
+      full_name: "Test Multi No Match",
+      gender: ["woman"],
+      is_veteran: true,
+      flag: "none",
+      approved_to_attend: "approved"
+    })
+
+    const result = await getAllProfiles({
+      gender: ["man"],
+      is_veteran: true,
+      approved_to_attend: ["approved"]
+    })
+
+    if (result.success) {
+      const foundMatch = result.data.find(p => p.id === matchingProfile.id)
+      const foundNoMatch = result.data.find(p => p.id === nonMatchingProfile.id)
+      expect(foundMatch).toBeDefined()
+      expect(foundNoMatch).toBeUndefined()
+    }
+  })
+
+  it("should return empty array when no matches", async () => {
+    await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-nomatch@example.com",
+      full_name: "Test No Match",
+      gender: ["man"]
+    })
+
+    const result = await getAllProfiles({ gender: ["non-binary"] })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const testProfiles = result.data.filter(p => p.email?.startsWith("test-global-"))
+      expect(testProfiles).toHaveLength(0)
+    }
+  })
+
+  it("should exclude cancelled events from count", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-cancelled@example.com",
+      full_name: "Test Cancelled Events"
+    })
+
+    const completedEvent = await createTestEvent(tracker, kysely, {
+      title: "Completed Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const cancelledEvent = await createTestEvent(tracker, kysely, {
+      title: "Cancelled Event",
+      event_status: "Cancelled",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: cancelledEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    const result = await getAllProfiles()
+
+    if (result.success) {
+      const foundProfile = result.data.find(p => p.id === profile.id)
+      expect(foundProfile?.attended_events_count).toBe(1)
+    }
+  })
+
+  it("should only count attended and finalised events", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-status@example.com",
+      full_name: "Test Status"
+    })
+
+    const attendedEvent = await createTestEvent(tracker, kysely, {
+      title: "Attended Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const notAttendedEvent = await createTestEvent(tracker, kysely, {
+      title: "Not Attended Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const pendingEvent = await createTestEvent(tracker, kysely, {
+      title: "Pending Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: attendedEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: notAttendedEvent.id,
+      application_status: "finalised",
+      attendance_status: "not-attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: pendingEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getAllProfiles()
+
+    if (result.success) {
+      const foundProfile = result.data.find(p => p.id === profile.id)
+      expect(foundProfile?.attended_events_count).toBe(1)
+    }
+  })
+
+  it("should return null for last event when no events exist", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-no-events@example.com",
+      full_name: "Test No Events"
+    })
+
+    const result = await getAllProfiles()
+
+    if (result.success) {
+      const foundProfile = result.data.find(p => p.id === profile.id)
+      expect(foundProfile?.attended_events_count).toBe(0)
+      expect(foundProfile?.last_attended_event_title).toBeNull()
+      expect(foundProfile?.last_attended_event_date).toBeNull()
+      expect(foundProfile?.last_attended_event_id).toBeNull()
+    }
   })
 })
