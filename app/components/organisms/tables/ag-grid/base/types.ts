@@ -37,6 +37,7 @@ export interface AGDataTableProps<TData> {
   pagination?: boolean
   paginationPageSize?: number
   paginationPageSizeSelector?: number[] | boolean
+  paginationAutoPageSize?: boolean
 
   rowSelection?: "single" | "multiple"
   onRowSelectionChange?: (selectedRows: TData[]) => void
@@ -60,6 +61,7 @@ export interface AGDataTableProps<TData> {
 
   showToolbar?: boolean
   onClearFilters?: () => void
+  headerContent?: React.ReactNode
 }
 
 export interface UseGridStateOptions {

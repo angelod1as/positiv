@@ -7,6 +7,7 @@ import { AGDataTableToolbar } from "./ag-data-table-toolbar"
 describe("AGDataTableToolbar", () => {
   const mockGridApi = {
     setFilterModel: vi.fn(),
+    resetColumnState: vi.fn(),
   } as unknown as GridApi
 
   const mockClearState = vi.fn()
@@ -153,6 +154,23 @@ describe("AGDataTableToolbar", () => {
       await user.click(screen.getByRole("button", { name: /resetar tabela/i }))
 
       expect(mockOnClearFilters).toHaveBeenCalled()
+    })
+
+    it("should call gridApi.resetColumnState when reset table is clicked", async () => {
+      const user = userEvent.setup()
+
+      render(
+        <AGDataTableToolbar
+          gridApi={mockGridApi}
+          clearState={mockClearState}
+          isFullscreen={false}
+          onToggleFullscreen={mockOnToggleFullscreen}
+        />,
+      )
+
+      await user.click(screen.getByRole("button", { name: /resetar tabela/i }))
+
+      expect(mockGridApi.resetColumnState).toHaveBeenCalled()
     })
   })
 
