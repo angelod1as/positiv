@@ -111,13 +111,16 @@ test.describe("Admin User Management", () => {
     )
 
     // Edit application status - use display name that appears in dropdown
+    // Wait for the POST response to ensure auto-save completes before proceeding
+    const saveResponsePromise1 = page.waitForResponse(
+      (resp) => resp.request().method() === "POST" && resp.status() === 200,
+    )
     await userManagement.editSelectCell(
       firstRow,
       "application_status",
       "Regras enviadas",
     )
-    // Wait for auto-save to complete
-    await page.waitForLoadState("networkidle").catch(() => {})
+    await saveResponsePromise1
 
     // Verify the change shows immediately - look for the cell in the grid that has our value
     // AG Grid renders rows in multiple containers, so we search the whole grid for the status
@@ -133,13 +136,16 @@ test.describe("Admin User Management", () => {
       secondParticipant.socialName,
     )
 
+    // Wait for the POST response to ensure auto-save completes before page reload
+    const saveResponsePromise2 = page.waitForResponse(
+      (resp) => resp.request().method() === "POST" && resp.status() === 200,
+    )
     await userManagement.editSelectCell(
       secondRow,
       "attendance_status",
       "Compareceu",
     )
-    // Wait for auto-save to complete
-    await page.waitForLoadState("networkidle").catch(() => {})
+    await saveResponsePromise2
 
     // Test 3: Data persistence - Refresh page and verify changes persist
     await page.reload()
