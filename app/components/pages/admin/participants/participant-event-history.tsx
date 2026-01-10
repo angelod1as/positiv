@@ -37,7 +37,7 @@ const attendanceStatusMap = new Map<string, string>(
   attendanceStatusOptions.map((opt) => [opt.value, opt.name]),
 )
 
-type ParticipantEventHistoryAGProps = {
+type ParticipantEventHistoryProps = {
   participantHistory: Array<ParticipantEventHistoryData>
 }
 
@@ -93,7 +93,7 @@ function AttendanceStatusRenderer(
   return attendanceStatusMap.get(value) || value
 }
 
-export const ParticipantEventHistoryAG: FC<ParticipantEventHistoryAGProps> = ({
+export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   participantHistory,
 }) => {
   const columnDefs: ColDef<ParticipantEventHistoryData>[] = useMemo(
@@ -158,7 +158,7 @@ export const ParticipantEventHistoryAG: FC<ParticipantEventHistoryAGProps> = ({
     <>
       <h2>Histórico de Inscrições</h2>
       <AGDataTable
-        id="participant-event-history-ag"
+        id="participant-event-history"
         data={participantHistory}
         columnDefs={columnDefs}
         emptyMessage="Nenhuma inscrição anterior encontrada"

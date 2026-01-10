@@ -14,7 +14,7 @@ export class AdminDashboardPage extends BasePage {
     // AG Grid events table has header "Todos os eventos"
     this.eventsTitle = page.getByRole("heading", { name: "Todos os eventos" })
     // AG Grid table container
-    this.eventsTable = page.locator('[data-testid="ag-data-table-admin-events-ag"]')
+    this.eventsTable = page.locator('[data-testid="ag-data-table-admin-events"]')
     this.createEventButton = page.getByRole("link", { name: "Criar evento" })
     this.participantsTitle = page.getByRole("heading", {
       name: "Participantes (em breve)",
