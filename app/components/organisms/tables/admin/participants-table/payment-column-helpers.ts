@@ -20,7 +20,7 @@ export function parsePaymentValue(
 
   const parsed = Number(newValue)
 
-  if (parsed < 0) {
+  if (Number.isNaN(parsed) || parsed < 0) {
     return oldValue
   }
 
