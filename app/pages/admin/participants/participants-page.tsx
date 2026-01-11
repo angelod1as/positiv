@@ -1,11 +1,19 @@
 import { useLoaderData } from "react-router"
+import { redirectWithError } from "remix-toast"
 import { getAllProfiles } from "~/business/admin/admin.server"
-import type { ProfileGlobal } from "~types/database/entities.types"
+import paths from "~/lib/paths"
+
+const {
+  admin: { ADMIN_DASHBOARD },
+} = paths
 
 export async function loader() {
   const result = await getAllProfiles()
   if (!result.success) {
-    return { profiles: [] as ProfileGlobal[] }
+    return redirectWithError(
+      ADMIN_DASHBOARD,
+      "Erro ao carregar perfis. Tente novamente.",
+    )
   }
   return { profiles: result.data }
 }
