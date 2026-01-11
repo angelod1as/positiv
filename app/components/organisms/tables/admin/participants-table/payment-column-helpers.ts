@@ -39,13 +39,5 @@ export function shouldAutoCheckHasPaid(
   paymentValue: number | null,
   currentHasPaid: boolean,
 ): boolean {
-  if (currentHasPaid) {
-    return false
-  }
-
-  if (paymentValue === null || paymentValue <= 0) {
-    return false
-  }
-
-  return true
+  return !currentHasPaid && paymentValue !== null && paymentValue > 0
 }
