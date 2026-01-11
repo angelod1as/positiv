@@ -1,7 +1,7 @@
-import type { ColDef } from "ag-grid-community"
+import type { ColDef, GridApi, GridReadyEvent } from "ag-grid-community"
 import { Search } from "lucide-react"
 import type { FC } from "react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { FlagBadgeRenderer } from "~/components/organisms/tables/ag-grid/renderers/flag-badge-renderer"
@@ -58,6 +58,10 @@ type AllParticipantsTableProps = {
 export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
   profiles,
 }) => {
+  const gridApiRef = useRef<GridApi<ProfileGlobal> | null>(null)
+  const [displayedRowCount, setDisplayedRowCount] = useState<number | null>(
+    null,
+  )
   const [genderFilter, setGenderFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.gender),
   )
@@ -237,7 +241,19 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
     setIsVeteranFilter([])
     setFlagFilter([])
     setApprovedToAttendFilter([])
+    Object.values(STORAGE_KEYS).forEach((key) => sessionStorage.removeItem(key))
   }, [])
+
+  const handleGridReady = useCallback((event: GridReadyEvent<ProfileGlobal>) => {
+    gridApiRef.current = event.api
+    setDisplayedRowCount(event.api.getDisplayedRowCount())
+    event.api.addEventListener("filterChanged", () => {
+      setDisplayedRowCount(event.api.getDisplayedRowCount())
+    })
+  }, [])
+
+  const displayCount = displayedRowCount ?? profiles.length
+  const isFiltered = displayCount !== profiles.length
 
   const tableHeader = (
     <div className="flex items-center justify-between flex-wrap gap-4">
@@ -249,11 +265,20 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className="pl-9"
+          aria-label="Buscar perfis"
         />
       </div>
       <div className="flex items-center gap-4 text-sm">
         <p>
-          <b>{profiles.length}</b> perfis
+          {isFiltered ? (
+            <>
+              <b>{displayCount}</b> de {profiles.length} perfis
+            </>
+          ) : (
+            <>
+              <b>{profiles.length}</b> perfis
+            </>
+          )}
         </p>
       </div>
     </div>
@@ -272,6 +297,7 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       persistState
       showToolbar
       onClearFilters={handleClearFilters}
+      onGridReady={handleGridReady}
       headerContent={tableHeader}
     />
   )
