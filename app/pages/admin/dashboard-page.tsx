@@ -1,8 +1,15 @@
+import { Link } from "react-router"
 import { getEventsForDashboard } from "~/business/admin/admin.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { Separator } from "~/components/ui/separator"
+import { Button } from "~/components/ui/button"
+import paths from "~/lib/paths"
 import type { Route } from "./+types/dashboard-page"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
+
+const {
+  admin: { ADMIN_PARTICIPANTS },
+} = paths
 
 export async function loader() {
   const events = await getEventsForDashboard()
@@ -38,8 +45,13 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
       {events && <AdminDashboardEventsTable events={events} />}
       <Separator />
-      <div>
-        <h2>Participantes (em breve)</h2>
+      <div className="flex flex-col gap-4">
+        <h2>Participantes</h2>
+        <div>
+          <Button asChild>
+            <Link to={ADMIN_PARTICIPANTS}>Ver todos os perfis</Link>
+          </Button>
+        </div>
       </div>
     </>
   )
