@@ -36,10 +36,19 @@ export const NEWS_VERSION = 1736621836000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
+    id: "auto-set-paid",
+    title: '💰 "Pago?" marcado automaticamente',
+    content:
+      'Na tabela de participantes, se você adicionar qualquer valor ao campo "Pagamento", a caixa "Pago?" é preenchida automaticamente.',
+    isAdmin: true,
+    createdAt: new Date("2026-01-11T20:37:00"),
+    isActive: true,
+  },
+  {
     id: "global-profiles-table",
     title: "👥 Nova página de Perfis",
     content:
-      "Agora você pode ver todos os perfis cadastrados em uma única tabela! Acesse pelo menu Admin → Perfis. A tabela mostra nome, gênero, orientação, status veterane/novate, flag, cidade, status de aprovação, quantidade de eventos e último evento. Use os filtros nas colunas para encontrar perfis específicos.",
+      "Agora você pode ver todos os perfis cadastrados em uma única tabela! Acesse pelo menu Admin → Perfis. A tabela mostra nome, gênero, orientação, status veterane/novate, flag, cidade, status de aprovação, quantidade de eventos e último evento. Use os filtros nas colunas para encontrar perfis específicos. Essa tabela será incrementada em breve!",
     isAdmin: true,
     createdAt: new Date("2026-01-11T19:37:00"),
     isActive: true,
