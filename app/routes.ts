@@ -87,6 +87,8 @@ export default [
     ...prefix("admin", [
       layout("pages/admin/layout.tsx", [
         index("pages/admin/dashboard-page.tsx"),
+        // Global participants listing
+        route("participants", "pages/admin/participants/participants-page.tsx"),
       ]),
       ...prefix("eventos", [
         layout("pages/admin/events/layout.tsx", [
