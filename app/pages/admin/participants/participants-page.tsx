@@ -1,6 +1,7 @@
 import { useLoaderData } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { getAllProfiles } from "~/business/admin/admin.server"
+import { AllParticipantsTable } from "~/components/organisms/tables/admin/all-participants-table"
 import paths from "~/lib/paths"
 
 const {
@@ -23,19 +24,8 @@ const ParticipantsPage = () => {
 
   return (
     <>
-      <h1>Perfis</h1>
-      {profiles.length === 0 ? (
-        <p>Nenhum perfil encontrado</p>
-      ) : (
-        <>
-          <p>{profiles.length} perfis</p>
-          <div className="mt-4 p-4 border rounded-lg bg-muted">
-            <p className="text-muted-foreground">
-              Tabela de perfis será implementada em breve
-            </p>
-          </div>
-        </>
-      )}
+      <h1 className="text-2xl font-bold mb-4">Perfis</h1>
+      <AllParticipantsTable profiles={profiles} />
     </>
   )
 }
