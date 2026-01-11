@@ -3,7 +3,11 @@
  *
  * Uses AG Grid for filtering, sorting, inline editing, and pagination.
  */
-import type { ColDef } from "ag-grid-community"
+import type {
+  CellValueChangedEvent,
+  ColDef,
+  ValueSetterParams,
+} from "ag-grid-community"
 import { Search } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
@@ -39,6 +43,10 @@ import {
 } from "~/lib/helpers/propMaps"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import { countParticipants } from "./count-participants"
+import {
+  parsePaymentValue,
+  shouldAutoCheckHasPaid,
+} from "./payment-column-helpers"
 
 // Filter state uses sessionStorage (clears when tab closes) - intentional so admins
 // start fresh each session. Grid layout state uses localStorage (persists across sessions)
@@ -188,6 +196,26 @@ export const AdminViewEventParticipantsTable: FC<
       formData.append(params.field, String(params.newValue ?? ""))
 
       fetcher.submit(formData, { method: "POST" })
+    },
+    [fetcher],
+  )
+
+  const handlePaymentAutoCheckHasPaid = useCallback(
+    (event: CellValueChangedEvent<ProfileWithExtraData>) => {
+      if (
+        event.colDef.field === "payment" &&
+        event.newValue !== null &&
+        event.newValue > 0 &&
+        event.data?.has_paid === true &&
+        event.oldValue !== event.newValue
+      ) {
+        const formData = new FormData()
+        formData.append("intent", "update-event-participant")
+        formData.append("id", event.data.id)
+        formData.append("profile_id", event.data.profile_id ?? "")
+        formData.append("has_paid", "true")
+        fetcher.submit(formData, { method: "POST" })
+      }
     },
     [fetcher],
   )
@@ -384,10 +412,32 @@ export const AdminViewEventParticipantsTable: FC<
         headerName: eventParticipantPropMap("payment"),
         editable: true,
         cellEditor: "agNumberCellEditor",
-        valueParser: (params) => {
-          const val = params.newValue
-          if (val === null || val === undefined || val === "") return null
-          return Number(val)
+        valueParser: (params) =>
+          parsePaymentValue(params.newValue, params.oldValue),
+        valueSetter: (params: ValueSetterParams<ProfileWithExtraData>) => {
+          const parsedValue = parsePaymentValue(
+            params.newValue,
+            params.data.payment,
+          )
+          const newValue = parsedValue ?? 0
+
+          if (newValue === params.data.payment) {
+            return false
+          }
+
+          params.data.payment = newValue
+
+          if (shouldAutoCheckHasPaid(newValue, params.data.has_paid ?? false)) {
+            params.data.has_paid = true
+            if (params.node) {
+              params.api.refreshCells({
+                rowNodes: [params.node],
+                columns: ["has_paid"],
+              })
+            }
+          }
+
+          return true
         },
       },
       {
@@ -548,6 +598,7 @@ export const AdminViewEventParticipantsTable: FC<
         onClearFilters={handleClearFilters}
         fetcher={fetcher}
         onSave={handleSave}
+        onCellValueChanged={handlePaymentAutoCheckHasPaid}
         headerContent={tableHeader}
       />
     </div>
