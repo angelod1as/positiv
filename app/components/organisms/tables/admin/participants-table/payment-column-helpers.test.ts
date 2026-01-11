@@ -63,6 +63,18 @@ describe("parsePaymentValue", () => {
       expect(result).toBe(100)
     })
   })
+
+  describe("blocking NaN values", () => {
+    it("returns oldValue when newValue is non-numeric string", () => {
+      const result = parsePaymentValue("abc", 100)
+      expect(result).toBe(100)
+    })
+
+    it("returns oldValue when newValue is mixed string", () => {
+      const result = parsePaymentValue("12abc", 50)
+      expect(result).toBe(50)
+    })
+  })
 })
 
 describe("shouldAutoCheckHasPaid", () => {
