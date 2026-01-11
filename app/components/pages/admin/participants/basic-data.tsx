@@ -1,5 +1,5 @@
 import { type FC } from "react"
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { Profile } from "~types/database/entities.types"
 import {
   GenderWarning,
   OrientationWarning,
@@ -13,7 +13,11 @@ import { AddToGoogleContactsButton } from "~/components/atoms/buttons/add-to-goo
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import { profilePropMap } from "~/lib/helpers/propMaps"
 
-type BasicDataProps = { profile: ProfileWithExtraData }
+type BasicDataProfile = Profile & {
+  was_admin_skipped_last_event?: boolean | null
+}
+
+type BasicDataProps = { profile: BasicDataProfile }
 export const BasicData: FC<BasicDataProps> = ({ profile }) => {
   const {
     full_name,
