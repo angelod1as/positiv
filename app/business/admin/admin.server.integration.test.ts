@@ -8,7 +8,8 @@ import {
   getEventParticipantHistoryById,
   getProfilesWithExtraDataById,
   getEventsForDashboard,
-  getAllProfiles
+  getAllProfiles,
+  getProfileById
 } from "./admin.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {
@@ -1661,6 +1662,162 @@ describe("getAllProfiles - Integration Tests", () => {
         const lastIndex = result.data.findIndex(p => p.email === "test-global-order-z@example.com")
         expect(firstIndex).toBeLessThan(lastIndex)
       }
+    }
+  })
+})
+
+describe("getProfileById - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-profile-by-id-%")
+      )
+      .execute()
+
+    await kysely
+      .deleteFrom("profiles")
+      .where("email", "like", "test-profile-by-id-%")
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should return a single profile with computed fields", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-profile-by-id-basic@example.com",
+      full_name: "Test Profile By Id",
+      gender: ["man"],
+      orientation: ["heterosexual"],
+      where_lives: "São Paulo",
+      flag: "none",
+      approved_to_attend: "approved"
+    })
+
+    const result = await getProfileById({ profileId: profile.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(result.data).toBeDefined()
+      expect(result.data.id).toBe(profile.id)
+      expect(result.data.email).toBe("test-profile-by-id-basic@example.com")
+      expect(result.data.full_name).toBe("Test Profile By Id")
+      expect(result.data).toHaveProperty("attended_events_count")
+      expect(result.data).toHaveProperty("last_attended_event_title")
+      expect(result.data).toHaveProperty("last_attended_event_date")
+      expect(result.data).toHaveProperty("last_attended_event_id")
+    }
+  })
+
+  it("should return error when profile does not exist", async () => {
+    const result = await getProfileById({ profileId: "non-existent-id" })
+
+    expect(result).toHaveProperty("success", false)
+  })
+
+  it("should calculate attended_events_count correctly", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-profile-by-id-count@example.com",
+      full_name: "Test Count"
+    })
+
+    const event1 = await createTestEvent(tracker, kysely, {
+      title: "Event 1",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const event2 = await createTestEvent(tracker, kysely, {
+      title: "Event 2",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event1.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event2.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    const result = await getProfileById({ profileId: profile.id })
+
+    if (result.success) {
+      expect(result.data.attended_events_count).toBe(2)
+    }
+  })
+
+  it("should return last_attended_event fields correctly", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-profile-by-id-last-event@example.com",
+      full_name: "Test Last Event"
+    })
+
+    const olderEvent = await createTestEvent(tracker, kysely, {
+      title: "Older Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const recentEvent = await createTestEvent(tracker, kysely, {
+      title: "Most Recent Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: olderEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: recentEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    const result = await getProfileById({ profileId: profile.id })
+
+    if (result.success) {
+      expect(result.data.last_attended_event_title).toBe("Most Recent Event")
+      expect(result.data.last_attended_event_id).toBe(recentEvent.id)
+      expect(result.data.last_attended_event_date).toBeDefined()
+    }
+  })
+
+  it("should return null for last event when no events exist", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-profile-by-id-no-events@example.com",
+      full_name: "Test No Events"
+    })
+
+    const result = await getProfileById({ profileId: profile.id })
+
+    if (result.success) {
+      expect(result.data.attended_events_count).toBe(0)
+      expect(result.data.last_attended_event_title).toBeNull()
+      expect(result.data.last_attended_event_date).toBeNull()
+      expect(result.data.last_attended_event_id).toBeNull()
     }
   })
 })
