@@ -89,6 +89,11 @@ export default [
         index("pages/admin/dashboard-page.tsx"),
         // Global participants listing
         route("participants", "pages/admin/participants/participants-page.tsx"),
+        // View single participant (profile-only mode)
+        route(
+          "participants/:profileId",
+          "pages/admin/participants/view-profile-page.tsx",
+        ),
       ]),
       ...prefix("eventos", [
         layout("pages/admin/events/layout.tsx", [

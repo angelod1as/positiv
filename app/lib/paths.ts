@@ -36,6 +36,8 @@ const EVENT_DATA = (id: string) => `${EVENT_VIEW(id)}/dados`
 const ADMIN_DASHBOARD = "/admin"
 // PARTICIPANTS
 const ADMIN_PARTICIPANTS = `${ADMIN_DASHBOARD}/participants`
+const ADMIN_VIEW_PARTICIPANT = (profileId: string) =>
+  `${ADMIN_PARTICIPANTS}/${profileId}`
 // EVENTS
 const ADMIN_EVENTS = `${ADMIN_DASHBOARD}/eventos`
 const ADMIN_VIEW_EVENT = (id: string) => `${ADMIN_EVENTS}/${id}`
@@ -53,6 +55,7 @@ const paths = {
   admin: {
     ADMIN_DASHBOARD,
     ADMIN_PARTICIPANTS,
+    ADMIN_VIEW_PARTICIPANT,
     events: {
       ADMIN_EDIT_EVENT,
       ADMIN_VIEW_EVENT,
