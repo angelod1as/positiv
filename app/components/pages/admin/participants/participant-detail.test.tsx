@@ -208,7 +208,43 @@ describe("ParticipantDetail", () => {
       ).toBeInTheDocument()
     })
 
-    it("should render ParticipantVsEventData BEFORE BasicData in event mode", () => {
+    it("should wrap ParticipantVsEventData in a Card in event mode", () => {
+      const router = createTestRouter(
+        <ParticipantDetail
+          profile={mockProfile as never}
+          fullHistory={[]}
+          currentEvent={{
+            data: mockCurrentEventData as never,
+            eventId: "event-1",
+          }}
+        />,
+      )
+      render(<RouterProvider router={router} />)
+
+      const eventData = screen.getByTestId("participant-vs-event-data")
+      const card = eventData.closest('[data-slot="card"]')
+      expect(card).toBeInTheDocument()
+    })
+
+    it("should render side-by-side layout container in event mode", () => {
+      const router = createTestRouter(
+        <ParticipantDetail
+          profile={mockProfile as never}
+          fullHistory={[]}
+          currentEvent={{
+            data: mockCurrentEventData as never,
+            eventId: "event-1",
+          }}
+        />,
+      )
+      render(<RouterProvider router={router} />)
+
+      const basicData = screen.getByTestId("basic-data")
+      const gridContainer = basicData.closest(".grid")
+      expect(gridContainer).toBeInTheDocument()
+    })
+
+    it("should render ParticipantVsEventData BEFORE BasicData in DOM for mobile-first layout", () => {
       const router = createTestRouter(
         <ParticipantDetail
           profile={mockProfile as never}

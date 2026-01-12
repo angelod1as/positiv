@@ -285,7 +285,7 @@ export const getAdminProfileById = composable(
 
 export const getProfileById = composable(
   async ({ profileId }: { profileId: string }): Promise<ProfileGlobal> => {
-    const profile = await kyselyDb
+    return kyselyDb
       .selectFrom("profiles as p")
       .selectAll("p")
       .select((eb) => [
@@ -337,13 +337,7 @@ export const getProfileById = composable(
           .as("last_attended_event_id"),
       ])
       .where("p.id", "=", profileId)
-      .executeTakeFirst()
-
-    if (!profile) {
-      throw new Error("Profile not found")
-    }
-
-    return profile
+      .executeTakeFirstOrThrow()
   },
 )
 

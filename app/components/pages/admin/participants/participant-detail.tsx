@@ -4,6 +4,7 @@ import type {
 } from "~types/database/entities.types"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { getAge } from "~/lib/helpers/get-age"
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { BasicData } from "./basic-data"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
 import { ParticipantEventHistory } from "./participant-event-history"
@@ -42,10 +43,23 @@ export const ParticipantDetail = ({
         </div>
       </div>
 
-      {currentEvent && (
-        <ParticipantVsEventData eventParticipant={currentEvent.data} />
+      {currentEvent ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="md:col-start-2">
+            <CardHeader>
+              <CardTitle>Dados do Evento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ParticipantVsEventData eventParticipant={currentEvent.data} />
+            </CardContent>
+          </Card>
+          <div className="md:col-start-1 md:row-start-1">
+            <BasicData profile={profile} />
+          </div>
+        </div>
+      ) : (
+        <BasicData profile={profile} />
       )}
-      <BasicData profile={profile} />
       {fullHistory.length > 0 && (
         <ParticipantEventHistory participantHistory={fullHistory} />
       )}
