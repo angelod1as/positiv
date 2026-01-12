@@ -5,7 +5,6 @@ import { SchemaForm } from "~/components/forms/base/schema-form"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   applicationStatusOptions,
-  approvedToAttendStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
   flagStatusOptions,
@@ -25,7 +24,6 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     eventParticipant
 
   const profileFieldLabels = {
-    approved_to_attend: profilePropMap("approved_to_attend"),
     flag: profilePropMap("flag"),
     flag_notes: profilePropMap("flag_notes"),
     is_veteran: profilePropMap("is_veteran"),
@@ -66,7 +64,6 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               was_selected_for_rotation: "checkbox",
               payment: "number",
               spot_type: "select",
-              approved_to_attend: "select",
               flag: "select",
               flag_notes: "textarea",
             }}
@@ -74,7 +71,6 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               attendance_status: attendanceStatusOptions,
               application_status: applicationStatusOptions,
               spot_type: spotTypeOptions,
-              approved_to_attend: approvedToAttendStatusOptions,
               flag: flagStatusOptions,
             }}
             labels={labels}
@@ -91,7 +87,6 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                     <div className="lg:flex gap-4 [&>*]:flex-1">
                       <Field name="attendance_status" />
                       <Field name="application_status" />
-                      <Field name="approved_to_attend" />
                     </div>
 
                     <div className="lg:flex gap-4 [&>*]:flex-1">

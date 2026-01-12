@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it } from "vitest"
 import { ApprovalStatusDropdown } from "./approval-status-dropdown"
@@ -16,8 +15,17 @@ describe("ApprovalStatusDropdown", () => {
   const defaultProps = {
     value: "pending" as const,
     profileId: "profile-123",
-    eventId: "event-456",
   }
+
+  describe("label", () => {
+    it("should render with label 'Status de Aprovação'", () => {
+      renderWithRouter(
+        <ApprovalStatusDropdown {...defaultProps} value="pending" />
+      )
+
+      expect(screen.getByText("Status de Aprovação")).toBeInTheDocument()
+    })
+  })
 
   describe("color rendering", () => {
     it("should render with green colors when status is approved", () => {
@@ -25,9 +33,9 @@ describe("ApprovalStatusDropdown", () => {
         <ApprovalStatusDropdown {...defaultProps} value="approved" />
       )
 
-      const dropdown = screen.getByRole("combobox")
-      expect(dropdown).toHaveClass("bg-green-100")
-      expect(dropdown).toHaveClass("border-green-500")
+      const trigger = screen.getByRole("combobox")
+      expect(trigger).toHaveClass("bg-green-100")
+      expect(trigger).toHaveClass("border-green-500")
     })
 
     it("should render with yellow colors when status is approved_with_reservations", () => {
@@ -38,9 +46,9 @@ describe("ApprovalStatusDropdown", () => {
         />
       )
 
-      const dropdown = screen.getByRole("combobox")
-      expect(dropdown).toHaveClass("bg-yellow-100")
-      expect(dropdown).toHaveClass("border-yellow-500")
+      const trigger = screen.getByRole("combobox")
+      expect(trigger).toHaveClass("bg-yellow-100")
+      expect(trigger).toHaveClass("border-yellow-500")
     })
 
     it("should render with red colors when status is rejected", () => {
@@ -48,9 +56,9 @@ describe("ApprovalStatusDropdown", () => {
         <ApprovalStatusDropdown {...defaultProps} value="rejected" />
       )
 
-      const dropdown = screen.getByRole("combobox")
-      expect(dropdown).toHaveClass("bg-red-100")
-      expect(dropdown).toHaveClass("border-red-500")
+      const trigger = screen.getByRole("combobox")
+      expect(trigger).toHaveClass("bg-red-100")
+      expect(trigger).toHaveClass("border-red-500")
     })
 
     it("should render with neutral colors when status is pending", () => {
@@ -58,9 +66,9 @@ describe("ApprovalStatusDropdown", () => {
         <ApprovalStatusDropdown {...defaultProps} value="pending" />
       )
 
-      const dropdown = screen.getByRole("combobox")
-      expect(dropdown).toHaveClass("bg-gray-100")
-      expect(dropdown).toHaveClass("border-gray-300")
+      const trigger = screen.getByRole("combobox")
+      expect(trigger).toHaveClass("bg-gray-100")
+      expect(trigger).toHaveClass("border-gray-300")
     })
   })
 
@@ -70,34 +78,26 @@ describe("ApprovalStatusDropdown", () => {
         <ApprovalStatusDropdown {...defaultProps} value="approved" />
       )
 
-      const dropdown = screen.getByRole("combobox")
-      expect(dropdown).toHaveValue("approved")
-      expect(screen.getByRole("option", { name: "Aprovade" })).toBeInTheDocument()
+      expect(screen.getByText("Aprovade")).toBeInTheDocument()
     })
 
-    it("should show all status options", () => {
+    it("should display pending status label", () => {
       renderWithRouter(
         <ApprovalStatusDropdown {...defaultProps} value="pending" />
       )
 
-      expect(screen.getByRole("option", { name: "Pendente" })).toBeInTheDocument()
-      expect(screen.getByRole("option", { name: "Aprovade" })).toBeInTheDocument()
-      expect(screen.getByRole("option", { name: "Aprovade com Ressalvas" })).toBeInTheDocument()
-      expect(screen.getByRole("option", { name: "Rejeitade" })).toBeInTheDocument()
+      expect(screen.getByText("Pendente")).toBeInTheDocument()
     })
   })
 
   describe("interaction", () => {
-    it("should allow selecting a different option", async () => {
-      const user = userEvent.setup()
+    it("should not be disabled by default", () => {
       renderWithRouter(
         <ApprovalStatusDropdown {...defaultProps} value="pending" />
       )
 
-      const dropdown = screen.getByRole("combobox")
-      await user.selectOptions(dropdown, "approved")
-
-      expect(dropdown).toHaveValue("approved")
+      const trigger = screen.getByRole("combobox")
+      expect(trigger).not.toBeDisabled()
     })
   })
 

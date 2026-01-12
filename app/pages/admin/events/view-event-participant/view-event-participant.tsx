@@ -1,4 +1,3 @@
-import { inputFromForm } from "composable-functions"
 import { formAction } from "remix-forms"
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
@@ -7,6 +6,7 @@ import {
   getProfileWithExtraDataById,
   getParticipantFullEventHistory,
   updateParticipantVsEvent,
+  updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { updateParticipantVsEventSchema } from "~/business/admin/common"
 import paths from "~/lib/paths"
@@ -33,11 +33,20 @@ export function shouldRevalidate({
 }
 
 export async function action({ request }: Route.ActionArgs) {
-  const { intent } = await inputFromForm(request)
+  const formData = await request.formData()
+  const intent = formData.get("intent")
+
+  if (intent === "update-profile-approval-status") {
+    const result = await updateProfileApprovalStatus(Object.fromEntries(formData))
+    return { success: result.success }
+  }
 
   if (intent === "participant-vs-event-schema") {
     return formAction({
-      request,
+      request: new Request(request.url, {
+        method: "POST",
+        body: formData,
+      }),
       schema: updateParticipantVsEventSchema,
       mutation: updateParticipantVsEvent,
       transformResult: async (result) => {
