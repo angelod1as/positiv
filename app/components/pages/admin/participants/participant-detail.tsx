@@ -46,14 +46,12 @@ export const ParticipantDetail = ({
               </b>
             </p>
           )}
-          {profile.approved_to_attend && (
-            <div className="mt-4">
-              <ApprovalStatusDropdown
-                value={profile.approved_to_attend}
-                profileId={profileId}
-              />
-            </div>
-          )}
+          <div className="mt-4">
+            <ApprovalStatusDropdown
+              value={profile.approved_to_attend ?? "pending"}
+              profileId={profileId}
+            />
+          </div>
         </div>
       </div>
 
