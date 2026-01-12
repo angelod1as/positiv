@@ -77,19 +77,15 @@ test.describe('Authentication Flows', () => {
     const password = generateTestPassword()
     const adminUser = await createTestUser(email, password, { admin: true })
     testUsers.push(adminUser)
-    
+
     // Use performUILogin which handles the full onboarding flow
-    await performUILogin(page, email, password)
-    
+    await performUILogin(page, email, password, { isAdmin: true })
+
     // Verify authenticated
     const authenticated = await isAuthenticated(page)
     expect(authenticated).toBe(true)
-    
-    // Should be on dashboard after login
-    await expect(page).toHaveURL('/dashboard')
-    
-    // Verify admin can access admin area
-    await page.goto('/admin')
+
+    // Admin users should be redirected to /admin after login
     await expect(page).toHaveURL('/admin')
     await expect(page.getByRole('heading', { name: 'Visão geral' })).toBeVisible()
   })

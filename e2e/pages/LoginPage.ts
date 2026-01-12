@@ -51,7 +51,7 @@ export class LoginPage extends BasePage {
     await Promise.all([
       this.page.waitForURL(url => {
         const pathname = new URL(url).pathname
-        return pathname === '/dashboard' || pathname === '/conta/termos-e-condicoes'
+        return pathname === '/dashboard' || pathname === '/admin' || pathname === '/conta/termos-e-condicoes'
       }, { timeout: 30000 }),
       this.submitButton.click()
     ])
@@ -70,7 +70,7 @@ export class LoginPage extends BasePage {
   async isLoggedIn(): Promise<boolean> {
     // Check if we're on a protected page
     const currentUrl = this.page.url()
-    if (currentUrl.includes('/dashboard') || currentUrl.includes('/conta')) {
+    if (currentUrl.includes('/dashboard') || currentUrl.includes('/admin') || currentUrl.includes('/conta')) {
       return true
     }
     
