@@ -217,6 +217,22 @@ export const AdminViewEventParticipantsTable: FC<
         formData.append("has_paid", "true")
         fetcher.submit(formData, { method: "POST" })
       }
+
+      // Auto-persist was_selected_for_rotation when transitioning to 'skipped'
+      // This provides immediate persistence without waiting for DB trigger
+      if (
+        event.colDef.field === "attendance_status" &&
+        event.oldValue !== "skipped" &&
+        event.newValue === "skipped" &&
+        event.data?.was_selected_for_rotation === true
+      ) {
+        const formData = new FormData()
+        formData.append("intent", "update-event-participant")
+        formData.append("id", event.data.id)
+        formData.append("profile_id", event.data.profile_id ?? "")
+        formData.append("was_selected_for_rotation", "true")
+        fetcher.submit(formData, { method: "POST" })
+      }
     },
     [fetcher],
   )
