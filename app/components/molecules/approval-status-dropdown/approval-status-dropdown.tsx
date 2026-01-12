@@ -60,13 +60,16 @@ export function ApprovalStatusDropdown({
     (opt) => opt.value === value
   )
 
+  const labelId = `approval-status-label-${profileId}`
+
   return (
     <div className="flex items-center gap-3">
-      <label className="text-sm font-medium text-gray-700">
+      <label id={labelId} className="text-sm font-medium text-gray-700">
         Status de Aprovação
       </label>
       <Select value={value} onValueChange={handleChange} disabled={isSubmitting}>
         <SelectTrigger
+          aria-labelledby={labelId}
           className={cn(
             "w-auto min-w-[180px] border-2",
             statusColors[value],
