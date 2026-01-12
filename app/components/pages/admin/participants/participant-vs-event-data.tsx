@@ -48,7 +48,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   return (
     <>
       <h2>Neste evento</h2>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4">
         <div className="space-y-2">
           <h3>Administração</h3>
 
