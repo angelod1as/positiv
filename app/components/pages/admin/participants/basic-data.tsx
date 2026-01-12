@@ -1,5 +1,4 @@
 import { type FC } from "react"
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import {
   GenderWarning,
   OrientationWarning,
@@ -8,12 +7,17 @@ import {
 } from "~/components/atoms/badges/badges"
 import { FlagBadge } from "~/components/atoms/badges/flag-badge"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import type { Profile } from "~types/database/entities.types"
 
 import { AddToGoogleContactsButton } from "~/components/atoms/buttons/add-to-google-contacts-button"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
 import { profilePropMap } from "~/lib/helpers/propMaps"
 
-type BasicDataProps = { profile: ProfileWithExtraData }
+type BasicDataProfile = Profile & {
+  was_admin_skipped_last_event?: boolean | null
+}
+
+type BasicDataProps = { profile: BasicDataProfile }
 export const BasicData: FC<BasicDataProps> = ({ profile }) => {
   const {
     full_name,
@@ -37,10 +41,9 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
 
   return (
     <>
-      <h2>Dados básicos</h2>
-
-      <div className="grid md:grid-cols-4 gap-4 [&>div]:space-y-2">
-        <div className="col-span-2">
+      <div className="grid gap-4 [&>div]:space-y-2">
+        <h3>Dados básicos</h3>
+        <div>
           <div className="flex gap-2 flex-wrap">
             <PhoneButton phone={phone} />
             <AddToGoogleContactsButton

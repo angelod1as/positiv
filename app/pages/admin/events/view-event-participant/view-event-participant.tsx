@@ -9,13 +9,10 @@ import {
   updateParticipantVsEvent,
 } from "~/business/admin/admin.server"
 import { updateParticipantVsEventSchema } from "~/business/admin/common"
-import { getAge } from "~/lib/helpers/get-age"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
-import { BasicData } from "~/components/pages/admin/participants/basic-data"
-import { ParticipantVsEventData } from "~/components/pages/admin/participants/participant-vs-event-data"
-import { ParticipantEventHistory } from "~/components/pages/admin/participants/participant-event-history"
+import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 
 const {
   admin: {
@@ -112,40 +109,26 @@ export async function loader({ params }: Route.LoaderArgs) {
     profile,
     participantHistory: currentEventResult.data,
     fullHistory,
+    eventId,
   }
 }
 
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
-  const { participantHistory, profile, fullHistory } = loaderData
+  const { participantHistory, profile, fullHistory, eventId } = loaderData
 
   if (!profile) return null
 
   const [thisEvent] = participantHistory
 
-  const name = profile.social_name || profile.full_name
-
   return (
-    <>
-      <div className="flex">
-        <div className="space-y-1">
-          <h1>
-            {name}, {getAge(profile.date_of_birth)}
-          </h1>
-          <p>
-            No evento{" "}
-            <b>
-              {thisEvent.event_emoji} {thisEvent.event_title}
-            </b>
-          </p>
-        </div>
-      </div>
-
-      <BasicData profile={profile} />
-      <ParticipantVsEventData eventParticipant={thisEvent} />
-      {fullHistory.length > 0 && (
-        <ParticipantEventHistory participantHistory={fullHistory} />
-      )}
-    </>
+    <ParticipantDetail
+      profile={profile}
+      fullHistory={fullHistory}
+      currentEvent={{
+        data: thisEvent,
+        eventId,
+      }}
+    />
   )
 }
 
