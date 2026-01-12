@@ -63,6 +63,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             inputTypes={{
               has_paid: "checkbox",
               is_veteran: "checkbox",
+              was_selected_for_rotation: "checkbox",
               payment: "number",
               spot_type: "select",
               approved_to_attend: "select",
@@ -99,6 +100,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                       <div className="flex flex-col justify-end">
                         <Field name="has_paid" />
                         <Field name="is_veteran" />
+                        <Field name="was_selected_for_rotation" />
                       </div>
                     </div>
                     <div className="lg:flex gap-4 [&>*]:flex-1">
