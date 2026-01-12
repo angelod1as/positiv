@@ -3,6 +3,7 @@ import { LoginPage } from "../pages/LoginPage"
 import { TEST_USER_PROFILE_DATA } from "./test-data"
 
 const DASHBOARD_URL = "/dashboard"
+const ADMIN_DASHBOARD_URL = "/admin"
 const TERMS_URL = "/conta/termos-e-condicoes"
 
 /**
@@ -26,10 +27,11 @@ export async function performUILoginWithPrefilledData(
   // Let the natural flow happen - user might be on terms page or dashboard
   await page.waitForLoadState("networkidle")
 
-  // We should be either on dashboard or terms page
+  // We should be either on dashboard, admin dashboard, or terms page
   const currentUrl = page.url()
   expect(
     currentUrl.includes("/dashboard") ||
+      currentUrl.includes("/admin") ||
       currentUrl.includes("/conta/termos-e-condicoes"),
   ).toBe(true)
 }
@@ -43,9 +45,10 @@ export async function performUILogin(
   page: Page,
   email: string,
   password: string,
-  options?: { subscribeToNewsletter?: boolean },
+  options?: { subscribeToNewsletter?: boolean; isAdmin?: boolean },
 ): Promise<void> {
-  const { subscribeToNewsletter = true } = options || {}
+  const { subscribeToNewsletter = true, isAdmin = false } = options || {}
+  const expectedDashboardUrl = isAdmin ? ADMIN_DASHBOARD_URL : DASHBOARD_URL
   const loginPage = new LoginPage(page)
 
   // Perform login
@@ -163,12 +166,12 @@ export async function performUILogin(
     await expect(continueButton2).toBeVisible()
 
     await Promise.all([
-      page.waitForNavigation({ url: DASHBOARD_URL, waitUntil: "networkidle" }),
+      page.waitForNavigation({ url: expectedDashboardUrl, waitUntil: "networkidle" }),
       continueButton2.click(),
     ])
   }
 
-  await expect(page).toHaveURL(new RegExp(`${DASHBOARD_URL}$`))
+  await expect(page).toHaveURL(new RegExp(`${expectedDashboardUrl}$`))
   await page.waitForLoadState("networkidle")
 }
 
@@ -234,7 +237,7 @@ export async function getCurrentUserEmail(page: Page): Promise<string | null> {
 
 export async function waitForAuthRedirect(page: Page): Promise<void> {
   await page.waitForNavigation({
-    url: (url) => url.pathname === DASHBOARD_URL || url.pathname === TERMS_URL,
+    url: (url) => url.pathname === DASHBOARD_URL || url.pathname === ADMIN_DASHBOARD_URL || url.pathname === TERMS_URL,
     waitUntil: "networkidle",
     timeout: 30000,
   })
