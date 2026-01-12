@@ -33,6 +33,7 @@ const mockParticipantHistory: Array<
     is_veteran: true,
     approved_to_attend: "approved",
     updated_at: "2024-02-15T10:00:00",
+    was_selected_for_rotation: false,
   },
   {
     id: "2",
@@ -59,6 +60,7 @@ const mockParticipantHistory: Array<
     is_veteran: true,
     approved_to_attend: "approved",
     updated_at: "2024-02-01T10:00:00",
+    was_selected_for_rotation: false,
   },
 ]
 
