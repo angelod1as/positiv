@@ -94,7 +94,7 @@ const profilesWithExtraDataQuery = kyselyDb
     eb
       .selectFrom("event_participants as ep")
       .innerJoin("events as e", "ep.event_id", "e.id")
-      .select(sql<boolean>`ep.attendance_status = 'skipped'`.as("is_skipped"))
+      .select("ep.was_selected_for_rotation")
       .whereRef("ep.profile_id", "=", "current_ep.profile_id")
       .where("ep.is_user_applied", "=", true)
       .where("ep.application_status", "=", "finalised")
