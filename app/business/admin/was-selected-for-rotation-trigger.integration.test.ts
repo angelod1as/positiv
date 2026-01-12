@@ -227,4 +227,76 @@ describe("was_selected_for_rotation trigger (POS-386)", () => {
     expect(afterUpdate.attendance_status).toBe("skipped")
     expect(afterUpdate.was_selected_for_rotation).toBe(true)
   })
+
+  it("should keep was_selected_for_rotation true through skipped -> pending -> skipped cycle", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-rotation-trigger-skipped-pending-skipped@example.com",
+      full_name: "Test Profile - Skipped Pending Skipped Cycle",
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event Status Cycle",
+      emoji: "🔁",
+      location: "Test Location",
+      description: "Test Description",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
+      time_application_start: new Date().toISOString(),
+      ticket_price: 100,
+      total_spots: 50,
+    })
+
+    // Start with skipped status
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      application_status: "finalised",
+      attendance_status: "skipped",
+    })
+
+    const afterSkipped = await kysely
+      .selectFrom("event_participants")
+      .select(["was_selected_for_rotation", "attendance_status"])
+      .where("id", "=", participant.id)
+      .executeTakeFirstOrThrow()
+
+    expect(afterSkipped.attendance_status).toBe("skipped")
+    expect(afterSkipped.was_selected_for_rotation).toBe(true)
+
+    // Change to pending
+    await kysely
+      .updateTable("event_participants")
+      .set({ attendance_status: "pending" })
+      .where("id", "=", participant.id)
+      .execute()
+
+    const afterPending = await kysely
+      .selectFrom("event_participants")
+      .select(["was_selected_for_rotation", "attendance_status"])
+      .where("id", "=", participant.id)
+      .executeTakeFirstOrThrow()
+
+    expect(afterPending.attendance_status).toBe("pending")
+    expect(afterPending.was_selected_for_rotation).toBe(true) // Should remain true
+
+    // Change back to skipped
+    await kysely
+      .updateTable("event_participants")
+      .set({ attendance_status: "skipped" })
+      .where("id", "=", participant.id)
+      .execute()
+
+    const afterSkippedAgain = await kysely
+      .selectFrom("event_participants")
+      .select(["was_selected_for_rotation", "attendance_status"])
+      .where("id", "=", participant.id)
+      .executeTakeFirstOrThrow()
+
+    expect(afterSkippedAgain.attendance_status).toBe("skipped")
+    expect(afterSkippedAgain.was_selected_for_rotation).toBe(true) // Should still be true
+  })
 })
