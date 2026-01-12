@@ -1,13 +1,20 @@
-import { useState, useEffect } from "react"
-import { useFetcher } from "react-router"
+import { useEffect, useRef } from "react"
+import { useFetcher, useRevalidator } from "react-router"
+import { toast } from "sonner"
 import { cn } from "~/lib/utils"
 import { approvedToAttendStatusOptions } from "~/lib/helpers/propMaps"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select"
 import type { ProfileApprovedToAttendStatus } from "~types/database/entities.types"
 
 type ApprovalStatusDropdownProps = {
   value: ProfileApprovedToAttendStatus
   profileId: string
-  eventId: string
 }
 
 const statusColors: Record<ProfileApprovedToAttendStatus, string> = {
@@ -20,44 +27,64 @@ const statusColors: Record<ProfileApprovedToAttendStatus, string> = {
 export function ApprovalStatusDropdown({
   value,
   profileId,
-  eventId,
 }: ApprovalStatusDropdownProps) {
-  const fetcher = useFetcher()
-  const [optimisticValue, setOptimisticValue] =
-    useState<ProfileApprovedToAttendStatus>(value)
+  const fetcher = useFetcher<{ success: boolean }>()
+  const revalidator = useRevalidator()
+  const previousDataRef = useRef(fetcher.data)
+  const isSubmitting = fetcher.state !== "idle"
 
   useEffect(() => {
-    setOptimisticValue(value)
-  }, [value])
+    if (fetcher.data && fetcher.data !== previousDataRef.current) {
+      if (fetcher.data.success) {
+        toast.success("Status de aprovação atualizado")
+        revalidator.revalidate()
+      } else {
+        toast.error("Erro ao atualizar status")
+      }
+    }
+    previousDataRef.current = fetcher.data
+  }, [fetcher.data, revalidator])
 
-  const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newValue = event.target.value as ProfileApprovedToAttendStatus
-    setOptimisticValue(newValue)
+  const handleChange = (newValue: string) => {
     fetcher.submit(
       {
-        intent: "participant-vs-event-schema",
+        intent: "update-profile-approval-status",
         profile_id: profileId,
-        event_id: eventId,
         approved_to_attend: newValue,
       },
       { method: "POST" }
     )
   }
 
+  const currentOption = approvedToAttendStatusOptions.find(
+    (opt) => opt.value === value
+  )
+
   return (
-    <select
-      value={optimisticValue}
-      onChange={handleChange}
-      className={cn(
-        "block rounded-md py-2 pr-10 pl-3 text-base font-medium focus:outline-none sm:text-sm border-2 cursor-pointer",
-        statusColors[optimisticValue]
-      )}
-    >
-      {approvedToAttendStatusOptions.map((option) => (
-        <option key={option.value} value={option.value}>
-          {option.name}
-        </option>
-      ))}
-    </select>
+    <div className="flex items-center gap-3">
+      <label className="text-sm font-medium text-gray-700">
+        Status de Aprovação
+      </label>
+      <Select value={value} onValueChange={handleChange} disabled={isSubmitting}>
+        <SelectTrigger
+          className={cn(
+            "w-auto min-w-[180px] border-2",
+            statusColors[value],
+            isSubmitting && "opacity-50 cursor-wait"
+          )}
+        >
+          <SelectValue>
+            {isSubmitting ? "Salvando..." : currentOption?.name}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {approvedToAttendStatusOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   )
 }

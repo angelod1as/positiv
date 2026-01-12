@@ -98,7 +98,6 @@ export const updateParticipantVsEventSchema = zod.object({
   spot_type: spotTypeEnum,
   is_veteran: zod.boolean(),
   was_selected_for_rotation: zod.boolean(),
-  approved_to_attend: profileApprovedToAttendStatusEnum,
   payment: zod.coerce.number(),
   admin_general_notes: zod.string(),
   flag: profileFlagStatusEnum,
@@ -130,7 +129,6 @@ export const updateEventParticipantByIdSchema = zod.object({
   payment: zod.coerce.number().optional(),
   attendance_status: participantAttendanceStatusEnum.optional(),
   application_status: participantApplicationStatusEnum.optional(),
-  approved_to_attend: profileApprovedToAttendStatusEnum.optional(),
   has_paid: parseBoolean.optional(),
   spot_type: spotTypeEnum.optional(),
   is_veteran: parseBoolean.optional(),
@@ -153,3 +151,9 @@ export const updateEventParticipantByIdSchema = zod.object({
     path: ["flag_notes"],
   }
 )
+
+export const updateProfileApprovalStatusSchema = zod.object({
+  intent: zod.literal("update-profile-approval-status"),
+  profile_id: zod.string(),
+  approved_to_attend: profileApprovedToAttendStatusEnum,
+})
