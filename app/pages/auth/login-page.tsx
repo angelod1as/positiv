@@ -21,13 +21,18 @@ import type { Route } from "./+types/login-page"
 const {
   auth: { FORGOT_PASSWORD, LOGON, LOGIN },
   dash: { DASHBOARD },
+  admin: { ADMIN_DASHBOARD },
 } = paths
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
-  const { currentUser, supabaseHeaders } = await getContext(request, params)
+  const { currentUser, currentProfile, supabaseHeaders } = await getContext(
+    request,
+    params,
+  )
 
   if (currentUser) {
-    return redirect(DASHBOARD, {
+    const targetPath = currentProfile?.is_admin ? ADMIN_DASHBOARD : DASHBOARD
+    return redirect(targetPath, {
       headers: supabaseHeaders,
     })
   }
