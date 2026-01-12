@@ -91,6 +91,7 @@ export const eventParticipantPropMap = (property: keyof EventParticipant) => {
     flag: "Flag",
     flag_notes: "Notas da Flag",
     updated_at: "Atualizado em",
+    was_selected_for_rotation: "Escolhide para rodízio?",
   }[property]
 }
 
