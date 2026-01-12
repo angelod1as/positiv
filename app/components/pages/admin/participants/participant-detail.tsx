@@ -1,13 +1,13 @@
+import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import { Card, CardContent } from "~/components/ui/card"
+import { getAge } from "~/lib/helpers/get-age"
 import type {
   ParticipantVsEvent,
   ProfileGlobal,
 } from "~types/database/entities.types"
-import type { ProfileWithExtraData } from "~/business/admin/admin.server"
-import { getAge } from "~/lib/helpers/get-age"
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card"
 import { BasicData } from "./basic-data"
-import { ParticipantVsEventData } from "./participant-vs-event-data"
 import { ParticipantEventHistory } from "./participant-event-history"
+import { ParticipantVsEventData } from "./participant-vs-event-data"
 
 type ParticipantDetailProps = {
   profile: ProfileWithExtraData | ProfileGlobal
@@ -29,9 +29,9 @@ export const ParticipantDetail = ({
     <>
       <div className="flex">
         <div className="space-y-1">
-          <h1>
+          <h2>
             {name}, {getAge(profile.date_of_birth)}
-          </h1>
+          </h2>
           {currentEvent && (
             <p>
               No evento{" "}
@@ -44,17 +44,18 @@ export const ParticipantDetail = ({
       </div>
 
       {currentEvent ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="md:col-start-2">
-            <CardHeader>
-              <CardTitle>Dados do Evento</CardTitle>
-            </CardHeader>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <Card className="sm:col-span-1 lg:col-span-3 py-4">
             <CardContent>
               <ParticipantVsEventData eventParticipant={currentEvent.data} />
             </CardContent>
           </Card>
-          <div className="md:col-start-1 md:row-start-1">
-            <BasicData profile={profile} />
+          <div className="lg:col-span-2">
+            <Card className="sm:col-span-1 lg:col-span-3 py-4">
+              <CardContent>
+                <BasicData profile={profile} />
+              </CardContent>
+            </Card>
           </div>
         </div>
       ) : (

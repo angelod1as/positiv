@@ -1,5 +1,4 @@
 import { type FC } from "react"
-import type { Profile } from "~types/database/entities.types"
 import {
   GenderWarning,
   OrientationWarning,
@@ -8,6 +7,7 @@ import {
 } from "~/components/atoms/badges/badges"
 import { FlagBadge } from "~/components/atoms/badges/flag-badge"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import type { Profile } from "~types/database/entities.types"
 
 import { AddToGoogleContactsButton } from "~/components/atoms/buttons/add-to-google-contacts-button"
 import { PhoneButton } from "~/lib/helpers/phone-to-button"
@@ -41,9 +41,8 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
 
   return (
     <>
-      <h2>Dados básicos</h2>
-
       <div className="grid gap-4 [&>div]:space-y-2">
+        <h3>Dados básicos</h3>
         <div>
           <div className="flex gap-2 flex-wrap">
             <PhoneButton phone={phone} />
