@@ -1,4 +1,8 @@
 import { composable } from "composable-functions"
+import {
+  LISTMONK_REGISTERED_LIST_ID,
+  LISTMONK_TEST_LIST_ID,
+} from "~/lib/constants/constants"
 import { db } from "~/lib/supabase/db.server"
 import { addSubscriber } from "./listmonk-client.server"
 import {
@@ -50,10 +54,15 @@ export const subscribeProfileToNewsletter = composable(
       )
     }
 
+    const isTestUser = profile.email.endsWith("@example.com")
+    const lists = isTestUser
+      ? [LISTMONK_REGISTERED_LIST_ID, LISTMONK_TEST_LIST_ID]
+      : [LISTMONK_REGISTERED_LIST_ID]
+
     const listmonkResult = await addSubscriber({
       email: profile.email,
       name: computedName,
-      lists: [4], // Inscrites List
+      lists,
       attributes: {
         profile_id: profile.id,
         user_id: profile.user_id,
