@@ -184,6 +184,7 @@ export type Database = {
           referred: string
           spot_type: Database["public"]["Enums"]["spot_type"]
           updated_at: string
+          was_selected_for_rotation: boolean
         }
         Insert: {
           admin_general_notes?: string | null
@@ -205,6 +206,7 @@ export type Database = {
           referred?: string
           spot_type?: Database["public"]["Enums"]["spot_type"]
           updated_at?: string
+          was_selected_for_rotation?: boolean
         }
         Update: {
           admin_general_notes?: string | null
@@ -226,6 +228,7 @@ export type Database = {
           referred?: string
           spot_type?: Database["public"]["Enums"]["spot_type"]
           updated_at?: string
+          was_selected_for_rotation?: boolean
         }
         Relationships: [
           {
