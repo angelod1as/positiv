@@ -176,17 +176,15 @@ export const AdminViewEventParticipantsTable: FC<
   // AG Grid handles the filtering internally for better performance.
 
   const handleSave = useCallback(
-    async (params: {
-      field: string
-      newValue: unknown
-      rowData: unknown
-    }) => {
+    async (params: { field: string; newValue: unknown; rowData: unknown }) => {
       const rowData = params.rowData as ProfileWithExtraData | undefined
       if (!rowData?.id) return
 
       // Validate field against whitelist to prevent parameter tampering
       if (
-        !EDITABLE_FIELDS.includes(params.field as (typeof EDITABLE_FIELDS)[number])
+        !EDITABLE_FIELDS.includes(
+          params.field as (typeof EDITABLE_FIELDS)[number],
+        )
       ) {
         return
       }
@@ -217,21 +215,6 @@ export const AdminViewEventParticipantsTable: FC<
         formData.append("id", event.data.id)
         formData.append("profile_id", event.data.profile_id ?? "")
         formData.append("has_paid", "true")
-        fetcher.submit(formData, { method: "POST" })
-      }
-
-      // Auto-persist was_selected_for_rotation when attendance_status = 'skipped'
-      if (
-        event.colDef.field === "attendance_status" &&
-        event.newValue === "skipped" &&
-        event.data?.was_selected_for_rotation === true &&
-        event.oldValue !== event.newValue
-      ) {
-        const formData = new FormData()
-        formData.append("intent", "update-event-participant")
-        formData.append("id", event.data.id)
-        formData.append("profile_id", event.data.profile_id ?? "")
-        formData.append("was_selected_for_rotation", "true")
         fetcher.submit(formData, { method: "POST" })
       }
     },
@@ -381,7 +364,8 @@ export const AdminViewEventParticipantsTable: FC<
           return option?.name || params.value
         },
         valueSetter: (params: ValueSetterParams<ProfileWithExtraData>) => {
-          const newValue = params.newValue as ProfileWithExtraData["attendance_status"]
+          const newValue =
+            params.newValue as ProfileWithExtraData["attendance_status"]
 
           if (newValue === params.data.attendance_status) {
             return false
@@ -413,6 +397,15 @@ export const AdminViewEventParticipantsTable: FC<
           model: attendanceStatusFilter,
           onModelChange: setAttendanceStatusFilter,
         },
+      },
+      {
+        field: "was_selected_for_rotation",
+        headerName: "Escolhide p/ rodízio?",
+        headerTooltip: "Escolhide para rodízio neste evento",
+        editable: true,
+        cellEditor: "agCheckboxCellEditor",
+        cellRenderer: "agCheckboxCellRenderer",
+        ...compactCell,
       },
       {
         field: "approved_to_attend",
@@ -547,15 +540,6 @@ export const AdminViewEventParticipantsTable: FC<
         field: "was_admin_skipped_last_event",
         headerName: "Foi rodízio na última festa?",
         cellRenderer: BooleanTextRenderer,
-      },
-      {
-        field: "was_selected_for_rotation",
-        headerName: "Escolhide p/ rodízio?",
-        headerTooltip: "Escolhide para rodízio neste evento",
-        editable: true,
-        cellEditor: "agCheckboxCellEditor",
-        cellRenderer: "agCheckboxCellRenderer",
-        ...compactCell,
       },
       {
         colId: "actions",

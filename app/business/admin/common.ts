@@ -134,6 +134,7 @@ export const updateEventParticipantByIdSchema = zod.object({
   has_paid: parseBoolean.optional(),
   spot_type: spotTypeEnum.optional(),
   is_veteran: parseBoolean.optional(),
+  was_selected_for_rotation: parseBoolean.optional(),
   flag: profileFlagStatusEnum.optional(),
   flag_notes: zod.string().nullable().optional(),
   notes: zod.string().optional(),
