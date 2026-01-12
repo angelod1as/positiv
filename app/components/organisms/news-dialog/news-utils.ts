@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1736621836000
+export const NEWS_VERSION = 1736729100000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "was-selected-for-rotation",
+    title: "🔄 Histórico de rodízio preservado",
+    content:
+      'Agora o sistema guarda se a pessoa foi escolhida para rodízio ("Pulade") mesmo que depois ela compareça ao evento. Na tabela de participantes, a coluna "Escolhide p/ rodízio?" é marcada automaticamente quando você seleciona "Pulade" no status de presença. Isso ajuda a manter o histórico correto de quem foi selecionado para rodízio.',
+    isAdmin: true,
+    createdAt: new Date("2026-01-12T21:45:00"),
+    isActive: true,
+  },
   {
     id: "auto-set-paid",
     title: '💰 "Pago?" marcado automaticamente',
