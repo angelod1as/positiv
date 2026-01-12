@@ -19,7 +19,13 @@ export async function loader({ params }: Route.LoaderArgs) {
     return redirectWithError(ADMIN_PARTICIPANTS, "Perfil não encontrado")
   }
 
-  const profileResult = await getProfileById({ profileId })
+  const [profileResult, historyResult] = await Promise.all([
+    getProfileById({ profileId }),
+    getParticipantFullEventHistory({
+      profileId,
+      excludeEventId: undefined,
+    }),
+  ])
 
   if (!profileResult.success) {
     console.error("Error fetching profile:", profileResult.errors)
@@ -32,13 +38,10 @@ export async function loader({ params }: Route.LoaderArgs) {
   const profile = profileResult.data
 
   let fullHistory: Array<ParticipantVsEvent & { time_event_start: string }> = []
-  const historyResult = await getParticipantFullEventHistory({
-    profileId: profile.id,
-    excludeEventId: undefined,
-  })
-
   if (historyResult.success) {
     fullHistory = historyResult.data
+  } else {
+    console.error("Error fetching history:", historyResult.errors)
   }
 
   return {

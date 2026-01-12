@@ -35,7 +35,7 @@ const EVENT_DATA = (id: string) => `${EVENT_VIEW(id)}/dados`
 //// ADMIN
 const ADMIN_DASHBOARD = "/admin"
 // PARTICIPANTS
-const ADMIN_PARTICIPANTS = `${ADMIN_DASHBOARD}/participants`
+const ADMIN_PARTICIPANTS = `${ADMIN_DASHBOARD}/participantes`
 const ADMIN_VIEW_PARTICIPANT = (profileId: string) =>
   `${ADMIN_PARTICIPANTS}/${profileId}`
 // EVENTS
