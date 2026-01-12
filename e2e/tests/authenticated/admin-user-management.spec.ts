@@ -250,7 +250,7 @@ test.describe("Admin User Management", () => {
     await expect(page).toHaveURL(
       new RegExp(`/admin/eventos/${testEventIdDetail}/participantes/[\\w-]+$`),
     )
-    await expect(page.locator("h1")).toContainText(
+    await expect(page.locator("h2")).toContainText(
       participantName.split(" ")[0],
     )
 
