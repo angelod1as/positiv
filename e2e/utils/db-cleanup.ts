@@ -259,7 +259,7 @@ export async function cleanupTestEvents(): Promise<void> {
       !PROTECTED_LIST_IDS.includes(e.listmonk_list_id)
   )
   for (const event of eventsWithLists) {
-    const result = await deleteList(event.listmonk_list_id, { force: true })
+    const result = await deleteList(event.listmonk_list_id)
     if (!result.success) {
       console.warn(
         `[Non-critical] Failed to delete Listmonk list ${event.listmonk_list_id} for event "${event.title}":`,
@@ -347,7 +347,7 @@ export async function cleanupListmonkSubscribers(): Promise<void> {
   let errorCount = 0
 
   for (const email of emails) {
-    const result = await removeSubscriber(email, { force: true })
+    const result = await removeSubscriber(email)
 
     if (result.success) {
       successCount++
