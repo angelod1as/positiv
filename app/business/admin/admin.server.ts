@@ -714,4 +714,6 @@ export const updateProfileApprovalStatus = applySchema(
   if (result.length === 0 || Number(result[0].numUpdatedRows) === 0) {
     throw new Error("Failed to update profile approval status")
   }
+
+  return { profile_id, approved_to_attend }
 })
