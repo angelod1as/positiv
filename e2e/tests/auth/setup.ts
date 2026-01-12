@@ -22,16 +22,16 @@ setup('authenticate as admin', async ({ page }) => {
   // Create a fresh admin user
   const email = generateTestEmail()
   const password = generateTestPassword()
-  
+
   console.info('Creating test admin user:', email)
   const adminUser = await createTestUser(email, password, { admin: true })
   setupUsers.admin = { ...adminUser, password }
-  
-  // Admin should go through full login flow
-  await performUILogin(page, email, password)
-  
+
+  // Admin should go through full login flow and be redirected to /admin
+  await performUILogin(page, email, password, { isAdmin: true })
+
   await page.context().storageState({ path: adminFile })
-  
+
   console.info('✅ Admin authentication state saved')
 })
 

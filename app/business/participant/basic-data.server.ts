@@ -99,6 +99,7 @@ const {
     DASHBOARD,
     account: { GENDER_PRONOUNS_ORIENTATION, BASIC_DATA },
   },
+  admin: { ADMIN_DASHBOARD },
 } = paths
 
 export const extraBasicData = async ({
@@ -155,7 +156,9 @@ export const extraBasicData = async ({
     )
   }
 
-  return redirectWithSuccess(DASHBOARD, "Dados salvos com sucesso", {
+  const targetPath = currentProfile.is_admin ? ADMIN_DASHBOARD : DASHBOARD
+
+  return redirectWithSuccess(targetPath, "Dados salvos com sucesso", {
     headers: supabaseHeaders,
   })
 }
