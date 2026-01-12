@@ -1,4 +1,5 @@
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-dropdown/approval-status-dropdown"
 import { Card, CardContent } from "~/components/ui/card"
 import { getAge } from "~/lib/helpers/get-age"
 import type {
@@ -42,6 +43,16 @@ export const ParticipantDetail = ({
           )}
         </div>
       </div>
+
+      {currentEvent && currentEvent.data.profile_id && (
+        <div className="mt-4">
+          <ApprovalStatusDropdown
+            value={currentEvent.data.approved_to_attend}
+            profileId={currentEvent.data.profile_id}
+            eventId={currentEvent.eventId}
+          />
+        </div>
+      )}
 
       {currentEvent ? (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
