@@ -28,29 +28,27 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     approved_to_attend: profilePropMap("approved_to_attend"),
     flag: profilePropMap("flag"),
     flag_notes: profilePropMap("flag_notes"),
+    is_veteran: profilePropMap("is_veteran"),
   }
 
-  const labels = Object.keys(eventParticipant).reduce(
-    (acc, curr) => {
-      if (curr in profileFieldLabels) {
-        return acc
-      }
-      return {
-        ...acc,
-        [curr]: eventParticipantPropMap(
-          curr as keyof Database["event_participants"],
-        ),
-      }
-    },
-    profileFieldLabels,
-  )
+  const labels = Object.keys(eventParticipant).reduce((acc, curr) => {
+    if (curr in profileFieldLabels) {
+      return acc
+    }
+    return {
+      ...acc,
+      [curr]: eventParticipantPropMap(
+        curr as keyof Database["event_participants"],
+      ),
+    }
+  }, profileFieldLabels)
 
   return (
-    <>
-      <h2>Neste evento</h2>
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className="space-y-4">
+      <h3>Neste evento</h3>
+      <div className="space-y-8">
         <div className="space-y-2">
-          <h3>Administração</h3>
+          <h4>Administração</h4>
 
           <SchemaForm
             key={`${eventParticipant.event_id}-${eventParticipant.profile_id}`}
@@ -89,18 +87,31 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                   <Field name="profile_id" hidden />
 
                   <div className="space-y-2">
-                    <Field name="attendance_status" />
-                    <Field name="application_status" />
-                    <Field name="approved_to_attend" />
-                    <Field name="spot_type" />
-                    <Field name="payment" />
-                    <div className="flex gap-8">
-                      <Field name="has_paid" />
-                      <Field name="is_veteran" />
+                    <div className="lg:flex gap-4 [&>*]:flex-1">
+                      <Field name="attendance_status" />
+                      <Field name="application_status" />
+                      <Field name="approved_to_attend" />
                     </div>
-                    <Field name="flag" />
-                    <Field name="flag_notes" multiline />
-                    <Field name="admin_general_notes" multiline />
+
+                    <div className="lg:flex gap-4 [&>*]:flex-1">
+                      <Field name="spot_type" />
+                      <Field name="payment" />
+                      <div className="flex flex-col justify-end">
+                        <Field name="has_paid" />
+                        <Field name="is_veteran" />
+                      </div>
+                    </div>
+                    <div className="lg:flex gap-4 [&>*]:flex-1">
+                      <div>
+                        <Field name="flag" />
+                        <Field name="flag_notes" multiline />
+                      </div>
+                      <Field
+                        name="admin_general_notes"
+                        multiline
+                        className="flex flex-col [&>*:last-child]:flex-1"
+                      />
+                    </div>
                     <Error />
                     <Errors />
                     <Button />
@@ -112,7 +123,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
         </div>
 
         <div className="space-y-2">
-          <h3>Respostas</h3>
+          <h4>Respostas</h4>
           <DataPair
             pair={[
               eventParticipantPropMap("application_date"),
@@ -148,6 +159,6 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
           />
         </div>
       </div>
-    </>
+    </div>
   )
 }

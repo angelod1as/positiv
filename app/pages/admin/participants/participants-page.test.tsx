@@ -45,7 +45,9 @@ describe("ParticipantsPage", () => {
       expect(screen.getByRole("grid")).toBeInTheDocument()
     })
 
-    expect(screen.getByText("Test 1")).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText("Test 1")).toBeInTheDocument()
+    })
   })
 
   it("should render empty message when no profiles", async () => {
