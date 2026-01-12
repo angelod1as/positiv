@@ -24,9 +24,11 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     redirect: vi.fn((path: string, options?: { headers: Headers }) => {
+      const headers = new Headers(options?.headers)
+      headers.set("Location", path)
       const response = new Response(null, {
         status: 302,
-        headers: { Location: path, ...(options?.headers ? Object.fromEntries(options.headers) : {}) },
+        headers,
       })
       throw response
     }),

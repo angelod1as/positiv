@@ -19,7 +19,7 @@ import { SchemaForm } from "~/components/forms/base/schema-form"
 import type { Route } from "./+types/login-page"
 
 const {
-  auth: { FORGOT_PASSWORD, LOGON, LOGIN },
+  auth: { FORGOT_PASSWORD, LOGON },
   dash: { DASHBOARD },
   admin: { ADMIN_DASHBOARD },
 } = paths
@@ -49,8 +49,11 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     mutation: loginUser,
     transformResult: async (result) => {
       if (result.success) {
+        const { currentProfile } = await getContext(request, params)
+        const targetPath = currentProfile?.is_admin ? ADMIN_DASHBOARD : DASHBOARD
+
         throw await redirectWithSuccess(
-          LOGIN,
+          targetPath,
           {
             message: "Bem vinde!",
             description:
