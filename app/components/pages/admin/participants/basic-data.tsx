@@ -43,8 +43,8 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
     <>
       <h2>Dados básicos</h2>
 
-      <div className="grid md:grid-cols-4 gap-4 [&>div]:space-y-2">
-        <div className="col-span-2">
+      <div className="grid gap-4 [&>div]:space-y-2">
+        <div>
           <div className="flex gap-2 flex-wrap">
             <PhoneButton phone={phone} />
             <AddToGoogleContactsButton
