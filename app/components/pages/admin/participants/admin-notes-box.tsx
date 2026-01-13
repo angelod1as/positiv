@@ -1,4 +1,5 @@
 import type { ChangeEvent, FC } from "react"
+import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { Card, CardContent } from "~/components/ui/card"
 import { Checkbox } from "~/components/ui/checkbox"
@@ -31,13 +32,33 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
 }) => {
   const fetcher = useFetcher()
 
-  const handleFieldChange = (field: string, value: unknown) => {
+  // Local state for text inputs to avoid submitting on every keystroke
+  const [localFlagNotes, setLocalFlagNotes] = useState(flagNotes ?? "")
+  const [localGeneralNotes, setLocalGeneralNotes] = useState(generalNotes ?? "")
+
+  // Sync local state when props change (e.g., after revalidation)
+  useEffect(() => {
+    setLocalFlagNotes(flagNotes ?? "")
+  }, [flagNotes])
+
+  useEffect(() => {
+    setLocalGeneralNotes(generalNotes ?? "")
+  }, [generalNotes])
+
+  const submitField = (field: string, value: unknown) => {
     const formData = new FormData()
     formData.set("intent", "update-profile-admin-notes")
     formData.set("profile_id", profileId)
     formData.set(field, String(value))
 
     fetcher.submit(formData, { method: "POST" })
+  }
+
+  const handleTextBlur = (field: string, value: string, originalValue: string | null) => {
+    // Only submit if value actually changed
+    if (value !== (originalValue ?? "")) {
+      submitField(field, value)
+    }
   }
 
   return (
@@ -49,7 +70,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
             <Label htmlFor="flag">Flag</Label>
             <Select
               value={flag}
-              onValueChange={(value) => handleFieldChange("flag", value)}
+              onValueChange={(value) => submitField("flag", value)}
             >
               <SelectTrigger id="flag">
                 <SelectValue placeholder="Selecione uma flag" />
@@ -68,9 +89,9 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
             <Label htmlFor="flag_notes">Notas da Flag</Label>
             <TextArea
               id="flag_notes"
-              value={flagNotes ?? ""}
-              onChange={(e) => handleFieldChange("flag_notes", e.target.value)}
-              onBlur={(e) => handleFieldChange("flag_notes", e.target.value)}
+              value={localFlagNotes}
+              onChange={(e) => setLocalFlagNotes(e.target.value)}
+              onBlur={(e) => handleTextBlur("flag_notes", e.target.value, flagNotes)}
               placeholder="Notas sobre a flag..."
             />
           </div>
@@ -79,11 +100,9 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
             <Label htmlFor="general_notes">Notas Gerais</Label>
             <TextArea
               id="general_notes"
-              value={generalNotes ?? ""}
-              onChange={(e) =>
-                handleFieldChange("general_notes", e.target.value)
-              }
-              onBlur={(e) => handleFieldChange("general_notes", e.target.value)}
+              value={localGeneralNotes}
+              onChange={(e) => setLocalGeneralNotes(e.target.value)}
+              onBlur={(e) => handleTextBlur("general_notes", e.target.value, generalNotes)}
               placeholder="Notas gerais sobre o perfil..."
             />
           </div>
@@ -93,7 +112,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
               id="is_veteran"
               checked={isVeteran}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                handleFieldChange("is_veteran", e.target.checked)
+                submitField("is_veteran", e.target.checked)
               }
             />
             <Label htmlFor="is_veteran">Veterano</Label>
