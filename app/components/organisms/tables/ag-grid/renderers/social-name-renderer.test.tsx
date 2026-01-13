@@ -1,7 +1,6 @@
 import type { ICellRendererParams } from "ag-grid-community"
-import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
-import { render, screen } from "~/test/test-utils"
+import { renderWithRouter, screen } from "~/test/test-utils"
 import { SocialNameRenderer } from "./social-name-renderer"
 
 interface MockRowData {
@@ -29,10 +28,6 @@ function createMockParams(rowData: MockRowData): ICellRendererParams {
     registerRowDragger: () => {},
     setTooltip: () => {},
   }
-}
-
-function renderWithRouter(component: React.ReactElement) {
-  return render(<MemoryRouter>{component}</MemoryRouter>)
 }
 
 describe("SocialNameRenderer", () => {

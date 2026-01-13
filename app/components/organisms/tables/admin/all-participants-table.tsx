@@ -126,7 +126,7 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
         headerName: "Registro",
         headerTooltip: "Data de cadastro",
         valueFormatter: (params) =>
-          formatDateTime(params.value, "numeric").date ?? "",
+          formatDateTime(params.value, "numeric").date ?? "-",
         sortable: true,
         sort: "desc",
         ...compactCell,
