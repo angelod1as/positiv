@@ -9,7 +9,8 @@ import {
   getProfilesWithExtraDataById,
   getEventsForDashboard,
   getAllProfiles,
-  getProfileById
+  getProfileById,
+  updateProfileApprovalStatus
 } from "./admin.server"
 
 describe("getParticipantFullEventHistory - Integration Tests", () => {
@@ -1819,5 +1820,147 @@ describe("getProfileById - Integration Tests", () => {
       expect(result.data.last_attended_event_date).toBeNull()
       expect(result.data.last_attended_event_id).toBeNull()
     }
+  })
+})
+
+describe("updateProfileApprovalStatus - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+
+    await kysely
+      .deleteFrom("profiles")
+      .where("email", "like", "test-approval-status-%")
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should update approval status to approved", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-approval-status-approved@example.com",
+      full_name: "Test Approval Approved",
+      approved_to_attend: "pending"
+    })
+
+    const result = await updateProfileApprovalStatus({
+      intent: "update-profile-approval-status",
+      profile_id: profile.id,
+      approved_to_attend: "approved"
+    })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(result.data.profile_id).toBe(profile.id)
+      expect(result.data.approved_to_attend).toBe("approved")
+    }
+
+    // Verify in database
+    const updatedProfile = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirst()
+
+    expect(updatedProfile?.approved_to_attend).toBe("approved")
+  })
+
+  it("should update approval status to approved_with_reservations", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-approval-status-reservations@example.com",
+      full_name: "Test Approval Reservations",
+      approved_to_attend: "pending"
+    })
+
+    const result = await updateProfileApprovalStatus({
+      intent: "update-profile-approval-status",
+      profile_id: profile.id,
+      approved_to_attend: "approved_with_reservations"
+    })
+
+    expect(result).toHaveProperty("success", true)
+
+    const updatedProfile = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirst()
+
+    expect(updatedProfile?.approved_to_attend).toBe("approved_with_reservations")
+  })
+
+  it("should update approval status to rejected", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-approval-status-rejected@example.com",
+      full_name: "Test Approval Rejected",
+      approved_to_attend: "approved"
+    })
+
+    const result = await updateProfileApprovalStatus({
+      intent: "update-profile-approval-status",
+      profile_id: profile.id,
+      approved_to_attend: "rejected"
+    })
+
+    expect(result).toHaveProperty("success", true)
+
+    const updatedProfile = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirst()
+
+    expect(updatedProfile?.approved_to_attend).toBe("rejected")
+  })
+
+  it("should update approval status to pending", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-approval-status-pending@example.com",
+      full_name: "Test Approval Pending",
+      approved_to_attend: "approved"
+    })
+
+    const result = await updateProfileApprovalStatus({
+      intent: "update-profile-approval-status",
+      profile_id: profile.id,
+      approved_to_attend: "pending"
+    })
+
+    expect(result).toHaveProperty("success", true)
+
+    const updatedProfile = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirst()
+
+    expect(updatedProfile?.approved_to_attend).toBe("pending")
+  })
+
+  it("should fail when profile_id does not exist", async () => {
+    const result = await updateProfileApprovalStatus({
+      intent: "update-profile-approval-status",
+      profile_id: "00000000-0000-0000-0000-000000000000",
+      approved_to_attend: "approved"
+    })
+
+    expect(result).toHaveProperty("success", false)
+  })
+
+  it("should fail with invalid profile_id format", async () => {
+    const result = await updateProfileApprovalStatus({
+      intent: "update-profile-approval-status",
+      profile_id: "invalid-uuid",
+      approved_to_attend: "approved"
+    })
+
+    expect(result).toHaveProperty("success", false)
   })
 })
