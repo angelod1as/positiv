@@ -3,9 +3,11 @@ import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-d
 import { Card, CardContent } from "~/components/ui/card"
 import { getAge } from "~/lib/helpers/get-age"
 import type {
+  EventParticipantWithEvent,
   ParticipantVsEvent,
   ProfileGlobal,
 } from "~types/database/entities.types"
+import { AdminNotesBox } from "./admin-notes-box"
 import { BasicData } from "./basic-data"
 import { ParticipantEventHistory } from "./participant-event-history"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
@@ -14,7 +16,7 @@ type ParticipantDetailProps = {
   profile: ProfileWithExtraData | ProfileGlobal
   fullHistory: Array<ParticipantVsEvent & { time_event_start: string }>
   currentEvent?: {
-    data: ParticipantVsEvent
+    data: EventParticipantWithEvent
     eventId: string
   }
 }
@@ -27,9 +29,10 @@ export const ParticipantDetail = ({
   const name = profile.social_name || profile.full_name
   // ProfileWithExtraData has profile_id from event_participants join (id is overwritten)
   // ProfileGlobal has id directly from profiles table
-  const profileId = "profile_id" in profile && profile.profile_id
-    ? profile.profile_id
-    : profile.id
+  const profileId =
+    "profile_id" in profile && profile.profile_id
+      ? profile.profile_id
+      : profile.id
 
   return (
     <>
@@ -57,13 +60,20 @@ export const ParticipantDetail = ({
 
       {currentEvent ? (
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <Card className="sm:col-span-1 lg:col-span-3 py-4">
+          <Card className="lg:col-span-3 py-4">
             <CardContent>
               <ParticipantVsEventData eventParticipant={currentEvent.data} />
             </CardContent>
           </Card>
-          <div className="lg:col-span-2">
-            <Card className="sm:col-span-1 lg:col-span-3 py-4">
+          <div className="lg:col-span-2 space-y-4">
+            <AdminNotesBox
+              profileId={profileId}
+              flag={profile.flag ?? "none"}
+              flagNotes={profile.flag_notes}
+              generalNotes={profile.general_notes}
+              isVeteran={profile.is_veteran ?? false}
+            />
+            <Card className="py-4">
               <CardContent>
                 <BasicData profile={profile} />
               </CardContent>
@@ -71,7 +81,16 @@ export const ParticipantDetail = ({
           </div>
         </div>
       ) : (
-        <BasicData profile={profile} />
+        <div className="grid grid-cols-2 gap-4">
+          <BasicData profile={profile} />
+          <AdminNotesBox
+            profileId={profileId}
+            flag={profile.flag ?? "none"}
+            flagNotes={profile.flag_notes}
+            generalNotes={profile.general_notes}
+            isVeteran={profile.is_veteran ?? false}
+          />
+        </div>
       )}
       {fullHistory.length > 0 && (
         <ParticipantEventHistory participantHistory={fullHistory} />
