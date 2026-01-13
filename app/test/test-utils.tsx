@@ -9,6 +9,7 @@ import {
   act,
 } from "@testing-library/react"
 import type { ReactElement } from "react"
+import { MemoryRouter } from "react-router"
 import { TestWrapper } from "./test-wrapper"
 
 export function render(ui: ReactElement, options?: RenderOptions) {
@@ -43,6 +44,17 @@ export function renderHook<Result, Props>(
     wrapper: CombinedWrapper,
     ...restOptions,
   } as RenderHookOptions<Props>)
+}
+
+/**
+ * Render with MemoryRouter for components that use React Router Link.
+ * Use this instead of render() when testing components with routing.
+ */
+export function renderWithRouter(ui: ReactElement, options?: RenderOptions) {
+  const RouterWrapper = ({ children }: { children: React.ReactNode }) => (
+    <MemoryRouter>{children}</MemoryRouter>
+  )
+  return render(ui, { wrapper: RouterWrapper, ...options })
 }
 
 export { screen, waitFor, within, fireEvent, act }

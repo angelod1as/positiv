@@ -1,7 +1,6 @@
 import type { ICellRendererParams } from "ag-grid-community"
-import { MemoryRouter } from "react-router"
 import { describe, expect, it } from "vitest"
-import { render, screen } from "~/test/test-utils"
+import { render, renderWithRouter, screen } from "~/test/test-utils"
 import { LinkedEventRenderer } from "./linked-event-renderer"
 
 interface MockRowData {
@@ -31,10 +30,6 @@ function createMockParams(rowData: MockRowData): ICellRendererParams {
     registerRowDragger: () => {},
     setTooltip: () => {},
   }
-}
-
-function renderWithRouter(component: React.ReactElement) {
-  return render(<MemoryRouter>{component}</MemoryRouter>)
 }
 
 describe("LinkedEventRenderer", () => {
@@ -180,7 +175,7 @@ describe("LinkedEventRenderer", () => {
         time_event_start: "2025-01-15T18:00:00Z",
       })
 
-      const { container } = renderWithRouter(
+      const { container } = render(
         <LinkedEventRenderer {...params} />,
       )
 
