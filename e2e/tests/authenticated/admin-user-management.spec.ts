@@ -670,4 +670,57 @@ test.describe("Admin User Management", () => {
       }
     }
   })
+
+  /**
+   * POS-378: Test that clicking on a profile name in the all-participants table
+   * navigates to the profile detail page.
+   */
+  test("all-participants table profile name links to detail page (POS-378)", async ({
+    page,
+  }) => {
+    // Navigate to all-participants page
+    await page.goto("/admin/participantes")
+    await page.waitForLoadState("networkidle")
+
+    // Wait for AG Grid to be ready
+    const grid = await waitForAGGridReady(page, "all-participants-table")
+    await expect(grid).toBeVisible()
+
+    // Get the first row from pinned left section (where social_name is)
+    const pinnedLeftRow = grid
+      .locator(".ag-pinned-left-cols-container .ag-row")
+      .first()
+    await expect(pinnedLeftRow).toBeVisible()
+
+    // Get the row-index to find corresponding cells across viewports
+    const rowIndex = await pinnedLeftRow.getAttribute("row-index")
+    expect(rowIndex).toBeTruthy()
+
+    // Get the social_name cell which should now be a link
+    const socialNameCell = grid
+      .locator(
+        `.ag-pinned-left-cols-container .ag-row[row-index="${rowIndex}"] .ag-cell[col-id="social_name"]`,
+      )
+      .first()
+    await expect(socialNameCell).toBeVisible()
+
+    // Get the link inside the cell
+    const profileLink = socialNameCell.locator("a")
+    await expect(profileLink).toBeVisible()
+
+    // Get the profile name text for later verification
+    const profileName = await profileLink.textContent()
+    expect(profileName).toBeTruthy()
+
+    // Click the profile link
+    await profileLink.click()
+
+    // Verify navigation to profile detail page
+    await expect(page).toHaveURL(/\/admin\/participantes\/[\w-]+$/)
+
+    // Verify profile name appears in the detail view
+    await expect(page.locator("h2").first()).toContainText(
+      (profileName ?? "").trim(),
+    )
+  })
 })
