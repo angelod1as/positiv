@@ -7,15 +7,13 @@ import {
   applicationStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
-  flagStatusOptions,
-  profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
-import { type ParticipantVsEvent } from "~types/database/entities.types"
+import { type EventParticipantWithEvent } from "~types/database/entities.types"
 import type { Database } from "~types/database/kysely.types"
 
 type ParticipantVsEventDataProps = {
-  eventParticipant: ParticipantVsEvent
+  eventParticipant: EventParticipantWithEvent
 }
 export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   eventParticipant,
@@ -23,23 +21,15 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   const { application_date, bond, companions, notes, referrals, referred } =
     eventParticipant
 
-  const profileFieldLabels = {
-    flag: profilePropMap("flag"),
-    flag_notes: profilePropMap("flag_notes"),
-    is_veteran: profilePropMap("is_veteran"),
-  }
-
-  const labels = Object.keys(eventParticipant).reduce((acc, curr) => {
-    if (curr in profileFieldLabels) {
-      return acc
-    }
-    return {
+  const labels = Object.keys(eventParticipant).reduce(
+    (acc, curr) => ({
       ...acc,
       [curr]: eventParticipantPropMap(
         curr as keyof Database["event_participants"],
       ),
-    }
-  }, profileFieldLabels)
+    }),
+    {} as Record<string, string>,
+  )
 
   return (
     <div className="space-y-4">
@@ -60,18 +50,15 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             }}
             inputTypes={{
               has_paid: "checkbox",
-              is_veteran: "checkbox",
               was_selected_for_rotation: "checkbox",
               payment: "number",
               spot_type: "select",
-              flag: "select",
-              flag_notes: "textarea",
+              admin_general_notes: "textarea",
             }}
             options={{
               attendance_status: attendanceStatusOptions,
               application_status: applicationStatusOptions,
               spot_type: spotTypeOptions,
-              flag: flagStatusOptions,
             }}
             labels={labels}
           >
@@ -94,15 +81,10 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                       <Field name="payment" />
                       <div className="flex flex-col justify-end">
                         <Field name="has_paid" />
-                        <Field name="is_veteran" />
                         <Field name="was_selected_for_rotation" />
                       </div>
                     </div>
                     <div className="lg:flex gap-4 [&>*]:flex-1">
-                      <div>
-                        <Field name="flag" />
-                        <Field name="flag_notes" multiline />
-                      </div>
                       <Field
                         name="admin_general_notes"
                         multiline
