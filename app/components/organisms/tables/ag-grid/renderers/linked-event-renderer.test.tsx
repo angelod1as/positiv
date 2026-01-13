@@ -180,7 +180,7 @@ describe("LinkedEventRenderer", () => {
         time_event_start: "2025-01-15T18:00:00Z",
       })
 
-      const { container } = renderWithRouter(
+      const { container } = render(
         <LinkedEventRenderer {...params} />,
       )
 
