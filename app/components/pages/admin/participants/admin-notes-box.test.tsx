@@ -158,4 +158,84 @@ describe("AdminNotesBox", () => {
     expect(formData.get("profile_id")).toBe("test-profile-id")
     expect(formData.get("intent")).toBe("update-profile-admin-notes")
   })
+
+  describe("textarea submission behavior", () => {
+    it("should NOT submit while typing in flag_notes textarea", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter(defaultProps)
+      render(<RouterProvider router={router} />)
+
+      const textarea = screen.getByLabelText("Notas da Flag")
+      await user.type(textarea, "typing some notes")
+
+      // Should NOT have submitted while typing
+      expect(mockFetcher.submit).not.toHaveBeenCalled()
+    })
+
+    it("should submit flag_notes on blur when value changed", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter(defaultProps)
+      render(<RouterProvider router={router} />)
+
+      const textarea = screen.getByLabelText("Notas da Flag")
+      await user.type(textarea, "new notes")
+      await user.tab() // Move focus away (blur)
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalledTimes(1)
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("flag_notes")).toBe("new notes")
+    })
+
+    it("should NOT submit flag_notes on blur when value unchanged", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter({
+        ...defaultProps,
+        flagNotes: "existing notes",
+      })
+      render(<RouterProvider router={router} />)
+
+      const textarea = screen.getByLabelText("Notas da Flag")
+      // Just focus and blur without changing
+      await user.click(textarea)
+      await user.tab()
+
+      expect(mockFetcher.submit).not.toHaveBeenCalled()
+    })
+
+    it("should NOT submit general_notes while typing", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter(defaultProps)
+      render(<RouterProvider router={router} />)
+
+      const textarea = screen.getByLabelText("Notas Gerais")
+      await user.type(textarea, "typing general notes")
+
+      expect(mockFetcher.submit).not.toHaveBeenCalled()
+    })
+
+    it("should submit general_notes on blur when value changed", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter(defaultProps)
+      render(<RouterProvider router={router} />)
+
+      const textarea = screen.getByLabelText("Notas Gerais")
+      await user.type(textarea, "new general notes")
+      await user.tab()
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalledTimes(1)
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("general_notes")).toBe("new general notes")
+    })
+  })
 })
