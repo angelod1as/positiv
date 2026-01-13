@@ -9,7 +9,6 @@ import type {
   GetAllProfilesFilters,
   ParticipantVsEvent,
   Profile,
-  ProfileApprovedToAttendStatus,
   ProfileFlagStatus,
   ProfileGlobal,
 } from "~types/database/entities.types"
@@ -21,6 +20,7 @@ import {
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
   updateParticipantVsEventSchema,
+  updateProfileApprovalStatusSchema,
 } from "./common"
 import {
   deleteEventListmonkList,
@@ -618,7 +618,6 @@ export const updateParticipantVsEvent = applySchema(
     event_id,
     profile_id,
     is_veteran,
-    approved_to_attend,
     flag,
     flag_notes,
     ...data
@@ -634,17 +633,12 @@ export const updateParticipantVsEvent = applySchema(
 
     const profileUpdateData: {
       is_veteran?: boolean
-      approved_to_attend?: ProfileApprovedToAttendStatus
       flag?: ProfileFlagStatus
       flag_notes?: string
     } = {}
 
     if (typeof is_veteran === "boolean") {
       profileUpdateData.is_veteran = is_veteran
-    }
-
-    if (approved_to_attend) {
-      profileUpdateData.approved_to_attend = approved_to_attend
     }
 
     if (flag) profileUpdateData.flag = flag
@@ -668,7 +662,6 @@ export const updateEventParticipantById = applySchema(
     id,
     profile_id,
     is_veteran,
-    approved_to_attend,
     flag,
     flag_notes,
     ...data
@@ -677,15 +670,12 @@ export const updateEventParticipantById = applySchema(
   return await kyselyDb.transaction().execute(async (transaction) => {
     if (
       typeof is_veteran === "boolean" ||
-      !!approved_to_attend ||
       flag !== undefined ||
       flag_notes !== undefined
     ) {
       const profileUpdates: Record<string, string | boolean | null> = {}
       if (typeof is_veteran === "boolean")
         profileUpdates.is_veteran = is_veteran
-      if (approved_to_attend)
-        profileUpdates.approved_to_attend = approved_to_attend
       if (flag !== undefined) profileUpdates.flag = flag
       if (flag_notes !== undefined) profileUpdates.flag_notes = flag_notes
 
@@ -708,4 +698,22 @@ export const updateEventParticipantById = applySchema(
         .execute()
     }
   })
+})
+
+export const updateProfileApprovalStatus = applySchema(
+  updateProfileApprovalStatusSchema,
+)(async (formData) => {
+  const { profile_id, approved_to_attend } = formData
+
+  const result = await kyselyDb
+    .updateTable("profiles")
+    .where("id", "=", profile_id)
+    .set({ approved_to_attend })
+    .execute()
+
+  if (result.length === 0 || Number(result[0].numUpdatedRows) === 0) {
+    throw new Error("Failed to update profile approval status")
+  }
+
+  return { profile_id, approved_to_attend }
 })
