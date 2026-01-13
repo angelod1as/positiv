@@ -6,6 +6,7 @@ import { kyselyDb } from "~/kysely-db"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import type {
   EventParticipant,
+  EventParticipantWithEvent,
   GetAllProfilesFilters,
   ParticipantVsEvent,
   Profile,
@@ -20,6 +21,7 @@ import {
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
   updateParticipantVsEventSchema,
+  updateProfileAdminNotesSchema,
   updateProfileApprovalStatusSchema,
 } from "./common"
 import {
@@ -613,45 +615,14 @@ export const getEventDemographicsById = composable(
 export const updateParticipantVsEvent = applySchema(
   updateParticipantVsEventSchema,
 )(async (formData) => {
-  const {
-    intent,
-    event_id,
-    profile_id,
-    is_veteran,
-    flag,
-    flag_notes,
-    ...data
-  } = formData
+  const { intent, event_id, profile_id, ...data } = formData
 
-  return await kyselyDb.transaction().execute(async (transaction) => {
-    await transaction
-      .updateTable("event_participants")
-      .where("event_id", "=", event_id)
-      .where("profile_id", "=", profile_id)
-      .set(data)
-      .execute()
-
-    const profileUpdateData: {
-      is_veteran?: boolean
-      flag?: ProfileFlagStatus
-      flag_notes?: string
-    } = {}
-
-    if (typeof is_veteran === "boolean") {
-      profileUpdateData.is_veteran = is_veteran
-    }
-
-    if (flag) profileUpdateData.flag = flag
-    if (flag_notes) profileUpdateData.flag_notes = flag_notes
-
-    if (Object.keys(profileUpdateData).length > 0) {
-      await transaction
-        .updateTable("profiles")
-        .where("id", "=", profile_id)
-        .set(profileUpdateData)
-        .execute()
-    }
-  })
+  await kyselyDb
+    .updateTable("event_participants")
+    .where("event_id", "=", event_id)
+    .where("profile_id", "=", profile_id)
+    .set(data)
+    .execute()
 })
 
 export const updateEventParticipantById = applySchema(
@@ -716,4 +687,59 @@ export const updateProfileApprovalStatus = applySchema(
   }
 
   return { profile_id, approved_to_attend }
+})
+
+export const getEventParticipantBasic = composable(
+  async ({
+    profileId,
+    eventId,
+  }: {
+    profileId: string
+    eventId: string
+  }): Promise<EventParticipantWithEvent | null> => {
+    const result = await kyselyDb
+      .selectFrom("event_participants")
+      .innerJoin("events", "events.id", "event_participants.event_id")
+      .selectAll("event_participants")
+      .select(["events.title as event_title", "events.emoji as event_emoji"])
+      .where("event_participants.profile_id", "=", profileId)
+      .where("event_participants.event_id", "=", eventId)
+      .executeTakeFirst()
+
+    return result ?? null
+  }
+)
+
+export const updateProfileAdminNotes = applySchema(
+  updateProfileAdminNotesSchema,
+)(async (formData) => {
+  const { profile_id, flag, flag_notes, general_notes, is_veteran } = formData
+
+  const updateData: {
+    flag?: ProfileFlagStatus
+    flag_notes?: string | null
+    general_notes?: string | null
+    is_veteran?: boolean
+  } = {}
+
+  if (flag !== undefined) updateData.flag = flag
+  if (flag_notes !== undefined) updateData.flag_notes = flag_notes
+  if (general_notes !== undefined) updateData.general_notes = general_notes
+  if (is_veteran !== undefined) updateData.is_veteran = is_veteran
+
+  if (Object.keys(updateData).length === 0) {
+    return { profile_id }
+  }
+
+  const result = await kyselyDb
+    .updateTable("profiles")
+    .where("id", "=", profile_id)
+    .set(updateData)
+    .execute()
+
+  if (result.length === 0 || Number(result[0].numUpdatedRows) === 0) {
+    throw new Error("Failed to update profile admin notes")
+  }
+
+  return { profile_id, ...updateData }
 })
