@@ -1,13 +1,8 @@
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { render, screen, waitFor } from "~/test/test-utils"
+import { render, renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { ProfileGlobal } from "~types/database/entities.types"
 import { AllParticipantsTable } from "./all-participants-table"
-
-function renderWithRouter(component: React.ReactElement) {
-  return render(<MemoryRouter>{component}</MemoryRouter>)
-}
 
 const mockSessionStorage = (() => {
   let store: Record<string, string> = {}

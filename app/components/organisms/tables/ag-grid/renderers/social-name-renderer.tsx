@@ -13,24 +13,22 @@ interface SocialNameData {
 }
 
 export function SocialNameRenderer(
-  params: ICellRendererParams<SocialNameData>
+  params: ICellRendererParams<SocialNameData>,
 ) {
-  const data = params.data
-  const socialName = params.value as string | null | undefined
-  const fullName = data?.full_name ?? ""
-  const profileId = data?.id
+  const { data } = params
+  if (!data) {
+    return <>-</>
+  }
+
+  const { id: profileId, social_name: socialName, full_name: fullName } = data
 
   let content: React.ReactNode
 
   if (socialName) {
     content = <>{socialName}</>
   } else {
-    const firstName = fullName.trim().split(/\s+/)[0]
-    if (!firstName) {
-      content = <>-</>
-    } else {
-      content = <i>{firstName}</i>
-    }
+    const firstName = fullName?.trim().split(/\s+/)[0]
+    content = firstName ? <i>{firstName}</i> : <>-</>
   }
 
   if (profileId) {

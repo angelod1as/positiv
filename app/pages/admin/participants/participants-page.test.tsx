@@ -1,6 +1,5 @@
-import { MemoryRouter } from "react-router"
 import { describe, expect, it, vi } from "vitest"
-import { render, screen, waitFor } from "~/test/test-utils"
+import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
 
 const mockUseLoaderData = vi.fn()
 
@@ -13,10 +12,6 @@ vi.mock("react-router", async (importOriginal) => {
 })
 
 import ParticipantsPage from "./participants-page"
-
-function renderWithRouter(component: React.ReactElement) {
-  return render(<MemoryRouter>{component}</MemoryRouter>)
-}
 
 describe("ParticipantsPage", () => {
   it("should render the page heading", async () => {
