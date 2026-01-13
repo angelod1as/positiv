@@ -1,6 +1,13 @@
 import type { ICellRendererParams } from "ag-grid-community"
+import { Link } from "~/components/atoms/link/link"
+import paths from "~/lib/paths"
+
+const {
+  admin: { ADMIN_VIEW_PARTICIPANT },
+} = paths
 
 interface SocialNameData {
+  id?: string
   social_name?: string | null
   full_name: string
 }
@@ -8,18 +15,27 @@ interface SocialNameData {
 export function SocialNameRenderer(
   params: ICellRendererParams<SocialNameData>
 ) {
+  const data = params.data
   const socialName = params.value as string | null | undefined
-  const fullName = params.data?.full_name ?? ""
+  const fullName = data?.full_name ?? ""
+  const profileId = data?.id
+
+  let content: React.ReactNode
 
   if (socialName) {
-    return <>{socialName}</>
+    content = <>{socialName}</>
+  } else {
+    const firstName = fullName.trim().split(/\s+/)[0]
+    if (!firstName) {
+      content = <>-</>
+    } else {
+      content = <i>{firstName}</i>
+    }
   }
 
-  const firstName = fullName.trim().split(/\s+/)[0]
-
-  if (!firstName) {
-    return <>-</>
+  if (profileId) {
+    return <Link to={ADMIN_VIEW_PARTICIPANT(profileId)}>{content}</Link>
   }
 
-  return <i>{firstName}</i>
+  return content
 }
