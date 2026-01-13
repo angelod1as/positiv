@@ -13,6 +13,7 @@ import {
   getEventCountColors,
   getVeteranRookieColors,
 } from "~/lib/helpers/cell-colors"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   approvedToAttendStatusOptions,
   flagStatusOptions,
@@ -119,6 +120,17 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
         pinned: "left",
         cellRenderer: SocialNameRenderer,
         sortable: true,
+      },
+      {
+        field: "created_at",
+        headerName: "Registro",
+        headerTooltip: "Data de cadastro",
+        valueFormatter: (params) =>
+          formatDateTime(params.value, "numeric").date ?? "",
+        sortable: true,
+        sort: "desc",
+        ...compactCell,
+        width: 80,
       },
       {
         field: "gender",
