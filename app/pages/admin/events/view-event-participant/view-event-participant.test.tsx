@@ -11,6 +11,10 @@ vi.mock("~/components/pages/admin/participants/basic-data", () => ({
   BasicData: () => <div>Basic Data</div>,
 }))
 
+vi.mock("~/components/pages/admin/participants/admin-notes-box", () => ({
+  AdminNotesBox: () => <div>Admin Notes Box</div>,
+}))
+
 vi.mock(
   "~/components/pages/admin/participants/participant-vs-event-data",
   () => ({
@@ -65,12 +69,10 @@ describe("ViewEventParticipant", () => {
         date_of_birth: "1990-01-01",
         is_veteran: true,
       },
-      participantHistory: [
-        {
-          event_title: "Workshop BDSM",
-          event_emoji: "🌱",
-        },
-      ],
+      eventParticipant: {
+        event_title: "Workshop BDSM",
+        event_emoji: "🌱",
+      },
       fullHistory: [
         {
           id: "event-2",
@@ -79,6 +81,7 @@ describe("ViewEventParticipant", () => {
           time_event_start: "2024-02-15T14:00:00",
         },
       ],
+      eventId: "test-event-id",
     }
 
     const router = createTestRouter(mockLoaderData)
@@ -97,13 +100,12 @@ describe("ViewEventParticipant", () => {
         date_of_birth: "1990-01-01",
         is_veteran: false,
       },
-      participantHistory: [
-        {
-          event_title: "Workshop BDSM",
-          event_emoji: "🌱",
-        },
-      ],
+      eventParticipant: {
+        event_title: "Workshop BDSM",
+        event_emoji: "🌱",
+      },
       fullHistory: [],
+      eventId: "test-event-id",
     }
 
     const router = createTestRouter(mockLoaderData)
@@ -124,13 +126,12 @@ describe("ViewEventParticipant", () => {
         date_of_birth: "1990-01-01",
         is_veteran: true,
       },
-      participantHistory: [
-        {
-          event_title: "Workshop BDSM",
-          event_emoji: "🌱",
-        },
-      ],
+      eventParticipant: {
+        event_title: "Workshop BDSM",
+        event_emoji: "🌱",
+      },
       fullHistory: [], // Empty history
+      eventId: "test-event-id",
     }
 
     const router = createTestRouter(mockLoaderData)
@@ -151,13 +152,12 @@ describe("ViewEventParticipant", () => {
         date_of_birth: "1990-01-01",
         is_veteran: true,
       },
-      participantHistory: [
-        {
-          event_title: "Workshop BDSM",
-          event_emoji: "🌱",
-        },
-      ],
+      eventParticipant: {
+        event_title: "Workshop BDSM",
+        event_emoji: "🌱",
+      },
       fullHistory: [],
+      eventId: "test-event-id",
     }
 
     const router = createTestRouter(mockLoaderData)
@@ -174,13 +174,12 @@ describe("ViewEventParticipant", () => {
   it("should handle null profile gracefully", () => {
     const mockLoaderData = {
       profile: null,
-      participantHistory: [
-        {
-          event_title: "Workshop BDSM",
-          event_emoji: "🌱",
-        },
-      ],
+      eventParticipant: {
+        event_title: "Workshop BDSM",
+        event_emoji: "🌱",
+      },
       fullHistory: [],
+      eventId: "test-event-id",
     }
 
     const router = createTestRouter(mockLoaderData)
