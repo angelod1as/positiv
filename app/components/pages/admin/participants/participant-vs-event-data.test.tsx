@@ -1,7 +1,7 @@
 import type { ReactNode } from "react"
 import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "~/test/test-utils"
-import type { ParticipantVsEvent } from "~types/database/entities.types"
+import type { EventParticipantWithEvent } from "~types/database/entities.types"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
 
 // Mock the SchemaForm component
@@ -37,7 +37,7 @@ vi.mock("~/components/forms/base/schema-form", () => ({
   },
 }))
 
-const mockEventParticipant: ParticipantVsEvent = {
+const mockEventParticipant: EventParticipantWithEvent = {
   id: "123",
   event_id: "event-123",
   profile_id: "profile-123",
@@ -47,8 +47,6 @@ const mockEventParticipant: ParticipantVsEvent = {
   spot_type: "regular",
   payment: 100,
   has_paid: false,
-  is_veteran: false,
-  approved_to_attend: "pending",
   admin_general_notes: "",
   bond: "Test bond",
   companions: "Test companions",
@@ -65,29 +63,26 @@ const mockEventParticipant: ParticipantVsEvent = {
 }
 
 describe("ParticipantVsEventData", () => {
-  it("should render flag and flag_notes fields", () => {
+  it("should NOT render flag and flag_notes fields (moved to AdminNotesBox)", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
 
-    // Check that flag fields are rendered
-    expect(screen.getByTestId("field-flag")).toBeInTheDocument()
-    expect(screen.getByTestId("field-flag_notes")).toBeInTheDocument()
+    // Flag fields should NOT be rendered - they're in AdminNotesBox now
+    expect(screen.queryByTestId("field-flag")).not.toBeInTheDocument()
+    expect(screen.queryByTestId("field-flag_notes")).not.toBeInTheDocument()
   })
 
-  it("should render flag_notes after flag field", () => {
+  it("should NOT render is_veteran field (moved to AdminNotesBox)", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
 
-    const fields = screen.getAllByTestId(/^field-/).map((el) => el.textContent)
-    const flagIndex = fields.indexOf("flag")
-    const flagNotesIndex = fields.indexOf("flag_notes")
-
-    // Check the order of fields
-    expect(flagIndex).toBeLessThan(flagNotesIndex)
+    // is_veteran field should NOT be rendered - it's in AdminNotesBox now
+    expect(screen.queryByTestId("field-is_veteran")).not.toBeInTheDocument()
   })
 
-  it("should pass flag options to SchemaForm", () => {
+  it("should NOT pass flag options to SchemaForm", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
 
-    expect(screen.getByTestId("has-flag-options")).toHaveTextContent("true")
+    // Flag options should not be passed anymore
+    expect(screen.getByTestId("has-flag-options")).toHaveTextContent("false")
   })
 
   it("should render attendance and application status fields", () => {
@@ -101,5 +96,18 @@ describe("ParticipantVsEventData", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
 
     expect(screen.getByTestId("field-spot_type")).toBeInTheDocument()
+  })
+
+  it("should render admin_general_notes field (event-specific notes)", () => {
+    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+
+    expect(screen.getByTestId("field-admin_general_notes")).toBeInTheDocument()
+  })
+
+  it("should render payment and has_paid fields", () => {
+    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+
+    expect(screen.getByTestId("field-payment")).toBeInTheDocument()
+    expect(screen.getByTestId("field-has_paid")).toBeInTheDocument()
   })
 })
