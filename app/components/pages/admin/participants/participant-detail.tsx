@@ -1,4 +1,5 @@
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-dropdown/approval-status-dropdown"
 import { Card, CardContent } from "~/components/ui/card"
 import { getAge } from "~/lib/helpers/get-age"
 import type {
@@ -24,6 +25,11 @@ export const ParticipantDetail = ({
   currentEvent,
 }: ParticipantDetailProps) => {
   const name = profile.social_name || profile.full_name
+  // ProfileWithExtraData has profile_id from event_participants join (id is overwritten)
+  // ProfileGlobal has id directly from profiles table
+  const profileId = "profile_id" in profile && profile.profile_id
+    ? profile.profile_id
+    : profile.id
 
   return (
     <>
@@ -40,6 +46,12 @@ export const ParticipantDetail = ({
               </b>
             </p>
           )}
+          <div className="mt-4">
+            <ApprovalStatusDropdown
+              value={profile.approved_to_attend ?? "pending"}
+              profileId={profileId}
+            />
+          </div>
         </div>
       </div>
 

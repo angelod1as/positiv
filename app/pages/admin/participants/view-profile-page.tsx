@@ -2,6 +2,7 @@ import { redirectWithError } from "remix-toast"
 import {
   getParticipantFullEventHistory,
   getProfileById,
+  updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import paths from "~/lib/paths"
@@ -48,6 +49,18 @@ export async function loader({ params }: Route.LoaderArgs) {
     profile,
     fullHistory,
   }
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData()
+  const intent = formData.get("intent")
+
+  if (intent === "update-profile-approval-status") {
+    const result = await updateProfileApprovalStatus(Object.fromEntries(formData))
+    return { success: result.success }
+  }
+
+  return { success: false }
 }
 
 const ViewProfilePage = ({ loaderData }: Route.ComponentProps) => {

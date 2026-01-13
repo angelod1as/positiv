@@ -18,12 +18,11 @@ vi.mock("~/components/forms/base/schema-form", () => ({
     }) => ReactNode
     options?: Record<string, unknown>
   }) => {
-    // Verify that approved_to_attend options are passed
-    const hasApprovedToAttendOptions = !!options?.approved_to_attend
+    const hasFlagOptions = !!options?.flag
     return (
       <div data-testid="schema-form">
-        <div data-testid="has-approved-to-attend-options">
-          {hasApprovedToAttendOptions ? "true" : "false"}
+        <div data-testid="has-flag-options">
+          {hasFlagOptions ? "true" : "false"}
         </div>
         {children({
           Field: ({ name }: { name: string }) => (
@@ -66,37 +65,6 @@ const mockEventParticipant: ParticipantVsEvent = {
 }
 
 describe("ParticipantVsEventData", () => {
-  it("should render the approved_to_attend field", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
-
-    // Check that the approved_to_attend field is rendered
-    expect(screen.getByTestId("field-approved_to_attend")).toBeInTheDocument()
-  })
-
-  it("should pass approved_to_attend options to SchemaForm", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
-
-    // Check that approved_to_attend options are passed to SchemaForm
-    expect(
-      screen.getByTestId("has-approved-to-attend-options"),
-    ).toHaveTextContent("true")
-  })
-
-  it("should render approved_to_attend field after application_status and before spot_type", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
-
-    const fields = screen.getAllByTestId(/^field-/).map((el) => el.textContent)
-    const attendanceIndex = fields.indexOf("attendance_status")
-    const applicationIndex = fields.indexOf("application_status")
-    const approvedIndex = fields.indexOf("approved_to_attend")
-    const spotTypeIndex = fields.indexOf("spot_type")
-
-    // Check the order of fields
-    expect(attendanceIndex).toBeLessThan(applicationIndex)
-    expect(applicationIndex).toBeLessThan(approvedIndex)
-    expect(approvedIndex).toBeLessThan(spotTypeIndex)
-  })
-
   it("should render flag and flag_notes fields", () => {
     render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
 
@@ -114,5 +82,24 @@ describe("ParticipantVsEventData", () => {
 
     // Check the order of fields
     expect(flagIndex).toBeLessThan(flagNotesIndex)
+  })
+
+  it("should pass flag options to SchemaForm", () => {
+    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+
+    expect(screen.getByTestId("has-flag-options")).toHaveTextContent("true")
+  })
+
+  it("should render attendance and application status fields", () => {
+    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+
+    expect(screen.getByTestId("field-attendance_status")).toBeInTheDocument()
+    expect(screen.getByTestId("field-application_status")).toBeInTheDocument()
+  })
+
+  it("should render spot_type field", () => {
+    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+
+    expect(screen.getByTestId("field-spot_type")).toBeInTheDocument()
   })
 })
