@@ -164,6 +164,7 @@ describe("AllParticipantsTable", () => {
         expect(screen.getByText("Nome")).toBeInTheDocument()
       })
 
+      expect(screen.getByText("Registro")).toBeInTheDocument()
       expect(screen.getByText("Vet/Nov")).toBeInTheDocument()
       expect(screen.getByText("Cidade")).toBeInTheDocument()
       expect(screen.getByText("Eventos")).toBeInTheDocument()
