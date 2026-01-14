@@ -22,7 +22,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   participantHistory,
 }) => {
   const paidEvents = participantHistory.filter(
-    (item) => item.payment && Number(item.payment) > 0,
+    (item) => Number(item.payment) > 0,
   )
 
   if (paidEvents.length === 0) {
@@ -40,7 +40,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
     paidEventsCount > 0 ? totalInvested / paidEventsCount : 0
 
   const totalSurplus = paidEvents.reduce((sum, item) => {
-    const payment = Number(item.payment ?? 0)
+    const payment = Number(item.payment)
     const ticketPrice = Number(item.ticket_price ?? 0)
     return sum + (payment - ticketPrice)
   }, 0)
@@ -67,7 +67,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Diferença total</p>
-            <p className="text-xl font-bold">{formatCurrency(totalSurplus)}</p>
+            <p className="text-xl font-bold">{formatSurplus(totalSurplus)}</p>
           </div>
         </div>
 
