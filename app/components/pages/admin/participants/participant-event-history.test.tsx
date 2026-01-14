@@ -233,24 +233,6 @@ describe("ParticipantEventHistory", () => {
     })
   })
 
-  it("should display 'Sim' when participant has paid", async () => {
-    const historyWithPayment: Array<
-      ParticipantVsEvent & { time_event_start: string }
-    > = [
-      {
-        ...mockParticipantHistory[0],
-        has_paid: true,
-      },
-    ]
-    renderWithRouter(
-      <ParticipantEventHistory participantHistory={historyWithPayment} />,
-    )
-
-    await waitFor(() => {
-      expect(screen.getByText("Sim")).toBeInTheDocument()
-    })
-  })
-
   it("should display 'Sim' when participant was selected for rotation", async () => {
     const historyWithRotation: Array<
       ParticipantVsEvent & { time_event_start: string }
@@ -277,7 +259,6 @@ describe("ParticipantEventHistory", () => {
     await waitFor(() => {
       expect(screen.getByText("Tipo de vaga")).toBeInTheDocument()
       expect(screen.getByText("Pagamento")).toBeInTheDocument()
-      expect(screen.getByText("Pago?")).toBeInTheDocument()
       expect(screen.getByText("Escolhide para rodízio?")).toBeInTheDocument()
     })
   })

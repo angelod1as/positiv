@@ -11,7 +11,6 @@ import {
   approvedToAttendStatusOptions,
   eventParticipantPropMap,
   eventPropNameMap,
-  hasPaidOptions,
   notesFilterOptions,
   profilePropMap,
   spotTypeOptions,
@@ -143,17 +142,6 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         headerName: eventParticipantPropMap("payment"),
         cellRenderer: PaymentRenderer,
         sortable: true,
-      },
-      {
-        field: "has_paid",
-        headerName: eventParticipantPropMap("has_paid"),
-        cellRenderer: BooleanTextRenderer,
-        sortable: true,
-        filter: BaseMultiSelectFilter,
-        filterParams: {
-          options: hasPaidOptions,
-          field: "has_paid",
-        },
       },
       {
         field: "application_status",
