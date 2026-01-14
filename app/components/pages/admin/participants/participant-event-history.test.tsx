@@ -2,12 +2,10 @@ import type React from "react"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it } from "vitest"
 import { render, screen, waitFor } from "~/test/test-utils"
-import type { ParticipantVsEvent } from "~types/database/entities.types"
+import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 import { ParticipantEventHistory } from "./participant-event-history"
 
-const mockParticipantHistory: Array<
-  ParticipantVsEvent & { time_event_start: string }
-> = [
+const mockParticipantHistory: ParticipantEventHistoryData[] = [
   {
     id: "1",
     profile_id: "profile-1",
@@ -15,6 +13,7 @@ const mockParticipantHistory: Array<
     event_title: "Workshop de Introdução",
     event_emoji: "🌱",
     time_event_start: "2024-03-01T10:00:00",
+    ticket_price: 100,
     application_status: "finalised",
     attendance_status: "attended",
     admin_general_notes: "Participou ativamente",
@@ -42,6 +41,7 @@ const mockParticipantHistory: Array<
     event_title: "Roda de Conversa",
     event_emoji: "💬",
     time_event_start: "2024-02-15T14:00:00",
+    ticket_price: 80,
     application_status: "finalised",
     attendance_status: "not-attended",
     admin_general_notes: "Faltou por motivo de saúde",
@@ -186,7 +186,7 @@ describe("ParticipantEventHistory", () => {
 
   it("should display payment amount with R$ prefix when participant has paid", async () => {
     const historyWithPayment: Array<
-      ParticipantVsEvent & { time_event_start: string }
+      ParticipantEventHistoryData
     > = [
       {
         ...mockParticipantHistory[0],
@@ -217,7 +217,7 @@ describe("ParticipantEventHistory", () => {
 
   it("should display spot type with Portuguese labels", async () => {
     const historyWithSocialSpot: Array<
-      ParticipantVsEvent & { time_event_start: string }
+      ParticipantEventHistoryData
     > = [
       {
         ...mockParticipantHistory[0],
@@ -235,7 +235,7 @@ describe("ParticipantEventHistory", () => {
 
   it("should display 'Sim' when participant was selected for rotation", async () => {
     const historyWithRotation: Array<
-      ParticipantVsEvent & { time_event_start: string }
+      ParticipantEventHistoryData
     > = [
       {
         ...mockParticipantHistory[0],
@@ -261,5 +261,83 @@ describe("ParticipantEventHistory", () => {
       expect(screen.getByText("Pagamento")).toBeInTheDocument()
       expect(screen.getByText("Escolhide para rodízio?")).toBeInTheDocument()
     })
+  })
+
+  it("should have the Surplus column header", async () => {
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Surplus")).toBeInTheDocument()
+    })
+  })
+
+  it("should display positive surplus with green color", async () => {
+    const historyWithSurplus: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        payment: 150,
+        ticket_price: 100,
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithSurplus} />,
+    )
+
+    await waitFor(() => {
+      const surplusElement = screen.getByText("+R$ 50,00")
+      expect(surplusElement).toBeInTheDocument()
+      expect(surplusElement).toHaveClass("text-green-600")
+    })
+  })
+
+  it("should display negative surplus with red color", async () => {
+    const historyWithNegativeSurplus: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        payment: 80,
+        ticket_price: 100,
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithNegativeSurplus} />,
+    )
+
+    await waitFor(() => {
+      const surplusElement = screen.getByText("-R$ 20,00")
+      expect(surplusElement).toBeInTheDocument()
+      expect(surplusElement).toHaveClass("text-red-600")
+    })
+  })
+
+  it("should display zero surplus when payment equals ticket price", async () => {
+    const historyWithZeroSurplus: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        payment: 100,
+        ticket_price: 100,
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithZeroSurplus} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("+R$ 0,00")).toBeInTheDocument()
+    })
+  })
+
+  it("should not display surplus when payment is 0", async () => {
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole("grid")).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText(/\+R\$/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/-R\$/)).not.toBeInTheDocument()
   })
 })
