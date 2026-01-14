@@ -90,6 +90,11 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
                         ({formattedDate})
                       </span>
                     )}
+                    {item.ticket_price != null && (
+                      <span className="text-muted-foreground ml-1">
+                        ({formatCurrency(Number(item.ticket_price))})
+                      </span>
+                    )}
                   </span>
                   <span className="font-medium">
                     {formatCurrency(Number(item.payment ?? 0))}{" "}
