@@ -13,7 +13,9 @@ import {
   eventPropNameMap,
   notesFilterOptions,
   profilePropMap,
+  spotTypeOptions,
 } from "~/lib/helpers/propMaps"
+import { BooleanTextRenderer } from "~/components/organisms/tables/ag-grid/renderers/boolean-text-renderer"
 import paths from "~/lib/paths"
 import type { ParticipantVsEvent } from "~types/database/entities.types"
 
@@ -35,6 +37,10 @@ const approvalStatusMap = new Map<string, string>(
 )
 const attendanceStatusMap = new Map<string, string>(
   attendanceStatusOptions.map((opt) => [opt.value, opt.name]),
+)
+
+const spotTypeMap = new Map<string, string>(
+  spotTypeOptions.map((opt) => [opt.value, opt.name]),
 )
 
 type ParticipantEventHistoryProps = {
@@ -93,6 +99,22 @@ function AttendanceStatusRenderer(
   return attendanceStatusMap.get(value) || value
 }
 
+function SpotTypeRenderer(
+  params: ICellRendererParams<ParticipantEventHistoryData>,
+) {
+  const value = params.value as string | undefined
+  if (!value) return null
+  return spotTypeMap.get(value) || value
+}
+
+function PaymentRenderer(
+  params: ICellRendererParams<ParticipantEventHistoryData>,
+) {
+  const value = params.value as number | null | undefined
+  if (value === null || value === undefined || value === 0) return null
+  return `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
 export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   participantHistory,
 }) => {
@@ -102,6 +124,23 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         field: "event_title",
         headerName: eventPropNameMap("title"),
         cellRenderer: EventRenderer,
+        sortable: true,
+      },
+      {
+        field: "spot_type",
+        headerName: eventParticipantPropMap("spot_type"),
+        cellRenderer: SpotTypeRenderer,
+        sortable: true,
+        filter: BaseMultiSelectFilter,
+        filterParams: {
+          options: spotTypeOptions,
+          field: "spot_type",
+        },
+      },
+      {
+        field: "payment",
+        headerName: eventParticipantPropMap("payment"),
+        cellRenderer: PaymentRenderer,
         sortable: true,
       },
       {
@@ -136,6 +175,12 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
           options: attendanceStatusOptions,
           field: "attendance_status",
         },
+      },
+      {
+        field: "was_selected_for_rotation",
+        headerName: eventParticipantPropMap("was_selected_for_rotation"),
+        cellRenderer: BooleanTextRenderer,
+        sortable: true,
       },
       {
         field: "admin_general_notes",
