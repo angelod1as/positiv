@@ -8,7 +8,7 @@ import {
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-profile-page"
-import type { ParticipantVsEvent } from "~types/database/entities.types"
+import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 
 const {
   admin: { ADMIN_PARTICIPANTS },
@@ -39,7 +39,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const profile = profileResult.data
 
-  let fullHistory: Array<ParticipantVsEvent & { time_event_start: string }> = []
+  let fullHistory: ParticipantEventHistoryData[] = []
   if (historyResult.success) {
     fullHistory = historyResult.data
   } else {
