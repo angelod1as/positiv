@@ -17,17 +17,13 @@ import {
 } from "~/lib/helpers/propMaps"
 import { BooleanTextRenderer } from "~/components/organisms/tables/ag-grid/renderers/boolean-text-renderer"
 import paths from "~/lib/paths"
-import type { ParticipantVsEvent } from "~types/database/entities.types"
+import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 
 const {
   admin: {
     events: { ADMIN_EVENT_VIEW_PARTICIPANT },
   },
 } = paths
-
-type ParticipantEventHistoryData = ParticipantVsEvent & {
-  time_event_start: string
-}
 
 const applicationStatusMap = new Map<string, string>(
   applicationStatusOptions.map((opt) => [opt.value, opt.name]),
@@ -44,7 +40,7 @@ const spotTypeMap = new Map<string, string>(
 )
 
 type ParticipantEventHistoryProps = {
-  participantHistory: Array<ParticipantEventHistoryData>
+  participantHistory: ParticipantEventHistoryData[]
 }
 
 function EventRenderer(params: ICellRendererParams<ParticipantEventHistoryData>) {
@@ -115,6 +111,26 @@ function PaymentRenderer(
   return `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
+function SurplusRenderer(
+  params: ICellRendererParams<ParticipantEventHistoryData>,
+) {
+  const data = params.data
+  if (!data) return null
+
+  const payment = data.payment ?? 0
+  if (payment === 0) return null
+
+  const ticketPrice = data.ticket_price ?? 0
+  const surplus = payment - ticketPrice
+
+  const formattedValue = `R$ ${Math.abs(surplus).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
+  if (surplus >= 0) {
+    return <span className="text-green-600">+{formattedValue}</span>
+  }
+  return <span className="text-red-600">-{formattedValue}</span>
+}
+
 export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
   participantHistory,
 }) => {
@@ -142,6 +158,11 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         headerName: eventParticipantPropMap("payment"),
         cellRenderer: PaymentRenderer,
         sortable: true,
+      },
+      {
+        headerName: "Diferença",
+        cellRenderer: SurplusRenderer,
+        sortable: false,
       },
       {
         field: "application_status",

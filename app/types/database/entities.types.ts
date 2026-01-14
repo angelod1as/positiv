@@ -140,6 +140,15 @@ export type ParticipantVsEvent = EventParticipant & {
 }
 
 /**
+ * Participant event history with event timing and pricing info
+ * Used for displaying historical event participation with financial data
+ */
+export type ParticipantEventHistoryData = ParticipantVsEvent & {
+  time_event_start: string
+  ticket_price: number | null
+}
+
+/**
  * Event participant with basic event info (title, emoji)
  * No profile fields - just event_participants table + event display info
  */
