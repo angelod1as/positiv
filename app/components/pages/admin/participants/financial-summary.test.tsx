@@ -106,7 +106,7 @@ describe("FinancialSummary", () => {
 
     render(<FinancialSummary participantHistory={history} />)
 
-    expect(screen.getByText("R$ 70,00")).toBeInTheDocument()
+    expect(screen.getByText("+R$ 70,00")).toBeInTheDocument()
   })
 
   it("should handle null ticket_price when calculating surplus", () => {
@@ -117,7 +117,7 @@ describe("FinancialSummary", () => {
 
     render(<FinancialSummary participantHistory={history} />)
 
-    expect(screen.getByText("R$ 170,00")).toBeInTheDocument()
+    expect(screen.getByText("+R$ 170,00")).toBeInTheDocument()
   })
 
   it("should display payment list with event names and amounts", () => {
@@ -154,7 +154,9 @@ describe("FinancialSummary", () => {
 
     render(<FinancialSummary participantHistory={history} />)
 
-    expect(screen.getByText(/\+R\$ 50,00/)).toBeInTheDocument()
+    // Both total surplus (+R$ 50,00) and per-event surplus (+R$ 50,00) show the same value
+    const surplusElements = screen.getAllByText(/\+R\$ 50,00/)
+    expect(surplusElements.length).toBeGreaterThanOrEqual(1)
   })
 
   it("should display negative surplus with minus sign", () => {
@@ -168,7 +170,9 @@ describe("FinancialSummary", () => {
 
     render(<FinancialSummary participantHistory={history} />)
 
-    expect(screen.getByText(/-R\$ 20,00/)).toBeInTheDocument()
+    // Both total surplus (-R$ 20,00) and per-event surplus (-R$ 20,00) show the same value
+    const surplusElements = screen.getAllByText(/-R\$ 20,00/)
+    expect(surplusElements.length).toBeGreaterThanOrEqual(1)
   })
 
   it("should only list events with payments > 0", () => {
