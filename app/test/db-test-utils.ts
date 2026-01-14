@@ -127,9 +127,15 @@ export async function createTestProfile(
   kysely: Kysely<Database>,
   data: TestProfileData
 ): Promise<Selectable<DatabaseTypes["public"]["Tables"]["profiles"]["Row"]>> {
+  // Default basic_data_filled to true so test profiles are visible in queries
+  // that filter by basic_data_filled (like getAllProfiles)
+  const profileData = {
+    basic_data_filled: true,
+    ...data,
+  }
   const profile = await kysely
     .insertInto("profiles")
-    .values(data as Insertable<DatabaseTypes["public"]["Tables"]["profiles"]["Row"]>)
+    .values(profileData as Insertable<DatabaseTypes["public"]["Tables"]["profiles"]["Row"]>)
     .returningAll()
     .executeTakeFirstOrThrow()
   

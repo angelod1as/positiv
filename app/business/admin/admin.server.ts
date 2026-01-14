@@ -236,6 +236,8 @@ export const getAllProfiles = composable(
           .limit(1)
           .as("last_attended_event_id"),
       ])
+      // Only show profiles that have completed basic data (excludes users who never filled their profile)
+      .where("p.basic_data_filled", "=", true)
 
     if (filters?.gender?.length) {
       query = query.where(({ eb }) =>
@@ -260,8 +262,8 @@ export const getAllProfiles = composable(
       query = query.where("p.approved_to_attend", "in", filters.approved_to_attend)
     }
 
-    // Default ordering for consistent results
-    query = query.orderBy("p.full_name", "asc")
+    // Order by newest profiles first for better UX when viewing recently registered users
+    query = query.orderBy("p.created_at", "desc")
 
     // Pagination
     if (filters?.limit !== undefined) {
