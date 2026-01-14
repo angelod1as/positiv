@@ -49,8 +49,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     mutation: loginUser,
     transformResult: async (result) => {
       if (result.success) {
-        const { currentProfile } = await getContext(request, params)
-        const targetPath = currentProfile?.is_admin ? ADMIN_DASHBOARD : DASHBOARD
+        const { data: profileData } = await context.supabase
+          .rpc("get_profile_with_roles", { user_id_input: result.data.user.id })
+          .single()
+        const targetPath = profileData?.is_admin ? ADMIN_DASHBOARD : DASHBOARD
 
         throw await redirectWithSuccess(
           targetPath,
