@@ -47,7 +47,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
 
   return (
     <Card>
-      <CardContent className="pt-6">
+      <CardContent>
         <h3 className="text-lg font-semibold mb-4">Resumo Financeiro</h3>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -61,7 +61,9 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Média por evento</p>
-            <p className="text-xl font-bold">{formatCurrency(averagePerEvent)}</p>
+            <p className="text-xl font-bold">
+              {formatCurrency(averagePerEvent)}
+            </p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">Diferença total</p>
@@ -73,7 +75,8 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
           <h4 className="text-sm font-medium mb-2">Pagamentos</h4>
           <ul className="space-y-2">
             {paidEvents.map((item) => {
-              const surplus = Number(item.payment ?? 0) - Number(item.ticket_price ?? 0)
+              const surplus =
+                Number(item.payment ?? 0) - Number(item.ticket_price ?? 0)
               const formattedDate = item.time_event_start
                 ? formatDateTime(item.time_event_start).date
                 : null
