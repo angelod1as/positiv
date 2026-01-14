@@ -5,11 +5,19 @@ import { SocialNameRenderer } from "./social-name-renderer"
 
 interface MockRowData {
   id?: string
+  profile_id?: string
   social_name?: string | null
   full_name: string
 }
 
-function createMockParams(rowData: MockRowData): ICellRendererParams {
+interface MockContext {
+  eventId?: string
+}
+
+function createMockParams(
+  rowData: MockRowData,
+  context: MockContext = {},
+): ICellRendererParams {
   return {
     value: rowData.social_name,
     valueFormatted: String(rowData.social_name ?? ""),
@@ -18,7 +26,7 @@ function createMockParams(rowData: MockRowData): ICellRendererParams {
     colDef: { field: "social_name" },
     column: {} as ICellRendererParams["column"],
     api: {} as ICellRendererParams["api"],
-    context: {},
+    context,
     getValue: () => rowData.social_name,
     setValue: () => {},
     formatValue: () => String(rowData.social_name ?? ""),
@@ -155,6 +163,77 @@ describe("SocialNameRenderer", () => {
       const firstName = screen.getByText("Madonna")
       expect(firstName).toBeInTheDocument()
       expect(firstName.tagName).toBe("I")
+    })
+  })
+
+  describe("event context routing", () => {
+    it("links to event-participant route when eventId is in context", () => {
+      const params = createMockParams(
+        {
+          id: "event-participant-id",
+          profile_id: "profile-456",
+          social_name: "Ana",
+          full_name: "Ana Maria",
+        },
+        { eventId: "event-789" },
+      )
+
+      renderWithRouter(<SocialNameRenderer {...params} />)
+
+      const link = screen.getByRole("link")
+      expect(link).toHaveAttribute(
+        "href",
+        "/admin/eventos/event-789/participantes/profile-456",
+      )
+    })
+
+    it("links to profile route when no eventId in context (profile-only mode)", () => {
+      const params = createMockParams({
+        id: "profile-123",
+        social_name: "Bia",
+        full_name: "Beatriz Silva",
+      })
+
+      renderWithRouter(<SocialNameRenderer {...params} />)
+
+      const link = screen.getByRole("link")
+      expect(link).toHaveAttribute("href", "/admin/participantes/profile-123")
+    })
+
+    it("uses profile_id from data when in event context", () => {
+      const params = createMockParams(
+        {
+          id: "ep-id-should-not-be-used",
+          profile_id: "correct-profile-id",
+          social_name: "Test",
+          full_name: "Test User",
+        },
+        { eventId: "some-event" },
+      )
+
+      renderWithRouter(<SocialNameRenderer {...params} />)
+
+      const link = screen.getByRole("link")
+      expect(link).toHaveAttribute(
+        "href",
+        "/admin/eventos/some-event/participantes/correct-profile-id",
+      )
+    })
+
+    it("renders without link when eventId present but profile_id missing", () => {
+      const params = createMockParams(
+        {
+          id: "ep-id",
+          social_name: "Test",
+          full_name: "Test User",
+        },
+        { eventId: "some-event" },
+      )
+
+      renderWithRouter(<SocialNameRenderer {...params} />)
+
+      expect(screen.queryByRole("link")).not.toBeInTheDocument()
+      expect(screen.getByText("Test")).toBeInTheDocument()
     })
   })
 })

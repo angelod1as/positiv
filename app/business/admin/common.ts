@@ -96,25 +96,10 @@ export const updateParticipantVsEventSchema = zod.object({
   application_status: participantApplicationStatusEnum,
   has_paid: zod.boolean(),
   spot_type: spotTypeEnum,
-  is_veteran: zod.boolean(),
   was_selected_for_rotation: zod.boolean(),
   payment: zod.coerce.number(),
   admin_general_notes: zod.string(),
-  flag: profileFlagStatusEnum,
-  flag_notes: zod.string().nullable(),
-}).refine(
-  (data) => {
-    // If flag is not "none", flag_notes must be provided
-    if (data.flag !== "none") {
-      return data.flag_notes !== null && data.flag_notes.trim().length > 0
-    }
-    return true
-  },
-  {
-    message: "Notas da Flag são obrigatórias quando uma flag é selecionada",
-    path: ["flag_notes"],
-  }
-)
+})
 
 const parseBoolean = zod.union([
   zod.literal("true").transform(() => true),
@@ -157,3 +142,30 @@ export const updateProfileApprovalStatusSchema = zod.object({
   profile_id: zod.string(),
   approved_to_attend: profileApprovedToAttendStatusEnum,
 })
+
+export const updateProfileAdminNotesSchema = zod
+  .object({
+    intent: zod.literal("update-profile-admin-notes"),
+    profile_id: zod.string(),
+    flag: profileFlagStatusEnum.optional(),
+    flag_notes: zod.string().nullable().optional(),
+    general_notes: zod.string().nullable().optional(),
+    is_veteran: parseBoolean.optional(),
+  })
+  .refine(
+    (data) => {
+      // If flag is provided and not "none", flag_notes must be provided
+      if (data.flag && data.flag !== "none") {
+        return (
+          data.flag_notes !== null &&
+          data.flag_notes !== undefined &&
+          data.flag_notes.trim().length > 0
+        )
+      }
+      return true
+    },
+    {
+      message: "Notas da Flag são obrigatórias quando uma flag é selecionada",
+      path: ["flag_notes"],
+    }
+  )
