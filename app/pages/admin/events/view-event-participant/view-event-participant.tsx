@@ -12,7 +12,7 @@ import {
 import { updateParticipantVsEventSchema } from "~/business/admin/common"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
-import type { ParticipantVsEvent } from "~types/database/entities.types"
+import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 
 const {
@@ -105,7 +105,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   const eventParticipant = eventParticipantResult.data
 
   // Get full participant history
-  let fullHistory: Array<ParticipantVsEvent & { time_event_start: string }> = []
+  let fullHistory: ParticipantEventHistoryData[] = []
   const historyResult = await getParticipantFullEventHistory({
     profileId: profile.id,
     excludeEventId: eventId,

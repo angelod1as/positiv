@@ -8,6 +8,7 @@ import type {
   EventParticipant,
   EventParticipantWithEvent,
   GetAllProfilesFilters,
+  ParticipantEventHistoryData,
   ParticipantVsEvent,
   Profile,
   ProfileFlagStatus,
@@ -380,7 +381,7 @@ export const getParticipantFullEventHistory = composable(
   }: {
     profileId: string
     excludeEventId?: string
-  }): Promise<Array<ParticipantVsEvent & { time_event_start: string }>> => {
+  }): Promise<Array<ParticipantEventHistoryData>> => {
     let query = kyselyDb
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
@@ -390,6 +391,7 @@ export const getParticipantFullEventHistory = composable(
         "events.title as event_title",
         "events.emoji as event_emoji",
         "events.time_event_start as time_event_start",
+        "events.ticket_price as ticket_price",
         "profiles.is_veteran as is_veteran",
         "profiles.approved_to_attend as approved_to_attend",
       ])
@@ -403,8 +405,7 @@ export const getParticipantFullEventHistory = composable(
     const results = await query.execute()
     // Filter out results with null time_event_start since we need it for sorting
     return results.filter(
-      (r): r is ParticipantVsEvent & { time_event_start: string } =>
-        r.time_event_start !== null,
+      (r): r is ParticipantEventHistoryData => r.time_event_start !== null,
     )
   },
 )
