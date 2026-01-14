@@ -140,6 +140,15 @@ export type ParticipantVsEvent = EventParticipant & {
 }
 
 /**
+ * Event participant with basic event info (title, emoji)
+ * No profile fields - just event_participants table + event display info
+ */
+export type EventParticipantWithEvent = EventParticipant & {
+  event_title: Event["title"]
+  event_emoji: Event["emoji"]
+}
+
+/**
  * Global profile with aggregated event data (no event scope)
  * Note: attended_events_count uses COALESCE(0) in query so effectively never null,
  * but Kysely's type inference keeps it nullable. Safe to use ?? 0 if needed.

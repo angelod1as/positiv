@@ -2,10 +2,11 @@ import { formAction } from "remix-forms"
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import {
-  getEventParticipantHistoryById,
-  getProfileWithExtraDataById,
+  getEventParticipantBasic,
   getParticipantFullEventHistory,
+  getProfileById,
   updateParticipantVsEvent,
+  updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { updateParticipantVsEventSchema } from "~/business/admin/common"
@@ -41,6 +42,11 @@ export async function action({ request }: Route.ActionArgs) {
     return { success: result.success }
   }
 
+  if (intent === "update-profile-admin-notes") {
+    const result = await updateProfileAdminNotes(Object.fromEntries(formData))
+    return { success: result.success, errors: result.success ? undefined : result.errors }
+  }
+
   if (intent === "participant-vs-event-schema") {
     return formAction({
       request: new Request(request.url, {
@@ -72,69 +78,62 @@ export async function loader({ params }: Route.LoaderArgs) {
     )
   }
 
-  const profileResult = await getProfileWithExtraDataById({
-    profileId: profileId,
-    eventId: eventId,
-  })
+  // Run profile and event_participant queries in parallel
+  const [profileResult, eventParticipantResult] = await Promise.all([
+    getProfileById({ profileId }),
+    getEventParticipantBasic({ profileId, eventId }),
+  ])
 
   if (!profileResult.success) {
     console.error("Error fetching profile:", profileResult.errors)
     return redirectWithError(
-      "Participante não encontrade ou não inscrite neste evento.",
+      "Participante não encontrade.",
       ADMIN_VIEW_EVENT(eventId),
     )
   }
 
   const profile = profileResult.data
 
-  // Get current event data
-  const currentEventResult = await getEventParticipantHistoryById({
-    profileId: profileId,
-    eventId: eventId,
-  })
-
-  if (!currentEventResult.success) {
-    console.error("Error fetching event history:", currentEventResult.errors)
+  if (!eventParticipantResult.success || !eventParticipantResult.data) {
+    console.error("Error fetching event participant:", eventParticipantResult.errors)
     return redirectWithError(
-      "Erro ao carregar histórico do evento.",
+      "Participante não inscrite neste evento.",
       ADMIN_VIEW_EVENT(eventId),
     )
   }
 
-  // Get full participant history for all participants (not just veterans)
-  let fullHistory: Array<ParticipantVsEvent & { time_event_start: string }> = []
-  if (profile?.profile_id) {
-    const historyResult = await getParticipantFullEventHistory({
-      profileId: profile.profile_id,
-      excludeEventId: eventId,
-    })
+  const eventParticipant = eventParticipantResult.data
 
-    if (historyResult.success) {
-      fullHistory = historyResult.data
-    }
+  // Get full participant history
+  let fullHistory: Array<ParticipantVsEvent & { time_event_start: string }> = []
+  const historyResult = await getParticipantFullEventHistory({
+    profileId: profile.id,
+    excludeEventId: eventId,
+  })
+
+  if (historyResult.success) {
+    fullHistory = historyResult.data
   }
 
   return {
     profile,
-    participantHistory: currentEventResult.data,
+    eventParticipant,
     fullHistory,
     eventId,
   }
 }
 
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
-  const { participantHistory, profile, fullHistory, eventId } = loaderData
+  const { eventParticipant, profile, fullHistory, eventId } = loaderData
 
   if (!profile) return null
-
-  const [thisEvent] = participantHistory
 
   return (
     <ParticipantDetail
       profile={profile}
       fullHistory={fullHistory}
       currentEvent={{
-        data: thisEvent,
+        data: eventParticipant,
         eventId,
       }}
     />

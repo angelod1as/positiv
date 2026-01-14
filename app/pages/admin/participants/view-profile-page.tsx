@@ -2,6 +2,7 @@ import { redirectWithError } from "remix-toast"
 import {
   getParticipantFullEventHistory,
   getProfileById,
+  updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
@@ -58,6 +59,11 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "update-profile-approval-status") {
     const result = await updateProfileApprovalStatus(Object.fromEntries(formData))
     return { success: result.success }
+  }
+
+  if (intent === "update-profile-admin-notes") {
+    const result = await updateProfileAdminNotes(Object.fromEntries(formData))
+    return { success: result.success, errors: result.success ? undefined : result.errors }
   }
 
   return { success: false }
