@@ -263,13 +263,13 @@ describe("ParticipantEventHistory", () => {
     })
   })
 
-  it("should have the Surplus column header", async () => {
+  it("should have the Diferença column header", async () => {
     renderWithRouter(
       <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
     )
 
     await waitFor(() => {
-      expect(screen.getByText("Surplus")).toBeInTheDocument()
+      expect(screen.getByText("Diferença")).toBeInTheDocument()
     })
   })
 

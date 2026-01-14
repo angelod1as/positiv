@@ -98,7 +98,7 @@ describe("FinancialSummary", () => {
     expect(screen.getByText("R$ 150,00")).toBeInTheDocument()
   })
 
-  it("should display total surplus (sum of payment - ticket_price)", () => {
+  it("should display diferença total (sum of payment - ticket_price)", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({ payment: 150, ticket_price: 100 }),
       createMockHistoryItem({ id: "2", payment: 200, ticket_price: 180 }),

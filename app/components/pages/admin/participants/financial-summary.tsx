@@ -22,7 +22,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   participantHistory,
 }) => {
   const paidEvents = participantHistory.filter(
-    (item) => item.payment && item.payment > 0,
+    (item) => item.payment && Number(item.payment) > 0,
   )
 
   if (paidEvents.length === 0) {
@@ -30,7 +30,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   }
 
   const totalInvested = paidEvents.reduce(
-    (sum, item) => sum + (item.payment ?? 0),
+    (sum, item) => sum + Number(item.payment ?? 0),
     0,
   )
 
@@ -40,8 +40,8 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
     paidEventsCount > 0 ? totalInvested / paidEventsCount : 0
 
   const totalSurplus = paidEvents.reduce((sum, item) => {
-    const payment = item.payment ?? 0
-    const ticketPrice = item.ticket_price ?? 0
+    const payment = Number(item.payment ?? 0)
+    const ticketPrice = Number(item.ticket_price ?? 0)
     return sum + (payment - ticketPrice)
   }, 0)
 
@@ -64,7 +64,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
             <p className="text-xl font-bold">{formatCurrency(averagePerEvent)}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Total surplus</p>
+            <p className="text-sm text-muted-foreground">Diferença total</p>
             <p className="text-xl font-bold">{formatCurrency(totalSurplus)}</p>
           </div>
         </div>
@@ -73,7 +73,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
           <h4 className="text-sm font-medium mb-2">Pagamentos</h4>
           <ul className="space-y-2">
             {paidEvents.map((item) => {
-              const surplus = (item.payment ?? 0) - (item.ticket_price ?? 0)
+              const surplus = Number(item.payment ?? 0) - Number(item.ticket_price ?? 0)
               const formattedDate = item.time_event_start
                 ? formatDateTime(item.time_event_start).date
                 : null
@@ -92,7 +92,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
                     )}
                   </span>
                   <span className="font-medium">
-                    {formatCurrency(item.payment ?? 0)}{" "}
+                    {formatCurrency(Number(item.payment ?? 0))}{" "}
                     <span
                       className={
                         surplus >= 0 ? "text-green-600" : "text-red-600"
