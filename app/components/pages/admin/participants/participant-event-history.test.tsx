@@ -183,4 +183,102 @@ describe("ParticipantEventHistory", () => {
       )
     })
   })
+
+  it("should display payment amount with R$ prefix when participant has paid", async () => {
+    const historyWithPayment: Array<
+      ParticipantVsEvent & { time_event_start: string }
+    > = [
+      {
+        ...mockParticipantHistory[0],
+        payment: 150,
+        has_paid: true,
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithPayment} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("R$ 150,00")).toBeInTheDocument()
+    })
+  })
+
+  it("should not display payment when value is 0", async () => {
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByRole("grid")).toBeInTheDocument()
+    })
+
+    expect(screen.queryByText(/R\$/)).not.toBeInTheDocument()
+  })
+
+  it("should display spot type with Portuguese labels", async () => {
+    const historyWithSocialSpot: Array<
+      ParticipantVsEvent & { time_event_start: string }
+    > = [
+      {
+        ...mockParticipantHistory[0],
+        spot_type: "social",
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithSocialSpot} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Social")).toBeInTheDocument()
+    })
+  })
+
+  it("should display 'Sim' when participant has paid", async () => {
+    const historyWithPayment: Array<
+      ParticipantVsEvent & { time_event_start: string }
+    > = [
+      {
+        ...mockParticipantHistory[0],
+        has_paid: true,
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithPayment} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Sim")).toBeInTheDocument()
+    })
+  })
+
+  it("should display 'Sim' when participant was selected for rotation", async () => {
+    const historyWithRotation: Array<
+      ParticipantVsEvent & { time_event_start: string }
+    > = [
+      {
+        ...mockParticipantHistory[0],
+        was_selected_for_rotation: true,
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithRotation} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Sim")).toBeInTheDocument()
+    })
+  })
+
+  it("should have the new column headers for spot type, payment, and rotation", async () => {
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={mockParticipantHistory} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("Tipo de vaga")).toBeInTheDocument()
+      expect(screen.getByText("Pagamento")).toBeInTheDocument()
+      expect(screen.getByText("Pago?")).toBeInTheDocument()
+      expect(screen.getByText("Escolhide para rodízio?")).toBeInTheDocument()
+    })
+  })
 })
