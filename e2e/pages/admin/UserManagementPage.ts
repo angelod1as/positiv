@@ -223,7 +223,7 @@ export class UserManagementPage extends BasePage {
 
   // Detail view methods
   async waitForDetailView(): Promise<void> {
-    await this.page.waitForSelector("h1", { state: "visible" })
+    await this.page.waitForSelector("h2", { state: "visible" })
     await this.page.waitForLoadState("networkidle")
   }
 
