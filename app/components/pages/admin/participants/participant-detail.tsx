@@ -4,17 +4,18 @@ import { Card, CardContent } from "~/components/ui/card"
 import { getAge } from "~/lib/helpers/get-age"
 import type {
   EventParticipantWithEvent,
-  ParticipantVsEvent,
+  ParticipantEventHistoryData,
   ProfileGlobal,
 } from "~types/database/entities.types"
 import { AdminNotesBox } from "./admin-notes-box"
 import { BasicData } from "./basic-data"
+import { FinancialSummary } from "./financial-summary"
 import { ParticipantEventHistory } from "./participant-event-history"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
 
 type ParticipantDetailProps = {
   profile: ProfileWithExtraData | ProfileGlobal
-  fullHistory: Array<ParticipantVsEvent & { time_event_start: string }>
+  fullHistory: ParticipantEventHistoryData[]
   currentEvent?: {
     data: EventParticipantWithEvent
     eventId: string
@@ -93,7 +94,10 @@ export const ParticipantDetail = ({
         </div>
       )}
       {fullHistory.length > 0 && (
-        <ParticipantEventHistory participantHistory={fullHistory} />
+        <>
+          <ParticipantEventHistory participantHistory={fullHistory} />
+          <FinancialSummary participantHistory={fullHistory} />
+        </>
       )}
     </>
   )

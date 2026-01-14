@@ -32,9 +32,27 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1736729100000
+export const NEWS_VERSION = 1736884800000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "financial-summary",
+    title: "💰 Resumo financeiro no perfil",
+    content:
+      "Agora a página de perfil de participantes mostra um resumo financeiro completo! Você pode ver o total investido, quantidade de eventos pagos, média por evento, e a diferença total (quanto pagou a mais ou a menos do preço do ingresso). Também há uma lista detalhada de todos os pagamentos por evento.",
+    isAdmin: true,
+    createdAt: new Date("2026-01-14T18:00:00"),
+    isActive: true,
+  },
+  {
+    id: "surplus-column",
+    title: "📊 Coluna de diferença no histórico",
+    content:
+      'A tabela de histórico de eventos agora mostra uma coluna "Diferença" que calcula automaticamente quanto cada participante pagou a mais (verde) ou a menos (vermelho) do preço do ingresso. Isso facilita identificar rapidamente quem contribuiu extra ou teve desconto.',
+    isAdmin: true,
+    createdAt: new Date("2026-01-14T18:00:00"),
+    isActive: true,
+  },
   {
     id: "was-selected-for-rotation",
     title: "🔄 Histórico de rodízio preservado",
