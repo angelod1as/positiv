@@ -1177,6 +1177,32 @@ describe("getAllProfiles - Integration Tests", () => {
     }
   })
 
+  it("should exclude profiles where basic_data_filled is false", async () => {
+    const filledProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-filled@example.com",
+      full_name: "Test Filled Profile",
+      basic_data_filled: true
+    })
+
+    const unfilledProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-global-unfilled@example.com",
+      full_name: "Test Unfilled Profile",
+      basic_data_filled: false
+    })
+
+    const result = await getAllProfiles()
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const foundFilled = result.data.find(p => p.id === filledProfile.id)
+      const foundUnfilled = result.data.find(p => p.id === unfilledProfile.id)
+      expect(foundFilled).toBeDefined()
+      expect(foundUnfilled).toBeUndefined()
+    }
+  })
+
   it("should calculate attended_events_count correctly", async () => {
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,
@@ -1640,29 +1666,32 @@ describe("getAllProfiles - Integration Tests", () => {
     }
   })
 
-  it("should return results ordered by full_name", async () => {
-    await createTestProfile(tracker, kysely, {
+  it("should return results ordered by created_at DESC (newest first)", async () => {
+    // Create older profile first
+    const olderProfile = await createTestProfile(tracker, kysely, {
       user_id: null,
-      email: "test-global-order-z@example.com",
-      full_name: "Zzzz Last Name"
+      email: "test-global-order-older@example.com",
+      full_name: "Older Profile"
     })
 
-    await createTestProfile(tracker, kysely, {
+    // Small delay to ensure different timestamps
+    await new Promise(resolve => setTimeout(resolve, 10))
+
+    // Create newer profile second
+    const newerProfile = await createTestProfile(tracker, kysely, {
       user_id: null,
-      email: "test-global-order-a@example.com",
-      full_name: "Aaaa First Name"
+      email: "test-global-order-newer@example.com",
+      full_name: "Newer Profile"
     })
 
     const result = await getAllProfiles()
 
     expect(result).toHaveProperty("success", true)
     if (result.success) {
-      const testProfiles = result.data.filter(p => p.email?.startsWith("test-global-order-"))
-      if (testProfiles.length >= 2) {
-        const firstIndex = result.data.findIndex(p => p.email === "test-global-order-a@example.com")
-        const lastIndex = result.data.findIndex(p => p.email === "test-global-order-z@example.com")
-        expect(firstIndex).toBeLessThan(lastIndex)
-      }
+      const newerIndex = result.data.findIndex(p => p.id === newerProfile.id)
+      const olderIndex = result.data.findIndex(p => p.id === olderProfile.id)
+      // Newer profile should appear before older profile (DESC order)
+      expect(newerIndex).toBeLessThan(olderIndex)
     }
   })
 })
