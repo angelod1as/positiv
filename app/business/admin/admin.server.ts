@@ -262,7 +262,7 @@ export const getAllProfiles = composable(
       query = query.where("p.approved_to_attend", "in", filters.approved_to_attend)
     }
 
-    // Default ordering: newest profiles first
+    // Order by newest profiles first for better UX when viewing recently registered users
     query = query.orderBy("p.created_at", "desc")
 
     // Pagination
