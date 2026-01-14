@@ -160,7 +160,7 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         sortable: true,
       },
       {
-        headerName: "Surplus",
+        headerName: "Diferença",
         cellRenderer: SurplusRenderer,
         sortable: false,
       },
