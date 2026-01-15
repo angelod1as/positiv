@@ -1,6 +1,6 @@
 import type { ColDef } from "ag-grid-community"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
-import { getVeteranRookieColors } from "~/lib/helpers/cell-colors"
+import { VeteranSelectCellRenderer } from "~/components/organisms/tables/ag-grid/renderers/veteran-select-cell-renderer"
 import { isVeteranOptions } from "~/lib/helpers/propMaps"
 
 interface VeteranColumnParams {
@@ -25,13 +25,9 @@ export function getVeteranColumn({
         values: [true, false],
         valueListMaxHeight: 120,
       },
-      valueFormatter: (params) => (params.value ? "Veterane" : "Novate"),
+      valueFormatter: (params) => (params.value === true ? "Veterane" : "Novate"),
     }),
-    cellRenderer: (params: { value: boolean | null }) => {
-      const colors = getVeteranRookieColors(params.value)
-      const label = params.value ? "Veterane" : "Novate"
-      return <span className={`px-2 py-0.5 rounded ${colors}`}>{label}</span>
-    },
+    cellRenderer: VeteranSelectCellRenderer,
     filter: BaseMultiSelectFilter,
     filterParams: {
       options: isVeteranOptions,

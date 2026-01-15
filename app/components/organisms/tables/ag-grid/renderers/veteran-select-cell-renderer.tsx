@@ -2,7 +2,7 @@ import type { ICellRendererParams } from "ag-grid-community"
 import { getVeteranRookieColors } from "~/lib/helpers/cell-colors"
 
 export function VeteranSelectCellRenderer(params: ICellRendererParams) {
-  const isVeteran = Boolean(params.value)
+  const isVeteran = params.value === true
   const label = isVeteran ? "Veterane" : "Novate"
   const colors = getVeteranRookieColors(isVeteran)
 
