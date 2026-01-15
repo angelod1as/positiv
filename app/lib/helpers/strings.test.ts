@@ -60,6 +60,34 @@ describe("toTitleCase", () => {
     })
   })
 
+  describe("hyphenated names", () => {
+    it("should capitalize both parts of hyphenated name", () => {
+      expect(toTitleCase("JEAN-CLAUDE")).toBe("Jean-Claude")
+    })
+
+    it("should handle hyphenated surname", () => {
+      expect(toTitleCase("MARIA COSTA-SILVA")).toBe("Maria Costa-Silva")
+    })
+
+    it("should handle multiple hyphens", () => {
+      expect(toTitleCase("JEAN-PIERRE-LOUIS")).toBe("Jean-Pierre-Louis")
+    })
+  })
+
+  describe("whitespace handling", () => {
+    it("should collapse multiple spaces to single space", () => {
+      expect(toTitleCase("MARIA  SILVA")).toBe("Maria Silva")
+    })
+
+    it("should trim leading and trailing spaces", () => {
+      expect(toTitleCase("  MARIA SILVA  ")).toBe("Maria Silva")
+    })
+
+    it("should handle tabs and mixed whitespace", () => {
+      expect(toTitleCase("MARIA\t\tSILVA")).toBe("Maria Silva")
+    })
+  })
+
   describe("edge cases", () => {
     it("should handle empty string", () => {
       expect(toTitleCase("")).toBe("")
@@ -69,8 +97,8 @@ describe("toTitleCase", () => {
       expect(toTitleCase("A")).toBe("A")
     })
 
-    it("should handle extra spaces", () => {
-      expect(toTitleCase("MARIA  SILVA")).toBe("Maria  Silva")
+    it("should handle whitespace only string", () => {
+      expect(toTitleCase("   ")).toBe("")
     })
   })
 })
@@ -154,6 +182,16 @@ describe("normalizeName", () => {
     })
   })
 
+  describe("whitespace handling", () => {
+    it("should trim leading and trailing spaces", () => {
+      expect(normalizeName("  Maria Silva  ")).toBe("Maria Silva")
+    })
+
+    it("should trim even when not converting case", () => {
+      expect(normalizeName("  Maria da Silva  ")).toBe("Maria da Silva")
+    })
+  })
+
   describe("edge cases", () => {
     it("should handle empty string", () => {
       expect(normalizeName("")).toBe("")
@@ -161,6 +199,10 @@ describe("normalizeName", () => {
 
     it("should handle single character", () => {
       expect(normalizeName("A")).toBe("A")
+    })
+
+    it("should handle whitespace only string", () => {
+      expect(normalizeName("   ")).toBe("")
     })
   })
 })
