@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1736884800000
+export const NEWS_VERSION = 1736898000000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "veteran-dropdown",
+    title: "🎖️ Veterane/Novate agora é dropdown",
+    content:
+      'A tabela de participantes foi simplificada! As colunas "Vet ou Nov?" e "Veterane?" (checkbox) foram unificadas em uma única coluna com dropdown. Agora você pode alterar o status diretamente clicando na célula e escolhendo "Veterane" ou "Novate".',
+    isAdmin: true,
+    createdAt: new Date("2026-01-15T00:00:00"),
+    isActive: true,
+  },
   {
     id: "financial-summary",
     title: "💰 Resumo financeiro no perfil",

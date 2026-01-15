@@ -1,6 +1,6 @@
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { render, renderWithRouter, screen, waitFor } from "~/test/test-utils"
+import { renderWithDataRouter, screen, waitFor } from "~/test/test-utils"
 import type { ProfileGlobal } from "~types/database/entities.types"
 import { AllParticipantsTable } from "./all-participants-table"
 
@@ -109,13 +109,13 @@ describe("AllParticipantsTable", () => {
 
   describe("rendering", () => {
     it("renders the AG Grid table", () => {
-      renderWithRouter(<AllParticipantsTable profiles={mockProfiles} />)
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfiles} />)
 
       expect(screen.getByRole("grid")).toBeInTheDocument()
     })
 
     it("renders profile data in the table", async () => {
-      renderWithRouter(<AllParticipantsTable profiles={mockProfiles} />)
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfiles} />)
 
       await waitFor(() => {
         expect(screen.getByText("João")).toBeInTheDocument()
@@ -123,7 +123,7 @@ describe("AllParticipantsTable", () => {
     })
 
     it("renders empty message when no profiles", async () => {
-      renderWithRouter(<AllParticipantsTable profiles={[]} />)
+      renderWithDataRouter(<AllParticipantsTable profiles={[]} />)
 
       await waitFor(() => {
         expect(
@@ -133,7 +133,7 @@ describe("AllParticipantsTable", () => {
     })
 
     it("renders profile count in header", () => {
-      renderWithRouter(<AllParticipantsTable profiles={mockProfilesMultiple} />)
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfilesMultiple} />)
 
       expect(screen.getByText("3")).toBeInTheDocument()
       expect(screen.getByText(/perfis/)).toBeInTheDocument()
@@ -142,7 +142,7 @@ describe("AllParticipantsTable", () => {
 
   describe("column configuration", () => {
     it("renders social_name column pinned left", () => {
-      const { container } = render(
+      const { container } = renderWithDataRouter(
         <AllParticipantsTable profiles={mockProfiles} />,
       )
 
@@ -153,14 +153,14 @@ describe("AllParticipantsTable", () => {
     })
 
     it("renders expected column headers", async () => {
-      renderWithRouter(<AllParticipantsTable profiles={mockProfiles} />)
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfiles} />)
 
       await waitFor(() => {
-        expect(screen.getByText("Nome")).toBeInTheDocument()
+        expect(screen.getByText("Nome Social")).toBeInTheDocument()
       })
 
       expect(screen.getByText("Registro")).toBeInTheDocument()
-      expect(screen.getByText("Vet/Nov")).toBeInTheDocument()
+      expect(screen.getByText("Vet ou Nov?")).toBeInTheDocument()
       expect(screen.getByText("Cidade")).toBeInTheDocument()
       expect(screen.getByText("Eventos")).toBeInTheDocument()
       expect(screen.getByText("Último Evento")).toBeInTheDocument()
@@ -169,14 +169,14 @@ describe("AllParticipantsTable", () => {
 
   describe("quick filter (search)", () => {
     it("renders search input", () => {
-      renderWithRouter(<AllParticipantsTable profiles={mockProfiles} />)
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfiles} />)
 
       expect(screen.getByPlaceholderText("Buscar...")).toBeInTheDocument()
     })
 
     it("filters profiles when searching", async () => {
       const user = userEvent.setup()
-      renderWithRouter(<AllParticipantsTable profiles={mockProfilesMultiple} />)
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfilesMultiple} />)
 
       await waitFor(() => {
         expect(screen.getByText("João")).toBeInTheDocument()
@@ -193,7 +193,7 @@ describe("AllParticipantsTable", () => {
 
   describe("session storage integration", () => {
     it("persists filter state to session storage", async () => {
-      renderWithRouter(<AllParticipantsTable profiles={mockProfiles} />)
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfiles} />)
 
       await waitFor(() => {
         expect(screen.getByRole("grid")).toBeInTheDocument()
@@ -205,7 +205,7 @@ describe("AllParticipantsTable", () => {
 
   describe("pagination", () => {
     it("renders with pagination enabled", async () => {
-      const { container } = renderWithRouter(
+      const { container } = renderWithDataRouter(
         <AllParticipantsTable profiles={mockProfiles} />,
       )
 
@@ -220,7 +220,7 @@ describe("AllParticipantsTable", () => {
 
   describe("toolbar", () => {
     it("renders toolbar with table container", async () => {
-      renderWithRouter(<AllParticipantsTable profiles={mockProfiles} />)
+      renderWithDataRouter(<AllParticipantsTable profiles={mockProfiles} />)
 
       await waitFor(() => {
         expect(screen.getByRole("grid")).toBeInTheDocument()

@@ -151,6 +151,7 @@ export const updateProfileAdminNotesSchema = zod
     flag_notes: zod.string().nullable().optional(),
     general_notes: zod.string().nullable().optional(),
     is_veteran: parseBoolean.optional(),
+    approved_to_attend: profileApprovedToAttendStatusEnum.optional(),
   })
   .refine(
     (data) => {

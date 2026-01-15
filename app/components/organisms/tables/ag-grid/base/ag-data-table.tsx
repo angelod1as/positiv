@@ -81,12 +81,15 @@ export function AGDataTable<TData>({
     },
   )
 
-  const { handleCellValueChanged: autoSaveHandler, hasPendingSave, isSaving } =
-    useAutoSave({
-      onSave,
-      debounceMs: autoSaveOptions?.debounceMs,
-      errorMessage: autoSaveOptions?.errorMessage,
-    })
+  const {
+    handleCellValueChanged: autoSaveHandler,
+    hasPendingSave,
+    isSaving,
+  } = useAutoSave({
+    onSave,
+    debounceMs: autoSaveOptions?.debounceMs,
+    errorMessage: autoSaveOptions?.errorMessage,
+  })
 
   // Derive save status from fetcher state and local state
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle")
@@ -210,10 +213,15 @@ export function AGDataTable<TData>({
     [],
   )
 
+  // Height offset for: header content (~50px) + pagination panel (~40px) + margins/padding (~25px)
+  const GRID_WRAPPER_OFFSET = 115
+  const DEFAULT_CONTAINER_HEIGHT = 515
+
+  const parsedHeight = height ? parseInt(height, 10) : DEFAULT_CONTAINER_HEIGHT
+  const gridHeight = parsedHeight - GRID_WRAPPER_OFFSET
 
   const containerClasses = cn(
     isFullscreen && "fixed inset-0 z-50 bg-background flex flex-col",
-    !isFullscreen && !height && "h-[400px]",
     !isFullscreen && "relative",
     isFullscreen && "h-full",
     className,
@@ -223,14 +231,17 @@ export function AGDataTable<TData>({
     <div
       data-testid={`ag-data-table-${id}`}
       className={containerClasses}
-      style={height && !isFullscreen ? { height } : undefined}
+      style={!isFullscreen ? { height: `${parsedHeight}px` } : undefined}
     >
       {headerContent && (
         <div className={cn("mb-2", isFullscreen && "px-4 pt-4")}>
           {headerContent}
         </div>
       )}
-      <div className={cn(isFullscreen && "flex-1", !isFullscreen && "h-full")}>
+      <div
+        className={cn(isFullscreen && "flex-1")}
+        style={!isFullscreen ? { height: `${gridHeight}px` } : undefined}
+      >
         <AgGridReact
           theme={gridTheme}
           localeText={AG_GRID_LOCALE_BR}
@@ -266,18 +277,22 @@ export function AGDataTable<TData>({
           }
         />
       </div>
-      {showToolbar && (
-        <div className="mt-2 flex justify-end">
-          <AGDataTableToolbar
-            gridApi={gridApi}
-            clearState={clearState}
-            onClearFilters={onClearFilters}
-            isFullscreen={isFullscreen}
-            onToggleFullscreen={handleToggleFullscreen}
-          />
+      {(fetcher || showToolbar) && (
+        <div className="flex justify-between items-center">
+          {fetcher && <SaveStatusIndicator status={saveStatus} />}
+          {showToolbar && (
+            <div className="mt-2 flex justify-end">
+              <AGDataTableToolbar
+                gridApi={gridApi}
+                clearState={clearState}
+                onClearFilters={onClearFilters}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={handleToggleFullscreen}
+              />
+            </div>
+          )}
         </div>
       )}
-      {fetcher && <SaveStatusIndicator status={saveStatus} />}
     </div>
   )
 }
