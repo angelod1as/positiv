@@ -7,8 +7,8 @@
  * - Event count: Indigo/blue tones
  */
 
-export const VETERAN_COLORS = "bg-purple-700 text-white"
-export const ROOKIE_COLORS = "bg-violet-100 text-violet-900"
+export const VETERAN_COLORS = "!bg-purple-700 text-white border border-white"
+export const ROOKIE_COLORS = "!bg-violet-100 text-violet-900 border border-violet-900"
 
 export function getVeteranRookieColors(isVeteran: boolean | null | undefined): string {
   if (isVeteran === null || isVeteran === undefined) return ""
