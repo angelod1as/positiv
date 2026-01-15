@@ -281,7 +281,13 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       const formData = new FormData()
       formData.append("intent", "update-profile-admin-notes")
       formData.append("profile_id", rowData.id)
-      formData.append(params.field, String(params.newValue))
+
+      // For is_veteran, read from rowData since valueSetter already converted string to boolean
+      if (params.field === "is_veteran") {
+        formData.append(params.field, String(rowData.is_veteran))
+      } else {
+        formData.append(params.field, String(params.newValue))
+      }
 
       fetcher.submit(formData, { method: "POST" })
     },
