@@ -14,6 +14,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useFetcher } from "react-router"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
+import { getVeteranColumn } from "~/components/organisms/tables/ag-grid/columns/veteran-column"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { ActionButtonsRenderer } from "~/components/organisms/tables/ag-grid/renderers/action-buttons-renderer"
 import { BooleanTextRenderer } from "~/components/organisms/tables/ag-grid/renderers/boolean-text-renderer"
@@ -25,10 +26,7 @@ import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/render
 import { TextViewModalRenderer } from "~/components/organisms/tables/ag-grid/renderers/text-view-modal-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
 import { Input } from "~/components/ui/input"
-import {
-  getEventCountColors,
-  getVeteranRookieColors,
-} from "~/lib/helpers/cell-colors"
+import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import {
   applicationStatusOptions,
   approvedToAttendStatusOptions,
@@ -36,7 +34,6 @@ import {
   eventParticipantPropMap,
   genderFilterOptions,
   hasPaidOptions,
-  isVeteranOptions,
   orientationFilterOptions,
   profilePropMap,
   spotTypeOptions,
@@ -261,21 +258,11 @@ export const AdminViewEventParticipantsTable: FC<
         headerName: profilePropMap("full_name"),
         sortable: true,
       },
-      {
-        field: "is_veteran",
-        headerName: "Vet ou Nov?",
-        headerTooltip: "Veterane ou Novate",
-        cellRenderer: (params: { value: boolean | null }) =>
-          params.value ? "Veterane" : "Novate",
-        cellClass: (params) => getVeteranRookieColors(params.value),
-        filter: BaseMultiSelectFilter,
-        filterParams: {
-          options: isVeteranOptions,
-          field: "is_veteran",
-          model: isVeteranFilter,
-          onModelChange: setIsVeteranFilter,
-        },
-      },
+      getVeteranColumn({
+        filterModel: isVeteranFilter,
+        onFilterChange: setIsVeteranFilter,
+        editable: true,
+      }),
       {
         field: "attended_events_count",
         headerName: "Eventos",
@@ -512,16 +499,6 @@ export const AdminViewEventParticipantsTable: FC<
           model: spotTypeFilter,
           onModelChange: setSpotTypeFilter,
         },
-      },
-      {
-        colId: "is_veteran_edit",
-        field: "is_veteran",
-        headerName: "Veterane?",
-        headerTooltip: "Marcar como veterane",
-        editable: true,
-        cellEditor: "agCheckboxCellEditor",
-        cellRenderer: "agCheckboxCellRenderer",
-        ...compactCell,
       },
       {
         field: "companions",

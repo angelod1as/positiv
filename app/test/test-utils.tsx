@@ -9,7 +9,7 @@ import {
   act,
 } from "@testing-library/react"
 import type { ReactElement } from "react"
-import { MemoryRouter } from "react-router"
+import { createMemoryRouter, MemoryRouter, RouterProvider } from "react-router"
 import { TestWrapper } from "./test-wrapper"
 
 export function render(ui: ReactElement, options?: RenderOptions) {
@@ -55,6 +55,15 @@ export function renderWithRouter(ui: ReactElement, options?: RenderOptions) {
     <MemoryRouter>{children}</MemoryRouter>
   )
   return render(ui, { wrapper: RouterWrapper, ...options })
+}
+
+/**
+ * Render with a data router for components that use useFetcher, useLoaderData, etc.
+ * Use this when testing components that need full data router capabilities.
+ */
+export function renderWithDataRouter(ui: ReactElement, options?: RenderOptions) {
+  const router = createMemoryRouter([{ path: "/", element: ui }])
+  return render(<RouterProvider router={router} />, options)
 }
 
 export { screen, waitFor, within, fireEvent, act }
