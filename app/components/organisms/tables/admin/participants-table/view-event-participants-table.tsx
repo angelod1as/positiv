@@ -265,8 +265,20 @@ export const AdminViewEventParticipantsTable: FC<
         field: "is_veteran",
         headerName: "Vet ou Nov?",
         headerTooltip: "Veterane ou Novate",
-        cellRenderer: (params: { value: boolean | null }) =>
-          params.value ? "Veterane" : "Novate",
+        editable: true,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: {
+          values: ["Veterane", "Novate"],
+        },
+        valueFormatter: (params) => (params.value ? "Veterane" : "Novate"),
+        valueSetter: (params: ValueSetterParams<ProfileWithExtraData>) => {
+          const newValue = params.newValue === "Veterane"
+          if (newValue === params.data.is_veteran) {
+            return false
+          }
+          params.data.is_veteran = newValue
+          return true
+        },
         cellClass: (params) => getVeteranRookieColors(params.value),
         filter: BaseMultiSelectFilter,
         filterParams: {
@@ -512,16 +524,6 @@ export const AdminViewEventParticipantsTable: FC<
           model: spotTypeFilter,
           onModelChange: setSpotTypeFilter,
         },
-      },
-      {
-        colId: "is_veteran_edit",
-        field: "is_veteran",
-        headerName: "Veterane?",
-        headerTooltip: "Marcar como veterane",
-        editable: true,
-        cellEditor: "agCheckboxCellEditor",
-        cellRenderer: "agCheckboxCellRenderer",
-        ...compactCell,
       },
       {
         field: "companions",
