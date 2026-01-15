@@ -42,7 +42,7 @@ describe("VeteranSelectCellRenderer", () => {
       render(<VeteranSelectCellRenderer {...params} />)
 
       const element = screen.getByText("Veterane")
-      expect(element).toHaveClass("bg-purple-700")
+      expect(element).toHaveClass("!bg-purple-700")
       expect(element).toHaveClass("text-white")
     })
   })
@@ -62,7 +62,7 @@ describe("VeteranSelectCellRenderer", () => {
       render(<VeteranSelectCellRenderer {...params} />)
 
       const element = screen.getByText("Novate")
-      expect(element).toHaveClass("bg-violet-100")
+      expect(element).toHaveClass("!bg-violet-100")
       expect(element).toHaveClass("text-violet-900")
     })
   })
