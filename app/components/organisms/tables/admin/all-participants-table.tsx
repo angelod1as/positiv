@@ -18,7 +18,6 @@ import {
   approvedToAttendStatusOptions,
   flagStatusOptions,
   genderFilterOptions,
-  isVeteranOptions,
   orientationFilterOptions,
   profilePropMap,
 } from "~/lib/helpers/propMaps"
@@ -119,9 +118,14 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
     () => [
       {
         field: "social_name",
-        headerName: "Nome",
+        headerName: "Nome Social",
         pinned: "left",
         cellRenderer: SocialNameRenderer,
+        sortable: true,
+      },
+      {
+        field: "full_name",
+        headerName: "Nome Completo",
         sortable: true,
       },
       {
