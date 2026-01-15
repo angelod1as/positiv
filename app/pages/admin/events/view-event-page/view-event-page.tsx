@@ -9,26 +9,29 @@ import {
   getAdminEventById,
   getEventDemographicsById,
   getProfilesWithExtraDataById,
+  updateEventDemographics,
   updateEventParticipantById,
   updateEventStatus,
-  updateEventDemographics,
 } from "~/business/admin/admin.server"
-import { updateEventListmonkList, listmonkSyncFiltersSchema } from "~/business/admin/event-listmonk-sync.server"
 import {
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
 } from "~/business/admin/common"
-import { formatDateTime } from "~/lib/helpers/format-date-time"
-import paths from "~/lib/paths"
-import type { ComposableFetcherData } from "~types/database/entities.types"
-import type { Route } from "./+types/view-event-page"
+import {
+  listmonkSyncFiltersSchema,
+  updateEventListmonkList,
+} from "~/business/admin/event-listmonk-sync.server"
+import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
 import { Buttons } from "~/components/pages/admin/events/buttons"
 import { DatesAndTimes } from "~/components/pages/admin/events/dates-and-times"
 import { DemographicsData } from "~/components/pages/admin/events/demographics"
 import { EventStatusForm } from "~/components/pages/admin/events/event-status-form"
 import { GeneralData } from "~/components/pages/admin/events/general-data"
+import { formatDateTime } from "~/lib/helpers/format-date-time"
+import paths from "~/lib/paths"
+import type { ComposableFetcherData } from "~types/database/entities.types"
+import type { Route } from "./+types/view-event-page"
 import { sendToast } from "./send-toast"
-import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
 
 const {
   admin: { ADMIN_DASHBOARD },
@@ -71,7 +74,11 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (intent === "sync-listmonk-list") {
     const eventId = params.id
     if (!eventId) {
-      return { success: false, errors: [{ message: "Event ID not found" }], intent }
+      return {
+        success: false,
+        errors: [{ message: "Event ID not found" }],
+        intent,
+      }
     }
 
     const formData = await request.formData()
@@ -88,7 +95,9 @@ export async function action({ request, params }: Route.ActionArgs) {
     if (!filtersValidation.success) {
       return {
         success: false,
-        errors: filtersValidation.error.issues.map((e) => ({ message: e.message })),
+        errors: filtersValidation.error.issues.map((e) => ({
+          message: e.message,
+        })),
         intent,
       }
     }
@@ -165,7 +174,10 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
 
     if (!fetcher.data) return
 
-    if (fetcher.data.intent === "update-event-participant" && fetcher.data.success) {
+    if (
+      fetcher.data.intent === "update-event-participant" &&
+      fetcher.data.success
+    ) {
       setIsListStale(true)
     }
 
@@ -199,7 +211,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
         />
       )}
 
-      <div className="max-h-[600px]">
+      <div>
         <AdminViewEventParticipantsTable
           participants={participants}
           eventId={event.id}
