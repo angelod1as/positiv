@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { PHONE_REGEXP } from "~/lib/constants/constants"
+import { normalizeName } from "~/lib/helpers/strings"
 import { zod } from "~/lib/helpers/zod"
 import type { Database } from "~types/database/database.types"
 
@@ -104,24 +105,15 @@ export const agreeToTermsSchema = zod.object({
   mktEmails: zod.boolean().optional(),
 })
 
-const uppercaseRefine = (val?: string) => {
-  if (!val) return true
-  return !/^[A-Z]*$/.test(val) || val.length < 2
-}
-
 /* BASIC DATA */
 export const basicDataSchema = zod
   .object({
-    full_name: zod
-      .string()
-      .min(2)
-      .max(255)
-      .refine(uppercaseRefine, "Não escreva com tudo em maiúscula, por favor"),
+    full_name: zod.string().min(2).max(255).transform(normalizeName),
     social_name: zod
       .string()
       .min(2)
       .max(255)
-      .refine(uppercaseRefine, "Não escreva com tudo em maiúscula, por favor")
+      .transform(normalizeName)
       .nullish(),
     rg: zod.string().min(2),
     rg_issuer: zod.string().min(2),
@@ -165,19 +157,26 @@ export const basicDataSchema = zod
       .refine((value) => PHONE_REGEXP.test(value.toString()), {
         message: "Número inválido",
       }),
-    how_came_to_us: zod
-      .string()
-      .refine(uppercaseRefine, "Não escreva com tudo em maiúscula, por favor")
-      .optional(),
-    where_lives: zod
-      .string()
-      .refine(uppercaseRefine, "Não escreva com tudo em maiúscula, por favor")
-      .optional(),
+    how_came_to_us: zod.string().optional(),
+    where_lives: zod.string().optional(),
   })
   .refine((data) => data.phone === data.confirm_phone, {
     message: "Os números de telefone são diferentes",
     path: ["phone"],
   })
+  .refine(
+    (data) => {
+      if (!data.social_name) return true
+      return (
+        data.social_name.trim().toLowerCase() !==
+        data.full_name.trim().toLowerCase()
+      )
+    },
+    {
+      message: "O nome social deve ser diferente do nome completo",
+      path: ["social_name"],
+    },
+  )
 
 export const ExtraBasicDataSchema = zod.object({
   gender: zod
