@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
+import { renderWithDataRouter, screen, waitFor } from "~/test/test-utils"
 
 const mockUseLoaderData = vi.fn()
 
@@ -17,7 +17,7 @@ describe("ParticipantsPage", () => {
   it("should render the page heading", async () => {
     mockUseLoaderData.mockReturnValue({ profiles: [] })
 
-    renderWithRouter(<ParticipantsPage />)
+    renderWithDataRouter(<ParticipantsPage />)
 
     expect(
       screen.getByRole("heading", { name: /perfis/i }),
@@ -43,7 +43,7 @@ describe("ParticipantsPage", () => {
       ],
     })
 
-    renderWithRouter(<ParticipantsPage />)
+    renderWithDataRouter(<ParticipantsPage />)
 
     await waitFor(() => {
       expect(screen.getByRole("grid")).toBeInTheDocument()
@@ -57,7 +57,7 @@ describe("ParticipantsPage", () => {
   it("should render empty message when no profiles", async () => {
     mockUseLoaderData.mockReturnValue({ profiles: [] })
 
-    renderWithRouter(<ParticipantsPage />)
+    renderWithDataRouter(<ParticipantsPage />)
 
     await waitFor(() => {
       expect(

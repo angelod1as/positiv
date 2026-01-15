@@ -342,7 +342,7 @@ describe("AGDataTable", () => {
       const gridContainer = container.querySelector(
         '[data-testid="ag-data-table-test-table"]',
       )
-      expect(gridContainer).toHaveClass("h-[400px]")
+      expect(gridContainer).toHaveStyle({ height: "515px" })
     })
 
     it("should merge custom className with default classes", async () => {
