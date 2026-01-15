@@ -213,6 +213,7 @@ export function AGDataTable<TData>({
     [],
   )
 
+  // Height offset for: header content (~50px) + pagination panel (~40px) + margins/padding (~25px)
   const GRID_WRAPPER_OFFSET = 115
   const DEFAULT_CONTAINER_HEIGHT = 515
 
@@ -276,20 +277,22 @@ export function AGDataTable<TData>({
           }
         />
       </div>
-      <div className="flex justify-between items-center">
-        {fetcher && <SaveStatusIndicator status={saveStatus} />}
-        {showToolbar && (
-          <div className="mt-2 flex justify-end">
-            <AGDataTableToolbar
-              gridApi={gridApi}
-              clearState={clearState}
-              onClearFilters={onClearFilters}
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={handleToggleFullscreen}
-            />
-          </div>
-        )}
-      </div>
+      {(fetcher || showToolbar) && (
+        <div className="flex justify-between items-center">
+          {fetcher && <SaveStatusIndicator status={saveStatus} />}
+          {showToolbar && (
+            <div className="mt-2 flex justify-end">
+              <AGDataTableToolbar
+                gridApi={gridApi}
+                clearState={clearState}
+                onClearFilters={onClearFilters}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={handleToggleFullscreen}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
