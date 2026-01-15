@@ -11,6 +11,7 @@ import type {
   ParticipantEventHistoryData,
   ParticipantVsEvent,
   Profile,
+  ProfileApprovedToAttendStatus,
   ProfileFlagStatus,
   ProfileGlobal,
 } from "~types/database/entities.types"
@@ -716,19 +717,29 @@ export const getEventParticipantBasic = composable(
 export const updateProfileAdminNotes = applySchema(
   updateProfileAdminNotesSchema,
 )(async (formData) => {
-  const { profile_id, flag, flag_notes, general_notes, is_veteran } = formData
+  const {
+    profile_id,
+    flag,
+    flag_notes,
+    general_notes,
+    is_veteran,
+    approved_to_attend,
+  } = formData
 
   const updateData: {
     flag?: ProfileFlagStatus
     flag_notes?: string | null
     general_notes?: string | null
     is_veteran?: boolean
+    approved_to_attend?: ProfileApprovedToAttendStatus
   } = {}
 
   if (flag !== undefined) updateData.flag = flag
   if (flag_notes !== undefined) updateData.flag_notes = flag_notes
   if (general_notes !== undefined) updateData.general_notes = general_notes
   if (is_veteran !== undefined) updateData.is_veteran = is_veteran
+  if (approved_to_attend !== undefined)
+    updateData.approved_to_attend = approved_to_attend
 
   if (Object.keys(updateData).length === 0) {
     return { profile_id }
