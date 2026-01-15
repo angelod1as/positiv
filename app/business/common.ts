@@ -157,8 +157,8 @@ export const basicDataSchema = zod
       .refine((value) => PHONE_REGEXP.test(value.toString()), {
         message: "Número inválido",
       }),
-    how_came_to_us: zod.string().transform(normalizeName).optional(),
-    where_lives: zod.string().transform(normalizeName).optional(),
+    how_came_to_us: zod.string().optional(),
+    where_lives: zod.string().optional(),
   })
   .refine((data) => data.phone === data.confirm_phone, {
     message: "Os números de telefone são diferentes",
