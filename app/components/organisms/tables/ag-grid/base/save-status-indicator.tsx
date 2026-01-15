@@ -21,7 +21,7 @@ export function SaveStatusIndicator({
   const config = statusConfig[status]
 
   return (
-    <div className="absolute bottom-[5px] left-[5px] z-10 flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-md">
+    <div className="flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-md">
       <span className={cn("h-3 w-3 rounded-full", config.color)} />
       <span className="text-xs font-medium text-gray-700">
         {errorMessage || config.text}
