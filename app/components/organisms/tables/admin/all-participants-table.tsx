@@ -2,17 +2,17 @@ import type { ColDef, GridApi, GridReadyEvent } from "ag-grid-community"
 import { Search } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useFetcher } from "react-router"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
+import type { AutoSaveParams } from "~/components/organisms/tables/ag-grid/base/types"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { FlagBadgeRenderer } from "~/components/organisms/tables/ag-grid/renderers/flag-badge-renderer"
 import { LastAttendedEventRenderer } from "~/components/organisms/tables/ag-grid/renderers/last-attended-event-renderer"
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
+import { getVeteranColumn } from "~/components/organisms/tables/ag-grid/columns/veteran-column"
 import { Input } from "~/components/ui/input"
-import {
-  getEventCountColors,
-  getVeteranRookieColors,
-} from "~/lib/helpers/cell-colors"
+import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   approvedToAttendStatusOptions,
@@ -23,6 +23,8 @@ import {
   profilePropMap,
 } from "~/lib/helpers/propMaps"
 import type { ProfileGlobal } from "~types/database/entities.types"
+
+const EDITABLE_FIELDS = ["is_veteran", "approved_to_attend"] as const
 
 const STORAGE_KEYS = {
   gender: "all-participants-filter-gender",
@@ -59,6 +61,7 @@ type AllParticipantsTableProps = {
 export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
   profiles,
 }) => {
+  const fetcher = useFetcher<{ success?: boolean; error?: string }>()
   const gridApiRef = useRef<GridApi<ProfileGlobal> | null>(null)
   const [displayedRowCount, setDisplayedRowCount] = useState<number | null>(
     null,
@@ -166,22 +169,11 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
         },
         sortable: true,
       },
-      {
-        field: "is_veteran",
-        headerName: "Vet/Nov",
-        headerTooltip: "Veterane ou Novate",
-        cellRenderer: (params: { value: boolean | null }) =>
-          params.value ? "Veterane" : "Novate",
-        cellClass: (params) => getVeteranRookieColors(params.value),
-        filter: BaseMultiSelectFilter,
-        filterParams: {
-          options: isVeteranOptions,
-          field: "is_veteran",
-          model: isVeteranFilter,
-          onModelChange: setIsVeteranFilter,
-        },
-        sortable: true,
-      },
+      getVeteranColumn({
+        filterModel: isVeteranFilter,
+        onFilterChange: setIsVeteranFilter,
+        editable: true,
+      }),
       {
         field: "flag",
         headerName: profilePropMap("flag"),
@@ -205,6 +197,11 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       {
         field: "approved_to_attend",
         headerName: profilePropMap("approved_to_attend"),
+        editable: true,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: {
+          values: approvedToAttendStatusOptions.map((o) => o.value),
+        },
         valueFormatter: (params) => {
           const option = approvedToAttendStatusOptions.find(
             (o) => o.value === params.value,
@@ -264,6 +261,29 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
     })
   }, [])
 
+  const handleSave = useCallback(
+    async (params: AutoSaveParams) => {
+      const rowData = params.rowData as ProfileGlobal | undefined
+      if (!rowData?.id) return
+
+      if (
+        !EDITABLE_FIELDS.includes(
+          params.field as (typeof EDITABLE_FIELDS)[number],
+        )
+      ) {
+        return
+      }
+
+      const formData = new FormData()
+      formData.append("intent", "update-profile-admin-notes")
+      formData.append("profile_id", rowData.id)
+      formData.append(params.field, String(params.newValue))
+
+      fetcher.submit(formData, { method: "POST" })
+    },
+    [fetcher],
+  )
+
   const displayCount = displayedRowCount ?? profiles.length
   const isFiltered = displayCount !== profiles.length
 
@@ -311,6 +331,8 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       onClearFilters={handleClearFilters}
       onGridReady={handleGridReady}
       headerContent={tableHeader}
+      fetcher={fetcher}
+      onSave={handleSave}
     />
   )
 }
