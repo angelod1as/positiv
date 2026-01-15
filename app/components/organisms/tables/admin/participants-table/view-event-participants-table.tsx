@@ -270,7 +270,10 @@ export const AdminViewEventParticipantsTable: FC<
         cellEditorParams: {
           values: ["Veterane", "Novate"],
         },
-        valueFormatter: (params) => (params.value ? "Veterane" : "Novate"),
+        cellRenderer: (params: { value: boolean | null }) =>
+          params.value ? "Veterane" : "Novate",
+        valueGetter: (params) =>
+          params.data?.is_veteran ? "Veterane" : "Novate",
         valueSetter: (params: ValueSetterParams<ProfileWithExtraData>) => {
           const newValue = params.newValue === "Veterane"
           if (newValue === params.data.is_veteran) {
@@ -279,7 +282,7 @@ export const AdminViewEventParticipantsTable: FC<
           params.data.is_veteran = newValue
           return true
         },
-        cellClass: (params) => getVeteranRookieColors(params.value),
+        cellClass: (params) => getVeteranRookieColors(params.data?.is_veteran),
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: isVeteranOptions,
