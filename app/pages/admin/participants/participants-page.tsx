@@ -1,6 +1,10 @@
+import type { ActionFunctionArgs } from "react-router"
 import { useLoaderData } from "react-router"
 import { redirectWithError } from "remix-toast"
-import { getAllProfiles } from "~/business/admin/admin.server"
+import {
+  getAllProfiles,
+  updateProfileAdminNotes,
+} from "~/business/admin/admin.server"
 import { AllParticipantsTable } from "~/components/organisms/tables/admin/all-participants-table"
 import paths from "~/lib/paths"
 
@@ -17,6 +21,18 @@ export async function loader() {
     )
   }
   return { profiles: result.data }
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const formData = await request.formData()
+  const intent = formData.get("intent")
+
+  if (intent === "update-profile-admin-notes") {
+    const result = await updateProfileAdminNotes(Object.fromEntries(formData))
+    return result
+  }
+
+  return null
 }
 
 const ParticipantsPage = () => {
