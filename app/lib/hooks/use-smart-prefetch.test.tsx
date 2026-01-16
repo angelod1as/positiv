@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { renderHook } from "~/test/test-utils"
 import { useSmartPrefetch } from "./use-smart-prefetch"
 
@@ -11,6 +11,8 @@ describe("useSmartPrefetch", () => {
   let mockConnection: MockNetworkInformation
 
   beforeEach(() => {
+    vi.spyOn(console, "info").mockImplementation(() => {})
+
     mockConnection = {
       effectiveType: "4g",
       saveData: false,
@@ -24,6 +26,10 @@ describe("useSmartPrefetch", () => {
       writable: true,
       value: mockConnection,
     })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it("should return 'intent' for fast connections (4g)", () => {
