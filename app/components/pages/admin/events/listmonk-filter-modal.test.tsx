@@ -41,6 +41,14 @@ describe("ListmonkFilterModal", () => {
   })
 
   describe("rendering", () => {
+    it("should render modal with accessible description", () => {
+      render(<ListmonkFilterModal {...defaultProps} />)
+
+      expect(
+        screen.getByText(/Selecione os filtros para sincronizar participantes/i),
+      ).toBeInTheDocument()
+    })
+
     it("should render modal with three filter sections", () => {
       render(<ListmonkFilterModal {...defaultProps} />)
 
