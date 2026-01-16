@@ -89,17 +89,30 @@ describe("cleanupTestData", () => {
   it("should handle cleanup errors gracefully", async () => {
     const { cleanupTestData, TestDataTracker } = await import("./db-test-utils")
     const tracker = new TestDataTracker()
-    
+
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {})
+
     const mockKysely = {
       deleteFrom: vi.fn().mockReturnThis(),
       where: vi.fn().mockReturnThis(),
-      execute: vi.fn().mockRejectedValue(new Error("Delete failed"))
+      execute: vi.fn().mockRejectedValue(new Error("Delete failed")),
     }
-    
+
     tracker.track("profiles", "profile-id-1")
-    
+
     // Should not throw, but log error
-    await expect(cleanupTestData(tracker, mockKysely as unknown as Kysely<Database>)).resolves.not.toThrow()
+    await expect(
+      cleanupTestData(tracker, mockKysely as unknown as Kysely<Database>),
+    ).resolves.not.toThrow()
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to delete"),
+      expect.any(Error),
+    )
+
+    consoleErrorSpy.mockRestore()
   })
 })
 

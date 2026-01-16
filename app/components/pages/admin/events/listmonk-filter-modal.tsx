@@ -5,6 +5,7 @@ import { Checkbox } from "~/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -140,6 +141,9 @@ export function ListmonkFilterModal({
               ? "Atualizar lista da newsletter"
               : "Criar lista da newsletter"}
           </DialogTitle>
+          <DialogDescription>
+            Selecione os filtros para sincronizar participantes com a newsletter.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
