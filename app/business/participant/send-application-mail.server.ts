@@ -10,8 +10,8 @@ type sendApplicationMailProps = {
 export const sendApplicationMail = async ({
   profile,
   event,
-}: sendApplicationMailProps) => {
-  if (!profile.email) return
+}: sendApplicationMailProps): Promise<{ emailSent: boolean }> => {
+  if (!profile.email) return { emailSent: false }
 
   const { html, text } = await formatApplicationMail(profile, event)
 
@@ -25,8 +25,9 @@ export const sendApplicationMail = async ({
   const result = await sendEmail(options)
 
   if (!result.success) {
-    throw new Error("Erro no envio do email de confirmação")
+    console.error("Email sending failed:", result.errors)
+    return { emailSent: false }
   }
 
-  return true
+  return { emailSent: true }
 }
