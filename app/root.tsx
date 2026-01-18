@@ -246,7 +246,7 @@ export function Layout(props: { children: ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
-        {import.meta.env.VITE_UMAMI_WEBSITE_ID && (
+        {import.meta.env.VITE_UMAMI_WEBSITE_ID && import.meta.env.VITE_UMAMI_URL && (
           <script
             defer
             src={`${import.meta.env.VITE_UMAMI_URL}/script.js`}
