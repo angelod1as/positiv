@@ -1,11 +1,13 @@
 import { redirect } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithSuccess, redirectWithWarning } from "remix-toast"
+import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getUserContext } from "~/business/auth/auth.server"
 import { applyToEventSchema } from "~/business/common"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { rulesSessionStorage } from "~/business/session.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { useAnalytics } from "~/lib/hooks/use-analytics"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/event-user-data"
 
@@ -32,6 +34,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     mutation: applyToEvent,
     transformResult: async (result) => {
       if (result.success) {
+        trackServerEvent(
+          "event_application_completed",
+          { eventId: params.id },
+          `/events/${params.id}/apply`
+        )
+
         const emailSent = result.data?.emailSent ?? false
 
         if (emailSent) {
@@ -69,6 +77,12 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 const EventUserInfo = ({ params }: Route.ComponentProps) => {
+  const { track } = useAnalytics()
+
+  const handleFormSubmit = () => {
+    track("event_application_clicked", { eventId: params.id })
+  }
+
   return (
     <>
       <h1>Quase lá!</h1>
@@ -83,36 +97,38 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
       </p>
       <p>(O email pode demorar uns minutos para chegar)</p>
 
-      <SchemaForm
-        schema={applyToEventSchema}
-        hiddenFields={["applicationDate", "eventId"]}
-        radio={["bond"]}
-        values={{
-          applicationDate: new Date(),
-          eventId: params.id,
-        }}
-        multiline={["notes", "companions", "referrals", "referred"]}
-        labels={{
-          notes:
-            "Você tem alguma nota ou comentário que gostaria que as pessoas administradoras soubessem?",
-          referrals: "Há alguma pessoa que você queira indicar? Por quê?",
-          referred: "Você foi indicade por alguém? Diga nomes!",
-          companions:
-            "Você pretende ir acompanhade? Se sim, nos diga o nome completo da(s) pessoa(s).",
-          bond: "Se a pessoa que você quer ir junte não for, você ainda assim quer ir no evento?",
-        }}
-        descriptions={{
-          notes: "Você tem algum aviso, lembrete, ideia, ou sugestão?",
-          referrals:
-            "Diga os nomes completos daquelas pessoas que você acha que têm tudo a ver com a gente e que querem muito participar — não esqueça de escrever a razão.",
-          referred:
-            'Se ninguém te indicou, escreva "ninguém". Diga os nomes completos de quem te indicou a Positiv — precisamos saber se foi uma indicação formal ("tem tudo a ver com você") ou informal ("ouvi numa mesa de bar").',
-          companions:
-            "Diga pra gente se você vai de galera — e quem é esse pessoal.",
-          bond: "Se, pra você, tudo bem se você for selecionade e elas não, selecione a caixinha acima.",
-        }}
-        buttonLabel="🎉 Confirmar Inscrição!"
-      />
+      <div onSubmitCapture={handleFormSubmit}>
+        <SchemaForm
+          schema={applyToEventSchema}
+          hiddenFields={["applicationDate", "eventId"]}
+          radio={["bond"]}
+          values={{
+            applicationDate: new Date(),
+            eventId: params.id,
+          }}
+          multiline={["notes", "companions", "referrals", "referred"]}
+          labels={{
+            notes:
+              "Você tem alguma nota ou comentário que gostaria que as pessoas administradoras soubessem?",
+            referrals: "Há alguma pessoa que você queira indicar? Por quê?",
+            referred: "Você foi indicade por alguém? Diga nomes!",
+            companions:
+              "Você pretende ir acompanhade? Se sim, nos diga o nome completo da(s) pessoa(s).",
+            bond: "Se a pessoa que você quer ir junte não for, você ainda assim quer ir no evento?",
+          }}
+          descriptions={{
+            notes: "Você tem algum aviso, lembrete, ideia, ou sugestão?",
+            referrals:
+              "Diga os nomes completos daquelas pessoas que você acha que têm tudo a ver com a gente e que querem muito participar — não esqueça de escrever a razão.",
+            referred:
+              'Se ninguém te indicou, escreva "ninguém". Diga os nomes completos de quem te indicou a Positiv — precisamos saber se foi uma indicação formal ("tem tudo a ver com você") ou informal ("ouvi numa mesa de bar").',
+            companions:
+              "Diga pra gente se você vai de galera — e quem é esse pessoal.",
+            bond: "Se, pra você, tudo bem se você for selecionade e elas não, selecione a caixinha acima.",
+          }}
+          buttonLabel="🎉 Confirmar Inscrição!"
+        />
+      </div>
     </>
   )
 }
