@@ -1,15 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { trackEvent, identifyUser } from "./umami"
+import { trackEvent } from "./umami"
 
 describe("umami analytics", () => {
   const mockTrack = vi.fn()
-  const mockIdentify = vi.fn()
 
   beforeEach(() => {
     vi.stubGlobal("window", {
       umami: {
         track: mockTrack,
-        identify: mockIdentify,
       },
     })
   })
@@ -49,36 +47,6 @@ describe("umami analytics", () => {
       vi.stubGlobal("window", {})
 
       expect(() => trackEvent("test_event")).not.toThrow()
-    })
-  })
-
-  describe("identifyUser", () => {
-    it("should call window.umami.identify with user id", () => {
-      identifyUser("user-123")
-
-      expect(mockIdentify).toHaveBeenCalledTimes(1)
-      expect(mockIdentify).toHaveBeenCalledWith("user-123", undefined)
-    })
-
-    it("should call window.umami.identify with user id and data", () => {
-      const userData = { role: "admin" }
-
-      identifyUser("user-123", userData)
-
-      expect(mockIdentify).toHaveBeenCalledTimes(1)
-      expect(mockIdentify).toHaveBeenCalledWith("user-123", userData)
-    })
-
-    it("should not throw when window is undefined", () => {
-      vi.stubGlobal("window", undefined)
-
-      expect(() => identifyUser("user-123")).not.toThrow()
-    })
-
-    it("should not throw when window.umami is undefined", () => {
-      vi.stubGlobal("window", {})
-
-      expect(() => identifyUser("user-123")).not.toThrow()
     })
   })
 })

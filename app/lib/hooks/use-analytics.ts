@@ -1,5 +1,5 @@
 import { useCallback } from "react"
-import { identifyUser, trackEvent } from "~/lib/analytics/umami"
+import { trackEvent } from "~/lib/analytics/umami"
 
 export function useAnalytics() {
   const track = useCallback(
@@ -9,12 +9,5 @@ export function useAnalytics() {
     []
   )
 
-  const identify = useCallback(
-    (userId: string, data?: Record<string, unknown>) => {
-      identifyUser(userId, data)
-    },
-    []
-  )
-
-  return { track, identify }
+  return { track }
 }
