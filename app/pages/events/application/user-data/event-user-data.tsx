@@ -34,7 +34,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     mutation: applyToEvent,
     transformResult: async (result) => {
       if (result.success) {
-        await trackServerEvent(
+        trackServerEvent(
           "event_application_completed",
           { eventId: params.id },
           `/events/${params.id}/apply`

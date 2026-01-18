@@ -184,11 +184,7 @@ export const loginUser = applySchema(
     )
   }
 
-  await trackServerEvent(
-    "user_login",
-    { userId: data.user.id },
-    "/auth/login"
-  )
+  trackServerEvent("user_login", { userId: data.user.id }, "/auth/login")
 
   return { user: data.user }
 })
@@ -331,7 +327,7 @@ export const registerUser = applySchema(
     throw new Error(`Ops, ocorreu um erro. Erro: ${error}`)
   }
 
-  await trackServerEvent("user_signup_completed", {}, "/auth/register")
+  trackServerEvent("user_signup_completed", {}, "/auth/register")
 
   return values
 })
