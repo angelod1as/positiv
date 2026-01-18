@@ -1,6 +1,6 @@
 import { redirect } from "react-router"
 import { formAction } from "remix-forms"
-import { redirectWithSuccess } from "remix-toast"
+import { redirectWithSuccess, redirectWithWarning } from "remix-toast"
 import { getUserContext } from "~/business/auth/auth.server"
 import { applyToEventSchema } from "~/business/common"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
@@ -32,18 +32,35 @@ export async function action({ request, params }: Route.ActionArgs) {
     mutation: applyToEvent,
     transformResult: async (result) => {
       if (result.success) {
-        throw await redirectWithSuccess(
-          DASHBOARD,
-          {
-            message: "Inscrição efetuada com sucesso",
-            description:
-              "Você receberá as informações do evento em seu email (pode demorar uns minutos)",
-            duration: 3000,
-          },
-          {
-            headers: context.supabaseHeaders,
-          },
-        )
+        const emailSent = result.data?.emailSent ?? false
+
+        if (emailSent) {
+          throw await redirectWithSuccess(
+            DASHBOARD,
+            {
+              message: "Inscrição efetuada com sucesso",
+              description:
+                "Você receberá as informações do evento em seu email (pode demorar uns minutos)",
+              duration: 3000,
+            },
+            {
+              headers: context.supabaseHeaders,
+            },
+          )
+        } else {
+          throw await redirectWithWarning(
+            DASHBOARD,
+            {
+              message: "Inscrição efetuada com sucesso!",
+              description:
+                "Houve um problema no envio do email, mas não se preocupe - sua inscrição foi registrada. Você pode verificar no seu painel.",
+              duration: 6000,
+            },
+            {
+              headers: context.supabaseHeaders,
+            },
+          )
+        }
       }
       return result
     },
