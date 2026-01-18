@@ -6,6 +6,7 @@ import { Button } from "~/components/atoms/button/button"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
+import { useAnalytics } from "~/lib/hooks/use-analytics"
 import { useSmartPrefetch } from "~/lib/hooks/use-smart-prefetch"
 import paths from "~/lib/paths"
 import type { EventStatus } from "~types/database/entities.types"
@@ -36,6 +37,17 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   dataTestId,
   isAdmin,
 }) => {
+  const fetcher = useFetcher()
+  const prefetchStrategy = useSmartPrefetch()
+  const { track } = useAnalytics()
+
+  useEffect(() => {
+    if (fetcher.data?.error) {
+      toast.error(fetcher.data.error)
+      console.error(fetcher.data.error)
+    }
+  }, [fetcher.data])
+
   if (isAdmin) {
     return (
       <div className="flex flex-row gap-4 w-full">
@@ -47,22 +59,16 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     )
   }
 
-  const fetcher = useFetcher()
-  const prefetchStrategy = useSmartPrefetch()
-
-  useEffect(() => {
-    if (fetcher.data?.error) {
-      toast.error(fetcher.data.error)
-      console.error(fetcher.data.error)
-    }
-  }, [fetcher.data])
-
   const handleConfirmCancel = async (closeDialog: () => void) => {
     await fetcher.submit(
       { cancel: true, eventId, fetchId: "handleConfirmCancel" },
       { method: "POST" },
     )
     closeDialog()
+  }
+
+  const handleCancelButtonClick = () => {
+    track("event_cancel_clicked", { eventId })
   }
 
   const { isClosed, isOpen, isScheduled } = checkEventStatus(event_status)
@@ -133,7 +139,11 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
             isLoading={fetcher.state !== "idle"}
             onConfirm={handleConfirmCancel}
           >
-            <ConfirmDialog.Trigger variant="destructive" className="w-full">
+            <ConfirmDialog.Trigger
+              variant="destructive"
+              className="w-full"
+              onClick={handleCancelButtonClick}
+            >
               Cancelar inscrição
             </ConfirmDialog.Trigger>
           </ConfirmDialog>
