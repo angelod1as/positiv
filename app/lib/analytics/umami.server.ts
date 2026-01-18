@@ -21,6 +21,7 @@ export async function trackServerEvent(
 ): Promise<void> {
   const websiteId = process.env.VITE_UMAMI_WEBSITE_ID
   const umamiUrl = process.env.VITE_UMAMI_URL
+  const hostname = process.env.VITE_APP_DOMAIN || "positivparty.com"
 
   if (!websiteId || !umamiUrl) {
     return
@@ -30,7 +31,7 @@ export async function trackServerEvent(
     type: "event",
     payload: {
       website: websiteId,
-      hostname: "positivparty.com",
+      hostname,
       url,
       name: eventName,
       language: "pt-BR",
@@ -47,12 +48,14 @@ export async function trackServerEvent(
         "Content-Type": "application/json",
         "User-Agent":
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Origin: "https://positivparty.com",
-        Referer: "https://positivparty.com/",
+        Origin: `https://${hostname}`,
+        Referer: `https://${hostname}/`,
       },
       body: JSON.stringify(payload),
     })
-  } catch {
-    // Silently fail - analytics should never break the app
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.error("[Analytics] Failed to track event:", eventName, error)
+    }
   }
 }
