@@ -53,7 +53,7 @@ export async function action({ request, params }: Route.ActionArgs) {
             {
               message: "Inscrição efetuada com sucesso!",
               description:
-                "Houve um problema no envio do email, mas não se preocupe - sua inscrição foi registrada.",
+                "Houve um problema no envio do email, mas não se preocupe - sua inscrição foi registrada. Você pode verificar no seu painel.",
               duration: 6000,
             },
             {
