@@ -2,6 +2,7 @@ import type { FC, ReactNode } from "react"
 import { Await } from "react-router"
 import { Suspense } from "react"
 import { redirectWithInfo } from "remix-toast"
+import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext } from "~/business/auth/auth.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
@@ -68,6 +69,12 @@ export async function action({ request, params }: Route.ClientActionArgs) {
         "Ops, seu cancelamento deu errado. Comunique o administrador.",
       )
     }
+
+    await trackServerEvent(
+      "event_cancel_completed",
+      { eventId },
+      "/dashboard"
+    )
 
     return
   }

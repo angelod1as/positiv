@@ -4,6 +4,7 @@ import { useForm, type SubmitHandler } from "react-hook-form"
 import { Form, redirect, useLoaderData, useSubmit } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
+import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getUserContext } from "~/business/auth/auth.server"
 import { rulesSessionStorage } from "~/business/session.server"
 import { Button } from "~/components/atoms/button/button"
@@ -59,6 +60,13 @@ export async function action({ request, params }: Route.ActionArgs) {
   try {
     const session = await getSession(request.headers.get("Cookie"))
     session.set("rulesCorrect", true)
+
+    await trackServerEvent(
+      "rules_quiz_passed",
+      { eventId: params.id },
+      `/events/${params.id}/rules`
+    )
+
     return redirect(EVENT_DATA(params.id), {
       headers: {
         "Set-Cookie": await commitSession(session),

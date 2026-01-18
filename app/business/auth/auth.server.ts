@@ -2,6 +2,7 @@ import { applySchema } from "composable-functions"
 import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
+import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { env } from "~/env.server"
 import { kyselyDb } from "~/kysely-db"
 import paths from "~/lib/paths"
@@ -183,6 +184,8 @@ export const loginUser = applySchema(
     )
   }
 
+  await trackServerEvent("user_login", {}, "/auth/login")
+
   return { user: data.user }
 })
 
@@ -323,6 +326,8 @@ export const registerUser = applySchema(
 
     throw new Error(`Ops, ocorreu um erro. Erro: ${error}`)
   }
+
+  await trackServerEvent("user_signup_completed", {}, "/auth/register")
 
   return values
 })
