@@ -48,12 +48,11 @@ export const applyToEvent = applySchema(
     if (event) {
       const emailResult = await sendApplicationMail({
         profile: currentProfile,
-        event: {
-          ...event,
-          event_status: event.event_status,
-        },
+        event,
       })
       emailSent = emailResult.emailSent
+    } else {
+      console.error("Event not found for email sending", { eventId })
     }
   }
 
