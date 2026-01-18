@@ -36,6 +36,8 @@ export const applyToEvent = applySchema(
     throw new Error("Sua inscrição teve um erro, tente novamente. Erro: upsert")
   }
 
+  let emailSent = false
+
   if (currentProfile.email) {
     const { data: event } = await supabase
       .from("events")
@@ -44,15 +46,15 @@ export const applyToEvent = applySchema(
       .single()
 
     if (event) {
-      await sendApplicationMail({
+      const emailResult = await sendApplicationMail({
         profile: currentProfile,
-        event: {
-          ...event,
-          event_status: event.event_status,
-        },
+        event,
       })
+      emailSent = emailResult.emailSent
+    } else {
+      console.error("Event not found for email sending", { eventId })
     }
   }
 
-  return
+  return { emailSent }
 })
