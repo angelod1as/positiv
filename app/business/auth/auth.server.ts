@@ -184,7 +184,11 @@ export const loginUser = applySchema(
     )
   }
 
-  await trackServerEvent("user_login", {}, "/auth/login")
+  await trackServerEvent(
+    "user_login",
+    { userId: data.user.id },
+    "/auth/login"
+  )
 
   return { user: data.user }
 })

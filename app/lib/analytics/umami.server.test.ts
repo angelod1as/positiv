@@ -10,6 +10,7 @@ describe("trackServerEvent", () => {
 
     vi.stubEnv("VITE_UMAMI_WEBSITE_ID", "test-website-id")
     vi.stubEnv("VITE_UMAMI_URL", "https://umami.test.com")
+    vi.stubEnv("VITE_APP_DOMAIN", "")
   })
 
   afterEach(() => {
@@ -88,5 +89,25 @@ describe("trackServerEvent", () => {
     const callArgs = mockFetch.mock.calls[0]
     const body = JSON.parse(callArgs[1].body)
     expect(body.payload.data).toBeUndefined()
+  })
+
+  it("should use custom domain from VITE_APP_DOMAIN env var", async () => {
+    vi.stubEnv("VITE_APP_DOMAIN", "staging.positiv.com")
+
+    await trackServerEvent("test_event", {}, "/test")
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      "https://umami.test.com/api/send",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Origin: "https://staging.positiv.com",
+          Referer: "https://staging.positiv.com/",
+        }),
+      })
+    )
+
+    const callArgs = mockFetch.mock.calls[0]
+    const body = JSON.parse(callArgs[1].body)
+    expect(body.payload.hostname).toBe("staging.positiv.com")
   })
 })
