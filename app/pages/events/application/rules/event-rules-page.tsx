@@ -61,11 +61,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     const session = await getSession(request.headers.get("Cookie"))
     session.set("rulesCorrect", true)
 
-    await trackServerEvent(
-      "rules_quiz_passed",
-      { eventId: params.id },
-      `/events/${params.id}/rules`
-    )
+    trackServerEvent("rules_quiz_passed", { eventId: params.id }, `/events/${params.id}/rules`)
 
     return redirect(EVENT_DATA(params.id), {
       headers: {

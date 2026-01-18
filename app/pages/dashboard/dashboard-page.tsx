@@ -70,11 +70,7 @@ export async function action({ request, params }: Route.ClientActionArgs) {
       )
     }
 
-    await trackServerEvent(
-      "event_cancel_completed",
-      { eventId },
-      "/dashboard"
-    )
+    trackServerEvent("event_cancel_completed", { eventId }, "/dashboard")
 
     return
   }
