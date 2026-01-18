@@ -60,15 +60,12 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   }
 
   const handleConfirmCancel = async (closeDialog: () => void) => {
+    track("event_cancel_clicked", { eventId })
     await fetcher.submit(
       { cancel: true, eventId, fetchId: "handleConfirmCancel" },
       { method: "POST" },
     )
     closeDialog()
-  }
-
-  const handleCancelButtonClick = () => {
-    track("event_cancel_clicked", { eventId })
   }
 
   const { isClosed, isOpen, isScheduled } = checkEventStatus(event_status)
@@ -139,11 +136,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
             isLoading={fetcher.state !== "idle"}
             onConfirm={handleConfirmCancel}
           >
-            <ConfirmDialog.Trigger
-              variant="destructive"
-              className="w-full"
-              onClick={handleCancelButtonClick}
-            >
+            <ConfirmDialog.Trigger variant="destructive" className="w-full">
               Cancelar inscrição
             </ConfirmDialog.Trigger>
           </ConfirmDialog>
