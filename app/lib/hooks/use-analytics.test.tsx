@@ -4,35 +4,25 @@ import userEvent from "@testing-library/user-event"
 import { useAnalytics } from "./use-analytics"
 
 function TestComponent() {
-  const { track, identify } = useAnalytics()
+  const { track } = useAnalytics()
 
   return (
-    <div>
-      <button
-        onClick={() => track("test_event", { key: "value" })}
-        data-testid="track-button"
-      >
-        Track Event
-      </button>
-      <button
-        onClick={() => identify("user-123", { role: "admin" })}
-        data-testid="identify-button"
-      >
-        Identify User
-      </button>
-    </div>
+    <button
+      onClick={() => track("test_event", { key: "value" })}
+      data-testid="track-button"
+    >
+      Track Event
+    </button>
   )
 }
 
 describe("useAnalytics", () => {
   const mockTrack = vi.fn()
-  const mockIdentify = vi.fn()
 
   beforeEach(() => {
     vi.stubGlobal("window", {
       umami: {
         track: mockTrack,
-        identify: mockIdentify,
       },
     })
   })
@@ -50,16 +40,6 @@ describe("useAnalytics", () => {
 
     expect(mockTrack).toHaveBeenCalledTimes(1)
     expect(mockTrack).toHaveBeenCalledWith("test_event", { key: "value" })
-  })
-
-  it("should call identifyUser when identify is invoked", async () => {
-    const user = userEvent.setup()
-    render(<TestComponent />)
-
-    await user.click(screen.getByTestId("identify-button"))
-
-    expect(mockIdentify).toHaveBeenCalledTimes(1)
-    expect(mockIdentify).toHaveBeenCalledWith("user-123", { role: "admin" })
   })
 
   it("should return stable function references across re-renders", async () => {
