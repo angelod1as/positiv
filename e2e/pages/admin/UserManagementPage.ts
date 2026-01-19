@@ -228,9 +228,16 @@ export class UserManagementPage extends BasePage {
   }
 
   async editDetailField(fieldName: string, value: string): Promise<void> {
-    const field = this.page.locator(`[name="${fieldName}"]`).first()
+    // First try to find by id (new pattern with Radix UI components)
+    const fieldById = this.page.locator(`[id="${fieldName}"]`).first()
+    const fieldByName = this.page.locator(`[name="${fieldName}"]`).first()
+
+    // Check which selector finds the element
+    const fieldByIdVisible = await fieldById.isVisible().catch(() => false)
+    const field = fieldByIdVisible ? fieldById : fieldByName
     await field.waitFor({ state: "visible" })
 
+    const tagName = await field.evaluate((el) => el.tagName)
     const fieldType = await field.getAttribute("type")
 
     if (fieldType === "checkbox") {
@@ -239,9 +246,17 @@ export class UserManagementPage extends BasePage {
       if (isChecked !== shouldBeChecked) {
         await field.click()
       }
-    } else if (await field.evaluate((el) => el.tagName === "SELECT")) {
+    } else if (tagName === "SELECT") {
       await field.selectOption(value)
-    } else if (await field.evaluate((el) => el.tagName === "TEXTAREA")) {
+    } else if (tagName === "BUTTON" && (await field.getAttribute("role")) === "combobox") {
+      // Radix UI Select - click trigger then select option
+      await field.click()
+      // Escape special regex characters in value
+      const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+      const option = this.page.getByRole("option", { name: new RegExp(escapedValue, "i") })
+      await option.waitFor({ state: "visible" })
+      await option.click()
+    } else if (tagName === "TEXTAREA") {
       await field.clear()
       await field.fill(value)
     } else {
@@ -251,27 +266,30 @@ export class UserManagementPage extends BasePage {
   }
 
   async saveDetailViewChanges(): Promise<void> {
-    await this.saveButton.click()
+    // Auto-save is now in place - wait for network idle to ensure save completes
+    // Note: We don't wait for sonner toast as it's unreliable in E2E tests
     await this.page.waitForLoadState("networkidle")
-
-    // TODO: Bug POS-203 - Success toast is not shown after saving
-    // Once fixed, uncomment the following:
-    // await this.page.waitForSelector('[role="status"]:has-text("Atualizado com sucesso")', {
-    //   state: 'visible',
-    //   timeout: 5000
-    // })
   }
 
   async getDetailFieldValue(fieldName: string): Promise<string> {
-    const field = this.page.locator(`[name="${fieldName}"]`).first()
+    // First try to find by id (new pattern with Radix UI components)
+    const fieldById = this.page.locator(`[id="${fieldName}"]`).first()
+    const fieldByName = this.page.locator(`[name="${fieldName}"]`).first()
 
+    const fieldByIdVisible = await fieldById.isVisible().catch(() => false)
+    const field = fieldByIdVisible ? fieldById : fieldByName
+
+    const tagName = await field.evaluate((el) => el.tagName)
     const fieldType = await field.getAttribute("type")
 
     if (fieldType === "checkbox") {
       const isChecked = await field.isChecked()
       return isChecked.toString()
-    } else if (await field.evaluate((el) => el.tagName === "SELECT")) {
+    } else if (tagName === "SELECT") {
       return await field.inputValue()
+    } else if (tagName === "BUTTON" && (await field.getAttribute("role")) === "combobox") {
+      // Radix UI Select - get the displayed text
+      return await field.textContent() ?? ""
     } else {
       return await field.inputValue()
     }
