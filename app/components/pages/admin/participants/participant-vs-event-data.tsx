@@ -1,5 +1,5 @@
 import type { ChangeEvent, FC } from "react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
@@ -21,6 +21,7 @@ import {
   eventParticipantPropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
+import { useSyncedState } from "~/lib/hooks/use-synced-state"
 import type {
   ComposableFetcherData,
   EventParticipantWithEvent,
@@ -55,17 +56,19 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   const fetcher = useFetcher<ComposableFetcherData>()
   const previousDataRef = useRef<ComposableFetcherData | undefined>(undefined)
 
-  // Local state for all editable fields
+  // Local state for all editable fields, synced with props
   const [localAttendanceStatus, setLocalAttendanceStatus] =
-    useState(attendance_status)
+    useSyncedState(attendance_status)
   const [localApplicationStatus, setLocalApplicationStatus] =
-    useState(application_status)
-  const [localSpotType, setLocalSpotType] = useState(spot_type)
-  const [localPayment, setLocalPayment] = useState(payment?.toString() ?? "")
-  const [localHasPaid, setLocalHasPaid] = useState(has_paid)
+    useSyncedState(application_status)
+  const [localSpotType, setLocalSpotType] = useSyncedState(spot_type)
+  const [localPayment, setLocalPayment] = useSyncedState(
+    payment?.toString() ?? "",
+  )
+  const [localHasPaid, setLocalHasPaid] = useSyncedState(has_paid)
   const [localWasSelectedForRotation, setLocalWasSelectedForRotation] =
-    useState(was_selected_for_rotation)
-  const [localAdminNotes, setLocalAdminNotes] = useState(
+    useSyncedState(was_selected_for_rotation)
+  const [localAdminNotes, setLocalAdminNotes] = useSyncedState(
     admin_general_notes ?? "",
   )
 
@@ -85,35 +88,6 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     }
     previousDataRef.current = fetcher.data
   }, [fetcher.data])
-
-  // Sync local state when props change (e.g., after revalidation)
-  useEffect(() => {
-    setLocalAttendanceStatus(attendance_status)
-  }, [attendance_status])
-
-  useEffect(() => {
-    setLocalApplicationStatus(application_status)
-  }, [application_status])
-
-  useEffect(() => {
-    setLocalSpotType(spot_type)
-  }, [spot_type])
-
-  useEffect(() => {
-    setLocalPayment(payment?.toString() ?? "")
-  }, [payment])
-
-  useEffect(() => {
-    setLocalHasPaid(has_paid)
-  }, [has_paid])
-
-  useEffect(() => {
-    setLocalWasSelectedForRotation(was_selected_for_rotation)
-  }, [was_selected_for_rotation])
-
-  useEffect(() => {
-    setLocalAdminNotes(admin_general_notes ?? "")
-  }, [admin_general_notes])
 
   const submitField = (field: string, value: unknown) => {
     const formData = new FormData()
