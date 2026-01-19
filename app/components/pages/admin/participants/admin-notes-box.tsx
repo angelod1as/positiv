@@ -156,16 +156,15 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
             />
           </div>
 
-          <div className="flex items-center space-x-2">
+          <Label className="flex items-center gap-2 cursor-pointer">
             <Checkbox
-              id="is_veteran"
               checked={isVeteran}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 submitField("is_veteran", e.target.checked)
               }
             />
-            <Label htmlFor="is_veteran">Veterano</Label>
-          </div>
+            <span>Veterano</span>
+          </Label>
         </div>
       </CardContent>
     </Card>

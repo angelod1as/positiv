@@ -7,7 +7,7 @@ export const Checkbox = React.forwardRef<
   React.JSX.IntrinsicElements["input"]
 >(({ className, checked, onChange, ...props }, ref) => {
   return (
-    <label className="relative inline-flex items-start mt-[2px] cursor-pointer">
+    <span className="relative inline-flex items-start mt-[2px]">
       <input
         ref={ref}
         type="checkbox"
@@ -17,7 +17,7 @@ export const Checkbox = React.forwardRef<
         onChange={onChange}
         {...props}
       />
-      <div
+      <span
         data-testid="checkbox"
         className={cn(
           "peer-checked:border-primary peer-focus-visible:ring-[3px] peer-focus-visible:ring-ring/50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
@@ -27,8 +27,8 @@ export const Checkbox = React.forwardRef<
         )}
       >
         {checked && <CheckIcon className="w-3 h-3 text-primary-foreground" />}
-      </div>
-    </label>
+      </span>
+    </span>
   )
 })
 
