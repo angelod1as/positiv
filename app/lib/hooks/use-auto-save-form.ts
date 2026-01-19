@@ -52,10 +52,10 @@ export interface UseAutoSaveFormReturn<T> {
 export function useAutoSaveForm<T extends ZodRawShape>(
   options: UseAutoSaveFormOptions<T>,
 ): UseAutoSaveFormReturn<z.infer<ZodObject<T>>> {
-  type FormData = z.infer<ZodObject<T>>
-  const { initialData, fetcher } = options
+  type FormValues = z.infer<ZodObject<T>>
+  const { initialData, fetcher, onSubmit } = options
 
-  const [values, setValues] = useState<FormData>(initialData)
+  const [values, setValues] = useState<FormValues>(initialData)
   const initialDataRef = useRef(initialData)
 
   // Re-sync values when initialData changes (prop sync)
@@ -68,15 +68,27 @@ export function useAutoSaveForm<T extends ZodRawShape>(
 
   const isSaving = fetcher.state !== "idle"
 
-  const setValue = useCallback((name: keyof FormData, value: unknown) => {
+  const setValue = useCallback((name: keyof FormValues, value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }))
   }, [])
 
-  const submitField = useCallback((_name: keyof FormData) => {
-    // Will be implemented in next TDD cycle
-  }, [])
+  const doSubmit = useCallback(
+    (name: keyof FormValues, value: unknown) => {
+      const formData = new FormData()
+      formData.set(String(name), String(value))
+      onSubmit(String(name), value, formData)
+    },
+    [onSubmit],
+  )
 
-  const getFieldState = useCallback((_name: keyof FormData): FieldState => {
+  const submitField = useCallback(
+    (name: keyof FormValues) => {
+      doSubmit(name, values[name])
+    },
+    [doSubmit, values],
+  )
+
+  const getFieldState = useCallback((_name: keyof FormValues): FieldState => {
     return {
       isDirty: false,
       isSaving: false,
@@ -85,20 +97,27 @@ export function useAutoSaveForm<T extends ZodRawShape>(
   }, [])
 
   const register = {
-    select: (_name: keyof FormData) => ({
-      value: "" as string,
-      onValueChange: (_value: string) => {},
+    select: (name: keyof FormValues) => ({
+      value: String(values[name] ?? ""),
+      onValueChange: (value: string) => {
+        setValues((prev) => ({ ...prev, [name]: value }))
+        doSubmit(name, value)
+      },
     }),
-    checkbox: (_name: keyof FormData) => ({
-      checked: false,
-      onChange: (_e: { target: { checked: boolean } }) => {},
+    checkbox: (name: keyof FormValues) => ({
+      checked: Boolean(values[name]),
+      onChange: (e: { target: { checked: boolean } }) => {
+        const newValue = e.target.checked
+        setValues((prev) => ({ ...prev, [name]: newValue }))
+        doSubmit(name, newValue)
+      },
     }),
-    text: (_name: keyof FormData) => ({
+    text: (_name: keyof FormValues) => ({
       value: "" as string,
       onChange: (_e: { target: { value: string } }) => {},
       onBlur: () => {},
     }),
-    number: (_name: keyof FormData) => ({
+    number: (_name: keyof FormValues) => ({
       value: "" as string,
       onChange: (_e: { target: { value: string } }) => {},
       onBlur: () => {},
