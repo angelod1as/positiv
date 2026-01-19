@@ -188,4 +188,182 @@ describe("useAutoSaveForm", () => {
       )
     })
   })
+
+  describe("text fields", () => {
+    it("should return current value from register.text", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      const textProps = result.current.register.text("name")
+      expect(textProps.value).toBe("Test Name")
+    })
+
+    it("should update local value on change without submitting", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register
+          .text("name")
+          .onChange({ target: { value: "New Name" } })
+      })
+
+      expect(result.current.values.name).toBe("New Name")
+      expect(mockOnSubmit).not.toHaveBeenCalled()
+    })
+
+    it("should submit on blur when value changed", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register
+          .text("name")
+          .onChange({ target: { value: "New Name" } })
+      })
+
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1)
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        "name",
+        "New Name",
+        expect.any(Object),
+      )
+    })
+
+    it("should not submit on blur when value unchanged", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      expect(mockOnSubmit).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("number fields", () => {
+    it("should return current value as string from register.number", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      const numberProps = result.current.register.number("count")
+      expect(numberProps.value).toBe("10")
+    })
+
+    it("should update local value on change without submitting", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register
+          .number("count")
+          .onChange({ target: { value: "20" } })
+      })
+
+      expect(result.current.values.count).toBe("20")
+      expect(mockOnSubmit).not.toHaveBeenCalled()
+    })
+
+    it("should submit on blur when value changed", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register
+          .number("count")
+          .onChange({ target: { value: "25" } })
+      })
+
+      act(() => {
+        result.current.register.number("count").onBlur()
+      })
+
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1)
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        "count",
+        "25",
+        expect.any(Object),
+      )
+    })
+
+    it("should not submit on blur when value unchanged", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register.number("count").onBlur()
+      })
+
+      expect(mockOnSubmit).not.toHaveBeenCalled()
+    })
+  })
 })
