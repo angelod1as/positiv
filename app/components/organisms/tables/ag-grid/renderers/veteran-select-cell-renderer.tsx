@@ -8,7 +8,7 @@ export function VeteranSelectCellRenderer(params: ICellRendererParams) {
 
   return (
     <div className="flex h-full w-full items-center">
-      <span className={`px-2 py-1 rounded text-sm ${colors}`}>{label}</span>
+      <span className={`px-2 py-1 rounded text-xs ${colors}`}>{label}</span>
     </div>
   )
 }

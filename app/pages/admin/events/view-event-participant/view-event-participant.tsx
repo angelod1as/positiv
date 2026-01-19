@@ -5,6 +5,7 @@ import {
   getEventParticipantBasic,
   getParticipantFullEventHistory,
   getProfileById,
+  updateEventParticipantById,
   updateParticipantVsEvent,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
@@ -44,6 +45,11 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "update-profile-admin-notes") {
     const result = await updateProfileAdminNotes(Object.fromEntries(formData))
+    return { success: result.success, errors: result.success ? undefined : result.errors }
+  }
+
+  if (intent === "update-event-participant") {
+    const result = await updateEventParticipantById(Object.fromEntries(formData))
     return { success: result.success, errors: result.success ? undefined : result.errors }
   }
 

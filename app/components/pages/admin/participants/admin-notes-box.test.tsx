@@ -1,15 +1,24 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
+import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { ProfileFlagStatus } from "~types/database/entities.types"
 import { AdminNotesBox } from "./admin-notes-box"
 
-const mockFetcher = {
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+    warning: vi.fn(),
+  },
+}))
+
+const createMockFetcher = (data?: { success: boolean; intent?: string; errors?: Record<string, string[]> }) => ({
   submit: vi.fn(),
   state: "idle" as const,
   formData: undefined,
-  data: undefined,
+  data,
   formAction: undefined,
   formMethod: undefined,
   formEncType: undefined,
@@ -18,7 +27,9 @@ const mockFetcher = {
   key: "",
   Form: () => null,
   load: vi.fn(),
-}
+})
+
+let mockFetcher = createMockFetcher()
 
 vi.mock("react-router", async (importOriginal) => {
   const original = await importOriginal<typeof import("react-router")>()
@@ -45,6 +56,7 @@ describe("AdminNotesBox", () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockFetcher = createMockFetcher()
   })
 
   const createTestRouter = (props: typeof defaultProps) => {
@@ -101,19 +113,24 @@ describe("AdminNotesBox", () => {
     expect(checkbox).toBeChecked()
   })
 
-  it("should submit form when flag changes", async () => {
+  it("should submit form when flag changes to none", async () => {
     const user = userEvent.setup()
 
-    const router = createTestRouter(defaultProps)
+    // Start with a non-none flag so we can change to none
+    const router = createTestRouter({
+      ...defaultProps,
+      flag: "yellow",
+      flagNotes: "Some notes",
+    })
     render(<RouterProvider router={router} />)
 
     // Click the trigger to open the dropdown
     const flagSelect = screen.getByLabelText("Flag")
     await user.click(flagSelect)
 
-    // Click the "Amarela" option (yellow flag)
-    const yellowOption = await screen.findByRole("option", { name: /amarela/i })
-    await user.click(yellowOption)
+    // Click the "Sem flag" option (none flag)
+    const noneOption = await screen.findByRole("option", { name: /sem flag/i })
+    await user.click(noneOption)
 
     await waitFor(() => {
       expect(mockFetcher.submit).toHaveBeenCalled()
@@ -208,6 +225,28 @@ describe("AdminNotesBox", () => {
       expect(mockFetcher.submit).not.toHaveBeenCalled()
     })
 
+    it("should prevent clearing flag_notes when a flag is set", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter({
+        ...defaultProps,
+        flag: "yellow",
+        flagNotes: "existing notes",
+      })
+      render(<RouterProvider router={router} />)
+
+      const textarea = screen.getByLabelText("Notas da Flag")
+      await user.clear(textarea)
+      await user.tab()
+
+      // Should show warning toast
+      expect(toast.warning).toHaveBeenCalledWith(
+        "Notas da Flag não podem estar vazias enquanto uma flag está selecionada",
+      )
+      // Should NOT submit
+      expect(mockFetcher.submit).not.toHaveBeenCalled()
+    })
+
     it("should NOT submit general_notes while typing", async () => {
       const user = userEvent.setup()
 
@@ -236,6 +275,122 @@ describe("AdminNotesBox", () => {
 
       const formData = mockFetcher.submit.mock.calls[0][0] as FormData
       expect(formData.get("general_notes")).toBe("new general notes")
+    })
+  })
+
+  describe("flag validation and toast feedback", () => {
+    it("should show error toast when changing flag to non-none with empty flag_notes", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter(defaultProps)
+      render(<RouterProvider router={router} />)
+
+      // Click the trigger to open the dropdown
+      const flagSelect = screen.getByLabelText("Flag")
+      await user.click(flagSelect)
+
+      // Click the "Amarela" option (yellow flag)
+      const yellowOption = await screen.findByRole("option", { name: /amarela/i })
+      await user.click(yellowOption)
+
+      await waitFor(() => {
+        expect(toast.warning).toHaveBeenCalledWith(
+          "Notas da Flag são obrigatórias quando uma flag é selecionada"
+        )
+      })
+
+      // Should NOT have called submit
+      expect(mockFetcher.submit).not.toHaveBeenCalled()
+    })
+
+    it("should submit both flag and flag_notes when changing flag to non-none with existing flag_notes", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter({
+        ...defaultProps,
+        flagNotes: "Existing warning notes",
+      })
+      render(<RouterProvider router={router} />)
+
+      // Click the trigger to open the dropdown
+      const flagSelect = screen.getByLabelText("Flag")
+      await user.click(flagSelect)
+
+      // Click the "Amarela" option (yellow flag)
+      const yellowOption = await screen.findByRole("option", { name: /amarela/i })
+      await user.click(yellowOption)
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("flag")).toBe("yellow")
+      expect(formData.get("flag_notes")).toBe("Existing warning notes")
+    })
+
+    it("should show success toast when fetcher returns success", async () => {
+      // Create fetcher with success response - toast should show on mount
+      mockFetcher = createMockFetcher({ success: true, intent: "update-profile-admin-notes" })
+
+      const router = createTestRouter({
+        ...defaultProps,
+        flagNotes: "Existing notes",
+      })
+      render(<RouterProvider router={router} />)
+
+      // Toast should be shown immediately when fetcher.data has success
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith("Dados salvos com sucesso")
+      })
+    })
+
+    it("should show error toast when fetcher returns failure", async () => {
+      // Create fetcher with error response - toast should show on mount
+      mockFetcher = createMockFetcher({
+        success: false,
+        intent: "update-profile-admin-notes",
+        errors: { _global: ["Erro ao salvar"] }
+      })
+
+      const router = createTestRouter({
+        ...defaultProps,
+        flagNotes: "Existing notes",
+      })
+      render(<RouterProvider router={router} />)
+
+      // Toast should be shown immediately when fetcher.data has error
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Erro ao salvar")
+      })
+    })
+
+    it("should allow changing flag to none without flag_notes", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter({
+        ...defaultProps,
+        flag: "yellow",
+        flagNotes: "Some notes",
+      })
+      render(<RouterProvider router={router} />)
+
+      // Click the trigger to open the dropdown
+      const flagSelect = screen.getByLabelText("Flag")
+      await user.click(flagSelect)
+
+      // Click the "Sem flag" option (none flag)
+      const noneOption = await screen.findByRole("option", { name: /sem flag/i })
+      await user.click(noneOption)
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("flag")).toBe("none")
+      // Should NOT include flag_notes when setting to none
+      expect(formData.has("flag_notes")).toBe(false)
     })
   })
 })
