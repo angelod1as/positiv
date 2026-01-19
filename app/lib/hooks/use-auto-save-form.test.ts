@@ -100,4 +100,92 @@ describe("useAutoSaveForm", () => {
       expect(result.current.isSaving).toBe(false)
     })
   })
+
+  describe("select fields", () => {
+    it("should return current value from register.select", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      const selectProps = result.current.register.select("status")
+      expect(selectProps.value).toBe("active")
+    })
+
+    it("should update local value and call onSubmit immediately when select changes", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register.select("status").onValueChange("inactive")
+      })
+
+      expect(result.current.values.status).toBe("inactive")
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1)
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        "status",
+        "inactive",
+        expect.any(Object),
+      )
+    })
+  })
+
+  describe("checkbox fields", () => {
+    it("should return current checked state from register.checkbox", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      const checkboxProps = result.current.register.checkbox("isActive")
+      expect(checkboxProps.checked).toBe(true)
+    })
+
+    it("should update local value and call onSubmit immediately when checkbox changes", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register
+          .checkbox("isActive")
+          .onChange({ target: { checked: false } })
+      })
+
+      expect(result.current.values.isActive).toBe(false)
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1)
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        "isActive",
+        false,
+        expect.any(Object),
+      )
+    })
+  })
 })
