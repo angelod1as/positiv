@@ -75,7 +75,12 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
       if (fetcher.data.success) {
         toast.success("Dados atualizados com sucesso")
       } else {
-        toast.error("Erro ao salvar")
+        const errorMessage =
+          (fetcher.data.errors &&
+            "_global" in fetcher.data.errors &&
+            fetcher.data.errors._global?.[0]) ||
+          "Erro ao salvar"
+        toast.error(errorMessage)
       }
     }
     previousDataRef.current = fetcher.data
