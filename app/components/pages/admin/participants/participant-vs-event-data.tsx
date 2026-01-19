@@ -1,7 +1,19 @@
-import type { FC } from "react"
-import { updateParticipantVsEventSchema } from "~/business/admin/common"
+import type { ChangeEvent, FC } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useFetcher } from "react-router"
+import { toast } from "sonner"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
-import { SchemaForm } from "~/components/forms/base/schema-form"
+import { Checkbox } from "~/components/ui/checkbox"
+import { Input } from "~/components/ui/input"
+import { Label } from "~/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select"
+import { TextArea } from "~/components/ui/textarea"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   applicationStatusOptions,
@@ -9,27 +21,89 @@ import {
   eventParticipantPropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
-import { type EventParticipantWithEvent } from "~types/database/entities.types"
-import type { Database } from "~types/database/kysely.types"
+import type {
+  ComposableFetcherData,
+  EventParticipantWithEvent,
+} from "~types/database/entities.types"
 
 type ParticipantVsEventDataProps = {
   eventParticipant: EventParticipantWithEvent
 }
+
 export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   eventParticipant,
 }) => {
-  const { application_date, bond, companions, notes, referrals, referred } =
-    eventParticipant
+  const {
+    id,
+    event_id,
+    profile_id,
+    application_date,
+    attendance_status,
+    application_status,
+    spot_type,
+    payment,
+    has_paid,
+    was_selected_for_rotation,
+    admin_general_notes,
+    bond,
+    companions,
+    notes,
+    referrals,
+    referred,
+  } = eventParticipant
 
-  const labels = Object.keys(eventParticipant).reduce(
-    (acc, curr) => ({
-      ...acc,
-      [curr]: eventParticipantPropMap(
-        curr as keyof Database["event_participants"],
-      ),
-    }),
-    {} as Record<string, string>,
-  )
+  const fetcher = useFetcher<ComposableFetcherData>()
+  const previousDataRef = useRef<ComposableFetcherData | undefined>(undefined)
+
+  // Local state for text inputs
+  const [localPayment, setLocalPayment] = useState(payment?.toString() ?? "")
+  const [localAdminNotes, setLocalAdminNotes] = useState(admin_general_notes ?? "")
+
+  // Show toast feedback when fetcher.data changes
+  useEffect(() => {
+    if (fetcher.data && fetcher.data !== previousDataRef.current) {
+      if (fetcher.data.success) {
+        toast.success("Dados atualizados com sucesso")
+      } else {
+        toast.error("Erro ao salvar")
+      }
+    }
+    previousDataRef.current = fetcher.data
+  }, [fetcher.data])
+
+  // Sync local state when props change (e.g., after revalidation)
+  useEffect(() => {
+    setLocalPayment(payment?.toString() ?? "")
+  }, [payment])
+
+  useEffect(() => {
+    setLocalAdminNotes(admin_general_notes ?? "")
+  }, [admin_general_notes])
+
+  const submitField = (field: string, value: unknown) => {
+    const formData = new FormData()
+    formData.set("intent", "update-event-participant")
+    formData.set("id", id)
+    formData.set("profile_id", profile_id ?? "")
+    formData.set("event_id", event_id)
+    formData.set(field, String(value))
+
+    fetcher.submit(formData, { method: "POST" })
+  }
+
+  const handleSelectChange = (field: string) => (value: string) => {
+    submitField(field, value)
+  }
+
+  const handleCheckboxChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
+    submitField(field, e.target.checked)
+  }
+
+  const handleTextBlur = (field: string, value: string, originalValue: string | number | null) => {
+    if (value !== (originalValue?.toString() ?? "")) {
+      submitField(field, value)
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -38,67 +112,109 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
         <div className="space-y-2">
           <h4>Administração</h4>
 
-          <SchemaForm
-            key={`${eventParticipant.event_id}-${eventParticipant.profile_id}`}
-            schema={updateParticipantVsEventSchema}
-            buttonLabel="Salvar"
-            hiddenFields={["intent", "event_id", "profile_id"]}
-            values={{
-              ...eventParticipant,
-              intent: "participant-vs-event-schema",
-              payment: Number(eventParticipant.payment),
-            }}
-            inputTypes={{
-              has_paid: "checkbox",
-              was_selected_for_rotation: "checkbox",
-              payment: "number",
-              spot_type: "select",
-              admin_general_notes: "textarea",
-            }}
-            options={{
-              attendance_status: attendanceStatusOptions,
-              application_status: applicationStatusOptions,
-              spot_type: spotTypeOptions,
-            }}
-            labels={labels}
-          >
-            {({ Field, Errors, Error, Button }) => {
-              return (
-                <>
-                  {/* Hidden */}
-                  <Field name="intent" hidden />
-                  <Field name="event_id" hidden />
-                  <Field name="profile_id" hidden />
+          <div className="space-y-4">
+            <div className="lg:flex gap-4 [&>*]:flex-1">
+              <div className="space-y-2">
+                <Label htmlFor="attendance_status">Status de Presença</Label>
+                <Select
+                  value={attendance_status}
+                  onValueChange={handleSelectChange("attendance_status")}
+                >
+                  <SelectTrigger id="attendance_status">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {attendanceStatusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                  <div className="space-y-2">
-                    <div className="lg:flex gap-4 [&>*]:flex-1">
-                      <Field name="attendance_status" />
-                      <Field name="application_status" />
-                    </div>
+              <div className="space-y-2">
+                <Label htmlFor="application_status">Status de Inscrição</Label>
+                <Select
+                  value={application_status}
+                  onValueChange={handleSelectChange("application_status")}
+                >
+                  <SelectTrigger id="application_status">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {applicationStatusOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-                    <div className="lg:flex gap-4 [&>*]:flex-1">
-                      <Field name="spot_type" />
-                      <Field name="payment" />
-                      <div className="flex flex-col justify-end">
-                        <Field name="has_paid" />
-                        <Field name="was_selected_for_rotation" />
-                      </div>
-                    </div>
-                    <div className="lg:flex gap-4 [&>*]:flex-1">
-                      <Field
-                        name="admin_general_notes"
-                        multiline
-                        className="flex flex-col [&>*:last-child]:flex-1"
-                      />
-                    </div>
-                    <Error />
-                    <Errors />
-                    <Button />
-                  </div>
-                </>
-              )
-            }}
-          </SchemaForm>
+            <div className="lg:flex gap-4 [&>*]:flex-1">
+              <div className="space-y-2">
+                <Label htmlFor="spot_type">Tipo de Vaga</Label>
+                <Select
+                  value={spot_type}
+                  onValueChange={handleSelectChange("spot_type")}
+                >
+                  <SelectTrigger id="spot_type">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {spotTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="payment">Pagamento</Label>
+                <Input
+                  id="payment"
+                  type="number"
+                  value={localPayment}
+                  onChange={(e) => setLocalPayment(e.target.value)}
+                  onBlur={(e) => handleTextBlur("payment", e.target.value, payment)}
+                />
+              </div>
+
+              <div className="flex flex-col justify-end gap-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="has_paid"
+                    checked={has_paid}
+                    onChange={handleCheckboxChange("has_paid")}
+                  />
+                  <Label htmlFor="has_paid">Pago</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="was_selected_for_rotation"
+                    checked={was_selected_for_rotation}
+                    onChange={handleCheckboxChange("was_selected_for_rotation")}
+                  />
+                  <Label htmlFor="was_selected_for_rotation">Selecionado para Rodízio</Label>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="admin_general_notes">Notas Gerais do Evento</Label>
+              <TextArea
+                id="admin_general_notes"
+                value={localAdminNotes}
+                onChange={(e) => setLocalAdminNotes(e.target.value)}
+                onBlur={(e) => handleTextBlur("admin_general_notes", e.target.value, admin_general_notes)}
+                placeholder="Notas administrativas para este evento..."
+              />
+            </div>
+          </div>
         </div>
 
         <div className="space-y-2">

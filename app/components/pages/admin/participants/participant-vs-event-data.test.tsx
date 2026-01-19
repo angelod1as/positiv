@@ -1,41 +1,42 @@
-import type { ReactNode } from "react"
-import { describe, expect, it, vi } from "vitest"
-import { render, screen } from "~/test/test-utils"
+import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { createMemoryRouter, RouterProvider } from "react-router"
+import { toast } from "sonner"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { EventParticipantWithEvent } from "~types/database/entities.types"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
 
-// Mock the SchemaForm component
-vi.mock("~/components/forms/base/schema-form", () => ({
-  SchemaForm: ({
-    children,
-    options,
-  }: {
-    children: (props: {
-      Field: ({ name }: { name: string }) => ReactNode
-      Errors: () => null
-      Error: () => null
-      Button: () => ReactNode
-    }) => ReactNode
-    options?: Record<string, unknown>
-  }) => {
-    const hasFlagOptions = !!options?.flag
-    return (
-      <div data-testid="schema-form">
-        <div data-testid="has-flag-options">
-          {hasFlagOptions ? "true" : "false"}
-        </div>
-        {children({
-          Field: ({ name }: { name: string }) => (
-            <div data-testid={`field-${name}`}>{name}</div>
-          ),
-          Errors: () => null,
-          Error: () => null,
-          Button: () => <button>Submit</button>,
-        })}
-      </div>
-    )
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
   },
 }))
+
+const createMockFetcher = (data?: { success: boolean; intent?: string; errors?: Record<string, string[]> }) => ({
+  submit: vi.fn(),
+  state: "idle" as const,
+  formData: undefined,
+  data,
+  formAction: undefined,
+  formMethod: undefined,
+  formEncType: undefined,
+  text: undefined,
+  json: undefined,
+  key: "",
+  Form: () => null,
+  load: vi.fn(),
+})
+
+let mockFetcher = createMockFetcher()
+
+vi.mock("react-router", async (importOriginal) => {
+  const original = await importOriginal<typeof import("react-router")>()
+  return {
+    ...original,
+    useFetcher: () => mockFetcher,
+  }
+})
 
 const mockEventParticipant: EventParticipantWithEvent = {
   id: "123",
@@ -47,7 +48,7 @@ const mockEventParticipant: EventParticipantWithEvent = {
   spot_type: "regular",
   payment: 100,
   has_paid: false,
-  admin_general_notes: "",
+  admin_general_notes: "Some admin notes",
   bond: "Test bond",
   companions: "Test companions",
   notes: "Test notes",
@@ -62,52 +63,175 @@ const mockEventParticipant: EventParticipantWithEvent = {
   was_selected_for_rotation: false,
 }
 
+const createTestRouter = (eventParticipant: EventParticipantWithEvent) => {
+  return createMemoryRouter([
+    {
+      path: "/",
+      element: <ParticipantVsEventData eventParticipant={eventParticipant} />,
+    },
+  ])
+}
+
 describe("ParticipantVsEventData", () => {
-  it("should NOT render flag and flag_notes fields (moved to AdminNotesBox)", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
-
-    // Flag fields should NOT be rendered - they're in AdminNotesBox now
-    expect(screen.queryByTestId("field-flag")).not.toBeInTheDocument()
-    expect(screen.queryByTestId("field-flag_notes")).not.toBeInTheDocument()
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockFetcher = createMockFetcher()
   })
 
-  it("should NOT render is_veteran field (moved to AdminNotesBox)", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+  describe("No Salvar button - auto-save instead", () => {
+    it("should NOT render a Salvar button", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
 
-    // is_veteran field should NOT be rendered - it's in AdminNotesBox now
-    expect(screen.queryByTestId("field-is_veteran")).not.toBeInTheDocument()
+      expect(screen.queryByRole("button", { name: /salvar/i })).not.toBeInTheDocument()
+    })
   })
 
-  it("should NOT pass flag options to SchemaForm", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+  describe("renders form fields", () => {
+    it("should render attendance status select", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
 
-    // Flag options should not be passed anymore
-    expect(screen.getByTestId("has-flag-options")).toHaveTextContent("false")
+      expect(screen.getByLabelText(/status de presença/i)).toBeInTheDocument()
+    })
+
+    it("should render application status select", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByLabelText(/status de inscrição/i)).toBeInTheDocument()
+    })
+
+    it("should render spot type select", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByLabelText(/tipo de vaga/i)).toBeInTheDocument()
+    })
+
+    it("should render payment input", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByLabelText(/pagamento/i)).toBeInTheDocument()
+    })
+
+    it("should render has_paid checkbox", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByLabelText(/pago/i)).toBeInTheDocument()
+    })
+
+    it("should render admin_general_notes textarea", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByLabelText(/notas gerais do evento/i)).toBeInTheDocument()
+    })
   })
 
-  it("should render attendance and application status fields", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+  describe("auto-save behavior", () => {
+    it("should auto-save when attendance_status changes", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
 
-    expect(screen.getByTestId("field-attendance_status")).toBeInTheDocument()
-    expect(screen.getByTestId("field-application_status")).toBeInTheDocument()
+      const select = screen.getByLabelText(/status de presença/i)
+      await user.click(select)
+
+      // Use getAllByRole and select the first match to handle radix portal duplicates
+      const options = await screen.findAllByRole("option", { name: /compareceu/i })
+      await user.click(options[0])
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("attendance_status")).toBe("attended")
+      expect(formData.get("intent")).toBe("update-event-participant")
+    })
+
+    it("should auto-save when has_paid checkbox changes", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      const checkbox = screen.getByLabelText(/pago/i)
+      await user.click(checkbox)
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("has_paid")).toBe("true")
+    })
+
+    it("should auto-save admin_general_notes on blur", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      const textarea = screen.getByLabelText(/notas gerais do evento/i)
+      await user.clear(textarea)
+      await user.type(textarea, "New notes for this event")
+      await user.tab()
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("admin_general_notes")).toBe("New notes for this event")
+    })
   })
 
-  it("should render spot_type field", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+  describe("toast feedback", () => {
+    it("should show success toast when save succeeds", async () => {
+      mockFetcher = createMockFetcher({ success: true, intent: "update-event-participant" })
 
-    expect(screen.getByTestId("field-spot_type")).toBeInTheDocument()
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      await waitFor(() => {
+        expect(toast.success).toHaveBeenCalledWith("Dados atualizados com sucesso")
+      })
+    })
+
+    it("should show error toast when save fails", async () => {
+      mockFetcher = createMockFetcher({ success: false, intent: "update-event-participant" })
+
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith("Erro ao salvar")
+      })
+    })
   })
 
-  it("should render admin_general_notes field (event-specific notes)", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+  describe("displays participant responses", () => {
+    it("should display bond response", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
 
-    expect(screen.getByTestId("field-admin_general_notes")).toBeInTheDocument()
-  })
+      expect(screen.getByText("Test bond")).toBeInTheDocument()
+    })
 
-  it("should render payment and has_paid fields", () => {
-    render(<ParticipantVsEventData eventParticipant={mockEventParticipant} />)
+    it("should display companions response", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
 
-    expect(screen.getByTestId("field-payment")).toBeInTheDocument()
-    expect(screen.getByTestId("field-has_paid")).toBeInTheDocument()
+      expect(screen.getByText("Test companions")).toBeInTheDocument()
+    })
+
+    it("should display notes response", () => {
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByText("Test notes")).toBeInTheDocument()
+    })
   })
 })
