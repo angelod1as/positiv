@@ -1,9 +1,17 @@
 import { act, renderHook } from "@testing-library/react"
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { z } from "zod"
+import { toast } from "sonner"
 import { useAutoSaveForm } from "./use-auto-save-form"
 import type { FetcherWithComponents } from "react-router"
 import type { ComposableFetcherData } from "~types/database/entities.types"
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}))
 
 const testSchema = z.object({
   name: z.string(),
@@ -364,6 +372,199 @@ describe("useAutoSaveForm", () => {
       })
 
       expect(mockOnSubmit).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("saving state", () => {
+    it("should reflect isSaving as true when fetcher is submitting", () => {
+      const fetcher = createMockFetcher({ state: "submitting" })
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      expect(result.current.isSaving).toBe(true)
+    })
+
+    it("should reflect isSaving as true when fetcher is loading", () => {
+      const fetcher = createMockFetcher({ state: "loading" })
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      expect(result.current.isSaving).toBe(true)
+    })
+  })
+
+  describe("toast feedback", () => {
+    it("should show success toast when fetcher returns success", () => {
+      const fetcher = createMockFetcher()
+
+      const { rerender } = renderHook(
+        ({ fetcherData }) =>
+          useAutoSaveForm({
+            schema: testSchema,
+            initialData: defaultInitialData,
+            fetcher: createMockFetcher({ data: fetcherData }),
+            onSubmit: mockOnSubmit,
+          }),
+        { initialProps: { fetcherData: undefined as ComposableFetcherData | undefined } },
+      )
+
+      rerender({
+        fetcherData: { success: true, intent: "update" },
+      })
+
+      expect(toast.success).toHaveBeenCalledWith("Dados atualizados com sucesso")
+    })
+
+    it("should show custom success message when provided", () => {
+      const fetcher = createMockFetcher()
+
+      const { rerender } = renderHook(
+        ({ fetcherData }) =>
+          useAutoSaveForm({
+            schema: testSchema,
+            initialData: defaultInitialData,
+            fetcher: createMockFetcher({ data: fetcherData }),
+            onSubmit: mockOnSubmit,
+            successMessage: "Custom success!",
+          }),
+        { initialProps: { fetcherData: undefined as ComposableFetcherData | undefined } },
+      )
+
+      rerender({
+        fetcherData: { success: true, intent: "update" },
+      })
+
+      expect(toast.success).toHaveBeenCalledWith("Custom success!")
+    })
+
+    it("should show error toast when fetcher returns error", () => {
+      const fetcher = createMockFetcher()
+
+      const { rerender } = renderHook(
+        ({ fetcherData }) =>
+          useAutoSaveForm({
+            schema: testSchema,
+            initialData: defaultInitialData,
+            fetcher: createMockFetcher({ data: fetcherData }),
+            onSubmit: mockOnSubmit,
+          }),
+        { initialProps: { fetcherData: undefined as ComposableFetcherData | undefined } },
+      )
+
+      rerender({
+        fetcherData: {
+          success: false,
+          intent: "update",
+          errors: { _global: ["Validation failed"] },
+        },
+      })
+
+      expect(toast.error).toHaveBeenCalledWith("Validation failed")
+    })
+
+    it("should show default error message when no specific error", () => {
+      const fetcher = createMockFetcher()
+
+      const { rerender } = renderHook(
+        ({ fetcherData }) =>
+          useAutoSaveForm({
+            schema: testSchema,
+            initialData: defaultInitialData,
+            fetcher: createMockFetcher({ data: fetcherData }),
+            onSubmit: mockOnSubmit,
+          }),
+        { initialProps: { fetcherData: undefined as ComposableFetcherData | undefined } },
+      )
+
+      rerender({
+        fetcherData: { success: false, intent: "update" },
+      })
+
+      expect(toast.error).toHaveBeenCalledWith("Erro ao salvar")
+    })
+
+    it("should show custom error message when provided", () => {
+      const fetcher = createMockFetcher()
+
+      const { rerender } = renderHook(
+        ({ fetcherData }) =>
+          useAutoSaveForm({
+            schema: testSchema,
+            initialData: defaultInitialData,
+            fetcher: createMockFetcher({ data: fetcherData }),
+            onSubmit: mockOnSubmit,
+            errorMessage: "Custom error!",
+          }),
+        { initialProps: { fetcherData: undefined as ComposableFetcherData | undefined } },
+      )
+
+      rerender({
+        fetcherData: { success: false, intent: "update" },
+      })
+
+      expect(toast.error).toHaveBeenCalledWith("Custom error!")
+    })
+  })
+
+  describe("manual setValue and submitField", () => {
+    it("should update value with setValue", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.setValue("name", "Manually set")
+      })
+
+      expect(result.current.values.name).toBe("Manually set")
+    })
+
+    it("should submit field value with submitField", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.setValue("name", "New value")
+      })
+
+      act(() => {
+        result.current.submitField("name")
+      })
+
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        "name",
+        "New value",
+        expect.any(Object),
+      )
     })
   })
 })
