@@ -56,13 +56,18 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   const previousDataRef = useRef<ComposableFetcherData | undefined>(undefined)
 
   // Local state for all editable fields
-  const [localAttendanceStatus, setLocalAttendanceStatus] = useState(attendance_status)
-  const [localApplicationStatus, setLocalApplicationStatus] = useState(application_status)
+  const [localAttendanceStatus, setLocalAttendanceStatus] =
+    useState(attendance_status)
+  const [localApplicationStatus, setLocalApplicationStatus] =
+    useState(application_status)
   const [localSpotType, setLocalSpotType] = useState(spot_type)
   const [localPayment, setLocalPayment] = useState(payment?.toString() ?? "")
   const [localHasPaid, setLocalHasPaid] = useState(has_paid)
-  const [localWasSelectedForRotation, setLocalWasSelectedForRotation] = useState(was_selected_for_rotation)
-  const [localAdminNotes, setLocalAdminNotes] = useState(admin_general_notes ?? "")
+  const [localWasSelectedForRotation, setLocalWasSelectedForRotation] =
+    useState(was_selected_for_rotation)
+  const [localAdminNotes, setLocalAdminNotes] = useState(
+    admin_general_notes ?? "",
+  )
 
   // Show toast feedback when fetcher.data changes
   useEffect(() => {
@@ -136,12 +141,18 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     submitField("has_paid", e.target.checked)
   }
 
-  const handleWasSelectedForRotationChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleWasSelectedForRotationChange = (
+    e: ChangeEvent<HTMLInputElement>,
+  ) => {
     setLocalWasSelectedForRotation(e.target.checked)
     submitField("was_selected_for_rotation", e.target.checked)
   }
 
-  const handleTextBlur = (field: string, value: string, originalValue: string | number | null) => {
+  const handleTextBlur = (
+    field: string,
+    value: string,
+    originalValue: string | number | null,
+  ) => {
     if (value !== (originalValue?.toString() ?? "")) {
       submitField(field, value)
     }
@@ -222,37 +233,45 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                   type="number"
                   value={localPayment}
                   onChange={(e) => setLocalPayment(e.target.value)}
-                  onBlur={(e) => handleTextBlur("payment", e.target.value, payment)}
+                  onBlur={(e) =>
+                    handleTextBlur("payment", e.target.value, payment)
+                  }
                 />
               </div>
 
               <div className="flex flex-col justify-end gap-2">
-                <div className="flex items-center space-x-2">
+                <Label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox
-                    id="has_paid"
                     checked={localHasPaid}
                     onChange={handleHasPaidChange}
                   />
-                  <Label htmlFor="has_paid">Pago</Label>
-                </div>
-                <div className="flex items-center space-x-2">
+                  <span>Pago</span>
+                </Label>
+                <Label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox
-                    id="was_selected_for_rotation"
                     checked={localWasSelectedForRotation}
                     onChange={handleWasSelectedForRotationChange}
                   />
-                  <Label htmlFor="was_selected_for_rotation">Selecionado para Rodízio</Label>
-                </div>
+                  <span>Selecionado para Rodízio</span>
+                </Label>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="admin_general_notes">Notas Gerais do Evento</Label>
+              <Label htmlFor="admin_general_notes">
+                Notas Gerais do Evento
+              </Label>
               <TextArea
                 id="admin_general_notes"
                 value={localAdminNotes}
                 onChange={(e) => setLocalAdminNotes(e.target.value)}
-                onBlur={(e) => handleTextBlur("admin_general_notes", e.target.value, admin_general_notes)}
+                onBlur={(e) =>
+                  handleTextBlur(
+                    "admin_general_notes",
+                    e.target.value,
+                    admin_general_notes,
+                  )
+                }
                 placeholder="Notas administrativas para este evento..."
               />
             </div>
