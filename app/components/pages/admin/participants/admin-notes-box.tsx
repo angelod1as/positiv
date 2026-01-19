@@ -62,7 +62,11 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
     setLocalGeneralNotes(generalNotes ?? "")
   }, [generalNotes])
 
-  const submitField = (field: string, value: unknown, additionalFields?: Record<string, string>) => {
+  const submitField = (
+    field: string,
+    value: unknown,
+    additionalFields?: Record<string, string>,
+  ) => {
     const formData = new FormData()
     formData.set("intent", "update-profile-admin-notes")
     formData.set("profile_id", profileId)
@@ -81,7 +85,9 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
     // If changing to a non-"none" flag, validate flag_notes
     if (newFlag !== "none") {
       if (!localFlagNotes.trim()) {
-        toast.error("Notas da Flag são obrigatórias quando uma flag é selecionada")
+        toast.warning(
+          "Notas da Flag são obrigatórias quando uma flag é selecionada",
+        )
         return
       }
       // Submit both flag and flag_notes when setting a non-none flag
@@ -92,7 +98,11 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
     }
   }
 
-  const handleTextBlur = (field: string, value: string, originalValue: string | null) => {
+  const handleTextBlur = (
+    field: string,
+    value: string,
+    originalValue: string | null,
+  ) => {
     // Only submit if value actually changed
     if (value !== (originalValue ?? "")) {
       submitField(field, value)
@@ -106,10 +116,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="flag">Flag</Label>
-            <Select
-              value={flag}
-              onValueChange={handleFlagChange}
-            >
+            <Select value={flag} onValueChange={handleFlagChange}>
               <SelectTrigger id="flag">
                 <SelectValue placeholder="Selecione uma flag" />
               </SelectTrigger>
@@ -129,7 +136,9 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
               id="flag_notes"
               value={localFlagNotes}
               onChange={(e) => setLocalFlagNotes(e.target.value)}
-              onBlur={(e) => handleTextBlur("flag_notes", e.target.value, flagNotes)}
+              onBlur={(e) =>
+                handleTextBlur("flag_notes", e.target.value, flagNotes)
+              }
               placeholder="Notas sobre a flag..."
             />
           </div>
@@ -140,7 +149,9 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
               id="general_notes"
               value={localGeneralNotes}
               onChange={(e) => setLocalGeneralNotes(e.target.value)}
-              onBlur={(e) => handleTextBlur("general_notes", e.target.value, generalNotes)}
+              onBlur={(e) =>
+                handleTextBlur("general_notes", e.target.value, generalNotes)
+              }
               placeholder="Notas gerais sobre o perfil..."
             />
           </div>

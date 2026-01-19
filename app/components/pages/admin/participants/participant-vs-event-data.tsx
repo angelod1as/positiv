@@ -55,8 +55,13 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   const fetcher = useFetcher<ComposableFetcherData>()
   const previousDataRef = useRef<ComposableFetcherData | undefined>(undefined)
 
-  // Local state for text inputs
+  // Local state for all editable fields
+  const [localAttendanceStatus, setLocalAttendanceStatus] = useState(attendance_status)
+  const [localApplicationStatus, setLocalApplicationStatus] = useState(application_status)
+  const [localSpotType, setLocalSpotType] = useState(spot_type)
   const [localPayment, setLocalPayment] = useState(payment?.toString() ?? "")
+  const [localHasPaid, setLocalHasPaid] = useState(has_paid)
+  const [localWasSelectedForRotation, setLocalWasSelectedForRotation] = useState(was_selected_for_rotation)
   const [localAdminNotes, setLocalAdminNotes] = useState(admin_general_notes ?? "")
 
   // Show toast feedback when fetcher.data changes
@@ -73,8 +78,28 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
   // Sync local state when props change (e.g., after revalidation)
   useEffect(() => {
+    setLocalAttendanceStatus(attendance_status)
+  }, [attendance_status])
+
+  useEffect(() => {
+    setLocalApplicationStatus(application_status)
+  }, [application_status])
+
+  useEffect(() => {
+    setLocalSpotType(spot_type)
+  }, [spot_type])
+
+  useEffect(() => {
     setLocalPayment(payment?.toString() ?? "")
   }, [payment])
+
+  useEffect(() => {
+    setLocalHasPaid(has_paid)
+  }, [has_paid])
+
+  useEffect(() => {
+    setLocalWasSelectedForRotation(was_selected_for_rotation)
+  }, [was_selected_for_rotation])
 
   useEffect(() => {
     setLocalAdminNotes(admin_general_notes ?? "")
@@ -91,12 +116,29 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     fetcher.submit(formData, { method: "POST" })
   }
 
-  const handleSelectChange = (field: string) => (value: string) => {
-    submitField(field, value)
+  const handleAttendanceStatusChange = (value: string) => {
+    setLocalAttendanceStatus(value as typeof attendance_status)
+    submitField("attendance_status", value)
   }
 
-  const handleCheckboxChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    submitField(field, e.target.checked)
+  const handleApplicationStatusChange = (value: string) => {
+    setLocalApplicationStatus(value as typeof application_status)
+    submitField("application_status", value)
+  }
+
+  const handleSpotTypeChange = (value: string) => {
+    setLocalSpotType(value as typeof spot_type)
+    submitField("spot_type", value)
+  }
+
+  const handleHasPaidChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setLocalHasPaid(e.target.checked)
+    submitField("has_paid", e.target.checked)
+  }
+
+  const handleWasSelectedForRotationChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setLocalWasSelectedForRotation(e.target.checked)
+    submitField("was_selected_for_rotation", e.target.checked)
   }
 
   const handleTextBlur = (field: string, value: string, originalValue: string | number | null) => {
@@ -117,8 +159,8 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="attendance_status">Status de Presença</Label>
                 <Select
-                  value={attendance_status}
-                  onValueChange={handleSelectChange("attendance_status")}
+                  value={localAttendanceStatus}
+                  onValueChange={handleAttendanceStatusChange}
                 >
                   <SelectTrigger id="attendance_status">
                     <SelectValue placeholder="Selecione..." />
@@ -136,8 +178,8 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="application_status">Status de Inscrição</Label>
                 <Select
-                  value={application_status}
-                  onValueChange={handleSelectChange("application_status")}
+                  value={localApplicationStatus}
+                  onValueChange={handleApplicationStatusChange}
                 >
                   <SelectTrigger id="application_status">
                     <SelectValue placeholder="Selecione..." />
@@ -157,8 +199,8 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="spot_type">Tipo de Vaga</Label>
                 <Select
-                  value={spot_type}
-                  onValueChange={handleSelectChange("spot_type")}
+                  value={localSpotType}
+                  onValueChange={handleSpotTypeChange}
                 >
                   <SelectTrigger id="spot_type">
                     <SelectValue placeholder="Selecione..." />
@@ -188,16 +230,16 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="has_paid"
-                    checked={has_paid}
-                    onChange={handleCheckboxChange("has_paid")}
+                    checked={localHasPaid}
+                    onChange={handleHasPaidChange}
                   />
                   <Label htmlFor="has_paid">Pago</Label>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="was_selected_for_rotation"
-                    checked={was_selected_for_rotation}
-                    onChange={handleCheckboxChange("was_selected_for_rotation")}
+                    checked={localWasSelectedForRotation}
+                    onChange={handleWasSelectedForRotationChange}
                   />
                   <Label htmlFor="was_selected_for_rotation">Selecionado para Rodízio</Label>
                 </div>

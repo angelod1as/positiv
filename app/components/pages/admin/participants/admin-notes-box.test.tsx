@@ -10,6 +10,7 @@ vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
+    warning: vi.fn(),
   },
 }))
 
@@ -271,7 +272,7 @@ describe("AdminNotesBox", () => {
       await user.click(yellowOption)
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
+        expect(toast.warning).toHaveBeenCalledWith(
           "Notas da Flag são obrigatórias quando uma flag é selecionada"
         )
       })
