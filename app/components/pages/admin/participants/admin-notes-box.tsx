@@ -1,5 +1,5 @@
 import type { ChangeEvent, FC } from "react"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { Card, CardContent } from "~/components/ui/card"
@@ -14,6 +14,7 @@ import {
 } from "~/components/ui/select"
 import { TextArea } from "~/components/ui/textarea"
 import { flagStatusOptions } from "~/lib/helpers/propMaps"
+import { useSyncedState } from "~/lib/hooks/use-synced-state"
 import type {
   ComposableFetcherData,
   ProfileFlagStatus,
@@ -37,9 +38,11 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
   const fetcher = useFetcher<ComposableFetcherData>()
   const previousDataRef = useRef<ComposableFetcherData | undefined>(undefined)
 
-  // Local state for text inputs to avoid submitting on every keystroke
-  const [localFlagNotes, setLocalFlagNotes] = useState(flagNotes ?? "")
-  const [localGeneralNotes, setLocalGeneralNotes] = useState(generalNotes ?? "")
+  // Local state for text inputs, synced with props
+  const [localFlagNotes, setLocalFlagNotes] = useSyncedState(flagNotes ?? "")
+  const [localGeneralNotes, setLocalGeneralNotes] = useSyncedState(
+    generalNotes ?? "",
+  )
 
   // Show toast feedback when fetcher.data changes
   useEffect(() => {
@@ -57,15 +60,6 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
     }
     previousDataRef.current = fetcher.data
   }, [fetcher.data])
-
-  // Sync local state when props change (e.g., after revalidation)
-  useEffect(() => {
-    setLocalFlagNotes(flagNotes ?? "")
-  }, [flagNotes])
-
-  useEffect(() => {
-    setLocalGeneralNotes(generalNotes ?? "")
-  }, [generalNotes])
 
   const submitField = (
     field: string,
