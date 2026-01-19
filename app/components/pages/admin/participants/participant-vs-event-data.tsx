@@ -30,7 +30,7 @@ const eventParticipantFormSchema = z.object({
   attendance_status: z.string(),
   application_status: z.string(),
   spot_type: z.string(),
-  payment: z.string(),
+  payment: z.coerce.number().min(0).optional(),
   has_paid: z.boolean(),
   was_selected_for_rotation: z.boolean(),
   admin_general_notes: z.string(),
@@ -64,13 +64,13 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
   const fetcher = useFetcher<ComposableFetcherData>()
 
-  const { values, register } = useAutoSaveForm({
+  const { register } = useAutoSaveForm({
     schema: eventParticipantFormSchema,
     initialData: {
       attendance_status,
       application_status,
       spot_type,
-      payment: payment?.toString() ?? "",
+      payment: payment ?? 0,
       has_paid,
       was_selected_for_rotation,
       admin_general_notes: admin_general_notes ?? "",
@@ -157,19 +157,11 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
               <div className="flex flex-col justify-end gap-2">
                 <Label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={values.has_paid}
-                    onChange={register.checkbox("has_paid").onChange}
-                  />
+                  <Checkbox {...register.checkbox("has_paid")} />
                   <span>Pago</span>
                 </Label>
                 <Label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox
-                    checked={values.was_selected_for_rotation}
-                    onChange={
-                      register.checkbox("was_selected_for_rotation").onChange
-                    }
-                  />
+                  <Checkbox {...register.checkbox("was_selected_for_rotation")} />
                   <span>Selecionado para Rodízio</span>
                 </Label>
               </div>

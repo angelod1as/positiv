@@ -706,4 +706,126 @@ describe("useAutoSaveForm", () => {
       expect(mockOnSubmit).not.toHaveBeenCalled()
     })
   })
+
+  describe("error state tracking", () => {
+    it("should track validation error in field state", () => {
+      const strictSchema = z.object({
+        name: z.string().min(5, "Name must be at least 5 characters"),
+        status: z.string(),
+        count: z.coerce.number(),
+        isActive: z.boolean(),
+      })
+
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: strictSchema,
+          initialData: { name: "Valid", status: "active", count: 10, isActive: true },
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      // Change to invalid value and trigger blur
+      act(() => {
+        result.current.register
+          .text("name")
+          .onChange({ target: { value: "ab" } })
+      })
+
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      // Error should be tracked in field state
+      expect(result.current.getFieldState("name").error).toBe(
+        "Name must be at least 5 characters",
+      )
+    })
+
+    it("should clear error when validation passes", () => {
+      const strictSchema = z.object({
+        name: z.string().min(5, "Name must be at least 5 characters"),
+        status: z.string(),
+        count: z.coerce.number(),
+        isActive: z.boolean(),
+      })
+
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: strictSchema,
+          initialData: { name: "Valid", status: "active", count: 10, isActive: true },
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      // First, trigger error
+      act(() => {
+        result.current.register
+          .text("name")
+          .onChange({ target: { value: "ab" } })
+      })
+
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      expect(result.current.getFieldState("name").error).toBe(
+        "Name must be at least 5 characters",
+      )
+
+      // Now fix the value
+      act(() => {
+        result.current.register
+          .text("name")
+          .onChange({ target: { value: "ValidName" } })
+      })
+
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      // Error should be cleared
+      expect(result.current.getFieldState("name").error).toBeNull()
+    })
+  })
+
+  describe("null value handling", () => {
+    it("should treat null and empty string as equivalent for dirty checking", () => {
+      const nullableSchema = z.object({
+        name: z.string(),
+        status: z.string(),
+        count: z.coerce.number(),
+        isActive: z.boolean(),
+      })
+
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: nullableSchema,
+          initialData: {
+            name: null as unknown as string,
+            status: "active",
+            count: 10,
+            isActive: true,
+          },
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      // Field with null initial value, focused and blurred without change
+      // should NOT trigger submit since "" === null (normalized)
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      expect(mockOnSubmit).not.toHaveBeenCalled()
+    })
+  })
 })
