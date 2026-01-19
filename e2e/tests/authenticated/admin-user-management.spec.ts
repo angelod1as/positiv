@@ -346,12 +346,12 @@ test.describe("Admin User Management", () => {
       page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
     ).toBeVisible()
 
-    // Verify current event's status values
-    const applicationStatusSelect = page.locator('[name="application_status"]')
-    const attendanceStatusSelect = page.locator('[name="attendance_status"]')
+    // Verify current event's status values (Radix UI Select shows text in trigger button)
+    const applicationStatusTrigger = page.locator('[id="application_status"]')
+    const attendanceStatusTrigger = page.locator('[id="attendance_status"]')
 
-    await expect(applicationStatusSelect).toHaveValue("sent_payment_data")
-    await expect(attendanceStatusSelect).toHaveValue("pending")
+    await expect(applicationStatusTrigger).toContainText("Dados de pagto enviados")
+    await expect(attendanceStatusTrigger).toContainText("Pendente")
 
     // Find and click on a different event in the history section
     const historySection = page.getByRole("heading", {
@@ -397,8 +397,8 @@ test.describe("Admin User Management", () => {
 
     // Verify the status values updated to the completed event's values
     // User3 attended the completed event with finalised status
-    await expect(applicationStatusSelect).toHaveValue("finalised")
-    await expect(attendanceStatusSelect).toHaveValue("attended")
+    await expect(applicationStatusTrigger).toContainText("Finalizado")
+    await expect(attendanceStatusTrigger).toContainText("Compareceu")
 
     // Test browser back navigation also works correctly
     await page.goBack()
@@ -408,8 +408,8 @@ test.describe("Admin User Management", () => {
     await expect(
       page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
     ).toBeVisible()
-    await expect(applicationStatusSelect).toHaveValue("sent_payment_data")
-    await expect(attendanceStatusSelect).toHaveValue("pending")
+    await expect(applicationStatusTrigger).toContainText("Dados de pagto enviados")
+    await expect(attendanceStatusTrigger).toContainText("Pendente")
   })
 
   test("AG Grid sorting functionality", async ({ page }) => {
