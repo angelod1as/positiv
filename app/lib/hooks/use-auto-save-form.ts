@@ -112,15 +112,31 @@ export function useAutoSaveForm<T extends ZodRawShape>(
         doSubmit(name, newValue)
       },
     }),
-    text: (_name: keyof FormValues) => ({
-      value: "" as string,
-      onChange: (_e: { target: { value: string } }) => {},
-      onBlur: () => {},
+    text: (name: keyof FormValues) => ({
+      value: String(values[name] ?? ""),
+      onChange: (e: { target: { value: string } }) => {
+        setValues((prev) => ({ ...prev, [name]: e.target.value }))
+      },
+      onBlur: () => {
+        const currentValue = String(values[name] ?? "")
+        const originalValue = String(initialDataRef.current[name] ?? "")
+        if (currentValue !== originalValue) {
+          doSubmit(name, currentValue)
+        }
+      },
     }),
-    number: (_name: keyof FormValues) => ({
-      value: "" as string,
-      onChange: (_e: { target: { value: string } }) => {},
-      onBlur: () => {},
+    number: (name: keyof FormValues) => ({
+      value: String(values[name] ?? ""),
+      onChange: (e: { target: { value: string } }) => {
+        setValues((prev) => ({ ...prev, [name]: e.target.value }))
+      },
+      onBlur: () => {
+        const currentValue = String(values[name] ?? "")
+        const originalValue = String(initialDataRef.current[name] ?? "")
+        if (currentValue !== originalValue) {
+          doSubmit(name, currentValue)
+        }
+      },
     }),
   }
 
