@@ -225,6 +225,28 @@ describe("AdminNotesBox", () => {
       expect(mockFetcher.submit).not.toHaveBeenCalled()
     })
 
+    it("should prevent clearing flag_notes when a flag is set", async () => {
+      const user = userEvent.setup()
+
+      const router = createTestRouter({
+        ...defaultProps,
+        flag: "yellow",
+        flagNotes: "existing notes",
+      })
+      render(<RouterProvider router={router} />)
+
+      const textarea = screen.getByLabelText("Notas da Flag")
+      await user.clear(textarea)
+      await user.tab()
+
+      // Should show warning toast
+      expect(toast.warning).toHaveBeenCalledWith(
+        "Notas da Flag não podem estar vazias enquanto uma flag está selecionada",
+      )
+      // Should NOT submit
+      expect(mockFetcher.submit).not.toHaveBeenCalled()
+    })
+
     it("should NOT submit general_notes while typing", async () => {
       const user = userEvent.setup()
 

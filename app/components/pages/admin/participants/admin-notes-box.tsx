@@ -51,10 +51,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
         toast.success("Dados salvos com sucesso")
       } else {
         const errorMessage =
-          (fetcher.data.errors &&
-            "_global" in fetcher.data.errors &&
-            fetcher.data.errors._global?.[0]) ||
-          "Erro ao salvar"
+          fetcher.data.errors?._global?.[0] ?? "Erro ao salvar"
         toast.error(errorMessage)
       }
     }
@@ -102,6 +99,15 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
     value: string,
     originalValue: string | null,
   ) => {
+    // Prevent clearing flag_notes when a flag is set
+    if (field === "flag_notes" && flag !== "none" && !value.trim()) {
+      toast.warning(
+        "Notas da Flag não podem estar vazias enquanto uma flag está selecionada",
+      )
+      setLocalFlagNotes(originalValue ?? "")
+      return
+    }
+
     // Only submit if value actually changed
     if (value !== (originalValue ?? "")) {
       submitField(field, value)
