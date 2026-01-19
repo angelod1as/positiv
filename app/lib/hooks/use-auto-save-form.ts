@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react"
 import type { ZodObject, ZodRawShape } from "zod"
 import type { FetcherWithComponents } from "react-router"
+import { toast } from "sonner"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { z } from "zod"
 
@@ -53,10 +54,19 @@ export function useAutoSaveForm<T extends ZodRawShape>(
   options: UseAutoSaveFormOptions<T>,
 ): UseAutoSaveFormReturn<z.infer<ZodObject<T>>> {
   type FormValues = z.infer<ZodObject<T>>
-  const { initialData, fetcher, onSubmit } = options
+  const {
+    initialData,
+    fetcher,
+    onSubmit,
+    successMessage = "Dados atualizados com sucesso",
+    errorMessage = "Erro ao salvar",
+  } = options
 
   const [values, setValues] = useState<FormValues>(initialData)
   const initialDataRef = useRef(initialData)
+  const previousFetcherDataRef = useRef<ComposableFetcherData | undefined>(
+    undefined,
+  )
 
   // Re-sync values when initialData changes (prop sync)
   useEffect(() => {
@@ -65,6 +75,20 @@ export function useAutoSaveForm<T extends ZodRawShape>(
       initialDataRef.current = initialData
     }
   }, [initialData])
+
+  // Show toast feedback when fetcher.data changes
+  useEffect(() => {
+    if (fetcher.data && fetcher.data !== previousFetcherDataRef.current) {
+      if (fetcher.data.success) {
+        toast.success(successMessage)
+      } else {
+        const errorMsg =
+          fetcher.data.errors?._global?.[0] ?? errorMessage
+        toast.error(errorMsg)
+      }
+    }
+    previousFetcherDataRef.current = fetcher.data
+  }, [fetcher.data, successMessage, errorMessage])
 
   const isSaving = fetcher.state !== "idle"
 
