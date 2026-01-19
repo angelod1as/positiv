@@ -16,7 +16,7 @@ vi.mock("sonner", () => ({
 const testSchema = z.object({
   name: z.string(),
   status: z.string(),
-  count: z.number(),
+  count: z.coerce.number(),
   isActive: z.boolean(),
 })
 
@@ -555,6 +555,155 @@ describe("useAutoSaveForm", () => {
         "New value",
         expect.any(Object),
       )
+    })
+  })
+
+  describe("schema validation", () => {
+    it("should not submit when field validation fails", () => {
+      const strictSchema = z.object({
+        name: z.string().min(5, "Name must be at least 5 characters"),
+        status: z.string(),
+        count: z.number(),
+        isActive: z.boolean(),
+      })
+
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: strictSchema,
+          initialData: { name: "Valid", status: "active", count: 10, isActive: true },
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register
+          .text("name")
+          .onChange({ target: { value: "ab" } })
+      })
+
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      expect(mockOnSubmit).not.toHaveBeenCalled()
+      expect(toast.error).toHaveBeenCalledWith("Name must be at least 5 characters")
+    })
+
+    it("should submit when field validation passes", () => {
+      const strictSchema = z.object({
+        name: z.string().min(5, "Name must be at least 5 characters"),
+        status: z.string(),
+        count: z.number(),
+        isActive: z.boolean(),
+      })
+
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: strictSchema,
+          initialData: { name: "Valid", status: "active", count: 10, isActive: true },
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register
+          .text("name")
+          .onChange({ target: { value: "ValidName" } })
+      })
+
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      expect(mockOnSubmit).toHaveBeenCalledWith(
+        "name",
+        "ValidName",
+        expect.any(Object),
+      )
+    })
+  })
+
+  describe("getFieldState", () => {
+    it("should return isDirty true when field value differs from initial", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register
+          .text("name")
+          .onChange({ target: { value: "Changed Name" } })
+      })
+
+      expect(result.current.getFieldState("name").isDirty).toBe(true)
+      expect(result.current.getFieldState("status").isDirty).toBe(false)
+    })
+
+    it("should return isSaving true when fetcher is not idle", () => {
+      const fetcher = createMockFetcher({ state: "submitting" })
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      expect(result.current.getFieldState("name").isSaving).toBe(true)
+    })
+  })
+
+  describe("baseline reset after save", () => {
+    it("should update baseline after successful save to prevent re-submitting unchanged values", () => {
+      const { rerender, result } = renderHook(
+        ({ fetcherData }) =>
+          useAutoSaveForm({
+            schema: testSchema,
+            initialData: defaultInitialData,
+            fetcher: createMockFetcher({ data: fetcherData }),
+            onSubmit: mockOnSubmit,
+          }),
+        { initialProps: { fetcherData: undefined as ComposableFetcherData | undefined } },
+      )
+
+      // Change value and submit
+      act(() => {
+        result.current.register
+          .text("name")
+          .onChange({ target: { value: "New Name" } })
+      })
+
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      expect(mockOnSubmit).toHaveBeenCalledTimes(1)
+      mockOnSubmit.mockClear()
+
+      // Simulate successful save
+      rerender({ fetcherData: { success: true, intent: "update" } })
+
+      // Try to blur again without changing - should NOT submit since baseline was updated
+      act(() => {
+        result.current.register.text("name").onBlur()
+      })
+
+      expect(mockOnSubmit).not.toHaveBeenCalled()
     })
   })
 })

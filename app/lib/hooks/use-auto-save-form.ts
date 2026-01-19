@@ -3,7 +3,7 @@ import type { ZodObject, ZodRawShape } from "zod"
 import type { FetcherWithComponents } from "react-router"
 import { toast } from "sonner"
 import type { ComposableFetcherData } from "~types/database/entities.types"
-import type { z } from "zod"
+import { z } from "zod"
 
 export interface UseAutoSaveFormOptions<T extends ZodRawShape> {
   schema: ZodObject<T>
@@ -55,6 +55,7 @@ export function useAutoSaveForm<T extends ZodRawShape>(
 ): UseAutoSaveFormReturn<z.infer<ZodObject<T>>> {
   type FormValues = z.infer<ZodObject<T>>
   const {
+    schema,
     initialData,
     fetcher,
     onSubmit,
@@ -79,11 +80,13 @@ export function useAutoSaveForm<T extends ZodRawShape>(
     }
   }, [initialData])
 
-  // Show toast feedback when fetcher.data changes
+  // Show toast feedback when fetcher.data changes and reset baseline on success
   useEffect(() => {
     if (fetcher.data && fetcher.data !== previousFetcherDataRef.current) {
       if (fetcher.data.success) {
         toast.success(successMessage)
+        // Reset baseline to current values after successful save
+        initialDataRef.current = values
       } else {
         const errorMsg =
           fetcher.data.errors?._global?.[0] ?? errorMessage
@@ -91,7 +94,7 @@ export function useAutoSaveForm<T extends ZodRawShape>(
       }
     }
     previousFetcherDataRef.current = fetcher.data
-  }, [fetcher.data, successMessage, errorMessage])
+  }, [fetcher.data, successMessage, errorMessage, values])
 
   const isSaving = fetcher.state !== "idle"
 
@@ -101,11 +104,22 @@ export function useAutoSaveForm<T extends ZodRawShape>(
 
   const doSubmit = useCallback(
     (name: keyof FormValues, value: unknown) => {
+      // Validate the field value against the schema
+      const fieldSchema = schema.shape[String(name)] as z.ZodType | undefined
+      if (fieldSchema) {
+        const result = fieldSchema.safeParse(value)
+        if (!result.success) {
+          const errorMessage = result.error.issues[0]?.message ?? "Valor inválido"
+          toast.error(errorMessage)
+          return
+        }
+      }
+
       const formData = new FormData()
       formData.set(String(name), String(value))
       onSubmit(String(name), value, formData)
     },
-    [onSubmit],
+    [onSubmit, schema],
   )
 
   const submitField = useCallback(
@@ -115,13 +129,20 @@ export function useAutoSaveForm<T extends ZodRawShape>(
     [doSubmit, values],
   )
 
-  const getFieldState = useCallback((_name: keyof FormValues): FieldState => {
-    return {
-      isDirty: false,
-      isSaving: false,
-      error: null,
-    }
-  }, [])
+  const getFieldState = useCallback(
+    (name: keyof FormValues): FieldState => {
+      const currentValue = values[name]
+      const originalValue = initialDataRef.current[name]
+      const isDirty = currentValue !== originalValue
+
+      return {
+        isDirty,
+        isSaving,
+        error: null,
+      }
+    },
+    [values, isSaving],
+  )
 
   const register = {
     select: (name: keyof FormValues) => ({
