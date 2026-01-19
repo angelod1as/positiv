@@ -69,8 +69,11 @@ export function useAutoSaveForm<T extends ZodRawShape>(
   )
 
   // Re-sync values when initialData changes (prop sync)
+  // Use JSON comparison since initialData is often an object literal
   useEffect(() => {
-    if (initialData !== initialDataRef.current) {
+    const currentJson = JSON.stringify(initialData)
+    const prevJson = JSON.stringify(initialDataRef.current)
+    if (currentJson !== prevJson) {
       setValues(initialData)
       initialDataRef.current = initialData
     }

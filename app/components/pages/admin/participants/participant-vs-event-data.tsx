@@ -1,7 +1,6 @@
-import type { ChangeEvent, FC } from "react"
-import { useEffect, useRef } from "react"
+import type { FC } from "react"
 import { useFetcher } from "react-router"
-import { toast } from "sonner"
+import { z } from "zod"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
@@ -21,11 +20,21 @@ import {
   eventParticipantPropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
-import { useSyncedState } from "~/lib/hooks/use-synced-state"
+import { useAutoSaveForm } from "~/lib/hooks/use-auto-save-form"
 import type {
   ComposableFetcherData,
   EventParticipantWithEvent,
 } from "~types/database/entities.types"
+
+const eventParticipantFormSchema = z.object({
+  attendance_status: z.string(),
+  application_status: z.string(),
+  spot_type: z.string(),
+  payment: z.string(),
+  has_paid: z.boolean(),
+  was_selected_for_rotation: z.boolean(),
+  admin_general_notes: z.string(),
+})
 
 type ParticipantVsEventDataProps = {
   eventParticipant: EventParticipantWithEvent
@@ -54,85 +63,29 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   } = eventParticipant
 
   const fetcher = useFetcher<ComposableFetcherData>()
-  const previousDataRef = useRef<ComposableFetcherData | undefined>(undefined)
 
-  // Local state for all editable fields, synced with props
-  const [localAttendanceStatus, setLocalAttendanceStatus] =
-    useSyncedState(attendance_status)
-  const [localApplicationStatus, setLocalApplicationStatus] =
-    useSyncedState(application_status)
-  const [localSpotType, setLocalSpotType] = useSyncedState(spot_type)
-  const [localPayment, setLocalPayment] = useSyncedState(
-    payment?.toString() ?? "",
-  )
-  const [localHasPaid, setLocalHasPaid] = useSyncedState(has_paid)
-  const [localWasSelectedForRotation, setLocalWasSelectedForRotation] =
-    useSyncedState(was_selected_for_rotation)
-  const [localAdminNotes, setLocalAdminNotes] = useSyncedState(
-    admin_general_notes ?? "",
-  )
-
-  // Show toast feedback when fetcher.data changes
-  useEffect(() => {
-    if (fetcher.data && fetcher.data !== previousDataRef.current) {
-      if (fetcher.data.success) {
-        toast.success("Dados atualizados com sucesso")
-      } else {
-        const errorMessage =
-          fetcher.data.errors?._global?.[0] ?? "Erro ao salvar"
-        toast.error(errorMessage)
-      }
-    }
-    previousDataRef.current = fetcher.data
-  }, [fetcher.data])
-
-  const submitField = (field: string, value: unknown) => {
-    const formData = new FormData()
-    formData.set("intent", "update-event-participant")
-    formData.set("id", id)
-    formData.set("profile_id", profile_id ?? "")
-    formData.set("event_id", event_id)
-    formData.set(field, String(value))
-
-    fetcher.submit(formData, { method: "POST" })
-  }
-
-  const handleAttendanceStatusChange = (value: string) => {
-    setLocalAttendanceStatus(value as typeof attendance_status)
-    submitField("attendance_status", value)
-  }
-
-  const handleApplicationStatusChange = (value: string) => {
-    setLocalApplicationStatus(value as typeof application_status)
-    submitField("application_status", value)
-  }
-
-  const handleSpotTypeChange = (value: string) => {
-    setLocalSpotType(value as typeof spot_type)
-    submitField("spot_type", value)
-  }
-
-  const handleHasPaidChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setLocalHasPaid(e.target.checked)
-    submitField("has_paid", e.target.checked)
-  }
-
-  const handleWasSelectedForRotationChange = (
-    e: ChangeEvent<HTMLInputElement>,
-  ) => {
-    setLocalWasSelectedForRotation(e.target.checked)
-    submitField("was_selected_for_rotation", e.target.checked)
-  }
-
-  const handleTextBlur = (
-    field: string,
-    value: string,
-    originalValue: string | number | null,
-  ) => {
-    if (value !== (originalValue?.toString() ?? "")) {
-      submitField(field, value)
-    }
-  }
+  const { values, register } = useAutoSaveForm({
+    schema: eventParticipantFormSchema,
+    initialData: {
+      attendance_status,
+      application_status,
+      spot_type,
+      payment: payment?.toString() ?? "",
+      has_paid,
+      was_selected_for_rotation,
+      admin_general_notes: admin_general_notes ?? "",
+    },
+    fetcher,
+    onSubmit: (field, value) => {
+      const formData = new FormData()
+      formData.set("intent", "update-event-participant")
+      formData.set("id", id)
+      formData.set("profile_id", profile_id ?? "")
+      formData.set("event_id", event_id)
+      formData.set(field, String(value))
+      fetcher.submit(formData, { method: "POST" })
+    },
+  })
 
   return (
     <div className="space-y-4">
@@ -145,10 +98,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             <div className="lg:flex gap-4 [&>*]:flex-1">
               <div className="space-y-2">
                 <Label htmlFor="attendance_status">Status de Presença</Label>
-                <Select
-                  value={localAttendanceStatus}
-                  onValueChange={handleAttendanceStatusChange}
-                >
+                <Select {...register.select("attendance_status")}>
                   <SelectTrigger id="attendance_status">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -164,10 +114,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="application_status">Status de Inscrição</Label>
-                <Select
-                  value={localApplicationStatus}
-                  onValueChange={handleApplicationStatusChange}
-                >
+                <Select {...register.select("application_status")}>
                   <SelectTrigger id="application_status">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -185,10 +132,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             <div className="lg:flex gap-4 [&>*]:flex-1">
               <div className="space-y-2">
                 <Label htmlFor="spot_type">Tipo de Vaga</Label>
-                <Select
-                  value={localSpotType}
-                  onValueChange={handleSpotTypeChange}
-                >
+                <Select {...register.select("spot_type")}>
                   <SelectTrigger id="spot_type">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
@@ -207,26 +151,24 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                 <Input
                   id="payment"
                   type="number"
-                  value={localPayment}
-                  onChange={(e) => setLocalPayment(e.target.value)}
-                  onBlur={(e) =>
-                    handleTextBlur("payment", e.target.value, payment)
-                  }
+                  {...register.number("payment")}
                 />
               </div>
 
               <div className="flex flex-col justify-end gap-2">
                 <Label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox
-                    checked={localHasPaid}
-                    onChange={handleHasPaidChange}
+                    checked={values.has_paid}
+                    onChange={register.checkbox("has_paid").onChange}
                   />
                   <span>Pago</span>
                 </Label>
                 <Label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox
-                    checked={localWasSelectedForRotation}
-                    onChange={handleWasSelectedForRotationChange}
+                    checked={values.was_selected_for_rotation}
+                    onChange={
+                      register.checkbox("was_selected_for_rotation").onChange
+                    }
                   />
                   <span>Selecionado para Rodízio</span>
                 </Label>
@@ -239,15 +181,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               </Label>
               <TextArea
                 id="admin_general_notes"
-                value={localAdminNotes}
-                onChange={(e) => setLocalAdminNotes(e.target.value)}
-                onBlur={(e) =>
-                  handleTextBlur(
-                    "admin_general_notes",
-                    e.target.value,
-                    admin_general_notes,
-                  )
-                }
+                {...register.text("admin_general_notes")}
                 placeholder="Notas administrativas para este evento..."
               />
             </div>
