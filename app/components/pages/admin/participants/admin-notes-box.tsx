@@ -1,6 +1,7 @@
 import type { ChangeEvent, FC } from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useFetcher } from "react-router"
+import { toast } from "sonner"
 import { Card, CardContent } from "~/components/ui/card"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Label } from "~/components/ui/label"
@@ -13,7 +14,10 @@ import {
 } from "~/components/ui/select"
 import { TextArea } from "~/components/ui/textarea"
 import { flagStatusOptions } from "~/lib/helpers/propMaps"
-import type { ProfileFlagStatus } from "~types/database/entities.types"
+import type {
+  ComposableFetcherData,
+  ProfileFlagStatus,
+} from "~types/database/entities.types"
 
 type AdminNotesBoxProps = {
   profileId: string
@@ -30,11 +34,24 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
   generalNotes,
   isVeteran,
 }) => {
-  const fetcher = useFetcher()
+  const fetcher = useFetcher<ComposableFetcherData>()
+  const previousDataRef = useRef<ComposableFetcherData | undefined>(undefined)
 
   // Local state for text inputs to avoid submitting on every keystroke
   const [localFlagNotes, setLocalFlagNotes] = useState(flagNotes ?? "")
   const [localGeneralNotes, setLocalGeneralNotes] = useState(generalNotes ?? "")
+
+  // Show toast feedback when fetcher.data changes
+  useEffect(() => {
+    if (fetcher.data && fetcher.data !== previousDataRef.current) {
+      if (fetcher.data.success) {
+        toast.success("Dados salvos com sucesso")
+      } else {
+        toast.error("Erro ao salvar")
+      }
+    }
+    previousDataRef.current = fetcher.data
+  }, [fetcher.data])
 
   // Sync local state when props change (e.g., after revalidation)
   useEffect(() => {
@@ -45,13 +62,34 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
     setLocalGeneralNotes(generalNotes ?? "")
   }, [generalNotes])
 
-  const submitField = (field: string, value: unknown) => {
+  const submitField = (field: string, value: unknown, additionalFields?: Record<string, string>) => {
     const formData = new FormData()
     formData.set("intent", "update-profile-admin-notes")
     formData.set("profile_id", profileId)
     formData.set(field, String(value))
 
+    if (additionalFields) {
+      Object.entries(additionalFields).forEach(([key, val]) => {
+        formData.set(key, val)
+      })
+    }
+
     fetcher.submit(formData, { method: "POST" })
+  }
+
+  const handleFlagChange = (newFlag: string) => {
+    // If changing to a non-"none" flag, validate flag_notes
+    if (newFlag !== "none") {
+      if (!localFlagNotes.trim()) {
+        toast.error("Notas da Flag são obrigatórias quando uma flag é selecionada")
+        return
+      }
+      // Submit both flag and flag_notes when setting a non-none flag
+      submitField("flag", newFlag, { flag_notes: localFlagNotes })
+    } else {
+      // When setting to "none", just submit the flag
+      submitField("flag", newFlag)
+    }
   }
 
   const handleTextBlur = (field: string, value: string, originalValue: string | null) => {
@@ -70,7 +108,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
             <Label htmlFor="flag">Flag</Label>
             <Select
               value={flag}
-              onValueChange={(value) => submitField("flag", value)}
+              onValueChange={handleFlagChange}
             >
               <SelectTrigger id="flag">
                 <SelectValue placeholder="Selecione uma flag" />
