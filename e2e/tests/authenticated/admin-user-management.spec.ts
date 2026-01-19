@@ -268,8 +268,8 @@ test.describe("Admin User Management", () => {
       participantIndex === 0 ? "João Test - indicação formal" : "ninguém"
     await expect(page.getByText(expectedReferredValue)).toBeVisible()
 
-    // Edit a field in detail view
-    await userManagement.editDetailField("application_status", "finalised")
+    // Edit a field in detail view (use display name for Radix UI Select)
+    await userManagement.editDetailField("application_status", "Finalizado")
 
     // Save changes
     await userManagement.saveDetailViewChanges()

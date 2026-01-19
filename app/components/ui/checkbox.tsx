@@ -2,6 +2,21 @@ import { CheckIcon } from "lucide-react"
 import * as React from "react"
 import { cn } from "~/lib/utils"
 
+/**
+ * Custom checkbox component with visual styling.
+ *
+ * **Important**: This component should be wrapped in a `<Label>` element for proper
+ * accessibility and clickable area. The checkbox uses a visually hidden input with
+ * a styled span for the visual representation.
+ *
+ * @example
+ * ```tsx
+ * <Label className="flex items-center gap-2 cursor-pointer">
+ *   <Checkbox checked={isChecked} onChange={handleChange} />
+ *   <span>Label text</span>
+ * </Label>
+ * ```
+ */
 export const Checkbox = React.forwardRef<
   HTMLInputElement,
   React.JSX.IntrinsicElements["input"]
