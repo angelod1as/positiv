@@ -38,7 +38,7 @@ function createMockFetcher(
     load: vi.fn(),
     Form: vi.fn() as unknown as FetcherWithComponents<ComposableFetcherData>["Form"],
     ...overrides,
-  }
+  } as FetcherWithComponents<ComposableFetcherData>
 }
 
 describe("useAutoSaveForm", () => {
@@ -409,8 +409,6 @@ describe("useAutoSaveForm", () => {
 
   describe("toast feedback", () => {
     it("should show success toast when fetcher returns success", () => {
-      const fetcher = createMockFetcher()
-
       const { rerender } = renderHook(
         ({ fetcherData }) =>
           useAutoSaveForm({
@@ -430,8 +428,6 @@ describe("useAutoSaveForm", () => {
     })
 
     it("should show custom success message when provided", () => {
-      const fetcher = createMockFetcher()
-
       const { rerender } = renderHook(
         ({ fetcherData }) =>
           useAutoSaveForm({
@@ -452,8 +448,6 @@ describe("useAutoSaveForm", () => {
     })
 
     it("should show error toast when fetcher returns error", () => {
-      const fetcher = createMockFetcher()
-
       const { rerender } = renderHook(
         ({ fetcherData }) =>
           useAutoSaveForm({
@@ -477,8 +471,6 @@ describe("useAutoSaveForm", () => {
     })
 
     it("should show default error message when no specific error", () => {
-      const fetcher = createMockFetcher()
-
       const { rerender } = renderHook(
         ({ fetcherData }) =>
           useAutoSaveForm({
@@ -498,8 +490,6 @@ describe("useAutoSaveForm", () => {
     })
 
     it("should show custom error message when provided", () => {
-      const fetcher = createMockFetcher()
-
       const { rerender } = renderHook(
         ({ fetcherData }) =>
           useAutoSaveForm({
