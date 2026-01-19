@@ -64,10 +64,19 @@ export function useAutoSaveForm<T extends ZodRawShape>(
   } = options
 
   const [values, setValues] = useState<FormValues>(initialData)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>(
+    {},
+  )
   const initialDataRef = useRef(initialData)
   const previousFetcherDataRef = useRef<ComposableFetcherData | undefined>(
     undefined,
   )
+
+  // Normalize null/undefined/empty string for comparison to avoid unnecessary saves
+  const normalizeForComparison = (value: unknown): string => {
+    if (value === null || value === undefined) return ""
+    return String(value)
+  }
 
   // Re-sync values when initialData changes (prop sync)
   // Use JSON comparison since initialData is often an object literal
@@ -104,20 +113,27 @@ export function useAutoSaveForm<T extends ZodRawShape>(
 
   const doSubmit = useCallback(
     (name: keyof FormValues, value: unknown) => {
+      const fieldName = String(name)
+
       // Validate the field value against the schema
-      const fieldSchema = schema.shape[String(name)] as z.ZodType | undefined
+      const fieldSchema = schema.shape[fieldName] as z.ZodType | undefined
       if (fieldSchema) {
         const result = fieldSchema.safeParse(value)
         if (!result.success) {
-          const errorMessage = result.error.issues[0]?.message ?? "Valor inválido"
-          toast.error(errorMessage)
+          const validationErrorMsg =
+            result.error.issues[0]?.message ?? "Valor inválido"
+          setFieldErrors((prev) => ({ ...prev, [fieldName]: validationErrorMsg }))
+          toast.error(validationErrorMsg)
           return
         }
       }
 
+      // Clear any previous error for this field
+      setFieldErrors((prev) => ({ ...prev, [fieldName]: null }))
+
       const formData = new FormData()
-      formData.set(String(name), String(value))
-      onSubmit(String(name), value, formData)
+      formData.set(fieldName, String(value))
+      onSubmit(fieldName, value, formData)
     },
     [onSubmit, schema],
   )
@@ -131,17 +147,18 @@ export function useAutoSaveForm<T extends ZodRawShape>(
 
   const getFieldState = useCallback(
     (name: keyof FormValues): FieldState => {
-      const currentValue = values[name]
-      const originalValue = initialDataRef.current[name]
+      const fieldName = String(name)
+      const currentValue = normalizeForComparison(values[name])
+      const originalValue = normalizeForComparison(initialDataRef.current[name])
       const isDirty = currentValue !== originalValue
 
       return {
         isDirty,
         isSaving,
-        error: null,
+        error: fieldErrors[fieldName] ?? null,
       }
     },
-    [values, isSaving],
+    [values, isSaving, fieldErrors],
   )
 
   const register = {
@@ -166,8 +183,8 @@ export function useAutoSaveForm<T extends ZodRawShape>(
         setValues((prev) => ({ ...prev, [name]: e.target.value }))
       },
       onBlur: () => {
-        const currentValue = String(values[name] ?? "")
-        const originalValue = String(initialDataRef.current[name] ?? "")
+        const currentValue = normalizeForComparison(values[name])
+        const originalValue = normalizeForComparison(initialDataRef.current[name])
         if (currentValue !== originalValue) {
           doSubmit(name, currentValue)
         }
@@ -179,8 +196,8 @@ export function useAutoSaveForm<T extends ZodRawShape>(
         setValues((prev) => ({ ...prev, [name]: e.target.value }))
       },
       onBlur: () => {
-        const currentValue = String(values[name] ?? "")
-        const originalValue = String(initialDataRef.current[name] ?? "")
+        const currentValue = normalizeForComparison(values[name])
+        const originalValue = normalizeForComparison(initialDataRef.current[name])
         if (currentValue !== originalValue) {
           doSubmit(name, currentValue)
         }
