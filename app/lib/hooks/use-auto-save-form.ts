@@ -66,6 +66,8 @@ export function useAutoSaveForm<T extends ZodRawShape>(
   } = options
 
   const form = useForm<FormValues>({
+    // Type assertion needed: zodResolver's generic constraints don't align with
+    // ZodRawShape-based inference. The resolver works correctly at runtime.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema) as any,
     defaultValues: initialData as DefaultValues<FormValues>,
@@ -219,8 +221,18 @@ export function useAutoSaveForm<T extends ZodRawShape>(
       onBlur: () => {
         if (dirtyFields[name as keyof typeof dirtyFields]) {
           const currentValue = String(values[name] ?? "")
-          const numValue = currentValue === "" ? 0 : Number(currentValue)
-          doSubmit(name, isNaN(numValue) ? currentValue : numValue)
+          if (currentValue === "") {
+            doSubmit(name, 0)
+            return
+          }
+          const numValue = Number(currentValue)
+          if (isNaN(numValue)) {
+            const fieldName = String(name)
+            setFieldErrors((prev) => ({ ...prev, [fieldName]: "Valor numérico inválido" }))
+            toast.error("Valor numérico inválido")
+            return
+          }
+          doSubmit(name, numValue)
         }
       },
     }),

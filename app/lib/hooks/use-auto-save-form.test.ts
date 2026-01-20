@@ -369,6 +369,33 @@ describe("useAutoSaveForm", () => {
 
       expect(mockOnSubmit).not.toHaveBeenCalled()
     })
+
+    it("should show error and not submit when number value is NaN", () => {
+      const fetcher = createMockFetcher()
+
+      const { result } = renderHook(() =>
+        useAutoSaveForm({
+          schema: testSchema,
+          initialData: defaultInitialData,
+          fetcher,
+          onSubmit: mockOnSubmit,
+        }),
+      )
+
+      act(() => {
+        result.current.register
+          .number("count")
+          .onChange({ target: { value: "abc" } })
+      })
+
+      act(() => {
+        result.current.register.number("count").onBlur()
+      })
+
+      expect(mockOnSubmit).not.toHaveBeenCalled()
+      expect(toast.error).toHaveBeenCalledWith("Valor numérico inválido")
+      expect(result.current.getFieldState("count").error).toBe("Valor numérico inválido")
+    })
   })
 
   describe("saving state", () => {
