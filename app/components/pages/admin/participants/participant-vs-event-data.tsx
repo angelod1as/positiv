@@ -30,7 +30,7 @@ const eventParticipantFormSchema = z.object({
   attendance_status: z.string(),
   application_status: z.string(),
   spot_type: z.string(),
-  payment: z.coerce.number().min(0, "O valor não pode ser negativo").optional(),
+  payment: z.coerce.number().min(0, "O valor não pode ser negativo"),
   has_paid: z.boolean(),
   was_selected_for_rotation: z.boolean(),
   admin_general_notes: z.string(),

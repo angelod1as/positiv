@@ -9,7 +9,7 @@ export interface UseAutoSaveFormOptions<T extends ZodRawShape> {
   schema: ZodObject<T>
   initialData: z.infer<ZodObject<T>>
   fetcher: FetcherWithComponents<ComposableFetcherData>
-  onSubmit: (field: string, value: unknown, formData: FormData) => void
+  onSubmit: (field: string, value: unknown) => void
   successMessage?: string
   errorMessage?: string
 }
@@ -131,9 +131,7 @@ export function useAutoSaveForm<T extends ZodRawShape>(
       // Clear any previous error for this field
       setFieldErrors((prev) => ({ ...prev, [fieldName]: null }))
 
-      const formData = new FormData()
-      formData.set(fieldName, String(value))
-      onSubmit(fieldName, value, formData)
+      onSubmit(fieldName, value)
     },
     [onSubmit, schema],
   )
@@ -199,7 +197,9 @@ export function useAutoSaveForm<T extends ZodRawShape>(
         const currentValue = normalizeForComparison(values[name])
         const originalValue = normalizeForComparison(initialDataRef.current[name])
         if (currentValue !== originalValue) {
-          doSubmit(name, currentValue)
+          // Coerce to number for proper type submission
+          const numValue = currentValue === "" ? 0 : Number(currentValue)
+          doSubmit(name, isNaN(numValue) ? currentValue : numValue)
         }
       },
     }),

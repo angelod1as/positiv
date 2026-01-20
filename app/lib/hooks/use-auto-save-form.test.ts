@@ -147,7 +147,6 @@ describe("useAutoSaveForm", () => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         "status",
         "inactive",
-        expect.any(Object),
       )
     })
   })
@@ -192,7 +191,6 @@ describe("useAutoSaveForm", () => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         "isActive",
         false,
-        expect.any(Object),
       )
     })
   })
@@ -262,7 +260,6 @@ describe("useAutoSaveForm", () => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         "name",
         "New Name",
-        expect.any(Object),
       )
     })
 
@@ -350,8 +347,7 @@ describe("useAutoSaveForm", () => {
       expect(mockOnSubmit).toHaveBeenCalledTimes(1)
       expect(mockOnSubmit).toHaveBeenCalledWith(
         "count",
-        "25",
-        expect.any(Object),
+        25, // Number fields coerce to number before submitting
       )
     })
 
@@ -553,7 +549,6 @@ describe("useAutoSaveForm", () => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         "name",
         "New value",
-        expect.any(Object),
       )
     })
   })
@@ -624,7 +619,6 @@ describe("useAutoSaveForm", () => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         "name",
         "ValidName",
-        expect.any(Object),
       )
     })
   })
