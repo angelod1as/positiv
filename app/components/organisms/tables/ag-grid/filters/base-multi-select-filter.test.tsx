@@ -583,6 +583,50 @@ describe("BaseMultiSelectFilter", () => {
     })
   })
 
+  describe("Default Selected Values", () => {
+    it("initializes with defaultSelectedValues in uncontrolled mode", () => {
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          defaultSelectedValues={["pending", "approved"]}
+        />,
+      )
+
+      expect(screen.getByText("2 de 3 selecionados")).toBeInTheDocument()
+    })
+
+    it("ignores defaultSelectedValues when controlled (model prop provided)", () => {
+      render(
+        <BaseMultiSelectFilter
+          {...defaultProps}
+          model={null}
+          defaultSelectedValues={["pending"]}
+        />,
+      )
+
+      expect(screen.getByText("0 de 3 selecionados")).toBeInTheDocument()
+    })
+
+    it("does not re-apply defaultSelectedValues after user clears filter", async () => {
+      const user = userEvent.setup()
+
+      render(
+        <BaseMultiSelectFilter
+          options={mockOptions}
+          field="status"
+          defaultSelectedValues={["pending"]}
+        />,
+      )
+
+      expect(screen.getByText("1 de 3 selecionados")).toBeInTheDocument()
+
+      await user.click(screen.getByRole("button", { name: /limpar/i }))
+
+      expect(screen.getByText("0 de 3 selecionados")).toBeInTheDocument()
+    })
+  })
+
   describe("Exact Matching Mode - Case Sensitivity", () => {
     it("matches case-insensitively in exact mode", () => {
       render(
