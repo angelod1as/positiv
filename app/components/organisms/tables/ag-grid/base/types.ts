@@ -45,6 +45,10 @@ export interface AGDataTableProps<TData> {
 
   quickFilterText?: string
 
+  showSearch?: boolean
+  searchPlaceholder?: string
+  searchAriaLabel?: string
+
   onSave?: (params: AutoSaveParams) => Promise<void>
   autoSaveOptions?: AutoSaveOptions
   fetcher?: FetcherWithComponents<{ success?: boolean; error?: string }>

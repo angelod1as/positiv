@@ -1,14 +1,8 @@
-/**
- * AG Grid Participants Table - Event View
- *
- * Uses AG Grid for filtering, sorting, inline editing, and pagination.
- */
 import type {
   CellValueChangedEvent,
   ColDef,
   ValueSetterParams,
 } from "ag-grid-community"
-import { Search } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { useFetcher } from "react-router"
@@ -25,7 +19,6 @@ import { PronounsRenderer } from "~/components/organisms/tables/ag-grid/renderer
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { TextViewModalRenderer } from "~/components/organisms/tables/ag-grid/renderers/text-view-modal-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
-import { Input } from "~/components/ui/input"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import {
   applicationStatusOptions,
@@ -127,7 +120,6 @@ export const AdminViewEventParticipantsTable: FC<
   const [spotTypeFilter, setSpotTypeFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.spotType),
   )
-  const [searchText, setSearchText] = useState("")
 
   // Persist all filter states to sessionStorage
   useEffect(() => {
@@ -572,41 +564,29 @@ export const AdminViewEventParticipantsTable: FC<
   const { acceptedInProcess, applications } = countParticipants(participants)
 
   const tableHeader = (
-    <div className="flex items-center justify-between flex-wrap gap-4">
-      <div className="relative w-full max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Buscar..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-      <div className="flex items-center gap-4 text-sm flex-wrap">
-        <p>
-          <b>{applications.total}</b> inscrites
-        </p>
-        <p>
-          <b>{acceptedInProcess.total}</b> aceites no processo
-        </p>
-        <span>|</span>
-        <p>Geral:</p>
-        <p>
-          <b>{applications.rookies}</b> N
-        </p>
-        <p>
-          <b>{applications.veterans}</b> V
-        </p>
-        <span>|</span>
-        <p>Aceites no processo:</p>
-        <p>
-          <b>{acceptedInProcess.rookies}</b> N
-        </p>
-        <p>
-          <b>{acceptedInProcess.veterans}</b> V
-        </p>
-      </div>
+    <div className="flex items-center gap-4 text-sm flex-wrap">
+      <p>
+        <b>{applications.total}</b> inscrites
+      </p>
+      <p>
+        <b>{acceptedInProcess.total}</b> aceites no processo
+      </p>
+      <span>|</span>
+      <p>Geral:</p>
+      <p>
+        <b>{applications.rookies}</b> N
+      </p>
+      <p>
+        <b>{applications.veterans}</b> V
+      </p>
+      <span>|</span>
+      <p>Aceites no processo:</p>
+      <p>
+        <b>{acceptedInProcess.rookies}</b> N
+      </p>
+      <p>
+        <b>{acceptedInProcess.veterans}</b> V
+      </p>
     </div>
   )
 
@@ -621,7 +601,8 @@ export const AdminViewEventParticipantsTable: FC<
         getRowId={(params) => params.data.id}
         pagination
         paginationAutoPageSize
-        quickFilterText={searchText}
+        showSearch
+        searchAriaLabel="Buscar participantes"
         emptyMessage="Nenhum participante encontrado"
         persistState
         showToolbar
