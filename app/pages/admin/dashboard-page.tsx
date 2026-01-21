@@ -1,7 +1,11 @@
 import { Link } from "react-router"
-import { getEventsForDashboard } from "~/business/admin/admin.server"
+import {
+  getEventsForDashboard,
+  getRecentProfiles,
+} from "~/business/admin/admin.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
+import { RecentProfilesTable } from "~/components/organisms/tables/admin/recent-profiles-table"
 import { Button } from "~/components/ui/button"
 import { Separator } from "~/components/ui/separator"
 import paths from "~/lib/paths"
@@ -12,12 +16,15 @@ const {
 } = paths
 
 export async function loader() {
-  const events = await getEventsForDashboard()
-  return { events }
+  const [events, recentProfiles] = await Promise.all([
+    getEventsForDashboard(),
+    getRecentProfiles(),
+  ])
+  return { events, recentProfiles }
 }
 
 const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
-  const { events } = loaderData
+  const { events, recentProfiles } = loaderData
 
   const activeEvents = events
     .filter(
@@ -50,12 +57,19 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
       {events && <AdminDashboardEventsTable events={events} />}
       <Separator />
       <div className="flex flex-col gap-4">
-        <h2>Participantes</h2>
-        <div>
-          <Button asChild>
-            <Link to={ADMIN_PARTICIPANTS}>Ver todos os perfis</Link>
-          </Button>
+        <div className="flex items-center justify-between">
+          <h2>Participantes recentes</h2>
+          <div className="grid grid-cols-1">
+            <Button asChild>
+              <Link to={ADMIN_PARTICIPANTS}>Ver todos os perfis</Link>
+            </Button>
+            <p className="text-xs">
+              Veja a tabela completa para editar os dados
+            </p>
+          </div>
         </div>
+
+        <RecentProfilesTable profiles={recentProfiles} />
       </div>
     </>
   )
