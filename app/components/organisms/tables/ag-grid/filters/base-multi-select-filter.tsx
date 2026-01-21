@@ -27,6 +27,8 @@ interface BaseMultiSelectFilterProps {
   selectAllLabel?: string
   clearLabel?: string
   noResultsLabel?: string
+  /** Default values to pre-select when filter initializes (uncontrolled mode only) */
+  defaultSelectedValues?: string[]
 }
 
 export function BaseMultiSelectFilter({
@@ -42,9 +44,12 @@ export function BaseMultiSelectFilter({
   selectAllLabel = "Selecionar Todos",
   clearLabel = "Limpar",
   noResultsLabel = "Nenhum resultado",
+  defaultSelectedValues,
 }: BaseMultiSelectFilterProps) {
   // Internal state for uncontrolled mode (when used directly via filterParams)
-  const [internalModel, setInternalModel] = useState<string[] | null>(null)
+  const [internalModel, setInternalModel] = useState<string[] | null>(
+    defaultSelectedValues?.length ? defaultSelectedValues : null,
+  )
   const [dataVersion, setDataVersion] = useState(0)
 
   // Listen for data changes to refresh filter options
