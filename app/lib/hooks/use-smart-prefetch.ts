@@ -24,11 +24,6 @@ export function useSmartPrefetch(): PrefetchBehavior {
       nav.connection || nav.mozConnection || nav.webkitConnection
 
     if (!connection) {
-      if (import.meta.env.DEV) {
-        console.info(
-          "[Prefetch] Network Information API not supported, prefetch disabled for safety",
-        )
-      }
       return
     }
 
@@ -38,33 +33,13 @@ export function useSmartPrefetch(): PrefetchBehavior {
 
       if (saveData) {
         setPrefetchStrategy("none")
-        if (import.meta.env.DEV) {
-          console.info("[Prefetch] Data saver mode enabled, prefetch disabled")
-        }
         return
       }
 
       if (effectiveType === "slow-2g" || effectiveType === "2g") {
         setPrefetchStrategy("none")
-        if (import.meta.env.DEV) {
-          console.info(
-            `[Prefetch] Slow connection detected (${effectiveType}), prefetch disabled`,
-          )
-        }
-      } else if (effectiveType === "3g") {
-        setPrefetchStrategy("intent")
-        if (import.meta.env.DEV) {
-          console.info(
-            `[Prefetch] Moderate connection (${effectiveType}), using intent prefetch`,
-          )
-        }
       } else {
         setPrefetchStrategy("intent")
-        if (import.meta.env.DEV) {
-          console.info(
-            `[Prefetch] Fast connection (${effectiveType}), using intent prefetch`,
-          )
-        }
       }
     }
 
