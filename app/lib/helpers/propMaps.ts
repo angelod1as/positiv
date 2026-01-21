@@ -298,6 +298,7 @@ export const DEFAULT_EVENT_STATUS_FILTER: EventStatus[] = [
   "Scheduled",
   "Registration Open",
   "Registration Closed",
+  "Completed",
 ]
 
 export const EVENTS_TABLE_FILTER_CONFIGS = {
