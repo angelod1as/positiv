@@ -643,7 +643,7 @@ describe("registerUser", () => {
     expect(result.errors[0].message).toContain("Ops, ocorreu um erro")
   })
 
-  it("should redirect to error page when email matches orphan profile (user_id = NULL)", async () => {
+  it("should show error when email matches orphan profile (user_id = NULL)", async () => {
     const mockSignUp = vi.fn().mockResolvedValue({ error: null })
 
     const mockSupabase = {
@@ -689,7 +689,9 @@ describe("registerUser", () => {
 
     expect(result.success).toBe(false)
     expect(result.errors).toHaveLength(1)
-    expect((result.errors[0] as Error).message).toBe("{}")
+    expect((result.errors[0] as Error).message).toContain(
+      "Este e-mail já está cadastrado em nosso sistema",
+    )
 
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
     expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "orphan@example.com")

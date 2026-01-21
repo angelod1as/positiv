@@ -19,7 +19,7 @@ import {
 
 const {
   root: { HOME },
-  auth: { LOGIN, LOGON_CALLBACK, REGISTRATION_ERROR },
+  auth: { LOGIN, LOGON_CALLBACK },
   dash: {
     DASHBOARD,
     account: { CHANGE_PASSWORD },
@@ -281,10 +281,11 @@ export const registerUser = applySchema(
 
   const { over18, confirmPassword, captchaToken, ...data } = values
 
-  // POS-360/POS-391: Block registration if email already exists in profiles table
-  // with user_id = NULL (orphan profiles imported without auth accounts).
-  // Profiles with user_id set already have accounts - Supabase Auth handles those.
-  // Admins must manually link orphan profiles to new users.
+  // Block signup for "orphan profiles" - profiles imported from external sources
+  // (e.g., mailing lists) that exist in our database but have no Supabase Auth account.
+  // These profiles have user_id = NULL. If someone tries to sign up with an email that
+  // matches an orphan profile, we block them and ask to contact support. An admin must
+  // manually link their new auth account to the existing profile to preserve their data.
   const normalizedEmail = data.email.toLowerCase().trim()
   const orphanProfile = await kyselyDb
     .selectFrom("profiles")
@@ -299,7 +300,9 @@ export const registerUser = applySchema(
       profileId: orphanProfile.id,
       timestamp: new Date().toISOString(),
     })
-    throw redirect(REGISTRATION_ERROR)
+    throw new Error(
+      "Este e-mail já está cadastrado em nosso sistema. Entre em contato pelo WhatsApp para recuperar seu acesso.",
+    )
   }
 
   const origin =

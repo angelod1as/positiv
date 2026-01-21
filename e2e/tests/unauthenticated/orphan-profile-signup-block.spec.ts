@@ -20,7 +20,7 @@ test.describe('Orphan Profile Signup Blocking (POS-391)', () => {
     }
   })
 
-  test('should block signup when email matches orphan profile (user_id = NULL)', async ({ page }) => {
+  test('should show error when email matches orphan profile (user_id = NULL)', async ({ page }) => {
     // Step 1: Create an orphan profile directly in database (simulating imported profile)
     const supabase = createSupabaseAdminClient()
     orphanEmail = generateTestEmail()
@@ -46,14 +46,11 @@ test.describe('Orphan Profile Signup Blocking (POS-391)', () => {
     const registerPage = new RegisterPage(page)
     await registerPage.register(orphanEmail, password)
 
-    // Step 3: Verify redirect to error page
-    await expect(page).toHaveURL('/auth/erro')
+    // Step 3: Verify error message is displayed in the form
+    await expect(page.getByText('Este e-mail já está cadastrado em nosso sistema')).toBeVisible()
 
-    // Step 4: Verify error page content is displayed
-    await expect(page.getByRole('heading', { name: 'Erro ao criar conta' })).toBeVisible()
-    await expect(page.getByText('ERR-001')).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Falar pelo WhatsApp' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Voltar para a home' })).toBeVisible()
+    // Should NOT redirect - stays on register page
+    await expect(page).toHaveURL('/registrar')
   })
 
   test('should allow signup when no matching profile exists', async ({ page }) => {
@@ -65,8 +62,7 @@ test.describe('Orphan Profile Signup Blocking (POS-391)', () => {
     const registerPage = new RegisterPage(page)
     await registerPage.register(newEmail, password)
 
-    // Should be redirected to confirm email page (not error page)
-    await expect(page).not.toHaveURL('/auth/erro')
+    // Should be redirected to confirm email page
     await expect(page).toHaveURL('/registrar/confirmar-email')
     await expect(page.getByText('Confirme sua conta')).toBeVisible()
 
@@ -109,8 +105,8 @@ test.describe('Orphan Profile Signup Blocking (POS-391)', () => {
     const registerPage = new RegisterPage(page)
     await registerPage.register(upperCaseEmail, password)
 
-    // Step 3: Should still be blocked (email normalized to lowercase)
-    await expect(page).toHaveURL('/auth/erro')
-    await expect(page.getByRole('heading', { name: 'Erro ao criar conta' })).toBeVisible()
+    // Step 3: Should show error (email normalized to lowercase)
+    await expect(page.getByText('Este e-mail já está cadastrado em nosso sistema')).toBeVisible()
+    await expect(page).toHaveURL('/registrar')
   })
 })
