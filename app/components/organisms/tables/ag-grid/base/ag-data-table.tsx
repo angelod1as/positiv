@@ -201,6 +201,11 @@ export function AGDataTable<TData>({
     setIsFullscreen((prev) => !prev)
   }, [])
 
+  const handleClearFilters = useCallback(() => {
+    setInternalSearchText("")
+    onClearFilters?.()
+  }, [onClearFilters])
+
   const handleStateUpdated = useCallback(
     (event: StateUpdatedEvent<TData>) => {
       if (persistState) {
@@ -314,7 +319,7 @@ export function AGDataTable<TData>({
               <AGDataTableToolbar
                 gridApi={gridApi}
                 clearState={clearState}
-                onClearFilters={onClearFilters}
+                onClearFilters={handleClearFilters}
                 isFullscreen={isFullscreen}
                 onToggleFullscreen={handleToggleFullscreen}
               />

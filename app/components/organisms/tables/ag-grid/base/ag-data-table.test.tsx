@@ -720,6 +720,68 @@ describe("AGDataTable", () => {
       const searchInput = screen.getByRole("textbox", { name: "Buscar perfis" })
       expect(searchInput).toBeInTheDocument()
     })
+
+    it("should clear search input when clear filters button is clicked", async () => {
+      const user = userEvent.setup()
+
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showSearch
+          showToolbar
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByRole("textbox", { name: /buscar/i })
+      await user.type(searchInput, "Item 1")
+
+      await waitFor(() => {
+        expect(searchInput).toHaveValue("Item 1")
+      })
+
+      await user.click(screen.getByRole("button", { name: /limpar filtros/i }))
+
+      await waitFor(() => {
+        expect(searchInput).toHaveValue("")
+      })
+    })
+
+    it("should clear search input when reset table button is clicked", async () => {
+      const user = userEvent.setup()
+
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showSearch
+          showToolbar
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByRole("textbox", { name: /buscar/i })
+      await user.type(searchInput, "some search")
+
+      await waitFor(() => {
+        expect(searchInput).toHaveValue("some search")
+      })
+
+      await user.click(screen.getByRole("button", { name: /resetar tabela/i }))
+
+      await waitFor(() => {
+        expect(searchInput).toHaveValue("")
+      })
+    })
   })
 
   describe("Toolbar", () => {
