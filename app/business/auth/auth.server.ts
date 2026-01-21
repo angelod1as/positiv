@@ -281,18 +281,24 @@ export const registerUser = applySchema(
 
   const { over18, confirmPassword, captchaToken, ...data } = values
 
-  // POS-360: Block registration if email already exists in profiles table.
-  // This prevents duplicate profiles when users try to register with emails
-  // that were imported as orphaned profiles (user_id = NULL).
-  // Admins must manually link such profiles to new users.
+  // POS-360/POS-391: Block registration if email already exists in profiles table
+  // with user_id = NULL (orphan profiles imported without auth accounts).
+  // Profiles with user_id set already have accounts - Supabase Auth handles those.
+  // Admins must manually link orphan profiles to new users.
   const normalizedEmail = data.email.toLowerCase().trim()
-  const existingProfile = await kyselyDb
+  const orphanProfile = await kyselyDb
     .selectFrom("profiles")
     .select("id")
     .where("email", "=", normalizedEmail)
+    .where("user_id", "is", null)
     .executeTakeFirst()
 
-  if (existingProfile) {
+  if (orphanProfile) {
+    console.warn("[ADMIN NOTIFICATION] Blocked signup attempt for orphan profile:", {
+      email: normalizedEmail,
+      profileId: orphanProfile.id,
+      timestamp: new Date().toISOString(),
+    })
     throw redirect(REGISTRATION_ERROR)
   }
 
