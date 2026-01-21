@@ -39,7 +39,7 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
       <h1>Visão geral</h1>
 
       {activeEvents.length > 0 && (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-8">
           <h2>Eventos com inscrições abertas</h2>
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
             {activeEvents.map((event) => (
@@ -51,11 +51,12 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
               />
             ))}
           </div>
+          {events && <AdminDashboardEventsTable events={events} />}
         </div>
       )}
 
-      {events && <AdminDashboardEventsTable events={events} />}
       <Separator />
+
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2>Participantes recentes</h2>
