@@ -444,7 +444,7 @@ describe("AdminDashboardEventsTable", () => {
   })
 
   describe("Status Filtering", () => {
-    it("should hide Cancelled events by default", async () => {
+    it("should show all events by default including Cancelled", async () => {
       render(<AdminDashboardEventsTable events={mockEvents} />)
 
       // Wait for table to render
@@ -452,14 +452,12 @@ describe("AdminDashboardEventsTable", () => {
         expect(screen.getByText("Draft Event")).toBeInTheDocument()
       })
 
-      // All non-Cancelled events should be visible
+      // All events should be visible by default (no pre-filtering)
       expect(screen.getByText("Scheduled Event")).toBeInTheDocument()
       expect(screen.getByText("Open Registration Event")).toBeInTheDocument()
       expect(screen.getByText("Closed Registration Event")).toBeInTheDocument()
       expect(screen.getByText("Completed Event")).toBeInTheDocument()
-
-      // Cancelled event should be hidden by default
-      expect(screen.queryByText("Cancelled Event")).not.toBeInTheDocument()
+      expect(screen.getByText("Cancelled Event")).toBeInTheDocument()
     })
   })
 })
