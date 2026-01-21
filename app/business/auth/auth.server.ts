@@ -19,7 +19,7 @@ import {
 
 const {
   root: { HOME },
-  auth: { LOGIN, LOGON_CALLBACK, REGISTRATION_ERROR },
+  auth: { LOGIN, LOGON_CALLBACK },
   dash: {
     DASHBOARD,
     account: { CHANGE_PASSWORD },
@@ -281,19 +281,28 @@ export const registerUser = applySchema(
 
   const { over18, confirmPassword, captchaToken, ...data } = values
 
-  // POS-360: Block registration if email already exists in profiles table.
-  // This prevents duplicate profiles when users try to register with emails
-  // that were imported as orphaned profiles (user_id = NULL).
-  // Admins must manually link such profiles to new users.
+  // Block signup for "orphan profiles" - profiles imported from external sources
+  // (e.g., mailing lists) that exist in our database but have no Supabase Auth account.
+  // These profiles have user_id = NULL. If someone tries to sign up with an email that
+  // matches an orphan profile, we block them and ask to contact support. An admin must
+  // manually link their new auth account to the existing profile to preserve their data.
   const normalizedEmail = data.email.toLowerCase().trim()
-  const existingProfile = await kyselyDb
+  const orphanProfile = await kyselyDb
     .selectFrom("profiles")
     .select("id")
     .where("email", "=", normalizedEmail)
+    .where("user_id", "is", null)
     .executeTakeFirst()
 
-  if (existingProfile) {
-    throw redirect(REGISTRATION_ERROR)
+  if (orphanProfile) {
+    console.warn("[ADMIN NOTIFICATION] Blocked signup attempt for orphan profile:", {
+      email: normalizedEmail,
+      profileId: orphanProfile.id,
+      timestamp: new Date().toISOString(),
+    })
+    throw new Error(
+      "Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o \"esqueci minha senha\". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou.",
+    )
   }
 
   const origin =

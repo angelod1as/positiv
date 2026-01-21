@@ -8,6 +8,10 @@
 /dump/
 *.pem
 
+# Production database dumps (contain real user data)
+production_dump.sql
+production_data.sql
+
 # Apple
 .DS_Store
 /node_modules/
