@@ -619,6 +619,109 @@ describe("AGDataTable", () => {
     })
   })
 
+  describe("Built-in Search", () => {
+    it("should render search input when showSearch is true", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showSearch
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByRole("textbox", { name: /buscar/i })
+      expect(searchInput).toBeInTheDocument()
+    })
+
+    it("should not render search input when showSearch is false", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showSearch={false}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      expect(
+        screen.queryByRole("textbox", { name: /buscar/i }),
+      ).not.toBeInTheDocument()
+    })
+
+    it("should filter rows when typing in built-in search input", async () => {
+      const user = userEvent.setup()
+
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showSearch
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+      expect(screen.getByText("Item 2")).toBeInTheDocument()
+
+      const searchInput = screen.getByRole("textbox", { name: /buscar/i })
+      await user.type(searchInput, "Item 1")
+
+      await waitFor(() => {
+        expect(screen.queryByText("Item 2")).not.toBeInTheDocument()
+      })
+      expect(screen.getByText("Item 1")).toBeInTheDocument()
+    })
+
+    it("should use custom placeholder when searchPlaceholder is provided", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showSearch
+          searchPlaceholder="Search profiles..."
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByPlaceholderText("Search profiles...")
+      expect(searchInput).toBeInTheDocument()
+    })
+
+    it("should use custom aria-label when searchAriaLabel is provided", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showSearch
+          searchAriaLabel="Buscar perfis"
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByRole("textbox", { name: "Buscar perfis" })
+      expect(searchInput).toBeInTheDocument()
+    })
+  })
+
   describe("Toolbar", () => {
     it("should render toolbar by default", async () => {
       render(
