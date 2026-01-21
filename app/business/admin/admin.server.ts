@@ -279,6 +279,14 @@ export const getAllProfiles = composable(
   },
 )
 
+export const getRecentProfiles = async () => {
+  const result = await getAllProfiles({ limit: 10 })
+  if (!result.success) {
+    return []
+  }
+  return result.data
+}
+
 export const getAdminProfileById = composable(
   async ({ profileId }: { profileId: string }) => {
     return await kyselyDb
