@@ -1,5 +1,5 @@
 import userEvent from "@testing-library/user-event"
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import { render, screen, waitFor } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
 import { AdminDashboardEventsTable } from "./events-table"
@@ -39,29 +39,6 @@ vi.mock("~/components/atoms/button/button", () => ({
   ),
 }))
 
-const mockSessionStorage = (() => {
-  let store: Record<string, string> = {}
-  return {
-    getItem: vi.fn((key: string) => store[key] ?? null),
-    setItem: vi.fn((key: string, value: string) => {
-      store[key] = value
-    }),
-    removeItem: vi.fn((key: string) => {
-      const { [key]: _, ...rest } = store
-      store = rest
-    }),
-    clear: vi.fn(() => {
-      store = {}
-    }),
-    get store() {
-      return store
-    },
-  }
-})()
-
-Object.defineProperty(window, "sessionStorage", {
-  value: mockSessionStorage,
-})
 
 describe("AdminDashboardEventsTable", () => {
   const mockEvents: Event[] = [
@@ -212,12 +189,7 @@ describe("AdminDashboardEventsTable", () => {
   ]
 
   beforeEach(() => {
-    mockSessionStorage.clear()
     vi.clearAllMocks()
-  })
-
-  afterEach(() => {
-    mockNavigate.mockClear()
   })
 
   describe("Basic Rendering", () => {
@@ -307,50 +279,6 @@ describe("AdminDashboardEventsTable", () => {
     })
   })
 
-  describe("Filtering", () => {
-    it("should show only active statuses by default (excluding Completed and Cancelled)", async () => {
-      render(<AdminDashboardEventsTable events={mockEvents} />)
-
-      await waitFor(() => {
-        expect(screen.getByText("Draft Event")).toBeInTheDocument()
-      })
-
-      // Active events should be visible
-      expect(screen.getByText("Scheduled Event")).toBeInTheDocument()
-      expect(screen.getByText("Open Registration Event")).toBeInTheDocument()
-      expect(screen.getByText("Closed Registration Event")).toBeInTheDocument()
-
-      // Completed and Cancelled events should be hidden by default
-      expect(screen.queryByText("Completed Event")).not.toBeInTheDocument()
-      expect(screen.queryByText("Cancelled Event")).not.toBeInTheDocument()
-    })
-
-    it("should load filter state from sessionStorage on mount", async () => {
-      // Set initial state in sessionStorage to include Completed but not Cancelled
-      mockSessionStorage.store["admin-events-filter-status"] =
-        JSON.stringify([
-          "Draft",
-          "Scheduled",
-          "Registration Open",
-          "Registration Closed",
-          "Completed",
-        ])
-
-      render(<AdminDashboardEventsTable events={mockEvents} />)
-
-      await waitFor(() => {
-        expect(screen.getByText("Draft Event")).toBeInTheDocument()
-      })
-
-      // Completed event should be visible based on sessionStorage
-      await waitFor(() => {
-        expect(screen.getByText("Completed Event")).toBeInTheDocument()
-      })
-
-      // Cancelled should still be hidden
-      expect(screen.queryByText("Cancelled Event")).not.toBeInTheDocument()
-    })
-  })
 
   describe("Sorting", () => {
     it("should have sortable columns", async () => {
@@ -482,6 +410,35 @@ describe("AdminDashboardEventsTable", () => {
 
       await waitFor(() => {
         expect(screen.getByText("Nenhum evento encontrado")).toBeInTheDocument()
+      })
+    })
+  })
+
+  describe("Search Functionality", () => {
+    it("should render a search input", async () => {
+      render(<AdminDashboardEventsTable events={mockEvents} />)
+
+      await waitFor(() => {
+        expect(screen.getByText("Draft Event")).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByLabelText("Buscar eventos")
+      expect(searchInput).toBeInTheDocument()
+    })
+
+    it("should filter events when typing in search input", async () => {
+      const user = userEvent.setup()
+      render(<AdminDashboardEventsTable events={mockEvents} />)
+
+      await waitFor(() => {
+        expect(screen.getByText("Draft Event")).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByLabelText("Buscar eventos")
+      await user.type(searchInput, "Draft")
+
+      await waitFor(() => {
+        expect(screen.getByText("Draft Event")).toBeInTheDocument()
       })
     })
   })

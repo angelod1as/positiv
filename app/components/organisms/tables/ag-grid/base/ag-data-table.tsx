@@ -68,6 +68,8 @@ export function AGDataTable<TData>({
   showToolbar = true,
   onClearFilters,
   headerContent,
+  isExternalFilterPresent,
+  doesExternalFilterPass,
 }: AGDataTableProps<TData>) {
   ensureModulesRegistered()
 
@@ -275,6 +277,8 @@ export function AGDataTable<TData>({
                   defaultMinWidth: 30,
                 }
           }
+          isExternalFilterPresent={isExternalFilterPresent}
+          doesExternalFilterPass={doesExternalFilterPass}
         />
       </div>
       {(fetcher || showToolbar) && (

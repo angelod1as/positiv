@@ -59,7 +59,6 @@ export const getEventsForDashboard = async () => {
       "time_payment_end",
     ])
     .orderBy("time_event_start", "desc")
-    .limit(50)
     .execute()
 
   return events
