@@ -51,9 +51,10 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
               />
             ))}
           </div>
-          {events && <AdminDashboardEventsTable events={events} />}
         </div>
       )}
+
+      {events && <AdminDashboardEventsTable events={events} />}
 
       <Separator />
 
