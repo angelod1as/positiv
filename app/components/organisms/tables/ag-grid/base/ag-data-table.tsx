@@ -80,7 +80,9 @@ export function AGDataTable<TData>({
 
   const [gridApi, setGridApi] = useState<GridApi | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [internalSearchText, setInternalSearchText] = useState("")
+  const [internalSearchText, setInternalSearchText] = useState(
+    quickFilterText ?? "",
+  )
 
   const effectiveQuickFilterText = showSearch
     ? internalSearchText
