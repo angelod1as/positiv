@@ -1,5 +1,4 @@
 import type { ColDef, GridApi, GridReadyEvent } from "ag-grid-community"
-import { Search } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useFetcher } from "react-router"
@@ -11,7 +10,6 @@ import { LastAttendedEventRenderer } from "~/components/organisms/tables/ag-grid
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
 import { getVeteranColumn } from "~/components/organisms/tables/ag-grid/columns/veteran-column"
-import { Input } from "~/components/ui/input"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
@@ -80,7 +78,6 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
   const [approvedToAttendFilter, setApprovedToAttendFilter] = useState<
     string[]
   >(() => getStoredFilter(STORAGE_KEYS.approvedToAttend))
-  const [searchText, setSearchText] = useState("")
 
   useEffect(() => {
     sessionStorage.setItem(STORAGE_KEYS.gender, JSON.stringify(genderFilter))
@@ -298,31 +295,18 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
   const isFiltered = displayCount !== profiles.length
 
   const tableHeader = (
-    <div className="flex items-center justify-between flex-wrap gap-4">
-      <div className="relative w-full max-w-sm">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Buscar..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="pl-9"
-          aria-label="Buscar perfis"
-        />
-      </div>
-      <div className="flex items-center gap-4 text-sm">
-        <p>
-          {isFiltered ? (
-            <>
-              <b>{displayCount}</b> de {profiles.length} perfis
-            </>
-          ) : (
-            <>
-              <b>{profiles.length}</b> perfis
-            </>
-          )}
-        </p>
-      </div>
+    <div className="flex items-center text-sm">
+      <p>
+        {isFiltered ? (
+          <>
+            <b>{displayCount}</b> de {profiles.length} perfis
+          </>
+        ) : (
+          <>
+            <b>{profiles.length}</b> perfis
+          </>
+        )}
+      </p>
     </div>
   )
 
@@ -334,7 +318,8 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       getRowId={(params) => params.data.id}
       pagination
       paginationAutoPageSize
-      quickFilterText={searchText}
+      showSearch
+      searchAriaLabel="Buscar perfis"
       emptyMessage="Nenhum perfil encontrado"
       persistState
       showToolbar

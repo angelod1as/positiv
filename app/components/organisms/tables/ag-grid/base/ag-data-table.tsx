@@ -11,7 +11,9 @@ import {
   type StateUpdatedEvent,
 } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
+import { Search } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { Input } from "~/components/ui/input"
 import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
 import { AGDataTableToolbar } from "./ag-data-table-toolbar"
@@ -54,6 +56,9 @@ export function AGDataTable<TData>({
   rowSelection,
   onRowSelectionChange,
   quickFilterText,
+  showSearch = false,
+  searchPlaceholder = "Buscar...",
+  searchAriaLabel = "Buscar",
   onSave,
   autoSaveOptions,
   fetcher,
@@ -75,6 +80,11 @@ export function AGDataTable<TData>({
 
   const [gridApi, setGridApi] = useState<GridApi | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [internalSearchText, setInternalSearchText] = useState("")
+
+  const effectiveQuickFilterText = showSearch
+    ? internalSearchText
+    : quickFilterText
 
   const { restoreState, saveState, clearState, hasSavedState } = useGridState(
     id,
@@ -235,6 +245,21 @@ export function AGDataTable<TData>({
       className={containerClasses}
       style={!isFullscreen ? { height: `${parsedHeight}px` } : undefined}
     >
+      {showSearch && (
+        <div
+          className={cn("relative w-full max-w-sm mb-2", isFullscreen && "px-4")}
+        >
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder={searchPlaceholder}
+            value={internalSearchText}
+            onChange={(e) => setInternalSearchText(e.target.value)}
+            className="pl-9"
+            aria-label={searchAriaLabel}
+          />
+        </div>
+      )}
       {headerContent && (
         <div className={cn("mb-2", isFullscreen && "px-4 pt-4")}>
           {headerContent}
@@ -261,7 +286,7 @@ export function AGDataTable<TData>({
           paginationAutoPageSize={paginationAutoPageSize}
           rowSelection={rowSelectionConfig}
           onSelectionChanged={handleSelectionChanged}
-          quickFilterText={quickFilterText}
+          quickFilterText={effectiveQuickFilterText}
           onCellValueChanged={handleCellValueChanged}
           onGridReady={handleGridReady}
           onStateUpdated={handleStateUpdated}
