@@ -721,6 +721,25 @@ describe("AGDataTable", () => {
       expect(searchInput).toBeInTheDocument()
     })
 
+    it("should initialize search input with quickFilterText value when provided", async () => {
+      render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefs}
+          showSearch
+          quickFilterText="Item 1"
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByRole("grid")).toBeInTheDocument()
+      })
+
+      const searchInput = screen.getByRole("textbox", { name: /buscar/i })
+      expect(searchInput).toHaveValue("Item 1")
+    })
+
     it("should clear search input when clear filters button is clicked", async () => {
       const user = userEvent.setup()
 
