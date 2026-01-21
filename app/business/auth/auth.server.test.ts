@@ -690,7 +690,7 @@ describe("registerUser", () => {
     expect(result.success).toBe(false)
     expect(result.errors).toHaveLength(1)
     expect((result.errors[0] as Error).message).toContain(
-      "Este e-mail já está cadastrado em nosso sistema",
+      "Houve um erro no cadastro da sua conta",
     )
 
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")

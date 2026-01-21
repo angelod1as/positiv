@@ -301,7 +301,7 @@ export const registerUser = applySchema(
       timestamp: new Date().toISOString(),
     })
     throw new Error(
-      "Este e-mail já está cadastrado em nosso sistema. Entre em contato pelo WhatsApp para recuperar seu acesso.",
+      "Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o \"esqueci minha senha\". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou.",
     )
   }
 
