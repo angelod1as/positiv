@@ -4,14 +4,15 @@
  * Uses AG Grid for filtering, sorting, and pagination.
  */
 import type { ColDef, RowClickedEvent } from "ag-grid-community"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { Search } from "lucide-react"
+import { useCallback, useMemo, useState } from "react"
 import { useNavigate } from "react-router"
 import { Button } from "~/components/atoms/button/button"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
+import { Input } from "~/components/ui/input"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
-  DEFAULT_EVENT_STATUS_FILTER,
   eventPropNameMap,
   eventStatusMap,
   eventStatusOptions,
@@ -27,42 +28,11 @@ interface AdminDashboardEventsTableProps {
   events: DashboardEvent[]
 }
 
-const STORAGE_KEY = "admin-events-filter-status"
-
-function getInitialFilterValues(): EventStatus[] {
-  if (typeof window === "undefined") return DEFAULT_EVENT_STATUS_FILTER
-  const stored = sessionStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored)
-      if (Array.isArray(parsed)) {
-        return parsed
-      }
-    } catch {
-      // Error parsing, fall back to default
-    }
-  }
-  return DEFAULT_EVENT_STATUS_FILTER
-}
-
 export function AdminDashboardEventsTable({
   events,
 }: AdminDashboardEventsTableProps) {
   const navigate = useNavigate()
-  const [filterModel, setFilterModel] = useState<string[] | null>(
-    getInitialFilterValues,
-  )
-
-  useEffect(() => {
-    if (filterModel) {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(filterModel))
-    }
-  }, [filterModel])
-
-  const filteredEvents = useMemo(() => {
-    if (!filterModel || filterModel.length === 0) return events
-    return events.filter((event) => filterModel.includes(event.event_status))
-  }, [events, filterModel])
+  const [searchText, setSearchText] = useState("")
 
   const columnDefs: ColDef<DashboardEvent>[] = useMemo(
     () => [
@@ -73,15 +43,13 @@ export function AdminDashboardEventsTable({
       {
         field: "event_status",
         headerName: eventPropNameMap("event_status"),
+        cellRenderer: (params: { value: EventStatus }) =>
+          eventStatusMap(params.value),
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: eventStatusOptions,
           field: "event_status",
-          model: filterModel,
-          onModelChange: setFilterModel,
         },
-        cellRenderer: (params: { value: EventStatus }) =>
-          eventStatusMap(params.value),
       },
       {
         field: "time_event_start",
@@ -91,7 +59,7 @@ export function AdminDashboardEventsTable({
           formatDateTime(params.value)?.full ?? "",
       },
     ],
-    [filterModel],
+    [],
   )
 
   const handleRowClicked = useCallback(
@@ -103,9 +71,21 @@ export function AdminDashboardEventsTable({
     [navigate],
   )
 
-  const handleClearFilters = useCallback(() => {
-    setFilterModel(DEFAULT_EVENT_STATUS_FILTER)
-  }, [])
+  const tableHeader = (
+    <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="relative w-full max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Buscar..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="pl-9"
+          aria-label="Buscar eventos"
+        />
+      </div>
+    </div>
+  )
 
   return (
     <div className="space-y-4">
@@ -117,7 +97,7 @@ export function AdminDashboardEventsTable({
       </div>
       <AGDataTable
         id="admin-events"
-        data={filteredEvents}
+        data={events}
         columnDefs={columnDefs}
         pagination
         paginationPageSize={25}
@@ -126,7 +106,8 @@ export function AdminDashboardEventsTable({
         emptyMessage="Nenhum evento encontrado"
         persistState
         showToolbar
-        onClearFilters={handleClearFilters}
+        headerContent={tableHeader}
+        quickFilterText={searchText}
       />
     </div>
   )

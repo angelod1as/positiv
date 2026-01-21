@@ -59,7 +59,6 @@ export const getEventsForDashboard = async () => {
       "time_payment_end",
     ])
     .orderBy("time_event_start", "desc")
-    .limit(50)
     .execute()
 
   return events
@@ -278,6 +277,14 @@ export const getAllProfiles = composable(
     return await query.execute()
   },
 )
+
+export const getRecentProfiles = async () => {
+  const result = await getAllProfiles({ limit: 10 })
+  if (!result.success) {
+    return []
+  }
+  return result.data
+}
 
 export const getAdminProfileById = composable(
   async ({ profileId }: { profileId: string }) => {

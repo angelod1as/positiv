@@ -6,6 +6,7 @@ import type {
   GridReadyEvent,
   GridState,
   IFilterParams,
+  IRowNode,
   RowClickedEvent,
   StateUpdatedEvent,
 } from "ag-grid-community"
@@ -62,6 +63,11 @@ export interface AGDataTableProps<TData> {
   showToolbar?: boolean
   onClearFilters?: () => void
   headerContent?: React.ReactNode
+
+  /** External filter: returns true if external filter is active */
+  isExternalFilterPresent?: () => boolean
+  /** External filter: returns true if row passes the filter */
+  doesExternalFilterPass?: (node: IRowNode<TData>) => boolean
 }
 
 export interface UseGridStateOptions {
