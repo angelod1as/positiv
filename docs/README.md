@@ -5,6 +5,7 @@ Welcome to the Positiv project documentation. This directory contains all techni
 ## Table of Contents
 
 ### 📋 Planning Documents
+
 - [Payment System](./payment-system.md) - Asaas payment integration plan (provider decision, architecture, implementation phases)
 
 ### 🏗️ Architecture Decision Records (ADRs)
@@ -16,6 +17,7 @@ pnpm adr:preview  # Opens browser with ADR knowledge base
 ```
 
 Current ADRs:
+
 - [ADR-0001: Git Worktree Workflow](./architecture/decisions/0001-git-worktree-workflow.md) - Using git worktrees for parallel development
 - [ADR: Use Log4brains](./architecture/decisions/20250630-use-log4brains-to-manage-the-adrs.md) - ADR management tool
 - [ADR: Use Markdown ADRs](./architecture/decisions/20250630-use-markdown-architectural-decision-records.md) - Decision to use MADR format
@@ -23,9 +25,11 @@ Current ADRs:
 To create a new ADR: `pnpm adr:new`
 
 ### 🔧 Development
+
 - [CLAUDE.md](../CLAUDE.md) - Claude Code configuration and guidelines
 
 ### 📁 Temporary Plans
+
 - [plans/](./plans/) - Temporary implementation plans for Linear tasks (deleted after PR creation)
 
 ## About This Documentation

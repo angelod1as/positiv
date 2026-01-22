@@ -10,11 +10,52 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 
 ## Current ADRs
 
-| ID | Title | Status |
-|----|-------|--------|
+### Process & Tooling
+
+| Date | Title | Status |
+|------|-------|--------|
 | [0001](./0001-git-worktree-workflow.md) | Git Worktree Workflow | Accepted |
-| [20250630](./20250630-use-log4brains-to-manage-the-adrs.md) | Use Log4brains | Accepted |
-| [20250630](./20250630-use-markdown-architectural-decision-records.md) | Use Markdown ADRs | Accepted |
+| [2025-06-30](./20250630-use-log4brains-to-manage-the-adrs.md) | Use Log4brains | Accepted |
+| [2025-06-30](./20250630-use-markdown-architectural-decision-records.md) | Use Markdown ADRs | Accepted |
+
+### Core Architecture
+
+| Date | Title | Status |
+|------|-------|--------|
+| [2025-01-22](./20250122-use-supabase-as-backend-infrastructure.md) | Use Supabase as Backend Infrastructure | Accepted |
+| [2025-01-23](./20250123-use-react-router-7-with-ssr.md) | Use React Router 7 with SSR | Accepted |
+| [2025-01-24](./20250124-use-rls-for-authorization.md) | Use Row-Level Security for Authorization | Accepted |
+| [2025-01-25](./20250125-use-kysely-as-sql-query-builder.md) | Use Kysely as SQL Query Builder | Accepted |
+| [2025-01-26](./20250126-use-server-only-file-suffixes.md) | Use Server-Only File Suffixes (.server.ts) | Accepted |
+
+### Frontend & UI
+
+| Date | Title | Status |
+|------|-------|--------|
+| [2025-01-27](./20250127-use-tailwind-css-v4.md) | Use Tailwind CSS v4 | Accepted |
+| [2025-01-28](./20250128-use-atomic-design-for-components.md) | Use Atomic Design for Components | Accepted |
+
+### Patterns & Libraries
+
+| Date | Title | Status |
+|------|-------|--------|
+| [2025-01-29](./20250129-use-react-hook-form-and-remix-forms-with-zod.md) | Use React Hook Form + Remix Forms with Zod | Accepted |
+| [2025-01-30](./20250130-use-composable-functions-for-error-handling.md) | Use Composable Functions for Error Handling | Accepted |
+| [2025-02-02](./20250202-use-ag-grid-for-admin-tables.md) | Use AG Grid for Admin Tables | Accepted |
+
+### Infrastructure & Services
+
+| Date | Title | Status |
+|------|-------|--------|
+| [2025-01-31](./20250131-use-nodemailer-with-aws-ses.md) | Use Nodemailer with AWS SES | Accepted |
+| [2025-02-01](./20250201-use-listmonk-for-newsletters.md) | Use Listmonk for Newsletters | Accepted |
+| [2025-02-03](./20250203-use-cloudflare-turnstile.md) | Use Cloudflare Turnstile for CAPTCHA | Accepted |
+
+### Testing
+
+| Date | Title | Status |
+|------|-------|--------|
+| [2025-02-04](./20250204-use-vitest-and-playwright-for-testing.md) | Use Vitest + Playwright for Testing | Accepted |
 
 ## Using Log4brains
 

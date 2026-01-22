@@ -27,7 +27,6 @@
     "perf:baseline": "tsx scripts/lighthouse/run-baseline.ts",
     "prepare": "husky",
     "adr": "log4brains adr",
-    "adr:new": "log4brains adr new",
     "adr:preview": "log4brains preview",
     "adr:build": "log4brains build"
   },
