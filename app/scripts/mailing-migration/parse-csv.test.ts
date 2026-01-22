@@ -292,6 +292,18 @@ describe("parse-csv", () => {
     it("should handle names with accents", () => {
       expect(normalizeName("joão silva")).toBe("João Silva")
     })
+
+    it("should keep Portuguese particles in lowercase", () => {
+      expect(normalizeName("maria da silva")).toBe("Maria da Silva")
+      expect(normalizeName("JOSÉ DE ALMEIDA")).toBe("José de Almeida")
+      expect(normalizeName("ana dos santos")).toBe("Ana dos Santos")
+      expect(normalizeName("carlos das neves")).toBe("Carlos das Neves")
+      expect(normalizeName("pedro do nascimento")).toBe("Pedro do Nascimento")
+    })
+
+    it("should capitalize particle if it is the first word", () => {
+      expect(normalizeName("da silva")).toBe("Da Silva")
+    })
   })
 
   describe("parseMailingRow", () => {

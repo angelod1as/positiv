@@ -124,12 +124,20 @@ export function parseBoolean(value: unknown): boolean | null {
   return null
 }
 
+const LOWERCASE_PARTICLES = ["de", "da", "do", "dos", "das", "e"]
+
 export function normalizeName(name: string): string {
   const trimmed = name.trim()
   if (!trimmed) return ""
   return trimmed
     .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .map((word, index) => {
+      const lower = word.toLowerCase()
+      if (index > 0 && LOWERCASE_PARTICLES.includes(lower)) {
+        return lower
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    })
     .join(" ")
 }
 
@@ -170,6 +178,12 @@ function isArrayValidationError(
 function getString(value: unknown): string {
   if (value === null || value === undefined) return ""
   return String(value)
+}
+
+function cleanSpreadsheetValue(value: unknown): string | null {
+  const trimmed = getString(value).trim()
+  if (!trimmed || trimmed === "#REF!") return null
+  return trimmed
 }
 
 export function parseMailingRow(
@@ -232,14 +246,10 @@ export function parseMailingRow(
     events[col] = parseBoolean(row[col])
   }
 
-  const socialName = getString(row["Nome social"]).trim()
-  const rg = getString(row["RG"]).trim()
-  const observation = getString(row["Observação"]).trim()
-
   const record: ParsedMailingRecord = {
     _rowIndex: rowIndex,
     full_name: normalizeName(getString(row["Nome"])),
-    social_name: socialName && socialName !== "#REF!" ? socialName : null,
+    social_name: cleanSpreadsheetValue(row["Nome social"]),
     gender: isArrayValidationError(genderResult) ? null : genderResult,
     orientation: isArrayValidationError(orientationResult)
       ? null
@@ -247,10 +257,10 @@ export function parseMailingRow(
     pronouns: isArrayValidationError(pronounsResult) ? null : pronounsResult,
     email: email || "",
     phone: normalizePhone(row["Celular"]),
-    rg: rg && rg !== "#REF!" ? rg : null,
+    rg: cleanSpreadsheetValue(row["RG"]),
     flag,
     approved_to_attend,
-    general_notes: observation || null,
+    general_notes: cleanSpreadsheetValue(row["Observação"]),
     events,
   }
 
@@ -291,6 +301,9 @@ function getEventColumns(headers: string[]): string[] {
 }
 
 export function parseMailingCsv(csvPath: string): ParseResult {
+  if (!fs.existsSync(csvPath)) {
+    throw new Error(`File not found: ${csvPath}`)
+  }
   const fileBuffer = fs.readFileSync(csvPath)
   const workbook = XLSX.read(fileBuffer, { type: "buffer", codepage: 65001 })
   const sheetName = workbook.SheetNames[0]
@@ -327,13 +340,15 @@ export function parseMailingCsv(csvPath: string): ParseResult {
     allErrors.push(...errors)
   }
 
+  const rowsWithErrors = new Set(allErrors.map((e) => e.rowIndex)).size
+
   return {
     records,
     errors: allErrors,
     stats: {
       total: rows.length,
-      valid: records.length - allErrors.length,
-      withErrors: allErrors.length,
+      valid: records.length - rowsWithErrors,
+      withErrors: rowsWithErrors,
       byFlag,
       byApproval,
     },
