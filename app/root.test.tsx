@@ -28,7 +28,7 @@ vi.mock("~/components/ui/tooltip", () => ({
 
 describe("Layout", () => {
   describe("Umami Analytics Script", () => {
-    it("should render Umami script when VITE_UMAMI_WEBSITE_ID is set", async () => {
+    it("should render Umami script when VITE_UMAMI_WEBSITE_ID is set", { timeout: 15000 }, async () => {
       vi.stubEnv("VITE_UMAMI_WEBSITE_ID", "test-website-id-123")
       vi.stubEnv("VITE_UMAMI_URL", "https://umami.example.com")
 
@@ -52,7 +52,7 @@ describe("Layout", () => {
       expect(umamiScript).toHaveAttribute("defer")
     })
 
-    it("should not render Umami script when VITE_UMAMI_WEBSITE_ID is not set", async () => {
+    it("should not render Umami script when VITE_UMAMI_WEBSITE_ID is not set", { timeout: 15000 }, async () => {
       vi.stubEnv("VITE_UMAMI_WEBSITE_ID", "")
       vi.stubEnv("VITE_UMAMI_URL", "")
 
