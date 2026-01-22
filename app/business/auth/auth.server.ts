@@ -295,11 +295,26 @@ export const registerUser = applySchema(
     .executeTakeFirst()
 
   if (orphanProfile) {
-    console.warn("[ADMIN NOTIFICATION] Blocked signup attempt for orphan profile:", {
-      email: normalizedEmail,
+    // Mask email for PII protection in logs (show first 3 chars + domain)
+    const [localPart, domain] = normalizedEmail.split("@")
+    const maskedEmail = `${localPart.slice(0, 3)}***@${domain}`
+
+    // Track blocked signup attempt for audit trail (no PII in analytics)
+    trackServerEvent(
+      "orphan_profile_signup_blocked",
+      { profileId: orphanProfile.id },
+      "/auth/register",
+    )
+
+    // Log for admin debugging with masked PII
+    console.warn("[ADMIN] Blocked orphan profile signup:", {
+      maskedEmail,
       profileId: orphanProfile.id,
-      timestamp: new Date().toISOString(),
     })
+
+    // Note: This error path differs from "User already registered" flow, which could
+    // theoretically allow email enumeration. Accepted as UX tradeoff - orphan profile
+    // users cannot use password reset (no auth account) and need to contact support.
     throw new Error(
       "Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o \"esqueci minha senha\". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou.",
     )

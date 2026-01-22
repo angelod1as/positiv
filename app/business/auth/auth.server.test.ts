@@ -744,9 +744,9 @@ describe("registerUser", () => {
     await registerUser(values, context)
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      "[ADMIN NOTIFICATION] Blocked signup attempt for orphan profile:",
+      "[ADMIN] Blocked orphan profile signup:",
       expect.objectContaining({
-        email: "orphan@example.com",
+        maskedEmail: "orp***@example.com",
         profileId: "orphan-profile-id",
       }),
     )
