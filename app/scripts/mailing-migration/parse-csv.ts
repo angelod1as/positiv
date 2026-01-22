@@ -376,6 +376,7 @@ export function parseMailingCsv(csvPath: string): ParseResult {
 async function main() {
   const csvPath = path.resolve(__dirname, "../../../mailing.csv")
   const outputPath = path.resolve(__dirname, "../../../mailing-parsed.json")
+  const manualReviewPath = path.resolve(__dirname, "../../../mailing-manual-review.json")
 
   console.info("Parsing mailing CSV...")
   console.info(`Input: ${csvPath}`)
@@ -419,6 +420,11 @@ async function main() {
 
   fs.writeFileSync(outputPath, JSON.stringify(result, null, 2))
   console.info(`\nOutput written to: ${outputPath}`)
+
+  if (result.requiresManualReview.length > 0) {
+    fs.writeFileSync(manualReviewPath, JSON.stringify(result.requiresManualReview, null, 2))
+    console.info(`Manual review file: ${manualReviewPath}`)
+  }
 }
 
 const isMainModule =
