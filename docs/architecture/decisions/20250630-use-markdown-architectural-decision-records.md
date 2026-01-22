@@ -37,6 +37,3 @@ The "Log4brains patch" performs the following modifications to the original temp
 - Add a `draft` status, to enable collaborative writing.
 - Add a `Tags` field.
 
-## Links
-
-- Relates to [Use Log4brains to manage the ADRs](20250630-use-log4brains-to-manage-the-adrs.md)
