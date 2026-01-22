@@ -34,3 +34,6 @@ scripts/temp/migration/output/
 # Production database dumps
 production_dump.sql
 production_data.sql
+
+# Mailing migration
+mailing.csv
