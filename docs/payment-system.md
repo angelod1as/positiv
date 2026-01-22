@@ -1,5 +1,8 @@
 # Payment System - Asaas Integration
 
+> **Linear Project:** [Sistema de Pagamentos](https://linear.app/positiv/project/sistema-de-pagamentos-cc14e6a9417c)
+> **Status:** Planned (Not yet started)
+
 ## Overview
 
 Automated payment system for event registrations in the Positiv platform. Integrated with Asaas for Brazilian payment processing.
@@ -101,64 +104,58 @@ function getPaymentStatus(participant): 'free' | 'pending' | 'paid' {
 
 ---
 
-## Implementation Phases
+## Implementation Tasks
+
+All tasks tracked in Linear: [Sistema de Pagamentos](https://linear.app/positiv/project/sistema-de-pagamentos-cc14e6a9417c)
 
 ### Phase 0: Feature Flag
-- Add `ENABLE_PAYMENT_SYSTEM` environment variable
-- Create `app/lib/features.server.ts` with `isPaymentSystemEnabled()`
-- All payment features gated behind this flag
+- [POS-285](https://linear.app/positiv/issue/POS-285) - Add `ENABLE_PAYMENT_SYSTEM` environment variable
 
 ### Phase 1: Database Migrations
-- Create `payment_transactions` table with RLS policies
-- Add payment link fields to `event_participants`
+- [POS-286](https://linear.app/positiv/issue/POS-286) - Create `payment_transactions` table
+- [POS-287](https://linear.app/positiv/issue/POS-287) - Add payment link fields to `event_participants`
 
 ### Phase 2: Asaas API Client
-```
-app/integrations/asaas/
-├── client.ts       # API methods
-├── types.ts        # TypeScript types
-├── constants.ts    # URLs, pricing
-└── client.test.ts  # Unit tests
-```
-
-Key methods:
-- `createPaymentCharges()` - Creates Pix + Credit charges
-- `getPaymentStatus()` - Check payment status
-- `refundPayment()` - Process refunds
-- `getOrCreateAsaasCustomer()` - Customer management
+- [POS-288](https://linear.app/positiv/issue/POS-288) - Create types and constants
+- [POS-289](https://linear.app/positiv/issue/POS-289) - Add environment variables
+- [POS-290](https://linear.app/positiv/issue/POS-290) - Implement `createPaymentCharges()`
+- [POS-291](https://linear.app/positiv/issue/POS-291) - Implement remaining client functions
+- [POS-292](https://linear.app/positiv/issue/POS-292) - Add unit tests
 
 ### Phase 3: Email Templates
-Three templates in Portuguese:
-- Payment link email (with link and pricing options)
-- Payment success confirmation
-- Payment failure notification
+- [POS-293](https://linear.app/positiv/issue/POS-293) - Payment link email
+- [POS-294](https://linear.app/positiv/issue/POS-294) - Payment success email
+- [POS-295](https://linear.app/positiv/issue/POS-295) - Payment failure email
 
 ### Phase 4: Payment Link Generation
-- `generatePaymentLink()` in `app/business/payments/`
-- Creates unique token (nanoid, 7-day expiry)
-- Creates Asaas charges (Pix + Credit)
-- Sends email and returns WhatsApp message
+- [POS-296](https://linear.app/positiv/issue/POS-296) - Implement `generatePaymentLink()`
+- [POS-297](https://linear.app/positiv/issue/POS-297) - Add admin mutation
 
 ### Phase 5: Webhook Handler
-- Route: `app/routes/api.webhooks.asaas.ts`
-- Handles: PAYMENT_CONFIRMED, PAYMENT_OVERDUE, PAYMENT_REFUNDED
-- Links transaction to participant on confirmation
-- Sends appropriate emails
+- [POS-298](https://linear.app/positiv/issue/POS-298) - Implement webhook handler
 
 ### Phase 6: Payment Routes
-- `/payment/:token` - Payment selection page
-- `/payment/success` - Success confirmation
-- `/payment/failure` - Failure page
+- [POS-299](https://linear.app/positiv/issue/POS-299) - Payment selection page (`/payment/:token`)
+- [POS-300](https://linear.app/positiv/issue/POS-300) - Success/failure pages
 
 ### Phase 7-9: Admin UI
-- Add payment status column to participants table
-- Add "Generate Payment Link" button
-- WhatsApp integration (opens with pre-filled message)
-- Refund functionality with confirmation dialog
+- [POS-301](https://linear.app/positiv/issue/POS-301) - Add onClick support to DataTable buttons
+- [POS-302](https://linear.app/positiv/issue/POS-302) - Add "Generate Payment Link" button
+- [POS-303](https://linear.app/positiv/issue/POS-303) - WhatsApp integration
+- [POS-304](https://linear.app/positiv/issue/POS-304) - Payment status column
+- [POS-305](https://linear.app/positiv/issue/POS-305) - Refund logic
+- [POS-306](https://linear.app/positiv/issue/POS-306) - Refund button in UI
 
 ### Phase 10: Cron Job
-- Daily cleanup of expired payment links
-- Route: `app/routes/api.cron.expire-payment-links.ts`
+- [POS-307](https://linear.app/positiv/issue/POS-307) - Cleanup expired payment links
+
+### Phase 11-14: Testing
+- [POS-308](https://linear.app/positiv/issue/POS-308) - Unit tests
+- [POS-309](https://linear.app/positiv/issue/POS-309) - Integration tests
+- [POS-310](https://linear.app/positiv/issue/POS-310) - E2E tests
+
+### Phase 15: Launch
+- [POS-311](https://linear.app/positiv/issue/POS-311) - Enable feature flag in production
 
 ---
 

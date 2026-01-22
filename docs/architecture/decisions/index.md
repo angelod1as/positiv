@@ -13,16 +13,26 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | ID | Title | Status |
 |----|-------|--------|
 | [0001](./0001-git-worktree-workflow.md) | Git Worktree Workflow | Accepted |
+| [20250630](./20250630-use-log4brains-to-manage-the-adrs.md) | Use Log4brains | Accepted |
 | [20250630](./20250630-use-markdown-architectural-decision-records.md) | Use Markdown ADRs | Accepted |
 
-## Creating a New ADR
+## Using Log4brains
 
-1. Copy `template.md` with the format `YYYYMMDD-title-in-kebab-case.md`
-2. Fill in the context, decision, and consequences
-3. Submit as a PR for review
-4. Update this index after acceptance
+We use [Log4brains](https://github.com/thomvaill/log4brains) to manage and browse ADRs.
+
+```bash
+# Preview ADRs in browser (with hot reload)
+pnpm adr:preview
+
+# Create a new ADR interactively
+pnpm adr:new
+
+# Build static site for deployment
+pnpm adr:build
+```
 
 ## More Information
 
+- [Log4brains documentation](https://github.com/thomvaill/log4brains)
 - [ADR GitHub organization](https://adr.github.io/)
 - [Michael Nygard's article on ADRs](https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions.html)
