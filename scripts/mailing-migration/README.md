@@ -71,7 +71,7 @@ Before running any migration operations, create a backup of the affected tables.
 
 | Script | Purpose |
 |--------|---------|
-| `01_create_backup.sql` | Creates backup tables (`_backup_profiles`, `_backup_events`, `_backup_event_participants`) |
+| `01_create_backup.sql` | Creates backup tables for all 6 affected tables |
 | `02_verify_backup.sql` | Verifies backup exists and shows differences from current state |
 | `03_rollback.sql` | Restores data from backup tables (⚠️ destructive) |
 | `04_cleanup_backup.sql` | Removes backup tables after migration is verified |
@@ -114,15 +114,19 @@ psql "$LOCAL_DB_URL" -f scripts/mailing-migration/04_cleanup_backup.sql
 
 | Table | Rows (as of Jan 2026) | Notes |
 |-------|----------------------|-------|
-| profiles | 945 | User profiles |
+| profiles | 944 | User profiles |
 | events | 30 | All events |
 | event_participants | 1,165 | Participation records |
+| newsletter_subscriptions | 91 | FK cascade from profiles |
+| event_demographics_history | - | FK cascade from events |
+| event_newsletter_campaigns | - | FK cascade from events |
 
 ### Important Notes
 
 - Backup tables are prefixed with `_backup_` and include a timestamp column
 - Rollback uses DELETE + INSERT (not TRUNCATE) to avoid cascading to unrelated tables
-- The rollback will delete newsletter_subscriptions linked to profiles (due to FK cascade)
+- All FK-cascade-affected tables are included in backup (newsletter_subscriptions, event_demographics_history, event_newsletter_campaigns)
+- All tables use UUIDs for primary keys, so no sequence resets are needed
 - Always verify backup exists before proceeding with migration
 
 ## Safety Notes

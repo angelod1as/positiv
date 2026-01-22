@@ -4,6 +4,14 @@
 -- ⚠️  DANGER: This script PERMANENTLY DELETES the backup tables.
 --             Only run this after migration has been verified successful.
 --
+-- Backup tables that will be deleted:
+--   - _backup_profiles
+--   - _backup_events
+--   - _backup_event_participants
+--   - _backup_newsletter_subscriptions
+--   - _backup_event_demographics_history
+--   - _backup_event_newsletter_campaigns
+--
 -- Prerequisites:
 --   - Migration must be complete and verified
 --   - You should NOT need to rollback anymore
@@ -39,10 +47,16 @@ END $$;
 -- BEGIN;
 
 -- DROP TABLE IF EXISTS _backup_event_participants;
+-- DROP TABLE IF EXISTS _backup_newsletter_subscriptions;
+-- DROP TABLE IF EXISTS _backup_event_demographics_history;
+-- DROP TABLE IF EXISTS _backup_event_newsletter_campaigns;
 -- DROP TABLE IF EXISTS _backup_profiles;
 -- DROP TABLE IF EXISTS _backup_events;
 
--- RAISE NOTICE '✓ Backup tables deleted';
+-- DO $$
+-- BEGIN
+--     RAISE NOTICE '✓ Backup tables deleted';
+-- END $$;
 
 -- COMMIT;
 
