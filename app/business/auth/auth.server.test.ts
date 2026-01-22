@@ -446,13 +446,15 @@ describe("getContext", () => {
 })
 
 describe("registerUser", () => {
-  // Set up default Kysely mock to return no existing profile
+  // Set up default Kysely mock to return no existing orphan profile
   beforeEach(async () => {
     const { kyselyDb: kysely } = await import("~/kysely-db")
     vi.mocked(kysely.selectFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          executeTakeFirst: vi.fn().mockResolvedValue(undefined),
+          where: vi.fn().mockReturnValue({
+            executeTakeFirst: vi.fn().mockResolvedValue(undefined),
+          }),
         }),
       }),
     } as never)
@@ -641,7 +643,7 @@ describe("registerUser", () => {
     expect(result.errors[0].message).toContain("Ops, ocorreu um erro")
   })
 
-  it("should redirect to error page when email already exists in profiles", async () => {
+  it("should show error when email matches orphan profile (user_id = NULL)", async () => {
     const mockSignUp = vi.fn().mockResolvedValue({ error: null })
 
     const mockSupabase = {
@@ -650,21 +652,25 @@ describe("registerUser", () => {
       },
     }
 
-    // Mock Kysely to return an existing profile
+    // Mock Kysely to return an existing orphan profile (user_id = NULL)
     const { kyselyDb: kysely } = await import("~/kysely-db")
     const mockExecuteTakeFirst = vi
       .fn()
-      .mockResolvedValue({ id: "existing-profile-id" })
+      .mockResolvedValue({ id: "orphan-profile-id" })
+    const mockWhereUserId = vi.fn().mockReturnValue({
+      executeTakeFirst: mockExecuteTakeFirst,
+    })
+    const mockWhereEmail = vi.fn().mockReturnValue({
+      where: mockWhereUserId,
+    })
     vi.mocked(kysely.selectFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          executeTakeFirst: mockExecuteTakeFirst,
-        }),
+        where: mockWhereEmail,
       }),
     } as never)
 
     const values = {
-      email: "existing@example.com",
+      email: "orphan@example.com",
       password: "password123",
       confirmPassword: "password123",
       over18: true,
@@ -679,20 +685,123 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    // composable-functions catches thrown Responses and wraps them in a result
     const result = await registerUser(values, context)
 
-    // Should return a failure (the thrown Response is wrapped in an Error)
     expect(result.success).toBe(false)
     expect(result.errors).toHaveLength(1)
-    // The error message is "{}" (stringified Response)
-    expect((result.errors[0] as Error).message).toBe("{}")
+    expect((result.errors[0] as Error).message).toContain(
+      "Houve um erro no cadastro da sua conta",
+    )
 
-    // Kysely should have been called to check for existing profile
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
-
-    // signUp should NOT have been called because we throw before reaching it
+    expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "orphan@example.com")
+    expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is", null)
     expect(mockSignUp).not.toHaveBeenCalled()
+  })
+
+  it("should log admin notification when signup blocked for orphan profile", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
+    const mockSignUp = vi.fn().mockResolvedValue({ error: null })
+
+    const mockSupabase = {
+      auth: {
+        signUp: mockSignUp,
+      },
+    }
+
+    const { kyselyDb: kysely } = await import("~/kysely-db")
+    const mockExecuteTakeFirst = vi
+      .fn()
+      .mockResolvedValue({ id: "orphan-profile-id" })
+    const mockWhereUserId = vi.fn().mockReturnValue({
+      executeTakeFirst: mockExecuteTakeFirst,
+    })
+    const mockWhereEmail = vi.fn().mockReturnValue({
+      where: mockWhereUserId,
+    })
+    vi.mocked(kysely.selectFrom).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: mockWhereEmail,
+      }),
+    } as never)
+
+    const values = {
+      email: "orphan@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+      over18: true,
+      captchaToken: "test-captcha-token",
+    }
+
+    const context = {
+      supabase: mockSupabase as unknown as DBClient,
+      host: "http://localhost:5173",
+      supabaseHeaders: new Headers(),
+      currentUser: null,
+      currentProfile: null,
+    }
+
+    await registerUser(values, context)
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[ADMIN] Blocked orphan profile signup:",
+      expect.objectContaining({
+        maskedEmail: "orp***@example.com",
+        profileId: "orphan-profile-id",
+      }),
+    )
+
+    consoleSpy.mockRestore()
+  })
+
+  it("should allow signup attempt when profile exists with user_id set (not orphan)", async () => {
+    const mockSignUp = vi.fn().mockResolvedValue({ error: null })
+
+    const mockSupabase = {
+      auth: {
+        signUp: mockSignUp,
+      },
+    }
+
+    // Mock Kysely to return NO profile (because user_id IS NULL check fails)
+    // This simulates a profile existing with user_id set
+    const { kyselyDb: kysely } = await import("~/kysely-db")
+    const mockExecuteTakeFirst = vi.fn().mockResolvedValue(undefined)
+    const mockWhereUserId = vi.fn().mockReturnValue({
+      executeTakeFirst: mockExecuteTakeFirst,
+    })
+    const mockWhereEmail = vi.fn().mockReturnValue({
+      where: mockWhereUserId,
+    })
+    vi.mocked(kysely.selectFrom).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: mockWhereEmail,
+      }),
+    } as never)
+
+    const values = {
+      email: "linked@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+      over18: true,
+      captchaToken: "test-captcha-token",
+    }
+
+    const context = {
+      supabase: mockSupabase as unknown as DBClient,
+      host: "http://localhost:5173",
+      supabaseHeaders: new Headers(),
+      currentUser: null,
+      currentProfile: null,
+    }
+
+    const result = await registerUser(values, context)
+
+    expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
+    expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "linked@example.com")
+    expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is", null)
+    expect(mockSignUp).toHaveBeenCalled()
+    expect(result.success).toBe(true)
   })
 
   it("should proceed with signup when email does not exist in profiles", async () => {
@@ -707,11 +816,15 @@ describe("registerUser", () => {
     // Mock Kysely to return no existing profile
     const { kyselyDb: kysely } = await import("~/kysely-db")
     const mockExecuteTakeFirst = vi.fn().mockResolvedValue(undefined)
+    const mockWhereUserId = vi.fn().mockReturnValue({
+      executeTakeFirst: mockExecuteTakeFirst,
+    })
+    const mockWhereEmail = vi.fn().mockReturnValue({
+      where: mockWhereUserId,
+    })
     vi.mocked(kysely.selectFrom).mockReturnValue({
       select: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          executeTakeFirst: mockExecuteTakeFirst,
-        }),
+        where: mockWhereEmail,
       }),
     } as never)
 
@@ -733,10 +846,9 @@ describe("registerUser", () => {
 
     const result = await registerUser(values, context)
 
-    // Kysely should have been called to check for existing profile
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
-
-    // signUp should have been called because no existing profile was found
+    expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "new@example.com")
+    expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is", null)
     expect(mockSignUp).toHaveBeenCalled()
     expect(result.success).toBe(true)
   })
