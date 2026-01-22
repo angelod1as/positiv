@@ -74,14 +74,35 @@ export class RegisterPage extends BasePage {
   }
 
   async waitForTurnstileCompletion(): Promise<void> {
-    // Wait for the Turnstile iframe to appear
-    await this.page.waitForSelector('iframe[src*="challenges.cloudflare.com"]', {
-      state: 'attached',
-      timeout: 10000
-    })
+    try {
+      // Wait for the Turnstile iframe to appear (may not load in CI)
+      await this.page.waitForSelector('iframe[src*="challenges.cloudflare.com"]', {
+        state: 'attached',
+        timeout: 5000
+      })
+      // With test keys, Turnstile auto-completes. Wait a moment for the token to be set
+      await this.page.waitForTimeout(1000)
+    } catch {
+      // Turnstile may not load in CI environments - inject mock token
+      // Supabase captcha is disabled locally (config.toml), so any token works
+      await this.injectMockCaptchaToken()
+    }
+  }
 
-    // With test keys, Turnstile auto-completes. Wait a moment for the token to be set
-    await this.page.waitForTimeout(1000)
+  private async injectMockCaptchaToken(): Promise<void> {
+    // Find the hidden captchaToken input and inject a mock value
+    // The form uses remix-forms which creates an input with name="captchaToken"
+    await this.page.evaluate(() => {
+      const input = document.querySelector('input[name="captchaToken"]') as HTMLInputElement
+      if (input) {
+        input.value = 'e2e-mock-captcha-token-12345'
+        // Trigger input event so form recognizes the change
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+      }
+    })
+    // Brief wait for form state to update
+    await this.page.waitForTimeout(100)
   }
 
   async register(email: string, password: string, confirmPassword?: string): Promise<void> {

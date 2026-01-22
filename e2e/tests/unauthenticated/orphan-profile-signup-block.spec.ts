@@ -49,8 +49,8 @@ test.describe('Orphan Profile Signup Blocking (POS-391)', () => {
     // Step 3: Verify error message is displayed in the form
     await expect(page.getByText('Houve um erro no cadastro da sua conta')).toBeVisible()
 
-    // Should NOT redirect - stays on register page
-    await expect(page).toHaveURL('/registrar')
+    // Should NOT redirect - stays on register page (may have ?index query param)
+    await expect(page).toHaveURL(/\/registrar(\?index)?$/)
   })
 
   test('should allow signup when no matching profile exists', async ({ page }) => {
@@ -107,6 +107,6 @@ test.describe('Orphan Profile Signup Blocking (POS-391)', () => {
 
     // Step 3: Should show error (email normalized to lowercase)
     await expect(page.getByText('Houve um erro no cadastro da sua conta')).toBeVisible()
-    await expect(page).toHaveURL('/registrar')
+    await expect(page).toHaveURL(/\/registrar(\?index)?$/)
   })
 })
