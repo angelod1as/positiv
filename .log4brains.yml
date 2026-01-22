@@ -1,5 +1,7 @@
 project:
   name: Positiv
   tz: America/Sao_Paulo
-  adrFolder: ./docs/decisions
-  packages: []
+  adrFolder: ./docs/architecture/decisions
+  repository:
+    url: https://github.com/angelod1as/positiv
+    provider: github

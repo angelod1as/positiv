@@ -2,41 +2,67 @@
 
 - Status: accepted
 - Date: 2025-06-29
-- Tags: doc
+- Tags: documentation
 
-## Context and Problem Statement
+## Context
 
-We want to record architectural decisions made in this project.
-Which format and structure should these records follow?
+We want to record architectural decisions made in this project. We need to decide on a format and structure for these records that is easy to write, read, and maintain.
 
-## Considered Options
+## Decision
 
-- [MADR](https://adr.github.io/madr/) 2.1.2 with Log4brains patch
-- [MADR](https://adr.github.io/madr/) 2.1.2 – The original Markdown Architectural Decision Records
-- [Michael Nygard's template](http://thinkrelevance.com/blog/2011/11/15/documenting-architecture-decisions) – The first incarnation of the term "ADR"
-- [Sustainable Architectural Decisions](https://www.infoq.com/articles/sustainable-architectural-design-decisions) – The Y-Statements
-- Other templates listed at <https://github.com/joelparkerhenderson/architecture_decision_record>
-- Formless – No conventions for file format and structure
+We use MADR (Markdown Architectural Decision Records) 2.1.2 with Log4brains patches. This format provides:
 
-## Decision Outcome
+- Lean, readable structure
+- Standard sections (Context, Decision, Consequences, Alternatives)
+- Date-based filenames (`YYYYMMDD-slug.md`) to avoid merge conflicts
+- Support for tags and status tracking
 
-Chosen option: "MADR 2.1.2 with Log4brains patch", because
+The Log4brains patch adds:
+- `draft` status for collaborative writing
+- `Tags` field for categorization
+- Date-based filenames instead of numerical
 
-- Implicit assumptions should be made explicit.
-  Design documentation is important to enable people understanding the decisions later on.
-  See also [A rational design process: How and why to fake it](https://doi.org/10.1109/TSE.1986.6312940).
-- The MADR format is lean and fits our development style.
-- The MADR structure is comprehensible and facilitates usage & maintenance.
-- The MADR project is vivid.
-- Version 2.1.2 is the latest one available when starting to document ADRs.
-- The Log4brains patch adds more features, like tags.
+## Consequences
 
-The "Log4brains patch" performs the following modifications to the original template:
+### Positive
 
-- Change the ADR filenames format (`NNN-adr-name` becomes `YYYYMMDD-adr-name`), to avoid conflicts during Git merges.
-- Add a `draft` status, to enable collaborative writing.
-- Add a `Tags` field.
+- Decisions are documented alongside code
+- Markdown is readable without special tools
+- Standard structure makes ADRs consistent
+- Version controlled with the codebase
+- Easy to link between related decisions
 
-## Links
+### Negative
 
-- Relates to [Use Log4brains to manage the ADRs](20250630-use-log4brains-to-manage-the-adrs.md)
+- Requires discipline to maintain
+- Another file type to manage
+
+### Neutral
+
+- Compatible with any markdown renderer
+- Can be migrated to other formats if needed
+
+## Alternatives Considered
+
+1. **Original MADR 2.1.2**
+   - Pros: Well-documented standard
+   - Cons: Numerical filenames cause merge conflicts
+
+2. **Michael Nygard's template**
+   - Pros: Original ADR format, simple
+   - Cons: Less structured, no tags
+
+3. **Y-Statements (Sustainable Architectural Decisions)**
+   - Pros: Detailed reasoning format
+   - Cons: More verbose, steeper learning curve
+
+4. **No formal structure**
+   - Pros: Maximum flexibility
+   - Cons: Inconsistent documentation, hard to find information
+
+## References
+
+- [MADR on GitHub](https://adr.github.io/madr/)
+- [Original ADR article by Michael Nygard](http://thinkrelevance.com/blog/2011/11/15/documenting-architecture-decisions)
+- [ADR GitHub organization](https://adr.github.io/)
+- Related: [Use Log4brains to Manage ADRs](./20250630-use-log4brains-to-manage-the-adrs.md)

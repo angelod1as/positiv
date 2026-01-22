@@ -25,7 +25,10 @@
     "email:test": "./scripts/testmail.sh",
     "worktree": "./scripts/create-worktree.sh",
     "perf:baseline": "tsx scripts/lighthouse/run-baseline.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "adr": "log4brains adr",
+    "adr:preview": "log4brains preview",
+    "adr:build": "log4brains build"
   },
   "dependencies": {
     "@ag-grid-community/locale": "^35.0.0",
@@ -117,6 +120,7 @@
     "husky": "^9.1.7",
     "install": "^0.13.0",
     "lighthouse": "^13.0.1",
+    "log4brains": "^1.1.0",
     "prettier": "^3.5.3",
     "puppeteer": "^24.30.0",
     "react-router-devtools": "^5.0.5",

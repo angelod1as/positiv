@@ -1,8 +1,8 @@
-# ADR-0001: Git Worktree Workflow for Parallel Development
+# Git Worktree Workflow for Parallel Development
 
-**Status:** Accepted  
-**Date:** 2025-01-22  
-**Tags:** development, tooling, git, claude
+- Status: accepted
+- Date: 2025-01-22
+- Tags: development, tooling, git, claude
 
 ## Context
 
@@ -59,5 +59,4 @@ We will use Git worktrees as the standard workflow for parallel development. Git
 ## References
 
 - [Git Worktree Documentation](https://git-scm.com/docs/git-worktree)
-- [Worktree Guide](../guides/worktree-guide.md)
 - [Claude Code Worktree Tutorial](https://wickd.ninja/blog/claude-code-tutorials/part-1-git-worktrees)
