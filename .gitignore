@@ -37,3 +37,4 @@ production_data.sql
 
 # Mailing migration
 mailing.csv
+mailing-parsed.json
