@@ -90,19 +90,11 @@ export class RegisterPage extends BasePage {
   }
 
   private async injectMockCaptchaToken(): Promise<void> {
-    // Find the hidden captchaToken input and inject a mock value
-    // The form uses remix-forms which creates an input with name="captchaToken"
-    await this.page.evaluate(() => {
-      const input = document.querySelector('input[name="captchaToken"]') as HTMLInputElement
-      if (input) {
-        input.value = 'e2e-mock-captcha-token-12345'
-        // Trigger input event so form recognizes the change
-        input.dispatchEvent(new Event('input', { bubbles: true }))
-        input.dispatchEvent(new Event('change', { bubbles: true }))
-      }
-    })
+    // Use Playwright's fill method on the hidden input - this properly triggers React events
+    const captchaInput = this.page.locator('input[name="captchaToken"]')
+    await captchaInput.fill('e2e-mock-captcha-token-12345', { force: true })
     // Brief wait for form state to update
-    await this.page.waitForTimeout(100)
+    await this.page.waitForTimeout(200)
   }
 
   async register(email: string, password: string, confirmPassword?: string): Promise<void> {
