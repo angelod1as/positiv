@@ -55,9 +55,11 @@ export class RegisterPage extends BasePage {
 
   async goto(): Promise<void> {
     await this.page.goto(this.url)
-    await this.page.waitForLoadState('networkidle')
-    // Wait for form to be ready
-    await this.emailInput.waitFor({ state: 'visible' })
+    // Wait for DOM to be ready, then wait for form element instead of networkidle
+    // networkidle is flaky in CI environments
+    await this.page.waitForLoadState('domcontentloaded')
+    // Wait for form to be ready (more reliable than networkidle)
+    await this.emailInput.waitFor({ state: 'visible', timeout: 30000 })
   }
 
   async fillRegistrationForm(email: string, password: string, confirmPassword?: string): Promise<void> {
@@ -107,7 +109,8 @@ export class RegisterPage extends BasePage {
 
   async waitForSuccessRedirect(): Promise<void> {
     // Wait for redirect to confirm email message page
-    await this.page.waitForURL('/registrar/confirmar-email', { waitUntil: 'networkidle' })
+    // Use domcontentloaded instead of networkidle for CI reliability
+    await this.page.waitForURL('/registrar/confirmar-email', { waitUntil: 'domcontentloaded' })
   }
 
   async verifyConfirmEmailPageDisplayed(): Promise<void> {
