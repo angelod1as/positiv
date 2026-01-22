@@ -30,3 +30,7 @@ e2e/.auth/
 validated-profiles.json
 scripts/temp/migration/output/
 .vscode/
+
+# Production database dumps
+production_dump.sql
+production_data.sql
