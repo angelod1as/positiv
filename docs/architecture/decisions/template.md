@@ -1,8 +1,8 @@
-# ADR-XXXX: [Title]
+# [Title]
 
-**Status:** [Proposed | Accepted | Deprecated | Superseded by ADR-YYYY]  
-**Date:** YYYY-MM-DD  
-**Tags:** [architecture, development, tooling]
+- Status: proposed
+- Date: YYYY-MM-DD
+- Tags: architecture, development, tooling
 
 ## Context
 

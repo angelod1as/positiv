@@ -1,8 +1,8 @@
-# ADR-0001: Git Worktree Workflow for Parallel Development
+# Git Worktree Workflow for Parallel Development
 
-**Status:** Accepted  
-**Date:** 2025-01-22  
-**Tags:** development, tooling, git, claude
+- Status: accepted
+- Date: 2025-01-22
+- Tags: development, tooling, git, claude
 
 ## Context
 
