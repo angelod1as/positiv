@@ -389,7 +389,57 @@ describe("parse-csv", () => {
       expect(result.errors).toHaveLength(0)
     })
 
-    it("should collect errors for invalid fields", () => {
+    it("should return record as null when email is invalid", () => {
+      const row = {
+        Nome: "Test",
+        "Nome social": "",
+        Gênero: "",
+        Orientação: "",
+        Pronomes: "",
+        "E-mail": "invalid-email",
+        Celular: "",
+        RG: "",
+        Bandeira: "",
+        "Aprovade para futuras festas?": "",
+        Observação: "",
+        "04/02/23": "",
+        "01/07/23": "",
+      }
+
+      const result = parseMailingRow(row, 3, EVENT_COLUMNS)
+
+      expect(result.record).toBeNull()
+      expect(result.errors).toContainEqual({
+        rowIndex: 3,
+        field: "email",
+        message: "Invalid email format",
+        value: "invalid-email",
+      })
+    })
+
+    it("should return record as null when email is empty", () => {
+      const row = {
+        Nome: "Test",
+        "Nome social": "",
+        Gênero: "",
+        Orientação: "",
+        Pronomes: "",
+        "E-mail": "",
+        Celular: "",
+        RG: "",
+        Bandeira: "",
+        "Aprovade para futuras festas?": "",
+        Observação: "",
+        "04/02/23": "",
+        "01/07/23": "",
+      }
+
+      const result = parseMailingRow(row, 3, EVENT_COLUMNS)
+
+      expect(result.record).toBeNull()
+    })
+
+    it("should collect non-email errors even when email is invalid", () => {
       const row = {
         Nome: "Test",
         "Nome social": "",
@@ -408,6 +458,7 @@ describe("parse-csv", () => {
 
       const result = parseMailingRow(row, 3, EVENT_COLUMNS)
 
+      expect(result.record).toBeNull()
       expect(result.errors).toHaveLength(2)
       expect(result.errors).toContainEqual({
         rowIndex: 3,

@@ -246,6 +246,10 @@ export function parseMailingRow(
     events[col] = parseBoolean(row[col])
   }
 
+  if (!email) {
+    return { record: null, errors }
+  }
+
   const record: ParsedMailingRecord = {
     _rowIndex: rowIndex,
     full_name: normalizeName(getString(row["Nome"])),
@@ -255,7 +259,7 @@ export function parseMailingRow(
       ? null
       : orientationResult,
     pronouns: isArrayValidationError(pronounsResult) ? null : pronounsResult,
-    email: email || "",
+    email,
     phone: normalizePhone(row["Celular"]),
     rg: cleanSpreadsheetValue(row["RG"]),
     flag,
@@ -267,13 +271,21 @@ export function parseMailingRow(
   return { record, errors }
 }
 
+export interface ManualReviewRecord {
+  rowIndex: number
+  rawData: Record<string, unknown>
+  errors: ParseError[]
+}
+
 export interface ParseResult {
   records: ParsedMailingRecord[]
+  requiresManualReview: ManualReviewRecord[]
   errors: ParseError[]
   stats: {
     total: number
     valid: number
     withErrors: number
+    requiresManualReview: number
     byFlag: Record<ProfileFlag, number>
     byApproval: Record<ApprovedToAttend, number>
   }
@@ -316,6 +328,7 @@ export function parseMailingCsv(csvPath: string): ParseResult {
   const eventColumns = getEventColumns(headers)
 
   const records: ParsedMailingRecord[] = []
+  const manualReview: ManualReviewRecord[] = []
   const allErrors: ParseError[] = []
   const byFlag: Record<ProfileFlag, number> = {
     none: 0,
@@ -331,11 +344,14 @@ export function parseMailingCsv(csvPath: string): ParseResult {
   }
 
   for (let i = 0; i < rows.length; i++) {
-    const { record, errors } = parseMailingRow(rows[i], i + 2, eventColumns)
+    const rowIndex = i + 2
+    const { record, errors } = parseMailingRow(rows[i], rowIndex, eventColumns)
     if (record) {
       records.push(record)
       byFlag[record.flag]++
       byApproval[record.approved_to_attend]++
+    } else {
+      manualReview.push({ rowIndex, rawData: rows[i], errors })
     }
     allErrors.push(...errors)
   }
@@ -344,11 +360,13 @@ export function parseMailingCsv(csvPath: string): ParseResult {
 
   return {
     records,
+    requiresManualReview: manualReview,
     errors: allErrors,
     stats: {
       total: rows.length,
       valid: records.length - rowsWithErrors,
       withErrors: rowsWithErrors,
+      requiresManualReview: manualReview.length,
       byFlag,
       byApproval,
     },
@@ -366,7 +384,9 @@ async function main() {
 
   console.info("\n=== Parsing Complete ===")
   console.info(`Total records: ${result.stats.total}`)
-  console.info(`Records with errors: ${result.stats.withErrors}`)
+  console.info(`Valid for DB insertion: ${result.records.length}`)
+  console.info(`Requires manual review (missing email): ${result.stats.requiresManualReview}`)
+  console.info(`Records with validation errors: ${result.stats.withErrors}`)
   console.info("\nBy Flag:")
   console.info(`  None: ${result.stats.byFlag.none}`)
   console.info(`  Yellow: ${result.stats.byFlag.yellow}`)
@@ -379,6 +399,14 @@ async function main() {
     `  Approved with Reservations: ${result.stats.byApproval.approved_with_reservations}`,
   )
   console.info(`  Rejected: ${result.stats.byApproval.rejected}`)
+
+  if (result.requiresManualReview.length > 0) {
+    console.info("\n=== Requires Manual Review (missing/invalid email) ===")
+    for (const entry of result.requiresManualReview) {
+      const name = entry.rawData["Nome"] || "(no name)"
+      console.info(`  Row ${entry.rowIndex}: ${name}`)
+    }
+  }
 
   if (result.errors.length > 0) {
     console.info("\n=== Validation Errors ===")
