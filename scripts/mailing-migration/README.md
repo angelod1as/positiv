@@ -26,7 +26,7 @@ Two Supabase MCP servers are configured:
 ### Step 1: Create Fresh Production Dumps
 
 ```bash
-cd /Users/angelodias/Documents/GIT/private/positiv-project/positiv
+cd <project-root>/positiv
 
 # Dump data only (credentials from your environment/1Password)
 supabase db dump --db-url "$PROD_DB_URL" --data-only --use-copy -f production_data.sql
@@ -128,6 +128,12 @@ psql "$LOCAL_DB_URL" -f scripts/mailing-migration/04_cleanup_backup.sql
 - All FK-cascade-affected tables are included in backup (newsletter_subscriptions, event_demographics_history, event_newsletter_campaigns)
 - All tables use UUIDs for primary keys, so no sequence resets are needed
 - Always verify backup exists before proceeding with migration
+
+### Limitations
+
+- **Schema changes**: Scripts use explicit column lists. If the schema changes (columns added/removed), scripts must be updated to match
+- **Indexes/constraints**: Backup tables only have primary keys. Other indexes and constraints are not preserved (not needed for rollback)
+- **Row-level security**: RLS policies are not backed up (they're part of schema, not data)
 
 ## Safety Notes
 

@@ -10,6 +10,10 @@
 --
 -- Note: All tables use UUIDs for primary keys, no sequence resets needed.
 --
+-- ⚠️  SCHEMA WARNING: This script uses explicit column lists. If the schema
+--                    has changed since backup (columns added/removed), this
+--                    script must be updated to match the current schema.
+--
 -- Prerequisites:
 --   - All backup tables must exist
 --   - Run 02_verify_backup.sql first to confirm backup state
@@ -154,6 +158,14 @@ SELECT
     admin_general_notes, application_status, attendance_status, has_paid,
     spot_type, referred, updated_at, was_selected_for_rotation
 FROM _backup_event_participants;
+
+-- Update table statistics after bulk inserts for query planner
+ANALYZE profiles;
+ANALYZE events;
+ANALYZE event_participants;
+ANALYZE newsletter_subscriptions;
+ANALYZE event_demographics_history;
+ANALYZE event_newsletter_campaigns;
 
 -- =============================================================================
 -- STEP 3: Verify rollback

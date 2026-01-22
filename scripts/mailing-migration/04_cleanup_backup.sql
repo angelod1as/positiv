@@ -15,6 +15,7 @@
 -- Prerequisites:
 --   - Migration must be complete and verified
 --   - You should NOT need to rollback anymore
+--   - Once deleted, rollback is no longer possible
 --
 -- Usage:
 --   psql "$LOCAL_DB_URL" -f scripts/mailing-migration/04_cleanup_backup.sql

@@ -4,6 +4,8 @@
 -- Run this script to verify backup tables exist and contain data.
 -- Use this before running any migration operations.
 --
+-- Note: This script only verifies row counts, not schema compatibility.
+--
 -- Usage:
 --   psql "$LOCAL_DB_URL" -f scripts/mailing-migration/02_verify_backup.sql
 -- =============================================================================

@@ -14,6 +14,10 @@
 --
 -- Note: All tables use UUIDs for primary keys, no sequence resets needed.
 --
+-- ⚠️  SCHEMA WARNING: This script uses CREATE TABLE AS SELECT which copies
+--                    all current columns. If the schema changes, the backup
+--                    tables will reflect the schema at backup time.
+--
 -- Usage:
 --   psql "$LOCAL_DB_URL" -f scripts/mailing-migration/01_create_backup.sql
 -- =============================================================================
