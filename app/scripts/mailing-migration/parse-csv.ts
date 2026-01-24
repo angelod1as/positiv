@@ -13,6 +13,16 @@ import {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export function preprocessEmail(raw: string): string {
+  const stripped = raw.replace(/[\u200B-\u200F\u2028-\u202F\uFEFF]/g, "")
+  const parts = stripped.split(/[;,]/)
+  for (const part of parts) {
+    const trimmed = part.trim()
+    if (trimmed) return trimmed
+  }
+  return ""
+}
+
 export function validateEmail(email: string): string | null {
   const trimmed = email.trim()
   if (!trimmed) return null
@@ -79,15 +89,20 @@ interface ArrayValidationError {
   validOptions: readonly string[]
 }
 
+const VALID_PRONOUNS_MAILING = [...PRONOUNS, "Todos"] as const
+
 const VALID_VALUES: Record<ArrayFieldType, readonly string[]> = {
   gender: GENDERS,
   orientation: ORIENTATIONS,
-  pronouns: PRONOUNS,
+  pronouns: VALID_PRONOUNS_MAILING,
 }
 
 function normalizeValue(value: string, fieldType: ArrayFieldType): string {
   const trimmed = value.trim()
   if (fieldType === "pronouns") {
+    if (trimmed.toLowerCase() === "todos") {
+      return "Todos"
+    }
     const parts = trimmed.split("/")
     if (parts.length === 2) {
       return `${parts[0].charAt(0).toUpperCase()}${parts[0].slice(1).toLowerCase()}/${parts[1].toLowerCase()}`
@@ -104,7 +119,9 @@ export function mapToArray(
   if (!trimmed) return null
 
   const validOptions = VALID_VALUES[fieldType]
-  const values = trimmed.split(",").map((v) => normalizeValue(v, fieldType))
+  const separator =
+    fieldType === "pronouns" && trimmed.includes(";") ? ";" : ","
+  const values = trimmed.split(separator).map((v) => normalizeValue(v, fieldType))
 
   for (const v of values) {
     if (!validOptions.includes(v)) {
@@ -193,7 +210,7 @@ export function parseMailingRow(
 ): RowParseResult {
   const errors: ParseError[] = []
 
-  const email = validateEmail(getString(row["E-mail"]))
+  const email = validateEmail(preprocessEmail(getString(row["E-mail"])))
   if (!email) {
     errors.push({
       rowIndex,
