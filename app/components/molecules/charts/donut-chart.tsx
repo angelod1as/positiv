@@ -18,6 +18,7 @@ export function DonutChart({
   innerRadius = 60,
   outerRadius = 80,
   centerLabel,
+  showLabel = false,
   className,
   ariaLabel,
   showTooltip = true,
@@ -35,6 +36,7 @@ export function DonutChart({
           innerRadius={innerRadius}
           outerRadius={outerRadius}
           strokeWidth={2}
+          label={showLabel}
         >
           {data.map((entry) => {
             const name = String(entry[nameKey])
