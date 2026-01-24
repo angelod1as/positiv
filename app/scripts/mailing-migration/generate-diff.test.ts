@@ -246,11 +246,14 @@ describe("diffProfile", () => {
     })
 
     const entries = diffProfile(profile, record)
-    const fullNameEntry = entries.find((e) => e.field_name === "full_name")
-    expect(fullNameEntry).toBeDefined()
-    expect(fullNameEntry!.action).toBe("usar_planilha")
-    expect(fullNameEntry!.db_value).toBe("")
-    expect(fullNameEntry!.spreadsheet_value).toBe("João")
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        field_name: "full_name",
+        action: "usar_planilha",
+        db_value: "",
+        spreadsheet_value: "João",
+      }),
+    )
   })
 
   it("should handle manter_db when db has value and sheet is empty", () => {
@@ -266,11 +269,14 @@ describe("diffProfile", () => {
     })
 
     const entries = diffProfile(profile, record)
-    const rgEntry = entries.find((e) => e.field_name === "rg")
-    expect(rgEntry).toBeDefined()
-    expect(rgEntry!.action).toBe("manter_db")
-    expect(rgEntry!.db_value).toBe("123456789")
-    expect(rgEntry!.spreadsheet_value).toBe("")
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        field_name: "rg",
+        action: "manter_db",
+        db_value: "123456789",
+        spreadsheet_value: "",
+      }),
+    )
   })
 
   it("should format arrays as comma-joined in output", () => {
@@ -286,10 +292,13 @@ describe("diffProfile", () => {
     })
 
     const entries = diffProfile(profile, record)
-    const genderEntry = entries.find((e) => e.field_name === "gender")
-    expect(genderEntry).toBeDefined()
-    expect(genderEntry!.db_value).toBe("Masculino")
-    expect(genderEntry!.spreadsheet_value).toBe("Feminino,Não-binário")
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        field_name: "gender",
+        db_value: "Masculino",
+        spreadsheet_value: "Feminino,Não-binário",
+      }),
+    )
   })
 
   it("should format phone as string in output", () => {
@@ -305,10 +314,13 @@ describe("diffProfile", () => {
     })
 
     const entries = diffProfile(profile, record)
-    const phoneEntry = entries.find((e) => e.field_name === "phone")
-    expect(phoneEntry).toBeDefined()
-    expect(phoneEntry!.db_value).toBe("11999999999")
-    expect(phoneEntry!.spreadsheet_value).toBe("11888888888")
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        field_name: "phone",
+        db_value: "11999999999",
+        spreadsheet_value: "11888888888",
+      }),
+    )
   })
 })
 
