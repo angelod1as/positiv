@@ -141,23 +141,131 @@ export async function generateDiff(
 }
 
 export function escapeCsvField(value: string): string {
+  if (!value) return value
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`
+  }
   return value
 }
 
 export function formatDiffCsv(entries: DiffEntry[]): string {
-  return ""
+  const header = "profile_id,nome_do_campo,valor_atual_db,valor_planilha,ação"
+  const rows = entries.map(
+    (e) =>
+      [
+        escapeCsvField(e.profile_id),
+        escapeCsvField(e.field_name),
+        escapeCsvField(e.db_value),
+        escapeCsvField(e.spreadsheet_value),
+        escapeCsvField(e.action),
+      ].join(","),
+  )
+  return `\uFEFF${[header, ...rows].join("\n")}\n`
 }
 
 export function createKyselyProfileQueryFn(
   kysely: Kysely<Database>,
 ): ProfileQueryFn {
   return {
-    findByIds: async () => [],
+    findByIds: async (ids: string[]) => {
+      if (ids.length === 0) return []
+      const rows = await kysely
+        .selectFrom("profiles")
+        .select([
+          "id",
+          "full_name",
+          "social_name",
+          "gender",
+          "orientation",
+          "pronouns",
+          "email",
+          "phone",
+          "rg",
+          "approved_to_attend",
+          "flag",
+          "general_notes",
+        ])
+        .where("id", "in", ids)
+        .execute()
+      return rows.map((r) => ({
+        ...r,
+        phone: r.phone !== null ? Number(r.phone) : null,
+      })) as ProfileData[]
+    },
   }
 }
 
 async function main() {
-  // stub
+  const dotenv = await import("dotenv")
+  dotenv.config({ path: path.resolve(process.cwd(), ".env") })
+
+  const matchedPath = path.resolve(__dirname, "../../../mailing-matched.json")
+  const parsedPath = path.resolve(__dirname, "../../../mailing-parsed.json")
+  const outputPath = path.resolve(__dirname, "../../../mailing-diff.csv")
+
+  if (!fs.existsSync(matchedPath)) {
+    throw new Error(
+      `Input file not found: ${matchedPath}. Run match-profiles.ts first.`,
+    )
+  }
+  if (!fs.existsSync(parsedPath)) {
+    throw new Error(
+      `Input file not found: ${parsedPath}. Run parse-csv.ts first.`,
+    )
+  }
+
+  const connectionString = process.env.SUPABASE_CONNECT_URL
+  if (!connectionString) {
+    throw new Error("SUPABASE_CONNECT_URL environment variable is not set")
+  }
+
+  console.info("Generating diff CSV...")
+  console.info(`Matched input: ${matchedPath}`)
+  console.info(`Parsed input: ${parsedPath}`)
+
+  const matched: MatchedRecord[] = JSON.parse(
+    fs.readFileSync(matchedPath, "utf-8"),
+  )
+  const parsedData = JSON.parse(fs.readFileSync(parsedPath, "utf-8"))
+  const parsed: ParsedMailingRecord[] = parsedData.records
+
+  console.info(`Matched records: ${matched.length}`)
+  console.info(`Parsed records: ${parsed.length}`)
+
+  const kysely = new Kysely<Database>({
+    dialect: new PostgresDialect({
+      pool: new Pool({ connectionString }),
+    }),
+  })
+
+  try {
+    const queryFn = createKyselyProfileQueryFn(kysely)
+    const entries = await generateDiff(matched, parsed, queryFn)
+
+    console.info("\n=== Diff Generation Complete ===")
+    console.info(`Total diff entries: ${entries.length}`)
+
+    const byAction = entries.reduce(
+      (acc, e) => {
+        acc[e.action] = (acc[e.action] || 0) + 1
+        return acc
+      },
+      {} as Record<DiffAction, number>,
+    )
+    console.info("\nBy Action:")
+    console.info(`  manter_db: ${byAction["manter_db"] || 0}`)
+    console.info(`  usar_planilha: ${byAction["usar_planilha"] || 0}`)
+    console.info(`  revisão_manual: ${byAction["revisão_manual"] || 0}`)
+
+    const uniqueProfiles = new Set(entries.map((e) => e.profile_id)).size
+    console.info(`\nProfiles with differences: ${uniqueProfiles}`)
+
+    const csv = formatDiffCsv(entries)
+    fs.writeFileSync(outputPath, csv, "utf-8")
+    console.info(`\nOutput written to: ${outputPath}`)
+  } finally {
+    await kysely.destroy()
+  }
 }
 
 const isMainModule =
