@@ -13,6 +13,10 @@ import {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export function preprocessEmail(raw: string): string {
+  return raw
+}
+
 export function validateEmail(email: string): string | null {
   const trimmed = email.trim()
   if (!trimmed) return null

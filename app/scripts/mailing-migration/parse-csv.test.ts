@@ -6,6 +6,7 @@ import {
   normalizePhone,
   parseBoolean,
   parseMailingRow,
+  preprocessEmail,
   validateEmail,
 } from "./parse-csv"
 
@@ -41,6 +42,38 @@ describe("parse-csv", () => {
 
     it("should return null for email with spaces in middle", () => {
       expect(validateEmail("user @example.com")).toBeNull()
+    })
+  })
+
+  describe("preprocessEmail", () => {
+    it("should return first email when multiple separated by semicolon", () => {
+      expect(preprocessEmail("email1@x.com; email2@x.com")).toBe("email1@x.com")
+    })
+
+    it("should return first email when multiple separated by comma", () => {
+      expect(preprocessEmail("email1@x.com, email2@x.com")).toBe("email1@x.com")
+    })
+
+    it("should strip invisible unicode LTR mark", () => {
+      expect(preprocessEmail("\u200eemail@x.com")).toBe("email@x.com")
+    })
+
+    it("should strip multiple invisible unicode chars", () => {
+      expect(
+        preprocessEmail("\u200ecesaremaccaro84@gmail.com; \u200ecesaremaccaro@gmail.com"),
+      ).toBe("cesaremaccaro84@gmail.com")
+    })
+
+    it("should return single email unchanged", () => {
+      expect(preprocessEmail("normal@x.com")).toBe("normal@x.com")
+    })
+
+    it("should return empty string for empty input", () => {
+      expect(preprocessEmail("")).toBe("")
+    })
+
+    it("should trim whitespace from the result", () => {
+      expect(preprocessEmail("  email@x.com  ")).toBe("email@x.com")
     })
   })
 
