@@ -1,5 +1,5 @@
 import type { ChartConfig } from '~/components/ui/chart'
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 
 export type { ChartConfig }
 
@@ -17,7 +17,7 @@ export interface BaseChartProps {
   className?: string
   showTooltip?: boolean
   showLegend?: boolean
-  tooltipContent?: ReactNode
+  tooltipContent?: ReactElement
   children?: ReactNode
 }
 
