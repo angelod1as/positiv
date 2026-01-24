@@ -5,7 +5,7 @@ import { Kysely, PostgresDialect } from "kysely"
 import { Pool } from "pg"
 import * as readline from "readline"
 import type { Database } from "~/types/database/kysely.types"
-import type { DiffAction, DiffEntry } from "./generate-diff"
+import type { DiffEntry } from "./generate-diff"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -103,15 +103,26 @@ export function parseReviewedCsv(csvContent: string): DiffEntry[] {
     const row = rows[i].trim()
     if (row === "") continue
 
-    const fields = parseCsvLine(rows[i])
+    const fields = parseCsvLine(row)
     if (fields.length < 5) continue
+
+    const action = fields[4]
+    if (
+      action !== "manter_db" &&
+      action !== "usar_planilha" &&
+      action !== "revisão_manual"
+    ) {
+      throw new Error(
+        `Invalid action "${action}" at row ${i + 1}. Must be one of: manter_db, usar_planilha, revisão_manual`,
+      )
+    }
 
     entries.push({
       profile_id: fields[0],
       field_name: fields[1],
       db_value: fields[2],
       spreadsheet_value: fields[3],
-      action: fields[4] as DiffAction,
+      action,
     })
   }
 

@@ -107,6 +107,18 @@ describe("parseReviewedCsv", () => {
     expect(result[2].action).toBe("revisão_manual")
   })
 
+  it("should throw on invalid action value", () => {
+    const csv = [
+      "profile_id,nome_do_campo,valor_atual_db,valor_planilha,ação",
+      "p1,full_name,A,B,invalid_action",
+      "",
+    ].join("\n")
+
+    expect(() => parseReviewedCsv(csv)).toThrow(
+      'Invalid action "invalid_action" at row 2',
+    )
+  })
+
   it("should handle quoted fields with newlines inside", () => {
     const csv = `profile_id,nome_do_campo,valor_atual_db,valor_planilha,ação\np1,general_notes,"line1\nline2","line3\nline4",usar_planilha\n`
 
