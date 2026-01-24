@@ -226,11 +226,80 @@ describe("parse-csv", () => {
         expect(mapToArray("Ele/Dele", "pronouns")).toEqual(["Ele/dele"])
       })
 
-      it("should handle multiple pronouns", () => {
+      it("should handle multiple pronouns separated by comma", () => {
         expect(mapToArray("Ela/dela, Elu/delu", "pronouns")).toEqual([
           "Ela/dela",
           "Elu/delu",
         ])
+      })
+
+      it("should accept Todos as a valid pronoun value", () => {
+        expect(mapToArray("Todos", "pronouns")).toEqual(["Todos"])
+      })
+
+      it("should split pronouns by semicolon", () => {
+        expect(mapToArray("Ela/Dela; Elu/Delu", "pronouns")).toEqual([
+          "Ela/dela",
+          "Elu/delu",
+        ])
+      })
+
+      it("should split Ela/Dela; Ele/Dele by semicolon", () => {
+        expect(mapToArray("Ela/Dela; Ele/Dele", "pronouns")).toEqual([
+          "Ela/dela",
+          "Ele/dele",
+        ])
+      })
+
+      it("should split Ele/Dele; Elu/Delu by semicolon", () => {
+        expect(mapToArray("Ele/Dele; Elu/Delu", "pronouns")).toEqual([
+          "Ele/dele",
+          "Elu/delu",
+        ])
+      })
+
+      it("should split Elu/Delu; Ela/Dela by semicolon", () => {
+        expect(mapToArray("Elu/Delu; Ela/Dela", "pronouns")).toEqual([
+          "Elu/delu",
+          "Ela/dela",
+        ])
+      })
+
+      it("should split Elu/Delu; Todos by semicolon", () => {
+        expect(mapToArray("Elu/Delu; Todos", "pronouns")).toEqual([
+          "Elu/delu",
+          "Todos",
+        ])
+      })
+
+      it("should split Ele/Dele; Ela/Dela by semicolon", () => {
+        expect(mapToArray("Ele/Dele; Ela/Dela", "pronouns")).toEqual([
+          "Ele/dele",
+          "Ela/dela",
+        ])
+      })
+
+      it("should split Ela/dela; Ile/Dile by semicolon", () => {
+        expect(mapToArray("Ela/dela; Ile/Dile", "pronouns")).toEqual([
+          "Ela/dela",
+          "Ile/dile",
+        ])
+      })
+
+      it("should split Ile/Dile; Elu/Delu by semicolon", () => {
+        expect(mapToArray("Ile/Dile; Elu/Delu", "pronouns")).toEqual([
+          "Ile/dile",
+          "Elu/delu",
+        ])
+      })
+
+      it("should handle all pronouns plus Todos separated by comma", () => {
+        expect(
+          mapToArray(
+            "Ele/dele, Ela/dela, Elu/delu, Ile/dile, Todos",
+            "pronouns",
+          ),
+        ).toEqual(["Ele/dele", "Ela/dela", "Elu/delu", "Ile/dile", "Todos"])
       })
     })
   })
