@@ -54,18 +54,41 @@ export const COMPARABLE_FIELDS = [
 ] as const
 
 export function isEmpty(value: unknown): boolean {
+  if (value === null || value === undefined) return true
+  if (typeof value === "string" && value === "") return true
+  if (Array.isArray(value) && value.length === 0) return true
   return false
 }
 
 export function formatValue(value: unknown): string {
-  return ""
+  if (value === null || value === undefined) return ""
+  if (Array.isArray(value)) {
+    if (value.length === 0) return ""
+    return value.join(",")
+  }
+  return String(value)
 }
 
 export function compareField(
   dbValue: unknown,
   sheetValue: unknown,
 ): DiffAction | null {
-  return null
+  const dbEmpty = isEmpty(dbValue)
+  const sheetEmpty = isEmpty(sheetValue)
+
+  if (dbEmpty && sheetEmpty) return null
+  if (!dbEmpty && sheetEmpty) return "manter_db"
+  if (dbEmpty && !sheetEmpty) return "usar_planilha"
+
+  const dbFormatted = Array.isArray(dbValue)
+    ? [...dbValue].sort().join(",")
+    : String(dbValue)
+  const sheetFormatted = Array.isArray(sheetValue)
+    ? [...sheetValue].sort().join(",")
+    : String(sheetValue)
+
+  if (dbFormatted === sheetFormatted) return null
+  return "revisão_manual"
 }
 
 export function diffProfile(
