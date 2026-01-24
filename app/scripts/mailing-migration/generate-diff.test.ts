@@ -3,8 +3,54 @@ import {
   isEmpty,
   formatValue,
   compareField,
+  diffProfile,
+  generateDiff,
   type DiffAction,
+  type ProfileData,
+  type ProfileQueryFn,
 } from "./generate-diff"
+import type { ParsedMailingRecord } from "./parse-csv"
+import type { MatchedRecord } from "./match-profiles"
+
+function createMockProfile(
+  overrides: Partial<ProfileData> & { id: string; email: string },
+): ProfileData {
+  return {
+    full_name: null,
+    social_name: null,
+    gender: null,
+    orientation: null,
+    pronouns: null,
+    phone: null,
+    rg: null,
+    approved_to_attend: "pending",
+    flag: "none",
+    general_notes: null,
+    ...overrides,
+  }
+}
+
+function createMockParsedRecord(
+  overrides: Partial<ParsedMailingRecord> & {
+    _rowIndex: number
+    email: string
+  },
+): ParsedMailingRecord {
+  return {
+    full_name: "",
+    social_name: null,
+    gender: null,
+    orientation: null,
+    pronouns: null,
+    phone: null,
+    rg: null,
+    flag: "none",
+    approved_to_attend: "pending",
+    general_notes: null,
+    events: {},
+    ...overrides,
+  }
+}
 
 describe("isEmpty", () => {
   it("should return true for null", () => {
@@ -133,5 +179,244 @@ describe("compareField", () => {
     expect(compareField(11999999999, 11888888888)).toBe(
       "revisão_manual" satisfies DiffAction,
     )
+  })
+})
+
+describe("diffProfile", () => {
+  it("should return empty array when all fields match", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      full_name: "João",
+      flag: "none",
+      approved_to_attend: "pending",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      full_name: "João",
+      flag: "none",
+      approved_to_attend: "pending",
+    })
+
+    const entries = diffProfile(profile, record)
+    expect(entries).toHaveLength(0)
+  })
+
+  it("should detect field differences between profile and record", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      full_name: "João",
+      flag: "none",
+      approved_to_attend: "approved",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      full_name: "Maria",
+      flag: "none",
+      approved_to_attend: "approved",
+    })
+
+    const entries = diffProfile(profile, record)
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toEqual({
+      profile_id: "p1",
+      field_name: "full_name",
+      db_value: "João",
+      spreadsheet_value: "Maria",
+      action: "revisão_manual",
+    })
+  })
+
+  it("should handle usar_planilha when db is empty and sheet has value", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      full_name: null,
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      full_name: "João",
+    })
+
+    const entries = diffProfile(profile, record)
+    const fullNameEntry = entries.find((e) => e.field_name === "full_name")
+    expect(fullNameEntry).toBeDefined()
+    expect(fullNameEntry!.action).toBe("usar_planilha")
+    expect(fullNameEntry!.db_value).toBe("")
+    expect(fullNameEntry!.spreadsheet_value).toBe("João")
+  })
+
+  it("should handle manter_db when db has value and sheet is empty", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      rg: "123456789",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      rg: null,
+    })
+
+    const entries = diffProfile(profile, record)
+    const rgEntry = entries.find((e) => e.field_name === "rg")
+    expect(rgEntry).toBeDefined()
+    expect(rgEntry!.action).toBe("manter_db")
+    expect(rgEntry!.db_value).toBe("123456789")
+    expect(rgEntry!.spreadsheet_value).toBe("")
+  })
+
+  it("should format arrays as comma-joined in output", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      gender: ["Masculino"],
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      gender: ["Feminino", "Não-binário"],
+    })
+
+    const entries = diffProfile(profile, record)
+    const genderEntry = entries.find((e) => e.field_name === "gender")
+    expect(genderEntry).toBeDefined()
+    expect(genderEntry!.db_value).toBe("Masculino")
+    expect(genderEntry!.spreadsheet_value).toBe("Feminino,Não-binário")
+  })
+
+  it("should format phone as string in output", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      phone: 11999999999,
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      phone: 11888888888,
+    })
+
+    const entries = diffProfile(profile, record)
+    const phoneEntry = entries.find((e) => e.field_name === "phone")
+    expect(phoneEntry).toBeDefined()
+    expect(phoneEntry!.db_value).toBe("11999999999")
+    expect(phoneEntry!.spreadsheet_value).toBe("11888888888")
+  })
+})
+
+describe("generateDiff", () => {
+  it("should fetch profiles and generate diff entries", async () => {
+    const matched: MatchedRecord[] = [
+      {
+        rowIndex: 2,
+        profileId: "p1",
+        matchType: "phone",
+        email: "a@x.com",
+        phone: 11999999999,
+      },
+    ]
+    const parsed: ParsedMailingRecord[] = [
+      createMockParsedRecord({
+        _rowIndex: 2,
+        email: "a@x.com",
+        full_name: "Maria",
+        flag: "none",
+        approved_to_attend: "pending",
+      }),
+    ]
+    const queryFn: ProfileQueryFn = {
+      findByIds: vi.fn().mockResolvedValue([
+        createMockProfile({
+          id: "p1",
+          email: "a@x.com",
+          full_name: "João",
+          flag: "none",
+          approved_to_attend: "pending",
+        }),
+      ]),
+    }
+
+    const entries = await generateDiff(matched, parsed, queryFn)
+
+    expect(queryFn.findByIds).toHaveBeenCalledWith(["p1"])
+    expect(entries.length).toBeGreaterThan(0)
+    const nameEntry = entries.find((e) => e.field_name === "full_name")
+    expect(nameEntry).toEqual({
+      profile_id: "p1",
+      field_name: "full_name",
+      db_value: "João",
+      spreadsheet_value: "Maria",
+      action: "revisão_manual",
+    })
+  })
+
+  it("should skip profiles not found in DB", async () => {
+    const matched: MatchedRecord[] = [
+      {
+        rowIndex: 2,
+        profileId: "p1",
+        matchType: "phone",
+        email: "a@x.com",
+        phone: 11999999999,
+      },
+    ]
+    const parsed: ParsedMailingRecord[] = [
+      createMockParsedRecord({ _rowIndex: 2, email: "a@x.com" }),
+    ]
+    const queryFn: ProfileQueryFn = {
+      findByIds: vi.fn().mockResolvedValue([]),
+    }
+
+    const entries = await generateDiff(matched, parsed, queryFn)
+    expect(entries).toHaveLength(0)
+  })
+
+  it("should handle multiple matched records", async () => {
+    const matched: MatchedRecord[] = [
+      {
+        rowIndex: 2,
+        profileId: "p1",
+        matchType: "phone",
+        email: "a@x.com",
+        phone: 11999999999,
+      },
+      {
+        rowIndex: 3,
+        profileId: "p2",
+        matchType: "email",
+        email: "b@x.com",
+        phone: null,
+      },
+    ]
+    const parsed: ParsedMailingRecord[] = [
+      createMockParsedRecord({
+        _rowIndex: 2,
+        email: "a@x.com",
+        full_name: "Name A",
+      }),
+      createMockParsedRecord({
+        _rowIndex: 3,
+        email: "b@x.com",
+        full_name: "Name B",
+      }),
+    ]
+    const queryFn: ProfileQueryFn = {
+      findByIds: vi.fn().mockResolvedValue([
+        createMockProfile({ id: "p1", email: "a@x.com", full_name: "Old A" }),
+        createMockProfile({ id: "p2", email: "b@x.com", full_name: "Old B" }),
+      ]),
+    }
+
+    const entries = await generateDiff(matched, parsed, queryFn)
+
+    const p1Entries = entries.filter((e) => e.profile_id === "p1")
+    const p2Entries = entries.filter((e) => e.profile_id === "p2")
+    expect(p1Entries.length).toBeGreaterThan(0)
+    expect(p2Entries.length).toBeGreaterThan(0)
   })
 })
