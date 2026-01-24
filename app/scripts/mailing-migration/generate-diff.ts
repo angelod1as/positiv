@@ -95,7 +95,25 @@ export function diffProfile(
   profile: ProfileData,
   record: ParsedMailingRecord,
 ): DiffEntry[] {
-  return []
+  const entries: DiffEntry[] = []
+
+  for (const field of COMPARABLE_FIELDS) {
+    const dbValue = profile[field]
+    const sheetValue = record[field as keyof ParsedMailingRecord]
+    const action = compareField(dbValue, sheetValue)
+
+    if (action !== null) {
+      entries.push({
+        profile_id: profile.id,
+        field_name: field,
+        db_value: formatValue(dbValue),
+        spreadsheet_value: formatValue(sheetValue),
+        action,
+      })
+    }
+  }
+
+  return entries
 }
 
 export async function generateDiff(
@@ -103,7 +121,23 @@ export async function generateDiff(
   parsed: ParsedMailingRecord[],
   queryFn: ProfileQueryFn,
 ): Promise<DiffEntry[]> {
-  return []
+  if (matched.length === 0) return []
+
+  const profileIds = [...new Set(matched.map((m) => m.profileId))]
+  const profiles = await queryFn.findByIds(profileIds)
+  const profileMap = new Map(profiles.map((p) => [p.id, p]))
+
+  const recordMap = new Map(parsed.map((r) => [r._rowIndex, r]))
+
+  const entries: DiffEntry[] = []
+  for (const match of matched) {
+    const profile = profileMap.get(match.profileId)
+    const record = recordMap.get(match.rowIndex)
+    if (!profile || !record) continue
+    entries.push(...diffProfile(profile, record))
+  }
+
+  return entries
 }
 
 export function escapeCsvField(value: string): string {
