@@ -112,14 +112,35 @@ export function createKyselyQueryFn(kysely: Kysely<Database>): QueryFn {
         .where("phone", "in", phones)
         .execute()
       // pg driver returns bigint as string; convert to number
-      return rows.map((r) => ({ id: r.id, phone: Number(r.phone) }))
+      const seen = new Set<number>()
+      return rows.reduce<{ id: string; phone: number }[]>((acc, r) => {
+        const phone = Number(r.phone)
+        if (seen.has(phone)) {
+          console.warn(`Duplicate phone in DB: ${phone} (profile ${r.id})`)
+        } else {
+          seen.add(phone)
+          acc.push({ id: r.id, phone })
+        }
+        return acc
+      }, [])
     },
-    findByEmails: async (emails: string[]) =>
-      kysely
+    findByEmails: async (emails: string[]) => {
+      const rows = await kysely
         .selectFrom("profiles")
         .select(["id", "email"])
         .where("email", "in", emails)
-        .execute(),
+        .execute()
+      const seen = new Set<string>()
+      return rows.reduce<{ id: string; email: string }[]>((acc, r) => {
+        if (seen.has(r.email)) {
+          console.warn(`Duplicate email in DB: ${r.email} (profile ${r.id})`)
+        } else {
+          seen.add(r.email)
+          acc.push({ id: r.id, email: r.email })
+        }
+        return acc
+      }, [])
+    },
   }
 }
 
@@ -154,22 +175,24 @@ async function main() {
     }),
   })
 
-  const queryFn = createKyselyQueryFn(kysely)
-  const result = await matchProfiles(records, queryFn)
+  try {
+    const queryFn = createKyselyQueryFn(kysely)
+    const result = await matchProfiles(records, queryFn)
 
-  await kysely.destroy()
+    console.info("\n=== Matching Complete ===")
+    console.info(`Matched: ${result.matched.length}`)
+    console.info(`  By phone: ${result.matched.filter((m) => m.matchType === "phone").length}`)
+    console.info(`  By email: ${result.matched.filter((m) => m.matchType === "email").length}`)
+    console.info(`Unmatched: ${result.unmatched.length}`)
 
-  console.info("\n=== Matching Complete ===")
-  console.info(`Matched: ${result.matched.length}`)
-  console.info(`  By phone: ${result.matched.filter((m) => m.matchType === "phone").length}`)
-  console.info(`  By email: ${result.matched.filter((m) => m.matchType === "email").length}`)
-  console.info(`Unmatched: ${result.unmatched.length}`)
+    fs.writeFileSync(matchedOutputPath, JSON.stringify(result.matched, null, 2))
+    console.info(`\nMatched output: ${matchedOutputPath}`)
 
-  fs.writeFileSync(matchedOutputPath, JSON.stringify(result.matched, null, 2))
-  console.info(`\nMatched output: ${matchedOutputPath}`)
-
-  fs.writeFileSync(unmatchedOutputPath, JSON.stringify(result.unmatched, null, 2))
-  console.info(`Unmatched output: ${unmatchedOutputPath}`)
+    fs.writeFileSync(unmatchedOutputPath, JSON.stringify(result.unmatched, null, 2))
+    console.info(`Unmatched output: ${unmatchedOutputPath}`)
+  } finally {
+    await kysely.destroy()
+  }
 }
 
 const isMainModule =
