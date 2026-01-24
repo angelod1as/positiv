@@ -87,6 +87,7 @@ export default [
     ...prefix("admin", [
       layout("pages/admin/layout.tsx", [
         index("pages/admin/dashboard-page.tsx"),
+        route("dummy", "pages/admin/dummy-page.tsx"),
         // Global participants listing
         route("participantes", "pages/admin/participants/participants-page.tsx"),
         // View single participant (profile-only mode)
