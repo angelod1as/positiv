@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 import type {
   ParseResult,
   ParsedMailingRecord,
-  ManualReviewRecord,
   ParseError,
   ProfileFlag,
   ApprovedToAttend,
