@@ -23,13 +23,14 @@ export function AreaChart({
   xAxisFormatter,
   stacked = true,
   className,
+  ariaLabel,
   showTooltip = true,
   showLegend = true,
   tooltipContent,
   children,
 }: AreaChartProps) {
   return (
-    <ChartContainer config={config} className={className}>
+    <ChartContainer config={config} className={className} role="img" aria-label={ariaLabel}>
       <RechartsAreaChart data={data}>
         <CartesianGrid vertical={false} />
         <XAxis

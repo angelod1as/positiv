@@ -15,6 +15,7 @@ export interface BaseChartProps {
   data: ChartDataPoint[]
   config: ChartConfig
   className?: string
+  ariaLabel?: string
   showTooltip?: boolean
   showLegend?: boolean
   tooltipContent?: ReactElement

@@ -19,13 +19,14 @@ export function DonutChart({
   outerRadius = 80,
   centerLabel,
   className,
+  ariaLabel,
   showTooltip = true,
   showLegend = true,
   tooltipContent,
   children,
 }: DonutChartProps) {
   return (
-    <ChartContainer config={config} className={cn('relative', className)}>
+    <ChartContainer config={config} className={cn('relative', className)} role="img" aria-label={ariaLabel}>
       <PieChart>
         <Pie
           data={data}

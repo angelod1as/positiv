@@ -24,13 +24,14 @@ export function BarChart({
   horizontal = false,
   stacked = false,
   className,
+  ariaLabel,
   showTooltip = true,
   showLegend = true,
   tooltipContent,
   children,
 }: BarChartProps) {
   return (
-    <ChartContainer config={config} className={className}>
+    <ChartContainer config={config} className={className} role="img" aria-label={ariaLabel}>
       <RechartsBarChart
         data={data}
         layout={horizontal ? 'vertical' : 'horizontal'}

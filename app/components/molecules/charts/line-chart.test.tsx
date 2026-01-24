@@ -109,4 +109,32 @@ describe('LineChart', () => {
     )
     expect(container.querySelector('.recharts-wrapper')).toBeInTheDocument()
   })
+
+  it('applies role="img" and aria-label for accessibility', () => {
+    const { container } = render(
+      <LineChart
+        data={mockData}
+        config={mockConfig}
+        series={mockSeries}
+        xAxisKey="month"
+        ariaLabel="Monthly desktop and mobile visitors"
+      />
+    )
+    const chart = container.querySelector('[data-chart]')
+    expect(chart).toHaveAttribute('role', 'img')
+    expect(chart).toHaveAttribute('aria-label', 'Monthly desktop and mobile visitors')
+  })
+
+  it('renders with role="img" even without ariaLabel', () => {
+    const { container } = render(
+      <LineChart
+        data={mockData}
+        config={mockConfig}
+        series={mockSeries}
+        xAxisKey="month"
+      />
+    )
+    const chart = container.querySelector('[data-chart]')
+    expect(chart).toHaveAttribute('role', 'img')
+  })
 })

@@ -23,13 +23,14 @@ export function LineChart({
   xAxisFormatter,
   curved = true,
   className,
+  ariaLabel,
   showTooltip = true,
   showLegend = true,
   tooltipContent,
   children,
 }: LineChartProps) {
   return (
-    <ChartContainer config={config} className={className}>
+    <ChartContainer config={config} className={className} role="img" aria-label={ariaLabel}>
       <RechartsLineChart data={data}>
         <CartesianGrid vertical={false} />
         <XAxis
