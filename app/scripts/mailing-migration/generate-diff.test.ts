@@ -5,7 +5,10 @@ import {
   compareField,
   diffProfile,
   generateDiff,
+  escapeCsvField,
+  formatDiffCsv,
   type DiffAction,
+  type DiffEntry,
   type ProfileData,
   type ProfileQueryFn,
 } from "./generate-diff"
@@ -418,5 +421,102 @@ describe("generateDiff", () => {
     const p2Entries = entries.filter((e) => e.profile_id === "p2")
     expect(p1Entries.length).toBeGreaterThan(0)
     expect(p2Entries.length).toBeGreaterThan(0)
+  })
+})
+
+describe("escapeCsvField", () => {
+  it("should return simple values unchanged", () => {
+    expect(escapeCsvField("hello")).toBe("hello")
+  })
+
+  it("should wrap values with commas in quotes", () => {
+    expect(escapeCsvField("a,b")).toBe('"a,b"')
+  })
+
+  it("should wrap values with quotes in quotes and escape inner quotes", () => {
+    expect(escapeCsvField('say "hi"')).toBe('"say ""hi"""')
+  })
+
+  it("should wrap values with newlines in quotes", () => {
+    expect(escapeCsvField("line1\nline2")).toBe('"line1\nline2"')
+  })
+
+  it("should handle empty string", () => {
+    expect(escapeCsvField("")).toBe("")
+  })
+
+  it("should handle value with all special characters", () => {
+    expect(escapeCsvField('a,b\n"c"')).toBe('"a,b\n""c"""')
+  })
+})
+
+describe("formatDiffCsv", () => {
+  it("should produce CSV with BOM and header when entries is empty", () => {
+    const result = formatDiffCsv([])
+    expect(result).toBe(
+      "\uFEFFprofile_id,nome_do_campo,valor_atual_db,valor_planilha,ação\n",
+    )
+  })
+
+  it("should produce correct CSV rows for entries", () => {
+    const entries: DiffEntry[] = [
+      {
+        profile_id: "p1",
+        field_name: "full_name",
+        db_value: "João",
+        spreadsheet_value: "Maria",
+        action: "revisão_manual",
+      },
+    ]
+
+    const result = formatDiffCsv(entries)
+    const lines = result.split("\n")
+    expect(lines[0]).toBe(
+      "\uFEFFprofile_id,nome_do_campo,valor_atual_db,valor_planilha,ação",
+    )
+    expect(lines[1]).toBe("p1,full_name,João,Maria,revisão_manual")
+  })
+
+  it("should escape fields with special characters", () => {
+    const entries: DiffEntry[] = [
+      {
+        profile_id: "p1",
+        field_name: "general_notes",
+        db_value: "note with, comma",
+        spreadsheet_value: 'note with "quotes"',
+        action: "revisão_manual",
+      },
+    ]
+
+    const result = formatDiffCsv(entries)
+    const lines = result.split("\n")
+    expect(lines[1]).toBe(
+      'p1,general_notes,"note with, comma","note with ""quotes""",revisão_manual',
+    )
+  })
+
+  it("should handle multiple entries", () => {
+    const entries: DiffEntry[] = [
+      {
+        profile_id: "p1",
+        field_name: "full_name",
+        db_value: "A",
+        spreadsheet_value: "B",
+        action: "revisão_manual",
+      },
+      {
+        profile_id: "p1",
+        field_name: "email",
+        db_value: "",
+        spreadsheet_value: "a@x.com",
+        action: "usar_planilha",
+      },
+    ]
+
+    const result = formatDiffCsv(entries)
+    const lines = result.split("\n")
+    expect(lines).toHaveLength(4) // header + 2 rows + trailing newline
+    expect(lines[1]).toBe("p1,full_name,A,B,revisão_manual")
+    expect(lines[2]).toBe("p1,email,,a@x.com,usar_planilha")
   })
 })
