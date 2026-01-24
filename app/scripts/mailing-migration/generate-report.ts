@@ -1,6 +1,10 @@
+import * as fs from "fs"
+import * as path from "path"
+import { fileURLToPath } from "url"
 import {
   validateEmail,
   normalizePhone,
+  parseMailingCsv,
 } from "./parse-csv"
 import type {
   ParseResult,
@@ -9,6 +13,9 @@ import type {
   ApprovedToAttend,
 } from "./parse-csv"
 import { EVENT_COLUMN_TO_ID } from "./event-mapping"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 export interface EventAttendanceEntry {
   columnName: string
@@ -104,4 +111,77 @@ export function generateReport(parseResult: ParseResult): AnalysisReport {
     },
     generatedAt: new Date().toISOString(),
   }
+}
+
+export function formatReport(report: AnalysisReport): string {
+  const lines: string[] = []
+
+  lines.push("=== Mailing Analysis Report ===")
+  lines.push(`Generated at: ${report.generatedAt}`)
+  lines.push("")
+
+  lines.push("--- Summary ---")
+  lines.push(`  Total records: ${report.summary.totalRecords}`)
+  lines.push(`  With email: ${report.summary.withEmail}`)
+  lines.push(`  Without email: ${report.summary.withoutEmail}`)
+  lines.push(`  With phone: ${report.summary.withPhone}`)
+  lines.push(`  Without phone: ${report.summary.withoutPhone}`)
+  lines.push("")
+
+  lines.push("--- Flag Distribution ---")
+  for (const [flag, count] of Object.entries(report.flagDistribution)) {
+    lines.push(`  ${flag}: ${count}`)
+  }
+  lines.push("")
+
+  lines.push("--- Approval Distribution ---")
+  for (const [status, count] of Object.entries(report.approvalDistribution)) {
+    lines.push(`  ${status}: ${count}`)
+  }
+  lines.push("")
+
+  lines.push("--- Event Attendance ---")
+  for (const entry of report.eventAttendance) {
+    lines.push(`  ${entry.columnName} (${entry.eventId})`)
+    lines.push(`    Attended: ${entry.attended}`)
+    lines.push(`    Not attended: ${entry.notAttended}`)
+    lines.push(`    Unknown: ${entry.unknown}`)
+  }
+  lines.push("")
+
+  lines.push("--- Data Quality ---")
+  lines.push(`  Total errors: ${report.dataQuality.totalErrors}`)
+  if (Object.keys(report.dataQuality.errorsByField).length > 0) {
+    lines.push("  Errors by field:")
+    for (const [field, count] of Object.entries(report.dataQuality.errorsByField)) {
+      lines.push(`    ${field}: ${count}`)
+    }
+  }
+
+  return lines.join("\n")
+}
+
+async function main() {
+  const csvPath = path.resolve(__dirname, "../../../mailing.csv")
+  const outputPath = path.resolve(__dirname, "../../../mailing-report.json")
+
+  console.info("Generating mailing analysis report...")
+  console.info(`Input: ${csvPath}`)
+
+  const parseResult = parseMailingCsv(csvPath)
+  const report = generateReport(parseResult)
+
+  console.info("")
+  console.info(formatReport(report))
+
+  fs.writeFileSync(outputPath, JSON.stringify(report, null, 2))
+  console.info(`\nReport saved to: ${outputPath}`)
+}
+
+const isMainModule =
+  import.meta.url === `file://${process.argv[1]}` ||
+  process.argv[1]?.endsWith("generate-report.ts")
+
+if (isMainModule) {
+  main().catch(console.error)
 }

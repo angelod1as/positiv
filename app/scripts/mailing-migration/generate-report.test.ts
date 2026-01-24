@@ -7,7 +7,7 @@ import type {
   ProfileFlag,
   ApprovedToAttend,
 } from "./parse-csv"
-import { generateReport } from "./generate-report"
+import { generateReport, formatReport } from "./generate-report"
 
 function createMockRecord(
   overrides: Partial<ParsedMailingRecord> = {},
@@ -333,5 +333,83 @@ describe("generateReport", () => {
         report.generatedAt,
       )
     })
+  })
+})
+
+describe("formatReport", () => {
+  it("should contain section headers", () => {
+    const parseResult = createMockParseResult({
+      records: [
+        createMockRecord({
+          events: { "04/02/23": true },
+        }),
+      ],
+    })
+    const report = generateReport(parseResult)
+
+    const output = formatReport(report)
+
+    expect(output).toContain("=== Mailing Analysis Report ===")
+    expect(output).toContain("Summary")
+    expect(output).toContain("Flag Distribution")
+    expect(output).toContain("Approval Distribution")
+    expect(output).toContain("Event Attendance")
+    expect(output).toContain("Data Quality")
+  })
+
+  it("should contain summary values", () => {
+    const parseResult = createMockParseResult({
+      records: [createMockRecord(), createMockRecord({ _rowIndex: 3 })],
+      requiresManualReview: [
+        { rowIndex: 4, rawData: { "E-mail": "", Celular: "" }, errors: [] },
+      ],
+      stats: { total: 3, valid: 2, withErrors: 0, requiresManualReview: 1,
+        byFlag: { none: 2, yellow: 0, red: 0, gray: 0 },
+        byApproval: { pending: 0, approved: 2, approved_with_reservations: 0, rejected: 0 },
+      },
+    })
+    const report = generateReport(parseResult)
+
+    const output = formatReport(report)
+
+    expect(output).toContain("Total records: 3")
+    expect(output).toContain("With email: 2")
+    expect(output).toContain("Without email: 1")
+    expect(output).toContain("With phone: 2")
+    expect(output).toContain("Without phone: 1")
+  })
+
+  it("should contain event attendance data", () => {
+    const records = [
+      createMockRecord({
+        events: { "04/02/23": true, "01/07/23": false },
+      }),
+      createMockRecord({
+        _rowIndex: 3,
+        events: { "04/02/23": true, "01/07/23": null },
+      }),
+    ]
+    const parseResult = createMockParseResult({ records })
+    const report = generateReport(parseResult)
+
+    const output = formatReport(report)
+
+    expect(output).toContain("04/02/23")
+    expect(output).toContain("01/07/23")
+  })
+
+  it("should contain data quality info when there are errors", () => {
+    const errors: ParseError[] = [
+      { rowIndex: 2, field: "email", message: "Invalid", value: "bad" },
+      { rowIndex: 3, field: "phone", message: "Missing", value: "" },
+    ]
+    const parseResult = createMockParseResult({ errors })
+    const report = generateReport(parseResult)
+
+    const output = formatReport(report)
+
+    expect(output).toContain("Total errors: 2")
+    expect(output).toContain("email: 1")
+    expect(output).toContain("phone: 1")
   })
 })
