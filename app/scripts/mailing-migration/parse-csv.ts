@@ -203,6 +203,16 @@ export function parseMailingRow(
     })
   }
 
+  const phone = normalizePhone(row["Celular"])
+  if (!phone) {
+    errors.push({
+      rowIndex,
+      field: "phone",
+      message: "Missing or invalid phone number",
+      value: row["Celular"],
+    })
+  }
+
   const genderResult = mapToArray(getString(row["Gênero"]), "gender")
   if (isArrayValidationError(genderResult)) {
     errors.push({
@@ -246,7 +256,7 @@ export function parseMailingRow(
     events[col] = parseBoolean(row[col])
   }
 
-  if (!email) {
+  if (!email || !phone) {
     return { record: null, errors }
   }
 
