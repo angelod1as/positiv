@@ -39,3 +39,4 @@ production_data.sql
 mailing.csv
 mailing-parsed.json
 mailing-manual-review.json
+mailing-report.json

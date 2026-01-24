@@ -357,7 +357,7 @@ describe("parse-csv", () => {
         Orientação: "",
         Pronomes: "",
         "E-mail": "maria@example.com",
-        Celular: "",
+        Celular: "(11) 91234-5678",
         RG: "",
         Bandeira: "",
         "Aprovade para futuras festas?": "",
@@ -376,7 +376,7 @@ describe("parse-csv", () => {
         orientation: null,
         pronouns: null,
         email: "maria@example.com",
-        phone: null,
+        phone: 11912345678,
         rg: null,
         flag: "none",
         approved_to_attend: "pending",
@@ -459,7 +459,7 @@ describe("parse-csv", () => {
       const result = parseMailingRow(row, 3, EVENT_COLUMNS)
 
       expect(result.record).toBeNull()
-      expect(result.errors).toHaveLength(2)
+      expect(result.errors).toHaveLength(3)
       expect(result.errors).toContainEqual({
         rowIndex: 3,
         field: "email",
@@ -468,9 +468,77 @@ describe("parse-csv", () => {
       })
       expect(result.errors).toContainEqual({
         rowIndex: 3,
+        field: "phone",
+        message: "Missing or invalid phone number",
+        value: "",
+      })
+      expect(result.errors).toContainEqual({
+        rowIndex: 3,
         field: "gender",
         message: "Invalid value",
         value: "Invalid Gender",
+      })
+    })
+
+    it("should return null record when phone is missing", () => {
+      const row = {
+        Nome: "Test User",
+        "Nome social": "",
+        Gênero: "",
+        Orientação: "",
+        Pronomes: "",
+        "E-mail": "test@example.com",
+        Celular: "",
+        RG: "",
+        Bandeira: "",
+        "Aprovade para futuras festas?": "",
+        Observação: "",
+        "04/02/23": "",
+        "01/07/23": "",
+      }
+
+      const result = parseMailingRow(row, 5, EVENT_COLUMNS)
+
+      expect(result.record).toBeNull()
+      expect(result.errors).toContainEqual({
+        rowIndex: 5,
+        field: "phone",
+        message: "Missing or invalid phone number",
+        value: "",
+      })
+    })
+
+    it("should return null record when both email and phone are missing", () => {
+      const row = {
+        Nome: "Test User",
+        "Nome social": "",
+        Gênero: "",
+        Orientação: "",
+        Pronomes: "",
+        "E-mail": "",
+        Celular: "",
+        RG: "",
+        Bandeira: "",
+        "Aprovade para futuras festas?": "",
+        Observação: "",
+        "04/02/23": "",
+        "01/07/23": "",
+      }
+
+      const result = parseMailingRow(row, 6, EVENT_COLUMNS)
+
+      expect(result.record).toBeNull()
+      expect(result.errors).toContainEqual({
+        rowIndex: 6,
+        field: "email",
+        message: "Invalid email format",
+        value: "",
+      })
+      expect(result.errors).toContainEqual({
+        rowIndex: 6,
+        field: "phone",
+        message: "Missing or invalid phone number",
+        value: "",
       })
     })
 
@@ -482,7 +550,7 @@ describe("parse-csv", () => {
         Orientação: "",
         Pronomes: "",
         "E-mail": "test@example.com",
-        Celular: "",
+        Celular: "(11) 98888-7777",
         RG: "",
         Bandeira: "🚨",
         "Aprovade para futuras festas?": "TRUE",
