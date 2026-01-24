@@ -346,9 +346,9 @@ describe("diffProfile", () => {
     )
   })
 
-  it("should keep flag differences as revisão_manual", () => {
+  it("should resolve flag conflicts using FLAG_DECISIONS map (manter_db)", () => {
     const profile = createMockProfile({
-      id: "p1",
+      id: "74d081e8-55d2-4562-a131-4b6334301250",
       email: "a@x.com",
       flag: "red",
     })
@@ -362,9 +362,46 @@ describe("diffProfile", () => {
     expect(entries).toContainEqual(
       expect.objectContaining({
         field_name: "flag",
-        action: "revisão_manual",
+        action: "manter_db",
       }),
     )
+  })
+
+  it("should resolve flag conflicts using FLAG_DECISIONS map (usar_planilha)", () => {
+    const profile = createMockProfile({
+      id: "41424a70-7789-4796-b664-6991ab33d25f",
+      email: "a@x.com",
+      flag: "none",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      flag: "red",
+    })
+
+    const entries = diffProfile(profile, record)
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        field_name: "flag",
+        action: "usar_planilha",
+      }),
+    )
+  })
+
+  it("should skip flag conflicts for unknown profile IDs", () => {
+    const profile = createMockProfile({
+      id: "unknown-id",
+      email: "a@x.com",
+      flag: "red",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      flag: "none",
+    })
+
+    const entries = diffProfile(profile, record)
+    expect(entries.find((e) => e.field_name === "flag")).toBeUndefined()
   })
 
   it("should skip case-only differences", () => {

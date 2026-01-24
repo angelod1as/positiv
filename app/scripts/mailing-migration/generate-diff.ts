@@ -53,6 +53,26 @@ export const COMPARABLE_FIELDS = [
 
 const EMPTY_SOCIAL_NAMES = ["não tenho", "n/a"]
 
+export const FLAG_DECISIONS: Record<string, DiffAction> = {
+  "41424a70-7789-4796-b664-6991ab33d25f": "usar_planilha",
+  "08cccd3e-b182-494f-8549-d492469fdccc": "usar_planilha",
+  "cec1d6aa-3293-4043-9ae3-10ddd594091b": "usar_planilha",
+  "1039a58b-cb6c-4618-ac44-69e754b2978c": "usar_planilha",
+  "030995f6-80e6-41ef-b588-47613023f37d": "usar_planilha",
+  "f2a5ff66-6d26-4997-9761-e6324c373b4b": "usar_planilha",
+  "35cd7bf6-5499-4d46-8a06-dd133b5d4740": "manter_db",
+  "4fa5f39f-f4a0-411e-b9df-23a58019b6bb": "manter_db",
+  "2108f786-b769-446b-a917-fb1aaa85dd9f": "manter_db",
+  "530e7132-4aeb-4f60-9b94-40c77cd4cbdc": "manter_db",
+  "74d081e8-55d2-4562-a131-4b6334301250": "manter_db",
+  "6fd04cb8-c8cf-4142-8853-00197661ee23": "manter_db",
+  "f0435782-f1f1-4f09-93b0-aa6f5eade3be": "manter_db",
+  "71205632-fc0e-4e20-8414-a65ad4835784": "manter_db",
+  "0ca6ed9a-e36c-4ac5-89fb-df23eb3e976b": "manter_db",
+  "9e461dc5-af56-4925-9914-29b507983fc6": "manter_db",
+  "2c2ff7d6-5084-4cbe-b01d-bf6b95ef4292": "manter_db",
+}
+
 export function stripZeroWidth(value: string): string {
   return value.replace(/[\u200B-\u200F\u2028-\u202F\uFEFF\u200E\u200D]/g, "")
 }
@@ -176,13 +196,16 @@ export function diffProfile(
     if (field === "flag") {
       const action = compareField(rawDbValue, rawSheetValue)
       if (action === "revisão_manual") {
-        entries.push({
-          profile_id: profile.id,
-          field_name: field,
-          db_value: formatValue(rawDbValue),
-          spreadsheet_value: formatValue(rawSheetValue),
-          action: "revisão_manual",
-        })
+        const decision = FLAG_DECISIONS[profile.id]
+        if (decision) {
+          entries.push({
+            profile_id: profile.id,
+            field_name: field,
+            db_value: formatValue(rawDbValue),
+            spreadsheet_value: formatValue(rawSheetValue),
+            action: decision,
+          })
+        }
       }
       continue
     }
