@@ -45,13 +45,28 @@ export const COMPARABLE_FIELDS = [
   "gender",
   "orientation",
   "pronouns",
-  "email",
-  "phone",
   "rg",
   "approved_to_attend",
   "flag",
   "general_notes",
 ] as const
+
+const EMPTY_SOCIAL_NAMES = ["não tenho", "n/a"]
+
+export function stripZeroWidth(value: string): string {
+  return value.replace(/[\u200B-\u200F\u2028-\u202F\uFEFF\u200E\u200D]/g, "")
+}
+
+export function normalizeForComparison(value: string): string {
+  return stripZeroWidth(value).trim().toLowerCase()
+}
+
+export function normalizeSocialName(value: unknown): unknown {
+  if (typeof value !== "string") return value
+  const normalized = normalizeForComparison(value)
+  if (EMPTY_SOCIAL_NAMES.includes(normalized)) return null
+  return value
+}
 
 export function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined) return true
@@ -81,14 +96,37 @@ export function compareField(
   if (dbEmpty && !sheetEmpty) return "usar_planilha"
 
   const dbFormatted = Array.isArray(dbValue)
-    ? [...dbValue].sort().join(",")
-    : String(dbValue)
+    ? [...dbValue].map((v) => normalizeForComparison(String(v))).sort().join(",")
+    : normalizeForComparison(String(dbValue))
   const sheetFormatted = Array.isArray(sheetValue)
-    ? [...sheetValue].sort().join(",")
-    : String(sheetValue)
+    ? [...sheetValue].map((v) => normalizeForComparison(String(v))).sort().join(",")
+    : normalizeForComparison(String(sheetValue))
 
   if (dbFormatted === sheetFormatted) return null
   return "revisão_manual"
+}
+
+export function resolveApprovedToAttend(
+  dbValue: string,
+  sheetValue: string,
+): DiffAction | null {
+  const dbNorm = normalizeForComparison(dbValue)
+  const sheetNorm = normalizeForComparison(sheetValue)
+  if (dbNorm === sheetNorm) return null
+  if (dbNorm === "pending" && sheetNorm === "rejected") return "usar_planilha"
+  return "manter_db"
+}
+
+export function resolveGeneralNotes(
+  dbValue: string | null,
+  sheetValue: string | null,
+): { action: DiffAction; finalValue: string } | null {
+  if (isEmpty(sheetValue)) return null
+  const prefixed = `[mailing] ${sheetValue}`
+  if (isEmpty(dbValue)) {
+    return { action: "usar_planilha", finalValue: prefixed }
+  }
+  return { action: "usar_planilha", finalValue: `${dbValue}. ${prefixed}` }
 }
 
 export function diffProfile(
@@ -98,11 +136,84 @@ export function diffProfile(
   const entries: DiffEntry[] = []
 
   for (const field of COMPARABLE_FIELDS) {
-    const dbValue = profile[field]
-    const sheetValue = record[field as keyof ParsedMailingRecord]
-    const action = compareField(dbValue, sheetValue)
+    const rawDbValue = profile[field]
+    const rawSheetValue = record[field as keyof ParsedMailingRecord]
 
-    if (action !== null) {
+    if (field === "general_notes") {
+      const result = resolveGeneralNotes(
+        rawDbValue as string | null,
+        rawSheetValue as string | null,
+      )
+      if (result) {
+        entries.push({
+          profile_id: profile.id,
+          field_name: field,
+          db_value: formatValue(rawDbValue),
+          spreadsheet_value: result.finalValue,
+          action: result.action,
+        })
+      }
+      continue
+    }
+
+    if (field === "approved_to_attend") {
+      const action = resolveApprovedToAttend(
+        String(rawDbValue ?? ""),
+        String(rawSheetValue ?? ""),
+      )
+      if (action) {
+        entries.push({
+          profile_id: profile.id,
+          field_name: field,
+          db_value: formatValue(rawDbValue),
+          spreadsheet_value: formatValue(rawSheetValue),
+          action,
+        })
+      }
+      continue
+    }
+
+    if (field === "flag") {
+      const action = compareField(rawDbValue, rawSheetValue)
+      if (action === "revisão_manual") {
+        entries.push({
+          profile_id: profile.id,
+          field_name: field,
+          db_value: formatValue(rawDbValue),
+          spreadsheet_value: formatValue(rawSheetValue),
+          action: "revisão_manual",
+        })
+      }
+      continue
+    }
+
+    const dbValue =
+      field === "social_name" ? normalizeSocialName(rawDbValue) : rawDbValue
+    const sheetValue =
+      field === "social_name"
+        ? normalizeSocialName(rawSheetValue)
+        : rawSheetValue
+
+    const action = compareField(dbValue, sheetValue)
+    if (action === null) continue
+
+    if (action === "usar_planilha") {
+      entries.push({
+        profile_id: profile.id,
+        field_name: field,
+        db_value: formatValue(dbValue),
+        spreadsheet_value: formatValue(sheetValue),
+        action: "usar_planilha",
+      })
+    } else if (action === "revisão_manual") {
+      entries.push({
+        profile_id: profile.id,
+        field_name: field,
+        db_value: formatValue(dbValue),
+        spreadsheet_value: formatValue(sheetValue),
+        action: "manter_db",
+      })
+    } else {
       entries.push({
         profile_id: profile.id,
         field_name: field,

@@ -206,7 +206,7 @@ describe("diffProfile", () => {
     expect(entries).toHaveLength(0)
   })
 
-  it("should detect field differences between profile and record", () => {
+  it("should resolve conflicts as manter_db for regular fields", () => {
     const profile = createMockProfile({
       id: "p1",
       email: "a@x.com",
@@ -229,7 +229,7 @@ describe("diffProfile", () => {
       field_name: "full_name",
       db_value: "João",
       spreadsheet_value: "Maria",
-      action: "revisão_manual",
+      action: "manter_db",
     })
   })
 
@@ -301,24 +301,144 @@ describe("diffProfile", () => {
     )
   })
 
-  it("should format phone as string in output", () => {
+  it("should append general_notes with [mailing] prefix", () => {
     const profile = createMockProfile({
       id: "p1",
       email: "a@x.com",
-      phone: 11999999999,
+      general_notes: "Existing note",
     })
     const record = createMockParsedRecord({
       _rowIndex: 2,
       email: "a@x.com",
-      phone: 11888888888,
+      general_notes: "New info",
     })
 
     const entries = diffProfile(profile, record)
     expect(entries).toContainEqual(
       expect.objectContaining({
-        field_name: "phone",
-        db_value: "11999999999",
-        spreadsheet_value: "11888888888",
+        field_name: "general_notes",
+        db_value: "Existing note",
+        spreadsheet_value: "Existing note. [mailing] New info",
+        action: "usar_planilha",
+      }),
+    )
+  })
+
+  it("should use [mailing] prefix when db notes is empty", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      general_notes: null,
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      general_notes: "New note",
+    })
+
+    const entries = diffProfile(profile, record)
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        field_name: "general_notes",
+        spreadsheet_value: "[mailing] New note",
+        action: "usar_planilha",
+      }),
+    )
+  })
+
+  it("should keep flag differences as revisão_manual", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      flag: "red",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      flag: "none",
+    })
+
+    const entries = diffProfile(profile, record)
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        field_name: "flag",
+        action: "revisão_manual",
+      }),
+    )
+  })
+
+  it("should skip case-only differences", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      full_name: "João Silva",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      full_name: "joão silva",
+    })
+
+    const entries = diffProfile(profile, record)
+    const nameEntry = entries.find((e) => e.field_name === "full_name")
+    expect(nameEntry).toBeUndefined()
+  })
+
+  it("should treat social_name 'Não tenho' as empty", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      social_name: "Não Tenho",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      social_name: null,
+    })
+
+    const entries = diffProfile(profile, record)
+    const snEntry = entries.find((e) => e.field_name === "social_name")
+    expect(snEntry).toBeUndefined()
+  })
+
+  it("should resolve approved_to_attend: DB pending + sheet rejected → usar_planilha", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      approved_to_attend: "pending",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      approved_to_attend: "rejected",
+    })
+
+    const entries = diffProfile(profile, record)
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        field_name: "approved_to_attend",
+        action: "usar_planilha",
+      }),
+    )
+  })
+
+  it("should resolve approved_to_attend: DB approved + sheet pending → manter_db", () => {
+    const profile = createMockProfile({
+      id: "p1",
+      email: "a@x.com",
+      approved_to_attend: "approved",
+    })
+    const record = createMockParsedRecord({
+      _rowIndex: 2,
+      email: "a@x.com",
+      approved_to_attend: "pending",
+    })
+
+    const entries = diffProfile(profile, record)
+    expect(entries).toContainEqual(
+      expect.objectContaining({
+        field_name: "approved_to_attend",
+        action: "manter_db",
       }),
     )
   })
@@ -366,7 +486,7 @@ describe("generateDiff", () => {
       field_name: "full_name",
       db_value: "João",
       spreadsheet_value: "Maria",
-      action: "revisão_manual",
+      action: "manter_db",
     })
   })
 
