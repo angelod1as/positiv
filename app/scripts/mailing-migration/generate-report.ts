@@ -1,9 +1,14 @@
+import {
+  validateEmail,
+  normalizePhone,
+} from "./parse-csv"
 import type {
   ParseResult,
   ParseError,
   ProfileFlag,
   ApprovedToAttend,
 } from "./parse-csv"
+import { EVENT_COLUMN_TO_ID } from "./event-mapping"
 
 export interface EventAttendanceEntry {
   columnName: string
@@ -34,28 +39,69 @@ export interface AnalysisReport {
   generatedAt: string
 }
 
-export function generateReport(_parseResult: ParseResult): AnalysisReport {
+export function generateReport(parseResult: ParseResult): AnalysisReport {
+  const { records, requiresManualReview, errors, stats } = parseResult
+  const totalRecords = stats.total
+
+  const manualReviewWithEmail = requiresManualReview.filter(
+    (entry) => validateEmail(String(entry.rawData["E-mail"] ?? "")) !== null,
+  ).length
+  const withEmail = records.length + manualReviewWithEmail
+  const withoutEmail = totalRecords - withEmail
+
+  const manualReviewWithPhone = requiresManualReview.filter(
+    (entry) => normalizePhone(entry.rawData["Celular"]) !== null,
+  ).length
+  const withPhone = records.length + manualReviewWithPhone
+  const withoutPhone = totalRecords - withPhone
+
+  const eventColumns = Object.keys(EVENT_COLUMN_TO_ID)
+  const eventAttendance: EventAttendanceEntry[] = []
+
+  for (const columnName of eventColumns) {
+    let attended = 0
+    let notAttended = 0
+    let unknown = 0
+
+    for (const record of records) {
+      const value = record.events[columnName]
+      if (value === true) attended++
+      else if (value === false) notAttended++
+      else unknown++
+    }
+
+    if (attended > 0 || notAttended > 0 || unknown > 0) {
+      eventAttendance.push({
+        columnName,
+        eventId: EVENT_COLUMN_TO_ID[columnName],
+        attended,
+        notAttended,
+        unknown,
+      })
+    }
+  }
+
+  const errorsByField: Record<string, number> = {}
+  for (const error of errors) {
+    errorsByField[error.field] = (errorsByField[error.field] ?? 0) + 1
+  }
+
   return {
     summary: {
-      totalRecords: 0,
-      withEmail: 0,
-      withoutEmail: 0,
-      withPhone: 0,
-      withoutPhone: 0,
+      totalRecords,
+      withEmail,
+      withoutEmail,
+      withPhone,
+      withoutPhone,
     },
-    flagDistribution: { none: 0, yellow: 0, red: 0, gray: 0 },
-    approvalDistribution: {
-      pending: 0,
-      approved: 0,
-      approved_with_reservations: 0,
-      rejected: 0,
-    },
-    eventAttendance: [],
+    flagDistribution: stats.byFlag,
+    approvalDistribution: stats.byApproval,
+    eventAttendance,
     dataQuality: {
-      totalErrors: 0,
-      errorsByField: {},
-      errors: [],
+      totalErrors: errors.length,
+      errorsByField,
+      errors,
     },
-    generatedAt: "",
+    generatedAt: new Date().toISOString(),
   }
 }
