@@ -18,13 +18,13 @@ describe('ScoreCard', () => {
   it('shows upward trend with green color', () => {
     render(<ScoreCard value={100} label="Sales" trend="up" trendValue="+12%" />)
     const trendElement = screen.getByText('+12%')
-    expect(trendElement.closest('[data-slot="trend"]')).toHaveClass('text-green')
+    expect(trendElement.closest('[data-slot="trend"]')).toHaveClass('text-green-600')
   })
 
   it('shows downward trend with red color', () => {
     render(<ScoreCard value={50} label="Churn" trend="down" trendValue="-5%" />)
     const trendElement = screen.getByText('-5%')
-    expect(trendElement.closest('[data-slot="trend"]')).toHaveClass('text-red')
+    expect(trendElement.closest('[data-slot="trend"]')).toHaveClass('text-red-600')
   })
 
   it('shows neutral trend with muted color', () => {

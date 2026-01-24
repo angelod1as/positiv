@@ -43,6 +43,7 @@ export interface DonutChartProps extends BaseChartProps {
   innerRadius?: number
   outerRadius?: number
   centerLabel?: ReactNode
+  showLabel?: boolean
 }
 
 export interface AreaChartProps extends BaseChartProps {

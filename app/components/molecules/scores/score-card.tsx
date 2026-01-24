@@ -14,8 +14,8 @@ type ScoreCardProps = {
 }
 
 const trendConfig = {
-  up: { icon: TrendingUp, className: 'text-green' },
-  down: { icon: TrendingDown, className: 'text-red' },
+  up: { icon: TrendingUp, className: 'text-green-600' },
+  down: { icon: TrendingDown, className: 'text-red-600' },
   neutral: { icon: Minus, className: 'text-muted-foreground' },
 }
 
