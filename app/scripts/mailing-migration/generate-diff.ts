@@ -1,0 +1,112 @@
+import * as fs from "fs"
+import * as path from "path"
+import { fileURLToPath } from "url"
+import { Kysely, PostgresDialect } from "kysely"
+import { Pool } from "pg"
+import type { Database } from "~/types/database/kysely.types"
+import type { ParsedMailingRecord } from "./parse-csv"
+import type { MatchedRecord } from "./match-profiles"
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+export type DiffAction = "manter_db" | "usar_planilha" | "revisão_manual"
+
+export interface DiffEntry {
+  profile_id: string
+  field_name: string
+  db_value: string
+  spreadsheet_value: string
+  action: DiffAction
+}
+
+export interface ProfileData {
+  id: string
+  full_name: string | null
+  social_name: string | null
+  gender: string[] | null
+  orientation: string[] | null
+  pronouns: string[] | null
+  email: string
+  phone: number | null
+  rg: string | null
+  approved_to_attend: string
+  flag: string
+  general_notes: string | null
+}
+
+export interface ProfileQueryFn {
+  findByIds: (ids: string[]) => Promise<ProfileData[]>
+}
+
+export const COMPARABLE_FIELDS = [
+  "full_name",
+  "social_name",
+  "gender",
+  "orientation",
+  "pronouns",
+  "email",
+  "phone",
+  "rg",
+  "approved_to_attend",
+  "flag",
+  "general_notes",
+] as const
+
+export function isEmpty(value: unknown): boolean {
+  return false
+}
+
+export function formatValue(value: unknown): string {
+  return ""
+}
+
+export function compareField(
+  dbValue: unknown,
+  sheetValue: unknown,
+): DiffAction | null {
+  return null
+}
+
+export function diffProfile(
+  profile: ProfileData,
+  record: ParsedMailingRecord,
+): DiffEntry[] {
+  return []
+}
+
+export async function generateDiff(
+  matched: MatchedRecord[],
+  parsed: ParsedMailingRecord[],
+  queryFn: ProfileQueryFn,
+): Promise<DiffEntry[]> {
+  return []
+}
+
+export function escapeCsvField(value: string): string {
+  return value
+}
+
+export function formatDiffCsv(entries: DiffEntry[]): string {
+  return ""
+}
+
+export function createKyselyProfileQueryFn(
+  kysely: Kysely<Database>,
+): ProfileQueryFn {
+  return {
+    findByIds: async () => [],
+  }
+}
+
+async function main() {
+  // stub
+}
+
+const isMainModule =
+  import.meta.url === `file://${process.argv[1]}` ||
+  process.argv[1]?.endsWith("generate-diff.ts")
+
+if (isMainModule) {
+  main().catch(console.error)
+}
