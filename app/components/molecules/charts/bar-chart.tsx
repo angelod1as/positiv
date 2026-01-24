@@ -73,7 +73,7 @@ export function BarChart({
           <Bar
             key={s.dataKey}
             dataKey={s.dataKey}
-            fill={`var(--color-${s.dataKey})`}
+            fill={s.color ?? `var(--color-${s.dataKey})`}
             radius={4}
             stackId={stacked ? 'stack' : s.stackId}
           />

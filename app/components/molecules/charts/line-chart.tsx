@@ -54,7 +54,7 @@ export function LineChart({
             key={s.dataKey}
             dataKey={s.dataKey}
             type={curved ? 'monotone' : 'linear'}
-            stroke={`var(--color-${s.dataKey})`}
+            stroke={s.color ?? `var(--color-${s.dataKey})`}
             strokeWidth={2}
             dot={false}
           />

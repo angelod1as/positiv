@@ -54,9 +54,9 @@ export function AreaChart({
             key={s.dataKey}
             dataKey={s.dataKey}
             type="monotone"
-            fill={`var(--color-${s.dataKey})`}
+            fill={s.color ?? `var(--color-${s.dataKey})`}
             fillOpacity={0.4}
-            stroke={`var(--color-${s.dataKey})`}
+            stroke={s.color ?? `var(--color-${s.dataKey})`}
             stackId={stacked ? 'stack' : s.stackId}
           />
         ))}

@@ -38,11 +38,10 @@ export function DonutChart({
         >
           {data.map((entry) => {
             const name = String(entry[nameKey])
-            const color = config[name]?.color
             return (
               <Cell
                 key={name}
-                fill={color ?? `var(--color-${name})`}
+                fill={`var(--color-${name})`}
               />
             )
           })}
