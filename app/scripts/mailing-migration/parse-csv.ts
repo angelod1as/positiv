@@ -14,7 +14,13 @@ import {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export function preprocessEmail(raw: string): string {
-  return raw
+  const stripped = raw.replace(/[\u200B-\u200F\u2028-\u202F\uFEFF]/g, "")
+  const parts = stripped.split(/[;,]/)
+  for (const part of parts) {
+    const trimmed = part.trim()
+    if (trimmed) return trimmed
+  }
+  return ""
 }
 
 export function validateEmail(email: string): string | null {
@@ -204,7 +210,7 @@ export function parseMailingRow(
 ): RowParseResult {
   const errors: ParseError[] = []
 
-  const email = validateEmail(getString(row["E-mail"]))
+  const email = validateEmail(preprocessEmail(getString(row["E-mail"])))
   if (!email) {
     errors.push({
       rowIndex,
