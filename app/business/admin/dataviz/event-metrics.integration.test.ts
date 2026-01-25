@@ -108,17 +108,17 @@ describe("Event Metrics - Integration Tests", () => {
     })
 
     it("should return events ordered by time_event_start ascending", async () => {
-      const event1 = await createTestEvent(tracker, kysely, {
+      await createTestEvent(tracker, kysely, {
         title: "First Event",
         event_status: "Completed" as EventStatus,
         time_event_start: new Date("2024-01-01T19:00:00Z").toISOString(),
       })
-      const event2 = await createTestEvent(tracker, kysely, {
+      await createTestEvent(tracker, kysely, {
         title: "Second Event",
         event_status: "Completed" as EventStatus,
         time_event_start: new Date("2024-02-01T19:00:00Z").toISOString(),
       })
-      const event3 = await createTestEvent(tracker, kysely, {
+      await createTestEvent(tracker, kysely, {
         title: "Third Event",
         event_status: "Completed" as EventStatus,
         time_event_start: new Date("2024-01-15T19:00:00Z").toISOString(),
@@ -214,14 +214,16 @@ describe("Event Metrics - Integration Tests", () => {
       const eventResult = result.find((e) => e.title === uniqueTitle)
 
       expect(eventResult).toBeDefined()
-      expect(eventResult!.inscritos).toBe(6)
-      expect(eventResult!.compareceram).toBe(3)
-      expect(eventResult!.nao_foram).toBe(1)
-      expect(eventResult!.skipped).toBe(1)
-      expect(eventResult!.will_not_go).toBe(1)
-      // rodizio is 2: 1 explicit + 1 from skipped (trigger auto-sets was_selected_for_rotation=true on skipped)
-      expect(eventResult!.rodizio).toBe(2)
-      expect(eventResult!.staff).toBe(1)
+      if (eventResult) {
+        expect(eventResult.inscritos).toBe(6)
+        expect(eventResult.compareceram).toBe(3)
+        expect(eventResult.nao_foram).toBe(1)
+        expect(eventResult.skipped).toBe(1)
+        expect(eventResult.will_not_go).toBe(1)
+        // rodizio is 2: 1 explicit + 1 from skipped (trigger auto-sets was_selected_for_rotation=true on skipped)
+        expect(eventResult.rodizio).toBe(2)
+        expect(eventResult.staff).toBe(1)
+      }
     })
 
     it("should handle events with no participants", async () => {
@@ -235,9 +237,11 @@ describe("Event Metrics - Integration Tests", () => {
       const emptyEvent = result.find((e) => e.title === "Empty Event")
 
       expect(emptyEvent).toBeDefined()
-      expect(emptyEvent!.inscritos).toBe(0)
-      expect(emptyEvent!.compareceram).toBe(0)
-      expect(emptyEvent!.nao_foram).toBe(0)
+      if (emptyEvent) {
+        expect(emptyEvent.inscritos).toBe(0)
+        expect(emptyEvent.compareceram).toBe(0)
+        expect(emptyEvent.nao_foram).toBe(0)
+      }
     })
   })
 
@@ -343,8 +347,10 @@ describe("Event Metrics - Integration Tests", () => {
       const eventResult = result.find((e) => e.title === "Mixed Payments Event")
 
       expect(eventResult).toBeDefined()
-      expect(eventResult!.faturamento_total).toBe(270)
-      expect(eventResult!.num_pagantes).toBe(2)
+      if (eventResult) {
+        expect(eventResult.faturamento_total).toBe(270)
+        expect(eventResult.num_pagantes).toBe(2)
+      }
     })
 
     it("should handle events with no participants", async () => {
@@ -359,9 +365,11 @@ describe("Event Metrics - Integration Tests", () => {
       const emptyEvent = result.find((e) => e.title === "Empty Revenue Event")
 
       expect(emptyEvent).toBeDefined()
-      expect(emptyEvent!.faturamento_total).toBe(0)
-      expect(emptyEvent!.num_pagantes).toBe(0)
-      expect(emptyEvent!.ticket_price).toBe(100)
+      if (emptyEvent) {
+        expect(emptyEvent.faturamento_total).toBe(0)
+        expect(emptyEvent.num_pagantes).toBe(0)
+        expect(emptyEvent.ticket_price).toBe(100)
+      }
     })
 
     it("should return events ordered by time_event_start ascending", async () => {
@@ -489,13 +497,15 @@ describe("Event Metrics - Integration Tests", () => {
       const emptyEvent = result.find((e) => e.title === "Empty Funnel Event")
 
       expect(emptyEvent).toBeDefined()
-      expect(emptyEvent!.inscritos).toBe(0)
-      expect(emptyEvent!.finalizados).toBe(0)
-      expect(emptyEvent!.pagaram).toBe(0)
-      expect(emptyEvent!.compareceram).toBe(0)
-      expect(emptyEvent!.pct_finalizados).toBe(0)
-      expect(emptyEvent!.pct_pagaram).toBe(0)
-      expect(emptyEvent!.pct_compareceram).toBe(0)
+      if (emptyEvent) {
+        expect(emptyEvent.inscritos).toBe(0)
+        expect(emptyEvent.finalizados).toBe(0)
+        expect(emptyEvent.pagaram).toBe(0)
+        expect(emptyEvent.compareceram).toBe(0)
+        expect(emptyEvent.pct_finalizados).toBe(0)
+        expect(emptyEvent.pct_pagaram).toBe(0)
+        expect(emptyEvent.pct_compareceram).toBe(0)
+      }
     })
 
     it("should return events ordered by time_event_start ascending", async () => {
@@ -612,9 +622,11 @@ describe("Event Metrics - Integration Tests", () => {
       const eventResult = result.find((e) => e.title === "No Spots Event")
 
       expect(eventResult).toBeDefined()
-      expect(eventResult!.compareceram).toBe(1)
-      expect(eventResult!.total_spots).toBe(0)
-      expect(eventResult!.occupancy_pct).toBe(0)
+      if (eventResult) {
+        expect(eventResult.compareceram).toBe(1)
+        expect(eventResult.total_spots).toBe(0)
+        expect(eventResult.occupancy_pct).toBe(0)
+      }
     })
 
     it("should handle events with no participants", async () => {
@@ -629,9 +641,11 @@ describe("Event Metrics - Integration Tests", () => {
       const emptyEvent = result.find((e) => e.title === "Empty Occupancy Event")
 
       expect(emptyEvent).toBeDefined()
-      expect(emptyEvent!.compareceram).toBe(0)
-      expect(emptyEvent!.total_spots).toBe(100)
-      expect(emptyEvent!.occupancy_pct).toBe(0)
+      if (emptyEvent) {
+        expect(emptyEvent.compareceram).toBe(0)
+        expect(emptyEvent.total_spots).toBe(100)
+        expect(emptyEvent.occupancy_pct).toBe(0)
+      }
     })
 
     it("should return events ordered by time_event_start ascending", async () => {

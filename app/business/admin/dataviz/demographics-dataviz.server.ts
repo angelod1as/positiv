@@ -59,7 +59,7 @@ export async function getDemographicsData(
   mode: DemographicsMode
 ): Promise<DemographicsDataResult> {
   // Build the base query depending on mode
-  let profileIds: string[]
+  let profileIds: string[] = []
 
   if (mode === "attended") {
     // Get profile IDs that have attended at least one event
@@ -81,96 +81,64 @@ export async function getDemographicsData(
     }
   }
 
-  // Query gender distribution
-  const genderQuery = kyselyDb
-    .selectFrom("profiles")
-    .innerJoin(sql`unnest(profiles.gender) as g(value)`, (join) =>
-      join.onTrue()
-    )
-    .where("profiles.gender", "is not", null)
-    .groupBy(sql`g.value`)
-    .select([
-      sql<string>`g.value`.as("category"),
-      sql<number>`count(distinct profiles.id)::int`.as("count"),
-    ])
+  const shouldFilterByAttendees = mode === "attended" && profileIds.length > 0
+  const profileIdsList = profileIds.length > 0 ? profileIds.map((id) => `'${id}'`).join(",") : "''"
+  const profileFilter = shouldFilterByAttendees
+    ? `AND profiles.id IN (${profileIdsList})`
+    : ""
 
-  const genderResult = await (mode === "attended" && profileIds!.length > 0
-    ? genderQuery.where("profiles.id", "in", profileIds!)
-    : genderQuery
-  ).execute()
+  // Query gender distribution using raw SQL for unnest
+  const genderResult = await sql<{ category: string; count: number }>`
+    SELECT g.value as category, count(distinct profiles.id)::int as count
+    FROM profiles, unnest(profiles.gender) as g(value)
+    WHERE profiles.gender IS NOT NULL ${sql.raw(profileFilter)}
+    GROUP BY g.value
+  `.execute(kyselyDb)
 
-  // Query orientation distribution
-  const orientationQuery = kyselyDb
-    .selectFrom("profiles")
-    .innerJoin(sql`unnest(profiles.orientation) as o(value)`, (join) =>
-      join.onTrue()
-    )
-    .where("profiles.orientation", "is not", null)
-    .groupBy(sql`o.value`)
-    .select([
-      sql<string>`o.value`.as("category"),
-      sql<number>`count(distinct profiles.id)::int`.as("count"),
-    ])
+  // Query orientation distribution using raw SQL for unnest
+  const orientationResult = await sql<{ category: string; count: number }>`
+    SELECT o.value as category, count(distinct profiles.id)::int as count
+    FROM profiles, unnest(profiles.orientation) as o(value)
+    WHERE profiles.orientation IS NOT NULL ${sql.raw(profileFilter)}
+    GROUP BY o.value
+  `.execute(kyselyDb)
 
-  const orientationResult = await (mode === "attended" && profileIds!.length > 0
-    ? orientationQuery.where("profiles.id", "in", profileIds!)
-    : orientationQuery
-  ).execute()
-
-  // Query race distribution
-  const raceQuery = kyselyDb
-    .selectFrom("profiles")
-    .innerJoin(sql`unnest(profiles.race_color) as r(value)`, (join) =>
-      join.onTrue()
-    )
-    .where("profiles.race_color", "is not", null)
-    .groupBy(sql`r.value`)
-    .select([
-      sql<string>`r.value`.as("category"),
-      sql<number>`count(distinct profiles.id)::int`.as("count"),
-    ])
-
-  const raceResult = await (mode === "attended" && profileIds!.length > 0
-    ? raceQuery.where("profiles.id", "in", profileIds!)
-    : raceQuery
-  ).execute()
+  // Query race distribution using raw SQL for unnest
+  const raceResult = await sql<{ category: string; count: number }>`
+    SELECT r.value as category, count(distinct profiles.id)::int as count
+    FROM profiles, unnest(profiles.race_color) as r(value)
+    WHERE profiles.race_color IS NOT NULL ${sql.raw(profileFilter)}
+    GROUP BY r.value
+  `.execute(kyselyDb)
 
   // Query age distribution
-  const ageQuery = kyselyDb
-    .selectFrom("profiles")
-    .where("profiles.date_of_birth", "is not", null)
-    .select([
-      sql<string>`
-        CASE
-          WHEN date_part('year', age(profiles.date_of_birth::date)) < 25 THEN '18-24'
-          WHEN date_part('year', age(profiles.date_of_birth::date)) < 35 THEN '25-34'
-          WHEN date_part('year', age(profiles.date_of_birth::date)) < 45 THEN '35-44'
-          WHEN date_part('year', age(profiles.date_of_birth::date)) < 55 THEN '45-54'
-          ELSE '55+'
-        END
-      `.as("category"),
-      sql<number>`count(*)::int`.as("count"),
-    ])
-    .groupBy(sql`
-        CASE
-          WHEN date_part('year', age(profiles.date_of_birth::date)) < 25 THEN '18-24'
-          WHEN date_part('year', age(profiles.date_of_birth::date)) < 35 THEN '25-34'
-          WHEN date_part('year', age(profiles.date_of_birth::date)) < 45 THEN '35-44'
-          WHEN date_part('year', age(profiles.date_of_birth::date)) < 55 THEN '45-54'
-          ELSE '55+'
-        END
-      `)
-
-  const ageResult = await (mode === "attended" && profileIds!.length > 0
-    ? ageQuery.where("profiles.id", "in", profileIds!)
-    : ageQuery
-  ).execute()
+  const ageResult = await sql<{ category: string; count: number }>`
+    SELECT
+      CASE
+        WHEN date_part('year', age(profiles.date_of_birth::date)) < 25 THEN '18-24'
+        WHEN date_part('year', age(profiles.date_of_birth::date)) < 35 THEN '25-34'
+        WHEN date_part('year', age(profiles.date_of_birth::date)) < 45 THEN '35-44'
+        WHEN date_part('year', age(profiles.date_of_birth::date)) < 55 THEN '45-54'
+        ELSE '55+'
+      END as category,
+      count(*)::int as count
+    FROM profiles
+    WHERE profiles.date_of_birth IS NOT NULL ${sql.raw(profileFilter)}
+    GROUP BY
+      CASE
+        WHEN date_part('year', age(profiles.date_of_birth::date)) < 25 THEN '18-24'
+        WHEN date_part('year', age(profiles.date_of_birth::date)) < 35 THEN '25-34'
+        WHEN date_part('year', age(profiles.date_of_birth::date)) < 45 THEN '35-44'
+        WHEN date_part('year', age(profiles.date_of_birth::date)) < 55 THEN '45-54'
+        ELSE '55+'
+      END
+  `.execute(kyselyDb)
 
   // Calculate totals for percentages
-  const genderTotal = genderResult.reduce((sum, r) => sum + r.count, 0)
-  const orientationTotal = orientationResult.reduce((sum, r) => sum + r.count, 0)
-  const raceTotal = raceResult.reduce((sum, r) => sum + r.count, 0)
-  const ageTotal = ageResult.reduce((sum, r) => sum + r.count, 0)
+  const genderTotal = genderResult.rows.reduce((sum: number, r) => sum + r.count, 0)
+  const orientationTotal = orientationResult.rows.reduce((sum: number, r) => sum + r.count, 0)
+  const raceTotal = raceResult.rows.reduce((sum: number, r) => sum + r.count, 0)
+  const ageTotal = ageResult.rows.reduce((sum: number, r) => sum + r.count, 0)
 
   const toDistribution = (
     data: { category: string; count: number }[],
@@ -183,9 +151,9 @@ export async function getDemographicsData(
     }))
 
   return {
-    gender: toDistribution(genderResult, genderTotal),
-    orientation: toDistribution(orientationResult, orientationTotal),
-    race: toDistribution(raceResult, raceTotal),
-    age: toDistribution(ageResult, ageTotal),
+    gender: toDistribution(genderResult.rows, genderTotal),
+    orientation: toDistribution(orientationResult.rows, orientationTotal),
+    race: toDistribution(raceResult.rows, raceTotal),
+    age: toDistribution(ageResult.rows, ageTotal),
   }
 }

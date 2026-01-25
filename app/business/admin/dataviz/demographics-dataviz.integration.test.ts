@@ -138,8 +138,10 @@ describe("Demographics DataViz - Integration Tests", () => {
       )
 
       expect(eventResult).toBeDefined()
-      expect(eventResult!.veterans).toBe(1)
-      expect(eventResult!.rookies).toBe(0)
+      if (eventResult) {
+        expect(eventResult.veterans).toBe(1)
+        expect(eventResult.rookies).toBe(0)
+      }
     })
 
     it("should handle events with no participants", async () => {
@@ -155,8 +157,10 @@ describe("Demographics DataViz - Integration Tests", () => {
       )
 
       expect(emptyEvent).toBeDefined()
-      expect(emptyEvent!.veterans).toBe(0)
-      expect(emptyEvent!.rookies).toBe(0)
+      if (emptyEvent) {
+        expect(emptyEvent.veterans).toBe(0)
+        expect(emptyEvent.rookies).toBe(0)
+      }
     })
 
     it("should return events ordered by time_event_start ascending", async () => {
@@ -221,7 +225,9 @@ describe("Demographics DataViz - Integration Tests", () => {
         (g) => g.category === "Cis Woman"
       )
       expect(cisWomanGender).toBeDefined()
-      expect(cisWomanGender!.count).toBe(2)
+      if (cisWomanGender) {
+        expect(cisWomanGender.count).toBe(2)
+      }
 
       // Orientation distribution
       expect(result.orientation.length).toBeGreaterThan(0)
@@ -273,7 +279,9 @@ describe("Demographics DataViz - Integration Tests", () => {
         (g) => g.category === "Non-binary"
       )
       expect(nonBinaryGender).toBeDefined()
-      expect(nonBinaryGender!.count).toBe(1)
+      if (nonBinaryGender) {
+        expect(nonBinaryGender.count).toBe(1)
+      }
 
       // Should NOT have demographics from non-attended profile
       const cisMenGender = result.gender.find((g) => g.category === "Cis Man")

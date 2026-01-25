@@ -70,16 +70,17 @@ describe("Growth and Retention DataViz - Integration Tests", () => {
       const mar = result.find((r) => r.month.startsWith("2024-03"))
 
       expect(jan).toBeDefined()
-      expect(jan!.new_profiles).toBe(2)
-
       expect(feb).toBeDefined()
-      expect(feb!.new_profiles).toBe(1)
-
       expect(mar).toBeDefined()
-      expect(mar!.new_profiles).toBe(2)
 
-      // Cumulative should be increasing
-      expect(mar!.cumulative).toBeGreaterThan(jan!.cumulative)
+      if (jan && feb && mar) {
+        expect(jan.new_profiles).toBe(2)
+        expect(feb.new_profiles).toBe(1)
+        expect(mar.new_profiles).toBe(2)
+
+        // Cumulative should be increasing
+        expect(mar.cumulative).toBeGreaterThan(jan.cumulative)
+      }
     })
 
     it("should return results ordered by month ascending", async () => {
@@ -196,13 +197,14 @@ describe("Growth and Retention DataViz - Integration Tests", () => {
       const threeEvents = result.find((r) => r.events_attended === 3)
 
       expect(oneEvent).toBeDefined()
-      expect(oneEvent!.num_people).toBe(2)
-
       expect(twoEvents).toBeDefined()
-      expect(twoEvents!.num_people).toBe(1)
-
       expect(threeEvents).toBeDefined()
-      expect(threeEvents!.num_people).toBe(1)
+
+      if (oneEvent && twoEvents && threeEvents) {
+        expect(oneEvent.num_people).toBe(2)
+        expect(twoEvents.num_people).toBe(1)
+        expect(threeEvents.num_people).toBe(1)
+      }
     })
 
     it("should only count attendance at completed events", async () => {
@@ -238,7 +240,9 @@ describe("Growth and Retention DataViz - Integration Tests", () => {
       // Should only count the completed event
       const oneEvent = result.find((r) => r.events_attended === 1)
       expect(oneEvent).toBeDefined()
-      expect(oneEvent!.num_people).toBe(1)
+      if (oneEvent) {
+        expect(oneEvent.num_people).toBe(1)
+      }
 
       const twoEvents = result.find((r) => r.events_attended === 2)
       expect(twoEvents).toBeUndefined()
@@ -293,10 +297,12 @@ describe("Growth and Retention DataViz - Integration Tests", () => {
 
       const january = result.find((r) => r.month_name === "January")
       expect(january).toBeDefined()
-      // Average inscritos: (1 + 2) / 2 = 1.5 -> rounded to 2
-      expect(january!.avg_inscritos).toBeGreaterThanOrEqual(1)
-      // Average compareceram: (1 + 1) / 2 = 1
-      expect(january!.avg_compareceram).toBeGreaterThanOrEqual(1)
+      if (january) {
+        // Average inscritos: (1 + 2) / 2 = 1.5 -> rounded to 2
+        expect(january.avg_inscritos).toBeGreaterThanOrEqual(1)
+        // Average compareceram: (1 + 1) / 2 = 1
+        expect(january.avg_compareceram).toBeGreaterThanOrEqual(1)
+      }
     })
 
     it("should return all 12 months when data exists", async () => {
