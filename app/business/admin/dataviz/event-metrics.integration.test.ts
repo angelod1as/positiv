@@ -11,6 +11,7 @@ import {
 import {
   getEventAttendanceData,
   getEventRevenueData,
+  getConversionFunnelData,
 } from "./event-metrics.server"
 import type { EventStatus } from "~types/database/entities.types"
 
@@ -385,6 +386,140 @@ describe("Event Metrics - Integration Tests", () => {
       expect(result[0].title).toBe("First Revenue")
       expect(result[1].title).toBe("Third Revenue")
       expect(result[2].title).toBe("Second Revenue")
+    })
+  })
+
+  describe("getConversionFunnelData", () => {
+    it("should calculate conversion funnel for completed events only", async () => {
+      const completedEvent = await createTestEvent(tracker, kysely, {
+        title: "Funnel Event",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-01-15T19:00:00Z").toISOString(),
+      })
+
+      const draftEvent = await createTestEvent(tracker, kysely, {
+        title: "Draft Event",
+        event_status: "Draft" as EventStatus,
+        time_event_start: new Date("2024-02-15T19:00:00Z").toISOString(),
+      })
+
+      const profiles = await Promise.all([
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-funnel1@test.com`,
+        }),
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-funnel2@test.com`,
+        }),
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-funnel3@test.com`,
+        }),
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-funnel4@test.com`,
+        }),
+      ])
+
+      // Profile 1: finalised, paid, attended
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: completedEvent.id,
+        profile_id: profiles[0].id,
+        application_status: "finalised",
+        has_paid: true,
+        attendance_status: "attended",
+      })
+      // Profile 2: finalised, paid, not attended
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: completedEvent.id,
+        profile_id: profiles[1].id,
+        application_status: "finalised",
+        has_paid: true,
+        attendance_status: "not-attended",
+      })
+      // Profile 3: finalised, not paid
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: completedEvent.id,
+        profile_id: profiles[2].id,
+        application_status: "finalised",
+        has_paid: false,
+        attendance_status: "pending",
+      })
+      // Profile 4: pending (not finalised)
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: completedEvent.id,
+        profile_id: profiles[3].id,
+        application_status: "pending",
+        has_paid: false,
+        attendance_status: "pending",
+      })
+
+      // Draft event participant (should not be counted)
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: draftEvent.id,
+        profile_id: profiles[0].id,
+        application_status: "finalised",
+        has_paid: true,
+        attendance_status: "attended",
+      })
+
+      const result = await getConversionFunnelData()
+
+      expect(result.length).toBe(1)
+      expect(result[0].title).toBe("Funnel Event")
+      expect(result[0].inscritos).toBe(4)
+      expect(result[0].finalizados).toBe(3)
+      expect(result[0].pagaram).toBe(2)
+      expect(result[0].compareceram).toBe(1)
+      expect(result[0].pct_finalizados).toBe(75)
+      expect(result[0].pct_pagaram).toBe(50)
+      expect(result[0].pct_compareceram).toBe(25)
+    })
+
+    it("should handle events with no participants", async () => {
+      await createTestEvent(tracker, kysely, {
+        title: "Empty Funnel Event",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-04-01T19:00:00Z").toISOString(),
+      })
+
+      const result = await getConversionFunnelData()
+      const emptyEvent = result.find((e) => e.title === "Empty Funnel Event")
+
+      expect(emptyEvent).toBeDefined()
+      expect(emptyEvent!.inscritos).toBe(0)
+      expect(emptyEvent!.finalizados).toBe(0)
+      expect(emptyEvent!.pagaram).toBe(0)
+      expect(emptyEvent!.compareceram).toBe(0)
+      expect(emptyEvent!.pct_finalizados).toBe(0)
+      expect(emptyEvent!.pct_pagaram).toBe(0)
+      expect(emptyEvent!.pct_compareceram).toBe(0)
+    })
+
+    it("should return events ordered by time_event_start ascending", async () => {
+      await createTestEvent(tracker, kysely, {
+        title: "First Funnel",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-01-01T19:00:00Z").toISOString(),
+      })
+      await createTestEvent(tracker, kysely, {
+        title: "Second Funnel",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-02-01T19:00:00Z").toISOString(),
+      })
+      await createTestEvent(tracker, kysely, {
+        title: "Third Funnel",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-01-15T19:00:00Z").toISOString(),
+      })
+
+      const result = await getConversionFunnelData()
+
+      expect(result.length).toBe(3)
+      expect(result[0].title).toBe("First Funnel")
+      expect(result[1].title).toBe("Third Funnel")
+      expect(result[2].title).toBe("Second Funnel")
     })
   })
 })
