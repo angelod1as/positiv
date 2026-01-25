@@ -8,7 +8,10 @@ import {
   createTestEvent,
   createTestEventParticipant,
 } from "~/test/db-test-utils"
-import { getEventAttendanceData } from "./event-metrics.server"
+import {
+  getEventAttendanceData,
+  getEventRevenueData,
+} from "./event-metrics.server"
 import type { EventStatus } from "~types/database/entities.types"
 
 describe("Event Metrics - Integration Tests", () => {
@@ -233,6 +236,155 @@ describe("Event Metrics - Integration Tests", () => {
       expect(emptyEvent!.inscritos).toBe(0)
       expect(emptyEvent!.compareceram).toBe(0)
       expect(emptyEvent!.nao_foram).toBe(0)
+    })
+  })
+
+  describe("getEventRevenueData", () => {
+    it("should return revenue data for completed events only", async () => {
+      const completedEvent = await createTestEvent(tracker, kysely, {
+        title: "Revenue Event",
+        emoji: "💰",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-01-15T19:00:00Z").toISOString(),
+        ticket_price: 100,
+      })
+
+      const draftEvent = await createTestEvent(tracker, kysely, {
+        title: "Draft Event",
+        event_status: "Draft" as EventStatus,
+        time_event_start: new Date("2024-02-15T19:00:00Z").toISOString(),
+        ticket_price: 200,
+      })
+
+      const profile1 = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `${testPrefix}-rev1@test.com`,
+      })
+      const profile2 = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `${testPrefix}-rev2@test.com`,
+      })
+
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: completedEvent.id,
+        profile_id: profile1.id,
+        has_paid: true,
+        payment: 100,
+      })
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: completedEvent.id,
+        profile_id: profile2.id,
+        has_paid: true,
+        payment: 80,
+      })
+
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: draftEvent.id,
+        profile_id: profile1.id,
+        has_paid: true,
+        payment: 200,
+      })
+
+      const result = await getEventRevenueData()
+
+      expect(result.length).toBe(1)
+      expect(result[0].title).toBe("Revenue Event")
+      expect(result[0].emoji).toBe("💰")
+      expect(result[0].faturamento_total).toBe(180)
+      expect(result[0].ticket_price).toBe(100)
+      expect(result[0].num_pagantes).toBe(2)
+    })
+
+    it("should calculate revenue correctly with mixed payment statuses", async () => {
+      const event = await createTestEvent(tracker, kysely, {
+        title: "Mixed Payments Event",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-03-01T19:00:00Z").toISOString(),
+        ticket_price: 150,
+      })
+
+      const profiles = await Promise.all([
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-paid1@test.com`,
+        }),
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-paid2@test.com`,
+        }),
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-notpaid@test.com`,
+        }),
+      ])
+
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: event.id,
+        profile_id: profiles[0].id,
+        has_paid: true,
+        payment: 150,
+      })
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: event.id,
+        profile_id: profiles[1].id,
+        has_paid: true,
+        payment: 120,
+      })
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: event.id,
+        profile_id: profiles[2].id,
+        has_paid: false,
+        payment: 0,
+      })
+
+      const result = await getEventRevenueData()
+      const eventResult = result.find((e) => e.title === "Mixed Payments Event")
+
+      expect(eventResult).toBeDefined()
+      expect(eventResult!.faturamento_total).toBe(270)
+      expect(eventResult!.num_pagantes).toBe(2)
+    })
+
+    it("should handle events with no participants", async () => {
+      await createTestEvent(tracker, kysely, {
+        title: "Empty Revenue Event",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-04-01T19:00:00Z").toISOString(),
+        ticket_price: 100,
+      })
+
+      const result = await getEventRevenueData()
+      const emptyEvent = result.find((e) => e.title === "Empty Revenue Event")
+
+      expect(emptyEvent).toBeDefined()
+      expect(emptyEvent!.faturamento_total).toBe(0)
+      expect(emptyEvent!.num_pagantes).toBe(0)
+      expect(emptyEvent!.ticket_price).toBe(100)
+    })
+
+    it("should return events ordered by time_event_start ascending", async () => {
+      await createTestEvent(tracker, kysely, {
+        title: "First Revenue",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-01-01T19:00:00Z").toISOString(),
+      })
+      await createTestEvent(tracker, kysely, {
+        title: "Second Revenue",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-02-01T19:00:00Z").toISOString(),
+      })
+      await createTestEvent(tracker, kysely, {
+        title: "Third Revenue",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-01-15T19:00:00Z").toISOString(),
+      })
+
+      const result = await getEventRevenueData()
+
+      expect(result.length).toBe(3)
+      expect(result[0].title).toBe("First Revenue")
+      expect(result[1].title).toBe("Third Revenue")
+      expect(result[2].title).toBe("Second Revenue")
     })
   })
 })
