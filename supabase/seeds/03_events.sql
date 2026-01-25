@@ -1,9 +1,11 @@
 -- supabase/seed/03_events.sql
 
--- Clear existing data from the public.events table before seeding
-TRUNCATE public.events CASCADE; -- Also truncates related tables due to foreign keys
+-- This script creates 30 events with realistic status distribution:
+-- 20 Completed, 4 Cancelled, 2 Registration Open, 2 Registration Closed, 1 Scheduled, 1 Draft
+-- 2 BDSM events (1 completed, 1 registration open)
 
--- Seed the public.events table with various events having different statuses
+TRUNCATE public.events CASCADE;
+
 INSERT INTO public.events (
     title,
     location,
@@ -21,185 +23,126 @@ INSERT INTO public.events (
     ticket_price,
     total_spots
 )
-VALUES
--- Draft
-(
-    'Evento Rascunho',                                    -- title
-    'Suíte Nagoya, Motel Harmony',                      -- location
-    'Vestibulum nulla orci, ullamcorper et vehicula in, placerat vel tortor. Praesent fermentum elit a tortor pellentesque, eget luctus turpis laoreet. Nunc pharetra, urna viverra porttitor pharetra, nisl sapien molestie ante, quis blandit arcu urna non metus',            -- description
-    '📓',                                               -- emoji
-    'Draft',                                            -- event_status
-    'regular',                                          -- event_type
-    now() + interval '1 month',                         -- time_event_start
-    now() + interval '1 month' + interval '2 hours',    -- time_event_end
-    now() + interval '3 weeks',                         -- time_application_start
-    now() + interval '1 month' - interval '7 days',     -- time_group_start
-    now() + interval '1 month' + interval '30 days',    -- time_group_end
-    now() + interval '1 month' - interval '21 days',    -- time_payment_start
-    now() + interval '1 month' - interval '9 days',     -- time_payment_end
-    110.00,                                             -- ticket_price
-    100                                                 -- total_spots
-),
--- Scheduled
-(
-    'Evento Agendado 1',                                      -- title
-    'Suíte Nagoya, Motel Harmony',                            -- location
-    'Mauris rutrum sem a enim viverra hendrerit. Aenean mattis odio nec felis vulputate, eget tristique dolor blandit.',                                                -- description
-    '📅',                                                     -- emoji
-    'Scheduled',                                              -- event_status
-    'regular',                                                -- event_type
-    now() + interval '2 months',                              -- time_event_start
-    now() + interval '2 months' + interval '3 hours',         -- time_event_end
-    now() + interval '1 month',                              -- time_application_start
-    now() + interval '2 months' - interval '7 days',          -- time_group_start
-    now() + interval '2 months' + interval '30 days',         -- time_group_end
-    now() + interval '2 months' - interval '21 days',         -- time_payment_start
-    now() + interval '2 months' - interval '9 days',          -- time_payment_end
-    10.00,                                                    -- ticket_price
-    50                                                        -- total_spots
-),
--- Registration Open
-(
-    'Evento Com Inscrições Abertas 2', -- title
-    'Suíte Nagoya, Motel Harmony', -- location
-    'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Sed vel lorem eu urna pretium vehicula non at urna. ', -- description
-    '🙆',                     -- emoji
-    'Registration Open',     -- event_status
-    'regular',               -- event_type
-    now() + interval '5 months', -- time_event_start (1 month after BDSM)
-    now() + interval '5 months' + interval '4 hours', -- time_event_end
-    now() - interval '2 week', -- time_application_start
-    now() + interval '5 months' - interval '7 days',   -- time_group_start
-    now() + interval '5 months' + interval '30 days',  -- time_group_end
-    now() + interval '5 months' - interval '21 days',  -- time_payment_start
-    now() + interval '5 months' - interval '9 days',   -- time_payment_end
-    25.00,                   -- ticket_price
-    200                      -- total_spots
-),
--- Registration Open - BDSM Event for Testing
-(
-    'Festa BDSM - Inscrições Abertas', -- title
-    'Suíte Premium, Motel Harmony', -- location
-    'Uma edição especial BDSM da Positiv. Venha explorar seus limites em um ambiente seguro e consensual.', -- description
-    '🔒',                     -- emoji
-    'Registration Open',     -- event_status
-    'bdsm',                  -- event_type
-    now() + interval '4 months', -- time_event_start (1 month after Abertas 1)
-    now() + interval '4 months' + interval '5 hours', -- time_event_end
-    now() - interval '1 week', -- time_application_start
-    now() + interval '4 months' - interval '7 days',   -- time_group_start
-    now() + interval '4 months' + interval '30 days',  -- time_group_end
-    now() + interval '4 months' - interval '21 days',  -- time_payment_start
-    now() + interval '4 months' - interval '9 days',   -- time_payment_end
-    150.00,                  -- ticket_price
-    80                       -- total_spots
-),
-(
-    'Evento Com Inscrições Abertas 1', -- title
-    'Suíte Nagoya, Motel Harmony', -- location
-    'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Sed vel lorem eu urna pretium vehicula non at urna. ', -- description
-    '🤗',                     -- emoji
-    'Registration Open',     -- event_status
-    'regular',               -- event_type
-    now() + interval '3 months', -- time_event_start
-    now() + interval '3 months' + interval '4 hours', -- time_event_end
-    now() - interval '1 week', -- time_application_start
-    now() + interval '3 months' - interval '7 days',   -- time_group_start
-    now() + interval '3 months' + interval '30 days',  -- time_group_end
-    now() + interval '3 months' - interval '21 days',  -- time_payment_start
-    now() + interval '3 months' - interval '9 days',   -- time_payment_end
-    25.00,                   -- ticket_price
-    200                      -- total_spots
-),
--- Registration Closed
-(
-    'Evento Com Inscrições Fechadas 1', -- title
-    'Suíte Nagoya, Motel Harmony', -- location
-    'ivamus nec ante eget urna volutpat feugiat. Curabitur nulla sapien, pulvinar a cursus accumsan, mollis vitae odio. Nulla ac metus eget risus posuere auctor. ', -- description
-    '😓',                     -- emoji
-    'Registration Closed',   -- event_status
-    'regular',               -- event_type
-    now() + interval '6 months', -- time_event_start
-    now() + interval '6 months' + interval '1 hour', -- time_event_end
-    now() - interval '2 months', -- time_application_start
-    now() + interval '6 months' - interval '7 days', -- time_group_start
-    now() + interval '6 months' + interval '30 days', -- time_group_end
-    now() + interval '6 months' - interval '21 days', -- time_payment_start
-    now() + interval '6 months' - interval '9 days',  -- time_payment_end
-    15.00,                   -- ticket_price
-    150                      -- total_spots
-),
--- Cancelled
-(
-    'Evento Cancelado 1',     -- title
-    'Suíte Nagoya, Motel Harmony', -- location
-    'Aviso: O Evento Cancelado 1 foi cancelado.', -- description
-    '',                      -- emoji
-    'Cancelled',             -- event_status
-    'regular',               -- event_type
-    now() - interval '1 hour', -- time_event_start
-    now() + interval '2 hours', -- time_event_end
-    now() - interval '1 month', -- time_application_start
-    now() - interval '1 hour' - interval '7 days',   -- time_group_start
-    now() - interval '1 hour' + interval '30 days',  -- time_group_end
-    now() - interval '1 hour' - interval '21 days',  -- time_payment_start
-    now() - interval '1 hour' - interval '9 days',   -- time_payment_end
-    90.00,                    -- ticket_price
-    75                       -- total_spots
-),
--- Completed
-(
-    'Evento Concluído 1',     -- title
-    'Suíte Nagoya, Motel Harmony', -- location
-    'Resumo e resultados do Evento Concluído 1.', -- description
-    '🥳',                     -- emoji
-    'Completed',             -- event_status
-    'regular',               -- event_type
-    now() - interval '1 month', -- time_event_start
-    now() - interval '1 month' + interval '3 hours', -- time_event_end
-    now() - interval '3 months', -- time_application_start
-    now() - interval '1 month' - interval '7 days',    -- time_group_start
-    now() - interval '1 month' + interval '30 days',   -- time_group_end
-    now() - interval '1 month' - interval '21 days',   -- time_payment_start
-    now() - interval '1 month' - interval '9 days',    -- time_payment_end
-    50.00,                   -- ticket_price
-    120                      -- total_spots
-),
--- Cancelled
-(
-    'Evento Cancelado 2',     -- title
-    'Suíte Nagoya, Motel Harmony', -- location
-    'Aviso: O Evento Cancelado 2 foi cancelado.', -- description
-    '🙅‍♂️',                     -- emoji
-    'Cancelled',             -- event_status
-    'regular',               -- event_type
-    now() + interval '6 months', -- time_event_start
-    now() + interval '6 months' + interval '2 hours', -- time_event_end
-    now() + interval '1 week', -- time_application_start
-    now() + interval '6 months' - interval '7 days',   -- time_group_start
-    now() + interval '6 months' + interval '30 days',  -- time_group_end
-    now() + interval '6 months' - interval '21 days',  -- time_payment_start
-    now() + interval '6 months' - interval '9 days',   -- time_payment_end
-    90.00,                    -- ticket_price
-    30                       -- total_spots
-),
--- Scheduled
-(
-    'Evento Agendado 2',     -- title
-    'Suíte Nagoya, Motel Harmony', -- location
-    'Prepare-se para o Evento Agendado 2! Marque em seus calendários!', -- description
-    '🙏',                     -- emoji
-    'Scheduled',             -- event_status
-    'regular',               -- event_type
-    now() + interval '7 months', -- time_event_start
-    now() + interval '7 months' + interval '1 hour', -- time_event_end
-    now() + interval '6 months', -- time_application_start
-    now() + interval '7 months' - interval '7 days',   -- time_group_start
-    now() + interval '7 months' + interval '30 days',  -- time_group_end
-    now() + interval '7 months' - interval '21 days',  -- time_payment_start
-    now() + interval '7 months' - interval '9 days',   -- time_payment_end
-    5.00,                    -- ticket_price
-    80                       -- total_spots
-);
-
--- Note: TRUNCATE ensures the table is empty, so no need for ON CONFLICT handling here.
+SELECT
+    title,
+    location,
+    description,
+    emoji,
+    event_status,
+    event_type,
+    time_event_start,
+    time_event_end,
+    time_application_start,
+    time_group_start,
+    time_group_end,
+    time_payment_start,
+    time_payment_end,
+    ticket_price,
+    total_spots
+FROM (
+    SELECT
+        n,
+        CASE
+            WHEN n <= 20 THEN 'Evento Concluido ' || n
+            WHEN n <= 24 THEN 'Evento Cancelado ' || (n - 20)
+            WHEN n = 25 THEN 'Festa BDSM - Inscricoes Abertas'
+            WHEN n = 26 THEN 'Evento Com Inscricoes Abertas 1'
+            WHEN n <= 28 THEN 'Evento Com Inscricoes Fechadas ' || (n - 26)
+            WHEN n = 29 THEN 'Evento Agendado 1'
+            ELSE 'Evento Rascunho'
+        END AS title,
+        CASE
+            WHEN n = 25 THEN 'Suite Premium, Motel Harmony'
+            ELSE 'Suite Nagoya, Motel Harmony'
+        END AS location,
+        CASE
+            WHEN n <= 20 THEN 'Descricao do evento concluido ' || n || '. Este evento ja aconteceu e foi um sucesso!'
+            WHEN n <= 24 THEN 'Aviso: Este evento foi cancelado. Pedimos desculpas pelo inconveniente.'
+            WHEN n = 25 THEN 'Uma edicao especial BDSM da Positiv. Venha explorar seus limites em um ambiente seguro e consensual.'
+            WHEN n = 26 THEN 'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Inscricoes abertas!'
+            WHEN n <= 28 THEN 'As inscricoes para este evento foram encerradas. Aguarde novas oportunidades.'
+            WHEN n = 29 THEN 'Prepare-se para este evento! Marque em seus calendarios!'
+            ELSE 'Evento em fase de planejamento. Mais informacoes em breve.'
+        END AS description,
+        CASE
+            WHEN n <= 20 THEN (ARRAY['🎉', '🥳', '✨', '🎊', '💃', '🕺', '🌟', '💫', '🔥', '❤️'])[((n - 1) % 10) + 1]
+            WHEN n <= 24 THEN '🙅'
+            WHEN n = 25 THEN '🔒'
+            WHEN n = 26 THEN '🤗'
+            WHEN n <= 28 THEN '😓'
+            WHEN n = 29 THEN '📅'
+            ELSE '📓'
+        END AS emoji,
+        CASE
+            WHEN n <= 20 THEN 'Completed'::public.event_status
+            WHEN n <= 24 THEN 'Cancelled'::public.event_status
+            WHEN n <= 26 THEN 'Registration Open'::public.event_status
+            WHEN n <= 28 THEN 'Registration Closed'::public.event_status
+            WHEN n = 29 THEN 'Scheduled'::public.event_status
+            ELSE 'Draft'::public.event_status
+        END AS event_status,
+        CASE
+            WHEN n = 10 THEN 'bdsm'::public.event_type_enum
+            WHEN n = 25 THEN 'bdsm'::public.event_type_enum
+            ELSE 'regular'::public.event_type_enum
+        END AS event_type,
+        CASE
+            WHEN n <= 20 THEN now() - (n * interval '1 month')
+            WHEN n <= 24 THEN now() - ((n - 20) * interval '2 months')
+            WHEN n <= 26 THEN now() + ((n - 24) * interval '2 months')
+            WHEN n <= 28 THEN now() + ((n - 24) * interval '3 months')
+            WHEN n = 29 THEN now() + interval '8 months'
+            ELSE now() + interval '10 months'
+        END AS time_event_start,
+        CASE
+            WHEN n <= 20 THEN now() - (n * interval '1 month') + interval '4 hours'
+            WHEN n <= 24 THEN now() - ((n - 20) * interval '2 months') + interval '3 hours'
+            WHEN n <= 26 THEN now() + ((n - 24) * interval '2 months') + interval '5 hours'
+            WHEN n <= 28 THEN now() + ((n - 24) * interval '3 months') + interval '4 hours'
+            WHEN n = 29 THEN now() + interval '8 months' + interval '3 hours'
+            ELSE now() + interval '10 months' + interval '2 hours'
+        END AS time_event_end,
+        CASE
+            WHEN n <= 20 THEN now() - (n * interval '1 month') - interval '2 months'
+            WHEN n <= 24 THEN now() - ((n - 20) * interval '2 months') - interval '1 month'
+            WHEN n <= 26 THEN now() - interval '1 week'
+            WHEN n <= 28 THEN now() - interval '2 months'
+            WHEN n = 29 THEN now() + interval '6 months'
+            ELSE now() + interval '3 weeks'
+        END AS time_application_start,
+        CASE
+            WHEN n <= 20 THEN now() - (n * interval '1 month') - interval '7 days'
+            WHEN n <= 24 THEN now() - ((n - 20) * interval '2 months') - interval '7 days'
+            WHEN n <= 26 THEN now() + ((n - 24) * interval '2 months') - interval '7 days'
+            WHEN n <= 28 THEN now() + ((n - 24) * interval '3 months') - interval '7 days'
+            WHEN n = 29 THEN now() + interval '8 months' - interval '7 days'
+            ELSE now() + interval '10 months' - interval '7 days'
+        END AS time_group_start,
+        CASE
+            WHEN n <= 20 THEN now() - (n * interval '1 month') + interval '30 days'
+            WHEN n <= 24 THEN now() - ((n - 20) * interval '2 months') + interval '30 days'
+            WHEN n <= 26 THEN now() + ((n - 24) * interval '2 months') + interval '30 days'
+            WHEN n <= 28 THEN now() + ((n - 24) * interval '3 months') + interval '30 days'
+            WHEN n = 29 THEN now() + interval '8 months' + interval '30 days'
+            ELSE now() + interval '10 months' + interval '30 days'
+        END AS time_group_end,
+        CASE
+            WHEN n <= 20 THEN now() - (n * interval '1 month') - interval '21 days'
+            WHEN n <= 24 THEN now() - ((n - 20) * interval '2 months') - interval '21 days'
+            WHEN n <= 26 THEN now() + ((n - 24) * interval '2 months') - interval '21 days'
+            WHEN n <= 28 THEN now() + ((n - 24) * interval '3 months') - interval '21 days'
+            WHEN n = 29 THEN now() + interval '8 months' - interval '21 days'
+            ELSE now() + interval '10 months' - interval '21 days'
+        END AS time_payment_start,
+        CASE
+            WHEN n <= 20 THEN now() - (n * interval '1 month') - interval '9 days'
+            WHEN n <= 24 THEN now() - ((n - 20) * interval '2 months') - interval '9 days'
+            WHEN n <= 26 THEN now() + ((n - 24) * interval '2 months') - interval '9 days'
+            WHEN n <= 28 THEN now() + ((n - 24) * interval '3 months') - interval '9 days'
+            WHEN n = 29 THEN now() + interval '8 months' - interval '9 days'
+            ELSE now() + interval '10 months' - interval '9 days'
+        END AS time_payment_end,
+        (10 + (random() * 140))::numeric(10,2) AS ticket_price,
+        (50 + floor(random() * 150))::int AS total_spots
+    FROM generate_series(1, 30) AS n
+) AS event_data;

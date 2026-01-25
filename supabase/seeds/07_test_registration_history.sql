@@ -55,9 +55,9 @@ BEGIN
     )
     RETURNING id INTO test_profile_id;
 
-    -- Get existing event IDs
-    SELECT id INTO event_id_reg_open_1 FROM public.events WHERE title = 'Evento Com Inscrições Abertas 1';
-    SELECT id INTO event_id_completed_1 FROM public.events WHERE title = 'Evento Concluído 1';
+    -- Get existing event IDs (using non-accented titles from 03_events.sql)
+    SELECT id INTO event_id_reg_open_1 FROM public.events WHERE title = 'Evento Com Inscricoes Abertas 1';
+    SELECT id INTO event_id_completed_1 FROM public.events WHERE title = 'Evento Concluido 1';
     SELECT id INTO event_id_scheduled_1 FROM public.events WHERE title = 'Evento Agendado 1';
 
     -- Insert various types of registrations for this user
@@ -73,7 +73,8 @@ BEGIN
         payment,
         notes,
         spot_type,
-        admin_general_notes
+        admin_general_notes,
+        referred
     )
     VALUES
     -- Current event: User applied themselves
@@ -89,7 +90,8 @@ BEGIN
         25.00,
         'Applied for current event',
         'regular',
-        'Waiting for event to happen'
+        'Waiting for event to happen',
+        'ninguem'
     ),
     -- Previous event: Admin added them (is_user_applied = FALSE)
     (
@@ -104,7 +106,8 @@ BEGIN
         0,
         'Admin added this person directly to the event',
         'staff',
-        'Admin added as staff member'
+        'Admin added as staff member',
+        'Indicacao de admin'
     ),
     -- Older event: User applied but didn't attend (no-show)
     (
@@ -119,7 +122,8 @@ BEGIN
         30.00,
         'User was a no-show',
         'regular',
-        'Did not attend despite confirming'
+        'Did not attend despite confirming',
+        'Evento anterior'
     );
 
     -- Log what we created for verification
