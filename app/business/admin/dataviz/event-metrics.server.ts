@@ -1,6 +1,9 @@
 import { sql } from "kysely"
 import { kyselyDb } from "~/kysely-db"
-import type { EventAttendanceDataPoint } from "./dataviz.types"
+import type {
+  EventAttendanceDataPoint,
+  EventRevenueDataPoint,
+} from "./dataviz.types"
 
 export async function getEventAttendanceData(): Promise<
   EventAttendanceDataPoint[]
@@ -61,5 +64,46 @@ export async function getEventAttendanceData(): Promise<
     rodizio: row.rodizio,
     vagas_sociais: row.vagas_sociais,
     staff: row.staff,
+  }))
+}
+
+export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
+  const result = await kyselyDb
+    .selectFrom("events")
+    .leftJoin(
+      "event_participants",
+      "event_participants.event_id",
+      "events.id"
+    )
+    .where("events.event_status", "=", "Completed")
+    .groupBy([
+      "events.id",
+      "events.title",
+      "events.emoji",
+      "events.time_event_start",
+      "events.ticket_price",
+    ])
+    .orderBy("events.time_event_start", "asc")
+    .select([
+      "events.title",
+      "events.emoji",
+      "events.time_event_start as date",
+      "events.ticket_price",
+      sql<number>`coalesce(sum(event_participants.payment), 0)::int`.as(
+        "faturamento_total"
+      ),
+      sql<number>`count(*) filter (where event_participants.has_paid = true)::int`.as(
+        "num_pagantes"
+      ),
+    ])
+    .execute()
+
+  return result.map((row) => ({
+    title: row.title ?? "",
+    emoji: row.emoji ?? "",
+    date: row.date ?? "",
+    faturamento_total: row.faturamento_total,
+    ticket_price: Number(row.ticket_price ?? 0),
+    num_pagantes: row.num_pagantes,
   }))
 }
