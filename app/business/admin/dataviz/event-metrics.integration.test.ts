@@ -12,6 +12,7 @@ import {
   getEventAttendanceData,
   getEventRevenueData,
   getConversionFunnelData,
+  getOccupancyData,
 } from "./event-metrics.server"
 import type { EventStatus } from "~types/database/entities.types"
 
@@ -520,6 +521,145 @@ describe("Event Metrics - Integration Tests", () => {
       expect(result[0].title).toBe("First Funnel")
       expect(result[1].title).toBe("Third Funnel")
       expect(result[2].title).toBe("Second Funnel")
+    })
+  })
+
+  describe("getOccupancyData", () => {
+    it("should calculate occupancy for completed events only", async () => {
+      const completedEvent = await createTestEvent(tracker, kysely, {
+        title: "Occupancy Event",
+        emoji: "📊",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-01-15T19:00:00Z").toISOString(),
+        total_spots: 50,
+      })
+
+      const draftEvent = await createTestEvent(tracker, kysely, {
+        title: "Draft Event",
+        event_status: "Draft" as EventStatus,
+        time_event_start: new Date("2024-02-15T19:00:00Z").toISOString(),
+        total_spots: 100,
+      })
+
+      const profiles = await Promise.all([
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-occ1@test.com`,
+        }),
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-occ2@test.com`,
+        }),
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          email: `${testPrefix}-occ3@test.com`,
+        }),
+      ])
+
+      // 2 attended out of 50 spots = 4%
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: completedEvent.id,
+        profile_id: profiles[0].id,
+        attendance_status: "attended",
+      })
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: completedEvent.id,
+        profile_id: profiles[1].id,
+        attendance_status: "attended",
+      })
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: completedEvent.id,
+        profile_id: profiles[2].id,
+        attendance_status: "not-attended",
+      })
+
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: draftEvent.id,
+        profile_id: profiles[0].id,
+        attendance_status: "attended",
+      })
+
+      const result = await getOccupancyData()
+
+      expect(result.length).toBe(1)
+      expect(result[0].title).toBe("Occupancy Event")
+      expect(result[0].emoji).toBe("📊")
+      expect(result[0].compareceram).toBe(2)
+      expect(result[0].total_spots).toBe(50)
+      expect(result[0].occupancy_pct).toBe(4)
+    })
+
+    it("should handle events with null total_spots", async () => {
+      const event = await createTestEvent(tracker, kysely, {
+        title: "No Spots Event",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-03-01T19:00:00Z").toISOString(),
+        total_spots: null,
+      })
+
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `${testPrefix}-nullspots@test.com`,
+      })
+
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: event.id,
+        profile_id: profile.id,
+        attendance_status: "attended",
+      })
+
+      const result = await getOccupancyData()
+      const eventResult = result.find((e) => e.title === "No Spots Event")
+
+      expect(eventResult).toBeDefined()
+      expect(eventResult!.compareceram).toBe(1)
+      expect(eventResult!.total_spots).toBe(0)
+      expect(eventResult!.occupancy_pct).toBe(0)
+    })
+
+    it("should handle events with no participants", async () => {
+      await createTestEvent(tracker, kysely, {
+        title: "Empty Occupancy Event",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-04-01T19:00:00Z").toISOString(),
+        total_spots: 100,
+      })
+
+      const result = await getOccupancyData()
+      const emptyEvent = result.find((e) => e.title === "Empty Occupancy Event")
+
+      expect(emptyEvent).toBeDefined()
+      expect(emptyEvent!.compareceram).toBe(0)
+      expect(emptyEvent!.total_spots).toBe(100)
+      expect(emptyEvent!.occupancy_pct).toBe(0)
+    })
+
+    it("should return events ordered by time_event_start ascending", async () => {
+      await createTestEvent(tracker, kysely, {
+        title: "First Occupancy",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-01-01T19:00:00Z").toISOString(),
+        total_spots: 50,
+      })
+      await createTestEvent(tracker, kysely, {
+        title: "Second Occupancy",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-02-01T19:00:00Z").toISOString(),
+        total_spots: 50,
+      })
+      await createTestEvent(tracker, kysely, {
+        title: "Third Occupancy",
+        event_status: "Completed" as EventStatus,
+        time_event_start: new Date("2024-01-15T19:00:00Z").toISOString(),
+        total_spots: 50,
+      })
+
+      const result = await getOccupancyData()
+
+      expect(result.length).toBe(3)
+      expect(result[0].title).toBe("First Occupancy")
+      expect(result[1].title).toBe("Third Occupancy")
+      expect(result[2].title).toBe("Second Occupancy")
     })
   })
 })
