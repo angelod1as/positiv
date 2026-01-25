@@ -3,6 +3,7 @@ import { kyselyDb } from "~/kysely-db"
 import type {
   EventAttendanceDataPoint,
   EventRevenueDataPoint,
+  ConversionFunnelDataPoint,
 } from "./dataviz.types"
 
 export async function getEventAttendanceData(): Promise<
@@ -106,4 +107,50 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
     ticket_price: Number(row.ticket_price ?? 0),
     num_pagantes: row.num_pagantes,
   }))
+}
+
+export async function getConversionFunnelData(): Promise<
+  ConversionFunnelDataPoint[]
+> {
+  const result = await kyselyDb
+    .selectFrom("events")
+    .leftJoin(
+      "event_participants",
+      "event_participants.event_id",
+      "events.id"
+    )
+    .where("events.event_status", "=", "Completed")
+    .groupBy(["events.id", "events.title", "events.time_event_start"])
+    .orderBy("events.time_event_start", "asc")
+    .select([
+      "events.title",
+      sql<number>`count(event_participants.id)::int`.as("inscritos"),
+      sql<number>`count(*) filter (where event_participants.application_status = 'finalised')::int`.as(
+        "finalizados"
+      ),
+      sql<number>`count(*) filter (where event_participants.has_paid = true)::int`.as(
+        "pagaram"
+      ),
+      sql<number>`count(*) filter (where event_participants.attendance_status = 'attended')::int`.as(
+        "compareceram"
+      ),
+    ])
+    .execute()
+
+  return result.map((row) => {
+    const inscritos = row.inscritos
+    return {
+      title: row.title ?? "",
+      inscritos,
+      finalizados: row.finalizados,
+      pagaram: row.pagaram,
+      compareceram: row.compareceram,
+      pct_finalizados:
+        inscritos > 0 ? Math.round((row.finalizados / inscritos) * 100) : 0,
+      pct_pagaram:
+        inscritos > 0 ? Math.round((row.pagaram / inscritos) * 100) : 0,
+      pct_compareceram:
+        inscritos > 0 ? Math.round((row.compareceram / inscritos) * 100) : 0,
+    }
+  })
 }
