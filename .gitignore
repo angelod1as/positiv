@@ -27,16 +27,4 @@ test-results/
 playwright/.auth/*
 e2e/.auth/
 .vercel/
-validated-profiles.json
-scripts/temp/migration/output/
 .vscode/
-
-# Production database dumps
-production_dump.sql
-production_data.sql
-
-# Mailing migration
-mailing.csv
-mailing-parsed.json
-mailing-manual-review.json
-mailing-report.json
