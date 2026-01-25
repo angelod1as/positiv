@@ -4,6 +4,7 @@ import type {
   EventAttendanceDataPoint,
   EventRevenueDataPoint,
   ConversionFunnelDataPoint,
+  OccupancyDataPoint,
 } from "./dataviz.types"
 
 export async function getEventAttendanceData(): Promise<
@@ -151,6 +152,49 @@ export async function getConversionFunnelData(): Promise<
         inscritos > 0 ? Math.round((row.pagaram / inscritos) * 100) : 0,
       pct_compareceram:
         inscritos > 0 ? Math.round((row.compareceram / inscritos) * 100) : 0,
+    }
+  })
+}
+
+export async function getOccupancyData(): Promise<OccupancyDataPoint[]> {
+  const result = await kyselyDb
+    .selectFrom("events")
+    .leftJoin(
+      "event_participants",
+      "event_participants.event_id",
+      "events.id"
+    )
+    .where("events.event_status", "=", "Completed")
+    .groupBy([
+      "events.id",
+      "events.title",
+      "events.emoji",
+      "events.time_event_start",
+      "events.total_spots",
+    ])
+    .orderBy("events.time_event_start", "asc")
+    .select([
+      "events.title",
+      "events.emoji",
+      "events.time_event_start as date",
+      "events.total_spots",
+      sql<number>`count(*) filter (where event_participants.attendance_status = 'attended')::int`.as(
+        "compareceram"
+      ),
+    ])
+    .execute()
+
+  return result.map((row) => {
+    const totalSpots = row.total_spots ?? 0
+    const compareceram = row.compareceram
+    return {
+      title: row.title ?? "",
+      emoji: row.emoji ?? "",
+      date: row.date ?? "",
+      compareceram,
+      total_spots: totalSpots,
+      occupancy_pct:
+        totalSpots > 0 ? Math.round((compareceram / totalSpots) * 100) : 0,
     }
   })
 }
