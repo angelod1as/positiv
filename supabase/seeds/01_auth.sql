@@ -1,93 +1,72 @@
 -- supabase/seed/01_auth.sql
 
--- This script creates multiple test users and their identities for Supabase authentication.
+-- This script creates 100 test users and their identities for Supabase authentication.
+-- First 10 users (admin, user1-9) are deterministic for test stability.
+-- Users 10-99 are generated using generate_series.
 
 -- Insert test users into the auth.users table
 INSERT INTO auth.users (
-    instance_id,           -- Default instance ID for Supabase
-    id,                    -- User ID (UUID, auto-generated)
-    aud,                   -- Audience type
-    role,                  -- Role for Row-Level Security
-    email,                 -- User email
-    encrypted_password,    -- Password, will be hashed
-    email_confirmed_at,    -- Confirmation timestamp
-    recovery_sent_at,      -- Recovery email sent timestamp
-    last_sign_in_at,       -- Last sign-in timestamp
-    raw_app_meta_data,     -- Application metadata in JSONB format
-    raw_user_meta_data,    -- User metadata in JSONB format
-    created_at,            -- Creation timestamp
-    updated_at,            -- Update timestamp
-    confirmation_token,    -- Email confirmation token
-    email_change,          -- Email change
-    email_change_token_new,-- Email change token
-    recovery_token         -- Recovery token
+    instance_id,
+    id,
+    aud,
+    role,
+    email,
+    encrypted_password,
+    email_confirmed_at,
+    recovery_sent_at,
+    last_sign_in_at,
+    raw_app_meta_data,
+    raw_user_meta_data,
+    created_at,
+    updated_at,
+    confirmation_token,
+    email_change,
+    email_change_token_new,
+    recovery_token
 )
 SELECT
-    '00000000-0000-0000-0000-000000000000', -- Default instance ID
-    gen_random_uuid(),                    -- Generate unique UUID for each user
-    'authenticated',                       -- Default audience
-    'authenticated',                       -- Role for Auth system
-    users_data.email,                      -- Email from defined test data
-    extensions.crypt('test1234', extensions.gen_salt('bf')), -- Password hashing for 'test1234'
-    current_timestamp,                     -- Email confirmed now
-    current_timestamp,                     -- Recovery email sent now
-    current_timestamp,                     -- Last sign-in set to now
-    '{"provider":"email","providers":["email"]}'::jsonb, -- Metadata for email provider
-    '{}'::jsonb,                           -- Empty user metadata
-    current_timestamp,                     -- Record creation timestamp
-    current_timestamp,                     -- Record update timestamp
-    '',                                    -- Empty confirmation token
-    '',                                    -- Empty email change
-    '',                                    -- Empty email change token
-    ''                                     -- Empty recovery token
-FROM (
-    -- Define 10 users: 1 admin and 9 standard users (all with password 'test1234')
-    VALUES
-    ('admin@example.com'),
-    ('user1@example.com'),
-    ('user2@example.com'),
-    ('user3@example.com'),
-    ('user4@example.com'),
-    ('user5@example.com'),
-    ('user6@example.com'),
-    ('user7@example.com'),
-    ('user8@example.com'),
-    ('user9@example.com')
-) AS users_data (email); -- All users have password 'test1234'
+    '00000000-0000-0000-0000-000000000000',
+    gen_random_uuid(),
+    'authenticated',
+    'authenticated',
+    CASE
+        WHEN n = 0 THEN 'admin@example.com'
+        ELSE 'user' || n || '@example.com'
+    END,
+    extensions.crypt('test1234', extensions.gen_salt('bf')),
+    current_timestamp,
+    current_timestamp,
+    current_timestamp,
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{}'::jsonb,
+    current_timestamp,
+    current_timestamp,
+    '',
+    '',
+    '',
+    ''
+FROM generate_series(0, 99) AS n;
 
--- Insert identities for the users in auth.identities
+-- Insert identities for all users in auth.identities
 INSERT INTO auth.identities (
-    id,                    -- Identity ID (UUID)
-    user_id,               -- ID of the user
-    identity_data,         -- Provider-specific identity data in JSONB
-    provider,              -- Provider name
-    provider_id,           -- Provider ID (same as user ID for email)
-    last_sign_in_at,       -- Last sign-in timestamp
-    created_at,            -- Creation timestamp
-    updated_at             -- Update timestamp
+    id,
+    user_id,
+    identity_data,
+    provider,
+    provider_id,
+    last_sign_in_at,
+    created_at,
+    updated_at
 )
 SELECT
-    gen_random_uuid(), -- Generate unique UUID for the identity
-    users.id AS id1,    -- Link to user's ID
-    format('{"sub":"%s","email":"%s"}', users.id::text, users.email)::jsonb, -- Identity data
-    'email',            -- Provider name
-    users.id AS id2,    -- Provider ID (same as user ID for email)
-    current_timestamp,  -- Last sign-in set to now
-    current_timestamp,  -- Creation timestamp
-    current_timestamp   -- Update timestamp
-FROM
-    auth.users AS users
-WHERE
-    users.email IN (   -- Filter for the specified test users
-        'admin@example.com',
-        'user1@example.com',
-        'user2@example.com',
-        'user3@example.com',
-        'user4@example.com',
-        'user5@example.com',
-        'user6@example.com',
-        'user7@example.com',
-        'user8@example.com',
-        'user9@example.com'
-    )
-ON CONFLICT (provider_id, provider) DO NOTHING; -- Avoid duplicates if identity exists
+    gen_random_uuid(),
+    users.id,
+    format('{"sub":"%s","email":"%s"}', users.id::text, users.email)::jsonb,
+    'email',
+    users.id,
+    current_timestamp,
+    current_timestamp,
+    current_timestamp
+FROM auth.users AS users
+WHERE users.email LIKE '%@example.com'
+ON CONFLICT (provider_id, provider) DO NOTHING;
