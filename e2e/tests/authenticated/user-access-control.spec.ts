@@ -9,9 +9,11 @@ test.describe('User Access Control', () => {
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
     const currentUrl = page.url()
-    
-    // Accept either dashboard or terms page (common redirect for new users)
-    expect(currentUrl.includes('/dashboard') || currentUrl.includes('/conta/termos-e-condicoes')).toBe(true)
+
+    // Accept dashboard, terms page, or profile completion pages (common redirects for new users)
+    const validPaths = ['/dashboard', '/conta/termos-e-condicoes', '/conta/dados-basicos', '/conta/dados-basicos-cont']
+    const isValidPath = validPaths.some(path => currentUrl.includes(path))
+    expect(isValidPath, `Expected URL to include one of ${validPaths.join(', ')}, but got: ${currentUrl}`).toBe(true)
     
     // If on terms page, accept and proceed to dashboard
     if (currentUrl.includes('/conta/termos-e-condicoes')) {
