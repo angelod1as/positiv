@@ -32,9 +32,27 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1736898000000
+export const NEWS_VERSION = 1737993600000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "feedback-form",
+    title: "📝 Formulário de Feedback",
+    content:
+      "Agora você pode enviar seu feedback sobre os eventos e a comunidade! Acesse através do menu principal ou pelo link /feedback. Suas sugestões, críticas e elogios nos ajudam a melhorar sempre.",
+    isAdmin: false,
+    createdAt: new Date("2026-01-27T12:00:00"),
+    isActive: true,
+  },
+  {
+    id: "admin-feedbacks-page",
+    title: "📋 Gerenciamento de Feedbacks",
+    content:
+      "Nova página no painel admin para visualizar todos os feedbacks recebidos! A tabela mostra nome, e-mail, WhatsApp, texto do feedback e se o contato já está verificado no sistema. Acesse pelo menu Admin → Feedbacks ou pelo widget na dashboard.",
+    isAdmin: true,
+    createdAt: new Date("2026-01-27T12:00:00"),
+    isActive: true,
+  },
   {
     id: "veteran-dropdown",
     title: "🎖️ Veterane/Novate agora é dropdown",
