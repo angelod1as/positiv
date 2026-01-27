@@ -4,10 +4,10 @@ import type {
   GridReadyEvent,
   ICellRendererParams,
 } from "ag-grid-community"
+import { EyeIcon } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useMemo, useRef, useState, useEffect } from "react"
 import type { FeedbackWithVerification } from "~/business/feedback/feedback.server"
-import { Link } from "~/components/atoms/link/link"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { AGIconButton } from "~/components/organisms/tables/ag-grid/renderers/ag-icon-button"
@@ -32,14 +32,8 @@ const participationFilterOptions = [
   { name: "Mais de uma vez", value: "more_than_once" },
 ]
 
-const verificationFilterOptions = [
-  { name: "Verificado", value: "true" },
-  { name: "Não verificado", value: "false" },
-]
-
 const STORAGE_KEYS = {
   participation: "feedbacks-filter-participation",
-  verification: "feedbacks-filter-verification",
 }
 
 function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
@@ -56,19 +50,40 @@ function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
   return defaultValue
 }
 
-function ProfileLinkRenderer(params: ICellRendererParams<FeedbackWithVerification>) {
+function SocialNameRenderer(params: ICellRendererParams<FeedbackWithVerification>) {
+  const { data } = params
+
+  if (!data?.is_verified || !data.social_name) {
+    return <>-</>
+  }
+
+  return <>{data.social_name}</>
+}
+
+function FullNameRenderer(params: ICellRendererParams<FeedbackWithVerification>) {
+  const { data } = params
+
+  if (!data?.is_verified || !data.full_name) {
+    return <>-</>
+  }
+
+  return <>{data.full_name}</>
+}
+
+function ProfileButtonRenderer(params: ICellRendererParams<FeedbackWithVerification>) {
   const { data } = params
 
   if (!data?.is_verified || !data.profile_id) {
     return null
   }
 
-  const displayName = data.social_name || data.full_name?.split(" ")[0] || "Ver perfil"
-
   return (
-    <Link to={paths.admin.ADMIN_VIEW_PARTICIPANT(data.profile_id)}>
-      {data.social_name ? displayName : <i>{displayName}</i>}
-    </Link>
+    <AGIconButton
+      href={paths.admin.ADMIN_VIEW_PARTICIPANT(data.profile_id)}
+      title="Ver perfil"
+    >
+      <EyeIcon className="h-4 w-4" />
+    </AGIconButton>
   )
 }
 
@@ -100,20 +115,13 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
   const [participationFilter, setParticipationFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.participation),
   )
-  const [verificationFilter, setVerificationFilter] = useState<string[]>(() =>
-    getStoredFilter(STORAGE_KEYS.verification),
-  )
 
   useEffect(() => {
     sessionStorage.setItem(
       STORAGE_KEYS.participation,
       JSON.stringify(participationFilter),
     )
-    sessionStorage.setItem(
-      STORAGE_KEYS.verification,
-      JSON.stringify(verificationFilter),
-    )
-  }, [participationFilter, verificationFilter])
+  }, [participationFilter])
 
   const columnDefs: ColDef<FeedbackWithVerification>[] = useMemo(
     () => [
@@ -126,28 +134,11 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
         sort: "desc",
       },
       {
-        field: "name",
-        headerName: "Nome",
-        valueFormatter: (params) => params.value || "Anônimo",
-        sortable: true,
-      },
-      {
-        field: "email",
-        headerName: "E-mail",
-        valueFormatter: (params) => params.value || "-",
-        sortable: true,
-      },
-      {
-        field: "whatsapp",
-        headerName: "WhatsApp",
-        cellRenderer: WhatsAppButtonRenderer,
-        sortable: true,
-        width: 100,
-      },
-      {
         field: "has_participated",
         headerName: "Participação",
         valueFormatter: (params) =>
+          participationLabels[params.value] || params.value,
+        tooltipValueGetter: (params) =>
           participationLabels[params.value] || params.value,
         filter: BaseMultiSelectFilter,
         filterParams: {
@@ -166,36 +157,59 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
         flex: 2,
       },
       {
+        field: "social_name",
+        headerName: "Nome Social",
+        headerTooltip: "Nome social do perfil cadastrado (quando verificado)",
+        cellRenderer: SocialNameRenderer,
+        tooltipValueGetter: () => null,
+        sortable: true,
+      },
+      {
+        field: "full_name",
+        headerName: "Nome",
+        headerTooltip: "Nome completo do perfil cadastrado (quando verificado)",
+        cellRenderer: FullNameRenderer,
+        tooltipValueGetter: () => null,
+        sortable: true,
+      },
+      {
+        field: "profile_id",
+        headerName: "Perfil",
+        headerTooltip: "Link para o perfil cadastrado",
+        cellRenderer: ProfileButtonRenderer,
+        tooltipValueGetter: () => null,
+        sortable: false,
+        width: 80,
+      },
+      {
+        field: "whatsapp",
+        headerName: "WhatsApp",
+        cellRenderer: WhatsAppButtonRenderer,
+        tooltipValueGetter: () => null,
+        sortable: true,
+        width: 100,
+      },
+      {
+        field: "email",
+        headerName: "E-mail",
+        valueFormatter: (params) => params.value || "-",
+        sortable: true,
+      },
+      {
         field: "can_contact",
         headerName: "Contato?",
-        headerTooltip: "Autorizou contato por WhatsApp ou e-mail",
+        headerTooltip: "Podemos entrar em contato?",
         valueFormatter: (params) => (params.value ? "✓" : "-"),
+        tooltipValueGetter: () => null,
         sortable: true,
         width: 90,
       },
-      {
-        field: "is_verified",
-        headerName: "Perfil",
-        headerTooltip: "O e-mail ou telefone está no nosso banco de dados?",
-        cellRenderer: ProfileLinkRenderer,
-        filter: BaseMultiSelectFilter,
-        filterParams: {
-          options: verificationFilterOptions,
-          field: "is_verified",
-          model: verificationFilter,
-          onModelChange: setVerificationFilter,
-          valueGetter: (data: FeedbackWithVerification) =>
-            String(data.is_verified),
-        },
-        sortable: true,
-      },
     ],
-    [participationFilter, verificationFilter],
+    [participationFilter],
   )
 
   const handleClearFilters = useCallback(() => {
     setParticipationFilter([])
-    setVerificationFilter([])
     Object.values(STORAGE_KEYS).forEach((key) => sessionStorage.removeItem(key))
   }, [])
 

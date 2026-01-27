@@ -89,7 +89,7 @@ const FeedbackPage = () => {
         }}
         descriptions={{
           canContact:
-            "Se quisermos conversar mais sobre seu feedback, podemos enviar uma mensagem no WhatsApp ou e-mail?",
+            "Se for o caso, podemos continuar uma comunicação por WhatsApp ou e-mail.",
         }}
         placeholders={{
           name: "Seu nome",
@@ -99,6 +99,7 @@ const FeedbackPage = () => {
         }}
         inputTypes={{
           email: "email",
+          canContact: "checkbox",
         }}
         multiline={["feedbackText"]}
         options={{
