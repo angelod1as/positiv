@@ -21,7 +21,7 @@ export async function loader() {
   const [events, recentProfiles, feedbacksResult] = await Promise.all([
     getEventsForDashboard(),
     getRecentProfiles(),
-    getRecentFeedbacks(),
+    getRecentFeedbacks(10),
   ])
   return {
     events,

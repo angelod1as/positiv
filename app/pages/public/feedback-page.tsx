@@ -67,7 +67,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   )
 }
 
-const FeedbackPage = ({}: Route.ComponentProps) => {
+const FeedbackPage = () => {
   const { turnstileSiteKey } = useLoaderData<typeof loader>()
 
   return (

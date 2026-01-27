@@ -1,3 +1,4 @@
+import { type z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 
 export const feedbackFormSchema = zod.object({
@@ -17,4 +18,4 @@ export const feedbackFormSchema = zod.object({
     .min(1, "Por favor, complete a verificação de segurança"),
 })
 
-export type FeedbackFormData = zod.infer<typeof feedbackFormSchema>
+export type FeedbackFormData = z.infer<typeof feedbackFormSchema>

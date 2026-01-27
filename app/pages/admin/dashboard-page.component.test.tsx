@@ -32,6 +32,10 @@ vi.mock("~/components/organisms/tables/admin/recent-profiles-table", () => ({
   RecentProfilesTable: () => <div data-testid="recent-profiles-table" />,
 }))
 
+vi.mock("~/components/organisms/tables/admin/recent-feedbacks-table", () => ({
+  RecentFeedbacksTable: () => <div data-testid="recent-feedbacks-table" />,
+}))
+
 vi.mock("~/components/ui/button", () => ({
   Button: ({
     children,
@@ -57,6 +61,7 @@ const createMockComponentProps = (
     loaderData: {
       events: events as LoaderData["events"],
       recentProfiles: [] as LoaderData["recentProfiles"],
+      recentFeedbacks: [] as LoaderData["recentFeedbacks"],
     },
     params: {},
     matches: [] as unknown as Route.ComponentProps["matches"],

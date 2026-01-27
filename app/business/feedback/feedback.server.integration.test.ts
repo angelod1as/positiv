@@ -93,11 +93,13 @@ describe("Feedback Server - Integration Tests", () => {
         })
         .execute()
 
-      const feedbacks = await getRecentFeedbacks(10)
+      const result = await getRecentFeedbacks(10)
 
-      expect(feedbacks).toHaveLength(2)
-      expect(feedbacks[0].name).toBe("Second")
-      expect(feedbacks[1].name).toBe("First")
+      expect(result.success).toBe(true)
+      if (!result.success) throw new Error("Expected success")
+      expect(result.data).toHaveLength(2)
+      expect(result.data[0].name).toBe("Second")
+      expect(result.data[1].name).toBe("First")
     })
 
     it("should respect the limit parameter", async () => {
@@ -125,9 +127,11 @@ describe("Feedback Server - Integration Tests", () => {
         ])
         .execute()
 
-      const feedbacks = await getRecentFeedbacks(2)
+      const result = await getRecentFeedbacks(2)
 
-      expect(feedbacks).toHaveLength(2)
+      expect(result.success).toBe(true)
+      if (!result.success) throw new Error("Expected success")
+      expect(result.data).toHaveLength(2)
     })
   })
 
@@ -144,14 +148,17 @@ describe("Feedback Server - Integration Tests", () => {
         })
         .execute()
 
-      const feedbacks = await getAllFeedbacksWithVerification()
+      const result = await getAllFeedbacksWithVerification()
 
-      expect(feedbacks).toHaveLength(1)
-      expect(feedbacks[0].is_verified).toBe(false)
+      expect(result.success).toBe(true)
+      if (!result.success) throw new Error("Expected success")
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].is_verified).toBe(false)
     })
 
     it("should set is_verified true when email matches a profile", async () => {
       const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "verified@example.com",
       })
       tracker.track("profile", profile.id)
@@ -167,14 +174,17 @@ describe("Feedback Server - Integration Tests", () => {
         })
         .execute()
 
-      const feedbacks = await getAllFeedbacksWithVerification()
+      const result = await getAllFeedbacksWithVerification()
 
-      expect(feedbacks).toHaveLength(1)
-      expect(feedbacks[0].is_verified).toBe(true)
+      expect(result.success).toBe(true)
+      if (!result.success) throw new Error("Expected success")
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].is_verified).toBe(true)
     })
 
     it("should set is_verified true when phone matches a profile", async () => {
       const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
         email: "user@example.com",
         phone: 11999999999,
       })
@@ -191,10 +201,12 @@ describe("Feedback Server - Integration Tests", () => {
         })
         .execute()
 
-      const feedbacks = await getAllFeedbacksWithVerification()
+      const result = await getAllFeedbacksWithVerification()
 
-      expect(feedbacks).toHaveLength(1)
-      expect(feedbacks[0].is_verified).toBe(true)
+      expect(result.success).toBe(true)
+      if (!result.success) throw new Error("Expected success")
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].is_verified).toBe(true)
     })
   })
 })
