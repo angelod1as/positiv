@@ -1,6 +1,6 @@
 # Testing Guidelines
 
-This document provides guidelines for writing effective tests in the Positiv project, based on lessons learned from our test cleanup initiative (POS-XXX).
+This document provides guidelines for writing effective tests in the Positiv project, based on lessons learned from our test cleanup initiative.
 
 ## Core Principles
 
