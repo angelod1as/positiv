@@ -88,7 +88,7 @@ describe("FeedbackPage", () => {
       const router = createTestRouter()
       render(<RouterProvider router={router} />)
 
-      expect(screen.getByText(/envie seu feedback/i)).toBeInTheDocument()
+      expect(screen.getByRole("heading", { name: /envie seu feedback/i })).toBeInTheDocument()
       expect(screen.getByTestId("mock-schema-form")).toBeInTheDocument()
     })
 

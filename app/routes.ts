@@ -16,10 +16,10 @@ export default [
   route("/newsletter/unsubscribe", "pages/newsletter/unsubscribe.tsx"),
   layout("pages/public/layout.tsx", [
     route("/codigo-de-conduta", "pages/public/code-of-conduct.tsx"),
-    route("/feedback", "pages/public/feedback-page.tsx"),
   ]),
 
   layout("pages/auth/layout.tsx", [
+    route("/feedback", "pages/public/feedback-page.tsx"),
     ...prefix("/entrar", [
       index("pages/auth/login-page.tsx"),
       route("/esqueci", "pages/auth/forgot-password-page.tsx"),

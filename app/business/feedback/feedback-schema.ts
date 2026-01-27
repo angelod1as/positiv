@@ -9,7 +9,9 @@ export const feedbackFormSchema = zod.object({
     .optional()
     .or(zod.literal("")),
   whatsapp: zod.string().optional(),
-  hasParticipated: zod.enum(["never", "once", "more_than_once"]),
+  hasParticipated: zod.enum(["never", "once", "more_than_once"], {
+    message: "Selecione uma opção",
+  }),
   feedbackText: zod
     .string()
     .min(10, "O feedback deve ter pelo menos 10 caracteres"),
