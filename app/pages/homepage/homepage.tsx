@@ -5,6 +5,7 @@ import { getContext } from "~/business/auth/auth.server"
 import { FloatingWhatsAppButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
 import { HomePageAbout } from "~/components/pages/homepage/about/about"
 import { HomePageCtaBanner } from "~/components/pages/homepage/cta-banner/home-page-cta-banner"
+import { HomePageFeedback } from "~/components/pages/homepage/feedback/home-page-feedback"
 import { HomePageFounders } from "~/components/pages/homepage/founders/home-page-founders"
 import { HomePageHero } from "~/components/pages/homepage/hero/hero"
 import { HomePageNextEvents } from "~/components/pages/homepage/next-events/next-events"
@@ -58,6 +59,7 @@ export default function Homepage({ loaderData }: Route.ComponentProps) {
         <HomePageTestimonials />
         <HomePageCtaBanner isLoggedIn={isLoggedIn} />
         <HomePageFounders />
+        <HomePageFeedback />
       </div>
       <FloatingWhatsAppButton />
     </>
