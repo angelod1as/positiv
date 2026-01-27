@@ -3,8 +3,10 @@ import {
   getEventsForDashboard,
   getRecentProfiles,
 } from "~/business/admin/admin.server"
+import { getRecentFeedbacks } from "~/business/feedback/feedback.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
+import { RecentFeedbacksTable } from "~/components/organisms/tables/admin/recent-feedbacks-table"
 import { RecentProfilesTable } from "~/components/organisms/tables/admin/recent-profiles-table"
 import { Button } from "~/components/ui/button"
 import { Separator } from "~/components/ui/separator"
@@ -12,19 +14,24 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/dashboard-page"
 
 const {
-  admin: { ADMIN_PARTICIPANTS },
+  admin: { ADMIN_PARTICIPANTS, ADMIN_FEEDBACKS },
 } = paths
 
 export async function loader() {
-  const [events, recentProfiles] = await Promise.all([
+  const [events, recentProfiles, feedbacksResult] = await Promise.all([
     getEventsForDashboard(),
     getRecentProfiles(),
+    getRecentFeedbacks(),
   ])
-  return { events, recentProfiles }
+  return {
+    events,
+    recentProfiles,
+    recentFeedbacks: feedbacksResult.success ? feedbacksResult.data : [],
+  }
 }
 
 const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
-  const { events, recentProfiles } = loaderData
+  const { events, recentProfiles, recentFeedbacks } = loaderData
 
   const activeEvents = events
     .filter(
@@ -72,6 +79,21 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
         </div>
 
         <RecentProfilesTable profiles={recentProfiles} />
+      </div>
+
+      <Separator />
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2>Feedbacks recentes</h2>
+          <div className="grid grid-cols-1">
+            <Button asChild>
+              <Link to={ADMIN_FEEDBACKS}>Ver todos os feedbacks</Link>
+            </Button>
+          </div>
+        </div>
+
+        <RecentFeedbacksTable feedbacks={recentFeedbacks} />
       </div>
     </>
   )

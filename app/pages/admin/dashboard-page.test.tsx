@@ -74,6 +74,25 @@ vi.mock("~/business/admin/admin.server", () => ({
   ]),
 }))
 
+vi.mock("~/business/feedback/feedback.server", () => ({
+  getRecentFeedbacks: vi.fn().mockResolvedValue({
+    success: true,
+    data: [
+      {
+        id: "feedback-1",
+        name: "Test User",
+        email: "test@example.com",
+        whatsapp: null,
+        has_participated: "once",
+        feedback_text: "Great event!",
+        ip_address: "127.0.0.1",
+        created_at: "2025-01-15T10:00:00Z",
+        is_verified: true,
+      },
+    ],
+  }),
+}))
+
 // Import after mocking
 import { loader } from "./dashboard-page"
 
@@ -107,6 +126,21 @@ describe("Dashboard Page Loader", () => {
           new Date(secondEventTime).getTime(),
         )
       }
+    }
+  })
+
+  it("should load recent feedbacks", async () => {
+    const result = await loader()
+
+    expect(result).toBeDefined()
+    expect(result.recentFeedbacks).toBeDefined()
+    expect(Array.isArray(result.recentFeedbacks)).toBe(true)
+
+    if (result.recentFeedbacks && result.recentFeedbacks.length > 0) {
+      const feedback = result.recentFeedbacks[0]
+      expect(feedback).toHaveProperty("id")
+      expect(feedback).toHaveProperty("feedback_text")
+      expect(feedback).toHaveProperty("is_verified")
     }
   })
 })
