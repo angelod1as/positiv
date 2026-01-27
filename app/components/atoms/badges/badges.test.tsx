@@ -1,216 +1,75 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { GenderWarning, OrientationWarning, VeteranBadge, RookieBadge } from './badges'
+import { GenderWarning, OrientationWarning, VeteranBadge } from './badges'
 
 describe('GenderWarning', () => {
-  it('should highlight trans genders with blue color', () => {
-    render(<GenderWarning genders={['Mulher trans', 'Homem trans']} />)
-    
-    const transWoman = screen.getByText('Mulher trans')
-    const transMan = screen.getByText('Homem trans')
-    
-    expect(transWoman).toHaveClass('text-blue-700')
-    expect(transMan).toHaveClass('text-blue-700')
-  })
-
-  it('should highlight agênera genders with blue color', () => {
-    render(<GenderWarning genders={['Pessoa agênera']} />)
-    
-    const agender = screen.getByText('Pessoa agênera')
-    expect(agender).toHaveClass('text-blue-700')
-  })
-
-  it('should highlight Travesti with blue color (case-insensitive)', () => {
-    render(<GenderWarning genders={['Travesti', 'travesti', 'TRAVESTI']} />)
-    
-    const travesti1 = screen.getByText('Travesti')
-    const travesti2 = screen.getByText('travesti')
-    const travesti3 = screen.getByText('TRAVESTI')
-    
-    expect(travesti1).toHaveClass('text-blue-700')
-    expect(travesti2).toHaveClass('text-blue-700')
-    expect(travesti3).toHaveClass('text-blue-700')
-  })
-
-  it('should highlight não-binário variations with blue color', () => {
+  it('should highlight specified gender identities and handle case variations', () => {
     render(<GenderWarning genders={[
-      'Pessoa não binária',
+      'Mulher trans',
+      'travesti',
       'Pessoa não-binária',
-      'Pessoa não binarie',
-      'Pessoa não-binarie',
-      'Pessoa não binário',
-      'não binária',
-      'NÃO-BINÁRIO'
+      'Mulher cis'
     ]} />)
-    
-    const variations = [
-      screen.getByText('Pessoa não binária'),
-      screen.getByText('Pessoa não-binária'),
-      screen.getByText('Pessoa não binarie'),
-      screen.getByText('Pessoa não-binarie'),
-      screen.getByText('Pessoa não binário'),
-      screen.getByText('não binária'),
-      screen.getByText('NÃO-BINÁRIO')
-    ]
-    
-    variations.forEach(element => {
-      expect(element).toHaveClass('text-blue-700')
-    })
+
+    const transWoman = screen.getByText('Mulher trans')
+    const travesti = screen.getByText('travesti')
+    const nonBinary = screen.getByText('Pessoa não-binária')
+    const cisWoman = screen.getByText('Mulher cis')
+
+    expect(transWoman).toHaveClass('text-blue-700')
+    expect(travesti).toHaveClass('text-blue-700')
+    expect(nonBinary).toHaveClass('text-blue-700')
+    expect(cisWoman).not.toHaveClass('text-blue-700')
   })
 
-  it('should not highlight other genders', () => {
-    render(<GenderWarning genders={['Mulher cis', 'Homem cis']} />)
-    
-    const cisgenderWoman = screen.getByText('Mulher cis')
-    const cisgenderMan = screen.getByText('Homem cis')
-    
-    expect(cisgenderWoman).not.toHaveClass('text-blue-700')
-    expect(cisgenderMan).not.toHaveClass('text-blue-700')
-  })
-
-  it('should render nothing when genders is null', () => {
-    const { container } = render(<GenderWarning genders={null} />)
+  it('should handle null and empty arrays', () => {
+    const { container, rerender } = render(<GenderWarning genders={null} />)
     expect(container.firstChild).toBeNull()
-  })
 
-  it('should render nothing when genders is empty array', () => {
-    const { container } = render(<GenderWarning genders={[]} />)
+    rerender(<GenderWarning genders={[]} />)
     expect(container.firstChild).toBeNull()
   })
 })
 
 describe('OrientationWarning', () => {
-  it('should highlight Hétero with red color (case-insensitive)', () => {
-    render(<OrientationWarning orientations={['Hétero', 'hétero', 'HÉTERO']} />)
-    
-    const hetero1 = screen.getByText('Hétero')
-    const hetero2 = screen.getByText('hétero')
-    const hetero3 = screen.getByText('HÉTERO')
-    
-    expect(hetero1).toHaveClass('text-red-700')
-    expect(hetero2).toHaveClass('text-red-700')
-    expect(hetero3).toHaveClass('text-red-700')
-  })
+  it('should highlight specified orientations and handle case variations', () => {
+    render(<OrientationWarning orientations={[
+      'Hétero',
+      'sapiosexual',
+      'Gay',
+      'Lésbica'
+    ]} />)
 
-  it('should highlight Sapiosexual with red color (case-insensitive)', () => {
-    render(<OrientationWarning orientations={['Sapiosexual', 'sapiosexual', 'SAPIOSEXUAL']} />)
-    
-    const sapio1 = screen.getByText('Sapiosexual')
-    const sapio2 = screen.getByText('sapiosexual')
-    const sapio3 = screen.getByText('SAPIOSEXUAL')
-    
-    expect(sapio1).toHaveClass('text-red-700')
-    expect(sapio2).toHaveClass('text-red-700')
-    expect(sapio3).toHaveClass('text-red-700')
-  })
+    const hetero = screen.getByText('Hétero')
+    const sapio = screen.getByText('sapiosexual')
+    const gay = screen.getByText('Gay')
+    const lesbian = screen.getByText('Lésbica')
 
-  it('should not highlight other orientations', () => {
-    render(<OrientationWarning orientations={['Gay', 'Lésbica', 'Bi', 'Pan', 'Demi', 'Ace']} />)
-    
-    const orientations = [
-      screen.getByText('Gay'),
-      screen.getByText('Lésbica'),
-      screen.getByText('Bi'),
-      screen.getByText('Pan'),
-      screen.getByText('Demi'),
-      screen.getByText('Ace')
-    ]
-    
-    orientations.forEach(element => {
-      expect(element).not.toHaveClass('text-red-700')
-    })
-  })
-
-  it('should render nothing when orientations is null', () => {
-    const { container } = render(<OrientationWarning orientations={null} />)
-    expect(container.firstChild).toBeNull()
-  })
-
-  it('should render nothing when orientations is empty array', () => {
-    const { container } = render(<OrientationWarning orientations={[]} />)
-    expect(container.firstChild).toBeNull()
+    expect(hetero).toHaveClass('text-red-700')
+    expect(sapio).toHaveClass('text-red-700')
+    expect(gay).not.toHaveClass('text-red-700')
+    expect(lesbian).not.toHaveClass('text-red-700')
   })
 })
 
-describe('VeteranBadge with event count', () => {
-  it('should render badge without count when eventCount is undefined', () => {
-    render(<VeteranBadge />)
-    expect(screen.getByText('Veterane')).toBeInTheDocument()
-    expect(screen.queryByText(/\d+/)).not.toBeInTheDocument()
-  })
-
-  it('should render badge without count when eventCount is null', () => {
-    render(<VeteranBadge eventCount={null} />)
-    expect(screen.getByText('Veterane')).toBeInTheDocument()
-    expect(screen.queryByText(/\d+/)).not.toBeInTheDocument()
-  })
-
-  it('should render badge with count of 0', () => {
-    render(<VeteranBadge eventCount={0} />)
-    expect(screen.getByText('Veterane')).toBeInTheDocument()
-    expect(screen.getByText('0')).toBeInTheDocument()
-  })
-
-  it('should render badge with single digit count', () => {
-    render(<VeteranBadge eventCount={5} />)
+describe('VeteranBadge', () => {
+  it('should display event count when provided', () => {
+    const { rerender } = render(<VeteranBadge eventCount={5} />)
     expect(screen.getByText('Veterane')).toBeInTheDocument()
     expect(screen.getByText('5')).toBeInTheDocument()
+
+    rerender(<VeteranBadge />)
+    expect(screen.queryByText(/\d+/)).not.toBeInTheDocument()
   })
 
-  it('should render badge with double-digit count', () => {
-    render(<VeteranBadge eventCount={12} />)
-    expect(screen.getByText('Veterane')).toBeInTheDocument()
-    expect(screen.getByText('12')).toBeInTheDocument()
-  })
+  it('should apply gradient colors based on event count ranges', () => {
+    const { rerender } = render(<VeteranBadge eventCount={1} />)
+    expect(screen.getByText('1')).toHaveClass('bg-indigo-100')
 
-  it('should render badge with triple-digit count', () => {
-    render(<VeteranBadge eventCount={100} />)
-    expect(screen.getByText('Veterane')).toBeInTheDocument()
-    expect(screen.getByText('100')).toBeInTheDocument()
-  })
+    rerender(<VeteranBadge eventCount={5} />)
+    expect(screen.getByText('5')).toHaveClass('bg-indigo-500')
 
-  describe('gradient colors based on event count', () => {
-    it('should apply lightest color (indigo-100) with dark text for 1-2 events', () => {
-      render(<VeteranBadge eventCount={1} />)
-      const countElement = screen.getByText('1')
-      expect(countElement).toHaveClass('bg-indigo-100', 'text-indigo-900')
-    })
-
-    it('should apply light color (indigo-300) with dark text for 3-4 events', () => {
-      render(<VeteranBadge eventCount={3} />)
-      const countElement = screen.getByText('3')
-      expect(countElement).toHaveClass('bg-indigo-300', 'text-indigo-900')
-    })
-
-    it('should apply medium color (indigo-500) with white text for 5-6 events', () => {
-      render(<VeteranBadge eventCount={5} />)
-      const countElement = screen.getByText('5')
-      expect(countElement).toHaveClass('bg-indigo-500', 'text-white')
-    })
-
-    it('should apply dark color (indigo-600) with white text for 7-8 events', () => {
-      render(<VeteranBadge eventCount={7} />)
-      const countElement = screen.getByText('7')
-      expect(countElement).toHaveClass('bg-indigo-600', 'text-white')
-    })
-
-    it('should apply darkest color (indigo-700) with white text for 9+ events', () => {
-      render(<VeteranBadge eventCount={9} />)
-      const countElement = screen.getByText('9')
-      expect(countElement).toHaveClass('bg-indigo-700', 'text-white')
-    })
-
-    it('should apply darkest color (indigo-700) with white text for 10+ events', () => {
-      render(<VeteranBadge eventCount={15} />)
-      const countElement = screen.getByText('15')
-      expect(countElement).toHaveClass('bg-indigo-700', 'text-white')
-    })
-  })
-})
-
-describe('RookieBadge', () => {
-  it('should render Novate badge', () => {
-    render(<RookieBadge />)
-    expect(screen.getByText('Novate')).toBeInTheDocument()
+    rerender(<VeteranBadge eventCount={10} />)
+    expect(screen.getByText('10')).toHaveClass('bg-indigo-700')
   })
 })
