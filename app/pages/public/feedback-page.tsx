@@ -85,6 +85,11 @@ const FeedbackPage = () => {
           whatsapp: "WhatsApp (opcional)",
           hasParticipated: "Já participou de algum evento?",
           feedbackText: "Seu feedback",
+          canContact: "Podemos entrar em contato?",
+        }}
+        descriptions={{
+          canContact:
+            "Se quisermos conversar mais sobre seu feedback, podemos enviar uma mensagem no WhatsApp ou e-mail?",
         }}
         placeholders={{
           name: "Seu nome",
@@ -114,6 +119,7 @@ const FeedbackPage = () => {
             <Field name="whatsapp" />
             <Field name="hasParticipated" />
             <Field name="feedbackText" />
+            <Field name="canContact" />
 
             <div className="flex flex-col gap-2">
               <Turnstile

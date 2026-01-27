@@ -42,11 +42,11 @@ export const TextViewModalCell = ({ value, label }: TextViewModalCellProps) => {
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent aria-describedby={undefined}>
+        <DialogContent aria-describedby={undefined} className="max-h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{label || "View Text"}</DialogTitle>
           </DialogHeader>
-          <div className="whitespace-pre-wrap">{text}</div>
+          <div className="whitespace-pre-wrap overflow-y-auto flex-1">{text}</div>
         </DialogContent>
       </Dialog>
     </>

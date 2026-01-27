@@ -40,9 +40,13 @@ describe("RecentFeedbacksTable", () => {
       whatsapp: "11999999999",
       has_participated: "once",
       feedback_text: "Este é um feedback muito longo que será truncado na exibição",
+      can_contact: true,
       ip_address: "192.168.1.1",
       created_at: "2024-01-15T10:30:00Z",
       is_verified: true,
+      profile_id: "profile-123",
+      social_name: "João",
+      full_name: "João Silva",
     },
     {
       id: "2",
@@ -51,9 +55,13 @@ describe("RecentFeedbacksTable", () => {
       whatsapp: null,
       has_participated: "never",
       feedback_text: "Feedback anônimo",
+      can_contact: false,
       ip_address: "192.168.1.2",
       created_at: "2024-01-14T09:00:00Z",
       is_verified: false,
+      profile_id: null,
+      social_name: null,
+      full_name: null,
     },
   ]
 

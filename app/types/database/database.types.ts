@@ -318,6 +318,7 @@ export type Database = {
       }
       feedbacks: {
         Row: {
+          can_contact: boolean
           created_at: string
           email: string | null
           feedback_text: string
@@ -328,6 +329,7 @@ export type Database = {
           whatsapp: string | null
         }
         Insert: {
+          can_contact?: boolean
           created_at?: string
           email?: string | null
           feedback_text: string
@@ -338,6 +340,7 @@ export type Database = {
           whatsapp?: string | null
         }
         Update: {
+          can_contact?: boolean
           created_at?: string
           email?: string | null
           feedback_text?: string

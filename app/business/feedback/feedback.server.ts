@@ -9,9 +9,13 @@ export interface FeedbackWithVerification {
   whatsapp: string | null
   has_participated: "never" | "once" | "more_than_once"
   feedback_text: string
+  can_contact: boolean
   ip_address: string
   created_at: string
   is_verified: boolean
+  profile_id: string | null
+  social_name: string | null
+  full_name: string | null
 }
 
 export async function submitFeedback(
@@ -26,6 +30,7 @@ export async function submitFeedback(
       whatsapp: data.whatsapp ?? null,
       has_participated: data.hasParticipated,
       feedback_text: data.feedbackText,
+      can_contact: data.canContact ?? false,
       ip_address: ipAddress,
     })
     .execute()
@@ -43,6 +48,9 @@ export const getRecentFeedbacks = composable(
     return feedbacks.map((f) => ({
       ...f,
       is_verified: false,
+      profile_id: null,
+      social_name: null,
+      full_name: null,
     }))
   },
 )
@@ -72,7 +80,7 @@ export const getAllFeedbacksWithVerification = composable(
       emails.length > 0
         ? await kyselyDb
             .selectFrom("profiles")
-            .select("email")
+            .select(["id", "email", "social_name", "full_name"])
             .where("email", "in", emails)
             .execute()
         : []
@@ -81,29 +89,40 @@ export const getAllFeedbacksWithVerification = composable(
       phones.length > 0
         ? await kyselyDb
             .selectFrom("profiles")
-            .select("phone")
+            .select(["id", "phone", "social_name", "full_name"])
             .where("phone", "in", phones)
             .execute()
         : []
 
-    const verifiedEmails = new Set(
-      profilesWithEmail.map((p) => p.email?.toLowerCase()),
+    const profileByEmail = new Map(
+      profilesWithEmail.map((p) => [
+        p.email?.toLowerCase(),
+        { id: p.id, social_name: p.social_name, full_name: p.full_name },
+      ]),
     )
-    const verifiedPhones = new Set(
-      profilesWithPhone.map((p) => String(p.phone)),
+    const profileByPhone = new Map(
+      profilesWithPhone.map((p) => [
+        String(p.phone),
+        { id: p.id, social_name: p.social_name, full_name: p.full_name },
+      ]),
     )
 
     return feedbacks.map((f) => {
-      const emailVerified = f.email
-        ? verifiedEmails.has(f.email.toLowerCase())
-        : false
-      const phoneVerified = f.whatsapp
-        ? verifiedPhones.has(f.whatsapp.replace(/\D/g, ""))
-        : false
+      const emailProfile = f.email
+        ? profileByEmail.get(f.email.toLowerCase())
+        : undefined
+      const phoneProfile = f.whatsapp
+        ? profileByPhone.get(f.whatsapp.replace(/\D/g, ""))
+        : undefined
+
+      const matchedProfile = emailProfile || phoneProfile
 
       return {
         ...f,
-        is_verified: emailVerified || phoneVerified,
+        is_verified: !!matchedProfile,
+        profile_id: matchedProfile?.id ?? null,
+        social_name: matchedProfile?.social_name ?? null,
+        full_name: matchedProfile?.full_name ?? null,
       }
     })
   },

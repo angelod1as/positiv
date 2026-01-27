@@ -31,6 +31,7 @@ describe("Feedback Server - Integration Tests", () => {
         whatsapp: "11999999999",
         hasParticipated: "never" as const,
         feedbackText: "Este é um feedback de teste.",
+        canContact: true,
       }
 
       await submitFeedback(feedbackData, "192.168.1.1")
@@ -53,6 +54,7 @@ describe("Feedback Server - Integration Tests", () => {
       const feedbackData = {
         hasParticipated: "once" as const,
         feedbackText: "Feedback sem contato.",
+        canContact: false,
       }
 
       await submitFeedback(feedbackData, "192.168.1.2")

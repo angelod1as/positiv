@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.feedbacks (
   whatsapp text,
   has_participated feedback_participation_enum NOT NULL DEFAULT 'never',
   feedback_text text NOT NULL,
+  can_contact boolean NOT NULL DEFAULT false,
   ip_address text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now()
 );
