@@ -16,6 +16,7 @@ export default [
   route("/newsletter/unsubscribe", "pages/newsletter/unsubscribe.tsx"),
   layout("pages/public/layout.tsx", [
     route("/codigo-de-conduta", "pages/public/code-of-conduct.tsx"),
+    route("/feedback", "pages/public/feedback-page.tsx"),
   ]),
 
   layout("pages/auth/layout.tsx", [
@@ -94,6 +95,8 @@ export default [
           "participantes/:profileId",
           "pages/admin/participants/view-profile-page.tsx",
         ),
+        // Feedbacks
+        route("feedbacks", "pages/admin/feedbacks/feedbacks-page.tsx"),
       ]),
       ...prefix("eventos", [
         layout("pages/admin/events/layout.tsx", [
