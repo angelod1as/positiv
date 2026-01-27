@@ -15,7 +15,7 @@ export const feedbackFormSchema = zod.object({
   feedbackText: zod
     .string()
     .min(10, "O feedback deve ter pelo menos 10 caracteres"),
-  canContact: zod.coerce.boolean().default(false),
+  canContact: zod.boolean().default(false),
   captchaToken: zod
     .string()
     .min(1, "Por favor, complete a verificação de segurança"),
