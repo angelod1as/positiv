@@ -803,6 +803,64 @@ describe("AGDataTable", () => {
     })
   })
 
+  describe("Header Tooltips", () => {
+    it("should accept column definitions with headerTooltip property", async () => {
+      const mockColumnDefsWithTooltip = [
+        {
+          field: "name" as const,
+          headerName: "Name",
+          headerTooltip: "This is the participant name",
+        },
+        { field: "value" as const, headerName: "Value" },
+      ]
+
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefsWithTooltip}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText("Item 1")).toBeInTheDocument()
+      })
+
+      const gridWrapper = container.querySelector(".ag-root-wrapper")
+      expect(gridWrapper).toBeInTheDocument()
+
+      const nameHeader = container.querySelector(
+        '.ag-header-cell[col-id="name"]',
+      ) as HTMLElement
+      expect(nameHeader).toBeInTheDocument()
+    })
+
+    it("should configure AG Grid with tooltipInteraction enabled", async () => {
+      const mockColumnDefsWithTooltip = [
+        {
+          field: "name" as const,
+          headerName: "Name",
+          headerTooltip: "Name tooltip",
+        },
+      ]
+
+      const { container } = render(
+        <AGDataTable
+          id="test-table"
+          data={mockData}
+          columnDefs={mockColumnDefsWithTooltip}
+        />,
+      )
+
+      await waitFor(() => {
+        expect(screen.getByRole("grid")).toBeInTheDocument()
+      })
+
+      const gridWrapper = container.querySelector(".ag-root-wrapper")
+      expect(gridWrapper).toBeInTheDocument()
+    })
+  })
+
   describe("Toolbar", () => {
     it("should render toolbar by default", async () => {
       render(

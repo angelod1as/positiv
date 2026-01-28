@@ -7,6 +7,7 @@ import {
   type CellValueChangedEvent,
   type GridApi,
   type GridReadyEvent,
+  type ITooltipParams,
   type SelectionChangedEvent,
   type StateUpdatedEvent,
 } from "ag-grid-community"
@@ -221,7 +222,9 @@ export function AGDataTable<TData>({
   const defaultColDef = useMemo(
     () => ({
       minWidth: 30,
-      tooltipValueGetter: (params: { value?: unknown }) => params.value,
+      tooltipValueGetter: (params: ITooltipParams) => {
+        return params.valueFormatted ?? params.value
+      },
       cellStyle: (params: CellClassParams) => {
         if (params.colDef?.editable === true) {
           return { backgroundColor: "rgba(148, 163, 184, 0.15)" }
@@ -254,7 +257,10 @@ export function AGDataTable<TData>({
     >
       {showSearch && (
         <div
-          className={cn("relative w-full max-w-sm mb-2", isFullscreen && "px-4")}
+          className={cn(
+            "relative w-full max-w-sm mb-2",
+            isFullscreen && "px-4",
+          )}
         >
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -299,8 +305,8 @@ export function AGDataTable<TData>({
           onStateUpdated={handleStateUpdated}
           onRowClicked={onRowClicked}
           maintainColumnOrder={persistState}
-          tooltipShowMode="whenTruncated"
           tooltipShowDelay={0}
+          tooltipInteraction={true}
           autoSizeStrategy={
             hasSavedState
               ? undefined

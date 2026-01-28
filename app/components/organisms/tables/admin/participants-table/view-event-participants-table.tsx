@@ -325,6 +325,8 @@ export const AdminViewEventParticipantsTable: FC<
       {
         field: "application_status",
         headerName: eventParticipantPropMap("application_status"),
+        headerTooltip:
+          "Etapa do processo de inscrição para este evento (conversas, envio de dados, finalização)",
         editable: true,
         cellEditor: "agSelectCellEditor",
         cellEditorParams: {
@@ -347,6 +349,8 @@ export const AdminViewEventParticipantsTable: FC<
       {
         field: "attendance_status",
         headerName: eventParticipantPropMap("attendance_status"),
+        headerTooltip:
+          "Se a pessoa compareceu ou não ao evento (confirmado após o evento acontecer)",
         editable: true,
         cellEditor: "agSelectCellEditor",
         cellEditorParams: {
@@ -405,6 +409,8 @@ export const AdminViewEventParticipantsTable: FC<
       {
         field: "approved_to_attend",
         headerName: profilePropMap("approved_to_attend"),
+        headerTooltip:
+          "Status de aprovação geral do perfil para participar dos eventos (independente de evento específico)",
         editable: true,
         cellEditor: "agSelectCellEditor",
         cellEditorParams: {
