@@ -7,7 +7,14 @@ vi.mock("./send-application-mail.server", () => ({
   sendApplicationMail: vi.fn(),
 }))
 
+vi.mock("~/lib/supabase/db.server", () => ({
+  db: {
+    selectFrom: vi.fn(),
+  },
+}))
+
 import { sendApplicationMail } from "./send-application-mail.server"
+import { db } from "~/lib/supabase/db.server"
 
 describe("applyToEvent", () => {
   let mockFrom: Mock
@@ -100,6 +107,20 @@ describe("applyToEvent", () => {
 
   describe("email sending scenarios", () => {
     beforeEach(() => {
+      // Mock Kysely query chain for event status check (Registration Open by default)
+      const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
+        event_status: "Registration Open",
+      })
+      const mockWhere = vi.fn(() => ({
+        executeTakeFirst: mockExecuteTakeFirst,
+      }))
+      const mockSelect = vi.fn(() => ({
+        where: mockWhere,
+      }))
+      vi.mocked(db.selectFrom).mockReturnValue({
+        select: mockSelect,
+      } as any)
+
       mockSingle
         .mockResolvedValueOnce({ data: null, error: null })
         .mockResolvedValueOnce({ data: mockEvent, error: null })
@@ -189,6 +210,78 @@ describe("applyToEvent", () => {
       )
 
       consoleErrorSpy.mockRestore()
+    })
+  })
+
+  describe("registration closed scenarios", () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it("should return error when event status is 'Registration Closed'", async () => {
+      // Mock Kysely query chain for event status check
+      const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
+        event_status: "Registration Closed",
+      })
+      const mockWhere = vi.fn(() => ({
+        executeTakeFirst: mockExecuteTakeFirst,
+      }))
+      const mockSelect = vi.fn(() => ({
+        where: mockWhere,
+      }))
+      vi.mocked(db.selectFrom).mockReturnValue({
+        select: mockSelect,
+      } as any)
+
+      const context = createContext()
+      const result = await applyToEvent(validValues, context)
+
+      // Should return error result (applySchema wraps errors)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.errors).toHaveLength(1)
+        expect(result.errors[0].message).toBe(
+          "Inscrições encerradas! Este evento atingiu o limite de participantes.",
+        )
+      }
+
+      // Verify Kysely was called to check event status
+      expect(db.selectFrom).toHaveBeenCalledWith("events")
+      expect(mockSelect).toHaveBeenCalledWith("event_status")
+      expect(mockWhere).toHaveBeenCalledWith("id", "=", "event-123")
+    })
+
+    it("should allow application when event status is 'Registration Open'", async () => {
+      // Mock Kysely query chain for event status check
+      const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
+        event_status: "Registration Open",
+      })
+      const mockWhere = vi.fn(() => ({
+        executeTakeFirst: mockExecuteTakeFirst,
+      }))
+      const mockSelect = vi.fn(() => ({
+        where: mockWhere,
+      }))
+      vi.mocked(db.selectFrom).mockReturnValue({
+        select: mockSelect,
+      } as any)
+
+      // Mock Supabase responses
+      mockSingle
+        .mockResolvedValueOnce({ data: null, error: null }) // existing participant check
+        .mockResolvedValueOnce({ data: mockEvent, error: null }) // event fetch for email
+
+      mockUpsert.mockResolvedValueOnce({ error: null })
+
+      vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
+
+      const context = createContext()
+      const result = await applyToEvent(validValues, context)
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.emailSent).toBe(true)
+      }
     })
   })
 })

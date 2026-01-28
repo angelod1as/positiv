@@ -2,6 +2,7 @@ import { applySchema } from "composable-functions"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { applyToEventSchema, userContextSchema } from "../common"
 import { sendApplicationMail } from "./send-application-mail.server"
+import { db } from "~/lib/supabase/db.server"
 
 export const applyToEvent = applySchema(
   applyToEventSchema,
@@ -15,6 +16,19 @@ export const applyToEvent = applySchema(
   }
 
   const profileId = currentProfile.id
+
+  // Check if registrations are still open
+  const event = await db
+    .selectFrom("events")
+    .select("event_status")
+    .where("id", "=", eventId)
+    .executeTakeFirst()
+
+  if (event?.event_status === "Registration Closed") {
+    throw new Error(
+      "Inscrições encerradas! Este evento atingiu o limite de participantes.",
+    )
+  }
 
   const { data } = await supabase
     .from("event_participants")
