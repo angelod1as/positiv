@@ -24,7 +24,11 @@ export const applyToEvent = applySchema(
     .where("id", "=", eventId)
     .executeTakeFirst()
 
-  if (event?.event_status === "Registration Closed") {
+  if (!event) {
+    throw new Error("Evento não encontrado.")
+  }
+
+  if (event.event_status === "Registration Closed") {
     throw new Error(
       "Inscrições encerradas! Este evento atingiu o limite de participantes.",
     )

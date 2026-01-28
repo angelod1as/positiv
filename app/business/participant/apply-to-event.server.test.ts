@@ -253,6 +253,36 @@ describe("applyToEvent", () => {
       expect(mockWhere).toHaveBeenCalledWith("id", "=", "event-123")
     })
 
+    it("should return error when event does not exist", async () => {
+      // Mock Kysely query chain to return null (event not found)
+      const mockExecuteTakeFirst = vi.fn().mockResolvedValue(null)
+      const mockWhere = vi.fn(() => ({
+        executeTakeFirst: mockExecuteTakeFirst,
+      }))
+      const mockSelect = vi.fn(() => ({
+        where: mockWhere,
+      }))
+      vi.mocked(db.selectFrom).mockReturnValue({
+        select: mockSelect,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
+
+      const context = createContext()
+      const result = await applyToEvent(validValues, context)
+
+      // Should return error result
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.errors).toHaveLength(1)
+        expect(result.errors[0].message).toBe("Evento não encontrado.")
+      }
+
+      // Verify Kysely was called to check event status
+      expect(db.selectFrom).toHaveBeenCalledWith("events")
+      expect(mockSelect).toHaveBeenCalledWith("event_status")
+      expect(mockWhere).toHaveBeenCalledWith("id", "=", "event-123")
+    })
+
     it("should allow application when event status is 'Registration Open'", async () => {
       // Mock Kysely query chain for event status check
       const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
