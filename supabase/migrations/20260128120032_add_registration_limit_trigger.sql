@@ -11,8 +11,7 @@ AS $$
 SELECT COUNT(*)
 FROM event_participants
 WHERE event_id = event_id_input
-  AND is_user_applied = TRUE
-  AND application_status != 'think_better';
+  AND is_user_applied = TRUE;
 $$;
 
 ALTER FUNCTION public.get_applied_participants_count(uuid) OWNER TO postgres;
@@ -22,7 +21,7 @@ GRANT ALL ON FUNCTION public.get_applied_participants_count(uuid) TO authenticat
 GRANT ALL ON FUNCTION public.get_applied_participants_count(uuid) TO service_role;
 
 COMMENT ON FUNCTION public.get_applied_participants_count(uuid)
-IS 'Counts participants for a given event where is_user_applied is TRUE and application_status is not think_better (gave up).';
+IS 'Counts all participants for a given event where is_user_applied is TRUE.';
 
 -- Create trigger function to close registrations when limit reached
 CREATE OR REPLACE FUNCTION public.close_registrations_at_limit()
@@ -36,7 +35,7 @@ DECLARE
   current_status event_status;
 BEGIN
   -- Only process if this is a user application (not admin-added)
-  IF NEW.is_user_applied = TRUE AND NEW.application_status != 'think_better' THEN
+  IF NEW.is_user_applied = TRUE THEN
 
     -- Get current event status
     SELECT event_status INTO current_status
@@ -79,4 +78,4 @@ FOR EACH ROW
 EXECUTE FUNCTION public.close_registrations_at_limit();
 
 COMMENT ON TRIGGER trigger_close_registrations_at_limit ON public.event_participants
-IS 'Automatically closes event registrations when 90 participants apply (is_user_applied = TRUE and application_status != think_better).';
+IS 'Automatically closes event registrations when 90 participants apply (is_user_applied = TRUE).';
