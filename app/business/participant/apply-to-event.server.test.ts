@@ -119,6 +119,7 @@ describe("applyToEvent", () => {
       }))
       vi.mocked(db.selectFrom).mockReturnValue({
         select: mockSelect,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       mockSingle
@@ -231,6 +232,7 @@ describe("applyToEvent", () => {
       }))
       vi.mocked(db.selectFrom).mockReturnValue({
         select: mockSelect,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       const context = createContext()
@@ -264,6 +266,7 @@ describe("applyToEvent", () => {
       }))
       vi.mocked(db.selectFrom).mockReturnValue({
         select: mockSelect,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       // Mock Supabase responses
