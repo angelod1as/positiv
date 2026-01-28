@@ -55,9 +55,9 @@ BEGIN
     )
     RETURNING id INTO test_profile_id;
 
-    -- Get existing event IDs (using non-accented titles from 03_events.sql)
-    SELECT id INTO event_id_reg_open_1 FROM public.events WHERE title = 'Evento Com Inscricoes Abertas 1';
-    SELECT id INTO event_id_completed_1 FROM public.events WHERE title = 'Evento Concluido 1';
+    -- Get existing event IDs (using proper Portuguese titles from 03_events.sql)
+    SELECT id INTO event_id_reg_open_1 FROM public.events WHERE title = 'Evento Com Inscrições Abertas 1';
+    SELECT id INTO event_id_completed_1 FROM public.events WHERE title = 'Evento Concluído 1';
     SELECT id INTO event_id_scheduled_1 FROM public.events WHERE title = 'Evento Agendado 1';
 
     -- Insert various types of registrations for this user

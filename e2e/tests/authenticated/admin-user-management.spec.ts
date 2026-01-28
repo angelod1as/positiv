@@ -310,8 +310,8 @@ test.describe("Admin User Management", () => {
    *
    * Uses seed data:
    * - User3 (user3@example.com / social_name: "user3")
-   * - "Evento Com Inscricoes Abertas 1": application_status='sent_payment_data', attendance_status='pending'
-   * - "Evento Concluido 1": application_status='finalised', attendance_status='attended'
+   * - "Evento Com Inscrições Abertas 1": application_status='sent_payment_data', attendance_status='pending'
+   * - "Evento Concluído 1": application_status='finalised', attendance_status='attended'
    */
   test("participant history navigation shows correct data (POS-362)", async ({
     page,
@@ -320,8 +320,8 @@ test.describe("Admin User Management", () => {
     await adminDashboard.navigate()
     await adminDashboard.verifyAdminAccess()
 
-    // Click on "Evento Com Inscricoes Abertas 1" in the events table
-    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
+    // Click on "Evento Com Inscrições Abertas 1" in the events table
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for participants table to load
     await userManagement.waitForTableToLoad()
@@ -343,7 +343,7 @@ test.describe("Admin User Management", () => {
 
     // Verify we're on the correct event page by checking the "No evento" paragraph
     await expect(
-      page.getByText(/No evento.*Evento Com Inscricoes Abertas 1/),
+      page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
     ).toBeVisible()
 
     // Verify current event's status values (Radix UI Select shows text in trigger button)
@@ -363,7 +363,7 @@ test.describe("Admin User Management", () => {
     // Use first() since regex matches multiple events (1, 10, 11, etc.)
     const historyEventLink = page
       .getByRole("link", {
-        name: /Evento Concluido 1/i,
+        name: /Evento Concluído 1/i,
       })
       .first()
     await expect(historyEventLink).toBeVisible()
@@ -396,7 +396,7 @@ test.describe("Admin User Management", () => {
     // KEY ASSERTION: Verify the page now shows the completed event's data
     // This is what was broken in POS-362 - it showed stale data from previous event
     // Use the "No evento" paragraph to specifically target the header, not the history link
-    await expect(page.getByText(/No evento.*Evento Concluido 1/)).toBeVisible()
+    await expect(page.getByText(/No evento.*Evento Concluído 1/)).toBeVisible()
 
     // Verify the status values updated to the completed event's values
     // User3 attended the completed event with finalised status
@@ -409,7 +409,7 @@ test.describe("Admin User Management", () => {
 
     // Should show the original event data again
     await expect(
-      page.getByText(/No evento.*Evento Com Inscricoes Abertas 1/),
+      page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
     ).toBeVisible()
     await expect(applicationStatusTrigger).toContainText("Dados de pagto enviados")
     await expect(attendanceStatusTrigger).toContainText("Pendente")
@@ -420,7 +420,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with known participants
-    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for AG Grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -446,7 +446,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with participants
-    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -486,7 +486,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with participants
-    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -531,7 +531,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with participants (need one with enough for pagination)
-    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -562,7 +562,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with known participants
-    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for AG Grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -601,7 +601,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with known participants
-    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for AG Grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -645,7 +645,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with known participants
-    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
 
     // Wait for AG Grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")

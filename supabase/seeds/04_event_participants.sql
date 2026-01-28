@@ -32,10 +32,10 @@ BEGIN
     SELECT p.id INTO user3_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user3@example.com';
     SELECT p.id INTO user4_profile_id FROM public.profiles p JOIN auth.users u ON p.user_id = u.id WHERE u.email = 'user4@example.com';
 
-    SELECT id INTO event_id_reg_open_1 FROM public.events WHERE title = 'Evento Com Inscricoes Abertas 1';
-    SELECT id INTO event_id_reg_closed_1 FROM public.events WHERE title LIKE 'Evento Com Inscricoes Fechadas 1%' LIMIT 1;
+    SELECT id INTO event_id_reg_open_1 FROM public.events WHERE title = 'Evento Com Inscrições Abertas 1';
+    SELECT id INTO event_id_reg_closed_1 FROM public.events WHERE title LIKE 'Evento Com Inscrições Fechadas 1%' LIMIT 1;
     SELECT id INTO event_id_cancelled_1 FROM public.events WHERE title = 'Evento Cancelado 1';
-    SELECT id INTO event_id_completed_1 FROM public.events WHERE title = 'Evento Concluido 1';
+    SELECT id INTO event_id_completed_1 FROM public.events WHERE title = 'Evento Concluído 1';
     SELECT id INTO event_id_scheduled_1 FROM public.events WHERE title = 'Evento Agendado 1';
 
     INSERT INTO public.event_participants (
