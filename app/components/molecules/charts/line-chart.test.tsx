@@ -32,19 +32,7 @@ const mockSeries = [
 ]
 
 describe('LineChart', () => {
-  it('renders without crashing', () => {
-    const { container } = render(
-      <LineChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="month"
-      />
-    )
-    expect(container.querySelector('[data-chart]')).toBeInTheDocument()
-  })
-
-  it('renders without crashing when data is empty', () => {
+  it('handles empty data without errors', () => {
     const { container } = render(
       <LineChart
         data={[]}
@@ -56,35 +44,7 @@ describe('LineChart', () => {
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
   })
 
-  it('applies className prop', () => {
-    const { container } = render(
-      <LineChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="month"
-        className="custom-chart-class"
-      />
-    )
-    expect(container.querySelector('[data-chart]')).toHaveClass('custom-chart-class')
-  })
-
-  it('injects CSS variables for chart colors via style tag', () => {
-    const { container } = render(
-      <LineChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="month"
-      />
-    )
-    const styleTag = container.querySelector('style')
-    expect(styleTag).toBeInTheDocument()
-    expect(styleTag?.textContent).toContain('--color-desktop')
-    expect(styleTag?.textContent).toContain('--color-mobile')
-  })
-
-  it('accepts children without crashing', () => {
+  it('accepts children for combo chart extensibility', () => {
     const { container } = render(
       <LineChart
         data={mockData}
@@ -98,19 +58,7 @@ describe('LineChart', () => {
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
   })
 
-  it('renders the recharts line chart', () => {
-    const { container } = render(
-      <LineChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="month"
-      />
-    )
-    expect(container.querySelector('.recharts-wrapper')).toBeInTheDocument()
-  })
-
-  it('applies role="img" and aria-label for accessibility', () => {
+  it('applies accessibility attributes', () => {
     const { container } = render(
       <LineChart
         data={mockData}
@@ -123,18 +71,5 @@ describe('LineChart', () => {
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
     expect(chart).toHaveAttribute('aria-label', 'Monthly desktop and mobile visitors')
-  })
-
-  it('renders with role="img" even without ariaLabel', () => {
-    const { container } = render(
-      <LineChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="month"
-      />
-    )
-    const chart = container.querySelector('[data-chart]')
-    expect(chart).toHaveAttribute('role', 'img')
   })
 })

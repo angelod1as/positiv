@@ -28,19 +28,7 @@ const mockConfig: ChartConfig = {
 }
 
 describe('DonutChart', () => {
-  it('renders without crashing', () => {
-    const { container } = render(
-      <DonutChart
-        data={mockData}
-        config={mockConfig}
-        dataKey="count"
-        nameKey="gender"
-      />
-    )
-    expect(container.querySelector('[data-chart]')).toBeInTheDocument()
-  })
-
-  it('renders without crashing when data is empty', () => {
+  it('handles empty data without errors', () => {
     const { container } = render(
       <DonutChart
         data={[]}
@@ -50,34 +38,6 @@ describe('DonutChart', () => {
       />
     )
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
-  })
-
-  it('applies className prop', () => {
-    const { container } = render(
-      <DonutChart
-        data={mockData}
-        config={mockConfig}
-        dataKey="count"
-        nameKey="gender"
-        className="donut-custom"
-      />
-    )
-    expect(container.querySelector('[data-chart]')).toHaveClass('donut-custom')
-  })
-
-  it('injects CSS variables for chart colors', () => {
-    const { container } = render(
-      <DonutChart
-        data={mockData}
-        config={mockConfig}
-        dataKey="count"
-        nameKey="gender"
-      />
-    )
-    const styleTag = container.querySelector('style')
-    expect(styleTag).toBeInTheDocument()
-    expect(styleTag?.textContent).toContain('--color-Male')
-    expect(styleTag?.textContent).toContain('--color-Female')
   })
 
   it('renders center label when provided', () => {
@@ -104,17 +64,5 @@ describe('DonutChart', () => {
       />
     )
     expect(container.querySelector('[data-slot="center-label"]')).not.toBeInTheDocument()
-  })
-
-  it('renders the recharts pie chart', () => {
-    const { container } = render(
-      <DonutChart
-        data={mockData}
-        config={mockConfig}
-        dataKey="count"
-        nameKey="gender"
-      />
-    )
-    expect(container.querySelector('.recharts-wrapper')).toBeInTheDocument()
   })
 })

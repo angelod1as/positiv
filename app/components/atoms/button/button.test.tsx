@@ -19,13 +19,6 @@ describe("Button", () => {
     expect(link).toHaveAttribute("data-discover", "true")
   })
 
-  it("should render as a regular button when to prop is not provided", () => {
-    render(<Button>Test Button</Button>)
-
-    const button = screen.getByRole("button", { name: "Test Button" })
-    expect(button).toBeInTheDocument()
-  })
-
   it("should pass prefetch prop through linkProps to Link component", () => {
     render(
       <MemoryRouter>

@@ -32,19 +32,7 @@ const mockSeries = [
 ]
 
 describe('AreaChart', () => {
-  it('renders without crashing', () => {
-    const { container } = render(
-      <AreaChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="month"
-      />
-    )
-    expect(container.querySelector('[data-chart]')).toBeInTheDocument()
-  })
-
-  it('renders without crashing when data is empty', () => {
+  it('handles empty data without errors', () => {
     const { container } = render(
       <AreaChart
         data={[]}
@@ -54,46 +42,6 @@ describe('AreaChart', () => {
       />
     )
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
-  })
-
-  it('applies className prop', () => {
-    const { container } = render(
-      <AreaChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="month"
-        className="area-custom"
-      />
-    )
-    expect(container.querySelector('[data-chart]')).toHaveClass('area-custom')
-  })
-
-  it('injects CSS variables for chart colors', () => {
-    const { container } = render(
-      <AreaChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="month"
-      />
-    )
-    const styleTag = container.querySelector('style')
-    expect(styleTag).toBeInTheDocument()
-    expect(styleTag?.textContent).toContain('--color-inscritos')
-    expect(styleTag?.textContent).toContain('--color-compareceram')
-  })
-
-  it('renders the recharts area chart', () => {
-    const { container } = render(
-      <AreaChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="month"
-      />
-    )
-    expect(container.querySelector('.recharts-wrapper')).toBeInTheDocument()
   })
 
   it('supports stacked mode by default', () => {

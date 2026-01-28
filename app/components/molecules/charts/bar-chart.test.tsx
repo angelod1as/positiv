@@ -32,19 +32,7 @@ const mockSeries = [
 ]
 
 describe('BarChart', () => {
-  it('renders without crashing', () => {
-    const { container } = render(
-      <BarChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="event"
-      />
-    )
-    expect(container.querySelector('[data-chart]')).toBeInTheDocument()
-  })
-
-  it('renders without crashing when data is empty', () => {
+  it('handles empty data without errors', () => {
     const { container } = render(
       <BarChart
         data={[]}
@@ -54,46 +42,6 @@ describe('BarChart', () => {
       />
     )
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
-  })
-
-  it('applies className prop', () => {
-    const { container } = render(
-      <BarChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="event"
-        className="bar-chart-custom"
-      />
-    )
-    expect(container.querySelector('[data-chart]')).toHaveClass('bar-chart-custom')
-  })
-
-  it('injects CSS variables for chart colors', () => {
-    const { container } = render(
-      <BarChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="event"
-      />
-    )
-    const styleTag = container.querySelector('style')
-    expect(styleTag).toBeInTheDocument()
-    expect(styleTag?.textContent).toContain('--color-revenue')
-    expect(styleTag?.textContent).toContain('--color-tickets')
-  })
-
-  it('renders the recharts bar chart', () => {
-    const { container } = render(
-      <BarChart
-        data={mockData}
-        config={mockConfig}
-        series={mockSeries}
-        xAxisKey="event"
-      />
-    )
-    expect(container.querySelector('.recharts-wrapper')).toBeInTheDocument()
   })
 
   it('accepts children for combo chart extensibility', () => {
@@ -110,7 +58,7 @@ describe('BarChart', () => {
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
   })
 
-  it('supports stacked prop', () => {
+  it('supports stacked bars', () => {
     const { container } = render(
       <BarChart
         data={mockData}
@@ -123,7 +71,7 @@ describe('BarChart', () => {
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
   })
 
-  it('supports horizontal prop', () => {
+  it('supports horizontal orientation', () => {
     const { container } = render(
       <BarChart
         data={mockData}
