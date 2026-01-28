@@ -302,7 +302,6 @@ export function AGDataTable<TData>({
           onStateUpdated={handleStateUpdated}
           onRowClicked={onRowClicked}
           maintainColumnOrder={persistState}
-          tooltipShowMode="whenTruncated"
           tooltipShowDelay={0}
           tooltipInteraction={true}
           autoSizeStrategy={
