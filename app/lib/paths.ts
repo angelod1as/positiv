@@ -10,6 +10,7 @@ const REGISTRATION_ERROR = `${LOGON}/erro`
 const LOGON_CALLBACK = "/auth/confirm"
 const LOGON_CONFIRM = `${LOGON}/confirm`
 const CODE_OF_CONDUCT = `/codigo-de-conduta`
+const FEEDBACK = `/feedback`
 
 ////////
 // PRIVATE
@@ -38,6 +39,8 @@ const ADMIN_DASHBOARD = "/admin"
 const ADMIN_PARTICIPANTS = `${ADMIN_DASHBOARD}/participantes`
 const ADMIN_VIEW_PARTICIPANT = (profileId: string) =>
   `${ADMIN_PARTICIPANTS}/${profileId}`
+// FEEDBACKS
+const ADMIN_FEEDBACKS = `${ADMIN_DASHBOARD}/feedbacks`
 // EVENTS
 const ADMIN_EVENTS = `${ADMIN_DASHBOARD}/eventos`
 const ADMIN_VIEW_EVENT = (id: string) => `${ADMIN_EVENTS}/${id}`
@@ -51,11 +54,13 @@ const paths = {
   root: {
     HOME,
     CODE_OF_CONDUCT,
+    FEEDBACK,
   },
   admin: {
     ADMIN_DASHBOARD,
     ADMIN_PARTICIPANTS,
     ADMIN_VIEW_PARTICIPANT,
+    ADMIN_FEEDBACKS,
     events: {
       ADMIN_EDIT_EVENT,
       ADMIN_VIEW_EVENT,

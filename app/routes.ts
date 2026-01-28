@@ -19,6 +19,7 @@ export default [
   ]),
 
   layout("pages/auth/layout.tsx", [
+    route("/feedback", "pages/public/feedback-page.tsx"),
     ...prefix("/entrar", [
       index("pages/auth/login-page.tsx"),
       route("/esqueci", "pages/auth/forgot-password-page.tsx"),
@@ -94,6 +95,8 @@ export default [
           "participantes/:profileId",
           "pages/admin/participants/view-profile-page.tsx",
         ),
+        // Feedbacks
+        route("feedbacks", "pages/admin/feedbacks/feedbacks-page.tsx"),
       ]),
       ...prefix("eventos", [
         layout("pages/admin/events/layout.tsx", [

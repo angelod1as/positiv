@@ -43,11 +43,11 @@ FROM (
     SELECT
         n,
         CASE
-            WHEN n <= 20 THEN 'Evento Concluido ' || n
+            WHEN n <= 20 THEN 'Evento Concluído ' || n
             WHEN n <= 24 THEN 'Evento Cancelado ' || (n - 20)
-            WHEN n = 25 THEN 'Festa BDSM - Inscricoes Abertas'
-            WHEN n = 26 THEN 'Evento Com Inscricoes Abertas 1'
-            WHEN n <= 28 THEN 'Evento Com Inscricoes Fechadas ' || (n - 26)
+            WHEN n = 25 THEN 'Festa BDSM - Inscrições Abertas'
+            WHEN n = 26 THEN 'Evento Com Inscrições Abertas 1'
+            WHEN n <= 28 THEN 'Evento Com Inscrições Fechadas ' || (n - 26)
             WHEN n = 29 THEN 'Evento Agendado 1'
             ELSE 'Evento Rascunho'
         END AS title,
@@ -59,7 +59,7 @@ FROM (
             WHEN n <= 20 THEN 'Descricao do evento concluido ' || n || '. Este evento ja aconteceu e foi um sucesso!'
             WHEN n <= 24 THEN 'Aviso: Este evento foi cancelado. Pedimos desculpas pelo inconveniente.'
             WHEN n = 25 THEN 'Uma edicao especial BDSM da Positiv. Venha explorar seus limites em um ambiente seguro e consensual.'
-            WHEN n = 26 THEN 'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Inscricoes abertas!'
+            WHEN n = 26 THEN 'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Inscrições abertas!'
             WHEN n <= 28 THEN 'As inscricoes para este evento foram encerradas. Aguarde novas oportunidades.'
             WHEN n = 29 THEN 'Prepare-se para este evento! Marque em seus calendarios!'
             ELSE 'Evento em fase de planejamento. Mais informacoes em breve.'

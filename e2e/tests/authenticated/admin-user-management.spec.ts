@@ -360,9 +360,12 @@ test.describe("Admin User Management", () => {
     await expect(historySection).toBeVisible({ timeout: 5000 })
 
     // Click on the completed event link in history and wait for navigation
-    const historyEventLink = page.getByRole("link", {
-      name: /Evento Concluído 1/i,
-    })
+    // Use first() since regex matches multiple events (1, 10, 11, etc.)
+    const historyEventLink = page
+      .getByRole("link", {
+        name: /Evento Concluído 1/i,
+      })
+      .first()
     await expect(historyEventLink).toBeVisible()
 
     // Extract event ID from current URL to detect change (using URL API for robustness)
@@ -451,16 +454,17 @@ test.describe("Admin User Management", () => {
     expect(initialRowCount).toBeGreaterThan(0)
 
     // Apply a filter using the multi-select filter
-    // Click on application_status filter button
-    const appStatusHeader = grid.locator(
-      '.ag-header-cell[col-id="application_status"]',
-    )
-    const filterButton = appStatusHeader.locator(".ag-header-icon")
+    // Use is_veteran column which is always visible (Vet ou Nov?)
+    const veteranHeader = grid.locator('.ag-header-cell[col-id="is_veteran"]')
+    await veteranHeader.waitFor({ state: "visible", timeout: 5000 })
+    const filterButton = veteranHeader.locator(".ag-header-icon")
     await filterButton.click()
 
     // Wait for filter popup - AG Grid renders filter content in a popup
     // Wait for the "Selecionar Todos" button which indicates the filter UI is ready
-    const selectAllButton = page.getByRole("button", { name: "Selecionar Todos" })
+    const selectAllButton = page.getByRole("button", {
+      name: "Selecionar Todos",
+    })
     await selectAllButton.waitFor({ state: "visible", timeout: 5000 })
 
     // Verify filter options are visible
@@ -620,8 +624,8 @@ test.describe("Admin User Management", () => {
     await page.keyboard.press("Tab")
 
     // Test Enter key to start editing (on editable cells)
-    // First navigate to an editable cell
-    const editableCell = grid.locator('.ag-cell[col-id="application_status"]').first()
+    // Use is_veteran column which is visible and editable
+    const editableCell = grid.locator('.ag-cell[col-id="is_veteran"]').first()
     await editableCell.click()
     await page.keyboard.press("Enter")
 

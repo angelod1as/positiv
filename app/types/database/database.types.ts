@@ -316,6 +316,42 @@ export type Database = {
         }
         Relationships: []
       }
+      feedbacks: {
+        Row: {
+          can_contact: boolean
+          created_at: string
+          email: string | null
+          feedback_text: string
+          has_participated: Database["public"]["Enums"]["feedback_participation_enum"]
+          id: string
+          ip_address: string
+          name: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          can_contact?: boolean
+          created_at?: string
+          email?: string | null
+          feedback_text: string
+          has_participated?: Database["public"]["Enums"]["feedback_participation_enum"]
+          id?: string
+          ip_address: string
+          name?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          can_contact?: boolean
+          created_at?: string
+          email?: string | null
+          feedback_text?: string
+          has_participated?: Database["public"]["Enums"]["feedback_participation_enum"]
+          id?: string
+          ip_address?: string
+          name?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       newsletter_subscriptions: {
         Row: {
           consent_given: boolean
@@ -535,6 +571,7 @@ export type Database = {
         | "Registration Closed"
         | "Registration Open"
       event_type_enum: "regular" | "bdsm"
+      feedback_participation_enum: "never" | "once" | "more_than_once"
       profile_flag_enum: "none" | "yellow" | "red" | "gray"
       spot_type: "regular" | "social" | "staff"
     }
@@ -694,6 +731,7 @@ export const Constants = {
         "Registration Open",
       ],
       event_type_enum: ["regular", "bdsm"],
+      feedback_participation_enum: ["never", "once", "more_than_once"],
       profile_flag_enum: ["none", "yellow", "red", "gray"],
       spot_type: ["regular", "social", "staff"],
     },
