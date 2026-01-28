@@ -310,8 +310,8 @@ test.describe("Admin User Management", () => {
    *
    * Uses seed data:
    * - User3 (user3@example.com / social_name: "user3")
-   * - "Evento Com Inscrições Abertas 1": application_status='sent_payment_data', attendance_status='pending'
-   * - "Evento Concluído 1": application_status='finalised', attendance_status='attended'
+   * - "Evento Com Inscricoes Abertas 1": application_status='sent_payment_data', attendance_status='pending'
+   * - "Evento Concluido 1": application_status='finalised', attendance_status='attended'
    */
   test("participant history navigation shows correct data (POS-362)", async ({
     page,
@@ -320,8 +320,8 @@ test.describe("Admin User Management", () => {
     await adminDashboard.navigate()
     await adminDashboard.verifyAdminAccess()
 
-    // Click on "Evento Com Inscrições Abertas 1" in the events table
-    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+    // Click on "Evento Com Inscricoes Abertas 1" in the events table
+    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
 
     // Wait for participants table to load
     await userManagement.waitForTableToLoad()
@@ -343,7 +343,7 @@ test.describe("Admin User Management", () => {
 
     // Verify we're on the correct event page by checking the "No evento" paragraph
     await expect(
-      page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
+      page.getByText(/No evento.*Evento Com Inscricoes Abertas 1/),
     ).toBeVisible()
 
     // Verify current event's status values (Radix UI Select shows text in trigger button)
@@ -360,9 +360,12 @@ test.describe("Admin User Management", () => {
     await expect(historySection).toBeVisible({ timeout: 5000 })
 
     // Click on the completed event link in history and wait for navigation
-    const historyEventLink = page.getByRole("link", {
-      name: /Evento Concluído 1/i,
-    })
+    // Use first() since regex matches multiple events (1, 10, 11, etc.)
+    const historyEventLink = page
+      .getByRole("link", {
+        name: /Evento Concluido 1/i,
+      })
+      .first()
     await expect(historyEventLink).toBeVisible()
 
     // Extract event ID from current URL to detect change (using URL API for robustness)
@@ -393,7 +396,7 @@ test.describe("Admin User Management", () => {
     // KEY ASSERTION: Verify the page now shows the completed event's data
     // This is what was broken in POS-362 - it showed stale data from previous event
     // Use the "No evento" paragraph to specifically target the header, not the history link
-    await expect(page.getByText(/No evento.*Evento Concluído 1/)).toBeVisible()
+    await expect(page.getByText(/No evento.*Evento Concluido 1/)).toBeVisible()
 
     // Verify the status values updated to the completed event's values
     // User3 attended the completed event with finalised status
@@ -406,7 +409,7 @@ test.describe("Admin User Management", () => {
 
     // Should show the original event data again
     await expect(
-      page.getByText(/No evento.*Evento Com Inscrições Abertas 1/),
+      page.getByText(/No evento.*Evento Com Inscricoes Abertas 1/),
     ).toBeVisible()
     await expect(applicationStatusTrigger).toContainText("Dados de pagto enviados")
     await expect(attendanceStatusTrigger).toContainText("Pendente")
@@ -417,7 +420,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with known participants
-    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
 
     // Wait for AG Grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -443,7 +446,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with participants
-    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
 
     // Wait for grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -451,16 +454,17 @@ test.describe("Admin User Management", () => {
     expect(initialRowCount).toBeGreaterThan(0)
 
     // Apply a filter using the multi-select filter
-    // Click on application_status filter button
-    const appStatusHeader = grid.locator(
-      '.ag-header-cell[col-id="application_status"]',
-    )
-    const filterButton = appStatusHeader.locator(".ag-header-icon")
+    // Use is_veteran column which is always visible (Vet ou Nov?)
+    const veteranHeader = grid.locator('.ag-header-cell[col-id="is_veteran"]')
+    await veteranHeader.waitFor({ state: "visible", timeout: 5000 })
+    const filterButton = veteranHeader.locator(".ag-header-icon")
     await filterButton.click()
 
     // Wait for filter popup - AG Grid renders filter content in a popup
     // Wait for the "Selecionar Todos" button which indicates the filter UI is ready
-    const selectAllButton = page.getByRole("button", { name: "Selecionar Todos" })
+    const selectAllButton = page.getByRole("button", {
+      name: "Selecionar Todos",
+    })
     await selectAllButton.waitFor({ state: "visible", timeout: 5000 })
 
     // Verify filter options are visible
@@ -482,7 +486,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with participants
-    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
 
     // Wait for grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -527,7 +531,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with participants (need one with enough for pagination)
-    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
 
     // Wait for grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -558,7 +562,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with known participants
-    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
 
     // Wait for AG Grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -597,7 +601,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with known participants
-    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
 
     // Wait for AG Grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
@@ -620,8 +624,8 @@ test.describe("Admin User Management", () => {
     await page.keyboard.press("Tab")
 
     // Test Enter key to start editing (on editable cells)
-    // First navigate to an editable cell
-    const editableCell = grid.locator('.ag-cell[col-id="application_status"]').first()
+    // Use is_veteran column which is visible and editable
+    const editableCell = grid.locator('.ag-cell[col-id="is_veteran"]').first()
     await editableCell.click()
     await page.keyboard.press("Enter")
 
@@ -641,7 +645,7 @@ test.describe("Admin User Management", () => {
     await adminDashboard.verifyAdminAccess()
 
     // Click on an event with known participants
-    await adminDashboard.clickViewEvent("Evento Com Inscrições Abertas 1")
+    await adminDashboard.clickViewEvent("Evento Com Inscricoes Abertas 1")
 
     // Wait for AG Grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
