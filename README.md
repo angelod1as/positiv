@@ -149,6 +149,51 @@ Tests run sequentially for reliability and follow realistic user journeys.
 2. The repositories must be siblings `./positiv` and `./positiv-email` must be in the same folder (or you will need to edit the Positiv Email files)
 3. Follow its Readme for running the server
 
+## CI/CD and Environments
+
+### Environment Strategy
+
+We use a **two-environment approach**:
+
+| Environment | Purpose | Database | When |
+|------------|---------|----------|------|
+| **Local** | Development | Supabase local | Day-to-day dev work |
+| **Production** | Live application | Supabase hosted | After merge to `main` |
+
+**Important**: We don't use a shared staging environment. Instead, each PR gets its own **ephemeral local Supabase instance** in CI. This allows multiple PRs with database migrations to run simultaneously without conflicts.
+
+### Why No Staging?
+
+A shared staging environment caused:
+- ❌ Blocking PRs (migrations from different PRs conflicted)
+- ❌ Serial development (had to wait for PRs to merge one by one)
+- ❌ Unreliable tests (E2E tests failed due to schema mismatches)
+
+With local Supabase instances per PR:
+- ✅ Multiple PRs can run simultaneously
+- ✅ Each PR tests against its own isolated database
+- ✅ ~5x faster development cycle
+- ✅ Zero cost (local instances are free)
+
+### CI Workflow
+
+When you open a PR:
+
+1. **Schema Validation**: TypeScript types are validated against database schema
+2. **Unit Tests**: Fast tests without database dependencies
+3. **E2E Tests**: Playwright tests run against a fresh local Supabase instance
+
+For detailed CI/CD documentation, see [docs/ci-workflow.md](docs/ci-workflow.md).
+
+### Database Migrations
+
+1. Create migration: `supabase migration new my_feature`
+2. Test locally: `supabase db reset`
+3. Open PR (CI tests your migration in isolation)
+4. Merge PR (migrations auto-apply to production)
+
+See [CLAUDE.md](CLAUDE.md#database-migration-rules) for migration best practices.
+
 ## Deployment
 
 The application can be deployed to any hosting service that supports Node.js applications. Follow these steps for deployment:
