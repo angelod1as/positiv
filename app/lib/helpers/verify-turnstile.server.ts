@@ -6,6 +6,8 @@ export interface TurnstileVerificationResult {
   error?: string
 }
 
+const TURNSTILE_TIMEOUT_MS = 5000
+
 export async function verifyTurnstileToken(
   token: string,
   ip: string,
@@ -13,6 +15,9 @@ export async function verifyTurnstileToken(
 ): Promise<TurnstileVerificationResult> {
   try {
     const { secretKey } = getTurnstileConfig(request)
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), TURNSTILE_TIMEOUT_MS)
 
     const response = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -24,8 +29,11 @@ export async function verifyTurnstileToken(
           response: token,
           remoteip: ip,
         }),
+        signal: controller.signal,
       },
     )
+
+    clearTimeout(timeoutId)
 
     const data = (await response.json()) as {
       success: boolean
