@@ -10,13 +10,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  validate-schema:
     runs-on: ubuntu-latest
-    env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
-      SUPABASE_PROJECT_ID: ${{ secrets.STAGING_PROJECT_ID }}
-      SUPABASE_CONNECT_URL: ${{ secrets.STAGING_SUPABASE_CONNECT_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
@@ -34,8 +29,6 @@ jobs:
           fi
       - name: Stop Supabase local development setup
         run: supabase db stop
-      - name: Push DB to staging
-        run: supabase db push --db-url "$SUPABASE_CONNECT_URL"
 
   unit-test:
     runs-on: ubuntu-latest
@@ -61,9 +54,9 @@ jobs:
           path: coverage/
           retention-days: 30
 
-  test:
+  e2e-test:
     runs-on: ubuntu-latest
-    needs: [deploy, unit-test]
+    needs: [validate-schema, unit-test]
     timeout-minutes: 60
     services:
       mailhog:
@@ -74,6 +67,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      # Setup Supabase CLI and start local instance
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start Supabase local instance
+        run: supabase start
+
+      - name: Get Supabase local credentials
+        id: supabase-creds
+        run: |
+          echo "api_url=$(supabase status --output json | jq -r '.API_URL')" >> $GITHUB_OUTPUT
+          echo "anon_key=$(supabase status --output json | jq -r '.ANON_KEY')" >> $GITHUB_OUTPUT
+          echo "service_role_key=$(supabase status --output json | jq -r '.SERVICE_ROLE_KEY')" >> $GITHUB_OUTPUT
+          echo "db_url=$(supabase status --output json | jq -r '.DB_URL')" >> $GITHUB_OUTPUT
+
+      # Setup Node and dependencies
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -86,14 +97,16 @@ jobs:
         run: pnpm install
       - name: Install Playwright Browsers
         run: pnpm exec playwright install chromium --with-deps
+
+      # Run E2E tests against local Supabase
       - name: Run E2E tests
         run: pnpm test:e2e
         env:
           CI: true
-          VITE_SUPABASE_URL: ${{ secrets.STAGING_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.STAGING_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.STAGING_SUPABASE_SERVICE_ROLE_KEY }}
-          SUPABASE_CONNECT_URL: ${{ secrets.STAGING_SUPABASE_CONNECT_URL }}
+          VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
+          VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}
+          SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
           TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
           TEST_USER_ADMIN_EMAIL: ${{ secrets.TEST_USER_ADMIN_EMAIL }}
           COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
@@ -103,6 +116,8 @@ jobs:
           LISTMONK_API_URL: ${{ secrets.LISTMONK_API_URL }}
           LISTMONK_API_USERNAME: ${{ secrets.LISTMONK_API_USERNAME }}
           LISTMONK_API_PASSWORD: ${{ secrets.LISTMONK_API_PASSWORD }}
+
+      # Upload artifacts
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
@@ -115,3 +130,8 @@ jobs:
           name: playwright-test-results
           path: test-results/
           retention-days: 30
+
+      # Cleanup
+      - name: Stop Supabase local instance
+        if: always()
+        run: supabase stop
