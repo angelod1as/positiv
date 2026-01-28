@@ -108,6 +108,16 @@ export const getAllFeedbacksWithVerification = composable(
       ]),
     )
 
+    if (profileByEmail.size === 0 && profileByPhone.size === 0) {
+      return feedbacks.map((f) => ({
+        ...f,
+        is_verified: false,
+        profile_id: null,
+        social_name: null,
+        full_name: null,
+      }))
+    }
+
     return feedbacks.map((f) => {
       const emailProfile = f.email
         ? profileByEmail.get(f.email.toLowerCase())
