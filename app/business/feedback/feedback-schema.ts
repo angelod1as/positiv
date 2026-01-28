@@ -14,7 +14,8 @@ export const feedbackFormSchema = zod.object({
   }),
   feedbackText: zod
     .string()
-    .min(10, "O feedback deve ter pelo menos 10 caracteres"),
+    .min(10, "O feedback deve ter pelo menos 10 caracteres")
+    .max(5000, "O feedback deve ter no máximo 5000 caracteres"),
   canContact: zod.preprocess(
     (val) => val === "on" || val === true || val === "true",
     zod.boolean(),

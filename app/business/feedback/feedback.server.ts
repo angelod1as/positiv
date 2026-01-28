@@ -27,7 +27,7 @@ export async function submitFeedback(
     .values({
       name: data.name ?? null,
       email: data.email || null,
-      whatsapp: data.whatsapp ?? null,
+      whatsapp: data.whatsapp || null,
       has_participated: data.hasParticipated,
       feedback_text: data.feedbackText,
       can_contact: data.canContact ?? false,
@@ -70,11 +70,12 @@ export const getAllFeedbacksWithVerification = composable(
     const emails = feedbacks
       .map((f) => f.email)
       .filter((e): e is string => e !== null)
-    const phones = feedbacks
+    const phoneStrings = feedbacks
       .map((f) => f.whatsapp)
       .filter((w): w is string => w !== null)
-      .map((w) => parseInt(w.replace(/\D/g, ""), 10))
-      .filter((p) => !isNaN(p))
+      .map((w) => w.replace(/\D/g, ""))
+      .filter((p) => p.length >= 10)
+    const phones = phoneStrings.map((p) => parseInt(p, 10)).filter((p) => !isNaN(p))
 
     const profilesWithEmail =
       emails.length > 0

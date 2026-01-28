@@ -62,6 +62,35 @@ describe("feedbackFormSchema", () => {
       const result = feedbackFormSchema.safeParse(data)
       expect(result.success).toBe(true)
     })
+
+    it("should reject feedbackText with more than 5000 characters", () => {
+      const data = {
+        ...validData,
+        feedbackText: "a".repeat(5001),
+      }
+
+      const result = feedbackFormSchema.safeParse(data)
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        const feedbackError = result.error.issues.find(
+          (issue) => issue.path[0] === "feedbackText",
+        )
+        expect(feedbackError).toBeDefined()
+        expect(feedbackError?.message).toBe(
+          "O feedback deve ter no máximo 5000 caracteres",
+        )
+      }
+    })
+
+    it("should accept feedbackText with exactly 5000 characters", () => {
+      const data = {
+        ...validData,
+        feedbackText: "a".repeat(5000),
+      }
+
+      const result = feedbackFormSchema.safeParse(data)
+      expect(result.success).toBe(true)
+    })
   })
 
   describe("email field validation", () => {

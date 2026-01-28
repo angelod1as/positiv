@@ -34,3 +34,5 @@ export class FeedbackRateLimiter {
     }
   }
 }
+
+export const feedbackRateLimiter = new FeedbackRateLimiter()

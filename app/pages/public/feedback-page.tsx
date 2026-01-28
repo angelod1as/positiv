@@ -1,7 +1,7 @@
 import { Turnstile } from "@marsidev/react-turnstile"
 import { data, useLoaderData } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
-import { FeedbackRateLimiter } from "~/business/feedback/feedback-rate-limiter"
+import { feedbackRateLimiter } from "~/business/feedback/feedback-rate-limiter"
 import { feedbackFormSchema } from "~/business/feedback/feedback-schema"
 import { submitFeedback } from "~/business/feedback/feedback.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
@@ -24,15 +24,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
     return data({ errors: parsed.error.flatten().fieldErrors }, { status: 400 })
   }
 
-  const ip =
-    request.headers.get("cf-connecting-ip") ||
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    "unknown"
+  const ip = request.headers.get("cf-connecting-ip") || "unknown"
 
   const isDev = process.env.NODE_ENV === "development"
   if (!isDev) {
-    const rateLimiter = new FeedbackRateLimiter()
-    if (rateLimiter.isRateLimited(ip)) {
+    if (feedbackRateLimiter.isRateLimited(ip)) {
       return redirectWithError(
         paths.root.FEEDBACK,
         "Você já enviou um feedback recentemente. Por favor, aguarde antes de enviar outro.",
@@ -56,8 +52,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   await submitFeedback(feedbackData, ip)
 
   if (!isDev) {
-    const rateLimiter = new FeedbackRateLimiter()
-    rateLimiter.recordRequest(ip)
+    feedbackRateLimiter.recordRequest(ip)
   }
 
   return redirectWithSuccess(
