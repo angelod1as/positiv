@@ -131,5 +131,21 @@ describe("FeedbackPage", () => {
 
       expect(screen.getByTestId("turnstile")).toBeInTheDocument()
     })
+
+    it("should display the information box about feedback acceptance", () => {
+      const router = createTestRouter()
+      render(<RouterProvider router={router} />)
+
+      expect(
+        screen.getByText(
+          /A Positiv leva em consideração exclusivamente os feedbacks relacionados com a nossa organização e nosso evento/i,
+        ),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText(
+          /Feedbacks de festas só serão aceitos via o formulário oficial enviado no grupo do WhatsApp do evento/i,
+        ),
+      ).toBeInTheDocument()
+    })
   })
 })
