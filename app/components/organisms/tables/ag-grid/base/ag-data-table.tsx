@@ -257,7 +257,10 @@ export function AGDataTable<TData>({
     >
       {showSearch && (
         <div
-          className={cn("relative w-full max-w-sm mb-2", isFullscreen && "px-4")}
+          className={cn(
+            "relative w-full max-w-sm mb-2",
+            isFullscreen && "px-4",
+          )}
         >
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
