@@ -7,6 +7,7 @@ import {
   type CellValueChangedEvent,
   type GridApi,
   type GridReadyEvent,
+  type ITooltipParams,
   type SelectionChangedEvent,
   type StateUpdatedEvent,
 } from "ag-grid-community"
@@ -221,7 +222,9 @@ export function AGDataTable<TData>({
   const defaultColDef = useMemo(
     () => ({
       minWidth: 30,
-      tooltipValueGetter: (params: { value?: unknown }) => params.value,
+      tooltipValueGetter: (params: ITooltipParams) => {
+        return params.valueFormatted ?? params.value
+      },
       cellStyle: (params: CellClassParams) => {
         if (params.colDef?.editable === true) {
           return { backgroundColor: "rgba(148, 163, 184, 0.15)" }
