@@ -1,11 +1,9 @@
 import type { ActionFunctionArgs } from "react-router"
-import { deleteEventListmonkList } from "~/business/admin/event-listmonk-sync.server"
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
 import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
-import { kyselyDb } from "~/kysely-db"
 
 /**
- * Internal API endpoint for processing newsletter campaigns
+ * Internal API endpoint for processing pre-opening reminder campaigns
  * Called by Supabase Edge Function via pg_cron
  */
 export async function action({ request }: ActionFunctionArgs) {
@@ -24,14 +22,14 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
-    // Get all pending opening campaigns
-    const pendingResult = await getPendingCampaigns("opening")
+    // Get all pending pre-opening campaigns
+    const pendingResult = await getPendingCampaigns("pre_opening")
 
     if (!pendingResult.success || !pendingResult.data) {
       return Response.json(
         {
           success: false,
-          error: "Failed to fetch pending campaigns",
+          error: "Failed to fetch pending pre-opening campaigns",
           processed: 0,
           errors: [],
         },
@@ -48,7 +46,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
     // Process each campaign
     for (const campaign of pending) {
-      const result = await processCampaignForEvent(campaign.event_id, "opening")
+      const result = await processCampaignForEvent(
+        campaign.event_id,
+        "pre_opening",
+      )
 
       results.push({
         eventId: campaign.event_id,
@@ -62,19 +63,15 @@ export async function action({ request }: ActionFunctionArgs) {
     const successCount = results.filter((r) => r.success).length
     const failureCount = results.filter((r) => !r.success).length
 
-    // Cleanup lists for completed events where time_group_end has passed
-    const cleanupResults = await cleanupCompletedEventLists()
-
     return Response.json({
       success: true,
       processed: pending.length,
       succeeded: successCount,
       failed: failureCount,
       results,
-      listCleanup: cleanupResults,
     })
   } catch (error) {
-    console.error("Error processing campaigns:", error)
+    console.error("Error processing pre-opening campaigns:", error)
 
     return Response.json(
       {
@@ -85,36 +82,5 @@ export async function action({ request }: ActionFunctionArgs) {
       },
       { status: 500 },
     )
-  }
-}
-
-async function cleanupCompletedEventLists() {
-  const eventsToCleanup = await kyselyDb
-    .selectFrom("events")
-    .select(["id", "listmonk_list_id"])
-    .where("event_status", "=", "Completed")
-    .where("time_group_end", "<", new Date().toISOString())
-    .where("listmonk_list_id", "is not", null)
-    .execute()
-
-  const results: Array<{ eventId: string; success: boolean; error?: string }> =
-    []
-
-  for (const event of eventsToCleanup) {
-    const result = await deleteEventListmonkList(event.id)
-    results.push({
-      eventId: event.id,
-      success: result.success,
-      error: result.success
-        ? undefined
-        : result.errors?.[0]?.message || "Unknown error",
-    })
-  }
-
-  return {
-    cleaned: eventsToCleanup.length,
-    succeeded: results.filter((r) => r.success).length,
-    failed: results.filter((r) => !r.success).length,
-    results,
   }
 }
