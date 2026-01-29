@@ -517,6 +517,10 @@ export type Database = {
         Returns: undefined
       }
       get_admin_user_ids: { Args: never; Returns: string[] }
+      get_applied_participants_count: {
+        Args: { event_id_input: string }
+        Returns: number
+      }
       get_profile_with_roles: {
         Args: { user_id_input: string }
         Returns: {
