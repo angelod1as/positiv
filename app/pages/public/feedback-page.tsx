@@ -5,6 +5,7 @@ import { feedbackRateLimiter } from "~/business/feedback/feedback-rate-limiter"
 import { feedbackFormSchema } from "~/business/feedback/feedback-schema"
 import { submitFeedback } from "~/business/feedback/feedback.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { Card, CardContent } from "~/components/ui/card"
 import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
 import { verifyTurnstileToken } from "~/lib/helpers/verify-turnstile.server"
 import paths from "~/lib/paths"
@@ -71,6 +72,20 @@ const FeedbackPage = () => {
         <p className="text-sm text-muted-foreground">
           Compartilhe aqui anonimamente (ou não) sugestões, críticas ou elogios.
         </p>
+        <Card className="bg-muted/50 mt-2">
+          <CardContent className="pt-4">
+            <p className="text-sm text-muted-foreground">
+              A Positiv leva em consideração exclusivamente os feedbacks
+              relacionados com a nossa organização e nosso evento. Nos
+              reservamos a não apurar denúncias de casos ocorridos fora dos
+              nossos espaços.
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Feedbacks de festas só serão aceitos via o formulário oficial
+              enviado no grupo do WhatsApp do evento.
+            </p>
+          </CardContent>
+        </Card>
       </div>
       <SchemaForm
         schema={feedbackFormSchema}
