@@ -239,6 +239,30 @@ supabase stop
 
 ---
 
+### Authentication Fails in E2E Tests
+
+**Cause**: Test user credentials don't match seeded users
+
+**Check**:
+1. Verify `TEST_USER_PASSWORD` secret matches password in `supabase/seed.sql`
+2. Verify `TEST_USER_ADMIN_EMAIL` secret matches admin email in `supabase/seed.sql`
+3. Ensure seeds are being applied (check Supabase startup logs)
+
+**Debug locally**:
+```bash
+# Check if seeds were applied
+supabase start
+supabase db reset  # This reapplies all migrations + seeds
+
+# Verify users exist in database
+psql postgresql://postgres:postgres@localhost:54322/postgres
+SELECT email FROM auth.users;
+```
+
+**Solution**: Update GitHub secrets or seed.sql to match, then re-run tests
+
+---
+
 ## GitHub Secrets Required
 
 ### For PRs (E2E Tests)
@@ -255,6 +279,19 @@ LISTMONK_API_PASSWORD
 ```
 
 Note: Supabase credentials are NOT needed for PRs! They come from the local instance.
+
+**Important**: The following secrets MUST match the seed data in `supabase/seed.sql`:
+
+- `TEST_USER_PASSWORD` - Must match the password for test users created in seeds
+- `TEST_USER_ADMIN_EMAIL` - Must match the email of the admin user created in seeds
+
+To verify seed users:
+```sql
+-- Check seed.sql for user creation
+-- Look for INSERT INTO auth.users or profile creation
+```
+
+If E2E tests fail with authentication errors, verify these secrets match the seeded users.
 
 ---
 
