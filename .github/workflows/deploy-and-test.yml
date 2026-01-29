@@ -18,7 +18,7 @@ jobs:
         with:
           version: latest
       - name: Start Supabase local development setup
-        run: supabase db start
+        run: supabase start
       - name: Verify generated types match Postgres schema
         run: |
           supabase gen types typescript --local > schema.gen.ts
@@ -28,7 +28,7 @@ jobs:
             exit 1
           fi
       - name: Stop Supabase local development setup
-        run: supabase db stop
+        run: supabase stop
 
   unit-test:
     runs-on: ubuntu-latest
