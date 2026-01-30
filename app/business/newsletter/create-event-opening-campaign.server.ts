@@ -158,7 +158,9 @@ export const createEventOpeningCampaign = composable(
       )
 
       if (!statusResponse.ok) {
-        console.error(`Failed to start campaign ${result.data.id}`)
+        throw new Error(
+          `Failed to start campaign ${result.data.id}: ${statusResponse.status} ${statusResponse.statusText}`,
+        )
       }
     }
 

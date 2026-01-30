@@ -101,6 +101,16 @@ BEGIN
       should_send_at = NEW.time_application_start,
       updated_at = NOW();
 
+  ELSE
+    -- If event moved to the past, mark campaigns as sent to prevent orphaned records
+    UPDATE event_newsletter_campaigns
+    SET
+      campaign_is_sent = true,
+      campaign_sent_time = COALESCE(campaign_sent_time, NOW()),
+      updated_at = NOW()
+    WHERE event_id = NEW.id
+      AND campaign_is_sent = false;
+
   END IF;
 
   RETURN NEW;

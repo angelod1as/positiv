@@ -23,6 +23,15 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Remove existing job if it exists (idempotency)
+  IF EXISTS (
+    SELECT 1 FROM cron.job
+    WHERE jobname = 'process-pre-opening-reminders'
+  ) THEN
+    PERFORM cron.unschedule('process-pre-opening-reminders');
+    RAISE NOTICE 'Removed existing cron job: process-pre-opening-reminders';
+  END IF;
+
   -- Create the cron job using Vault secrets
   PERFORM cron.schedule(
     'process-pre-opening-reminders',

@@ -158,7 +158,9 @@ export const createPreOpeningReminder = composable(
       )
 
       if (!statusResponse.ok) {
-        console.error(`Failed to start pre-opening campaign ${result.data.id}`)
+        throw new Error(
+          `Failed to start pre-opening campaign ${result.data.id}: ${statusResponse.status} ${statusResponse.statusText}`,
+        )
       }
     }
 
