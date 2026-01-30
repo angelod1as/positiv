@@ -77,7 +77,7 @@ describe("Campaign Tracking - Integration Tests", () => {
       await createCampaignTracking(event1.id)
       await createCampaignTracking(event2.id)
 
-      const result = await getPendingCampaigns()
+      const result = await getPendingCampaigns("opening")
 
       expect(result.success).toBe(true)
       if (result.success) {
@@ -95,7 +95,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .where("event_id", "=", event.id)
         .execute()
 
-      const result = await getPendingCampaigns()
+      const result = await getPendingCampaigns("opening")
 
       expect(result.success).toBe(true)
       if (result.success) {
@@ -116,7 +116,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .where("event_id", "=", event1.id)
         .execute()
 
-      const result = await getPendingCampaigns()
+      const result = await getPendingCampaigns("opening")
 
       expect(result.success).toBe(true)
       if (result.success) {
@@ -138,7 +138,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .where("event_id", "=", event.id)
         .execute()
 
-      const result = await getPendingCampaigns()
+      const result = await getPendingCampaigns("opening")
 
       expect(result.success).toBe(true)
       if (result.success) {
@@ -153,7 +153,7 @@ describe("Campaign Tracking - Integration Tests", () => {
       await createCampaignTracking(event.id)
 
       const campaignId = "listmonk-campaign-123"
-      const result = await updateCampaignCreated(event.id, campaignId)
+      const result = await updateCampaignCreated(event.id, campaignId, "opening")
 
       expect(result.success).toBe(true)
 
@@ -183,7 +183,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .where("event_id", "=", event.id)
         .execute()
 
-      const result = await updateCampaignSent(event.id)
+      const result = await updateCampaignSent(event.id, "opening")
 
       expect(result.success).toBe(true)
 
@@ -209,7 +209,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         timestamp: new Date().toISOString(),
       }
 
-      const result = await updateCampaignError(event.id, errorData)
+      const result = await updateCampaignError(event.id, errorData, "opening")
 
       expect(result.success).toBe(true)
 
@@ -234,7 +234,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         timestamp: new Date().toISOString(),
       }
 
-      await updateCampaignError(event.id, errorData1)
+      await updateCampaignError(event.id, errorData1, "opening")
 
       const errorData2 = {
         step: "send_signal" as const,
@@ -242,7 +242,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         timestamp: new Date().toISOString(),
       }
 
-      await updateCampaignError(event.id, errorData2)
+      await updateCampaignError(event.id, errorData2, "opening")
 
       const tracking = await db
         .selectFrom("event_newsletter_campaigns")
