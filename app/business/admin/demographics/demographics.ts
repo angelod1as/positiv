@@ -31,7 +31,6 @@ export type Demographics = {
   gender: {
     cis: number
     trans: number
-    agender: number
     other: OtherCategoryData
   }
   orientation: {
@@ -67,7 +66,6 @@ function countGenders(rows: DemographicRow[]) {
   const result = rows.reduce<{
     cis: number
     trans: number
-    agender: number
     other: { count: number; othersSet: Set<string> }
   }>(
     (acc, row) => {
@@ -82,7 +80,7 @@ function countGenders(rows: DemographicRow[]) {
       }
       return acc
     },
-    { cis: 0, trans: 0, agender: 0, other: { count: 0, othersSet: new Set<string>() } },
+    { cis: 0, trans: 0, other: { count: 0, othersSet: new Set<string>() } },
   )
 
   return {
@@ -259,7 +257,6 @@ function calculateGenderPercentages(
   counts: {
     cis: number
     trans: number
-    agender: number
     other: { count: number; others: string[] }
   },
   total: number,
@@ -267,7 +264,6 @@ function calculateGenderPercentages(
   return {
     cis: calculatePercentage(counts.cis, total),
     trans: calculatePercentage(counts.trans, total),
-    agender: calculatePercentage(counts.agender, total),
     other: {
       percentage: calculatePercentage(counts.other.count, total),
       values: counts.other.others,

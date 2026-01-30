@@ -5,6 +5,13 @@ import { GENDERS } from "~/lib/constants/constants"
 // - Inconsistency: countRaceColor and countGenders only process first array element [0]
 //   while countOrientations processes ALL elements. Should be consistent.
 
+function normalizeAccents(str: string): string {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+}
+
 function isCisGender(gender: string): boolean {
   const lower = gender.toLowerCase()
   return (
@@ -16,30 +23,31 @@ function isCisGender(gender: string): boolean {
 
 function isTransGender(gender: string): boolean {
   const lower = gender.toLowerCase()
+  const normalized = normalizeAccents(gender)
+
   return (
-    /\btrans\b|\bnão binári[ae]\b/i.test(lower) ||
+    /\btrans\b/i.test(lower) ||
+    /\bnão binári[ae]\b/i.test(lower) ||
+    /\bnao binari[ae]\b/i.test(normalized) ||
+    /\bag[êe]nero\b/i.test(lower) ||
+    /\bagenero\b/i.test(normalized) ||
+    /\bagender\b/i.test(normalized) ||
+    /\bagênera\b/i.test(lower) ||
+    /\bagenera\b/i.test(normalized) ||
     lower === "travesti" ||
     lower === "mulher trans" ||
     lower === "homem trans"
   )
 }
 
-function isAgender(gender: string): boolean {
-  const lower = gender.toLowerCase()
-  return /\bag[êe]nero\b|\bagender\b|\bagênera\b/i.test(lower)
-}
-
 export function classifySingleGender(
   genderString: string,
-): "cis" | "trans" | "agender" | "other" {
+): "cis" | "trans" | "other" {
   if (isCisGender(genderString)) {
     return "cis"
   }
   if (isTransGender(genderString)) {
     return "trans"
-  }
-  if (isAgender(genderString)) {
-    return "agender"
   }
   return "other"
 }
