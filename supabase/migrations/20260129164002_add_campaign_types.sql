@@ -39,6 +39,10 @@ ON event_newsletter_campaigns(
 );
 
 -- 6. Populate should_send_at for existing 'opening' campaigns
+-- Note: We only backfill 'opening' campaigns here. Pre-opening campaigns
+-- (which send 3 days before registration opens) are intentionally NOT backfilled
+-- for existing events - they will only be created for new/updated future events
+-- via the trigger function below.
 UPDATE event_newsletter_campaigns enc
 SET should_send_at = e.time_application_start
 FROM events e

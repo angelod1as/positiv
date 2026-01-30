@@ -148,13 +148,16 @@ export const createPreOpeningReminder = composable(
     const result = (await response.json()) as CampaignResponse
 
     if (sendImmediately) {
-      await fetch(`${listmonkApiUrl}/api/campaigns/${result.data.id}/status`, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify({ status: "running" }),
-      })
+      const statusResponse = await fetch(
+        `${listmonkApiUrl}/api/campaigns/${result.data.id}/status`,
+        {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({ status: "running" }),
+        },
+      )
 
-      if (!response.ok) {
+      if (!statusResponse.ok) {
         console.error(`Failed to start pre-opening campaign ${result.data.id}`)
       }
     }
