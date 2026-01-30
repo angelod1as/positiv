@@ -18,7 +18,7 @@ jobs:
         with:
           version: latest
       - name: Start Supabase local development setup
-        run: supabase db start
+        run: supabase start
       - name: Verify generated types match Postgres schema
         run: |
           supabase gen types typescript --local > schema.gen.ts
@@ -28,7 +28,7 @@ jobs:
             exit 1
           fi
       - name: Stop Supabase local development setup
-        run: supabase db stop
+        run: supabase stop
 
   unit-test:
     runs-on: ubuntu-latest
@@ -75,6 +75,22 @@ jobs:
 
       - name: Start Supabase local instance
         run: supabase start
+
+      - name: Verify Supabase is running
+        run: |
+          max_attempts=30
+          attempt=1
+          while [ $attempt -le $max_attempts ]; do
+            if supabase status --output json > /dev/null 2>&1; then
+              echo "Supabase is running successfully"
+              exit 0
+            fi
+            echo "Attempt $attempt/$max_attempts: Waiting for Supabase to be ready..."
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+          echo "Supabase failed to start after $max_attempts attempts"
+          exit 1
 
       - name: Get Supabase local credentials
         id: supabase-creds
