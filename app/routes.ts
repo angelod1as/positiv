@@ -9,6 +9,7 @@ import {
 export default [
   // API ROUTES (internal endpoints)
   route("/api/process-campaigns", "routes/api.process-campaigns.ts"),
+  route("/api/retry-newsletter-syncs", "routes/api.retry-newsletter-syncs.ts"),
 
   // PUBLIC
   index("pages/homepage/homepage.tsx"),
