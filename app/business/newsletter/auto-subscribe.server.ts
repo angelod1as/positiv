@@ -85,7 +85,9 @@ export const subscribeProfileToNewsletter = composable(
           errors: listmonkResult.errors?.map(e => e.message) ?? []
         },
       )
-      // TODO POS-262: Add cron job to retry failed syncs - query newsletter_subscriptions where sync_status='failed' and retry Listmonk sync
+      // Failed syncs are automatically retried by the retry-failed-newsletter-syncs cron job
+      // See: app/business/newsletter/retry-failed-syncs.server.ts
+      // Cron schedule: Every 30 minutes with exponential backoff (max 5 retries)
       // Don't throw - allow subscription to succeed even if sync fails
       // The subscription record is created and can be synced later
       return { syncStatus: "failed" as const }
