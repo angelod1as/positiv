@@ -22,21 +22,17 @@ function isCisGender(gender: string): boolean {
 }
 
 function isTransGender(gender: string): boolean {
-  const lower = gender.toLowerCase()
   const normalized = normalizeAccents(gender)
 
   return (
-    /\btrans\b/i.test(lower) ||
-    /\bnão binári[ae]\b/i.test(lower) ||
+    /\btrans\b/i.test(normalized) ||
     /\bnao binari[ae]\b/i.test(normalized) ||
-    /\bag[êe]nero\b/i.test(lower) ||
     /\bagenero\b/i.test(normalized) ||
     /\bagender\b/i.test(normalized) ||
-    /\bagênera\b/i.test(lower) ||
     /\bagenera\b/i.test(normalized) ||
-    lower === "travesti" ||
-    lower === "mulher trans" ||
-    lower === "homem trans"
+    normalized === "travesti" ||
+    normalized === "mulher trans" ||
+    normalized === "homem trans"
   )
 }
 
