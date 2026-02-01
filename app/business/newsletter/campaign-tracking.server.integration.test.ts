@@ -39,10 +39,12 @@ describe("Campaign Tracking - Integration Tests", () => {
         .selectFrom("event_newsletter_campaigns")
         .selectAll()
         .where("event_id", "=", event.id)
+        .where("campaign_type", "=", "opening")
         .executeTakeFirst()
 
       expect(tracking).toBeDefined()
       expect(tracking?.event_id).toBe(event.id)
+      expect(tracking?.campaign_type).toBe("opening")
       expect(tracking?.campaign_is_created).toBe(false)
       expect(tracking?.campaign_is_sent).toBe(false)
       expect(tracking?.times_attempted).toBe(0)
@@ -63,6 +65,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .selectFrom("event_newsletter_campaigns")
         .select((eb) => eb.fn.countAll().as("count"))
         .where("event_id", "=", event.id)
+        .where("campaign_type", "=", "opening")
         .executeTakeFirstOrThrow()
 
       expect(Number(count.count)).toBe(1)
@@ -93,6 +96,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .updateTable("event_newsletter_campaigns")
         .set({ campaign_is_created: true, campaign_id: "test-123" })
         .where("event_id", "=", event.id)
+        .where("campaign_type", "=", "opening")
         .execute()
 
       const result = await getPendingCampaigns("opening")
@@ -114,6 +118,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .updateTable("event_newsletter_campaigns")
         .set({ times_attempted: 3 })
         .where("event_id", "=", event1.id)
+        .where("campaign_type", "=", "opening")
         .execute()
 
       const result = await getPendingCampaigns("opening")
@@ -136,6 +141,7 @@ describe("Campaign Tracking - Integration Tests", () => {
           campaign_is_sent: true,
         })
         .where("event_id", "=", event.id)
+        .where("campaign_type", "=", "opening")
         .execute()
 
       const result = await getPendingCampaigns("opening")
@@ -161,6 +167,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .selectFrom("event_newsletter_campaigns")
         .selectAll()
         .where("event_id", "=", event.id)
+        .where("campaign_type", "=", "opening")
         .executeTakeFirstOrThrow()
 
       expect(tracking.campaign_is_created).toBe(true)
@@ -181,6 +188,7 @@ describe("Campaign Tracking - Integration Tests", () => {
           campaign_id: "test-123",
         })
         .where("event_id", "=", event.id)
+        .where("campaign_type", "=", "opening")
         .execute()
 
       const result = await updateCampaignSent(event.id, "opening")
@@ -191,6 +199,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .selectFrom("event_newsletter_campaigns")
         .selectAll()
         .where("event_id", "=", event.id)
+        .where("campaign_type", "=", "opening")
         .executeTakeFirstOrThrow()
 
       expect(tracking.campaign_is_sent).toBe(true)
@@ -217,6 +226,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .selectFrom("event_newsletter_campaigns")
         .selectAll()
         .where("event_id", "=", event.id)
+        .where("campaign_type", "=", "opening")
         .executeTakeFirstOrThrow()
 
       expect(tracking.times_attempted).toBe(1)
@@ -248,6 +258,7 @@ describe("Campaign Tracking - Integration Tests", () => {
         .selectFrom("event_newsletter_campaigns")
         .selectAll()
         .where("event_id", "=", event.id)
+        .where("campaign_type", "=", "opening")
         .executeTakeFirstOrThrow()
 
       expect(tracking.times_attempted).toBe(2)
