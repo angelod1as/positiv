@@ -32,8 +32,13 @@ BEGIN
 
   -- Get app URL and internal job secret from settings
   -- These should be set via Supabase dashboard secrets
-  app_url := current_setting('app.settings.app_url', false);
-  internal_secret := current_setting('app.settings.internal_job_secret', false);
+  app_url := current_setting('app.settings.app_url', true);
+  internal_secret := current_setting('app.settings.internal_job_secret', true);
+
+  IF app_url IS NULL OR internal_secret IS NULL THEN
+    RAISE WARNING 'Cron job not created: app.settings.app_url and app.settings.internal_job_secret must be configured';
+    RETURN;
+  END IF;
 
   -- Create the cron job to run every 30 minutes
   PERFORM cron.schedule(

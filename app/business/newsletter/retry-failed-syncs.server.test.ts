@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import {
   getFailedSubscriptionsForRetry,
   shouldRetrySubscription,
@@ -18,6 +18,10 @@ describe("shouldRetrySubscription", () => {
     // Mock current time to a fixed value for consistent tests
     vi.useFakeTimers()
     vi.setSystemTime(new Date("2026-01-29T23:00:00.000Z"))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("should retry immediately if no last attempt", () => {

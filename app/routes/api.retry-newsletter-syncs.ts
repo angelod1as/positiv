@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router"
 import { processFailedSyncRetries } from "~/business/newsletter/retry-failed-syncs.server"
+import { timingSafeEqual } from "node:crypto"
 
 /**
  * Internal API endpoint for retrying failed newsletter syncs
@@ -20,7 +21,14 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const expectedToken = `Bearer ${secret}`
 
-  if (!authHeader || authHeader !== expectedToken) {
+  // Use timing-safe comparison to prevent timing attacks
+  const providedTokenBuffer = Buffer.from(authHeader || "")
+  const expectedTokenBuffer = Buffer.from(expectedToken)
+
+  if (
+    providedTokenBuffer.length !== expectedTokenBuffer.length ||
+    !timingSafeEqual(providedTokenBuffer, expectedTokenBuffer)
+  ) {
     return Response.json({ error: "Unauthorized" }, { status: 401 })
   }
 

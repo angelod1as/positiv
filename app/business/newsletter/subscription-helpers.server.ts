@@ -35,6 +35,7 @@ export const subscribeProfile = composable(
           subscription_source: source,
           sync_status: "pending" as SyncStatus,
           unsubscribed_at: null,
+          retry_count: 0,
         }))
         .where("profile_id", "=", profileId)
         .returningAll()
@@ -132,6 +133,7 @@ export const updateSyncStatus = composable(
       listmonk_subscriber_id?: number
       consent_given?: boolean
       unsubscribed_at?: string | null
+      retry_count?: number
     }
 
     const updatePayload: UpdatePayload = {
@@ -148,6 +150,11 @@ export const updateSyncStatus = composable(
     } else if (syncStatus === "synced" || syncStatus === "pending") {
       updatePayload.consent_given = true
       updatePayload.unsubscribed_at = null
+    }
+
+    // Reset retry count when subscription syncs successfully
+    if (syncStatus === "synced") {
+      updatePayload.retry_count = 0
     }
 
     const updatedSubscription = await db

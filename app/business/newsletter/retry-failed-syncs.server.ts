@@ -77,8 +77,9 @@ export function shouldRetrySubscription(
   if (!lastAttemptAt) return true
 
   const backoffMinutes = getBackoffMinutes(retryCount)
-  const nextRetryTime = new Date(lastAttemptAt)
-  nextRetryTime.setMinutes(nextRetryTime.getMinutes() + backoffMinutes)
+  const lastAttemptTime = new Date(lastAttemptAt).getTime()
+  const backoffMilliseconds = backoffMinutes * 60 * 1000
+  const nextRetryTime = new Date(lastAttemptTime + backoffMilliseconds)
 
   return new Date() >= nextRetryTime
 }
@@ -101,21 +102,41 @@ async function retrySubscriptionSync(
     ? [LISTMONK_REGISTERED_LIST_ID, LISTMONK_TEST_LIST_ID]
     : [LISTMONK_REGISTERED_LIST_ID]
 
-  const result = await addSubscriber({
-    email: subscription.email,
-    name: computedName,
-    lists,
-    attributes: {
-      profile_id: subscription.profile_id,
-      user_id: subscription.user_id,
-      social_name: subscription.social_name,
-      full_name: subscription.full_name,
+  let result
+  try {
+    result = await addSubscriber({
+      email: subscription.email,
       name: computedName,
-      is_veteran: subscription.is_veteran,
-      approved_to_attend: subscription.approved_to_attend,
-      synced_at: new Date().toISOString(),
-    },
-  })
+      lists,
+      attributes: {
+        profile_id: subscription.profile_id,
+        user_id: subscription.user_id,
+        social_name: subscription.social_name,
+        full_name: subscription.full_name,
+        name: computedName,
+        is_veteran: subscription.is_veteran,
+        approved_to_attend: subscription.approved_to_attend,
+        synced_at: new Date().toISOString(),
+      },
+    })
+  } catch (err) {
+    // Handle thrown errors from addSubscriber
+    await db
+      .updateTable("newsletter_subscriptions")
+      .set({
+        retry_count: subscription.retry_count + 1,
+        last_sync_attempt_at: new Date().toISOString(),
+      })
+      .where("id", "=", subscription.id)
+      .where("sync_status", "=", "failed")
+      .execute()
+
+    return {
+      success: false,
+      profileId: subscription.profile_id,
+      errors: [err instanceof Error ? err.message : err],
+    }
+  }
 
   if (result.success) {
     await updateSyncStatus(
@@ -126,13 +147,15 @@ async function retrySubscriptionSync(
     return { success: true, profileId: subscription.profile_id }
   } else {
     // Increment retry count and update timestamp
+    // Only update if still in failed status to avoid race conditions
     await db
       .updateTable("newsletter_subscriptions")
       .set({
         retry_count: subscription.retry_count + 1,
         last_sync_attempt_at: new Date().toISOString(),
       })
-      .where("profile_id", "=", subscription.profile_id)
+      .where("id", "=", subscription.id)
+      .where("sync_status", "=", "failed")
       .execute()
 
     return {
@@ -174,13 +197,23 @@ export const processFailedSyncRetries = composable(async () => {
     if (result.success) {
       results.succeeded++
       console.info(
-        `Successfully retried newsletter sync for profile ${sub.profile_id}`,
+        `Successfully retried newsletter sync (attempt ${sub.retry_count + 1})`,
+        {
+          profileId: sub.profile_id,
+          subscriptionId: sub.id,
+          retryCount: sub.retry_count,
+        },
       )
     } else {
       results.failed++
       console.error(
-        `Failed to retry newsletter sync for profile ${sub.profile_id}`,
-        result.errors,
+        `Failed to retry newsletter sync (attempt ${sub.retry_count + 1})`,
+        {
+          profileId: sub.profile_id,
+          subscriptionId: sub.id,
+          retryCount: sub.retry_count,
+          errors: result.errors,
+        },
       )
     }
   }
