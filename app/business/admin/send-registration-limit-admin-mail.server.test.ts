@@ -8,20 +8,21 @@ vi.mock("./get-admin-emails.server")
 vi.mock("~/business/email/send-email")
 
 describe("sendRegistrationLimitAdminMail", () => {
-  const mockEvent: Omit<ViewEvent, "is_applied"> = {
+    const mockEvent: Omit<ViewEvent, "is_applied"> = {
     id: "123e4567-e89b-12d3-a456-426614174000",
     title: "Test Event",
     emoji: "🎉",
     location: "Test Location",
+    description: "Test Description",
     time_event_start: "2026-02-15T19:00:00Z",
     time_event_end: "2026-02-16T03:00:00Z",
-    time_registration_start: "2026-02-01T00:00:00Z",
-    time_registration_end: "2026-02-10T23:59:59Z",
+    time_application_start: "2026-02-01T00:00:00Z",
+    time_group_start: "2026-02-14T19:00:00Z",
+    time_group_end: "2026-02-14T20:00:00Z",
+    time_payment_start: "2026-02-12T00:00:00Z",
+    time_payment_end: "2026-02-14T23:59:59Z",
+    ticket_price: 30,
     event_status: "Registration Closed",
-    event_type: "Festinha",
-    has_rotation: false,
-    auto_publish: false,
-    created_at: "2026-01-15T00:00:00Z",
   }
 
   beforeEach(() => {
@@ -31,7 +32,7 @@ describe("sendRegistrationLimitAdminMail", () => {
   it("should get admin emails and send email to all admins", async () => {
     const adminEmails = ["admin1@example.com", "admin2@example.com"]
     vi.spyOn(getAdminEmailsModule, "getAdminEmails").mockResolvedValue(adminEmails)
-    vi.spyOn(sendEmailModule, "sendEmail").mockResolvedValue({ success: true, data: undefined })
+    vi.spyOn(sendEmailModule, "sendEmail").mockResolvedValue({ success: true, data: undefined, errors: [] })
 
     const result = await sendRegistrationLimitAdminMail({
       event: mockEvent,
@@ -85,7 +86,7 @@ describe("sendRegistrationLimitAdminMail", () => {
   it("should include all event details in email", async () => {
     const adminEmails = ["admin@example.com"]
     vi.spyOn(getAdminEmailsModule, "getAdminEmails").mockResolvedValue(adminEmails)
-    vi.spyOn(sendEmailModule, "sendEmail").mockResolvedValue({ success: true, data: undefined })
+    vi.spyOn(sendEmailModule, "sendEmail").mockResolvedValue({ success: true, data: undefined, errors: [] })
 
     await sendRegistrationLimitAdminMail({
       event: mockEvent,

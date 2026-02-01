@@ -3,20 +3,21 @@ import { formatRegistrationLimitAdminMail } from "./format-registration-limit-ad
 import type { ViewEvent } from "~types/database/entities.types"
 
 describe("formatRegistrationLimitAdminMail", () => {
-  const mockEvent: Omit<ViewEvent, "is_applied"> = {
+    const mockEvent: Omit<ViewEvent, "is_applied"> = {
     id: "123e4567-e89b-12d3-a456-426614174000",
     title: "Test Event",
     emoji: "🎉",
     location: "Test Location",
+    description: "Test Description",
     time_event_start: "2026-02-15T19:00:00Z",
     time_event_end: "2026-02-16T03:00:00Z",
-    time_registration_start: "2026-02-01T00:00:00Z",
-    time_registration_end: "2026-02-10T23:59:59Z",
+    time_application_start: "2026-02-01T00:00:00Z",
+    time_group_start: "2026-02-14T19:00:00Z",
+    time_group_end: "2026-02-14T20:00:00Z",
+    time_payment_start: "2026-02-12T00:00:00Z",
+    time_payment_end: "2026-02-14T23:59:59Z",
+    ticket_price: 30,
     event_status: "Registration Closed",
-    event_type: "Festinha",
-    has_rotation: false,
-    auto_publish: false,
-    created_at: "2026-01-15T00:00:00Z",
   }
 
   const participantCount = 90
