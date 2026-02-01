@@ -37,8 +37,7 @@ BEGIN
   internal_secret := current_setting('app.settings.internal_job_secret', true);
 
   IF app_url IS NULL OR internal_secret IS NULL THEN
-    RAISE WARNING 'Cron job not created: app.settings.app_url and app.settings.internal_job_secret must be configured';
-    RETURN;
+    RAISE EXCEPTION 'Migration failed: app.settings.app_url and app.settings.internal_job_secret must be configured before running this migration. Set these via: ALTER DATABASE postgres SET app.settings.app_url = ''https://your-app.com''; ALTER DATABASE postgres SET app.settings.internal_job_secret = ''your-secret'';';
   END IF;
 
   -- Create the cron job to run every 30 minutes
