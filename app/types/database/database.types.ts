@@ -253,6 +253,38 @@ export type Database = {
           },
         ]
       }
+      event_registration_limit_emails: {
+        Row: {
+          admin_emails: string[]
+          created_at: string
+          event_id: string
+          id: string
+          sent_at: string
+        }
+        Insert: {
+          admin_emails: string[]
+          created_at?: string
+          event_id: string
+          id?: string
+          sent_at?: string
+        }
+        Update: {
+          admin_emails?: string[]
+          created_at?: string
+          event_id?: string
+          id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registration_limit_emails_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           auto_publish: boolean

@@ -191,6 +191,11 @@ pnpm email:test   # Start Mailhog for local email testing
    - Templates in `/app/components/email/templates`
    - Sending logic in `/app/business/email/`
    - Local testing with Mailhog
+   - **Automated Notifications**:
+     - Database triggers can send notifications via `pg_net.http_post` to internal API endpoints
+     - Example: Registration limit emails sent when event reaches 90 participants
+     - Tracking tables prevent duplicate notifications (e.g., `event_registration_limit_emails`)
+     - API endpoints handle email formatting and sending (e.g., `/api/admin/send-registration-limit-email`)
 
 5. **Type Safety**: Strict TypeScript with database types generated from schema. Path aliases use `~/*` for `/app/*`.
 
@@ -233,6 +238,38 @@ pnpm email:test   # Start Mailhog for local email testing
 2. Use form components from `/app/components/forms`
 3. Handle submission in action functions
 4. Show errors using existing error handling patterns
+
+**Adding automated email notifications**:
+
+1. Create tracking table to prevent duplicates (e.g., `event_registration_limit_emails`)
+   - Include unique constraint on the identifier (e.g., event_id)
+   - Track admin emails sent and timestamp
+2. Create HTML email template in `/app/business/email/templates/`
+   - Use existing design patterns (purple gradient, brand colors)
+   - Sanitize all user-controlled fields with `sanitizeHtml()`
+   - Include unit tests with XSS protection tests
+3. Create email formatter function to convert HTML to text
+   - Use `html-to-text` library for plain text version
+4. Create email sender function in `/app/business/admin/`
+   - Query recipients from database
+   - Call formatter and send via `sendEmail()`
+   - Handle empty recipient list and sending failures
+5. Create API endpoint in `/app/pages/api/admin/`
+   - Validate request parameters
+   - Fetch required data from database
+   - Call email sender function
+   - Record notification in tracking table using `onConflict().doNothing()`
+6. Create database function to call API endpoint
+   - Use `pg_net.http_post` for async HTTP calls
+   - Check tracking table for duplicates before calling
+   - Get app URL from `current_setting('app.url')` with fallback
+7. Update or create database trigger to call notification function
+   - Call notification function at appropriate time (e.g., AFTER INSERT/UPDATE)
+   - Only trigger when necessary conditions are met
+8. Add integration tests
+   - Test API endpoint directly (mock email sending)
+   - Verify tracking table prevents duplicates
+   - Test error cases (missing params, not found, send failures)
 
 ### Testing
 
