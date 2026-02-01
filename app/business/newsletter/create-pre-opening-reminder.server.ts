@@ -6,6 +6,7 @@ import {
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ViewEvent } from "~types/database/entities.types"
+import { PRE_OPENING_REMINDER_DAYS_BEFORE } from "./constants"
 import { getListmonkConfig } from "./listmonk-client.server"
 
 interface CreateCampaignParams {
@@ -44,21 +45,21 @@ function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
   return `
 <div style="text-align: center; margin-bottom: 30px;">
   <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2;">
-    <span style="display: inline-block; line-height: 1;">🎉</span> Inscrições Abertas <span style="display: inline-block; line-height: 1;">🎉</span>
+    <span style="display: inline-block; line-height: 1;">⏰</span> Atenção: Inscrições abrem em ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias! <span style="display: inline-block; line-height: 1;">⏰</span>
   </h1>
 </div>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-  As inscrições para o evento <strong>${eventDisplay}</strong> acabaram de abrir!
+  Daqui a ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias as inscrições para <strong>${eventDisplay}</strong> abrem!
 </p>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-  Corra já e garanta a sua vaga!
+  <strong>Coloca aí no calendário e CORRE quando abrir!</strong>
 </p>
 
 <div style="text-align: center; margin: 30px 0;">
   <a href="${DASHBOARD_URL}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
-    Inscreva-se agora!
+    Acessar Dashboard
   </a>
 </div>
 
@@ -80,43 +81,43 @@ function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
     <strong style="color: #333;">${time}</strong>
   </div>
   <div style="margin-bottom: 8px; font-size: 14px;">
-    <span style="color: #666;">Inscrições abrem em:</span>
-    <strong style="color: #333;">${applicationOpenDate} às ${applicationOpenTime}</strong>
+    <span style="color: #666;">📅 Inscrições abrem em:</span>
+    <strong style="color: #bf03c3;">${applicationOpenDate} às ${applicationOpenTime}</strong>
   </div>
 </div>
 
 <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
 
 <h3 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #333; margin: 0 0 12px 0;">
-  Informações importantes
+  🚨 Informações importantes
 </h3>
 
 <ul style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0; padding-left: 20px; color: #333;">
   <li style="margin-bottom: 8px;">
-    Ter participado de edições anteriores <strong>não garante</strong> a sua participação em outras festas;
+    <strong>O sistema fecha as inscrições AUTOMATICAMENTE quando bater 90 inscrites</strong>
   </li>
   <li style="margin-bottom: 8px;">
-    Se você quer ir acompanhade, <strong>todas as pessoas</strong> precisam se inscrever e passar pela entrevista;
+    <strong>Desses 90, selecionaremos 60 pessoas para o evento</strong>
   </li>
   <li style="margin-bottom: 8px;">
-    Inscrever-se no formulário <strong>não significa</strong> que você será selecionade para participar do evento;
+    Ter participado de edições anteriores <strong>não garante</strong> a sua participação em outras festas
   </li>
   <li style="margin-bottom: 8px;">
-    Temos políticas de <strong>entradas sociais</strong> para pessoas trans, negras, indígenas e em vulnerabilidade social. Se você é de um desses grupos e gostaria de participar da festa, fale com Ju ou Angelo pelo nosso WhatsApp.
+    Se você quer ir acompanhade, <strong>todas as pessoas</strong> precisam se inscrever e passar pela entrevista
   </li>
 </ul>
 `.trim()
 }
 
-export const createEventOpeningCampaign = composable(
+export const createPreOpeningReminder = composable(
   async (params: CreateCampaignParams): Promise<CampaignResponse> => {
     const { event, listIds, sendImmediately = false } = params
 
     const { listmonkApiUrl, headers } = getListmonkConfig()
 
     const sanitizedTitle = sanitizeHtml(event.title || "")
-    const campaignName = `Event Opening: ${sanitizedTitle}`
-    const subject = `Inscrições abertas: ${sanitizedTitle}!`
+    const campaignName = `Pre-Opening Reminder: ${sanitizedTitle}`
+    const subject = `⏰ Atenção: Inscrições abrem em ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias - ${sanitizedTitle}`
 
     const body = generateCampaignBody(event)
 
@@ -141,7 +142,7 @@ export const createEventOpeningCampaign = composable(
         .text()
         .catch(() => "Unable to read error body")
       throw new Error(
-        `Failed to create campaign: ${response.status} ${response.statusText}. Response: ${errorBody}`,
+        `Failed to create pre-opening campaign: ${response.status} ${response.statusText}. Response: ${errorBody}`,
       )
     }
 
@@ -159,7 +160,7 @@ export const createEventOpeningCampaign = composable(
 
       if (!statusResponse.ok) {
         throw new Error(
-          `Failed to start campaign ${result.data.id}: ${statusResponse.status} ${statusResponse.statusText}`,
+          `Failed to start pre-opening campaign ${result.data.id}: ${statusResponse.status} ${statusResponse.statusText}`,
         )
       }
     }

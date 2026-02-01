@@ -7,6 +7,7 @@ import {
   updateCampaignSent,
 } from "./campaign-tracking.server"
 import { createEventOpeningCampaign } from "./create-event-opening-campaign.server"
+import { createPreOpeningReminder } from "./create-pre-opening-reminder.server"
 import { getListmonkConfig } from "./listmonk-client.server"
 
 /**
@@ -14,7 +15,10 @@ import { getListmonkConfig } from "./listmonk-client.server"
  * Returns the campaign ID on success
  */
 export const createCampaignForEvent = composable(
-  async (eventId: string): Promise<number> => {
+  async (
+    eventId: string,
+    campaignType: "opening" | "pre_opening" = "opening",
+  ): Promise<number> => {
     // Fetch event data
     const event = await kyselyDb
       .selectFrom("events")
@@ -26,12 +30,19 @@ export const createCampaignForEvent = composable(
       throw new Error(`Event not found: ${eventId}`)
     }
 
-    // Create campaign using existing function
-    const campaignResult = await createEventOpeningCampaign({
-      event,
-      listIds: [LISTMONK_REGISTERED_LIST_ID],
-      sendImmediately: false,
-    })
+    // Create campaign using appropriate function based on type
+    const campaignResult =
+      campaignType === "pre_opening"
+        ? await createPreOpeningReminder({
+            event,
+            listIds: [LISTMONK_REGISTERED_LIST_ID],
+            sendImmediately: false,
+          })
+        : await createEventOpeningCampaign({
+            event,
+            listIds: [LISTMONK_REGISTERED_LIST_ID],
+            sendImmediately: false,
+          })
 
     // Handle campaign creation errors
     if (!campaignResult.success || !campaignResult.data) {
@@ -39,11 +50,15 @@ export const createCampaignForEvent = composable(
         campaignResult.errors?.[0]?.message || "Unknown error creating campaign"
 
       // Update tracking with error
-      await updateCampaignError(eventId, {
-        step: "campaign_creation",
-        message: errorMessage,
-        timestamp: new Date().toISOString(),
-      })
+      await updateCampaignError(
+        eventId,
+        {
+          step: "campaign_creation",
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        },
+        campaignType,
+      )
 
       throw new Error(errorMessage)
     }
@@ -51,7 +66,7 @@ export const createCampaignForEvent = composable(
     const campaignId = campaignResult.data.data.id
 
     // Update tracking row with success
-    await updateCampaignCreated(eventId, String(campaignId))
+    await updateCampaignCreated(eventId, String(campaignId), campaignType)
 
     return campaignId
   },
@@ -61,21 +76,27 @@ export const createCampaignForEvent = composable(
  * Sends an already-created campaign
  */
 export const sendCampaign = composable(
-  async (eventId: string): Promise<void> => {
+  async (
+    eventId: string,
+    campaignType: "opening" | "pre_opening" = "opening",
+  ): Promise<void> => {
     // Fetch tracking row to get campaign ID
     const tracking = await kyselyDb
       .selectFrom("event_newsletter_campaigns")
       .selectAll()
       .where("event_id", "=", eventId)
+      .where("campaign_type", "=", campaignType)
       .executeTakeFirst()
 
     if (!tracking) {
-      throw new Error(`Tracking row not found for event: ${eventId}`)
+      throw new Error(
+        `Tracking row not found for event: ${eventId}, type: ${campaignType}`,
+      )
     }
 
     if (!tracking.campaign_id) {
       throw new Error(
-        `Campaign not created yet for event: ${eventId}. Cannot send.`,
+        `Campaign not created yet for event: ${eventId}, type: ${campaignType}. Cannot send.`,
       )
     }
 
@@ -99,17 +120,21 @@ export const sendCampaign = composable(
       const errorMessage = `Failed to send campaign: ${response.status} ${response.statusText}. Response: ${errorBody}`
 
       // Update tracking with error
-      await updateCampaignError(eventId, {
-        step: "send_signal",
-        message: errorMessage,
-        timestamp: new Date().toISOString(),
-      })
+      await updateCampaignError(
+        eventId,
+        {
+          step: "send_signal",
+          message: errorMessage,
+          timestamp: new Date().toISOString(),
+        },
+        campaignType,
+      )
 
       throw new Error(errorMessage)
     }
 
     // Update tracking row with success
-    await updateCampaignSent(eventId)
+    await updateCampaignSent(eventId, campaignType)
   },
 )
 
@@ -120,16 +145,22 @@ export const sendCampaign = composable(
  * - If already sent: does nothing
  */
 export const processCampaignForEvent = composable(
-  async (eventId: string): Promise<void> => {
+  async (
+    eventId: string,
+    campaignType: "opening" | "pre_opening" = "opening",
+  ): Promise<void> => {
     // Get current tracking state
     const tracking = await kyselyDb
       .selectFrom("event_newsletter_campaigns")
       .selectAll()
       .where("event_id", "=", eventId)
+      .where("campaign_type", "=", campaignType)
       .executeTakeFirst()
 
     if (!tracking) {
-      throw new Error(`No tracking row found for event: ${eventId}`)
+      throw new Error(
+        `No tracking row found for event: ${eventId}, type: ${campaignType}`,
+      )
     }
 
     // If already sent, nothing to do
@@ -139,7 +170,7 @@ export const processCampaignForEvent = composable(
 
     // If not created yet, create it first
     if (!tracking.campaign_is_created) {
-      const createResult = await createCampaignForEvent(eventId)
+      const createResult = await createCampaignForEvent(eventId, campaignType)
 
       // Check if creation failed - if so, stop here
       if (!createResult.success) {
@@ -150,7 +181,7 @@ export const processCampaignForEvent = composable(
     }
 
     // Then send it
-    const sendResult = await sendCampaign(eventId)
+    const sendResult = await sendCampaign(eventId, campaignType)
 
     // Check if sending failed
     if (!sendResult.success) {

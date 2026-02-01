@@ -45,6 +45,15 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
     isActive: true,
   },
   {
+    id: "pre-opening-reminders",
+    title: "⏰ Lembretes antes da abertura de inscrições",
+    content:
+      "Agora você recebe um email 3 dias antes da abertura das inscrições! Isso te dá tempo para se preparar e não perder a vaga. Lembre-se: as inscrições fecham automaticamente ao atingir 90 inscrites, e apenas 60 pessoas são selecionadas. Se você está inscrite na newsletter, já vai receber os lembretes automaticamente.",
+    isAdmin: false,
+    createdAt: new Date("2026-01-29T12:00:00"),
+    isActive: true,
+  },
+  {
     id: "feedback-form",
     title: "📝 Formulário de Feedback",
     content:
