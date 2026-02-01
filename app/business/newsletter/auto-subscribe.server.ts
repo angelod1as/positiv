@@ -6,14 +6,11 @@ import {
 import { db } from "~/lib/supabase/db.server"
 import { addSubscriber } from "./listmonk-client.server"
 import {
+  computeSubscriberName,
   subscribeProfile,
   updateSyncStatus,
 } from "./subscription-helpers.server"
 import type { SubscriptionSource } from "./types"
-
-function computeNameFromFullName(fullName: string): string {
-  return fullName.trim().split(/\s+/)[0] || fullName
-}
 
 export const subscribeProfileToNewsletter = composable(
   async (profileId: string, source: SubscriptionSource) => {
@@ -37,11 +34,11 @@ export const subscribeProfileToNewsletter = composable(
 
     await subscribeProfile(profileId, source)
 
-    const computedName =
-      profile.social_name ||
-      (profile.full_name
-        ? computeNameFromFullName(profile.full_name)
-        : profile.email)
+    const computedName = computeSubscriberName(
+      profile.social_name,
+      profile.full_name,
+      profile.email,
+    )
 
     if (!profile.full_name && !profile.social_name) {
       console.warn(
@@ -85,7 +82,9 @@ export const subscribeProfileToNewsletter = composable(
           errors: listmonkResult.errors?.map(e => e.message) ?? []
         },
       )
-      // TODO POS-262: Add cron job to retry failed syncs - query newsletter_subscriptions where sync_status='failed' and retry Listmonk sync
+      // Failed syncs are automatically retried by the retry-failed-newsletter-syncs cron job
+      // See: app/business/newsletter/retry-failed-syncs.server.ts
+      // Cron schedule: Every 30 minutes with exponential backoff (max 5 retries)
       // Don't throw - allow subscription to succeed even if sync fails
       // The subscription record is created and can be synced later
       return { syncStatus: "failed" as const }

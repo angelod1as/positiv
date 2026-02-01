@@ -7,6 +7,31 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       event_demographics_history: {
@@ -400,6 +425,7 @@ export type Database = {
           last_sync_attempt_at: string | null
           listmonk_subscriber_id: number | null
           profile_id: string
+          retry_count: number
           subscribed_at: string | null
           subscription_source: string | null
           sync_status: string | null
@@ -415,6 +441,7 @@ export type Database = {
           last_sync_attempt_at?: string | null
           listmonk_subscriber_id?: number | null
           profile_id: string
+          retry_count?: number
           subscribed_at?: string | null
           subscription_source?: string | null
           sync_status?: string | null
@@ -430,6 +457,7 @@ export type Database = {
           last_sync_attempt_at?: string | null
           listmonk_subscriber_id?: number | null
           profile_id?: string
+          retry_count?: number
           subscribed_at?: string | null
           subscription_source?: string | null
           sync_status?: string | null
@@ -554,7 +582,10 @@ export type Database = {
         Args: { p_role_name: string; p_user_id: string }
         Returns: undefined
       }
-      get_admin_user_ids: { Args: never; Returns: string[] }
+      get_admin_user_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       get_applied_participants_count: {
         Args: { event_id_input: string }
         Returns: number
@@ -583,8 +614,14 @@ export type Database = {
           where_lives: string
         }[]
       }
-      get_vault_secret: { Args: { secret_name: string }; Returns: string }
-      update_event_statuses_automatically: { Args: never; Returns: Json }
+      get_vault_secret: {
+        Args: { secret_name: string }
+        Returns: string
+      }
+      update_event_statuses_automatically: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
     }
     Enums: {
       application_status_enum:
@@ -742,6 +779,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       application_status_enum: [

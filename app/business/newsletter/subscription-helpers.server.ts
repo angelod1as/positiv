@@ -3,6 +3,23 @@ import { db } from "~/lib/supabase/db.server"
 import { removeSubscriber } from "./listmonk-client.server"
 import type { SubscriptionSource, SyncStatus } from "./types"
 
+/**
+ * Computes subscriber name for Listmonk from profile data
+ * Priority: social_name > first word of full_name > email
+ */
+export function computeSubscriberName(
+  socialName: string | null,
+  fullName: string | null,
+  email: string,
+): string {
+  if (socialName) return socialName
+  if (fullName) {
+    const firstName = fullName.trim().split(/\s+/)[0]
+    return firstName || fullName
+  }
+  return email
+}
+
 export const getSubscriptionStatus = composable(async (profileId: string) => {
   return await db
     .selectFrom("newsletter_subscriptions")
@@ -35,6 +52,7 @@ export const subscribeProfile = composable(
           subscription_source: source,
           sync_status: "pending" as SyncStatus,
           unsubscribed_at: null,
+          retry_count: 0,
         }))
         .where("profile_id", "=", profileId)
         .returningAll()
@@ -132,6 +150,7 @@ export const updateSyncStatus = composable(
       listmonk_subscriber_id?: number
       consent_given?: boolean
       unsubscribed_at?: string | null
+      retry_count?: number
     }
 
     const updatePayload: UpdatePayload = {
@@ -148,6 +167,11 @@ export const updateSyncStatus = composable(
     } else if (syncStatus === "synced" || syncStatus === "pending") {
       updatePayload.consent_given = true
       updatePayload.unsubscribed_at = null
+    }
+
+    // Reset retry count when subscription syncs successfully
+    if (syncStatus === "synced") {
+      updatePayload.retry_count = 0
     }
 
     const updatedSubscription = await db

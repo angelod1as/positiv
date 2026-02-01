@@ -55,6 +55,7 @@ describe("agreeToTerms", () => {
         listmonk_subscriber_id: null,
         sync_status: "unsubscribed",
         last_sync_attempt_at: null,
+        retry_count: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
