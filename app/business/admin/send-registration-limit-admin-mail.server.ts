@@ -7,14 +7,16 @@ type SendRegistrationLimitAdminMailProps = {
   event: Omit<ViewEvent, "is_applied">
   participantCount: number
   timestamp: Date
+  adminEmails?: string[]
 }
 
 export const sendRegistrationLimitAdminMail = async ({
   event,
   participantCount,
   timestamp,
+  adminEmails: providedAdminEmails,
 }: SendRegistrationLimitAdminMailProps): Promise<{ emailSent: boolean }> => {
-  const adminEmails = await getAdminEmails()
+  const adminEmails = providedAdminEmails ?? (await getAdminEmails())
 
   if (adminEmails.length === 0) {
     console.warn("No admin emails found to send registration limit notification")

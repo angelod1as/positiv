@@ -19,16 +19,6 @@ export async function action({ request }: ActionFunctionArgs) {
       return Response.json({ success: false, error: "eventId is required" }, { status: 400 })
     }
 
-    const alreadyNotified = await db
-      .selectFrom("event_registration_limit_emails")
-      .select("id")
-      .where("event_id", "=", eventId)
-      .executeTakeFirst()
-
-    if (alreadyNotified) {
-      return Response.json({ success: true, message: "Notification already sent" }, { status: 200 })
-    }
-
     const event = await db
       .selectFrom("events")
       .selectAll()
@@ -48,26 +38,37 @@ export async function action({ request }: ActionFunctionArgs) {
 
     const count = Number(participantCount.count)
 
-    const { emailSent } = await sendRegistrationLimitAdminMail({
-      event,
-      participantCount: count,
-      timestamp: new Date(),
-    })
-
-    if (!emailSent) {
-      return Response.json({ success: false, error: "Failed to send email" }, { status: 500 })
-    }
-
+    // Fetch admin emails once
     const adminEmails = await getAdminEmails()
 
-    await db
+    // Insert tracking record FIRST to prevent race condition
+    // onConflict ensures only one insert succeeds if multiple requests arrive simultaneously
+    const insertResult = await db
       .insertInto("event_registration_limit_emails")
       .values({
         event_id: eventId,
         admin_emails: adminEmails,
       })
       .onConflict((oc) => oc.doNothing())
+      .returning("id")
       .execute()
+
+    // If insert returned nothing, notification was already sent by another request
+    if (insertResult.length === 0) {
+      return Response.json({ success: true, message: "Notification already sent" }, { status: 200 })
+    }
+
+    // Send email only if we successfully inserted the tracking record
+    const { emailSent } = await sendRegistrationLimitAdminMail({
+      event,
+      participantCount: count,
+      timestamp: new Date(),
+      adminEmails,
+    })
+
+    if (!emailSent) {
+      return Response.json({ success: false, error: "Failed to send email" }, { status: 500 })
+    }
 
     return Response.json({ success: true })
   } catch (error) {

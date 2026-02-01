@@ -38,6 +38,12 @@ BEGIN
     current_setting('app.internal_job_secret', true)
   );
 
+  -- Verify secret is available
+  IF internal_job_secret IS NULL THEN
+    RAISE WARNING 'INTERNAL_JOB_SECRET not configured - cannot send notification for event %', event_id_param;
+    RETURN;
+  END IF;
+
   -- Call the API endpoint asynchronously using pg_net
   -- This won't block the trigger execution
   PERFORM net.http_post(
