@@ -48,4 +48,24 @@ describe('OccupancyChart', () => {
     expect(styleTag).toBeInTheDocument()
     expect(styleTag?.textContent).toContain('--color-occupancy_pct')
   })
+
+  it('has proper accessibility attributes', () => {
+    const { container } = render(<OccupancyChart data={mockData} />)
+    const chart = container.querySelector('[data-chart]')
+    expect(chart).toHaveAttribute('role', 'img')
+    expect(chart).toHaveAttribute('aria-label', 'Gráfico de taxa de ocupação por evento')
+  })
+
+  it('renders with horizontal scrolling wrapper', () => {
+    const { container} = render(<OccupancyChart data={mockData} />)
+    const scrollWrapper = container.querySelector('.overflow-x-auto')
+    expect(scrollWrapper).toBeInTheDocument()
+  })
+
+  it('applies custom className prop', () => {
+    const { container } = render(
+      <OccupancyChart data={mockData} className="custom-chart-class" />
+    )
+    expect(container.querySelector('[data-chart]')).toHaveClass('custom-chart-class')
+  })
 })
