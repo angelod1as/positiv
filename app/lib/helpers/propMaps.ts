@@ -157,6 +157,18 @@ export const profileFlagStatusMap = (flag: ProfileFlagStatus) => {
   return profileFlagStatus[flag] || ""
 }
 
+export const participantAttendanceStatusPropMap = (
+  attendance_status: ParticipantAttendanceStatus,
+) => {
+  return participantAttendanceStatus[attendance_status] || ""
+}
+
+export const profileApprovedToAttendStatusPropMap = (
+  approved_to_attend: ProfileApprovedToAttendStatus,
+) => {
+  return profileApprovedToAttendStatus[approved_to_attend] || ""
+}
+
 export const applicationStatusOptions: Array<{
   name: string
   value: ParticipantApplicationStatus
