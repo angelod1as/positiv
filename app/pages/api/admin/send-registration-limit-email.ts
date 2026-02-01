@@ -5,11 +5,28 @@ import { db } from "~/lib/supabase/db.server"
 
 export async function action({ request }: ActionFunctionArgs) {
   try {
+    const internalJobSecret = process.env.INTERNAL_JOB_SECRET
+    const authHeader = request.headers.get("Authorization")
+
+    if (!internalJobSecret || authHeader !== `Bearer ${internalJobSecret}`) {
+      return Response.json({ success: false, error: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await request.json()
     const { eventId } = body
 
     if (!eventId || typeof eventId !== "string") {
       return Response.json({ success: false, error: "eventId is required" }, { status: 400 })
+    }
+
+    const alreadyNotified = await db
+      .selectFrom("event_registration_limit_emails")
+      .select("id")
+      .where("event_id", "=", eventId)
+      .executeTakeFirst()
+
+    if (alreadyNotified) {
+      return Response.json({ success: true, message: "Notification already sent" }, { status: 200 })
     }
 
     const event = await db
@@ -56,7 +73,7 @@ export async function action({ request }: ActionFunctionArgs) {
   } catch (error) {
     console.error("Error in send-registration-limit-email API:", error)
     return Response.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     )
   }

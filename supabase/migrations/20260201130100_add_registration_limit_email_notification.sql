@@ -12,6 +12,7 @@ AS $$
 DECLARE
   already_notified boolean;
   app_url text;
+  internal_job_secret text;
 BEGIN
   -- Check if notification was already sent for this event
   SELECT EXISTS(
@@ -31,11 +32,20 @@ BEGIN
     'http://localhost:5173'
   );
 
+  -- Get the internal job secret for authentication
+  internal_job_secret := COALESCE(
+    vault.get_secret_value('INTERNAL_JOB_SECRET'),
+    current_setting('app.internal_job_secret', true)
+  );
+
   -- Call the API endpoint asynchronously using pg_net
   -- This won't block the trigger execution
   PERFORM net.http_post(
     url := app_url || '/api/admin/send-registration-limit-email',
-    headers := '{"Content-Type": "application/json"}'::jsonb,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || internal_job_secret
+    ),
     body := json_build_object('eventId', event_id_param)::text
   );
 
