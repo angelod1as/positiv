@@ -10,6 +10,13 @@ interface GenderChartProps {
 
 type FilterMode = 'all' | 'attended'
 
+/**
+ * Displays gender distribution as a donut chart with filter toggle.
+ * Categories with < 2% representation are grouped into "Outros".
+ *
+ * Note: Filter toggle is presentational. Parent component should
+ * fetch appropriate data based on selected mode.
+ */
 export function GenderChart({ data, className }: GenderChartProps) {
   const [mode, setMode] = useState<FilterMode>('all')
 
