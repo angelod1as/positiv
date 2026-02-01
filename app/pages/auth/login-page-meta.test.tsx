@@ -3,7 +3,8 @@ import { meta } from "./login-page"
 
 describe("Login page meta function", () => {
   it("should return correct page title", () => {
-    const metaResult = meta({})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const metaResult = meta({} as any)
 
     const titleMeta = metaResult.find((m) => "title" in m)
 
@@ -12,7 +13,8 @@ describe("Login page meta function", () => {
   })
 
   it("should set og:title", () => {
-    const metaResult = meta({})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const metaResult = meta({} as any)
 
     const ogTitleMeta = metaResult.find(
       (m) => "property" in m && m.property === "og:title",

@@ -2,11 +2,17 @@ import { useLoaderData } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { getAllFeedbacksWithVerification } from "~/business/feedback/feedback.server"
 import { FeedbacksTable } from "~/components/organisms/tables/admin/feedbacks-table"
+import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
+import type { Route } from "./+types/feedbacks-page"
 
 const {
   admin: { ADMIN_DASHBOARD },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Admin - Feedbacks")
+}
 
 export async function loader() {
   const result = await getAllFeedbacksWithVerification()

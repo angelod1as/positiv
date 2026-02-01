@@ -3,7 +3,8 @@ import { meta } from "./homepage"
 
 describe("Homepage meta function", () => {
   it("should return Positiv Party as the page title", () => {
-    const metaResult = meta({})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const metaResult = meta({} as any)
 
     const titleMeta = metaResult.find(
       (m) => "title" in m && m.title === "Positiv Party",
@@ -14,7 +15,8 @@ describe("Homepage meta function", () => {
   })
 
   it("should set og:title to Positiv Party", () => {
-    const metaResult = meta({})
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const metaResult = meta({} as any)
 
     const ogTitleMeta = metaResult.find(
       (m) => "property" in m && m.property === "og:title",
