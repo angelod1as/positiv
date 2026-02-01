@@ -15,6 +15,13 @@ import type { ViewEvent } from "~types/database/entities.types"
 import type { Route } from "./+types/homepage"
 import { getNextEvents } from "./fetch/get-next-events"
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Positiv Party" },
+    { property: "og:title", content: "Positiv Party" },
+  ]
+}
+
 async function loadEvents(profileId: string | undefined) {
   const result = await getNextEvents(profileId, 3, true)
 

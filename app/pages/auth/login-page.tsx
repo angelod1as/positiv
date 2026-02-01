@@ -24,6 +24,13 @@ const {
   admin: { ADMIN_DASHBOARD },
 } = paths
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Entrar | Positiv Party" },
+    { property: "og:title", content: "Entrar | Positiv Party" },
+  ]
+}
+
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const { currentUser, currentProfile, supabaseHeaders } = await getContext(
     request,

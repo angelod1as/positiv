@@ -17,6 +17,13 @@ const {
   admin: { ADMIN_PARTICIPANTS, ADMIN_FEEDBACKS },
 } = paths
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Admin - Visão Geral | Positiv Party" },
+    { property: "og:title", content: "Admin - Visão Geral | Positiv Party" },
+  ]
+}
+
 export async function loader() {
   const [events, recentProfiles, feedbacksResult] = await Promise.all([
     getEventsForDashboard(),

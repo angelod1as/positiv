@@ -23,6 +23,13 @@ const {
   auth: { LOGIN, LOGON_EMAIL_MESSAGE },
 } = paths
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Registrar | Positiv Party" },
+    { property: "og:title", content: "Registrar | Positiv Party" },
+  ]
+}
+
 export const loader = async () => {
   const { siteKey } = getTurnstileConfig()
   return { turnstileSiteKey: siteKey }

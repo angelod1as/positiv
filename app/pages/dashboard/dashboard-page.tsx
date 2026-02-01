@@ -13,6 +13,13 @@ import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 import { splitEvents } from "./utils/split-events"
 
+export function meta({}: Route.MetaArgs) {
+  return [
+    { title: "Meus Eventos | Positiv Party" },
+    { property: "og:title", content: "Meus Eventos | Positiv Party" },
+  ]
+}
+
 const {
   dash: {
     participant: { AGREE_TO_TERMS },
