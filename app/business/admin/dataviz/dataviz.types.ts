@@ -23,6 +23,8 @@ export type EventRevenueDataPoint = {
 
 export type ConversionFunnelDataPoint = {
   title: string
+  emoji: string
+  date: string
   inscritos: number
   finalizados: number
   pagaram: number

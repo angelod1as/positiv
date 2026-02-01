@@ -121,10 +121,17 @@ export async function getConversionFunnelData(): Promise<
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
-    .groupBy(["events.id", "events.title", "events.time_event_start"])
+    .groupBy([
+      "events.id",
+      "events.title",
+      "events.emoji",
+      "events.time_event_start",
+    ])
     .orderBy("events.time_event_start", "asc")
     .select([
       "events.title",
+      "events.emoji",
+      "events.time_event_start as date",
       sql<number>`count(event_participants.id)::int`.as("inscritos"),
       sql<number>`count(*) filter (where event_participants.application_status = 'finalised')::int`.as(
         "finalizados"
@@ -142,6 +149,8 @@ export async function getConversionFunnelData(): Promise<
     const inscritos = row.inscritos
     return {
       title: row.title ?? "",
+      emoji: row.emoji ?? "",
+      date: row.date ?? "",
       inscritos,
       finalizados: row.finalizados,
       pagaram: row.pagaram,
