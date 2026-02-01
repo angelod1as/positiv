@@ -6,6 +6,7 @@ import {
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ViewEvent } from "~types/database/entities.types"
+import { PRE_OPENING_REMINDER_DAYS_BEFORE } from "./constants"
 import { getListmonkConfig } from "./listmonk-client.server"
 
 interface CreateCampaignParams {
@@ -44,12 +45,12 @@ function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
   return `
 <div style="text-align: center; margin-bottom: 30px;">
   <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2;">
-    <span style="display: inline-block; line-height: 1;">⏰</span> Atenção: Inscrições abrem em 3 dias! <span style="display: inline-block; line-height: 1;">⏰</span>
+    <span style="display: inline-block; line-height: 1;">⏰</span> Atenção: Inscrições abrem em ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias! <span style="display: inline-block; line-height: 1;">⏰</span>
   </h1>
 </div>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-  Daqui a 3 dias as inscrições para <strong>${eventDisplay}</strong> abrem!
+  Daqui a ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias as inscrições para <strong>${eventDisplay}</strong> abrem!
 </p>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
@@ -116,7 +117,7 @@ export const createPreOpeningReminder = composable(
 
     const sanitizedTitle = sanitizeHtml(event.title || "")
     const campaignName = `Pre-Opening Reminder: ${sanitizedTitle}`
-    const subject = `⏰ Atenção: Inscrições abrem em 3 dias - ${sanitizedTitle}`
+    const subject = `⏰ Atenção: Inscrições abrem em ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias - ${sanitizedTitle}`
 
     const body = generateCampaignBody(event)
 

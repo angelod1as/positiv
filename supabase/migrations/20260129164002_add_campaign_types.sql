@@ -56,6 +56,11 @@ WHERE enc.event_id = e.id
 CREATE OR REPLACE FUNCTION create_event_campaigns()
 RETURNS TRIGGER AS $func$
 BEGIN
+  -- Skip if time_application_start didn't change (optimization for UPDATE)
+  IF TG_OP = 'UPDATE' AND OLD.time_application_start IS NOT DISTINCT FROM NEW.time_application_start THEN
+    RETURN NEW;
+  END IF;
+
   -- Only if time_application_start is in the future
   IF NEW.time_application_start > NOW() THEN
 
@@ -118,6 +123,8 @@ END;
 $func$ LANGUAGE plpgsql;
 
 -- Attach trigger to events table
+-- Only fires on INSERT or when time_application_start changes
+-- Additional optimization inside function skips unchanged updates
 DROP TRIGGER IF EXISTS trigger_create_event_campaigns ON events;
 CREATE TRIGGER trigger_create_event_campaigns
 AFTER INSERT OR UPDATE OF time_application_start ON events
