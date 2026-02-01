@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1738336200000
+export const NEWS_VERSION = 1738411200000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "admin-registration-limit-email",
+    title: "📧 Notificação automática quando evento atingir limite",
+    content:
+      "Agora todos os admins recebem um e-mail automático quando um evento atinge o limite de 90 inscrições e tem as inscrições fechadas! O e-mail inclui detalhes do evento, quantidade de participantes e um link direto para a página de participantes. Você só recebe um e-mail por evento (sem duplicatas).",
+    isAdmin: true,
+    createdAt: new Date("2026-02-01T15:30:00"),
+    isActive: true,
+  },
   {
     id: "demographics-agender-merged",
     title: "📊 Atualização nos dados demográficos",
