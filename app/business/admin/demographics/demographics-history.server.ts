@@ -22,7 +22,6 @@ export const storeEventDemographicsSnapshot = composable(
           veteran_no: demographics.veteran.no,
           gender_cis: demographics.gender.cis,
           gender_trans: demographics.gender.trans,
-          gender_agender: demographics.gender.agender,
           gender_other_percentage: demographics.gender.other.percentage,
           gender_other_values: demographics.gender.other.values || [],
           orientation_straight: demographics.orientation.straight,
@@ -79,7 +78,6 @@ export const upsertEventDemographicsSnapshot = composable(
           veteran_no: demographics.veteran.no,
           gender_cis: demographics.gender.cis,
           gender_trans: demographics.gender.trans,
-          gender_agender: demographics.gender.agender,
           gender_other_percentage: demographics.gender.other.percentage,
           gender_other_values: demographics.gender.other.values || [],
           orientation_straight: demographics.orientation.straight,
@@ -107,7 +105,6 @@ export const upsertEventDemographicsSnapshot = composable(
             veteran_no: demographics.veteran.no,
             gender_cis: demographics.gender.cis,
             gender_trans: demographics.gender.trans,
-            gender_agender: demographics.gender.agender,
             gender_other_percentage: demographics.gender.other.percentage,
             gender_other_values: demographics.gender.other.values || [],
             orientation_straight: demographics.orientation.straight,
@@ -167,7 +164,6 @@ export const getEventDemographicsHistory = composable(
       gender: {
         cis: Number(snapshot.gender_cis),
         trans: Number(snapshot.gender_trans),
-        agender: Number(snapshot.gender_agender),
         other: {
           percentage: Number(snapshot.gender_other_percentage),
           values: snapshot.gender_other_values || [],

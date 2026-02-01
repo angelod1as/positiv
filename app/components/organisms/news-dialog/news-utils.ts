@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1737993600000
+export const NEWS_VERSION = 1738336200000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "demographics-agender-merged",
+    title: "📊 Atualização nos dados demográficos",
+    content:
+      'Agora os gêneros "agênero" e "não-binárie" são contabilizados como "trans" nos dados demográficos — anteriormente eles eram dados separados. Também corrigimos um bug onde variações sem acento (como "agenera" vs "agênera") eram contadas separadamente.',
+    isAdmin: true,
+    createdAt: new Date("2026-01-30T10:00:00"),
+    isActive: true,
+  },
   {
     id: "feedback-form",
     title: "📝 Formulário de Feedback",
@@ -51,78 +60,6 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
       "Nova página no painel admin para visualizar todos os feedbacks recebidos! A tabela mostra nome, e-mail, WhatsApp, texto do feedback e se o contato já está verificado no sistema. Acesse pelo menu Admin → Feedbacks ou pelo widget na dashboard.",
     isAdmin: true,
     createdAt: new Date("2026-01-27T12:00:00"),
-    isActive: true,
-  },
-  {
-    id: "veteran-dropdown",
-    title: "🎖️ Veterane/Novate agora é dropdown",
-    content:
-      'A tabela de participantes foi simplificada! As colunas "Vet ou Nov?" e "Veterane?" (checkbox) foram unificadas em uma única coluna com dropdown. Agora você pode alterar o status diretamente clicando na célula e escolhendo "Veterane" ou "Novate".',
-    isAdmin: true,
-    createdAt: new Date("2026-01-15T00:00:00"),
-    isActive: true,
-  },
-  {
-    id: "financial-summary",
-    title: "💰 Resumo financeiro no perfil",
-    content:
-      "Agora a página de perfil de participantes mostra um resumo financeiro completo! Você pode ver o total investido, quantidade de eventos pagos, média por evento, e a diferença total (quanto pagou a mais ou a menos do preço do ingresso). Também há uma lista detalhada de todos os pagamentos por evento.",
-    isAdmin: true,
-    createdAt: new Date("2026-01-14T18:00:00"),
-    isActive: true,
-  },
-  {
-    id: "surplus-column",
-    title: "📊 Coluna de diferença no histórico",
-    content:
-      'A tabela de histórico de eventos agora mostra uma coluna "Diferença" que calcula automaticamente quanto cada participante pagou a mais (verde) ou a menos (vermelho) do preço do ingresso. Isso facilita identificar rapidamente quem contribuiu extra ou teve desconto.',
-    isAdmin: true,
-    createdAt: new Date("2026-01-14T18:00:00"),
-    isActive: true,
-  },
-  {
-    id: "was-selected-for-rotation",
-    title: "🔄 Histórico de rodízio preservado",
-    content:
-      'Agora o sistema guarda se a pessoa foi escolhida para rodízio ("Pulade") mesmo que depois ela compareça ao evento. Na tabela de participantes, a coluna "Escolhide p/ rodízio?" é marcada automaticamente quando você seleciona "Pulade" no status de presença. Isso ajuda a manter o histórico correto de quem foi selecionado para rodízio.',
-    isAdmin: true,
-    createdAt: new Date("2026-01-12T21:45:00"),
-    isActive: true,
-  },
-  {
-    id: "auto-set-paid",
-    title: '💰 "Pago?" marcado automaticamente',
-    content:
-      'Na tabela de participantes, se você adicionar qualquer valor ao campo "Pagamento", a caixa "Pago?" é preenchida automaticamente.',
-    isAdmin: true,
-    createdAt: new Date("2026-01-11T20:37:00"),
-    isActive: true,
-  },
-  {
-    id: "global-profiles-table",
-    title: "👥 Nova página de Perfis",
-    content:
-      "Agora você pode ver todos os perfis cadastrados em uma única tabela! Acesse pelo menu Admin → Perfis. A tabela mostra nome, gênero, orientação, status veterane/novate, flag, cidade, status de aprovação, quantidade de eventos e último evento. Use os filtros nas colunas para encontrar perfis específicos. Essa tabela será incrementada em breve!",
-    isAdmin: true,
-    createdAt: new Date("2026-01-11T19:37:00"),
-    isActive: true,
-  },
-  {
-    id: "removed-unused-date-fields",
-    title: "🗑️ Campos de data removidos do formulário de evento",
-    content:
-      "O formulário de criação/edição de evento foi simplificado! Removemos 3 campos que nunca foram utilizados: 'Data final de inscrições', 'Data de início das entrevistas' e 'Data final das entrevistas'. O fechamento de inscrições continua sendo controlado pelo status do evento.",
-    isAdmin: true,
-    createdAt: new Date("2026-01-05T17:30:00"),
-    isActive: true,
-  },
-  {
-    id: "clickable-event-rows",
-    title: "🖱️ Clique nas linhas da tabela de eventos",
-    content:
-      "Agora você pode clicar diretamente nas linhas da tabela de eventos para visualizar os detalhes! Não é mais necessário procurar pelo botão de visualização - basta clicar em qualquer lugar da linha do evento que você deseja ver.",
-    isAdmin: true,
-    createdAt: new Date("2026-01-04T18:00:00"),
     isActive: true,
   },
 ]

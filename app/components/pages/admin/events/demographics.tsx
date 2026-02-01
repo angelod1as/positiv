@@ -37,7 +37,7 @@ export const DemographicsData: FC<DemographicsProps> = ({
         )}
       </div>
       {demographics ? (
-        <div className="flex flex-col gap-4 sm:grid sm:grid-cols-4">
+        <div className="flex flex-col gap-4 sm:grid sm:grid-cols-5">
           <div>
             <h4>Geral</h4>
             <DataPair
@@ -54,10 +54,6 @@ export const DemographicsData: FC<DemographicsProps> = ({
             <h4>Gênero</h4>
             <DataPair suffix="%" pair={["Cis", demographics.gender.cis]} />
             <DataPair suffix="%" pair={["Trans", demographics.gender.trans]} />
-            <DataPair
-              suffix="%"
-              pair={["Agênere", demographics.gender.agender]}
-            />
             {!!demographics.gender.other.percentage && (
               <>
                 <DataPair

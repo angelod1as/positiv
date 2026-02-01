@@ -5,41 +5,43 @@ import { GENDERS } from "~/lib/constants/constants"
 // - Inconsistency: countRaceColor and countGenders only process first array element [0]
 //   while countOrientations processes ALL elements. Should be consistent.
 
+function normalizeAccents(str: string): string {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+}
+
 function isCisGender(gender: string): boolean {
-  const lower = gender.toLowerCase()
+  const normalized = normalizeAccents(gender)
   return (
-    (GENDERS.includes("Mulher cis") && lower === "mulher cis") ||
-    (GENDERS.includes("Homem cis") && lower === "homem cis") ||
-    /\bcis\b/i.test(lower)
+    (GENDERS.includes("Mulher cis") && normalized === "mulher cis") ||
+    (GENDERS.includes("Homem cis") && normalized === "homem cis") ||
+    /\bcis\b/i.test(normalized)
   )
 }
 
 function isTransGender(gender: string): boolean {
-  const lower = gender.toLowerCase()
-  return (
-    /\btrans\b|\bnão binári[ae]\b/i.test(lower) ||
-    lower === "travesti" ||
-    lower === "mulher trans" ||
-    lower === "homem trans"
-  )
-}
+  const normalized = normalizeAccents(gender)
 
-function isAgender(gender: string): boolean {
-  const lower = gender.toLowerCase()
-  return /\bag[êe]nero\b|\bagender\b|\bagênera\b/i.test(lower)
+  return (
+    /\btrans\b/i.test(normalized) ||
+    /\bnao binari[ae]\b/i.test(normalized) ||
+    /\bagenero\b/i.test(normalized) ||
+    /\bagender\b/i.test(normalized) ||
+    /\bagenera\b/i.test(normalized) ||
+    normalized === "travesti"
+  )
 }
 
 export function classifySingleGender(
   genderString: string,
-): "cis" | "trans" | "agender" | "other" {
+): "cis" | "trans" | "other" {
   if (isCisGender(genderString)) {
     return "cis"
   }
   if (isTransGender(genderString)) {
     return "trans"
-  }
-  if (isAgender(genderString)) {
-    return "agender"
   }
   return "other"
 }

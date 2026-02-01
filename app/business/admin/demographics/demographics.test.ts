@@ -2,6 +2,149 @@ import { describe, expect, it } from "vitest"
 import { calculateDemographics } from "./demographics"
 
 describe("calculateDemographics", () => {
+  describe("gender demographics - agender merged into trans", () => {
+    it("should classify agender variations as trans (with accents)", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["Pessoa agênera"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1991-01-01",
+          gender: ["agênero"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.gender.trans).toBe(100)
+      expect(result.gender.cis).toBe(0)
+    })
+
+    it("should classify agender variations as trans (without accents)", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["Pessoa agenera"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1991-01-01",
+          gender: ["agenero"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1992-01-01",
+          gender: ["agender"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.gender.trans).toBe(100)
+      expect(result.gender.cis).toBe(0)
+    })
+
+    it("should classify non-binary variations as trans (without accents)", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["nao binaria"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1991-01-01",
+          gender: ["nao binarie"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.gender.trans).toBe(100)
+      expect(result.gender.cis).toBe(0)
+    })
+
+    it("should classify non-binary variations as trans (with accents)", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["não binária"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1991-01-01",
+          gender: ["não binarie"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.gender.trans).toBe(100)
+      expect(result.gender.cis).toBe(0)
+    })
+
+    it("should combine trans and agender into single trans category", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["Mulher trans"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1991-01-01",
+          gender: ["Pessoa agênera"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1992-01-01",
+          gender: ["não binária"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1993-01-01",
+          gender: ["Homem cis"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.gender.trans).toBe(75)
+      expect(result.gender.cis).toBe(25)
+    })
+  })
+
   describe("race_color demographics", () => {
     it("should deduplicate other values using Set (including Not Provided)", () => {
       const testData = [
