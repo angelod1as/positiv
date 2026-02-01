@@ -82,6 +82,30 @@ describe("calculateDemographics", () => {
       expect(result.gender.cis).toBe(0)
     })
 
+    it("should classify non-binary variations as trans (with accents)", () => {
+      const testData = [
+        {
+          date_of_birth: "1990-01-01",
+          gender: ["não binária"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+        {
+          date_of_birth: "1991-01-01",
+          gender: ["não binarie"],
+          is_veteran: false,
+          orientation: ["Hetero"],
+          race_color: null,
+        },
+      ]
+
+      const result = calculateDemographics(testData)
+
+      expect(result.gender.trans).toBe(100)
+      expect(result.gender.cis).toBe(0)
+    })
+
     it("should combine trans and agender into single trans category", () => {
       const testData = [
         {

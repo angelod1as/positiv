@@ -13,11 +13,11 @@ function normalizeAccents(str: string): string {
 }
 
 function isCisGender(gender: string): boolean {
-  const lower = gender.toLowerCase()
+  const normalized = normalizeAccents(gender)
   return (
-    (GENDERS.includes("Mulher cis") && lower === "mulher cis") ||
-    (GENDERS.includes("Homem cis") && lower === "homem cis") ||
-    /\bcis\b/i.test(lower)
+    (GENDERS.includes("Mulher cis") && normalized === "mulher cis") ||
+    (GENDERS.includes("Homem cis") && normalized === "homem cis") ||
+    /\bcis\b/i.test(normalized)
   )
 }
 
@@ -30,9 +30,7 @@ function isTransGender(gender: string): boolean {
     /\bagenero\b/i.test(normalized) ||
     /\bagender\b/i.test(normalized) ||
     /\bagenera\b/i.test(normalized) ||
-    normalized === "travesti" ||
-    normalized === "mulher trans" ||
-    normalized === "homem trans"
+    normalized === "travesti"
   )
 }
 
