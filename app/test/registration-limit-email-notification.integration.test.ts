@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { createTestEvent } from "~/test/db-test-utils"
+import { createTestEvent, createTestProfile } from "~/test/db-test-utils"
 import { action } from "~/pages/api/admin/send-registration-limit-email"
 import * as sendEmailModule from "~/business/email/send-email"
 
@@ -162,6 +162,7 @@ describe("Registration Limit Email Notification - E2E Integration", () => {
   })
 
   it("should include participant count in email", async () => {
+    const testId = Date.now()
     const event = await createTestEvent(tracker, kysely, {
       title: "Test Event - Participant Count",
       event_status: "Registration Closed",
@@ -169,46 +170,37 @@ describe("Registration Limit Email Notification - E2E Integration", () => {
     })
 
     // Create some test participants
-    const profile1Id = crypto.randomUUID()
-    const profile2Id = crypto.randomUUID()
+    const profile1 = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      full_name: "Test User 1",
+      email: `test-count-${testId}-1@example.com`,
+      cpf: "12345678901",
+      date_of_birth: "1990-01-01",
+      phone: "11999999991",
+    })
 
-    await kysely
-      .insertInto("profiles")
-      .values([
-        {
-          id: profile1Id,
-          full_name: "Test User 1",
-          email: "test1@example.com",
-          cpf: "12345678901",
-          date_of_birth: "1990-01-01",
-          phone: "11999999991",
-        },
-        {
-          id: profile2Id,
-          full_name: "Test User 2",
-          email: "test2@example.com",
-          cpf: "12345678902",
-          date_of_birth: "1990-01-02",
-          phone: "11999999992",
-        },
-      ])
-      .execute()
-
-    tracker.track("profiles", [profile1Id, profile2Id])
+    const profile2 = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      full_name: "Test User 2",
+      email: `test-count-${testId}-2@example.com`,
+      cpf: "12345678902",
+      date_of_birth: "1990-01-02",
+      phone: "11999999992",
+    })
 
     await kysely
       .insertInto("event_participants")
       .values([
         {
           event_id: event.id,
-          profile_id: profile1Id,
+          profile_id: profile1.id,
           is_user_applied: true,
           application_status: "finalised",
           attendance_status: "pending",
         },
         {
           event_id: event.id,
-          profile_id: profile2Id,
+          profile_id: profile2.id,
           is_user_applied: true,
           application_status: "finalised",
           attendance_status: "pending",
