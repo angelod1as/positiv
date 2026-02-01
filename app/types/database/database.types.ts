@@ -7,6 +7,31 @@ export type Json =
   | Json[]
 
 export type Database = {
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       event_demographics_history: {
@@ -17,7 +42,6 @@ export type Database = {
           calculated_at: string
           created_at: string
           event_id: string
-          gender_agender: number
           gender_cis: number
           gender_other_percentage: number
           gender_other_values: string[] | null
@@ -47,7 +71,6 @@ export type Database = {
           calculated_at?: string
           created_at?: string
           event_id: string
-          gender_agender?: number
           gender_cis?: number
           gender_other_percentage?: number
           gender_other_values?: string[] | null
@@ -77,7 +100,6 @@ export type Database = {
           calculated_at?: string
           created_at?: string
           event_id?: string
-          gender_agender?: number
           gender_cis?: number
           gender_other_percentage?: number
           gender_other_values?: string[] | null
@@ -117,11 +139,13 @@ export type Database = {
           campaign_is_created: boolean
           campaign_is_sent: boolean
           campaign_sent_time: string | null
+          campaign_type: Database["public"]["Enums"]["campaign_type"]
           created_at: string
           event_id: string
           id: string
           last_attempt: string | null
           last_error: Json | null
+          should_send_at: string | null
           times_attempted: number
           updated_at: string
         }
@@ -131,11 +155,13 @@ export type Database = {
           campaign_is_created?: boolean
           campaign_is_sent?: boolean
           campaign_sent_time?: string | null
+          campaign_type?: Database["public"]["Enums"]["campaign_type"]
           created_at?: string
           event_id: string
           id?: string
           last_attempt?: string | null
           last_error?: Json | null
+          should_send_at?: string | null
           times_attempted?: number
           updated_at?: string
         }
@@ -145,11 +171,13 @@ export type Database = {
           campaign_is_created?: boolean
           campaign_is_sent?: boolean
           campaign_sent_time?: string | null
+          campaign_type?: Database["public"]["Enums"]["campaign_type"]
           created_at?: string
           event_id?: string
           id?: string
           last_attempt?: string | null
           last_error?: Json | null
+          should_send_at?: string | null
           times_attempted?: number
           updated_at?: string
         }
@@ -157,7 +185,7 @@ export type Database = {
           {
             foreignKeyName: "event_newsletter_campaigns_event_id_fkey"
             columns: ["event_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
@@ -516,7 +544,10 @@ export type Database = {
         Args: { p_role_name: string; p_user_id: string }
         Returns: undefined
       }
-      get_admin_user_ids: { Args: never; Returns: string[] }
+      get_admin_user_ids: {
+        Args: Record<PropertyKey, never>
+        Returns: string[]
+      }
       get_applied_participants_count: {
         Args: { event_id_input: string }
         Returns: number
@@ -545,8 +576,14 @@ export type Database = {
           where_lives: string
         }[]
       }
-      get_vault_secret: { Args: { secret_name: string }; Returns: string }
-      update_event_statuses_automatically: { Args: never; Returns: Json }
+      get_vault_secret: {
+        Args: { secret_name: string }
+        Returns: string
+      }
+      update_event_statuses_automatically: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
     }
     Enums: {
       application_status_enum:
@@ -567,6 +604,7 @@ export type Database = {
         | "not-attended"
         | "skipped"
         | "will-not-go"
+      campaign_type: "opening" | "pre_opening"
       event_status:
         | "Draft"
         | "Completed"
@@ -703,6 +741,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       application_status_enum: [
@@ -726,6 +767,7 @@ export const Constants = {
         "skipped",
         "will-not-go",
       ],
+      campaign_type: ["opening", "pre_opening"],
       event_status: [
         "Draft",
         "Completed",
