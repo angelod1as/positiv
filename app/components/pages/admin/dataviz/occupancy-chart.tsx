@@ -1,3 +1,4 @@
+import { ReferenceLine } from 'recharts'
 import type { OccupancyDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { LineChart } from '~/components/molecules/charts/line-chart'
 import type { ChartConfig } from '~/components/ui/chart'
@@ -16,6 +17,12 @@ function transformData(data: OccupancyDataPoint[]): ChartDataPoint[] {
     total_spots: point.total_spots,
     date: point.date,
   }))
+}
+
+function calculateAverage(data: OccupancyDataPoint[]): number {
+  if (data.length === 0) return 0
+  const sum = data.reduce((acc, point) => acc + point.occupancy_pct, 0)
+  return Math.round(sum / data.length)
 }
 
 const chartConfig: ChartConfig = {
@@ -38,15 +45,44 @@ export function OccupancyChart({ data, className }: OccupancyChartProps) {
   }
 
   const chartData = transformData(data)
+  const averageOccupancy = calculateAverage(data)
+  const minWidth = Math.max(600, data.length * 100)
 
   return (
-    <LineChart
-      data={chartData}
-      config={chartConfig}
-      series={series}
-      xAxisKey="event"
-      className={className}
-      ariaLabel="Gráfico de taxa de ocupação por evento"
-    />
+    <div className="overflow-x-auto">
+      <div style={{ minWidth }}>
+        <LineChart
+          data={chartData}
+          config={chartConfig}
+          series={series}
+          xAxisKey="event"
+          className={className}
+          ariaLabel="Gráfico de taxa de ocupação por evento"
+        >
+          <ReferenceLine
+            y={100}
+            stroke="hsl(var(--muted-foreground))"
+            strokeDasharray="3 3"
+            label={{
+              value: 'Capacidade Total (100%)',
+              position: 'insideTopRight',
+              fill: 'hsl(var(--muted-foreground))',
+              fontSize: 12,
+            }}
+          />
+          <ReferenceLine
+            y={averageOccupancy}
+            stroke="hsl(var(--chart-2))"
+            strokeDasharray="3 3"
+            label={{
+              value: `Média: ${averageOccupancy}%`,
+              position: 'insideBottomRight',
+              fill: 'hsl(var(--chart-2))',
+              fontSize: 12,
+            }}
+          />
+        </LineChart>
+      </div>
+    </div>
   )
 }
