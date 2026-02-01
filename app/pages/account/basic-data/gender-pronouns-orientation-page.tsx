@@ -14,12 +14,17 @@ import {
   PRONOUNS,
   RACE_COLOR,
 } from "~/lib/constants/constants"
-import type { Route } from "./+types/basic-data-page"
+import { createMetaArray } from "~/lib/helpers/meta"
+import type { Route } from "./+types/gender-pronouns-orientation-page"
 
 const toOptions = (labels: readonly string[]) =>
   labels.map((label) => ({ label, value: label }))
 
 type FormData = z.infer<typeof ExtraBasicDataSchema>
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Gênero e Orientação")
+}
 
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getContext(request, params)

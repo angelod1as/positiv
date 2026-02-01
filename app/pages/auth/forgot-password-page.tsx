@@ -13,11 +13,16 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import paths from "~/lib/paths"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/forgot-password-page"
 
 const {
   auth: { LOGIN },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Esqueci a Senha")
+}
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const context = await getContext(request, params)

@@ -8,8 +8,13 @@ import { SchemaForm } from "~/components/forms/base/schema-form"
 import { Card, CardContent } from "~/components/ui/card"
 import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
 import { verifyTurnstileToken } from "~/lib/helpers/verify-turnstile.server"
+import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/feedback-page"
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Feedback")
+}
 
 export const loader = async () => {
   const { siteKey } = getTurnstileConfig()

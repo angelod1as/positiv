@@ -5,6 +5,7 @@ import { basicDataSchema } from "~/business/common"
 import { basicData } from "~/business/participant/basic-data.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import paths from "~/lib/paths"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/basic-data-page"
 
 const {
@@ -12,6 +13,10 @@ const {
     account: { GENDER_PRONOUNS_ORIENTATION },
   },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Dados Básicos")
+}
 
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getContext(request, params)

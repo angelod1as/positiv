@@ -1,5 +1,6 @@
 import { getContext } from "~/business/auth/auth.server"
 import { Link } from "~/components/atoms/link/link"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "../public/+types/code-of-conduct"
 
 export async function loader({ params, request }: Route.LoaderArgs) {
@@ -13,8 +14,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Código de Conduta" },
-    { property: "og:title", content: "Código de Conduta" },
+    ...createMetaArray("Código de Conduta"),
     {
       name: "description",
       content: "Código de conduta da Positiv",

@@ -9,12 +9,17 @@ import {
 
 import { Button } from "~/components/atoms/button/button"
 import paths from "~/lib/paths"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/confirm-email-message-page"
 
 const {
   root: { HOME },
   auth: { FORGOT_PASSWORD },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Confirme sua Conta")
+}
 
 const ConfirmEmailMessagePage = ({}: Route.ComponentProps) => {
   return (

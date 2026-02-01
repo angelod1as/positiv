@@ -9,10 +9,16 @@ import {
 import { Button } from "~/components/atoms/button/button"
 import paths from "~/lib/paths"
 import { POSITIV_WHATSAPP } from "~/lib/constants/constants"
+import { createMetaArray } from "~/lib/helpers/meta"
+import type { Route } from "./+types/registration-error-page"
 
 const {
   root: { HOME },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Erro ao Criar Conta")
+}
 
 const RegistrationErrorPage = () => {
   const errorMessage = "Olá! Tive o erro ERR-001 ao criar minha conta"
