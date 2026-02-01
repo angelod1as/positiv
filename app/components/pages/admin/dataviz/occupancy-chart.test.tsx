@@ -39,4 +39,13 @@ describe('OccupancyChart', () => {
     const { container } = render(<OccupancyChart data={[]} />)
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
   })
+
+  it('renders LineChart with occupancy data', () => {
+    const { container } = render(<OccupancyChart data={mockData} />)
+    expect(container.querySelector('[data-chart]')).toBeInTheDocument()
+
+    const styleTag = container.querySelector('style')
+    expect(styleTag).toBeInTheDocument()
+    expect(styleTag?.textContent).toContain('--color-occupancy_pct')
+  })
 })
