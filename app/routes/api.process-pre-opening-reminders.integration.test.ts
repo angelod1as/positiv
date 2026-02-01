@@ -4,6 +4,30 @@ import {
   setupIntegrationTest,
 } from "~/test/integration-setup"
 import { createTestEvent } from "~/test/db-test-utils"
+import type { Database } from "~/types/database/database.types"
+
+type EventNewsletterCampaign = Database["public"]["Tables"]["event_newsletter_campaigns"]["Row"]
+
+// Helper to create mock campaign objects
+const createMockCampaign = (
+  overrides: Partial<EventNewsletterCampaign>,
+): EventNewsletterCampaign => ({
+  id: crypto.randomUUID(),
+  event_id: "",
+  campaign_type: "pre_opening",
+  should_send_at: new Date().toISOString(),
+  campaign_is_created: false,
+  campaign_is_sent: false,
+  times_attempted: 0,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  campaign_creation_time: null,
+  campaign_id: null,
+  campaign_sent_time: null,
+  last_attempt: null,
+  last_error: null,
+  ...overrides,
+})
 
 // Mock the newsletter functions
 vi.mock("~/business/newsletter/campaign-automation.server", () => ({
@@ -124,6 +148,7 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
       vi.mocked(getPendingCampaigns).mockResolvedValueOnce({
         success: true,
         data: [],
+        errors: [],
       })
 
       const request = new Request("http://localhost:5173/api/process-pre-opening-reminders", {
@@ -167,20 +192,18 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
       vi.mocked(getPendingCampaigns).mockResolvedValueOnce({
         success: true,
         data: [
-          {
+          createMockCampaign({
             event_id: event.id,
-            campaign_type: "pre_opening" as const,
             should_send_at: new Date(Date.now() - 1000).toISOString(),
-            campaign_is_created: false,
-            campaign_is_sent: false,
-            times_attempted: 0,
-          },
+          }),
         ],
+        errors: [],
       })
 
       vi.mocked(processCampaignForEvent).mockResolvedValueOnce({
         success: true,
-        data: null,
+        data: undefined,
+        errors: [],
       })
 
       const request = new Request("http://localhost:5173/api/process-pre-opening-reminders", {
@@ -228,14 +251,17 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
         .executeTakeFirst()
 
       expect(campaign).toBeDefined()
-      expect(new Date(campaign!.should_send_at).getTime()).toBeGreaterThan(
-        Date.now(),
-      )
+      if (campaign && campaign.should_send_at) {
+        expect(new Date(campaign.should_send_at).getTime()).toBeGreaterThan(
+          Date.now(),
+        )
+      }
 
       // Mock should return empty since should_send_at is in the future
       vi.mocked(getPendingCampaigns).mockResolvedValueOnce({
         success: true,
         data: [],
+        errors: [],
       })
 
       const request = new Request("http://localhost:5173/api/process-pre-opening-reminders", {
@@ -268,28 +294,21 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
       vi.mocked(getPendingCampaigns).mockResolvedValueOnce({
         success: true,
         data: [
-          {
+          createMockCampaign({
             event_id: event1.id,
-            campaign_type: "pre_opening" as const,
             should_send_at: new Date(Date.now() - 1000).toISOString(),
-            campaign_is_created: false,
-            campaign_is_sent: false,
-            times_attempted: 0,
-          },
-          {
+          }),
+          createMockCampaign({
             event_id: event2.id,
-            campaign_type: "pre_opening" as const,
             should_send_at: new Date(Date.now() - 1000).toISOString(),
-            campaign_is_created: false,
-            campaign_is_sent: false,
-            times_attempted: 0,
-          },
+          }),
         ],
+        errors: [],
       })
 
       vi.mocked(processCampaignForEvent)
-        .mockResolvedValueOnce({ success: true, data: null })
-        .mockResolvedValueOnce({ success: true, data: null })
+        .mockResolvedValueOnce({ success: true, data: undefined, errors: [] })
+        .mockResolvedValueOnce({ success: true, data: undefined, errors: [] })
 
       const request = new Request("http://localhost:5173/api/process-pre-opening-reminders", {
         method: "POST",
@@ -319,20 +338,17 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
       vi.mocked(getPendingCampaigns).mockResolvedValueOnce({
         success: true,
         data: [
-          {
+          createMockCampaign({
             event_id: event.id,
-            campaign_type: "pre_opening" as const,
             should_send_at: new Date(Date.now() - 1000).toISOString(),
-            campaign_is_created: false,
-            campaign_is_sent: false,
-            times_attempted: 0,
-          },
+          }),
         ],
+        errors: [],
       })
 
       vi.mocked(processCampaignForEvent).mockResolvedValueOnce({
         success: false,
-        errors: [{ message: "Listmonk API error" }],
+        errors: [Object.assign(new Error("Listmonk API error"), { name: "Error" })],
       })
 
       const request = new Request("http://localhost:5173/api/process-pre-opening-reminders", {
@@ -367,30 +383,23 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
       vi.mocked(getPendingCampaigns).mockResolvedValueOnce({
         success: true,
         data: [
-          {
+          createMockCampaign({
             event_id: event1.id,
-            campaign_type: "pre_opening" as const,
             should_send_at: new Date(Date.now() - 1000).toISOString(),
-            campaign_is_created: false,
-            campaign_is_sent: false,
-            times_attempted: 0,
-          },
-          {
+          }),
+          createMockCampaign({
             event_id: event2.id,
-            campaign_type: "pre_opening" as const,
             should_send_at: new Date(Date.now() - 1000).toISOString(),
-            campaign_is_created: false,
-            campaign_is_sent: false,
-            times_attempted: 0,
-          },
+          }),
         ],
+        errors: [],
       })
 
       vi.mocked(processCampaignForEvent)
-        .mockResolvedValueOnce({ success: true, data: null })
+        .mockResolvedValueOnce({ success: true, data: undefined, errors: [] })
         .mockResolvedValueOnce({
           success: false,
-          errors: [{ message: "Failed to send" }],
+          errors: [Object.assign(new Error("Failed to send"), { name: "Error" })],
         })
 
       const request = new Request("http://localhost:5173/api/process-pre-opening-reminders", {
@@ -417,7 +426,7 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
     it("should return 500 when getPendingCampaigns fails", async () => {
       vi.mocked(getPendingCampaigns).mockResolvedValueOnce({
         success: false,
-        errors: [{ message: "Database error" }],
+        errors: [Object.assign(new Error("Database error"), { name: "Error" })],
       })
 
       const request = new Request("http://localhost:5173/api/process-pre-opening-reminders", {
