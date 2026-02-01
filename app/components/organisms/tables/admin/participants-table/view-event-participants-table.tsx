@@ -32,7 +32,12 @@ import {
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import type { ComposableFetcherData } from "~types/database/entities.types"
+import { CategoryLabelWithTooltip } from "./category-label-with-tooltip"
 import { countParticipants } from "./count-participants"
+import {
+  acceptedInProcessTooltipContent,
+  generalTooltipContent,
+} from "./tooltip-contents"
 import {
   parsePaymentValue,
   shouldAutoCheckHasPaid,
@@ -578,7 +583,10 @@ export const AdminViewEventParticipantsTable: FC<
         <b>{acceptedInProcess.total}</b> aceites no processo
       </p>
       <span>|</span>
-      <p>Geral:</p>
+      <CategoryLabelWithTooltip
+        label="Geral"
+        tooltipContent={generalTooltipContent}
+      />
       <p>
         <b>{applications.rookies}</b> N
       </p>
@@ -586,7 +594,10 @@ export const AdminViewEventParticipantsTable: FC<
         <b>{applications.veterans}</b> V
       </p>
       <span>|</span>
-      <p>Aceites no processo:</p>
+      <CategoryLabelWithTooltip
+        label="Aceites no processo"
+        tooltipContent={acceptedInProcessTooltipContent}
+      />
       <p>
         <b>{acceptedInProcess.rookies}</b> N
       </p>
