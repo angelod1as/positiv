@@ -1,3 +1,4 @@
+-- Part 2/2: Schedule cron job (depends on schema changes from Part 1)
 -- Schedule cron job to retry failed newsletter syncs via API
 -- Runs every 30 minutes
 -- Calls internal API endpoint directly

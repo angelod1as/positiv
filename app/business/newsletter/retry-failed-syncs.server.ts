@@ -18,14 +18,20 @@
 import { composable } from "composable-functions"
 import { db } from "~/lib/supabase/db.server"
 import { addSubscriber } from "./listmonk-client.server"
-import { updateSyncStatus } from "./subscription-helpers.server"
+import {
+  computeSubscriberName,
+  updateSyncStatus,
+} from "./subscription-helpers.server"
 import {
   LISTMONK_REGISTERED_LIST_ID,
   LISTMONK_TEST_LIST_ID,
 } from "~/lib/constants/constants"
+import {
+  DEFAULT_BACKOFF_MINUTES,
+  MAX_RETRY_COUNT,
+  NEWSLETTER_RETRY_BACKOFF_MINUTES,
+} from "./constants"
 import type { Database } from "~/types/database/database.types"
-
-const MAX_RETRY_COUNT = 5
 
 type SubscriptionWithProfile = {
   id: string
@@ -66,8 +72,7 @@ export async function getFailedSubscriptionsForRetry(): Promise<
 }
 
 function getBackoffMinutes(retryCount: number): number {
-  const backoffSchedule = [0, 5, 15, 60, 360] // minutes
-  return backoffSchedule[retryCount] ?? 1440 // default to 24 hours
+  return NEWSLETTER_RETRY_BACKOFF_MINUTES[retryCount] ?? DEFAULT_BACKOFF_MINUTES
 }
 
 export function shouldRetrySubscription(
@@ -91,11 +96,11 @@ async function retrySubscriptionSync(
   profileId: string
   errors?: unknown[]
 }> {
-  const computedName =
-    subscription.social_name ||
-    (subscription.full_name
-      ? subscription.full_name.trim().split(/\s+/)[0]
-      : subscription.email)
+  const computedName = computeSubscriberName(
+    subscription.social_name,
+    subscription.full_name,
+    subscription.email,
+  )
 
   const isTestUser = subscription.email.endsWith("@example.com")
   const lists = isTestUser

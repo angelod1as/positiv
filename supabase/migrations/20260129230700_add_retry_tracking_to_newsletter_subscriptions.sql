@@ -1,3 +1,4 @@
+-- Part 1/2: Schema changes for retry tracking (must run before cron setup in Part 2)
 -- Add retry tracking to newsletter_subscriptions table for failed sync retries
 -- Part of POS-262: Add cron job to retry failed newsletter syncs to Listmonk
 

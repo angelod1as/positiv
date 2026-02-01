@@ -3,6 +3,23 @@ import { db } from "~/lib/supabase/db.server"
 import { removeSubscriber } from "./listmonk-client.server"
 import type { SubscriptionSource, SyncStatus } from "./types"
 
+/**
+ * Computes subscriber name for Listmonk from profile data
+ * Priority: social_name > first word of full_name > email
+ */
+export function computeSubscriberName(
+  socialName: string | null,
+  fullName: string | null,
+  email: string,
+): string {
+  if (socialName) return socialName
+  if (fullName) {
+    const firstName = fullName.trim().split(/\s+/)[0]
+    return firstName || fullName
+  }
+  return email
+}
+
 export const getSubscriptionStatus = composable(async (profileId: string) => {
   return await db
     .selectFrom("newsletter_subscriptions")

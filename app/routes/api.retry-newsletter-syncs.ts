@@ -9,6 +9,10 @@ import { timingSafeEqual } from "node:crypto"
  * Authentication: Requires Bearer token matching INTERNAL_JOB_SECRET
  * Method: POST only
  * Schedule: Every 30 minutes
+ *
+ * @returns JSON response with one of these shapes:
+ *  - Success: `{ success: true, stats: { processed, succeeded, failed, skipped } }`
+ *  - Error: `{ success: false, error: string, details?: unknown[], stats: { ... } }`
  */
 export async function action({ request }: ActionFunctionArgs) {
   // Verify request is from authorized internal source using secret token

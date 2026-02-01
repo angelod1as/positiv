@@ -6,14 +6,11 @@ import {
 import { db } from "~/lib/supabase/db.server"
 import { addSubscriber } from "./listmonk-client.server"
 import {
+  computeSubscriberName,
   subscribeProfile,
   updateSyncStatus,
 } from "./subscription-helpers.server"
 import type { SubscriptionSource } from "./types"
-
-function computeNameFromFullName(fullName: string): string {
-  return fullName.trim().split(/\s+/)[0] || fullName
-}
 
 export const subscribeProfileToNewsletter = composable(
   async (profileId: string, source: SubscriptionSource) => {
@@ -37,11 +34,11 @@ export const subscribeProfileToNewsletter = composable(
 
     await subscribeProfile(profileId, source)
 
-    const computedName =
-      profile.social_name ||
-      (profile.full_name
-        ? computeNameFromFullName(profile.full_name)
-        : profile.email)
+    const computedName = computeSubscriberName(
+      profile.social_name,
+      profile.full_name,
+      profile.email,
+    )
 
     if (!profile.full_name && !profile.social_name) {
       console.warn(
