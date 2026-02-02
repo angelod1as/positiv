@@ -17,6 +17,7 @@ import { getContext, registerUser } from "~/business/auth/auth.server"
 import { registerUserSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/register-page"
 
 const {
@@ -24,10 +25,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Registrar | Positiv Party" },
-    { property: "og:title", content: "Registrar | Positiv Party" },
-  ]
+  return createMetaArray("Registrar")
 }
 
 export const loader = async () => {

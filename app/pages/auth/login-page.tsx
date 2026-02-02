@@ -16,6 +16,7 @@ import { redirectWithSuccess } from "remix-toast"
 import { getContext, loginUser } from "~/business/auth/auth.server"
 import { loginSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/login-page"
 
 const {
@@ -25,10 +26,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Entrar | Positiv Party" },
-    { property: "og:title", content: "Entrar | Positiv Party" },
-  ]
+  return createMetaArray("Entrar")
 }
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
