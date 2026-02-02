@@ -40,12 +40,16 @@ const mockGenderDataWithSmallCategories: DemographicDistribution[] = [
 
 describe('GenderChart', () => {
   it('should render gender distribution chart with data', () => {
-    const { container } = render(<GenderChart data={mockGenderData} />)
+    const { container } = render(
+      <GenderChart data={mockGenderData} mode="all" onModeChange={vi.fn()} />
+    )
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
   })
 
   it('should group categories with less than 2% into "Outros"', () => {
-    const { container } = render(<GenderChart data={mockGenderDataWithSmallCategories} />)
+    const { container } = render(
+      <GenderChart data={mockGenderDataWithSmallCategories} mode="all" onModeChange={vi.fn()} />
+    )
 
     // Should find "Outros" in the chart config (style tag)
     const styleTag = container.querySelector('style')
@@ -61,7 +65,10 @@ describe('GenderChart', () => {
 
   it('should toggle between "Toda a comunidade" and "Quem já compareceu"', async () => {
     const user = userEvent.setup()
-    render(<GenderChart data={mockGenderData} />)
+    const mockOnModeChange = vi.fn()
+    const { rerender } = render(
+      <GenderChart data={mockGenderData} mode="all" onModeChange={mockOnModeChange} />
+    )
 
     // Should find both toggle buttons
     const todaButton = screen.getByRole('button', { name: /toda a comunidade/i })
@@ -72,17 +79,28 @@ describe('GenderChart', () => {
 
     // First button should be active by default
     expect(todaButton).toHaveAttribute('data-active', 'true')
+    expect(compareceramButton).toHaveAttribute('data-active', 'false')
 
     // Click the second button
     await user.click(compareceramButton)
 
+    // onModeChange should be called with 'attended'
+    expect(mockOnModeChange).toHaveBeenCalledWith('attended')
+
+    // Simulate parent updating mode
+    rerender(<GenderChart data={mockGenderData} mode="attended" onModeChange={mockOnModeChange} />)
+
     // Second button should now be active
-    expect(compareceramButton).toHaveAttribute('data-active', 'true')
-    expect(todaButton).toHaveAttribute('data-active', 'false')
+    const todaButtonAfter = screen.getByRole('button', { name: /toda a comunidade/i })
+    const compareceramButtonAfter = screen.getByRole('button', { name: /quem já compareceu/i })
+    expect(compareceramButtonAfter).toHaveAttribute('data-active', 'true')
+    expect(todaButtonAfter).toHaveAttribute('data-active', 'false')
   })
 
   it('should display total count in center label', () => {
-    const { container } = render(<GenderChart data={mockGenderData} />)
+    const { container } = render(
+      <GenderChart data={mockGenderData} mode="all" onModeChange={vi.fn()} />
+    )
 
     // Total count should be displayed in the center
     const centerLabel = container.querySelector('[data-slot="center-label"]')
@@ -94,7 +112,9 @@ describe('GenderChart', () => {
   })
 
   it('should show percentage and count in tooltip', () => {
-    const { container } = render(<GenderChart data={mockGenderData} />)
+    const { container } = render(
+      <GenderChart data={mockGenderData} mode="all" onModeChange={vi.fn()} />
+    )
 
     // Verify chart config has correct data structure for tooltip
     const styleTag = container.querySelector('style')
@@ -106,7 +126,9 @@ describe('GenderChart', () => {
   })
 
   it('should handle empty data without crashing', () => {
-    const { container } = render(<GenderChart data={[]} />)
+    const { container } = render(
+      <GenderChart data={[]} mode="all" onModeChange={vi.fn()} />
+    )
 
     // Should still render the container
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
@@ -116,7 +138,9 @@ describe('GenderChart', () => {
   })
 
   it('has proper accessibility attributes', () => {
-    const { container } = render(<GenderChart data={mockGenderData} />)
+    const { container } = render(
+      <GenderChart data={mockGenderData} mode="all" onModeChange={vi.fn()} />
+    )
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
     expect(chart).toHaveAttribute('aria-label', 'Distribuição de gênero')

@@ -1,24 +1,25 @@
-import { useState } from 'react'
+import { useMemo } from 'react'
 import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
 import { DonutChart } from '~/components/molecules/charts/donut-chart'
 import type { ChartConfig } from '~/components/ui/chart'
 
+export type FilterMode = 'all' | 'attended'
+
 interface GenderChartProps {
   data: DemographicDistribution[]
   className?: string
+  mode: FilterMode
+  onModeChange: (mode: FilterMode) => void
 }
-
-type FilterMode = 'all' | 'attended'
 
 /**
  * Displays gender distribution as a donut chart with filter toggle.
  * Categories with < 2% representation are grouped into "Outros".
  *
- * Note: Filter toggle is presentational. Parent component should
- * fetch appropriate data based on selected mode.
+ * Controlled component: accepts mode and onModeChange callback.
+ * Parent component should fetch appropriate data based on selected mode.
  */
-export function GenderChart({ data, className }: GenderChartProps) {
-  const [mode, setMode] = useState<FilterMode>('all')
+export function GenderChart({ data, className, mode, onModeChange }: GenderChartProps) {
 
   // Handle empty data
   if (data.length === 0) {
@@ -30,30 +31,41 @@ export function GenderChart({ data, className }: GenderChartProps) {
   }
 
   // Process data: group categories < 2% into "Outros"
-  const processedData = processGenderData(data)
+  const processedData = useMemo(() => processGenderData(data), [data])
 
   // Calculate total count for center label
-  const totalCount = data.reduce((sum, item) => sum + item.count, 0)
+  const totalCount = useMemo(
+    () => data.reduce((sum, item) => sum + item.count, 0),
+    [data]
+  )
 
   // Create chart config with colors
-  const chartConfig: ChartConfig = processedData.reduce(
-    (acc, item, index) => ({
-      ...acc,
-      [item.category]: {
-        label: item.category,
-        color: `var(--chart-${index + 1})`,
-      },
-    }),
-    {} as ChartConfig
+  const chartConfig: ChartConfig = useMemo(
+    () =>
+      processedData.reduce(
+        (acc, item, index) => ({
+          ...acc,
+          [item.category]: {
+            label: item.category,
+            color: `var(--chart-${index + 1})`,
+          },
+        }),
+        {} as ChartConfig
+      ),
+    [processedData]
   )
 
   // Transform data for DonutChart (needs value field)
-  const chartData = processedData.map((item) => ({
-    category: item.category,
-    value: item.count,
-    count: item.count,
-    percentage: item.percentage,
-  }))
+  const chartData = useMemo(
+    () =>
+      processedData.map((item) => ({
+        category: item.category,
+        value: item.count,
+        count: item.count,
+        percentage: item.percentage,
+      })),
+    [processedData]
+  )
 
   return (
     <div className={className}>
@@ -61,7 +73,7 @@ export function GenderChart({ data, className }: GenderChartProps) {
       <div className="mb-4 flex justify-center gap-2">
         <button
           type="button"
-          onClick={() => setMode('all')}
+          onClick={() => onModeChange('all')}
           data-active={mode === 'all'}
           className={`rounded px-4 py-2 text-sm transition-colors ${
             mode === 'all'
@@ -73,7 +85,7 @@ export function GenderChart({ data, className }: GenderChartProps) {
         </button>
         <button
           type="button"
-          onClick={() => setMode('attended')}
+          onClick={() => onModeChange('attended')}
           data-active={mode === 'attended'}
           className={`rounded px-4 py-2 text-sm transition-colors ${
             mode === 'attended'
@@ -86,20 +98,22 @@ export function GenderChart({ data, className }: GenderChartProps) {
       </div>
 
       {/* Chart */}
-      <DonutChart
-        data={chartData}
-        config={chartConfig}
-        dataKey="value"
-        nameKey="category"
-        ariaLabel="Distribuição de gênero"
-        centerLabel={
-          <div className="text-center">
-            <div className="text-3xl font-bold">{totalCount}</div>
-            <div className="text-sm text-muted-foreground">pessoas</div>
-          </div>
-        }
-        className="h-[400px]"
-      />
+      <div data-chart role="img" aria-label="Distribuição de gênero">
+        <DonutChart
+          data={chartData}
+          config={chartConfig}
+          dataKey="value"
+          nameKey="category"
+          ariaLabel="Distribuição de gênero"
+          centerLabel={
+            <div className="text-center">
+              <div className="text-3xl font-bold">{totalCount}</div>
+              <div className="text-sm text-muted-foreground">pessoas</div>
+            </div>
+          }
+          className="h-[400px]"
+        />
+      </div>
     </div>
   )
 }
