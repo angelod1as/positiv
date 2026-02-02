@@ -7,6 +7,7 @@ import { getSubscriptionStatus } from "~/business/newsletter/subscription-helper
 import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
+import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/agree-to-terms-page"
 
@@ -15,6 +16,10 @@ const {
     account: { BASIC_DATA },
   },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Termos e Condições")
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getUserContext(request, params)

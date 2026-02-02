@@ -9,6 +9,7 @@ import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import paths from "~/lib/paths"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/account-page"
 
 const {
@@ -18,6 +19,10 @@ const {
     participant: { AGREE_TO_TERMS },
   },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Minha Conta")
+}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getUserContext(request, params)

@@ -8,6 +8,7 @@ import {
 import { changePasswordSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import paths from "~/lib/paths"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/change-password-page"
 
 const {
@@ -15,6 +16,10 @@ const {
     account: { ACCOUNT },
   },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Mudar Senha")
+}
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
   const context = await getContext(request, params)

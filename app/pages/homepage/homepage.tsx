@@ -11,9 +11,14 @@ import { HomePageHero } from "~/components/pages/homepage/hero/hero"
 import { HomePageNextEvents } from "~/components/pages/homepage/next-events/next-events"
 import { HomePageNextEventsSkeleton } from "~/components/pages/homepage/next-events/next-events-skeleton"
 import { HomePageTestimonials } from "~/components/pages/homepage/testimonials/home-page-testimonials"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { ViewEvent } from "~types/database/entities.types"
 import type { Route } from "./+types/homepage"
 import { getNextEvents } from "./fetch/get-next-events"
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Positiv Party")
+}
 
 async function loadEvents(profileId: string | undefined) {
   const result = await getNextEvents(profileId, 3, true)

@@ -1,7 +1,9 @@
 import { redirect } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { rulesSessionStorage } from "~/business/session.server"
+import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
+import type { Route } from "./+types/event-bdsm-consent-page"
 import { EventBdsmConsentPage } from "./event-bdsm-consent"
 
 const {
@@ -9,6 +11,10 @@ const {
     events: { EVENT_RULES, EVENT_BDSM_CONSENT },
   },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Consentimento BDSM")
+}
 
 export async function action({ request, params }: { request: Request; params: { id: string } }) {
   const { commitSession, getSession } = rulesSessionStorage

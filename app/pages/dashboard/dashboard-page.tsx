@@ -7,11 +7,16 @@ import { getContext } from "~/business/auth/auth.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { EventListSkeleton } from "~/components/organisms/event-list/event-list-skeleton"
+import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { ViewEvent } from "~types/database/entities.types"
 import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 import { splitEvents } from "./utils/split-events"
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Meus Eventos")
+}
 
 const {
   dash: {

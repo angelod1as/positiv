@@ -6,11 +6,17 @@ import {
   updateProfileAdminNotes,
 } from "~/business/admin/admin.server"
 import { AllParticipantsTable } from "~/components/organisms/tables/admin/all-participants-table"
+import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
+import type { Route } from "./+types/participants-page"
 
 const {
   admin: { ADMIN_DASHBOARD },
 } = paths
+
+export function meta({}: Route.MetaArgs) {
+  return createMetaArray("Admin - Participantes")
+}
 
 export async function loader() {
   const result = await getAllProfiles()
