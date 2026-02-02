@@ -6,6 +6,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import { format, parse } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import type { GrowthDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import {
   ChartContainer,
@@ -17,6 +19,15 @@ import {
 interface GrowthChartProps {
   data: GrowthDataPoint[]
   className?: string
+}
+
+function formatMonth(monthString: string): string {
+  try {
+    const date = parse(monthString, 'yyyy-MM', new Date())
+    return format(date, 'MMM/yy', { locale: ptBR })
+  } catch {
+    return monthString
+  }
 }
 
 export function GrowthChart({ data, className }: GrowthChartProps) {
@@ -33,7 +44,7 @@ export function GrowthChart({ data, className }: GrowthChartProps) {
 
   const chartData = data.map((item) => ({
     ...item,
-    label: item.month,
+    label: formatMonth(item.month),
   }))
 
   const minWidth = Math.max(600, data.length * 80)

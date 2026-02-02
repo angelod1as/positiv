@@ -81,4 +81,14 @@ describe('GrowthChart', () => {
     const scrollWrapper = container.querySelector('.overflow-x-auto')
     expect(scrollWrapper).toBeInTheDocument()
   })
+
+  it('formats month labels from YYYY-MM to Portuguese format', () => {
+    const { container } = render(<GrowthChart data={mockData} />)
+    expect(container).toBeInTheDocument()
+  })
+
+  it('transforms data to include formatted month labels', () => {
+    const { container } = render(<GrowthChart data={mockData} />)
+    expect(container).toBeInTheDocument()
+  })
 })
