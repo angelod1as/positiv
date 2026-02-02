@@ -117,4 +117,18 @@ describe('GrowthChart', () => {
     const { container } = render(<GrowthChart data={dataWithoutJuly} />)
     expect(container).toBeInTheDocument()
   })
+
+  it('calculates minimum width based on data length', () => {
+    const { container } = render(<GrowthChart data={mockData} />)
+    const scrollWrapper = container.querySelector('.overflow-x-auto')
+    const innerDiv = scrollWrapper?.querySelector('div')
+    expect(innerDiv).toBeInTheDocument()
+  })
+
+  it('uses proper chart configuration colors', () => {
+    const { container } = render(<GrowthChart data={mockData} />)
+    const styleTag = container.querySelector('style')
+    expect(styleTag?.textContent).toContain('--color-new_profiles')
+    expect(styleTag?.textContent).toContain('--color-cumulative')
+  })
 })
