@@ -10,6 +10,7 @@ import { RecentFeedbacksTable } from "~/components/organisms/tables/admin/recent
 import { RecentProfilesTable } from "~/components/organisms/tables/admin/recent-profiles-table"
 import { Button } from "~/components/ui/button"
 import { Separator } from "~/components/ui/separator"
+import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/dashboard-page"
 
@@ -18,10 +19,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return [
-    { title: "Admin - Visão Geral | Positiv Party" },
-    { property: "og:title", content: "Admin - Visão Geral | Positiv Party" },
-  ]
+  return createMetaArray("Admin - Visão Geral")
 }
 
 export async function loader() {
