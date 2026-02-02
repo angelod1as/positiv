@@ -1,8 +1,7 @@
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, isValid } from 'date-fns'
 import type { VeteranRookieDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { AreaChart } from '~/components/molecules/charts/area-chart'
 import type { ChartConfig } from '~/components/ui/chart'
-import type { ReactElement } from 'react'
 
 interface VeteranRookieChartProps {
   data: VeteranRookieDataPoint[]
@@ -26,12 +25,11 @@ const chartConfig: ChartConfig = {
 }
 
 function formatDate(dateString: string): string {
-  try {
-    const date = parseISO(dateString)
+  const date = parseISO(dateString)
+  if (isValid(date)) {
     return format(date, 'dd/MM/yy')
-  } catch {
-    return dateString
   }
+  return dateString
 }
 
 interface TooltipPayloadItem {
@@ -48,7 +46,7 @@ interface CustomTooltipProps {
   label?: string
 }
 
-function CustomTooltipContent({ active, payload, label }: CustomTooltipProps): ReactElement | null {
+function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null
 
   const dataPoint = payload[0]?.payload
@@ -104,7 +102,7 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps): R
 export function VeteranRookieChart({ data, className }: VeteranRookieChartProps) {
   const chartData = data.map((item) => ({
     ...item,
-    label: `${item.emoji} ${item.title} ${formatDate(item.date)}`,
+    label: `${item.emoji} ${item.title}\n${formatDate(item.date)}`,
   }))
 
   return (
