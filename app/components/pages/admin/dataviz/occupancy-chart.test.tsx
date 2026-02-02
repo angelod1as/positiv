@@ -37,7 +37,9 @@ const mockData: OccupancyDataPoint[] = [
 describe('OccupancyChart', () => {
   it('handles empty data gracefully', () => {
     const { container } = render(<OccupancyChart data={[]} />)
-    expect(container.querySelector('[data-chart]')).toBeInTheDocument()
+    const chart = container.querySelector('[data-chart]')
+    expect(chart).toBeInTheDocument()
+    expect(chart).toHaveTextContent('Nenhum dado de ocupação disponível')
   })
 
   it('renders LineChart with occupancy data', () => {

@@ -1,3 +1,4 @@
+import { format, parseISO } from 'date-fns'
 import { ReferenceLine } from 'recharts'
 import type { OccupancyDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { LineChart } from '~/components/molecules/charts/line-chart'
@@ -9,9 +10,18 @@ interface OccupancyChartProps {
   className?: string
 }
 
+function formatDate(dateString: string): string {
+  try {
+    const date = parseISO(dateString)
+    return format(date, 'dd/MM/yy')
+  } catch {
+    return dateString
+  }
+}
+
 function transformData(data: OccupancyDataPoint[]): ChartDataPoint[] {
   return data.map((point) => ({
-    event: `${point.emoji} ${point.title}`,
+    event: `${point.emoji} ${point.title}\n${formatDate(point.date)}`,
     occupancy_pct: point.occupancy_pct,
     compareceram: point.compareceram,
     total_spots: point.total_spots,
@@ -41,12 +51,23 @@ const series: ChartSeries[] = [
 
 export function OccupancyChart({ data, className }: OccupancyChartProps) {
   if (!data || data.length === 0) {
-    return <div data-chart role="img" aria-label="Gráfico de taxa de ocupação por evento" />
+    return (
+      <div
+        data-chart
+        role="img"
+        aria-label="Gráfico de taxa de ocupação por evento"
+        className="flex h-[300px] items-center justify-center text-muted-foreground"
+      >
+        Nenhum dado de ocupação disponível
+      </div>
+    )
   }
 
   const chartData = transformData(data)
   const averageOccupancy = calculateAverage(data)
   const minWidth = Math.max(600, data.length * 100)
+
+  const averageLabelPosition = averageOccupancy > 90 ? 'insideTopLeft' : 'insideBottomRight'
 
   return (
     <div className="overflow-x-auto">
@@ -76,7 +97,7 @@ export function OccupancyChart({ data, className }: OccupancyChartProps) {
             strokeDasharray="3 3"
             label={{
               value: `Média: ${averageOccupancy}%`,
-              position: 'insideBottomRight',
+              position: averageLabelPosition,
               fill: 'hsl(var(--chart-2))',
               fontSize: 12,
             }}
