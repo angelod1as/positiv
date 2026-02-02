@@ -3,6 +3,7 @@ import {
   CartesianGrid,
   ComposedChart,
   Line,
+  ReferenceDot,
   XAxis,
   YAxis,
 } from 'recharts'
@@ -99,6 +100,8 @@ export function GrowthChart({ data, className }: GrowthChartProps) {
     label: formatMonth(item.month),
   }))
 
+  const julyMigration = chartData.find((item) => item.month === '2025-07')
+
   const minWidth = Math.max(600, data.length * 80)
 
   return (
@@ -146,6 +149,23 @@ export function GrowthChart({ data, className }: GrowthChartProps) {
               strokeWidth={2}
               dot={{ r: 4 }}
             />
+            {julyMigration && (
+              <ReferenceDot
+                x={julyMigration.label}
+                y={julyMigration.new_profiles}
+                yAxisId="left"
+                r={8}
+                fill="var(--chart-3)"
+                stroke="white"
+                strokeWidth={2}
+                label={{
+                  value: 'Migração do sistema anterior',
+                  position: 'top',
+                  fill: 'var(--muted-foreground)',
+                  fontSize: 10,
+                }}
+              />
+            )}
           </ComposedChart>
         </ChartContainer>
       </div>

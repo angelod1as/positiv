@@ -106,4 +106,15 @@ describe('GrowthChart', () => {
     const { container } = render(<GrowthChart data={mockData} />)
     expect(container).toBeInTheDocument()
   })
+
+  it('displays annotation for July 2025 migration', () => {
+    const { container } = render(<GrowthChart data={mockData} />)
+    expect(container).toBeInTheDocument()
+  })
+
+  it('does not display annotation for other months', () => {
+    const dataWithoutJuly = mockData.filter(item => item.month !== '2025-07')
+    const { container } = render(<GrowthChart data={dataWithoutJuly} />)
+    expect(container).toBeInTheDocument()
+  })
 })
