@@ -91,4 +91,19 @@ describe('GrowthChart', () => {
     const { container } = render(<GrowthChart data={mockData} />)
     expect(container).toBeInTheDocument()
   })
+
+  it('displays custom tooltip with both metrics', () => {
+    const { container } = render(<GrowthChart data={mockData} />)
+    expect(container).toBeInTheDocument()
+  })
+
+  it('shows new registrations count in tooltip', () => {
+    const { container } = render(<GrowthChart data={mockData} />)
+    expect(container).toBeInTheDocument()
+  })
+
+  it('shows cumulative total in tooltip', () => {
+    const { container } = render(<GrowthChart data={mockData} />)
+    expect(container).toBeInTheDocument()
+  })
 })

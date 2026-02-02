@@ -12,7 +12,6 @@ import type { GrowthDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from '~/components/ui/chart'
 
@@ -28,6 +27,59 @@ function formatMonth(monthString: string): string {
   } catch {
     return monthString
   }
+}
+
+interface TooltipPayloadItem {
+  dataKey?: string
+  value?: number
+  color?: string
+  stroke?: string
+  fill?: string
+  payload?: GrowthDataPoint & { label: string }
+}
+
+interface CustomTooltipProps {
+  active?: boolean
+  payload?: TooltipPayloadItem[]
+  label?: string
+}
+
+function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
+  if (!active || !payload?.length) return null
+
+  const dataPoint = payload[0]?.payload
+
+  if (!dataPoint) return null
+
+  return (
+    <div className="border-border/50 bg-background rounded-lg border px-3 py-2 text-xs shadow-xl">
+      <div className="mb-2 font-medium">
+        <div>{label}</div>
+      </div>
+      <div className="grid gap-1.5">
+        <div className="flex items-center gap-2">
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+            style={{ backgroundColor: 'var(--chart-1)' }}
+          />
+          <span className="text-muted-foreground flex-1">Novos cadastros</span>
+          <span className="font-mono font-medium tabular-nums">
+            {dataPoint.new_profiles}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+            style={{ backgroundColor: 'var(--chart-2)' }}
+          />
+          <span className="text-muted-foreground flex-1">Total acumulado</span>
+          <span className="font-mono font-medium tabular-nums">
+            {dataPoint.cumulative}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function GrowthChart({ data, className }: GrowthChartProps) {
@@ -79,7 +131,7 @@ export function GrowthChart({ data, className }: GrowthChartProps) {
               axisLine={false}
               tickMargin={8}
             />
-            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartTooltip content={<CustomTooltipContent />} />
             <Bar
               yAxisId="left"
               dataKey="new_profiles"
