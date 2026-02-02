@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   Bar,
   BarChart as RechartsBarChart,
@@ -5,7 +6,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { format, parseISO } from 'date-fns'
+import { format, isValid, parseISO } from 'date-fns'
 import type { ConversionFunnelDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import {
   ChartContainer,
@@ -21,6 +22,7 @@ interface FunnelChartProps {
 function formatDate(dateString: string): string {
   try {
     const date = parseISO(dateString)
+    if (!isValid(date)) return dateString
     return format(date, 'dd/MM/yy')
   } catch {
     return dateString
@@ -86,7 +88,11 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
   if (!dataPoint) return null
 
   return (
-    <div className="border-border/50 bg-background rounded-lg border px-3 py-2 text-xs shadow-xl">
+    <div
+      className="border-border/50 bg-background rounded-lg border px-3 py-2 text-xs shadow-xl"
+      role="tooltip"
+      aria-live="polite"
+    >
       <div className="mb-2 font-medium">
         <div>{firstLine}</div>
         {secondLine && <div className="text-muted-foreground">{secondLine}</div>}
@@ -137,39 +143,73 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
   )
 }
 
+const MIN_CHART_WIDTH = 600
+const WIDTH_PER_EVENT = 120
+
 const SERIES_CONFIG = [
-  { dataKey: 'inscritos', label: 'Inscritos', color: 'var(--chart-1)' },
-  { dataKey: 'finalizados', label: 'Finalizados', color: 'var(--chart-2)' },
-  { dataKey: 'pagaram', label: 'Pagaram', color: 'var(--chart-3)' },
-  { dataKey: 'compareceram', label: 'Compareceram', color: 'var(--chart-4)' },
+  {
+    dataKey: 'compareceram',
+    segmentKey: 'compareceram_segment',
+    label: 'Compareceram',
+    color: 'var(--chart-4)',
+  },
+  {
+    dataKey: 'pagaram',
+    segmentKey: 'pagaram_segment',
+    label: 'Pagaram',
+    color: 'var(--chart-3)',
+  },
+  {
+    dataKey: 'finalizados',
+    segmentKey: 'finalizados_segment',
+    label: 'Finalizados',
+    color: 'var(--chart-2)',
+  },
+  {
+    dataKey: 'inscritos',
+    segmentKey: 'inscritos_segment',
+    label: 'Inscritos',
+    color: 'var(--chart-1)',
+  },
 ] as const
 
 export function FunnelChart({ data, className }: FunnelChartProps) {
   const chartConfig: ChartConfig = {
-    inscritos: {
-      label: 'Inscritos',
-      color: 'var(--chart-1)',
-    },
-    finalizados: {
-      label: 'Finalizados',
-      color: 'var(--chart-2)',
+    compareceram: {
+      label: 'Compareceram',
+      color: 'var(--chart-4)',
     },
     pagaram: {
       label: 'Pagaram',
       color: 'var(--chart-3)',
     },
-    compareceram: {
-      label: 'Compareceram',
-      color: 'var(--chart-4)',
+    finalizados: {
+      label: 'Finalizados',
+      color: 'var(--chart-2)',
+    },
+    inscritos: {
+      label: 'Inscritos',
+      color: 'var(--chart-1)',
     },
   }
 
-  const chartData = data.map((item) => ({
-    ...item,
-    label: `${item.emoji} ${item.title}\n${formatDate(item.date)}`,
-  }))
+  const chartData = useMemo(
+    () =>
+      data.map((item) => ({
+        ...item,
+        label: `${item.emoji} ${item.title}\n${formatDate(item.date)}`,
+        inscritos_segment: item.inscritos - item.finalizados,
+        finalizados_segment: item.finalizados - item.pagaram,
+        pagaram_segment: item.pagaram - item.compareceram,
+        compareceram_segment: item.compareceram,
+      })),
+    [data]
+  )
 
-  const minWidth = Math.max(600, data.length * 120)
+  const minWidth = useMemo(
+    () => Math.max(MIN_CHART_WIDTH, data.length * WIDTH_PER_EVENT),
+    [data.length]
+  )
 
   return (
     <div className="overflow-x-auto">
@@ -195,9 +235,9 @@ export function FunnelChart({ data, className }: FunnelChartProps) {
             {SERIES_CONFIG.map((series) => (
               <Bar
                 key={series.dataKey}
-                dataKey={series.dataKey}
+                dataKey={series.segmentKey}
                 stackId="funnel"
-                fill={`var(--color-${series.dataKey})`}
+                fill={series.color}
                 radius={4}
               />
             ))}

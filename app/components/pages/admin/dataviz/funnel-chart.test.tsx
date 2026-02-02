@@ -52,10 +52,10 @@ describe('FunnelChart', () => {
     const { container } = render(<FunnelChart data={mockData} />)
     const styleTag = container.querySelector('style')
     expect(styleTag).toBeInTheDocument()
-    expect(styleTag?.textContent).toContain('--color-inscritos')
-    expect(styleTag?.textContent).toContain('--color-finalizados')
-    expect(styleTag?.textContent).toContain('--color-pagaram')
     expect(styleTag?.textContent).toContain('--color-compareceram')
+    expect(styleTag?.textContent).toContain('--color-pagaram')
+    expect(styleTag?.textContent).toContain('--color-finalizados')
+    expect(styleTag?.textContent).toContain('--color-inscritos')
   })
 
   it('handles empty data gracefully', () => {
