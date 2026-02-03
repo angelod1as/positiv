@@ -41,6 +41,8 @@ const ADMIN_VIEW_PARTICIPANT = (profileId: string) =>
   `${ADMIN_PARTICIPANTS}/${profileId}`
 // FEEDBACKS
 const ADMIN_FEEDBACKS = `${ADMIN_DASHBOARD}/feedbacks`
+// DATAVIZ
+const ADMIN_DATAVIZ = `${ADMIN_DASHBOARD}/numeros`
 // EVENTS
 const ADMIN_EVENTS = `${ADMIN_DASHBOARD}/eventos`
 const ADMIN_VIEW_EVENT = (id: string) => `${ADMIN_EVENTS}/${id}`
@@ -61,6 +63,7 @@ const paths = {
     ADMIN_PARTICIPANTS,
     ADMIN_VIEW_PARTICIPANT,
     ADMIN_FEEDBACKS,
+    ADMIN_DATAVIZ,
     events: {
       ADMIN_EDIT_EVENT,
       ADMIN_VIEW_EVENT,
