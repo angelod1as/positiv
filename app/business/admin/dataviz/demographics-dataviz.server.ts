@@ -145,44 +145,50 @@ export async function getDemographicsData(
         ? sql<{ category: string; count: number }>`
             SELECT
               CASE
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 25 THEN '18-24'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 35 THEN '25-34'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 45 THEN '35-44'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 55 THEN '45-54'
-                ELSE '55+'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 18 AND 24 THEN '18-24'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 25 AND 29 THEN '25-29'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 30 AND 34 THEN '30-34'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 35 AND 39 THEN '35-39'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 40 AND 49 THEN '40-49'
+                ELSE '50+'
               END as category,
               count(*)::int as count
             FROM profiles
             WHERE profiles.date_of_birth IS NOT NULL
+              AND date_part('year', age(profiles.date_of_birth::date)) >= 18
               AND profiles.id = ANY(ARRAY[${profileIdsArray}])
             GROUP BY
               CASE
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 25 THEN '18-24'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 35 THEN '25-34'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 45 THEN '35-44'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 55 THEN '45-54'
-                ELSE '55+'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 18 AND 24 THEN '18-24'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 25 AND 29 THEN '25-29'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 30 AND 34 THEN '30-34'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 35 AND 39 THEN '35-39'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 40 AND 49 THEN '40-49'
+                ELSE '50+'
               END
           `.execute(kyselyDb)
         : sql<{ category: string; count: number }>`
             SELECT
               CASE
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 25 THEN '18-24'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 35 THEN '25-34'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 45 THEN '35-44'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 55 THEN '45-54'
-                ELSE '55+'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 18 AND 24 THEN '18-24'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 25 AND 29 THEN '25-29'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 30 AND 34 THEN '30-34'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 35 AND 39 THEN '35-39'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 40 AND 49 THEN '40-49'
+                ELSE '50+'
               END as category,
               count(*)::int as count
             FROM profiles
             WHERE profiles.date_of_birth IS NOT NULL
+              AND date_part('year', age(profiles.date_of_birth::date)) >= 18
             GROUP BY
               CASE
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 25 THEN '18-24'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 35 THEN '25-34'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 45 THEN '35-44'
-                WHEN date_part('year', age(profiles.date_of_birth::date)) < 55 THEN '45-54'
-                ELSE '55+'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 18 AND 24 THEN '18-24'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 25 AND 29 THEN '25-29'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 30 AND 34 THEN '30-34'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 35 AND 39 THEN '35-39'
+                WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 40 AND 49 THEN '40-49'
+                ELSE '50+'
               END
           `.execute(kyselyDb),
     ])
