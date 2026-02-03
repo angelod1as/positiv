@@ -84,7 +84,7 @@ describe('GrowthChart', () => {
 
   it('formats month labels from YYYY-MM to Portuguese format', () => {
     const { container } = render(<GrowthChart data={mockData} />)
-    expect(container).toBeInTheDocument()
+    expect(container.querySelector('[data-chart]')).toBeInTheDocument()
   })
 
   it('transforms data to include formatted month labels', () => {

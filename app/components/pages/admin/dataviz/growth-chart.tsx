@@ -7,7 +7,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { format, parse } from 'date-fns'
+import { format, isValid, parse } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { GrowthDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import {
@@ -22,12 +22,11 @@ interface GrowthChartProps {
 }
 
 function formatMonth(monthString: string): string {
-  try {
-    const date = parse(monthString, 'yyyy-MM', new Date())
+  const date = parse(monthString, 'yyyy-MM', new Date())
+  if (isValid(date)) {
     return format(date, 'MMM/yy', { locale: ptBR })
-  } catch {
-    return monthString
   }
+  return monthString
 }
 
 interface TooltipPayloadItem {
@@ -41,8 +40,8 @@ interface TooltipPayloadItem {
 
 interface CustomTooltipProps {
   active?: boolean
-  payload?: TooltipPayloadItem[]
-  label?: string
+  payload?: readonly TooltipPayloadItem[]
+  label?: string | number
 }
 
 function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
@@ -134,7 +133,7 @@ export function GrowthChart({ data, className }: GrowthChartProps) {
               axisLine={false}
               tickMargin={8}
             />
-            <ChartTooltip content={<CustomTooltipContent />} />
+            <ChartTooltip content={CustomTooltipContent} />
             <Bar
               yAxisId="left"
               dataKey="new_profiles"
