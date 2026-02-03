@@ -139,15 +139,21 @@ function processOrientationData(
   // If there are small categories, combine them into "Outros"
   if (smallCategories.length > 0) {
     const outrosCount = smallCategories.reduce((sum, item) => sum + item.count, 0)
-    const total = data.reduce((sum, item) => sum + item.count, 0)
-    const outrosPercentage = total > 0 ? Math.round((outrosCount / total) * 100) : 0
 
     mainCategories.push({
       category: 'Outros',
       count: outrosCount,
-      percentage: outrosPercentage,
+      percentage: 0, // Percentage will be recalculated below
     })
   }
 
-  return mainCategories
+  const totalCount = mainCategories.reduce((sum, item) => sum + item.count, 0)
+
+  if (totalCount === 0) return mainCategories
+
+  // Recalculate percentages for all categories to ensure they sum to 100
+  return mainCategories.map((item) => ({
+    ...item,
+    percentage: Math.round((item.count / totalCount) * 100),
+  }))
 }
