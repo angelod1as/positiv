@@ -37,20 +37,17 @@ vi.mock("~/components/organisms/tables/admin/recent-feedbacks-table", () => ({
 }))
 
 vi.mock("~/components/ui/button", () => ({
-  Button: ({
-    children,
-  }: {
-    children: React.ReactNode
-    asChild?: boolean
-  }) => <button>{children}</button>,
+  Button: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
+    <button>{children}</button>
+  ),
 }))
 
 vi.mock("~/components/ui/separator", () => ({
   Separator: () => <hr />,
 }))
 
-import AdminDashboard from "./dashboard-page"
-import type { Route } from "./+types/dashboard-page"
+import type { Route } from "../+types/dashboard-page"
+import AdminDashboard from "../dashboard-page"
 
 type LoaderData = Route.ComponentProps["loaderData"]
 
@@ -116,9 +113,7 @@ describe("AdminDashboard Component", () => {
     ]
 
     render(
-      <AdminDashboard
-        {...createMockComponentProps(eventsWithActiveStatus)}
-      />,
+      <AdminDashboard {...createMockComponentProps(eventsWithActiveStatus)} />,
     )
 
     expect(screen.getByTestId("events-table")).toBeInTheDocument()
@@ -160,9 +155,7 @@ describe("AdminDashboard Component", () => {
     ]
 
     render(
-      <AdminDashboard
-        {...createMockComponentProps(eventsWithActiveStatus)}
-      />,
+      <AdminDashboard {...createMockComponentProps(eventsWithActiveStatus)} />,
     )
 
     expect(

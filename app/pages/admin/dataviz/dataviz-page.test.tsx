@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { loader } from "./numeros"
+import { loader } from "./dataviz-page"
 
 // Mock the data layer functions
 vi.mock("~/business/admin/dataviz/kpi-scores.server", () => ({

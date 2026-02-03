@@ -1,34 +1,37 @@
 import { useState } from "react"
 import { useLoaderData } from "react-router"
-import { getKpiScores } from "~/business/admin/dataviz/kpi-scores.server"
 import {
+  getDemographicsData,
+  getVeteranRookieData,
+} from "~/business/admin/dataviz/demographics-dataviz.server"
+import {
+  getConversionFunnelData,
   getEventAttendanceData,
   getEventRevenueData,
-  getConversionFunnelData,
   getOccupancyData,
 } from "~/business/admin/dataviz/event-metrics.server"
-import {
-  getVeteranRookieData,
-  getDemographicsData,
-} from "~/business/admin/dataviz/demographics-dataviz.server"
 import {
   getGrowthData,
   getRetentionData,
   getSeasonalityData,
 } from "~/business/admin/dataviz/growth-retention.server"
-import { KpiScores } from "~/components/pages/admin/dataviz/kpi-scores"
-import { AttendanceChart } from "~/components/pages/admin/dataviz/attendance-chart"
-import { RevenueChart } from "~/components/pages/admin/dataviz/revenue-chart"
-import { FunnelChart } from "~/components/pages/admin/dataviz/funnel-chart"
-import { VeteranRookieChart } from "~/components/pages/admin/dataviz/veteran-rookie-chart"
-import { OccupancyChart } from "~/components/pages/admin/dataviz/occupancy-chart"
-import { GenderChart, type FilterMode } from "~/components/pages/admin/dataviz/gender-chart"
-import { OrientationChart } from "~/components/pages/admin/dataviz/orientation-chart"
+import { getKpiScores } from "~/business/admin/dataviz/kpi-scores.server"
 import { AgeChart } from "~/components/pages/admin/dataviz/age-chart"
-import { RaceChart } from "~/components/pages/admin/dataviz/race-chart"
+import { AttendanceChart } from "~/components/pages/admin/dataviz/attendance-chart"
+import { FunnelChart } from "~/components/pages/admin/dataviz/funnel-chart"
+import {
+  GenderChart,
+  type FilterMode,
+} from "~/components/pages/admin/dataviz/gender-chart"
 import { GrowthChart } from "~/components/pages/admin/dataviz/growth-chart"
+import { KpiScores } from "~/components/pages/admin/dataviz/kpi-scores"
+import { OccupancyChart } from "~/components/pages/admin/dataviz/occupancy-chart"
+import { OrientationChart } from "~/components/pages/admin/dataviz/orientation-chart"
+import { RaceChart } from "~/components/pages/admin/dataviz/race-chart"
 import { RetentionChart } from "~/components/pages/admin/dataviz/retention-chart"
+import { RevenueChart } from "~/components/pages/admin/dataviz/revenue-chart"
 import { SeasonalityChart } from "~/components/pages/admin/dataviz/seasonality-chart"
+import { VeteranRookieChart } from "~/components/pages/admin/dataviz/veteran-rookie-chart"
 import { Separator } from "~/components/ui/separator"
 
 export async function loader() {
@@ -75,7 +78,10 @@ export default function NumerosPage() {
   const [demographicsMode, setDemographicsMode] = useState<FilterMode>("all")
 
   const totalProfiles = data.kpiScores.total_profiles
-  const filledProfilesAge = data.demographics.age.reduce((sum, item) => sum + item.count, 0)
+  const filledProfilesAge = data.demographics.age.reduce(
+    (sum, item) => sum + item.count,
+    0,
+  )
 
   return (
     <div className="space-y-12">
