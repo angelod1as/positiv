@@ -46,8 +46,8 @@ vi.mock("~/components/ui/separator", () => ({
   Separator: () => <hr />,
 }))
 
-import type { Route } from "../+types/dashboard-page"
-import AdminDashboard from "../dashboard-page"
+import type { Route } from "./+types/dashboard-page"
+import AdminDashboard from "./dashboard-page"
 
 type LoaderData = Route.ComponentProps["loaderData"]
 

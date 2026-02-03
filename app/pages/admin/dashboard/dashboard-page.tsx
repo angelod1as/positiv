@@ -12,7 +12,7 @@ import { Button } from "~/components/ui/button"
 import { Separator } from "~/components/ui/separator"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
-import type { Route } from "../+types/dashboard-page"
+import type { Route } from "./+types/dashboard-page"
 
 const {
   admin: { ADMIN_PARTICIPANTS, ADMIN_FEEDBACKS, ADMIN_DATAVIZ },
