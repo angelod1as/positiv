@@ -73,7 +73,7 @@ export function AgeChart({
         <button
           type="button"
           onClick={() => onModeChange('all')}
-          data-active={mode === 'all'}
+          aria-pressed={mode === 'all'}
           className={`rounded px-4 py-2 text-sm transition-colors ${
             mode === 'all'
               ? 'bg-primary text-primary-foreground'
@@ -85,7 +85,7 @@ export function AgeChart({
         <button
           type="button"
           onClick={() => onModeChange('attended')}
-          data-active={mode === 'attended'}
+          aria-pressed={mode === 'attended'}
           className={`rounded px-4 py-2 text-sm transition-colors ${
             mode === 'attended'
               ? 'bg-primary text-primary-foreground'
