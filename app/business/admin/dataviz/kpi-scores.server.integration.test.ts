@@ -17,14 +17,17 @@ describe("getKpiScores - Extended KPI Data", () => {
 
   it("should return approved profiles count", async () => {
     await createTestProfile(tracker, kysely, {
+      user_id: null,
       email: "approved@test.com",
       approved_to_attend: "approved",
     })
     await createTestProfile(tracker, kysely, {
+      user_id: null,
       email: "pending@test.com",
       approved_to_attend: "pending",
     })
     await createTestProfile(tracker, kysely, {
+      user_id: null,
       email: "rejected@test.com",
       approved_to_attend: "rejected",
     })
@@ -36,18 +39,22 @@ describe("getKpiScores - Extended KPI Data", () => {
 
   it("should return flagged profiles count (yellow + red)", async () => {
     await createTestProfile(tracker, kysely, {
+      user_id: null,
       email: "yellow@test.com",
       flag: "yellow",
     })
     await createTestProfile(tracker, kysely, {
+      user_id: null,
       email: "red@test.com",
       flag: "red",
     })
     await createTestProfile(tracker, kysely, {
+      user_id: null,
       email: "none@test.com",
       flag: "none",
     })
     await createTestProfile(tracker, kysely, {
+      user_id: null,
       email: "gray@test.com",
       flag: "gray",
     })
