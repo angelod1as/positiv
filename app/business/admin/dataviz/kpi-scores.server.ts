@@ -11,6 +11,12 @@ export async function getKpiScores(): Promise<KpiScores> {
       sql<number>`count(*) filter (where became_veteran_date is not null)::int`.as(
         "total_veterans"
       ),
+      sql<number>`count(*) filter (where approved_to_attend = 'approved')::int`.as(
+        "total_approved"
+      ),
+      sql<number>`count(*) filter (where flag in ('yellow', 'red'))::int`.as(
+        "total_flagged"
+      ),
     ])
     .executeTakeFirstOrThrow()
 
@@ -102,9 +108,56 @@ export async function getKpiScores(): Promise<KpiScores> {
       ? Math.round(revenueData.total_revenue / eventCounts.total_events_completed)
       : 0
 
+  // Attendance frequency (3+ and 5+ events)
+  const attendanceFrequency = await kyselyDb
+    .selectFrom(
+      kyselyDb
+        .selectFrom("event_participants")
+        .innerJoin("events", "events.id", "event_participants.event_id")
+        .where("event_participants.attendance_status", "=", "attended")
+        .where("events.event_status", "=", "Completed")
+        .groupBy("event_participants.profile_id")
+        .select([
+          "event_participants.profile_id",
+          sql<number>`count(*)::int`.as("events_count"),
+        ])
+        .as("attended_counts")
+    )
+    .select([
+      sql<number>`count(*) filter (where events_count >= 3)::int`.as("attended_3_plus"),
+      sql<number>`count(*) filter (where events_count >= 5)::int`.as("attended_5_plus"),
+    ])
+    .executeTakeFirstOrThrow()
+
+  // Average no-show rate
+  const noShowData = await kyselyDb
+    .selectFrom("events")
+    .leftJoin(
+      "event_participants",
+      "event_participants.event_id",
+      "events.id"
+    )
+    .where("events.event_status", "=", "Completed")
+    .groupBy("events.id")
+    .select([
+      sql<number>`count(*) filter (where event_participants.attendance_status = 'not-attended')::int`.as(
+        "no_shows"
+      ),
+      sql<number>`count(*) filter (where event_participants.attendance_status in ('attended', 'not-attended'))::int`.as(
+        "total_expected"
+      ),
+    ])
+    .execute()
+
+  const totalNoShows = noShowData.reduce((sum, row) => sum + row.no_shows, 0)
+  const totalExpected = noShowData.reduce((sum, row) => sum + row.total_expected, 0)
+  const avgNoShowRate =
+    totalExpected > 0 ? Math.round((totalNoShows / totalExpected) * 100) : 0
+
   return {
     total_profiles: profileCounts.total_profiles,
     total_veterans: profileCounts.total_veterans,
+    total_approved: profileCounts.total_approved,
     total_events_completed: eventCounts.total_events_completed,
     total_unique_attendees: attendeeCounts.total_unique_attendees,
     avg_attendance_per_event: avgAttendancePerEvent,
@@ -112,5 +165,9 @@ export async function getKpiScores(): Promise<KpiScores> {
     total_revenue: revenueData.total_revenue,
     avg_revenue_per_event: avgRevenuePerEvent,
     avg_ticket_price: eventCounts.avg_ticket_price,
+    total_flagged: profileCounts.total_flagged,
+    attended_3_plus: attendanceFrequency.attended_3_plus,
+    attended_5_plus: attendanceFrequency.attended_5_plus,
+    avg_no_show_rate: avgNoShowRate,
   }
 }

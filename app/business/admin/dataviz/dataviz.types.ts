@@ -85,6 +85,7 @@ export type SeasonalityDataPoint = {
 export type KpiScores = {
   total_profiles: number
   total_veterans: number
+  total_approved: number
   total_events_completed: number
   total_unique_attendees: number
   avg_attendance_per_event: number
@@ -92,4 +93,8 @@ export type KpiScores = {
   total_revenue: number
   avg_revenue_per_event: number
   avg_ticket_price: number
+  total_flagged: number
+  attended_3_plus: number
+  attended_5_plus: number
+  avg_no_show_rate: number
 }
