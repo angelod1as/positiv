@@ -72,8 +72,11 @@ export function AgeChart({
       <div className="mb-4 flex justify-center gap-2">
         <button
           type="button"
-          onClick={() => onModeChange('all')}
+          onClick={() => {
+            if (mode !== 'all') onModeChange('all')
+          }}
           aria-pressed={mode === 'all'}
+          disabled={mode === 'all'}
           className={`rounded px-4 py-2 text-sm transition-colors ${
             mode === 'all'
               ? 'bg-primary text-primary-foreground'
@@ -84,8 +87,11 @@ export function AgeChart({
         </button>
         <button
           type="button"
-          onClick={() => onModeChange('attended')}
+          onClick={() => {
+            if (mode !== 'attended') onModeChange('attended')
+          }}
           aria-pressed={mode === 'attended'}
+          disabled={mode === 'attended'}
           className={`rounded px-4 py-2 text-sm transition-colors ${
             mode === 'attended'
               ? 'bg-primary text-primary-foreground'

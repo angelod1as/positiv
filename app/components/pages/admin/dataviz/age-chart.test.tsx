@@ -80,9 +80,11 @@ describe('AgeChart', () => {
     expect(todaButton).toBeInTheDocument()
     expect(compareceramButton).toBeInTheDocument()
 
-    // First button should be active by default
+    // First button should be active and disabled by default
     expect(todaButton).toHaveAttribute('aria-pressed', 'true')
+    expect(todaButton).toBeDisabled()
     expect(compareceramButton).toHaveAttribute('aria-pressed', 'false')
+    expect(compareceramButton).not.toBeDisabled()
 
     // Click the second button
     await user.click(compareceramButton)
@@ -101,11 +103,13 @@ describe('AgeChart', () => {
       />
     )
 
-    // Second button should now be active
+    // Second button should now be active and disabled
     const todaButtonAfter = screen.getByRole('button', { name: /toda a comunidade/i })
     const compareceramButtonAfter = screen.getByRole('button', { name: /quem já compareceu/i })
     expect(compareceramButtonAfter).toHaveAttribute('aria-pressed', 'true')
+    expect(compareceramButtonAfter).toBeDisabled()
     expect(todaButtonAfter).toHaveAttribute('aria-pressed', 'false')
+    expect(todaButtonAfter).not.toBeDisabled()
   })
 
   it('should display annotation with filled/total profile count', () => {
