@@ -32,9 +32,11 @@ function formatDate(dateString: string): string {
 function calculateYearsSpan(data: EventAttendanceDataPoint[]): number {
   if (data.length === 0) return 0
 
-  const dates = data.map((d) => parseISO(d.date))
-  const earliest = new Date(Math.min(...dates.map((d) => d.getTime())))
-  const latest = new Date(Math.max(...dates.map((d) => d.getTime())))
+  const validDates = data.map((d) => parseISO(d.date)).filter(isValid)
+  if (validDates.length === 0) return 0
+
+  const earliest = new Date(Math.min(...validDates.map((d) => d.getTime())))
+  const latest = new Date(Math.max(...validDates.map((d) => d.getTime())))
 
   const yearsDiff = latest.getFullYear() - earliest.getFullYear()
   return yearsDiff === 0 ? 1 : yearsDiff + 1

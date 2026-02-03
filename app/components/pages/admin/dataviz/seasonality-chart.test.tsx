@@ -123,4 +123,22 @@ describe('SeasonalityChart', () => {
     render(<SeasonalityChart data={multiYearData} />)
     expect(screen.getByText(/ao longo de 3 anos/)).toBeInTheDocument()
   })
+
+  it('handles invalid dates gracefully without returning NaN', () => {
+    const invalidDateData: EventAttendanceDataPoint[] = [
+      { ...mockData[0], date: 'invalid-date' },
+      { ...mockData[1], date: '2024-07-20' },
+    ]
+    render(<SeasonalityChart data={invalidDateData} />)
+    expect(screen.getByText(/ao longo de 1 ano/)).toBeInTheDocument()
+  })
+
+  it('shows zero years span when all dates are invalid', () => {
+    const allInvalidData: EventAttendanceDataPoint[] = [
+      { ...mockData[0], date: 'invalid-date' },
+      { ...mockData[1], date: 'also-invalid' },
+    ]
+    render(<SeasonalityChart data={allInvalidData} />)
+    expect(screen.getByText(/ao longo de 0 anos/)).toBeInTheDocument()
+  })
 })
