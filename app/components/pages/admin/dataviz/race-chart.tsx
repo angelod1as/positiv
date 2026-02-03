@@ -33,14 +33,8 @@ export function RaceChart({ data, className, mode, onModeChange }: RaceChartProp
     )
   }
 
-  // Process data: group categories < 2% into "Outros"
-  const processedData = useMemo(() => processRaceData(data), [data])
-
-  // Calculate total count for center label
-  const totalCount = useMemo(
-    () => data.reduce((sum, item) => sum + item.count, 0),
-    [data]
-  )
+  // Process data: group categories < 2% into "Outros" and calculate total
+  const { processedData, totalCount } = useMemo(() => processRaceData(data), [data])
 
   // Create chart config with colors
   const chartConfig: ChartConfig = useMemo(
@@ -78,6 +72,7 @@ export function RaceChart({ data, className, mode, onModeChange }: RaceChartProp
           type="button"
           onClick={() => onModeChange('all')}
           data-active={mode === 'all'}
+          aria-pressed={mode === 'all'}
           className={`rounded px-4 py-2 text-sm transition-colors ${
             mode === 'all'
               ? 'bg-primary text-primary-foreground'
@@ -90,6 +85,7 @@ export function RaceChart({ data, className, mode, onModeChange }: RaceChartProp
           type="button"
           onClick={() => onModeChange('attended')}
           data-active={mode === 'attended'}
+          aria-pressed={mode === 'attended'}
           className={`rounded px-4 py-2 text-sm transition-colors ${
             mode === 'attended'
               ? 'bg-primary text-primary-foreground'
@@ -128,27 +124,28 @@ export function RaceChart({ data, className, mode, onModeChange }: RaceChartProp
 
 /**
  * Process race data by grouping categories with < 2% into "Outros"
+ * Returns both processed data and total count
  */
-function processRaceData(
-  data: DemographicDistribution[]
-): DemographicDistribution[] {
+function processRaceData(data: DemographicDistribution[]): {
+  processedData: DemographicDistribution[]
+  totalCount: number
+} {
   const mainCategories: DemographicDistribution[] = []
-  const smallCategories: DemographicDistribution[] = []
+  let outrosCount = 0
+  const totalCount = data.reduce((sum, item) => sum + item.count, 0)
 
   // Separate categories by percentage threshold
   for (const item of data) {
     if (item.percentage < 2) {
-      smallCategories.push(item)
+      outrosCount += item.count
     } else {
       mainCategories.push(item)
     }
   }
 
   // If there are small categories, combine them into "Outros"
-  if (smallCategories.length > 0) {
-    const outrosCount = smallCategories.reduce((sum, item) => sum + item.count, 0)
-    const total = data.reduce((sum, item) => sum + item.count, 0)
-    const outrosPercentage = total > 0 ? Math.round((outrosCount / total) * 100) : 0
+  if (outrosCount > 0) {
+    const outrosPercentage = totalCount > 0 ? Math.round((outrosCount / totalCount) * 100) : 0
 
     mainCategories.push({
       category: 'Outros',
@@ -157,5 +154,5 @@ function processRaceData(
     })
   }
 
-  return mainCategories
+  return { processedData: mainCategories, totalCount }
 }
