@@ -30,8 +30,6 @@ import { OrientationChart } from "~/components/pages/admin/dataviz/orientation-c
 import { RaceChart } from "~/components/pages/admin/dataviz/race-chart"
 import { RetentionChart } from "~/components/pages/admin/dataviz/retention-chart"
 import { RevenueChart } from "~/components/pages/admin/dataviz/revenue-chart"
-import { SeasonalityChart } from "~/components/pages/admin/dataviz/seasonality-chart"
-import { VeteranRookieChart } from "~/components/pages/admin/dataviz/veteran-rookie-chart"
 import { Separator } from "~/components/ui/separator"
 
 export async function loader() {
@@ -97,15 +95,11 @@ export default function NumerosPage() {
       {/* Eventos Section */}
       <section className="space-y-8">
         <h2 className="text-2xl font-semibold">Eventos</h2>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <AttendanceChart data={data.eventAttendance} />
-          <RevenueChart data={data.eventRevenue} />
-        </div>
+        <AttendanceChart data={data.eventAttendance} />
+        <RevenueChart data={data.eventRevenue} />
         <FunnelChart data={data.conversionFunnel} />
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <VeteranRookieChart data={data.veteranRookie} />
-          <OccupancyChart data={data.occupancy} />
-        </div>
+        {/* <VeteranRookieChart data={data.veteranRookie} /> */}
+        <OccupancyChart data={data.occupancy} />
       </section>
 
       <Separator />
@@ -150,7 +144,7 @@ export default function NumerosPage() {
       {/* Sazonalidade Section */}
       <section className="space-y-8">
         <h2 className="text-2xl font-semibold">Sazonalidade</h2>
-        <SeasonalityChart data={data.eventAttendance} />
+        {/* <SeasonalityChart data={data.eventAttendance} /> */}
       </section>
     </div>
   )
