@@ -129,8 +129,8 @@ export async function getKpiScores(): Promise<KpiScores> {
     ])
     .executeTakeFirstOrThrow()
 
-  // Average no-show rate
-  const noShowData = await kyselyDb
+  // Average no-show rate (aggregate in database for better performance)
+  const noShowTotals = await kyselyDb
     .selectFrom("events")
     .leftJoin(
       "event_participants",
@@ -138,21 +138,20 @@ export async function getKpiScores(): Promise<KpiScores> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
-    .groupBy("events.id")
     .select([
-      sql<number>`count(*) filter (where event_participants.attendance_status = 'not-attended')::int`.as(
-        "no_shows"
+      sql<number>`coalesce(sum(case when event_participants.attendance_status = 'not-attended' then 1 else 0 end), 0)::int`.as(
+        "total_no_shows"
       ),
-      sql<number>`count(*) filter (where event_participants.attendance_status in ('attended', 'not-attended'))::int`.as(
+      sql<number>`coalesce(sum(case when event_participants.attendance_status in ('attended', 'not-attended') then 1 else 0 end), 0)::int`.as(
         "total_expected"
       ),
     ])
-    .execute()
+    .executeTakeFirstOrThrow()
 
-  const totalNoShows = noShowData.reduce((sum, row) => sum + row.no_shows, 0)
-  const totalExpected = noShowData.reduce((sum, row) => sum + row.total_expected, 0)
   const avgNoShowRate =
-    totalExpected > 0 ? Math.round((totalNoShows / totalExpected) * 100) : 0
+    noShowTotals.total_expected > 0
+      ? Math.round((noShowTotals.total_no_shows / noShowTotals.total_expected) * 100)
+      : 0
 
   return {
     total_profiles: profileCounts.total_profiles,
