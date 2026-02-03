@@ -155,6 +155,7 @@ export async function getDemographicsData(
               count(*)::int as count
             FROM profiles
             WHERE profiles.date_of_birth IS NOT NULL
+              AND date_part('year', age(profiles.date_of_birth::date)) >= 18
               AND profiles.id = ANY(ARRAY[${profileIdsArray}])
             GROUP BY
               CASE
@@ -179,6 +180,7 @@ export async function getDemographicsData(
               count(*)::int as count
             FROM profiles
             WHERE profiles.date_of_birth IS NOT NULL
+              AND date_part('year', age(profiles.date_of_birth::date)) >= 18
             GROUP BY
               CASE
                 WHEN date_part('year', age(profiles.date_of_birth::date)) BETWEEN 18 AND 24 THEN '18-24'
