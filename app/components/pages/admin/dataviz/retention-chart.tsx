@@ -109,6 +109,7 @@ export function RetentionChart({ data, className }: RetentionChartProps) {
       className={className}
       ariaLabel="Gráfico de frequência de comparecimento"
       tooltipContent={<CustomTooltipContent />}
+      showLegend={false}
     >
       <ReferenceLine
         y={0}
