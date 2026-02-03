@@ -10,11 +10,27 @@ interface RetentionChartProps {
 }
 
 function transformData(data: RetentionDataPoint[]): ChartDataPoint[] {
-  return data.map((point) => ({
-    events_attended: point.events_attended >= 7 ? '7+' : String(point.events_attended),
+  const lessThan7 = data.filter((p) => p.events_attended < 7)
+  const sevenAndUp = data.filter((p) => p.events_attended >= 7)
+
+  const transformedData: ChartDataPoint[] = lessThan7.map((point) => ({
+    events_attended: String(point.events_attended),
     events_attended_num: point.events_attended,
     num_people: point.num_people,
   }))
+
+  if (sevenAndUp.length > 0) {
+    const totalSevenAndUp = sevenAndUp.reduce((sum, p) => sum + p.num_people, 0)
+    transformedData.push({
+      events_attended: '7+',
+      events_attended_num: 7,
+      num_people: totalSevenAndUp,
+    })
+  }
+
+  return transformedData.sort(
+    (a, b) => (a.events_attended_num as number) - (b.events_attended_num as number)
+  )
 }
 
 function calculateTotal(data: RetentionDataPoint[]): number {
@@ -42,11 +58,12 @@ function CustomTooltipContent({ active, payload }: CustomTooltipProps) {
   const numPeople = data.num_people
   const eventsLabel = data.events_attended
   const festasWord = eventsLabel === '1' ? 'festa' : 'festas'
+  const eventsText = eventsLabel === '7+' ? 'a 7 ou mais' : `a ${eventsLabel}`
 
   return (
     <div className="border-border/50 bg-background rounded-lg border px-3 py-2 text-xs shadow-xl">
       <div className="font-mono font-medium tabular-nums">
-        {numPeople} {numPeople === 1 ? 'pessoa foi' : 'pessoas foram'} a {eventsLabel}{' '}
+        {numPeople} {numPeople === 1 ? 'pessoa foi' : 'pessoas foram'} {eventsText}{' '}
         {festasWord}
       </div>
     </div>
