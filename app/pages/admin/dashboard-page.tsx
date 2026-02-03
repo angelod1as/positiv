@@ -15,7 +15,7 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/dashboard-page"
 
 const {
-  admin: { ADMIN_PARTICIPANTS, ADMIN_FEEDBACKS },
+  admin: { ADMIN_PARTICIPANTS, ADMIN_FEEDBACKS, ADMIN_DATAVIZ },
 } = paths
 
 export function meta({}: Route.MetaArgs) {
@@ -99,6 +99,22 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
         </div>
 
         <RecentFeedbacksTable feedbacks={recentFeedbacks} />
+      </div>
+
+      <Separator />
+
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2>Números e métricas</h2>
+          <div className="grid grid-cols-1">
+            <Button asChild>
+              <Link to={ADMIN_DATAVIZ}>Ver números</Link>
+            </Button>
+            <p className="text-xs">
+              Veja todos os gráficos e métricas da comunidade
+            </p>
+          </div>
+        </div>
       </div>
     </>
   )
