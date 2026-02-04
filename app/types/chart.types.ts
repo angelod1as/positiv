@@ -1,5 +1,5 @@
 import type { ChartConfig } from '~/components/ui/chart'
-import type { ComponentType, ReactElement, ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 
 export type { ChartConfig }
 
@@ -23,8 +23,14 @@ export interface BaseChartProps {
   children?: ReactNode
 }
 
+export interface XAxisTickProps {
+  x?: string | number
+  y?: string | number
+  payload?: { value: string }
+}
+
 export interface XAxisCustomProps {
-  xAxisTickComponent?: ComponentType<{ x?: string | number; y?: string | number; payload?: { value: string } }>
+  xAxisTickComponent?: (props: XAxisTickProps) => ReactElement | null
   xAxisHeight?: number
 }
 

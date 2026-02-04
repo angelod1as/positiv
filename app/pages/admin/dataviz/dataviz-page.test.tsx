@@ -24,6 +24,10 @@ vi.mock("~/business/admin/dataviz/growth-retention.server", () => ({
   getSeasonalityData: vi.fn(),
 }))
 
+function makeRequest(url = "http://localhost/admin/numeros") {
+  return { request: new Request(url), params: {}, context: {} }
+}
+
 describe("Numeros Page - Loader", () => {
   it("should fetch all required data in parallel", async () => {
     const { getKpiScores } = await import(
@@ -73,7 +77,7 @@ describe("Numeros Page - Loader", () => {
     vi.mocked(getRetentionData).mockResolvedValue([])
     vi.mocked(getSeasonalityData).mockResolvedValue([])
 
-    const result = await loader()
+    const result = await loader(makeRequest())
 
     // Verify all functions were called
     expect(getKpiScores).toHaveBeenCalledTimes(1)
@@ -135,14 +139,14 @@ describe("Numeros Page - Loader", () => {
     vi.mocked(getKpiScores).mockResolvedValue(mockKpiScores)
     vi.mocked(getDemographicsData).mockResolvedValue(mockDemographics)
 
-    const result = await loader()
+    const result = await loader(makeRequest())
 
     expect(result.kpiScores).toEqual(mockKpiScores)
     expect(result.demographics).toEqual(mockDemographics)
   })
 
   it("should handle empty data gracefully", async () => {
-    const result = await loader()
+    const result = await loader(makeRequest())
 
     expect(result.kpiScores).toBeDefined()
     expect(Array.isArray(result.eventAttendance)).toBe(true)
@@ -154,5 +158,47 @@ describe("Numeros Page - Loader", () => {
     expect(Array.isArray(result.growth)).toBe(true)
     expect(Array.isArray(result.retention)).toBe(true)
     expect(Array.isArray(result.seasonality)).toBe(true)
+  })
+
+  it("should fetch demographics with 'attended' mode when ?mode=attended is set", async () => {
+    const { getDemographicsData } = await import(
+      "~/business/admin/dataviz/demographics-dataviz.server"
+    )
+
+    const mockAttendedDemographics = {
+      gender: [{ category: "Mulher cis", count: 25, percentage: 50 }],
+      orientation: [{ category: "Bi", count: 20, percentage: 40 }],
+      age: [{ category: "30-34", count: 15, percentage: 30 }],
+      race: [{ category: "Branca", count: 10, percentage: 20 }],
+    }
+
+    vi.mocked(getDemographicsData).mockResolvedValue(mockAttendedDemographics)
+
+    const result = await loader(
+      makeRequest("http://localhost/admin/numeros?mode=attended")
+    )
+
+    expect(getDemographicsData).toHaveBeenCalledWith("attended")
+    expect(result.demographics).toEqual(mockAttendedDemographics)
+  })
+
+  it("should default to 'all' mode when no mode param is provided", async () => {
+    const { getDemographicsData } = await import(
+      "~/business/admin/dataviz/demographics-dataviz.server"
+    )
+
+    await loader(makeRequest())
+
+    expect(getDemographicsData).toHaveBeenCalledWith("all")
+  })
+
+  it("should default to 'all' mode when invalid mode param is provided", async () => {
+    const { getDemographicsData } = await import(
+      "~/business/admin/dataviz/demographics-dataviz.server"
+    )
+
+    await loader(makeRequest("http://localhost/admin/numeros?mode=invalid"))
+
+    expect(getDemographicsData).toHaveBeenCalledWith("all")
   })
 })
