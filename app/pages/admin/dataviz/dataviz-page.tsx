@@ -18,17 +18,9 @@ import {
 } from "~/business/admin/dataviz/growth-retention.server"
 import { getKpiScores } from "~/business/admin/dataviz/kpi-scores.server"
 import type { FilterMode } from "~/components/atoms/charts/demographic-filter-toggle"
-import { AgeChart } from "~/components/pages/admin/dataviz/age-chart"
-import { AttendanceChart } from "~/components/pages/admin/dataviz/attendance-chart"
-import { FunnelChart } from "~/components/pages/admin/dataviz/funnel-chart"
-import { GenderChart } from "~/components/pages/admin/dataviz/gender-chart"
-import { GrowthChart } from "~/components/pages/admin/dataviz/growth-chart"
+import { CommunitySection } from "~/components/pages/admin/dataviz/community-section"
+import { EventsSection } from "~/components/pages/admin/dataviz/events-section"
 import { KpiScores } from "~/components/pages/admin/dataviz/kpi-scores"
-import { OccupancyChart } from "~/components/pages/admin/dataviz/occupancy-chart"
-import { OrientationChart } from "~/components/pages/admin/dataviz/orientation-chart"
-import { RaceChart } from "~/components/pages/admin/dataviz/race-chart"
-import { RetentionChart } from "~/components/pages/admin/dataviz/retention-chart"
-import { RevenueChart } from "~/components/pages/admin/dataviz/revenue-chart"
 import { Separator } from "~/components/ui/separator"
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -100,67 +92,30 @@ export default function NumerosPage() {
     <div className="space-y-12">
       <h1 className="text-3xl font-bold">Números</h1>
 
-      {/* KPIs Section */}
       <section>
         <KpiScores data={data.kpiScores} />
       </section>
 
       <Separator />
 
-      {/* Eventos Section */}
-      <section className="space-y-8">
-        <h2 className="text-2xl font-semibold">Eventos</h2>
-        <AttendanceChart data={data.eventAttendance} />
-        <RevenueChart data={data.eventRevenue} />
-        <FunnelChart data={data.conversionFunnel} />
-        {/* <VeteranRookieChart data={data.veteranRookie} /> */}
-        <OccupancyChart data={data.occupancy} />
-      </section>
+      <EventsSection
+        attendance={data.eventAttendance}
+        revenue={data.eventRevenue}
+        funnel={data.conversionFunnel}
+        occupancy={data.occupancy}
+      />
 
       <Separator />
 
-      {/* Comunidade Section */}
-      <section className="space-y-8">
-        <h2 className="text-2xl font-semibold">Comunidade</h2>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <GenderChart
-            data={demographics.gender}
-            mode={demographicsMode}
-            onModeChange={handleModeChange}
-          />
-          <OrientationChart
-            data={demographics.orientation}
-            mode={demographicsMode}
-            onModeChange={handleModeChange}
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <AgeChart
-            data={demographics.age}
-            mode={demographicsMode}
-            onModeChange={handleModeChange}
-            totalProfiles={totalProfiles}
-            filledProfiles={filledProfilesAge}
-          />
-          <RaceChart
-            data={demographics.race}
-            mode={demographicsMode}
-            onModeChange={handleModeChange}
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <GrowthChart data={data.growth} />
-          <RetentionChart data={data.retention} />
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* Sazonalidade Section */}
-      <section className="space-y-8">
-        <h2 className="text-2xl font-semibold">Sazonalidade</h2>
-        {/* <SeasonalityChart data={data.eventAttendance} /> */}
-      </section>
+      <CommunitySection
+        demographics={demographics}
+        growth={data.growth}
+        retention={data.retention}
+        demographicsMode={demographicsMode}
+        onModeChange={handleModeChange}
+        totalProfiles={totalProfiles}
+        filledProfilesAge={filledProfilesAge}
+      />
     </div>
   )
 }
