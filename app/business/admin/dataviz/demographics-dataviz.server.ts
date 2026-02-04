@@ -47,7 +47,7 @@ export async function getVeteranRookieData(): Promise<
   return result.map((row) => ({
     title: row.title ?? "",
     emoji: row.emoji ?? "",
-    date: row.date ?? "",
+    date: row.date ? new Date(row.date).toISOString() : "",
     veterans: row.veterans,
     rookies: row.rookies,
   }))
