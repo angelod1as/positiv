@@ -1,5 +1,5 @@
 import type { ChartConfig } from '~/components/ui/chart'
-import type { ReactElement, ReactNode } from 'react'
+import type { ComponentType, ReactElement, ReactNode } from 'react'
 
 export type { ChartConfig }
 
@@ -18,18 +18,24 @@ export interface BaseChartProps {
   ariaLabel?: string
   showTooltip?: boolean
   showLegend?: boolean
+  tooltipAnimated?: boolean
   tooltipContent?: ReactElement | ((props: Record<string, unknown>) => ReactNode)
   children?: ReactNode
 }
 
-export interface LineChartProps extends BaseChartProps {
+export interface XAxisCustomProps {
+  xAxisTickComponent?: ComponentType<{ x?: string | number; y?: string | number; payload?: { value: string } }>
+  xAxisHeight?: number
+}
+
+export interface LineChartProps extends BaseChartProps, XAxisCustomProps {
   series: ChartSeries[]
   xAxisKey: string
   xAxisFormatter?: (value: string) => string
   curved?: boolean
 }
 
-export interface BarChartProps extends BaseChartProps {
+export interface BarChartProps extends BaseChartProps, XAxisCustomProps {
   series: ChartSeries[]
   xAxisKey: string
   xAxisFormatter?: (value: string) => string
@@ -46,7 +52,7 @@ export interface DonutChartProps extends BaseChartProps {
   showLabel?: boolean
 }
 
-export interface AreaChartProps extends BaseChartProps {
+export interface AreaChartProps extends BaseChartProps, XAxisCustomProps {
   series: ChartSeries[]
   xAxisKey: string
   xAxisFormatter?: (value: string) => string

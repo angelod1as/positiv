@@ -21,11 +21,14 @@ export function LineChart({
   series,
   xAxisKey,
   xAxisFormatter,
+  xAxisTickComponent,
+  xAxisHeight,
   curved = true,
   className,
   ariaLabel,
   showTooltip = true,
   showLegend = true,
+  tooltipAnimated = false,
   tooltipContent,
   children,
 }: LineChartProps) {
@@ -38,11 +41,14 @@ export function LineChart({
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={xAxisFormatter}
+          tickFormatter={xAxisTickComponent ? undefined : xAxisFormatter}
+          tick={xAxisTickComponent}
+          height={xAxisHeight}
         />
         <YAxis tickLine={false} axisLine={false} tickMargin={8} />
         {showTooltip && (
           <ChartTooltip
+            isAnimationActive={tooltipAnimated}
             content={tooltipContent ?? <ChartTooltipContent />}
           />
         )}

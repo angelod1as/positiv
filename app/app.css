@@ -303,4 +303,21 @@
   .maximized-table {
     @apply !fixed top-0 left-0 z-50 w-full h-full bg-white;
   }
+
+  /* Chart tooltip */
+  .chart-tooltip {
+    @apply border-border/50 bg-background rounded-lg border px-3 py-2 text-xs shadow-xl;
+  }
+  .chart-tooltip-row {
+    @apply flex items-center gap-2;
+  }
+  .chart-tooltip-swatch {
+    @apply h-2.5 w-2.5 shrink-0 rounded-[2px];
+  }
+  .chart-tooltip-label {
+    @apply text-muted-foreground flex-1;
+  }
+  .chart-tooltip-value {
+    @apply font-mono font-medium tabular-nums;
+  }
 }

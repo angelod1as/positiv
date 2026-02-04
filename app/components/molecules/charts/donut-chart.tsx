@@ -23,6 +23,7 @@ export function DonutChart({
   ariaLabel,
   showTooltip = true,
   showLegend = true,
+  tooltipAnimated = false,
   tooltipContent,
   children,
 }: DonutChartProps) {
@@ -50,6 +51,7 @@ export function DonutChart({
         </Pie>
         {showTooltip && (
           <ChartTooltip
+            isAnimationActive={tooltipAnimated}
             content={tooltipContent ?? <ChartTooltipContent nameKey={nameKey} />}
           />
         )}

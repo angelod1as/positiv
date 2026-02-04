@@ -21,12 +21,15 @@ export function BarChart({
   series,
   xAxisKey,
   xAxisFormatter,
+  xAxisTickComponent,
+  xAxisHeight,
   horizontal = false,
   stacked = false,
   className,
   ariaLabel,
   showTooltip = true,
   showLegend = true,
+  tooltipAnimated = false,
   tooltipContent,
   children,
 }: BarChartProps) {
@@ -56,13 +59,16 @@ export function BarChart({
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={xAxisFormatter}
+              tickFormatter={xAxisTickComponent ? undefined : xAxisFormatter}
+              tick={xAxisTickComponent}
+              height={xAxisHeight}
             />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} />
           </>
         )}
         {showTooltip && (
           <ChartTooltip
+            isAnimationActive={tooltipAnimated}
             content={tooltipContent ?? <ChartTooltipContent />}
           />
         )}
