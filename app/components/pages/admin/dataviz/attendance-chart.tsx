@@ -7,12 +7,17 @@ import {
   YAxis,
 } from 'recharts'
 import type { EventAttendanceDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
+import { ScrollableChartContainer } from '~/components/atoms/charts/scrollable-chart-container'
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
-import { format, parseISO } from 'date-fns'
+import {
+  buildEventLabel,
+  calculateScrollWidth,
+} from '~/lib/helpers/chart-utils'
 
 const SERIES_CONFIG = [
   { dataKey: 'inscritos', label: 'Inscritos', color: 'var(--chart-1)' },
@@ -29,50 +34,6 @@ type SeriesKey = (typeof SERIES_CONFIG)[number]['dataKey']
 interface AttendanceChartProps {
   data: EventAttendanceDataPoint[]
   className?: string
-}
-
-function formatDate(dateString: string): string {
-  try {
-    const date = parseISO(dateString)
-    return format(date, 'dd/MM/yy')
-  } catch {
-    return dateString
-  }
-}
-
-interface CustomXAxisTickProps {
-  x?: string | number
-  y?: string | number
-  payload?: { value: string }
-}
-
-function CustomXAxisTick({ x, y, payload }: CustomXAxisTickProps) {
-  if (!payload?.value) return null
-
-  const [firstLine, secondLine] = payload.value.split('\n')
-
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <text
-        x={0}
-        y={0}
-        dy={12}
-        textAnchor="middle"
-        className="fill-muted-foreground text-xs"
-      >
-        {firstLine}
-      </text>
-      <text
-        x={0}
-        y={0}
-        dy={26}
-        textAnchor="middle"
-        className="fill-muted-foreground text-xs"
-      >
-        {secondLine}
-      </text>
-    </g>
-  )
 }
 
 interface TooltipPayloadItem {
@@ -95,7 +56,7 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
   const [firstLine, secondLine] = (label || '').split('\n')
 
   return (
-    <div className="border-border/50 bg-background rounded-lg border px-3 py-2 text-xs shadow-xl">
+    <div className="chart-tooltip">
       <div className="mb-2 font-medium">
         <div>{firstLine}</div>
         {secondLine && <div className="text-muted-foreground">{secondLine}</div>}
@@ -105,15 +66,15 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
           const config = SERIES_CONFIG.find((s) => s.dataKey === item.dataKey)
           const color = item.stroke || item.color || config?.color
           return (
-            <div key={item.dataKey} className="flex items-center gap-2">
+            <div key={item.dataKey} className="chart-tooltip-row">
               <span
-                className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+                className="chart-tooltip-swatch"
                 style={{ backgroundColor: color }}
               />
-              <span className="text-muted-foreground flex-1">
+              <span className="chart-tooltip-label">
                 {config?.label || item.dataKey}
               </span>
-              <span className="font-mono font-medium tabular-nums">
+              <span className="chart-tooltip-value">
                 {item.value?.toLocaleString()}
               </span>
             </div>
@@ -137,7 +98,7 @@ export function AttendanceChart({ data, className }: AttendanceChartProps) {
 
   const chartData = data.map((item) => ({
     ...item,
-    label: `${item.emoji} ${item.title}\n${formatDate(item.date)}`,
+    label: buildEventLabel(item),
   }))
 
   const visibleSeries = SERIES_CONFIG.filter(
@@ -156,42 +117,38 @@ export function AttendanceChart({ data, className }: AttendanceChartProps) {
     })
   }
 
-  const minWidth = Math.max(600, data.length * 100)
-
   return (
-    <div className="overflow-x-auto">
-      <div style={{ minWidth }}>
-        <ChartContainer
-          config={chartConfig}
-          className={className}
-          role="img"
-          aria-label="Presença por evento"
-        >
-          <RechartsLineChart data={chartData}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="label"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              height={50}
-              tick={CustomXAxisTick}
+    <ScrollableChartContainer minWidth={calculateScrollWidth(data.length, 100)}>
+      <ChartContainer
+        config={chartConfig}
+        className={className}
+        role="img"
+        aria-label="Presença por evento"
+      >
+        <RechartsLineChart data={chartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            height={50}
+            tick={MultiLineXAxisTick}
+          />
+          <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+          <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
+          {visibleSeries.map((s) => (
+            <Line
+              key={s.dataKey}
+              dataKey={s.dataKey}
+              type="monotone"
+              stroke={s.color}
+              strokeWidth={2}
+              dot={false}
             />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-            <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
-            {visibleSeries.map((s) => (
-              <Line
-                key={s.dataKey}
-                dataKey={s.dataKey}
-                type="monotone"
-                stroke={s.color}
-                strokeWidth={2}
-                dot={false}
-              />
-            ))}
-          </RechartsLineChart>
-        </ChartContainer>
-      </div>
+          ))}
+        </RechartsLineChart>
+      </ChartContainer>
       <div className="mt-4 flex flex-wrap justify-center gap-4">
         {SERIES_CONFIG.map(({ dataKey, label, color }) => {
           const isHidden = hiddenSeries.has(dataKey)
@@ -202,7 +159,7 @@ export function AttendanceChart({ data, className }: AttendanceChartProps) {
               onClick={() => toggleSeries(dataKey)}
               data-legend-item
               data-hidden={isHidden}
-              className={`flex items-center gap-2 rounded px-2 py-1 text-sm transition-opacity hover:bg-muted ${
+              className={`flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm transition-opacity hover:bg-muted ${
                 isHidden ? 'opacity-40' : ''
               }`}
             >
@@ -215,6 +172,6 @@ export function AttendanceChart({ data, className }: AttendanceChartProps) {
           )
         })}
       </div>
-    </div>
+    </ScrollableChartContainer>
   )
 }
