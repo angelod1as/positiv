@@ -49,11 +49,11 @@ function ChartContainer({
         data-chart={chartId}
         className={cn(
           // Size
-          "max-h-[500px]",
+          "h-[350px]",
           "w-auto",
 
           // Layout & Typography
-          "flex aspect-video justify-center text-xs",
+          "flex justify-center text-xs",
 
           // Axis & Grid
           "[&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground",
