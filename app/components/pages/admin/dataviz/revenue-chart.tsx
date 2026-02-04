@@ -1,7 +1,7 @@
 import {
   Bar,
-  BarChart as RechartsBarChart,
   CartesianGrid,
+  ComposedChart,
   Line,
   XAxis,
   YAxis,
@@ -169,7 +169,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
           role="img"
           aria-label="Faturamento por evento"
         >
-          <RechartsBarChart data={chartData}>
+          <ComposedChart data={chartData}>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="label"
@@ -193,7 +193,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
               strokeWidth={2}
               dot={{ r: 4 }}
             />
-          </RechartsBarChart>
+          </ComposedChart>
         </ChartContainer>
       </div>
     </div>
