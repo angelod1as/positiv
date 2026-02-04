@@ -61,7 +61,7 @@ function CustomTooltipContent({ active, payload }: CustomTooltipProps) {
   const eventsText = eventsLabel === '7+' ? 'a 7 ou mais' : `a ${eventsLabel}`
 
   return (
-    <div className="border-border/50 bg-background rounded-lg border px-3 py-2 text-xs shadow-xl">
+    <div className="chart-tooltip">
       <div className="font-mono font-medium tabular-nums">
         {numPeople} {numPeople === 1 ? 'pessoa foi' : 'pessoas foram'} {eventsText}{' '}
         {festasWord}

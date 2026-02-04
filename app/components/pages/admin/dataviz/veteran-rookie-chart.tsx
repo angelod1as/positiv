@@ -1,7 +1,7 @@
-import { format, parseISO, isValid } from 'date-fns'
 import type { VeteranRookieDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { AreaChart } from '~/components/molecules/charts/area-chart'
 import type { ChartConfig } from '~/components/ui/chart'
+import { buildEventLabel } from '~/lib/helpers/chart-utils'
 
 interface VeteranRookieChartProps {
   data: VeteranRookieDataPoint[]
@@ -22,14 +22,6 @@ const chartConfig: ChartConfig = {
     label: 'Novatos',
     color: 'var(--chart-1)',
   },
-}
-
-function formatDate(dateString: string): string {
-  const date = parseISO(dateString)
-  if (isValid(date)) {
-    return format(date, 'dd/MM/yy')
-  }
-  return dateString
 }
 
 interface TooltipPayloadItem {
@@ -57,42 +49,34 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
   const veteranPercentage = total > 0 ? (dataPoint.veterans / total) * 100 : 0
 
   return (
-    <div className="border-border/50 bg-background rounded-lg border px-3 py-2 text-xs shadow-xl">
+    <div className="chart-tooltip">
       <div className="mb-2 font-medium">
         <div>{label}</div>
       </div>
       <div className="grid gap-1.5">
-        <div className="flex items-center gap-2">
+        <div className="chart-tooltip-row">
           <span
-            className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+            className="chart-tooltip-swatch"
             style={{ backgroundColor: chartConfig.veterans.color }}
           />
-          <span className="text-muted-foreground flex-1">Veteranos</span>
-          <span className="font-mono font-medium tabular-nums">
-            {dataPoint.veterans}
-          </span>
+          <span className="chart-tooltip-label">Veteranos</span>
+          <span className="chart-tooltip-value">{dataPoint.veterans}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="chart-tooltip-row">
           <span
-            className="h-2.5 w-2.5 shrink-0 rounded-[2px]"
+            className="chart-tooltip-swatch"
             style={{ backgroundColor: chartConfig.rookies.color }}
           />
-          <span className="text-muted-foreground flex-1">Novatos</span>
-          <span className="font-mono font-medium tabular-nums">
-            {dataPoint.rookies}
-          </span>
+          <span className="chart-tooltip-label">Novatos</span>
+          <span className="chart-tooltip-value">{dataPoint.rookies}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground flex-1">Total</span>
-          <span className="font-mono font-medium tabular-nums">
-            {total}
-          </span>
+        <div className="chart-tooltip-row">
+          <span className="chart-tooltip-label">Total</span>
+          <span className="chart-tooltip-value">{total}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground flex-1">% Veteranos</span>
-          <span className="font-mono font-medium tabular-nums">
-            {veteranPercentage.toFixed(1)}%
-          </span>
+        <div className="chart-tooltip-row">
+          <span className="chart-tooltip-label">% Veteranos</span>
+          <span className="chart-tooltip-value">{veteranPercentage.toFixed(1)}%</span>
         </div>
       </div>
     </div>
@@ -102,7 +86,7 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
 export function VeteranRookieChart({ data, className }: VeteranRookieChartProps) {
   const chartData = data.map((item) => ({
     ...item,
-    label: `${item.emoji} ${item.title}\n${formatDate(item.date)}`,
+    label: buildEventLabel(item),
   }))
 
   return (

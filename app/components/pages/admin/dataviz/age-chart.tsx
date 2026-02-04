@@ -6,8 +6,6 @@ import { BarChart } from '~/components/molecules/charts/bar-chart'
 import type { ChartConfig } from '~/components/ui/chart'
 import { sortByAgeRange } from '~/lib/helpers/chart-utils'
 
-export type { FilterMode }
-
 interface AgeChartProps {
   data: DemographicDistribution[]
   className?: string

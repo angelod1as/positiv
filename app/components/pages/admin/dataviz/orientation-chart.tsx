@@ -6,8 +6,6 @@ import { DonutChart } from '~/components/molecules/charts/donut-chart'
 import type { ChartConfig } from '~/components/ui/chart'
 import { groupSmallCategories, sanitizeCssKey } from '~/lib/helpers/chart-utils'
 
-export type { FilterMode }
-
 interface OrientationChartProps {
   data: DemographicDistribution[]
   className?: string
