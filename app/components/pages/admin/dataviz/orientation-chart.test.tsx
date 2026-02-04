@@ -50,16 +50,16 @@ describe('OrientationChart', () => {
       <OrientationChart data={mockOrientationDataWithSmallCategories} mode="all" onModeChange={vi.fn()} />
     )
 
-    // Should find "Outros" in the chart config (style tag)
+    // Should find "outros" (sanitized) in the chart config (style tag)
     const styleTag = container.querySelector('style')
-    expect(styleTag?.textContent).toContain('--color-Outros')
+    expect(styleTag?.textContent).toContain('--color-outros')
 
-    // Verify main categories are still present
-    expect(styleTag?.textContent).toContain('--color-Bi')
-    expect(styleTag?.textContent).toContain('--color-Pan')
+    // Verify main categories are still present (sanitized)
+    expect(styleTag?.textContent).toContain('--color-bi')
+    expect(styleTag?.textContent).toContain('--color-pan')
 
     // Small categories (< 2%) should NOT be in config directly
-    expect(styleTag?.textContent).not.toContain('--color-Queer')
+    expect(styleTag?.textContent).not.toContain('--color-queer')
   })
 
   it('should toggle between "Toda a comunidade" and "Quem já compareceu"', async () => {
@@ -119,9 +119,9 @@ describe('OrientationChart', () => {
     const styleTag = container.querySelector('style')
     expect(styleTag).toBeInTheDocument()
 
-    // Should have color configurations for main categories
-    expect(styleTag?.textContent).toContain('--color-Bi')
-    expect(styleTag?.textContent).toContain('--color-Pan')
+    // Should have color configurations for main categories (sanitized)
+    expect(styleTag?.textContent).toContain('--color-bi')
+    expect(styleTag?.textContent).toContain('--color-pan')
   })
 
   it('should handle empty data without crashing', () => {

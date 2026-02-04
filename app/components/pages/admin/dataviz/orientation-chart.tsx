@@ -1,9 +1,12 @@
 import { useMemo } from 'react'
 import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
+import { DemographicFilterToggle } from '~/components/atoms/charts/demographic-filter-toggle'
+import type { FilterMode } from '~/components/atoms/charts/demographic-filter-toggle'
 import { DonutChart } from '~/components/molecules/charts/donut-chart'
 import type { ChartConfig } from '~/components/ui/chart'
+import { groupSmallCategories, sanitizeCssKey } from '~/lib/helpers/chart-utils'
 
-export type FilterMode = 'all' | 'attended'
+export type { FilterMode }
 
 interface OrientationChartProps {
   data: DemographicDistribution[]
@@ -12,16 +15,7 @@ interface OrientationChartProps {
   onModeChange: (mode: FilterMode) => void
 }
 
-/**
- * Displays orientation distribution as a donut chart with filter toggle.
- * Categories with < 2% representation are grouped into "Outros".
- *
- * Controlled component: accepts mode and onModeChange callback.
- * Parent component should fetch appropriate data based on selected mode.
- */
 export function OrientationChart({ data, className, mode, onModeChange }: OrientationChartProps) {
-
-  // Handle empty data
   if (data.length === 0) {
     return (
       <div className={className} data-chart role="img" aria-label="Distribuição de orientação">
@@ -30,81 +24,53 @@ export function OrientationChart({ data, className, mode, onModeChange }: Orient
     )
   }
 
-  // Process data: group categories < 2% into "Outros"
-  const processedData = useMemo(() => processOrientationData(data), [data])
+  const processedData = useMemo(() => groupSmallCategories(data), [data])
 
-  // Calculate total count for center label
   const totalCount = useMemo(
     () => data.reduce((sum, item) => sum + item.count, 0),
-    [data]
+    [data],
   )
 
-  // Create chart config with colors
   const chartConfig: ChartConfig = useMemo(
     () =>
       processedData.reduce(
         (acc, item, index) => ({
           ...acc,
-          [item.category]: {
+          [sanitizeCssKey(item.category)]: {
             label: item.category,
             color: `var(--chart-${index + 1})`,
           },
         }),
-        {} as ChartConfig
+        {} as ChartConfig,
       ),
-    [processedData]
+    [processedData],
   )
 
-  // Transform data for DonutChart (needs value field)
   const chartData = useMemo(
     () =>
       processedData.map((item) => ({
-        category: item.category,
+        category: sanitizeCssKey(item.category),
+        label: item.category,
         value: item.count,
         count: item.count,
         percentage: item.percentage,
       })),
-    [processedData]
+    [processedData],
   )
 
   return (
     <div className={className}>
-      {/* Filter toggle */}
-      <div className="mb-4 flex justify-center gap-2">
-        <button
-          type="button"
-          onClick={() => onModeChange('all')}
-          data-active={mode === 'all'}
-          className={`rounded px-4 py-2 text-sm transition-colors ${
-            mode === 'all'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          Toda a comunidade
-        </button>
-        <button
-          type="button"
-          onClick={() => onModeChange('attended')}
-          data-active={mode === 'attended'}
-          className={`rounded px-4 py-2 text-sm transition-colors ${
-            mode === 'attended'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          Quem já compareceu
-        </button>
-      </div>
-
-      {/* Chart */}
+      <DemographicFilterToggle mode={mode} onModeChange={onModeChange} />
       <div data-chart role="img" aria-label="Distribuição de orientação">
         <DonutChart
           data={chartData}
           config={chartConfig}
           dataKey="value"
           nameKey="category"
+          innerRadius={80}
+          outerRadius={130}
           ariaLabel="Distribuição de orientação"
+          showLabel
           centerLabel={
             <div className="text-center">
               <div className="text-3xl font-bold">{totalCount}</div>
@@ -116,38 +82,4 @@ export function OrientationChart({ data, className, mode, onModeChange }: Orient
       </div>
     </div>
   )
-}
-
-/**
- * Process orientation data by grouping categories with < 2% into "Outros"
- */
-function processOrientationData(
-  data: DemographicDistribution[]
-): DemographicDistribution[] {
-  const mainCategories: DemographicDistribution[] = []
-  const smallCategories: DemographicDistribution[] = []
-
-  // Separate categories by percentage threshold
-  for (const item of data) {
-    if (item.percentage < 2) {
-      smallCategories.push(item)
-    } else {
-      mainCategories.push(item)
-    }
-  }
-
-  // If there are small categories, combine them into "Outros"
-  if (smallCategories.length > 0) {
-    const outrosCount = smallCategories.reduce((sum, item) => sum + item.count, 0)
-    const total = data.reduce((sum, item) => sum + item.count, 0)
-    const outrosPercentage = total > 0 ? Math.round((outrosCount / total) * 100) : 0
-
-    mainCategories.push({
-      category: 'Outros',
-      count: outrosCount,
-      percentage: outrosPercentage,
-    })
-  }
-
-  return mainCategories
 }
