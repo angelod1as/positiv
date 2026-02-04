@@ -1,9 +1,12 @@
 import { useMemo } from 'react'
 import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
+import { DemographicFilterToggle } from '~/components/atoms/charts/demographic-filter-toggle'
+import type { FilterMode } from '~/components/atoms/charts/demographic-filter-toggle'
 import { BarChart } from '~/components/molecules/charts/bar-chart'
 import type { ChartConfig } from '~/components/ui/chart'
+import { sortByAgeRange } from '~/lib/helpers/chart-utils'
 
-export type FilterMode = 'all' | 'attended'
+export type { FilterMode }
 
 interface AgeChartProps {
   data: DemographicDistribution[]
@@ -14,14 +17,6 @@ interface AgeChartProps {
   filledProfiles: number
 }
 
-/**
- * Displays age distribution as a horizontal bar chart with filter toggle.
- *
- * Age ranges: 18-24, 25-29, 30-34, 35-39, 40-49, 50+
- *
- * Controlled component: accepts mode and onModeChange callback.
- * Parent component should fetch appropriate data based on selected mode.
- */
 export function AgeChart({
   data,
   className,
@@ -30,7 +25,6 @@ export function AgeChart({
   totalProfiles,
   filledProfiles,
 }: AgeChartProps) {
-  // Handle empty data
   if (data.length === 0) {
     return (
       <div className={className} data-chart role="img" aria-label="Distribuição de idade">
@@ -39,10 +33,11 @@ export function AgeChart({
     )
   }
 
-  // Create chart config with colors for each age range
+  const sortedData = useMemo(() => sortByAgeRange(data), [data])
+
   const chartConfig: ChartConfig = useMemo(
     () =>
-      data.reduce(
+      sortedData.reduce(
         (acc, item, index) => ({
           ...acc,
           [item.category]: {
@@ -50,64 +45,27 @@ export function AgeChart({
             color: `var(--chart-${index + 1})`,
           },
         }),
-        {} as ChartConfig
+        {} as ChartConfig,
       ),
-    [data]
+    [sortedData],
   )
 
-  // Transform data for BarChart (needs specific field structure)
   const chartData = useMemo(
     () =>
-      data.map((item) => ({
+      sortedData.map((item) => ({
         ageRange: item.category,
         count: item.count,
         percentage: item.percentage,
       })),
-    [data]
+    [sortedData],
   )
 
   return (
     <div className={className}>
-      {/* Filter toggle */}
-      <div className="mb-4 flex justify-center gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            if (mode !== 'all') onModeChange('all')
-          }}
-          aria-pressed={mode === 'all'}
-          disabled={mode === 'all'}
-          className={`rounded px-4 py-2 text-sm transition-colors ${
-            mode === 'all'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          Toda a comunidade
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (mode !== 'attended') onModeChange('attended')
-          }}
-          aria-pressed={mode === 'attended'}
-          disabled={mode === 'attended'}
-          className={`rounded px-4 py-2 text-sm transition-colors ${
-            mode === 'attended'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
-          }`}
-        >
-          Quem já compareceu
-        </button>
-      </div>
-
-      {/* Annotation */}
+      <DemographicFilterToggle mode={mode} onModeChange={onModeChange} />
       <p className="mb-4 text-center text-sm text-muted-foreground">
         {filledProfiles} perfis com data de nascimento preenchida (de {totalProfiles} total)
       </p>
-
-      {/* Chart */}
       <div data-chart role="img" aria-label="Distribuição de idade">
         <BarChart
           data={chartData}
