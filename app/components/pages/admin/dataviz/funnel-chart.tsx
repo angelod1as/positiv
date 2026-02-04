@@ -231,7 +231,7 @@ export function FunnelChart({ data, className }: FunnelChartProps) {
               tick={CustomXAxisTick}
             />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-            <ChartTooltip content={<CustomTooltipContent />} />
+            <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
             {SERIES_CONFIG.map((series) => (
               <Bar
                 key={series.dataKey}

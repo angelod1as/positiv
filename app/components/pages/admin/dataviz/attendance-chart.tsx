@@ -178,7 +178,7 @@ export function AttendanceChart({ data, className }: AttendanceChartProps) {
               tick={CustomXAxisTick}
             />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-            <ChartTooltip content={<CustomTooltipContent />} />
+            <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
             {visibleSeries.map((s) => (
               <Line
                 key={s.dataKey}

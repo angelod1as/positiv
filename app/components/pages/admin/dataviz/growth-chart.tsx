@@ -133,7 +133,7 @@ export function GrowthChart({ data, className }: GrowthChartProps) {
               axisLine={false}
               tickMargin={8}
             />
-            <ChartTooltip content={CustomTooltipContent} />
+            <ChartTooltip content={CustomTooltipContent} isAnimationActive={false} />
             <Bar
               yAxisId="left"
               dataKey="new_profiles"

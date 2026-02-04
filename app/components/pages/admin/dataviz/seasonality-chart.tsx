@@ -189,7 +189,7 @@ export function SeasonalityChart({ data, className }: SeasonalityChartProps) {
                 tick={CustomXAxisTick}
               />
               <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-              <ChartTooltip content={<CustomTooltipContent />} />
+              <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
               <Bar dataKey="inscritos" fill="var(--chart-1)" radius={4} />
               <Bar dataKey="compareceram" fill="var(--chart-2)" radius={4} />
             </RechartsBarChart>

@@ -180,7 +180,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
               tick={CustomXAxisTick}
             />
             <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-            <ChartTooltip content={<CustomTooltipContent />} />
+            <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
             <Bar
               dataKey="faturamento_total"
               fill="var(--color-faturamento_total)"
