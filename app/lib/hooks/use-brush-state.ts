@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 const STORAGE_KEY = 'dataviz-brush-events'
 
@@ -17,12 +17,14 @@ interface UseBrushStateReturn {
 function readFromStorage(dataLength: number): {
   startIndex: number
   endIndex: number
-} {
+} | null {
   const fullRange = { startIndex: 0, endIndex: dataLength - 1 }
+
+  if (typeof window === 'undefined') return null
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return fullRange
+    if (!raw) return null
 
     const parsed = JSON.parse(raw) as {
       startIndex: number
@@ -55,7 +57,14 @@ function readFromStorage(dataLength: number): {
 }
 
 export function useBrushState(dataLength: number): UseBrushStateReturn {
-  const [range, setRange] = useState(() => readFromStorage(dataLength))
+  const [range, setRange] = useState({ startIndex: 0, endIndex: dataLength - 1 })
+
+  useEffect(() => {
+    const stored = readFromStorage(dataLength)
+    if (stored) {
+      setRange(stored)
+    }
+  }, [dataLength])
 
   const onChange = useCallback(
     (update: BrushRange) => {
