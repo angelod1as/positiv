@@ -1,6 +1,9 @@
 import { useCallback, useState } from "react"
-import { type LoaderFunctionArgs, useFetcher, useLoaderData } from "react-router"
-import paths from "~/lib/paths"
+import {
+  type LoaderFunctionArgs,
+  useFetcher,
+  useLoaderData,
+} from "react-router"
 import type { DemographicsDataResult } from "~/business/admin/dataviz/dataviz.types"
 import {
   getDemographicsData,
@@ -23,6 +26,7 @@ import { CommunitySection } from "~/components/pages/admin/dataviz/community-sec
 import { EventsSection } from "~/components/pages/admin/dataviz/events-section"
 import { KpiScores } from "~/components/pages/admin/dataviz/kpi-scores"
 import { Separator } from "~/components/ui/separator"
+import paths from "~/lib/paths"
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url)
