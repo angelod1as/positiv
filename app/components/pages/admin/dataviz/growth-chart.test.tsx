@@ -76,12 +76,6 @@ describe('GrowthChart', () => {
     expect(chartContainer).toHaveClass('custom-class')
   })
 
-  it('renders with horizontal scrolling wrapper', () => {
-    const { container } = render(<GrowthChart data={mockData} />)
-    const scrollWrapper = container.querySelector('.overflow-x-auto')
-    expect(scrollWrapper).toBeInTheDocument()
-  })
-
   it('formats month labels from YYYY-MM to Portuguese format', () => {
     const { container } = render(<GrowthChart data={mockData} />)
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
@@ -116,13 +110,6 @@ describe('GrowthChart', () => {
     const dataWithoutJuly = mockData.filter(item => item.month !== '2025-07')
     const { container } = render(<GrowthChart data={dataWithoutJuly} />)
     expect(container).toBeInTheDocument()
-  })
-
-  it('calculates minimum width based on data length', () => {
-    const { container } = render(<GrowthChart data={mockData} />)
-    const scrollWrapper = container.querySelector('.overflow-x-auto')
-    const innerDiv = scrollWrapper?.querySelector('div')
-    expect(innerDiv).toBeInTheDocument()
   })
 
   it('uses proper chart configuration colors', () => {

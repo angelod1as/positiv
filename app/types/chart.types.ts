@@ -18,18 +18,31 @@ export interface BaseChartProps {
   ariaLabel?: string
   showTooltip?: boolean
   showLegend?: boolean
+  showValues?: boolean
+  tooltipAnimated?: boolean
   tooltipContent?: ReactElement | ((props: Record<string, unknown>) => ReactNode)
   children?: ReactNode
 }
 
-export interface LineChartProps extends BaseChartProps {
+export interface XAxisTickProps {
+  x?: string | number
+  y?: string | number
+  payload?: { value: string }
+}
+
+export interface XAxisCustomProps {
+  xAxisTickComponent?: (props: XAxisTickProps) => ReactElement | null
+  xAxisHeight?: number
+}
+
+export interface LineChartProps extends BaseChartProps, XAxisCustomProps {
   series: ChartSeries[]
   xAxisKey: string
   xAxisFormatter?: (value: string) => string
   curved?: boolean
 }
 
-export interface BarChartProps extends BaseChartProps {
+export interface BarChartProps extends BaseChartProps, XAxisCustomProps {
   series: ChartSeries[]
   xAxisKey: string
   xAxisFormatter?: (value: string) => string
@@ -46,7 +59,7 @@ export interface DonutChartProps extends BaseChartProps {
   showLabel?: boolean
 }
 
-export interface AreaChartProps extends BaseChartProps {
+export interface AreaChartProps extends BaseChartProps, XAxisCustomProps {
   series: ChartSeries[]
   xAxisKey: string
   xAxisFormatter?: (value: string) => string

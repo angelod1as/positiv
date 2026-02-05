@@ -51,16 +51,16 @@ describe('GenderChart', () => {
       <GenderChart data={mockGenderDataWithSmallCategories} mode="all" onModeChange={vi.fn()} />
     )
 
-    // Should find "Outros" in the chart config (style tag)
+    // Should find "outros" (sanitized) in the chart config (style tag)
     const styleTag = container.querySelector('style')
-    expect(styleTag?.textContent).toContain('--color-Outros')
+    expect(styleTag?.textContent).toContain('--color-outros')
 
-    // Verify main categories are still present
-    expect(styleTag?.textContent).toContain('--color-Mulher cis')
-    expect(styleTag?.textContent).toContain('--color-Homem cis')
+    // Verify main categories are still present (sanitized)
+    expect(styleTag?.textContent).toContain('--color-mulher-cis')
+    expect(styleTag?.textContent).toContain('--color-homem-cis')
 
     // Small categories (< 2%) should NOT be in config directly
-    expect(styleTag?.textContent).not.toContain('--color-Fluída')
+    expect(styleTag?.textContent).not.toContain('--color-fluida')
   })
 
   it('should toggle between "Toda a comunidade" and "Quem já compareceu"', async () => {
@@ -120,9 +120,9 @@ describe('GenderChart', () => {
     const styleTag = container.querySelector('style')
     expect(styleTag).toBeInTheDocument()
 
-    // Should have color configurations for main categories
-    expect(styleTag?.textContent).toContain('--color-Mulher cis')
-    expect(styleTag?.textContent).toContain('--color-Homem cis')
+    // Should have color configurations for main categories (sanitized)
+    expect(styleTag?.textContent).toContain('--color-mulher-cis')
+    expect(styleTag?.textContent).toContain('--color-homem-cis')
   })
 
   it('should handle empty data without crashing', () => {

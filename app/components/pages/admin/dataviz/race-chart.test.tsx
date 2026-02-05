@@ -46,16 +46,16 @@ describe('RaceChart', () => {
       <RaceChart data={mockRaceDataWithSmallCategories} mode="all" onModeChange={vi.fn()} />
     )
 
-    // Should find "Outros" in the chart config (style tag)
+    // Should find "outros" (sanitized) in the chart config (style tag)
     const styleTag = container.querySelector('style')
-    expect(styleTag?.textContent).toContain('--color-Outros')
+    expect(styleTag?.textContent).toContain('--color-outros')
 
-    // Verify main categories are still present
-    expect(styleTag?.textContent).toContain('--color-Branca')
-    expect(styleTag?.textContent).toContain('--color-Parda')
+    // Verify main categories are still present (sanitized)
+    expect(styleTag?.textContent).toContain('--color-branca')
+    expect(styleTag?.textContent).toContain('--color-parda')
 
     // Small categories (< 2%) should NOT be in config directly
-    expect(styleTag?.textContent).not.toContain('--color-Não declarada')
+    expect(styleTag?.textContent).not.toContain('--color-nao-declarada')
   })
 
   it('should toggle between "Toda a comunidade" and "Quem já compareceu"', async () => {
@@ -124,9 +124,9 @@ describe('RaceChart', () => {
     const styleTag = container.querySelector('style')
     expect(styleTag).toBeInTheDocument()
 
-    // Should have color configurations for main categories
-    expect(styleTag?.textContent).toContain('--color-Branca')
-    expect(styleTag?.textContent).toContain('--color-Parda')
+    // Should have color configurations for main categories (sanitized)
+    expect(styleTag?.textContent).toContain('--color-branca')
+    expect(styleTag?.textContent).toContain('--color-parda')
   })
 
   it('should handle empty data without crashing', () => {

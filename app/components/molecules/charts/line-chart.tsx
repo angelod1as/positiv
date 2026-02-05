@@ -1,5 +1,6 @@
 import {
   CartesianGrid,
+  LabelList,
   Line,
   LineChart as RechartsLineChart,
   XAxis,
@@ -21,11 +22,15 @@ export function LineChart({
   series,
   xAxisKey,
   xAxisFormatter,
+  xAxisTickComponent,
+  xAxisHeight,
   curved = true,
   className,
   ariaLabel,
   showTooltip = true,
   showLegend = true,
+  showValues = false,
+  tooltipAnimated = false,
   tooltipContent,
   children,
 }: LineChartProps) {
@@ -38,11 +43,14 @@ export function LineChart({
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={xAxisFormatter}
+          tickFormatter={xAxisTickComponent ? undefined : xAxisFormatter}
+          tick={xAxisTickComponent}
+          height={xAxisHeight}
         />
         <YAxis tickLine={false} axisLine={false} tickMargin={8} />
         {showTooltip && (
           <ChartTooltip
+            isAnimationActive={tooltipAnimated}
             content={tooltipContent ?? <ChartTooltipContent />}
           />
         )}
@@ -56,8 +64,17 @@ export function LineChart({
             type={curved ? 'monotone' : 'linear'}
             stroke={s.color ?? `var(--color-${s.dataKey})`}
             strokeWidth={2}
-            dot={false}
-          />
+            dot={showValues ? { r: 3 } : false}
+          >
+            {showValues && (
+              <LabelList
+                dataKey={s.dataKey}
+                position="top"
+                offset={10}
+                className="fill-foreground text-xs"
+              />
+            )}
+          </Line>
         ))}
         {children}
       </RechartsLineChart>

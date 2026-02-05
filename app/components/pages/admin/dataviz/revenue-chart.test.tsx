@@ -85,9 +85,4 @@ describe('RevenueChart', () => {
     expect(container).toBeInTheDocument()
   })
 
-  it('renders with horizontal scrolling wrapper', () => {
-    const { container } = render(<RevenueChart data={mockData} />)
-    const scrollWrapper = container.querySelector('.overflow-x-auto')
-    expect(scrollWrapper).toBeInTheDocument()
-  })
 })

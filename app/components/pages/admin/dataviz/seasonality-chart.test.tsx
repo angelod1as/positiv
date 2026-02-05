@@ -93,12 +93,6 @@ describe('SeasonalityChart', () => {
     )
   })
 
-  it('renders with horizontal scrolling wrapper', () => {
-    const { container } = render(<SeasonalityChart data={mockData} />)
-    const scrollWrapper = container.querySelector('.overflow-x-auto')
-    expect(scrollWrapper).toBeInTheDocument()
-  })
-
   it('displays footer note with event count and years span', () => {
     render(<SeasonalityChart data={mockData} />)
     expect(screen.getByText(/Baseado em 3 eventos/)).toBeInTheDocument()

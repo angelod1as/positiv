@@ -88,9 +88,12 @@ export default [
   layout("pages/guard/admin.tsx", [
     ...prefix("admin", [
       layout("pages/admin/layout.tsx", [
-        index("pages/admin/dashboard-page.tsx"),
+        index("pages/admin/dashboard/dashboard-page.tsx"),
         // Global participants listing
-        route("participantes", "pages/admin/participants/participants-page.tsx"),
+        route(
+          "participantes",
+          "pages/admin/participants/participants-page.tsx",
+        ),
         // View single participant (profile-only mode)
         route(
           "participantes/:profileId",
@@ -98,11 +101,13 @@ export default [
         ),
         // Feedbacks
         route("feedbacks", "pages/admin/feedbacks/feedbacks-page.tsx"),
+        // Dataviz
+        route("numeros", "pages/admin/dataviz/dataviz-page.tsx"),
       ]),
       ...prefix("eventos", [
         layout("pages/admin/events/layout.tsx", [
           // Eventos (redirect)
-          index("pages/admin/events-page.tsx"),
+          index("pages/admin/events/events-page.tsx"),
           // Ver evento
           route(
             "/:id?",

@@ -100,6 +100,23 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
         <RecentFeedbacksTable feedbacks={recentFeedbacks} />
       </div>
+
+      <Separator />
+
+      {/* Commented out for now, we need to see the charts in production */}
+      {/* <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2>Números e métricas</h2>
+          <div className="grid grid-cols-1">
+            <Button asChild>
+              <Link to={ADMIN_DATAVIZ}>Ver números</Link>
+            </Button>
+            <p className="text-xs">
+              Veja todos os gráficos e métricas da comunidade
+            </p>
+          </div>
+        </div>
+      </div> */}
     </>
   )
 }

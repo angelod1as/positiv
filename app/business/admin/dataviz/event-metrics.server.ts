@@ -57,7 +57,7 @@ export async function getEventAttendanceData(): Promise<
   return result.map((row) => ({
     title: row.title ?? "",
     emoji: row.emoji ?? "",
-    date: row.date ?? "",
+    date: row.date ? new Date(row.date).toISOString() : "",
     inscritos: row.inscritos,
     compareceram: row.compareceram,
     nao_foram: row.nao_foram,
@@ -103,7 +103,7 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
   return result.map((row) => ({
     title: row.title ?? "",
     emoji: row.emoji ?? "",
-    date: row.date ?? "",
+    date: row.date ? new Date(row.date).toISOString() : "",
     faturamento_total: row.faturamento_total,
     ticket_price: Number(row.ticket_price ?? 0),
     num_pagantes: row.num_pagantes,
@@ -150,7 +150,7 @@ export async function getConversionFunnelData(): Promise<
     return {
       title: row.title ?? "",
       emoji: row.emoji ?? "",
-      date: row.date ?? "",
+      date: row.date ? new Date(row.date).toISOString() : "",
       inscritos,
       finalizados: row.finalizados,
       pagaram: row.pagaram,
@@ -199,7 +199,7 @@ export async function getOccupancyData(): Promise<OccupancyDataPoint[]> {
     return {
       title: row.title ?? "",
       emoji: row.emoji ?? "",
-      date: row.date ?? "",
+      date: row.date ? new Date(row.date).toISOString() : "",
       compareceram,
       total_spots: totalSpots,
       occupancy_pct:

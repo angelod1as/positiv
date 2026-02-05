@@ -21,11 +21,14 @@ export function AreaChart({
   series,
   xAxisKey,
   xAxisFormatter,
+  xAxisTickComponent,
+  xAxisHeight,
   stacked = true,
   className,
   ariaLabel,
   showTooltip = true,
   showLegend = true,
+  tooltipAnimated = false,
   tooltipContent,
   children,
 }: AreaChartProps) {
@@ -38,11 +41,14 @@ export function AreaChart({
           tickLine={false}
           axisLine={false}
           tickMargin={8}
-          tickFormatter={xAxisFormatter}
+          tickFormatter={xAxisTickComponent ? undefined : xAxisFormatter}
+          tick={xAxisTickComponent}
+          height={xAxisHeight}
         />
         <YAxis tickLine={false} axisLine={false} tickMargin={8} />
         {showTooltip && (
           <ChartTooltip
+            isAnimationActive={tooltipAnimated}
             content={tooltipContent ?? <ChartTooltipContent />}
           />
         )}
