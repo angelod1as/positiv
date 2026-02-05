@@ -1,18 +1,18 @@
-import { useMemo } from 'react'
+import { useMemo } from "react"
 import type {
   ConversionFunnelDataPoint,
   EventAttendanceDataPoint,
   EventRevenueDataPoint,
   OccupancyDataPoint,
-} from '~/business/admin/dataviz/dataviz.types'
-import { ChartSection } from '~/components/atoms/charts/chart-section'
-import { buildEventLabel } from '~/lib/helpers/chart-utils'
-import { useBrushState } from '~/lib/hooks/use-brush-state'
-import { AttendanceChart } from './attendance-chart'
-import { EventRangeSelector } from './event-range-selector'
-import { FunnelChart } from './funnel-chart'
-import { OccupancyChart } from './occupancy-chart'
-import { RevenueChart } from './revenue-chart'
+} from "~/business/admin/dataviz/dataviz.types"
+import { ChartSection } from "~/components/atoms/charts/chart-section"
+import { buildEventLabel } from "~/lib/helpers/chart-utils"
+import { useBrushState } from "~/lib/hooks/use-brush-state"
+import { AttendanceChart } from "./attendance-chart"
+import { EventRangeSelector } from "./event-range-selector"
+import { FunnelChart } from "./funnel-chart"
+import { OccupancyChart } from "./occupancy-chart"
+import { RevenueChart } from "./revenue-chart"
 
 interface EventsSectionProps {
   attendance: EventAttendanceDataPoint[]
@@ -35,27 +35,27 @@ export function EventsSection({
         label: buildEventLabel(item),
         inscritos: item.inscritos,
       })),
-    [attendance]
+    [attendance],
   )
 
   const slicedAttendance = useMemo(
     () => attendance.slice(startIndex, endIndex + 1),
-    [attendance, startIndex, endIndex]
+    [attendance, startIndex, endIndex],
   )
 
   const slicedRevenue = useMemo(
     () => revenue.slice(startIndex, endIndex + 1),
-    [revenue, startIndex, endIndex]
+    [revenue, startIndex, endIndex],
   )
 
   const slicedFunnel = useMemo(
     () => funnel.slice(startIndex, endIndex + 1),
-    [funnel, startIndex, endIndex]
+    [funnel, startIndex, endIndex],
   )
 
   const slicedOccupancy = useMemo(
     () => occupancy.slice(startIndex, endIndex + 1),
-    [occupancy, startIndex, endIndex]
+    [occupancy, startIndex, endIndex],
   )
 
   return (

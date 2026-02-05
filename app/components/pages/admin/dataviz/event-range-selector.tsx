@@ -1,11 +1,8 @@
-import { Area, AreaChart, Brush, XAxis } from 'recharts'
-import {
-  ChartContainer,
-  type ChartConfig,
-} from '~/components/ui/chart'
+import { AreaChart, Brush, XAxis } from "recharts"
+import { ChartContainer, type ChartConfig } from "~/components/ui/chart"
 
 const chartConfig: ChartConfig = {
-  inscritos: { label: 'Inscritos', color: 'var(--chart-1)' },
+  inscritos: { label: "Inscritos", color: "var(--chart-1)" },
 }
 
 interface EventRangeSelectorProps {
@@ -25,7 +22,7 @@ export function EventRangeSelector({
 
   return (
     <div>
-      <p className="mb-2 text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         Selecionar intervalo de eventos
       </p>
       <ChartContainer
@@ -36,18 +33,10 @@ export function EventRangeSelector({
       >
         <AreaChart data={data}>
           <XAxis dataKey="label" hide />
-          <Area
-            dataKey="inscritos"
-            type="monotone"
-            fill="var(--color-inscritos)"
-            fillOpacity={0.3}
-            stroke="var(--color-inscritos)"
-            strokeWidth={1}
-          />
           <Brush
             dataKey="label"
             height={30}
-            stroke="var(--chart-1)"
+            stroke="var(--chart-2)"
             startIndex={startIndex}
             endIndex={endIndex}
             onChange={(range) =>
