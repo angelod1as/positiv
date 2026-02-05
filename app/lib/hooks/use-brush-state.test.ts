@@ -39,7 +39,7 @@ describe('useBrushState', () => {
       result.current.onChange({ startIndex: 3, endIndex: 8 })
     })
 
-    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY)!)
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
     expect(stored).toEqual({ startIndex: 3, endIndex: 8 })
   })
 

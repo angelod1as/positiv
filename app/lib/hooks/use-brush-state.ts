@@ -24,11 +24,12 @@ function readFromStorage(dataLength: number): {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return fullRange
 
-    const parsed = JSON.parse(raw)
-    let { startIndex, endIndex } = parsed as {
+    const parsed = JSON.parse(raw) as {
       startIndex: number
       endIndex: number
     }
+    const { startIndex } = parsed
+    let { endIndex } = parsed
 
     if (
       typeof startIndex !== 'number' ||
