@@ -103,7 +103,8 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
       <Separator />
 
-      <div className="flex flex-col gap-4">
+      {/* Commented out for now, we need to see the charts in production */}
+      {/* <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <h2>Números e métricas</h2>
           <div className="grid grid-cols-1">
@@ -115,7 +116,7 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
             </p>
           </div>
         </div>
-      </div>
+      </div> */}
     </>
   )
 }
