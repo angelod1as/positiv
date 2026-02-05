@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react"
 import { type LoaderFunctionArgs, useFetcher, useLoaderData } from "react-router"
+import paths from "~/lib/paths"
 import type { DemographicsDataResult } from "~/business/admin/dataviz/dataviz.types"
 import {
   getDemographicsData,
@@ -77,7 +78,7 @@ export default function NumerosPage() {
   const handleModeChange = useCallback(
     (mode: FilterMode) => {
       setDemographicsMode(mode)
-      fetcher.load(`/admin/numeros?mode=${mode}`)
+      fetcher.load(`${paths.admin.ADMIN_DATAVIZ}?mode=${mode}`)
     },
     [fetcher],
   )

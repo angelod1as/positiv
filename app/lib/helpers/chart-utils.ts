@@ -1,10 +1,11 @@
-import { format, parseISO } from 'date-fns'
+import { format, isValid, parseISO } from 'date-fns'
 import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
 
 export function formatChartDate(dateString: string): string {
   if (!dateString) return ''
   try {
     const date = parseISO(dateString)
+    if (!isValid(date)) return dateString
     return format(date, 'dd/MM/yy')
   } catch {
     return dateString

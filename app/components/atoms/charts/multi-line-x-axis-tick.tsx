@@ -9,7 +9,7 @@ export function MultiLineXAxisTick({
   y,
   payload,
 }: MultiLineXAxisTickProps) {
-  if (!payload?.value) return null
+  if (x === undefined || y === undefined || !payload?.value) return null
 
   const [firstLine, secondLine = ''] = payload.value.split('\n')
 

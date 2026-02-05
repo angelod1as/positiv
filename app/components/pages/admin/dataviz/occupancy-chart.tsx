@@ -23,8 +23,10 @@ interface OccupancyChartProps {
 
 function calculateAverage(data: OccupancyDataPoint[]): number {
   if (data.length === 0) return 0
-  const sum = data.reduce((acc, point) => acc + point.occupancy_pct, 0)
-  return Math.round(sum / data.length)
+  const totalAttendees = data.reduce((acc, point) => acc + point.compareceram, 0)
+  const totalSpots = data.reduce((acc, point) => acc + point.total_spots, 0)
+  if (totalSpots === 0) return 0
+  return Math.round((totalAttendees / totalSpots) * 100)
 }
 
 interface TooltipPayloadItem {
