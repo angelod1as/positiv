@@ -135,4 +135,57 @@ describe('useBrushState', () => {
     expect(result.current.startIndex).toBe(0)
     expect(result.current.endIndex).toBe(5)
   })
+
+  it('clamps negative startIndex to 0', () => {
+    const { result } = renderHook(() => useBrushState(10))
+
+    act(() => {
+      result.current.onChange({ startIndex: -3, endIndex: 5 })
+    })
+
+    expect(result.current.startIndex).toBe(0)
+    expect(result.current.endIndex).toBe(5)
+  })
+
+  it('clamps endIndex exceeding data length', () => {
+    const { result } = renderHook(() => useBrushState(5))
+
+    act(() => {
+      result.current.onChange({ startIndex: 1, endIndex: 20 })
+    })
+
+    expect(result.current.startIndex).toBe(1)
+    expect(result.current.endIndex).toBe(4)
+  })
+
+  it('ensures endIndex is never less than startIndex', () => {
+    const { result } = renderHook(() => useBrushState(10))
+
+    act(() => {
+      result.current.onChange({ startIndex: 7, endIndex: 3 })
+    })
+
+    expect(result.current.startIndex).toBe(7)
+    expect(result.current.endIndex).toBe(7)
+  })
+
+  it('handles non-object localStorage value gracefully', () => {
+    localStorage.setItem(STORAGE_KEY, '42')
+
+    const { result } = renderHook(() => useBrushState(5))
+
+    expect(result.current.startIndex).toBe(0)
+    expect(result.current.endIndex).toBe(4)
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+  })
+
+  it('handles localStorage array value gracefully', () => {
+    localStorage.setItem(STORAGE_KEY, '[1, 2, 3]')
+
+    const { result } = renderHook(() => useBrushState(5))
+
+    expect(result.current.startIndex).toBe(0)
+    expect(result.current.endIndex).toBe(4)
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+  })
 })

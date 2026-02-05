@@ -26,20 +26,22 @@ function readFromStorage(dataLength: number): {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
 
-    const parsed = JSON.parse(raw) as {
-      startIndex: number
-      endIndex: number
-    }
-    const { startIndex } = parsed
-    let { endIndex } = parsed
+    const parsed: unknown = JSON.parse(raw)
 
     if (
-      typeof startIndex !== 'number' ||
-      typeof endIndex !== 'number'
+      !parsed ||
+      typeof parsed !== 'object' ||
+      !('startIndex' in parsed) ||
+      !('endIndex' in parsed) ||
+      typeof (parsed as Record<string, unknown>).startIndex !== 'number' ||
+      typeof (parsed as Record<string, unknown>).endIndex !== 'number'
     ) {
       localStorage.removeItem(STORAGE_KEY)
       return fullRange
     }
+
+    const { startIndex } = parsed as { startIndex: number; endIndex: number }
+    let { endIndex } = parsed as { startIndex: number; endIndex: number }
 
     if (startIndex >= dataLength) {
       return fullRange
@@ -69,10 +71,10 @@ export function useBrushState(dataLength: number): UseBrushStateReturn {
   const onChange = useCallback(
     (update: BrushRange) => {
       setRange((prev) => {
-        const next = {
-          startIndex: update.startIndex ?? prev.startIndex,
-          endIndex: update.endIndex ?? prev.endIndex,
-        }
+        const maxIndex = Math.max(dataLength - 1, 0)
+        const start = Math.max(0, Math.min(update.startIndex ?? prev.startIndex, maxIndex))
+        const end = Math.max(start, Math.min(update.endIndex ?? prev.endIndex, maxIndex))
+        const next = { startIndex: start, endIndex: end }
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
         } catch {
@@ -81,7 +83,7 @@ export function useBrushState(dataLength: number): UseBrushStateReturn {
         return next
       })
     },
-    []
+    [dataLength]
   )
 
   const reset = useCallback(() => {
