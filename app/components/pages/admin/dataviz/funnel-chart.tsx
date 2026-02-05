@@ -3,6 +3,7 @@ import {
   Bar,
   BarChart as RechartsBarChart,
   CartesianGrid,
+  LabelList,
   XAxis,
   YAxis,
 } from 'recharts'
@@ -155,7 +156,15 @@ export function FunnelChart({ data, className }: FunnelChartProps) {
             stackId="funnel"
             fill={series.color}
             radius={4}
-          />
+          >
+            {series.dataKey === 'inscritos' && (
+              <LabelList
+                dataKey="inscritos"
+                position="top"
+                className="fill-foreground text-xs"
+              />
+            )}
+          </Bar>
         ))}
       </RechartsBarChart>
     </ChartContainer>

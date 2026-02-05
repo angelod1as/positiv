@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   CartesianGrid,
+  LabelList,
   Line,
   LineChart as RechartsLineChart,
   XAxis,
@@ -14,6 +15,8 @@ import {
   type ChartConfig,
 } from '~/components/ui/chart'
 import { buildEventLabel } from '~/lib/helpers/chart-utils'
+
+const LABELED_SERIES = new Set(['inscritos', 'compareceram'])
 
 const SERIES_CONFIG = [
   { dataKey: 'inscritos', label: 'Inscritos', color: 'var(--chart-1)' },
@@ -140,8 +143,17 @@ export function AttendanceChart({ data, className }: AttendanceChartProps) {
               type="monotone"
               stroke={s.color}
               strokeWidth={2}
-              dot={false}
-            />
+              dot={{ r: 3 }}
+            >
+              {LABELED_SERIES.has(s.dataKey) && (
+                <LabelList
+                  dataKey={s.dataKey}
+                  position="top"
+                  offset={10}
+                  className="fill-foreground text-xs"
+                />
+              )}
+            </Line>
           ))}
         </RechartsLineChart>
       </ChartContainer>

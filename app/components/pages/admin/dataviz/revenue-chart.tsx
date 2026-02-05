@@ -2,6 +2,7 @@ import {
   Bar,
   CartesianGrid,
   ComposedChart,
+  LabelList,
   Line,
   XAxis,
   YAxis,
@@ -114,7 +115,14 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
           dataKey="faturamento_total"
           fill="var(--color-faturamento_total)"
           radius={4}
-        />
+        >
+          <LabelList
+            dataKey="faturamento_total"
+            position="top"
+            className="fill-foreground text-xs"
+            formatter={(value) => formatCurrency(Number(value ?? 0))}
+          />
+        </Bar>
         <Line
           dataKey="ticket_price"
           type="monotone"
