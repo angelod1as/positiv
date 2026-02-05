@@ -15,7 +15,7 @@ import paths from "~/lib/paths"
 import type { Route } from "./+types/dashboard-page"
 
 const {
-  admin: { ADMIN_PARTICIPANTS, ADMIN_FEEDBACKS, ADMIN_DATAVIZ },
+  admin: { ADMIN_PARTICIPANTS, ADMIN_FEEDBACKS },
 } = paths
 
 export function meta({}: Route.MetaArgs) {
