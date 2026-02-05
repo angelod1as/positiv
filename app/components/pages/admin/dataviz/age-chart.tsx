@@ -72,6 +72,7 @@ export function AgeChart({
           xAxisKey="ageRange"
           horizontal={true}
           ariaLabel="Distribuição de idade"
+          showValues
           className="h-[400px]"
         />
       </div>

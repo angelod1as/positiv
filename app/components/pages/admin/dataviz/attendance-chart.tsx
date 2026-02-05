@@ -8,16 +8,12 @@ import {
 } from 'recharts'
 import type { EventAttendanceDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
-import { ScrollableChartContainer } from '~/components/atoms/charts/scrollable-chart-container'
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
-import {
-  buildEventLabel,
-  calculateScrollWidth,
-} from '~/lib/helpers/chart-utils'
+import { buildEventLabel } from '~/lib/helpers/chart-utils'
 
 const SERIES_CONFIG = [
   { dataKey: 'inscritos', label: 'Inscritos', color: 'var(--chart-1)' },
@@ -118,7 +114,7 @@ export function AttendanceChart({ data, className }: AttendanceChartProps) {
   }
 
   return (
-    <ScrollableChartContainer minWidth={calculateScrollWidth(data.length, 100)}>
+    <div>
       <ChartContainer
         config={chartConfig}
         className={className}
@@ -172,6 +168,6 @@ export function AttendanceChart({ data, className }: AttendanceChartProps) {
           )
         })}
       </div>
-    </ScrollableChartContainer>
+    </div>
   )
 }

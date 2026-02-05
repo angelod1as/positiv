@@ -9,16 +9,12 @@ import {
 import { isValid, parseISO } from 'date-fns'
 import type { EventAttendanceDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
-import { ScrollableChartContainer } from '~/components/atoms/charts/scrollable-chart-container'
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
-import {
-  buildEventLabel,
-  calculateScrollWidth,
-} from '~/lib/helpers/chart-utils'
+import { buildEventLabel } from '~/lib/helpers/chart-utils'
 
 interface SeasonalityChartProps {
   data: EventAttendanceDataPoint[]
@@ -103,30 +99,28 @@ export function SeasonalityChart({ data, className }: SeasonalityChartProps) {
 
   return (
     <div>
-      <ScrollableChartContainer minWidth={calculateScrollWidth(data.length, 100)}>
-        <ChartContainer
-          config={chartConfig}
-          className={className}
-          role="img"
-          aria-label="Análise de sazonalidade - inscrições e comparecimento ao longo do tempo"
-        >
-          <RechartsBarChart data={chartData}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="label"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              height={50}
-              tick={MultiLineXAxisTick}
-            />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-            <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
-            <Bar dataKey="inscritos" fill="var(--chart-1)" radius={4} />
-            <Bar dataKey="compareceram" fill="var(--chart-2)" radius={4} />
-          </RechartsBarChart>
-        </ChartContainer>
-      </ScrollableChartContainer>
+      <ChartContainer
+        config={chartConfig}
+        className={className}
+        role="img"
+        aria-label="Análise de sazonalidade - inscrições e comparecimento ao longo do tempo"
+      >
+        <RechartsBarChart data={chartData}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="label"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            height={50}
+            tick={MultiLineXAxisTick}
+          />
+          <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+          <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
+          <Bar dataKey="inscritos" fill="var(--chart-1)" radius={4} />
+          <Bar dataKey="compareceram" fill="var(--chart-2)" radius={4} />
+        </RechartsBarChart>
+      </ChartContainer>
       {totalEvents > 0 && (
         <div className="mt-4 text-center text-sm text-muted-foreground">
           Baseado em {totalEvents} {totalEvents === 1 ? 'evento' : 'eventos'} ao

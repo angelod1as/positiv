@@ -8,7 +8,6 @@ import {
 } from 'recharts'
 import type { EventRevenueDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
-import { ScrollableChartContainer } from '~/components/atoms/charts/scrollable-chart-container'
 import {
   ChartContainer,
   ChartTooltip,
@@ -16,7 +15,6 @@ import {
 } from '~/components/ui/chart'
 import {
   buildEventLabel,
-  calculateScrollWidth,
   formatCurrency,
 } from '~/lib/helpers/chart-utils'
 
@@ -94,39 +92,37 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
   }))
 
   return (
-    <ScrollableChartContainer minWidth={calculateScrollWidth(data.length, 120)}>
-      <ChartContainer
-        config={chartConfig}
-        className={className}
-        role="img"
-        aria-label="Faturamento por evento"
-      >
-        <ComposedChart data={chartData}>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            height={50}
-            tick={MultiLineXAxisTick}
-          />
-          <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-          <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
-          <Bar
-            dataKey="faturamento_total"
-            fill="var(--color-faturamento_total)"
-            radius={4}
-          />
-          <Line
-            dataKey="ticket_price"
-            type="monotone"
-            stroke="var(--color-ticket_price)"
-            strokeWidth={2}
-            dot={{ r: 4 }}
-          />
-        </ComposedChart>
-      </ChartContainer>
-    </ScrollableChartContainer>
+    <ChartContainer
+      config={chartConfig}
+      className={className}
+      role="img"
+      aria-label="Faturamento por evento"
+    >
+      <ComposedChart data={chartData}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="label"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          height={50}
+          tick={MultiLineXAxisTick}
+        />
+        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+        <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
+        <Bar
+          dataKey="faturamento_total"
+          fill="var(--color-faturamento_total)"
+          radius={4}
+        />
+        <Line
+          dataKey="ticket_price"
+          type="monotone"
+          stroke="var(--color-ticket_price)"
+          strokeWidth={2}
+          dot={{ r: 4 }}
+        />
+      </ComposedChart>
+    </ChartContainer>
   )
 }

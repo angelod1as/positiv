@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart as RechartsBarChart,
   CartesianGrid,
+  LabelList,
   XAxis,
   YAxis,
 } from 'recharts'
@@ -29,6 +30,7 @@ export function BarChart({
   ariaLabel,
   showTooltip = true,
   showLegend = true,
+  showValues = false,
   tooltipAnimated = false,
   tooltipContent,
   children,
@@ -82,7 +84,15 @@ export function BarChart({
             fill={s.color ?? `var(--color-${s.dataKey})`}
             radius={4}
             stackId={stacked ? 'stack' : s.stackId}
-          />
+          >
+            {showValues && (
+              <LabelList
+                dataKey={s.dataKey}
+                position={horizontal ? 'right' : 'top'}
+                className="fill-foreground text-xs"
+              />
+            )}
+          </Bar>
         ))}
         {children}
       </RechartsBarChart>

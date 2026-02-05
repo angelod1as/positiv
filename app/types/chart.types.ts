@@ -18,6 +18,7 @@ export interface BaseChartProps {
   ariaLabel?: string
   showTooltip?: boolean
   showLegend?: boolean
+  showValues?: boolean
   tooltipAnimated?: boolean
   tooltipContent?: ReactElement | ((props: Record<string, unknown>) => ReactNode)
   children?: ReactNode

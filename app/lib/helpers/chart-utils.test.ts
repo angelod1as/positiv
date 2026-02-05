@@ -3,7 +3,6 @@ import {
   formatChartDate,
   formatCurrency,
   buildEventLabel,
-  calculateScrollWidth,
   groupSmallCategories,
   sanitizeCssKey,
   AGE_RANGE_ORDER,
@@ -64,24 +63,6 @@ describe('buildEventLabel', () => {
       date: '2024-01-15',
     })
     expect(result).toBe(' Festa\n15/01/24')
-  })
-})
-
-describe('calculateScrollWidth', () => {
-  it('returns minWidth based on data length and width per item', () => {
-    expect(calculateScrollWidth(10, 100)).toBe(1000)
-  })
-
-  it('returns minimum threshold when calculated width is smaller', () => {
-    expect(calculateScrollWidth(2, 100)).toBe(600)
-  })
-
-  it('uses custom minimum width', () => {
-    expect(calculateScrollWidth(2, 100, 300)).toBe(300)
-  })
-
-  it('handles zero data length', () => {
-    expect(calculateScrollWidth(0, 100)).toBe(600)
   })
 })
 

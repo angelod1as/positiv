@@ -1,3 +1,4 @@
+import type { PieLabelRenderProps } from 'recharts'
 import { Cell, Pie, PieChart } from 'recharts'
 
 import { cn } from '~/lib/utils'
@@ -9,6 +10,31 @@ import {
   ChartTooltipContent,
 } from '~/components/ui/chart'
 import type { DonutChartProps } from '~/types/chart.types'
+
+function renderCustomLabel(props: PieLabelRenderProps) {
+  const { cx, cy, midAngle = 0, outerRadius: or, payload } = props
+  const RADIAN = Math.PI / 180
+  const radius = (or as number) + 20
+  const x = (cx as number) + radius * Math.cos(-midAngle * RADIAN)
+  const y = (cy as number) + radius * Math.sin(-midAngle * RADIAN)
+  const textAnchor = x > (cx as number) ? 'start' : 'end'
+
+  const data = payload as Record<string, unknown>
+  const label = (data.label ?? data.category ?? '') as string
+  const percentage = data.percentage as number | undefined
+
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor={textAnchor}
+      dominantBaseline="central"
+      className="fill-foreground text-xs"
+    >
+      {label} {percentage != null && `(${percentage}%)`}
+    </text>
+  )
+}
 
 export function DonutChart({
   data,
@@ -37,7 +63,7 @@ export function DonutChart({
           innerRadius={innerRadius}
           outerRadius={outerRadius}
           strokeWidth={2}
-          label={showLabel}
+          label={showLabel ? renderCustomLabel : false}
         >
           {data.map((entry) => {
             const name = String(entry[nameKey])

@@ -8,16 +8,12 @@ import {
 } from 'recharts'
 import type { ConversionFunnelDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
-import { ScrollableChartContainer } from '~/components/atoms/charts/scrollable-chart-container'
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
-import {
-  buildEventLabel,
-  calculateScrollWidth,
-} from '~/lib/helpers/chart-utils'
+import { buildEventLabel } from '~/lib/helpers/chart-utils'
 
 interface FunnelChartProps {
   data: ConversionFunnelDataPoint[]
@@ -134,36 +130,34 @@ export function FunnelChart({ data, className }: FunnelChartProps) {
   )
 
   return (
-    <ScrollableChartContainer minWidth={calculateScrollWidth(data.length, 120)}>
-      <ChartContainer
-        config={chartConfig}
-        className={className}
-        role="img"
-        aria-label="Funil de conversão por evento"
-      >
-        <RechartsBarChart data={chartData}>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-            height={50}
-            tick={MultiLineXAxisTick}
+    <ChartContainer
+      config={chartConfig}
+      className={className}
+      role="img"
+      aria-label="Funil de conversão por evento"
+    >
+      <RechartsBarChart data={chartData}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="label"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          height={50}
+          tick={MultiLineXAxisTick}
+        />
+        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+        <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
+        {SERIES_CONFIG.map((series) => (
+          <Bar
+            key={series.dataKey}
+            dataKey={series.segmentKey}
+            stackId="funnel"
+            fill={series.color}
+            radius={4}
           />
-          <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-          <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
-          {SERIES_CONFIG.map((series) => (
-            <Bar
-              key={series.dataKey}
-              dataKey={series.segmentKey}
-              stackId="funnel"
-              fill={series.color}
-              radius={4}
-            />
-          ))}
-        </RechartsBarChart>
-      </ChartContainer>
-    </ScrollableChartContainer>
+        ))}
+      </RechartsBarChart>
+    </ChartContainer>
   )
 }

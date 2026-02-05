@@ -106,9 +106,4 @@ describe('AttendanceChart', () => {
     expect(legendItem).toHaveAttribute('data-hidden', 'true')
   })
 
-  it('renders with horizontal scrolling wrapper', () => {
-    const { container } = render(<AttendanceChart data={mockData} />)
-    const scrollWrapper = container.querySelector('.overflow-x-auto')
-    expect(scrollWrapper).toBeInTheDocument()
-  })
 })

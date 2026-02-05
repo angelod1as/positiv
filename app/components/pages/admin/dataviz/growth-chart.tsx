@@ -10,13 +10,11 @@ import {
 import { format, isValid, parse } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { GrowthDataPoint } from '~/business/admin/dataviz/dataviz.types'
-import { ScrollableChartContainer } from '~/components/atoms/charts/scrollable-chart-container'
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
-import { calculateScrollWidth } from '~/lib/helpers/chart-utils'
 
 interface GrowthChartProps {
   data: GrowthDataPoint[]
@@ -88,68 +86,66 @@ export function GrowthChart({ data, className }: GrowthChartProps) {
   const julyMigration = chartData.find((item) => item.month === '2025-07')
 
   return (
-    <ScrollableChartContainer minWidth={calculateScrollWidth(data.length, 80)}>
-      <ChartContainer
-        config={chartConfig}
-        className={className}
-        role="img"
-        aria-label="Gráfico de crescimento de perfis cadastrados"
-      >
-        <ComposedChart data={chartData}>
-          <CartesianGrid vertical={false} />
-          <XAxis
-            dataKey="label"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-          />
-          <YAxis
+    <ChartContainer
+      config={chartConfig}
+      className={className}
+      role="img"
+      aria-label="Gráfico de crescimento de perfis cadastrados"
+    >
+      <ComposedChart data={chartData}>
+        <CartesianGrid vertical={false} />
+        <XAxis
+          dataKey="label"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+        />
+        <YAxis
+          yAxisId="left"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+        />
+        <YAxis
+          yAxisId="right"
+          orientation="right"
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+        />
+        <ChartTooltip content={CustomTooltipContent} isAnimationActive={false} />
+        <Bar
+          yAxisId="left"
+          dataKey="new_profiles"
+          fill="var(--color-new_profiles)"
+          radius={4}
+        />
+        <Line
+          yAxisId="right"
+          dataKey="cumulative"
+          type="monotone"
+          stroke="var(--color-cumulative)"
+          strokeWidth={2}
+          dot={{ r: 4 }}
+        />
+        {julyMigration && (
+          <ReferenceDot
+            x={julyMigration.label}
+            y={julyMigration.new_profiles}
             yAxisId="left"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-          />
-          <YAxis
-            yAxisId="right"
-            orientation="right"
-            tickLine={false}
-            axisLine={false}
-            tickMargin={8}
-          />
-          <ChartTooltip content={CustomTooltipContent} isAnimationActive={false} />
-          <Bar
-            yAxisId="left"
-            dataKey="new_profiles"
-            fill="var(--color-new_profiles)"
-            radius={4}
-          />
-          <Line
-            yAxisId="right"
-            dataKey="cumulative"
-            type="monotone"
-            stroke="var(--color-cumulative)"
+            r={8}
+            fill="var(--chart-3)"
+            stroke="white"
             strokeWidth={2}
-            dot={{ r: 4 }}
+            label={{
+              value: 'Migração do sistema anterior',
+              position: 'top',
+              fill: 'var(--muted-foreground)',
+              fontSize: 10,
+            }}
           />
-          {julyMigration && (
-            <ReferenceDot
-              x={julyMigration.label}
-              y={julyMigration.new_profiles}
-              yAxisId="left"
-              r={8}
-              fill="var(--chart-3)"
-              stroke="white"
-              strokeWidth={2}
-              label={{
-                value: 'Migração do sistema anterior',
-                position: 'top',
-                fill: 'var(--muted-foreground)',
-                fontSize: 10,
-              }}
-            />
-          )}
-        </ComposedChart>
-      </ChartContainer>
-    </ScrollableChartContainer>
+        )}
+      </ComposedChart>
+    </ChartContainer>
   )
 }

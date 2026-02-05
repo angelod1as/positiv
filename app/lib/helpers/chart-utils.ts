@@ -30,16 +30,6 @@ export function buildEventLabel({
   return `${emoji} ${title}\n${formatChartDate(date)}`
 }
 
-const DEFAULT_MIN_SCROLL_WIDTH = 600
-
-export function calculateScrollWidth(
-  dataLength: number,
-  widthPerItem: number,
-  minWidth: number = DEFAULT_MIN_SCROLL_WIDTH,
-): number {
-  return Math.max(minWidth, dataLength * widthPerItem)
-}
-
 const DEFAULT_SMALL_CATEGORY_THRESHOLD = 2
 
 export function groupSmallCategories(

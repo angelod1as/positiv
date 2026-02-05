@@ -77,9 +77,4 @@ describe('FunnelChart', () => {
     expect(chart).toHaveAttribute('aria-label', 'Funil de conversão por evento')
   })
 
-  it('renders with horizontal scrolling wrapper', () => {
-    const { container } = render(<FunnelChart data={mockData} />)
-    const scrollWrapper = container.querySelector('.overflow-x-auto')
-    expect(scrollWrapper).toBeInTheDocument()
-  })
 })

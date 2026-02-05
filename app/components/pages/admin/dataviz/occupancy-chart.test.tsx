@@ -58,12 +58,6 @@ describe('OccupancyChart', () => {
     expect(chart).toHaveAttribute('aria-label', 'Gráfico de taxa de ocupação por evento')
   })
 
-  it('renders with horizontal scrolling wrapper', () => {
-    const { container} = render(<OccupancyChart data={mockData} />)
-    const scrollWrapper = container.querySelector('.overflow-x-auto')
-    expect(scrollWrapper).toBeInTheDocument()
-  })
-
   it('applies custom className prop', () => {
     const { container } = render(
       <OccupancyChart data={mockData} className="custom-chart-class" />

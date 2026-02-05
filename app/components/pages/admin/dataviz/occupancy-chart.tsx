@@ -1,9 +1,9 @@
 import { ReferenceLine } from 'recharts'
 import type { OccupancyDataPoint } from '~/business/admin/dataviz/dataviz.types'
-import { ScrollableChartContainer } from '~/components/atoms/charts/scrollable-chart-container'
+import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
 import { LineChart } from '~/components/molecules/charts/line-chart'
 import type { ChartConfig } from '~/components/ui/chart'
-import { buildEventLabel, calculateScrollWidth } from '~/lib/helpers/chart-utils'
+import { buildEventLabel } from '~/lib/helpers/chart-utils'
 import type { ChartDataPoint, ChartSeries } from '~/types/chart.types'
 
 interface OccupancyChartProps {
@@ -61,38 +61,39 @@ export function OccupancyChart({ data, className }: OccupancyChartProps) {
   const averageLabelPosition = averageOccupancy > 90 ? 'insideTopLeft' : 'insideBottomRight'
 
   return (
-    <ScrollableChartContainer minWidth={calculateScrollWidth(data.length, 100)}>
-      <LineChart
-        data={chartData}
-        config={chartConfig}
-        series={series}
-        xAxisKey="event"
-        className={className}
-        ariaLabel="Gráfico de taxa de ocupação por evento"
-      >
-        <ReferenceLine
-          y={100}
-          stroke="hsl(var(--muted-foreground))"
-          strokeDasharray="3 3"
-          label={{
-            value: 'Capacidade Total (100%)',
-            position: 'insideTopRight',
-            fill: 'hsl(var(--muted-foreground))',
-            fontSize: 12,
-          }}
-        />
-        <ReferenceLine
-          y={averageOccupancy}
-          stroke="hsl(var(--chart-2))"
-          strokeDasharray="3 3"
-          label={{
-            value: `Média: ${averageOccupancy}%`,
-            position: averageLabelPosition,
-            fill: 'hsl(var(--chart-2))',
-            fontSize: 12,
-          }}
-        />
-      </LineChart>
-    </ScrollableChartContainer>
+    <LineChart
+      data={chartData}
+      config={chartConfig}
+      series={series}
+      xAxisKey="event"
+      xAxisTickComponent={MultiLineXAxisTick}
+      xAxisHeight={50}
+      showValues
+      className={className}
+      ariaLabel="Gráfico de taxa de ocupação por evento"
+    >
+      <ReferenceLine
+        y={100}
+        stroke="hsl(var(--muted-foreground))"
+        strokeDasharray="3 3"
+        label={{
+          value: 'Capacidade Total (100%)',
+          position: 'insideTopRight',
+          fill: 'hsl(var(--muted-foreground))',
+          fontSize: 12,
+        }}
+      />
+      <ReferenceLine
+        y={averageOccupancy}
+        stroke="hsl(var(--chart-2))"
+        strokeDasharray="3 3"
+        label={{
+          value: `Média: ${averageOccupancy}%`,
+          position: averageLabelPosition,
+          fill: 'hsl(var(--chart-2))',
+          fontSize: 12,
+        }}
+      />
+    </LineChart>
   )
 }
