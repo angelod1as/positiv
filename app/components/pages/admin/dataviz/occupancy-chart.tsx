@@ -61,11 +61,11 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-1)' }} />
           <span className="chart-tooltip-label">Ocupação</span>
-          <span className="chart-tooltip-value">{String(dataPoint.occupancy_pct)}%</span>
+          <span className="chart-tooltip-value">{Number(dataPoint.occupancy_pct ?? 0)}%</span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-label">Compareceram</span>
-          <span className="chart-tooltip-value">{String(dataPoint.compareceram)} / {String(dataPoint.total_spots)}</span>
+          <span className="chart-tooltip-value">{Number(dataPoint.compareceram ?? 0)} / {Number(dataPoint.total_spots ?? 0)}</span>
         </div>
       </div>
     </div>
