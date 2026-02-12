@@ -47,7 +47,7 @@ describe("DataViz - Integration Tests", () => {
   describe("Demographics DataViz", () => {
     describe("getVeteranRookieData", () => {
       it("should calculate veterans and rookies for completed events only", async () => {
-        const eventDate = new Date("2025-06-01T19:00:00Z")
+        const eventDate = new Date("2025-12-01T19:00:00Z")
         const completedEvent = await createTestEvent(tracker, kysely, {
           title: "Veteran Rookie Event",
           emoji: "🎖️",
@@ -65,7 +65,7 @@ describe("DataViz - Integration Tests", () => {
         const veteranProfile = await createTestProfile(tracker, kysely, {
           user_id: null,
           email: `${testPrefix}-veteran@test.com`,
-          became_veteran_date: new Date("2025-01-01T00:00:00Z").toISOString(),
+          became_veteran_date: new Date("2025-07-01T00:00:00Z").toISOString(),
         })
 
         // Rookie: null became_veteran_date
@@ -79,7 +79,7 @@ describe("DataViz - Integration Tests", () => {
         const rookieProfile2 = await createTestProfile(tracker, kysely, {
           user_id: null,
           email: `${testPrefix}-rookie2@test.com`,
-          became_veteran_date: new Date("2025-12-01T00:00:00Z").toISOString(),
+          became_veteran_date: new Date("2026-01-01T00:00:00Z").toISOString(),
         })
 
         await createTestEventParticipant(tracker, kysely, {
@@ -115,7 +115,7 @@ describe("DataViz - Integration Tests", () => {
       })
 
       it("should only count attended participants", async () => {
-        const eventDate = new Date("2025-06-01T19:00:00Z")
+        const eventDate = new Date("2025-12-01T19:00:00Z")
         const event = await createTestEvent(tracker, kysely, {
           title: "Attendance Filter Event",
           event_status: "Completed" as EventStatus,
@@ -125,7 +125,7 @@ describe("DataViz - Integration Tests", () => {
         const veteranProfile = await createTestProfile(tracker, kysely, {
           user_id: null,
           email: `${testPrefix}-vet-attended@test.com`,
-          became_veteran_date: new Date("2025-01-01T00:00:00Z").toISOString(),
+          became_veteran_date: new Date("2025-07-01T00:00:00Z").toISOString(),
         })
 
         const rookieProfile = await createTestProfile(tracker, kysely, {
@@ -161,7 +161,7 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "Empty Veteran Rookie Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-04-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-10-01T19:00:00Z").toISOString(),
         })
 
         const result = await getVeteranRookieData()
@@ -180,17 +180,17 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "First VR",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
         })
         await createTestEvent(tracker, kysely, {
           title: "Second VR",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-02-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-08-01T19:00:00Z").toISOString(),
         })
         await createTestEvent(tracker, kysely, {
           title: "Third VR",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
         })
 
         const result = await getVeteranRookieData()
@@ -256,7 +256,7 @@ describe("DataViz - Integration Tests", () => {
         const event = await createTestEvent(tracker, kysely, {
           title: "Demographics Test Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-06-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-12-01T19:00:00Z").toISOString(),
         })
 
         // Profile that attended
@@ -386,7 +386,7 @@ describe("DataViz - Integration Tests", () => {
           title: "Completed Event",
           emoji: "🎉",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
           total_spots: 50,
         })
 
@@ -394,7 +394,7 @@ describe("DataViz - Integration Tests", () => {
           title: "Draft Event",
           emoji: "📝",
           event_status: "Draft" as EventStatus,
-          time_event_start: new Date("2025-02-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-08-15T19:00:00Z").toISOString(),
         })
 
         const profile1 = await createTestProfile(tracker, kysely, {
@@ -457,17 +457,17 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "First Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
         })
         await createTestEvent(tracker, kysely, {
           title: "Second Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-02-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-08-01T19:00:00Z").toISOString(),
         })
         await createTestEvent(tracker, kysely, {
           title: "Third Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
         })
 
         const result = await getEventAttendanceData()
@@ -483,7 +483,7 @@ describe("DataViz - Integration Tests", () => {
         const event = await createTestEvent(tracker, kysely, {
           title: uniqueTitle,
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-03-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-09-01T19:00:00Z").toISOString(),
         })
 
         const profiles = await Promise.all([
@@ -576,7 +576,7 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "Empty Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-04-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-10-01T19:00:00Z").toISOString(),
         })
 
         const result = await getEventAttendanceData()
@@ -597,14 +597,14 @@ describe("DataViz - Integration Tests", () => {
           title: "Revenue Event",
           emoji: "💰",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
           ticket_price: 100,
         })
 
         const draftEvent = await createTestEvent(tracker, kysely, {
           title: "Draft Event",
           event_status: "Draft" as EventStatus,
-          time_event_start: new Date("2025-02-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-08-15T19:00:00Z").toISOString(),
           ticket_price: 200,
         })
 
@@ -651,7 +651,7 @@ describe("DataViz - Integration Tests", () => {
         const event = await createTestEvent(tracker, kysely, {
           title: "Mixed Payments Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-03-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-09-01T19:00:00Z").toISOString(),
           ticket_price: 150,
         })
 
@@ -703,7 +703,7 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "Empty Revenue Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-04-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-10-01T19:00:00Z").toISOString(),
           ticket_price: 100,
         })
 
@@ -722,17 +722,17 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "First Revenue",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
         })
         await createTestEvent(tracker, kysely, {
           title: "Second Revenue",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-02-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-08-01T19:00:00Z").toISOString(),
         })
         await createTestEvent(tracker, kysely, {
           title: "Third Revenue",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
         })
 
         const result = await getEventRevenueData()
@@ -749,13 +749,13 @@ describe("DataViz - Integration Tests", () => {
         const completedEvent = await createTestEvent(tracker, kysely, {
           title: "Funnel Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
         })
 
         const draftEvent = await createTestEvent(tracker, kysely, {
           title: "Draft Event",
           event_status: "Draft" as EventStatus,
-          time_event_start: new Date("2025-02-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-08-15T19:00:00Z").toISOString(),
         })
 
         const profiles = await Promise.all([
@@ -836,7 +836,7 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "Empty Funnel Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-04-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-10-01T19:00:00Z").toISOString(),
         })
 
         const result = await getConversionFunnelData()
@@ -858,17 +858,17 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "First Funnel",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
         })
         await createTestEvent(tracker, kysely, {
           title: "Second Funnel",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-02-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-08-01T19:00:00Z").toISOString(),
         })
         await createTestEvent(tracker, kysely, {
           title: "Third Funnel",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
         })
 
         const result = await getConversionFunnelData()
@@ -886,14 +886,14 @@ describe("DataViz - Integration Tests", () => {
           title: "Occupancy Event",
           emoji: "📊",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
           total_spots: 50,
         })
 
         const draftEvent = await createTestEvent(tracker, kysely, {
           title: "Draft Event",
           event_status: "Draft" as EventStatus,
-          time_event_start: new Date("2025-02-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-08-15T19:00:00Z").toISOString(),
           total_spots: 100,
         })
 
@@ -949,7 +949,7 @@ describe("DataViz - Integration Tests", () => {
         const event = await createTestEvent(tracker, kysely, {
           title: "No Spots Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-03-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-09-01T19:00:00Z").toISOString(),
           total_spots: null,
         })
 
@@ -979,7 +979,7 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "Empty Occupancy Event",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-04-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-10-01T19:00:00Z").toISOString(),
           total_spots: 100,
         })
 
@@ -998,19 +998,19 @@ describe("DataViz - Integration Tests", () => {
         await createTestEvent(tracker, kysely, {
           title: "First Occupancy",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
           total_spots: 50,
         })
         await createTestEvent(tracker, kysely, {
           title: "Second Occupancy",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-02-01T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-08-01T19:00:00Z").toISOString(),
           total_spots: 50,
         })
         await createTestEvent(tracker, kysely, {
           title: "Third Occupancy",
           event_status: "Completed" as EventStatus,
-          time_event_start: new Date("2025-01-15T19:00:00Z").toISOString(),
+          time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
           total_spots: 50,
         })
 
@@ -1326,12 +1326,12 @@ describe("DataViz - Integration Tests", () => {
         const veteran1 = await createTestProfile(tracker, kysely, {
           user_id: null,
           email: `${testPrefix}-vet1@test.com`,
-          became_veteran_date: new Date("2025-01-01T00:00:00Z").toISOString(),
+          became_veteran_date: new Date("2025-07-01T00:00:00Z").toISOString(),
         })
         const veteran2 = await createTestProfile(tracker, kysely, {
           user_id: null,
           email: `${testPrefix}-vet2@test.com`,
-          became_veteran_date: new Date("2025-01-01T00:00:00Z").toISOString(),
+          became_veteran_date: new Date("2025-07-01T00:00:00Z").toISOString(),
         })
         const nonVeteran = await createTestProfile(tracker, kysely, {
           user_id: null,
