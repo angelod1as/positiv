@@ -14,11 +14,12 @@ jobs:
       PRODUCTION_SUPABASE_URL: ${{ secrets.PRODUCTION_SUPABASE_URL }}
       PRODUCTION_SUPABASE_ANON_KEY: ${{ secrets.PRODUCTION_SUPABASE_ANON_KEY }}
     steps:
-      - name: Make an API request to Staging Supabase
-        run: |
-          curl --fsS -X GET "${{ env.STAGING_SUPABASE_URL }}/rest/v1/" \
-          -H "apikey: ${{ env.STAGING_SUPABASE_ANON_KEY }}" \
-          -H "Authorization: Bearer ${{ env.STAGING_SUPABASE_ANON_KEY }}"
+      ## No longer needed, we don't have a Staging Supabase anymore
+      # - name: Make an API request to Staging Supabase
+      #   run: |
+      #     curl --fsS -X GET "${{ env.STAGING_SUPABASE_URL }}/rest/v1/" \
+      #     -H "apikey: ${{ env.STAGING_SUPABASE_ANON_KEY }}" \
+      #     -H "Authorization: Bearer ${{ env.STAGING_SUPABASE_ANON_KEY }}"
 
       - name: Make an API request to Production Supabase
         run: |
