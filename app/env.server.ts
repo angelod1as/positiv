@@ -14,7 +14,7 @@ const getEnvironment = makeTypedEnvironment(
     IS_PROD_IN_DEV: zod.string().optional(),
 
     ENABLE_PAYMENT_SYSTEM: zod
-      .string()
+      .enum(["true", "false"])
       .default("false")
       .transform((val) => val === "true"),
 

@@ -1,32 +1,56 @@
-import { describe, expect, it } from "vitest"
-import { FEATURES, isPaymentSystemEnabled } from "./features.server"
+import { describe, expect, it, afterEach, vi } from "vitest"
 
 describe("FEATURES", () => {
-  it("should export FEATURES object", () => {
+  it("should export FEATURES object", async () => {
+    const { FEATURES } = await import("./features.server")
     expect(FEATURES).toBeDefined()
     expect(typeof FEATURES).toBe("object")
   })
 
-  it("should have paymentSystem property", () => {
+  it("should have paymentSystem property", async () => {
+    const { FEATURES } = await import("./features.server")
     expect(FEATURES).toHaveProperty("paymentSystem")
     expect(typeof FEATURES.paymentSystem).toBe("boolean")
   })
 })
 
 describe("isPaymentSystemEnabled", () => {
-  it("should return a boolean", () => {
-    const result = isPaymentSystemEnabled()
-    expect(typeof result).toBe("boolean")
+  // Keep a copy of the original env var
+  const originalEnv = process.env.ENABLE_PAYMENT_SYSTEM
+
+  // Reset modules and env var after each test
+  afterEach(() => {
+    process.env.ENABLE_PAYMENT_SYSTEM = originalEnv
+    vi.resetModules()
   })
 
-  it("should return boolean based on ENABLE_PAYMENT_SYSTEM env var", () => {
-    const result = isPaymentSystemEnabled()
-    const envValue = process.env.ENABLE_PAYMENT_SYSTEM
-    const expected = envValue === "true"
-    expect(result).toBe(expected)
+  it('should return true when ENABLE_PAYMENT_SYSTEM is "true"', async () => {
+    vi.resetModules() // Reset BEFORE setting env var
+    process.env.ENABLE_PAYMENT_SYSTEM = "true"
+    const { isPaymentSystemEnabled } = await import("./features.server")
+    expect(isPaymentSystemEnabled()).toBe(true)
   })
 
-  it("should match FEATURES.paymentSystem value", () => {
+  it('should return false when ENABLE_PAYMENT_SYSTEM is "false"', async () => {
+    vi.resetModules() // Reset BEFORE setting env var
+    process.env.ENABLE_PAYMENT_SYSTEM = "false"
+    const { isPaymentSystemEnabled } = await import("./features.server")
+    expect(isPaymentSystemEnabled()).toBe(false)
+  })
+
+  it("should return false when ENABLE_PAYMENT_SYSTEM is not set (default)", async () => {
+    vi.resetModules() // Reset BEFORE deleting env var
+    delete process.env.ENABLE_PAYMENT_SYSTEM
+    const { isPaymentSystemEnabled } = await import("./features.server")
+    expect(isPaymentSystemEnabled()).toBe(false)
+  })
+
+  it("should match FEATURES.paymentSystem value", async () => {
+    vi.resetModules() // Reset BEFORE setting env var
+    process.env.ENABLE_PAYMENT_SYSTEM = "true"
+    const { isPaymentSystemEnabled, FEATURES } = await import(
+      "./features.server"
+    )
     expect(isPaymentSystemEnabled()).toBe(FEATURES.paymentSystem)
   })
 })
