@@ -6,6 +6,8 @@ import type {
   SeasonalityDataPoint,
 } from "./dataviz.types"
 
+const EVENT_CUTOFF_DATE = "2025-07-01"
+
 export async function getGrowthData(): Promise<GrowthDataPoint[]> {
   const result = await kyselyDb
     .selectFrom("profiles")
@@ -39,6 +41,7 @@ export async function getRetentionData(): Promise<RetentionDataPoint[]> {
         .innerJoin("events", "events.id", "event_participants.event_id")
         .where("event_participants.attendance_status", "=", "attended")
         .where("events.event_status", "=", "Completed")
+        .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
         .groupBy("event_participants.profile_id")
         .select([
           "event_participants.profile_id",
@@ -84,6 +87,7 @@ export async function getSeasonalityData(): Promise<SeasonalityDataPoint[]> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
     .groupBy(sql`extract(month from events.time_event_start)`)
     .orderBy(sql`extract(month from events.time_event_start)`, "asc")
     .select([

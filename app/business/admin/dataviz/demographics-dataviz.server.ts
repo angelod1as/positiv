@@ -6,6 +6,8 @@ import type {
   DemographicDistribution,
 } from "./dataviz.types"
 
+const EVENT_CUTOFF_DATE = "2025-07-01"
+
 export async function getVeteranRookieData(): Promise<
   VeteranRookieDataPoint[]
 > {
@@ -18,6 +20,7 @@ export async function getVeteranRookieData(): Promise<
     )
     .leftJoin("profiles", "profiles.id", "event_participants.profile_id")
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
     .where((eb) =>
       eb.or([
         eb("event_participants.attendance_status", "=", "attended"),
@@ -68,6 +71,7 @@ export async function getDemographicsData(
       .innerJoin("events", "events.id", "event_participants.event_id")
       .where("event_participants.attendance_status", "=", "attended")
       .where("events.event_status", "=", "Completed")
+      .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
       .select("event_participants.profile_id")
       .distinct()
       .execute()

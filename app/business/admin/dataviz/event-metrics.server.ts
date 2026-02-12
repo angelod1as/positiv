@@ -7,6 +7,8 @@ import type {
   OccupancyDataPoint,
 } from "./dataviz.types"
 
+const EVENT_CUTOFF_DATE = "2025-07-01"
+
 export async function getEventAttendanceData(): Promise<
   EventAttendanceDataPoint[]
 > {
@@ -18,6 +20,7 @@ export async function getEventAttendanceData(): Promise<
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
     .groupBy([
       "events.id",
       "events.title",
@@ -78,6 +81,7 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
     .groupBy([
       "events.id",
       "events.title",
@@ -121,6 +125,7 @@ export async function getConversionFunnelData(): Promise<
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
     .groupBy([
       "events.id",
       "events.title",
@@ -174,6 +179,7 @@ export async function getOccupancyData(): Promise<OccupancyDataPoint[]> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
     .groupBy([
       "events.id",
       "events.title",
