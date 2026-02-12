@@ -13,6 +13,11 @@ const getEnvironment = makeTypedEnvironment(
     IS_PROD: zod.string().optional(),
     IS_PROD_IN_DEV: zod.string().optional(),
 
+    ENABLE_PAYMENT_SYSTEM: zod
+      .string()
+      .default("false")
+      .transform((val) => val === "true"),
+
     TEST_USER_ADMIN_EMAIL: zod.string().optional(),
     TEST_USER_PASSWORD: zod.string().optional(),
 
