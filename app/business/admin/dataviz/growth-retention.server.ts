@@ -1,16 +1,16 @@
 import { sql } from "kysely"
 import { kyselyDb } from "~/kysely-db"
+import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
 import type {
   GrowthDataPoint,
   RetentionDataPoint,
   SeasonalityDataPoint,
 } from "./dataviz.types"
 
-const EVENT_CUTOFF_DATE = "2025-07-01"
-
 export async function getGrowthData(): Promise<GrowthDataPoint[]> {
   const result = await kyselyDb
     .selectFrom("profiles")
+    .where("profiles.created_at", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .select([
       sql<string>`to_char(date_trunc('month', created_at), 'YYYY-MM')`.as(
         "month"
@@ -41,7 +41,7 @@ export async function getRetentionData(): Promise<RetentionDataPoint[]> {
         .innerJoin("events", "events.id", "event_participants.event_id")
         .where("event_participants.attendance_status", "=", "attended")
         .where("events.event_status", "=", "Completed")
-        .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
+        .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
         .groupBy("event_participants.profile_id")
         .select([
           "event_participants.profile_id",
@@ -87,7 +87,7 @@ export async function getSeasonalityData(): Promise<SeasonalityDataPoint[]> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .groupBy(sql`extract(month from events.time_event_start)`)
     .orderBy(sql`extract(month from events.time_event_start)`, "asc")
     .select([

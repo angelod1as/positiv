@@ -1027,51 +1027,51 @@ describe("DataViz - Integration Tests", () => {
   describe("Growth and Retention", () => {
     describe("getGrowthData", () => {
       it("should return monthly profile growth with cumulative counts", async () => {
-        // Create profiles in different months
+        // Create profiles in different months (July-September 2025, after cutoff date)
         await createTestProfile(tracker, kysely, {
           user_id: null,
-          email: `${testPrefix}-jan1@test.com`,
-          created_at: "2024-01-15T10:00:00Z",
+          email: `${testPrefix}-jul1@test.com`,
+          created_at: "2025-07-15T10:00:00Z",
         })
         await createTestProfile(tracker, kysely, {
           user_id: null,
-          email: `${testPrefix}-jan2@test.com`,
-          created_at: "2024-01-20T10:00:00Z",
+          email: `${testPrefix}-jul2@test.com`,
+          created_at: "2025-07-20T10:00:00Z",
         })
         await createTestProfile(tracker, kysely, {
           user_id: null,
-          email: `${testPrefix}-feb1@test.com`,
-          created_at: "2024-02-10T10:00:00Z",
+          email: `${testPrefix}-aug1@test.com`,
+          created_at: "2025-08-10T10:00:00Z",
         })
         await createTestProfile(tracker, kysely, {
           user_id: null,
-          email: `${testPrefix}-mar1@test.com`,
-          created_at: "2024-03-05T10:00:00Z",
+          email: `${testPrefix}-sep1@test.com`,
+          created_at: "2025-09-05T10:00:00Z",
         })
         await createTestProfile(tracker, kysely, {
           user_id: null,
-          email: `${testPrefix}-mar2@test.com`,
-          created_at: "2024-03-15T10:00:00Z",
+          email: `${testPrefix}-sep2@test.com`,
+          created_at: "2025-09-15T10:00:00Z",
         })
 
         const result = await getGrowthData()
 
         // Find our test months
-        const jan = result.find((r) => r.month.startsWith("2024-01"))
-        const feb = result.find((r) => r.month.startsWith("2024-02"))
-        const mar = result.find((r) => r.month.startsWith("2024-03"))
+        const jul = result.find((r) => r.month.startsWith("2025-07"))
+        const aug = result.find((r) => r.month.startsWith("2025-08"))
+        const sep = result.find((r) => r.month.startsWith("2025-09"))
 
-        expect(jan).toBeDefined()
-        expect(feb).toBeDefined()
-        expect(mar).toBeDefined()
+        expect(jul).toBeDefined()
+        expect(aug).toBeDefined()
+        expect(sep).toBeDefined()
 
-        if (jan && feb && mar) {
-          expect(jan.new_profiles).toBe(2)
-          expect(feb.new_profiles).toBe(1)
-          expect(mar.new_profiles).toBe(2)
+        if (jul && aug && sep) {
+          expect(jul.new_profiles).toBe(2)
+          expect(aug.new_profiles).toBe(1)
+          expect(sep.new_profiles).toBe(2)
 
           // Cumulative should be increasing
-          expect(mar.cumulative).toBeGreaterThan(jan.cumulative)
+          expect(sep.cumulative).toBeGreaterThan(jul.cumulative)
         }
       })
 
@@ -1079,22 +1079,22 @@ describe("DataViz - Integration Tests", () => {
         await createTestProfile(tracker, kysely, {
           user_id: null,
           email: `${testPrefix}-order1@test.com`,
-          created_at: "2024-06-15T10:00:00Z",
+          created_at: "2025-10-15T10:00:00Z",
         })
         await createTestProfile(tracker, kysely, {
           user_id: null,
           email: `${testPrefix}-order2@test.com`,
-          created_at: "2024-03-15T10:00:00Z",
+          created_at: "2025-08-15T10:00:00Z",
         })
 
         const result = await getGrowthData()
 
-        // March should come before June
-        const marchIdx = result.findIndex((r) => r.month.startsWith("2024-03"))
-        const juneIdx = result.findIndex((r) => r.month.startsWith("2024-06"))
+        // August should come before October
+        const augIdx = result.findIndex((r) => r.month.startsWith("2025-08"))
+        const octIdx = result.findIndex((r) => r.month.startsWith("2025-10"))
 
-        if (marchIdx !== -1 && juneIdx !== -1) {
-          expect(marchIdx).toBeLessThan(juneIdx)
+        if (augIdx !== -1 && octIdx !== -1) {
+          expect(augIdx).toBeLessThan(octIdx)
         }
       })
     })

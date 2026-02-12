@@ -1,12 +1,11 @@
 import { sql } from "kysely"
 import { kyselyDb } from "~/kysely-db"
+import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
 import type {
   VeteranRookieDataPoint,
   DemographicsDataResult,
   DemographicDistribution,
 } from "./dataviz.types"
-
-const EVENT_CUTOFF_DATE = "2025-07-01"
 
 export async function getVeteranRookieData(): Promise<
   VeteranRookieDataPoint[]
@@ -20,7 +19,7 @@ export async function getVeteranRookieData(): Promise<
     )
     .leftJoin("profiles", "profiles.id", "event_participants.profile_id")
     .where("events.event_status", "=", "Completed")
-    .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .where((eb) =>
       eb.or([
         eb("event_participants.attendance_status", "=", "attended"),
@@ -61,17 +60,19 @@ type DemographicsMode = "all" | "attended"
 export async function getDemographicsData(
   mode: DemographicsMode
 ): Promise<DemographicsDataResult> {
-  // Build the base query depending on mode
+  // Build the base query depending on mode:
+  // - "attended": Show demographics of profiles who attended events >= cutoff date
+  // - "all": Show demographics of ALL profiles (no date filter) as a baseline for comparison
   let profileIds: string[] = []
 
   if (mode === "attended") {
-    // Get profile IDs that have attended at least one event
+    // Get profile IDs that have attended at least one event (filtered by cutoff date)
     const attendedProfiles = await kyselyDb
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .where("event_participants.attendance_status", "=", "attended")
       .where("events.event_status", "=", "Completed")
-      .where("events.time_event_start", ">=", EVENT_CUTOFF_DATE)
+      .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
       .select("event_participants.profile_id")
       .distinct()
       .execute()
