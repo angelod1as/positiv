@@ -1,5 +1,6 @@
 import { sql } from "kysely"
 import { kyselyDb } from "~/kysely-db"
+import { DATAVIZ_EVENT_CUTOFF_DATE } from "~/lib/constants/constants"
 import type {
   EventAttendanceDataPoint,
   EventRevenueDataPoint,
@@ -18,6 +19,7 @@ export async function getEventAttendanceData(): Promise<
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .groupBy([
       "events.id",
       "events.title",
@@ -78,6 +80,7 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .groupBy([
       "events.id",
       "events.title",
@@ -121,6 +124,7 @@ export async function getConversionFunnelData(): Promise<
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .groupBy([
       "events.id",
       "events.title",
@@ -174,6 +178,7 @@ export async function getOccupancyData(): Promise<OccupancyDataPoint[]> {
       "events.id"
     )
     .where("events.event_status", "=", "Completed")
+    .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .groupBy([
       "events.id",
       "events.title",
