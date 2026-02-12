@@ -83,14 +83,14 @@ describe("getKpiScores - Extended KPI Data", () => {
       email: "attended2@test.com",
     })
 
-    // Create 6 completed events
+    // Create 6 completed events (July 2025 onwards)
     const events = await Promise.all(
       Array.from({ length: 6 }).map((_, i) =>
         createTestEvent(tracker, kysely, {
           title: `Test Event ${i + 1}`,
           event_status: "Completed",
-          time_event_start: new Date(`2025-0${i + 1}-01`).toISOString(),
-          time_event_end: new Date(`2025-0${i + 1}-01`).toISOString(),
+          time_event_start: new Date(`2025-${String(i + 7).padStart(2, '0')}-01`).toISOString(),
+          time_event_end: new Date(`2025-${String(i + 7).padStart(2, '0')}-01`).toISOString(),
           total_spots: 10,
           ticket_price: 100,
         })
@@ -149,14 +149,14 @@ describe("getKpiScores - Extended KPI Data", () => {
       email: "attended4@test.com",
     })
 
-    // Create 6 completed events
+    // Create 6 completed events (July 2025 onwards)
     const events = await Promise.all(
       Array.from({ length: 6 }).map((_, i) =>
         createTestEvent(tracker, kysely, {
           title: `Test Event ${i + 1}`,
           event_status: "Completed",
-          time_event_start: new Date(`2025-0${i + 1}-01`).toISOString(),
-          time_event_end: new Date(`2025-0${i + 1}-01`).toISOString(),
+          time_event_start: new Date(`2025-${String(i + 7).padStart(2, '0')}-01`).toISOString(),
+          time_event_end: new Date(`2025-${String(i + 7).padStart(2, '0')}-01`).toISOString(),
           total_spots: 10,
           ticket_price: 100,
         })
