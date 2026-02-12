@@ -2,7 +2,7 @@
 -- This job processes pre-opening reminder campaigns (3-day advance notifications)
 -- Runs every 30 minutes to check for events that need reminders sent
 --
--- DEPENDS ON: 20260129164002_add_campaign_types.sql
+-- DEPENDS ON: 20260129215501_add_campaign_types.sql
 -- This migration requires the campaign_type column and should_send_at column
 -- added by the previous migration to function correctly.
 
