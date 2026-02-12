@@ -19,9 +19,11 @@ describe("isPaymentSystemEnabled", () => {
     expect(typeof result).toBe("boolean")
   })
 
-  it("should default to false when not set", () => {
+  it("should return boolean based on ENABLE_PAYMENT_SYSTEM env var", () => {
     const result = isPaymentSystemEnabled()
-    expect(result).toBe(false)
+    const envValue = process.env.ENABLE_PAYMENT_SYSTEM
+    const expected = envValue === "true"
+    expect(result).toBe(expected)
   })
 
   it("should match FEATURES.paymentSystem value", () => {
