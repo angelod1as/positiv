@@ -98,11 +98,13 @@ export function meta({}: Route.MetaArgs) {
 
 export async function loader({ params, request }: Route.LoaderArgs) {
   try {
-    const { currentProfile, currentUser, isProdInDev } = await getContext(
-      request,
-      params,
-    )
+    const { currentProfile, currentUser, isProdInDev, supabaseHeaders } =
+      await getContext(request, params)
     const { toast, headers } = await getToast(request)
+
+    supabaseHeaders.forEach((value, key) => {
+      headers.append(key, value)
+    })
 
     const cookieHeader = request.headers.get("Cookie")
     const cookie = (await newsCookie.parse(cookieHeader)) || {}
