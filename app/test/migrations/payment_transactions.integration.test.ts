@@ -1,0 +1,338 @@
+import { describe, it, expect, beforeEach, afterEach } from "vitest"
+import { sql } from "kysely"
+import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
+import { createTestProfile, createTestEvent, createTestEventParticipant } from "~/test/db-test-utils"
+
+describe("payment_transactions table - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  async function createTestData(emailSuffix: string) {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `payment-test-${emailSuffix}@example.com`,
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: `Payment Test Event ${emailSuffix}`,
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      event_id: event.id,
+      profile_id: profile.id,
+    })
+
+    return { profile, event, participant }
+  }
+
+  it("should have payment_transactions table", async () => {
+    const result = await kysely
+      .selectFrom("payment_transactions")
+      .selectAll()
+      .execute()
+
+    expect(result).toBeDefined()
+    expect(Array.isArray(result)).toBe(true)
+  })
+
+  it("should create transaction with complete Asaas data", async () => {
+    const { profile, event, participant } = await createTestData("create")
+
+    const asaasPaymentData = {
+      id: "pay_test123",
+      customer: "cus_test456",
+      billingType: "CREDIT_CARD",
+      value: 227,
+      netValue: 219.45,
+      status: "CONFIRMED",
+      installmentCount: 3,
+      installmentValue: 75.67,
+      creditCard: {
+        creditCardNumber: "8829",
+        creditCardBrand: "MASTERCARD",
+      },
+      confirmedDate: "2026-02-12",
+      invoiceUrl: "https://example.com/invoice",
+    }
+
+    const transaction = await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_test123",
+        asaas_customer_id: "cus_test456",
+        asaas_payment_data: JSON.stringify(asaasPaymentData),
+        payment_method: "credit_card",
+        amount: 227,
+        installments: 3,
+        status: "pending",
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    expect(transaction.id).toBeDefined()
+    expect(transaction.asaas_payment_id).toBe("pay_test123")
+    expect(transaction.asaas_customer_id).toBe("cus_test456")
+    expect(transaction.payment_method).toBe("credit_card")
+    expect(Number(transaction.amount)).toBe(227)
+    expect(transaction.installments).toBe(3)
+    expect(transaction.status).toBe("pending")
+    expect(transaction.event_id).toBe(event.id)
+    expect(transaction.created_at).toBeDefined()
+    expect(transaction.updated_at).toBeDefined()
+  })
+
+  it("should enforce unique constraint on asaas_payment_id", async () => {
+    const { profile, event, participant } = await createTestData("unique")
+
+    await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_unique123",
+        asaas_customer_id: "cus_test789",
+        asaas_payment_data: JSON.stringify({ id: "pay_unique123" }),
+        payment_method: "pix",
+        amount: 220,
+        status: "pending",
+      })
+      .execute()
+
+    await expect(
+      kysely
+        .insertInto("payment_transactions")
+        .values({
+          event_participant_id: participant.id,
+          profile_id: profile.id,
+          event_id: event.id,
+          asaas_payment_id: "pay_unique123",
+          asaas_customer_id: "cus_test789",
+          asaas_payment_data: JSON.stringify({ id: "pay_unique123" }),
+          payment_method: "pix",
+          amount: 220,
+          status: "pending",
+        })
+        .execute()
+    ).rejects.toThrow()
+  })
+
+  it("should enforce payment_method check constraint", async () => {
+    const { profile, event, participant } = await createTestData("method")
+
+    await expect(
+      kysely
+        .insertInto("payment_transactions")
+        .values({
+          event_participant_id: participant.id,
+          profile_id: profile.id,
+          event_id: event.id,
+          asaas_payment_id: "pay_method456",
+          asaas_customer_id: "cus_test999",
+          asaas_payment_data: JSON.stringify({ id: "pay_method456" }),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          payment_method: "invalid_method" as any,
+          amount: 220,
+          status: "pending",
+        })
+        .execute()
+    ).rejects.toThrow()
+  })
+
+  it("should enforce status check constraint", async () => {
+    const { profile, event, participant } = await createTestData("status")
+
+    await expect(
+      kysely
+        .insertInto("payment_transactions")
+        .values({
+          event_participant_id: participant.id,
+          profile_id: profile.id,
+          event_id: event.id,
+          asaas_payment_id: "pay_status789",
+          asaas_customer_id: "cus_test888",
+          asaas_payment_data: JSON.stringify({ id: "pay_status789" }),
+          payment_method: "pix",
+          amount: 220,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          status: "invalid_status" as any,
+        })
+        .execute()
+    ).rejects.toThrow()
+  })
+
+  it("should CASCADE delete when participant is deleted", async () => {
+    const { profile, event, participant } = await createTestData("cascade")
+
+    const transaction = await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_cascade123",
+        asaas_customer_id: "cus_test777",
+        asaas_payment_data: JSON.stringify({ id: "pay_cascade123" }),
+        payment_method: "pix",
+        amount: 220,
+        status: "pending",
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    await kysely
+      .deleteFrom("event_participants")
+      .where("id", "=", participant.id)
+      .execute()
+
+    const deletedTransaction = await kysely
+      .selectFrom("payment_transactions")
+      .where("id", "=", transaction.id)
+      .selectAll()
+      .executeTakeFirst()
+
+    expect(deletedTransaction).toBeUndefined()
+  })
+
+  it("should store and query JSONB data", async () => {
+    const { profile, event, participant } = await createTestData("jsonb")
+
+    const asaasPaymentData = {
+      id: "pay_jsonb123",
+      customer: "cus_jsonb456",
+      billingType: "CREDIT_CARD",
+      creditCard: {
+        creditCardBrand: "VISA",
+        creditCardNumber: "1234",
+      },
+    }
+
+    await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_jsonb123",
+        asaas_customer_id: "cus_jsonb456",
+        asaas_payment_data: JSON.stringify(asaasPaymentData),
+        payment_method: "credit_card",
+        amount: 227,
+        status: "pending",
+      })
+      .execute()
+
+    const result = await kysely
+      .selectFrom("payment_transactions")
+      .select([
+        "asaas_payment_id",
+        sql<string>`asaas_payment_data->'creditCard'->>'creditCardBrand'`.as("card_brand"),
+      ])
+      .where("asaas_payment_id", "=", "pay_jsonb123")
+      .executeTakeFirstOrThrow()
+
+    expect(result.card_brand).toBe("VISA")
+  })
+
+  it("should auto-update updated_at timestamp on modification", async () => {
+    const { profile, event, participant } = await createTestData("timestamp")
+
+    const transaction = await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_timestamp123",
+        asaas_customer_id: "cus_timestamp456",
+        asaas_payment_data: JSON.stringify({ id: "pay_timestamp123" }),
+        payment_method: "pix",
+        amount: 220,
+        status: "pending",
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    const originalUpdatedAt = transaction.updated_at
+
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    const updated = await kysely
+      .updateTable("payment_transactions")
+      .set({ status: "confirmed", confirmed_at: new Date().toISOString() })
+      .where("id", "=", transaction.id)
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    expect(new Date(updated.updated_at).getTime()).toBeGreaterThan(
+      new Date(originalUpdatedAt).getTime()
+    )
+  })
+
+  it("should allow all valid payment methods", async () => {
+    const methods = ["pix", "credit_card", "boleto"] as const
+
+    for (const method of methods) {
+      const { profile, event, participant } = await createTestData(`pm-${method}`)
+
+      const transaction = await kysely
+        .insertInto("payment_transactions")
+        .values({
+          event_participant_id: participant.id,
+          profile_id: profile.id,
+          event_id: event.id,
+          asaas_payment_id: `pay_${method}_test`,
+          asaas_customer_id: `cus_${method}_test`,
+          asaas_payment_data: JSON.stringify({ id: `pay_${method}_test`, billingType: method.toUpperCase() }),
+          payment_method: method,
+          amount: 220,
+          status: "pending",
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow()
+
+      expect(transaction.payment_method).toBe(method)
+    }
+  })
+
+  it("should allow all valid statuses", async () => {
+    const { profile, event, participant } = await createTestData("statuses")
+
+    const transaction = await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_status_lifecycle",
+        asaas_customer_id: "cus_status_test",
+        asaas_payment_data: JSON.stringify({ id: "pay_status_lifecycle" }),
+        payment_method: "pix",
+        amount: 220,
+        status: "pending",
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    for (const status of ["confirmed", "failed", "refunded"] as const) {
+      const updated = await kysely
+        .updateTable("payment_transactions")
+        .set({ status })
+        .where("id", "=", transaction.id)
+        .returningAll()
+        .executeTakeFirstOrThrow()
+
+      expect(updated.status).toBe(status)
+    }
+  })
+})
