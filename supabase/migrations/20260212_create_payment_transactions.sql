@@ -76,7 +76,7 @@ BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = '';
 
 CREATE OR REPLACE TRIGGER update_payment_transactions_timestamp
 BEFORE UPDATE ON public.payment_transactions
@@ -89,7 +89,10 @@ EXECUTE FUNCTION update_payment_transactions_updated_at();
 
 ALTER TABLE public.payment_transactions OWNER TO postgres;
 
--- Service role only (server-side operations)
+-- Enable RLS (defense-in-depth, consistent with all other tables)
+ALTER TABLE public.payment_transactions ENABLE ROW LEVEL SECURITY;
+
+-- Service role only (server-side operations, bypasses RLS)
 GRANT ALL ON TABLE public.payment_transactions TO service_role;
 REVOKE ALL ON TABLE public.payment_transactions FROM anon, authenticated;
 

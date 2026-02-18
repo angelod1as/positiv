@@ -204,6 +204,30 @@ describe("payment_transactions table - Integration Tests", () => {
     expect(deletedTransaction).toBeUndefined()
   })
 
+  it("should RESTRICT deletion of profile with payment transactions", async () => {
+    const { profile, event, participant } = await createTestData("restrict")
+
+    await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_restrict_test",
+        asaas_customer_id: "cus_restrict_test",
+        asaas_payment_data: { id: "pay_restrict_test" },
+        payment_method: "pix",
+        amount: 220,
+        status: "pending",
+      })
+      .execute()
+
+    // Should fail: profile has payment transactions (ON DELETE RESTRICT)
+    await expect(
+      kysely.deleteFrom("profiles").where("id", "=", profile.id).execute()
+    ).rejects.toThrow()
+  })
+
   it("should store and query JSONB data", async () => {
     const { profile, event, participant } = await createTestData("jsonb")
 
