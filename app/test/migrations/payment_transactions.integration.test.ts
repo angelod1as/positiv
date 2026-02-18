@@ -70,7 +70,7 @@ describe("payment_transactions table - Integration Tests", () => {
         event_id: event.id,
         asaas_payment_id: "pay_test123",
         asaas_customer_id: "cus_test456",
-        asaas_payment_data: JSON.stringify(asaasPaymentData),
+        asaas_payment_data: asaasPaymentData,
         payment_method: "credit_card",
         amount: 227,
         installments: 3,
@@ -102,7 +102,7 @@ describe("payment_transactions table - Integration Tests", () => {
         event_id: event.id,
         asaas_payment_id: "pay_unique123",
         asaas_customer_id: "cus_test789",
-        asaas_payment_data: JSON.stringify({ id: "pay_unique123" }),
+        asaas_payment_data: { id: "pay_unique123" },
         payment_method: "pix",
         amount: 220,
         status: "pending",
@@ -118,7 +118,7 @@ describe("payment_transactions table - Integration Tests", () => {
           event_id: event.id,
           asaas_payment_id: "pay_unique123",
           asaas_customer_id: "cus_test789",
-          asaas_payment_data: JSON.stringify({ id: "pay_unique123" }),
+          asaas_payment_data: { id: "pay_unique123" },
           payment_method: "pix",
           amount: 220,
           status: "pending",
@@ -139,7 +139,7 @@ describe("payment_transactions table - Integration Tests", () => {
           event_id: event.id,
           asaas_payment_id: "pay_method456",
           asaas_customer_id: "cus_test999",
-          asaas_payment_data: JSON.stringify({ id: "pay_method456" }),
+          asaas_payment_data: { id: "pay_method456" },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           payment_method: "invalid_method" as any,
           amount: 220,
@@ -161,7 +161,7 @@ describe("payment_transactions table - Integration Tests", () => {
           event_id: event.id,
           asaas_payment_id: "pay_status789",
           asaas_customer_id: "cus_test888",
-          asaas_payment_data: JSON.stringify({ id: "pay_status789" }),
+          asaas_payment_data: { id: "pay_status789" },
           payment_method: "pix",
           amount: 220,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -182,7 +182,7 @@ describe("payment_transactions table - Integration Tests", () => {
         event_id: event.id,
         asaas_payment_id: "pay_cascade123",
         asaas_customer_id: "cus_test777",
-        asaas_payment_data: JSON.stringify({ id: "pay_cascade123" }),
+        asaas_payment_data: { id: "pay_cascade123" },
         payment_method: "pix",
         amount: 220,
         status: "pending",
@@ -225,7 +225,7 @@ describe("payment_transactions table - Integration Tests", () => {
         event_id: event.id,
         asaas_payment_id: "pay_jsonb123",
         asaas_customer_id: "cus_jsonb456",
-        asaas_payment_data: JSON.stringify(asaasPaymentData),
+        asaas_payment_data: asaasPaymentData,
         payment_method: "credit_card",
         amount: 227,
         status: "pending",
@@ -255,7 +255,7 @@ describe("payment_transactions table - Integration Tests", () => {
         event_id: event.id,
         asaas_payment_id: "pay_timestamp123",
         asaas_customer_id: "cus_timestamp456",
-        asaas_payment_data: JSON.stringify({ id: "pay_timestamp123" }),
+        asaas_payment_data: { id: "pay_timestamp123" },
         payment_method: "pix",
         amount: 220,
         status: "pending",
@@ -293,7 +293,7 @@ describe("payment_transactions table - Integration Tests", () => {
           event_id: event.id,
           asaas_payment_id: `pay_${method}_test`,
           asaas_customer_id: `cus_${method}_test`,
-          asaas_payment_data: JSON.stringify({ id: `pay_${method}_test`, billingType: method.toUpperCase() }),
+          asaas_payment_data: { id: `pay_${method}_test`, billingType: method.toUpperCase() },
           payment_method: method,
           amount: 220,
           status: "pending",
@@ -303,6 +303,80 @@ describe("payment_transactions table - Integration Tests", () => {
 
       expect(transaction.payment_method).toBe(method)
     }
+  })
+
+  it("should accept created_by referencing a valid profile", async () => {
+    const { profile, event, participant } = await createTestData("createdby")
+
+    const adminProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "admin-createdby@example.com",
+    })
+
+    const transaction = await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_createdby_test",
+        asaas_customer_id: "cus_createdby_test",
+        asaas_payment_data: { id: "pay_createdby_test" },
+        payment_method: "pix",
+        amount: 220,
+        status: "pending",
+        created_by: adminProfile.id,
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    expect(transaction.created_by).toBe(adminProfile.id)
+  })
+
+  it("should enforce refund_reason is required when status is refunded", async () => {
+    const { profile, event, participant } = await createTestData("refund-check")
+
+    // Insert a pending transaction
+    const transaction = await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_refund_check",
+        asaas_customer_id: "cus_refund_check",
+        asaas_payment_data: { id: "pay_refund_check" },
+        payment_method: "pix",
+        amount: 220,
+        status: "pending",
+      })
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    // Should fail: setting status to 'refunded' without refund_reason
+    await expect(
+      kysely
+        .updateTable("payment_transactions")
+        .set({ status: "refunded" })
+        .where("id", "=", transaction.id)
+        .execute()
+    ).rejects.toThrow()
+
+    // Should succeed: setting status to 'refunded' with refund_reason
+    const refunded = await kysely
+      .updateTable("payment_transactions")
+      .set({
+        status: "refunded",
+        refund_reason: "Customer requested cancellation",
+        refunded_at: new Date().toISOString(),
+      })
+      .where("id", "=", transaction.id)
+      .returningAll()
+      .executeTakeFirstOrThrow()
+
+    expect(refunded.status).toBe("refunded")
+    expect(refunded.refund_reason).toBe("Customer requested cancellation")
+    expect(refunded.refunded_at).toBeDefined()
   })
 
   it("should allow all valid statuses", async () => {
@@ -316,7 +390,7 @@ describe("payment_transactions table - Integration Tests", () => {
         event_id: event.id,
         asaas_payment_id: "pay_status_lifecycle",
         asaas_customer_id: "cus_status_test",
-        asaas_payment_data: JSON.stringify({ id: "pay_status_lifecycle" }),
+        asaas_payment_data: { id: "pay_status_lifecycle" },
         payment_method: "pix",
         amount: 220,
         status: "pending",
@@ -325,9 +399,14 @@ describe("payment_transactions table - Integration Tests", () => {
       .executeTakeFirstOrThrow()
 
     for (const status of ["confirmed", "failed", "refunded"] as const) {
+      const setValues: Record<string, string> = { status }
+      if (status === "refunded") {
+        setValues.refund_reason = "Test refund reason"
+      }
+
       const updated = await kysely
         .updateTable("payment_transactions")
-        .set({ status })
+        .set(setValues)
         .where("id", "=", transaction.id)
         .returningAll()
         .executeTakeFirstOrThrow()

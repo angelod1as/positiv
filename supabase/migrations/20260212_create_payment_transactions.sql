@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS public.payment_transactions (
     -- Our Data (Relationships & Identifiers)
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     event_participant_id uuid NOT NULL REFERENCES public.event_participants(id) ON DELETE CASCADE,
-    profile_id uuid NOT NULL REFERENCES public.profiles(id),
-    event_id uuid NOT NULL REFERENCES public.events(id),
+    profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
+    event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE RESTRICT,
 
     -- Asaas Payment Data (Store as received)
     asaas_payment_id text UNIQUE NOT NULL,
@@ -32,7 +32,11 @@ CREATE TABLE IF NOT EXISTS public.payment_transactions (
     -- Status & Refund (Our state management)
     status text NOT NULL CHECK (status IN ('pending', 'confirmed', 'failed', 'refunded')),
     created_by uuid REFERENCES public.profiles(id),
-    refund_reason text
+    refund_reason text,
+
+    -- Business rule: refund_reason is required when status is 'refunded'
+    CONSTRAINT chk_refund_reason_required_when_refunded
+        CHECK (status != 'refunded' OR refund_reason IS NOT NULL)
 );
 
 -- ============================================
@@ -74,7 +78,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_payment_transactions_timestamp
+CREATE OR REPLACE TRIGGER update_payment_transactions_timestamp
 BEFORE UPDATE ON public.payment_transactions
 FOR EACH ROW
 EXECUTE FUNCTION update_payment_transactions_updated_at();
