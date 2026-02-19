@@ -1,5 +1,6 @@
 import { ArrowRightIcon } from "lucide-react"
 import type { FC } from "react"
+import { BDSMBadge } from "~/components/atoms/badges/badges"
 import { Button } from "~/components/atoms/button/button"
 import {
   Card,
@@ -46,6 +47,7 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                 time_event_end,
                 title,
                 is_applied,
+                event_type,
               }) => {
                 const { date, time: startingTime } =
                   formatDateTime(time_event_start)
@@ -68,8 +70,9 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                         {date}, das {startingTime} às {endingTime}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="text-muted-foreground grow gap-4 flex flex-col">
+                    <CardContent className="text-muted-foreground grow gap-4 flex flex-col items-center">
                       <p>{description}</p>
+                      <BDSMBadge event_type={event_type} />
                     </CardContent>
                     <CardFooter className="flex flex-col gap-2">
                       {isOpen ? (
