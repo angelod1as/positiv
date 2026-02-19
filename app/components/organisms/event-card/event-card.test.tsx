@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from "vitest"
-import { render } from "~/test/test-utils"
-import type { ViewEvent } from "~types/database/entities.types"
+import { render, screen } from "~/test/test-utils"
+import type { Event } from "~types/database/entities.types"
 import { EventCard } from "./event-card"
 
-const mockEvent: ViewEvent = {
+const mockEvent: Event = {
   id: "test-event-id",
   title: "Test Event",
   description: "Test Description",
@@ -19,6 +19,12 @@ const mockEvent: ViewEvent = {
   ticket_price: 50,
   event_status: "Registration Open",
   is_applied: false,
+  event_type: "regular",
+  auto_publish: false,
+  created_at: "2025-01-01T00:00:00Z",
+  total_spots: null,
+  listmonk_list_id: null,
+  listmonk_list_synced_at: null,
 }
 
 vi.mock("./event-card-footer", () => ({
@@ -63,5 +69,18 @@ describe("EventCard", () => {
 
     const footer = getByTestId("event-card-footer")
     expect(footer).toHaveAttribute("data-event-id", "test-event-id")
+  })
+
+  it("should render BDSM badge when event_type is bdsm", () => {
+    const bdsmEvent = { ...mockEvent, event_type: "bdsm" as const }
+    render(<EventCard event={bdsmEvent} data-testid="test-card" />)
+
+    expect(screen.getByText("Edição BDSM")).toBeInTheDocument()
+  })
+
+  it("should not render BDSM badge when event_type is regular", () => {
+    render(<EventCard event={mockEvent} data-testid="test-card" />)
+
+    expect(screen.queryByText("Edição BDSM")).not.toBeInTheDocument()
   })
 })

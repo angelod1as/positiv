@@ -1,7 +1,7 @@
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 
 /**
  * Registration Limit Reached Admin Email Template
@@ -10,7 +10,7 @@ import type { ViewEvent } from "~types/database/entities.types"
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const registrationLimitReachedAdminTemplate = (
-  event: Omit<ViewEvent, "is_applied">,
+  event: Event,
   participantCount: number,
   timestamp: Date,
 ): string => {

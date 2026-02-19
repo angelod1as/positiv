@@ -1,8 +1,8 @@
 import ical, { ICalAlarmType, ICalCalendarMethod } from "ical-generator"
-import type { Event, ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 import { POSITIV_EMAIL, POSITIV_URL } from "~/lib/constants/constants"
 
-export const formatCalendarEvent = async (event: ViewEvent | Event) => {
+export const formatCalendarEvent = async (event: Event) => {
   const { time_event_start, time_event_end, location, title, emoji } = event
   if (!time_event_start || !time_event_end || !title || !location) return
 

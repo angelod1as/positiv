@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
 import { formatRegistrationLimitAdminMail } from "./format-registration-limit-admin-mail"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 
 describe("formatRegistrationLimitAdminMail", () => {
-    const mockEvent: Omit<ViewEvent, "is_applied"> = {
+    const mockEvent: Event = {
     id: "123e4567-e89b-12d3-a456-426614174000",
     title: "Test Event",
     emoji: "🎉",
@@ -18,6 +18,12 @@ describe("formatRegistrationLimitAdminMail", () => {
     time_payment_end: "2026-02-14T23:59:59Z",
     ticket_price: 30,
     event_status: "Registration Closed",
+    event_type: "regular",
+    auto_publish: false,
+    created_at: "2025-01-01T00:00:00Z",
+    total_spots: null,
+    listmonk_list_id: null,
+    listmonk_list_synced_at: null,
   }
 
   const participantCount = 90

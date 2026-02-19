@@ -1,9 +1,9 @@
 import { htmlToText } from "html-to-text"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 import { registrationLimitReachedAdminTemplate } from "./templates/registration-limit-reached-admin.template"
 
 export const formatRegistrationLimitAdminMail = async (
-  event: Omit<ViewEvent, "is_applied">,
+  event: Event,
   participantCount: number,
   timestamp: Date,
 ) => {

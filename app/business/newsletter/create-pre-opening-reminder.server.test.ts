@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 
 vi.mock("~/env.server", () => ({
   env: () => ({
@@ -17,7 +17,7 @@ const { createPreOpeningReminder } = await import(
 )
 
 describe("createPreOpeningReminder", () => {
-  const mockEvent: Omit<ViewEvent, "is_applied"> = {
+  const mockEvent: Event = {
     id: "test-event-id",
     title: "Test Event",
     emoji: "🎉",
@@ -32,6 +32,12 @@ describe("createPreOpeningReminder", () => {
     description: "Test Description",
     ticket_price: null,
     event_status: "Scheduled",
+    event_type: "regular",
+    auto_publish: false,
+    created_at: "2025-01-01T00:00:00Z",
+    total_spots: null,
+    listmonk_list_id: null,
+    listmonk_list_synced_at: null,
   }
 
   beforeEach(() => {

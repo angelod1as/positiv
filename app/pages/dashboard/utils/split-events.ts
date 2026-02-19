@@ -1,11 +1,11 @@
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 
-export const splitEvents = (events: ViewEvent[] | undefined) => {
+export const splitEvents = (events: Event[] | undefined) => {
   const empty: {
-    registrationOpen: ViewEvent[]
-    scheduled: ViewEvent[]
-    registrationClosed: ViewEvent[]
+    registrationOpen: Event[]
+    scheduled: Event[]
+    registrationClosed: Event[]
   } = {
     registrationOpen: [],
     scheduled: [],

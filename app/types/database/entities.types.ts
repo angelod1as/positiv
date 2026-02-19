@@ -55,26 +55,6 @@ export type Participant = Profile &
 /** Event Status */
 export type EventStatus = Database["public"]["Enums"]["event_status"]
 
-/** Limited event information */
-export type ViewEvent = Pick<
-  Event,
-  | "id"
-  | "description"
-  | "emoji"
-  | "time_event_start"
-  | "time_event_end"
-  | "time_application_start"
-  | "location"
-  | "ticket_price"
-  | "title"
-  | "time_group_end"
-  | "time_group_start"
-  | "time_payment_start"
-  | "time_payment_end"
-> & {
-  event_status: EventStatus
-  is_applied?: boolean
-}
 
 const participantApplicationStatus = [
   "pending",

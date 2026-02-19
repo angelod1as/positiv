@@ -42,22 +42,7 @@ export const getAdminContext = async (
 export const getEventsForDashboard = async () => {
   const events = await kyselyDb
     .selectFrom("events")
-    .select([
-      "id",
-      "title",
-      "description",
-      "emoji",
-      "event_status",
-      "location",
-      "ticket_price",
-      "time_event_start",
-      "time_event_end",
-      "time_application_start",
-      "time_group_start",
-      "time_group_end",
-      "time_payment_start",
-      "time_payment_end",
-    ])
+    .selectAll()
     .orderBy("time_event_start", "desc")
     .execute()
 

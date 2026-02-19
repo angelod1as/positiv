@@ -1,5 +1,6 @@
 import { ArrowRightIcon } from "lucide-react"
 import type { FC } from "react"
+import { BDSMBadge } from "~/components/atoms/badges/badges"
 import { Button } from "~/components/atoms/button/button"
 import {
   Card,
@@ -11,7 +12,7 @@ import {
 } from "~/components/ui/card"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import routes from "~/lib/paths"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 import { HomePageTitle } from "../home-title/home-title"
 import { Section } from "../section/section"
 
@@ -20,7 +21,7 @@ const {
 } = routes
 
 type HomePageNextEventsProps = {
-  events: Array<ViewEvent>
+  events: Array<Event>
 }
 export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
   return (
@@ -46,6 +47,7 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                 time_event_end,
                 title,
                 is_applied,
+                event_type,
               }) => {
                 const { date, time: startingTime } =
                   formatDateTime(time_event_start)
@@ -68,8 +70,9 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                         {date}, das {startingTime} às {endingTime}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="text-muted-foreground grow gap-4 flex flex-col">
+                    <CardContent className="text-muted-foreground grow gap-4 flex flex-col items-center">
                       <p>{description}</p>
+                      <BDSMBadge event_type={event_type} />
                     </CardContent>
                     <CardFooter className="flex flex-col gap-2">
                       {isOpen ? (
