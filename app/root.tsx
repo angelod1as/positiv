@@ -11,11 +11,7 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router"
-import {
-  getToast,
-  redirectWithError,
-  redirectWithSuccess,
-} from "remix-toast"
+import { getToast, redirectWithError, redirectWithSuccess } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
@@ -36,18 +32,18 @@ import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
 import { NewsletterSubscriptionModal } from "./components/organisms/newsletter-subscription-modal"
 import { ProfileUpdateGuard } from "./components/organisms/profile-update-guard/profile-update-guard"
 
-import "@fontsource/dm-sans/400.css"
 import "@fontsource/dm-sans/400-italic.css"
-import "@fontsource/dm-sans/500.css"
+import "@fontsource/dm-sans/400.css"
 import "@fontsource/dm-sans/500-italic.css"
-import "@fontsource/dm-sans/700.css"
+import "@fontsource/dm-sans/500.css"
 import "@fontsource/dm-sans/700-italic.css"
-import "@fontsource/nunito/400.css"
+import "@fontsource/dm-sans/700.css"
 import "@fontsource/nunito/400-italic.css"
-import "@fontsource/nunito/500.css"
+import "@fontsource/nunito/400.css"
 import "@fontsource/nunito/500-italic.css"
-import "@fontsource/nunito/700.css"
+import "@fontsource/nunito/500.css"
 import "@fontsource/nunito/700-italic.css"
+import "@fontsource/nunito/700.css"
 
 export const links: Route.LinksFunction = () => []
 
@@ -212,11 +208,7 @@ export async function action({ params, request }: Route.ActionArgs) {
         ? "Inscrição realizada! Houve um problema temporário com o sistema de emails, mas entraremos em contato em breve."
         : "Inscrição realizada com sucesso!"
 
-    return redirectWithSuccess(
-      thisUrl as string,
-      successMessage,
-      { headers },
-    )
+    return redirectWithSuccess(thisUrl as string, successMessage, { headers })
   }
 
   if (
@@ -242,19 +234,21 @@ export async function action({ params, request }: Route.ActionArgs) {
 
 export function Layout(props: { children: ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" data-theme="light">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="color-scheme" content="only light" />
         <Meta />
         <Links />
-        {import.meta.env.VITE_UMAMI_WEBSITE_ID && import.meta.env.VITE_UMAMI_URL && (
-          <script
-            defer
-            src={`${import.meta.env.VITE_UMAMI_URL}/script.js`}
-            data-website-id={import.meta.env.VITE_UMAMI_WEBSITE_ID}
-          />
-        )}
+        {import.meta.env.VITE_UMAMI_WEBSITE_ID &&
+          import.meta.env.VITE_UMAMI_URL && (
+            <script
+              defer
+              src={`${import.meta.env.VITE_UMAMI_URL}/script.js`}
+              data-website-id={import.meta.env.VITE_UMAMI_WEBSITE_ID}
+            />
+          )}
       </head>
       <body className="h-screen flex flex-col">
         <TooltipProvider delayDuration={0}>

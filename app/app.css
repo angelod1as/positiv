@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Force light theme */
+:root {
+  color-scheme: light;
+}
+
 /* For AG Grid DataTable - using Theming API (themeQuartz), no legacy CSS imports needed */
 
 /* AG Grid custom cell styles */
