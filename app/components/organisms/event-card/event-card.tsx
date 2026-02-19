@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 
+import { BDSMBadge } from "~/components/atoms/badges/badges"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calendar-link"
 import type { Event } from "~types/database/entities.types"
@@ -36,6 +37,7 @@ export const EventCard: FC<EventCardProps> = ({
     ticket_price,
     title,
     is_applied,
+    event_type,
   } = event
 
   return (
@@ -63,6 +65,7 @@ export const EventCard: FC<EventCardProps> = ({
               <DataPair pair={["Valor", `R$ ${ticket_price}`]} />
             )}
             {location && <DataPair pair={["Local", location]} />}
+            <BDSMBadge event_type={event_type} />
           </div>
         </div>
       </CardContent>
