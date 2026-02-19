@@ -9,6 +9,7 @@ import {
   getAdminEventById,
   getEventDemographicsById,
   getProfilesWithExtraDataById,
+  getRejectedEventParticipants,
   updateEventDemographics,
   updateEventParticipantById,
   updateEventStatus,
@@ -156,11 +157,15 @@ export async function loader({ params }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
-  const participants = await loadParticipants(eventId)
+  const [participants, rejectedParticipants] = await Promise.all([
+    loadParticipants(eventId),
+    getRejectedEventParticipants(eventId),
+  ])
 
   return {
     event,
     participants,
+    rejectedParticipants,
     demographics: demographics?.success ? demographics.data : undefined,
   }
 }
