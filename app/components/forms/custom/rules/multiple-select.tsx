@@ -24,12 +24,10 @@ export const MultipleSelect = <T extends FieldValues = FieldValues>({
         <div className="flex flex-col gap-4">
           {answers.map((answer, i) => {
             const isChecked = field.value?.includes(answer) || false
-            const checkboxId = `${name}-${i}`
 
             return (
-              <div key={i} className="flex gap-2">
+              <Label key={i} className="flex gap-2 cursor-pointer">
                 <Checkbox
-                  id={checkboxId}
                   checked={isChecked}
                   onChange={(e) => {
                     const newValue = e.target.checked
@@ -38,10 +36,8 @@ export const MultipleSelect = <T extends FieldValues = FieldValues>({
                     field.onChange(newValue)
                   }}
                 />
-                <Label className="text-base -mt-0.5" htmlFor={checkboxId}>
-                  {answer}
-                </Label>
-              </div>
+                <span className="text-base -mt-0.5">{answer}</span>
+              </Label>
             )
           })}
           {error && <Error name={name}>{error}</Error>}

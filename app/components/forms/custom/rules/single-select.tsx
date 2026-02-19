@@ -29,12 +29,14 @@ export const SingleSelect = <T extends FieldValues = FieldValues>({
           {answers.map((answer, i) => {
             const radioId = `${name}-${i}`
             return (
-              <div key={i} className="flex gap-2 self-start">
-                <RadioGroupItem value={answer} id={radioId} className="" />
-                <Label className="text-base -mt-1" htmlFor={radioId}>
-                  {answer}
-                </Label>
-              </div>
+              <Label
+                key={i}
+                htmlFor={radioId}
+                className="flex gap-2 self-start cursor-pointer"
+              >
+                <RadioGroupItem value={answer} id={radioId} />
+                <span className="text-base -mt-1">{answer}</span>
+              </Label>
             )
           })}
         </RadioGroup>
