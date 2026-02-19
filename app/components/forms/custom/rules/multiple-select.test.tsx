@@ -1,6 +1,6 @@
 import userEvent from "@testing-library/user-event"
 import { useForm } from "react-hook-form"
-import { describe, expect, it, vi } from "vitest"
+import { describe, expect, it } from "vitest"
 import { render, screen } from "~/test/test-utils"
 import { MultipleSelect } from "./multiple-select"
 
