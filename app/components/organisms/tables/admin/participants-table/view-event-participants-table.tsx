@@ -264,6 +264,7 @@ export const AdminViewEventParticipantsTable: FC<
         field: "attended_events_count",
         headerName: "Total de eventos",
         headerTooltip: "Total de presenças desde o início do histórico",
+        sortable: true,
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,
@@ -272,6 +273,7 @@ export const AdminViewEventParticipantsTable: FC<
         field: "last_attended_events_count",
         headerName: "Últimos eventos (6 últimos)",
         headerTooltip: "Presenças nos últimos 6 eventos realizados",
+        sortable: true,
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,

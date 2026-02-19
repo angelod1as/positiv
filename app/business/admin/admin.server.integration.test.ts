@@ -1157,6 +1157,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
 
     const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
 
+    expect(result).toHaveProperty("success", true)
     if (result.success) {
       const participant = result.data.find(p => p.profile_id === profile.id)
       expect(participant?.last_attended_events_count).toBe(0)
@@ -1221,6 +1222,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
 
     const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
 
+    expect(result).toHaveProperty("success", true)
     if (result.success) {
       const participant = result.data.find(p => p.profile_id === profile.id)
       // Only 2 completed events exist in the pool, attended both
@@ -1271,6 +1273,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
 
     const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
 
+    expect(result).toHaveProperty("success", true)
     if (result.success) {
       const participant = result.data.find(p => p.profile_id === profile.id)
       expect(participant?.last_attended_events_count).toBe(2)
@@ -1314,6 +1317,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
 
     const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
 
+    expect(result).toHaveProperty("success", true)
     if (result.success) {
       const participant = result.data.find(p => p.profile_id === profile.id)
       // Current event excluded: only 1 completed event in pool, attended it
@@ -1355,6 +1359,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
 
     const result = await getAllProfiles()
 
+    expect(result).toHaveProperty("success", true)
     if (result.success) {
       const foundProfile = result.data.find(p => p.id === profile.id)
       expect(foundProfile).toBeDefined()
@@ -1395,6 +1400,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
 
     const result = await getProfileById({ profileId: profile.id })
 
+    expect(result).toHaveProperty("success", true)
     if (result.success) {
       expect(result.data.last_attended_events_count).toBe(3)
     }

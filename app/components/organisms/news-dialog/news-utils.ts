@@ -32,52 +32,16 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1738411200000
+export const NEWS_VERSION = 1740000000000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
-    id: "admin-registration-limit-email",
-    title: "📧 Notificação automática quando evento atingir limite",
+    id: "admin-last-attended-events-count",
+    title: "📊 Nova coluna: Últimos eventos (6 últimos)",
     content:
-      "Agora todos os admins recebem um e-mail automático quando um evento atinge o limite de 90 inscrições e tem as inscrições fechadas! O e-mail inclui detalhes do evento, quantidade de participantes e um link direto para a página de participantes. Você só recebe um e-mail por evento (sem duplicatas).",
+      "Agora as tabelas de participantes e de perfis mostram quantos dos últimos 6 eventos realizados cada pessoa participou. Essa informação ajuda a identificar rapidamente quem está ativo na comunidade e quem não participa há algum tempo.",
     isAdmin: true,
-    createdAt: new Date("2026-02-01T15:30:00"),
-    isActive: true,
-  },
-  {
-    id: "demographics-agender-merged",
-    title: "📊 Atualização nos dados demográficos",
-    content:
-      'Agora os gêneros "agênero" e "não-binárie" são contabilizados como "trans" nos dados demográficos — anteriormente eles eram dados separados. Também corrigimos um bug onde variações sem acento (como "agenera" vs "agênera") eram contadas separadamente.',
-    isAdmin: true,
-    createdAt: new Date("2026-01-30T10:00:00"),
-    isActive: true,
-  },
-  {
-    id: "pre-opening-reminders",
-    title: "⏰ Lembretes antes da abertura de inscrições",
-    content:
-      "Agora você recebe um email 3 dias antes da abertura das inscrições! Isso te dá tempo para se preparar e não perder a vaga. Lembre-se: as inscrições fecham automaticamente ao atingir 90 inscrites, e apenas 60 pessoas são selecionadas. Se você está inscrite na newsletter, já vai receber os lembretes automaticamente.",
-    isAdmin: false,
-    createdAt: new Date("2026-01-29T12:00:00"),
-    isActive: true,
-  },
-  {
-    id: "feedback-form",
-    title: "📝 Formulário de Feedback",
-    content:
-      "Agora você pode enviar seu feedback sobre os eventos e a comunidade! Acesse através do menu principal ou pelo link /feedback. Suas sugestões, críticas e elogios nos ajudam a melhorar sempre.",
-    isAdmin: false,
-    createdAt: new Date("2026-01-27T12:00:00"),
-    isActive: true,
-  },
-  {
-    id: "admin-feedbacks-page",
-    title: "📋 Gerenciamento de Feedbacks",
-    content:
-      "Nova página no painel admin para visualizar todos os feedbacks recebidos! A tabela mostra nome, e-mail, WhatsApp, texto do feedback e se o contato já está verificado no sistema. Acesse pelo menu Admin → Feedbacks ou pelo widget na dashboard.",
-    isAdmin: true,
-    createdAt: new Date("2026-01-27T12:00:00"),
+    createdAt: new Date("2026-02-19T12:00:00"),
     isActive: true,
   },
 ]

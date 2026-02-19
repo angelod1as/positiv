@@ -144,7 +144,7 @@ const profilesWithExtraDataQuery = kyselyDb
     eb
       .selectFrom("event_participants as ep_recent")
       .innerJoin("events as e_recent", "ep_recent.event_id", "e_recent.id")
-      .select(sql<number>`COUNT(*)::int`.as("count"))
+      .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
       .whereRef("ep_recent.profile_id", "=", "current_ep.profile_id")
       .where("ep_recent.attendance_status", "=", "attended")
       .where("ep_recent.application_status", "=", "finalised")
