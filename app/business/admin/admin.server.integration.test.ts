@@ -7,6 +7,7 @@ import {
   getProfileWithExtraDataById,
   getEventParticipantHistoryById,
   getProfilesWithExtraDataById,
+  getRejectedEventParticipants,
   getEventsForDashboard,
   getAllProfiles,
   getProfileById,
@@ -1519,6 +1520,133 @@ describe("getProfilesWithExtraDataById - Rejected Participants - Integration Tes
       expect(pendingParticipant).toBeDefined()
       expect(reservationsParticipant).toBeDefined()
     }
+  })
+})
+
+describe("getRejectedEventParticipants - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-get-rejected-%")
+      )
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should return only rejected applied participants for an event", async () => {
+    const rejectedAppliedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-get-rejected-applied@example.com",
+      full_name: "Rejected Applied",
+      social_name: "Rej Social",
+      approved_to_attend: "rejected"
+    })
+
+    const approvedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-get-rejected-approved@example.com",
+      full_name: "Approved Profile",
+      approved_to_attend: "approved"
+    })
+
+    const rejectedNotAppliedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-get-rejected-not-applied@example.com",
+      full_name: "Rejected Not Applied",
+      approved_to_attend: "rejected"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Get Rejected Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: rejectedAppliedProfile.id,
+      event_id: event.id,
+      is_user_applied: true
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: approvedProfile.id,
+      event_id: event.id,
+      is_user_applied: true
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: rejectedNotAppliedProfile.id,
+      event_id: event.id,
+      is_user_applied: false
+    })
+
+    const result = await getRejectedEventParticipants(event.id)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].profile_id).toBe(rejectedAppliedProfile.id)
+    expect(result[0].full_name).toBe("Rejected Applied")
+    expect(result[0].social_name).toBe("Rej Social")
+  })
+
+  it("should return empty array when no rejected participants exist", async () => {
+    const approvedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-get-rejected-none@example.com",
+      full_name: "Approved Only",
+      approved_to_attend: "approved"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test No Rejected Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: approvedProfile.id,
+      event_id: event.id,
+      is_user_applied: true
+    })
+
+    const result = await getRejectedEventParticipants(event.id)
+
+    expect(result).toHaveLength(0)
+  })
+
+  it("should handle null social_name correctly", async () => {
+    const rejectedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-get-rejected-no-social@example.com",
+      full_name: "No Social Name",
+      social_name: null,
+      approved_to_attend: "rejected"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Rejected No Social",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: rejectedProfile.id,
+      event_id: event.id,
+      is_user_applied: true
+    })
+
+    const result = await getRejectedEventParticipants(event.id)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].social_name).toBeNull()
+    expect(result[0].full_name).toBe("No Social Name")
   })
 })
 
