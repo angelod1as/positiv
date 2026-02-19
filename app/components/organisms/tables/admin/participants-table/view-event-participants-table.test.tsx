@@ -51,6 +51,7 @@ const createMockParticipant = (
     full_name: "Beatriz Silva",
     is_veteran: true,
     attended_events_count: 3,
+    last_attended_events_count: 2,
     last_attended_event_id: "event-prev",
     last_attended_event_title: "Retiro de Verão",
     last_attended_event_date: "2024-06-15T10:00:00Z",
@@ -193,7 +194,7 @@ describe("AdminViewEventParticipantsTable", () => {
       })
 
       expect(screen.getByText("Vet ou Nov?")).toBeInTheDocument()
-      expect(screen.getByText("Eventos")).toBeInTheDocument()
+      expect(screen.getByText("Total de eventos")).toBeInTheDocument()
     })
   })
 
