@@ -1407,6 +1407,121 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
   })
 })
 
+describe("getProfilesWithExtraDataById - Rejected Participants - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-rejected-%")
+      )
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should exclude rejected profiles from event participants", async () => {
+    const rejectedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-rejected-profile@example.com",
+      full_name: "Rejected Profile",
+      approved_to_attend: "rejected"
+    })
+
+    const approvedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-rejected-approved@example.com",
+      full_name: "Approved Profile",
+      approved_to_attend: "approved"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event Rejected Filter",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: rejectedProfile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: approvedProfile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: event.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const rejectedParticipant = result.data.find(p => p.profile_id === rejectedProfile.id)
+      const approvedParticipant = result.data.find(p => p.profile_id === approvedProfile.id)
+      expect(rejectedParticipant).toBeUndefined()
+      expect(approvedParticipant).toBeDefined()
+    }
+  })
+
+  it("should include pending and approved_with_reservations profiles", async () => {
+    const pendingProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-rejected-pending@example.com",
+      full_name: "Pending Profile",
+      approved_to_attend: "pending"
+    })
+
+    const reservationsProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-rejected-reservations@example.com",
+      full_name: "Reservations Profile",
+      approved_to_attend: "approved_with_reservations"
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event Non-Rejected",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: pendingProfile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: reservationsProfile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: event.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const pendingParticipant = result.data.find(p => p.profile_id === pendingProfile.id)
+      const reservationsParticipant = result.data.find(p => p.profile_id === reservationsProfile.id)
+      expect(pendingParticipant).toBeDefined()
+      expect(reservationsParticipant).toBeDefined()
+    }
+  })
+})
+
 describe("getEventsForDashboard - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
 

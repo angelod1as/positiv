@@ -183,6 +183,7 @@ export const getProfilesWithExtraDataById = composable(
     const profiles = await profilesWithExtraDataQuery
       .where("current_ep.event_id", "=", eventId)
       .where("current_ep.is_user_applied", "=", true)
+      .where("p.approved_to_attend", "!=", "rejected")
       .execute()
 
     return profiles
