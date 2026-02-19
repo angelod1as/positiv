@@ -1,4 +1,9 @@
-import { Controller, type Control, type FieldValues, type Path } from "react-hook-form"
+import {
+  Controller,
+  type Control,
+  type FieldValues,
+  type Path,
+} from "react-hook-form"
 import { Error } from "~/components/forms/base/error"
 import { Label } from "~/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group"
@@ -32,7 +37,7 @@ export const SingleSelect = <T extends FieldValues = FieldValues>({
               <Label
                 key={i}
                 htmlFor={radioId}
-                className="flex gap-2 self-start cursor-pointer"
+                className="flex gap-2 self-start cursor-pointer items-start"
               >
                 <RadioGroupItem value={answer} id={radioId} />
                 <span className="text-base -mt-1">{answer}</span>

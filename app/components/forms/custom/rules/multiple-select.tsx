@@ -1,4 +1,9 @@
-import { Controller, type Control, type FieldValues, type Path } from "react-hook-form"
+import {
+  Controller,
+  type Control,
+  type FieldValues,
+  type Path,
+} from "react-hook-form"
 import { Error } from "~/components/forms/base/error"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Label } from "~/components/ui/label"
@@ -26,7 +31,7 @@ export const MultipleSelect = <T extends FieldValues = FieldValues>({
             const isChecked = field.value?.includes(answer) || false
 
             return (
-              <Label key={i} className="flex gap-2 cursor-pointer">
+              <Label key={i} className="flex gap-2 cursor-pointer items-start">
                 <Checkbox
                   checked={isChecked}
                   onChange={(e) => {
