@@ -138,6 +138,15 @@ describe("ListmonkFilterModal", () => {
       ).toBeChecked()
     })
 
+    it("should wrap all checkboxes inside a label element", () => {
+      render(<ListmonkFilterModal {...defaultProps} />)
+
+      const checkboxes = screen.getAllByRole("checkbox")
+      for (const checkbox of checkboxes) {
+        expect(checkbox.closest("label")).not.toBeNull()
+      }
+    })
+
     it("should not render modal when isOpen is false", () => {
       render(<ListmonkFilterModal {...defaultProps} isOpen={false} />)
 
