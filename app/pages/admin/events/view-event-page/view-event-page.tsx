@@ -24,6 +24,7 @@ import {
 } from "~/business/admin/event-listmonk-sync.server"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
 import { Buttons } from "~/components/pages/admin/events/buttons"
+import { RejectedParticipantsSection } from "~/components/pages/admin/events/rejected-participants-section"
 import { DatesAndTimes } from "~/components/pages/admin/events/dates-and-times"
 import { DemographicsData } from "~/components/pages/admin/events/demographics"
 import { EventStatusForm } from "~/components/pages/admin/events/event-status-form"
@@ -191,7 +192,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     }
   }, [fetcher.data])
 
-  const { event, participants, demographics } = loaderData
+  const { event, participants, rejectedParticipants, demographics } = loaderData
 
   const { title, emoji, time_event_start } = event
 
@@ -221,6 +222,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
           participants={participants}
           eventId={event.id}
         />
+        <RejectedParticipantsSection participants={rejectedParticipants} />
       </div>
 
       <GeneralData {...event} />
