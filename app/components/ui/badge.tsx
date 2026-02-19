@@ -27,6 +27,7 @@ const badgeVariants = cva(
           "border-amber-500 bg-amber-200 text-primary [a&]:hover:bg-amber-200/90",
         gender:
           "border-rose-500 bg-rose-200 text-primary [a&]:hover:bg-rose-200/90",
+        bdsm: "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
       },
     },
     defaultVariants: {
