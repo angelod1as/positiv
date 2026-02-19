@@ -1,13 +1,13 @@
 import { composable, type Composable } from "composable-functions"
 import { kyselyDb } from "~/kysely-db"
-import type { EventStatus, ViewEvent } from "~types/database/entities.types"
+import type { Event, EventStatus } from "~types/database/entities.types"
 
 type GetNextEvents = Composable<
   (
     profileId: string | undefined,
     limit?: number,
     isHomepage?: boolean,
-  ) => ViewEvent[]
+  ) => Event[]
 >
 
 export const getNextEvents: GetNextEvents = composable(

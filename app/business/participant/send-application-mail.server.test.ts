@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { sendApplicationMail } from "./send-application-mail.server"
-import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
+import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 
 vi.mock("~/business/email/send-email", () => ({
   sendEmail: vi.fn(),
@@ -34,7 +34,7 @@ describe("sendApplicationMail", () => {
     is_admin: false,
   }
 
-  const mockEvent: ViewEvent = {
+  const mockEvent: Event = {
     id: "event-123",
     title: "Test Event",
     emoji: "🎉",
@@ -49,6 +49,12 @@ describe("sendApplicationMail", () => {
     location: "Test Location",
     ticket_price: null,
     event_status: "Registration Open",
+    event_type: "regular",
+    auto_publish: false,
+    created_at: "2025-01-01T00:00:00Z",
+    total_spots: null,
+    listmonk_list_id: null,
+    listmonk_list_synced_at: null,
   }
 
   beforeEach(() => {

@@ -9,7 +9,7 @@ import { EventCard } from "~/components/organisms/event-card/event-card"
 import { EventListSkeleton } from "~/components/organisms/event-list/event-list-skeleton"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 import { getNextEvents } from "../homepage/fetch/get-next-events"
 import type { Route } from "./+types/dashboard-page"
 import { splitEvents } from "./utils/split-events"
@@ -126,9 +126,9 @@ const Wrapper: FC<WrapperProps> = ({
 
 const EventsContent: FC<{
   events: {
-    registrationOpen: ViewEvent[]
-    registrationClosed: ViewEvent[]
-    scheduled: ViewEvent[]
+    registrationOpen: Event[]
+    registrationClosed: Event[]
+    scheduled: Event[]
   }
 }> = ({ events }) => {
   const { registrationOpen, registrationClosed, scheduled } = events

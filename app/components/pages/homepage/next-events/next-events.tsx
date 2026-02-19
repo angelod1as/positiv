@@ -11,7 +11,7 @@ import {
 } from "~/components/ui/card"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import routes from "~/lib/paths"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 import { HomePageTitle } from "../home-title/home-title"
 import { Section } from "../section/section"
 
@@ -20,7 +20,7 @@ const {
 } = routes
 
 type HomePageNextEventsProps = {
-  events: Array<ViewEvent>
+  events: Array<Event>
 }
 export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
   return (

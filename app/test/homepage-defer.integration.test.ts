@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 
 describe("Homepage Loader - Deferred Loading Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -24,7 +24,7 @@ describe("Homepage Loader - Deferred Loading Integration Tests", () => {
           id: "1",
           title: "Homepage Event",
           event_status: "Registration Open",
-        } as ViewEvent,
+        } as Event,
       ]),
       isLoggedIn: false,
     }

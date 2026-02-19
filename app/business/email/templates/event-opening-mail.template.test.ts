@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 import { eventOpeningMailTemplate } from "./event-opening-mail.template"
 
 describe("eventOpeningMailTemplate", () => {
-  const mockEvent: Omit<ViewEvent, "is_applied"> = {
+  const mockEvent: Event = {
     id: "test-event-id",
     title: "Test Event",
     emoji: "🎉",
@@ -18,6 +18,12 @@ describe("eventOpeningMailTemplate", () => {
     description: "Test Description",
     ticket_price: null,
     event_status: "Registration Open",
+    event_type: "regular",
+    auto_publish: false,
+    created_at: "2025-01-01T00:00:00Z",
+    total_spots: null,
+    listmonk_list_id: null,
+    listmonk_list_synced_at: null,
   }
 
   const mockProfileId = "test-profile-123"
@@ -146,8 +152,8 @@ describe("eventOpeningMailTemplate", () => {
 
 describe("eventOpeningMailTemplate - XSS Protection", () => {
   const createMockEvent = (
-    overrides?: Partial<Omit<ViewEvent, "is_applied">>,
-  ): Omit<ViewEvent, "is_applied"> => ({
+    overrides?: Partial<Event>,
+  ): Event => ({
     id: "test-event-id",
     title: "Test Event",
     emoji: "🎉",
@@ -162,6 +168,12 @@ describe("eventOpeningMailTemplate - XSS Protection", () => {
     description: "Test Description",
     ticket_price: null,
     event_status: "Registration Open",
+    event_type: "regular",
+    auto_publish: false,
+    created_at: "2025-01-01T00:00:00Z",
+    total_spots: null,
+    listmonk_list_id: null,
+    listmonk_list_synced_at: null,
     ...overrides,
   })
 

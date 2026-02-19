@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 import { splitEvents } from "~/pages/dashboard/utils/split-events"
 
 describe("Dashboard Loader - Deferred Loading Integration Tests", () => {
@@ -18,22 +18,22 @@ describe("Dashboard Loader - Deferred Loading Integration Tests", () => {
     // This test verifies the splitEvents function behavior
     // The defer() implementation will use this same logic
 
-    const mockEvents: ViewEvent[] = [
+    const mockEvents: Event[] = [
       {
         id: "1",
         title: "Open Event",
         event_status: "Registration Open",
-      } as ViewEvent,
+      } as Event,
       {
         id: "2",
         title: "Closed Event",
         event_status: "Registration Closed",
-      } as ViewEvent,
+      } as Event,
       {
         id: "3",
         title: "Scheduled Event",
         event_status: "Scheduled",
-      } as ViewEvent,
+      } as Event,
     ]
 
     const result = splitEvents(mockEvents)

@@ -1056,7 +1056,7 @@ describe("getEventsForDashboard - Integration Tests", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
-  it("should return all ViewEvent fields needed for EventCard display", async () => {
+  it("should return all Event fields needed for EventCard display", async () => {
     const event = await createTestEvent(tracker, kysely, {
       title: "Full Event Data Test",
       emoji: "🎉",
@@ -1083,7 +1083,7 @@ describe("getEventsForDashboard - Integration Tests", () => {
     const createdEvent = events.find(e => e.id === event.id)
     expect(createdEvent).toBeDefined()
 
-    // Verify all ViewEvent fields are present
+    // Verify all Event fields are present
     expect(createdEvent).toHaveProperty("id")
     expect(createdEvent).toHaveProperty("title")
     expect(createdEvent).toHaveProperty("description")

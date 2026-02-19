@@ -1,10 +1,10 @@
 import { formatApplicationMail } from "~/business/email/format-application-mail"
-import type { ProfileWithRoles, ViewEvent } from "~types/database/entities.types"
+import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
 
 type sendApplicationMailProps = {
-  event: ViewEvent
+  event: Event
   profile: NonNullable<ProfileWithRoles>
 }
 export const sendApplicationMail = async ({

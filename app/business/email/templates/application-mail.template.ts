@@ -2,8 +2,8 @@ import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type {
+  Event,
   ProfileWithRoles,
-  ViewEvent,
 } from "~types/database/entities.types"
 
 /**
@@ -14,7 +14,7 @@ import type {
  */
 export const applicationMailTemplate = (
   profile: NonNullable<ProfileWithRoles>,
-  event: Omit<ViewEvent, "is_applied">,
+  event: Event,
 ): string => {
   const { date, time } = formatDateTime(event.time_event_start)
   const displayName = sanitizeHtml(

@@ -5,11 +5,11 @@ import {
 } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 import { getListmonkConfig } from "./listmonk-client.server"
 
 interface CreateCampaignParams {
-  event: Omit<ViewEvent, "is_applied">
+  event: Event
   listIds: number[]
   sendImmediately?: boolean
 }
@@ -23,7 +23,7 @@ interface CampaignResponse {
   }
 }
 
-function generateCampaignBody(event: Omit<ViewEvent, "is_applied">): string {
+function generateCampaignBody(event: Event): string {
   const { date, time } = formatDateTime(event.time_event_start)
   const { date: applicationOpenDate, time: applicationOpenTime } =
     formatDateTime(event.time_application_start)

@@ -12,7 +12,7 @@ import { HomePageNextEvents } from "~/components/pages/homepage/next-events/next
 import { HomePageNextEventsSkeleton } from "~/components/pages/homepage/next-events/next-events-skeleton"
 import { HomePageTestimonials } from "~/components/pages/homepage/testimonials/home-page-testimonials"
 import { createMetaArray } from "~/lib/helpers/meta"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 import type { Route } from "./+types/homepage"
 import { getNextEvents } from "./fetch/get-next-events"
 
@@ -42,7 +42,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
 }
 
-const EventsContent: FC<{ events: ViewEvent[] | undefined }> = ({ events }) => {
+const EventsContent: FC<{ events: Event[] | undefined }> = ({ events }) => {
   if (!events || events.length === 0) {
     return null
   }

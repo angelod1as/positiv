@@ -1,10 +1,10 @@
 import { formatRegistrationLimitAdminMail } from "~/business/email/format-registration-limit-admin-mail"
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
 import { getAdminEmails } from "./get-admin-emails.server"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 
 type SendRegistrationLimitAdminMailProps = {
-  event: Omit<ViewEvent, "is_applied">
+  event: Event
   participantCount: number
   timestamp: Date
   adminEmails?: string[]

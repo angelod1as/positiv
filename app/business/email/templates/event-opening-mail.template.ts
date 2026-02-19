@@ -1,7 +1,7 @@
 import { DASHBOARD_URL, POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type { ViewEvent } from "~types/database/entities.types"
+import type { Event } from "~types/database/entities.types"
 
 /**
  * Event Opening Email Template
@@ -10,7 +10,7 @@ import type { ViewEvent } from "~types/database/entities.types"
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const eventOpeningMailTemplate = (
-  event: Omit<ViewEvent, "is_applied">,
+  event: Event,
   profileId: string,
 ): string => {
   const { date, time } = formatDateTime(event.time_event_start)
