@@ -35,14 +35,14 @@ import type { ComposableFetcherData } from "~types/database/entities.types"
 import { CategoryLabelWithTooltip } from "./category-label-with-tooltip"
 import { countParticipants } from "./count-participants"
 import {
-  acceptedInProcessTooltipContent,
-  generalTooltipContent,
-} from "./tooltip-contents"
-import {
   parsePaymentValue,
   shouldAutoCheckHasPaid,
 } from "./payment-column-helpers"
 import { shouldAutoCheckWasSelectedForRotation } from "./rotation-column-helpers"
+import {
+  acceptedInProcessTooltipContent,
+  generalTooltipContent,
+} from "./tooltip-contents"
 
 // Filter state uses sessionStorage (clears when tab closes) - intentional so admins
 // start fresh each session. Grid layout state uses localStorage (persists across sessions)
@@ -262,8 +262,16 @@ export const AdminViewEventParticipantsTable: FC<
       }),
       {
         field: "attended_events_count",
-        headerName: "Eventos",
-        headerTooltip: "Quantidade de eventos",
+        headerName: "Total de eventos",
+        headerTooltip: "Total de presenças desde o início do histórico",
+        ...compactCell,
+        cellClass: (params) =>
+          `ag-cell-compact ${getEventCountColors(params.value)}`,
+      },
+      {
+        field: "last_attended_events_count",
+        headerName: "Últimos eventos (6 últimos)",
+        headerTooltip: "Presenças nos últimos 6 eventos realizados",
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,
