@@ -63,6 +63,7 @@ export type ProfileWithExtraData = Profile &
   EventParticipant & {
     was_admin_skipped_last_event?: boolean | null
     attended_events_count?: number | null
+    last_attended_events_count?: number | null
     last_attended_event_title?: string | null
     last_attended_event_date?: string | null
     last_attended_event_id?: string | null
@@ -140,6 +141,25 @@ const profilesWithExtraDataQuery = kyselyDb
       .orderBy("e_last_id.time_event_start", "desc")
       .limit(1)
       .as("last_attended_event_id"),
+    eb
+      .selectFrom("event_participants as ep_recent")
+      .innerJoin("events as e_recent", "ep_recent.event_id", "e_recent.id")
+      .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
+      .whereRef("ep_recent.profile_id", "=", "current_ep.profile_id")
+      .where("ep_recent.attendance_status", "=", "attended")
+      .where("ep_recent.application_status", "=", "finalised")
+      .where("e_recent.event_status", "!=", "Cancelled")
+      .whereRef("ep_recent.event_id", "!=", "current_ep.event_id")
+      .where("ep_recent.event_id", "in", (subEb) =>
+        subEb
+          .selectFrom("events as e_top")
+          .select("e_top.id")
+          .where("e_top.event_status", "=", "Completed")
+          .whereRef("e_top.id", "!=", "current_ep.event_id")
+          .orderBy("e_top.time_event_start", "desc")
+          .limit(6),
+      )
+      .as("last_attended_events_count"),
   ])
 
 export const getProfileWithExtraDataById = composable(
@@ -169,59 +189,86 @@ export const getProfilesWithExtraDataById = composable(
   },
 )
 
+const globalProfileBaseQuery = kyselyDb
+  .selectFrom("profiles as p")
+  .selectAll("p")
+  .select((eb) => [
+    eb
+      .selectFrom("event_participants as ep_count")
+      .innerJoin("events as e_count", "ep_count.event_id", "e_count.id")
+      .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
+      .whereRef("ep_count.profile_id", "=", "p.id")
+      .where("ep_count.attendance_status", "=", "attended")
+      .where("ep_count.application_status", "=", "finalised")
+      .where("e_count.event_status", "!=", "Cancelled")
+      .as("attended_events_count"),
+    eb
+      .selectFrom("event_participants as ep_last")
+      .innerJoin("events as e_last", "ep_last.event_id", "e_last.id")
+      .select("e_last.title")
+      .whereRef("ep_last.profile_id", "=", "p.id")
+      .where("ep_last.attendance_status", "=", "attended")
+      .where("ep_last.application_status", "=", "finalised")
+      .where("e_last.event_status", "!=", "Cancelled")
+      .orderBy("e_last.time_event_start", "desc")
+      .limit(1)
+      .as("last_attended_event_title"),
+    eb
+      .selectFrom("event_participants as ep_last_date")
+      .innerJoin(
+        "events as e_last_date",
+        "ep_last_date.event_id",
+        "e_last_date.id",
+      )
+      .select("e_last_date.time_event_start")
+      .whereRef("ep_last_date.profile_id", "=", "p.id")
+      .where("ep_last_date.attendance_status", "=", "attended")
+      .where("ep_last_date.application_status", "=", "finalised")
+      .where("e_last_date.event_status", "!=", "Cancelled")
+      .orderBy("e_last_date.time_event_start", "desc")
+      .limit(1)
+      .as("last_attended_event_date"),
+    eb
+      .selectFrom("event_participants as ep_last_id")
+      .innerJoin(
+        "events as e_last_id",
+        "ep_last_id.event_id",
+        "e_last_id.id",
+      )
+      .select("e_last_id.id")
+      .whereRef("ep_last_id.profile_id", "=", "p.id")
+      .where("ep_last_id.attendance_status", "=", "attended")
+      .where("ep_last_id.application_status", "=", "finalised")
+      .where("e_last_id.event_status", "!=", "Cancelled")
+      .orderBy("e_last_id.time_event_start", "desc")
+      .limit(1)
+      .as("last_attended_event_id"),
+    eb
+      .selectFrom("event_participants as ep_recent")
+      .innerJoin(
+        "events as e_recent",
+        "ep_recent.event_id",
+        "e_recent.id",
+      )
+      .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
+      .whereRef("ep_recent.profile_id", "=", "p.id")
+      .where("ep_recent.attendance_status", "=", "attended")
+      .where("ep_recent.application_status", "=", "finalised")
+      .where("e_recent.event_status", "!=", "Cancelled")
+      .where("ep_recent.event_id", "in", (subEb) =>
+        subEb
+          .selectFrom("events as e_top")
+          .select("e_top.id")
+          .where("e_top.event_status", "=", "Completed")
+          .orderBy("e_top.time_event_start", "desc")
+          .limit(6),
+      )
+      .as("last_attended_events_count"),
+  ])
+
 export const getAllProfiles = composable(
   async (filters?: GetAllProfilesFilters): Promise<ProfileGlobal[]> => {
-    let query = kyselyDb
-      .selectFrom("profiles as p")
-      .selectAll("p")
-      .select((eb) => [
-        eb
-          .selectFrom("event_participants as ep_count")
-          .innerJoin("events as e_count", "ep_count.event_id", "e_count.id")
-          .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
-          .whereRef("ep_count.profile_id", "=", "p.id")
-          .where("ep_count.attendance_status", "=", "attended")
-          .where("ep_count.application_status", "=", "finalised")
-          .where("e_count.event_status", "!=", "Cancelled")
-          .as("attended_events_count"),
-        eb
-          .selectFrom("event_participants as ep_last")
-          .innerJoin("events as e_last", "ep_last.event_id", "e_last.id")
-          .select("e_last.title")
-          .whereRef("ep_last.profile_id", "=", "p.id")
-          .where("ep_last.attendance_status", "=", "attended")
-          .where("ep_last.application_status", "=", "finalised")
-          .where("e_last.event_status", "!=", "Cancelled")
-          .orderBy("e_last.time_event_start", "desc")
-          .limit(1)
-          .as("last_attended_event_title"),
-        eb
-          .selectFrom("event_participants as ep_last_date")
-          .innerJoin(
-            "events as e_last_date",
-            "ep_last_date.event_id",
-            "e_last_date.id",
-          )
-          .select("e_last_date.time_event_start")
-          .whereRef("ep_last_date.profile_id", "=", "p.id")
-          .where("ep_last_date.attendance_status", "=", "attended")
-          .where("ep_last_date.application_status", "=", "finalised")
-          .where("e_last_date.event_status", "!=", "Cancelled")
-          .orderBy("e_last_date.time_event_start", "desc")
-          .limit(1)
-          .as("last_attended_event_date"),
-        eb
-          .selectFrom("event_participants as ep_last_id")
-          .innerJoin("events as e_last_id", "ep_last_id.event_id", "e_last_id.id")
-          .select("e_last_id.id")
-          .whereRef("ep_last_id.profile_id", "=", "p.id")
-          .where("ep_last_id.attendance_status", "=", "attended")
-          .where("ep_last_id.application_status", "=", "finalised")
-          .where("e_last_id.event_status", "!=", "Cancelled")
-          .orderBy("e_last_id.time_event_start", "desc")
-          .limit(1)
-          .as("last_attended_event_id"),
-      ])
+    let query = globalProfileBaseQuery
       // Only show profiles that have completed basic data (excludes users who never filled their profile)
       .where("p.basic_data_filled", "=", true)
 
@@ -232,7 +279,11 @@ export const getAllProfiles = composable(
     }
     if (filters?.orientation?.length) {
       query = query.where(({ eb }) =>
-        eb(sql`p.orientation`, "&&", sql`${sql.val(filters.orientation)}::text[]`),
+        eb(
+          sql`p.orientation`,
+          "&&",
+          sql`${sql.val(filters.orientation)}::text[]`,
+        ),
       )
     }
     if (filters?.is_veteran !== undefined) {
@@ -245,7 +296,11 @@ export const getAllProfiles = composable(
       query = query.where("p.where_lives", "ilike", `%${filters.where_lives}%`)
     }
     if (filters?.approved_to_attend?.length) {
-      query = query.where("p.approved_to_attend", "in", filters.approved_to_attend)
+      query = query.where(
+        "p.approved_to_attend",
+        "in",
+        filters.approved_to_attend,
+      )
     }
 
     // Order by newest profiles first for better UX when viewing recently registered users
@@ -283,57 +338,7 @@ export const getAdminProfileById = composable(
 
 export const getProfileById = composable(
   async ({ profileId }: { profileId: string }): Promise<ProfileGlobal> => {
-    return kyselyDb
-      .selectFrom("profiles as p")
-      .selectAll("p")
-      .select((eb) => [
-        eb
-          .selectFrom("event_participants as ep_count")
-          .innerJoin("events as e_count", "ep_count.event_id", "e_count.id")
-          .select(sql<number>`COALESCE(COUNT(*)::int, 0)`.as("count"))
-          .whereRef("ep_count.profile_id", "=", "p.id")
-          .where("ep_count.attendance_status", "=", "attended")
-          .where("ep_count.application_status", "=", "finalised")
-          .where("e_count.event_status", "!=", "Cancelled")
-          .as("attended_events_count"),
-        eb
-          .selectFrom("event_participants as ep_last")
-          .innerJoin("events as e_last", "ep_last.event_id", "e_last.id")
-          .select("e_last.title")
-          .whereRef("ep_last.profile_id", "=", "p.id")
-          .where("ep_last.attendance_status", "=", "attended")
-          .where("ep_last.application_status", "=", "finalised")
-          .where("e_last.event_status", "!=", "Cancelled")
-          .orderBy("e_last.time_event_start", "desc")
-          .limit(1)
-          .as("last_attended_event_title"),
-        eb
-          .selectFrom("event_participants as ep_last_date")
-          .innerJoin(
-            "events as e_last_date",
-            "ep_last_date.event_id",
-            "e_last_date.id",
-          )
-          .select("e_last_date.time_event_start")
-          .whereRef("ep_last_date.profile_id", "=", "p.id")
-          .where("ep_last_date.attendance_status", "=", "attended")
-          .where("ep_last_date.application_status", "=", "finalised")
-          .where("e_last_date.event_status", "!=", "Cancelled")
-          .orderBy("e_last_date.time_event_start", "desc")
-          .limit(1)
-          .as("last_attended_event_date"),
-        eb
-          .selectFrom("event_participants as ep_last_id")
-          .innerJoin("events as e_last_id", "ep_last_id.event_id", "e_last_id.id")
-          .select("e_last_id.id")
-          .whereRef("ep_last_id.profile_id", "=", "p.id")
-          .where("ep_last_id.attendance_status", "=", "attended")
-          .where("ep_last_id.application_status", "=", "finalised")
-          .where("e_last_id.event_status", "!=", "Cancelled")
-          .orderBy("e_last_id.time_event_start", "desc")
-          .limit(1)
-          .as("last_attended_event_id"),
-      ])
+    return globalProfileBaseQuery
       .where("p.id", "=", profileId)
       .executeTakeFirstOrThrow()
   },
@@ -624,15 +629,8 @@ export const updateParticipantVsEvent = applySchema(
 export const updateEventParticipantById = applySchema(
   updateEventParticipantByIdSchema,
 )(async (formData) => {
-  const {
-    intent,
-    id,
-    profile_id,
-    is_veteran,
-    flag,
-    flag_notes,
-    ...data
-  } = formData
+  const { intent, id, profile_id, is_veteran, flag, flag_notes, ...data } =
+    formData
 
   return await kyselyDb.transaction().execute(async (transaction) => {
     if (
@@ -703,7 +701,7 @@ export const getEventParticipantBasic = composable(
       .executeTakeFirst()
 
     return result ?? null
-  }
+  },
 )
 
 export const updateProfileAdminNotes = applySchema(

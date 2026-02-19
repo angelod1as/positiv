@@ -144,6 +144,7 @@ export type EventParticipantWithEvent = EventParticipant & {
  */
 export type ProfileGlobal = Profile & {
   attended_events_count: number | null
+  last_attended_events_count: number | null
   last_attended_event_title: string | null
   last_attended_event_date: string | null
   last_attended_event_id: string | null

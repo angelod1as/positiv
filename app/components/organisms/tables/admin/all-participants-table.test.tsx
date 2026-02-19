@@ -58,6 +58,7 @@ const createMockProfile = (
     race_color: null,
     created_at: "2024-01-01T00:00:00Z",
     attended_events_count: 5,
+    last_attended_events_count: 3,
     last_attended_event_title: "Evento Teste",
     last_attended_event_date: "2024-06-01T00:00:00Z",
     last_attended_event_id: "event-1",
@@ -126,14 +127,14 @@ describe("AllParticipantsTable", () => {
       renderWithDataRouter(<AllParticipantsTable profiles={[]} />)
 
       await waitFor(() => {
-        expect(
-          screen.getByText("Nenhum perfil encontrado"),
-        ).toBeInTheDocument()
+        expect(screen.getByText("Nenhum perfil encontrado")).toBeInTheDocument()
       })
     })
 
     it("renders profile count in header", () => {
-      renderWithDataRouter(<AllParticipantsTable profiles={mockProfilesMultiple} />)
+      renderWithDataRouter(
+        <AllParticipantsTable profiles={mockProfilesMultiple} />,
+      )
 
       expect(screen.getByText("3")).toBeInTheDocument()
       expect(screen.getByText(/perfis/)).toBeInTheDocument()
@@ -162,7 +163,7 @@ describe("AllParticipantsTable", () => {
       expect(screen.getByText("Registro")).toBeInTheDocument()
       expect(screen.getByText("Vet ou Nov?")).toBeInTheDocument()
       expect(screen.getByText("Cidade")).toBeInTheDocument()
-      expect(screen.getByText("Eventos")).toBeInTheDocument()
+      expect(screen.getByText("Total de eventos")).toBeInTheDocument()
       expect(screen.getByText("Último Evento")).toBeInTheDocument()
     })
   })
@@ -176,7 +177,9 @@ describe("AllParticipantsTable", () => {
 
     it("filters profiles when searching", async () => {
       const user = userEvent.setup()
-      renderWithDataRouter(<AllParticipantsTable profiles={mockProfilesMultiple} />)
+      renderWithDataRouter(
+        <AllParticipantsTable profiles={mockProfilesMultiple} />,
+      )
 
       await waitFor(() => {
         expect(screen.getByText("João")).toBeInTheDocument()

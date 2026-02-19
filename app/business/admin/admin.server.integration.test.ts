@@ -1045,6 +1045,368 @@ describe("getProfilesWithExtraDataById - Event Count and Last Event - Integratio
   })
 })
 
+describe("Computed fields: last_attended_events_count - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-last6-%")
+      )
+      .execute()
+
+    await kysely
+      .deleteFrom("profiles")
+      .where("email", "like", "test-last6-%")
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should count attendance in last 6 completed events correctly (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-count@example.com",
+      full_name: "Test Last 6 Count"
+    })
+
+    // Create 8 completed events (only most recent 6 should be considered)
+    const completedEvents = []
+    for (let i = 0; i < 8; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Completed Event ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (80 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      completedEvents.push(event)
+    }
+
+    // Current event (not completed)
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    // Attend events: 1, 2 (old, outside last 6), 3, 4, 6, 8 (4 of these are in the last 6)
+    // Events sorted by time_event_start desc: 8, 7, 6, 5, 4, 3, 2, 1
+    // Last 6 (excluding current): 8, 7, 6, 5, 4, 3
+    // Attended among last 6: 8, 6, 4, 3 → count = 4
+    const attendedIndices = [0, 1, 2, 3, 5, 7] // events 1, 2, 3, 4, 6, 8
+    for (const idx of attendedIndices) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: completedEvents[idx].id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant).toBeDefined()
+      // Last 6 completed events (excl current): events 8, 7, 6, 5, 4, 3
+      // Attended among those: 8, 6, 4, 3 → 4
+      expect(participant?.last_attended_events_count).toBe(4)
+    }
+  })
+
+  it("should return 0 when profile didn't attend any of the last 6 (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-zero@example.com",
+      full_name: "Test Last 6 Zero"
+    })
+
+    // Create 6 completed events
+    for (let i = 0; i < 6; i++) {
+      await createTestEvent(tracker, kysely, {
+        title: `Completed Event ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (60 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+      })
+    }
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant?.last_attended_events_count).toBe(0)
+    }
+  })
+
+  it("should only consider Completed events for the last 6 pool (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-completed-only@example.com",
+      full_name: "Test Last 6 Completed Only"
+    })
+
+    // Create 3 completed events
+    const completed1 = await createTestEvent(tracker, kysely, {
+      title: "Completed 1",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const completed2 = await createTestEvent(tracker, kysely, {
+      title: "Completed 2",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    // Create non-completed events (should NOT be in the pool)
+    const openEvent = await createTestEvent(tracker, kysely, {
+      title: "Open Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const cancelledEvent = await createTestEvent(tracker, kysely, {
+      title: "Cancelled Event",
+      event_status: "Cancelled",
+      time_event_start: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    // Attend all events
+    for (const event of [completed1, completed2, openEvent, cancelledEvent]) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: event.id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      // Only 2 completed events exist in the pool, attended both
+      expect(participant?.last_attended_events_count).toBe(2)
+    }
+  })
+
+  it("should handle fewer than 6 total completed events gracefully (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-fewer@example.com",
+      full_name: "Test Last 6 Fewer"
+    })
+
+    // Only 3 completed events
+    const events = []
+    for (let i = 0; i < 3; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Completed Event ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (30 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      events.push(event)
+    }
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    // Attend 2 out of 3
+    for (let i = 0; i < 2; i++) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: events[i].id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant?.last_attended_events_count).toBe(2)
+    }
+  })
+
+  it("should exclude the current event from the pool and count (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-exclude-current@example.com",
+      full_name: "Test Last 6 Exclude Current"
+    })
+
+    const completedEvent = await createTestEvent(tracker, kysely, {
+      title: "Completed Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    // Current event is also completed — should be excluded from pool
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Current Completed Event",
+      event_status: "Completed",
+      time_event_start: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvent.id,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      is_user_applied: true,
+      application_status: "finalised",
+      attendance_status: "attended"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      // Current event excluded: only 1 completed event in pool, attended it
+      expect(participant?.last_attended_events_count).toBe(1)
+    }
+  })
+
+  it("should calculate last_attended_events_count correctly in global scope (getAllProfiles)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-global@example.com",
+      full_name: "Test Last 6 Global"
+    })
+
+    // Create 8 completed events
+    const completedEvents = []
+    for (let i = 0; i < 8; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Global Completed ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (80 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      completedEvents.push(event)
+    }
+
+    // Attend events 1, 2, 3, 5, 7 (indices 0, 1, 2, 4, 6)
+    // Sorted desc: 8, 7, 6, 5, 4, 3, 2, 1
+    // Last 6: 8, 7, 6, 5, 4, 3
+    // Attended among last 6: 7, 5, 3 → 3
+    const attendedIndices = [0, 1, 2, 4, 6]
+    for (const idx of attendedIndices) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: completedEvents[idx].id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    const result = await getAllProfiles()
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const foundProfile = result.data.find(p => p.id === profile.id)
+      expect(foundProfile).toBeDefined()
+      expect(foundProfile?.last_attended_events_count).toBe(3)
+    }
+  })
+
+  it("should calculate last_attended_events_count correctly in getProfileById", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-profile-by-id@example.com",
+      full_name: "Test Last 6 Profile By Id"
+    })
+
+    // Create 8 completed events
+    const completedEvents = []
+    for (let i = 0; i < 8; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `ById Completed ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (80 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      completedEvents.push(event)
+    }
+
+    // Attend events 1, 2, 3, 5, 7 (indices 0, 1, 2, 4, 6)
+    // Last 6 desc: 8, 7, 6, 5, 4, 3
+    // Attended among last 6: 7, 5, 3 → 3
+    const attendedIndices = [0, 1, 2, 4, 6]
+    for (const idx of attendedIndices) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: completedEvents[idx].id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    const result = await getProfileById({ profileId: profile.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(result.data.last_attended_events_count).toBe(3)
+    }
+  })
+})
+
 describe("getEventsForDashboard - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
 

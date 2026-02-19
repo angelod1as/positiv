@@ -4,12 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useFetcher } from "react-router"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import type { AutoSaveParams } from "~/components/organisms/tables/ag-grid/base/types"
+import { getVeteranColumn } from "~/components/organisms/tables/ag-grid/columns/veteran-column"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { FlagBadgeRenderer } from "~/components/organisms/tables/ag-grid/renderers/flag-badge-renderer"
 import { LastAttendedEventRenderer } from "~/components/organisms/tables/ag-grid/renderers/last-attended-event-renderer"
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
-import { getVeteranColumn } from "~/components/organisms/tables/ag-grid/columns/veteran-column"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
@@ -220,8 +220,17 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       },
       {
         field: "attended_events_count",
-        headerName: "Eventos",
-        headerTooltip: "Quantidade de eventos",
+        headerName: "Total de eventos",
+        headerTooltip: "Total de presenças desde o início do histórico",
+        ...compactCell,
+        cellClass: (params) =>
+          `ag-cell-compact ${getEventCountColors(params.value)}`,
+        sortable: true,
+      },
+      {
+        field: "last_attended_events_count",
+        headerName: "Últimos eventos (6 últimos)",
+        headerTooltip: "Presenças nos últimos 6 eventos realizados",
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,
@@ -254,13 +263,16 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
     Object.values(STORAGE_KEYS).forEach((key) => sessionStorage.removeItem(key))
   }, [])
 
-  const handleGridReady = useCallback((event: GridReadyEvent<ProfileGlobal>) => {
-    gridApiRef.current = event.api
-    setDisplayedRowCount(event.api.getDisplayedRowCount())
-    event.api.addEventListener("filterChanged", () => {
+  const handleGridReady = useCallback(
+    (event: GridReadyEvent<ProfileGlobal>) => {
+      gridApiRef.current = event.api
       setDisplayedRowCount(event.api.getDisplayedRowCount())
-    })
-  }, [])
+      event.api.addEventListener("filterChanged", () => {
+        setDisplayedRowCount(event.api.getDisplayedRowCount())
+      })
+    },
+    [],
+  )
 
   const handleSave = useCallback(
     async (params: AutoSaveParams) => {
