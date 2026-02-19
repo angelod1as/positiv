@@ -153,20 +153,17 @@ export function ListmonkFilterModal({
             </Label>
             <div className="ml-4 space-y-3">
               {approvedToAttendStatusOptions.map((option) => (
-                <div key={option.value} className="flex items-center gap-2">
+                <Label
+                  key={option.value}
+                  className="flex items-center gap-2 cursor-pointer font-normal"
+                >
                   <Checkbox
-                    id={`approval-${option.value}`}
                     checked={approvalStatuses.includes(option.value)}
                     onChange={() => handleApprovalToggle(option.value)}
                     aria-label={`Status de Aprovação: ${option.name}`}
                   />
-                  <Label
-                    htmlFor={`approval-${option.value}`}
-                    className="cursor-pointer font-normal"
-                  >
-                    {option.name}
-                  </Label>
-                </div>
+                  <span>{option.name}</span>
+                </Label>
               ))}
             </div>
           </div>
@@ -177,22 +174,17 @@ export function ListmonkFilterModal({
             </Label>
             <div className="ml-4 space-y-3">
               {applicationStatusOptions.map((option) => (
-                <div key={option.value} className="flex items-center gap-2">
+                <Label
+                  key={option.value}
+                  className="flex items-center gap-2 cursor-pointer font-normal"
+                >
                   <Checkbox
-                    id={`application-${option.value}`}
                     checked={applicationStatuses.includes(option.value)}
-                    onChange={() =>
-                      handleApplicationToggle(option.value)
-                    }
+                    onChange={() => handleApplicationToggle(option.value)}
                     aria-label={`Status de Processo: ${option.name}`}
                   />
-                  <Label
-                    htmlFor={`application-${option.value}`}
-                    className="cursor-pointer font-normal"
-                  >
-                    {option.name}
-                  </Label>
-                </div>
+                  <span>{option.name}</span>
+                </Label>
               ))}
             </div>
           </div>
@@ -203,20 +195,17 @@ export function ListmonkFilterModal({
             </Label>
             <div className="ml-4 space-y-3">
               {attendanceStatusOptions.map((option) => (
-                <div key={option.value} className="flex items-center gap-2">
+                <Label
+                  key={option.value}
+                  className="flex items-center gap-2 cursor-pointer font-normal"
+                >
                   <Checkbox
-                    id={`attendance-${option.value}`}
                     checked={attendanceStatuses.includes(option.value)}
                     onChange={() => handleAttendanceToggle(option.value)}
                     aria-label={`Status de Presença: ${option.name}`}
                   />
-                  <Label
-                    htmlFor={`attendance-${option.value}`}
-                    className="cursor-pointer font-normal"
-                  >
-                    {option.name}
-                  </Label>
-                </div>
+                  <span>{option.name}</span>
+                </Label>
               ))}
             </div>
           </div>
