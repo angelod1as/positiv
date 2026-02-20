@@ -37,11 +37,6 @@ describe("applyToEvent", () => {
           upsert: mockUpsert,
         }
       }
-      if (table === "events") {
-        return {
-          select: mockSelect,
-        }
-      }
       return { select: mockSelect, upsert: mockUpsert }
     })
   })
@@ -107,24 +102,21 @@ describe("applyToEvent", () => {
 
   describe("email sending scenarios", () => {
     beforeEach(() => {
-      // Mock Kysely query chain for event status check (Registration Open by default)
-      const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
-        event_status: "Registration Open",
-      })
+      // Mock Kysely query chain - selectAll returns full event
+      const mockExecuteTakeFirst = vi.fn().mockResolvedValue(mockEvent)
       const mockWhere = vi.fn(() => ({
         executeTakeFirst: mockExecuteTakeFirst,
       }))
-      const mockSelect = vi.fn(() => ({
+      const mockSelectAll = vi.fn(() => ({
         where: mockWhere,
       }))
       vi.mocked(db.selectFrom).mockReturnValue({
-        select: mockSelect,
+        selectAll: mockSelectAll,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
-      mockSingle
-        .mockResolvedValueOnce({ data: null, error: null })
-        .mockResolvedValueOnce({ data: mockEvent, error: null })
+      // Only participant check needed — no second event query
+      mockSingle.mockResolvedValueOnce({ data: null, error: null })
     })
 
     it("should return emailSent: true when email sends successfully", async () => {
@@ -186,32 +178,6 @@ describe("applyToEvent", () => {
       }
       expect(sendApplicationMail).not.toHaveBeenCalled()
     })
-
-    it("should return emailSent: false and log error when event not found", async () => {
-      const consoleErrorSpy = vi
-        .spyOn(console, "error")
-        .mockImplementation(() => {})
-
-      mockSingle
-        .mockReset()
-        .mockResolvedValueOnce({ data: null, error: null })
-        .mockResolvedValueOnce({ data: null, error: null })
-
-      const context = createContext()
-      const result = await applyToEvent(validValues, context)
-
-      expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.emailSent).toBe(false)
-      }
-      expect(sendApplicationMail).not.toHaveBeenCalled()
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Event not found for email sending",
-        { eventId: "event-123" },
-      )
-
-      consoleErrorSpy.mockRestore()
-    })
   })
 
   describe("registration closed scenarios", () => {
@@ -220,25 +186,24 @@ describe("applyToEvent", () => {
     })
 
     it("should return error when event status is 'Registration Closed'", async () => {
-      // Mock Kysely query chain for event status check
       const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
+        ...mockEvent,
         event_status: "Registration Closed",
       })
       const mockWhere = vi.fn(() => ({
         executeTakeFirst: mockExecuteTakeFirst,
       }))
-      const mockSelect = vi.fn(() => ({
+      const mockSelectAll = vi.fn(() => ({
         where: mockWhere,
       }))
       vi.mocked(db.selectFrom).mockReturnValue({
-        select: mockSelect,
+        selectAll: mockSelectAll,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       const context = createContext()
       const result = await applyToEvent(validValues, context)
 
-      // Should return error result (applySchema wraps errors)
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(result.errors).toHaveLength(1)
@@ -247,63 +212,53 @@ describe("applyToEvent", () => {
         )
       }
 
-      // Verify Kysely was called to check event status
       expect(db.selectFrom).toHaveBeenCalledWith("events")
-      expect(mockSelect).toHaveBeenCalledWith("event_status")
+      expect(mockSelectAll).toHaveBeenCalled()
       expect(mockWhere).toHaveBeenCalledWith("id", "=", "event-123")
     })
 
     it("should return error when event does not exist", async () => {
-      // Mock Kysely query chain to return null (event not found)
       const mockExecuteTakeFirst = vi.fn().mockResolvedValue(null)
       const mockWhere = vi.fn(() => ({
         executeTakeFirst: mockExecuteTakeFirst,
       }))
-      const mockSelect = vi.fn(() => ({
+      const mockSelectAll = vi.fn(() => ({
         where: mockWhere,
       }))
       vi.mocked(db.selectFrom).mockReturnValue({
-        select: mockSelect,
+        selectAll: mockSelectAll,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
       const context = createContext()
       const result = await applyToEvent(validValues, context)
 
-      // Should return error result
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(result.errors).toHaveLength(1)
         expect(result.errors[0].message).toBe("Evento não encontrado.")
       }
 
-      // Verify Kysely was called to check event status
       expect(db.selectFrom).toHaveBeenCalledWith("events")
-      expect(mockSelect).toHaveBeenCalledWith("event_status")
+      expect(mockSelectAll).toHaveBeenCalled()
       expect(mockWhere).toHaveBeenCalledWith("id", "=", "event-123")
     })
 
     it("should allow application when event status is 'Registration Open'", async () => {
-      // Mock Kysely query chain for event status check
-      const mockExecuteTakeFirst = vi.fn().mockResolvedValue({
-        event_status: "Registration Open",
-      })
+      const mockExecuteTakeFirst = vi.fn().mockResolvedValue(mockEvent)
       const mockWhere = vi.fn(() => ({
         executeTakeFirst: mockExecuteTakeFirst,
       }))
-      const mockSelect = vi.fn(() => ({
+      const mockSelectAll = vi.fn(() => ({
         where: mockWhere,
       }))
       vi.mocked(db.selectFrom).mockReturnValue({
-        select: mockSelect,
+        selectAll: mockSelectAll,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any)
 
-      // Mock Supabase responses
-      mockSingle
-        .mockResolvedValueOnce({ data: null, error: null }) // existing participant check
-        .mockResolvedValueOnce({ data: mockEvent, error: null }) // event fetch for email
-
+      // Only participant check needed
+      mockSingle.mockResolvedValueOnce({ data: null, error: null })
       mockUpsert.mockResolvedValueOnce({ error: null })
 
       vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })

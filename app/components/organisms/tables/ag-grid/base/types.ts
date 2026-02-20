@@ -63,6 +63,7 @@ export interface AGDataTableProps<TData> {
 
   persistState?: boolean
   stateVersion?: number
+  suppressColumnVirtualisation?: boolean
 
   showToolbar?: boolean
   onClearFilters?: () => void
