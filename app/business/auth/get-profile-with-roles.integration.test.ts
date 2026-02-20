@@ -9,34 +9,28 @@ import {
   cleanupAfterTest,
   setupIntegrationTest,
 } from "~/test/integration-setup"
+import {
+  createTestAuthUser,
+  createTestProfile,
+} from "~/test/db-test-utils"
 import { sql } from "kysely"
 
 describe("get_profile_with_roles RPC - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
 
-  // Get a test user ID from the database
   let testUserId: string
 
   beforeEach(async () => {
     tracker.clear()
 
-    // Get first available auth user for testing
-    const authUser = await kysely
-      .selectFrom("profiles")
-      .select("user_id as id")
-      .where("user_id", "is not", null)
-      .orderBy("user_id", "asc")
-      .limit(1)
-      .executeTakeFirst()
+    const testEmail = `test-rpc-${Date.now()}@example.com`
+    testUserId = await createTestAuthUser(testEmail, "test1234", tracker)
+    await createTestProfile(tracker, kysely, {
+      user_id: testUserId,
+      email: testEmail,
+      full_name: "Test RPC User",
+    })
 
-    if (!authUser || !authUser.id) {
-      throw new Error("No auth users found in test database")
-    }
-
-    testUserId = authUser.id
-
-    // Only clear user_roles for this user (we'll create new ones in tests)
-    // DO NOT delete the profile itself - it's shared test data
     await kysely
       .deleteFrom("user_roles")
       .where("user_id", "=", testUserId)
@@ -48,9 +42,6 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
   })
 
   it("should return profile with is_admin=false and empty roles array when user has no roles", async () => {
-    // Arrange: No roles added (beforeEach already cleared user_roles for this user)
-
-    // Act: Call the RPC using Kysely sql template
     const result = await sql<{
       id: string
       email: string
@@ -61,15 +52,13 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       kysely,
     )
 
-    // Assert
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
     expect(data.is_admin).toBe(false)
-    expect(data.roles).toBeNull() // PostgreSQL array_agg returns NULL for zero rows
+    expect(data.roles).toBeNull()
   })
 
   it("should return profile with is_admin=true and roles=['admin'] when user has admin role", async () => {
-    // Arrange: Add admin role to existing profile
     await kysely
       .insertInto("user_roles")
       .values({
@@ -79,7 +68,6 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       })
       .execute()
 
-    // Act: Call the RPC
     const result = await sql<{
       is_admin: boolean
       roles: string[] | null
@@ -89,18 +77,15 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       kysely,
     )
 
-    // Assert
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
     expect(data.is_admin).toBe(true)
     expect(data.roles).toEqual(["admin"])
-    // Verify it returns the existing profile's data
     expect(data.email).toBeDefined()
     expect(data.full_name).toBeDefined()
   })
 
   it("should return profile with is_admin=false when user has non-admin roles", async () => {
-    // Arrange: Add moderator role to existing profile (not admin)
     await kysely
       .insertInto("user_roles")
       .values({
@@ -110,7 +95,6 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       })
       .execute()
 
-    // Act: Call the RPC
     const result = await sql<{
       is_admin: boolean
       roles: string[] | null
@@ -118,7 +102,6 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       kysely,
     )
 
-    // Assert
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
     expect(data.is_admin).toBe(false)
@@ -126,7 +109,6 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
   })
 
   it("should return profile with multiple roles sorted alphabetically", async () => {
-    // Arrange: Add multiple roles to existing profile (inserted in non-alphabetical order)
     await kysely
       .insertInto("user_roles")
       .values([
@@ -148,7 +130,6 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       ])
       .execute()
 
-    // Act: Call the RPC
     const result = await sql<{
       is_admin: boolean
       roles: string[] | null
@@ -156,17 +137,13 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       kysely,
     )
 
-    // Assert
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
-    expect(data.is_admin).toBe(true) // Has admin role
-    expect(data.roles).toEqual(["admin", "editor", "moderator"]) // Sorted alphabetically
+    expect(data.is_admin).toBe(true)
+    expect(data.roles).toEqual(["admin", "editor", "moderator"])
   })
 
   it("should return all profile columns correctly", async () => {
-    // Arrange: Use existing profile (no roles added)
-
-    // Act: Call the RPC
     const result = await sql<{
       id: string
       email: string
@@ -191,11 +168,9 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       kysely,
     )
 
-    // Assert: Verify all expected columns are present and have correct types
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
 
-    // Verify all columns exist (structure test)
     expect(data).toHaveProperty("id")
     expect(data).toHaveProperty("email")
     expect(data).toHaveProperty("full_name")
@@ -216,21 +191,17 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     expect(data).toHaveProperty("is_admin")
     expect(data).toHaveProperty("roles")
 
-    // Verify derived fields match expected values (no roles added)
     expect(data.is_admin).toBe(false)
-    expect(data.roles).toBeNull() // PostgreSQL array_agg returns NULL for zero rows
+    expect(data.roles).toBeNull()
   })
 
   it("should return no rows when user_id does not exist", async () => {
-    // Arrange: Use a non-existent user_id
     const nonExistentUserId = "99999999-9999-9999-9999-999999999999"
 
-    // Act: Call the RPC
     const result = await sql`SELECT * FROM get_profile_with_roles(${nonExistentUserId}::uuid)`.execute(
       kysely,
     )
 
-    // Assert: Should return no rows
     expect(result.rows).toHaveLength(0)
   })
 })
