@@ -8,10 +8,10 @@ const {
 } = paths
 
 function formatName(participant: RejectedEventParticipant): string {
-  if (participant.social_name) {
+  if (participant.social_name && participant.full_name) {
     return `${participant.social_name} (${participant.full_name})`
   }
-  return participant.full_name
+  return participant.social_name ?? participant.full_name ?? participant.profile_id
 }
 
 export function RejectedParticipantsSection({

@@ -193,7 +193,7 @@ export const getProfilesWithExtraDataById = composable(
 export type RejectedEventParticipant = {
   profile_id: string
   social_name: string | null
-  full_name: string
+  full_name: string | null
 }
 
 export async function getRejectedEventParticipants(
