@@ -38,7 +38,6 @@ describe("payment_transactions table - Integration Tests", () => {
       .selectAll()
       .execute()
 
-    expect(result).toBeDefined()
     expect(Array.isArray(result)).toBe(true)
   })
 
@@ -474,14 +473,13 @@ describe("payment_transactions table - Integration Tests", () => {
       .executeTakeFirstOrThrow()
 
     for (const status of ["confirmed", "failed", "refunded"] as const) {
-      const setValues: Record<string, string> = { status }
-      if (status === "refunded") {
-        setValues.refund_reason = "Test refund reason"
-      }
-
       const updated = await kysely
         .updateTable("payment_transactions")
-        .set(setValues)
+        .set(
+          status === "refunded"
+            ? { status, refund_reason: "Test refund reason" }
+            : { status },
+        )
         .where("id", "=", transaction.id)
         .returningAll()
         .executeTakeFirstOrThrow()

@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS public.payment_transactions (
 
     -- Status & Refund (Our state management)
     status text NOT NULL CHECK (status IN ('pending', 'confirmed', 'failed', 'refunded')),
-    created_by uuid REFERENCES public.profiles(id),
+    created_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
     refund_reason text,
 
     -- Business rule: refund_reason is required when status is 'refunded'
