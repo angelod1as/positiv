@@ -17,10 +17,10 @@ export const applyToEvent = applySchema(
 
   const profileId = currentProfile.id
 
-  // Check if registrations are still open
+  // Fetch full event once for both status check and email sending
   const event = await db
     .selectFrom("events")
-    .select("event_status")
+    .selectAll()
     .where("id", "=", eventId)
     .executeTakeFirst()
 
@@ -57,21 +57,8 @@ export const applyToEvent = applySchema(
   let emailSent = false
 
   if (currentProfile.email) {
-    const { data: event } = await supabase
-      .from("events")
-      .select("*")
-      .eq("id", eventId)
-      .single()
-
-    if (event) {
-      const emailResult = await sendApplicationMail({
-        profile: currentProfile,
-        event,
-      })
-      emailSent = emailResult.emailSent
-    } else {
-      console.error("Event not found for email sending", { eventId })
-    }
+    const emailResult = await sendApplicationMail({ profile: currentProfile, event })
+    emailSent = emailResult.emailSent
   }
 
   return { emailSent }
