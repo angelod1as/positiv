@@ -1,5 +1,7 @@
+import { POSITIV_URL } from "~/lib/constants/constants"
+
 export function loader() {
-  const baseUrl = "https://positivparty.com"
+  const baseUrl = POSITIV_URL.replace(/\/$/, "")
 
   const urls = [
     { loc: `${baseUrl}/`, priority: "1.0" },

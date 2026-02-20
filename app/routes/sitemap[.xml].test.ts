@@ -19,7 +19,7 @@ describe("sitemap.xml loader", () => {
     const response = loader()
     const body = await response.text()
 
-    expect(body).toContain("<loc>https://positivparty.com/</loc>")
+    expect(body).toContain("<loc>https://www.positivparty.com/</loc>")
     expect(body).toContain("<priority>1.0</priority>")
   })
 
@@ -28,7 +28,7 @@ describe("sitemap.xml loader", () => {
     const body = await response.text()
 
     expect(body).toContain(
-      "<loc>https://positivparty.com/codigo-de-conduta</loc>",
+      "<loc>https://www.positivparty.com/codigo-de-conduta</loc>",
     )
     expect(body).toContain("<priority>0.7</priority>")
   })
@@ -37,7 +37,7 @@ describe("sitemap.xml loader", () => {
     const response = loader()
     const body = await response.text()
 
-    expect(body).toContain("<loc>https://positivparty.com/feedback</loc>")
+    expect(body).toContain("<loc>https://www.positivparty.com/feedback</loc>")
     expect(body).toContain("<priority>0.5</priority>")
   })
 

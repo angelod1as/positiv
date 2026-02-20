@@ -35,7 +35,7 @@ describe("robots.txt loader", () => {
     const body = await response.text()
 
     expect(body).toContain(
-      "Sitemap: https://positivparty.com/sitemap.xml",
+      "Sitemap: https://www.positivparty.com/sitemap.xml",
     )
   })
 })
