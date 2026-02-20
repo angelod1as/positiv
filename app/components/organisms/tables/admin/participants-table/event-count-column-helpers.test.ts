@@ -37,4 +37,22 @@ describe("eventCountComparator", () => {
       expect(eventCountComparator(null, 0)).toBeLessThan(0)
     })
   })
+
+  describe("non-finite numbers treated as -1", () => {
+    it("returns negative when a is NaN and b is 5", () => {
+      expect(eventCountComparator(NaN, 5)).toBeLessThan(0)
+    })
+
+    it("returns positive when a is 5 and b is NaN", () => {
+      expect(eventCountComparator(5, NaN)).toBeGreaterThan(0)
+    })
+
+    it("returns 0 when both are NaN (both treated as -1)", () => {
+      expect(eventCountComparator(NaN, NaN)).toBe(0)
+    })
+
+    it("returns 0 when a is NaN and b is null (both treated as -1)", () => {
+      expect(eventCountComparator(NaN, null)).toBe(0)
+    })
+  })
 })
