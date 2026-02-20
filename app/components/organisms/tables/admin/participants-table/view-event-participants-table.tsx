@@ -637,6 +637,7 @@ export const AdminViewEventParticipantsTable: FC<
         emptyMessage="Nenhum participante encontrado"
         persistState
         stateVersion={2}
+        suppressColumnVirtualisation
         showToolbar
         onClearFilters={handleClearFilters}
         fetcher={fetcher}

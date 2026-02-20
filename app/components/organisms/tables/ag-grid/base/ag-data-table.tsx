@@ -71,6 +71,7 @@ export function AGDataTable<TData>({
   height,
   persistState = true,
   stateVersion = 1,
+  suppressColumnVirtualisation = false,
   showToolbar = true,
   onClearFilters,
   headerContent,
@@ -305,6 +306,7 @@ export function AGDataTable<TData>({
           onStateUpdated={handleStateUpdated}
           onRowClicked={onRowClicked}
           maintainColumnOrder={persistState}
+          suppressColumnVirtualisation={suppressColumnVirtualisation}
           tooltipShowDelay={0}
           tooltipInteraction={true}
           autoSizeStrategy={
