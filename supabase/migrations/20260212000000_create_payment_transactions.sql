@@ -8,7 +8,7 @@
 CREATE TABLE IF NOT EXISTS public.payment_transactions (
     -- Our Data (Relationships & Identifiers)
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_participant_id uuid NOT NULL REFERENCES public.event_participants(id) ON DELETE CASCADE,
+    event_participant_id uuid NOT NULL REFERENCES public.event_participants(id) ON DELETE RESTRICT,
     profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE RESTRICT,
     event_id uuid NOT NULL REFERENCES public.events(id) ON DELETE RESTRICT,
 
@@ -110,7 +110,7 @@ COMMENT ON COLUMN public.payment_transactions.id IS
 'Primary key UUID for the payment transaction.';
 
 COMMENT ON COLUMN public.payment_transactions.event_participant_id IS
-'Foreign key to the event participant who made this payment. CASCADE deletes when participant removed.';
+'Foreign key to the event participant who made this payment. ON DELETE RESTRICT — payment records are financial artifacts and must be explicitly removed before the participant record can be deleted.';
 
 COMMENT ON COLUMN public.payment_transactions.profile_id IS
 'Foreign key to the user profile. Denormalized for fast user-level queries.';
