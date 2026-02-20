@@ -38,10 +38,10 @@ describe("Registration Limit - Integration Tests", () => {
       .returningAll()
       .executeTakeFirst()
 
-    expect(result).toBeDefined()
     if (result) {
       tracker.track("event_participants", result.id)
     }
+    expect(result).toBeDefined()
     expect(result?.event_id).toBe(event.id)
     expect(result?.profile_id).toBe(profile.id)
   })
