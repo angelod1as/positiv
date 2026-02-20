@@ -228,6 +228,29 @@ describe("payment_transactions table - Integration Tests", () => {
     ).rejects.toThrow()
   })
 
+  it("should RESTRICT deletion of event with payment transactions", async () => {
+    const { profile, event, participant } = await createTestData("restrict-event")
+
+    await kysely
+      .insertInto("payment_transactions")
+      .values({
+        event_participant_id: participant.id,
+        profile_id: profile.id,
+        event_id: event.id,
+        asaas_payment_id: "pay_restrict_event_test",
+        asaas_customer_id: "cus_test",
+        asaas_payment_data: { id: "pay_restrict_event_test" },
+        payment_method: "pix",
+        amount: 100,
+        status: "pending",
+      })
+      .executeTakeFirstOrThrow()
+
+    await expect(
+      kysely.deleteFrom("events").where("id", "=", event.id).execute()
+    ).rejects.toThrow()
+  })
+
   it("should store and query JSONB data", async () => {
     const { profile, event, participant } = await createTestData("jsonb")
 
@@ -326,6 +349,34 @@ describe("payment_transactions table - Integration Tests", () => {
         .executeTakeFirstOrThrow()
 
       expect(transaction.payment_method).toBe(method)
+    }
+  })
+
+  it("should allow NULL installments for pix and boleto", async () => {
+    const { profile, event, participant } = await createTestData("null-installments")
+
+    for (const [method, payId] of [
+      ["pix", "pay_null_inst_pix"],
+      ["boleto", "pay_null_inst_boleto"],
+    ] as const) {
+      const tx = await kysely
+        .insertInto("payment_transactions")
+        .values({
+          event_participant_id: participant.id,
+          profile_id: profile.id,
+          event_id: event.id,
+          asaas_payment_id: payId,
+          asaas_customer_id: "cus_test",
+          asaas_payment_data: { id: payId },
+          payment_method: method,
+          amount: 100,
+          status: "pending",
+          installments: null,
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow()
+
+      expect(tx.installments).toBeNull()
     }
   })
 
