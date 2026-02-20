@@ -19,6 +19,7 @@ export default [
     "pages/api/admin/send-registration-limit-email.ts",
   ),
   route("/robots.txt", "routes/robots[.txt].ts"),
+  route("/sitemap.xml", "routes/sitemap[.xml].ts"),
 
   // PUBLIC
   index("pages/homepage/homepage.tsx"),
