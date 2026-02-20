@@ -13,6 +13,36 @@ describe("Registration Limit - Integration Tests", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
+  it("should allow a single user to apply without the trigger blocking the insert", async () => {
+    const testId = Date.now()
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event - Single Application",
+      event_status: "Registration Open",
+    })
+
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      full_name: "Single Test User",
+      email: `test${testId}-single@example.com`,
+    })
+
+    const result = await kysely
+      .insertInto("event_participants")
+      .values({
+        event_id: event.id,
+        profile_id: profile.id,
+        is_user_applied: true,
+        application_status: "pending",
+        attendance_status: "pending",
+      })
+      .returningAll()
+      .executeTakeFirst()
+
+    expect(result).toBeDefined()
+    expect(result?.event_id).toBe(event.id)
+    expect(result?.profile_id).toBe(profile.id)
+  })
+
   it("should close registrations when 90 participants apply", async () => {
     const testId = Date.now()
     const event = await createTestEvent(tracker, kysely, {
