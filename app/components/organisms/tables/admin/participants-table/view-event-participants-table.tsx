@@ -34,6 +34,7 @@ import {
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import { CategoryLabelWithTooltip } from "./category-label-with-tooltip"
 import { countParticipants } from "./count-participants"
+import { eventCountComparator } from "./event-count-column-helpers"
 import {
   parsePaymentValue,
   shouldAutoCheckHasPaid,
@@ -265,6 +266,8 @@ export const AdminViewEventParticipantsTable: FC<
         headerName: "Total de eventos",
         headerTooltip: "Total de presenças desde o início do histórico",
         sortable: true,
+        sort: "desc",
+        comparator: eventCountComparator,
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,
@@ -274,6 +277,7 @@ export const AdminViewEventParticipantsTable: FC<
         headerName: "Últimos eventos (6 últimos)",
         headerTooltip: "Presenças nos últimos 6 eventos realizados",
         sortable: true,
+        comparator: eventCountComparator,
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,
@@ -632,6 +636,7 @@ export const AdminViewEventParticipantsTable: FC<
         searchAriaLabel="Buscar participantes"
         emptyMessage="Nenhum participante encontrado"
         persistState
+        stateVersion={2}
         showToolbar
         onClearFilters={handleClearFilters}
         fetcher={fetcher}

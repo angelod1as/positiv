@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1740000000000
+export const NEWS_VERSION = 1771536000000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "admin-event-count-default-sort",
+    title: "📋 Tabela de participantes ordena por eventos automaticamente",
+    content:
+      "A coluna \"Total de eventos\" agora carrega com ordenação decrescente por padrão, mostrando as pessoas mais ativas primeiro. Participantes sem histórico de presença aparecem sempre no final da lista.",
+    isAdmin: true,
+    createdAt: new Date("2026-02-20T12:00:00"),
+    isActive: true,
+  },
   {
     id: "admin-last-attended-events-count",
     title: "📊 Nova coluna: Últimos eventos (6 últimos)",
