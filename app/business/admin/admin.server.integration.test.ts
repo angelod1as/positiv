@@ -1081,7 +1081,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       const event = await createTestEvent(tracker, kysely, {
         title: `Completed Event ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (80 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (8 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
       completedEvents.push(event)
     }
@@ -1338,7 +1338,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       const event = await createTestEvent(tracker, kysely, {
         title: `Global Completed ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (80 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (8 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
       completedEvents.push(event)
     }
@@ -1380,7 +1380,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       const event = await createTestEvent(tracker, kysely, {
         title: `ById Completed ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (80 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (8 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
       completedEvents.push(event)
     }

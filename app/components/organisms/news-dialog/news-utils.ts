@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1771536000000
+export const NEWS_VERSION = 1771592400000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "fix-registration-trigger",
+    title: "🔧 Erro ao se inscrever em eventos corrigido",
+    content:
+      "Corrigido um erro que impedia participantes de se inscreverem em eventos. O fechamento automático das inscrições ao atingir 90 participantes agora funciona corretamente e, mesmo em caso de falha, não bloqueia mais as inscrições.",
+    isAdmin: true,
+    createdAt: new Date("2026-02-20T13:00:00"),
+    isActive: true,
+  },
   {
     id: "admin-event-count-default-sort",
     title: "📋 Tabela de participantes ordena por eventos automaticamente",
