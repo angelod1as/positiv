@@ -32,6 +32,7 @@ describe("DataViz - Integration Tests", () => {
 
   beforeEach(async () => {
     tracker.clear()
+    await kysely.deleteFrom("payment_transactions").execute()
     await kysely.deleteFrom("event_participants").execute()
     await kysely
       .updateTable("events")
