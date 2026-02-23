@@ -39,8 +39,12 @@ describe("agreeToTerms", () => {
     const mockEqForSelect = vi.fn(() => ({ is: mockIsForSelect }))
     const mockSelectOrphan = vi.fn(() => ({ eq: mockEqForSelect }))
 
-    // Update chain: from("profiles").update({...}).eq(...).is(...)
-    mockIsForUpdate = vi.fn(() => Promise.resolve({ error: null }))
+    // Update chain: from("profiles").update({...}).eq(...).is(...).select("id").maybeSingle()
+    mockIsForUpdate = vi.fn(() => ({
+      select: vi.fn(() => ({
+        maybeSingle: vi.fn(() => Promise.resolve({ data: { id: "orphan-profile-456" }, error: null })),
+      })),
+    }))
     const mockEqForUpdate = vi.fn(() => ({ is: mockIsForUpdate }))
     const mockUpdate = vi.fn(() => ({ eq: mockEqForUpdate }))
 

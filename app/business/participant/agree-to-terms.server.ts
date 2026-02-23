@@ -30,21 +30,28 @@ export const agreeToTerms = applySchema(
       .maybeSingle()
 
     if (orphanProfile) {
-      const { error } = await supabase
+      // Use .select("id").maybeSingle() to confirm the row was actually modified.
+      // The .is("user_id", null) guard protects against a TOCTOU race: if another
+      // process claimed the profile between our SELECT and this UPDATE, 0 rows match
+      // and data will be null — we surface that as an error rather than silently
+      // binding the wrong profile ID to this user.
+      const { data: linkedProfile, error } = await supabase
         .from("profiles")
         .update({ user_id: currentUser.id })
         .eq("id", orphanProfile.id)
         .is("user_id", null)
+        .select("id")
+        .maybeSingle()
 
-      if (error) throw new Error("Problema ao vincular perfil")
+      if (error || !linkedProfile) throw new Error("Problema ao vincular perfil")
 
-      profileId = orphanProfile.id
+      profileId = linkedProfile.id
     } else {
       const { data: newProfile, error } = await supabase
         .from("profiles")
         .insert({
           user_id: currentUser.id,
-          email: currentUser.email,
+          email: normalizedEmail,
         })
         .select("id")
         .single()

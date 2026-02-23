@@ -310,6 +310,9 @@ export const registerUser = applySchema(
       profileId: claimedProfile.id,
     })
 
+    // Note: this error message differs from the "User already registered" path below,
+    // which could theoretically allow email enumeration. Accepted as a UX tradeoff —
+    // users with a claimed profile cannot use password reset without contacting support.
     throw new Error(
       "Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o \"esqueci minha senha\". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou.",
     )

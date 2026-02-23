@@ -8,7 +8,7 @@ import {
   createTestAuthUser,
   getTestSupabaseClient,
 } from "~/test/db-test-utils"
-import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
+import { agreeToTerms } from "./agree-to-terms.server"
 import type { z } from "zod"
 import type { contextSchema } from "~/business/common"
 
