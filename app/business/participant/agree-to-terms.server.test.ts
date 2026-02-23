@@ -12,16 +12,48 @@ vi.mock("../newsletter/subscription-helpers.server", () => ({
   unsubscribeProfile: vi.fn(),
 }))
 
+vi.mock("~/kysely-db", () => ({
+  kyselyDb: {
+    selectFrom: vi.fn(),
+    updateTable: vi.fn(),
+  },
+}))
+
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
+import { kyselyDb } from "~/kysely-db"
 
 describe("agreeToTerms", () => {
   let mockFrom: Mock
   let mockInsert: Mock
   let mockSelect: Mock
   let mockSingle: Mock
-  let mockMaybeSingle: Mock
-  let mockIsForUpdate: Mock
+
+  const mockKyselySelectReturning = (result: { id: string } | undefined) => {
+    ;(kyselyDb.selectFrom as unknown as Mock).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            executeTakeFirst: vi.fn().mockResolvedValue(result),
+          }),
+        }),
+      }),
+    } as never)
+  }
+
+  const mockKyselyUpdateReturning = (result: { id: string } | undefined) => {
+    ;(kyselyDb.updateTable as unknown as Mock).mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockReturnValue({
+              executeTakeFirst: vi.fn().mockResolvedValue(result),
+            }),
+          }),
+        }),
+      }),
+    } as never)
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -32,27 +64,14 @@ describe("agreeToTerms", () => {
     mockInsert = vi.fn(() => ({
       select: mockSelect,
     }))
-
-    // Orphan check chain: from("profiles").select("id").eq(...).is(...).maybeSingle()
-    mockMaybeSingle = vi.fn(() => Promise.resolve({ data: null, error: null }))
-    const mockIsForSelect = vi.fn(() => ({ maybeSingle: mockMaybeSingle }))
-    const mockEqForSelect = vi.fn(() => ({ is: mockIsForSelect }))
-    const mockSelectOrphan = vi.fn(() => ({ eq: mockEqForSelect }))
-
-    // Update chain: from("profiles").update({...}).eq(...).is(...).select("id").maybeSingle()
-    mockIsForUpdate = vi.fn(() => ({
-      select: vi.fn(() => ({
-        maybeSingle: vi.fn(() => Promise.resolve({ data: { id: "orphan-profile-456" }, error: null })),
-      })),
-    }))
-    const mockEqForUpdate = vi.fn(() => ({ is: mockIsForUpdate }))
-    const mockUpdate = vi.fn(() => ({ eq: mockEqForUpdate }))
-
     mockFrom = vi.fn(() => ({
-      select: mockSelectOrphan,
       insert: mockInsert,
-      update: mockUpdate,
     }))
+
+    // Default: no orphan found → INSERT path
+    mockKyselySelectReturning(undefined)
+    // Default: update succeeds (used in orphan-linking tests)
+    mockKyselyUpdateReturning({ id: "orphan-profile-456" })
 
     // Setup default mocks for newsletter subscription
     vi.mocked(subscribeProfileToNewsletter).mockResolvedValue({
@@ -115,7 +134,7 @@ describe("agreeToTerms", () => {
   })
 
   it("should link orphan profile when orphan profile exists for user email", async () => {
-    mockMaybeSingle.mockResolvedValueOnce({ data: { id: "orphan-profile-456" }, error: null })
+    mockKyselySelectReturning({ id: "orphan-profile-456" })
 
     const context = createContext({ currentProfile: null })
     const values = { agree: true, commonEmails: true, mktEmails: false }
@@ -123,8 +142,24 @@ describe("agreeToTerms", () => {
     await agreeToTerms(values, context)
 
     expect(mockInsert).not.toHaveBeenCalled()
-    expect(mockIsForUpdate).toHaveBeenCalled()
+    expect(kyselyDb.updateTable).toHaveBeenCalledWith("profiles")
     expect(unsubscribeProfile).toHaveBeenCalledWith("orphan-profile-456")
+  })
+
+  it("should throw error when orphan profile is claimed between SELECT and UPDATE (TOCTOU)", async () => {
+    mockKyselySelectReturning({ id: "orphan-profile-456" })
+    mockKyselyUpdateReturning(undefined) // 0 rows updated — race condition
+
+    const context = createContext({ currentProfile: null })
+    const values = { agree: true, commonEmails: true, mktEmails: false }
+
+    const result = await agreeToTerms(values, context)
+
+    expect(result).toBeDefined()
+    if ("errors" in result && result.errors) {
+      expect(result.errors[0].message).toBe("Problema ao vincular perfil")
+    }
+    expect(mockInsert).not.toHaveBeenCalled()
   })
 
   it("should unsubscribe existing profile when mktEmails is false", async () => {
