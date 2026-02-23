@@ -155,10 +155,9 @@ describe("agreeToTerms", () => {
 
     const result = await agreeToTerms(values, context)
 
-    expect(result).toBeDefined()
-    if ("errors" in result && result.errors) {
-      expect(result.errors[0].message).toBe("Problema ao vincular perfil")
-    }
+    expect(result).toMatchObject({
+      errors: [{ message: "Problema ao vincular perfil" }],
+    })
     expect(mockInsert).not.toHaveBeenCalled()
   })
 
@@ -234,12 +233,10 @@ describe("agreeToTerms", () => {
 
     const result = await agreeToTerms(values, context)
 
-    // composable-functions catches errors and returns them in the result
-    expect(result).toBeDefined()
     expect(mockFrom).toHaveBeenCalledWith("profiles")
-    if ('errors' in result && result.errors) {
-      expect(result.errors[0].message).toBe("Problema ao criar perfil")
-    }
+    expect(result).toMatchObject({
+      errors: [{ message: "Problema ao criar perfil" }],
+    })
   })
 
   it("should handle unsubscribe when no subscription exists", async () => {

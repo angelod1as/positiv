@@ -66,7 +66,8 @@ describe("agreeToTerms orphan profile linking - Integration Tests", () => {
     const context = buildContext(userId, testEmail)
     const values = { agree: true, commonEmails: true, mktEmails: false }
 
-    await agreeToTerms(values, context)
+    const result = await agreeToTerms(values, context)
+    expect(result).toMatchObject({ success: true })
 
     const updatedProfile = await kysely
       .selectFrom("profiles")
@@ -84,7 +85,8 @@ describe("agreeToTerms orphan profile linking - Integration Tests", () => {
     const context = buildContext(userId, testEmail)
     const values = { agree: true, commonEmails: true, mktEmails: false }
 
-    await agreeToTerms(values, context)
+    const result = await agreeToTerms(values, context)
+    expect(result).toMatchObject({ success: true })
 
     const newProfile = await kysely
       .selectFrom("profiles")
