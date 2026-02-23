@@ -20,6 +20,8 @@ describe("agreeToTerms", () => {
   let mockInsert: Mock
   let mockSelect: Mock
   let mockSingle: Mock
+  let mockMaybeSingle: Mock
+  let mockIsForUpdate: Mock
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -30,8 +32,22 @@ describe("agreeToTerms", () => {
     mockInsert = vi.fn(() => ({
       select: mockSelect,
     }))
+
+    // Orphan check chain: from("profiles").select("id").eq(...).is(...).maybeSingle()
+    mockMaybeSingle = vi.fn(() => Promise.resolve({ data: null, error: null }))
+    const mockIsForSelect = vi.fn(() => ({ maybeSingle: mockMaybeSingle }))
+    const mockEqForSelect = vi.fn(() => ({ is: mockIsForSelect }))
+    const mockSelectOrphan = vi.fn(() => ({ eq: mockEqForSelect }))
+
+    // Update chain: from("profiles").update({...}).eq(...).is(...)
+    mockIsForUpdate = vi.fn(() => Promise.resolve({ error: null }))
+    const mockEqForUpdate = vi.fn(() => ({ is: mockIsForUpdate }))
+    const mockUpdate = vi.fn(() => ({ eq: mockEqForUpdate }))
+
     mockFrom = vi.fn(() => ({
+      select: mockSelectOrphan,
       insert: mockInsert,
+      update: mockUpdate,
     }))
 
     // Setup default mocks for newsletter subscription
@@ -92,6 +108,19 @@ describe("agreeToTerms", () => {
     expect(mockSelect).toHaveBeenCalledWith("id")
     expect(subscribeProfileToNewsletter).toHaveBeenCalledWith("new-profile-123", "onboarding_auto")
     expect(unsubscribeProfile).not.toHaveBeenCalled()
+  })
+
+  it("should link orphan profile when orphan profile exists for user email", async () => {
+    mockMaybeSingle.mockResolvedValueOnce({ data: { id: "orphan-profile-456" }, error: null })
+
+    const context = createContext({ currentProfile: null })
+    const values = { agree: true, commonEmails: true, mktEmails: false }
+
+    await agreeToTerms(values, context)
+
+    expect(mockInsert).not.toHaveBeenCalled()
+    expect(mockIsForUpdate).toHaveBeenCalled()
+    expect(unsubscribeProfile).toHaveBeenCalledWith("orphan-profile-456")
   })
 
   it("should unsubscribe existing profile when mktEmails is false", async () => {

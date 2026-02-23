@@ -20,21 +20,41 @@ export const agreeToTerms = applySchema(
   if (currentProfile) {
     profileId = currentProfile.id
   } else {
-    // Create a new profile
-    const { data: newProfile, error } = await supabase
+    const normalizedEmail = currentUser.email.toLowerCase().trim()
+
+    const { data: orphanProfile } = await supabase
       .from("profiles")
-      .insert({
-        user_id: currentUser.id,
-        email: currentUser.email,
-      })
       .select("id")
-      .single()
+      .eq("email", normalizedEmail)
+      .is("user_id", null)
+      .maybeSingle()
 
-    if (error || !newProfile) {
-      throw new Error("Problema ao criar perfil")
+    if (orphanProfile) {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ user_id: currentUser.id })
+        .eq("id", orphanProfile.id)
+        .is("user_id", null)
+
+      if (error) throw new Error("Problema ao vincular perfil")
+
+      profileId = orphanProfile.id
+    } else {
+      const { data: newProfile, error } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: currentUser.id,
+          email: currentUser.email,
+        })
+        .select("id")
+        .single()
+
+      if (error || !newProfile) {
+        throw new Error("Problema ao criar perfil")
+      }
+
+      profileId = newProfile.id
     }
-
-    profileId = newProfile.id
   }
 
   // Handle newsletter subscription separately using the new table
