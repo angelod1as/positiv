@@ -12,14 +12,48 @@ vi.mock("../newsletter/subscription-helpers.server", () => ({
   unsubscribeProfile: vi.fn(),
 }))
 
+vi.mock("~/kysely-db", () => ({
+  kyselyDb: {
+    selectFrom: vi.fn(),
+    updateTable: vi.fn(),
+  },
+}))
+
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
+import { kyselyDb } from "~/kysely-db"
 
 describe("agreeToTerms", () => {
   let mockFrom: Mock
   let mockInsert: Mock
   let mockSelect: Mock
   let mockSingle: Mock
+
+  const mockKyselySelectReturning = (result: { id: string } | undefined) => {
+    ;(kyselyDb.selectFrom as unknown as Mock).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            executeTakeFirst: vi.fn().mockResolvedValue(result),
+          }),
+        }),
+      }),
+    } as never)
+  }
+
+  const mockKyselyUpdateReturning = (result: { id: string } | undefined) => {
+    ;(kyselyDb.updateTable as unknown as Mock).mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockReturnValue({
+              executeTakeFirst: vi.fn().mockResolvedValue(result),
+            }),
+          }),
+        }),
+      }),
+    } as never)
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -33,6 +67,11 @@ describe("agreeToTerms", () => {
     mockFrom = vi.fn(() => ({
       insert: mockInsert,
     }))
+
+    // Default: no orphan found → INSERT path
+    mockKyselySelectReturning(undefined)
+    // Default: update succeeds (used in orphan-linking tests)
+    mockKyselyUpdateReturning({ id: "orphan-profile-456" })
 
     // Setup default mocks for newsletter subscription
     vi.mocked(subscribeProfileToNewsletter).mockResolvedValue({
@@ -92,6 +131,34 @@ describe("agreeToTerms", () => {
     expect(mockSelect).toHaveBeenCalledWith("id")
     expect(subscribeProfileToNewsletter).toHaveBeenCalledWith("new-profile-123", "onboarding_auto")
     expect(unsubscribeProfile).not.toHaveBeenCalled()
+  })
+
+  it("should link orphan profile when orphan profile exists for user email", async () => {
+    mockKyselySelectReturning({ id: "orphan-profile-456" })
+
+    const context = createContext({ currentProfile: null })
+    const values = { agree: true, commonEmails: true, mktEmails: false }
+
+    await agreeToTerms(values, context)
+
+    expect(mockInsert).not.toHaveBeenCalled()
+    expect(kyselyDb.updateTable).toHaveBeenCalledWith("profiles")
+    expect(unsubscribeProfile).toHaveBeenCalledWith("orphan-profile-456")
+  })
+
+  it("should throw error when orphan profile is claimed between SELECT and UPDATE (TOCTOU)", async () => {
+    mockKyselySelectReturning({ id: "orphan-profile-456" })
+    mockKyselyUpdateReturning(undefined) // 0 rows updated — race condition
+
+    const context = createContext({ currentProfile: null })
+    const values = { agree: true, commonEmails: true, mktEmails: false }
+
+    const result = await agreeToTerms(values, context)
+
+    expect(result).toMatchObject({
+      errors: [{ message: "Problema ao vincular perfil" }],
+    })
+    expect(mockInsert).not.toHaveBeenCalled()
   })
 
   it("should unsubscribe existing profile when mktEmails is false", async () => {
@@ -166,12 +233,10 @@ describe("agreeToTerms", () => {
 
     const result = await agreeToTerms(values, context)
 
-    // composable-functions catches errors and returns them in the result
-    expect(result).toBeDefined()
     expect(mockFrom).toHaveBeenCalledWith("profiles")
-    if ('errors' in result && result.errors) {
-      expect(result.errors[0].message).toBe("Problema ao criar perfil")
-    }
+    expect(result).toMatchObject({
+      errors: [{ message: "Problema ao criar perfil" }],
+    })
   })
 
   it("should handle unsubscribe when no subscription exists", async () => {

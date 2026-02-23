@@ -643,7 +643,7 @@ describe("registerUser", () => {
     expect(result.errors[0].message).toContain("Ops, ocorreu um erro")
   })
 
-  it("should show error when email matches orphan profile (user_id = NULL)", async () => {
+  it("should show error when email matches claimed profile (user_id IS NOT NULL)", async () => {
     const mockSignUp = vi.fn().mockResolvedValue({ error: null })
 
     const mockSupabase = {
@@ -652,11 +652,11 @@ describe("registerUser", () => {
       },
     }
 
-    // Mock Kysely to return an existing orphan profile (user_id = NULL)
+    // Mock Kysely to return an existing claimed profile (user_id IS NOT NULL)
     const { kyselyDb: kysely } = await import("~/kysely-db")
     const mockExecuteTakeFirst = vi
       .fn()
-      .mockResolvedValue({ id: "orphan-profile-id" })
+      .mockResolvedValue({ id: "claimed-profile-id" })
     const mockWhereUserId = vi.fn().mockReturnValue({
       executeTakeFirst: mockExecuteTakeFirst,
     })
@@ -670,7 +670,7 @@ describe("registerUser", () => {
     } as never)
 
     const values = {
-      email: "orphan@example.com",
+      email: "claimed@example.com",
       password: "password123",
       confirmPassword: "password123",
       over18: true,
@@ -694,12 +694,12 @@ describe("registerUser", () => {
     )
 
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
-    expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "orphan@example.com")
-    expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is", null)
+    expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "claimed@example.com")
+    expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is not", null)
     expect(mockSignUp).not.toHaveBeenCalled()
   })
 
-  it("should log admin notification when signup blocked for orphan profile", async () => {
+  it("should log admin notification when signup blocked for claimed profile", async () => {
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
     const mockSignUp = vi.fn().mockResolvedValue({ error: null })
 
@@ -712,7 +712,61 @@ describe("registerUser", () => {
     const { kyselyDb: kysely } = await import("~/kysely-db")
     const mockExecuteTakeFirst = vi
       .fn()
-      .mockResolvedValue({ id: "orphan-profile-id" })
+      .mockResolvedValue({ id: "claimed-profile-id" })
+    const mockWhereUserId = vi.fn().mockReturnValue({
+      executeTakeFirst: mockExecuteTakeFirst,
+    })
+    const mockWhereEmail = vi.fn().mockReturnValue({
+      where: mockWhereUserId,
+    })
+    vi.mocked(kysely.selectFrom).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: mockWhereEmail,
+      }),
+    } as never)
+
+    const values = {
+      email: "claimed@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+      over18: true,
+      captchaToken: "test-captcha-token",
+    }
+
+    const context = {
+      supabase: mockSupabase as unknown as DBClient,
+      host: "http://localhost:5173",
+      supabaseHeaders: new Headers(),
+      currentUser: null,
+      currentProfile: null,
+    }
+
+    await registerUser(values, context)
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "[ADMIN] Blocked claimed profile signup:",
+      expect.objectContaining({
+        maskedEmail: "cla***@example.com",
+        profileId: "claimed-profile-id",
+      }),
+    )
+
+    consoleSpy.mockRestore()
+  })
+
+  it("should allow signup when email matches orphan profile (user_id IS NULL)", async () => {
+    const mockSignUp = vi.fn().mockResolvedValue({ error: null })
+
+    const mockSupabase = {
+      auth: {
+        signUp: mockSignUp,
+      },
+    }
+
+    // Mock Kysely to return NO claimed profile (orphan exists but has user_id=NULL)
+    // The claimed profile check (user_id IS NOT NULL) returns undefined → allow signup
+    const { kyselyDb: kysely } = await import("~/kysely-db")
+    const mockExecuteTakeFirst = vi.fn().mockResolvedValue(undefined)
     const mockWhereUserId = vi.fn().mockReturnValue({
       executeTakeFirst: mockExecuteTakeFirst,
     })
@@ -741,65 +795,11 @@ describe("registerUser", () => {
       currentProfile: null,
     }
 
-    await registerUser(values, context)
-
-    expect(consoleSpy).toHaveBeenCalledWith(
-      "[ADMIN] Blocked orphan profile signup:",
-      expect.objectContaining({
-        maskedEmail: "orp***@example.com",
-        profileId: "orphan-profile-id",
-      }),
-    )
-
-    consoleSpy.mockRestore()
-  })
-
-  it("should allow signup attempt when profile exists with user_id set (not orphan)", async () => {
-    const mockSignUp = vi.fn().mockResolvedValue({ error: null })
-
-    const mockSupabase = {
-      auth: {
-        signUp: mockSignUp,
-      },
-    }
-
-    // Mock Kysely to return NO profile (because user_id IS NULL check fails)
-    // This simulates a profile existing with user_id set
-    const { kyselyDb: kysely } = await import("~/kysely-db")
-    const mockExecuteTakeFirst = vi.fn().mockResolvedValue(undefined)
-    const mockWhereUserId = vi.fn().mockReturnValue({
-      executeTakeFirst: mockExecuteTakeFirst,
-    })
-    const mockWhereEmail = vi.fn().mockReturnValue({
-      where: mockWhereUserId,
-    })
-    vi.mocked(kysely.selectFrom).mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        where: mockWhereEmail,
-      }),
-    } as never)
-
-    const values = {
-      email: "linked@example.com",
-      password: "password123",
-      confirmPassword: "password123",
-      over18: true,
-      captchaToken: "test-captcha-token",
-    }
-
-    const context = {
-      supabase: mockSupabase as unknown as DBClient,
-      host: "http://localhost:5173",
-      supabaseHeaders: new Headers(),
-      currentUser: null,
-      currentProfile: null,
-    }
-
     const result = await registerUser(values, context)
 
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
-    expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "linked@example.com")
-    expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is", null)
+    expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "orphan@example.com")
+    expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is not", null)
     expect(mockSignUp).toHaveBeenCalled()
     expect(result.success).toBe(true)
   })
@@ -848,7 +848,7 @@ describe("registerUser", () => {
 
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
     expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "new@example.com")
-    expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is", null)
+    expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is not", null)
     expect(mockSignUp).toHaveBeenCalled()
     expect(result.success).toBe(true)
   })

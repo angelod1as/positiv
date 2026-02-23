@@ -2,6 +2,7 @@ import { applySchema } from "composable-functions"
 import { agreeToTermsSchema, contextSchema } from "../common"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
+import { kyselyDb } from "~/kysely-db"
 
 export const agreeToTerms = applySchema(
   agreeToTermsSchema,
@@ -20,21 +21,50 @@ export const agreeToTerms = applySchema(
   if (currentProfile) {
     profileId = currentProfile.id
   } else {
-    // Create a new profile
-    const { data: newProfile, error } = await supabase
-      .from("profiles")
-      .insert({
-        user_id: currentUser.id,
-        email: currentUser.email,
-      })
+    const normalizedEmail = currentUser.email.toLowerCase().trim()
+
+    // Use kyselyDb (server-side, bypasses RLS) for orphan operations.
+    // The session client cannot SELECT/UPDATE orphan profiles because the RLS
+    // policy requires auth.uid() = user_id, which is never true when user_id IS NULL.
+    const orphanProfile = await kyselyDb
+      .selectFrom("profiles")
       .select("id")
-      .single()
+      .where("email", "=", normalizedEmail)
+      .where("user_id", "is", null)
+      .executeTakeFirst()
 
-    if (error || !newProfile) {
-      throw new Error("Problema ao criar perfil")
+    if (orphanProfile) {
+      // The .where("user_id", "is", null) guard on the UPDATE protects against a
+      // TOCTOU race: if another process claimed the profile between our SELECT and
+      // this UPDATE, 0 rows match and executeTakeFirst returns undefined — we surface
+      // that as an error rather than silently binding the wrong profile ID to this user.
+      const linkedProfile = await kyselyDb
+        .updateTable("profiles")
+        .set({ user_id: currentUser.id })
+        .where("id", "=", orphanProfile.id)
+        .where("user_id", "is", null)
+        .returning("id")
+        .executeTakeFirst()
+
+      if (!linkedProfile) throw new Error("Problema ao vincular perfil")
+
+      profileId = linkedProfile.id
+    } else {
+      const { data: newProfile, error } = await supabase
+        .from("profiles")
+        .insert({
+          user_id: currentUser.id,
+          email: normalizedEmail,
+        })
+        .select("id")
+        .single()
+
+      if (error || !newProfile) {
+        throw new Error("Problema ao criar perfil")
+      }
+
+      profileId = newProfile.id
     }
-
-    profileId = newProfile.id
   }
 
   // Handle newsletter subscription separately using the new table

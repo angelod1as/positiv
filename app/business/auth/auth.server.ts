@@ -281,40 +281,38 @@ export const registerUser = applySchema(
 
   const { over18, confirmPassword, captchaToken, ...data } = values
 
-  // Block signup for "orphan profiles" - profiles imported from external sources
-  // (e.g., mailing lists) that exist in our database but have no Supabase Auth account.
-  // These profiles have user_id = NULL. If someone tries to sign up with an email that
-  // matches an orphan profile, we block them and ask to contact support. An admin must
-  // manually link their new auth account to the existing profile to preserve their data.
+  // Block signup only when a claimed profile (user_id IS NOT NULL) already exists for
+  // this email. Orphan profiles (user_id = NULL, e.g. pre-imported contacts) are allowed
+  // through — they will be linked to the new auth account during the agree-to-terms step.
   const normalizedEmail = data.email.toLowerCase().trim()
-  const orphanProfile = await kyselyDb
+  const claimedProfile = await kyselyDb
     .selectFrom("profiles")
     .select("id")
     .where("email", "=", normalizedEmail)
-    .where("user_id", "is", null)
+    .where("user_id", "is not", null)
     .executeTakeFirst()
 
-  if (orphanProfile) {
+  if (claimedProfile) {
     // Mask email for PII protection in logs (show first 3 chars + domain)
     const [localPart, domain] = normalizedEmail.split("@")
     const maskedEmail = `${localPart.slice(0, 3)}***@${domain}`
 
     // Track blocked signup attempt for audit trail (no PII in analytics)
     trackServerEvent(
-      "orphan_profile_signup_blocked",
-      { profileId: orphanProfile.id },
+      "claimed_profile_signup_blocked",
+      { profileId: claimedProfile.id },
       "/auth/register",
     )
 
     // Log for admin debugging with masked PII
-    console.warn("[ADMIN] Blocked orphan profile signup:", {
+    console.warn("[ADMIN] Blocked claimed profile signup:", {
       maskedEmail,
-      profileId: orphanProfile.id,
+      profileId: claimedProfile.id,
     })
 
-    // Note: This error path differs from "User already registered" flow, which could
-    // theoretically allow email enumeration. Accepted as UX tradeoff - orphan profile
-    // users cannot use password reset (no auth account) and need to contact support.
+    // Note: this error message differs from the "User already registered" path below,
+    // which could theoretically allow email enumeration. Accepted as a UX tradeoff —
+    // users with a claimed profile cannot use password reset without contacting support.
     throw new Error(
       "Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o \"esqueci minha senha\". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou.",
     )
