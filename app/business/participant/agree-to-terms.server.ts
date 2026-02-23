@@ -2,6 +2,7 @@ import { applySchema } from "composable-functions"
 import { agreeToTermsSchema, contextSchema } from "../common"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
+import { kyselyDb } from "~/kysely-db"
 
 export const agreeToTerms = applySchema(
   agreeToTermsSchema,
@@ -22,28 +23,30 @@ export const agreeToTerms = applySchema(
   } else {
     const normalizedEmail = currentUser.email.toLowerCase().trim()
 
-    const { data: orphanProfile } = await supabase
-      .from("profiles")
+    // Use kyselyDb (server-side, bypasses RLS) for orphan operations.
+    // The session client cannot SELECT/UPDATE orphan profiles because the RLS
+    // policy requires auth.uid() = user_id, which is never true when user_id IS NULL.
+    const orphanProfile = await kyselyDb
+      .selectFrom("profiles")
       .select("id")
-      .eq("email", normalizedEmail)
-      .is("user_id", null)
-      .maybeSingle()
+      .where("email", "=", normalizedEmail)
+      .where("user_id", "is", null)
+      .executeTakeFirst()
 
     if (orphanProfile) {
-      // Use .select("id").maybeSingle() to confirm the row was actually modified.
-      // The .is("user_id", null) guard protects against a TOCTOU race: if another
-      // process claimed the profile between our SELECT and this UPDATE, 0 rows match
-      // and data will be null — we surface that as an error rather than silently
-      // binding the wrong profile ID to this user.
-      const { data: linkedProfile, error } = await supabase
-        .from("profiles")
-        .update({ user_id: currentUser.id })
-        .eq("id", orphanProfile.id)
-        .is("user_id", null)
-        .select("id")
-        .maybeSingle()
+      // The .where("user_id", "is", null) guard on the UPDATE protects against a
+      // TOCTOU race: if another process claimed the profile between our SELECT and
+      // this UPDATE, 0 rows match and executeTakeFirst returns undefined — we surface
+      // that as an error rather than silently binding the wrong profile ID to this user.
+      const linkedProfile = await kyselyDb
+        .updateTable("profiles")
+        .set({ user_id: currentUser.id })
+        .where("id", "=", orphanProfile.id)
+        .where("user_id", "is", null)
+        .returning("id")
+        .executeTakeFirst()
 
-      if (error || !linkedProfile) throw new Error("Problema ao vincular perfil")
+      if (!linkedProfile) throw new Error("Problema ao vincular perfil")
 
       profileId = linkedProfile.id
     } else {
