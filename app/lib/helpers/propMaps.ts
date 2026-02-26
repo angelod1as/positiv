@@ -119,6 +119,7 @@ const participantApplicationStatus: Record<
   sent_rules: "Regras enviadas",
   think_better: "Pensar melhor",
   finalised: "Finalizado",
+  no_response: "Não Respondeu",
 }
 
 const participantAttendanceStatus: Record<ParticipantAttendanceStatus, string> =
@@ -127,7 +128,8 @@ const participantAttendanceStatus: Record<ParticipantAttendanceStatus, string> =
     attended: "Compareceu",
     "not-attended": "Não compareceu",
     skipped: "Pulade (rodízio)",
-    "will-not-go": "Não vai",
+    withdrew: "Desistiu",
+    "not-selected": "Não Selecionade",
   }
 
 const profileApprovedToAttendStatus: Record<

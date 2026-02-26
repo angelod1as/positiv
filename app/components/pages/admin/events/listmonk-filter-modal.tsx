@@ -50,7 +50,8 @@ const DEFAULT_ATTENDANCE_STATUSES: ParticipantAttendanceStatus[] = [
   "attended",
   "not-attended",
   "skipped",
-  "will-not-go",
+  "withdrew",
+  "not-selected",
 ]
 
 export function ListmonkFilterModal({

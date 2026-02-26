@@ -11,7 +11,8 @@ export const getWillGoToEventParticipants = (
   const willGo = participants.filter((participant) => {
     const notAttendance: ParticipantAttendanceStatus[] = [
       "skipped",
-      "will-not-go",
+      "withdrew",
+      "not-selected",
     ]
     const notApplication: ParticipantApplicationStatus[] = [
       "pending",

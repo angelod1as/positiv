@@ -63,6 +63,7 @@ const participantApplicationStatus = [
   "sent_rules",
   "think_better",
   "finalised",
+  "no_response",
 ] as const satisfies ParticipantApplicationStatus[]
 
 export const participantApplicationStatusEnum = z.enum(
@@ -74,7 +75,8 @@ const participantAttendanceStatus = [
   "attended",
   "not-attended",
   "skipped",
-  "will-not-go",
+  "withdrew",
+  "not-selected",
 ] as const satisfies ParticipantAttendanceStatus[]
 
 const profileApprovedToAttendStatus = [

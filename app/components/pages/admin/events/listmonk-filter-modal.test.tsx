@@ -134,7 +134,14 @@ describe("ListmonkFilterModal", () => {
         }),
       ).toBeChecked()
       expect(
-        screen.getByRole("checkbox", { name: /Status de Presença: Não vai/i }),
+        screen.getByRole("checkbox", {
+          name: /Status de Presença: Desistiu/i,
+        }),
+      ).toBeChecked()
+      expect(
+        screen.getByRole("checkbox", {
+          name: /Status de Presença: Não Selecionade/i,
+        }),
       ).toBeChecked()
     })
 

@@ -3,6 +3,8 @@ import {
   applicationStatusOptions,
   isVeteranOptions,
   notesFilterOptions,
+  participantApplicationStatusPropMap,
+  participantAttendanceStatusPropMap,
   PARTICIPANTS_TABLE_FILTER_CONFIGS,
 } from "./propMaps"
 
@@ -98,6 +100,28 @@ describe("propMaps", () => {
       const option = notesFilterOptions.find((o) => o.value === "no-notes")
       expect(option).toBeDefined()
       expect(option?.label).toBe("Sem notas")
+    })
+  })
+})
+
+describe("propMaps - new enum values (POS-447, POS-448)", () => {
+  describe("participantApplicationStatusPropMap", () => {
+    it("should map no_response to 'Não Respondeu'", () => {
+      expect(participantApplicationStatusPropMap("no_response")).toBe(
+        "Não Respondeu",
+      )
+    })
+  })
+
+  describe("participantAttendanceStatusPropMap", () => {
+    it("should map withdrew to 'Desistiu'", () => {
+      expect(participantAttendanceStatusPropMap("withdrew")).toBe("Desistiu")
+    })
+
+    it("should map not-selected to 'Não Selecionade'", () => {
+      expect(participantAttendanceStatusPropMap("not-selected")).toBe(
+        "Não Selecionade",
+      )
     })
   })
 })

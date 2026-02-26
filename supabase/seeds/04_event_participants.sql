@@ -60,7 +60,7 @@ BEGIN
     (user4_profile_id, event_id_completed_1, TRUE, 'finalised', 'not-attended', TRUE, now() - interval '4 months', NULL, 0, 'User applied but did not show up', NULL, 'ninguem', NULL, NULL, 'regular', NULL),
     (user4_profile_id, event_id_reg_closed_1, TRUE, 'finalised', 'pending', FALSE, now() - interval '2 months', NULL, 0, 'Application finalized', NULL, 'Beatriz Lima - evento anterior', NULL, NULL, 'regular', NULL),
     (user4_profile_id, event_id_scheduled_1, TRUE, 'sent_rules', 'pending', TRUE, now() - interval '7 months', NULL, 0, 'Admin sent participation rules to user', NULL, 'ninguem', NULL, NULL, 'regular', NULL),
-    (user4_profile_id, event_id_cancelled_1, TRUE, 'finalised', 'will-not-go', FALSE, now() - interval '1 month', now() - interval '15 days', 0, 'User decided they will not go', NULL, 'ninguem', NULL, NULL, 'regular', NULL);
+    (user4_profile_id, event_id_cancelled_1, TRUE, 'finalised', 'withdrew', FALSE, now() - interval '1 month', now() - interval '15 days', 0, 'User decided they will not go', NULL, 'ninguem', NULL, NULL, 'regular', NULL);
 END $$;
 
 -- ============================================================================
@@ -90,7 +90,7 @@ BEGIN
                 WHEN random() < 0.80 THEN 'attended'
                 WHEN random() < 0.88 THEN 'not-attended'
                 WHEN random() < 0.93 THEN 'skipped'
-                WHEN random() < 0.98 THEN 'will-not-go'
+                WHEN random() < 0.98 THEN 'withdrew'
                 ELSE 'pending'
             END::attendance_status_enum,
             random() < 0.95,
@@ -294,7 +294,7 @@ BEGIN
             END::application_status_enum,
             CASE
                 WHEN random() < 0.70 THEN 'pending'
-                ELSE 'will-not-go'
+                ELSE 'withdrew'
             END::attendance_status_enum,
             random() < 0.30,
             now() - interval '3 months' - (random() * interval '30 days'),

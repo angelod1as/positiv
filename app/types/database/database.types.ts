@@ -690,6 +690,7 @@ export type Database = {
         | "sent_rules"
         | "think_better"
         | "finalised"
+        | "no_response"
       approved_to_attend_enum:
         | "pending"
         | "approved"
@@ -700,7 +701,8 @@ export type Database = {
         | "attended"
         | "not-attended"
         | "skipped"
-        | "will-not-go"
+        | "withdrew"
+        | "not-selected"
       campaign_type: "opening" | "pre_opening"
       event_status:
         | "Draft"
@@ -847,6 +849,7 @@ export const Constants = {
         "sent_rules",
         "think_better",
         "finalised",
+        "no_response",
       ],
       approved_to_attend_enum: [
         "pending",
@@ -859,7 +862,8 @@ export const Constants = {
         "attended",
         "not-attended",
         "skipped",
-        "will-not-go",
+        "withdrew",
+        "not-selected",
       ],
       campaign_type: ["opening", "pre_opening"],
       event_status: [

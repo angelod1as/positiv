@@ -38,8 +38,11 @@ export async function getEventAttendanceData(): Promise<
       sql<number>`count(*) filter (where event_participants.attendance_status = 'not-attended')::int`.as(
         "nao_foram"
       ),
-      sql<number>`count(*) filter (where event_participants.attendance_status = 'will-not-go')::int`.as(
-        "will_not_go"
+      sql<number>`count(*) filter (where event_participants.attendance_status = 'withdrew')::int`.as(
+        "withdrew"
+      ),
+      sql<number>`count(*) filter (where event_participants.attendance_status = 'not-selected')::int`.as(
+        "not_selected"
       ),
       sql<number>`count(*) filter (where event_participants.attendance_status = 'skipped')::int`.as(
         "skipped"
@@ -63,7 +66,8 @@ export async function getEventAttendanceData(): Promise<
     inscritos: row.inscritos,
     compareceram: row.compareceram,
     nao_foram: row.nao_foram,
-    will_not_go: row.will_not_go,
+    withdrew: row.withdrew,
+    not_selected: row.not_selected,
     skipped: row.skipped,
     rodizio: row.rodizio,
     vagas_sociais: row.vagas_sociais,

@@ -538,7 +538,7 @@ describe("DataViz - Integration Tests", () => {
         await createTestEventParticipant(tracker, kysely, {
           event_id: event.id,
           profile_id: profiles[3].id,
-          attendance_status: "will-not-go",
+          attendance_status: "withdrew",
           spot_type: "regular",
           was_selected_for_rotation: false,
         })
@@ -566,7 +566,7 @@ describe("DataViz - Integration Tests", () => {
           expect(eventResult.compareceram).toBe(3)
           expect(eventResult.nao_foram).toBe(1)
           expect(eventResult.skipped).toBe(1)
-          expect(eventResult.will_not_go).toBe(1)
+          expect(eventResult.withdrew).toBe(1)
           // rodizio is 2: 1 explicit + 1 from skipped (trigger auto-sets was_selected_for_rotation=true on skipped)
           expect(eventResult.rodizio).toBe(2)
           expect(eventResult.staff).toBe(1)
