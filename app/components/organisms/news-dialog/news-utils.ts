@@ -32,7 +32,7 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1740614400000
+export const NEWS_VERSION = 1772064000000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {

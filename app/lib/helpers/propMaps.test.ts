@@ -107,8 +107,7 @@ describe("propMaps", () => {
 describe("propMaps - new enum values (POS-447, POS-448)", () => {
   describe("participantApplicationStatusPropMap", () => {
     it("should map no_response to 'Não Respondeu'", () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(participantApplicationStatusPropMap("no_response" as any)).toBe(
+      expect(participantApplicationStatusPropMap("no_response")).toBe(
         "Não Respondeu",
       )
     })
@@ -116,15 +115,11 @@ describe("propMaps - new enum values (POS-447, POS-448)", () => {
 
   describe("participantAttendanceStatusPropMap", () => {
     it("should map withdrew to 'Desistiu'", () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(participantAttendanceStatusPropMap("withdrew" as any)).toBe(
-        "Desistiu",
-      )
+      expect(participantAttendanceStatusPropMap("withdrew")).toBe("Desistiu")
     })
 
     it("should map not-selected to 'Não Selecionade'", () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      expect(participantAttendanceStatusPropMap("not-selected" as any)).toBe(
+      expect(participantAttendanceStatusPropMap("not-selected")).toBe(
         "Não Selecionade",
       )
     })
