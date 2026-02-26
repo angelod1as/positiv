@@ -9,6 +9,7 @@ export default defineConfig({
     name: 'integration',
     environment: 'node', // Integration tests run in Node, not jsdom
     globals: true,
+    globalSetup: './app/test/integration-global-setup.ts',
     setupFiles: './app/test/integration-setup.ts',
     env: {
       NODE_ENV: 'test'
