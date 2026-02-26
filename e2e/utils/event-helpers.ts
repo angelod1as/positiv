@@ -87,7 +87,8 @@ export async function createTestEventWithParticipants(
         | "attended"
         | "not-attended"
         | "skipped"
-        | "will-not-go",
+        | "withdrew"
+        | "not-selected",
       has_paid: i === 0,
       payment: i === 0 ? 100 : 0,
       spot_type: (i === 0 ? "regular" : i === 1 ? "social" : "staff") as

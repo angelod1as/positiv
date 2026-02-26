@@ -24,7 +24,8 @@ const mockData: EventAttendanceDataPoint[] = [
     inscritos: 100,
     compareceram: 80,
     nao_foram: 10,
-    will_not_go: 5,
+    withdrew: 5,
+    not_selected: 2,
     skipped: 3,
     rodizio: 15,
     vagas_sociais: 5,
@@ -37,7 +38,8 @@ const mockData: EventAttendanceDataPoint[] = [
     inscritos: 120,
     compareceram: 90,
     nao_foram: 15,
-    will_not_go: 8,
+    withdrew: 8,
+    not_selected: 4,
     skipped: 5,
     rodizio: 20,
     vagas_sociais: 10,
@@ -56,14 +58,15 @@ describe('AttendanceChart', () => {
     expect(container.querySelector('[data-chart]')).toBeInTheDocument()
   })
 
-  it('configures all 7 series in chart config', () => {
+  it('configures all 8 series in chart config', () => {
     const { container } = render(<AttendanceChart data={mockData} />)
     const styleTag = container.querySelector('style')
     expect(styleTag).toBeInTheDocument()
     expect(styleTag?.textContent).toContain('--color-inscritos')
     expect(styleTag?.textContent).toContain('--color-compareceram')
     expect(styleTag?.textContent).toContain('--color-nao_foram')
-    expect(styleTag?.textContent).toContain('--color-will_not_go')
+    expect(styleTag?.textContent).toContain('--color-withdrew')
+    expect(styleTag?.textContent).toContain('--color-not_selected')
     expect(styleTag?.textContent).toContain('--color-rodizio')
     expect(styleTag?.textContent).toContain('--color-vagas_sociais')
     expect(styleTag?.textContent).toContain('--color-staff')
@@ -88,7 +91,8 @@ describe('AttendanceChart', () => {
     expect(screen.getByText('Inscritos')).toBeInTheDocument()
     expect(screen.getByText('Compareceram')).toBeInTheDocument()
     expect(screen.getByText('Não foram')).toBeInTheDocument()
-    expect(screen.getByText('Avisaram')).toBeInTheDocument()
+    expect(screen.getByText('Desistiu')).toBeInTheDocument()
+    expect(screen.getByText('Não selecionade')).toBeInTheDocument()
     expect(screen.getByText('Rodízio')).toBeInTheDocument()
     expect(screen.getByText('Vagas sociais')).toBeInTheDocument()
     expect(screen.getByText('Staff')).toBeInTheDocument()

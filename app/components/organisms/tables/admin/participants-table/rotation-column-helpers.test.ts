@@ -25,8 +25,8 @@ describe("shouldAutoCheckWasSelectedForRotation", () => {
       expect(result).toBe(false)
     })
 
-    it("returns false when attendance_status is 'will-not-go'", () => {
-      const result = shouldAutoCheckWasSelectedForRotation("will-not-go", false)
+    it("returns false when attendance_status is 'withdrew'", () => {
+      const result = shouldAutoCheckWasSelectedForRotation("withdrew", false)
       expect(result).toBe(false)
     })
   })
