@@ -5,7 +5,8 @@ export type EventAttendanceDataPoint = {
   inscritos: number
   compareceram: number
   nao_foram: number
-  will_not_go: number
+  withdrew: number
+  not_selected: number
   skipped: number
   rodizio: number
   vagas_sociais: number
