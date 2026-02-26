@@ -2355,3 +2355,133 @@ describe("updateProfileApprovalStatus - Integration Tests", () => {
     expect(result).toHaveProperty("success", false)
   })
 })
+
+describe("updateEventParticipantById - approved_to_attend update via inline table edit", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+    await kysely
+      .deleteFrom("event_participants")
+      .where("profile_id", "in", (eb) =>
+        eb.selectFrom("profiles").select("id").where("email", "like", "test-approved-to-attend-%")
+      )
+      .execute()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("should update profiles.approved_to_attend when set to 'approved' via updateEventParticipantById", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-approved-to-attend-approved@example.com",
+      full_name: "Test Approved Status",
+      approved_to_attend: "pending",
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Approval Event",
+      time_event_start: new Date().toISOString(),
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+    })
+
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      approved_to_attend: "approved",
+    })
+
+    expect(result.success).toBe(true)
+
+    const updatedProfile = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirst()
+
+    expect(updatedProfile?.approved_to_attend).toBe("approved")
+  })
+
+  it("should update profiles.approved_to_attend when set to 'rejected' via updateEventParticipantById", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-approved-to-attend-rejected@example.com",
+      full_name: "Test Rejected Status",
+      approved_to_attend: "pending",
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Rejection Event",
+      time_event_start: new Date().toISOString(),
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+    })
+
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      approved_to_attend: "rejected",
+    })
+
+    expect(result.success).toBe(true)
+
+    const updatedProfile = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirst()
+
+    expect(updatedProfile?.approved_to_attend).toBe("rejected")
+  })
+
+  it("should not touch profiles.approved_to_attend when only attendance_status is updated (regression guard)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-approved-to-attend-regression@example.com",
+      full_name: "Test Regression Guard",
+      approved_to_attend: "pending",
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Regression Event",
+      time_event_start: new Date().toISOString(),
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+      attendance_status: "pending",
+    })
+
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      attendance_status: "attended",
+    })
+
+    expect(result.success).toBe(true)
+
+    const updatedProfile = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirst()
+
+    expect(updatedProfile?.approved_to_attend).toBe("pending")
+  })
+})

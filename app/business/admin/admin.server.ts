@@ -629,20 +629,23 @@ export const updateParticipantVsEvent = applySchema(
 export const updateEventParticipantById = applySchema(
   updateEventParticipantByIdSchema,
 )(async (formData) => {
-  const { intent, id, profile_id, is_veteran, flag, flag_notes, ...data } =
+  const { intent, id, profile_id, is_veteran, flag, flag_notes, approved_to_attend, ...data } =
     formData
 
   return await kyselyDb.transaction().execute(async (transaction) => {
     if (
       typeof is_veteran === "boolean" ||
       flag !== undefined ||
-      flag_notes !== undefined
+      flag_notes !== undefined ||
+      approved_to_attend !== undefined
     ) {
       const profileUpdates: Record<string, string | boolean | null> = {}
       if (typeof is_veteran === "boolean")
         profileUpdates.is_veteran = is_veteran
       if (flag !== undefined) profileUpdates.flag = flag
       if (flag_notes !== undefined) profileUpdates.flag_notes = flag_notes
+      if (approved_to_attend !== undefined)
+        profileUpdates.approved_to_attend = approved_to_attend
 
       await transaction
         .updateTable("profiles")
