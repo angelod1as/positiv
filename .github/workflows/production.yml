@@ -41,4 +41,7 @@ jobs:
         with:
           version: latest
 
-      - run: supabase db push --db-url "$SUPABASE_CONNECT_URL"
+      # --include-all: applies migrations whose timestamps fall before the last
+      # migration already on the remote. This happens when a branch with an older
+      # timestamp is merged after a newer migration is already deployed to production.
+      - run: supabase db push --include-all --db-url "$SUPABASE_CONNECT_URL"
