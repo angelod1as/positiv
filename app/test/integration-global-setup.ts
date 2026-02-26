@@ -14,44 +14,79 @@ const TABLES = [
   "newsletter_subscriptions",   // seeded; cascade-deleted when profiles are deleted
 ]
 
+// auth.users is intentionally excluded from the backup/restore cycle.
+// Tests that create auth users (via createTestAuthUser) track them with TestDataTracker
+// and delete them in each test's afterEach hook via cleanupTestAuthUsers. By the time
+// global teardown runs, no test-created auth users remain. The seeded auth.users rows
+// live in the auth schema and are never affected by TRUNCATE on public schema tables,
+// so they are always present when user_roles is restored.
+
+// Sequence reset is not needed: all primary keys in this codebase use UUIDs (via the
+// uuid-ossp extension), so there are no integer sequences that could drift between runs.
+
 export default async function setup() {
+  // dotenv.config() is called here because globalSetup runs in a separate Node process
+  // from the test workers and cannot rely on the dotenv.config() in integration-setup.ts.
   dotenv.config({ path: path.resolve(process.cwd(), ".env") })
 
   const connectionString = process.env.SUPABASE_CONNECT_URL
   if (!connectionString) throw new Error("SUPABASE_CONNECT_URL is not set")
 
   const pool = new Pool({ connectionString })
-  const client = await pool.connect()
 
   try {
-    // Drop stale backups from any previous failed run
-    for (const table of TABLES) {
-      await client.query(`DROP TABLE IF EXISTS _backup_${table}`)
+    const client = await pool.connect()
+    try {
+      // Drop stale backups from any previous failed run
+      for (const table of TABLES) {
+        await client.query(`DROP TABLE IF EXISTS _backup_${table}`)
+      }
+      // Snapshot current seed state
+      for (const table of TABLES) {
+        await client.query(
+          `CREATE TABLE _backup_${table} AS SELECT * FROM ${table}`
+        )
+      }
+    } finally {
+      client.release()
     }
-    // Snapshot current seed state
-    for (const table of TABLES) {
-      await client.query(
-        `CREATE TABLE _backup_${table} AS SELECT * FROM ${table}`
-      )
-    }
-  } finally {
-    client.release()
+  } catch (err) {
+    // Pool must be closed here: if setup fails, teardown will never be called.
+    await pool.end()
+    throw err
   }
 
   return async function teardown() {
     const client = await pool.connect()
     try {
-      // Truncate all backed-up tables. CASCADE handles any additional FK
-      // dependencies (e.g. event_reminders, event_registration_limit_emails)
-      // that are not seeded and therefore need no restoration.
-      const tableList = TABLES.join(", ")
-      await client.query(`TRUNCATE TABLE ${tableList} CASCADE`)
+      // Wrap the entire restore in a transaction so it is atomic. If any INSERT fails,
+      // the DB is rolled back to the post-TRUNCATE state and the backup tables remain
+      // intact for manual inspection or retry.
+      await client.query("BEGIN")
+      try {
+        // TRUNCATE ... CASCADE is intentional: it also wipes tables that have FK
+        // references to the seeded tables but are not themselves seeded (e.g.
+        // event_reminders, event_registration_limit_emails). Those rows are created
+        // by integration tests and do not need to be restored.
+        const tableList = TABLES.join(", ")
+        await client.query(`TRUNCATE TABLE ${tableList} CASCADE`)
 
-      // Restore in FK-dependency order (same as TABLES array)
+        // Restore in FK-dependency order (same as TABLES array)
+        for (const table of TABLES) {
+          await client.query(
+            `INSERT INTO ${table} SELECT * FROM _backup_${table}`
+          )
+        }
+
+        await client.query("COMMIT")
+      } catch (err) {
+        await client.query("ROLLBACK")
+        throw err
+      }
+
+      // Drop backup tables only after the restore transaction commits successfully.
+      // Keeping them until after COMMIT means a failed restore leaves backups intact.
       for (const table of TABLES) {
-        await client.query(
-          `INSERT INTO ${table} SELECT * FROM _backup_${table}`
-        )
         await client.query(`DROP TABLE _backup_${table}`)
       }
     } finally {
