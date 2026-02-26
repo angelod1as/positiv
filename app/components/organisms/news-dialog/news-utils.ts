@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1771592400000
+export const NEWS_VERSION = 1740614400000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "status-enum-updates",
+    title: "🔄 Novos status de processo e presença",
+    content:
+      "Os status de acompanhamento de eventos foram atualizados. O status \"Não vai\" foi renomeado para \"Desistiu\" (para quem foi selecionade mas desistiu de comparecer). Foram adicionados também dois novos status: \"Não Selecionade\" (inscrite que não foi selecionade para o evento) e \"Não Respondeu\" (candidate que não respondeu aos contatos durante o processo de inscrição).",
+    isAdmin: true,
+    createdAt: new Date("2026-02-26T12:00:00"),
+    isActive: true,
+  },
   {
     id: "fix-registration-trigger",
     title: "🔧 Erro ao se inscrever em eventos corrigido",
