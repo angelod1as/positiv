@@ -123,6 +123,7 @@ export const updateEventParticipantByIdSchema = zod.object({
   notes: zod.string().optional(),
   admin_general_notes: zod.string().optional(),
   companions: zod.string().optional(),
+  approved_to_attend: profileApprovedToAttendStatusEnum.optional(),
 }).refine(
   (data) => {
     // If flag is provided and not "none", flag_notes must be provided
