@@ -305,18 +305,15 @@ export async function createTestAdminUser(
   userId: string
   profile: Selectable<DatabaseTypes["public"]["Tables"]["profiles"]["Row"]>
 }> {
-  // Create auth user
-  const userId = await createTestAuthUser(email)
-  
-  // Create profile
+  const userId = await createTestAuthUser(email, 'test1234', tracker)
+
   const profile = await createTestProfile(tracker, kysely, {
     user_id: userId,
     email,
     full_name: profileData?.full_name || "Test Admin",
     ...profileData
   })
-  
-  // Add admin role
+
   await kysely
     .insertInto("user_roles")
     .values({
@@ -325,6 +322,7 @@ export async function createTestAdminUser(
       created_at: new Date().toISOString()
     })
     .execute()
-  
+  tracker.track("user_roles", userId)
+
   return { userId, profile }
 }

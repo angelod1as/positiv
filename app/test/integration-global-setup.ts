@@ -3,6 +3,10 @@ import type { PoolClient } from "pg"
 import dotenv from "dotenv"
 import path from "path"
 
+// PID-scoped suffix prevents backup table name collisions when two test processes run
+// concurrently against the same database (e.g. CI matrix jobs).
+const RUN_ID = process.pid
+
 // Tables to snapshot before tests and restore afterwards, in FK-dependency order for INSERT.
 // Ordered so that referenced tables come before referencing tables.
 const TABLES = [
@@ -12,7 +16,7 @@ const TABLES = [
   "event_participants",         // seeded; wiped by kpi-scores and dataviz (no WHERE)
   "payment_transactions",       // wiped by kpi-scores and dataviz (no WHERE)
   "event_demographics_history", // wiped by demographics-history (no WHERE)
-  "newsletter_subscriptions",   // seeded; cascade-deleted when profiles are deleted
+  "newsletter_subscriptions",   // seeded; not in TestDataTracker tableOrder — relies on this global restore
 ]
 
 // auth.users is intentionally excluded from the backup/restore cycle.
@@ -21,9 +25,6 @@ const TABLES = [
 // global teardown runs, no test-created auth users remain. The seeded auth.users rows
 // live in the auth schema and are never affected by TRUNCATE on public schema tables,
 // so they are always present when user_roles is restored.
-
-// Sequence reset is not needed: all primary keys in this codebase use UUIDs (via the
-// uuid-ossp extension), so there are no integer sequences that could drift between runs.
 
 async function getColumnNames(client: PoolClient, table: string): Promise<string[]> {
   const result = await client.query<{ column_name: string }>(
@@ -43,21 +44,17 @@ export default async function setup() {
   const connectionString = process.env.SUPABASE_CONNECT_URL
   if (!connectionString) throw new Error("SUPABASE_CONNECT_URL is not set")
 
-  // connectionTimeoutMillis ensures pool.connect() fails fast when the DB is unreachable
-  // (e.g. local Supabase not running) instead of hanging indefinitely.
   const pool = new Pool({ connectionString, connectionTimeoutMillis: 5000 })
 
   try {
     const client = await pool.connect()
     try {
-      // Drop stale backups from any previous failed run
       for (const table of TABLES) {
-        await client.query(`DROP TABLE IF EXISTS _backup_${table}`)
+        await client.query(`DROP TABLE IF EXISTS _backup_${RUN_ID}_${table}`)
       }
-      // Snapshot current seed state
       for (const table of TABLES) {
         await client.query(
-          `CREATE TABLE _backup_${table} AS SELECT * FROM ${table}`
+          `CREATE TABLE _backup_${RUN_ID}_${table} AS SELECT * FROM ${table}`
         )
       }
     } finally {
@@ -87,12 +84,12 @@ export default async function setup() {
         // Restore in FK-dependency order (same as TABLES array).
         // Column names are fetched explicitly from information_schema so the INSERT
         // matches by name rather than position — safe if a future migration adds or
-        // reorders columns between setup and teardown within the same test run.
+        // reorders columns.
         for (const table of TABLES) {
           const columns = await getColumnNames(client, table)
           const colList = columns.map(c => `"${c}"`).join(", ")
           await client.query(
-            `INSERT INTO ${table} (${colList}) SELECT ${colList} FROM _backup_${table}`
+            `INSERT INTO ${table} (${colList}) SELECT ${colList} FROM _backup_${RUN_ID}_${table}`
           )
         }
 
@@ -102,11 +99,8 @@ export default async function setup() {
         throw err
       }
 
-      // Drop backup tables only after the restore transaction commits successfully.
-      // Keeping them until after COMMIT means a failed restore leaves backups intact.
-      // IF EXISTS guards against a partially-completed prior teardown.
       for (const table of TABLES) {
-        await client.query(`DROP TABLE IF EXISTS _backup_${table}`)
+        await client.query(`DROP TABLE IF EXISTS _backup_${RUN_ID}_${table}`)
       }
     } finally {
       client.release()
