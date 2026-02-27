@@ -1,4 +1,5 @@
 import { Pool } from "pg"
+import type { PoolClient } from "pg"
 import dotenv from "dotenv"
 import path from "path"
 
@@ -24,6 +25,16 @@ const TABLES = [
 // Sequence reset is not needed: all primary keys in this codebase use UUIDs (via the
 // uuid-ossp extension), so there are no integer sequences that could drift between runs.
 
+async function getColumnNames(client: PoolClient, table: string): Promise<string[]> {
+  const result = await client.query<{ column_name: string }>(
+    `SELECT column_name FROM information_schema.columns
+     WHERE table_schema = 'public' AND table_name = $1
+     ORDER BY ordinal_position`,
+    [table]
+  )
+  return result.rows.map(r => r.column_name)
+}
+
 export default async function setup() {
   // dotenv.config() is called here because globalSetup runs in a separate Node process
   // from the test workers and cannot rely on the dotenv.config() in integration-setup.ts.
@@ -32,7 +43,9 @@ export default async function setup() {
   const connectionString = process.env.SUPABASE_CONNECT_URL
   if (!connectionString) throw new Error("SUPABASE_CONNECT_URL is not set")
 
-  const pool = new Pool({ connectionString })
+  // connectionTimeoutMillis ensures pool.connect() fails fast when the DB is unreachable
+  // (e.g. local Supabase not running) instead of hanging indefinitely.
+  const pool = new Pool({ connectionString, connectionTimeoutMillis: 5000 })
 
   try {
     const client = await pool.connect()
@@ -71,10 +84,15 @@ export default async function setup() {
         const tableList = TABLES.join(", ")
         await client.query(`TRUNCATE TABLE ${tableList} CASCADE`)
 
-        // Restore in FK-dependency order (same as TABLES array)
+        // Restore in FK-dependency order (same as TABLES array).
+        // Column names are fetched explicitly from information_schema so the INSERT
+        // matches by name rather than position — safe if a future migration adds or
+        // reorders columns between setup and teardown within the same test run.
         for (const table of TABLES) {
+          const columns = await getColumnNames(client, table)
+          const colList = columns.map(c => `"${c}"`).join(", ")
           await client.query(
-            `INSERT INTO ${table} SELECT * FROM _backup_${table}`
+            `INSERT INTO ${table} (${colList}) SELECT ${colList} FROM _backup_${table}`
           )
         }
 
@@ -86,8 +104,9 @@ export default async function setup() {
 
       // Drop backup tables only after the restore transaction commits successfully.
       // Keeping them until after COMMIT means a failed restore leaves backups intact.
+      // IF EXISTS guards against a partially-completed prior teardown.
       for (const table of TABLES) {
-        await client.query(`DROP TABLE _backup_${table}`)
+        await client.query(`DROP TABLE IF EXISTS _backup_${table}`)
       }
     } finally {
       client.release()
