@@ -11,7 +11,7 @@ function formatName(participant: RejectedEventParticipant): string {
   if (participant.social_name && participant.full_name) {
     return `${participant.social_name} (${participant.full_name})`
   }
-  return participant.social_name ?? participant.full_name ?? participant.profile_id
+  return participant.social_name ?? participant.full_name ?? "(sem nome)"
 }
 
 export function RejectedParticipantsSection({
@@ -37,13 +37,17 @@ export function RejectedParticipantsSection({
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
         aria-expanded={isExpanded}
+        aria-controls="rejected-participants-list"
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
-        <span>{isExpanded ? "\u25BC" : "\u25B6"}</span>
+        <span>{isExpanded ? "▼" : "▶"}</span>
         <span>{text}</span>
       </button>
       {isExpanded && (
-        <ul className="mt-2 ml-6 space-y-1 text-sm">
+        <ul
+          id="rejected-participants-list"
+          className="mt-2 ml-6 space-y-1 text-sm"
+        >
           {participants.map((p) => (
             <li key={p.profile_id}>
               <Link to={ADMIN_VIEW_PARTICIPANT(p.profile_id)}>

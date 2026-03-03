@@ -69,6 +69,22 @@ describe("RejectedParticipantsSection", () => {
     expect(link.getAttribute("href")).toBe("/admin/participantes/xyz-456")
   })
 
+  it("should fall back to '(sem nome)' when both names are null", async () => {
+    const user = userEvent.setup()
+    const participants: RejectedEventParticipant[] = [
+      { profile_id: "no-name-123", social_name: null, full_name: null },
+    ]
+    renderWithRouter(
+      <RejectedParticipantsSection participants={participants} />,
+    )
+
+    await user.click(screen.getByRole("button"))
+
+    const link = screen.getByRole("link", { name: "(sem nome)" })
+    expect(link).toBeDefined()
+    expect(link.getAttribute("href")).toBe("/admin/participantes/no-name-123")
+  })
+
   it("should use singular text for 1 participant", () => {
     const participants: RejectedEventParticipant[] = [
       { profile_id: "1", social_name: null, full_name: "Lone Rejected" },

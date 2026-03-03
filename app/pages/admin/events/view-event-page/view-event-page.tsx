@@ -160,7 +160,10 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const [participants, rejectedParticipants] = await Promise.all([
     loadParticipants(eventId),
-    getRejectedEventParticipants(eventId).catch(() => []),
+    getRejectedEventParticipants(eventId).catch((err) => {
+      console.error("Failed to fetch rejected participants", err)
+      return []
+    }),
   ])
 
   return {
