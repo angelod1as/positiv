@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1772064000000
+export const NEWS_VERSION = 1772539200000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "rejected-participants-section",
+    title: "🚫 Participantes rejeitades visíveis na página do evento",
+    content:
+      "A página de cada evento agora mostra uma seção separada com as pessoas rejeitades que se inscreveram. Antes, essas pessoas simplesmente não apareciam na lista — agora estão visíveis para facilitar o acompanhamento.",
+    isAdmin: true,
+    createdAt: new Date("2026-03-03T12:00:00"),
+    isActive: true,
+  },
   {
     id: "status-enum-updates",
     title: "🔄 Novos status de processo e presença",
