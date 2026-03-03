@@ -36,6 +36,7 @@ export function RejectedParticipantsSection({
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         <span>{isExpanded ? "\u25BC" : "\u25B6"}</span>

@@ -24,11 +24,11 @@ import {
 } from "~/business/admin/event-listmonk-sync.server"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
 import { Buttons } from "~/components/pages/admin/events/buttons"
-import { RejectedParticipantsSection } from "~/components/pages/admin/events/rejected-participants-section"
 import { DatesAndTimes } from "~/components/pages/admin/events/dates-and-times"
 import { DemographicsData } from "~/components/pages/admin/events/demographics"
 import { EventStatusForm } from "~/components/pages/admin/events/event-status-form"
 import { GeneralData } from "~/components/pages/admin/events/general-data"
+import { RejectedParticipantsSection } from "~/components/pages/admin/events/rejected-participants-section"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
@@ -160,7 +160,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const [participants, rejectedParticipants] = await Promise.all([
     loadParticipants(eventId),
-    getRejectedEventParticipants(eventId),
+    getRejectedEventParticipants(eventId).catch(() => []),
   ])
 
   return {
