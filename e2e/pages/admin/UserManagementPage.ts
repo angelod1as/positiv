@@ -41,6 +41,15 @@ export class UserManagementPage extends BasePage {
 
   async findRowByParticipantName(name: string): Promise<Locator> {
     await this.waitForTableToLoad()
+    // Use the search box to filter the table before looking for the row.
+    // This ensures the participant is on the first page even in large paginated tables,
+    // since AG Grid pagination only renders rows for the current page.
+    const searchInput = this.participantsTable.locator(
+      '[aria-label="Buscar participantes"]',
+    )
+    if (await searchInput.isVisible()) {
+      await searchInput.fill(name)
+    }
     // social_name is in pinned left section, so we need to search there first
     // then return the center row with matching row-index
     const pinnedLeftRow = this.participantsTable
