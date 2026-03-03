@@ -1,0 +1,70 @@
+name: Database Backup
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # daily at 3am UTC
+  workflow_dispatch: # manual trigger for testing
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Create database dump
+        env:
+          SUPABASE_CONNECT_URL: ${{ secrets.PRODUCTION_SUPABASE_CONNECT_URL }}
+        run: |
+          FILENAME="backup_$(date +%Y%m%d_%H%M%S).dump"
+          pg_dump -Fc "$SUPABASE_CONNECT_URL" -f "$FILENAME"
+          echo "DUMP_FILE=$FILENAME" >> "$GITHUB_ENV"
+
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Ensure backup directory exists on VPS
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_BACKUP_PATH: ${{ secrets.VPS_BACKUP_PATH }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" "mkdir -p $VPS_BACKUP_PATH"
+
+      - name: Upload backup via SCP
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_BACKUP_PATH: ${{ secrets.VPS_BACKUP_PATH }}
+        run: |
+          scp "$DUMP_FILE" "$VPS_USER@$VPS_HOST:$VPS_BACKUP_PATH/$DUMP_FILE"
+
+      - name: Prune backups older than 30 days
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_BACKUP_PATH: ${{ secrets.VPS_BACKUP_PATH }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" \
+            "find $VPS_BACKUP_PATH -name 'backup_*.dump' -mtime +30 -delete"
+
+      - name: Notify Telegram on failure
+        if: failure()
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_TO }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            ❌ *Database backup failed*
+
+            Repo: ${{ github.repository }}
+            Run: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          format: markdown
