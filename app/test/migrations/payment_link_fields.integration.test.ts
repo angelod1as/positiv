@@ -94,16 +94,18 @@ describe("event_participants payment link fields - Integration Tests", () => {
 
   it("should store and retrieve payment_link_generated_at", async () => {
     const { participant } = await createTestData("generated-set")
-    const now = new Date().toISOString()
+    const now = new Date()
 
     const updated = await kysely
       .updateTable("event_participants")
-      .set({ payment_link_generated_at: now })
+      .set({ payment_link_generated_at: now.toISOString() })
       .where("id", "=", participant.id)
       .returningAll()
       .executeTakeFirstOrThrow()
 
-    expect(updated.payment_link_generated_at).toBeDefined()
+    expect(updated.payment_link_generated_at).not.toBeNull()
+    const storedTime = new Date(String(updated.payment_link_generated_at)).getTime()
+    expect(Math.abs(storedTime - now.getTime())).toBeLessThan(1000)
   })
 
   it("should have payment_link_expires_at column that is nullable", async () => {
@@ -120,16 +122,18 @@ describe("event_participants payment link fields - Integration Tests", () => {
 
   it("should store and retrieve payment_link_expires_at", async () => {
     const { participant } = await createTestData("expires-set")
-    const future = new Date(Date.now() + 86400000).toISOString()
+    const future = new Date(Date.now() + 86400000)
 
     const updated = await kysely
       .updateTable("event_participants")
-      .set({ payment_link_expires_at: future })
+      .set({ payment_link_expires_at: future.toISOString() })
       .where("id", "=", participant.id)
       .returningAll()
       .executeTakeFirstOrThrow()
 
-    expect(updated.payment_link_expires_at).toBeDefined()
+    expect(updated.payment_link_expires_at).not.toBeNull()
+    const storedTime = new Date(String(updated.payment_link_expires_at)).getTime()
+    expect(Math.abs(storedTime - future.getTime())).toBeLessThan(1000)
   })
 
   it("should have payment_transaction_id column that is nullable", async () => {
