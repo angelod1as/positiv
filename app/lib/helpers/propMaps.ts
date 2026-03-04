@@ -92,6 +92,10 @@ export const eventParticipantPropMap = (property: keyof EventParticipant) => {
     flag_notes: "Notas da Flag",
     updated_at: "Atualizado em",
     was_selected_for_rotation: "Escolhide para rodízio?",
+    payment_link_token: "Token do link de pagamento",
+    payment_link_generated_at: "Link de pagamento gerado em",
+    payment_link_expires_at: "Link de pagamento expira em",
+    payment_transaction_id: "Id da transação de pagamento",
   }[property]
 }
 
