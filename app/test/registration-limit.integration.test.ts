@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
+import { sql } from "kysely"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile, createTestEvent } from "~/test/db-test-utils"
 
@@ -139,6 +140,110 @@ describe("Registration Limit - Integration Tests", () => {
         })
         .execute()
     }
+
+    const eventAfter = await kysely
+      .selectFrom("events")
+      .select("event_status")
+      .where("id", "=", event.id)
+      .executeTakeFirstOrThrow()
+
+    expect(eventAfter.event_status).toBe("Registration Open")
+  })
+
+  it("should not count rejected participants toward the applied count", async () => {
+    const testId = Date.now() + 3
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event - Rejected Excluded from Count",
+      event_status: "Registration Open",
+    })
+
+    const regularProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      full_name: "Regular User",
+      email: `regular${testId}@example.com`,
+    })
+
+    const rejectedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      full_name: "Rejected User",
+      email: `rejected${testId}@example.com`,
+      approved_to_attend: "rejected",
+    })
+
+    await kysely
+      .insertInto("event_participants")
+      .values([
+        {
+          event_id: event.id,
+          profile_id: regularProfile.id,
+          is_user_applied: true,
+          application_status: "finalised",
+          attendance_status: "pending",
+        },
+        {
+          event_id: event.id,
+          profile_id: rejectedProfile.id,
+          is_user_applied: true,
+          application_status: "finalised",
+          attendance_status: "pending",
+        },
+      ])
+      .execute()
+
+    const result = await sql<{ get_applied_participants_count: string }>`
+      SELECT get_applied_participants_count(${event.id}::uuid)
+    `.execute(kysely)
+
+    expect(Number(result.rows[0].get_applied_participants_count)).toBe(1)
+  })
+
+  it("should not close registrations at 90 when some participants are rejected", async () => {
+    const testId = Date.now() + 4
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event - Rejected Not Counted for Close",
+      event_status: "Registration Open",
+    })
+
+    const regularProfiles = await Promise.all(
+      Array.from({ length: 89 }, (_, i) =>
+        createTestProfile(tracker, kysely, {
+          user_id: null,
+          full_name: `Regular User ${i + 1}`,
+          email: `reg${testId}-${i + 1}@example.com`,
+        }),
+      ),
+    )
+
+    for (const profile of regularProfiles) {
+      await kysely
+        .insertInto("event_participants")
+        .values({
+          event_id: event.id,
+          profile_id: profile.id,
+          is_user_applied: true,
+          application_status: "finalised",
+          attendance_status: "pending",
+        })
+        .execute()
+    }
+
+    const rejectedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      full_name: "Rejected User for Close Test",
+      email: `rej-close${testId}@example.com`,
+      approved_to_attend: "rejected",
+    })
+
+    await kysely
+      .insertInto("event_participants")
+      .values({
+        event_id: event.id,
+        profile_id: rejectedProfile.id,
+        is_user_applied: true,
+        application_status: "finalised",
+        attendance_status: "pending",
+      })
+      .execute()
 
     const eventAfter = await kysely
       .selectFrom("events")

@@ -326,12 +326,20 @@ test.describe("Admin User Management", () => {
     // Wait for participants table to load
     await userManagement.waitForTableToLoad()
 
-    // Find the row for User3 (social_name: "user3") - seed data participant with history
-    const participantRow =
-      await userManagement.findRowByParticipantName("user3")
-
-    // Click to view participant details
-    await userManagement.clickViewParticipantButton(participantRow)
+    // Navigate to user3's detail page via the name link in the pinned-left column.
+    // user3 may be on page 2+ due to default sort, so we first filter with the
+    // search box to bring them into view, then click their name link directly.
+    // This avoids row-index-based navigation which is fragile in large paginated tables
+    // (row-indices shift when AG Grid applies the quick filter asynchronously).
+    const searchInput = userManagement.participantsTable.locator(
+      '[aria-label="Buscar participantes"]',
+    )
+    await searchInput.fill("user3")
+    const user3Link = userManagement.participantsTable
+      .locator(".ag-pinned-left-cols-container a")
+      .getByText("user3", { exact: true })
+      .first()
+    await user3Link.click()
 
     // Wait for navigation to participant detail page
     await page.waitForURL(/\/participantes\//)
@@ -606,9 +614,13 @@ test.describe("Admin User Management", () => {
     // Wait for AG Grid to be ready
     const grid = await waitForAGGridReady(page, "participants-table")
 
-    // Focus on the first cell
-    const firstCell = grid.locator(".ag-cell").first()
-    await firstCell.click()
+    // Focus on the first cell in the center container to avoid pinned-left link cells
+    const firstCenterCell = grid
+      .locator(".ag-center-cols-container .ag-row")
+      .first()
+      .locator(".ag-cell")
+      .first()
+    await firstCenterCell.click()
 
     // Test arrow key navigation
     // Press right arrow to move to next cell
@@ -620,12 +632,12 @@ test.describe("Admin User Management", () => {
     // Press down arrow to move to row below
     await page.keyboard.press("ArrowDown")
 
-    // Press Tab to move between cells
-    await page.keyboard.press("Tab")
-
-    // Test Enter key to start editing (on editable cells)
-    // Use is_veteran column which is visible and editable
-    const editableCell = grid.locator('.ag-cell[col-id="is_veteran"]').first()
+    // Test Enter key to start editing on an editable cell (is_veteran uses agSelectCellEditor)
+    // Target the first data row specifically to avoid any off-screen cell issues
+    const editableCell = grid
+      .locator('.ag-center-cols-container .ag-row[row-index="0"] .ag-cell[col-id="is_veteran"]')
+      .first()
+    await editableCell.scrollIntoViewIfNeeded()
     await editableCell.click()
     await page.keyboard.press("Enter")
 

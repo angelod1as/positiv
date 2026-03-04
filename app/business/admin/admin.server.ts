@@ -183,11 +183,31 @@ export const getProfilesWithExtraDataById = composable(
     const profiles = await profilesWithExtraDataQuery
       .where("current_ep.event_id", "=", eventId)
       .where("current_ep.is_user_applied", "=", true)
+      .where("p.approved_to_attend", "!=", "rejected")
       .execute()
 
     return profiles
   },
 )
+
+export type RejectedEventParticipant = {
+  profile_id: string
+  social_name: string | null
+  full_name: string | null
+}
+
+export async function getRejectedEventParticipants(
+  eventId: string,
+): Promise<RejectedEventParticipant[]> {
+  return kyselyDb
+    .selectFrom("event_participants as ep")
+    .innerJoin("profiles as p", "ep.profile_id", "p.id")
+    .select(["p.id as profile_id", "p.social_name", "p.full_name"])
+    .where("ep.event_id", "=", eventId)
+    .where("ep.is_user_applied", "=", true)
+    .where("p.approved_to_attend", "=", "rejected")
+    .execute()
+}
 
 const globalProfileBaseQuery = kyselyDb
   .selectFrom("profiles as p")

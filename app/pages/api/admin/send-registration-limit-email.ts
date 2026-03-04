@@ -30,10 +30,12 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     const participantCount = await db
-      .selectFrom("event_participants")
-      .where("event_id", "=", eventId)
-      .where("is_user_applied", "=", true)
-      .select(db.fn.count("id").as("count"))
+      .selectFrom("event_participants as ep")
+      .innerJoin("profiles as p", "p.id", "ep.profile_id")
+      .where("ep.event_id", "=", eventId)
+      .where("ep.is_user_applied", "=", true)
+      .where("p.approved_to_attend", "!=", "rejected")
+      .select(db.fn.countAll<string>().as("count"))
       .executeTakeFirstOrThrow()
 
     const count = Number(participantCount.count)
