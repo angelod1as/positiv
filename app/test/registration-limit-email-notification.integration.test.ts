@@ -308,4 +308,61 @@ describe("Registration Limit Email Notification - E2E Integration", () => {
     expect(emailCall.html).toContain("🎊")
     expect(emailCall.html).toContain("2")
   })
+
+  it("should not count rejected participants in email participant count", async () => {
+    const testId = Date.now() + 1
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event - Rejected Not Counted in Email",
+      event_status: "Registration Closed",
+      emoji: "🎉",
+    })
+
+    const regularProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      full_name: "Regular Participant",
+      email: `regular-email-${testId}@example.com`,
+    })
+
+    const rejectedProfile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      full_name: "Rejected Participant",
+      email: `rejected-email-${testId}@example.com`,
+      approved_to_attend: "rejected",
+    })
+
+    await kysely
+      .insertInto("event_participants")
+      .values([
+        {
+          event_id: event.id,
+          profile_id: regularProfile.id,
+          is_user_applied: true,
+          application_status: "finalised",
+          attendance_status: "pending",
+        },
+        {
+          event_id: event.id,
+          profile_id: rejectedProfile.id,
+          is_user_applied: true,
+          application_status: "finalised",
+          attendance_status: "pending",
+        },
+      ])
+      .execute()
+
+    const request = new Request("http://localhost/api/admin/send-registration-limit-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${mockSecret}`,
+      },
+      body: JSON.stringify({ eventId: event.id }),
+    })
+
+    await action({ request, params: {}, context: {} })
+
+    const emailCall = vi.mocked(sendEmailModule.sendEmail).mock.calls[0][0]
+    expect(emailCall.html).toContain("1")
+    expect(emailCall.html).not.toContain(">2<")
+  })
 })
