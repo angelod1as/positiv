@@ -1,0 +1,48 @@
+import type {
+  AsaasEnvironment,
+  AsaasWebhookEvent,
+  PaymentMethod,
+  PaymentTransactionStatus,
+} from "./types"
+
+export const ASAAS_API_URLS: Record<AsaasEnvironment, string> = {
+  sandbox: "https://api-sandbox.asaas.com/v3",
+  production: "https://api.asaas.com/v3",
+}
+
+export const ASAAS_REQUIRED_HEADERS = {
+  "Content-Type": "application/json",
+} as const
+
+export const PAYMENT_PRICING = {
+  pix: { amount: 220 },
+  creditCard: { amount: 227, maxInstallments: 6 },
+} as const
+
+export const PAYMENT_LINK_EXPIRY_HOURS = 48
+
+export const HANDLED_WEBHOOK_EVENTS: readonly AsaasWebhookEvent[] = [
+  "PAYMENT_CONFIRMED",
+  "PAYMENT_RECEIVED",
+  "PAYMENT_REFUNDED",
+  "PAYMENT_OVERDUE",
+  "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
+] as const
+
+export const BILLING_TYPE_TO_PAYMENT_METHOD: Record<string, PaymentMethod> =
+  {
+    PIX: "pix",
+    CREDIT_CARD: "credit_card",
+    BOLETO: "boleto",
+  }
+
+export const WEBHOOK_EVENT_TO_TRANSACTION_STATUS: Record<
+  string,
+  PaymentTransactionStatus
+> = {
+  PAYMENT_CONFIRMED: "confirmed",
+  PAYMENT_RECEIVED: "confirmed",
+  PAYMENT_REFUNDED: "refunded",
+  PAYMENT_OVERDUE: "pending",
+  PAYMENT_CREDIT_CARD_CAPTURE_REFUSED: "failed",
+}
