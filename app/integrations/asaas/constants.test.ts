@@ -110,9 +110,9 @@ describe("Asaas constants", () => {
       )
     })
 
-    it("maps PAYMENT_OVERDUE to pending", () => {
+    it("maps PAYMENT_OVERDUE to failed", () => {
       expect(WEBHOOK_EVENT_TO_TRANSACTION_STATUS.PAYMENT_OVERDUE).toBe(
-        "pending",
+        "failed",
       )
     })
 

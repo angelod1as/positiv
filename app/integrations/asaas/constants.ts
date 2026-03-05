@@ -1,4 +1,5 @@
 import type {
+  AsaasBillingType,
   AsaasEnvironment,
   AsaasWebhookEvent,
   PaymentMethod,
@@ -29,20 +30,20 @@ export const HANDLED_WEBHOOK_EVENTS: readonly AsaasWebhookEvent[] = [
   "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
 ] as const
 
-export const BILLING_TYPE_TO_PAYMENT_METHOD: Record<string, PaymentMethod> =
-  {
-    PIX: "pix",
-    CREDIT_CARD: "credit_card",
-    BOLETO: "boleto",
-  }
+export const BILLING_TYPE_TO_PAYMENT_METHOD: Partial<
+  Record<AsaasBillingType, PaymentMethod>
+> = {
+  PIX: "pix",
+  CREDIT_CARD: "credit_card",
+  BOLETO: "boleto",
+}
 
-export const WEBHOOK_EVENT_TO_TRANSACTION_STATUS: Record<
-  string,
-  PaymentTransactionStatus
+export const WEBHOOK_EVENT_TO_TRANSACTION_STATUS: Partial<
+  Record<AsaasWebhookEvent, PaymentTransactionStatus>
 > = {
   PAYMENT_CONFIRMED: "confirmed",
   PAYMENT_RECEIVED: "confirmed",
   PAYMENT_REFUNDED: "refunded",
-  PAYMENT_OVERDUE: "pending",
+  PAYMENT_OVERDUE: "failed",
   PAYMENT_CREDIT_CARD_CAPTURE_REFUSED: "failed",
 }
