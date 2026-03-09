@@ -35,7 +35,6 @@ export const BILLING_TYPE_TO_PAYMENT_METHOD: Partial<
 > = {
   PIX: "pix",
   CREDIT_CARD: "credit_card",
-  BOLETO: "boleto",
 }
 
 export const WEBHOOK_EVENT_TO_TRANSACTION_STATUS: Partial<

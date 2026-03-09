@@ -86,9 +86,6 @@ describe("Asaas constants", () => {
       )
     })
 
-    it("maps BOLETO to boleto", () => {
-      expect(BILLING_TYPE_TO_PAYMENT_METHOD.BOLETO).toBe("boleto")
-    })
   })
 
   describe("WEBHOOK_EVENT_TO_TRANSACTION_STATUS", () => {

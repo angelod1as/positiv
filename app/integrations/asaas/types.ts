@@ -1,6 +1,3 @@
-// Asaas API type definitions
-// Reference: https://docs.asaas.com/reference/criar-nova-cobranca
-
 export type AsaasEnvironment = "sandbox" | "production"
 
 export interface AsaasConfig {
@@ -34,7 +31,7 @@ export type AsaasPaymentStatus =
   | "DUNNING_RECEIVED"
   | "AWAITING_RISK_ANALYSIS"
 
-export type PaymentMethod = "pix" | "credit_card" | "boleto"
+export type PaymentMethod = "pix" | "credit_card"
 
 export type PaymentTransactionStatus =
   | "pending"
