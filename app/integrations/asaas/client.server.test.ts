@@ -168,7 +168,10 @@ describe("createPaymentCharge", () => {
 
     expect(global.fetch).toHaveBeenCalledWith(
       "https://api-sandbox.asaas.com/v3/payments",
-      expect.objectContaining({ method: "POST" })
+      expect.objectContaining({
+        method: "POST",
+        signal: expect.any(AbortSignal),
+      })
     )
   })
 

@@ -32,13 +32,14 @@ export async function createPaymentCharge(
     description: params.description,
     externalReference: params.externalReference,
     callback: params.callback,
-    ...(installmentCount && { installmentCount, totalValue: amount }),
+    ...(installmentCount !== undefined && { installmentCount, totalValue: amount }),
   }
 
   const response = await fetch(`${baseUrl}/payments`, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
   })
 
   if (!response.ok) {
