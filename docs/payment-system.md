@@ -10,7 +10,7 @@ Automated payment system for event registrations in the Positiv platform. Integr
 **Key Features:**
 - Generate unique payment links per participant
 - Dual payment options: Pix (R$ 220) and Credit Card (R$ 227)
-- Credit card supports up to 21x installments
+- Credit card supports up to 6x installments
 - WhatsApp integration with pre-filled messages
 - Email notifications (link sent, success, failure)
 - Webhook-based payment confirmation
@@ -52,7 +52,7 @@ Based on 360 annual transactions (8 events × 45 attendees):
 
 1. **Lowest installment fees** - Critical since 50% of payments use installments
 2. **Modern API** - RESTful with clear documentation and sandbox
-3. **Full feature set** - Pix, credit, 21x installments, refunds, webhooks
+3. **Full feature set** - Pix, credit, 6x installments, refunds, webhooks
 4. **Brazil-focused** - Built for Brazilian market with CPF/CNPJ handling
 5. **Transparent pricing** - No hidden fees, setup costs, or monthly fees
 
