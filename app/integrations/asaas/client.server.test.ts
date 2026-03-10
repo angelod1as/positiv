@@ -202,4 +202,35 @@ describe("createPaymentCharge", () => {
 
     expect(result).toEqual(MOCK_ASAAS_PAYMENT)
   })
+
+  it("throws with descriptive error when API returns non-ok response", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      new Response("Invalid customer", {
+        status: 400,
+        statusText: "Bad Request",
+      })
+    )
+
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "pix",
+      customer: "invalid",
+      dueDate: "2026-03-15",
+    }
+
+    await expect(createPaymentCharge(params)).rejects.toThrow(
+      "Failed to create pix charge: 400 Bad Request. Response: Invalid customer"
+    )
+  })
+
+  it("throws when fetch rejects with network error", async () => {
+    fetchSpy.mockRejectedValueOnce(new Error("Network error"))
+
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "credit_card",
+      customer: "cus_xyz789",
+      dueDate: "2026-03-15",
+    }
+
+    await expect(createPaymentCharge(params)).rejects.toThrow("Network error")
+  })
 })

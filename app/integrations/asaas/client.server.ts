@@ -41,5 +41,12 @@ export async function createPaymentCharge(
     body: JSON.stringify(body),
   })
 
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
+    throw new Error(
+      `Failed to create ${params.paymentMethod} charge: ${response.status} ${response.statusText}. Response: ${errorBody}`
+    )
+  }
+
   return (await response.json()) as AsaasPayment
 }
