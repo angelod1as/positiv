@@ -101,16 +101,20 @@ const MOCK_ASAAS_PAYMENT: AsaasPayment = {
   nossoNumero: null,
 }
 
-describe("createPaymentCharge", () => {
-  let fetchSpy: ReturnType<typeof vi.spyOn>
+function getLastFetchBody(): Record<string, unknown> {
+  const calls = vi.mocked(global.fetch).mock.calls
+  const init = calls[calls.length - 1][1] as RequestInit
+  return JSON.parse(init.body as string) as Record<string, unknown>
+}
 
+describe("createPaymentCharge", () => {
   beforeEach(() => {
     mockEnv.mockReturnValue({
       asaasApiKey: "test-api-key",
       asaasEnvironment: "sandbox",
     } as ReturnType<typeof env>)
 
-    fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(
+    vi.spyOn(global, "fetch").mockResolvedValue(
       new Response(JSON.stringify(MOCK_ASAAS_PAYMENT), {
         status: 200,
         headers: { "Content-Type": "application/json" },
@@ -131,7 +135,7 @@ describe("createPaymentCharge", () => {
 
     await createPaymentCharge(params)
 
-    const body = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+    const body = getLastFetchBody()
     expect(body.billingType).toBe("PIX")
     expect(body.value).toBe(220)
     expect(body.installmentCount).toBeUndefined()
@@ -146,7 +150,7 @@ describe("createPaymentCharge", () => {
 
     await createPaymentCharge(params)
 
-    const body = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+    const body = getLastFetchBody()
     expect(body.billingType).toBe("CREDIT_CARD")
     expect(body.value).toBe(227)
     expect(body.installmentCount).toBe(6)
@@ -162,7 +166,7 @@ describe("createPaymentCharge", () => {
 
     await createPaymentCharge(params)
 
-    expect(fetchSpy).toHaveBeenCalledWith(
+    expect(global.fetch).toHaveBeenCalledWith(
       "https://api-sandbox.asaas.com/v3/payments",
       expect.objectContaining({ method: "POST" })
     )
@@ -180,7 +184,7 @@ describe("createPaymentCharge", () => {
 
     await createPaymentCharge(params)
 
-    const body = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+    const body = getLastFetchBody()
     expect(body.customer).toBe("cus_xyz789")
     expect(body.dueDate).toBe("2026-03-15")
     expect(body.description).toBe("Event registration")
@@ -204,7 +208,7 @@ describe("createPaymentCharge", () => {
   })
 
   it("throws with descriptive error when API returns non-ok response", async () => {
-    fetchSpy.mockResolvedValueOnce(
+    vi.mocked(global.fetch).mockResolvedValueOnce(
       new Response("Invalid customer", {
         status: 400,
         statusText: "Bad Request",
@@ -223,7 +227,7 @@ describe("createPaymentCharge", () => {
   })
 
   it("throws when fetch rejects with network error", async () => {
-    fetchSpy.mockRejectedValueOnce(new Error("Network error"))
+    vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Network error"))
 
     const params: CreatePaymentChargeParams = {
       paymentMethod: "credit_card",
