@@ -3,7 +3,6 @@ export type AsaasEnvironment = "sandbox" | "production"
 export interface AsaasConfig {
   apiKey: string
   environment: AsaasEnvironment
-  baseUrl: string
 }
 
 export type AsaasBillingType =
