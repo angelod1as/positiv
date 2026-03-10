@@ -47,8 +47,6 @@ const getEnvironment = makeTypedEnvironment(
 
     COOKIE_SECRET: zod.string().optional(),
 
-    VERCEL: zod.string().optional(),
-
     ASAAS_API_KEY: zod.string().optional(),
     ASAAS_WEBHOOK_TOKEN: zod.string().optional(),
     ASAAS_ENVIRONMENT: zod
