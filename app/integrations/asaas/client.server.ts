@@ -1,5 +1,5 @@
 import { env } from "~/env.server"
-import { ASAAS_API_URLS, ASAAS_REQUIRED_HEADERS, PAYMENT_PRICING } from "./constants"
+import { ASAAS_API_URLS, ASAAS_REQUIRED_HEADERS, PAYMENT_METHOD_CONFIG } from "./constants"
 import type { AsaasPayment, CreatePaymentChargeParams } from "./types"
 
 export function getAsaasConfig() {
@@ -22,24 +22,17 @@ export async function createPaymentCharge(
   params: CreatePaymentChargeParams
 ): Promise<AsaasPayment> {
   const { baseUrl, headers } = getAsaasConfig()
-
-  const isPix = params.paymentMethod === "pix"
-  const billingType = isPix ? "PIX" : "CREDIT_CARD"
-  const value = isPix ? PAYMENT_PRICING.pix.amount : PAYMENT_PRICING.creditCard.amount
+  const { billingType, amount, installmentCount } = PAYMENT_METHOD_CONFIG[params.paymentMethod]
 
   const body: Record<string, unknown> = {
     customer: params.customer,
     billingType,
-    value,
+    value: amount,
     dueDate: params.dueDate,
     description: params.description,
     externalReference: params.externalReference,
     callback: params.callback,
-  }
-
-  if (!isPix) {
-    body.installmentCount = PAYMENT_PRICING.creditCard.maxInstallments
-    body.totalValue = value
+    ...(installmentCount && { installmentCount, totalValue: amount }),
   }
 
   const response = await fetch(`${baseUrl}/payments`, {

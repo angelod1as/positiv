@@ -20,6 +20,25 @@ export const PAYMENT_PRICING = {
   creditCard: { amount: 227, maxInstallments: 6 },
 } as const
 
+export const PAYMENT_METHOD_CONFIG: Record<
+  PaymentMethod,
+  {
+    billingType: AsaasBillingType
+    amount: number
+    installmentCount?: number
+  }
+> = {
+  pix: {
+    billingType: "PIX",
+    amount: PAYMENT_PRICING.pix.amount,
+  },
+  credit_card: {
+    billingType: "CREDIT_CARD",
+    amount: PAYMENT_PRICING.creditCard.amount,
+    installmentCount: PAYMENT_PRICING.creditCard.maxInstallments,
+  },
+}
+
 export const PAYMENT_LINK_EXPIRY_HOURS = 48
 
 export const HANDLED_WEBHOOK_EVENTS: readonly AsaasWebhookEvent[] = [
