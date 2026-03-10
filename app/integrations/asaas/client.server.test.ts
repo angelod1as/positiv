@@ -5,7 +5,8 @@ vi.mock("~/env.server", () => ({
 }))
 
 import { env } from "~/env.server"
-import { getAsaasConfig } from "./client.server"
+import { getAsaasConfig, createPaymentCharge } from "./client.server"
+import type { AsaasPayment, CreatePaymentChargeParams } from "./types"
 
 const mockEnv = vi.mocked(env)
 
@@ -65,5 +66,140 @@ describe("getAsaasConfig", () => {
     } as unknown as ReturnType<typeof env>)
 
     expect(() => getAsaasConfig()).toThrow("Asaas API key not configured")
+  })
+})
+
+const MOCK_ASAAS_PAYMENT: AsaasPayment = {
+  object: "payment",
+  id: "pay_abc123",
+  dateCreated: "2026-03-10",
+  customer: "cus_xyz789",
+  subscription: null,
+  installment: null,
+  paymentLink: null,
+  value: 220,
+  netValue: 210,
+  originalValue: null,
+  interestValue: null,
+  billingType: "PIX",
+  status: "PENDING",
+  dueDate: "2026-03-15",
+  originalDueDate: "2026-03-15",
+  paymentDate: null,
+  clientPaymentDate: null,
+  creditDate: null,
+  estimatedCreditDate: null,
+  description: "Test payment",
+  externalReference: null,
+  installmentNumber: null,
+  invoiceUrl: "https://sandbox.asaas.com/i/abc123",
+  transactionReceiptUrl: null,
+  deleted: false,
+  anticipated: false,
+  anticipable: false,
+  bankSlipUrl: null,
+  nossoNumero: null,
+}
+
+describe("createPaymentCharge", () => {
+  let fetchSpy: ReturnType<typeof vi.spyOn>
+
+  beforeEach(() => {
+    mockEnv.mockReturnValue({
+      asaasApiKey: "test-api-key",
+      asaasEnvironment: "sandbox",
+    } as ReturnType<typeof env>)
+
+    fetchSpy = vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(MOCK_ASAAS_PAYMENT), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("creates PIX charge with amount 220 and billingType PIX", async () => {
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "pix",
+      customer: "cus_xyz789",
+      dueDate: "2026-03-15",
+    }
+
+    await createPaymentCharge(params)
+
+    const body = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+    expect(body.billingType).toBe("PIX")
+    expect(body.value).toBe(220)
+    expect(body.installmentCount).toBeUndefined()
+  })
+
+  it("creates CREDIT_CARD charge with amount 227 and 6 installments", async () => {
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "credit_card",
+      customer: "cus_xyz789",
+      dueDate: "2026-03-15",
+    }
+
+    await createPaymentCharge(params)
+
+    const body = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+    expect(body.billingType).toBe("CREDIT_CARD")
+    expect(body.value).toBe(227)
+    expect(body.installmentCount).toBe(6)
+    expect(body.totalValue).toBe(227)
+  })
+
+  it("POSTs to the correct payments endpoint", async () => {
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "pix",
+      customer: "cus_xyz789",
+      dueDate: "2026-03-15",
+    }
+
+    await createPaymentCharge(params)
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://api-sandbox.asaas.com/v3/payments",
+      expect.objectContaining({ method: "POST" })
+    )
+  })
+
+  it("passes customer, dueDate, description, externalReference, and callback", async () => {
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "pix",
+      customer: "cus_xyz789",
+      dueDate: "2026-03-15",
+      description: "Event registration",
+      externalReference: "ref-123",
+      callback: { successUrl: "https://example.com/success", autoRedirect: true },
+    }
+
+    await createPaymentCharge(params)
+
+    const body = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+    expect(body.customer).toBe("cus_xyz789")
+    expect(body.dueDate).toBe("2026-03-15")
+    expect(body.description).toBe("Event registration")
+    expect(body.externalReference).toBe("ref-123")
+    expect(body.callback).toEqual({
+      successUrl: "https://example.com/success",
+      autoRedirect: true,
+    })
+  })
+
+  it("returns the AsaasPayment response from API", async () => {
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "pix",
+      customer: "cus_xyz789",
+      dueDate: "2026-03-15",
+    }
+
+    const result = await createPaymentCharge(params)
+
+    expect(result).toEqual(MOCK_ASAAS_PAYMENT)
   })
 })
