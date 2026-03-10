@@ -155,6 +155,15 @@ export type AsaasWebhookEvent =
   | "PAYMENT_BANK_SLIP_VIEWED"
   | "PAYMENT_CHECKOUT_VIEWED"
 
+export interface CreatePaymentChargeParams {
+  paymentMethod: PaymentMethod
+  customer: string
+  dueDate: string
+  description?: string
+  externalReference?: string
+  callback?: { successUrl: string; autoRedirect?: boolean }
+}
+
 export interface AsaasWebhookPayload {
   event: AsaasWebhookEvent
   payment: AsaasPayment
