@@ -1,103 +1,65 @@
 import { describe, expect, it } from "vitest"
-import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 import { applicationMailTemplate } from "./application-mail.template"
 
 describe("applicationMailTemplate", () => {
-  const mockProfile: NonNullable<ProfileWithRoles> = {
-    id: "test-profile-id",
-    full_name: "Test User",
-    social_name: "Testy",
-    email: "test@example.com",
-    basic_data_filled: true,
-    created_at: "2024-01-01T00:00:00Z",
-    is_admin: false,
-  }
-
-  const mockEvent: Event = {
-    id: "test-event-id",
-    title: "Test Event",
-    emoji: "🎉",
-    location: "Test Location",
-    time_event_start: "2024-12-25T20:00:00-03:00",
-    time_event_end: "2024-12-26T04:00:00-03:00",
-    time_application_start: "2024-12-01T10:00:00-03:00",
-    time_group_start: null,
-    time_group_end: null,
-    time_payment_start: null,
-    time_payment_end: null,
-    description: "Test Description",
-    ticket_price: null,
-    event_status: "Registration Open",
-    event_type: "regular",
-    auto_publish: false,
-    created_at: "2025-01-01T00:00:00Z",
-    total_spots: null,
-    listmonk_list_id: null,
-    listmonk_list_synced_at: null,
-  }
+  const participantName = "Testy"
+  const eventTitle = "Test Event"
+  const eventEmoji = "🎉"
+  const eventLocation = "Test Location"
+  const eventStartTime = "2024-12-25T20:00:00-03:00"
 
   it("should return a string", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(typeof result).toBe("string")
   })
 
   it("should be valid HTML with DOCTYPE", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("<!DOCTYPE html>")
     expect(result).toContain("<html lang=\"pt-BR\">")
     expect(result).toContain("</html>")
   })
 
   it("should include Brand Purple gradient background", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain(
       "linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%)",
     )
   })
 
   it("should include Positiv logo", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("positiv-logo-colors.png")
   })
 
-  it("should use social_name when available", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+  it("should display participant name", () => {
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("Testy")
-    expect(result).not.toContain("Test User")
-  })
-
-  it("should fallback to full_name when social_name is not available", () => {
-    const profileWithoutSocialName = {
-      ...mockProfile,
-      social_name: null,
-    }
-    const result = applicationMailTemplate(profileWithoutSocialName, mockEvent)
-    expect(result).toContain("Test User")
   })
 
   it("should include event title with emoji", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("🎉 Test Event")
     expect(result).toContain("🎉&nbsp;Test Event")
   })
 
   it("should include event location", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("Test Location")
   })
 
   it("should format event date in Brazilian Portuguese", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("25 de dezembro de 2024")
   })
 
   it("should format event time with h suffix", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("20h")
   })
 
   it("should include event details section", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("Evento:")
     expect(result).toContain("Local:")
     expect(result).toContain("Data:")
@@ -105,13 +67,13 @@ describe("applicationMailTemplate", () => {
   })
 
   it("should include important notes section", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("Importante!")
     expect(result).toContain("Não se esqueça:")
   })
 
   it("should include all important bullet points", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("Ter participado de edições anteriores")
     expect(result).toContain("Se você quer ir acompanhade")
     expect(result).toContain("Inscrever-se no formulário")
@@ -119,67 +81,30 @@ describe("applicationMailTemplate", () => {
   })
 
   it("should include footer with Positiv link", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("Você recebeu este e-mail pois se cadastrou")
     expect(result).toContain("Positiv")
     expect(result).toContain("Configurações")
   })
 
   it("should include account settings link", () => {
-    const result = applicationMailTemplate(mockProfile, mockEvent)
+    const result = applicationMailTemplate(participantName, eventTitle, eventEmoji, eventLocation, eventStartTime)
     expect(result).toContain("conta")
   })
 })
 
 describe("applicationMailTemplate - XSS Protection", () => {
-  const createMockProfile = (
-    overrides?: Partial<ProfileWithRoles>,
-  ): NonNullable<ProfileWithRoles> => ({
-    id: "test-profile-id",
-    full_name: "Test User",
-    social_name: null,
-    email: "test@example.com",
-    basic_data_filled: true,
-    created_at: "2024-01-01T00:00:00Z",
-    is_admin: false,
-    ...overrides,
-  })
-
-  const createMockEvent = (
-    overrides?: Partial<Event>,
-  ): Event => ({
-    id: "test-event-id",
-    title: "Test Event",
-    emoji: "🎉",
-    location: "Test Location",
-    time_event_start: "2024-12-25T20:00:00-03:00",
-    time_event_end: "2024-12-26T04:00:00-03:00",
-    time_application_start: "2024-12-01T10:00:00-03:00",
-    time_group_start: null,
-    time_group_end: null,
-    time_payment_start: null,
-    time_payment_end: null,
-    description: "Test Description",
-    ticket_price: null,
-    event_status: "Registration Open",
-    event_type: "regular",
-    auto_publish: false,
-    created_at: "2025-01-01T00:00:00Z",
-    total_spots: null,
-    listmonk_list_id: null,
-    listmonk_list_synced_at: null,
-    ...overrides,
-  })
+  const eventTitle = "Test Event"
+  const eventEmoji = "🎉"
+  const eventLocation = "Test Location"
+  const eventStartTime = "2024-12-25T20:00:00-03:00"
 
   describe("Profile Name Sanitization", () => {
-    it("should sanitize script tags in full_name", () => {
-      const profile = createMockProfile({
-        full_name: '<script>alert("XSS")</script>John',
-        social_name: null,
-      })
-      const event = createMockEvent()
-
-      const html = applicationMailTemplate(profile, event)
+    it("should sanitize script tags in participant name", () => {
+      const html = applicationMailTemplate(
+        '<script>alert("XSS")</script>John',
+        eventTitle, eventEmoji, eventLocation, eventStartTime,
+      )
 
       expect(html).not.toContain("<script>")
       expect(html).not.toContain("</script>")
@@ -187,41 +112,21 @@ describe("applicationMailTemplate - XSS Protection", () => {
       expect(html).toContain("John")
     })
 
-    it("should sanitize script tags in social_name", () => {
-      const profile = createMockProfile({
-        full_name: "John Doe",
-        social_name: '<script>alert("XSS")</script>Jane',
-      })
-      const event = createMockEvent()
-
-      const html = applicationMailTemplate(profile, event)
-
-      expect(html).not.toContain("<script>")
-      expect(html).not.toContain('alert("XSS")')
-      expect(html).toContain("Jane")
-    })
-
-    it("should sanitize img tag with onerror in full_name", () => {
-      const profile = createMockProfile({
-        full_name: '<img src=x onerror="alert(\'XSS\')">John',
-        social_name: null,
-      })
-      const event = createMockEvent()
-
-      const html = applicationMailTemplate(profile, event)
+    it("should sanitize img tag with onerror in participant name", () => {
+      const html = applicationMailTemplate(
+        '<img src=x onerror="alert(\'XSS\')">John',
+        eventTitle, eventEmoji, eventLocation, eventStartTime,
+      )
 
       expect(html).not.toContain("onerror")
       expect(html).not.toContain('alert(\'XSS\')')
     })
 
-    it("should sanitize iframe injection in social_name", () => {
-      const profile = createMockProfile({
-        full_name: "John Doe",
-        social_name: '<iframe src="https://evil.com"></iframe>Jane',
-      })
-      const event = createMockEvent()
-
-      const html = applicationMailTemplate(profile, event)
+    it("should sanitize iframe injection in participant name", () => {
+      const html = applicationMailTemplate(
+        '<iframe src="https://evil.com"></iframe>Jane',
+        eventTitle, eventEmoji, eventLocation, eventStartTime,
+      )
 
       expect(html).not.toContain("<iframe")
       expect(html).not.toContain("evil.com")
@@ -229,13 +134,10 @@ describe("applicationMailTemplate - XSS Protection", () => {
     })
 
     it("should escape HTML entities in legitimate names", () => {
-      const profile = createMockProfile({
-        full_name: "John <Doe> & Associates",
-        social_name: null,
-      })
-      const event = createMockEvent()
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "John <Doe> & Associates",
+        eventTitle, eventEmoji, eventLocation, eventStartTime,
+      )
 
       expect(html).toContain("&amp;")
       expect(html).toContain("John")
@@ -246,12 +148,11 @@ describe("applicationMailTemplate - XSS Protection", () => {
 
   describe("Event Title Sanitization", () => {
     it("should sanitize script tags in event title", () => {
-      const profile = createMockProfile()
-      const event = createMockEvent({
-        title: '<script>alert("XSS")</script>Party',
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "Test User",
+        '<script>alert("XSS")</script>Party',
+        eventEmoji, eventLocation, eventStartTime,
+      )
 
       expect(html).not.toContain("<script>")
       expect(html).not.toContain('alert("XSS")')
@@ -259,24 +160,22 @@ describe("applicationMailTemplate - XSS Protection", () => {
     })
 
     it("should sanitize img tag with onerror in event title", () => {
-      const profile = createMockProfile()
-      const event = createMockEvent({
-        title: '<img src=x onerror="alert(\'XSS\')">Party',
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "Test User",
+        '<img src=x onerror="alert(\'XSS\')">Party',
+        eventEmoji, eventLocation, eventStartTime,
+      )
 
       expect(html).not.toContain("onerror")
       expect(html).not.toContain('alert(\'XSS\')')
     })
 
     it("should escape HTML entities in event title", () => {
-      const profile = createMockProfile()
-      const event = createMockEvent({
-        title: "Party <New Year's> & More",
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "Test User",
+        "Party <New Year's> & More",
+        eventEmoji, eventLocation, eventStartTime,
+      )
 
       expect(html).toContain("&amp;")
       expect(html).toContain("Party")
@@ -287,12 +186,11 @@ describe("applicationMailTemplate - XSS Protection", () => {
 
   describe("Event Location Sanitization", () => {
     it("should sanitize script tags in location", () => {
-      const profile = createMockProfile()
-      const event = createMockEvent({
-        location: '<script>alert("XSS")</script>São Paulo',
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "Test User", eventTitle, eventEmoji,
+        '<script>alert("XSS")</script>São Paulo',
+        eventStartTime,
+      )
 
       expect(html).not.toContain("<script>")
       expect(html).not.toContain('alert("XSS")')
@@ -300,24 +198,22 @@ describe("applicationMailTemplate - XSS Protection", () => {
     })
 
     it("should sanitize onclick event handler in location", () => {
-      const profile = createMockProfile()
-      const event = createMockEvent({
-        location: '<a href="#" onclick="alert(\'XSS\')">Click</a>',
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "Test User", eventTitle, eventEmoji,
+        '<a href="#" onclick="alert(\'XSS\')">Click</a>',
+        eventStartTime,
+      )
 
       expect(html).not.toContain("onclick")
       expect(html).not.toContain('alert(\'XSS\')')
     })
 
     it("should escape HTML entities in location", () => {
-      const profile = createMockProfile()
-      const event = createMockEvent({
-        location: "Street <Main> & Ave",
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "Test User", eventTitle, eventEmoji,
+        "Street <Main> & Ave",
+        eventStartTime,
+      )
 
       expect(html).toContain("&amp;")
       expect(html).toContain("Street")
@@ -328,24 +224,21 @@ describe("applicationMailTemplate - XSS Protection", () => {
 
   describe("Event Emoji Sanitization", () => {
     it("should sanitize script tags in emoji field", () => {
-      const profile = createMockProfile()
-      const event = createMockEvent({
-        emoji: '<script>alert("XSS")</script>🎉',
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "Test User", eventTitle,
+        '<script>alert("XSS")</script>🎉',
+        eventLocation, eventStartTime,
+      )
 
       expect(html).not.toContain("<script>")
       expect(html).not.toContain('alert("XSS")')
     })
 
     it("should allow legitimate emoji characters", () => {
-      const profile = createMockProfile()
-      const event = createMockEvent({
-        emoji: "🎉",
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "Test User", eventTitle, "🎉",
+        eventLocation, eventStartTime,
+      )
 
       expect(html).toContain("🎉")
     })
@@ -353,17 +246,13 @@ describe("applicationMailTemplate - XSS Protection", () => {
 
   describe("Combined Attack Vectors", () => {
     it("should sanitize multiple XSS attempts across all fields", () => {
-      const profile = createMockProfile({
-        full_name: '<script>alert("name")</script>John',
-        social_name: '<img src=x onerror="alert(\'social\')">',
-      })
-      const event = createMockEvent({
-        title: '<iframe src="https://evil.com">Party</iframe>',
-        location: '<a onclick="alert(\'loc\')">Place</a>',
-        emoji: '<script>alert("emoji")</script>🎉',
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        '<script>alert("name")</script>John',
+        '<iframe src="https://evil.com">Party</iframe>',
+        '<script>alert("emoji")</script>🎉',
+        '<a onclick="alert(\'loc\')">Place</a>',
+        eventStartTime,
+      )
 
       expect(html).not.toContain("<script>")
       expect(html).not.toContain("<iframe")
@@ -376,17 +265,13 @@ describe("applicationMailTemplate - XSS Protection", () => {
 
   describe("Legitimate Content Preservation", () => {
     it("should preserve legitimate content after sanitization", () => {
-      const profile = createMockProfile({
-        full_name: "João da Silva",
-        social_name: "Ana Maria",
-      })
-      const event = createMockEvent({
-        title: "Festa de Ano Novo",
-        location: "São Paulo, SP",
-        emoji: "🎉",
-      })
-
-      const html = applicationMailTemplate(profile, event)
+      const html = applicationMailTemplate(
+        "Ana Maria",
+        "Festa de Ano Novo",
+        "🎉",
+        "São Paulo, SP",
+        "2024-12-25T20:00:00-03:00",
+      )
 
       expect(html).toContain("Ana Maria")
       expect(html).toContain("Festa de Ano Novo")
