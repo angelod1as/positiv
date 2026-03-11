@@ -84,14 +84,10 @@ export async function refundPayment(
 ): Promise<AsaasPayment> {
   const { baseUrl, headers } = getAsaasConfig()
 
-  const body: Record<string, unknown> = {}
-  if (params.value !== undefined) body.value = params.value
-  if (params.description !== undefined) body.description = params.description
-
   const response = await fetch(`${baseUrl}/payments/${paymentId}/refund`, {
     method: "POST",
     headers,
-    body: JSON.stringify(body),
+    body: JSON.stringify(params),
     signal: AbortSignal.timeout(15_000),
   })
 
