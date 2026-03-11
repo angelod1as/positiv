@@ -67,6 +67,15 @@ describe("getAsaasConfig", () => {
 
     expect(() => getAsaasConfig()).toThrow("Asaas API key not configured")
   })
+
+  it("throws when API key is empty string", () => {
+    mockEnv.mockReturnValue({
+      asaasApiKey: "",
+      asaasEnvironment: "sandbox",
+    } as unknown as ReturnType<typeof env>)
+
+    expect(() => getAsaasConfig()).toThrow("Asaas API key not configured")
+  })
 })
 
 const MOCK_ASAAS_PAYMENT: AsaasPayment = {
@@ -268,6 +277,39 @@ describe("createPaymentCharge", () => {
 
     await expect(createPaymentCharge(params)).rejects.toThrow("Network error")
   })
+
+  it("uses fallback message when response body cannot be read", async () => {
+    const badResponse = new Response(null, {
+      status: 500,
+      statusText: "Internal Server Error",
+    })
+    vi.spyOn(badResponse, "text").mockRejectedValueOnce(new Error("stream error"))
+    vi.mocked(global.fetch).mockResolvedValueOnce(badResponse)
+
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "pix",
+      customer: "cus_xyz789",
+      dueDate: "2026-03-15",
+    }
+
+    await expect(createPaymentCharge(params)).rejects.toThrow(
+      "Failed to create pix charge: 500 Internal Server Error. Response: Unable to read error body"
+    )
+  })
+
+  it("does not include installmentCount or totalValue for PIX charges", async () => {
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "pix",
+      customer: "cus_xyz789",
+      dueDate: "2026-03-15",
+    }
+
+    await createPaymentCharge(params)
+
+    const body = getLastFetchBody()
+    expect(body).not.toHaveProperty("installmentCount")
+    expect(body).not.toHaveProperty("totalValue")
+  })
 })
 
 describe("getPaymentStatus", () => {
@@ -395,6 +437,22 @@ describe("refundPayment", () => {
     await expect(refundPayment("pay_abc123", {})).rejects.toThrow(
       "Failed to refund payment: 400 Bad Request. Response: Refund not allowed"
     )
+  })
+
+  it("sends only value when description is not provided", async () => {
+    await refundPayment("pay_abc123", { value: 50 })
+
+    const body = getLastFetchBody()
+    expect(body.value).toBe(50)
+    expect(body).not.toHaveProperty("description")
+  })
+
+  it("sends only description when value is not provided", async () => {
+    await refundPayment("pay_abc123", { description: "Full refund" })
+
+    const body = getLastFetchBody()
+    expect(body.description).toBe("Full refund")
+    expect(body).not.toHaveProperty("value")
   })
 
   it("throws on network error", async () => {
@@ -644,6 +702,108 @@ describe("getOrCreateAsaasCustomer", () => {
 
     await expect(getOrCreateAsaasCustomer(params)).rejects.toThrow(
       "Failed to create customer: 400 Bad Request. Response: Invalid CPF"
+    )
+  })
+
+  it("returns first active customer when multiple exist", async () => {
+    const firstActive: AsaasCustomer = { ...MOCK_ASAAS_CUSTOMER, id: "cus_first" }
+    const secondActive: AsaasCustomer = { ...MOCK_ASAAS_CUSTOMER, id: "cus_second" }
+    const thirdActive: AsaasCustomer = { ...MOCK_ASAAS_CUSTOMER, id: "cus_third" }
+
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify(mockCustomerListResponse([firstActive, secondActive, thirdActive])),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      )
+    )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+      email: "test@example.com",
+    }
+
+    const result = await getOrCreateAsaasCustomer(params)
+
+    expect(result.id).toBe("cus_first")
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+  })
+
+  it("creates new customer when all existing customers are deleted", async () => {
+    const deleted1: AsaasCustomer = { ...MOCK_ASAAS_CUSTOMER, id: "cus_del1", deleted: true }
+    const deleted2: AsaasCustomer = { ...MOCK_ASAAS_CUSTOMER, id: "cus_del2", deleted: true }
+    const deleted3: AsaasCustomer = { ...MOCK_ASAAS_CUSTOMER, id: "cus_del3", deleted: true }
+
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify(mockCustomerListResponse([deleted1, deleted2, deleted3])),
+          { status: 200, headers: { "Content-Type": "application/json" } }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(MOCK_ASAAS_CUSTOMER), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+      email: "test@example.com",
+    }
+
+    const result = await getOrCreateAsaasCustomer(params)
+
+    expect(result).toEqual(MOCK_ASAAS_CUSTOMER)
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      "https://api-sandbox.asaas.com/v3/customers",
+      expect.objectContaining({ method: "POST" })
+    )
+  })
+
+  it("includes timeout signal in customer search fetch request", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify(mockCustomerListResponse([MOCK_ASAAS_CUSTOMER])), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+      email: "test@example.com",
+    }
+
+    await getOrCreateAsaasCustomer(params)
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    )
+  })
+
+  it("includes timeout signal in customer create fetch request", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify(MOCK_ASAAS_CUSTOMER), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+    }
+
+    await getOrCreateAsaasCustomer(params)
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api-sandbox.asaas.com/v3/customers",
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
   })
 
