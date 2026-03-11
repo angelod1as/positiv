@@ -19,10 +19,6 @@ export const paymentLinkEmailTemplate = (
   const sanitizedName = sanitizeHtml(participantName)
   const sanitizedEmoji = sanitizeHtml(eventEmoji || "")
   const sanitizedTitle = sanitizeHtml(eventTitle || "")
-  const eventDisplay = [sanitizedEmoji, sanitizedTitle]
-    .filter(Boolean)
-    .join(" ")
-
   const { date: expiryDate, time: expiryTime } = formatDateTime(expiresAt.toISOString())
 
   const pixAmount = PAYMENT_PRICING.pix.amount

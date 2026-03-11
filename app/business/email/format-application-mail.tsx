@@ -12,7 +12,7 @@ export const formatApplicationMail = async (
     event.title || "",
     event.emoji,
     event.location || "",
-    event.time_event_start,
+    event.time_event_start || "",
   )
   const text = htmlToText(html)
 
