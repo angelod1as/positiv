@@ -1,7 +1,6 @@
 import { DASHBOARD_URL, POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import type { Event } from "~types/database/entities.types"
 
 /**
  * Event Opening Email Template
@@ -10,22 +9,26 @@ import type { Event } from "~types/database/entities.types"
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const eventOpeningMailTemplate = (
-  event: Event,
+  eventTitle: string,
+  eventEmoji: string | null,
+  eventLocation: string,
+  eventStartTime: string,
+  applicationStartTime: string,
   profileId: string,
 ): string => {
-  const { date, time } = formatDateTime(event.time_event_start)
+  const { date, time } = formatDateTime(eventStartTime)
   const { date: applicationOpenDate, time: applicationOpenTime } =
-    formatDateTime(event.time_application_start)
+    formatDateTime(applicationStartTime)
 
-  const sanitizedEmoji = sanitizeHtml(event.emoji || "")
-  const sanitizedTitle = sanitizeHtml(event.title || "")
+  const sanitizedEmoji = sanitizeHtml(eventEmoji || "")
+  const sanitizedTitle = sanitizeHtml(eventTitle || "")
   const eventDisplay = [sanitizedEmoji, sanitizedTitle]
     .filter(Boolean)
     .join(" ")
 
   const details = [
     ["Evento", eventDisplay],
-    ["Local", sanitizeHtml(event.location || "")],
+    ["Local", sanitizeHtml(eventLocation || "")],
     ["Data do evento", date],
     ["Horário de início", time],
     ["Inscrições abrem em", `${applicationOpenDate} às ${applicationOpenTime}`],
