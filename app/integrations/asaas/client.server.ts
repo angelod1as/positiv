@@ -9,6 +9,13 @@ import type {
   RefundAsaasPaymentParams,
 } from "./types"
 
+async function throwAsaasError(response: Response, action: string): Promise<never> {
+  const errorBody = await response.text().catch(() => "Unable to read error body")
+  throw new Error(
+    `Failed to ${action}: ${response.status} ${response.statusText}. Response: ${errorBody}`
+  )
+}
+
 export function getAsaasConfig() {
   const { asaasApiKey, asaasEnvironment } = env()
 
@@ -50,10 +57,7 @@ export async function createPaymentCharge(
   })
 
   if (!response.ok) {
-    const errorBody = await response.text().catch(() => "Unable to read error body")
-    throw new Error(
-      `Failed to create ${params.paymentMethod} charge: ${response.status} ${response.statusText}. Response: ${errorBody}`
-    )
+    await throwAsaasError(response, `create ${params.paymentMethod} charge`)
   }
 
   return (await response.json()) as AsaasPayment
@@ -69,10 +73,7 @@ export async function getPaymentStatus(paymentId: string): Promise<AsaasPayment>
   })
 
   if (!response.ok) {
-    const errorBody = await response.text().catch(() => "Unable to read error body")
-    throw new Error(
-      `Failed to get payment status: ${response.status} ${response.statusText}. Response: ${errorBody}`
-    )
+    await throwAsaasError(response, "get payment status")
   }
 
   return (await response.json()) as AsaasPayment
@@ -92,10 +93,7 @@ export async function refundPayment(
   })
 
   if (!response.ok) {
-    const errorBody = await response.text().catch(() => "Unable to read error body")
-    throw new Error(
-      `Failed to refund payment: ${response.status} ${response.statusText}. Response: ${errorBody}`
-    )
+    await throwAsaasError(response, "refund payment")
   }
 
   return (await response.json()) as AsaasPayment
@@ -123,10 +121,7 @@ export async function getOrCreateAsaasCustomer(
     )
 
     if (!searchResponse.ok) {
-      const errorBody = await searchResponse.text().catch(() => "Unable to read error body")
-      throw new Error(
-        `Failed to search for customer: ${searchResponse.status} ${searchResponse.statusText}. Response: ${errorBody}`
-      )
+      await throwAsaasError(searchResponse, "search for customer")
     }
 
     const searchResult = (await searchResponse.json()) as AsaasListResponse<AsaasCustomer>
@@ -143,10 +138,7 @@ export async function getOrCreateAsaasCustomer(
   })
 
   if (!createResponse.ok) {
-    const errorBody = await createResponse.text().catch(() => "Unable to read error body")
-    throw new Error(
-      `Failed to create customer: ${createResponse.status} ${createResponse.statusText}. Response: ${errorBody}`
-    )
+    await throwAsaasError(createResponse, "create customer")
   }
 
   return (await createResponse.json()) as AsaasCustomer
