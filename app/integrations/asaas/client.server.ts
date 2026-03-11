@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto"
 import { env } from "~/env.server"
 import { ASAAS_API_URLS, ASAAS_REQUIRED_HEADERS, PAYMENT_METHOD_CONFIG } from "./constants"
 import type {
@@ -101,8 +102,11 @@ export async function refundPayment(
 
 export function verifyWebhookSignature(token: string): boolean {
   const { asaasWebhookToken } = env()
-  if (!asaasWebhookToken) return false
-  return token === asaasWebhookToken
+  if (!asaasWebhookToken || !token) return false
+  const a = Buffer.from(token)
+  const b = Buffer.from(asaasWebhookToken)
+  if (a.length !== b.length) return false
+  return timingSafeEqual(a, b)
 }
 
 export async function getOrCreateAsaasCustomer(
@@ -125,8 +129,9 @@ export async function getOrCreateAsaasCustomer(
     }
 
     const searchResult = (await searchResponse.json()) as AsaasListResponse<AsaasCustomer>
-    if (searchResult.data.length > 0) {
-      return searchResult.data[0]
+    const activeCustomer = searchResult.data.find((c) => !c.deleted)
+    if (activeCustomer) {
+      return activeCustomer
     }
   }
 

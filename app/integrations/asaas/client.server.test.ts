@@ -478,6 +478,39 @@ describe("getOrCreateAsaasCustomer", () => {
     )
   })
 
+  it("skips deleted customers and creates a new one", async () => {
+    const deletedCustomer: AsaasCustomer = { ...MOCK_ASAAS_CUSTOMER, id: "cus_deleted", deleted: true }
+
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(mockCustomerListResponse([deletedCustomer])), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(MOCK_ASAAS_CUSTOMER), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+      email: "test@example.com",
+    }
+
+    const result = await getOrCreateAsaasCustomer(params)
+
+    expect(result).toEqual(MOCK_ASAAS_CUSTOMER)
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      "https://api-sandbox.asaas.com/v3/customers",
+      expect.objectContaining({ method: "POST" })
+    )
+  })
+
   it("creates new customer when none found by email", async () => {
     vi.spyOn(global, "fetch")
       .mockResolvedValueOnce(
