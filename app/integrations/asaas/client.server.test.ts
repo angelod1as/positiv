@@ -5,7 +5,7 @@ vi.mock("~/env.server", () => ({
 }))
 
 import { env } from "~/env.server"
-import { getAsaasConfig, createPaymentCharge, getPaymentStatus, refundPayment } from "./client.server"
+import { getAsaasConfig, createPaymentCharge, getPaymentStatus, refundPayment, verifyWebhookSignature } from "./client.server"
 import type { AsaasPayment, CreatePaymentChargeParams, RefundAsaasPaymentParams } from "./types"
 
 const mockEnv = vi.mocked(env)
@@ -373,5 +373,43 @@ describe("refundPayment", () => {
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Network error"))
 
     await expect(refundPayment("pay_abc123", {})).rejects.toThrow("Network error")
+  })
+})
+
+describe("verifyWebhookSignature", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("returns true when token matches asaasWebhookToken", () => {
+    mockEnv.mockReturnValue({
+      asaasWebhookToken: "my-webhook-secret",
+    } as ReturnType<typeof env>)
+
+    expect(verifyWebhookSignature("my-webhook-secret")).toBe(true)
+  })
+
+  it("returns false when token does not match", () => {
+    mockEnv.mockReturnValue({
+      asaasWebhookToken: "my-webhook-secret",
+    } as ReturnType<typeof env>)
+
+    expect(verifyWebhookSignature("wrong-token")).toBe(false)
+  })
+
+  it("returns false when asaasWebhookToken is not configured", () => {
+    mockEnv.mockReturnValue({
+      asaasWebhookToken: undefined,
+    } as ReturnType<typeof env>)
+
+    expect(verifyWebhookSignature("any-token")).toBe(false)
+  })
+
+  it("returns false for empty string token", () => {
+    mockEnv.mockReturnValue({
+      asaasWebhookToken: "my-webhook-secret",
+    } as ReturnType<typeof env>)
+
+    expect(verifyWebhookSignature("")).toBe(false)
   })
 })

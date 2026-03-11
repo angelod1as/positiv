@@ -97,3 +97,9 @@ export async function refundPayment(
 
   return (await response.json()) as AsaasPayment
 }
+
+export function verifyWebhookSignature(token: string): boolean {
+  const { asaasWebhookToken } = env()
+  if (!asaasWebhookToken || !token) return false
+  return token === asaasWebhookToken
+}
