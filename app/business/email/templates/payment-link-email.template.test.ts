@@ -140,6 +140,36 @@ describe("paymentLinkEmailTemplate", () => {
       expect(html).toContain("Jane")
     })
 
+    it("should reject javascript: protocol in payment link", () => {
+      const html = paymentLinkEmailTemplate(
+        participantName, eventTitle, eventEmoji,
+        "javascript:alert(document.cookie)",
+        expiresAt,
+      )
+
+      expect(html).not.toContain("javascript:")
+    })
+
+    it("should reject data: protocol in payment link", () => {
+      const html = paymentLinkEmailTemplate(
+        participantName, eventTitle, eventEmoji,
+        "data:text/html,<script>alert(1)</script>",
+        expiresAt,
+      )
+
+      expect(html).not.toContain("data:text/html")
+    })
+
+    it("should allow valid https payment link", () => {
+      const html = paymentLinkEmailTemplate(
+        participantName, eventTitle, eventEmoji,
+        "https://www.asaas.com/c/pay123",
+        expiresAt,
+      )
+
+      expect(html).toContain("https://www.asaas.com/c/pay123")
+    })
+
     it("should sanitize multiple XSS attempts across all fields", () => {
       const html = paymentLinkEmailTemplate(
         '<script>alert("name")</script>John',

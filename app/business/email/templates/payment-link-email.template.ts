@@ -19,6 +19,7 @@ export const paymentLinkEmailTemplate = (
   const sanitizedName = sanitizeHtml(participantName)
   const sanitizedEmoji = sanitizeHtml(eventEmoji || "")
   const sanitizedTitle = sanitizeHtml(eventTitle || "")
+  const safePaymentLink = /^https?:\/\//i.test(paymentLink) ? paymentLink : "#"
   const { date: expiryDate, time: expiryTime } = formatDateTime(expiresAt.toISOString())
 
   const pixAmount = PAYMENT_PRICING.pix.amount
@@ -85,7 +86,7 @@ export const paymentLinkEmailTemplate = (
 
               <!-- CTA Button -->
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${paymentLink}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
+                <a href="${safePaymentLink}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
                   Realizar pagamento
                 </a>
               </div>
