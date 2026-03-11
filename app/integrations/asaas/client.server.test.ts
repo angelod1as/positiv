@@ -101,6 +101,34 @@ const MOCK_ASAAS_PAYMENT: AsaasPayment = {
   nossoNumero: null,
 }
 
+const MOCK_ASAAS_CUSTOMER: AsaasCustomer = {
+  object: "customer",
+  id: "cus_abc123",
+  dateCreated: "2026-03-10",
+  name: "Test User",
+  email: "test@example.com",
+  phone: null,
+  mobilePhone: null,
+  cpfCnpj: "12345678901",
+  personType: "FISICA",
+  deleted: false,
+  externalReference: null,
+  notificationDisabled: false,
+}
+
+function mockCustomerListResponse(
+  customers: AsaasCustomer[]
+): AsaasListResponse<AsaasCustomer> {
+  return {
+    object: "list",
+    hasMore: false,
+    totalCount: customers.length,
+    limit: 10,
+    offset: 0,
+    data: customers,
+  }
+}
+
 function getLastFetchBody(): Record<string, unknown> {
   const calls = vi.mocked(global.fetch).mock.calls
   const init = calls[calls.length - 1][1] as RequestInit
@@ -413,34 +441,6 @@ describe("verifyWebhookSignature", () => {
     expect(verifyWebhookSignature("")).toBe(false)
   })
 })
-
-const MOCK_ASAAS_CUSTOMER: AsaasCustomer = {
-  object: "customer",
-  id: "cus_abc123",
-  dateCreated: "2026-03-10",
-  name: "Test User",
-  email: "test@example.com",
-  phone: null,
-  mobilePhone: null,
-  cpfCnpj: "12345678901",
-  personType: "FISICA",
-  deleted: false,
-  externalReference: null,
-  notificationDisabled: false,
-}
-
-function mockCustomerListResponse(
-  customers: AsaasCustomer[]
-): AsaasListResponse<AsaasCustomer> {
-  return {
-    object: "list",
-    hasMore: false,
-    totalCount: customers.length,
-    limit: 10,
-    offset: 0,
-    data: customers,
-  }
-}
 
 describe("getOrCreateAsaasCustomer", () => {
   beforeEach(() => {
