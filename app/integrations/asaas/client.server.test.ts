@@ -5,7 +5,7 @@ vi.mock("~/env.server", () => ({
 }))
 
 import { env } from "~/env.server"
-import { getAsaasConfig, createPaymentCharge } from "./client.server"
+import { getAsaasConfig, createPaymentCharge, getPaymentStatus } from "./client.server"
 import type { AsaasPayment, CreatePaymentChargeParams } from "./types"
 
 const mockEnv = vi.mocked(env)
@@ -239,5 +239,62 @@ describe("createPaymentCharge", () => {
     }
 
     await expect(createPaymentCharge(params)).rejects.toThrow("Network error")
+  })
+})
+
+describe("getPaymentStatus", () => {
+  beforeEach(() => {
+    mockEnv.mockReturnValue({
+      asaasApiKey: "test-api-key",
+      asaasEnvironment: "sandbox",
+    } as ReturnType<typeof env>)
+
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(MOCK_ASAAS_PAYMENT), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("GETs the correct payment endpoint with paymentId", async () => {
+    await getPaymentStatus("pay_abc123")
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api-sandbox.asaas.com/v3/payments/pay_abc123",
+      expect.objectContaining({
+        method: "GET",
+        signal: expect.any(AbortSignal),
+      })
+    )
+  })
+
+  it("returns AsaasPayment response", async () => {
+    const result = await getPaymentStatus("pay_abc123")
+
+    expect(result).toEqual(MOCK_ASAAS_PAYMENT)
+  })
+
+  it("throws descriptive error on non-ok response", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response("Payment not found", {
+        status: 404,
+        statusText: "Not Found",
+      })
+    )
+
+    await expect(getPaymentStatus("pay_invalid")).rejects.toThrow(
+      "Failed to get payment status: 404 Not Found. Response: Payment not found"
+    )
+  })
+
+  it("throws on network error", async () => {
+    vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Network error"))
+
+    await expect(getPaymentStatus("pay_abc123")).rejects.toThrow("Network error")
   })
 })

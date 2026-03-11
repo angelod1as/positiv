@@ -51,3 +51,22 @@ export async function createPaymentCharge(
 
   return (await response.json()) as AsaasPayment
 }
+
+export async function getPaymentStatus(paymentId: string): Promise<AsaasPayment> {
+  const { baseUrl, headers } = getAsaasConfig()
+
+  const response = await fetch(`${baseUrl}/payments/${paymentId}`, {
+    method: "GET",
+    headers,
+    signal: AbortSignal.timeout(15_000),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
+    throw new Error(
+      `Failed to get payment status: ${response.status} ${response.statusText}. Response: ${errorBody}`
+    )
+  }
+
+  return (await response.json()) as AsaasPayment
+}
