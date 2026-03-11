@@ -1,6 +1,6 @@
 import { env } from "~/env.server"
 import { ASAAS_API_URLS, ASAAS_REQUIRED_HEADERS, PAYMENT_METHOD_CONFIG } from "./constants"
-import type { AsaasPayment, CreatePaymentChargeParams } from "./types"
+import type { AsaasPayment, CreatePaymentChargeParams, RefundAsaasPaymentParams } from "./types"
 
 export function getAsaasConfig() {
   const { asaasApiKey, asaasEnvironment } = env()
@@ -65,6 +65,33 @@ export async function getPaymentStatus(paymentId: string): Promise<AsaasPayment>
     const errorBody = await response.text().catch(() => "Unable to read error body")
     throw new Error(
       `Failed to get payment status: ${response.status} ${response.statusText}. Response: ${errorBody}`
+    )
+  }
+
+  return (await response.json()) as AsaasPayment
+}
+
+export async function refundPayment(
+  paymentId: string,
+  params: RefundAsaasPaymentParams
+): Promise<AsaasPayment> {
+  const { baseUrl, headers } = getAsaasConfig()
+
+  const body: Record<string, unknown> = {}
+  if (params.value !== undefined) body.value = params.value
+  if (params.description !== undefined) body.description = params.description
+
+  const response = await fetch(`${baseUrl}/payments/${paymentId}/refund`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
+  })
+
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => "Unable to read error body")
+    throw new Error(
+      `Failed to refund payment: ${response.status} ${response.statusText}. Response: ${errorBody}`
     )
   }
 

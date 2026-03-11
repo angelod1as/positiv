@@ -5,8 +5,8 @@ vi.mock("~/env.server", () => ({
 }))
 
 import { env } from "~/env.server"
-import { getAsaasConfig, createPaymentCharge, getPaymentStatus } from "./client.server"
-import type { AsaasPayment, CreatePaymentChargeParams } from "./types"
+import { getAsaasConfig, createPaymentCharge, getPaymentStatus, refundPayment } from "./client.server"
+import type { AsaasPayment, CreatePaymentChargeParams, RefundAsaasPaymentParams } from "./types"
 
 const mockEnv = vi.mocked(env)
 
@@ -296,5 +296,82 @@ describe("getPaymentStatus", () => {
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Network error"))
 
     await expect(getPaymentStatus("pay_abc123")).rejects.toThrow("Network error")
+  })
+})
+
+describe("refundPayment", () => {
+  beforeEach(() => {
+    mockEnv.mockReturnValue({
+      asaasApiKey: "test-api-key",
+      asaasEnvironment: "sandbox",
+    } as ReturnType<typeof env>)
+
+    vi.spyOn(global, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ ...MOCK_ASAAS_PAYMENT, status: "REFUNDED" }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("POSTs to the correct refund endpoint", async () => {
+    await refundPayment("pay_abc123", {})
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api-sandbox.asaas.com/v3/payments/pay_abc123/refund",
+      expect.objectContaining({
+        method: "POST",
+        signal: expect.any(AbortSignal),
+      })
+    )
+  })
+
+  it("sends value and description in body when provided", async () => {
+    const params: RefundAsaasPaymentParams = {
+      value: 100,
+      description: "Partial refund",
+    }
+
+    await refundPayment("pay_abc123", params)
+
+    const body = getLastFetchBody()
+    expect(body.value).toBe(100)
+    expect(body.description).toBe("Partial refund")
+  })
+
+  it("sends empty object when no optional params provided", async () => {
+    await refundPayment("pay_abc123", {})
+
+    const body = getLastFetchBody()
+    expect(body).toEqual({})
+  })
+
+  it("returns AsaasPayment response", async () => {
+    const result = await refundPayment("pay_abc123", {})
+
+    expect(result.status).toBe("REFUNDED")
+  })
+
+  it("throws on non-ok response", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      new Response("Refund not allowed", {
+        status: 400,
+        statusText: "Bad Request",
+      })
+    )
+
+    await expect(refundPayment("pay_abc123", {})).rejects.toThrow(
+      "Failed to refund payment: 400 Bad Request. Response: Refund not allowed"
+    )
+  })
+
+  it("throws on network error", async () => {
+    vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Network error"))
+
+    await expect(refundPayment("pay_abc123", {})).rejects.toThrow("Network error")
   })
 })
