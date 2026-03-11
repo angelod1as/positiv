@@ -1,6 +1,13 @@
 import { env } from "~/env.server"
 import { ASAAS_API_URLS, ASAAS_REQUIRED_HEADERS, PAYMENT_METHOD_CONFIG } from "./constants"
-import type { AsaasPayment, CreatePaymentChargeParams, RefundAsaasPaymentParams } from "./types"
+import type {
+  AsaasCustomer,
+  AsaasListResponse,
+  AsaasPayment,
+  CreateAsaasCustomerParams,
+  CreatePaymentChargeParams,
+  RefundAsaasPaymentParams,
+} from "./types"
 
 export function getAsaasConfig() {
   const { asaasApiKey, asaasEnvironment } = env()
@@ -102,4 +109,49 @@ export function verifyWebhookSignature(token: string): boolean {
   const { asaasWebhookToken } = env()
   if (!asaasWebhookToken || !token) return false
   return token === asaasWebhookToken
+}
+
+export async function getOrCreateAsaasCustomer(
+  params: CreateAsaasCustomerParams
+): Promise<AsaasCustomer> {
+  const { baseUrl, headers } = getAsaasConfig()
+
+  if (params.email) {
+    const searchResponse = await fetch(
+      `${baseUrl}/customers?email=${encodeURIComponent(params.email)}`,
+      {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(15_000),
+      }
+    )
+
+    if (!searchResponse.ok) {
+      const errorBody = await searchResponse.text().catch(() => "Unable to read error body")
+      throw new Error(
+        `Failed to search for customer: ${searchResponse.status} ${searchResponse.statusText}. Response: ${errorBody}`
+      )
+    }
+
+    const searchResult = (await searchResponse.json()) as AsaasListResponse<AsaasCustomer>
+    if (searchResult.data.length > 0) {
+      return searchResult.data[0]
+    }
+  }
+
+  const createResponse = await fetch(`${baseUrl}/customers`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(params),
+    signal: AbortSignal.timeout(15_000),
+  })
+
+  if (!createResponse.ok) {
+    const errorBody = await createResponse.text().catch(() => "Unable to read error body")
+    throw new Error(
+      `Failed to create customer: ${createResponse.status} ${createResponse.statusText}. Response: ${errorBody}`
+    )
+  }
+
+  return (await createResponse.json()) as AsaasCustomer
 }

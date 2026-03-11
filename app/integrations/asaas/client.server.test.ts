@@ -5,8 +5,8 @@ vi.mock("~/env.server", () => ({
 }))
 
 import { env } from "~/env.server"
-import { getAsaasConfig, createPaymentCharge, getPaymentStatus, refundPayment, verifyWebhookSignature } from "./client.server"
-import type { AsaasPayment, CreatePaymentChargeParams, RefundAsaasPaymentParams } from "./types"
+import { getAsaasConfig, createPaymentCharge, getPaymentStatus, refundPayment, verifyWebhookSignature, getOrCreateAsaasCustomer } from "./client.server"
+import type { AsaasCustomer, AsaasListResponse, AsaasPayment, CreateAsaasCustomerParams, CreatePaymentChargeParams, RefundAsaasPaymentParams } from "./types"
 
 const mockEnv = vi.mocked(env)
 
@@ -411,5 +411,218 @@ describe("verifyWebhookSignature", () => {
     } as ReturnType<typeof env>)
 
     expect(verifyWebhookSignature("")).toBe(false)
+  })
+})
+
+const MOCK_ASAAS_CUSTOMER: AsaasCustomer = {
+  object: "customer",
+  id: "cus_abc123",
+  dateCreated: "2026-03-10",
+  name: "Test User",
+  email: "test@example.com",
+  phone: null,
+  mobilePhone: null,
+  cpfCnpj: "12345678901",
+  personType: "FISICA",
+  deleted: false,
+  externalReference: null,
+  notificationDisabled: false,
+}
+
+function mockCustomerListResponse(
+  customers: AsaasCustomer[]
+): AsaasListResponse<AsaasCustomer> {
+  return {
+    object: "list",
+    hasMore: false,
+    totalCount: customers.length,
+    limit: 10,
+    offset: 0,
+    data: customers,
+  }
+}
+
+describe("getOrCreateAsaasCustomer", () => {
+  beforeEach(() => {
+    mockEnv.mockReturnValue({
+      asaasApiKey: "test-api-key",
+      asaasEnvironment: "sandbox",
+    } as ReturnType<typeof env>)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it("returns existing customer when found by email", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify(mockCustomerListResponse([MOCK_ASAAS_CUSTOMER])), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+      email: "test@example.com",
+    }
+
+    const result = await getOrCreateAsaasCustomer(params)
+
+    expect(result).toEqual(MOCK_ASAAS_CUSTOMER)
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api-sandbox.asaas.com/v3/customers?email=test%40example.com",
+      expect.objectContaining({ method: "GET" })
+    )
+  })
+
+  it("creates new customer when none found by email", async () => {
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(mockCustomerListResponse([])), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(MOCK_ASAAS_CUSTOMER), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+      email: "test@example.com",
+    }
+
+    const result = await getOrCreateAsaasCustomer(params)
+
+    expect(result).toEqual(MOCK_ASAAS_CUSTOMER)
+    expect(global.fetch).toHaveBeenCalledTimes(2)
+    expect(global.fetch).toHaveBeenLastCalledWith(
+      "https://api-sandbox.asaas.com/v3/customers",
+      expect.objectContaining({ method: "POST" })
+    )
+  })
+
+  it("sends all CreateAsaasCustomerParams fields in POST body", async () => {
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(mockCustomerListResponse([])), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(MOCK_ASAAS_CUSTOMER), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+      email: "test@example.com",
+      phone: "11999999999",
+      mobilePhone: "11988888888",
+      externalReference: "ref-456",
+      notificationDisabled: true,
+    }
+
+    await getOrCreateAsaasCustomer(params)
+
+    const body = getLastFetchBody()
+    expect(body.name).toBe("Test User")
+    expect(body.cpfCnpj).toBe("12345678901")
+    expect(body.email).toBe("test@example.com")
+    expect(body.phone).toBe("11999999999")
+    expect(body.mobilePhone).toBe("11988888888")
+    expect(body.externalReference).toBe("ref-456")
+    expect(body.notificationDisabled).toBe(true)
+  })
+
+  it("skips email search when email is undefined and goes straight to POST", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify(MOCK_ASAAS_CUSTOMER), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      })
+    )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+    }
+
+    const result = await getOrCreateAsaasCustomer(params)
+
+    expect(result).toEqual(MOCK_ASAAS_CUSTOMER)
+    expect(global.fetch).toHaveBeenCalledTimes(1)
+    expect(global.fetch).toHaveBeenCalledWith(
+      "https://api-sandbox.asaas.com/v3/customers",
+      expect.objectContaining({ method: "POST" })
+    )
+  })
+
+  it("throws on search failure", async () => {
+    vi.spyOn(global, "fetch").mockResolvedValueOnce(
+      new Response("Internal error", {
+        status: 500,
+        statusText: "Internal Server Error",
+      })
+    )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+      email: "test@example.com",
+    }
+
+    await expect(getOrCreateAsaasCustomer(params)).rejects.toThrow(
+      "Failed to search for customer: 500 Internal Server Error. Response: Internal error"
+    )
+  })
+
+  it("throws on create failure", async () => {
+    vi.spyOn(global, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(mockCustomerListResponse([])), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response("Invalid CPF", {
+          status: 400,
+          statusText: "Bad Request",
+        })
+      )
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "invalid",
+      email: "test@example.com",
+    }
+
+    await expect(getOrCreateAsaasCustomer(params)).rejects.toThrow(
+      "Failed to create customer: 400 Bad Request. Response: Invalid CPF"
+    )
+  })
+
+  it("throws on network error", async () => {
+    vi.spyOn(global, "fetch").mockRejectedValueOnce(new Error("Network error"))
+
+    const params: CreateAsaasCustomerParams = {
+      name: "Test User",
+      cpfCnpj: "12345678901",
+      email: "test@example.com",
+    }
+
+    await expect(getOrCreateAsaasCustomer(params)).rejects.toThrow("Network error")
   })
 })
