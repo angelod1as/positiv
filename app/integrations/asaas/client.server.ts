@@ -101,7 +101,7 @@ export async function refundPayment(
 
 export function verifyWebhookSignature(token: string): boolean {
   const { asaasWebhookToken } = env()
-  if (!asaasWebhookToken || !token) return false
+  if (!asaasWebhookToken) return false
   return token === asaasWebhookToken
 }
 
