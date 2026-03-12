@@ -1,6 +1,12 @@
 import { formatInTimeZone } from "date-fns-tz"
 import { ptBR } from "date-fns/locale"
 
+const SAO_PAULO_TZ = "America/Sao_Paulo"
+
+export function formatDateISO(date: Date): string {
+  return formatInTimeZone(date, SAO_PAULO_TZ, "yyyy-MM-dd")
+}
+
 // Define the type for length options
 type DateLengthOption = "long" | "short" | "numeric"
 
@@ -14,7 +20,7 @@ export function formatDateTime(
 } {
   if (!dateString) return { full: undefined, date: undefined, time: undefined }
 
-  const timeZone = "America/Sao_Paulo"
+  const timeZone = SAO_PAULO_TZ
 
   let datePattern: string
   const timePattern = "HH'h'"
