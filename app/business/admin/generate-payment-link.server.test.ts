@@ -87,13 +87,13 @@ const validParticipantRow = {
   event_id: "evt-1",
   spot_type: "regular",
   full_name: "Test User",
-  social_name: null,
+  social_name: null as string | null,
   email: "test@example.com",
   cpf: "123.456.789-00",
   event_title: "Test Event",
   event_emoji: "🎉",
-  payment_link_token: null,
-  payment_link_expires_at: null,
+  payment_link_token: null as string | null,
+  payment_link_expires_at: null as string | null,
 }
 
 describe("generatePaymentLink", () => {
