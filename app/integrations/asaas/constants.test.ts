@@ -3,6 +3,7 @@ import {
   ASAAS_API_URLS,
   ASAAS_REQUIRED_HEADERS,
   BILLING_TYPE_TO_PAYMENT_METHOD,
+  formatCentavos,
   HANDLED_WEBHOOK_EVENTS,
   PAYMENT_LINK_EXPIRY_HOURS,
   PAYMENT_PRICING,
@@ -31,13 +32,27 @@ describe("Asaas constants", () => {
   })
 
   describe("PAYMENT_PRICING", () => {
-    it("has pix at R$ 220", () => {
-      expect(PAYMENT_PRICING.pix.amount).toBe(220)
+    it("has pix at 22000 centavos (R$ 220)", () => {
+      expect(PAYMENT_PRICING.pix.amount).toBe(22_000)
     })
 
-    it("has credit card at R$ 227 with 6 max installments", () => {
-      expect(PAYMENT_PRICING.creditCard.amount).toBe(227)
+    it("has credit card at 22700 centavos (R$ 227) with 6 max installments", () => {
+      expect(PAYMENT_PRICING.creditCard.amount).toBe(22_700)
       expect(PAYMENT_PRICING.creditCard.maxInstallments).toBe(6)
+    })
+  })
+
+  describe("formatCentavos", () => {
+    it("formats 22000 centavos as 220,00", () => {
+      expect(formatCentavos(22_000)).toBe("220,00")
+    })
+
+    it("formats 22700 centavos as 227,00", () => {
+      expect(formatCentavos(22_700)).toBe("227,00")
+    })
+
+    it("formats 150 centavos as 1,50", () => {
+      expect(formatCentavos(150)).toBe("1,50")
     })
   })
 

@@ -39,15 +39,17 @@ export async function createPaymentCharge(
   const { baseUrl, headers } = getAsaasConfig()
   const { billingType, amount, installmentCount } = PAYMENT_METHOD_CONFIG[params.paymentMethod]
 
+  const valueInReais = amount / 100
+
   const body: Record<string, unknown> = {
     customer: params.customer,
     billingType,
-    value: amount,
+    value: valueInReais,
     dueDate: params.dueDate,
     description: params.description,
     externalReference: params.externalReference,
     callback: params.callback,
-    ...(installmentCount !== undefined && { installmentCount, totalValue: amount }),
+    ...(installmentCount !== undefined && { installmentCount, totalValue: valueInReais }),
   }
 
   const response = await fetch(`${baseUrl}/payments`, {
@@ -98,6 +100,20 @@ export async function refundPayment(
   }
 
   return (await response.json()) as AsaasPayment
+}
+
+export async function deletePayment(paymentId: string): Promise<void> {
+  const { baseUrl, headers } = getAsaasConfig()
+
+  const response = await fetch(`${baseUrl}/payments/${paymentId}`, {
+    method: "DELETE",
+    headers,
+    signal: AbortSignal.timeout(15_000),
+  })
+
+  if (!response.ok) {
+    await throwAsaasError(response, "delete payment")
+  }
 }
 
 export function verifyWebhookSignature(token: string): boolean {

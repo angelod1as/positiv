@@ -16,9 +16,13 @@ export const ASAAS_REQUIRED_HEADERS = {
 } as const
 
 export const PAYMENT_PRICING = {
-  pix: { amount: 220 },
-  creditCard: { amount: 227, maxInstallments: 6 },
+  pix: { amount: 22_000 },
+  creditCard: { amount: 22_700, maxInstallments: 6 },
 } as const
+
+export function formatCentavos(centavos: number): string {
+  return (centavos / 100).toFixed(2).replace(".", ",")
+}
 
 export const PAYMENT_METHOD_CONFIG: Record<
   PaymentMethod,

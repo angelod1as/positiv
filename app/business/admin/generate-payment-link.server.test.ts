@@ -11,6 +11,7 @@ vi.mock("~/env.server", () => ({
 vi.mock("~/integrations/asaas/client.server", () => ({
   getOrCreateAsaasCustomer: vi.fn(),
   createPaymentCharge: vi.fn(),
+  deletePayment: vi.fn(),
 }))
 
 vi.mock("~/business/email/send-email", () => ({
@@ -37,7 +38,11 @@ vi.mock("~/kysely-db", () => ({
 import { isPaymentSystemEnabled } from "~/lib/features.server"
 import { env } from "~/env.server"
 import { kyselyDb } from "~/kysely-db"
-import { getOrCreateAsaasCustomer, createPaymentCharge } from "~/integrations/asaas/client.server"
+import {
+  getOrCreateAsaasCustomer,
+  createPaymentCharge,
+  deletePayment,
+} from "~/integrations/asaas/client.server"
 import { sendEmail } from "~/business/email/send-email"
 import { formatPaymentLinkMail } from "~/business/email/format-payment-link-mail"
 import { getPaymentLinkEmailSubject } from "~/business/email/templates/payment-link-email.template"
@@ -86,6 +91,7 @@ const validParticipantRow = {
   profile_id: "prof-1",
   event_id: "evt-1",
   spot_type: "regular",
+  has_paid: false,
   full_name: "Test User",
   social_name: null as string | null,
   email: "test@example.com",
@@ -94,6 +100,121 @@ const validParticipantRow = {
   event_emoji: "🎉",
   payment_link_token: null as string | null,
   payment_link_expires_at: null as string | null,
+}
+
+function setupHappyPathMocks(options?: { participantRow?: typeof validParticipantRow }) {
+  const row = options?.participantRow ?? validParticipantRow
+
+  vi.mocked(kyselyDb.selectFrom)
+    .mockReturnValueOnce(createMockSelectChain(row) as never)
+    .mockReturnValueOnce(
+      createMockPaymentTransactionsSelect(undefined) as never
+    )
+
+  vi.mocked(getOrCreateAsaasCustomer).mockResolvedValue({
+    id: "cus_123",
+    object: "customer",
+    dateCreated: "2025-01-01",
+    name: "Test User",
+    email: "test@example.com",
+    phone: null,
+    mobilePhone: null,
+    cpfCnpj: "12345678900",
+    personType: "FISICA",
+    deleted: false,
+    externalReference: null,
+    notificationDisabled: true,
+  })
+
+  const mockPayment = {
+    object: "payment" as const,
+    id: "pay_1",
+    dateCreated: "2025-01-01",
+    customer: "cus_123",
+    subscription: null,
+    installment: null,
+    paymentLink: null,
+    value: 220,
+    netValue: 218,
+    originalValue: null,
+    interestValue: null,
+    billingType: "PIX" as const,
+    status: "PENDING" as const,
+    dueDate: "2025-01-03",
+    originalDueDate: "2025-01-03",
+    paymentDate: null,
+    clientPaymentDate: null,
+    creditDate: null,
+    estimatedCreditDate: null,
+    description: null,
+    externalReference: null,
+    installmentNumber: null,
+    invoiceUrl: "https://sandbox.asaas.com/i/pix-invoice",
+    transactionReceiptUrl: null,
+    deleted: false,
+    anticipated: false,
+    anticipable: false,
+    bankSlipUrl: null,
+    nossoNumero: null,
+  }
+
+  vi.mocked(createPaymentCharge)
+    .mockResolvedValueOnce({
+      ...mockPayment,
+      invoiceUrl: "https://sandbox.asaas.com/i/pix-invoice",
+    })
+    .mockResolvedValueOnce({
+      ...mockPayment,
+      id: "pay_2",
+      billingType: "CREDIT_CARD",
+      value: 227,
+      invoiceUrl: "https://sandbox.asaas.com/i/cc-invoice",
+    })
+
+  const mockDeleteExecute = vi.fn().mockResolvedValue(undefined)
+  const mockInsertExecute = vi.fn().mockResolvedValue(undefined)
+  const mockUpdateExecute = vi.fn().mockResolvedValue(undefined)
+  const mockInsertValues = vi.fn().mockReturnValue({
+    execute: mockInsertExecute,
+  })
+  const mockUpdateSet = vi.fn().mockReturnValue({
+    where: vi.fn().mockReturnValue({
+      execute: mockUpdateExecute,
+    }),
+  })
+
+  const mockTrx = {
+    deleteFrom: vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          execute: mockDeleteExecute,
+        }),
+      }),
+    }),
+    insertInto: vi.fn().mockReturnValue({
+      values: mockInsertValues,
+    }),
+    updateTable: vi.fn().mockReturnValue({
+      set: mockUpdateSet,
+    }),
+  }
+  vi.mocked(kyselyDb.transaction).mockReturnValue({
+    execute: vi.fn().mockImplementation(async (cb) => cb(mockTrx)),
+  } as never)
+
+  vi.mocked(formatPaymentLinkMail).mockResolvedValue({
+    html: "<p>Payment link</p>",
+    text: "Payment link",
+  })
+  vi.mocked(getPaymentLinkEmailSubject).mockReturnValue("Payment Subject")
+  vi.mocked(sendEmail).mockResolvedValue({
+    success: true,
+    data: undefined,
+    errors: [],
+  })
+  vi.mocked(deletePayment).mockResolvedValue(undefined)
+
+  return { mockTrx, mockInsertValues, mockUpdateSet }
 }
 
 describe("generatePaymentLink", () => {
@@ -161,6 +282,23 @@ describe("generatePaymentLink", () => {
       ).rejects.toThrow("Only regular spot participants can generate payment links")
     })
 
+    it("throws when participant has_paid is true", async () => {
+      vi.mocked(kyselyDb.selectFrom).mockReturnValue(
+        createMockSelectChain({
+          ...validParticipantRow,
+          has_paid: true,
+        }) as never
+      )
+
+      await expect(
+        generatePaymentLink({
+          profileId: "prof-1",
+          eventId: "evt-1",
+          adminProfileId: "admin-1",
+        })
+      ).rejects.toThrow("Participant is already marked as paid")
+    })
+
     it("throws when participant already has a confirmed payment", async () => {
       vi.mocked(kyselyDb.selectFrom)
         .mockReturnValueOnce(createMockSelectChain(validParticipantRow) as never)
@@ -220,6 +358,48 @@ describe("generatePaymentLink", () => {
           adminProfileId: "admin-1",
         })
       ).rejects.toThrow("Participant profile must have a CPF")
+    })
+
+    it("throws when participant has no full_name", async () => {
+      vi.mocked(kyselyDb.selectFrom)
+        .mockReturnValueOnce(
+          createMockSelectChain({
+            ...validParticipantRow,
+            full_name: null,
+          }) as never
+        )
+        .mockReturnValueOnce(
+          createMockPaymentTransactionsSelect(undefined) as never
+        )
+
+      await expect(
+        generatePaymentLink({
+          profileId: "prof-1",
+          eventId: "evt-1",
+          adminProfileId: "admin-1",
+        })
+      ).rejects.toThrow("Participant profile must have a name")
+    })
+
+    it("throws when event has no title", async () => {
+      vi.mocked(kyselyDb.selectFrom)
+        .mockReturnValueOnce(
+          createMockSelectChain({
+            ...validParticipantRow,
+            event_title: null,
+          }) as never
+        )
+        .mockReturnValueOnce(
+          createMockPaymentTransactionsSelect(undefined) as never
+        )
+
+      await expect(
+        generatePaymentLink({
+          profileId: "prof-1",
+          eventId: "evt-1",
+          adminProfileId: "admin-1",
+        })
+      ).rejects.toThrow("Event must have a title")
     })
 
     it("allows regeneration when existing payment link is expired", async () => {
@@ -320,8 +500,8 @@ describe("generatePaymentLink", () => {
       )
     })
 
-    it("inserts two payment_transactions via transaction", async () => {
-      const mockTrx = setupHappyPathMocks()
+    it("deletes old pending transactions and inserts new ones via transaction", async () => {
+      const { mockTrx, mockInsertValues } = setupHappyPathMocks()
 
       await generatePaymentLink({
         profileId: "prof-1",
@@ -329,11 +509,24 @@ describe("generatePaymentLink", () => {
         adminProfileId: "admin-1",
       })
 
+      expect(mockTrx.deleteFrom).toHaveBeenCalledWith("payment_transactions")
       expect(mockTrx.insertInto).toHaveBeenCalledWith("payment_transactions")
+      expect(mockInsertValues).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            payment_method: "pix",
+            status: "pending",
+          }),
+          expect.objectContaining({
+            payment_method: "credit_card",
+            status: "pending",
+          }),
+        ])
+      )
     })
 
-    it("updates event_participants with token and expiry via transaction", async () => {
-      const mockTrx = setupHappyPathMocks()
+    it("updates event_participants by participant_id via transaction", async () => {
+      const { mockTrx, mockUpdateSet } = setupHappyPathMocks()
 
       await generatePaymentLink({
         profileId: "prof-1",
@@ -342,6 +535,25 @@ describe("generatePaymentLink", () => {
       })
 
       expect(mockTrx.updateTable).toHaveBeenCalledWith("event_participants")
+      expect(mockUpdateSet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payment_link_token: expect.any(String),
+        })
+      )
+    })
+
+    it("passes raw objects to asaas_payment_data (not JSON.stringify)", async () => {
+      const { mockInsertValues } = setupHappyPathMocks()
+
+      await generatePaymentLink({
+        profileId: "prof-1",
+        eventId: "evt-1",
+        adminProfileId: "admin-1",
+      })
+
+      const insertedValues = mockInsertValues.mock.calls[0][0]
+      expect(typeof insertedValues[0].asaas_payment_data).toBe("object")
+      expect(typeof insertedValues[1].asaas_payment_data).toBe("object")
     })
 
     it("calls sendEmail with formatted content", async () => {
@@ -365,7 +577,7 @@ describe("generatePaymentLink", () => {
       )
     })
 
-    it("returns token, invoice URLs, and whatsapp message", async () => {
+    it("returns token, invoice URLs, and whatsapp message with correct amounts", async () => {
       setupHappyPathMocks()
 
       const result = await generatePaymentLink({
@@ -378,8 +590,50 @@ describe("generatePaymentLink", () => {
       expect(result.pixInvoiceUrl).toBe("https://sandbox.asaas.com/i/pix-invoice")
       expect(result.creditInvoiceUrl).toBe("https://sandbox.asaas.com/i/cc-invoice")
       expect(result.whatsappMessage).toContain("Test Event")
-      expect(result.whatsappMessage).toContain("Pix")
+      expect(result.whatsappMessage).toContain("R$ 220,00")
+      expect(result.whatsappMessage).toContain("R$ 227,00")
       expect(result.whatsappMessage).toContain("Cartão de crédito")
+    })
+  })
+
+  describe("rollback on DB failure", () => {
+    it("deletes Asaas charges when DB transaction fails", async () => {
+      setupHappyPathMocks()
+      vi.mocked(kyselyDb.transaction).mockReturnValue({
+        execute: vi.fn().mockRejectedValue(new Error("DB error")),
+      } as never)
+
+      await expect(
+        generatePaymentLink({
+          profileId: "prof-1",
+          eventId: "evt-1",
+          adminProfileId: "admin-1",
+        })
+      ).rejects.toThrow("DB error")
+
+      expect(deletePayment).toHaveBeenCalledWith("pay_1")
+      expect(deletePayment).toHaveBeenCalledWith("pay_2")
+    })
+
+    it("still throws DB error when Asaas cleanup also fails", async () => {
+      setupHappyPathMocks()
+      vi.mocked(kyselyDb.transaction).mockReturnValue({
+        execute: vi.fn().mockRejectedValue(new Error("DB error")),
+      } as never)
+      vi.mocked(deletePayment).mockRejectedValue(new Error("Asaas API down"))
+
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
+      await expect(
+        generatePaymentLink({
+          profileId: "prof-1",
+          eventId: "evt-1",
+          adminProfileId: "admin-1",
+        })
+      ).rejects.toThrow("DB error")
+
+      expect(consoleSpy).toHaveBeenCalled()
+      consoleSpy.mockRestore()
     })
   })
 
@@ -424,106 +678,3 @@ describe("generatePaymentLink", () => {
     })
   })
 })
-
-function setupHappyPathMocks(options?: { participantRow?: typeof validParticipantRow }) {
-  const row = options?.participantRow ?? validParticipantRow
-
-  vi.mocked(kyselyDb.selectFrom)
-    .mockReturnValueOnce(createMockSelectChain(row) as never)
-    .mockReturnValueOnce(
-      createMockPaymentTransactionsSelect(undefined) as never
-    )
-
-  vi.mocked(getOrCreateAsaasCustomer).mockResolvedValue({
-    id: "cus_123",
-    object: "customer",
-    dateCreated: "2025-01-01",
-    name: "Test User",
-    email: "test@example.com",
-    phone: null,
-    mobilePhone: null,
-    cpfCnpj: "12345678900",
-    personType: "FISICA",
-    deleted: false,
-    externalReference: null,
-    notificationDisabled: true,
-  })
-
-  const mockPayment = {
-    object: "payment" as const,
-    id: "pay_1",
-    dateCreated: "2025-01-01",
-    customer: "cus_123",
-    subscription: null,
-    installment: null,
-    paymentLink: null,
-    value: 220,
-    netValue: 218,
-    originalValue: null,
-    interestValue: null,
-    billingType: "PIX" as const,
-    status: "PENDING" as const,
-    dueDate: "2025-01-03",
-    originalDueDate: "2025-01-03",
-    paymentDate: null,
-    clientPaymentDate: null,
-    creditDate: null,
-    estimatedCreditDate: null,
-    description: null,
-    externalReference: null,
-    installmentNumber: null,
-    invoiceUrl: "https://sandbox.asaas.com/i/pix-invoice",
-    transactionReceiptUrl: null,
-    deleted: false,
-    anticipated: false,
-    anticipable: false,
-    bankSlipUrl: null,
-    nossoNumero: null,
-  }
-
-  vi.mocked(createPaymentCharge)
-    .mockResolvedValueOnce({
-      ...mockPayment,
-      invoiceUrl: "https://sandbox.asaas.com/i/pix-invoice",
-    })
-    .mockResolvedValueOnce({
-      ...mockPayment,
-      id: "pay_2",
-      billingType: "CREDIT_CARD",
-      value: 227,
-      invoiceUrl: "https://sandbox.asaas.com/i/cc-invoice",
-    })
-
-  const mockTrx = {
-    insertInto: vi.fn().mockReturnValue({
-      values: vi.fn().mockReturnValue({
-        execute: vi.fn().mockResolvedValue(undefined),
-      }),
-    }),
-    updateTable: vi.fn().mockReturnValue({
-      set: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            execute: vi.fn().mockResolvedValue(undefined),
-          }),
-        }),
-      }),
-    }),
-  }
-  vi.mocked(kyselyDb.transaction).mockReturnValue({
-    execute: vi.fn().mockImplementation(async (cb) => cb(mockTrx)),
-  } as never)
-
-  vi.mocked(formatPaymentLinkMail).mockResolvedValue({
-    html: "<p>Payment link</p>",
-    text: "Payment link",
-  })
-  vi.mocked(getPaymentLinkEmailSubject).mockReturnValue("Payment Subject")
-  vi.mocked(sendEmail).mockResolvedValue({
-    success: true,
-    data: undefined,
-    errors: [],
-  })
-
-  return mockTrx
-}
