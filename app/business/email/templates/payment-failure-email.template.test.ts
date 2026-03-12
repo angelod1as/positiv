@@ -202,6 +202,17 @@ describe("paymentFailureEmailTemplate", () => {
       expect(html).not.toContain("data:text/html")
     })
 
+    it("should strip quotes and angle brackets from paymentLink to prevent attribute injection", () => {
+      const maliciousLink = 'https://evil.com" onclick="alert(1)'
+      const html = paymentFailureEmailTemplate(
+        participantName, eventTitle, eventEmoji, failureReason,
+        maliciousLink,
+      )
+      expect(html).not.toContain(maliciousLink)
+      expect(html).not.toContain('" onclick="')
+      expect(html).toContain("https://evil.com onclick=alert(1)")
+    })
+
     it("should allow valid https paymentLink", () => {
       const html = paymentFailureEmailTemplate(
         participantName, eventTitle, eventEmoji, failureReason,

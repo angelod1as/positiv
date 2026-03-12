@@ -12,7 +12,9 @@ export const paymentFailureEmailTemplate = (
   const sanitizedEmoji = sanitizeHtml(eventEmoji || "")
   const sanitizedTitle = sanitizeHtml(eventTitle || "")
   const sanitizedReason = failureReason ? sanitizeHtml(failureReason) : null
-  const safePaymentLink = /^https?:\/\//i.test(paymentLink) ? paymentLink : "#"
+  const safePaymentLink = /^https?:\/\//i.test(paymentLink)
+    ? paymentLink.replace(/["'<>]/g, "")
+    : "#"
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
