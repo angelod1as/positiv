@@ -11,10 +11,12 @@ import {
   PAYMENT_LINK_EXPIRY_HOURS,
   PAYMENT_METHOD_CONFIG,
 } from "~/integrations/asaas/constants"
+import type { AsaasPayment } from "~/integrations/asaas/types"
 import { formatPaymentLinkMail } from "~/business/email/format-payment-link-mail"
 import { getPaymentLinkEmailSubject } from "~/business/email/templates/payment-link-email.template"
 import { sendEmail } from "~/business/email/send-email"
 import { isPaymentSystemEnabled } from "~/lib/features.server"
+import { formatDateISO } from "~/lib/helpers/format-date-time"
 import { kyselyDb } from "~/kysely-db"
 
 export interface GeneratePaymentLinkParams {
@@ -112,7 +114,7 @@ export async function generatePaymentLink(
   const token = randomUUID()
   const now = new Date()
   const expiresAt = addHours(now, PAYMENT_LINK_EXPIRY_HOURS)
-  const dueDate = expiresAt.toISOString().split("T")[0]
+  const dueDate = formatDateISO(expiresAt)
 
   const strippedCpf = participant.cpf.replace(/\D/g, "")
   const displayName = participant.social_name ?? participant.full_name
@@ -127,7 +129,7 @@ export async function generatePaymentLink(
 
   const paymentLink = `${appUrl}/payment/${token}`
 
-  const [pixPayment, creditPayment] = await Promise.all([
+  const chargeResults = await Promise.allSettled([
     createPaymentCharge({
       paymentMethod: "pix",
       customer: customer.id,
@@ -145,6 +147,22 @@ export async function generatePaymentLink(
       callback: { successUrl: `${appUrl}/payment/${token}/success`, autoRedirect: true },
     }),
   ])
+
+  const [pixResult, creditResult] = chargeResults
+
+  if (pixResult.status === "rejected" || creditResult.status === "rejected") {
+    const successfulIds = chargeResults
+      .filter((r): r is PromiseFulfilledResult<AsaasPayment> => r.status === "fulfilled")
+      .map((r) => r.value.id)
+    await Promise.allSettled(successfulIds.map((id) => deletePayment(id)))
+    const failed = chargeResults.find(
+      (r): r is PromiseRejectedResult => r.status === "rejected",
+    )
+    throw failed?.reason instanceof Error ? failed.reason : new Error(String(failed?.reason))
+  }
+
+  const pixPayment = pixResult.value
+  const creditPayment = creditResult.value
 
   try {
     await kyselyDb.transaction().execute(async (trx) => {

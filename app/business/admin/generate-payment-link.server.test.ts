@@ -637,6 +637,56 @@ describe("generatePaymentLink", () => {
     })
   })
 
+  describe("rollback on partial Asaas failure", () => {
+    it("cleans up PIX charge when credit card charge fails", async () => {
+      setupHappyPathMocks()
+      vi.mocked(createPaymentCharge)
+        .mockReset()
+        .mockResolvedValueOnce({
+          object: "payment" as const,
+          id: "pay_pix_only",
+          dateCreated: "2025-01-01",
+          customer: "cus_123",
+          subscription: null,
+          installment: null,
+          paymentLink: null,
+          value: 220,
+          netValue: 218,
+          originalValue: null,
+          interestValue: null,
+          billingType: "PIX" as const,
+          status: "PENDING" as const,
+          dueDate: "2025-01-03",
+          originalDueDate: "2025-01-03",
+          paymentDate: null,
+          clientPaymentDate: null,
+          creditDate: null,
+          estimatedCreditDate: null,
+          description: null,
+          externalReference: null,
+          installmentNumber: null,
+          invoiceUrl: "https://sandbox.asaas.com/i/pix",
+          transactionReceiptUrl: null,
+          deleted: false,
+          anticipated: false,
+          anticipable: false,
+          bankSlipUrl: null,
+          nossoNumero: null,
+        })
+        .mockRejectedValueOnce(new Error("Credit card charge failed"))
+
+      await expect(
+        generatePaymentLink({
+          profileId: "prof-1",
+          eventId: "evt-1",
+          adminProfileId: "admin-1",
+        })
+      ).rejects.toThrow("Credit card charge failed")
+
+      expect(deletePayment).toHaveBeenCalledWith("pay_pix_only")
+    })
+  })
+
   describe("edge cases", () => {
     it("still returns result when sendEmail fails", async () => {
       setupHappyPathMocks()
