@@ -86,6 +86,23 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
     }
 
+    const eventId = params.id
+    if (!eventId) {
+      return {
+        success: false,
+        errors: [{ message: "Event ID not found" }],
+        intent,
+      }
+    }
+
+    if (!context.currentProfile) {
+      return {
+        success: false,
+        errors: [{ message: "Admin profile not found" }],
+        intent,
+      }
+    }
+
     const parsed = generatePaymentLinkSchema.safeParse(formValues)
     if (!parsed.success) {
       return {
@@ -98,11 +115,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     try {
       const result = await generatePaymentLink({
         profileId: parsed.data.profileId,
-        eventId: parsed.data.eventId,
-        adminProfileId: context.currentUser.id,
+        eventId,
+        adminProfileId: context.currentProfile.id,
       })
       return { success: true, intent, ...result }
     } catch (error) {
+      console.error("Failed to generate payment link:", error)
       const message =
         error instanceof Error ? error.message : "Unknown error"
       return {

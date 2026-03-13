@@ -53,6 +53,7 @@ describe("view-event-page action: generate-payment-link intent", () => {
 
     mockGetAdminContext.mockResolvedValue({
       currentUser: { id: "admin-user-id" },
+      currentProfile: { id: "admin-profile-id" },
       supabase: {},
       supabaseHeaders: new Headers(),
     })
@@ -66,7 +67,6 @@ describe("view-event-page action: generate-payment-link intent", () => {
     mockInputFromForm.mockResolvedValue({
       intent: "generate-payment-link",
       profileId: "profile-123",
-      eventId: "event-456",
     })
     mockIsPaymentSystemEnabled.mockReturnValue(false)
 
@@ -89,7 +89,6 @@ describe("view-event-page action: generate-payment-link intent", () => {
     mockInputFromForm.mockResolvedValue({
       intent: "generate-payment-link",
       profileId: "profile-123",
-      eventId: "event-456",
     })
     mockIsPaymentSystemEnabled.mockReturnValue(true)
 
@@ -111,7 +110,7 @@ describe("view-event-page action: generate-payment-link intent", () => {
     expect(mockGeneratePaymentLink).toHaveBeenCalledWith({
       profileId: "profile-123",
       eventId: "event-456",
-      adminProfileId: "admin-user-id",
+      adminProfileId: "admin-profile-id",
     })
     expect(result).toEqual({
       success: true,
@@ -124,7 +123,6 @@ describe("view-event-page action: generate-payment-link intent", () => {
     mockInputFromForm.mockResolvedValue({
       intent: "generate-payment-link",
       profileId: "profile-123",
-      eventId: "event-456",
     })
     mockIsPaymentSystemEnabled.mockReturnValue(true)
     mockGeneratePaymentLink.mockRejectedValue(
@@ -145,12 +143,13 @@ describe("view-event-page action: generate-payment-link intent", () => {
     })
   })
 
-  it("returns validation error when profileId is missing", async () => {
+  it("returns 'Unknown error' when generatePaymentLink throws a non-Error", async () => {
     mockInputFromForm.mockResolvedValue({
       intent: "generate-payment-link",
-      eventId: "event-456",
+      profileId: "profile-123",
     })
     mockIsPaymentSystemEnabled.mockReturnValue(true)
+    mockGeneratePaymentLink.mockRejectedValue("string error")
 
     const { action } = await import("./view-event-page")
     const request = new Request("http://localhost", { method: "POST" })
@@ -159,18 +158,16 @@ describe("view-event-page action: generate-payment-link intent", () => {
       params: { id: "event-456" },
     } as never)
 
-    expect(result).toMatchObject({
+    expect(result).toEqual({
       success: false,
+      errors: [{ message: "Unknown error" }],
       intent: "generate-payment-link",
     })
-    expect((result as { errors: { message: string }[] }).errors.length).toBeGreaterThan(0)
-    expect(mockGeneratePaymentLink).not.toHaveBeenCalled()
   })
 
-  it("returns validation error when eventId is missing", async () => {
+  it("returns validation error when profileId is missing", async () => {
     mockInputFromForm.mockResolvedValue({
       intent: "generate-payment-link",
-      profileId: "profile-123",
     })
     mockIsPaymentSystemEnabled.mockReturnValue(true)
 
