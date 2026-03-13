@@ -73,6 +73,12 @@ export const eventSchema = zod.object({
   time_payment_end: datetime.nullish(),
 })
 
+export const generatePaymentLinkSchema = zod.object({
+  intent: zod.literal("generate-payment-link"),
+  profileId: zod.string(),
+  eventId: zod.string(),
+})
+
 export const adminContextSchema = userContextSchema.extend({
   eventId: zod.string().optional(),
 })
