@@ -217,7 +217,7 @@ async function sendFailureEmail(
     const displayName = participant.social_name ?? participant.full_name
     const eventTitle = participant.event_title ?? ""
     const paymentLink = participant.payment_link_token
-      ? `${env().appUrl}/pagamento/${participant.payment_link_token}`
+      ? `${env().appUrl}/payment/${participant.payment_link_token}`
       : null
 
     const { html, text } = await formatPaymentFailureMail(

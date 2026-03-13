@@ -416,7 +416,7 @@ describe("handleWebhookPayment", () => {
         "Cool Event",
         "🎉",
         null,
-        "https://positiv.test/pagamento/abc-123-token",
+        "https://positiv.test/payment/abc-123-token",
       )
       expect(sendEmail).toHaveBeenCalled()
     })
