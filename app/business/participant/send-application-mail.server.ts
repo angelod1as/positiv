@@ -2,6 +2,7 @@ import { formatApplicationMail } from "~/business/email/format-application-mail"
 import type { Event, ProfileWithRoles } from "~types/database/entities.types"
 
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
+import { logger } from "~/lib/logger/logger.server"
 
 type sendApplicationMailProps = {
   event: Event
@@ -25,7 +26,7 @@ export const sendApplicationMail = async ({
   const result = await sendEmail(options)
 
   if (!result.success) {
-    console.error("Email sending failed:", result.errors)
+    logger.error("Email sending failed:", result.errors)
     return { emailSent: false }
   }
 

@@ -1,6 +1,7 @@
 import { composable } from "composable-functions"
 import type Mail from "nodemailer/lib/mailer"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
+import { logger } from "~/lib/logger/logger.server"
 import { getEmailTransport } from "./get-email-transport"
 
 export interface MailOptions extends Omit<Mail.Options, "from"> {
@@ -22,9 +23,7 @@ export const sendEmail = composable(
         },
         (error, info) => {
           if (error) {
-            console.error("\ntransport.sendMail error", error, "\n")
-            console.error("\ninfo", info, "\n")
-            console.error("\nmailOptions", mailOptions, "\n")
+            logger.warn("transport.sendMail error", { error, info, to: mailOptions.to, subject: mailOptions.subject })
             reject(new Error("transport.sendMail error"))
           } else {
             resolve()
