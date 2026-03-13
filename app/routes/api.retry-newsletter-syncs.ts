@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router"
 import { processFailedSyncRetries } from "~/business/newsletter/retry-failed-syncs.server"
+import { logger } from "~/lib/logger/logger.server"
 import { timingSafeEqual } from "node:crypto"
 
 /**
@@ -46,7 +47,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const result = await processFailedSyncRetries()
 
     if (!result.success || !result.data) {
-      console.error("Failed to process newsletter sync retries", result.errors)
+      logger.error("Failed to process newsletter sync retries", result.errors)
       return Response.json(
         {
           success: false,
@@ -68,7 +69,7 @@ export async function action({ request }: ActionFunctionArgs) {
       stats: result.data,
     })
   } catch (error) {
-    console.error("Error processing newsletter sync retries:", error)
+    logger.error("Error processing newsletter sync retries:", error)
 
     return Response.json(
       {

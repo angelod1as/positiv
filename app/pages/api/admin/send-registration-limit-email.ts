@@ -1,6 +1,7 @@
 import { type ActionFunctionArgs } from "react-router"
 import { sendRegistrationLimitAdminMail } from "~/business/admin/send-registration-limit-admin-mail.server"
 import { getAdminEmails } from "~/business/admin/get-admin-emails.server"
+import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -74,7 +75,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return Response.json({ success: true })
   } catch (error) {
-    console.error("Error in send-registration-limit-email API:", error)
+    logger.error("Error in send-registration-limit-email API:", error)
     return Response.json(
       { success: false, error: "Internal server error" },
       { status: 500 }
