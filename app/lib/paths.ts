@@ -11,6 +11,7 @@ const LOGON_CALLBACK = "/auth/confirm"
 const LOGON_CONFIRM = `${LOGON}/confirm`
 const CODE_OF_CONDUCT = `/codigo-de-conduta`
 const FEEDBACK = `/feedback`
+const PAYMENT = (token: string) => `/payment/${token}`
 
 ////////
 // PRIVATE
@@ -57,6 +58,7 @@ const paths = {
     HOME,
     CODE_OF_CONDUCT,
     FEEDBACK,
+    PAYMENT,
   },
   admin: {
     ADMIN_DASHBOARD,
