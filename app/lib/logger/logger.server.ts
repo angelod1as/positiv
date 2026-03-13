@@ -1,4 +1,5 @@
 import winston from "winston"
+import { env } from "~/env.server"
 import { TelegramTransport } from "./telegram-transport.server"
 
 const isProduction = process.env.NODE_ENV === "production"
@@ -14,9 +15,11 @@ const transports: winston.transport[] = [
   new winston.transports.Console({ format: consoleFormat }),
 ]
 
-const telegramEnabled = process.env.TELEGRAM_ALERTS_ENABLED === "true"
-const botToken = process.env.TELEGRAM_BOT_TOKEN
-const chatId = process.env.TELEGRAM_CHAT_ID
+const {
+  telegramAlertsEnabled: telegramEnabled,
+  telegramBotToken: botToken,
+  telegramChatId: chatId,
+} = env()
 
 if (telegramEnabled && botToken && chatId) {
   transports.push(

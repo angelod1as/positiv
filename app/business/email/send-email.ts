@@ -23,7 +23,7 @@ export const sendEmail = composable(
         },
         (error, info) => {
           if (error) {
-            logger.warn("transport.sendMail error", { error, info, to: mailOptions.to, subject: mailOptions.subject })
+            logger.error("transport.sendMail error", { error, info, to: mailOptions.to, subject: mailOptions.subject })
             reject(new Error("transport.sendMail error"))
           } else {
             resolve()

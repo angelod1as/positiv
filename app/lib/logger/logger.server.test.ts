@@ -58,6 +58,17 @@ describe("logger", () => {
     expect(hasTelegram).toBe(false)
   })
 
+  it("does not add Telegram transport when enabled but missing chatId", async () => {
+    vi.stubEnv("TELEGRAM_ALERTS_ENABLED", "true")
+    vi.stubEnv("TELEGRAM_BOT_TOKEN", "123:ABC")
+
+    const { logger } = await import("./logger.server")
+    const hasTelegram = logger.transports.some(
+      (t: winston.transport) => t.constructor.name === "TelegramTransport",
+    )
+    expect(hasTelegram).toBe(false)
+  })
+
   it("sets Telegram transport to error level only", async () => {
     vi.stubEnv("TELEGRAM_ALERTS_ENABLED", "true")
     vi.stubEnv("TELEGRAM_BOT_TOKEN", "123:ABC")
