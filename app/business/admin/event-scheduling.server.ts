@@ -1,4 +1,5 @@
 import type { Kysely } from "kysely"
+import { logger } from "~/lib/logger/logger.server"
 import type { Database } from "~/types/database/kysely.types"
 
 export type UpdateResult = {
@@ -29,7 +30,7 @@ export async function updateEventStatusesAutomatically(
     
     return parsedResult
   } catch (error) {
-    console.error('Failed to update event statuses automatically:', error)
+    logger.error('Failed to update event statuses automatically:', error)
     // Return a safe default result on error
     return {
       success: false,

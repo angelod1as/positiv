@@ -1,6 +1,7 @@
 import { composable } from "composable-functions"
 import { z } from "zod"
 import { kyselyDb } from "~/kysely-db"
+import { logger } from "~/lib/logger/logger.server"
 import {
   participantApplicationStatusEnum,
   participantAttendanceStatusEnum,
@@ -145,7 +146,7 @@ async function addParticipantsToList(
       subscribersAdded += withSubscriberId.length
     } else {
       // If bulk add fails, fall back to individual adds
-      console.warn(
+      logger.warn(
         "Bulk subscriber add failed, falling back to individual adds:",
         bulkResult.errors,
       )
@@ -290,7 +291,7 @@ async function removeIneligibleSubscribers(
         await removeSubscriberFromList(subscriber.id, listId)
         removedCount++
       } catch (error) {
-        console.error(
+        logger.error(
           `Failed to remove subscriber ${subscriber.email} from list ${listId}:`,
           error,
         )
