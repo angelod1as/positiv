@@ -15,9 +15,12 @@ import {
   updateEventStatus,
 } from "~/business/admin/admin.server"
 import {
+  generatePaymentLinkSchema,
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
 } from "~/business/admin/common"
+import { generatePaymentLink } from "~/business/admin/generate-payment-link.server"
+import { isPaymentSystemEnabled } from "~/lib/features.server"
 import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
@@ -75,9 +78,6 @@ export async function action({ request, params }: Route.ActionArgs) {
   }
 
   if (intent === "generate-payment-link") {
-    const { isPaymentSystemEnabled } = await import(
-      "~/lib/features.server"
-    )
     if (!isPaymentSystemEnabled()) {
       return {
         success: false,
@@ -86,9 +86,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
     }
 
-    const { generatePaymentLinkSchema } = await import(
-      "~/business/admin/common"
-    )
     const parsed = generatePaymentLinkSchema.safeParse(formValues)
     if (!parsed.success) {
       return {
@@ -98,9 +95,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
     }
 
-    const { generatePaymentLink } = await import(
-      "~/business/admin/generate-payment-link.server"
-    )
     try {
       const result = await generatePaymentLink({
         profileId: parsed.data.profileId,
