@@ -395,4 +395,19 @@ describe("payment_transactions table - Integration Tests", () => {
       expect(updated.status).toBe(status)
     }
   })
+
+  it("should allow cancelled status", async () => {
+    const { profile, event, participant } = await createTestData("cancelled")
+
+    const transaction = await createTestPaymentTransaction(tracker, kysely, {
+      event_participant_id: participant.id,
+      profile_id: profile.id,
+      event_id: event.id,
+      asaas_payment_id: "pay_cancelled_test",
+      asaas_customer_id: "cus_cancelled_test",
+      status: "cancelled",
+    })
+
+    expect(transaction.status).toBe("cancelled")
+  })
 })

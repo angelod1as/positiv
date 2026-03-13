@@ -37,6 +37,7 @@ export type PaymentTransactionStatus =
   | "confirmed"
   | "failed"
   | "refunded"
+  | "cancelled"
 
 export interface CreateAsaasCustomerParams {
   name: string
