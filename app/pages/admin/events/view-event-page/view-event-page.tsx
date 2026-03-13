@@ -42,7 +42,8 @@ const {
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getAdminContext(request, params)
-  const { intent } = await inputFromForm(request)
+  const formValues = await inputFromForm(request)
+  const { intent } = formValues
 
   if (intent === "update-event-participant") {
     return await formAction({
@@ -71,6 +72,51 @@ export async function action({ request, params }: Route.ActionArgs) {
       context: { ...context, eventId: params.id },
       transformResult: (result) => ({ ...result, intent }),
     })
+  }
+
+  if (intent === "generate-payment-link") {
+    const { isPaymentSystemEnabled } = await import(
+      "~/lib/features.server"
+    )
+    if (!isPaymentSystemEnabled()) {
+      return {
+        success: false,
+        errors: [{ message: "Payment system is not enabled" }],
+        intent,
+      }
+    }
+
+    const { generatePaymentLinkSchema } = await import(
+      "~/business/admin/common"
+    )
+    const parsed = generatePaymentLinkSchema.safeParse(formValues)
+    if (!parsed.success) {
+      return {
+        success: false,
+        errors: parsed.error.issues.map((e) => ({ message: e.message })),
+        intent,
+      }
+    }
+
+    const { generatePaymentLink } = await import(
+      "~/business/admin/generate-payment-link.server"
+    )
+    try {
+      const result = await generatePaymentLink({
+        profileId: parsed.data.profileId,
+        eventId: parsed.data.eventId,
+        adminProfileId: context.currentUser.id,
+      })
+      return { success: true, intent, ...result }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unknown error"
+      return {
+        success: false,
+        errors: [{ message }],
+        intent,
+      }
+    }
   }
 
   if (intent === "sync-listmonk-list") {
