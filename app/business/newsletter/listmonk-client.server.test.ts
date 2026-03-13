@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach, type MockInstance } from "vitest"
+import { logger } from "~/lib/logger/logger.server"
 import {
   testConnection,
   addSubscriber,
@@ -14,6 +15,15 @@ vi.mock("~/env.server", () => ({
     listmonkApiUsername: "testuser",
     listmonkApiPassword: "testpass",
   })),
+}))
+
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
 }))
 
 describe("testConnection", () => {
@@ -63,16 +73,13 @@ describe("testConnection", () => {
 
 describe("addSubscriber", () => {
   let fetchSpy: MockInstance
-  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
-    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
   })
 
   afterEach(() => {
     fetchSpy.mockRestore()
-    consoleSpy.mockRestore()
     vi.clearAllMocks()
   })
 
@@ -598,16 +605,13 @@ describe("addSubscribersToListBulk", () => {
 
 describe("removeSubscriber", () => {
   let fetchSpy: MockInstance
-  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
-    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
   })
 
   afterEach(() => {
     fetchSpy.mockRestore()
-    consoleSpy.mockRestore()
     vi.clearAllMocks()
   })
 
@@ -749,16 +753,13 @@ describe("removeSubscriber", () => {
 
 describe("createCampaign", () => {
   let fetchSpy: MockInstance
-  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
-    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
   })
 
   afterEach(() => {
     fetchSpy.mockRestore()
-    consoleSpy.mockRestore()
     vi.clearAllMocks()
   })
 
@@ -801,7 +802,7 @@ describe("createCampaign", () => {
     const result = await createCampaign({ name: "Test", lists: [] })
 
     expect(result.success).toBe(true)
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(logger.error).toHaveBeenCalledWith(
       expect.stringContaining("Failed to create campaign")
     )
   })
@@ -817,16 +818,13 @@ describe("createCampaign", () => {
 
 describe("updateCampaignStatus", () => {
   let fetchSpy: MockInstance
-  let consoleSpy: MockInstance
 
   beforeEach(() => {
     fetchSpy = vi.spyOn(global, "fetch")
-    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
   })
 
   afterEach(() => {
     fetchSpy.mockRestore()
-    consoleSpy.mockRestore()
     vi.clearAllMocks()
   })
 
@@ -862,7 +860,7 @@ describe("updateCampaignStatus", () => {
     const result = await updateCampaignStatus(456, "paused")
 
     expect(result.success).toBe(true)
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(logger.error).toHaveBeenCalledWith(
       expect.stringContaining("Failed to update campaign status")
     )
   })
