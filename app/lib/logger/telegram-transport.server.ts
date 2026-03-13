@@ -57,6 +57,23 @@ export class TelegramTransport extends TransportStream {
     const message = escapeHtml(String(info.message))
     let text = `<b>[${level}]</b>\n${message}`
 
+    const skipKeys = new Set(["level", "message"])
+    const metadata: Record<string, unknown> = {}
+    for (const key of Object.keys(info)) {
+      if (skipKeys.has(key)) continue
+      const value = info[key]
+      if (value instanceof Error) {
+        metadata[key] = { message: value.message, stack: value.stack }
+      } else {
+        metadata[key] = value
+      }
+    }
+
+    if (Object.keys(metadata).length > 0) {
+      const serialized = escapeHtml(JSON.stringify(metadata, null, 2))
+      text += `\n<pre>${serialized}</pre>`
+    }
+
     if (text.length > 4096) {
       text = text.slice(0, 4093) + "..."
     }

@@ -107,4 +107,63 @@ describe("TelegramTransport", () => {
       })
     })
   })
+
+  it("includes metadata object in the message text", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        { level: "error", message: "Event failed", eventId: "evt-123", userId: 42 },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          expect(body.text).toContain("eventId")
+          expect(body.text).toContain("evt-123")
+          expect(body.text).toContain("userId")
+          expect(body.text).toContain("42")
+          expect(body.text).toContain("<pre>")
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("includes Error stack trace in metadata", () => {
+    return new Promise<void>((resolve) => {
+      const error = new Error("connection refused")
+      transport.log(
+        { level: "error", message: "DB error", error },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          expect(body.text).toContain("connection refused")
+          expect(body.text).toContain("stack")
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("escapes HTML in metadata values", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        { level: "error", message: "bad input", payload: "<img src=x onerror=alert(1)>" },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          expect(body.text).not.toContain("<img")
+          expect(body.text).toContain("&lt;img")
+          resolve()
+        },
+      )
+    })
+  })
+
+  it("truncates message with metadata to 4096 characters", () => {
+    return new Promise<void>((resolve) => {
+      transport.log(
+        { level: "error", message: "fail", bigField: "y".repeat(5000) },
+        () => {
+          const body = JSON.parse(fetchSpy.mock.calls[0][1].body)
+          expect(body.text.length).toBeLessThanOrEqual(4096)
+          resolve()
+        },
+      )
+    })
+  })
 })
