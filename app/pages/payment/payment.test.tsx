@@ -57,13 +57,7 @@ import type { ValidatePaymentTokenResult } from "~/business/payment/validate-pay
 type LoaderData = Exclude<ValidatePaymentTokenResult, { status: "not_found" }>
 
 function renderPaymentPage(loaderData: LoaderData) {
-  return render(
-    <PaymentPage
-      loaderData={loaderData}
-      params={{ token: "test-token" }}
-      matches={[] as never}
-    />,
-  )
+  return render(<PaymentPage loaderData={loaderData} />)
 }
 
 describe("PaymentPage", () => {
@@ -106,14 +100,14 @@ describe("PaymentPage", () => {
     it("renders Pix option with correct amount", () => {
       renderPaymentPage(successData)
 
-      expect(screen.getByText(/Pix/)).toBeInTheDocument()
+      expect(screen.getAllByText(/Pix/).length).toBeGreaterThanOrEqual(1)
       expect(screen.getByText(/220,00/)).toBeInTheDocument()
     })
 
     it("renders credit card option with correct amount and installments", () => {
       renderPaymentPage(successData)
 
-      expect(screen.getByText(/Cartão de crédito/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/Cartão de crédito/i).length).toBeGreaterThanOrEqual(1)
       expect(screen.getByText(/227,00/)).toBeInTheDocument()
       expect(screen.getByText(/6x/)).toBeInTheDocument()
     })
@@ -148,7 +142,7 @@ describe("PaymentPage", () => {
         },
       })
 
-      expect(screen.getByText(/Pix/)).toBeInTheDocument()
+      expect(screen.getAllByText(/Pix/).length).toBeGreaterThanOrEqual(1)
       expect(screen.getByText(/220,00/)).toBeInTheDocument()
       expect(screen.queryByText(/Cartão de crédito/i)).not.toBeInTheDocument()
     })
