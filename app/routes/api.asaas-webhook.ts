@@ -15,13 +15,13 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ ignored: true }, { status: 200 })
   }
 
-  const payload = (await request.json()) as AsaasWebhookPayload
-
-  if (!HANDLED_WEBHOOK_EVENTS.includes(payload.event as AsaasWebhookEvent)) {
-    return Response.json({ ignored: true }, { status: 200 })
-  }
-
   try {
+    const payload = (await request.json()) as AsaasWebhookPayload
+
+    if (!HANDLED_WEBHOOK_EVENTS.includes(payload.event as AsaasWebhookEvent)) {
+      return Response.json({ ignored: true }, { status: 200 })
+    }
+
     await handleWebhookPayment(payload)
     return Response.json({ ok: true }, { status: 200 })
   } catch (error) {

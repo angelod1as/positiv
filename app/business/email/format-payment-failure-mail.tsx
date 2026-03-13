@@ -6,7 +6,7 @@ export const formatPaymentFailureMail = async (
   eventTitle: string,
   eventEmoji: string | null,
   failureReason: string | null,
-  paymentLink: string,
+  paymentLink: string | null,
 ) => {
   const html = paymentFailureEmailTemplate(
     participantName,

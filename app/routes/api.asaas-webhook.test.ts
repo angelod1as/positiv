@@ -132,6 +132,32 @@ describe("api.asaas-webhook action", () => {
     expect(handleWebhookPayment).toHaveBeenCalledWith(payload)
   })
 
+  it("should return 200 when request body is malformed JSON", async () => {
+    vi.mocked(isPaymentSystemEnabled).mockReturnValue(true)
+    vi.mocked(verifyWebhookSignature).mockReturnValue(true)
+
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    const request = new Request("http://localhost/api/webhooks/asaas", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "asaas-access-token": "valid-token",
+      },
+      body: "not valid json{{{",
+    })
+
+    const response = await action({
+      request,
+      params: {},
+      context: {},
+    })
+
+    expect(response.status).toBe(200)
+
+    consoleSpy.mockRestore()
+  })
+
   it("should return 200 even when handleWebhookPayment throws", async () => {
     vi.mocked(isPaymentSystemEnabled).mockReturnValue(true)
     vi.mocked(verifyWebhookSignature).mockReturnValue(true)

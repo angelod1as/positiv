@@ -145,7 +145,7 @@ async function sendConfirmationEmail(
     const paymentMethod =
       BILLING_TYPE_TO_PAYMENT_METHOD[payload.payment.billingType] ?? "pix"
     const paymentMethodLabel = paymentMethod === "pix" ? "Pix" : "Cartão de crédito"
-    const amount = formatCentavos(payload.payment.value * 100)
+    const amount = formatCentavos(Math.round(payload.payment.value * 100))
     const paymentDate = payload.payment.paymentDate ?? payload.payment.dateCreated
 
     const { html, text } = await formatPaymentSuccessMail(
@@ -218,7 +218,7 @@ async function sendFailureEmail(
     const eventTitle = participant.event_title ?? ""
     const paymentLink = participant.payment_link_token
       ? `${env().appUrl}/pagamento/${participant.payment_link_token}`
-      : ""
+      : null
 
     const { html, text } = await formatPaymentFailureMail(
       displayName,

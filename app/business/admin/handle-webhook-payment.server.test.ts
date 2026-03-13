@@ -223,6 +223,20 @@ describe("handleWebhookPayment", () => {
       expect(mockTrx.updateTable).toHaveBeenCalledTimes(2)
     })
 
+    it("should trigger confirmation for PAYMENT_RECEIVED event", async () => {
+      vi.mocked(kyselyDb.selectFrom)
+        .mockReturnValueOnce(mockLookupSelect(mockTransaction) as never)
+        .mockReturnValueOnce(mockSiblingsSelect([]) as never)
+        .mockReturnValueOnce(mockParticipantJoinSelect(null) as never)
+
+      const mockTrx = setupTransactionMock()
+
+      await handleWebhookPayment(makePayload({ event: "PAYMENT_RECEIVED" }))
+
+      expect(kyselyDb.transaction).toHaveBeenCalled()
+      expect(mockTrx.updateTable).toHaveBeenCalledTimes(2)
+    })
+
     it("should cancel sibling transactions", async () => {
       const sibling = { id: "tx-2", asaas_payment_id: "pay_456" }
 
