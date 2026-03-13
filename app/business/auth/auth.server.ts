@@ -5,6 +5,7 @@ import type { z } from "zod"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { env } from "~/env.server"
 import { kyselyDb } from "~/kysely-db"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import {
@@ -77,7 +78,7 @@ async function _fetchContext(
     }
 
     if (!authError.message.includes("Auth session missing!")) {
-      console.error("AUTH error", errorProps)
+      logger.error("AUTH error", errorProps)
       throw await redirectWithError(
         DASHBOARD,
         "Houve um erro com sua autenticação, tente novamente mais tarde",
@@ -102,7 +103,7 @@ async function _fetchContext(
 
   if (profileError) {
     if (profileError.details !== "The result contains 0 rows") {
-      console.error("getCurrentProfile", profileError)
+      logger.warn("getCurrentProfile", profileError)
     }
 
     return {
@@ -227,7 +228,7 @@ export const forgotPassword = applySchema(
   })
 
   if (error) {
-    console.error("Password Reset Error", error)
+    logger.error("Password Reset Error", error)
     throw new Error(
       "Algo deu errado com sua requisição, contate o administrador",
     )
@@ -242,7 +243,7 @@ export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
   const { error } = await supabase.auth.signOut()
 
   if (error) {
-    console.error(error)
+    logger.error("Logout error", error)
     throw new Error(
       `Erro de logout — Código: "${error.code}" — Mensagem: "${error.message}"`,
     )
@@ -264,7 +265,7 @@ export const changePassword = applySchema(
     if (error.code === "same_password") {
       throw new Error("Será que essa não era a sua senha? Tente outra.")
     }
-    console.error(error)
+    logger.error("Password change error", error)
     throw new Error(
       "Não conseguimos resetar sua senha. Entre em contato com o administrador",
     )
@@ -305,7 +306,7 @@ export const registerUser = applySchema(
     )
 
     // Log for admin debugging with masked PII
-    console.warn("[ADMIN] Blocked claimed profile signup:", {
+    logger.warn("[ADMIN] Blocked claimed profile signup:", {
       maskedEmail,
       profileId: claimedProfile.id,
     })
