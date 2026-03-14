@@ -50,7 +50,7 @@ function PaymentOptionCard({ option }: { option: PaymentOption }) {
         </CardDescription>
       </CardHeader>
       <CardFooter>
-        <Button to={option.invoiceUrl}>
+        <Button to={option.invoiceUrl} linkProps={{ target: "_blank", rel: "noopener noreferrer" }}>
           Pagar com {label}
         </Button>
       </CardFooter>

@@ -18,13 +18,15 @@ vi.mock("react-router", async () => {
 vi.mock("~/components/atoms/button/button", () => ({
   Button: ({
     children,
+    linkProps,
     ...props
   }: {
     children: React.ReactNode
     to?: string
     variant?: string
+    linkProps?: Record<string, string>
   }) => (
-    <a href={props.to ?? "#"} data-variant={props.variant}>
+    <a href={props.to ?? "#"} data-variant={props.variant} {...linkProps}>
       {children}
     </a>
   ),
@@ -121,6 +123,19 @@ describe("PaymentPage", () => {
 
       expect(pixLink).toBeInTheDocument()
       expect(ccLink).toBeInTheDocument()
+    })
+
+    it("opens payment links in a new tab", () => {
+      renderPaymentPage(successData)
+
+      const links = screen.getAllByRole("link")
+      const pixLink = links.find((l) => l.getAttribute("href") === "https://asaas.com/i/pix-123")
+      const ccLink = links.find((l) => l.getAttribute("href") === "https://asaas.com/i/cc-456")
+
+      expect(pixLink).toHaveAttribute("target", "_blank")
+      expect(pixLink).toHaveAttribute("rel", "noopener noreferrer")
+      expect(ccLink).toHaveAttribute("target", "_blank")
+      expect(ccLink).toHaveAttribute("rel", "noopener noreferrer")
     })
   })
 
