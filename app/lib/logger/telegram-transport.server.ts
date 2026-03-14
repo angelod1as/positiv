@@ -47,6 +47,7 @@ export class TelegramTransport extends TransportStream {
     this.refillTokens()
 
     if (this.tokens <= 0) {
+      this.emit("logged", info)
       callback()
       return
     }

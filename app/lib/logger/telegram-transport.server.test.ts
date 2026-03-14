@@ -179,6 +179,31 @@ describe("TelegramTransport", () => {
     })
   })
 
+  it("emits 'logged' event even when rate-limited", () => {
+    return new Promise<void>((resolve) => {
+      const loggedMessages: string[] = []
+      transport.on("logged", (info) => {
+        loggedMessages.push(info.message)
+      })
+
+      let completed = 0
+      const total = 7
+
+      for (let i = 0; i < total; i++) {
+        transport.log({ level: "error", message: `msg-${i}` }, () => {
+          completed++
+          if (completed === total) {
+            expect(fetchSpy).toHaveBeenCalledTimes(5)
+            expect(loggedMessages).toHaveLength(7)
+            expect(loggedMessages).toContain("msg-5")
+            expect(loggedMessages).toContain("msg-6")
+            resolve()
+          }
+        })
+      }
+    })
+  })
+
   it("escapes HTML in metadata values", () => {
     return new Promise<void>((resolve) => {
       transport.log(

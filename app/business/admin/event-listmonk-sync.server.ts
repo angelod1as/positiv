@@ -147,8 +147,8 @@ async function addParticipantsToList(
     } else {
       // If bulk add fails, fall back to individual adds
       logger.warn(
-        "Bulk subscriber add failed, falling back to individual adds:",
-        bulkResult.errors,
+        "Bulk subscriber add failed, falling back to individual adds",
+        { errors: bulkResult.errors },
       )
       for (const participant of withSubscriberId) {
         const name =
