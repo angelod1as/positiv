@@ -72,7 +72,7 @@ export async function action({ request }: ActionFunctionArgs) {
       results,
     })
   } catch (error) {
-    logger.error("Error processing pre-opening campaigns:", error)
+    logger.error("Error processing pre-opening campaigns:", { error })
 
     return Response.json(
       {

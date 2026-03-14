@@ -47,7 +47,7 @@ export async function action({ request }: ActionFunctionArgs) {
     const result = await processFailedSyncRetries()
 
     if (!result.success || !result.data) {
-      logger.error("Failed to process newsletter sync retries", result.errors)
+      logger.error("Failed to process newsletter sync retries", { errors: result.errors })
       return Response.json(
         {
           success: false,
@@ -69,7 +69,7 @@ export async function action({ request }: ActionFunctionArgs) {
       stats: result.data,
     })
   } catch (error) {
-    logger.error("Error processing newsletter sync retries:", error)
+    logger.error("Error processing newsletter sync retries:", { error })
 
     return Response.json(
       {

@@ -140,6 +140,16 @@ describe("TelegramTransport", () => {
     })
   })
 
+  it("emits 'logged' event after sending", () => {
+    return new Promise<void>((resolve) => {
+      transport.on('logged', (info) => {
+        expect(info.message).toBe("emit test")
+        resolve()
+      })
+      transport.log({ level: "error", message: "emit test" }, () => {})
+    })
+  })
+
   it("escapes HTML in metadata values", () => {
     return new Promise<void>((resolve) => {
       transport.log(

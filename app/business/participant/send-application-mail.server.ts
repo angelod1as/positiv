@@ -26,7 +26,7 @@ export const sendApplicationMail = async ({
   const result = await sendEmail(options)
 
   if (!result.success) {
-    logger.error("Email sending failed:", result.errors)
+    logger.error("Email sending failed:", { errors: result.errors })
     return { emailSent: false }
   }
 

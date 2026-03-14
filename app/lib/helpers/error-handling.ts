@@ -49,7 +49,7 @@ export async function withErrorRedirect<T>(
 }
 
 export function handleApiError(error: unknown): Response {
-  logger.error("API Error:", error)
+  logger.error("API Error:", { error })
   
   if (error instanceof Response) {
     return error

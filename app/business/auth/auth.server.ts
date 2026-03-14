@@ -103,7 +103,7 @@ async function _fetchContext(
 
   if (profileError) {
     if (profileError.details !== "The result contains 0 rows") {
-      logger.warn("getCurrentProfile", profileError)
+      logger.warn("getCurrentProfile", { error: profileError })
     }
 
     return {
@@ -228,7 +228,7 @@ export const forgotPassword = applySchema(
   })
 
   if (error) {
-    logger.error("Password Reset Error", error)
+    logger.error("Password Reset Error", { error })
     throw new Error(
       "Algo deu errado com sua requisição, contate o administrador",
     )
@@ -243,7 +243,7 @@ export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
   const { error } = await supabase.auth.signOut()
 
   if (error) {
-    logger.error("Logout error", error)
+    logger.error("Logout error", { error })
     throw new Error(
       `Erro de logout — Código: "${error.code}" — Mensagem: "${error.message}"`,
     )
@@ -265,7 +265,7 @@ export const changePassword = applySchema(
     if (error.code === "same_password") {
       throw new Error("Será que essa não era a sua senha? Tente outra.")
     }
-    logger.error("Password change error", error)
+    logger.error("Password change error", { error })
     throw new Error(
       "Não conseguimos resetar sua senha. Entre em contato com o administrador",
     )

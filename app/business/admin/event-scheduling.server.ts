@@ -30,7 +30,7 @@ export async function updateEventStatusesAutomatically(
     
     return parsedResult
   } catch (error) {
-    logger.error('Failed to update event statuses automatically:', error)
+    logger.error('Failed to update event statuses automatically:', { error })
     // Return a safe default result on error
     return {
       success: false,

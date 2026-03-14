@@ -40,7 +40,7 @@ export const sendRegistrationLimitAdminMail = async ({
   const result = await sendEmail(options)
 
   if (!result.success) {
-    logger.error("Registration limit admin email failed:", result.errors)
+    logger.error("Registration limit admin email failed:", { errors: result.errors })
     return { emailSent: false }
   }
 

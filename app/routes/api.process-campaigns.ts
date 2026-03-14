@@ -75,7 +75,7 @@ export async function action({ request }: ActionFunctionArgs) {
       listCleanup: cleanupResults,
     })
   } catch (error) {
-    logger.error("Error processing campaigns:", error)
+    logger.error("Error processing campaigns:", { error })
 
     return Response.json(
       {

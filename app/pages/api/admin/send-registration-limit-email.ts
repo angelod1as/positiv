@@ -75,7 +75,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     return Response.json({ success: true })
   } catch (error) {
-    logger.error("Error in send-registration-limit-email API:", error)
+    logger.error("Error in send-registration-limit-email API:", { error })
     return Response.json(
       { success: false, error: "Internal server error" },
       { status: 500 }

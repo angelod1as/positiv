@@ -92,6 +92,7 @@ export class TelegramTransport extends TransportStream {
     })
       .catch(() => {})
       .finally(() => {
+        this.emit('logged', info)
         callback()
       })
   }
