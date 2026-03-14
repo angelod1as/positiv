@@ -197,11 +197,21 @@ describe("validatePaymentToken", () => {
 
     const result = await validatePaymentToken("partial-token")
 
-    expect(result.status).toBe("success")
-    if (result.status === "success") {
-      expect(result.data.paymentOptions).toHaveLength(1)
-      expect(result.data.paymentOptions[0].method).toBe("pix")
-    }
+    expect(result).toEqual({
+      status: "success",
+      data: {
+        eventTitle: "Test Event",
+        eventEmoji: "🎉",
+        participantName: "Test User",
+        paymentOptions: [
+          {
+            method: "pix",
+            amount: 22_000,
+            invoiceUrl: "https://asaas.com/i/pix-123",
+          },
+        ],
+      },
+    })
   })
 
   it("returns no_valid_charges when all transactions failed", async () => {
@@ -238,6 +248,7 @@ describe("validatePaymentToken", () => {
 
     const result = await validatePaymentToken("social-token")
 
+    expect(result.status).toBe("success")
     if (result.status === "success") {
       expect(result.data.participantName).toBe("Display Name")
     }

@@ -5,6 +5,7 @@ import {
   type PaymentOption,
 } from "~/business/payment/validate-payment-token.server"
 import { formatCentavos } from "~/integrations/asaas/constants"
+import type { PaymentMethod } from "~/integrations/asaas/types"
 import { Button } from "~/components/atoms/button/button"
 import {
   Card,
@@ -31,7 +32,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   return result
 }
 
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
+const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   pix: "Pix",
   credit_card: "Cartão de crédito",
 }

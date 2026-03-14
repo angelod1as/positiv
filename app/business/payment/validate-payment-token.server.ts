@@ -1,4 +1,5 @@
 import { isPaymentSystemEnabled } from "~/lib/features.server"
+import type { PaymentMethod } from "~/integrations/asaas/types"
 import { kyselyDb } from "~/kysely-db"
 
 export type ValidatePaymentTokenResult =
@@ -17,10 +18,10 @@ export type ValidatePaymentTokenResult =
     }
 
 export interface PaymentOption {
-  method: string
+  method: PaymentMethod
   amount: number
   invoiceUrl: string
-  installments?: number | null
+  installments?: number
 }
 
 export async function validatePaymentToken(
@@ -92,10 +93,20 @@ export async function validatePaymentToken(
 
   const displayName = participant.social_name ?? participant.full_name ?? "Participante"
 
-  const paymentOptions: PaymentOption[] = pendingTransactions.map((t) => {
+  const validTransactions = pendingTransactions.filter((t) => {
+    if (!t.asaas_payment_data) return false
+    const data = t.asaas_payment_data as Record<string, unknown>
+    return typeof data.invoiceUrl === "string"
+  })
+
+  if (validTransactions.length === 0) {
+    return { status: "no_valid_charges", data: { eventTitle, eventEmoji } }
+  }
+
+  const paymentOptions: PaymentOption[] = validTransactions.map((t) => {
     const paymentData = t.asaas_payment_data as unknown as { invoiceUrl: string }
     return {
-      method: t.payment_method,
+      method: t.payment_method as PaymentMethod,
       amount: t.amount,
       invoiceUrl: paymentData.invoiceUrl,
       ...(t.installments ? { installments: t.installments } : {}),
