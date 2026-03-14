@@ -86,7 +86,7 @@ export const agreeToTerms = applySchema(
     if (!result.success) {
       logger.error(
         "Failed to subscribe profile to newsletter:",
-        result.errors.map(e => e.message).join(", "),
+        { errors: result.errors.map(e => e.message) },
       )
       return {
         ...context,
@@ -106,7 +106,7 @@ export const agreeToTerms = applySchema(
       // It's ok if unsubscribe fails because no subscription exists.
       // For other errors, we should throw.
       if (!result.errors[0].message.includes("No subscription found")) {
-        logger.error("Failed to unsubscribe profile:", result.errors[0].message)
+        logger.error("Failed to unsubscribe profile:", { error: result.errors[0].message })
         throw result.errors[0]
       }
     }

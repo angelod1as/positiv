@@ -36,7 +36,7 @@ export class TelegramTransport extends TransportStream {
     const newTokens = Math.floor(elapsed / this.refillRate)
     if (newTokens > 0) {
       this.tokens = Math.min(this.maxTokens, this.tokens + newTokens)
-      this.lastRefill = now
+      this.lastRefill += newTokens * this.refillRate
     }
   }
 

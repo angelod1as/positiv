@@ -79,6 +79,35 @@ describe("TelegramTransport", () => {
     })
   })
 
+  it("rate limiter preserves fractional elapsed time across refills", () => {
+    return new Promise<void>((resolve) => {
+      vi.useFakeTimers()
+
+      const freshTransport = new TelegramTransport({ botToken: BOT_TOKEN, chatId: CHAT_ID })
+
+      // Exhaust all 5 tokens
+      const noop = () => {}
+      for (let i = 0; i < 5; i++) {
+        freshTransport.log({ level: "error", message: `burst-${i}` }, noop)
+      }
+
+      // Advance 1500ms — should refill 1 token with 500ms remainder preserved
+      vi.advanceTimersByTime(1500)
+
+      freshTransport.log({ level: "error", message: "after-1500" }, noop)
+
+      // Only 500ms more needed (not 1000ms) because 500ms remainder was preserved
+      vi.advanceTimersByTime(500)
+
+      freshTransport.log({ level: "error", message: "after-500-more" }, () => {
+        // 5 burst + 1 after 1500ms + 1 after 500ms more = 7 fetch calls
+        expect(fetchSpy).toHaveBeenCalledTimes(7)
+        vi.useRealTimers()
+        resolve()
+      })
+    })
+  })
+
   it("always calls the callback even on network errors", () => {
     fetchSpy.mockRejectedValue(new Error("Network failure"))
     return new Promise<void>((resolve) => {
