@@ -1,6 +1,7 @@
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import type { Event } from "~types/database/entities.types"
 
 /**
  * Registration Limit Reached Admin Email Template
@@ -9,20 +10,18 @@ import { formatDateTime } from "~/lib/helpers/format-date-time"
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const registrationLimitReachedAdminTemplate = (
-  eventId: string,
-  eventTitle: string,
-  eventEmoji: string | null,
+  event: Event,
   participantCount: number,
   timestamp: Date,
 ): string => {
   const { date, time } = formatDateTime(timestamp.toISOString())
-  const sanitizedEmoji = sanitizeHtml(eventEmoji || "")
-  const sanitizedTitle = sanitizeHtml(eventTitle || "")
+  const sanitizedEmoji = sanitizeHtml(event.emoji || "")
+  const sanitizedTitle = sanitizeHtml(event.title || "")
   const eventDisplay = [sanitizedEmoji, sanitizedTitle]
     .filter(Boolean)
     .join(" ")
 
-  const eventParticipantsUrl = `${POSITIV_URL}admin/events/${eventId}/participants`
+  const eventParticipantsUrl = `${POSITIV_URL}admin/events/${event.id}/participants`
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">

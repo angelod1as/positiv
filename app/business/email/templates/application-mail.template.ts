@@ -1,6 +1,10 @@
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import type {
+  Event,
+  ProfileWithRoles,
+} from "~types/database/entities.types"
 
 /**
  * Application Email Template
@@ -9,23 +13,22 @@ import { formatDateTime } from "~/lib/helpers/format-date-time"
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const applicationMailTemplate = (
-  participantName: string,
-  eventTitle: string,
-  eventEmoji: string | null,
-  eventLocation: string,
-  eventStartTime: string,
+  profile: NonNullable<ProfileWithRoles>,
+  event: Event,
 ): string => {
-  const { date, time } = formatDateTime(eventStartTime)
-  const displayName = sanitizeHtml(participantName)
-  const sanitizedEmoji = sanitizeHtml(eventEmoji || "")
-  const sanitizedTitle = sanitizeHtml(eventTitle || "")
+  const { date, time } = formatDateTime(event.time_event_start)
+  const displayName = sanitizeHtml(
+    profile.social_name || profile.full_name || "",
+  )
+  const sanitizedEmoji = sanitizeHtml(event.emoji || "")
+  const sanitizedTitle = sanitizeHtml(event.title || "")
   const eventDisplay = [sanitizedEmoji, sanitizedTitle]
     .filter(Boolean)
     .join(" ")
 
   const details = [
     ["Evento", eventDisplay],
-    ["Local", sanitizeHtml(eventLocation || "")],
+    ["Local", sanitizeHtml(event.location || "")],
     ["Data", date],
     ["Horário de início", time],
   ]

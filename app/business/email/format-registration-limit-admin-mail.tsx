@@ -8,9 +8,7 @@ export const formatRegistrationLimitAdminMail = async (
   timestamp: Date,
 ) => {
   const html = registrationLimitReachedAdminTemplate(
-    event.id,
-    event.title || "",
-    event.emoji,
+    event,
     participantCount,
     timestamp,
   )
