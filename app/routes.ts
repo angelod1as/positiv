@@ -26,7 +26,6 @@ export default [
   index("pages/homepage/homepage.tsx"),
   route("/auth/confirm", "pages/auth/confirm.tsx"),
   route("/newsletter/unsubscribe", "pages/newsletter/unsubscribe.tsx"),
-  route("/payment/:token", "pages/payment/payment.tsx"),
   layout("pages/public/layout.tsx", [
     route("/codigo-de-conduta", "pages/public/code-of-conduct.tsx"),
   ]),
