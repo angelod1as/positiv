@@ -24,15 +24,6 @@ const getEnvironment = makeTypedEnvironment(
     SUPABASE_DB_PASSWORD: zod.string().optional(),
     SUPABASE_CONNECT_URL: zod.string().optional(),
 
-    // unused:
-    CONTENTFUL_ENVIRONMENT: zod.string().optional(),
-    CONTENTFUL_SPACE_ID: zod.string().optional(),
-    CONTENTFUL_ACCESS_TOKEN: zod.string().optional(),
-    CONTENTFUL_PREVIEW_ACCESS_TOKEN: zod.string().optional(),
-    CONTENTFUL_MANAGEMENT_TOKEN: zod.string().optional(),
-    CONTENTFUL_REVALIDATE_SECRET: zod.string().optional(),
-    CONTENTFUL_PREVIEW_SECRET: zod.string().optional(),
-
     AWS_ACCESS_KEY_ID: zod.string().optional(),
     AWS_SECRET_ACCESS_KEY: zod.string().optional(),
 
@@ -50,6 +41,13 @@ const getEnvironment = makeTypedEnvironment(
       .enum(["true", "false"])
       .default("false")
       .transform((val) => val === "true"),
+
+    PAYMENT_SYSTEM_ONLINE: zod
+      .enum(["true", "false"])
+      .default("false")
+      .transform((val) => val === "true"),
+    ASAAS_API_KEY: zod.string().optional(),
+    ASAAS_API_URL: zod.string().optional(),
   }),
 )
 
