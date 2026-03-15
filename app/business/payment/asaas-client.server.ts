@@ -1,3 +1,4 @@
+import { z } from "zod"
 import { env } from "~/env.server"
 
 function getAsaasConfig() {
@@ -10,14 +11,25 @@ function getAsaasConfig() {
   return { apiKey: asaasApiKey, apiUrl: asaasApiUrl }
 }
 
+const asaasCustomerResponseSchema = z.object({
+  id: z.string(),
+})
+
+const asaasPaymentResponseSchema = z.object({
+  id: z.string(),
+  invoiceUrl: z.string(),
+})
+
 async function asaasFetch<T>(
   path: string,
   body: Record<string, unknown>,
+  schema: z.ZodType<T>,
+  method: "POST" | "GET" = "POST",
 ): Promise<T> {
   const { apiKey, apiUrl } = getAsaasConfig()
 
   const response = await fetch(`${apiUrl}${path}`, {
-    method: "POST",
+    method,
     headers: {
       "Content-Type": "application/json",
       access_token: apiKey,
@@ -30,7 +42,8 @@ async function asaasFetch<T>(
     throw new Error(`Asaas API error (${response.status}): ${errorBody}`)
   }
 
-  return response.json() as Promise<T>
+  const json = await response.json()
+  return schema.parse(json)
 }
 
 export async function createAsaasCustomer({
@@ -40,7 +53,7 @@ export async function createAsaasCustomer({
   name: string
   cpfCnpj: string
 }): Promise<{ id: string }> {
-  return asaasFetch("/customers", { name, cpfCnpj })
+  return asaasFetch("/customers", { name, cpfCnpj }, asaasCustomerResponseSchema)
 }
 
 export async function createAsaasPayment({
@@ -75,5 +88,20 @@ export async function createAsaasPayment({
     body.installmentValue = Number((value / installmentCount).toFixed(2))
   }
 
-  return asaasFetch("/payments", body)
+  return asaasFetch("/payments", body, asaasPaymentResponseSchema)
+}
+
+export async function refundAsaasPayment(
+  paymentId: string,
+  value?: number,
+): Promise<void> {
+  const body: Record<string, unknown> = {}
+  if (value !== undefined) {
+    body.value = value
+  }
+  await asaasFetch(
+    `/payments/${paymentId}/refund`,
+    body,
+    z.object({ id: z.string() }),
+  )
 }
