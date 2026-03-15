@@ -1,5 +1,6 @@
 import { formatRegistrationLimitAdminMail } from "~/business/email/format-registration-limit-admin-mail"
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
+import { logger } from "~/lib/logger/logger.server"
 import { getAdminEmails } from "./get-admin-emails.server"
 import type { Event } from "~types/database/entities.types"
 
@@ -19,7 +20,7 @@ export const sendRegistrationLimitAdminMail = async ({
   const adminEmails = providedAdminEmails ?? (await getAdminEmails())
 
   if (adminEmails.length === 0) {
-    console.warn("No admin emails found to send registration limit notification")
+    logger.warn("No admin emails found to send registration limit notification")
     return { emailSent: false }
   }
 
@@ -39,7 +40,7 @@ export const sendRegistrationLimitAdminMail = async ({
   const result = await sendEmail(options)
 
   if (!result.success) {
-    console.error("Registration limit admin email failed:", result.errors)
+    logger.error("Registration limit admin email failed:", { errors: result.errors })
     return { emailSent: false }
   }
 

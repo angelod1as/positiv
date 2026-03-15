@@ -1,8 +1,9 @@
 import { applySchema } from "composable-functions"
+import { kyselyDb } from "~/kysely-db"
+import { logger } from "~/lib/logger/logger.server"
 import { agreeToTermsSchema, contextSchema } from "../common"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { unsubscribeProfile } from "../newsletter/subscription-helpers.server"
-import { kyselyDb } from "~/kysely-db"
 
 export const agreeToTerms = applySchema(
   agreeToTermsSchema,
@@ -83,9 +84,9 @@ export const agreeToTerms = applySchema(
       subscriptionSource,
     )
     if (!result.success) {
-      console.error(
+      logger.error(
         "Failed to subscribe profile to newsletter:",
-        result.errors.map(e => e.message).join(", "),
+        { errors: result.errors.map(e => e.message) },
       )
       return {
         ...context,
@@ -94,7 +95,7 @@ export const agreeToTerms = applySchema(
       }
     }
     if (result.data?.syncStatus === "failed") {
-      console.warn(
+      logger.warn(
         "Newsletter subscription created but sync failed. Will be retried by cron job.",
         { profileId, subscriptionSource },
       )
@@ -105,7 +106,7 @@ export const agreeToTerms = applySchema(
       // It's ok if unsubscribe fails because no subscription exists.
       // For other errors, we should throw.
       if (!result.errors[0].message.includes("No subscription found")) {
-        console.error("Failed to unsubscribe profile:", result.errors[0].message)
+        logger.error("Failed to unsubscribe profile:", { error: result.errors[0].message })
         throw result.errors[0]
       }
     }

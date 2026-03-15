@@ -1,4 +1,5 @@
 import { composable } from "composable-functions"
+import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
 import { removeSubscriber } from "./listmonk-client.server"
 import type { SubscriptionSource, SyncStatus } from "./types"
@@ -104,9 +105,9 @@ export const unsubscribeProfile = composable(async (profileId: string) => {
 
   if (!removeResult.success) {
     syncStatus = "failed"
-    console.error(
+    logger.warn(
       "Failed to remove subscriber from Listmonk:",
-      removeResult.errors?.map(e => e.message).join(", ") ?? "Unknown error",
+      { error: removeResult.errors?.map(e => e.message).join(", ") ?? "Unknown error" },
     )
   }
 

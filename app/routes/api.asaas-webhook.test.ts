@@ -12,10 +12,20 @@ vi.mock("~/business/admin/handle-webhook-payment.server", () => ({
   handleWebhookPayment: vi.fn(),
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}))
+
 import { action } from "./api.asaas-webhook"
 import { isPaymentSystemEnabled } from "~/lib/features.server"
 import { verifyWebhookSignature } from "~/integrations/asaas/client.server"
 import { handleWebhookPayment } from "~/business/admin/handle-webhook-payment.server"
+import { logger } from "~/lib/logger/logger.server"
 
 function makeRequest(
   body: unknown = {},
@@ -136,8 +146,6 @@ describe("api.asaas-webhook action", () => {
     vi.mocked(isPaymentSystemEnabled).mockReturnValue(true)
     vi.mocked(verifyWebhookSignature).mockReturnValue(true)
 
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
     const request = new Request("http://localhost/api/webhooks/asaas", {
       method: "POST",
       headers: {
@@ -154,8 +162,7 @@ describe("api.asaas-webhook action", () => {
     })
 
     expect(response.status).toBe(200)
-
-    consoleSpy.mockRestore()
+    expect(logger.error).toHaveBeenCalled()
   })
 
   it("should return 200 even when handleWebhookPayment throws", async () => {
@@ -164,8 +171,6 @@ describe("api.asaas-webhook action", () => {
     vi.mocked(handleWebhookPayment).mockRejectedValue(
       new Error("DB connection failed"),
     )
-
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
 
     const payload = {
       event: "PAYMENT_CONFIRMED",
@@ -179,8 +184,9 @@ describe("api.asaas-webhook action", () => {
     })
 
     expect(response.status).toBe(200)
-    expect(consoleSpy).toHaveBeenCalled()
-
-    consoleSpy.mockRestore()
+    expect(logger.error).toHaveBeenCalledWith(
+      "Webhook handler error:",
+      expect.objectContaining({ error: expect.any(Error) }),
+    )
   })
 })

@@ -1,5 +1,6 @@
 import { composable } from "composable-functions"
 import { env } from "~/env.server"
+import { logger } from "~/lib/logger/logger.server"
 
 interface AddSubscriberParams {
   email: string
@@ -317,7 +318,7 @@ export const createCampaign = composable(
     })
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         `Failed to create campaign: ${response.status} ${response.statusText}`
       )
     }
@@ -338,7 +339,7 @@ export const updateCampaignStatus = composable(
     )
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         `Failed to update campaign status: ${response.status} ${response.statusText}`
       )
     }

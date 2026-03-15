@@ -3,6 +3,7 @@ import {
   LISTMONK_REGISTERED_LIST_ID,
   LISTMONK_TEST_LIST_ID,
 } from "~/lib/constants/constants"
+import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
 import { addSubscriber } from "./listmonk-client.server"
 import {
@@ -41,7 +42,7 @@ export const subscribeProfileToNewsletter = composable(
     )
 
     if (!profile.full_name && !profile.social_name) {
-      console.warn(
+      logger.warn(
         "Newsletter sync: Profile has no full_name or social_name, using email as name",
         {
           profileId: profile.id,
@@ -74,7 +75,7 @@ export const subscribeProfileToNewsletter = composable(
 
     if (!listmonkResult.success) {
       await updateSyncStatus(profileId, "failed")
-      console.error(
+      logger.warn(
         `Failed to subscribe profile to newsletter: Failed to sync with newsletter service`,
         {
           profileId,

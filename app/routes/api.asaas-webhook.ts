@@ -4,6 +4,7 @@ import { verifyWebhookSignature } from "~/integrations/asaas/client.server"
 import { HANDLED_WEBHOOK_EVENTS } from "~/integrations/asaas/constants"
 import type { AsaasWebhookEvent, AsaasWebhookPayload } from "~/integrations/asaas/types"
 import { isPaymentSystemEnabled } from "~/lib/features.server"
+import { logger } from "~/lib/logger/logger.server"
 
 export async function action({ request }: ActionFunctionArgs) {
   if (!isPaymentSystemEnabled()) {
@@ -25,7 +26,7 @@ export async function action({ request }: ActionFunctionArgs) {
     await handleWebhookPayment(payload)
     return Response.json({ ok: true }, { status: 200 })
   } catch (error) {
-    console.error("Webhook handler error:", error)
+    logger.error("Webhook handler error:", { error })
     return Response.json({ ok: true }, { status: 200 })
   }
 }

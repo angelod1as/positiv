@@ -1,3 +1,5 @@
+import { logger } from "~/lib/logger/logger.server"
+
 type EventData = Record<string, unknown>
 
 interface UmamiPayload {
@@ -54,8 +56,6 @@ export async function trackServerEvent(
       body: JSON.stringify(payload),
     })
   } catch (error) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[Analytics] Failed to track event:", eventName, error)
-    }
+    logger.warn("[Analytics] Failed to track event:", { eventName, error })
   }
 }

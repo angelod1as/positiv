@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router"
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
 import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
+import { logger } from "~/lib/logger/logger.server"
 
 /**
  * Internal API endpoint for processing pre-opening reminder campaigns
@@ -71,7 +72,7 @@ export async function action({ request }: ActionFunctionArgs) {
       results,
     })
   } catch (error) {
-    console.error("Error processing pre-opening campaigns:", error)
+    logger.error("Error processing pre-opening campaigns:", { error })
 
     return Response.json(
       {

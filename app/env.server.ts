@@ -53,6 +53,13 @@ const getEnvironment = makeTypedEnvironment(
       .enum(["sandbox", "production"])
       .default("sandbox"),
     APP_URL: zod.string().optional(),
+
+    TELEGRAM_BOT_TOKEN: zod.string().optional(),
+    TELEGRAM_CHAT_ID: zod.string().optional(),
+    TELEGRAM_ALERTS_ENABLED: zod
+      .enum(["true", "false"])
+      .default("false")
+      .transform((val) => val === "true"),
   }),
 )
 

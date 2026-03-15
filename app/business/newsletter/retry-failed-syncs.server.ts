@@ -16,6 +16,7 @@
  */
 
 import { composable } from "composable-functions"
+import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
 import { addSubscriber } from "./listmonk-client.server"
 import {
@@ -201,7 +202,7 @@ export const processFailedSyncRetries = composable(async () => {
 
     if (result.success) {
       results.succeeded++
-      console.info(
+      logger.info(
         `Successfully retried newsletter sync (attempt ${sub.retry_count + 1})`,
         {
           profileId: sub.profile_id,
@@ -211,7 +212,7 @@ export const processFailedSyncRetries = composable(async () => {
       )
     } else {
       results.failed++
-      console.error(
+      logger.warn(
         `Failed to retry newsletter sync (attempt ${sub.retry_count + 1})`,
         {
           profileId: sub.profile_id,

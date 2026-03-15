@@ -18,6 +18,7 @@ import { sendEmail } from "~/business/email/send-email"
 import { isPaymentSystemEnabled } from "~/lib/features.server"
 import { formatDateISO } from "~/lib/helpers/format-date-time"
 import { kyselyDb } from "~/kysely-db"
+import { logger } from "~/lib/logger/logger.server"
 
 export interface GeneratePaymentLinkParams {
   profileId: string
@@ -220,9 +221,9 @@ export async function generatePaymentLink(
     ])
     const failures = cleanupResults.filter((r) => r.status === "rejected")
     if (failures.length > 0) {
-      console.error(
+      logger.error(
         "Failed to clean up Asaas charges after DB error:",
-        failures.map((f) => (f as PromiseRejectedResult).reason),
+        { errors: failures.map((f) => (f as PromiseRejectedResult).reason) },
       )
     }
     throw error
@@ -251,11 +252,11 @@ export async function generatePaymentLink(
       })
 
       if (!emailResult.success) {
-        console.error("Failed to send payment link email:", emailResult.errors)
+        logger.error("Failed to send payment link email:", { errors: emailResult.errors })
       }
     }
   } catch (error) {
-    console.error("Error sending payment link email:", error)
+    logger.error("Error sending payment link email:", { error })
   }
 
   const pixAmount = formatCentavos(PAYMENT_METHOD_CONFIG.pix.amount)

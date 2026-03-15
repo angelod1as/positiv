@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { logger } from "~/lib/logger/logger.server"
 import type { DBClient } from "~/types/utils/utils.types"
 import { getContext, registerUser } from "./auth.server"
 
@@ -22,17 +23,23 @@ vi.mock("~/kysely-db", () => ({
   },
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}))
+
 describe("getContext", () => {
   let mockSignOut: ReturnType<typeof vi.fn>
-  let consoleSpy: ReturnType<typeof vi.spyOn>
 
   beforeEach(() => {
     mockSignOut = vi.fn().mockResolvedValue({ error: null })
-    consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
   })
 
   afterEach(() => {
-    consoleSpy.mockRestore()
     vi.clearAllMocks()
   })
 
@@ -78,7 +85,7 @@ describe("getContext", () => {
     expect(result.currentUser).toBeNull()
     expect(result.currentProfile).toBeNull()
     expect(mockSignOut).toHaveBeenCalledTimes(1)
-    expect(consoleSpy).not.toHaveBeenCalled()
+    expect(logger.error).not.toHaveBeenCalled()
   })
 
   it("should handle refresh_token_not_found error", async () => {
@@ -103,7 +110,7 @@ describe("getContext", () => {
     expect(result.currentUser).toBeNull()
     expect(result.currentProfile).toBeNull()
     expect(mockSignOut).toHaveBeenCalledTimes(1)
-    expect(consoleSpy).not.toHaveBeenCalled()
+    expect(logger.error).not.toHaveBeenCalled()
   })
 
   it("should handle errors with missing code but matching message", async () => {
@@ -129,7 +136,7 @@ describe("getContext", () => {
     expect(result.currentUser).toBeNull()
     expect(result.currentProfile).toBeNull()
     expect(mockSignOut).toHaveBeenCalledTimes(1)
-    expect(consoleSpy).not.toHaveBeenCalled()
+    expect(logger.error).not.toHaveBeenCalled()
   })
 
   it("should handle malformed error objects gracefully", async () => {
@@ -155,7 +162,7 @@ describe("getContext", () => {
     expect(result.currentUser).toBeNull()
     expect(result.currentProfile).toBeNull()
     expect(mockSignOut).toHaveBeenCalledTimes(1)
-    expect(consoleSpy).not.toHaveBeenCalled()
+    expect(logger.error).not.toHaveBeenCalled()
   })
 
   it("should handle missing oauth_client_id error gracefully", async () => {
@@ -182,7 +189,7 @@ describe("getContext", () => {
     expect(result.currentUser).toBeNull()
     expect(result.currentProfile).toBeNull()
     expect(mockSignOut).toHaveBeenCalledTimes(1)
-    expect(consoleSpy).not.toHaveBeenCalled()
+    expect(logger.error).not.toHaveBeenCalled()
   })
 
   it("should not handle unrelated auth errors", async () => {
@@ -206,7 +213,7 @@ describe("getContext", () => {
 
     await expect(getContext(mockRequest, mockParams)).rejects.toThrow()
     expect(mockSignOut).not.toHaveBeenCalled()
-    expect(consoleSpy).toHaveBeenCalledTimes(1)
+    expect(logger.error).toHaveBeenCalledTimes(1)
     expect(redirectWithError).toHaveBeenCalled()
   })
 
@@ -235,7 +242,7 @@ describe("getContext", () => {
     expect(result.currentUser).toBeNull()
     expect(result.currentProfile).toBeNull()
     expect(mockSignOut).not.toHaveBeenCalled()
-    expect(consoleSpy).not.toHaveBeenCalled()
+    expect(logger.error).not.toHaveBeenCalled()
   })
 
   it("should handle signOut failure gracefully", async () => {
@@ -700,7 +707,6 @@ describe("registerUser", () => {
   })
 
   it("should log admin notification when signup blocked for claimed profile", async () => {
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {})
     const mockSignUp = vi.fn().mockResolvedValue({ error: null })
 
     const mockSupabase = {
@@ -743,15 +749,13 @@ describe("registerUser", () => {
 
     await registerUser(values, context)
 
-    expect(consoleSpy).toHaveBeenCalledWith(
+    expect(logger.warn).toHaveBeenCalledWith(
       "[ADMIN] Blocked claimed profile signup:",
       expect.objectContaining({
         maskedEmail: "cla***@example.com",
         profileId: "claimed-profile-id",
       }),
     )
-
-    consoleSpy.mockRestore()
   })
 
   it("should allow signup when email matches orphan profile (user_id IS NULL)", async () => {

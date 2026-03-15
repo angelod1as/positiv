@@ -1,4 +1,5 @@
 import { redirectWithToast } from "remix-toast"
+import { logger } from "~/lib/logger/logger.server"
 
 export type SafeExecuteResult<T> = 
   | { success: true; data: T }
@@ -48,7 +49,7 @@ export async function withErrorRedirect<T>(
 }
 
 export function handleApiError(error: unknown): Response {
-  console.error("API Error:", error)
+  logger.error("API Error:", { error })
   
   if (error instanceof Response) {
     return error

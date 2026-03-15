@@ -4,6 +4,7 @@ import type { Params } from "react-router"
 import type { z } from "zod"
 import { kyselyDb } from "~/kysely-db"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
+import { logger } from "~/lib/logger/logger.server"
 import type {
   EventParticipant,
   EventParticipantWithEvent,
@@ -536,7 +537,7 @@ export const updateEventStatus = applySchema(
     if (values.event_status === "Registration Closed") {
       const syncResult = await updateEventListmonkList(eventId)
       if (!syncResult.success) {
-        console.error("Failed to sync Listmonk list:", {
+        logger.warn("Failed to sync Listmonk list:", {
           eventId,
           errors: syncResult.errors,
         })
@@ -546,7 +547,7 @@ export const updateEventStatus = applySchema(
       // Completed events have their lists deleted via cron job after time_group_end
       const syncResult = await deleteEventListmonkList(eventId)
       if (!syncResult.success) {
-        console.error("Failed to delete Listmonk list:", {
+        logger.warn("Failed to delete Listmonk list:", {
           eventId,
           errors: syncResult.errors,
         })
@@ -608,7 +609,7 @@ export const updateEventDemographics = applySchema(
   })
 
   if (!snapshotResult.success) {
-    console.error("Failed to upsert demographics snapshot for event", {
+    logger.error("Failed to upsert demographics snapshot for event", {
       eventId,
       errors: snapshotResult.errors,
     })

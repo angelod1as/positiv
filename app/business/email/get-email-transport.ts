@@ -2,6 +2,7 @@ import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
 import nodemailer from "nodemailer"
 import { env } from "~/env.server"
 import { isProd } from "~/lib/helpers/is-prod.server"
+import { logger } from "~/lib/logger/logger.server"
 
 const { awsAccessKeyId, awsSecretAccessKey } = env()
 
@@ -10,6 +11,7 @@ export function getEmailTransport() {
 
   if (prod) {
     if (!awsAccessKeyId || !awsSecretAccessKey) {
+      logger.error("AWS SES credentials not found")
       throw new Error("Credentials not found")
     }
 

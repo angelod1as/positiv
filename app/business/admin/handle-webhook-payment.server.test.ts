@@ -37,6 +37,15 @@ vi.mock("~/env.server", () => ({
   env: () => ({ appUrl: "https://positiv.test" }),
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}))
+
 import { handleWebhookPayment } from "./handle-webhook-payment.server"
 import { kyselyDb } from "~/kysely-db"
 import { deletePayment } from "~/integrations/asaas/client.server"
@@ -45,6 +54,7 @@ import { formatPaymentSuccessMail } from "~/business/email/format-payment-succes
 import { formatPaymentFailureMail } from "~/business/email/format-payment-failure-mail"
 import { getPaymentSuccessEmailSubject } from "~/business/email/templates/payment-success-email.template"
 import { getPaymentFailureEmailSubject } from "~/business/email/templates/payment-failure-email.template"
+import { logger } from "~/lib/logger/logger.server"
 
 const mockTransaction = {
   id: "tx-1",
@@ -267,18 +277,14 @@ describe("handleWebhookPayment", () => {
       setupTransactionMock()
       vi.mocked(deletePayment).mockRejectedValue(new Error("Asaas API error"))
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
       await expect(
         handleWebhookPayment(makePayload({ event: "PAYMENT_CONFIRMED" })),
       ).resolves.toBeUndefined()
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining("Failed to delete sibling payment"),
-        expect.any(Error),
+        expect.objectContaining({ error: expect.any(Error) }),
       )
-
-      consoleSpy.mockRestore()
     })
 
     it("should send success email with correct args", async () => {
@@ -362,18 +368,14 @@ describe("handleWebhookPayment", () => {
       setupTransactionMock()
       vi.mocked(sendEmail).mockRejectedValue(new Error("SMTP error"))
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
       await expect(
         handleWebhookPayment(makePayload({ event: "PAYMENT_CONFIRMED" })),
       ).resolves.toBeUndefined()
 
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         "Failed to send confirmation email:",
-        expect.any(Error),
+        expect.objectContaining({ error: expect.any(Error) }),
       )
-
-      consoleSpy.mockRestore()
     })
   })
 

@@ -3,6 +3,7 @@ import { deleteEventListmonkList } from "~/business/admin/event-listmonk-sync.se
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
 import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
 import { kyselyDb } from "~/kysely-db"
+import { logger } from "~/lib/logger/logger.server"
 
 /**
  * Internal API endpoint for processing newsletter campaigns
@@ -74,7 +75,7 @@ export async function action({ request }: ActionFunctionArgs) {
       listCleanup: cleanupResults,
     })
   } catch (error) {
-    console.error("Error processing campaigns:", error)
+    logger.error("Error processing campaigns:", { error })
 
     return Response.json(
       {

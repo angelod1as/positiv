@@ -87,6 +87,8 @@
     "sonner": "^2.0.3",
     "string-ts": "^2.2.1",
     "tailwind-merge": "^3.2.0",
+    "winston": "^3.19.0",
+    "winston-transport": "^4.9.0",
     "xlsx": "^0.18.5",
     "zod": "^4.3.5"
   },
