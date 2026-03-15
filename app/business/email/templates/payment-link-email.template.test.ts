@@ -67,11 +67,11 @@ describe("paymentLinkEmailTemplate", () => {
       expect(result).toContain("R$ 220,00")
     })
 
-    it("should include credit card pricing with installments formatted from centavos", () => {
+    it("should include credit card base price with installment info", () => {
       const result = paymentLinkEmailTemplate(participantName, eventTitle, eventEmoji, paymentLink, expiresAt)
       expect(result).toContain("Cartão")
-      expect(result).toContain("R$ 227,07")
-      expect(result).toContain(`${MAX_INSTALLMENTS}x`)
+      expect(result).toContain("R$ 220,00")
+      expect(result).toContain(`parcele em até ${MAX_INSTALLMENTS}x`)
     })
 
     it("should include CTA button with payment link", () => {
