@@ -103,7 +103,7 @@ async function _fetchContext(
 
   if (profileError) {
     if (profileError.details !== "The result contains 0 rows") {
-      logger.warn("getCurrentProfile", { error: profileError })
+      logger.error("getCurrentProfile", { error: profileError })
     }
 
     return {
