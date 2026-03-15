@@ -116,15 +116,6 @@ export interface AsaasPayment {
   }
 }
 
-export interface AsaasListResponse<T> {
-  object: "list"
-  hasMore: boolean
-  totalCount: number
-  limit: number
-  offset: number
-  data: T[]
-}
-
 export interface AsaasPixQrCode {
   encodedImage: string
   payload: string
