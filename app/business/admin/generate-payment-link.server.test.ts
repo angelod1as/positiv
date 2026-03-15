@@ -601,7 +601,7 @@ describe("generatePaymentLink", () => {
       expect(result.creditInvoiceUrl).toBe("https://sandbox.asaas.com/i/cc-invoice")
       expect(result.whatsappMessage).toContain("Test Event")
       expect(result.whatsappMessage).toContain("R$ 220,00")
-      expect(result.whatsappMessage).toContain("R$ 227,00")
+      expect(result.whatsappMessage).toContain("R$ 227,07")
       expect(result.whatsappMessage).toContain("Cartão de crédito")
     })
   })

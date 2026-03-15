@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { PAYMENT_PRICING } from "~/integrations/asaas/constants"
+import { MAX_INSTALLMENTS } from "~/integrations/asaas/constants"
 import {
   getPaymentLinkEmailSubject,
   paymentLinkEmailTemplate,
@@ -70,8 +70,8 @@ describe("paymentLinkEmailTemplate", () => {
     it("should include credit card pricing with installments formatted from centavos", () => {
       const result = paymentLinkEmailTemplate(participantName, eventTitle, eventEmoji, paymentLink, expiresAt)
       expect(result).toContain("Cartão")
-      expect(result).toContain("R$ 227,00")
-      expect(result).toContain(`${PAYMENT_PRICING.creditCard.maxInstallments}x`)
+      expect(result).toContain("R$ 227,07")
+      expect(result).toContain(`${MAX_INSTALLMENTS}x`)
     })
 
     it("should include CTA button with payment link", () => {

@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest"
-import {
-  BASE_PRICE,
-  ASAAS_FEES,
-  MAX_INSTALLMENTS,
-  calculatePaymentPrice,
-} from "./calculate-payment-price"
+import { ASAAS_FEES, BASE_PRICE, MAX_INSTALLMENTS } from "~/integrations/asaas/constants"
+import { calculatePaymentPrice } from "./calculate-payment-price"
 
 describe("calculatePaymentPrice", () => {
   describe("constants", () => {

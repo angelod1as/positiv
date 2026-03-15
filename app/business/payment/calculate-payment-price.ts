@@ -1,12 +1,4 @@
-export const BASE_PRICE = 22_000
-
-export const ASAAS_FEES = {
-  pix: { rate: 0, fixed: 0 },
-  cc_1x: { rate: 0.0299, fixed: 49 },
-  cc_2_6x: { rate: 0.0349, fixed: 49 },
-} as const
-
-export const MAX_INSTALLMENTS = 6
+import { ASAAS_FEES, BASE_PRICE, MAX_INSTALLMENTS } from "~/integrations/asaas/constants"
 
 type PaymentMethod = "pix" | "credit_card"
 

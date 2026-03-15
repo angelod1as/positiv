@@ -189,9 +189,9 @@ describe("createPaymentCharge", () => {
 
     const body = getLastFetchBody()
     expect(body.billingType).toBe("CREDIT_CARD")
-    expect(body.value).toBe(227)
+    expect(body.value).toBe(227.07)
     expect(body.installmentCount).toBe(6)
-    expect(body.totalValue).toBe(227)
+    expect(body.totalValue).toBe(227.07)
   })
 
   it("POSTs to the correct payments endpoint", async () => {
