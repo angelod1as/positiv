@@ -1,28 +1,25 @@
 import { isPaymentSystemEnabled } from "~/lib/features.server"
-import type { PaymentMethod } from "~/integrations/asaas/types"
 import { kyselyDb } from "~/kysely-db"
 
 export type ValidatePaymentTokenResult =
   | { status: "not_found" }
   | { status: "expired"; data: { eventTitle: string; eventEmoji: string | null } }
   | { status: "already_paid"; data: { eventTitle: string; eventEmoji: string | null } }
-  | { status: "no_valid_charges"; data: { eventTitle: string; eventEmoji: string | null } }
   | {
-      status: "success"
+      status: "ready"
       data: {
         eventTitle: string
         eventEmoji: string | null
         participantName: string
-        paymentOptions: PaymentOption[]
+        participantId: string
+        profileId: string
+        eventId: string
+        cpf: string | null
+        email: string | null
+        fullName: string | null
+        socialName: string | null
       }
     }
-
-export interface PaymentOption {
-  method: PaymentMethod
-  amount: number
-  invoiceUrl: string
-  installments?: number
-}
 
 export async function validatePaymentToken(
   token: string
@@ -43,6 +40,8 @@ export async function validatePaymentToken(
       "event_participants.payment_link_expires_at",
       "profiles.full_name",
       "profiles.social_name",
+      "profiles.email",
+      "profiles.cpf",
       "events.title as event_title",
       "events.emoji as event_emoji",
     ])
@@ -69,13 +68,7 @@ export async function validatePaymentToken(
 
   const transactions = await kyselyDb
     .selectFrom("payment_transactions")
-    .select([
-      "payment_method",
-      "amount",
-      "status",
-      "installments",
-      "asaas_payment_data",
-    ])
+    .select(["status"])
     .where("event_participant_id", "=", participant.participant_id)
     .where("event_id", "=", participant.event_id)
     .execute()
@@ -85,41 +78,21 @@ export async function validatePaymentToken(
     return { status: "already_paid", data: { eventTitle, eventEmoji } }
   }
 
-  const pendingTransactions = transactions.filter((t) => t.status === "pending")
-
-  if (pendingTransactions.length === 0) {
-    return { status: "no_valid_charges", data: { eventTitle, eventEmoji } }
-  }
-
   const displayName = participant.social_name ?? participant.full_name ?? "Participante"
 
-  const validTransactions = pendingTransactions.filter((t) => {
-    if (!t.asaas_payment_data) return false
-    const data = t.asaas_payment_data as Record<string, unknown>
-    return typeof data.invoiceUrl === "string"
-  })
-
-  if (validTransactions.length === 0) {
-    return { status: "no_valid_charges", data: { eventTitle, eventEmoji } }
-  }
-
-  const paymentOptions: PaymentOption[] = validTransactions.map((t) => {
-    const paymentData = t.asaas_payment_data as unknown as { invoiceUrl: string }
-    return {
-      method: t.payment_method as PaymentMethod,
-      amount: t.amount,
-      invoiceUrl: paymentData.invoiceUrl,
-      ...(t.installments ? { installments: t.installments } : {}),
-    }
-  })
-
   return {
-    status: "success",
+    status: "ready",
     data: {
       eventTitle,
       eventEmoji,
       participantName: displayName,
-      paymentOptions,
+      participantId: participant.participant_id,
+      profileId: participant.profile_id,
+      eventId: participant.event_id,
+      cpf: participant.cpf,
+      email: participant.email,
+      fullName: participant.full_name,
+      socialName: participant.social_name,
     },
   }
 }

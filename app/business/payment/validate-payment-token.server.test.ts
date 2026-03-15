@@ -24,8 +24,10 @@ const validParticipantRow = {
   has_paid: false,
   full_name: "Test User",
   social_name: null as string | null,
+  email: "test@example.com",
+  cpf: "123.456.789-00",
   event_title: "Test Event",
-  event_emoji: "🎉",
+  event_emoji: "\u{1F389}",
   payment_link_expires_at: futureDate,
 }
 
@@ -53,22 +55,6 @@ function createMockTransactionsSelect(result: unknown) {
       }),
     }),
   }
-}
-
-const pendingPixTransaction = {
-  payment_method: "pix",
-  amount: 22_000,
-  status: "pending",
-  installments: null as number | null,
-  asaas_payment_data: { invoiceUrl: "https://asaas.com/i/pix-123" },
-}
-
-const pendingCreditTransaction = {
-  payment_method: "credit_card",
-  amount: 22_700,
-  status: "pending",
-  installments: 6,
-  asaas_payment_data: { invoiceUrl: "https://asaas.com/i/cc-456" },
 }
 
 describe("validatePaymentToken", () => {
@@ -107,7 +93,7 @@ describe("validatePaymentToken", () => {
 
     expect(result).toEqual({
       status: "expired",
-      data: { eventTitle: "Test Event", eventEmoji: "🎉" },
+      data: { eventTitle: "Test Event", eventEmoji: "\u{1F389}" },
     })
   })
 
@@ -123,7 +109,7 @@ describe("validatePaymentToken", () => {
 
     expect(result).toEqual({
       status: "already_paid",
-      data: { eventTitle: "Test Event", eventEmoji: "🎉" },
+      data: { eventTitle: "Test Event", eventEmoji: "\u{1F389}" },
     })
   })
 
@@ -134,7 +120,7 @@ describe("validatePaymentToken", () => {
       )
       .mockReturnValueOnce(
         createMockTransactionsSelect([
-          { ...pendingPixTransaction, status: "confirmed" },
+          { status: "confirmed" },
         ]) as never
       )
 
@@ -142,95 +128,35 @@ describe("validatePaymentToken", () => {
 
     expect(result).toEqual({
       status: "already_paid",
-      data: { eventTitle: "Test Event", eventEmoji: "🎉" },
+      data: { eventTitle: "Test Event", eventEmoji: "\u{1F389}" },
     })
   })
 
-  it("returns success with 2 payment options", async () => {
+  it("returns ready with participant data when token is valid", async () => {
     vi.mocked(kyselyDb.selectFrom)
       .mockReturnValueOnce(
         createMockParticipantSelect(validParticipantRow) as never
       )
       .mockReturnValueOnce(
-        createMockTransactionsSelect([
-          pendingPixTransaction,
-          pendingCreditTransaction,
-        ]) as never
+        createMockTransactionsSelect([]) as never
       )
 
     const result = await validatePaymentToken("valid-token")
 
     expect(result).toEqual({
-      status: "success",
+      status: "ready",
       data: {
         eventTitle: "Test Event",
-        eventEmoji: "🎉",
+        eventEmoji: "\u{1F389}",
         participantName: "Test User",
-        paymentOptions: [
-          {
-            method: "pix",
-            amount: 22_000,
-            invoiceUrl: "https://asaas.com/i/pix-123",
-          },
-          {
-            method: "credit_card",
-            amount: 22_700,
-            invoiceUrl: "https://asaas.com/i/cc-456",
-            installments: 6,
-          },
-        ],
+        participantId: "part-1",
+        profileId: "prof-1",
+        eventId: "evt-1",
+        cpf: "123.456.789-00",
+        email: "test@example.com",
+        fullName: "Test User",
+        socialName: null,
       },
-    })
-  })
-
-  it("returns success with 1 payment option when one failed", async () => {
-    vi.mocked(kyselyDb.selectFrom)
-      .mockReturnValueOnce(
-        createMockParticipantSelect(validParticipantRow) as never
-      )
-      .mockReturnValueOnce(
-        createMockTransactionsSelect([
-          pendingPixTransaction,
-          { ...pendingCreditTransaction, status: "failed" },
-        ]) as never
-      )
-
-    const result = await validatePaymentToken("partial-token")
-
-    expect(result).toEqual({
-      status: "success",
-      data: {
-        eventTitle: "Test Event",
-        eventEmoji: "🎉",
-        participantName: "Test User",
-        paymentOptions: [
-          {
-            method: "pix",
-            amount: 22_000,
-            invoiceUrl: "https://asaas.com/i/pix-123",
-          },
-        ],
-      },
-    })
-  })
-
-  it("returns no_valid_charges when all transactions failed", async () => {
-    vi.mocked(kyselyDb.selectFrom)
-      .mockReturnValueOnce(
-        createMockParticipantSelect(validParticipantRow) as never
-      )
-      .mockReturnValueOnce(
-        createMockTransactionsSelect([
-          { ...pendingPixTransaction, status: "failed" },
-          { ...pendingCreditTransaction, status: "cancelled" },
-        ]) as never
-      )
-
-    const result = await validatePaymentToken("failed-token")
-
-    expect(result).toEqual({
-      status: "no_valid_charges",
-      data: { eventTitle: "Test Event", eventEmoji: "🎉" },
     })
   })
 
@@ -243,14 +169,48 @@ describe("validatePaymentToken", () => {
         }) as never
       )
       .mockReturnValueOnce(
-        createMockTransactionsSelect([pendingPixTransaction]) as never
+        createMockTransactionsSelect([]) as never
       )
 
     const result = await validatePaymentToken("social-token")
 
-    expect(result.status).toBe("success")
-    if (result.status === "success") {
+    expect(result.status).toBe("ready")
+    if (result.status === "ready") {
       expect(result.data.participantName).toBe("Display Name")
+      expect(result.data.socialName).toBe("Display Name")
     }
+  })
+
+  it("returns ready even when there are pending transactions (no longer blocks)", async () => {
+    vi.mocked(kyselyDb.selectFrom)
+      .mockReturnValueOnce(
+        createMockParticipantSelect(validParticipantRow) as never
+      )
+      .mockReturnValueOnce(
+        createMockTransactionsSelect([
+          { status: "pending" },
+        ]) as never
+      )
+
+    const result = await validatePaymentToken("pending-token")
+
+    expect(result.status).toBe("ready")
+  })
+
+  it("returns ready when all transactions are failed (no longer returns no_valid_charges)", async () => {
+    vi.mocked(kyselyDb.selectFrom)
+      .mockReturnValueOnce(
+        createMockParticipantSelect(validParticipantRow) as never
+      )
+      .mockReturnValueOnce(
+        createMockTransactionsSelect([
+          { status: "failed" },
+          { status: "cancelled" },
+        ]) as never
+      )
+
+    const result = await validatePaymentToken("failed-token")
+
+    expect(result.status).toBe("ready")
   })
 })
