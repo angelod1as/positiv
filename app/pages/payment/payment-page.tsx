@@ -1,63 +1,80 @@
 import { applySchema } from "composable-functions"
-import { redirect } from "react-router"
+import { redirect, useLoaderData } from "react-router"
 import { formAction } from "remix-forms"
-import { assertPaymentSystemOnline } from "~/business/payment/payment-guard.server"
 import {
   createAsaasCustomer,
   createAsaasPayment,
 } from "~/business/payment/asaas-client.server"
 import { paymentFormSchema } from "~/business/payment/payment-form-schema"
+import { assertPaymentSystemOnline } from "~/business/payment/payment-guard.server"
+import {
+  buildPaymentOptions,
+  type PaymentOption,
+} from "~/business/payment/payment-pricing.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import type { Route } from "./+types/payment-page"
 
-const PIX_PRICE = 220_00
-const CREDIT_CARD_PRICE = 230_00
+const TICKET_PRICE_CENTS = 220_00
 
-function formatCurrency(value: number) {
+function formatCurrency(cents: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(value / 100)
+  }).format(cents / 100)
 }
 
-function buildInstallmentOptions() {
-  return Array.from({ length: 3 }, (_, i) => i + 1).map((n) => ({
-    name: `${n}x de ${formatCurrency(CREDIT_CARD_PRICE / n)}`,
-    value: String(n),
-  }))
+function formatOptionLabel(o: PaymentOption) {
+  if (o.billingType === "PIX") {
+    return `Pix — ${formatCurrency(o.totalCents)}`
+  }
+  if (o.installments === 1) {
+    return `Cartão 1x — ${formatCurrency(o.totalCents)}`
+  }
+  return `Cartão ${o.installments}x de ${formatCurrency(o.perInstallmentCents)} (total ${formatCurrency(o.totalCents)})`
 }
-
-const mutation = applySchema(paymentFormSchema)(async ({
-  billingType,
-  installmentCount,
-}) => {
-  const value = billingType === "PIX" ? PIX_PRICE : CREDIT_CARD_PRICE
-
-  const dueDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split("T")[0]
-
-  const customer = await createAsaasCustomer({
-    name: "Teste PoC",
-    cpfCnpj: "24971563792",
-  })
-
-  const payment = await createAsaasPayment({
-    customerId: customer.id,
-    billingType,
-    value: value / 100,
-    dueDate,
-    description: "Positiv — Ingresso",
-    installmentCount:
-      billingType === "CREDIT_CARD" ? installmentCount : undefined,
-  })
-
-  return { invoiceUrl: payment.invoiceUrl }
-})
 
 export function loader() {
   assertPaymentSystemOnline()
+
+  const paymentOptions = buildPaymentOptions(TICKET_PRICE_CENTS)
+  const dropdownOptions = paymentOptions.map((o) => ({
+    name: formatOptionLabel(o),
+    value: o.value,
+  }))
+
+  return { dropdownOptions, paymentOptions }
 }
+
+const mutation = applySchema(paymentFormSchema)(
+  async ({ paymentOption: selectedValue }) => {
+    const paymentOptions = buildPaymentOptions(TICKET_PRICE_CENTS)
+    const option = paymentOptions.find((o) => o.value === selectedValue)
+    if (!option) throw new Error("Opção de pagamento inválida")
+
+    const dueDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0]
+
+    const customer = await createAsaasCustomer({
+      name: "Teste PoC",
+      cpfCnpj: "24971563792",
+    })
+
+    const payment = await createAsaasPayment({
+      customerId: customer.id,
+      billingType: option.billingType,
+      value: option.totalCents / 100,
+      dueDate,
+      description: "Positiv — Ingresso",
+      installmentCount:
+        option.billingType === "CREDIT_CARD" && option.installments > 1
+          ? option.installments
+          : undefined,
+    })
+
+    return { invoiceUrl: payment.invoiceUrl }
+  },
+)
 
 export async function action({ request }: Route.ActionArgs) {
   assertPaymentSystemOnline()
@@ -75,6 +92,8 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function PaymentPage() {
+  const { dropdownOptions } = useLoaderData<typeof loader>()
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg space-y-6">
@@ -87,41 +106,19 @@ export default function PaymentPage() {
 
         <SchemaForm
           schema={paymentFormSchema}
-          labels={{
-            billingType: "Forma de pagamento",
-            installmentCount: "Parcelas",
-          }}
-          options={{
-            billingType: [
-              {
-                name: `Pix — ${formatCurrency(PIX_PRICE)} (à vista)`,
-                value: "PIX",
-              },
-              {
-                name: `Cartão de Crédito — ${formatCurrency(CREDIT_CARD_PRICE)}`,
-                value: "CREDIT_CARD",
-              },
-            ],
-            installmentCount: buildInstallmentOptions(),
-          }}
-          values={{ billingType: "PIX" as const, installmentCount: 1 }}
+          labels={{ paymentOption: "Forma de pagamento" }}
+          options={{ paymentOption: dropdownOptions }}
+          values={{ paymentOption: "PIX" }}
           buttonLabel="Pagar"
           pendingButtonLabel="Processando..."
         >
-          {({ Field, Button, Errors, watch }) => {
-            const billingType = watch("billingType")
-
-            return (
-              <div className="flex flex-col gap-6">
-                <Field name="billingType" />
-                {billingType === "CREDIT_CARD" && (
-                  <Field name="installmentCount" />
-                )}
-                <Errors />
-                <Button />
-              </div>
-            )
-          }}
+          {({ Field, Button, Errors }) => (
+            <div className="flex flex-col gap-6">
+              <Field name="paymentOption" />
+              <Errors />
+              <Button />
+            </div>
+          )}
         </SchemaForm>
       </div>
     </div>
