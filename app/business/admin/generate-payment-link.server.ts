@@ -1,22 +1,18 @@
 import { randomUUID } from "node:crypto"
 import { addHours } from "date-fns"
 import { env } from "~/env.server"
+import { getOrCreateAsaasCustomer } from "~/integrations/asaas/client.server"
 import {
-  getOrCreateAsaasCustomer,
-  createPaymentCharge,
-  deletePayment,
-} from "~/integrations/asaas/client.server"
-import {
+  BASE_PRICE,
   formatCentavos,
   PAYMENT_LINK_EXPIRY_HOURS,
-  PAYMENT_METHOD_CONFIG,
+  MAX_INSTALLMENTS,
 } from "~/integrations/asaas/constants"
-import type { AsaasPayment } from "~/integrations/asaas/types"
+import { calculatePaymentPrice } from "~/business/payment/calculate-payment-price"
 import { formatPaymentLinkMail } from "~/business/email/format-payment-link-mail"
 import { getPaymentLinkEmailSubject } from "~/business/email/templates/payment-link-email.template"
 import { sendEmail } from "~/business/email/send-email"
 import { isPaymentSystemEnabled } from "~/lib/features.server"
-import { formatDateISO } from "~/lib/helpers/format-date-time"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
 
@@ -28,13 +24,11 @@ export interface GeneratePaymentLinkParams {
 
 export interface GeneratePaymentLinkResult {
   token: string
-  pixInvoiceUrl: string
-  creditInvoiceUrl: string
   whatsappMessage: string
 }
 
 export async function generatePaymentLink(
-  params: GeneratePaymentLinkParams
+  params: GeneratePaymentLinkParams,
 ): Promise<GeneratePaymentLinkResult> {
   if (!isPaymentSystemEnabled()) {
     throw new Error("Payment system is not enabled")
@@ -115,13 +109,12 @@ export async function generatePaymentLink(
   const token = randomUUID()
   const now = new Date()
   const expiresAt = addHours(now, PAYMENT_LINK_EXPIRY_HOURS)
-  const dueDate = formatDateISO(expiresAt)
 
   const strippedCpf = participant.cpf.replace(/\D/g, "")
   const displayName = participant.social_name ?? participant.full_name
   const eventTitle = participant.event_title
 
-  const customer = await getOrCreateAsaasCustomer({
+  await getOrCreateAsaasCustomer({
     name: displayName,
     cpfCnpj: strippedCpf,
     email: participant.email ?? undefined,
@@ -130,104 +123,15 @@ export async function generatePaymentLink(
 
   const paymentLink = `${appUrl}/payment/${token}`
 
-  const chargeResults = await Promise.allSettled([
-    createPaymentCharge({
-      paymentMethod: "pix",
-      customer: customer.id,
-      dueDate,
-      description: `Positiv - ${eventTitle}`,
-      externalReference: token,
-      callback: { successUrl: `${appUrl}/payment/${token}/success`, autoRedirect: true },
-    }),
-    createPaymentCharge({
-      paymentMethod: "credit_card",
-      customer: customer.id,
-      dueDate,
-      description: `Positiv - ${eventTitle}`,
-      externalReference: token,
-      callback: { successUrl: `${appUrl}/payment/${token}/success`, autoRedirect: true },
-    }),
-  ])
-
-  const [pixResult, creditResult] = chargeResults
-
-  if (pixResult.status === "rejected" || creditResult.status === "rejected") {
-    const successfulIds = chargeResults
-      .filter((r): r is PromiseFulfilledResult<AsaasPayment> => r.status === "fulfilled")
-      .map((r) => r.value.id)
-    await Promise.allSettled(successfulIds.map((id) => deletePayment(id)))
-    const failed = chargeResults.find(
-      (r): r is PromiseRejectedResult => r.status === "rejected",
-    )
-    throw failed?.reason instanceof Error ? failed.reason : new Error(String(failed?.reason))
-  }
-
-  const pixPayment = pixResult.value
-  const creditPayment = creditResult.value
-
-  try {
-    await kyselyDb.transaction().execute(async (trx) => {
-      await trx
-        .deleteFrom("payment_transactions")
-        .where("event_participant_id", "=", participant.participant_id)
-        .where("status", "=", "pending")
-        .execute()
-
-      await trx
-        .insertInto("payment_transactions")
-        .values([
-          {
-            event_participant_id: participant.participant_id,
-            profile_id: params.profileId,
-            event_id: params.eventId,
-            asaas_payment_id: pixPayment.id,
-            asaas_customer_id: customer.id,
-            asaas_payment_data: pixPayment as unknown as string,
-            payment_method: "pix",
-            amount: PAYMENT_METHOD_CONFIG.pix.amount,
-            status: "pending",
-            created_by: params.adminProfileId,
-          },
-          {
-            event_participant_id: participant.participant_id,
-            profile_id: params.profileId,
-            event_id: params.eventId,
-            asaas_payment_id: creditPayment.id,
-            asaas_customer_id: customer.id,
-            asaas_payment_data: creditPayment as unknown as string,
-            payment_method: "credit_card",
-            amount: PAYMENT_METHOD_CONFIG.credit_card.amount,
-            installments: PAYMENT_METHOD_CONFIG.credit_card.installmentCount,
-            status: "pending",
-            created_by: params.adminProfileId,
-          },
-        ])
-        .execute()
-
-      await trx
-        .updateTable("event_participants")
-        .set({
-          payment_link_token: token,
-          payment_link_generated_at: now.toISOString(),
-          payment_link_expires_at: expiresAt.toISOString(),
-        })
-        .where("id", "=", participant.participant_id)
-        .execute()
+  await kyselyDb
+    .updateTable("event_participants")
+    .set({
+      payment_link_token: token,
+      payment_link_generated_at: now.toISOString(),
+      payment_link_expires_at: expiresAt.toISOString(),
     })
-  } catch (error) {
-    const cleanupResults = await Promise.allSettled([
-      deletePayment(pixPayment.id),
-      deletePayment(creditPayment.id),
-    ])
-    const failures = cleanupResults.filter((r) => r.status === "rejected")
-    if (failures.length > 0) {
-      logger.error(
-        "Failed to clean up Asaas charges after DB error:",
-        { errors: failures.map((f) => (f as PromiseRejectedResult).reason) },
-      )
-    }
-    throw error
-  }
+    .where("id", "=", participant.participant_id)
+    .execute()
 
   try {
     const { html, text } = await formatPaymentLinkMail(
@@ -259,9 +163,8 @@ export async function generatePaymentLink(
     logger.error("Error sending payment link email:", { error })
   }
 
-  const pixAmount = formatCentavos(PAYMENT_METHOD_CONFIG.pix.amount)
-  const creditAmount = formatCentavos(PAYMENT_METHOD_CONFIG.credit_card.amount)
-  const installments = PAYMENT_METHOD_CONFIG.credit_card.installmentCount
+  const pixAmount = formatCentavos(calculatePaymentPrice("pix", 1).totalAmount)
+  const basePrice = formatCentavos(BASE_PRICE)
 
   const whatsappMessage = [
     `Olá ${displayName}! 🎉`,
@@ -269,7 +172,7 @@ export async function generatePaymentLink(
     `Seu link de pagamento para o evento *${eventTitle}* está pronto:`,
     "",
     `💰 *Pix*: R$ ${pixAmount}`,
-    `💳 *Cartão de crédito*: R$ ${creditAmount} (até ${installments}x)`,
+    `💳 *Cartão*: R$ ${basePrice} (parcele em até ${MAX_INSTALLMENTS}x no cartão)`,
     "",
     `🔗 ${paymentLink}`,
     "",
@@ -278,8 +181,6 @@ export async function generatePaymentLink(
 
   return {
     token,
-    pixInvoiceUrl: pixPayment.invoiceUrl,
-    creditInvoiceUrl: creditPayment.invoiceUrl,
     whatsappMessage,
   }
 }
