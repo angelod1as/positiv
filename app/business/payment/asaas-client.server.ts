@@ -49,11 +49,18 @@ async function asaasFetch<T>(
 export async function createAsaasCustomer({
   name,
   cpfCnpj,
+  email,
+  phone,
 }: {
   name: string
   cpfCnpj: string
+  email?: string
+  phone?: string
 }): Promise<{ id: string }> {
-  return asaasFetch("/customers", { name, cpfCnpj }, asaasCustomerResponseSchema)
+  const body: Record<string, unknown> = { name, cpfCnpj }
+  if (email) body.email = email
+  if (phone) body.mobilePhone = phone
+  return asaasFetch("/customers", body, asaasCustomerResponseSchema)
 }
 
 export async function createAsaasPayment({
