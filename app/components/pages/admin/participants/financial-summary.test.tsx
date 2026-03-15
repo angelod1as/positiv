@@ -32,10 +32,6 @@ const createMockHistoryItem = (
   approved_to_attend: "approved",
   updated_at: "2024-02-15T10:00:00",
   was_selected_for_rotation: false,
-  payment_link_token: null,
-  payment_link_generated_at: null,
-  payment_link_expires_at: null,
-  payment_transaction_id: null,
   ...overrides,
 })
 

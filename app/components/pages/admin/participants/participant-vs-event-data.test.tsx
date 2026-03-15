@@ -61,10 +61,6 @@ const mockEventParticipant: EventParticipantWithEvent = {
   created_at: "2024-01-01",
   updated_at: "2024-01-01",
   was_selected_for_rotation: false,
-  payment_link_token: null,
-  payment_link_generated_at: null,
-  payment_link_expires_at: null,
-  payment_transaction_id: null,
 }
 
 const createTestRouter = (eventParticipant: EventParticipantWithEvent) => {
