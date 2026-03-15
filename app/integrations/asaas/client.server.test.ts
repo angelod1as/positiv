@@ -5,7 +5,7 @@ vi.mock("~/env.server", () => ({
 }))
 
 import { env } from "~/env.server"
-import { getAsaasConfig, createPaymentCharge, getPaymentStatus, refundPayment, verifyWebhookSignature, getOrCreateAsaasCustomer, deletePayment } from "./client.server"
+import { getAsaasConfig, createPaymentCharge, getPaymentStatus, refundPayment, verifyWebhookSignature, getOrCreateAsaasCustomer } from "./client.server"
 import type { AsaasCustomer, AsaasListResponse, AsaasPayment, CreateAsaasCustomerParams, CreatePaymentChargeParams, RefundAsaasPaymentParams } from "./types"
 
 const mockEnv = vi.mocked(env)
@@ -163,7 +163,7 @@ describe("createPaymentCharge", () => {
     vi.restoreAllMocks()
   })
 
-  it("creates PIX charge with value in reais (centavos / 100) and billingType PIX", async () => {
+  it("creates PIX charge with amount 220 and billingType PIX", async () => {
     const params: CreatePaymentChargeParams = {
       paymentMethod: "pix",
       customer: "cus_xyz789",
@@ -178,7 +178,7 @@ describe("createPaymentCharge", () => {
     expect(body.installmentCount).toBeUndefined()
   })
 
-  it("creates CREDIT_CARD charge with value in reais and 6 installments", async () => {
+  it("creates CREDIT_CARD charge with amount 227 and 6 installments", async () => {
     const params: CreatePaymentChargeParams = {
       paymentMethod: "credit_card",
       customer: "cus_xyz789",
@@ -817,56 +817,5 @@ describe("getOrCreateAsaasCustomer", () => {
     }
 
     await expect(getOrCreateAsaasCustomer(params)).rejects.toThrow("Network error")
-  })
-})
-
-describe("deletePayment", () => {
-  beforeEach(() => {
-    mockEnv.mockReturnValue({
-      asaasApiKey: "test-api-key",
-      asaasEnvironment: "sandbox",
-    } as ReturnType<typeof env>)
-
-    vi.spyOn(global, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ deleted: true, id: "pay_abc123" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      })
-    )
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  it("DELETEs the correct payment endpoint", async () => {
-    await deletePayment("pay_abc123")
-
-    expect(global.fetch).toHaveBeenCalledWith(
-      "https://api-sandbox.asaas.com/v3/payments/pay_abc123",
-      expect.objectContaining({
-        method: "DELETE",
-        signal: expect.any(AbortSignal),
-      })
-    )
-  })
-
-  it("throws on non-ok response", async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce(
-      new Response("Payment not found", {
-        status: 404,
-        statusText: "Not Found",
-      })
-    )
-
-    await expect(deletePayment("pay_invalid")).rejects.toThrow(
-      "Failed to delete payment: 404 Not Found. Response: Payment not found"
-    )
-  })
-
-  it("throws on network error", async () => {
-    vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Network error"))
-
-    await expect(deletePayment("pay_abc123")).rejects.toThrow("Network error")
   })
 })

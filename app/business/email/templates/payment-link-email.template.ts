@@ -1,4 +1,4 @@
-import { formatCentavos, PAYMENT_PRICING } from "~/integrations/asaas/constants"
+import { PAYMENT_PRICING } from "~/integrations/asaas/constants"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
@@ -22,8 +22,8 @@ export const paymentLinkEmailTemplate = (
   const safePaymentLink = /^https?:\/\//i.test(paymentLink) ? paymentLink : "#"
   const { date: expiryDate, time: expiryTime } = formatDateTime(expiresAt.toISOString())
 
-  const pixAmount = formatCentavos(PAYMENT_PRICING.pix.amount)
-  const creditAmount = formatCentavos(PAYMENT_PRICING.creditCard.amount)
+  const pixAmount = PAYMENT_PRICING.pix.amount
+  const creditAmount = PAYMENT_PRICING.creditCard.amount
   const maxInstallments = PAYMENT_PRICING.creditCard.maxInstallments
 
   return `<!DOCTYPE html>
@@ -75,11 +75,11 @@ export const paymentLinkEmailTemplate = (
                 </div>
                 <div style="margin-bottom: 8px; font-size: 14px;">
                   <span style="color: #666;">Pix:</span>
-                  <strong style="color: #333;">R$ ${pixAmount}</strong>
+                  <strong style="color: #333;">R$ ${pixAmount},00</strong>
                 </div>
                 <div style="font-size: 14px;">
                   <span style="color: #666;">Cartão de crédito:</span>
-                  <strong style="color: #333;">R$ ${creditAmount}</strong>
+                  <strong style="color: #333;">R$ ${creditAmount},00</strong>
                   <span style="color: #666;">(até ${maxInstallments}x)</span>
                 </div>
               </div>

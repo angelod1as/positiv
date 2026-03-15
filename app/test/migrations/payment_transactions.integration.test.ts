@@ -74,7 +74,7 @@ describe("payment_transactions table - Integration Tests", () => {
       asaas_customer_id: "cus_test456",
       asaas_payment_data: asaasPaymentData,
       payment_method: "credit_card",
-      amount: 22_700,
+      amount: 227,
       installments: 3,
       status: "pending",
     })
@@ -83,7 +83,7 @@ describe("payment_transactions table - Integration Tests", () => {
     expect(transaction.asaas_payment_id).toBe("pay_test123")
     expect(transaction.asaas_customer_id).toBe("cus_test456")
     expect(transaction.payment_method).toBe("credit_card")
-    expect(transaction.amount).toBe("22700.00")
+    expect(transaction.amount).toBe("227.00")
     expect(transaction.installments).toBe(3)
     expect(transaction.status).toBe("pending")
     expect(transaction.event_id).toBe(event.id)
@@ -113,7 +113,7 @@ describe("payment_transactions table - Integration Tests", () => {
           asaas_customer_id: "cus_test789",
           asaas_payment_data: { id: "pay_unique123" },
           payment_method: "pix",
-          amount: 22_000,
+          amount: 220,
           status: "pending",
         })
         .execute()
@@ -135,7 +135,7 @@ describe("payment_transactions table - Integration Tests", () => {
           asaas_payment_data: { id: "pay_method456" },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           payment_method: "invalid_method" as any,
-          amount: 22_000,
+          amount: 220,
           status: "pending",
         })
         .execute()
@@ -156,7 +156,7 @@ describe("payment_transactions table - Integration Tests", () => {
           asaas_customer_id: "cus_test888",
           asaas_payment_data: { id: "pay_status789" },
           payment_method: "pix",
-          amount: 22_000,
+          amount: 220,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           status: "invalid_status" as any,
         })
@@ -231,7 +231,7 @@ describe("payment_transactions table - Integration Tests", () => {
       asaas_customer_id: "cus_jsonb456",
       asaas_payment_data: asaasPaymentData,
       payment_method: "credit_card",
-      amount: 22_700,
+      amount: 227,
     })
 
     const result = await kysely

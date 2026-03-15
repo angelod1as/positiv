@@ -61,16 +61,16 @@ describe("paymentLinkEmailTemplate", () => {
       expect(result).not.toContain("🎉")
     })
 
-    it("should include Pix pricing formatted from centavos", () => {
+    it("should include Pix pricing", () => {
       const result = paymentLinkEmailTemplate(participantName, eventTitle, eventEmoji, paymentLink, expiresAt)
       expect(result).toContain("Pix")
-      expect(result).toContain("R$ 220,00")
+      expect(result).toContain(`R$ ${PAYMENT_PRICING.pix.amount},00`)
     })
 
-    it("should include credit card pricing with installments formatted from centavos", () => {
+    it("should include credit card pricing with installments", () => {
       const result = paymentLinkEmailTemplate(participantName, eventTitle, eventEmoji, paymentLink, expiresAt)
       expect(result).toContain("Cartão")
-      expect(result).toContain("R$ 227,00")
+      expect(result).toContain(`R$ ${PAYMENT_PRICING.creditCard.amount},00`)
       expect(result).toContain(`${PAYMENT_PRICING.creditCard.maxInstallments}x`)
     })
 

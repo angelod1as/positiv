@@ -206,7 +206,7 @@ export async function createTestPaymentTransaction(
       asaas_customer_id: "cus_test",
       asaas_payment_data: { id: data.asaas_payment_id },
       payment_method: "pix",
-      amount: 22_000,
+      amount: 220,
       status: "pending",
       ...data,
     } as DatabaseTypes["public"]["Tables"]["payment_transactions"]["Insert"])
