@@ -5,13 +5,7 @@
 DROP TABLE IF EXISTS payment_transactions;
 
 ALTER TABLE event_participants
+  DROP COLUMN IF EXISTS payment_transaction_id,
   DROP COLUMN IF EXISTS payment_link_token,
   DROP COLUMN IF EXISTS payment_link_generated_at,
   DROP COLUMN IF EXISTS payment_link_expires_at;
-
--- Remove 'cancelled' from payment_transaction_status enum if it exists
-DO $$ BEGIN
-  DROP TYPE IF EXISTS payment_transaction_status;
-EXCEPTION
-  WHEN dependent_objects_still_exist THEN null;
-END $$;
