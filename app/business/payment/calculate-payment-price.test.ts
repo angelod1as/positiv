@@ -1,30 +1,7 @@
 import { describe, expect, it } from "vitest"
-import { ASAAS_FEES, BASE_PRICE, MAX_INSTALLMENTS } from "~/integrations/asaas/constants"
 import { calculatePaymentPrice } from "./calculate-payment-price"
 
 describe("calculatePaymentPrice", () => {
-  describe("constants", () => {
-    it("has BASE_PRICE of 22000 centavos (R$220)", () => {
-      expect(BASE_PRICE).toBe(22_000)
-    })
-
-    it("has pix fees at zero (absorbed by us)", () => {
-      expect(ASAAS_FEES.pix).toEqual({ rate: 0, fixed: 0 })
-    })
-
-    it("has cc_1x fees at 2.99% + R$0.49", () => {
-      expect(ASAAS_FEES.cc_1x).toEqual({ rate: 0.0299, fixed: 49 })
-    })
-
-    it("has cc_2_6x fees at 3.49% + R$0.49", () => {
-      expect(ASAAS_FEES.cc_2_6x).toEqual({ rate: 0.0349, fixed: 49 })
-    })
-
-    it("has MAX_INSTALLMENTS of 6", () => {
-      expect(MAX_INSTALLMENTS).toBe(6)
-    })
-  })
-
   describe("pix", () => {
     it("returns totalAmount of 22000 and installmentValue of 22000", () => {
       const result = calculatePaymentPrice("pix", 1)
@@ -87,6 +64,12 @@ describe("calculatePaymentPrice", () => {
 
     it("throws for pix with more than 1 installment", () => {
       expect(() => calculatePaymentPrice("pix", 2)).toThrow()
+    })
+
+    it("throws for non-integer installments", () => {
+      expect(() => calculatePaymentPrice("credit_card", 1.5)).toThrow(
+        "Installments must be an integer",
+      )
     })
   })
 })

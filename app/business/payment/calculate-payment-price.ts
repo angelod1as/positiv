@@ -1,6 +1,5 @@
 import { ASAAS_FEES, BASE_PRICE, MAX_INSTALLMENTS } from "~/integrations/asaas/constants"
-
-type PaymentMethod = "pix" | "credit_card"
+import type { PaymentMethod } from "~/integrations/asaas/types"
 
 interface PaymentPrice {
   totalAmount: number
@@ -17,6 +16,10 @@ export function calculatePaymentPrice(
   method: PaymentMethod,
   installments: number,
 ): PaymentPrice {
+  if (!Number.isInteger(installments)) {
+    throw new Error("Installments must be an integer")
+  }
+
   if (installments < 1 || installments > MAX_INSTALLMENTS) {
     throw new Error(
       `Installments must be between 1 and ${MAX_INSTALLMENTS}, got ${installments}`,
