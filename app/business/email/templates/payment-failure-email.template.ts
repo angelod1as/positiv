@@ -6,15 +6,15 @@ export const paymentFailureEmailTemplate = (
   eventTitle: string,
   eventEmoji: string | null,
   failureReason: string | null,
-  paymentLink: string | null,
+  paymentLink: string,
 ): string => {
   const sanitizedName = sanitizeHtml(participantName)
   const sanitizedEmoji = sanitizeHtml(eventEmoji || "")
   const sanitizedTitle = sanitizeHtml(eventTitle || "")
   const sanitizedReason = failureReason ? sanitizeHtml(failureReason) : null
-  const safePaymentLink = paymentLink && /^https?:\/\//i.test(paymentLink)
+  const safePaymentLink = /^https?:\/\//i.test(paymentLink)
     ? paymentLink.replace(/["'<>]/g, "")
-    : null
+    : "#"
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -76,12 +76,12 @@ export const paymentFailureEmailTemplate = (
                 </div>
               </div>` : ""}
 
-              ${safePaymentLink ? `<!-- CTA Button -->
+              <!-- CTA Button -->
               <div style="text-align: center; margin: 0 0 20px 0;">
                 <a href="${safePaymentLink}" style="display: inline-block; background: #b7002d; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(183,0,45,0.3);">
                   Tentar novamente
                 </a>
-              </div>` : ""}
+              </div>
 
               <!-- Support text -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 0 0; color: #666; text-align: center;">

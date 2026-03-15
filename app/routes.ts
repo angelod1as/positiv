@@ -18,7 +18,6 @@ export default [
     "/api/admin/send-registration-limit-email",
     "pages/api/admin/send-registration-limit-email.ts",
   ),
-  route("/api/webhooks/asaas", "routes/api.asaas-webhook.ts"),
   route("/robots.txt", "routes/robots[.txt].ts"),
   route("/sitemap.xml", "routes/sitemap[.xml].ts"),
 
