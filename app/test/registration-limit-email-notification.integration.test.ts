@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { createTestEvent, createTestProfile } from "~/test/db-test-utils"
+import { createTestEvent, createTestProfile, createTestAdminUser } from "~/test/db-test-utils"
 import { action } from "~/pages/api/admin/send-registration-limit-email"
 import * as sendEmailModule from "~/business/email/send-email"
 
@@ -19,6 +19,14 @@ describe("Registration Limit Email Notification - E2E Integration", () => {
       errors: [],
     })
     process.env.INTERNAL_JOB_SECRET = mockSecret
+
+    // Create an admin user for tests that need admin emails
+    await createTestAdminUser(
+      tracker,
+      kysely,
+      `test-admin-${Date.now()}@example.com`,
+      { full_name: "Test Admin" }
+    )
   })
 
   afterEach(async () => {
