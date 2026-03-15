@@ -14,29 +14,29 @@ import {
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import type { Route } from "./+types/payment-page"
 
-const TICKET_PRICE_CENTS = 220_00
+const TICKET_PRICE = 220
 
-function formatCurrency(cents: number) {
+function formatCurrency(reais: number) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(cents / 100)
+  }).format(reais)
 }
 
 function formatOptionLabel(o: PaymentOption) {
   if (o.billingType === "PIX") {
-    return `Pix — ${formatCurrency(o.totalCents)}`
+    return `Pix — ${formatCurrency(o.totalReais)}`
   }
   if (o.installments === 1) {
-    return `Cartão 1x — ${formatCurrency(o.totalCents)}`
+    return `Cartão 1x — ${formatCurrency(o.totalReais)}`
   }
-  return `Cartão ${o.installments}x de ${formatCurrency(o.perInstallmentCents)} (total ${formatCurrency(o.totalCents)})`
+  return `Cartão ${o.installments}x de ${formatCurrency(o.perInstallmentReais)} (total ${formatCurrency(o.totalReais)})`
 }
 
 export function loader() {
   assertPaymentSystemOnline()
 
-  const paymentOptions = buildPaymentOptions(TICKET_PRICE_CENTS)
+  const paymentOptions = buildPaymentOptions(TICKET_PRICE)
   const dropdownOptions = paymentOptions.map((o) => ({
     name: formatOptionLabel(o),
     value: o.value,
@@ -47,7 +47,7 @@ export function loader() {
 
 const mutation = applySchema(paymentFormSchema)(
   async ({ paymentOption: selectedValue }) => {
-    const paymentOptions = buildPaymentOptions(TICKET_PRICE_CENTS)
+    const paymentOptions = buildPaymentOptions(TICKET_PRICE)
     const option = paymentOptions.find((o) => o.value === selectedValue)
     if (!option) throw new Error("Opção de pagamento inválida")
 
@@ -63,7 +63,7 @@ const mutation = applySchema(paymentFormSchema)(
     const payment = await createAsaasPayment({
       customerId: customer.id,
       billingType: option.billingType,
-      value: option.totalCents / 100,
+      value: option.totalReais,
       dueDate,
       description: "Positiv — Ingresso",
       installmentCount:

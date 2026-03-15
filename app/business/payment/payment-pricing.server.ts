@@ -24,56 +24,59 @@ function getFeeConfig(installments: number): InstallmentFeeConfig {
 }
 
 export function calculateChargeAmount(
-  ticketPriceCents: number,
+  ticketPrice: number,
   installments: number,
 ): number {
+  const ticketPriceCents = Math.round(ticketPrice * 100)
   const { percentFee, fixedFeeCents, monthlyAnticipationRate } =
     getFeeConfig(installments)
   const anticipationFactor = 1 - monthlyAnticipationRate * installments
   const grossCents =
     (ticketPriceCents / anticipationFactor + fixedFeeCents) / (1 - percentFee)
-  return Math.ceil(grossCents)
+  return Math.ceil(grossCents) / 100
 }
 
 export function calculateInstallmentValue(
-  ticketPriceCents: number,
+  ticketPrice: number,
   installments: number,
 ): number {
-  const totalCents = calculateChargeAmount(ticketPriceCents, installments)
-  return Math.ceil(totalCents / installments)
+  const totalReais = calculateChargeAmount(ticketPrice, installments)
+  const totalCents = Math.round(totalReais * 100)
+  return Math.ceil(totalCents / installments) / 100
 }
 
 export type PaymentOption = {
   value: string
   billingType: "PIX" | "CREDIT_CARD"
   installments: number
-  totalCents: number
-  perInstallmentCents: number
+  totalReais: number
+  perInstallmentReais: number
 }
 
 export const MAX_INSTALLMENTS = 4
 
-export function buildPaymentOptions(ticketPriceCents: number): PaymentOption[] {
+export function buildPaymentOptions(ticketPrice: number): PaymentOption[] {
   const options: PaymentOption[] = [
     {
       value: "PIX",
       billingType: "PIX",
       installments: 1,
-      totalCents: ticketPriceCents,
-      perInstallmentCents: ticketPriceCents,
+      totalReais: ticketPrice,
+      perInstallmentReais: ticketPrice,
     },
   ]
 
   for (let i = 1; i <= MAX_INSTALLMENTS; i++) {
-    const perInstallmentCents = calculateInstallmentValue(ticketPriceCents, i)
-    const totalCents = perInstallmentCents * i
+    const perInstallmentReais = calculateInstallmentValue(ticketPrice, i)
+    const totalReais =
+      Math.round(perInstallmentReais * i * 100) / 100
 
     options.push({
       value: `CC_${i}`,
       billingType: "CREDIT_CARD",
       installments: i,
-      totalCents,
-      perInstallmentCents,
+      totalReais,
+      perInstallmentReais,
     })
   }
 
