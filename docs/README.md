@@ -4,10 +4,6 @@ Welcome to the Positiv project documentation. This directory contains all techni
 
 ## Table of Contents
 
-### 📋 Planning Documents
-
-- [Payment System](./payment-system.md) - Asaas payment integration plan (provider decision, architecture, implementation phases)
-
 ### 🏗️ Architecture Decision Records (ADRs)
 
 We use [Log4brains](https://github.com/thomvaill/log4brains) to manage ADRs. Browse them with:
