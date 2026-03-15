@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto"
 import { env } from "~/env.server"
-import { ASAAS_API_URLS, ASAAS_REQUIRED_HEADERS, PAYMENT_METHOD_CONFIG } from "./constants"
+import { ASAAS_API_URLS, ASAAS_REQUIRED_HEADERS } from "./constants"
 import type {
   AsaasCustomer,
   AsaasListResponse,
@@ -37,9 +37,8 @@ export async function createPaymentCharge(
   params: CreatePaymentChargeParams
 ): Promise<AsaasPayment> {
   const { baseUrl, headers } = getAsaasConfig()
-  const { billingType, amount, installmentCount } = PAYMENT_METHOD_CONFIG[params.paymentMethod]
-
-  const valueInReais = amount / 100
+  const billingType = params.paymentMethod === "pix" ? "PIX" : "CREDIT_CARD"
+  const valueInReais = params.amount / 100
 
   const body: Record<string, unknown> = {
     customer: params.customer,
@@ -49,7 +48,9 @@ export async function createPaymentCharge(
     description: params.description,
     externalReference: params.externalReference,
     callback: params.callback,
-    ...(installmentCount !== undefined && { installmentCount, totalValue: valueInReais }),
+    ...(params.installments && params.installments > 1
+      ? { installmentCount: params.installments, totalValue: valueInReais }
+      : {}),
   }
 
   const response = await fetch(`${baseUrl}/payments`, {

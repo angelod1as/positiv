@@ -169,6 +169,8 @@ export interface CreatePaymentChargeParams {
   paymentMethod: PaymentMethod
   customer: string
   dueDate: string
+  amount: number
+  installments?: number
   description?: string
   externalReference?: string
   callback?: { successUrl: string; autoRedirect?: boolean }

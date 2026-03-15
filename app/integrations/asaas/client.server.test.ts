@@ -163,11 +163,12 @@ describe("createPaymentCharge", () => {
     vi.restoreAllMocks()
   })
 
-  it("creates PIX charge with value in reais (centavos / 100) and billingType PIX", async () => {
+  it("creates PIX charge with explicit amount converted to reais and billingType PIX", async () => {
     const params: CreatePaymentChargeParams = {
       paymentMethod: "pix",
       customer: "cus_xyz789",
       dueDate: "2026-03-15",
+      amount: 22_000,
     }
 
     await createPaymentCharge(params)
@@ -178,11 +179,13 @@ describe("createPaymentCharge", () => {
     expect(body.installmentCount).toBeUndefined()
   })
 
-  it("creates CREDIT_CARD charge with value in reais and 6 installments", async () => {
+  it("creates CREDIT_CARD charge with explicit amount and installments", async () => {
     const params: CreatePaymentChargeParams = {
       paymentMethod: "credit_card",
       customer: "cus_xyz789",
       dueDate: "2026-03-15",
+      amount: 22_707,
+      installments: 6,
     }
 
     await createPaymentCharge(params)
@@ -194,11 +197,30 @@ describe("createPaymentCharge", () => {
     expect(body.totalValue).toBe(227.07)
   })
 
+  it("creates CREDIT_CARD charge without installments when installments is 1", async () => {
+    const params: CreatePaymentChargeParams = {
+      paymentMethod: "credit_card",
+      customer: "cus_xyz789",
+      dueDate: "2026-03-15",
+      amount: 22_707,
+      installments: 1,
+    }
+
+    await createPaymentCharge(params)
+
+    const body = getLastFetchBody()
+    expect(body.billingType).toBe("CREDIT_CARD")
+    expect(body.value).toBe(227.07)
+    expect(body.installmentCount).toBeUndefined()
+    expect(body.totalValue).toBeUndefined()
+  })
+
   it("POSTs to the correct payments endpoint", async () => {
     const params: CreatePaymentChargeParams = {
       paymentMethod: "pix",
       customer: "cus_xyz789",
       dueDate: "2026-03-15",
+      amount: 22_000,
     }
 
     await createPaymentCharge(params)
@@ -217,6 +239,7 @@ describe("createPaymentCharge", () => {
       paymentMethod: "pix",
       customer: "cus_xyz789",
       dueDate: "2026-03-15",
+      amount: 22_000,
       description: "Event registration",
       externalReference: "ref-123",
       callback: { successUrl: "https://example.com/success", autoRedirect: true },
@@ -240,6 +263,7 @@ describe("createPaymentCharge", () => {
       paymentMethod: "pix",
       customer: "cus_xyz789",
       dueDate: "2026-03-15",
+      amount: 22_000,
     }
 
     const result = await createPaymentCharge(params)
@@ -259,6 +283,7 @@ describe("createPaymentCharge", () => {
       paymentMethod: "pix",
       customer: "invalid",
       dueDate: "2026-03-15",
+      amount: 22_000,
     }
 
     await expect(createPaymentCharge(params)).rejects.toThrow(
@@ -273,6 +298,7 @@ describe("createPaymentCharge", () => {
       paymentMethod: "credit_card",
       customer: "cus_xyz789",
       dueDate: "2026-03-15",
+      amount: 22_707,
     }
 
     await expect(createPaymentCharge(params)).rejects.toThrow("Network error")
@@ -290,6 +316,7 @@ describe("createPaymentCharge", () => {
       paymentMethod: "pix",
       customer: "cus_xyz789",
       dueDate: "2026-03-15",
+      amount: 22_000,
     }
 
     await expect(createPaymentCharge(params)).rejects.toThrow(
@@ -302,6 +329,7 @@ describe("createPaymentCharge", () => {
       paymentMethod: "pix",
       customer: "cus_xyz789",
       dueDate: "2026-03-15",
+      amount: 22_000,
     }
 
     await createPaymentCharge(params)
