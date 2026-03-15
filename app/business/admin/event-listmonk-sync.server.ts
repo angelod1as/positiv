@@ -293,7 +293,7 @@ async function removeIneligibleSubscribers(
       } catch (error) {
         logger.error(
           `Failed to remove subscriber ${subscriber.email} from list ${listId}:`,
-          error,
+          { error },
         )
       }
     }
