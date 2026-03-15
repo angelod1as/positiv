@@ -1,14 +1,12 @@
 import { describe, expect, it } from "vitest"
 import {
   ASAAS_API_URLS,
-  ASAAS_FEES,
   ASAAS_REQUIRED_HEADERS,
-  BASE_PRICE,
   BILLING_TYPE_TO_PAYMENT_METHOD,
   formatCentavos,
   HANDLED_WEBHOOK_EVENTS,
-  MAX_INSTALLMENTS,
   PAYMENT_LINK_EXPIRY_HOURS,
+  PAYMENT_PRICING,
   WEBHOOK_EVENT_TO_TRANSACTION_STATUS,
 } from "./constants"
 
@@ -33,29 +31,14 @@ describe("Asaas constants", () => {
     })
   })
 
-  describe("BASE_PRICE", () => {
-    it("is 22000 centavos (R$ 220)", () => {
-      expect(BASE_PRICE).toBe(22_000)
-    })
-  })
-
-  describe("ASAAS_FEES", () => {
-    it("has pix fees at zero", () => {
-      expect(ASAAS_FEES.pix).toEqual({ rate: 0, fixed: 0 })
+  describe("PAYMENT_PRICING", () => {
+    it("has pix at 22000 centavos (R$ 220)", () => {
+      expect(PAYMENT_PRICING.pix.amount).toBe(22_000)
     })
 
-    it("has cc_1x fees at 2.99% + R$0.49", () => {
-      expect(ASAAS_FEES.cc_1x).toEqual({ rate: 0.0299, fixed: 49 })
-    })
-
-    it("has cc_2_6x fees at 3.49% + R$0.49", () => {
-      expect(ASAAS_FEES.cc_2_6x).toEqual({ rate: 0.0349, fixed: 49 })
-    })
-  })
-
-  describe("MAX_INSTALLMENTS", () => {
-    it("is 6", () => {
-      expect(MAX_INSTALLMENTS).toBe(6)
+    it("has credit card at 22700 centavos (R$ 227) with 6 max installments", () => {
+      expect(PAYMENT_PRICING.creditCard.amount).toBe(22_700)
+      expect(PAYMENT_PRICING.creditCard.maxInstallments).toBe(6)
     })
   })
 

@@ -1,4 +1,4 @@
-import { formatCentavos, MAX_INSTALLMENTS, PAYMENT_METHOD_CONFIG } from "~/integrations/asaas/constants"
+import { formatCentavos, PAYMENT_PRICING } from "~/integrations/asaas/constants"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
@@ -22,9 +22,9 @@ export const paymentLinkEmailTemplate = (
   const safePaymentLink = /^https?:\/\//i.test(paymentLink) ? paymentLink : "#"
   const { date: expiryDate, time: expiryTime } = formatDateTime(expiresAt.toISOString())
 
-  const pixAmount = formatCentavos(PAYMENT_METHOD_CONFIG.pix.amount)
-  const creditAmount = formatCentavos(PAYMENT_METHOD_CONFIG.credit_card.amount)
-  const maxInstallments = MAX_INSTALLMENTS
+  const pixAmount = formatCentavos(PAYMENT_PRICING.pix.amount)
+  const creditAmount = formatCentavos(PAYMENT_PRICING.creditCard.amount)
+  const maxInstallments = PAYMENT_PRICING.creditCard.maxInstallments
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">

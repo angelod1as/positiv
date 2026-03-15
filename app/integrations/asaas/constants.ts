@@ -15,15 +15,10 @@ export const ASAAS_REQUIRED_HEADERS = {
   "Content-Type": "application/json",
 } as const
 
-export const BASE_PRICE = 22_000
-
-export const ASAAS_FEES = {
-  pix: { rate: 0, fixed: 0 },
-  cc_1x: { rate: 0.0299, fixed: 49 },
-  cc_2_6x: { rate: 0.0349, fixed: 49 },
+export const PAYMENT_PRICING = {
+  pix: { amount: 22_000 },
+  creditCard: { amount: 22_700, maxInstallments: 6 },
 } as const
-
-export const MAX_INSTALLMENTS = 6
 
 export function formatCentavos(centavos: number): string {
   return (centavos / 100).toFixed(2).replace(".", ",")
@@ -39,12 +34,12 @@ export const PAYMENT_METHOD_CONFIG: Record<
 > = {
   pix: {
     billingType: "PIX",
-    amount: BASE_PRICE,
+    amount: PAYMENT_PRICING.pix.amount,
   },
   credit_card: {
     billingType: "CREDIT_CARD",
-    amount: Math.ceil(BASE_PRICE * (1 + ASAAS_FEES.cc_1x.rate) + ASAAS_FEES.cc_1x.fixed),
-    installmentCount: MAX_INSTALLMENTS,
+    amount: PAYMENT_PRICING.creditCard.amount,
+    installmentCount: PAYMENT_PRICING.creditCard.maxInstallments,
   },
 }
 
