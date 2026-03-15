@@ -80,6 +80,10 @@ export async function validatePaymentToken(
 
   const displayName = participant.social_name ?? participant.full_name ?? "Participante"
 
+  if (!participant.profile_id) {
+    return { status: "not_found" }
+  }
+
   return {
     status: "ready",
     data: {

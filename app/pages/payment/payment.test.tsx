@@ -40,7 +40,7 @@ vi.mock("~/components/atoms/button/button", () => ({
     children: React.ReactNode
     to?: string
     variant?: string
-    type?: string
+    type?: "button" | "submit" | "reset"
     disabled?: boolean
     linkProps?: Record<string, string>
   }) => {
