@@ -57,7 +57,6 @@ export async function cleanupTestData(
   // Perform batch deletions for each table
   // Order matters due to foreign key constraints - delete in reverse order of dependencies
   const tableOrder = [
-    "payment_transactions",
     "event_participants",
     "event_demographics_history",
     "events",
@@ -71,12 +70,6 @@ export async function cleanupTestData(
 
     try {
       switch (table) {
-        case "payment_transactions":
-          await kysely
-            .deleteFrom("payment_transactions")
-            .where("id", "in", ids)
-            .execute()
-          break
         case "event_participants":
           await kysely
             .deleteFrom("event_participants")
@@ -187,34 +180,6 @@ export async function createTestEventParticipant(
   
   tracker.track("event_participants", participant.id)
   return participant
-}
-
-export async function createTestPaymentTransaction(
-  tracker: TestDataTracker,
-  kysely: Kysely<Database>,
-  data: {
-    event_participant_id: string
-    profile_id: string
-    event_id: string
-    asaas_payment_id: string
-    [key: string]: unknown
-  }
-): Promise<Selectable<DatabaseTypes["public"]["Tables"]["payment_transactions"]["Row"]>> {
-  const tx = await kysely
-    .insertInto("payment_transactions")
-    .values({
-      asaas_customer_id: "cus_test",
-      asaas_payment_data: { id: data.asaas_payment_id },
-      payment_method: "pix",
-      amount: 22_000,
-      status: "pending",
-      ...data,
-    } as DatabaseTypes["public"]["Tables"]["payment_transactions"]["Insert"])
-    .returningAll()
-    .executeTakeFirstOrThrow()
-
-  tracker.track("payment_transactions", tx.id)
-  return tx
 }
 
 /**

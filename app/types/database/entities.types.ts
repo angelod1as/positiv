@@ -152,17 +152,6 @@ export type ProfileGlobal = Profile & {
   last_attended_event_id: string | null
 }
 
-/**
- * Payment transaction row with corrected amount type.
- * PostgreSQL numeric(10,2) is returned as string by the pg driver — the
- * auto-generated type says `number` but the runtime value is always a string
- * (e.g. "227.00"). Use this type instead of the raw Row type.
- */
-export type PaymentTransaction = Omit<
-  Database["public"]["Tables"]["payment_transactions"]["Row"],
-  "amount"
-> & { amount: string }
-
 /** Filters and pagination for getAllProfiles query */
 export type GetAllProfilesFilters = {
   gender?: string[]

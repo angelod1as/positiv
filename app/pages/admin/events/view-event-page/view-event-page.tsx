@@ -15,12 +15,9 @@ import {
   updateEventStatus,
 } from "~/business/admin/admin.server"
 import {
-  generatePaymentLinkSchema,
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
 } from "~/business/admin/common"
-import { generatePaymentLink } from "~/business/admin/generate-payment-link.server"
-import { isPaymentSystemEnabled } from "~/lib/features.server"
 import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
@@ -45,8 +42,7 @@ const {
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getAdminContext(request, params)
-  const formValues = await inputFromForm(request)
-  const { intent } = formValues
+  const { intent } = await inputFromForm(request)
 
   if (intent === "update-event-participant") {
     return await formAction({
@@ -75,60 +71,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       context: { ...context, eventId: params.id },
       transformResult: (result) => ({ ...result, intent }),
     })
-  }
-
-  if (intent === "generate-payment-link") {
-    if (!isPaymentSystemEnabled()) {
-      return {
-        success: false,
-        errors: [{ message: "Payment system is not enabled" }],
-        intent,
-      }
-    }
-
-    const eventId = params.id
-    if (!eventId) {
-      return {
-        success: false,
-        errors: [{ message: "Event ID not found" }],
-        intent,
-      }
-    }
-
-    if (!context.currentProfile) {
-      return {
-        success: false,
-        errors: [{ message: "Admin profile not found" }],
-        intent,
-      }
-    }
-
-    const parsed = generatePaymentLinkSchema.safeParse(formValues)
-    if (!parsed.success) {
-      return {
-        success: false,
-        errors: parsed.error.issues.map((e) => ({ message: e.message })),
-        intent,
-      }
-    }
-
-    try {
-      const result = await generatePaymentLink({
-        profileId: parsed.data.profileId,
-        eventId,
-        adminProfileId: context.currentProfile.id,
-      })
-      return { success: true, intent, ...result }
-    } catch (error) {
-      console.error("Failed to generate payment link:", error)
-      const message =
-        error instanceof Error ? error.message : "Unknown error"
-      return {
-        success: false,
-        errors: [{ message }],
-        intent,
-      }
-    }
   }
 
   if (intent === "sync-listmonk-list") {

@@ -13,11 +13,6 @@ const getEnvironment = makeTypedEnvironment(
     IS_PROD: zod.string().optional(),
     IS_PROD_IN_DEV: zod.string().optional(),
 
-    ENABLE_PAYMENT_SYSTEM: zod
-      .enum(["true", "false"])
-      .default("false")
-      .transform((val) => val === "true"),
-
     TEST_USER_ADMIN_EMAIL: zod.string().optional(),
     TEST_USER_PASSWORD: zod.string().optional(),
 
@@ -47,11 +42,6 @@ const getEnvironment = makeTypedEnvironment(
 
     COOKIE_SECRET: zod.string().optional(),
 
-    ASAAS_API_KEY: zod.string().optional(),
-    ASAAS_WEBHOOK_TOKEN: zod.string().optional(),
-    ASAAS_ENVIRONMENT: zod
-      .enum(["sandbox", "production"])
-      .default("sandbox"),
     APP_URL: zod.string().optional(),
 
     TELEGRAM_BOT_TOKEN: zod.string().optional(),

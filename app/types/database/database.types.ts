@@ -182,10 +182,6 @@ export type Database = {
           is_user_applied: boolean
           notes: string | null
           payment: number
-          payment_link_expires_at: string | null
-          payment_link_generated_at: string | null
-          payment_link_token: string | null
-          payment_transaction_id: string | null
           profile_id: string | null
           referrals: string | null
           referred: string
@@ -208,10 +204,6 @@ export type Database = {
           is_user_applied?: boolean
           notes?: string | null
           payment?: number
-          payment_link_expires_at?: string | null
-          payment_link_generated_at?: string | null
-          payment_link_token?: string | null
-          payment_transaction_id?: string | null
           profile_id?: string | null
           referrals?: string | null
           referred?: string
@@ -234,10 +226,6 @@ export type Database = {
           is_user_applied?: boolean
           notes?: string | null
           payment?: number
-          payment_link_expires_at?: string | null
-          payment_link_generated_at?: string | null
-          payment_link_token?: string | null
-          payment_transaction_id?: string | null
           profile_id?: string | null
           referrals?: string | null
           referred?: string
@@ -251,13 +239,6 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_participants_payment_transaction_id_fkey"
-            columns: ["payment_transaction_id"]
-            isOneToOne: false
-            referencedRelation: "payment_transactions"
             referencedColumns: ["id"]
           },
           {
@@ -460,98 +441,6 @@ export type Database = {
             foreignKeyName: "newsletter_subscriptions_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payment_transactions: {
-        Row: {
-          amount: number
-          asaas_customer_id: string
-          asaas_payment_data: Json
-          asaas_payment_id: string
-          confirmed_at: string | null
-          created_at: string
-          created_by: string | null
-          event_id: string
-          event_participant_id: string
-          failed_at: string | null
-          id: string
-          installments: number | null
-          payment_method: string
-          profile_id: string
-          refund_reason: string | null
-          refunded_at: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          amount: number
-          asaas_customer_id: string
-          asaas_payment_data: Json
-          asaas_payment_id: string
-          confirmed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          event_id: string
-          event_participant_id: string
-          failed_at?: string | null
-          id?: string
-          installments?: number | null
-          payment_method: string
-          profile_id: string
-          refund_reason?: string | null
-          refunded_at?: string | null
-          status: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          asaas_customer_id?: string
-          asaas_payment_data?: Json
-          asaas_payment_id?: string
-          confirmed_at?: string | null
-          created_at?: string
-          created_by?: string | null
-          event_id?: string
-          event_participant_id?: string
-          failed_at?: string | null
-          id?: string
-          installments?: number | null
-          payment_method?: string
-          profile_id?: string
-          refund_reason?: string | null
-          refunded_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payment_transactions_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_transactions_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_transactions_event_participant_id_fkey"
-            columns: ["event_participant_id"]
-            isOneToOne: false
-            referencedRelation: "event_participants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payment_transactions_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

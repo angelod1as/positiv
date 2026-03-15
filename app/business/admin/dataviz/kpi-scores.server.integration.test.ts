@@ -12,7 +12,6 @@ describe("getKpiScores - Extended KPI Data", () => {
 
   beforeEach(async () => {
     tracker.clear()
-    await kysely.deleteFrom("payment_transactions").execute()
     await kysely.deleteFrom("event_participants").execute()
     await kysely.deleteFrom("profiles").execute()
   })

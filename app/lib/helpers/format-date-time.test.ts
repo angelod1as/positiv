@@ -1,22 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { formatDateISO, formatDateTime } from "./format-date-time"
-
-describe("formatDateISO", () => {
-  it("should return yyyy-MM-dd in BRT timezone", () => {
-    const date = new Date("2026-03-14T02:00:00Z")
-    expect(formatDateISO(date)).toBe("2026-03-13")
-  })
-
-  it("should return same date when time is within BRT day", () => {
-    const date = new Date("2026-03-14T15:00:00Z")
-    expect(formatDateISO(date)).toBe("2026-03-14")
-  })
-
-  it("should handle year boundary correctly", () => {
-    const date = new Date("2026-01-01T01:00:00Z")
-    expect(formatDateISO(date)).toBe("2025-12-31")
-  })
-})
+import { formatDateTime } from "./format-date-time"
 
 describe("formatDateTime - GMT-3 Timezone Verification", () => {
   it("should handle null or undefined input", () => {

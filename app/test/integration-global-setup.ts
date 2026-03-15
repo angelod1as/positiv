@@ -12,9 +12,8 @@ const RUN_ID = process.pid
 const TABLES = [
   "profiles",                   // seeded; wiped by kpi-scores (no WHERE)
   "user_roles",                 // seeded; references auth.users, not profiles
-  "events",                     // seeded; referenced by event_participants, payment_transactions
+  "events",                     // seeded; referenced by event_participants
   "event_participants",         // seeded; wiped by kpi-scores and dataviz (no WHERE)
-  "payment_transactions",       // wiped by kpi-scores and dataviz (no WHERE)
   "event_demographics_history", // wiped by demographics-history (no WHERE)
   "newsletter_subscriptions",   // seeded; not in TestDataTracker tableOrder — relies on this global restore
 ]
