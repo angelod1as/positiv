@@ -12,6 +12,7 @@ import {
 import type { AsaasWebhookPayload } from "~/integrations/asaas/types"
 import { env } from "~/env.server"
 import { kyselyDb } from "~/kysely-db"
+import { logger } from "~/lib/logger/logger.server"
 
 export async function handleWebhookPayment(
   payload: AsaasWebhookPayload,
@@ -98,9 +99,9 @@ async function cancelSiblingTransactions(
     try {
       await deletePayment(sibling.asaas_payment_id)
     } catch (error) {
-      console.error(
+      logger.error(
         `Failed to delete sibling payment ${sibling.asaas_payment_id} in Asaas:`,
-        error,
+        { error },
       )
     }
 
@@ -111,9 +112,9 @@ async function cancelSiblingTransactions(
         .where("id", "=", sibling.id)
         .execute()
     } catch (error) {
-      console.error(
+      logger.error(
         `Failed to mark sibling ${sibling.id} as cancelled:`,
-        error,
+        { error },
       )
     }
   }
@@ -170,7 +171,7 @@ async function sendConfirmationEmail(
       text,
     })
   } catch (error) {
-    console.error("Failed to send confirmation email:", error)
+    logger.error("Failed to send confirmation email:", { error })
   }
 }
 
@@ -240,7 +241,7 @@ async function sendFailureEmail(
       text,
     })
   } catch (error) {
-    console.error("Failed to send failure email:", error)
+    logger.error("Failed to send failure email:", { error })
   }
 }
 

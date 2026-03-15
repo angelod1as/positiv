@@ -35,6 +35,15 @@ vi.mock("~/kysely-db", () => ({
   },
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+  },
+}))
+
 import { isPaymentSystemEnabled } from "~/lib/features.server"
 import { env } from "~/env.server"
 import { kyselyDb } from "~/kysely-db"
@@ -46,6 +55,7 @@ import {
 import { sendEmail } from "~/business/email/send-email"
 import { formatPaymentLinkMail } from "~/business/email/format-payment-link-mail"
 import { getPaymentLinkEmailSubject } from "~/business/email/templates/payment-link-email.template"
+import { logger } from "~/lib/logger/logger.server"
 import { generatePaymentLink } from "./generate-payment-link.server"
 
 const mockEnv = {
@@ -622,8 +632,6 @@ describe("generatePaymentLink", () => {
       } as never)
       vi.mocked(deletePayment).mockRejectedValue(new Error("Asaas API down"))
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
       await expect(
         generatePaymentLink({
           profileId: "prof-1",
@@ -632,8 +640,10 @@ describe("generatePaymentLink", () => {
         })
       ).rejects.toThrow("DB error")
 
-      expect(consoleSpy).toHaveBeenCalled()
-      consoleSpy.mockRestore()
+      expect(logger.error).toHaveBeenCalledWith(
+        "Failed to clean up Asaas charges after DB error:",
+        expect.any(Object),
+      )
     })
   })
 
@@ -695,8 +705,6 @@ describe("generatePaymentLink", () => {
         errors: [new Error("SMTP error")],
       })
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
       const result = await generatePaymentLink({
         profileId: "prof-1",
         eventId: "evt-1",
@@ -705,16 +713,16 @@ describe("generatePaymentLink", () => {
 
       expect(result.token).toBeDefined()
       expect(result.pixInvoiceUrl).toBe("https://sandbox.asaas.com/i/pix-invoice")
-      expect(consoleSpy).toHaveBeenCalled()
-      consoleSpy.mockRestore()
+      expect(logger.error).toHaveBeenCalledWith(
+        "Failed to send payment link email:",
+        expect.any(Object),
+      )
     })
 
     it("still returns result when email formatting throws", async () => {
       setupHappyPathMocks()
       vi.mocked(formatPaymentLinkMail).mockRejectedValue(new Error("Template error"))
 
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {})
-
       const result = await generatePaymentLink({
         profileId: "prof-1",
         eventId: "evt-1",
@@ -723,8 +731,10 @@ describe("generatePaymentLink", () => {
 
       expect(result.token).toBeDefined()
       expect(result.pixInvoiceUrl).toBe("https://sandbox.asaas.com/i/pix-invoice")
-      expect(consoleSpy).toHaveBeenCalled()
-      consoleSpy.mockRestore()
+      expect(logger.error).toHaveBeenCalledWith(
+        "Error sending payment link email:",
+        expect.objectContaining({ error: expect.any(Error) }),
+      )
     })
   })
 })
