@@ -58,6 +58,9 @@ export async function action({ request }: Route.ActionArgs) {
       return { success: false, errors: result.errors }
     }
 
+    if (entries.application_status !== "sent_payment_data")
+      return { success: true }
+
     // When application_status changes to "sent_payment_data", we create a payment request
     // and send the payment link email. If this fails, we return success: false even though
     // the DB update succeeded — because from the admin's perspective, the intent was to
