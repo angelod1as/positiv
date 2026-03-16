@@ -6,6 +6,10 @@ import {
   createTestEventParticipant,
   createTestPaymentRequest,
 } from "~/test/db-test-utils"
+import {
+  getActivePaymentRequest,
+  markPaymentAsExpired,
+} from "./payment-request.server"
 
 describe("payment-request - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -69,19 +73,13 @@ describe("payment-request - Integration Tests", () => {
         status: "pending",
       })
 
-      const active = await kysely
-        .selectFrom("payment_requests")
-        .selectAll()
-        .where("event_participant_id", "=", participant.id)
-        .where("status", "not in", ["expired", "cancelled"])
-        .where("expires_at", ">", new Date().toISOString())
-        .executeTakeFirst()
+      const active = await getActivePaymentRequest(participant.id)
 
-      expect(active).toBeDefined()
+      expect(active).not.toBeNull()
       expect(active?.id).toBe(request.id)
     })
 
-    it("excludes expired requests", async () => {
+    it("returns null for expired requests", async () => {
       const { participant } = await setupParticipant()
 
       await createTestPaymentRequest(tracker, kysely, {
@@ -91,18 +89,12 @@ describe("payment-request - Integration Tests", () => {
         status: "pending",
       })
 
-      const active = await kysely
-        .selectFrom("payment_requests")
-        .selectAll()
-        .where("event_participant_id", "=", participant.id)
-        .where("status", "not in", ["expired", "cancelled"])
-        .where("expires_at", ">", new Date().toISOString())
-        .executeTakeFirst()
+      const active = await getActivePaymentRequest(participant.id)
 
-      expect(active).toBeUndefined()
+      expect(active).toBeNull()
     })
 
-    it("excludes cancelled requests", async () => {
+    it("returns null for cancelled requests", async () => {
       const { participant } = await setupParticipant()
 
       await createTestPaymentRequest(tracker, kysely, {
@@ -112,15 +104,9 @@ describe("payment-request - Integration Tests", () => {
         status: "cancelled",
       })
 
-      const active = await kysely
-        .selectFrom("payment_requests")
-        .selectAll()
-        .where("event_participant_id", "=", participant.id)
-        .where("status", "not in", ["expired", "cancelled"])
-        .where("expires_at", ">", new Date().toISOString())
-        .executeTakeFirst()
+      const active = await getActivePaymentRequest(participant.id)
 
-      expect(active).toBeUndefined()
+      expect(active).toBeNull()
     })
   })
 
@@ -135,11 +121,7 @@ describe("payment-request - Integration Tests", () => {
         status: "pending",
       })
 
-      await kysely
-        .updateTable("payment_requests")
-        .set({ status: "expired", updated_at: new Date().toISOString() })
-        .where("id", "=", request.id)
-        .execute()
+      await markPaymentAsExpired(request.id)
 
       const updated = await kysely
         .selectFrom("payment_requests")

@@ -55,8 +55,78 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
-import { resolvePaymentRequest } from "./trigger-payment-request.server"
+import { resolvePaymentRequest, handlePaymentStatusChange } from "./trigger-payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
+
+describe("handlePaymentStatusChange", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("returns triggered: false when status is not sent_payment_data", async () => {
+    const result = await handlePaymentStatusChange({
+      applicationStatus: "pending",
+      eventParticipantId: "ep-1",
+      eventId: "ev-1",
+      profileId: "pr-1",
+    })
+
+    expect(result.triggered).toBe(false)
+    expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+  })
+
+  it("returns triggered: false when status is undefined", async () => {
+    const result = await handlePaymentStatusChange({
+      applicationStatus: undefined,
+      eventParticipantId: "ep-1",
+      eventId: "ev-1",
+      profileId: "pr-1",
+    })
+
+    expect(result.triggered).toBe(false)
+  })
+
+  it("returns triggered: true with success when status is sent_payment_data", async () => {
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
+      undefined,
+      {
+        id: "pr-new",
+        event_participant_id: "ep-1",
+        amount: 220,
+        status: "pending",
+        expires_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+      },
+    ])
+
+    const result = await handlePaymentStatusChange({
+      applicationStatus: "sent_payment_data",
+      eventParticipantId: "ep-1",
+      eventId: "ev-1",
+      profileId: "pr-1",
+    })
+
+    expect(result.triggered).toBe(true)
+    if (result.triggered) expect(result.success).toBe(true)
+  })
+
+  it("returns triggered: true with failure when resolvePaymentRequest fails", async () => {
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Free Event", ticket_price: null },
+    ])
+
+    const result = await handlePaymentStatusChange({
+      applicationStatus: "sent_payment_data",
+      eventParticipantId: "ep-1",
+      eventId: "ev-1",
+      profileId: "pr-1",
+    })
+
+    expect(result.triggered).toBe(true)
+    if (result.triggered) expect(result.success).toBe(false)
+  })
+})
 
 describe("resolvePaymentRequest", () => {
   beforeEach(() => {

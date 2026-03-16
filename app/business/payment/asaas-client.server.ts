@@ -34,7 +34,7 @@ async function asaasFetch<T>(
       "Content-Type": "application/json",
       access_token: apiKey,
     },
-    body: JSON.stringify(body),
+    ...(method !== "GET" && { body: JSON.stringify(body) }),
   })
 
   if (!response.ok) {
@@ -92,7 +92,6 @@ export async function createAsaasPayment({
     installmentCount > 1
   ) {
     body.installmentCount = installmentCount
-    body.installmentValue = Number((value / installmentCount).toFixed(2))
   }
 
   return asaasFetch("/payments", body, asaasPaymentResponseSchema)

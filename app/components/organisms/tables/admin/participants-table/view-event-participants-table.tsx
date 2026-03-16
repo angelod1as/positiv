@@ -198,11 +198,12 @@ export const AdminViewEventParticipantsTable: FC<
       formData.append("intent", "update-event-participant")
       formData.append("id", rowData.id)
       formData.append("profile_id", rowData.profile_id ?? "")
+      formData.append("event_id", eventId)
       formData.append(params.field, String(params.newValue ?? ""))
 
       fetcher.submit(formData, { method: "POST" })
     },
-    [fetcher],
+    [fetcher, eventId],
   )
 
   const handleCellValueChanged = useCallback(

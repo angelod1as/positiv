@@ -62,6 +62,15 @@ describe("paymentLinkMailTemplate", () => {
     expect(html).not.toContain("onerror")
   })
 
+  it("rejects payment URLs with invalid protocol", () => {
+    expect(() =>
+      paymentLinkMailTemplate({
+        ...defaultParams,
+        paymentUrl: 'javascript:alert("xss")',
+      }),
+    ).toThrow("Invalid payment URL")
+  })
+
   it("is valid HTML", () => {
     const html = paymentLinkMailTemplate(defaultParams)
     expect(html).toContain("<!DOCTYPE html>")

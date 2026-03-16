@@ -59,6 +59,10 @@ export function paymentLinkMailTemplate({
   const safeEventName = sanitizeHtml(eventName)
   const formattedExpiry = formatDate(expiresAt)
 
+  if (!paymentUrl.startsWith("https://") && !paymentUrl.startsWith("http://")) {
+    throw new Error(`Invalid payment URL: must start with https:// or http://`)
+  }
+
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>

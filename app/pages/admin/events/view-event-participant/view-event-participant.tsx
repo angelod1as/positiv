@@ -8,9 +8,8 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
-import { resolvePaymentRequest } from "~/business/payment/trigger-payment-request.server"
+import { handlePaymentStatusChange } from "~/business/payment/trigger-payment-request.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
-import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-participant"
@@ -59,24 +58,17 @@ export async function action({ request }: Route.ActionArgs) {
       return { success: false, errors: result.errors }
     }
 
-    if (entries.application_status !== "sent_payment_data")
-      return { success: true }
-
     // When application_status changes to "sent_payment_data", we create a payment request
     // and send the payment link email. If this fails, we return success: false even though
     // the DB update succeeded — because from the admin's perspective, the intent was to
     // trigger payment and that part failed. The auto-save form will show the error toast.
-    const paymentResult = await resolvePaymentRequest(
-      entries.id as string,
-      entries.event_id as string,
-      entries.profile_id as string,
-    )
-    if (!paymentResult.success) {
-      logger.error("Failed to resolve payment request", {
-        errors: paymentResult.errors,
-        eventId: entries.event_id,
-        profileId: entries.profile_id,
-      })
+    const payment = await handlePaymentStatusChange({
+      applicationStatus: entries.application_status as string | undefined,
+      eventParticipantId: entries.id as string,
+      eventId: entries.event_id as string,
+      profileId: entries.profile_id as string,
+    })
+    if (payment.triggered && !payment.success) {
       return {
         success: false,
         errors: {

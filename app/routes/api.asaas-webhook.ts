@@ -83,15 +83,15 @@ export async function action({ request }: ActionFunctionArgs) {
     return fail({ error: "Payment system offline" }, 404)
   }
 
+  if (!isTokenValid(request)) {
+    logger.warn("Asaas webhook received with invalid token")
+    return fail({ error: "Invalid webhook token" }, 401)
+  }
+
   const body = await request.json().catch(() => null)
   if (!body) {
     logger.warn("Asaas webhook received with empty or unparseable body")
     return fail({ error: "Missing or invalid JSON body" }, 400)
-  }
-
-  if (!isTokenValid(request)) {
-    logger.warn("Asaas webhook received with invalid token", { event: body.event })
-    return fail({ error: "Invalid webhook token" }, 401)
   }
 
   const event = body.event as string

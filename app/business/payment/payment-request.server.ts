@@ -5,6 +5,8 @@ import {
 } from "./asaas-client.server"
 import { buildPaymentOptions } from "./payment-pricing.server"
 
+export const PAYMENT_REQUEST_EXPIRY_MS = 2 * 24 * 60 * 60 * 1000
+
 export async function createPaymentRequest({
   eventParticipantId,
   ticketPrice,
@@ -12,7 +14,7 @@ export async function createPaymentRequest({
   eventParticipantId: string
   ticketPrice: number
 }) {
-  const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+  const expiresAt = new Date(Date.now() + PAYMENT_REQUEST_EXPIRY_MS)
 
   return kyselyDb
     .insertInto("payment_requests")
@@ -27,13 +29,14 @@ export async function createPaymentRequest({
 }
 
 export async function getActivePaymentRequest(eventParticipantId: string) {
-  return kyselyDb
+  const result = await kyselyDb
     .selectFrom("payment_requests")
     .selectAll()
     .where("event_participant_id", "=", eventParticipantId)
     .where("status", "not in", ["expired", "cancelled"])
     .where("expires_at", ">", new Date().toISOString())
-    .executeTakeFirst() ?? null
+    .executeTakeFirst()
+  return result ?? null
 }
 
 function parsePaymentOption(paymentOption: string) {
@@ -95,7 +98,7 @@ export async function confirmPaymentChoice({
   const option = options.find((o) => o.value === paymentOption)
   if (!option) throw new Error(`Invalid payment option: ${paymentOption}`)
 
-  const dueDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+  const dueDate = new Date(Date.now() + PAYMENT_REQUEST_EXPIRY_MS)
     .toISOString()
     .split("T")[0]
 
