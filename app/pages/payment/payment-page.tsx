@@ -1,20 +1,22 @@
 import { applySchema } from "composable-functions"
 import { redirect, useLoaderData } from "react-router"
 import { formAction } from "remix-forms"
-import {
-  createAsaasCustomer,
-  createAsaasPayment,
-} from "~/business/payment/asaas-client.server"
+import { redirectWithError } from "remix-toast"
+import { getContext } from "~/business/auth/auth.server"
 import { paymentFormSchema } from "~/business/payment/payment-form-schema"
 import { assertPaymentSystemOnline } from "~/business/payment/payment-guard.server"
+import {
+  confirmPaymentChoice,
+  getActivePaymentRequest,
+} from "~/business/payment/payment-request.server"
 import {
   buildPaymentOptions,
   type PaymentOption,
 } from "~/business/payment/payment-pricing.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { kyselyDb } from "~/kysely-db"
+import paths from "~/lib/paths"
 import type { Route } from "./+types/payment-page"
-
-const TICKET_PRICE = 220
 
 function formatCurrency(reais: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -33,51 +35,107 @@ function formatOptionLabel(o: PaymentOption) {
   return `Cartão ${o.installments}x de ${formatCurrency(o.perInstallmentReais)} (total ${formatCurrency(o.totalReais)})`
 }
 
-export function loader() {
+async function getEventParticipantWithAuth(request: Request, params: Route.LoaderArgs["params"]) {
   assertPaymentSystemOnline()
 
-  const paymentOptions = buildPaymentOptions(TICKET_PRICE)
+  const { currentUser } = await getContext(request, params)
+  if (!currentUser) {
+    throw await redirectWithError(paths.auth.LOGIN, "Você precisa estar logade para acessar esta página.")
+  }
+
+  const eventParticipantId = params.eventParticipantId
+  if (!eventParticipantId) {
+    throw await redirectWithError(paths.root.HOME, "Link de pagamento inválido.")
+  }
+
+  const profile = await kyselyDb
+    .selectFrom("profiles")
+    .select(["id"])
+    .where("user_id", "=", currentUser.id)
+    .executeTakeFirst()
+
+  if (!profile) {
+    throw await redirectWithError(paths.root.HOME, "Perfil não encontrado.")
+  }
+
+  const eventParticipant = await kyselyDb
+    .selectFrom("event_participants")
+    .innerJoin("events", "events.id", "event_participants.event_id")
+    .select([
+      "event_participants.id",
+      "event_participants.profile_id",
+      "event_participants.event_id",
+      "events.title as event_title",
+      "events.ticket_price",
+    ])
+    .where("event_participants.id", "=", eventParticipantId)
+    .executeTakeFirst()
+
+  if (!eventParticipant) {
+    throw await redirectWithError(paths.root.HOME, "Inscrição não encontrada.")
+  }
+
+  if (eventParticipant.profile_id !== profile.id) {
+    throw await redirectWithError(paths.root.HOME, "Você não tem permissão para acessar esta página de pagamento.")
+  }
+
+  return { eventParticipant, eventParticipantId }
+}
+
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { eventParticipant } = await getEventParticipantWithAuth(request, params)
+
+  const ticketPrice = Number(eventParticipant.ticket_price)
+  if (!ticketPrice) {
+    throw await redirectWithError(paths.root.HOME, "Este evento não possui valor de ingresso configurado.")
+  }
+
+  const activeRequest = await getActivePaymentRequest(eventParticipant.id)
+
+  if (activeRequest?.status === "paid") {
+    return {
+      state: "already_paid" as const,
+      eventName: eventParticipant.event_title,
+      dropdownOptions: [],
+    }
+  }
+
+  if (!activeRequest) {
+    return {
+      state: "no_request" as const,
+      eventName: eventParticipant.event_title,
+      dropdownOptions: [],
+    }
+  }
+
+  const paymentOptions = buildPaymentOptions(ticketPrice)
   const dropdownOptions = paymentOptions.map((o) => ({
     name: formatOptionLabel(o),
     value: o.value,
   }))
 
-  return { dropdownOptions, paymentOptions }
+  return {
+    state: "ready" as const,
+    eventName: eventParticipant.event_title,
+    dropdownOptions,
+  }
 }
 
-const mutation = applySchema(paymentFormSchema)(
-  async ({ paymentOption: selectedValue }) => {
-    const paymentOptions = buildPaymentOptions(TICKET_PRICE)
-    const option = paymentOptions.find((o) => o.value === selectedValue)
-    if (!option) throw new Error("Opção de pagamento inválida")
+export async function action({ request, params }: Route.ActionArgs) {
+  const { eventParticipant } = await getEventParticipantWithAuth(request, params)
+  const ticketPrice = Number(eventParticipant.ticket_price)
 
-    const dueDate = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0]
+  const mutation = applySchema(paymentFormSchema)(
+    async ({ paymentOption: selectedValue }) => {
+      const result = await confirmPaymentChoice({
+        eventParticipantId: eventParticipant.id,
+        paymentOption: selectedValue,
+        ticketPrice,
+      })
+      return { invoiceUrl: result.invoiceUrl }
+    },
+  )
 
-    const customer = await createAsaasCustomer({
-      name: "Teste PoC",
-      cpfCnpj: "24971563792",
-    })
-
-    const payment = await createAsaasPayment({
-      customerId: customer.id,
-      billingType: option.billingType,
-      value: option.totalReais,
-      dueDate,
-      description: "Positiv — Ingresso",
-      installmentCount:
-        option.billingType === "CREDIT_CARD" && option.installments > 1
-          ? option.installments
-          : undefined,
-    })
-
-    return { invoiceUrl: payment.invoiceUrl }
-  },
-)
-
-export async function action({ request }: Route.ActionArgs) {
-  assertPaymentSystemOnline()
   return formAction({
     request,
     schema: paymentFormSchema,
@@ -92,7 +150,34 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function PaymentPage() {
-  const { dropdownOptions } = useLoaderData<typeof loader>()
+  const data = useLoaderData<typeof loader>()
+
+  if (data.state === "already_paid") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="w-full max-w-lg space-y-6 text-center">
+          <h1 className="text-2xl font-bold">Pagamento já realizado</h1>
+          <p className="text-muted-foreground">
+            O pagamento para o evento <strong>{data.eventName}</strong> já foi confirmado.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (data.state === "no_request") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="w-full max-w-lg space-y-6 text-center">
+          <h1 className="text-2xl font-bold">Link expirado</h1>
+          <p className="text-muted-foreground">
+            Não há um pagamento pendente para o evento <strong>{data.eventName}</strong>.
+            Entre em contato com a organização para solicitar um novo link.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -100,14 +185,14 @@ export default function PaymentPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold">Pagamento</h1>
           <p className="text-muted-foreground">
-            Selecione a forma de pagamento
+            {data.eventName} — Selecione a forma de pagamento
           </p>
         </div>
 
         <SchemaForm
           schema={paymentFormSchema}
           labels={{ paymentOption: "Forma de pagamento" }}
-          options={{ paymentOption: dropdownOptions }}
+          options={{ paymentOption: data.dropdownOptions }}
           values={{ paymentOption: "PIX" }}
           buttonLabel="Pagar"
           pendingButtonLabel="Processando..."

@@ -23,7 +23,7 @@ export default [
 
   // PAYMENT
   route("/api/asaas-webhook", "routes/api.asaas-webhook.ts"),
-  route("/pagamento/:token", "pages/payment/payment-page.tsx"),
+  route("/pagamento/:eventParticipantId", "pages/payment/payment-page.tsx"),
   // route("/pagamento/obrigado", "pages/payment/thank-you-page.tsx"),
 
   // PUBLIC

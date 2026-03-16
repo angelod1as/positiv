@@ -55,7 +55,7 @@ const ADMIN_EVENT_VIEW_PARTICIPANT = (eventId: string, participantId: string) =>
 ////////
 // PAYMENT
 ////////
-const PAYMENT = (token: string) => `/pagamento/${token}`
+const PAYMENT = (eventParticipantId: string) => `/pagamento/${eventParticipantId}`
 const PAYMENT_THANK_YOU = "/pagamento/obrigado"
 
 const paths = {

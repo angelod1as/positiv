@@ -153,7 +153,7 @@ describe("payment-request - Integration Tests", () => {
 
   describe("payment request with profile join", () => {
     it("can join payment_requests with event_participants and profiles", async () => {
-      const { participant, profile, event } = await setupParticipant()
+      const { participant } = await setupParticipant()
 
       await createTestPaymentRequest(tracker, kysely, {
         event_participant_id: participant.id,
