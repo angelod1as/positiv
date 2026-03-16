@@ -25,6 +25,12 @@ export const sendToast = (fetcherData: ComposableFetcherData) => {
     if (!fetcherData.success) {
       return toast.error("Ops, algo deu errado")
     }
+    if (fetcherData.paymentSent === true) {
+      return toast.success("Dados atualizados e link de pagamento enviado com sucesso")
+    }
+    if (fetcherData.paymentSent === false) {
+      return toast.error("Dados atualizados, mas houve um erro ao enviar o link de pagamento. Tente novamente.")
+    }
     return toast.success("Dados atualizados com sucesso")
   }
 

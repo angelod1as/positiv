@@ -9,6 +9,39 @@ import {
 } from "./payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
 
+/**
+ * Called from admin action handlers when application_status changes.
+ * Only triggers payment when status is "sent_payment_data".
+ * Returns { triggered: false } for other statuses,
+ * or { triggered: true, success, errors } when payment was attempted.
+ */
+export async function handlePaymentStatusChange(fields: {
+  applicationStatus: string | undefined
+  eventParticipantId: string
+  eventId: string
+  profileId: string
+}) {
+  if (fields.applicationStatus !== "sent_payment_data") {
+    return { triggered: false as const }
+  }
+
+  const result = await resolvePaymentRequest(
+    fields.eventParticipantId,
+    fields.eventId,
+    fields.profileId,
+  )
+
+  if (!result.success) {
+    logger.error("Failed to resolve payment request", {
+      errors: result.errors,
+      eventId: fields.eventId,
+      profileId: fields.profileId,
+    })
+  }
+
+  return { triggered: true as const, ...result }
+}
+
 export const resolvePaymentRequest = composable(
   async (
     eventParticipantId: string,

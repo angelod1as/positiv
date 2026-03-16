@@ -18,6 +18,7 @@ import {
   updateEventParticipantByIdSchema,
   updateEventStatusSchema,
 } from "~/business/admin/common"
+import { handlePaymentStatusChange } from "~/business/payment/trigger-payment-request.server"
 import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
@@ -42,14 +43,30 @@ const {
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
   const context = await getAdminContext(request, params)
-  const { intent } = await inputFromForm(request)
+  const input = await inputFromForm(request)
+  const { intent } = input
 
   if (intent === "update-event-participant") {
     return await formAction({
       request,
       schema: updateEventParticipantByIdSchema,
       mutation: updateEventParticipantById,
-      transformResult: (result) => ({ ...result, intent }),
+      transformResult: async (result) => {
+        if (!result.success) return { ...result, intent }
+
+        const payment = await handlePaymentStatusChange({
+          applicationStatus: input.application_status as string | undefined,
+          eventParticipantId: input.id as string,
+          eventId: (input.event_id as string) || params.id || "",
+          profileId: input.profile_id as string,
+        })
+
+        return {
+          ...result,
+          intent,
+          paymentSent: payment.triggered ? payment.success : undefined,
+        }
+      },
     })
   }
 

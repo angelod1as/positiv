@@ -31,6 +31,7 @@ import {
   profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
+import { toast } from "sonner"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import { CategoryLabelWithTooltip } from "./category-label-with-tooltip"
 import { countParticipants } from "./count-participants"
@@ -101,6 +102,15 @@ export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
 > = ({ participants, eventId }) => {
   const fetcher = useFetcher<ComposableFetcherData>()
+
+  useEffect(() => {
+    if (fetcher.data?.paymentSent === true) {
+      toast.success("Link de pagamento enviado com sucesso")
+    }
+    if (fetcher.data?.paymentSent === false) {
+      toast.error("Dados atualizados, mas houve um erro ao enviar o link de pagamento. Tente novamente.", { duration: Infinity })
+    }
+  }, [fetcher.data])
 
   const [applicationStatusFilter, setApplicationStatusFilter] = useState<
     string[]
