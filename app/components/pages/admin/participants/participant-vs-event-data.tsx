@@ -1,7 +1,9 @@
-import type { FC } from "react"
+import { type FC, useEffect } from "react"
 import { useFetcher } from "react-router"
+import { toast } from "sonner"
 import { z } from "zod"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import { Button } from "~/components/ui/button"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
@@ -63,6 +65,36 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   } = eventParticipant
 
   const fetcher = useFetcher<ComposableFetcherData>()
+  const resendFetcher = useFetcher<ComposableFetcherData>()
+
+  const handleResendPaymentLink = () => {
+    const formData = new FormData()
+    formData.set("intent", "resend-payment-link")
+    formData.set("id", id)
+    formData.set("event_id", event_id)
+    formData.set("profile_id", profile_id ?? "")
+    resendFetcher.submit(formData, { method: "POST" })
+  }
+
+  const isResending = resendFetcher.state !== "idle"
+
+  useEffect(() => {
+    if (fetcher.data?.paymentSent === true) {
+      toast.success("Link de pagamento enviado com sucesso")
+    }
+    if (fetcher.data?.paymentSent === false) {
+      toast.error("Dados atualizados, mas houve um erro ao enviar o link de pagamento. Tente novamente.", { duration: Infinity })
+    }
+  }, [fetcher.data])
+
+  useEffect(() => {
+    if (resendFetcher.data?.paymentSent === true) {
+      toast.success("Link de pagamento reenviado com sucesso")
+    }
+    if (resendFetcher.data?.paymentSent === false) {
+      toast.error("Erro ao reenviar link de pagamento. Tente novamente.", { duration: Infinity })
+    }
+  }, [resendFetcher.data])
 
   const { register } = useAutoSaveForm({
     schema: eventParticipantFormSchema,
@@ -114,18 +146,31 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="application_status">Status de Inscrição</Label>
-                <Select {...register.select("application_status")}>
-                  <SelectTrigger id="application_status">
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {applicationStatusOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select {...register.select("application_status")}>
+                    <SelectTrigger id="application_status">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {applicationStatusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {application_status === "sent_payment_data" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResendPaymentLink}
+                      disabled={isResending}
+                      className="shrink-0 self-center"
+                    >
+                      {isResending ? "Enviando..." : "Reenviar link"}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 

@@ -8,7 +8,10 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
-import { handlePaymentStatusChange } from "~/business/payment/trigger-payment-request.server"
+import {
+  handlePaymentStatusChange,
+  resolvePaymentRequest,
+} from "~/business/payment/trigger-payment-request.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import paths from "~/lib/paths"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
@@ -82,7 +85,20 @@ export async function action({ request }: Route.ActionArgs) {
       }
     }
 
-    return { success: true }
+    return { success: true, paymentSent: true }
+  }
+
+  if (intent === "resend-payment-link") {
+    const entries = Object.fromEntries(formData)
+    const result = await resolvePaymentRequest(
+      entries.id as string,
+      entries.event_id as string,
+      entries.profile_id as string,
+    )
+    return {
+      success: result.success,
+      paymentSent: result.success,
+    }
   }
 }
 
