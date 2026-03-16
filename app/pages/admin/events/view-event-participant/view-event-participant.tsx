@@ -1,20 +1,19 @@
-import { formAction } from "remix-forms"
 import type { ShouldRevalidateFunctionArgs } from "react-router"
-import { redirectWithError, redirectWithSuccess } from "remix-toast"
+import { redirectWithError } from "remix-toast"
 import {
   getEventParticipantBasic,
   getParticipantFullEventHistory,
   getProfileById,
   updateEventParticipantById,
-  updateParticipantVsEvent,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
-import { updateParticipantVsEventSchema } from "~/business/admin/common"
-import paths from "~/lib/paths"
-import type { Route } from "./+types/view-event-participant"
-import type { ParticipantEventHistoryData } from "~types/database/entities.types"
+import { resolvePaymentRequest } from "~/business/payment/trigger-payment-request.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
+import { logger } from "~/lib/logger/logger.server"
+import paths from "~/lib/paths"
+import type { ParticipantEventHistoryData } from "~types/database/entities.types"
+import type { Route } from "./+types/view-event-participant"
 
 const {
   admin: {
@@ -39,35 +38,56 @@ export async function action({ request }: Route.ActionArgs) {
   const intent = formData.get("intent")
 
   if (intent === "update-profile-approval-status") {
-    const result = await updateProfileApprovalStatus(Object.fromEntries(formData))
+    const result = await updateProfileApprovalStatus(
+      Object.fromEntries(formData),
+    )
     return { success: result.success }
   }
 
   if (intent === "update-profile-admin-notes") {
     const result = await updateProfileAdminNotes(Object.fromEntries(formData))
-    return { success: result.success, errors: result.success ? undefined : result.errors }
+    return {
+      success: result.success,
+      errors: result.success ? undefined : result.errors,
+    }
   }
 
   if (intent === "update-event-participant") {
-    const result = await updateEventParticipantById(Object.fromEntries(formData))
-    return { success: result.success, errors: result.success ? undefined : result.errors }
-  }
+    const entries = Object.fromEntries(formData)
+    const result = await updateEventParticipantById(entries)
+    if (!result.success) {
+      return { success: false, errors: result.errors }
+    }
 
-  if (intent === "participant-vs-event-schema") {
-    return formAction({
-      request: new Request(request.url, {
-        method: "POST",
-        body: formData,
-      }),
-      schema: updateParticipantVsEventSchema,
-      mutation: updateParticipantVsEvent,
-      transformResult: async (result) => {
-        if (result.success) {
-          throw await redirectWithSuccess(request.url, "Atualizado com sucesso")
-        }
-        return result
-      },
-    })
+    if (entries.application_status !== "sent_payment_data")
+      return { success: true }
+
+    // When application_status changes to "sent_payment_data", we create a payment request
+    // and send the payment link email. If this fails, we return success: false even though
+    // the DB update succeeded — because from the admin's perspective, the intent was to
+    // trigger payment and that part failed. The auto-save form will show the error toast.
+    const paymentResult = await resolvePaymentRequest(
+      entries.id as string,
+      entries.event_id as string,
+      entries.profile_id as string,
+    )
+    if (!paymentResult.success) {
+      logger.error("Failed to resolve payment request", {
+        errors: paymentResult.errors,
+        eventId: entries.event_id,
+        profileId: entries.profile_id,
+      })
+      return {
+        success: false,
+        errors: {
+          _global: [
+            "Status atualizado, mas houve um erro ao enviar o link de pagamento. Tente novamente.",
+          ],
+        },
+      }
+    }
+
+    return { success: true }
   }
 }
 
@@ -101,7 +121,10 @@ export async function loader({ params }: Route.LoaderArgs) {
   const profile = profileResult.data
 
   if (!eventParticipantResult.success || !eventParticipantResult.data) {
-    console.error("Error fetching event participant:", eventParticipantResult.errors)
+    console.error(
+      "Error fetching event participant:",
+      eventParticipantResult.errors,
+    )
     return redirectWithError(
       "Participante não inscrite neste evento.",
       ADMIN_VIEW_EVENT(eventId),

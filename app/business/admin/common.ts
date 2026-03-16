@@ -88,19 +88,6 @@ export const updateEventDemographicsSchema = zod.object({
 
 const spotTypeEnum = zod.enum(["regular", "social", "staff"])
 
-export const updateParticipantVsEventSchema = zod.object({
-  profile_id: zod.string(),
-  event_id: zod.string(),
-  intent: zod.literal("participant-vs-event-schema"),
-  attendance_status: participantAttendanceStatusEnum,
-  application_status: participantApplicationStatusEnum,
-  has_paid: zod.boolean(),
-  spot_type: spotTypeEnum,
-  was_selected_for_rotation: zod.boolean(),
-  payment: zod.coerce.number(),
-  admin_general_notes: zod.string(),
-})
-
 const parseBoolean = zod.union([
   zod.literal("true").transform(() => true),
   zod.literal("false").transform(() => false),
