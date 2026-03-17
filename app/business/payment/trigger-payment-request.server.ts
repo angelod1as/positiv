@@ -3,6 +3,7 @@ import { env } from "~/env.server"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
+import { refundAsaasPayment } from "./asaas-client.server"
 import {
   createPaymentRequest,
   getActivePaymentRequest,
@@ -97,5 +98,42 @@ export const resolvePaymentRequest = composable(
     })
 
     return paymentRequest
+  },
+)
+
+export const processRefund = composable(
+  async (eventParticipantId: string) => {
+    const paymentRequest = await kyselyDb
+      .selectFrom("payment_requests")
+      .selectAll()
+      .where("event_participant_id", "=", eventParticipantId)
+      .where("status", "=", "paid")
+      .executeTakeFirst()
+
+    if (!paymentRequest) {
+      throw new Error("No paid payment request found for this participant")
+    }
+
+    if (!paymentRequest.asaas_payment_id) {
+      throw new Error("Payment request has no Asaas payment ID — cannot refund")
+    }
+
+    await refundAsaasPayment(paymentRequest.asaas_payment_id)
+
+    await kyselyDb
+      .updateTable("payment_requests")
+      .set({
+        status: "refunded",
+        refund_amount: paymentRequest.amount,
+        refunded_at: new Date().toISOString(),
+      })
+      .where("id", "=", paymentRequest.id)
+      .execute()
+
+    logger.info("Payment refunded", {
+      paymentRequestId: paymentRequest.id,
+      eventParticipantId,
+      amount: paymentRequest.amount,
+    })
   },
 )

@@ -10,6 +10,7 @@ import {
 } from "~/business/admin/admin.server"
 import {
   handlePaymentStatusChange,
+  processRefund,
   resolvePaymentRequest,
 } from "~/business/payment/trigger-payment-request.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
@@ -99,6 +100,12 @@ export async function action({ request }: Route.ActionArgs) {
       success: result.success,
       paymentSent: result.success,
     }
+  }
+
+  if (intent === "refund-payment") {
+    const entries = Object.fromEntries(formData)
+    const result = await processRefund(entries.id as string)
+    return { success: result.success }
   }
 }
 

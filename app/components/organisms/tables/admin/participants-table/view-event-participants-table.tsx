@@ -108,7 +108,7 @@ export const AdminViewEventParticipantsTable: FC<
       toast.success("Link de pagamento enviado com sucesso")
     }
     if (fetcher.data?.paymentSent === false) {
-      toast.error("Dados atualizados, mas houve um erro ao enviar o link de pagamento. Tente novamente.", { duration: Infinity })
+      toast.error("Dados atualizados, mas houve um erro ao enviar o link de pagamento. Tente novamente.", { duration: Infinity, closeButton: true })
     }
   }, [fetcher.data])
 

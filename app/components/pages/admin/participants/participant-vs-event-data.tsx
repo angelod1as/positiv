@@ -3,6 +3,17 @@ import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { z } from "zod"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog"
 import { Button } from "~/components/ui/button"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
@@ -76,14 +87,26 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     resendFetcher.submit(formData, { method: "POST" })
   }
 
+  const refundFetcher = useFetcher<ComposableFetcherData>()
+
+  const handleRefund = () => {
+    const formData = new FormData()
+    formData.set("intent", "refund-payment")
+    formData.set("id", id)
+    formData.set("event_id", event_id)
+    formData.set("profile_id", profile_id ?? "")
+    refundFetcher.submit(formData, { method: "POST" })
+  }
+
   const isResending = resendFetcher.state !== "idle"
+  const isRefunding = refundFetcher.state !== "idle"
 
   useEffect(() => {
     if (fetcher.data?.paymentSent === true) {
       toast.success("Link de pagamento enviado com sucesso")
     }
     if (fetcher.data?.paymentSent === false) {
-      toast.error("Dados atualizados, mas houve um erro ao enviar o link de pagamento. Tente novamente.", { duration: Infinity })
+      toast.error("Dados atualizados, mas houve um erro ao enviar o link de pagamento. Tente novamente.", { duration: Infinity, closeButton: true })
     }
   }, [fetcher.data])
 
@@ -92,9 +115,18 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
       toast.success("Link de pagamento reenviado com sucesso")
     }
     if (resendFetcher.data?.paymentSent === false) {
-      toast.error("Erro ao reenviar link de pagamento. Tente novamente.", { duration: Infinity })
+      toast.error("Erro ao reenviar link de pagamento. Tente novamente.", { duration: Infinity, closeButton: true })
     }
   }, [resendFetcher.data])
+
+  useEffect(() => {
+    if (refundFetcher.data?.success === true) {
+      toast.success("Reembolso realizado com sucesso")
+    }
+    if (refundFetcher.data?.success === false) {
+      toast.error("Erro ao processar reembolso. Tente novamente.", { duration: Infinity, closeButton: true })
+    }
+  }, [refundFetcher.data])
 
   const { register } = useAutoSaveForm({
     schema: eventParticipantFormSchema,
@@ -209,6 +241,33 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                   <Checkbox {...register.checkbox("was_selected_for_rotation")} />
                   <span>Selecionado para Rodízio</span>
                 </Label>
+                {has_paid && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={isRefunding}
+                      >
+                        {isRefunding ? "Processando..." : "Reembolsar"}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Confirmar reembolso</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja reembolsar este pagamento? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleRefund}>
+                          Confirmar reembolso
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             </div>
 
