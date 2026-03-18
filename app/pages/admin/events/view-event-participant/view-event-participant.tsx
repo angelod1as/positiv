@@ -86,6 +86,7 @@ export async function action({ request }: Route.ActionArgs) {
       eventParticipantId: entries.id as string,
       eventId: entries.event_id as string,
       profileId: entries.profile_id as string,
+      customAmount: entries.custom_amount ? Number(entries.custom_amount) : undefined,
     })
     if (payment.triggered && !payment.success) {
       return {

@@ -66,6 +66,16 @@ export const resolvePaymentRequest = composable(
     }
 
     const activeRequest = await getActivePaymentRequest(eventParticipantId)
+
+    if (activeRequest && customAmount && Number(activeRequest.amount) !== customAmount) {
+      await kyselyDb
+        .updateTable("payment_requests")
+        .set({ amount: customAmount })
+        .where("id", "=", activeRequest.id)
+        .execute()
+      activeRequest.amount = customAmount
+    }
+
     const paymentRequest =
       activeRequest ??
       (await createPaymentRequest({

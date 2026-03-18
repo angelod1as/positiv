@@ -103,6 +103,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
   const fetcher = useFetcher<ComposableFetcherData>()
   const resendFetcher = useFetcher<ComposableFetcherData>()
+  const [useCustomAmount, setUseCustomAmount] = useState(false)
   const [customAmount, setCustomAmount] = useState("")
 
   const handleResendPaymentLink = () => {
@@ -111,7 +112,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     formData.set("id", id)
     formData.set("event_id", event_id)
     formData.set("profile_id", profile_id ?? "")
-    if (customAmount) formData.set("custom_amount", customAmount)
+    if (useCustomAmount && customAmount) formData.set("custom_amount", customAmount)
     resendFetcher.submit(formData, { method: "POST" })
   }
 
@@ -176,6 +177,14 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
       formData.set("profile_id", profile_id ?? "")
       formData.set("event_id", event_id)
       formData.set(field, String(value))
+      if (
+        field === "application_status" &&
+        value === "sent_payment_data" &&
+        useCustomAmount &&
+        customAmount
+      ) {
+        formData.set("custom_amount", customAmount)
+      }
       fetcher.submit(formData, { method: "POST" })
     },
   })
@@ -221,24 +230,31 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                     </SelectContent>
                   </Select>
                   {application_status === "sent_payment_data" && isAsaasManaged && (
-                    <>
-                      <Input
-                        type="number"
-                        placeholder="Valor custom (R$)"
-                        value={customAmount}
-                        onChange={(e) => setCustomAmount(e.target.value)}
-                        className="w-32 shrink-0 self-center"
-                      />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleResendPaymentLink}
-                        disabled={isResending}
-                        className="shrink-0 self-center"
-                      >
-                        {isResending ? "Enviando..." : "Reenviar link"}
-                      </Button>
-                    </>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleResendPaymentLink}
+                      disabled={isResending}
+                      className="shrink-0 self-center"
+                    >
+                      {isResending ? "Enviando..." : "Reenviar link"}
+                    </Button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <Checkbox
+                    checked={useCustomAmount}
+                    onChange={(e) => setUseCustomAmount(e.target.checked)}
+                  />
+                  <span className="text-sm text-muted-foreground">Valor customizado</span>
+                  {useCustomAmount && (
+                    <Input
+                      type="number"
+                      placeholder="R$"
+                      value={customAmount}
+                      onChange={(e) => setCustomAmount(e.target.value)}
+                      className="w-28"
+                    />
                   )}
                 </div>
               </div>
