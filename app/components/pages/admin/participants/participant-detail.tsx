@@ -1,4 +1,5 @@
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { PaymentRequestRow } from "~/business/payment/payment-request.server"
 import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-dropdown/approval-status-dropdown"
 import { Card, CardContent } from "~/components/ui/card"
 import { getAge } from "~/lib/helpers/get-age"
@@ -20,12 +21,14 @@ type ParticipantDetailProps = {
     data: EventParticipantWithEvent
     eventId: string
   }
+  paymentRequest?: PaymentRequestRow | null
 }
 
 export const ParticipantDetail = ({
   profile,
   fullHistory,
   currentEvent,
+  paymentRequest,
 }: ParticipantDetailProps) => {
   const name = profile.social_name || profile.full_name
   // ProfileWithExtraData has profile_id from event_participants join (id is overwritten)
@@ -63,7 +66,10 @@ export const ParticipantDetail = ({
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
           <Card className="lg:col-span-3 py-4">
             <CardContent>
-              <ParticipantVsEventData eventParticipant={currentEvent.data} />
+              <ParticipantVsEventData
+                eventParticipant={currentEvent.data}
+                paymentRequest={paymentRequest}
+              />
             </CardContent>
           </Card>
           <div className="lg:col-span-2 space-y-4">

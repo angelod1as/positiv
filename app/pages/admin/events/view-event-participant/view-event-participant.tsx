@@ -8,6 +8,7 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
+import { getLatestPaymentRequest } from "~/business/payment/payment-request.server"
 import {
   handlePaymentStatusChange,
   processRefund,
@@ -151,27 +152,33 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const eventParticipant = eventParticipantResult.data
 
-  // Get full participant history
-  let fullHistory: ParticipantEventHistoryData[] = []
-  const historyResult = await getParticipantFullEventHistory({
-    profileId: profile.id,
-    excludeEventId: eventId,
-  })
+  const [historyResult, paymentRequestResult] = await Promise.all([
+    getParticipantFullEventHistory({
+      profileId: profile.id,
+      excludeEventId: eventId,
+    }),
+    getLatestPaymentRequest(eventParticipant.id),
+  ])
 
-  if (historyResult.success) {
-    fullHistory = historyResult.data
-  }
+  const fullHistory: ParticipantEventHistoryData[] = historyResult.success
+    ? historyResult.data
+    : []
+
+  const paymentRequest = paymentRequestResult.success
+    ? paymentRequestResult.data
+    : null
 
   return {
     profile,
     eventParticipant,
     fullHistory,
     eventId,
+    paymentRequest,
   }
 }
 
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
-  const { eventParticipant, profile, fullHistory, eventId } = loaderData
+  const { eventParticipant, profile, fullHistory, eventId, paymentRequest } = loaderData
 
   if (!profile) return null
 
@@ -183,6 +190,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
         data: eventParticipant,
         eventId,
       }}
+      paymentRequest={paymentRequest}
     />
   )
 }

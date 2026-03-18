@@ -34,6 +34,7 @@ import {
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import { useAutoSaveForm } from "~/lib/hooks/use-auto-save-form"
+import type { PaymentRequestRow } from "~/business/payment/payment-request.server"
 import type {
   ComposableFetcherData,
   EventParticipantWithEvent,
@@ -51,10 +52,35 @@ const eventParticipantFormSchema = z.object({
 
 type ParticipantVsEventDataProps = {
   eventParticipant: EventParticipantWithEvent
+  paymentRequest?: PaymentRequestRow | null
+}
+
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending: "Pendente",
+  awaiting_payment: "Aguardando pagamento",
+  paid: "Pago",
+  expired: "Expirado",
+  refunded: "Reembolsado",
+  partially_refunded: "Parcialmente reembolsado",
+  cancelled: "Cancelado",
+}
+
+const BILLING_TYPE_LABELS: Record<string, string> = {
+  PIX: "Pix",
+  CREDIT_CARD: "Cartão de Crédito",
+  manual: "Manual",
+}
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value)
 }
 
 export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   eventParticipant,
+  paymentRequest,
 }) => {
   const {
     id,
@@ -283,6 +309,66 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             </div>
           </div>
         </div>
+
+        {paymentRequest && (
+          <div className="space-y-2">
+            <h4>Pagamento</h4>
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
+              <DataPair
+                pair={[
+                  "Status",
+                  PAYMENT_STATUS_LABELS[paymentRequest.status] ?? paymentRequest.status,
+                ]}
+              />
+              <DataPair
+                pair={[
+                  "Tipo",
+                  BILLING_TYPE_LABELS[paymentRequest.billing_type ?? ""] ?? paymentRequest.billing_type ?? "—",
+                ]}
+              />
+              <DataPair
+                pair={[
+                  "Valor",
+                  formatCurrency(Number(paymentRequest.amount)),
+                ]}
+              />
+              {paymentRequest.installment_count && paymentRequest.installment_count > 1 && (
+                <DataPair
+                  pair={["Parcelas", `${paymentRequest.installment_count}x`]}
+                />
+              )}
+              {paymentRequest.invoice_url && (
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground">Link Asaas:</span>
+                  <a
+                    href={paymentRequest.invoice_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary underline"
+                  >
+                    Abrir
+                  </a>
+                </div>
+              )}
+              {paymentRequest.paid_at && (
+                <DataPair
+                  pair={[
+                    "Pago em",
+                    formatDateTime(paymentRequest.paid_at).full,
+                  ]}
+                />
+              )}
+              {paymentRequest.refunded_at && (
+                <DataPair
+                  pair={[
+                    "Reembolsado em",
+                    formatDateTime(paymentRequest.refunded_at).full,
+                  ]}
+                />
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="space-y-2">
           <h4>Respostas</h4>

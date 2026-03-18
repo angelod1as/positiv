@@ -1,3 +1,4 @@
+import { composable } from "composable-functions"
 import { kyselyDb } from "~/kysely-db"
 import {
   createAsaasCustomer,
@@ -30,6 +31,22 @@ export async function createPaymentRequest({
     .returningAll()
     .executeTakeFirstOrThrow()
 }
+
+export const getLatestPaymentRequest = composable(
+  async (eventParticipantId: string) => {
+    const result = await kyselyDb
+      .selectFrom("payment_requests")
+      .selectAll()
+      .where("event_participant_id", "=", eventParticipantId)
+      .orderBy("created_at", "desc")
+      .executeTakeFirst()
+    return result ?? null
+  },
+)
+
+export type PaymentRequestRow = NonNullable<
+  Extract<Awaited<ReturnType<typeof getLatestPaymentRequest>>, { success: true }>["data"]
+>
 
 export async function getActivePaymentRequest(eventParticipantId: string) {
   const result = await kyselyDb
