@@ -126,6 +126,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
   const isResending = resendFetcher.state !== "idle"
   const isRefunding = refundFetcher.state !== "idle"
+  const isAsaasManaged = paymentRequest != null && paymentRequest.billing_type !== "manual"
 
   useEffect(() => {
     if (fetcher.data?.paymentSent === true) {
@@ -217,7 +218,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  {application_status === "sent_payment_data" && (
+                  {application_status === "sent_payment_data" && isAsaasManaged && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -254,20 +255,24 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                 <Input
                   id="payment"
                   type="number"
+                  disabled={isAsaasManaged}
                   {...register.number("payment")}
                 />
               </div>
 
               <div className="flex flex-col justify-end gap-2">
                 <Label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox {...register.checkbox("has_paid")} />
+                  <Checkbox
+                    disabled={isAsaasManaged}
+                    {...register.checkbox("has_paid")}
+                  />
                   <span>Pago</span>
                 </Label>
                 <Label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox {...register.checkbox("was_selected_for_rotation")} />
                   <span>Selecionado para Rodízio</span>
                 </Label>
-                {has_paid && (
+                {has_paid && isAsaasManaged && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
