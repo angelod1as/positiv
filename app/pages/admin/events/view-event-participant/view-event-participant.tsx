@@ -103,10 +103,14 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "resend-payment-link") {
     const entries = Object.fromEntries(formData)
+    const customAmount = entries.custom_amount
+      ? Number(entries.custom_amount)
+      : undefined
     const result = await resolvePaymentRequest(
       entries.id as string,
       entries.event_id as string,
       entries.profile_id as string,
+      customAmount,
     )
     return {
       success: result.success,

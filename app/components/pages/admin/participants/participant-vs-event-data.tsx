@@ -1,4 +1,4 @@
-import { type FC, useEffect } from "react"
+import { type FC, useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { z } from "zod"
@@ -103,6 +103,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
   const fetcher = useFetcher<ComposableFetcherData>()
   const resendFetcher = useFetcher<ComposableFetcherData>()
+  const [customAmount, setCustomAmount] = useState("")
 
   const handleResendPaymentLink = () => {
     const formData = new FormData()
@@ -110,6 +111,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     formData.set("id", id)
     formData.set("event_id", event_id)
     formData.set("profile_id", profile_id ?? "")
+    if (customAmount) formData.set("custom_amount", customAmount)
     resendFetcher.submit(formData, { method: "POST" })
   }
 
@@ -219,15 +221,24 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                     </SelectContent>
                   </Select>
                   {application_status === "sent_payment_data" && isAsaasManaged && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleResendPaymentLink}
-                      disabled={isResending}
-                      className="shrink-0 self-center"
-                    >
-                      {isResending ? "Enviando..." : "Reenviar link"}
-                    </Button>
+                    <>
+                      <Input
+                        type="number"
+                        placeholder="Valor custom (R$)"
+                        value={customAmount}
+                        onChange={(e) => setCustomAmount(e.target.value)}
+                        className="w-32 shrink-0 self-center"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResendPaymentLink}
+                        disabled={isResending}
+                        className="shrink-0 self-center"
+                      >
+                        {isResending ? "Enviando..." : "Reenviar link"}
+                      </Button>
+                    </>
                   )}
                 </div>
               </div>
