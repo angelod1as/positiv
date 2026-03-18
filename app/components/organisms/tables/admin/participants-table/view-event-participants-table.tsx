@@ -36,10 +36,6 @@ import type { ComposableFetcherData } from "~types/database/entities.types"
 import { CategoryLabelWithTooltip } from "./category-label-with-tooltip"
 import { countParticipants } from "./count-participants"
 import { eventCountComparator } from "./event-count-column-helpers"
-import {
-  parsePaymentValue,
-  shouldAutoCheckHasPaid,
-} from "./payment-column-helpers"
 import { shouldAutoCheckWasSelectedForRotation } from "./rotation-column-helpers"
 import {
   acceptedInProcessTooltipContent,
@@ -64,8 +60,6 @@ const EDITABLE_FIELDS = [
   "application_status",
   "attendance_status",
   "approved_to_attend",
-  "has_paid",
-  "payment",
   "spot_type",
   "is_veteran",
   "notes",
@@ -208,22 +202,6 @@ export const AdminViewEventParticipantsTable: FC<
 
   const handleCellValueChanged = useCallback(
     (event: CellValueChangedEvent<ProfileWithExtraData>) => {
-      // Auto-persist has_paid when payment > 0
-      if (
-        event.colDef.field === "payment" &&
-        event.newValue !== null &&
-        event.newValue > 0 &&
-        event.data?.has_paid === true &&
-        event.oldValue !== event.newValue
-      ) {
-        const formData = new FormData()
-        formData.append("intent", "update-event-participant")
-        formData.append("id", event.data.id)
-        formData.append("profile_id", event.data.profile_id ?? "")
-        formData.append("has_paid", "true")
-        fetcher.submit(formData, { method: "POST" })
-      }
-
       // Auto-persist was_selected_for_rotation when transitioning to 'skipped'
       // This provides immediate persistence without waiting for DB trigger
       if (
@@ -464,8 +442,6 @@ export const AdminViewEventParticipantsTable: FC<
         field: "has_paid",
         headerName: "Pago?",
         headerTooltip: "Pagamento realizado",
-        editable: true,
-        cellEditor: "agCheckboxCellEditor",
         cellRenderer: "agCheckboxCellRenderer",
         filter: BaseMultiSelectFilter,
         filterParams: {
@@ -478,35 +454,6 @@ export const AdminViewEventParticipantsTable: FC<
       {
         field: "payment",
         headerName: eventParticipantPropMap("payment"),
-        editable: true,
-        cellEditor: "agNumberCellEditor",
-        valueParser: (params) =>
-          parsePaymentValue(params.newValue, params.oldValue),
-        valueSetter: (params: ValueSetterParams<ProfileWithExtraData>) => {
-          const parsedValue = parsePaymentValue(
-            params.newValue,
-            params.data.payment,
-          )
-          const newValue = parsedValue ?? 0
-
-          if (newValue === params.data.payment) {
-            return false
-          }
-
-          params.data.payment = newValue
-
-          if (shouldAutoCheckHasPaid(newValue, params.data.has_paid ?? false)) {
-            params.data.has_paid = true
-            if (params.node) {
-              params.api.refreshCells({
-                rowNodes: [params.node],
-                columns: ["has_paid"],
-              })
-            }
-          }
-
-          return true
-        },
       },
       {
         field: "spot_type",

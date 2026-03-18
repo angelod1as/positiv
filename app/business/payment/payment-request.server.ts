@@ -48,38 +48,6 @@ export type PaymentRequestRow = NonNullable<
   Extract<Awaited<ReturnType<typeof getLatestPaymentRequest>>, { success: true }>["data"]
 >
 
-export const syncManualPaymentStatus = composable(
-  async (eventParticipantId: string, hasPaid: boolean, paymentAmount?: number) => {
-    const latestResult = await getLatestPaymentRequest(eventParticipantId)
-    if (!latestResult.success) return
-    const paymentRequest = latestResult.data
-    if (!paymentRequest) return
-    if (paymentRequest.payment_mode !== "manual") return
-
-    const updates: Record<string, unknown> = {}
-
-    if (hasPaid && paymentRequest.status !== "paid") {
-      updates.status = "paid"
-      updates.paid_at = new Date().toISOString()
-    }
-    if (!hasPaid && paymentRequest.status === "paid") {
-      updates.status = "pending"
-      updates.paid_at = null
-    }
-    if (paymentAmount !== undefined) {
-      updates.amount = paymentAmount
-    }
-
-    if (Object.keys(updates).length === 0) return
-
-    await kyselyDb
-      .updateTable("payment_requests")
-      .set(updates)
-      .where("id", "=", paymentRequest.id)
-      .execute()
-  },
-)
-
 export async function getActivePaymentRequest(eventParticipantId: string) {
   const result = await kyselyDb
     .selectFrom("payment_requests")
