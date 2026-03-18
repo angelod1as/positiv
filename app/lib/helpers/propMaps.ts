@@ -72,8 +72,6 @@ export const eventParticipantPropMap = (property: keyof EventParticipant) => {
     profile_id: "Id do perfil",
     event_id: "Id do evento",
     is_user_applied: "Inscrite?",
-    has_paid: "Pago?",
-    payment: "Pagamento",
     attendance_status: "Status de Presença",
     application_status: "Status de Processo",
     application_date: "Data de inscrição",

@@ -47,8 +47,6 @@ const mockEventParticipant: EventParticipantWithEvent = {
   application_status: "finalised",
   attendance_status: "pending",
   spot_type: "regular",
-  payment: 100,
-  has_paid: false,
   admin_general_notes: "Some admin notes",
   bond: "Test bond",
   companions: "Test companions",

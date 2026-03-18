@@ -418,7 +418,6 @@ describe("DataViz - Integration Tests", () => {
           attendance_status: "attended",
           application_status: "finalised",
           spot_type: "regular",
-          has_paid: true,
         })
         await createTestEventParticipant(tracker, kysely, {
           event_id: completedEvent.id,
@@ -426,7 +425,6 @@ describe("DataViz - Integration Tests", () => {
           attendance_status: "not-attended",
           application_status: "finalised",
           spot_type: "regular",
-          has_paid: true,
         })
         await createTestEventParticipant(tracker, kysely, {
           event_id: completedEvent.id,
@@ -434,7 +432,6 @@ describe("DataViz - Integration Tests", () => {
           attendance_status: "pending",
           application_status: "finalised",
           spot_type: "social",
-          has_paid: false,
         })
 
         await createTestEventParticipant(tracker, kysely, {

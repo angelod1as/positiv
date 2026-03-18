@@ -719,7 +719,6 @@ describe("updateEventParticipantById - Integration Tests", () => {
       profile_id: profile.id,
       event_id: event.id,
       is_user_applied: true,
-      payment: 100,
       attendance_status: "pending"
     })
 
@@ -727,7 +726,6 @@ describe("updateEventParticipantById - Integration Tests", () => {
       id: participant.id,
       profile_id: profile.id,
       intent: "update-event-participant",
-      payment: 150,
       flag: "gray",
       flag_notes: "Previously had red flag for behavior in 2023. Cleared after 1 year of good behavior."
     })

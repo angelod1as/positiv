@@ -63,8 +63,6 @@ describe("getEventParticipantBasic - Integration Tests", () => {
       application_status: "finalised",
       attendance_status: "pending",
       admin_general_notes: "Test admin notes",
-      payment: 100,
-      has_paid: true,
     })
 
     const result = await getEventParticipantBasic({
@@ -79,7 +77,6 @@ describe("getEventParticipantBasic - Integration Tests", () => {
       expect(result.data.application_status).toBe("finalised")
       expect(result.data.attendance_status).toBe("pending")
       expect(result.data.admin_general_notes).toBe("Test admin notes")
-      expect(result.data.has_paid).toBe(true)
       // Should NOT include profile fields like full_name, is_veteran, flag, etc.
       expect(result.data).not.toHaveProperty("full_name")
       expect(result.data).not.toHaveProperty("email")
@@ -177,8 +174,6 @@ describe("getEventParticipantBasic - Integration Tests", () => {
       expect(result.data).toHaveProperty("event_id")
       expect(result.data).toHaveProperty("application_status")
       expect(result.data).toHaveProperty("attendance_status")
-      expect(result.data).toHaveProperty("has_paid")
-      expect(result.data).toHaveProperty("payment")
       expect(result.data).toHaveProperty("spot_type")
       expect(result.data).toHaveProperty("was_selected_for_rotation")
       expect(result.data).toHaveProperty("admin_general_notes")

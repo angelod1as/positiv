@@ -21,8 +21,6 @@ const createMockHistoryItem = (
   created_at: "2024-02-15T10:00:00",
   bond: null,
   notes: null,
-  has_paid: true,
-  payment: 150,
   pr_amount: 150,
   pr_status: "paid",
   referrals: null,

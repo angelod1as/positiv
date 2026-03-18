@@ -106,7 +106,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile3Events.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )
@@ -118,7 +117,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile5Events.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )
@@ -130,7 +128,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile2Events.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )
@@ -172,7 +169,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile5Plus.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )
@@ -184,7 +180,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile4.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )
