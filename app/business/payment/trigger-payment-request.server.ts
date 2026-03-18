@@ -21,6 +21,7 @@ export async function handlePaymentStatusChange(fields: {
   eventParticipantId: string
   eventId: string
   profileId: string
+  customAmount?: number
 }) {
   if (fields.applicationStatus !== "sent_payment_data") {
     return { triggered: false as const }
@@ -30,6 +31,7 @@ export async function handlePaymentStatusChange(fields: {
     fields.eventParticipantId,
     fields.eventId,
     fields.profileId,
+    fields.customAmount,
   )
 
   if (!result.success) {
@@ -48,6 +50,7 @@ export const resolvePaymentRequest = composable(
     eventParticipantId: string,
     eventId: string,
     profileId: string,
+    customAmount?: number,
   ) => {
     const isPaymentSystemOnline = env().paymentSystemOnline
 
@@ -57,8 +60,9 @@ export const resolvePaymentRequest = composable(
       .where("id", "=", eventId)
       .executeTakeFirstOrThrow()
 
-    if (!event.ticket_price) {
-      throw new Error(`Event ${eventId} has no ticket_price configured`)
+    const amount = customAmount ?? Number(event.ticket_price)
+    if (!amount) {
+      throw new Error(`Event ${eventId} has no ticket_price configured and no custom amount provided`)
     }
 
     const activeRequest = await getActivePaymentRequest(eventParticipantId)
@@ -66,7 +70,7 @@ export const resolvePaymentRequest = composable(
       activeRequest ??
       (await createPaymentRequest({
         eventParticipantId,
-        ticketPrice: Number(event.ticket_price),
+        ticketPrice: amount,
         billingType: isPaymentSystemOnline ? undefined : "manual",
       }))
 
@@ -96,7 +100,7 @@ export const resolvePaymentRequest = composable(
       participantEmail: profile.email,
       participantName: profile.full_name ?? "Participante",
       eventName: event.title ?? "Evento Positiv",
-      ticketPrice: Number(event.ticket_price),
+      ticketPrice: Number(paymentRequest.amount),
       paymentUrl,
       expiresAt: new Date(paymentRequest.expires_at),
     })
