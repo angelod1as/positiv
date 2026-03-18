@@ -26,8 +26,10 @@ import {
   attendanceStatusOptions,
   eventParticipantPropMap,
   genderFilterOptions,
-  hasPaidOptions,
   orientationFilterOptions,
+  paymentModePropMap,
+  paymentStatusOptions,
+  paymentStatusPropMap,
   profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
@@ -52,7 +54,7 @@ const STORAGE_KEYS = {
   gender: "participants-filter-gender",
   orientation: "participants-filter-orientation",
   isVeteran: "participants-filter-is_veteran",
-  hasPaid: "participants-filter-has_paid",
+  paymentStatus: "participants-filter-payment_status",
   spotType: "participants-filter-spot_type",
 }
 
@@ -124,8 +126,8 @@ export const AdminViewEventParticipantsTable: FC<
   const [isVeteranFilter, setIsVeteranFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.isVeteran),
   )
-  const [hasPaidFilter, setHasPaidFilter] = useState<string[]>(() =>
-    getStoredFilter(STORAGE_KEYS.hasPaid),
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string[]>(() =>
+    getStoredFilter(STORAGE_KEYS.paymentStatus),
   )
   const [spotTypeFilter, setSpotTypeFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.spotType),
@@ -154,7 +156,7 @@ export const AdminViewEventParticipantsTable: FC<
       STORAGE_KEYS.isVeteran,
       JSON.stringify(isVeteranFilter),
     )
-    sessionStorage.setItem(STORAGE_KEYS.hasPaid, JSON.stringify(hasPaidFilter))
+    sessionStorage.setItem(STORAGE_KEYS.paymentStatus, JSON.stringify(paymentStatusFilter))
     sessionStorage.setItem(
       STORAGE_KEYS.spotType,
       JSON.stringify(spotTypeFilter),
@@ -166,7 +168,7 @@ export const AdminViewEventParticipantsTable: FC<
     genderFilter,
     orientationFilter,
     isVeteranFilter,
-    hasPaidFilter,
+    paymentStatusFilter,
     spotTypeFilter,
   ])
 
@@ -439,21 +441,34 @@ export const AdminViewEventParticipantsTable: FC<
         },
       },
       {
-        field: "has_paid",
-        headerName: "Pago?",
-        headerTooltip: "Pagamento realizado",
-        cellRenderer: "agCheckboxCellRenderer",
+        field: "payment_status",
+        headerName: "Status Pagamento",
+        headerTooltip: "Status do pagamento via payment_requests",
+        valueFormatter: (params) =>
+          params.value ? paymentStatusPropMap(params.value) : "",
         filter: BaseMultiSelectFilter,
         filterParams: {
-          options: hasPaidOptions,
-          field: "has_paid",
-          model: hasPaidFilter,
-          onModelChange: setHasPaidFilter,
+          options: paymentStatusOptions,
+          field: "payment_status",
+          model: paymentStatusFilter,
+          onModelChange: setPaymentStatusFilter,
         },
       },
       {
-        field: "payment",
-        headerName: eventParticipantPropMap("payment"),
+        field: "payment_amount",
+        headerName: "Valor Pago",
+        headerTooltip: "Valor do pagamento",
+        valueFormatter: (params) =>
+          params.value != null
+            ? `R$ ${Number(params.value).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : "",
+      },
+      {
+        field: "payment_mode_value",
+        headerName: "Modo Pagamento",
+        headerTooltip: "Automático ou Manual",
+        valueFormatter: (params) =>
+          params.value ? paymentModePropMap(params.value) : "",
       },
       {
         field: "spot_type",
@@ -528,7 +543,7 @@ export const AdminViewEventParticipantsTable: FC<
       genderFilter,
       orientationFilter,
       isVeteranFilter,
-      hasPaidFilter,
+      paymentStatusFilter,
       spotTypeFilter,
     ],
   )
@@ -540,7 +555,7 @@ export const AdminViewEventParticipantsTable: FC<
     setGenderFilter([])
     setOrientationFilter([])
     setIsVeteranFilter([])
-    setHasPaidFilter([])
+    setPaymentStatusFilter([])
     setSpotTypeFilter([])
   }, [])
 

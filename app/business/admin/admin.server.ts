@@ -67,6 +67,9 @@ export type ProfileWithExtraData = Profile &
     last_attended_event_title?: string | null
     last_attended_event_date?: string | null
     last_attended_event_id?: string | null
+    payment_status?: string | null
+    payment_amount?: number | null
+    payment_mode_value?: string | null
   }
 
 // Main query to get event_participants information along with if they were skipped in the last event
@@ -160,6 +163,15 @@ const profilesWithExtraDataQuery = kyselyDb
           .limit(6),
       )
       .as("last_attended_events_count"),
+    sql<string | null>`(SELECT pr.status FROM payment_requests pr WHERE pr.event_participant_id = current_ep.id ORDER BY pr.created_at DESC LIMIT 1)`.as(
+      "payment_status",
+    ),
+    sql<number | null>`(SELECT pr.amount FROM payment_requests pr WHERE pr.event_participant_id = current_ep.id ORDER BY pr.created_at DESC LIMIT 1)`.as(
+      "payment_amount",
+    ),
+    sql<string | null>`(SELECT pr.payment_mode FROM payment_requests pr WHERE pr.event_participant_id = current_ep.id ORDER BY pr.created_at DESC LIMIT 1)`.as(
+      "payment_mode_value",
+    ),
   ])
 
 export const getProfileWithExtraDataById = composable(
@@ -412,6 +424,12 @@ export const getParticipantFullEventHistory = composable(
         "events.ticket_price as ticket_price",
         "profiles.is_veteran as is_veteran",
         "profiles.approved_to_attend as approved_to_attend",
+        sql<number | null>`(SELECT pr.amount FROM payment_requests pr WHERE pr.event_participant_id = event_participants.id ORDER BY pr.created_at DESC LIMIT 1)`.as(
+          "pr_amount",
+        ),
+        sql<string | null>`(SELECT pr.status FROM payment_requests pr WHERE pr.event_participant_id = event_participants.id ORDER BY pr.created_at DESC LIMIT 1)`.as(
+          "pr_status",
+        ),
       ])
       .where("event_participants.profile_id", "=", profileId)
       .orderBy("events.time_event_start", "desc")

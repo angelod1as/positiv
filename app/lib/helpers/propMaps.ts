@@ -213,20 +213,38 @@ export const isVeteranOptions: Array<{
   value: value,
 }))
 
-const hasPaidStatusMap: Record<string, string> = {
-  true: "Sim",
-  false: "Não",
+const paymentRequestStatusMap: Record<string, string> = {
+  pending: "Pendente",
+  awaiting_payment: "Aguardando pagamento",
+  paid: "Pago",
+  expired: "Expirado",
+  refunded: "Reembolsado",
+  partially_refunded: "Parcialmente reembolsado",
+  cancelled: "Cancelado",
 }
 
-export const hasPaidOptions: Array<{
+export const paymentStatusOptions: Array<{
   name: string
   value: string
   label: string
-}> = Object.entries(hasPaidStatusMap).map(([value, name]) => ({
-  name: name,
+}> = Object.entries(paymentRequestStatusMap).map(([value, name]) => ({
+  name,
   label: name,
-  value: value,
+  value,
 }))
+
+export const paymentStatusPropMap = (status: string): string => {
+  return paymentRequestStatusMap[status] || status
+}
+
+const paymentModeMap: Record<string, string> = {
+  automatic: "Automático",
+  manual: "Manual",
+}
+
+export const paymentModePropMap = (mode: string): string => {
+  return paymentModeMap[mode] || mode
+}
 
 export const PARTICIPANTS_TABLE_FILTER_CONFIGS = {
   application_status: {
