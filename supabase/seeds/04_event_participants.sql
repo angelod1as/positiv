@@ -49,7 +49,7 @@ BEGIN
     (admin_profile_id, event_id_cancelled_1, FALSE, 'finalised', 'pending', FALSE, now() - interval '3 months', now() - interval '1 month', 0, 'Event was cancelled', NULL, 'Joao Silva - indicacao formal', NULL, NULL, 'staff', NULL),
     (user1_profile_id, event_id_reg_open_1, TRUE, 'pending', 'pending', FALSE, now() - interval '1 day', NULL, 0, NULL, NULL, 'ninguem', NULL, NULL, 'staff', NULL),
     (user1_profile_id, event_id_completed_1, TRUE, 'finalised', 'skipped', FALSE, now() - interval '4 months', NULL, 0, NULL, NULL, 'ninguem', NULL, NULL, 'staff', 'Admin notes here... why skipped and all...'),
-    (user1_profile_id, event_id_reg_closed_1, TRUE, 'sent_payment_data', 'pending', TRUE, now() - interval '1 month', NULL, 15.00, 'User paid for this closed event', NULL, 'ninguem', NULL, NULL, 'staff', NULL),
+    (user1_profile_id, event_id_reg_closed_1, TRUE, 'talking', 'pending', FALSE, now() - interval '1 month', NULL, 0, NULL, NULL, 'ninguem', NULL, NULL, 'staff', NULL),
     (user2_profile_id, event_id_reg_open_1, TRUE, 'talking', 'pending', FALSE, now() - interval '2 days', NULL, 0, 'Admin talking to user about participation', NULL, 'Maria Santos - mesa de bar', NULL, NULL, 'regular', NULL),
     (user2_profile_id, event_id_completed_1, TRUE, 'finalised', 'skipped', FALSE, now() - interval '4 months', NULL, 0, 'Admin decision: behavioral concerns', NULL, 'Carlos Oliveira - indicacao formal', NULL, NULL, 'regular', NULL),
     (user2_profile_id, event_id_scheduled_1, TRUE, 'finalised', 'skipped', FALSE, now() - interval '6 months', NULL, 0, 'Admin decision: no-show history', NULL, 'ninguem', 'Vou com meu melhor amigo', NULL, 'regular', NULL),
