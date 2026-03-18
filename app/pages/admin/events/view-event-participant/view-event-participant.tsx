@@ -8,7 +8,12 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
-import { getLatestPaymentRequest } from "~/business/payment/payment-request.server"
+import {
+  getLatestPaymentRequest,
+  markManualPaymentPaid,
+  markManualPaymentRefunded,
+  updatePaymentRequestAmount,
+} from "~/business/payment/payment-request.server"
 import {
   handlePaymentStatusChange,
   processRefund,
@@ -76,6 +81,7 @@ export async function action({ request }: Route.ActionArgs) {
       eventId: entries.event_id as string,
       profileId: entries.profile_id as string,
       customAmount: entries.custom_amount ? Number(entries.custom_amount) : undefined,
+      paymentMode: entries.payment_mode as string | undefined,
     })
     if (payment.triggered && !payment.success) {
       return {
@@ -112,6 +118,39 @@ export async function action({ request }: Route.ActionArgs) {
     const entries = Object.fromEntries(formData)
     const result = await processRefund(entries.id as string)
     return { success: result.success }
+  }
+
+  if (intent === "mark-manual-payment-paid") {
+    const entries = Object.fromEntries(formData)
+    try {
+      await markManualPaymentPaid(entries.id as string)
+      return { success: true }
+    } catch {
+      return { success: false }
+    }
+  }
+
+  if (intent === "mark-manual-payment-refunded") {
+    const entries = Object.fromEntries(formData)
+    try {
+      await markManualPaymentRefunded(entries.id as string)
+      return { success: true }
+    } catch {
+      return { success: false }
+    }
+  }
+
+  if (intent === "update-manual-payment-amount") {
+    const entries = Object.fromEntries(formData)
+    try {
+      await updatePaymentRequestAmount(
+        entries.id as string,
+        Number(entries.amount),
+      )
+      return { success: true }
+    } catch {
+      return { success: false }
+    }
   }
 }
 

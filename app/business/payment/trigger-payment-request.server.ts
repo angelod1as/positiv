@@ -22,6 +22,7 @@ export async function handlePaymentStatusChange(fields: {
   eventId: string
   profileId: string
   customAmount?: number
+  paymentMode?: string
 }) {
   if (fields.applicationStatus !== "sent_payment_data") {
     return { triggered: false as const }
@@ -32,6 +33,7 @@ export async function handlePaymentStatusChange(fields: {
     fields.eventId,
     fields.profileId,
     fields.customAmount,
+    fields.paymentMode,
   )
 
   if (!result.success) {
@@ -51,8 +53,11 @@ export const resolvePaymentRequest = composable(
     eventId: string,
     profileId: string,
     customAmount?: number,
+    paymentMode?: string,
   ) => {
-    const isPaymentSystemOnline = env().paymentSystemOnline
+    const isPaymentSystemOnline = paymentMode
+      ? paymentMode === "automatic"
+      : env().paymentSystemOnline
 
     const event = await kyselyDb
       .selectFrom("events")

@@ -163,3 +163,71 @@ export async function markPaymentAsExpired(paymentRequestId: string) {
     .where("id", "=", paymentRequestId)
     .execute()
 }
+
+export async function markManualPaymentPaid(eventParticipantId: string) {
+  const now = new Date().toISOString()
+  const result = await kyselyDb
+    .updateTable("payment_requests")
+    .set({
+      status: "paid",
+      paid_at: now,
+      updated_at: now,
+    })
+    .where("event_participant_id", "=", eventParticipantId)
+    .where("payment_mode", "=", "manual")
+    .where("status", "in", ["pending", "awaiting_payment"])
+    .returningAll()
+    .executeTakeFirst()
+
+  if (!result) {
+    throw new Error("No pending manual payment request found for this participant")
+  }
+
+  return result
+}
+
+export async function markManualPaymentRefunded(eventParticipantId: string) {
+  const now = new Date().toISOString()
+  const result = await kyselyDb
+    .updateTable("payment_requests")
+    .set({
+      status: "refunded",
+      refunded_at: now,
+      updated_at: now,
+    })
+    .where("event_participant_id", "=", eventParticipantId)
+    .where("payment_mode", "=", "manual")
+    .where("status", "=", "paid")
+    .returningAll()
+    .executeTakeFirst()
+
+  if (!result) {
+    throw new Error("No paid manual payment request found for this participant")
+  }
+
+  return result
+}
+
+export async function updatePaymentRequestAmount(eventParticipantId: string, amount: number) {
+  if (amount <= 0) {
+    throw new Error("Amount must be greater than zero")
+  }
+
+  const result = await kyselyDb
+    .updateTable("payment_requests")
+    .set({
+      amount,
+      updated_at: new Date().toISOString(),
+    })
+    .where("event_participant_id", "=", eventParticipantId)
+    .where("payment_mode", "=", "manual")
+    .where("status", "in", ["pending", "awaiting_payment"])
+    .returningAll()
+    .executeTakeFirst()
+
+  if (!result) {
+    throw new Error("No pending manual payment request found for this participant")
+  }
+
+  return result
+}

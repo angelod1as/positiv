@@ -59,6 +59,7 @@ export async function action({ request, params }: Route.ActionArgs) {
           eventParticipantId: input.id as string,
           eventId: (input.event_id as string) || params.id || "",
           profileId: input.profile_id as string,
+          paymentMode: input.payment_mode as string | undefined,
         })
 
         return {

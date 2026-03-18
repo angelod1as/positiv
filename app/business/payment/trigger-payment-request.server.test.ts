@@ -212,6 +212,59 @@ describe("resolvePaymentRequest", () => {
     expect(result.success).toBe(true)
   })
 
+  it("uses paymentMode=automatic to override feature flag when provided", async () => {
+    mockEnv.paymentSystemOnline = false
+
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      undefined,
+      newPaymentRequest,
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
+    ])
+
+    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1", undefined, "automatic")
+
+    expect(result.success).toBe(true)
+    expect(sendPaymentLinkEmail).toHaveBeenCalled()
+  })
+
+  it("uses paymentMode=manual to override feature flag when provided", async () => {
+    mockEnv.paymentSystemOnline = true
+
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      undefined,
+      newPaymentRequest,
+    ])
+
+    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1", undefined, "manual")
+
+    expect(result.success).toBe(true)
+    expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+  })
+
+  it("passes paymentMode from handlePaymentStatusChange to resolvePaymentRequest", async () => {
+    mockEnv.paymentSystemOnline = true
+
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      undefined,
+      newPaymentRequest,
+    ])
+
+    const result = await handlePaymentStatusChange({
+      applicationStatus: "sent_payment_data",
+      eventParticipantId: "ep-1",
+      eventId: "ev-1",
+      profileId: "pr-1",
+      paymentMode: "manual",
+    })
+
+    expect(result.triggered).toBe(true)
+    if (result.triggered) expect(result.success).toBe(true)
+    expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+  })
+
   it("reuses active payment request if one exists", async () => {
     const existingRequest = {
       id: "pr-existing",

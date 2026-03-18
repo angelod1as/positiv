@@ -44,8 +44,6 @@ const eventParticipantFormSchema = z.object({
   attendance_status: z.string(),
   application_status: z.string(),
   spot_type: z.string(),
-  payment: z.coerce.number().min(0, "O valor não pode ser negativo"),
-  has_paid: z.boolean(),
   was_selected_for_rotation: z.boolean(),
   admin_general_notes: z.string(),
 })
@@ -94,8 +92,6 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     attendance_status,
     application_status,
     spot_type,
-    payment,
-    has_paid,
     was_selected_for_rotation,
     admin_general_notes,
     bond,
@@ -107,8 +103,15 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
   const fetcher = useFetcher<ComposableFetcherData>()
   const resendFetcher = useFetcher<ComposableFetcherData>()
+  const manualFetcher = useFetcher<ComposableFetcherData>()
   const [useCustomAmount, setUseCustomAmount] = useState(false)
   const [customAmount, setCustomAmount] = useState("")
+  const [paymentMode, setPaymentMode] = useState<string>(
+    paymentRequest?.payment_mode ?? "automatic",
+  )
+  const [manualAmount, setManualAmount] = useState(
+    paymentRequest ? String(Number(paymentRequest.amount)) : "",
+  )
 
   const handleResendPaymentLink = () => {
     const formData = new FormData()
@@ -131,9 +134,42 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     refundFetcher.submit(formData, { method: "POST" })
   }
 
+  const handleMarkManualPaid = () => {
+    const formData = new FormData()
+    formData.set("intent", "mark-manual-payment-paid")
+    formData.set("id", id)
+    manualFetcher.submit(formData, { method: "POST" })
+  }
+
+  const handleMarkManualRefunded = () => {
+    const formData = new FormData()
+    formData.set("intent", "mark-manual-payment-refunded")
+    formData.set("id", id)
+    manualFetcher.submit(formData, { method: "POST" })
+  }
+
+  const handleUpdateManualAmount = () => {
+    const amount = Number(manualAmount)
+    if (!amount || amount <= 0) {
+      toast.error("O valor deve ser maior que zero")
+      return
+    }
+    const formData = new FormData()
+    formData.set("intent", "update-manual-payment-amount")
+    formData.set("id", id)
+    formData.set("amount", String(amount))
+    manualFetcher.submit(formData, { method: "POST" })
+  }
+
   const isResending = resendFetcher.state !== "idle"
   const isRefunding = refundFetcher.state !== "idle"
-  const isAsaasManaged = paymentRequest != null && paymentRequest.payment_mode !== "manual"
+  const isManualProcessing = manualFetcher.state !== "idle"
+
+  const isAutomatic = paymentRequest?.payment_mode === "automatic"
+  const isManual = paymentRequest?.payment_mode === "manual"
+  const isPendingPayment = paymentRequest != null &&
+    (paymentRequest.status === "pending" || paymentRequest.status === "awaiting_payment")
+  const isPaid = paymentRequest?.status === "paid"
 
   useEffect(() => {
     if (fetcher.data?.paymentSent === true) {
@@ -162,14 +198,21 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     }
   }, [refundFetcher.data])
 
+  useEffect(() => {
+    if (manualFetcher.data?.success === true) {
+      toast.success("Pagamento atualizado com sucesso")
+    }
+    if (manualFetcher.data?.success === false) {
+      toast.error("Erro ao atualizar pagamento. Tente novamente.", { duration: Infinity, closeButton: true })
+    }
+  }, [manualFetcher.data])
+
   const { register } = useAutoSaveForm({
     schema: eventParticipantFormSchema,
     initialData: {
       attendance_status,
       application_status,
       spot_type,
-      payment: payment ?? 0,
-      has_paid,
       was_selected_for_rotation,
       admin_general_notes: admin_general_notes ?? "",
     },
@@ -181,13 +224,11 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
       formData.set("profile_id", profile_id ?? "")
       formData.set("event_id", event_id)
       formData.set(field, String(value))
-      if (
-        field === "application_status" &&
-        value === "sent_payment_data" &&
-        useCustomAmount &&
-        customAmount
-      ) {
-        formData.set("custom_amount", customAmount)
+      if (field === "application_status" && value === "sent_payment_data") {
+        formData.set("payment_mode", paymentMode)
+        if (useCustomAmount && customAmount) {
+          formData.set("custom_amount", customAmount)
+        }
       }
       fetcher.submit(formData, { method: "POST" })
     },
@@ -233,7 +274,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  {application_status === "sent_payment_data" && isAsaasManaged && (
+                  {application_status === "sent_payment_data" && isAutomatic && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -282,28 +323,27 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="payment">Pagamento</Label>
-                <Input
-                  id="payment"
-                  type="number"
-                  disabled={isAsaasManaged}
-                  {...register.number("payment")}
-                />
+                <Label htmlFor="payment_mode_select">Tipo de Pagamento</Label>
+                <Select
+                  value={paymentMode}
+                  onValueChange={setPaymentMode}
+                >
+                  <SelectTrigger id="payment_mode_select">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="automatic">Automático</SelectItem>
+                    <SelectItem value="manual">Manual</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex flex-col justify-end gap-2">
-                <Label className={`flex items-center gap-2 ${isAsaasManaged ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer"}`}>
-                  <Checkbox
-                    disabled={isAsaasManaged}
-                    {...register.checkbox("has_paid")}
-                  />
-                  <span>Pago</span>
-                </Label>
                 <Label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox {...register.checkbox("was_selected_for_rotation")} />
                   <span>Selecionado para Rodízio</span>
                 </Label>
-                {has_paid && isAsaasManaged && (
+                {isPaid && isAutomatic && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -409,6 +449,85 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                     formatDateTime(paymentRequest.refunded_at).full,
                   ]}
                 />
+              )}
+
+              {isManual && (
+                <div className="mt-3 pt-3 border-t space-y-3">
+                  {isPendingPayment && (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor="manual_amount" className="shrink-0">Valor:</Label>
+                        <Input
+                          id="manual_amount"
+                          type="number"
+                          value={manualAmount}
+                          onChange={(e) => setManualAmount(e.target.value)}
+                          className="w-28"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleUpdateManualAmount}
+                          disabled={isManualProcessing}
+                        >
+                          Salvar valor
+                        </Button>
+                      </div>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="default"
+                            size="sm"
+                            disabled={isManualProcessing}
+                          >
+                            {isManualProcessing ? "Processando..." : "Marcar como pago"}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar pagamento manual</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja marcar este pagamento como pago?
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleMarkManualPaid}>
+                              Confirmar pagamento
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </>
+                  )}
+                  {isPaid && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={isManualProcessing}
+                        >
+                          {isManualProcessing ? "Processando..." : "Marcar como reembolsado"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Confirmar reembolso manual</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Tem certeza que deseja marcar este pagamento como reembolsado?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={handleMarkManualRefunded}>
+                            Confirmar reembolso
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
+                </div>
               )}
             </div>
           </div>
