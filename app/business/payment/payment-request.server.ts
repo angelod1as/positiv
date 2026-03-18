@@ -10,9 +10,11 @@ export const PAYMENT_REQUEST_EXPIRY_MS = 2 * 24 * 60 * 60 * 1000
 export async function createPaymentRequest({
   eventParticipantId,
   ticketPrice,
+  billingType,
 }: {
   eventParticipantId: string
   ticketPrice: number
+  billingType?: string
 }) {
   const expiresAt = new Date(Date.now() + PAYMENT_REQUEST_EXPIRY_MS)
 
@@ -22,6 +24,7 @@ export async function createPaymentRequest({
       event_participant_id: eventParticipantId,
       amount: ticketPrice,
       status: "pending",
+      billing_type: billingType ?? null,
       expires_at: expiresAt.toISOString(),
     })
     .returningAll()

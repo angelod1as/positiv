@@ -36,15 +36,17 @@ const mockKyselyDb = vi.hoisted(() => {
   }
 })
 
+const mockEnv = vi.hoisted(() => ({
+  paymentSystemOnline: true,
+  appUrl: "https://www.positivparty.com",
+  asaasApiKey: "test",
+  asaasApiUrl: "https://sandbox.asaas.com/api/v3",
+}))
+
 vi.mock("~/kysely-db", () => ({ kyselyDb: mockKyselyDb }))
 
 vi.mock("~/env.server", () => ({
-  env: () => ({
-    paymentSystemOnline: true,
-    appUrl: "https://www.positivparty.com",
-    asaasApiKey: "test",
-    asaasApiUrl: "https://sandbox.asaas.com/api/v3",
-  }),
+  env: () => mockEnv,
 }))
 
 vi.mock("./send-payment-link-email.server", () => ({
@@ -58,9 +60,18 @@ vi.mock("~/lib/logger/logger.server", () => ({
 import { resolvePaymentRequest, handlePaymentStatusChange } from "./trigger-payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
 
+const newPaymentRequest = {
+  id: "pr-new",
+  event_participant_id: "ep-1",
+  amount: 220,
+  status: "pending",
+  expires_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+}
+
 describe("handlePaymentStatusChange", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockEnv.paymentSystemOnline = true
   })
 
   it("returns triggered: false when status is not sent_payment_data", async () => {
@@ -89,15 +100,9 @@ describe("handlePaymentStatusChange", () => {
   it("returns triggered: true with success when status is sent_payment_data", async () => {
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
       undefined,
-      {
-        id: "pr-new",
-        event_participant_id: "ep-1",
-        amount: 220,
-        status: "pending",
-        expires_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
+      newPaymentRequest,
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
     ])
 
     const result = await handlePaymentStatusChange({
@@ -131,20 +136,15 @@ describe("handlePaymentStatusChange", () => {
 describe("resolvePaymentRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockEnv.paymentSystemOnline = true
   })
 
-  it("creates payment request and sends email", async () => {
+  it("creates payment request and sends email when online", async () => {
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
       undefined,
-      {
-        id: "pr-new",
-        event_participant_id: "ep-1",
-        amount: 220,
-        status: "pending",
-        expires_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
+      newPaymentRequest,
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
     ])
 
     const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
@@ -160,6 +160,21 @@ describe("resolvePaymentRequest", () => {
     )
   })
 
+  it("creates manual payment request without email when offline", async () => {
+    mockEnv.paymentSystemOnline = false
+
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      undefined,
+      newPaymentRequest,
+    ])
+
+    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
+
+    expect(result.success).toBe(true)
+    expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+  })
+
   it("returns failure when event has no ticket_price", async () => {
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Free Event", ticket_price: null },
@@ -170,15 +185,31 @@ describe("resolvePaymentRequest", () => {
     expect(result.success).toBe(false)
   })
 
-  it("returns failure when profile has no CPF", async () => {
+  it("returns failure when profile has no CPF (online only)", async () => {
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      undefined,
+      newPaymentRequest,
       { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: null },
     ])
 
     const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
 
     expect(result.success).toBe(false)
+  })
+
+  it("does not require CPF when offline", async () => {
+    mockEnv.paymentSystemOnline = false
+
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      undefined,
+      newPaymentRequest,
+    ])
+
+    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
+
+    expect(result.success).toBe(true)
   })
 
   it("reuses active payment request if one exists", async () => {
@@ -192,8 +223,8 @@ describe("resolvePaymentRequest", () => {
 
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
       existingRequest,
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
     ])
 
     const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")

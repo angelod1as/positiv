@@ -49,7 +49,7 @@ export const resolvePaymentRequest = composable(
     eventId: string,
     profileId: string,
   ) => {
-    if (!env().paymentSystemOnline) return
+    const isPaymentSystemOnline = env().paymentSystemOnline
 
     const event = await kyselyDb
       .selectFrom("events")
@@ -61,6 +61,24 @@ export const resolvePaymentRequest = composable(
       throw new Error(`Event ${eventId} has no ticket_price configured`)
     }
 
+    const activeRequest = await getActivePaymentRequest(eventParticipantId)
+    const paymentRequest =
+      activeRequest ??
+      (await createPaymentRequest({
+        eventParticipantId,
+        ticketPrice: Number(event.ticket_price),
+        billingType: isPaymentSystemOnline ? undefined : "manual",
+      }))
+
+    if (!isPaymentSystemOnline) {
+      logger.info("Payment request created as manual (payment system offline)", {
+        eventParticipantId,
+        paymentRequestId: paymentRequest.id,
+        reused: !!activeRequest,
+      })
+      return paymentRequest
+    }
+
     const profile = await kyselyDb
       .selectFrom("profiles")
       .select(["id", "email", "full_name", "cpf"])
@@ -70,14 +88,6 @@ export const resolvePaymentRequest = composable(
     if (!profile.cpf) {
       throw new Error(`Profile ${profileId} has no CPF. Payment requires a valid CPF.`)
     }
-
-    const activeRequest = await getActivePaymentRequest(eventParticipantId)
-    const paymentRequest =
-      activeRequest ??
-      (await createPaymentRequest({
-        eventParticipantId,
-        ticketPrice: Number(event.ticket_price),
-      }))
 
     const { appUrl } = env()
     const paymentUrl = `${appUrl}${paths.payment.PAYMENT(eventParticipantId)}`
