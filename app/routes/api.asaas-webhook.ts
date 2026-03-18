@@ -46,26 +46,17 @@ const findPaymentRequest = composable((asaasPaymentId: string) =>
     .executeTakeFirst(),
 )
 
-const markAsPaid = composable(
-  async (paymentRequestId: string, eventParticipantId: string, amount: number) => {
-    await Promise.all([
-      kyselyDb
-        .updateTable("payment_requests")
-        .set({
-          status: "paid" as const,
-          paid_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .where("id", "=", paymentRequestId)
-        .execute(),
-      kyselyDb
-        .updateTable("event_participants")
-        .set({ has_paid: true, payment: amount })
-        .where("id", "=", eventParticipantId)
-        .execute(),
-    ])
-  },
-)
+const markAsPaid = composable(async (paymentRequestId: string) => {
+  await kyselyDb
+    .updateTable("payment_requests")
+    .set({
+      status: "paid" as const,
+      paid_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .where("id", "=", paymentRequestId)
+    .execute()
+})
 
 const markAsExpired = composable((paymentRequestId: string) =>
   kyselyDb
@@ -122,11 +113,7 @@ export async function action({ request }: ActionFunctionArgs) {
       return ok({ received: true, skipped: "already_paid" })
     }
 
-    const paidResult = await markAsPaid(
-      paymentRequest.id,
-      paymentRequest.event_participant_id,
-      Number(paymentRequest.amount),
-    )
+    const paidResult = await markAsPaid(paymentRequest.id)
     if (!paidResult.success) {
       logger.error("Failed to mark payment as paid", {
         paymentRequestId: paymentRequest.id,

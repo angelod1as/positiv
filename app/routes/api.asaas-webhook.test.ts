@@ -129,7 +129,7 @@ describe("api.asaas-webhook", () => {
   })
 
   describe("PAYMENT_RECEIVED (PIX)", () => {
-    it("marks payment request as paid and updates event_participant", async () => {
+    it("marks payment request as paid", async () => {
       mockFindResult.value = {
         id: "pr-1",
         event_participant_id: "ep-1",
