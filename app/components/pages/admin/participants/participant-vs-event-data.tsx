@@ -261,7 +261,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               </div>
 
               <div className="flex flex-col justify-end gap-2">
-                <Label className="flex items-center gap-2 cursor-pointer">
+                <Label className={`flex items-center gap-2 ${isAsaasManaged ? "cursor-not-allowed text-muted-foreground" : "cursor-pointer"}`}>
                   <Checkbox
                     disabled={isAsaasManaged}
                     {...register.checkbox("has_paid")}
