@@ -274,7 +274,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                       ))}
                     </SelectContent>
                   </Select>
-                  {application_status === "sent_payment_data" && isAutomatic && (
+                  {application_status === "sent_payment_data" && isAutomatic && isPendingPayment && (
                     <Button
                       variant="outline"
                       size="sm"
