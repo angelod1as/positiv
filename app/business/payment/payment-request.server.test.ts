@@ -138,7 +138,6 @@ describe("payment-request.server", () => {
       const result = await confirmPaymentChoice({
         eventParticipantId: "ep-1",
         paymentOption: "CC_2",
-        ticketPrice: 220,
       })
 
       expect(result.invoiceUrl).toBe("https://sandbox.asaas.com/i/pay_1")
@@ -164,7 +163,6 @@ describe("payment-request.server", () => {
         confirmPaymentChoice({
           eventParticipantId: "ep-1",
           paymentOption: "PIX",
-          ticketPrice: 220,
         }),
       ).rejects.toThrow()
     })
@@ -186,7 +184,6 @@ describe("payment-request.server", () => {
         confirmPaymentChoice({
           eventParticipantId: "ep-1",
           paymentOption: "PIX",
-          ticketPrice: 220,
         }),
       ).rejects.toThrow("CPF")
     })
@@ -214,7 +211,6 @@ describe("payment-request.server", () => {
       await confirmPaymentChoice({
         eventParticipantId: "ep-1",
         paymentOption: "PIX",
-        ticketPrice: 220,
       })
 
       expect(createAsaasPayment).toHaveBeenCalledWith(

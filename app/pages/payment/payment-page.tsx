@@ -85,11 +85,6 @@ async function getEventParticipantWithAuth(request: Request, params: Route.Loade
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { eventParticipant } = await getEventParticipantWithAuth(request, params)
 
-  const ticketPrice = Number(eventParticipant.ticket_price)
-  if (!ticketPrice) {
-    throw await redirectWithError(paths.root.HOME, "Este evento não possui valor de ingresso configurado.")
-  }
-
   const activeRequest = await getActivePaymentRequest(eventParticipant.id)
 
   if (activeRequest?.status === "paid") {
@@ -108,7 +103,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     }
   }
 
-  const paymentOptions = buildPaymentOptions(ticketPrice)
+  const amount = Number(activeRequest.amount)
+  if (!amount) {
+    throw await redirectWithError(paths.root.HOME, "Valor de pagamento inválido.")
+  }
+
+  const paymentOptions = buildPaymentOptions(amount)
   const dropdownOptions = paymentOptions.map((o) => ({
     name: formatOptionLabel(o),
     value: o.value,
@@ -123,14 +123,12 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 export async function action({ request, params }: Route.ActionArgs) {
   const { eventParticipant } = await getEventParticipantWithAuth(request, params)
-  const ticketPrice = Number(eventParticipant.ticket_price)
 
   const mutation = applySchema(paymentFormSchema)(
     async ({ paymentOption: selectedValue }) => {
       const result = await confirmPaymentChoice({
         eventParticipantId: eventParticipant.id,
         paymentOption: selectedValue,
-        ticketPrice,
       })
       return { invoiceUrl: result.invoiceUrl }
     },

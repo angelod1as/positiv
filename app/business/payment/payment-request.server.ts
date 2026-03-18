@@ -108,11 +108,9 @@ function parsePaymentOption(paymentOption: string) {
 export async function confirmPaymentChoice({
   eventParticipantId,
   paymentOption,
-  ticketPrice,
 }: {
   eventParticipantId: string
   paymentOption: string
-  ticketPrice: number
 }) {
   const paymentRequest = await kyselyDb
     .selectFrom("payment_requests")
@@ -125,6 +123,8 @@ export async function confirmPaymentChoice({
   if (!paymentRequest) {
     throw new Error("No active payment request found")
   }
+
+  const amount = Number(paymentRequest.amount)
 
   const profile = await kyselyDb
     .selectFrom("event_participants")
@@ -146,7 +146,7 @@ export async function confirmPaymentChoice({
 
   const { billingType, installments } = parsePaymentOption(paymentOption)
 
-  const options = buildPaymentOptions(ticketPrice)
+  const options = buildPaymentOptions(amount)
   const option = options.find((o) => o.value === paymentOption)
   if (!option) throw new Error(`Invalid payment option: ${paymentOption}`)
 
