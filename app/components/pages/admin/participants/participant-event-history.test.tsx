@@ -24,6 +24,8 @@ const mockParticipantHistory: ParticipantEventHistoryData[] = [
     notes: null,
     has_paid: false,
     payment: 0,
+    pr_amount: null,
+    pr_status: null,
     referrals: null,
     referred: "",
     companions: null,
@@ -52,6 +54,8 @@ const mockParticipantHistory: ParticipantEventHistoryData[] = [
     notes: null,
     has_paid: false,
     payment: 0,
+    pr_amount: null,
+    pr_status: null,
     referrals: null,
     referred: "",
     companions: null,
@@ -190,8 +194,8 @@ describe("ParticipantEventHistory", () => {
     > = [
       {
         ...mockParticipantHistory[0],
-        payment: 150,
-        has_paid: true,
+        pr_amount: 150,
+        pr_status: "paid",
       },
     ]
     renderWithRouter(
@@ -277,7 +281,7 @@ describe("ParticipantEventHistory", () => {
     const historyWithSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 150,
+        pr_amount: 150,
         ticket_price: 100,
       },
     ]
@@ -296,7 +300,7 @@ describe("ParticipantEventHistory", () => {
     const historyWithNegativeSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 80,
+        pr_amount: 80,
         ticket_price: 100,
       },
     ]
@@ -315,7 +319,7 @@ describe("ParticipantEventHistory", () => {
     const historyWithZeroSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 100,
+        pr_amount: 100,
         ticket_price: 100,
       },
     ]

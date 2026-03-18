@@ -129,6 +129,8 @@ export type ParticipantVsEvent = EventParticipant & {
 export type ParticipantEventHistoryData = ParticipantVsEvent & {
   time_event_start: string
   ticket_price: number | null
+  pr_amount: number | null
+  pr_status: string | null
 }
 
 /**

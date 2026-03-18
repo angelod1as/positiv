@@ -22,7 +22,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   participantHistory,
 }) => {
   const paidEvents = participantHistory.filter(
-    (item) => Number(item.payment) > 0,
+    (item) => item.pr_status === "paid" && Number(item.pr_amount) > 0,
   )
 
   if (paidEvents.length === 0) {
@@ -30,7 +30,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   }
 
   const totalInvested = paidEvents.reduce(
-    (sum, item) => sum + Number(item.payment ?? 0),
+    (sum, item) => sum + Number(item.pr_amount ?? 0),
     0,
   )
 
@@ -40,9 +40,9 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
     paidEventsCount > 0 ? totalInvested / paidEventsCount : 0
 
   const totalSurplus = paidEvents.reduce((sum, item) => {
-    const payment = Number(item.payment)
+    const amount = Number(item.pr_amount)
     const ticketPrice = Number(item.ticket_price ?? 0)
-    return sum + (payment - ticketPrice)
+    return sum + (amount - ticketPrice)
   }, 0)
 
   return (
@@ -76,7 +76,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
           <ul className="space-y-2">
             {paidEvents.map((item) => {
               const surplus =
-                Number(item.payment ?? 0) - Number(item.ticket_price ?? 0)
+                Number(item.pr_amount ?? 0) - Number(item.ticket_price ?? 0)
               const formattedDate = item.time_event_start
                 ? formatDateTime(item.time_event_start).date
                 : null
@@ -100,7 +100,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
                     )}
                   </span>
                   <span className="font-medium">
-                    {formatCurrency(Number(item.payment ?? 0))}{" "}
+                    {formatCurrency(Number(item.pr_amount ?? 0))}{" "}
                     <span
                       className={
                         surplus >= 0 ? "text-green-600" : "text-red-600"

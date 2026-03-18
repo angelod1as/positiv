@@ -106,9 +106,11 @@ function SpotTypeRenderer(
 function PaymentRenderer(
   params: ICellRendererParams<ParticipantEventHistoryData>,
 ) {
-  const value = params.value as number | null | undefined
-  if (value === null || value === undefined || value === 0) return null
-  return `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const data = params.data
+  if (!data) return null
+  const amount = data.pr_amount
+  if (amount === null || amount === undefined || amount === 0) return null
+  return `R$ ${amount.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function SurplusRenderer(
@@ -117,11 +119,11 @@ function SurplusRenderer(
   const data = params.data
   if (!data) return null
 
-  const payment = data.payment ?? 0
-  if (payment === 0) return null
+  const amount = data.pr_amount ?? 0
+  if (amount === 0) return null
 
   const ticketPrice = data.ticket_price ?? 0
-  const surplus = payment - ticketPrice
+  const surplus = amount - ticketPrice
 
   const formattedValue = `R$ ${Math.abs(surplus).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
@@ -154,8 +156,8 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         },
       },
       {
-        field: "payment",
-        headerName: eventParticipantPropMap("payment"),
+        field: "pr_amount",
+        headerName: "Pagamento",
         cellRenderer: PaymentRenderer,
         sortable: true,
       },
