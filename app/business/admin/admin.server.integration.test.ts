@@ -600,16 +600,15 @@ describe("updateEventParticipantById - Integration Tests", () => {
       profile_id: profile.id,
       event_id: event.id,
       is_user_applied: true,
-      payment: 100,
       attendance_status: "pending"
     })
 
-    // Test updating payment field when participant has flag
+    // Test updating attendance_status field when participant has flag
     const result = await updateEventParticipantById({
       id: participant.id,
       profile_id: profile.id,
       intent: "update-event-participant",
-      payment: 150
+      attendance_status: "attended"
     })
 
     expect(result.success).toBe(true)
@@ -621,7 +620,7 @@ describe("updateEventParticipantById - Integration Tests", () => {
       .where("id", "=", participant.id)
       .executeTakeFirst()
 
-    expect(updatedParticipant?.payment).toBe("150.00")
+    expect(updatedParticipant?.attendance_status).toBe("attended")
   })
 
   it("should fail when updating participant with flag but without flag_notes", async () => {
