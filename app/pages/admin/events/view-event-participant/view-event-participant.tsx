@@ -8,7 +8,10 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
-import { getLatestPaymentRequest } from "~/business/payment/payment-request.server"
+import {
+  getLatestPaymentRequest,
+  syncManualPaymentStatus,
+} from "~/business/payment/payment-request.server"
 import {
   handlePaymentStatusChange,
   processRefund,
@@ -61,6 +64,14 @@ export async function action({ request }: Route.ActionArgs) {
     const result = await updateEventParticipantById(entries)
     if (!result.success) {
       return { success: false, errors: result.errors }
+    }
+
+    if (entries.has_paid !== undefined || entries.payment !== undefined) {
+      await syncManualPaymentStatus(
+        entries.id as string,
+        entries.has_paid === "true",
+        entries.payment !== undefined ? Number(entries.payment) : undefined,
+      )
     }
 
     if (entries.application_status !== "sent_payment_data")
