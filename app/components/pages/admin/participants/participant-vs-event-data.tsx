@@ -386,36 +386,39 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
           </div>
         </div>
 
-        {paymentRequest && (
-          <div className="space-y-2">
-            <h4>Pagamento</h4>
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
-              <DataPair
-                pair={[
-                  "Status",
-                  PAYMENT_STATUS_LABELS[paymentRequest.status] ?? paymentRequest.status,
-                ]}
-              />
-              <DataPair
-                pair={[
-                  "Modo",
-                  PAYMENT_MODE_LABELS[paymentRequest.payment_mode] ?? paymentRequest.payment_mode,
-                ]}
-              />
-              {paymentRequest.payment_method && (
+        <div className="space-y-2">
+          <h4>Pagamento</h4>
+          <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
+            {!paymentRequest ? (
+              <p className="text-muted-foreground">Sem pagamento até o momento</p>
+            ) : (
+              <>
                 <DataPair
                   pair={[
-                    "Método",
-                    PAYMENT_METHOD_LABELS[paymentRequest.payment_method] ?? paymentRequest.payment_method,
+                    "Status",
+                    PAYMENT_STATUS_LABELS[paymentRequest.status] ?? paymentRequest.status,
                   ]}
                 />
-              )}
-              <DataPair
-                pair={[
-                  "Valor",
-                  formatCurrency(Number(paymentRequest.amount)),
-                ]}
-              />
+                <DataPair
+                  pair={[
+                    "Modo",
+                    PAYMENT_MODE_LABELS[paymentRequest.payment_mode] ?? paymentRequest.payment_mode,
+                  ]}
+                />
+                {paymentRequest.payment_method && (
+                  <DataPair
+                    pair={[
+                      "Método",
+                      PAYMENT_METHOD_LABELS[paymentRequest.payment_method] ?? paymentRequest.payment_method,
+                    ]}
+                  />
+                )}
+                <DataPair
+                  pair={[
+                    "Valor",
+                    formatCurrency(Number(paymentRequest.amount)),
+                  ]}
+                />
               {paymentRequest.installment_count && paymentRequest.installment_count > 1 && (
                 <DataPair
                   pair={["Parcelas", `${paymentRequest.installment_count}x`]}
@@ -529,9 +532,10 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                   )}
                 </div>
               )}
-            </div>
+              </>
+            )}
           </div>
-        )}
+        </div>
 
         <div className="space-y-2">
           <h4>Respostas</h4>
