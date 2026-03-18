@@ -451,7 +451,6 @@ export type Database = {
           amount: number
           asaas_customer_id: string | null
           asaas_payment_id: string | null
-          billing_type: string | null
           created_at: string
           event_participant_id: string
           expires_at: string
@@ -459,6 +458,8 @@ export type Database = {
           installment_count: number | null
           invoice_url: string | null
           paid_at: string | null
+          payment_method: string | null
+          payment_mode: string
           refund_amount: number | null
           refunded_at: string | null
           status: Database["public"]["Enums"]["payment_request_status"]
@@ -468,7 +469,6 @@ export type Database = {
           amount: number
           asaas_customer_id?: string | null
           asaas_payment_id?: string | null
-          billing_type?: string | null
           created_at?: string
           event_participant_id: string
           expires_at: string
@@ -476,6 +476,8 @@ export type Database = {
           installment_count?: number | null
           invoice_url?: string | null
           paid_at?: string | null
+          payment_method?: string | null
+          payment_mode?: string
           refund_amount?: number | null
           refunded_at?: string | null
           status?: Database["public"]["Enums"]["payment_request_status"]
@@ -485,7 +487,6 @@ export type Database = {
           amount?: number
           asaas_customer_id?: string | null
           asaas_payment_id?: string | null
-          billing_type?: string | null
           created_at?: string
           event_participant_id?: string
           expires_at?: string
@@ -493,6 +494,8 @@ export type Database = {
           installment_count?: number | null
           invoice_url?: string | null
           paid_at?: string | null
+          payment_method?: string | null
+          payment_mode?: string
           refund_amount?: number | null
           refunded_at?: string | null
           status?: Database["public"]["Enums"]["payment_request_status"]

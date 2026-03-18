@@ -11,11 +11,11 @@ export const PAYMENT_REQUEST_EXPIRY_MS = 2 * 24 * 60 * 60 * 1000
 export async function createPaymentRequest({
   eventParticipantId,
   ticketPrice,
-  billingType,
+  paymentMode,
 }: {
   eventParticipantId: string
   ticketPrice: number
-  billingType?: string
+  paymentMode?: string
 }) {
   const expiresAt = new Date(Date.now() + PAYMENT_REQUEST_EXPIRY_MS)
 
@@ -25,7 +25,7 @@ export async function createPaymentRequest({
       event_participant_id: eventParticipantId,
       amount: ticketPrice,
       status: "pending",
-      billing_type: billingType ?? null,
+      payment_mode: paymentMode ?? "manual",
       expires_at: expiresAt.toISOString(),
     })
     .returningAll()
@@ -54,7 +54,7 @@ export const syncManualPaymentStatus = composable(
     if (!latestResult.success) return
     const paymentRequest = latestResult.data
     if (!paymentRequest) return
-    if (paymentRequest.billing_type !== "manual") return
+    if (paymentRequest.payment_mode !== "manual") return
 
     const updates: Record<string, unknown> = {}
 
@@ -171,7 +171,8 @@ export async function confirmPaymentChoice({
     .set({
       asaas_customer_id: customer.id,
       asaas_payment_id: payment.id,
-      billing_type: billingType,
+      payment_mode: "automatic",
+      payment_method: billingType,
       installment_count: installments,
       amount: option.totalReais,
       invoice_url: payment.invoiceUrl,

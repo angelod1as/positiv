@@ -65,10 +65,14 @@ const PAYMENT_STATUS_LABELS: Record<string, string> = {
   cancelled: "Cancelado",
 }
 
-const BILLING_TYPE_LABELS: Record<string, string> = {
+const PAYMENT_MODE_LABELS: Record<string, string> = {
+  automatic: "Automático",
+  manual: "Manual",
+}
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
   PIX: "Pix",
   CREDIT_CARD: "Cartão de Crédito",
-  manual: "Manual",
 }
 
 function formatCurrency(value: number) {
@@ -129,7 +133,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
   const isResending = resendFetcher.state !== "idle"
   const isRefunding = refundFetcher.state !== "idle"
-  const isAsaasManaged = paymentRequest != null && paymentRequest.billing_type !== "manual"
+  const isAsaasManaged = paymentRequest != null && paymentRequest.payment_mode !== "manual"
 
   useEffect(() => {
     if (fetcher.data?.paymentSent === true) {
@@ -354,10 +358,18 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               />
               <DataPair
                 pair={[
-                  "Tipo",
-                  BILLING_TYPE_LABELS[paymentRequest.billing_type ?? ""] ?? paymentRequest.billing_type ?? "—",
+                  "Modo",
+                  PAYMENT_MODE_LABELS[paymentRequest.payment_mode] ?? paymentRequest.payment_mode,
                 ]}
               />
+              {paymentRequest.payment_method && (
+                <DataPair
+                  pair={[
+                    "Método",
+                    PAYMENT_METHOD_LABELS[paymentRequest.payment_method] ?? paymentRequest.payment_method,
+                  ]}
+                />
+              )}
               <DataPair
                 pair={[
                   "Valor",

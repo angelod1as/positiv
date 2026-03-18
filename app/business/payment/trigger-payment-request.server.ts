@@ -81,7 +81,7 @@ export const resolvePaymentRequest = composable(
       (await createPaymentRequest({
         eventParticipantId,
         ticketPrice: amount,
-        billingType: isPaymentSystemOnline ? undefined : "manual",
+        paymentMode: isPaymentSystemOnline ? "automatic" : "manual",
       }))
 
     if (!isPaymentSystemOnline) {
