@@ -83,6 +83,11 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
       "event_participants.event_id",
       "events.id"
     )
+    .leftJoin("payment_requests as pr", (join) =>
+      join
+        .onRef("pr.event_participant_id", "=", "event_participants.id")
+        .on("pr.status", "=", "paid")
+    )
     .where("events.event_status", "=", "Completed")
     .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .groupBy([
@@ -98,10 +103,10 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
       "events.emoji",
       "events.time_event_start as date",
       "events.ticket_price",
-      sql<number>`coalesce(sum(event_participants.payment), 0)::int`.as(
+      sql<number>`coalesce(sum(pr.amount), 0)::int`.as(
         "faturamento_total"
       ),
-      sql<number>`count(*) filter (where event_participants.has_paid = true)::int`.as(
+      sql<number>`count(distinct pr.event_participant_id)::int`.as(
         "num_pagantes"
       ),
     ])
@@ -127,6 +132,11 @@ export async function getConversionFunnelData(): Promise<
       "event_participants.event_id",
       "events.id"
     )
+    .leftJoin("payment_requests as pr", (join) =>
+      join
+        .onRef("pr.event_participant_id", "=", "event_participants.id")
+        .on("pr.status", "=", "paid")
+    )
     .where("events.event_status", "=", "Completed")
     .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .groupBy([
@@ -140,14 +150,14 @@ export async function getConversionFunnelData(): Promise<
       "events.title",
       "events.emoji",
       "events.time_event_start as date",
-      sql<number>`count(event_participants.id)::int`.as("inscritos"),
-      sql<number>`count(*) filter (where event_participants.application_status = 'finalised')::int`.as(
+      sql<number>`count(distinct event_participants.id)::int`.as("inscritos"),
+      sql<number>`count(distinct event_participants.id) filter (where event_participants.application_status = 'finalised')::int`.as(
         "finalizados"
       ),
-      sql<number>`count(*) filter (where event_participants.has_paid = true)::int`.as(
+      sql<number>`count(distinct pr.event_participant_id)::int`.as(
         "pagaram"
       ),
-      sql<number>`count(*) filter (where event_participants.attendance_status = 'attended')::int`.as(
+      sql<number>`count(distinct event_participants.id) filter (where event_participants.attendance_status = 'attended')::int`.as(
         "compareceram"
       ),
     ])

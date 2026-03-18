@@ -7,6 +7,7 @@ import {
   createTestProfile,
   createTestEvent,
   createTestEventParticipant,
+  createTestPaymentRequest,
 } from "~/test/db-test-utils"
 import {
   getVeteranRookieData,
@@ -32,6 +33,7 @@ describe("DataViz - Integration Tests", () => {
 
   beforeEach(async () => {
     tracker.clear()
+    await kysely.deleteFrom("payment_requests").execute()
     await kysely.deleteFrom("event_participants").execute()
     await kysely
       .updateTable("events")
@@ -617,24 +619,36 @@ describe("DataViz - Integration Tests", () => {
           email: `${testPrefix}-rev2@test.com`,
         })
 
-        await createTestEventParticipant(tracker, kysely, {
+        const participant1 = await createTestEventParticipant(tracker, kysely, {
           event_id: completedEvent.id,
           profile_id: profile1.id,
-          has_paid: true,
-          payment: 100,
         })
-        await createTestEventParticipant(tracker, kysely, {
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: participant1.id,
+          amount: 100,
+          status: "paid",
+          expires_at: new Date("2025-08-15T19:00:00Z").toISOString(),
+        })
+        const participant2 = await createTestEventParticipant(tracker, kysely, {
           event_id: completedEvent.id,
           profile_id: profile2.id,
-          has_paid: true,
-          payment: 80,
+        })
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: participant2.id,
+          amount: 80,
+          status: "paid",
+          expires_at: new Date("2025-08-15T19:00:00Z").toISOString(),
         })
 
-        await createTestEventParticipant(tracker, kysely, {
+        const draftParticipant = await createTestEventParticipant(tracker, kysely, {
           event_id: draftEvent.id,
           profile_id: profile1.id,
-          has_paid: true,
-          payment: 200,
+        })
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: draftParticipant.id,
+          amount: 200,
+          status: "paid",
+          expires_at: new Date("2025-09-15T19:00:00Z").toISOString(),
         })
 
         const result = await getEventRevenueData()
@@ -670,23 +684,29 @@ describe("DataViz - Integration Tests", () => {
           }),
         ])
 
-        await createTestEventParticipant(tracker, kysely, {
+        const paidParticipant1 = await createTestEventParticipant(tracker, kysely, {
           event_id: event.id,
           profile_id: profiles[0].id,
-          has_paid: true,
-          payment: 150,
         })
-        await createTestEventParticipant(tracker, kysely, {
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: paidParticipant1.id,
+          amount: 150,
+          status: "paid",
+          expires_at: new Date("2025-10-01T19:00:00Z").toISOString(),
+        })
+        const paidParticipant2 = await createTestEventParticipant(tracker, kysely, {
           event_id: event.id,
           profile_id: profiles[1].id,
-          has_paid: true,
-          payment: 120,
+        })
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: paidParticipant2.id,
+          amount: 120,
+          status: "paid",
+          expires_at: new Date("2025-10-01T19:00:00Z").toISOString(),
         })
         await createTestEventParticipant(tracker, kysely, {
           event_id: event.id,
           profile_id: profiles[2].id,
-          has_paid: false,
-          payment: 0,
         })
 
         const result = await getEventRevenueData()
@@ -778,27 +798,36 @@ describe("DataViz - Integration Tests", () => {
         ])
 
         // Profile 1: finalised, paid, attended
-        await createTestEventParticipant(tracker, kysely, {
+        const funnelParticipant1 = await createTestEventParticipant(tracker, kysely, {
           event_id: completedEvent.id,
           profile_id: profiles[0].id,
           application_status: "finalised",
-          has_paid: true,
           attendance_status: "attended",
         })
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: funnelParticipant1.id,
+          amount: 100,
+          status: "paid",
+          expires_at: new Date("2025-08-15T19:00:00Z").toISOString(),
+        })
         // Profile 2: finalised, paid, not attended
-        await createTestEventParticipant(tracker, kysely, {
+        const funnelParticipant2 = await createTestEventParticipant(tracker, kysely, {
           event_id: completedEvent.id,
           profile_id: profiles[1].id,
           application_status: "finalised",
-          has_paid: true,
           attendance_status: "not-attended",
+        })
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: funnelParticipant2.id,
+          amount: 100,
+          status: "paid",
+          expires_at: new Date("2025-08-15T19:00:00Z").toISOString(),
         })
         // Profile 3: finalised, not paid
         await createTestEventParticipant(tracker, kysely, {
           event_id: completedEvent.id,
           profile_id: profiles[2].id,
           application_status: "finalised",
-          has_paid: false,
           attendance_status: "pending",
         })
         // Profile 4: pending (not finalised)
@@ -806,17 +835,21 @@ describe("DataViz - Integration Tests", () => {
           event_id: completedEvent.id,
           profile_id: profiles[3].id,
           application_status: "pending",
-          has_paid: false,
           attendance_status: "pending",
         })
 
         // Draft event participant (should not be counted)
-        await createTestEventParticipant(tracker, kysely, {
+        const draftFunnelParticipant = await createTestEventParticipant(tracker, kysely, {
           event_id: draftEvent.id,
           profile_id: profiles[0].id,
           application_status: "finalised",
-          has_paid: true,
           attendance_status: "attended",
+        })
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: draftFunnelParticipant.id,
+          amount: 100,
+          status: "paid",
+          expires_at: new Date("2025-09-15T19:00:00Z").toISOString(),
         })
 
         const result = await getConversionFunnelData()
@@ -1364,35 +1397,51 @@ describe("DataViz - Integration Tests", () => {
         })
 
         // Event 1: veteran1 and nonVeteran attended, paid
-        await createTestEventParticipant(tracker, kysely, {
+        const kpiP1 = await createTestEventParticipant(tracker, kysely, {
           event_id: event1.id,
           profile_id: veteran1.id,
           attendance_status: "attended",
-          has_paid: true,
-          payment: 100,
         })
-        await createTestEventParticipant(tracker, kysely, {
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: kpiP1.id,
+          amount: 100,
+          status: "paid",
+          expires_at: new Date("2025-08-15T19:00:00Z").toISOString(),
+        })
+        const kpiP2 = await createTestEventParticipant(tracker, kysely, {
           event_id: event1.id,
           profile_id: nonVeteran.id,
           attendance_status: "attended",
-          has_paid: true,
-          payment: 100,
+        })
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: kpiP2.id,
+          amount: 100,
+          status: "paid",
+          expires_at: new Date("2025-08-15T19:00:00Z").toISOString(),
         })
 
         // Event 2: veteran1 and veteran2 attended, paid
-        await createTestEventParticipant(tracker, kysely, {
+        const kpiP3 = await createTestEventParticipant(tracker, kysely, {
           event_id: event2.id,
           profile_id: veteran1.id,
           attendance_status: "attended",
-          has_paid: true,
-          payment: 150,
         })
-        await createTestEventParticipant(tracker, kysely, {
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: kpiP3.id,
+          amount: 150,
+          status: "paid",
+          expires_at: new Date("2025-09-15T19:00:00Z").toISOString(),
+        })
+        const kpiP4 = await createTestEventParticipant(tracker, kysely, {
           event_id: event2.id,
           profile_id: veteran2.id,
           attendance_status: "attended",
-          has_paid: true,
-          payment: 150,
+        })
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: kpiP4.id,
+          amount: 150,
+          status: "paid",
+          expires_at: new Date("2025-09-15T19:00:00Z").toISOString(),
         })
 
         const result = await getKpiScores()
@@ -1463,19 +1512,27 @@ describe("DataViz - Integration Tests", () => {
           ticket_price: 200,
         })
 
-        await createTestEventParticipant(tracker, kysely, {
+        const completedP = await createTestEventParticipant(tracker, kysely, {
           event_id: completedEvent.id,
           profile_id: profile.id,
           attendance_status: "attended",
-          has_paid: true,
-          payment: 100,
         })
-        await createTestEventParticipant(tracker, kysely, {
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: completedP.id,
+          amount: 100,
+          status: "paid",
+          expires_at: new Date("2025-08-15T19:00:00Z").toISOString(),
+        })
+        const draftP = await createTestEventParticipant(tracker, kysely, {
           event_id: draftEvent.id,
           profile_id: profile.id,
           attendance_status: "attended",
-          has_paid: true,
-          payment: 200,
+        })
+        await createTestPaymentRequest(tracker, kysely, {
+          event_participant_id: draftP.id,
+          amount: 200,
+          status: "paid",
+          expires_at: new Date("2025-09-15T19:00:00Z").toISOString(),
         })
 
         const result = await getKpiScores()

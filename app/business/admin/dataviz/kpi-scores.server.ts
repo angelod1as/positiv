@@ -104,9 +104,14 @@ export async function getKpiScores(): Promise<KpiScores> {
   const revenueData = await kyselyDb
     .selectFrom("event_participants")
     .innerJoin("events", "events.id", "event_participants.event_id")
+    .leftJoin("payment_requests as pr", (join) =>
+      join
+        .onRef("pr.event_participant_id", "=", "event_participants.id")
+        .on("pr.status", "=", "paid")
+    )
     .where("events.event_status", "=", "Completed")
     .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
-    .select([sql<number>`coalesce(sum(event_participants.payment), 0)::int`.as("total_revenue")])
+    .select([sql<number>`coalesce(sum(pr.amount), 0)::int`.as("total_revenue")])
     .executeTakeFirstOrThrow()
 
   const avgRevenuePerEvent =
