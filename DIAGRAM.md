@@ -253,16 +253,6 @@ flowchart TD
 
 ---
 
-## Known Issues / Edge Cases
+## Known Limitations
 
-1. **Resend creates a NEW Asaas payment but reuses the payment_request row** — if admin resends with a different amount, the old Asaas payment is orphaned (never cancelled on Asaas side)
-
-2. **No cancellation flow** — `cancelled` status exists in the enum but nothing sets it. If an admin wants to cancel a payment request, there's no UI action for it.
-
-3. **Refund on automatic payment is fire-and-forget** — if the Asaas refund API call succeeds but the DB update fails, the payment is refunded on Asaas but still shows as "paid" locally.
-
-4. **Multiple payment_requests per participant** — structurally allowed (expired + new active). Dataviz queries use LEFT JOIN which could theoretically multiply rows, though current business logic prevents multiple paid rows.
-
-5. **No notification to participant on refund** — when admin refunds, the participant is not emailed about it.
-
-6. **Custom amount only works from participant detail page** — the data table view doesn't have a custom amount input, so changing status to sent_payment_data from the table always uses event's ticket_price.
+1. **Custom amount only works from participant detail page** — the data table view doesn't have a custom amount input, so changing status to sent_payment_data from the table always uses event's ticket_price.
