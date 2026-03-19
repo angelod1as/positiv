@@ -1,6 +1,8 @@
 import { composable } from "composable-functions"
 import { kyselyDb } from "~/kysely-db"
+import { logger } from "~/lib/logger/logger.server"
 import {
+  cancelAsaasPayment,
   createAsaasCustomer,
   createAsaasPayment,
 } from "./asaas-client.server"
@@ -57,6 +59,28 @@ export async function getActivePaymentRequest(eventParticipantId: string) {
     .where("expires_at", ">", new Date().toISOString())
     .executeTakeFirst()
   return result ?? null
+}
+
+export async function cancelActivePaymentRequest(eventParticipantId: string) {
+  const active = await getActivePaymentRequest(eventParticipantId)
+  if (!active) return
+
+  if (active.asaas_payment_id) {
+    await cancelAsaasPayment(active.asaas_payment_id)
+    logger.info("Cancelled Asaas payment before creating new request", {
+      paymentRequestId: active.id,
+      asaasPaymentId: active.asaas_payment_id,
+    })
+  }
+
+  await kyselyDb
+    .updateTable("payment_requests")
+    .set({
+      status: "cancelled",
+      updated_at: new Date().toISOString(),
+    })
+    .where("id", "=", active.id)
+    .execute()
 }
 
 function parsePaymentOption(paymentOption: string) {

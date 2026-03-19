@@ -13,6 +13,11 @@ vi.mock("~/kysely-db", () => ({
 vi.mock("./asaas-client.server", () => ({
   createAsaasCustomer: vi.fn(),
   createAsaasPayment: vi.fn(),
+  cancelAsaasPayment: vi.fn(),
+}))
+
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
 vi.mock("./payment-pricing.server", async (importOriginal) => {
@@ -25,10 +30,11 @@ vi.mock("./payment-pricing.server", async (importOriginal) => {
 import {
   createPaymentRequest,
   getActivePaymentRequest,
+  cancelActivePaymentRequest,
   confirmPaymentChoice,
   markPaymentAsExpired,
 } from "./payment-request.server"
-import { createAsaasCustomer, createAsaasPayment } from "./asaas-client.server"
+import { createAsaasCustomer, createAsaasPayment, cancelAsaasPayment } from "./asaas-client.server"
 
 function chainable(returnValue?: unknown) {
   const chain: Record<string, ReturnType<typeof vi.fn>> = {}
@@ -229,6 +235,53 @@ describe("payment-request.server", () => {
       await markPaymentAsExpired("pr-1")
 
       expect(mockKyselyDb.updateTable).toHaveBeenCalledWith("payment_requests")
+    })
+  })
+
+  describe("cancelActivePaymentRequest", () => {
+    it("cancels active request and calls Asaas cancel when asaas_payment_id exists", async () => {
+      const activeRequest = {
+        id: "pr-active",
+        event_participant_id: "ep-1",
+        asaas_payment_id: "pay_old",
+        status: "awaiting_payment",
+        expires_at: new Date(Date.now() + 86400000).toISOString(),
+      }
+
+      mockKyselyDb.selectFrom.mockReturnValue(chainable(activeRequest))
+      mockKyselyDb.updateTable.mockReturnValue(chainable(undefined))
+
+      await cancelActivePaymentRequest("ep-1")
+
+      expect(cancelAsaasPayment).toHaveBeenCalledWith("pay_old")
+      expect(mockKyselyDb.updateTable).toHaveBeenCalledWith("payment_requests")
+    })
+
+    it("cancels active request without Asaas call when no asaas_payment_id", async () => {
+      const activeRequest = {
+        id: "pr-active",
+        event_participant_id: "ep-1",
+        asaas_payment_id: null,
+        status: "pending",
+        expires_at: new Date(Date.now() + 86400000).toISOString(),
+      }
+
+      mockKyselyDb.selectFrom.mockReturnValue(chainable(activeRequest))
+      mockKyselyDb.updateTable.mockReturnValue(chainable(undefined))
+
+      await cancelActivePaymentRequest("ep-1")
+
+      expect(cancelAsaasPayment).not.toHaveBeenCalled()
+      expect(mockKyselyDb.updateTable).toHaveBeenCalledWith("payment_requests")
+    })
+
+    it("does nothing when no active request exists", async () => {
+      mockKyselyDb.selectFrom.mockReturnValue(chainable(null))
+
+      await cancelActivePaymentRequest("ep-1")
+
+      expect(cancelAsaasPayment).not.toHaveBeenCalled()
+      expect(mockKyselyDb.updateTable).not.toHaveBeenCalled()
     })
   })
 })

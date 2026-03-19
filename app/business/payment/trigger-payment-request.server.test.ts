@@ -57,21 +57,43 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
+vi.mock("./payment-request.server", () => ({
+  createPaymentRequest: vi.fn(),
+  cancelActivePaymentRequest: vi.fn(),
+}))
+
 import { resolvePaymentRequest, handlePaymentStatusChange } from "./trigger-payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
+import {
+  createPaymentRequest,
+  cancelActivePaymentRequest,
+} from "./payment-request.server"
 
 const newPaymentRequest = {
   id: "pr-new",
   event_participant_id: "ep-1",
   amount: 220,
-  status: "pending",
+  status: "pending" as const,
   expires_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  asaas_customer_id: null,
+  asaas_payment_id: null,
+  installment_count: null,
+  invoice_url: null,
+  paid_at: null,
+  payment_method: null,
+  payment_mode: "manual",
+  refund_amount: null,
+  refunded_at: null,
 }
 
 describe("handlePaymentStatusChange", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockEnv.paymentSystemOnline = true
+    vi.mocked(createPaymentRequest).mockResolvedValue(newPaymentRequest)
+    vi.mocked(cancelActivePaymentRequest).mockResolvedValue(undefined)
   })
 
   it("returns triggered: false when status is not sent_payment_data", async () => {
@@ -100,8 +122,6 @@ describe("handlePaymentStatusChange", () => {
   it("returns triggered: true with success when status is sent_payment_data", async () => {
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      undefined,
-      newPaymentRequest,
       { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
     ])
 
@@ -137,13 +157,30 @@ describe("resolvePaymentRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockEnv.paymentSystemOnline = true
+    vi.mocked(createPaymentRequest).mockResolvedValue(newPaymentRequest)
+    vi.mocked(cancelActivePaymentRequest).mockResolvedValue(undefined)
+  })
+
+  it("cancels any existing active request before creating a new one", async () => {
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
+    ])
+
+    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
+
+    expect(result.success).toBe(true)
+    expect(cancelActivePaymentRequest).toHaveBeenCalledWith("ep-1")
+    expect(createPaymentRequest).toHaveBeenCalledWith({
+      eventParticipantId: "ep-1",
+      ticketPrice: 220,
+      paymentMode: "automatic",
+    })
   })
 
   it("creates payment request and sends email when online", async () => {
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      undefined,
-      newPaymentRequest,
       { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
     ])
 
@@ -165,8 +202,6 @@ describe("resolvePaymentRequest", () => {
 
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      undefined,
-      newPaymentRequest,
     ])
 
     const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
@@ -188,8 +223,6 @@ describe("resolvePaymentRequest", () => {
   it("returns failure when profile has no CPF (online only)", async () => {
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      undefined,
-      newPaymentRequest,
       { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: null },
     ])
 
@@ -203,8 +236,6 @@ describe("resolvePaymentRequest", () => {
 
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      undefined,
-      newPaymentRequest,
     ])
 
     const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
@@ -217,8 +248,6 @@ describe("resolvePaymentRequest", () => {
 
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      undefined,
-      newPaymentRequest,
       { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
     ])
 
@@ -233,8 +262,6 @@ describe("resolvePaymentRequest", () => {
 
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      undefined,
-      newPaymentRequest,
     ])
 
     const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1", undefined, "manual")
@@ -248,8 +275,6 @@ describe("resolvePaymentRequest", () => {
 
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      undefined,
-      newPaymentRequest,
     ])
 
     const result = await handlePaymentStatusChange({
@@ -263,29 +288,5 @@ describe("resolvePaymentRequest", () => {
     expect(result.triggered).toBe(true)
     if (result.triggered) expect(result.success).toBe(true)
     expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
-  })
-
-  it("reuses active payment request if one exists", async () => {
-    const existingRequest = {
-      id: "pr-existing",
-      event_participant_id: "ep-1",
-      amount: 220,
-      status: "pending",
-      expires_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-    }
-
-    mockKyselyDb._setResults([
-      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
-      existingRequest,
-      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
-    ])
-
-    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
-
-    expect(result.success).toBe(true)
-    if (result.success) {
-      expect(result.data?.id).toBe("pr-existing")
-    }
-    expect(sendPaymentLinkEmail).toHaveBeenCalled()
   })
 })

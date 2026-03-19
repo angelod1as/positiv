@@ -5,8 +5,8 @@ import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import { refundAsaasPayment } from "./asaas-client.server"
 import {
+  cancelActivePaymentRequest,
   createPaymentRequest,
-  getActivePaymentRequest,
 } from "./payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
 
@@ -70,30 +70,18 @@ export const resolvePaymentRequest = composable(
       throw new Error(`Event ${eventId} has no ticket_price configured and no custom amount provided`)
     }
 
-    const activeRequest = await getActivePaymentRequest(eventParticipantId)
+    await cancelActivePaymentRequest(eventParticipantId)
 
-    if (activeRequest && customAmount && Number(activeRequest.amount) !== customAmount) {
-      await kyselyDb
-        .updateTable("payment_requests")
-        .set({ amount: customAmount })
-        .where("id", "=", activeRequest.id)
-        .execute()
-      activeRequest.amount = customAmount
-    }
-
-    const paymentRequest =
-      activeRequest ??
-      (await createPaymentRequest({
-        eventParticipantId,
-        ticketPrice: amount,
-        paymentMode: isPaymentSystemOnline ? "automatic" : "manual",
-      }))
+    const paymentRequest = await createPaymentRequest({
+      eventParticipantId,
+      ticketPrice: amount,
+      paymentMode: isPaymentSystemOnline ? "automatic" : "manual",
+    })
 
     if (!isPaymentSystemOnline) {
       logger.info("Payment request created as manual (payment system offline)", {
         eventParticipantId,
         paymentRequestId: paymentRequest.id,
-        reused: !!activeRequest,
       })
       return paymentRequest
     }
@@ -123,7 +111,6 @@ export const resolvePaymentRequest = composable(
     logger.info("Payment request resolved", {
       eventParticipantId,
       paymentRequestId: paymentRequest.id,
-      reused: !!activeRequest,
     })
 
     return paymentRequest
