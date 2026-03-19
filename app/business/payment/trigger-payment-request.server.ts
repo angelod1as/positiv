@@ -9,6 +9,7 @@ import {
   createPaymentRequest,
 } from "./payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
+import { sendPaymentRefundEmail } from "./send-payment-refund-email.server"
 
 /**
  * Called from admin action handlers when application_status changes.
@@ -169,6 +170,31 @@ export const processRefund = composable(
       })
 
       throw error
+    }
+
+    // Send refund notification email (best-effort)
+    try {
+      const participantInfo = await kyselyDb
+        .selectFrom("event_participants")
+        .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+        .innerJoin("events", "events.id", "event_participants.event_id")
+        .select(["profiles.email", "profiles.full_name", "events.title"])
+        .where("event_participants.id", "=", eventParticipantId)
+        .executeTakeFirst()
+
+      if (participantInfo?.email) {
+        await sendPaymentRefundEmail({
+          participantEmail: participantInfo.email,
+          participantName: participantInfo.full_name ?? "Participante",
+          eventName: participantInfo.title ?? "Evento Positiv",
+          refundAmount: Number(paymentRequest.amount),
+        })
+      }
+    } catch (emailError) {
+      logger.error("Failed to send refund notification email (non-fatal)", {
+        eventParticipantId,
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+      })
     }
 
     logger.info("Payment refunded", {

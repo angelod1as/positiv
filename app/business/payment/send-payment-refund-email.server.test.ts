@@ -39,7 +39,7 @@ describe("sendPaymentRefundEmail", () => {
   })
 
   it("returns emailSent: false when sendEmail fails", async () => {
-    vi.mocked(sendEmail).mockResolvedValueOnce({ success: false, errors: [{ message: "fail" }] })
+    vi.mocked(sendEmail).mockResolvedValueOnce({ success: false, errors: [{ message: "fail" } as never] })
 
     const result = await sendPaymentRefundEmail({
       participantEmail: "joao@test.com",

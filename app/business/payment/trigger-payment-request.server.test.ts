@@ -66,6 +66,10 @@ vi.mock("./asaas-client.server", () => ({
   refundAsaasPayment: vi.fn(),
 }))
 
+vi.mock("./send-payment-refund-email.server", () => ({
+  sendPaymentRefundEmail: vi.fn().mockResolvedValue({ emailSent: true }),
+}))
+
 import { resolvePaymentRequest, handlePaymentStatusChange, processRefund } from "./trigger-payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
 import {
@@ -73,6 +77,7 @@ import {
   cancelActivePaymentRequest,
 } from "./payment-request.server"
 import { refundAsaasPayment } from "./asaas-client.server"
+import { sendPaymentRefundEmail } from "./send-payment-refund-email.server"
 import { logger } from "~/lib/logger/logger.server"
 
 const newPaymentRequest = {
@@ -365,5 +370,54 @@ describe("processRefund", () => {
     const result = await processRefund("ep-1")
 
     expect(result.success).toBe(false)
+  })
+
+  it("still succeeds when refund email fails", async () => {
+    const paidRequest = {
+      id: "pr-paid",
+      event_participant_id: "ep-1",
+      asaas_payment_id: "pay_123",
+      amount: 220,
+      status: "paid",
+    }
+
+    mockKyselyDb._setResults([
+      paidRequest,
+      { email: "joao@test.com", full_name: "João", title: "Positiv Regular" },
+    ])
+    vi.mocked(refundAsaasPayment).mockResolvedValueOnce(undefined)
+    vi.mocked(sendPaymentRefundEmail).mockRejectedValueOnce(new Error("Email failed"))
+
+    const result = await processRefund("ep-1")
+
+    expect(result.success).toBe(true)
+  })
+
+  it("sends refund notification email after successful refund", async () => {
+    const paidRequest = {
+      id: "pr-paid",
+      event_participant_id: "ep-1",
+      asaas_payment_id: "pay_123",
+      amount: 220,
+      status: "paid",
+    }
+
+    mockKyselyDb._setResults([
+      paidRequest,
+      { email: "joao@test.com", full_name: "João", title: "Positiv Regular" },
+    ])
+    vi.mocked(refundAsaasPayment).mockResolvedValueOnce(undefined)
+
+    const result = await processRefund("ep-1")
+
+    expect(result.success).toBe(true)
+    expect(sendPaymentRefundEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        participantEmail: "joao@test.com",
+        participantName: "João",
+        eventName: "Positiv Regular",
+        refundAmount: 220,
+      }),
+    )
   })
 })
