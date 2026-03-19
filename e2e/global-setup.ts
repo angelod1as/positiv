@@ -2,6 +2,7 @@ import { chromium, type FullConfig } from "@playwright/test"
 import { spawn } from "child_process"
 import { existsSync, statSync, readdirSync } from "fs"
 import { join } from "path"
+import { startAsaasMockServer } from "./mocks/asaas-mock-server"
 
 async function buildApplication(): Promise<void> {
   console.info("🔨 Building application for production...")
@@ -126,6 +127,9 @@ async function globalSetup(_config: FullConfig) {
   
   // Start the production server
   await startProductionServer()
+
+  // Start Asaas mock server for payment E2E tests
+  await startAsaasMockServer(9999)
 
   // Pre-warm the browser if needed
   if (!process.env.CI) {

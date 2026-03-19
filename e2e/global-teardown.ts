@@ -1,6 +1,7 @@
 import type { FullConfig } from "@playwright/test"
 import { deleteAllTestUsers } from "./utils/user-management"
 import { cleanupTestEvents, cleanupListmonkSubscribers } from "./utils/db-cleanup"
+import { stopAsaasMockServer } from "./mocks/asaas-mock-server"
 
 async function globalTeardown(_config: FullConfig) {
   console.info("🧹 Running global teardown for E2E tests...")
@@ -9,9 +10,17 @@ async function globalTeardown(_config: FullConfig) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const serverRunning = (global as any).__PRODUCTION_SERVER_RUNNING__
   
+  // Stop Asaas mock server
+  try {
+    await stopAsaasMockServer()
+    console.info("✅ Asaas mock server stopped")
+  } catch (error) {
+    console.error("⚠️ Error stopping Asaas mock server:", error)
+  }
+
   if (serverRunning) {
     console.info("🛑 Stopping production server...")
-    
+
     try {
       const { stopProductionServer } = await import("./serve-production")
       await stopProductionServer()
