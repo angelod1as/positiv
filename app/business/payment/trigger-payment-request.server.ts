@@ -134,18 +134,42 @@ export const processRefund = composable(
       throw new Error("Payment request has no Asaas payment ID — cannot refund")
     }
 
-    await refundAsaasPayment(paymentRequest.asaas_payment_id)
+    const now = new Date().toISOString()
 
+    // Optimistic: mark as refunded in DB first
     await kyselyDb
       .updateTable("payment_requests")
       .set({
         status: "refunded",
         refund_amount: paymentRequest.amount,
-        refunded_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        refunded_at: now,
+        updated_at: now,
       })
       .where("id", "=", paymentRequest.id)
       .execute()
+
+    try {
+      await refundAsaasPayment(paymentRequest.asaas_payment_id)
+    } catch (error) {
+      // Rollback DB to paid if Asaas fails
+      await kyselyDb
+        .updateTable("payment_requests")
+        .set({
+          status: "paid",
+          refund_amount: 0,
+          refunded_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .where("id", "=", paymentRequest.id)
+        .execute()
+
+      logger.error("Asaas refund failed, rolled back DB status to paid", {
+        paymentRequestId: paymentRequest.id,
+        error: error instanceof Error ? error.message : String(error),
+      })
+
+      throw error
+    }
 
     logger.info("Payment refunded", {
       paymentRequestId: paymentRequest.id,

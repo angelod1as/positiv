@@ -62,12 +62,18 @@ vi.mock("./payment-request.server", () => ({
   cancelActivePaymentRequest: vi.fn(),
 }))
 
-import { resolvePaymentRequest, handlePaymentStatusChange } from "./trigger-payment-request.server"
+vi.mock("./asaas-client.server", () => ({
+  refundAsaasPayment: vi.fn(),
+}))
+
+import { resolvePaymentRequest, handlePaymentStatusChange, processRefund } from "./trigger-payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
 import {
   createPaymentRequest,
   cancelActivePaymentRequest,
 } from "./payment-request.server"
+import { refundAsaasPayment } from "./asaas-client.server"
+import { logger } from "~/lib/logger/logger.server"
 
 const newPaymentRequest = {
   id: "pr-new",
@@ -288,5 +294,76 @@ describe("resolvePaymentRequest", () => {
     expect(result.triggered).toBe(true)
     if (result.triggered) expect(result.success).toBe(true)
     expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+  })
+})
+
+describe("processRefund", () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it("marks as refunded in DB then calls Asaas refund", async () => {
+    const paidRequest = {
+      id: "pr-paid",
+      event_participant_id: "ep-1",
+      asaas_payment_id: "pay_123",
+      amount: 220,
+      status: "paid",
+    }
+
+    mockKyselyDb._setResults([paidRequest])
+    vi.mocked(refundAsaasPayment).mockResolvedValueOnce(undefined)
+
+    const result = await processRefund("ep-1")
+
+    expect(result.success).toBe(true)
+    expect(refundAsaasPayment).toHaveBeenCalledWith("pay_123")
+  })
+
+  it("rolls back DB to paid if Asaas refund fails", async () => {
+    const paidRequest = {
+      id: "pr-paid",
+      event_participant_id: "ep-1",
+      asaas_payment_id: "pay_123",
+      amount: 220,
+      status: "paid",
+    }
+
+    mockKyselyDb._setResults([paidRequest])
+    vi.mocked(refundAsaasPayment).mockRejectedValueOnce(
+      new Error("Asaas API error (500): Internal Server Error"),
+    )
+
+    const result = await processRefund("ep-1")
+
+    expect(result.success).toBe(false)
+    expect(logger.error).toHaveBeenCalledWith(
+      "Asaas refund failed, rolled back DB status to paid",
+      expect.objectContaining({
+        paymentRequestId: "pr-paid",
+      }),
+    )
+  })
+
+  it("fails when payment request has no asaas_payment_id", async () => {
+    const paidRequest = {
+      id: "pr-paid",
+      event_participant_id: "ep-1",
+      asaas_payment_id: null,
+      amount: 220,
+      status: "paid",
+    }
+
+    mockKyselyDb._setResults([paidRequest])
+
+    const result = await processRefund("ep-1")
+
+    expect(result.success).toBe(false)
+  })
+
+  it("fails when no paid payment request found", async () => {
+    mockKyselyDb._setResults([undefined])
+
+    const result = await processRefund("ep-1")
+
+    expect(result.success).toBe(false)
   })
 })
