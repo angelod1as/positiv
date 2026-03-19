@@ -15,24 +15,26 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
   req.on("data", (chunk: string) => (body += chunk))
   req.on("end", () => {
     const parsed: Record<string, unknown> = body ? JSON.parse(body) : {}
+    const method = req.method ?? "UNKNOWN"
+    const url = req.url ?? "/"
+
     calls.push({
-      method: req.method!,
-      path: req.url!,
+      method,
+      path: url,
       body: parsed,
       timestamp: Date.now(),
     })
 
     res.setHeader("Content-Type", "application/json")
-    const url = req.url!
 
     // POST /api/v3/customers
-    if (req.method === "POST" && url === "/api/v3/customers") {
+    if (method === "POST" && url === "/api/v3/customers") {
       res.end(JSON.stringify({ id: `cus_mock_${Date.now()}` }))
       return
     }
 
     // POST /api/v3/payments
-    if (req.method === "POST" && url === "/api/v3/payments") {
+    if (method === "POST" && url === "/api/v3/payments") {
       res.end(JSON.stringify({
         id: `pay_mock_${Date.now()}`,
         invoiceUrl: "http://localhost:5173/",
@@ -41,21 +43,21 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
     }
 
     // POST /api/v3/payments/:id/refund
-    if (req.method === "POST" && url.match(/^\/api\/v3\/payments\/[^/]+\/refund$/)) {
+    if (method === "POST" && url.match(/^\/api\/v3\/payments\/[^/]+\/refund$/)) {
       const id = url.split("/")[4]
       res.end(JSON.stringify({ id, status: "REFUNDED" }))
       return
     }
 
     // DELETE /api/v3/payments/:id
-    if (req.method === "DELETE" && url.match(/^\/api\/v3\/payments\/[^/]+$/)) {
+    if (method === "DELETE" && url.match(/^\/api\/v3\/payments\/[^/]+$/)) {
       const id = url.split("/")[4]
       res.end(JSON.stringify({ deleted: true, id }))
       return
     }
 
     res.statusCode = 404
-    res.end(JSON.stringify({ error: "Unknown Asaas mock endpoint", url, method: req.method }))
+    res.end(JSON.stringify({ error: "Unknown Asaas mock endpoint", url, method }))
   })
 }
 
