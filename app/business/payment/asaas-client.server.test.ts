@@ -8,6 +8,7 @@ vi.mock("~/env.server", () => ({
 }))
 
 import {
+  cancelAsaasPayment,
   createAsaasCustomer,
   createAsaasPayment,
   refundAsaasPayment,
@@ -144,6 +145,27 @@ describe("Asaas client", () => {
       mockFetchError("Not Found", 404)
 
       await expect(refundAsaasPayment("pay_123")).rejects.toThrow(
+        "Asaas API error (404): Not Found",
+      )
+    })
+  })
+
+  describe("cancelAsaasPayment", () => {
+    it("calls DELETE /payments/{id}", async () => {
+      mockFetchResponse({ deleted: true, id: "pay_123" })
+
+      await cancelAsaasPayment("pay_123")
+
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "https://sandbox.asaas.com/api/v3/payments/pay_123",
+        expect.objectContaining({ method: "DELETE" }),
+      )
+    })
+
+    it("throws on HTTP error", async () => {
+      mockFetchError("Not Found", 404)
+
+      await expect(cancelAsaasPayment("pay_123")).rejects.toThrow(
         "Asaas API error (404): Not Found",
       )
     })

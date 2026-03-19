@@ -24,7 +24,7 @@ async function asaasFetch<T>(
   path: string,
   body: Record<string, unknown>,
   schema: z.ZodType<T>,
-  method: "POST" | "GET" = "POST",
+  method: "POST" | "GET" | "DELETE" = "POST",
 ): Promise<T> {
   const { apiKey, apiUrl } = getAsaasConfig()
 
@@ -34,7 +34,7 @@ async function asaasFetch<T>(
       "Content-Type": "application/json",
       access_token: apiKey,
     },
-    ...(method !== "GET" && { body: JSON.stringify(body) }),
+    ...(method !== "GET" && method !== "DELETE" && { body: JSON.stringify(body) }),
   })
 
   if (!response.ok) {
@@ -109,5 +109,14 @@ export async function refundAsaasPayment(
     `/payments/${paymentId}/refund`,
     body,
     z.object({ id: z.string() }),
+  )
+}
+
+export async function cancelAsaasPayment(paymentId: string): Promise<void> {
+  await asaasFetch(
+    `/payments/${paymentId}`,
+    {},
+    z.object({ deleted: z.boolean(), id: z.string() }),
+    "DELETE",
   )
 }
