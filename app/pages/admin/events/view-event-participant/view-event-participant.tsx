@@ -9,6 +9,7 @@ import {
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import {
+  cancelActivePaymentRequest,
   getLatestPaymentRequest,
   markManualPaymentPaid,
   markManualPaymentRefunded,
@@ -134,6 +135,16 @@ export async function action({ request }: Route.ActionArgs) {
     const entries = Object.fromEntries(formData)
     try {
       await markManualPaymentRefunded(entries.id as string)
+      return { success: true }
+    } catch {
+      return { success: false }
+    }
+  }
+
+  if (intent === "cancel-payment") {
+    const entries = Object.fromEntries(formData)
+    try {
+      await cancelActivePaymentRequest(entries.id as string)
       return { success: true }
     } catch {
       return { success: false }

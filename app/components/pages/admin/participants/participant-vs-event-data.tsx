@@ -90,6 +90,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
   const fetcher = useFetcher<ComposableFetcherData>()
   const resendFetcher = useFetcher<ComposableFetcherData>()
+  const cancelFetcher = useFetcher<ComposableFetcherData>()
   const manualFetcher = useFetcher<ComposableFetcherData>()
   const [useCustomAmount, setUseCustomAmount] = useState(false)
   const [customAmount, setCustomAmount] = useState("")
@@ -135,6 +136,13 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     manualFetcher.submit(formData, { method: "POST" })
   }
 
+  const handleCancelPayment = () => {
+    const formData = new FormData()
+    formData.set("intent", "cancel-payment")
+    formData.set("id", id)
+    cancelFetcher.submit(formData, { method: "POST" })
+  }
+
   const handleUpdateManualAmount = () => {
     const amount = Number(manualAmount)
     if (!amount || amount <= 0) {
@@ -149,6 +157,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   }
 
   const isResending = resendFetcher.state !== "idle"
+  const isCancelling = cancelFetcher.state !== "idle"
   const isRefunding = refundFetcher.state !== "idle"
   const isManualProcessing = manualFetcher.state !== "idle"
 
@@ -175,6 +184,15 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
       toast.error("Erro ao reenviar link de pagamento. Tente novamente.", { duration: Infinity, closeButton: true })
     }
   }, [resendFetcher.data])
+
+  useEffect(() => {
+    if (cancelFetcher.data?.success === true) {
+      toast.success("Pagamento cancelado com sucesso")
+    }
+    if (cancelFetcher.data?.success === false) {
+      toast.error("Erro ao cancelar pagamento. Tente novamente.", { duration: Infinity, closeButton: true })
+    }
+  }, [cancelFetcher.data])
 
   useEffect(() => {
     if (refundFetcher.data?.success === true) {
@@ -439,6 +457,36 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                     formatDateTime(paymentRequest.refunded_at).full,
                   ]}
                 />
+              )}
+
+              {isAutomatic && isPendingPayment && (
+                <div className="mt-3 pt-3 border-t">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={isCancelling}
+                      >
+                        {isCancelling ? "Cancelando..." : "Cancelar pagamento"}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Cancelar pagamento</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja cancelar este pagamento? O link de pagamento será invalidado.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Voltar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleCancelPayment}>
+                          Confirmar cancelamento
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               )}
 
               {isManual && (
