@@ -16,6 +16,10 @@ vi.mock("./asaas-client.server", () => ({
   cancelAsaasPayment: vi.fn(),
 }))
 
+vi.mock("./send-payment-refund-email.server", () => ({
+  sendPaymentRefundEmail: vi.fn().mockResolvedValue({ emailSent: true }),
+}))
+
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
@@ -33,8 +37,10 @@ import {
   cancelActivePaymentRequest,
   confirmPaymentChoice,
   markPaymentAsExpired,
+  markManualPaymentRefunded,
 } from "./payment-request.server"
 import { createAsaasCustomer, createAsaasPayment, cancelAsaasPayment } from "./asaas-client.server"
+import { sendPaymentRefundEmail } from "./send-payment-refund-email.server"
 
 function chainable(returnValue?: unknown) {
   const chain: Record<string, ReturnType<typeof vi.fn>> = {}
@@ -302,6 +308,53 @@ describe("payment-request.server", () => {
 
       expect(cancelAsaasPayment).not.toHaveBeenCalled()
       expect(mockKyselyDb.updateTable).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("markManualPaymentRefunded", () => {
+    it("sends refund notification email after marking as refunded", async () => {
+      const refundedRequest = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        amount: 100,
+        status: "refunded",
+        payment_mode: "manual",
+      }
+
+      mockKyselyDb.updateTable.mockReturnValue(chainable(refundedRequest))
+      mockKyselyDb.selectFrom.mockReturnValue(
+        chainable({ email: "joao@test.com", full_name: "João", title: "Positiv Regular" }),
+      )
+
+      await markManualPaymentRefunded("ep-1")
+
+      expect(sendPaymentRefundEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          participantEmail: "joao@test.com",
+          participantName: "João",
+          eventName: "Positiv Regular",
+          refundAmount: 100,
+        }),
+      )
+    })
+
+    it("still succeeds when refund email fails", async () => {
+      const refundedRequest = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        amount: 100,
+        status: "refunded",
+        payment_mode: "manual",
+      }
+
+      mockKyselyDb.updateTable.mockReturnValue(chainable(refundedRequest))
+      mockKyselyDb.selectFrom.mockReturnValue(
+        chainable({ email: "joao@test.com", full_name: "João", title: "Positiv Regular" }),
+      )
+      vi.mocked(sendPaymentRefundEmail).mockRejectedValueOnce(new Error("Email failed"))
+
+      const result = await markManualPaymentRefunded("ep-1")
+      expect(result).toEqual(refundedRequest)
     })
   })
 })

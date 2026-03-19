@@ -7,6 +7,7 @@ import {
   createAsaasPayment,
 } from "./asaas-client.server"
 import { buildPaymentOptions } from "./payment-pricing.server"
+import { sendPaymentRefundEmail } from "./send-payment-refund-email.server"
 
 export const PAYMENT_REQUEST_EXPIRY_MS = 2 * 24 * 60 * 60 * 1000
 
@@ -235,6 +236,30 @@ export async function markManualPaymentRefunded(eventParticipantId: string) {
 
   if (!result) {
     throw new Error("No paid manual payment request found for this participant")
+  }
+
+  try {
+    const participantInfo = await kyselyDb
+      .selectFrom("event_participants")
+      .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+      .innerJoin("events", "events.id", "event_participants.event_id")
+      .select(["profiles.email", "profiles.full_name", "events.title"])
+      .where("event_participants.id", "=", eventParticipantId)
+      .executeTakeFirst()
+
+    if (participantInfo?.email) {
+      await sendPaymentRefundEmail({
+        participantEmail: participantInfo.email,
+        participantName: participantInfo.full_name ?? "Participante",
+        eventName: participantInfo.title ?? "Evento Positiv",
+        refundAmount: Number(result.amount),
+      })
+    }
+  } catch (emailError) {
+    logger.error("Failed to send manual refund notification email (non-fatal)", {
+      eventParticipantId,
+      error: emailError instanceof Error ? emailError.message : String(emailError),
+    })
   }
 
   return result
