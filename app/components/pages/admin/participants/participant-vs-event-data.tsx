@@ -31,6 +31,8 @@ import {
   applicationStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
+  paymentModePropMap,
+  paymentStatusPropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import { useAutoSaveForm } from "~/lib/hooks/use-auto-save-form"
@@ -51,21 +53,6 @@ const eventParticipantFormSchema = z.object({
 type ParticipantVsEventDataProps = {
   eventParticipant: EventParticipantWithEvent
   paymentRequest?: PaymentRequestRow | null
-}
-
-const PAYMENT_STATUS_LABELS: Record<string, string> = {
-  pending: "Pendente",
-  awaiting_payment: "Aguardando pagamento",
-  paid: "Pago",
-  expired: "Expirado",
-  refunded: "Reembolsado",
-  partially_refunded: "Parcialmente reembolsado",
-  cancelled: "Cancelado",
-}
-
-const PAYMENT_MODE_LABELS: Record<string, string> = {
-  automatic: "Automático",
-  manual: "Manual",
 }
 
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
@@ -396,13 +383,13 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                 <DataPair
                   pair={[
                     "Status",
-                    PAYMENT_STATUS_LABELS[paymentRequest.status] ?? paymentRequest.status,
+                    paymentStatusPropMap(paymentRequest.status),
                   ]}
                 />
                 <DataPair
                   pair={[
                     "Modo",
-                    PAYMENT_MODE_LABELS[paymentRequest.payment_mode] ?? paymentRequest.payment_mode,
+                    paymentModePropMap(paymentRequest.payment_mode),
                   ]}
                 />
                 {paymentRequest.payment_method && (

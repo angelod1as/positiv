@@ -142,11 +142,12 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "update-manual-payment-amount") {
     const entries = Object.fromEntries(formData)
+    const amount = Number(entries.amount)
+    if (isNaN(amount) || amount < 0) {
+      return { success: false }
+    }
     try {
-      await updatePaymentRequestAmount(
-        entries.id as string,
-        Number(entries.amount),
-      )
+      await updatePaymentRequestAmount(entries.id as string, amount)
       return { success: true }
     } catch {
       return { success: false }
