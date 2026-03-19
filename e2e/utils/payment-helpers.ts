@@ -1,5 +1,9 @@
+import type { Database } from "../../app/types/database/database.types"
 import type { AsaasWebhookResponse } from "../../app/routes/api.asaas-webhook"
 import { createSupabaseAdminClient } from "./db-cleanup"
+
+type PaymentRequestStatus =
+  Database["public"]["Enums"]["payment_request_status"]
 
 const APP_BASE_URL = "http://localhost:5173"
 
@@ -38,7 +42,7 @@ export async function getEventParticipantId(
 export async function seedPaymentRequest(params: {
   eventParticipantId: string
   amount: number
-  status?: string
+  status?: PaymentRequestStatus
   paymentMode?: string
   asaasPaymentId?: string | null
 }) {
