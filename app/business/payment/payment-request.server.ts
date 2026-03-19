@@ -66,11 +66,19 @@ export async function cancelActivePaymentRequest(eventParticipantId: string) {
   if (!active) return
 
   if (active.asaas_payment_id) {
-    await cancelAsaasPayment(active.asaas_payment_id)
-    logger.info("Cancelled Asaas payment before creating new request", {
-      paymentRequestId: active.id,
-      asaasPaymentId: active.asaas_payment_id,
-    })
+    try {
+      await cancelAsaasPayment(active.asaas_payment_id)
+      logger.info("Cancelled Asaas payment before creating new request", {
+        paymentRequestId: active.id,
+        asaasPaymentId: active.asaas_payment_id,
+      })
+    } catch (error) {
+      logger.error("Failed to cancel Asaas payment, proceeding with local cancellation", {
+        paymentRequestId: active.id,
+        asaasPaymentId: active.asaas_payment_id,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
   }
 
   await kyselyDb

@@ -275,6 +275,26 @@ describe("payment-request.server", () => {
       expect(mockKyselyDb.updateTable).toHaveBeenCalledWith("payment_requests")
     })
 
+    it("still cancels locally when Asaas cancel fails", async () => {
+      const activeRequest = {
+        id: "pr-active",
+        event_participant_id: "ep-1",
+        asaas_payment_id: "pay_old",
+        status: "awaiting_payment",
+        expires_at: new Date(Date.now() + 86400000).toISOString(),
+      }
+
+      mockKyselyDb.selectFrom.mockReturnValue(chainable(activeRequest))
+      mockKyselyDb.updateTable.mockReturnValue(chainable(undefined))
+      vi.mocked(cancelAsaasPayment).mockRejectedValueOnce(new Error("Asaas API error"))
+
+      await cancelActivePaymentRequest("ep-1")
+
+      expect(cancelAsaasPayment).toHaveBeenCalledWith("pay_old")
+      expect(mockKyselyDb.updateTable).toHaveBeenCalledWith("payment_requests")
+    })
+
+
     it("does nothing when no active request exists", async () => {
       mockKyselyDb.selectFrom.mockReturnValue(chainable(null))
 
