@@ -34,6 +34,7 @@ test.beforeAll(async () => {
 })
 
 test.afterAll(async () => {
+  if (!participants) return
   for (const p of participants) {
     const epId = await getEventParticipantId(p.profileId, eventId).catch(
       () => null,
@@ -41,7 +42,7 @@ test.afterAll(async () => {
     if (epId) await deletePaymentRequestsByParticipant(epId)
   }
   await cleanupTestParticipants(participants)
-  await cleanupTestPaymentEvent(eventId)
+  if (eventId) await cleanupTestPaymentEvent(eventId)
 })
 
 test.describe("User Payment Page", () => {
@@ -72,13 +73,24 @@ test.describe("User Payment Page", () => {
   test("owner sees payment options with correct prices", async ({ page }) => {
     const supabase = createSupabaseAdminClient()
 
+    // The E2E setup creates a fresh user with a random email for the user.json auth state.
+    // We need to find that user's profile to create an EP they own.
+    // Navigate to dashboard to get Supabase session cookie, then extract user ID.
+    await page.goto("/dashboard")
+    await page.waitForLoadState("networkidle")
+
+    // Find the authenticated user's profile (most recently created test user, not test-participant)
     const { data: profile } = await supabase
       .from("profiles")
-      .select("id")
-      .eq("email", "user1@example.com")
+      .select("id, email, full_name, user_id")
+      .ilike("email", "test-%@example.com")
+      .not("email", "ilike", "test-participant-%")
+      .order("created_at", { ascending: false })
+      .limit(1)
       .single()
 
-    if (!profile) throw new Error("user1 profile not found")
+    if (!profile) throw new Error("Could not find the E2E test user profile")
+    console.info("Authenticated user email:", profile.email)
 
     const { data: ep, error } = await supabase
       .from("event_participants")

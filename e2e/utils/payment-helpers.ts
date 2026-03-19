@@ -123,10 +123,10 @@ export async function createTestEvent(params: {
       time_event_end: new Date(
         Date.now() + 30 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000,
       ).toISOString(),
-      registration_opens_at: new Date(
+      time_application_start: new Date(
         Date.now() - 7 * 24 * 60 * 60 * 1000,
       ).toISOString(),
-      capacity: 50,
+      total_spots: 50,
     })
     .select()
     .single()

@@ -56,6 +56,11 @@ async function startProductionServer() {
         ...process.env,
         PORT: String(PORT),
         NODE_ENV: "production",
+        CI: "true",
+        PAYMENT_SYSTEM_ONLINE: process.env.PAYMENT_SYSTEM_ONLINE ?? "false",
+        ASAAS_API_URL: process.env.ASAAS_API_URL ?? "",
+        ASAAS_API_KEY: process.env.ASAAS_API_KEY ?? "",
+        ASAAS_WEBHOOK_TOKEN: process.env.ASAAS_WEBHOOK_TOKEN ?? "",
       },
       detached: false,
       killSignal: "SIGTERM"

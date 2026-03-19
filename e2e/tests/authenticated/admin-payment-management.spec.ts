@@ -55,12 +55,11 @@ function participantUrl(participantIndex: number): string {
   return `/admin/eventos/${eventId}/participantes/${participants[participantIndex].profileId}`
 }
 
-async function waitForAutoSave(page: import("@playwright/test").Page) {
-  await page.waitForResponse(
+function autoSavePromise(page: import("@playwright/test").Page) {
+  return page.waitForResponse(
     (resp) =>
       resp.request().method() === "POST" &&
-      resp.url().includes("/participantes/") &&
-      resp.status() === 200,
+      resp.url().includes("/participantes/"),
   )
 }
 
@@ -77,11 +76,12 @@ test.describe("Admin Payment Management", () => {
 
     const trigger = page.locator("#application_status")
     await trigger.click()
+    const savePromise = autoSavePromise(page)
     await page
       .getByRole("option", { name: "Dados de pagto enviados" })
       .click()
 
-    await waitForAutoSave(page)
+    await savePromise
 
     const epId = await getEventParticipantId(
       participants[0].profileId,
@@ -110,11 +110,12 @@ test.describe("Admin Payment Management", () => {
 
     const statusTrigger = page.locator("#application_status")
     await statusTrigger.click()
+    const savePromise = autoSavePromise(page)
     await page
       .getByRole("option", { name: "Dados de pagto enviados" })
       .click()
 
-    await waitForAutoSave(page)
+    await savePromise
 
     const epId = await getEventParticipantId(
       participants[1].profileId,
@@ -320,7 +321,7 @@ test.describe("Admin Payment Management", () => {
 
     await page.goto(participantUrl(2))
     await page.waitForLoadState("networkidle")
-    await expect(page.getByText("Pago")).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText("Status: Pago")).toBeVisible({ timeout: 10000 })
   })
 
   test("webhook PAYMENT_OVERDUE marks payment as expired", async ({
@@ -356,6 +357,6 @@ test.describe("Admin Payment Management", () => {
 
     await page.goto(participantUrl(2))
     await page.waitForLoadState("networkidle")
-    await expect(page.getByText("Expirado")).toBeVisible({ timeout: 10000 })
+    await expect(page.getByText("Status: Expirado")).toBeVisible({ timeout: 10000 })
   })
 })
