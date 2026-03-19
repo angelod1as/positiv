@@ -64,6 +64,12 @@ async function waitForAutoSave(page: import("@playwright/test").Page) {
   )
 }
 
+function assertPaymentRequest(
+  pr: Awaited<ReturnType<typeof getPaymentRequestByEventParticipantId>>,
+): asserts pr is NonNullable<typeof pr> {
+  if (pr == null) throw new Error("Expected payment request to exist")
+}
+
 test.describe("Admin Payment Management", () => {
   test("admin triggers automatic payment", async ({ page }) => {
     await page.goto(participantUrl(0))
@@ -77,11 +83,14 @@ test.describe("Admin Payment Management", () => {
 
     await waitForAutoSave(page)
 
-    const epId = await getEventParticipantId(participants[0].profileId, eventId)
+    const epId = await getEventParticipantId(
+      participants[0].profileId,
+      eventId,
+    )
     const pr = await getPaymentRequestByEventParticipantId(epId)
-    expect(pr).not.toBeNull()
-    expect(pr!.status).toBe("pending")
-    expect(pr!.payment_mode).toBe("automatic")
+    assertPaymentRequest(pr)
+    expect(pr.status).toBe("pending")
+    expect(pr.payment_mode).toBe("automatic")
 
     const email = await waitForEmail({
       to: participants[0].email,
@@ -107,10 +116,13 @@ test.describe("Admin Payment Management", () => {
 
     await waitForAutoSave(page)
 
-    const epId = await getEventParticipantId(participants[1].profileId, eventId)
+    const epId = await getEventParticipantId(
+      participants[1].profileId,
+      eventId,
+    )
     const pr = await getPaymentRequestByEventParticipantId(epId)
-    expect(pr).not.toBeNull()
-    expect(pr!.payment_mode).toBe("manual")
+    assertPaymentRequest(pr)
+    expect(pr.payment_mode).toBe("manual")
 
     await page.waitForTimeout(3000)
     const emails = await getAllEmails()
@@ -127,7 +139,10 @@ test.describe("Admin Payment Management", () => {
   })
 
   test("admin cancels pending automatic payment", async ({ page }) => {
-    const epId = await getEventParticipantId(participants[2].profileId, eventId)
+    const epId = await getEventParticipantId(
+      participants[2].profileId,
+      eventId,
+    )
     await deletePaymentRequestsByParticipant(epId)
     await seedPaymentRequest({
       eventParticipantId: epId,
@@ -159,12 +174,15 @@ test.describe("Admin Payment Management", () => {
     )
 
     const pr = await getPaymentRequestByEventParticipantId(epId)
-    expect(pr).not.toBeNull()
-    expect(pr!.status).toBe("cancelled")
+    assertPaymentRequest(pr)
+    expect(pr.status).toBe("cancelled")
   })
 
   test("admin marks manual payment as paid", async ({ page }) => {
-    const epId = await getEventParticipantId(participants[2].profileId, eventId)
+    const epId = await getEventParticipantId(
+      participants[2].profileId,
+      eventId,
+    )
     await deletePaymentRequestsByParticipant(epId)
     await seedPaymentRequest({
       eventParticipantId: epId,
@@ -195,15 +213,18 @@ test.describe("Admin Payment Management", () => {
     )
 
     const pr = await getPaymentRequestByEventParticipantId(epId)
-    expect(pr).not.toBeNull()
-    expect(pr!.status).toBe("paid")
-    expect(pr!.paid_at).not.toBeNull()
+    assertPaymentRequest(pr)
+    expect(pr.status).toBe("paid")
+    expect(pr.paid_at).not.toBeNull()
   })
 
   test("admin refunds manual payment and receives refund email", async ({
     page,
   }) => {
-    const epId = await getEventParticipantId(participants[2].profileId, eventId)
+    const epId = await getEventParticipantId(
+      participants[2].profileId,
+      eventId,
+    )
     await deletePaymentRequestsByParticipant(epId)
     await seedPaymentRequest({
       eventParticipantId: epId,
@@ -234,8 +255,8 @@ test.describe("Admin Payment Management", () => {
     )
 
     const pr = await getPaymentRequestByEventParticipantId(epId)
-    expect(pr).not.toBeNull()
-    expect(pr!.status).toBe("refunded")
+    assertPaymentRequest(pr)
+    expect(pr.status).toBe("refunded")
 
     const email = await waitForEmail({
       to: participants[2].email,
@@ -271,7 +292,10 @@ test.describe("Admin Payment Management", () => {
   })
 
   test("webhook PAYMENT_CONFIRMED marks payment as paid", async ({ page }) => {
-    const epId = await getEventParticipantId(participants[2].profileId, eventId)
+    const epId = await getEventParticipantId(
+      participants[2].profileId,
+      eventId,
+    )
     await deletePaymentRequestsByParticipant(epId)
     const fakeAsaasId = `pay_confirmed_test_${Date.now()}`
     await seedPaymentRequest({
@@ -291,8 +315,8 @@ test.describe("Admin Payment Management", () => {
     expect("action" in result.body && result.body.action).toBe("marked_paid")
 
     const pr = await getPaymentRequestByEventParticipantId(epId)
-    expect(pr).not.toBeNull()
-    expect(pr!.status).toBe("paid")
+    assertPaymentRequest(pr)
+    expect(pr.status).toBe("paid")
 
     await page.goto(participantUrl(2))
     await page.waitForLoadState("networkidle")
@@ -302,7 +326,10 @@ test.describe("Admin Payment Management", () => {
   test("webhook PAYMENT_OVERDUE marks payment as expired", async ({
     page,
   }) => {
-    const epId = await getEventParticipantId(participants[2].profileId, eventId)
+    const epId = await getEventParticipantId(
+      participants[2].profileId,
+      eventId,
+    )
     await deletePaymentRequestsByParticipant(epId)
     const fakeAsaasId = `pay_overdue_test_${Date.now()}`
     await seedPaymentRequest({
@@ -324,8 +351,8 @@ test.describe("Admin Payment Management", () => {
     )
 
     const pr = await getPaymentRequestByEventParticipantId(epId)
-    expect(pr).not.toBeNull()
-    expect(pr!.status).toBe("expired")
+    assertPaymentRequest(pr)
+    expect(pr.status).toBe("expired")
 
     await page.goto(participantUrl(2))
     await page.waitForLoadState("networkidle")
