@@ -1,6 +1,9 @@
 import { composable } from "composable-functions"
 import { kyselyDb } from "~/kysely-db"
 import { json } from "~/lib/helpers/kysely-helpers"
+import { logger } from "~/lib/logger/logger.server"
+
+const MAX_CAMPAIGN_RETRIES = 3
 
 type CampaignErrorData = {
   step: "campaign_creation" | "send_signal"
@@ -37,7 +40,7 @@ export const getPendingCampaigns = composable(
       .selectFrom("event_newsletter_campaigns")
       .selectAll()
       .where("campaign_type", "=", campaignType)
-      .where("times_attempted", "<", 3)
+      .where("times_attempted", "<", MAX_CAMPAIGN_RETRIES)
       .where((eb) =>
         eb.or([
           eb("campaign_is_created", "=", false),
@@ -101,7 +104,7 @@ export const updateCampaignError = composable(
     errorData: CampaignErrorData,
     campaignType: "opening" | "pre_opening",
   ) => {
-    await kyselyDb
+    const [updated] = await kyselyDb
       .updateTable("event_newsletter_campaigns")
       .set((eb) => ({
         times_attempted: eb("times_attempted", "+", 1),
@@ -111,7 +114,21 @@ export const updateCampaignError = composable(
       }))
       .where("event_id", "=", eventId)
       .where("campaign_type", "=", campaignType)
+      .returning(["times_attempted"])
       .execute()
+
+    if (updated && updated.times_attempted >= MAX_CAMPAIGN_RETRIES) {
+      logger.error(
+        "Campaign email failed after max retries — will not retry again",
+        {
+          eventId,
+          campaignType,
+          timesAttempted: updated.times_attempted,
+          lastError: errorData.message,
+          step: errorData.step,
+        },
+      )
+    }
 
     return true
   },
