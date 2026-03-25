@@ -4,10 +4,12 @@ import {
   getRecentProfiles,
 } from "~/business/admin/admin.server"
 import { getRecentFeedbacks } from "~/business/feedback/feedback.server"
+import { testListmonkConnection } from "~/business/newsletter/test-listmonk-connection.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
 import { RecentFeedbacksTable } from "~/components/organisms/tables/admin/recent-feedbacks-table"
 import { RecentProfilesTable } from "~/components/organisms/tables/admin/recent-profiles-table"
+import { ListmonkDiagnosticSection } from "~/components/pages/admin/listmonk-diagnostic-section"
 import { Button } from "~/components/ui/button"
 import { Separator } from "~/components/ui/separator"
 import { createMetaArray } from "~/lib/helpers/meta"
@@ -20,6 +22,18 @@ const {
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray("Admin - Visão Geral")
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const formData = await request.formData()
+  const intent = formData.get("intent")
+
+  if (intent === "test-listmonk") {
+    const diagnosticResult = await testListmonkConnection()
+    return { intent: "test-listmonk", diagnosticResult }
+  }
+
+  return { intent }
 }
 
 export async function loader() {
@@ -100,6 +114,10 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
         <RecentFeedbacksTable feedbacks={recentFeedbacks} />
       </div>
+
+      <Separator />
+
+      <ListmonkDiagnosticSection />
 
       <Separator />
 
