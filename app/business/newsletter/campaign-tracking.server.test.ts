@@ -5,8 +5,8 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: mockLogger,
 }))
 
+const mockReturningExecute = vi.fn().mockResolvedValue([])
 const mockExecute = vi.fn().mockResolvedValue([])
-const mockExecuteTakeFirst = vi.fn().mockResolvedValue(null)
 
 vi.mock("~/kysely-db", () => ({
   kyselyDb: {
@@ -15,6 +15,9 @@ vi.mock("~/kysely-db", () => ({
         where: vi.fn(() => ({
           where: vi.fn(() => ({
             execute: mockExecute,
+            returning: vi.fn(() => ({
+              execute: mockReturningExecute,
+            })),
           })),
         })),
       })),
@@ -23,7 +26,7 @@ vi.mock("~/kysely-db", () => ({
       selectAll: vi.fn(() => ({
         where: vi.fn(() => ({
           where: vi.fn(() => ({
-            executeTakeFirst: mockExecuteTakeFirst,
+            executeTakeFirst: vi.fn().mockResolvedValue(null),
           })),
         })),
       })),
@@ -48,10 +51,7 @@ describe("updateCampaignError", () => {
   })
 
   it("should log error at error level when max retries reached", async () => {
-    mockExecuteTakeFirst.mockResolvedValueOnce({
-      times_attempted: 3,
-      campaign_type: "opening",
-    })
+    mockReturningExecute.mockResolvedValueOnce([{ times_attempted: 3 }])
 
     const { updateCampaignError } = await import(
       "./campaign-tracking.server"
@@ -76,10 +76,25 @@ describe("updateCampaignError", () => {
   })
 
   it("should not log error when retries below max", async () => {
-    mockExecuteTakeFirst.mockResolvedValueOnce({
-      times_attempted: 1,
-      campaign_type: "opening",
-    })
+    mockReturningExecute.mockResolvedValueOnce([{ times_attempted: 1 }])
+
+    const { updateCampaignError } = await import(
+      "./campaign-tracking.server"
+    )
+
+    const errorData = {
+      step: "campaign_creation" as const,
+      message: "fetch failed",
+      timestamp: "2026-03-25T14:00:00.000Z",
+    }
+
+    await updateCampaignError("event-123", errorData, "opening")
+
+    expect(mockLogger.error).not.toHaveBeenCalled()
+  })
+
+  it("should not log error when returning gives empty result", async () => {
+    mockReturningExecute.mockResolvedValueOnce([])
 
     const { updateCampaignError } = await import(
       "./campaign-tracking.server"

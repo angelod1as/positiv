@@ -104,7 +104,7 @@ export const updateCampaignError = composable(
     errorData: CampaignErrorData,
     campaignType: "opening" | "pre_opening",
   ) => {
-    await kyselyDb
+    const [updated] = await kyselyDb
       .updateTable("event_newsletter_campaigns")
       .set((eb) => ({
         times_attempted: eb("times_attempted", "+", 1),
@@ -114,14 +114,8 @@ export const updateCampaignError = composable(
       }))
       .where("event_id", "=", eventId)
       .where("campaign_type", "=", campaignType)
+      .returning(["times_attempted"])
       .execute()
-
-    const updated = await kyselyDb
-      .selectFrom("event_newsletter_campaigns")
-      .selectAll()
-      .where("event_id", "=", eventId)
-      .where("campaign_type", "=", campaignType)
-      .executeTakeFirst()
 
     if (updated && updated.times_attempted >= MAX_CAMPAIGN_RETRIES) {
       logger.error(
