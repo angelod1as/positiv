@@ -1,4 +1,4 @@
-import { LISTMONK_ADMIN_LIST_ID } from "~/lib/constants/constants"
+import { LISTMONK_DEVELOPERS_LIST_ID } from "~/lib/constants/constants"
 import { logger } from "~/lib/logger/logger.server"
 import { getListmonkConfig } from "./listmonk-client.server"
 
@@ -47,7 +47,7 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
       body: JSON.stringify({
         name: `[TESTE] Diagnóstico de conexão - ${new Date().toISOString()}`,
         subject: "[TESTE] Diagnóstico de conexão com Listmonk",
-        lists: [LISTMONK_ADMIN_LIST_ID],
+        lists: [LISTMONK_DEVELOPERS_LIST_ID],
         type: "regular",
         content_type: "html",
         body: "<p>Este é um email de teste enviado pelo diagnóstico de conexão do painel admin.</p>",

@@ -47,7 +47,7 @@ export const RACE_COLOR = [
 
 export const LISTMONK_REGISTERED_LIST_ID = 4
 export const LISTMONK_TEST_LIST_ID = 5
-export const LISTMONK_ADMIN_LIST_ID = 16
+export const LISTMONK_DEVELOPERS_LIST_ID = 16
 
 // Event Opened Template
 export const LISTMONK_EVENT_OPENING_TEMPLATE_ID = 7

@@ -70,7 +70,7 @@ export function ListmonkDiagnosticSection() {
       <div>
         <ConfirmDialog
           title="Testar conexão?"
-          description="Será enviado um email de teste para todos os administradores cadastrados na lista de admins do Listmonk."
+          description="Será enviado um email de teste para todos os desenvolvedores cadastrados na lista de devs do Listmonk."
           confirmLabel="Testar"
           cancelLabel="Cancelar"
           open={isDialogOpen}
