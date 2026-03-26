@@ -9,7 +9,21 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
   const steps: DiagnosticResult["steps"] = []
   let campaignId: number | null = null
 
-  const { listmonkApiUrl, headers } = getListmonkConfig()
+  let listmonkApiUrl: string
+  let headers: Record<string, string>
+  try {
+    const config = getListmonkConfig()
+    listmonkApiUrl = config.listmonkApiUrl
+    headers = config.headers
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error"
+    steps.push({
+      label: "Configuração do Listmonk",
+      status: "error",
+      error: message,
+    })
+    return { success: false, campaignId: null, steps }
+  }
 
   // Step 1: Test connection
   try {
@@ -97,7 +111,27 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
 export async function cleanupListmonkTestCampaign(
   campaignId: number,
 ): Promise<CleanupResult> {
-  const { listmonkApiUrl, headers } = getListmonkConfig()
+  let listmonkApiUrl: string
+  let headers: Record<string, string>
+  try {
+    const config = getListmonkConfig()
+    listmonkApiUrl = config.listmonkApiUrl
+    headers = config.headers
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error"
+    logger.error("Listmonk diagnostic cleanup failed - config error", {
+      campaignId,
+      error: message,
+    })
+    return {
+      success: false,
+      step: {
+        label: "Campanha de teste removida",
+        status: "error",
+        error: message,
+      },
+    }
+  }
 
   try {
     const response = await fetch(
