@@ -174,7 +174,7 @@ export const getRulesFormQuestions = (eventType: EventType) => ({
       "A respeito das pessoas que vão à Positiv e da maneira como es participantes devem se portar, é certo dizer que:",
     answers: {
       correct: [
-        "A Positiv tem esse nome, também, por conta do movimento body-positive, uma alusão à quebra dos padrões que a sociedade impõe, ã aceitação ao próprio corpo e à conscientização de que corpos dissidentes são desejáveis e desejantes.",
+        "A Positiv tem esse nome, também, por conta do movimento body-positive, uma alusão à quebra dos padrões que a sociedade impõe, à aceitação ao próprio corpo e à conscientização de que corpos dissidentes são desejáveis e desejantes.",
         "Estar numa Positiv exige um autoquestionamento se nos sentimos abertes e prontes para estar em um ambiente E interagir (sexualmente ou não) com uma pluralidade de corpos, raças, cores, etnias.",
         "Quase todos nós moldamos nosso interesse desde pequenes com uma enxurrada de regras sociais que limitam o que é belo e desejável. É importante que cada participante tenha consciência disso e busque expandir seus conceitos.",
       ],
