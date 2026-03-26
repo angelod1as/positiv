@@ -96,7 +96,7 @@ export const getRulesFormQuestions = (eventType: EventType) => ({
     answers: {
       correct: [
         "A frase está incorreta. A Positiv se parece mais com um picnic e não tem música alta ou luzes piscando.",
-        eventType === "bdsm" 
+        eventType === "bdsm"
           ? "A frase está incorreta. Na Positiv BDSM não há álcool ou outras substâncias."
           : "A frase está incorreta. É até possível que haja drinks ou cerveja, mas a moderação é essencial.",
       ],
@@ -166,6 +166,21 @@ export const getRulesFormQuestions = (eventType: EventType) => ({
         "A pessoa disse, no grupo do whatsapp, que ia me pegar com força. Cheguei na festa e fui logo roubar um beijo.",
         'A interação de certo grupo chamou minha atenção. Perguntei "posso participar?", e só uma das pessoas respondeu. Participei mesmo assim.',
         "O sexo oral estava rolando, e estava ótimo. Para não perder o clima, só coloquei a camisinha e mandei ver.",
+      ],
+    },
+  },
+  "body-positive": {
+    question:
+      "A respeito das pessoas que vão à Positiv e da maneira como es participantes devem se portar, é certo dizer que:",
+    answers: {
+      correct: [
+        "A Positiv tem esse nome, também, por conta do movimento body-positive, uma alusão à quebra dos padrões que a sociedade impõe, ã aceitação ao próprio corpo e à conscientização de que corpos dissidentes são desejáveis e desejantes.",
+        "Estar numa Positiv exige um autoquestionamento se nos sentimos abertes e prontes para estar em um ambiente E interagir (sexualmente ou não) com uma pluralidade de corpos, raças, cores, etnias.",
+        "Quase todos nós moldamos nosso interesse desde pequenes com uma enxurrada de regras sociais que limitam o que é belo e desejável. É importante que cada participante tenha consciência disso e busque expandir seus conceitos.",
+      ],
+      incorrect: [
+        'A Positiv foi pensada, majoritariamente, para pessoas que se enquadram numa estética "padrão". Portanto, nosso público não é plural, nem conta com corpos dissidentes.',
+        "Como se trata de uma festa, nenhum participante precisa se preocupar com outras pessoas, ou como elas se sentem, se estão ou não excluídas. Se eu encontrar alguém meio de fora de uma rodinha, isolade, não é minha responsabilidade falar com a pessoa ou perguntar como ela está.",
       ],
     },
   },
