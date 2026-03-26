@@ -1,22 +1,13 @@
 import { LISTMONK_DEVELOPERS_LIST_ID } from "~/lib/constants/constants"
 import { logger } from "~/lib/logger/logger.server"
 import { getListmonkConfig } from "./listmonk-client.server"
+import type { CleanupResult, DiagnosticResult } from "./test-listmonk-connection.types"
 
-type DiagnosticStep = {
-  label: string
-  status: "ok" | "error"
-  error?: string
-}
-
-export type DiagnosticResult = {
-  success: boolean
-  steps: DiagnosticStep[]
-}
+export type { CleanupResult, DiagnosticResult } from "./test-listmonk-connection.types"
 
 export async function testListmonkConnection(): Promise<DiagnosticResult> {
-  const steps: DiagnosticStep[] = []
+  const steps: DiagnosticResult["steps"] = []
   let campaignId: number | null = null
-  let failed = false
 
   const { listmonkApiUrl, headers } = getListmonkConfig()
 
@@ -36,7 +27,7 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
       status: "error",
       error: message,
     })
-    return { success: false, steps }
+    return { success: false, campaignId: null, steps }
   }
 
   // Step 2: Create test campaign
@@ -69,7 +60,7 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
       status: "error",
       error: message,
     })
-    return { success: false, steps }
+    return { success: false, campaignId: null, steps }
   }
 
   // Step 3: Send campaign
@@ -88,18 +79,26 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
         .catch(() => "Unable to read error body")
       throw new Error(`${response.status}: ${errorBody}`)
     }
-    steps.push({ label: "Email enviado para admins", status: "ok" })
+    steps.push({ label: "Email enviado para devs", status: "ok" })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
     steps.push({
-      label: "Email enviado para admins",
+      label: "Email enviado para devs",
       status: "error",
       error: message,
     })
-    failed = true
+    logger.error("Listmonk diagnostic test failed at send step", { steps })
+    return { success: false, campaignId, steps }
   }
 
-  // Step 4: Cleanup — always runs if campaign was created
+  return { success: true, campaignId, steps }
+}
+
+export async function cleanupListmonkTestCampaign(
+  campaignId: number,
+): Promise<CleanupResult> {
+  const { listmonkApiUrl, headers } = getListmonkConfig()
+
   try {
     const response = await fetch(
       `${listmonkApiUrl}/api/campaigns/${campaignId}`,
@@ -114,20 +113,23 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
         .catch(() => "Unable to read error body")
       throw new Error(`${response.status}: ${errorBody}`)
     }
-    steps.push({ label: "Campanha de teste removida", status: "ok" })
+    return {
+      success: true,
+      step: { label: "Campanha de teste removida", status: "ok" },
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
-    steps.push({
-      label: "Campanha de teste removida",
-      status: "error",
+    logger.error("Listmonk diagnostic cleanup failed", {
+      campaignId,
       error: message,
     })
-    failed = true
+    return {
+      success: false,
+      step: {
+        label: "Campanha de teste removida",
+        status: "error",
+        error: message,
+      },
+    }
   }
-
-  if (failed) {
-    logger.error("Listmonk diagnostic test failed", { steps })
-  }
-
-  return { success: !failed, steps }
 }

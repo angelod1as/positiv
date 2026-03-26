@@ -4,7 +4,10 @@ import {
   getRecentProfiles,
 } from "~/business/admin/admin.server"
 import { getRecentFeedbacks } from "~/business/feedback/feedback.server"
-import { testListmonkConnection } from "~/business/newsletter/test-listmonk-connection.server"
+import {
+  cleanupListmonkTestCampaign,
+  testListmonkConnection,
+} from "~/business/newsletter/test-listmonk-connection.server"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { AdminDashboardEventsTable } from "~/components/organisms/tables/admin/events-table"
 import { RecentFeedbacksTable } from "~/components/organisms/tables/admin/recent-feedbacks-table"
@@ -31,6 +34,12 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "test-listmonk") {
     const diagnosticResult = await testListmonkConnection()
     return { intent: "test-listmonk", diagnosticResult }
+  }
+
+  if (intent === "cleanup-listmonk") {
+    const campaignId = Number(formData.get("campaignId"))
+    const cleanupResult = await cleanupListmonkTestCampaign(campaignId)
+    return { intent: "cleanup-listmonk", cleanupResult }
   }
 
   return { intent }

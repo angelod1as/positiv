@@ -2,56 +2,105 @@ import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
-import type { DiagnosticResult } from "~/business/newsletter/test-listmonk-connection.server"
+import { Button } from "~/components/ui/button"
+import type {
+  CleanupResult,
+  DiagnosticResult,
+} from "~/business/newsletter/test-listmonk-connection.types"
 
-type FetcherData = {
+type TestFetcherData = {
   intent?: string
   diagnosticResult?: DiagnosticResult
 }
 
-export function ListmonkDiagnosticSection() {
-  const fetcher = useFetcher<FetcherData>()
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const isSubmitting =
-    fetcher.state === "submitting" || fetcher.state === "loading"
+type CleanupFetcherData = {
+  intent?: string
+  cleanupResult?: CleanupResult
+}
 
-  const handleConfirm = async (closeDialog: () => void) => {
+export function ListmonkDiagnosticSection() {
+  const testFetcher = useFetcher<TestFetcherData>()
+  const cleanupFetcher = useFetcher<CleanupFetcherData>()
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [campaignId, setCampaignId] = useState<number | null>(null)
+
+  const isTestSubmitting =
+    testFetcher.state === "submitting" || testFetcher.state === "loading"
+  const isCleanupSubmitting =
+    cleanupFetcher.state === "submitting" || cleanupFetcher.state === "loading"
+
+  const handleTestConfirm = async (closeDialog: () => void) => {
+    setCampaignId(null)
     const formData = new FormData()
     formData.append("intent", "test-listmonk")
-    fetcher.submit(formData, { method: "POST" })
+    testFetcher.submit(formData, { method: "POST" })
     closeDialog()
   }
 
-  useEffect(() => {
-    if (fetcher.data?.intent !== "test-listmonk" || !fetcher.data.diagnosticResult) return
+  const handleCleanup = () => {
+    if (!campaignId) return
+    const formData = new FormData()
+    formData.append("intent", "cleanup-listmonk")
+    formData.append("campaignId", String(campaignId))
+    cleanupFetcher.submit(formData, { method: "POST" })
+  }
 
-    const { success, steps } = fetcher.data.diagnosticResult
-    const stepsText = steps
-      .map((s) =>
-        s.status === "ok"
-          ? `✓ ${s.label}`
-          : `✗ ${s.label}${s.error ? `: ${s.error}` : ""}`,
-      )
-      .join("\n")
+  useEffect(() => {
+    if (
+      testFetcher.data?.intent !== "test-listmonk" ||
+      !testFetcher.data.diagnosticResult
+    )
+      return
+
+    const { success, steps, campaignId: resultCampaignId } =
+      testFetcher.data.diagnosticResult
+
+    if (resultCampaignId) {
+      setCampaignId(resultCampaignId)
+    }
+
+    steps.forEach((step, index) => {
+      const delay = index * 800
+      setTimeout(() => {
+        if (step.status === "ok") {
+          toast.success(`✓ ${step.label}`, { duration: 6000 })
+        } else {
+          toast.error(`✗ ${step.label}`, {
+            description: step.error,
+            duration: 12000,
+          })
+        }
+      }, delay)
+    })
+
+    if (!success && !resultCampaignId) {
+      setTimeout(() => {
+        toast.error("Diagnóstico falhou antes de criar a campanha", {
+          duration: 8000,
+        })
+      }, steps.length * 800)
+    }
+  }, [testFetcher.data])
+
+  useEffect(() => {
+    if (
+      cleanupFetcher.data?.intent !== "cleanup-listmonk" ||
+      !cleanupFetcher.data.cleanupResult
+    )
+      return
+
+    const { success, step } = cleanupFetcher.data.cleanupResult
 
     if (success) {
-      toast.success("Conexão com Listmonk OK!", {
-        description: stepsText,
-        duration: 8000,
-      })
+      toast.success(`✓ ${step.label}`, { duration: 6000 })
+      setCampaignId(null)
     } else {
-      const firstError = steps.find((s) => s.status === "error")
-      toast.error(
-        firstError?.error
-          ? `${firstError.label}: ${firstError.error}`
-          : "Falha no diagnóstico",
-        {
-          description: stepsText,
-          duration: 12000,
-        },
-      )
+      toast.error(`✗ ${step.label}`, {
+        description: step.error,
+        duration: 12000,
+      })
     }
-  }, [fetcher.data])
+  }, [cleanupFetcher.data])
 
   return (
     <div className="flex flex-col gap-4">
@@ -60,14 +109,14 @@ export function ListmonkDiagnosticSection() {
           <h2>Diagnóstico de Email</h2>
           <p className="text-sm text-muted-foreground">
             Essa ferramenta testa a conexão com o serviço de newsletter
-            (Listmonk) e envia uma campanha de teste para os administradores.
+            (Listmonk) e envia uma campanha de teste para os desenvolvedores.
             Use quando quiser verificar se os emails de abertura de evento estão
             funcionando.
           </p>
         </div>
       </div>
 
-      <div>
+      <div className="flex gap-2">
         <ConfirmDialog
           title="Testar conexão?"
           description="Será enviado um email de teste para todos os desenvolvedores cadastrados na lista de devs do Listmonk."
@@ -75,16 +124,29 @@ export function ListmonkDiagnosticSection() {
           cancelLabel="Cancelar"
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          isLoading={isSubmitting}
-          onConfirm={handleConfirm}
+          isLoading={isTestSubmitting}
+          onConfirm={handleTestConfirm}
         >
           <ConfirmDialog.Trigger
             variant="outline"
-            disabled={isSubmitting}
+            disabled={isTestSubmitting}
           >
-            {isSubmitting ? "Testando..." : "Testar conexão com Listmonk"}
+            {isTestSubmitting ? "Testando..." : "Testar conexão com Listmonk"}
           </ConfirmDialog.Trigger>
         </ConfirmDialog>
+
+        {campaignId && (
+          <Button
+            variant="destructive"
+            size="default"
+            onClick={handleCleanup}
+            disabled={isCleanupSubmitting}
+          >
+            {isCleanupSubmitting
+              ? "Limpando..."
+              : "Limpar campanha de teste"}
+          </Button>
+        )}
       </div>
     </div>
   )
