@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ORIENTATIONS, POSITIV_WHATSAPP } from './constants'
+import { DASHBOARD_URL, ORIENTATIONS, POSITIV_URL, POSITIV_WHATSAPP } from './constants'
 
 describe('ORIENTATIONS', () => {
   it('should contain Lésbica as an orientation option', () => {
@@ -8,6 +8,16 @@ describe('ORIENTATIONS', () => {
 
   it('should not contain Sapatão as an orientation option', () => {
     expect(ORIENTATIONS).not.toContain('Sapatão')
+  })
+})
+
+describe('URL constants', () => {
+  it('should not contain double slashes in paths', () => {
+    expect(DASHBOARD_URL).not.toMatch(/https?:\/\/[^/]+\/\//)
+  })
+
+  it('DASHBOARD_URL should resolve to the correct URL', () => {
+    expect(DASHBOARD_URL).toBe(`${POSITIV_URL}dashboard`)
   })
 })
 
