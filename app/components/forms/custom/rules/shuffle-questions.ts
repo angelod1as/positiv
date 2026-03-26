@@ -1,5 +1,5 @@
-import { getRulesFormQuestions } from "./rules-questions"
 import type { EventType } from "~types/database/entities.types"
+import { getRulesFormQuestions } from "./rules-questions"
 
 const shuffleArray = <T>(array: T[]): T[] => {
   const shuffled = [...array]
