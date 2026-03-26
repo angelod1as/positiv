@@ -7,14 +7,16 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { error: vi.fn(), warn: vi.fn() },
 }))
 
+const mockGetListmonkConfig = vi.fn(() => ({
+  listmonkApiUrl: "http://listmonk:9000",
+  headers: {
+    Authorization: "Basic dGVzdDp0ZXN0",
+    "Content-Type": "application/json",
+  },
+}))
+
 vi.mock("./listmonk-client.server", () => ({
-  getListmonkConfig: vi.fn(() => ({
-    listmonkApiUrl: "http://listmonk:9000",
-    headers: {
-      Authorization: "Basic dGVzdDp0ZXN0",
-      "Content-Type": "application/json",
-    },
-  })),
+  getListmonkConfig: () => mockGetListmonkConfig(),
 }))
 
 function jsonResponse(data: unknown, status = 200) {
@@ -158,5 +160,47 @@ describe("cleanupListmonkTestCampaign", () => {
     expect(result.success).toBe(false)
     expect(result.step.status).toBe("error")
     expect(result.step.error).toBeDefined()
+  })
+
+  it("should return structured error when config is missing", async () => {
+    mockGetListmonkConfig.mockImplementationOnce(() => {
+      throw new Error("Listmonk API credentials not configured")
+    })
+
+    const { cleanupListmonkTestCampaign } = await import(
+      "./test-listmonk-connection.server"
+    )
+
+    const result = await cleanupListmonkTestCampaign(99)
+
+    expect(result.success).toBe(false)
+    expect(result.step.status).toBe("error")
+    expect(result.step.error).toContain("credentials not configured")
+  })
+})
+
+describe("config errors", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("testListmonkConnection should return structured error when config is missing", async () => {
+    mockGetListmonkConfig.mockImplementationOnce(() => {
+      throw new Error("Listmonk API credentials not configured")
+    })
+
+    const { testListmonkConnection } = await import(
+      "./test-listmonk-connection.server"
+    )
+
+    const result = await testListmonkConnection()
+
+    expect(result.success).toBe(false)
+    expect(result.campaignId).toBeNull()
+    expect(result.steps).toHaveLength(1)
+    expect(result.steps[0].label).toBe("Configuração do Listmonk")
+    expect(result.steps[0].status).toBe("error")
+    expect(result.steps[0].error).toContain("credentials not configured")
+    expect(mockFetch).not.toHaveBeenCalled()
   })
 })
