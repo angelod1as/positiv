@@ -10,12 +10,12 @@ vi.mock("sonner", () => ({
   },
 }))
 
-const createMockFetcher = (
-  overrides?: Partial<{
-    state: "idle" | "submitting" | "loading"
-    data: unknown
-  }>,
-) => ({
+type FetcherOverrides = Partial<{
+  state: "idle" | "submitting" | "loading"
+  data: unknown
+}>
+
+const createMockFetcher = (overrides?: FetcherOverrides) => ({
   submit: vi.fn(),
   state: overrides?.state ?? ("idle" as const),
   formData: undefined,
@@ -30,13 +30,23 @@ const createMockFetcher = (
   load: vi.fn(),
 })
 
-let mockFetcher = createMockFetcher()
+let fetcherConfigs: [FetcherOverrides | undefined, FetcherOverrides | undefined] = [
+  undefined,
+  undefined,
+]
 
 vi.mock("react-router", async (importOriginal) => {
   const original = await importOriginal<typeof import("react-router")>()
   return {
     ...original,
-    useFetcher: () => mockFetcher,
+    useFetcher: (() => {
+      let instanceIndex = 0
+      return () => {
+        const index = instanceIndex
+        instanceIndex = (instanceIndex + 1) % 2
+        return createMockFetcher(fetcherConfigs[index])
+      }
+    })(),
   }
 })
 
@@ -51,7 +61,7 @@ function renderWithRouter(element: React.ReactElement) {
 describe("ListmonkDiagnosticSection", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockFetcher = createMockFetcher()
+    fetcherConfigs = [undefined, undefined]
   })
 
   it("should render section title and description", async () => {
@@ -69,7 +79,7 @@ describe("ListmonkDiagnosticSection", () => {
     ).toBeInTheDocument()
   })
 
-  it("should render test button", async () => {
+  it("should render test button but not cleanup button initially", async () => {
     const { ListmonkDiagnosticSection } = await import(
       "./listmonk-diagnostic-section"
     )
@@ -79,10 +89,13 @@ describe("ListmonkDiagnosticSection", () => {
     expect(
       screen.getByRole("button", { name: /testar conexão com listmonk/i }),
     ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: /limpar campanha/i }),
+    ).not.toBeInTheDocument()
   })
 
-  it("should show loading state when fetcher is submitting", async () => {
-    mockFetcher = createMockFetcher({ state: "submitting" })
+  it("should show loading state when test fetcher is submitting", async () => {
+    fetcherConfigs = [{ state: "submitting" }, undefined]
 
     const { ListmonkDiagnosticSection } = await import(
       "./listmonk-diagnostic-section"
@@ -93,7 +106,7 @@ describe("ListmonkDiagnosticSection", () => {
     expect(screen.getByText(/testando/i)).toBeInTheDocument()
   })
 
-  it("should open confirm dialog when button is clicked", async () => {
+  it("should open confirm dialog when test button is clicked", async () => {
     const user = userEvent.setup()
 
     const { ListmonkDiagnosticSection } = await import(
@@ -109,5 +122,63 @@ describe("ListmonkDiagnosticSection", () => {
     expect(
       screen.getByText(/será enviado um email de teste/i),
     ).toBeInTheDocument()
+  })
+
+  it("should show cleanup button after successful test with campaignId", async () => {
+    fetcherConfigs = [
+      {
+        data: {
+          intent: "test-listmonk",
+          diagnosticResult: {
+            success: true,
+            campaignId: 99,
+            steps: [
+              { label: "Conexão estabelecida", status: "ok" },
+              { label: "Campanha de teste criada", status: "ok" },
+              { label: "Email enviado para devs", status: "ok" },
+            ],
+          },
+        },
+      },
+      undefined,
+    ]
+
+    const { ListmonkDiagnosticSection } = await import(
+      "./listmonk-diagnostic-section"
+    )
+
+    renderWithRouter(<ListmonkDiagnosticSection />)
+
+    expect(
+      screen.getByRole("button", { name: /limpar campanha/i }),
+    ).toBeInTheDocument()
+  })
+
+  it("should not show cleanup button after failed test with no campaignId", async () => {
+    fetcherConfigs = [
+      {
+        data: {
+          intent: "test-listmonk",
+          diagnosticResult: {
+            success: false,
+            campaignId: null,
+            steps: [
+              { label: "Conexão estabelecida", status: "error", error: "fail" },
+            ],
+          },
+        },
+      },
+      undefined,
+    ]
+
+    const { ListmonkDiagnosticSection } = await import(
+      "./listmonk-diagnostic-section"
+    )
+
+    renderWithRouter(<ListmonkDiagnosticSection />)
+
+    expect(
+      screen.queryByRole("button", { name: /limpar campanha/i }),
+    ).not.toBeInTheDocument()
   })
 })
