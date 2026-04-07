@@ -20,7 +20,8 @@ export const getRulesFormSchema = (eventType: EventType) => {
         // Multiple-select (checkbox)
         acc[key] = zod
           .array(zod.string())
-          .min(1, { message: "Resposta obrigatória" })
+          .default([])
+          .pipe(zod.array(zod.string()).min(1, { message: "Resposta obrigatória" }))
           .refine(
             (answers) =>
               answers.some((answer) => question.answers.correct.includes(answer)),
