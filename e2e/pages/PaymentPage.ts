@@ -36,4 +36,21 @@ export class PaymentPage extends BasePage {
     const texts = await options.allTextContents()
     return texts.filter((t) => t.trim() !== "")
   }
+
+  async selectPaymentOption(value: string): Promise<void> {
+    await this.paymentSelect.selectOption(value)
+  }
+
+  async submitPayment(): Promise<void> {
+    await this.payButton.click()
+  }
+
+  async submitAndWaitForRedirect(value: string): Promise<string> {
+    await this.selectPaymentOption(value)
+    await Promise.all([
+      this.page.waitForURL(/\/mock-invoice\//, { timeout: 15000 }),
+      this.payButton.click(),
+    ])
+    return this.page.url()
+  }
 }
