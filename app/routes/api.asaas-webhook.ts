@@ -34,7 +34,10 @@ const PAYMENT_EVENTS = ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"] as const
 
 function isTokenValid(request: Request): boolean {
   const { asaasWebhookToken } = env()
-  if (!asaasWebhookToken) return true
+  if (!asaasWebhookToken) {
+    logger.warn("ASAAS_WEBHOOK_TOKEN not configured — webhook authentication disabled")
+    return true
+  }
   return request.headers.get("asaas-access-token") === asaasWebhookToken
 }
 

@@ -137,8 +137,8 @@ export const processRefund = composable(
 
     const now = new Date().toISOString()
 
-    // Optimistic: mark as refunded in DB first
-    await kyselyDb
+    // Optimistic: mark as refunded in DB first (atomic — only if still "paid")
+    const updated = await kyselyDb
       .updateTable("payment_requests")
       .set({
         status: "refunded",
@@ -147,7 +147,12 @@ export const processRefund = composable(
         updated_at: now,
       })
       .where("id", "=", paymentRequest.id)
-      .execute()
+      .where("status", "=", "paid")
+      .executeTakeFirst()
+
+    if (!updated) {
+      throw new Error("Payment is no longer in 'paid' status — cannot refund")
+    }
 
     try {
       await refundAsaasPayment(paymentRequest.asaas_payment_id)

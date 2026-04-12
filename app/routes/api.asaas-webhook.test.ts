@@ -87,7 +87,7 @@ describe("api.asaas-webhook", () => {
     expect(response.status).toBe(401)
   })
 
-  it("skips token validation when ASAAS_WEBHOOK_TOKEN is not configured", async () => {
+  it("allows requests but logs warning when ASAAS_WEBHOOK_TOKEN is not configured", async () => {
     mockEnv.asaasWebhookToken = undefined as unknown as string
     mockFindResult.value = {
       id: "pr-1",
@@ -99,9 +99,8 @@ describe("api.asaas-webhook", () => {
     const request = makeRequest({ event: "PAYMENT_RECEIVED", payment: { id: "pay_1", value: 220 } })
     const response = await action(actionArgs(request))
     expect(response.status).toBe(200)
-    expect(vi.mocked(logger.warn)).not.toHaveBeenCalledWith(
-      expect.stringContaining("token"),
-      expect.anything(),
+    expect(vi.mocked(logger.warn)).toHaveBeenCalledWith(
+      expect.stringContaining("ASAAS_WEBHOOK_TOKEN not configured"),
     )
   })
 

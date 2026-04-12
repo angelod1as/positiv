@@ -314,13 +314,30 @@ describe("processRefund", () => {
       status: "paid",
     }
 
-    mockKyselyDb._setResults([paidRequest])
+    mockKyselyDb._setResults([paidRequest, { numUpdatedRows: 1n }])
     vi.mocked(refundAsaasPayment).mockResolvedValueOnce(undefined)
 
     const result = await processRefund("ep-1")
 
     expect(result.success).toBe(true)
     expect(refundAsaasPayment).toHaveBeenCalledWith("pay_123")
+  })
+
+  it("fails when payment is no longer in paid status (race condition)", async () => {
+    const paidRequest = {
+      id: "pr-paid",
+      event_participant_id: "ep-1",
+      asaas_payment_id: "pay_123",
+      amount: 220,
+      status: "paid",
+    }
+
+    mockKyselyDb._setResults([paidRequest, undefined])
+
+    const result = await processRefund("ep-1")
+
+    expect(result.success).toBe(false)
+    expect(refundAsaasPayment).not.toHaveBeenCalled()
   })
 
   it("rolls back DB to paid if Asaas refund fails", async () => {
@@ -332,7 +349,7 @@ describe("processRefund", () => {
       status: "paid",
     }
 
-    mockKyselyDb._setResults([paidRequest])
+    mockKyselyDb._setResults([paidRequest, { numUpdatedRows: 1n }])
     vi.mocked(refundAsaasPayment).mockRejectedValueOnce(
       new Error("Asaas API error (500): Internal Server Error"),
     )
@@ -383,6 +400,7 @@ describe("processRefund", () => {
 
     mockKyselyDb._setResults([
       paidRequest,
+      { numUpdatedRows: 1n },
       { email: "joao@test.com", full_name: "João", title: "Positiv Regular" },
     ])
     vi.mocked(refundAsaasPayment).mockResolvedValueOnce(undefined)
@@ -404,6 +422,7 @@ describe("processRefund", () => {
 
     mockKyselyDb._setResults([
       paidRequest,
+      { numUpdatedRows: 1n },
       { email: "joao@test.com", full_name: "João", title: "Positiv Regular" },
     ])
     vi.mocked(refundAsaasPayment).mockResolvedValueOnce(undefined)
