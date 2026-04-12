@@ -1,5 +1,7 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { redirectWithError } from "remix-toast"
+import { getUserContext } from "~/business/auth/auth.server"
+import { requireAdmin } from "~/business/auth/guards.server"
 import {
   getEventParticipantBasic,
   getParticipantFullEventHistory,
@@ -43,7 +45,13 @@ export function shouldRevalidate({
   return hasParamsChanged || defaultShouldRevalidate
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, params }: Route.ActionArgs) {
+  // Layout loader-level admin checks do NOT gate actions in React Router 7:
+  // the action runs before loaders revalidate. Enforce admin role here
+  // so mutation side effects require authorization.
+  const { currentProfile } = await getUserContext(request, params)
+  requireAdmin(currentProfile)
+
   const formData = await request.formData()
   const intent = formData.get("intent")
 

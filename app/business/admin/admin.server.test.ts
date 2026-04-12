@@ -1,9 +1,19 @@
 import { describe, expect, it, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
-// Mock getUserContext to return a basic user context
+// Mock getUserContext to return an admin context. getAdminContext now
+// enforces admin role via requireAdmin(context.currentProfile), so the
+// mock must include currentProfile with is_admin: true.
 vi.mock("../auth/auth.server", () => ({
   getUserContext: vi.fn(async () => ({
+    currentUser: {
+      id: "test-user-id",
+      email: "admin@test.com",
+    },
+    currentProfile: {
+      id: "test-profile-id",
+      is_admin: true,
+    },
     user: {
       id: "test-user-id",
       email: "admin@test.com",

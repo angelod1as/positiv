@@ -17,6 +17,7 @@ import type {
   ProfileGlobal,
 } from "~types/database/entities.types"
 import { getUserContext } from "../auth/auth.server"
+import { requireAdmin } from "../auth/guards.server"
 import {
   adminContextSchema,
   eventFormSchema,
@@ -36,6 +37,10 @@ export const getAdminContext = async (
   params: Params,
 ): Promise<z.infer<typeof adminContextSchema>> => {
   const context = await getUserContext(request, params)
+  // Enforce admin role — previously this function was a false friend that
+  // only required login. All admin pages/actions that call this rely on
+  // this guard for authorization.
+  requireAdmin(context.currentProfile)
   return context
 }
 

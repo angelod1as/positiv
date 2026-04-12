@@ -161,8 +161,10 @@ export const processRefund = composable(
     try {
       await refundAsaasPayment(paymentRequest.asaas_payment_id)
     } catch (error) {
-      // Rollback DB to paid if Asaas fails
-      await kyselyDb
+      // Rollback DB to paid if Asaas fails. Guard with WHERE status='refunded'
+      // so we don't clobber a concurrent state change (e.g. PAYMENT_REFUNDED
+      // webhook arrived between our optimistic UPDATE and the Asaas call).
+      const rolledBack = await kyselyDb
         .updateTable("payment_requests")
         .set({
           status: "paid",
@@ -171,12 +173,25 @@ export const processRefund = composable(
           updated_at: new Date().toISOString(),
         })
         .where("id", "=", paymentRequest.id)
-        .execute()
+        .where("status", "=", "refunded")
+        .returningAll()
+        .executeTakeFirst()
 
-      logger.error("Asaas refund failed, rolled back DB status to paid", {
-        paymentRequestId: paymentRequest.id,
-        error: error instanceof Error ? error.message : String(error),
-      })
+      if (!rolledBack) {
+        logger.error(
+          "Asaas refund failed AND rollback was a no-op — MANUAL RECONCILIATION REQUIRED",
+          {
+            paymentRequestId: paymentRequest.id,
+            asaasPaymentId: paymentRequest.asaas_payment_id,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        )
+      } else {
+        logger.error("Asaas refund failed, rolled back DB status to paid", {
+          paymentRequestId: paymentRequest.id,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
 
       throw error
     }

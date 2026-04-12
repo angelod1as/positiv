@@ -6,9 +6,8 @@ import { stopAsaasMockServer } from "./mocks/asaas-mock-server"
 async function globalTeardown(_config: FullConfig) {
   console.info("🧹 Running global teardown for E2E tests...")
 
-  // Stop the production server if it's running
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const serverRunning = (global as any).__PRODUCTION_SERVER_RUNNING__
+  // Stop the production server if it's running (flag set by global-setup.ts)
+  const serverRunning = globalThis.__PRODUCTION_SERVER_RUNNING__
   
   // Stop Asaas mock server
   try {

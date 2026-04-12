@@ -20,6 +20,8 @@ const asaasPaymentResponseSchema = z.object({
   invoiceUrl: z.string(),
 })
 
+const ASAAS_FETCH_TIMEOUT_MS = 30_000
+
 async function asaasFetch<T>(
   path: string,
   body: Record<string, unknown>,
@@ -28,22 +30,34 @@ async function asaasFetch<T>(
 ): Promise<T> {
   const { apiKey, apiUrl } = getAsaasConfig()
 
-  const response = await fetch(`${apiUrl}${path}`, {
-    method,
-    headers: {
-      "Content-Type": "application/json",
-      access_token: apiKey,
-    },
-    ...(method !== "GET" && method !== "DELETE" && { body: JSON.stringify(body) }),
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(
+    () => controller.abort(new Error("Asaas request timeout")),
+    ASAAS_FETCH_TIMEOUT_MS,
+  )
 
-  if (!response.ok) {
-    const errorBody = await response.text()
-    throw new Error(`Asaas API error (${response.status}): ${errorBody}`)
+  try {
+    const hasBody = method !== "GET" && method !== "DELETE"
+    const response = await fetch(`${apiUrl}${path}`, {
+      method,
+      signal: controller.signal,
+      headers: {
+        access_token: apiKey,
+        ...(hasBody && { "Content-Type": "application/json" }),
+      },
+      ...(hasBody && { body: JSON.stringify(body) }),
+    })
+
+    if (!response.ok) {
+      const errorBody = await response.text()
+      throw new Error(`Asaas API error (${response.status}): ${errorBody}`)
+    }
+
+    const json = await response.json()
+    return schema.parse(json)
+  } finally {
+    clearTimeout(timeout)
   }
-
-  const json = await response.json()
-  return schema.parse(json)
 }
 
 export async function createAsaasCustomer({
@@ -113,10 +127,18 @@ export async function refundAsaasPayment(
 }
 
 export async function cancelAsaasPayment(paymentId: string): Promise<void> {
-  await asaasFetch(
+  const result = await asaasFetch(
     `/payments/${paymentId}`,
     {},
     z.object({ deleted: z.boolean(), id: z.string() }),
     "DELETE",
   )
+  // Asaas returns HTTP 200 with `{ deleted: false }` when the payment cannot
+  // be deleted (e.g. already paid). Treat this as a failure — otherwise we
+  // silently claim "cancelled" while the charge is still alive on Asaas.
+  if (!result.deleted) {
+    throw new Error(
+      `Asaas refused to delete payment ${paymentId} (deleted=false)`,
+    )
+  }
 }

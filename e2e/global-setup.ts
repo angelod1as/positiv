@@ -4,6 +4,10 @@ import { existsSync, statSync, readdirSync } from "fs"
 import { join } from "path"
 import { startAsaasMockServer } from "./mocks/asaas-mock-server"
 
+declare global {
+  var __PRODUCTION_SERVER_RUNNING__: boolean | undefined
+}
+
 async function buildApplication(): Promise<void> {
   console.info("🔨 Building application for production...")
   
@@ -138,10 +142,8 @@ async function globalSetup(_config: FullConfig) {
   }
 
   console.info("✅ Global setup completed")
-  
-  // Store a flag that the server is running for teardown
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(global as any).__PRODUCTION_SERVER_RUNNING__ = true
+
+  globalThis.__PRODUCTION_SERVER_RUNNING__ = true
 }
 
 export default globalSetup

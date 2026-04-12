@@ -93,13 +93,29 @@ export async function deletePaymentRequestsByParticipant(
     .eq("event_participant_id", eventParticipantId)
 }
 
-export async function postWebhook(payload: {
-  event: string
-  payment: { id: string; value?: number }
-}): Promise<{ status: number; body: AsaasWebhookResponse }> {
+export async function postWebhook(
+  payload: {
+    event: string
+    payment: { id: string; value?: number }
+  },
+  options: { token?: string | null } = {},
+): Promise<{ status: number; body: AsaasWebhookResponse }> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  }
+  // Default: use the token from the env. Tests can explicitly pass
+  // token: null to omit it, or a wrong value to test 401.
+  const token =
+    options.token === undefined
+      ? process.env.ASAAS_WEBHOOK_TOKEN
+      : options.token
+  if (token) {
+    headers["asaas-access-token"] = token
+  }
+
   const response = await fetch(`${APP_BASE_URL}/api/asaas-webhook`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(payload),
   })
   return {

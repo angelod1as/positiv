@@ -66,30 +66,50 @@ export async function cancelActivePaymentRequest(eventParticipantId: string) {
   const active = await getActivePaymentRequest(eventParticipantId)
   if (!active) return
 
-  if (active.asaas_payment_id) {
-    try {
-      await cancelAsaasPayment(active.asaas_payment_id)
-      logger.info("Cancelled Asaas payment before creating new request", {
-        paymentRequestId: active.id,
-        asaasPaymentId: active.asaas_payment_id,
-      })
-    } catch (error) {
-      logger.error("Failed to cancel Asaas payment, proceeding with local cancellation", {
-        paymentRequestId: active.id,
-        asaasPaymentId: active.asaas_payment_id,
-        error: error instanceof Error ? error.message : String(error),
-      })
-    }
-  }
-
-  await kyselyDb
+  // Atomic guard: only cancel if status is still non-terminal. Using
+  // returningAll() so executeTakeFirst() returns the row (or undefined
+  // when a concurrent caller already changed the status) — never
+  // Kysely's always-truthy UpdateResult.
+  const updated = await kyselyDb
     .updateTable("payment_requests")
     .set({
       status: "cancelled",
       updated_at: new Date().toISOString(),
     })
     .where("id", "=", active.id)
-    .execute()
+    .where("status", "in", ["pending", "awaiting_payment"])
+    .returningAll()
+    .executeTakeFirst()
+
+  if (!updated) {
+    // Another concurrent process already changed the status (paid via
+    // webhook, cancelled by another admin, etc.). Skip the Asaas cancel
+    // to avoid clobbering a legitimate state transition.
+    logger.info(
+      "cancelActivePaymentRequest: status changed concurrently, skipping",
+      { paymentRequestId: active.id },
+    )
+    return
+  }
+
+  if (updated.asaas_payment_id) {
+    try {
+      await cancelAsaasPayment(updated.asaas_payment_id)
+      logger.info("Cancelled Asaas payment after local cancellation", {
+        paymentRequestId: updated.id,
+        asaasPaymentId: updated.asaas_payment_id,
+      })
+    } catch (error) {
+      logger.error(
+        "Failed to cancel Asaas payment after local cancellation — manual reconciliation needed",
+        {
+          paymentRequestId: updated.id,
+          asaasPaymentId: updated.asaas_payment_id,
+          error: error instanceof Error ? error.message : String(error),
+        },
+      )
+    }
+  }
 }
 
 function parsePaymentOption(paymentOption: string) {
@@ -97,7 +117,10 @@ function parsePaymentOption(paymentOption: string) {
     return { billingType: "PIX" as const, installments: 1 }
   }
 
-  const match = paymentOption.match(/^CC_(\d+)$/)
+  // Only accept CC_1 through CC_9. Belt-and-suspenders with the schema enum;
+  // a hand-crafted POST that bypasses the schema should fail hard rather than
+  // quietly treat CC_0 as zero installments or CC_999 as supported.
+  const match = paymentOption.match(/^CC_([1-9])$/)
   if (!match) throw new Error(`Invalid payment option: ${paymentOption}`)
 
   return {
@@ -221,21 +244,38 @@ export async function markManualPaymentPaid(eventParticipantId: string) {
 
 export async function markManualPaymentRefunded(eventParticipantId: string) {
   const now = new Date().toISOString()
+
+  // Need the current amount to set refund_amount — do a SELECT first so we
+  // don't lose audit information. The WHERE on the UPDATE still provides
+  // atomicity (only flips rows where status is still 'paid').
+  const current = await kyselyDb
+    .selectFrom("payment_requests")
+    .selectAll()
+    .where("event_participant_id", "=", eventParticipantId)
+    .where("payment_mode", "=", "manual")
+    .where("status", "=", "paid")
+    .executeTakeFirst()
+
+  if (!current) {
+    throw new Error("No paid manual payment request found for this participant")
+  }
+
   const result = await kyselyDb
     .updateTable("payment_requests")
     .set({
       status: "refunded",
+      refund_amount: current.amount,
       refunded_at: now,
       updated_at: now,
     })
-    .where("event_participant_id", "=", eventParticipantId)
-    .where("payment_mode", "=", "manual")
+    .where("id", "=", current.id)
     .where("status", "=", "paid")
     .returningAll()
     .executeTakeFirst()
 
   if (!result) {
-    throw new Error("No paid manual payment request found for this participant")
+    // Row flipped to another status between SELECT and UPDATE (concurrent admin).
+    throw new Error("Manual payment was concurrently modified; refund aborted")
   }
 
   try {

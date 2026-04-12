@@ -254,8 +254,13 @@ describe("payment-request.server", () => {
         expires_at: new Date(Date.now() + 86400000).toISOString(),
       }
 
+      // Updated flow: DB UPDATE runs first (with WHERE status guard +
+      // returningAll), then Asaas cancel runs only if the update succeeded.
+      // The mock returns the cancelled row to simulate a matching UPDATE.
       mockKyselyDb.selectFrom.mockReturnValue(chainable(activeRequest))
-      mockKyselyDb.updateTable.mockReturnValue(chainable(undefined))
+      mockKyselyDb.updateTable.mockReturnValue(
+        chainable({ ...activeRequest, status: "cancelled" }),
+      )
 
       await cancelActivePaymentRequest("ep-1")
 
@@ -273,7 +278,9 @@ describe("payment-request.server", () => {
       }
 
       mockKyselyDb.selectFrom.mockReturnValue(chainable(activeRequest))
-      mockKyselyDb.updateTable.mockReturnValue(chainable(undefined))
+      mockKyselyDb.updateTable.mockReturnValue(
+        chainable({ ...activeRequest, status: "cancelled" }),
+      )
 
       await cancelActivePaymentRequest("ep-1")
 
@@ -291,7 +298,9 @@ describe("payment-request.server", () => {
       }
 
       mockKyselyDb.selectFrom.mockReturnValue(chainable(activeRequest))
-      mockKyselyDb.updateTable.mockReturnValue(chainable(undefined))
+      mockKyselyDb.updateTable.mockReturnValue(
+        chainable({ ...activeRequest, status: "cancelled" }),
+      )
       vi.mocked(cancelAsaasPayment).mockRejectedValueOnce(new Error("Asaas API error"))
 
       await cancelActivePaymentRequest("ep-1")
@@ -300,6 +309,24 @@ describe("payment-request.server", () => {
       expect(mockKyselyDb.updateTable).toHaveBeenCalledWith("payment_requests")
     })
 
+    it("skips Asaas cancel when status changed concurrently (UPDATE no-op)", async () => {
+      const activeRequest = {
+        id: "pr-active",
+        event_participant_id: "ep-1",
+        asaas_payment_id: "pay_old",
+        status: "awaiting_payment",
+        expires_at: new Date(Date.now() + 86400000).toISOString(),
+      }
+
+      // UPDATE returns undefined (WHERE status IN (...) didn't match because
+      // a concurrent process flipped the row to paid/refunded/cancelled).
+      mockKyselyDb.selectFrom.mockReturnValue(chainable(activeRequest))
+      mockKyselyDb.updateTable.mockReturnValue(chainable(undefined))
+
+      await cancelActivePaymentRequest("ep-1")
+
+      expect(cancelAsaasPayment).not.toHaveBeenCalled()
+    })
 
     it("does nothing when no active request exists", async () => {
       mockKyselyDb.selectFrom.mockReturnValue(chainable(null))

@@ -6,7 +6,8 @@ const mockEnv = vi.hoisted(() => ({
   nodeEnv: "test" as "development" | "production" | "test",
 }))
 
-const mockFindResult = vi.hoisted(() => ({ value: undefined as unknown }))
+const mockSelectResult = vi.hoisted(() => ({ value: undefined as unknown }))
+const mockUpdateResult = vi.hoisted(() => ({ value: undefined as unknown }))
 const mockExecute = vi.hoisted(() => vi.fn().mockResolvedValue([]))
 
 vi.mock("~/env.server", () => ({
@@ -14,25 +15,31 @@ vi.mock("~/env.server", () => ({
 }))
 
 vi.mock("~/kysely-db", () => {
-  function chainProxy(): unknown {
+  function chainProxy(kind: "select" | "update"): unknown {
     return new Proxy(
       {},
       {
         get(_, prop) {
           if (typeof prop === "symbol") return undefined
           if (prop === "then") return undefined
-          if (prop === "executeTakeFirst")
-            return () => Promise.resolve(mockFindResult.value)
+          if (prop === "executeTakeFirst") {
+            return () =>
+              Promise.resolve(
+                kind === "select"
+                  ? mockSelectResult.value
+                  : mockUpdateResult.value,
+              )
+          }
           if (prop === "execute") return mockExecute
-          return () => chainProxy()
+          return () => chainProxy(kind)
         },
       },
     )
   }
   return {
     kyselyDb: {
-      selectFrom: () => chainProxy(),
-      updateTable: () => chainProxy(),
+      selectFrom: () => chainProxy("select"),
+      updateTable: () => chainProxy("update"),
     },
   }
 })
@@ -62,7 +69,8 @@ describe("api.asaas-webhook", () => {
     mockEnv.paymentSystemOnline = true
     mockEnv.asaasWebhookToken = "test-webhook-token"
     mockEnv.nodeEnv = "test"
-    mockFindResult.value = undefined
+    mockSelectResult.value = undefined
+    mockUpdateResult.value = undefined
   })
 
   it("returns 404 when payment system is offline", async () => {
@@ -92,7 +100,7 @@ describe("api.asaas-webhook", () => {
   it("allows requests but logs warning when ASAAS_WEBHOOK_TOKEN is not configured (dev/test)", async () => {
     mockEnv.asaasWebhookToken = undefined as unknown as string
     mockEnv.nodeEnv = "development"
-    mockFindResult.value = {
+    mockSelectResult.value = {
       id: "pr-1",
       event_participant_id: "ep-1",
       status: "awaiting_payment",
@@ -141,12 +149,14 @@ describe("api.asaas-webhook", () => {
 
   describe("PAYMENT_RECEIVED (PIX)", () => {
     it("marks payment request as paid", async () => {
-      mockFindResult.value = {
+      const row = {
         id: "pr-1",
         event_participant_id: "ep-1",
         status: "awaiting_payment",
         amount: 220,
       }
+      mockSelectResult.value = row
+      mockUpdateResult.value = { ...row, status: "paid" }
 
       const request = makeRequest(
         { event: "PAYMENT_RECEIVED", payment: { id: "pay_1", value: 220 } },
@@ -161,16 +171,40 @@ describe("api.asaas-webhook", () => {
         expect.objectContaining({ paymentRequestId: "pr-1" }),
       )
     })
-  })
 
-  describe("PAYMENT_CONFIRMED (CC)", () => {
-    it("marks payment as paid (same as PAYMENT_RECEIVED)", async () => {
-      mockFindResult.value = {
+    it("skips paid update when row is no longer in pre-paid state (race)", async () => {
+      // SELECT sees awaiting_payment, but UPDATE with WHERE status IN
+      // (pending, awaiting_payment) matches 0 rows (another process changed
+      // it concurrently to a terminal state). Must NOT mark as paid.
+      mockSelectResult.value = {
         id: "pr-1",
         event_participant_id: "ep-1",
         status: "awaiting_payment",
         amount: 220,
       }
+      mockUpdateResult.value = undefined
+
+      const request = makeRequest(
+        { event: "PAYMENT_RECEIVED", payment: { id: "pay_1", value: 220 } },
+        "test-webhook-token",
+      )
+      const response = await action(actionArgs(request))
+      expect(response.status).toBe(200)
+      const json = await response.json()
+      expect(json.skipped).toBe("already_terminal")
+    })
+  })
+
+  describe("PAYMENT_CONFIRMED (CC)", () => {
+    it("marks payment as paid (same as PAYMENT_RECEIVED)", async () => {
+      const row = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        status: "awaiting_payment",
+        amount: 220,
+      }
+      mockSelectResult.value = row
+      mockUpdateResult.value = { ...row, status: "paid" }
 
       const request = makeRequest(
         { event: "PAYMENT_CONFIRMED", payment: { id: "pay_1", value: 220 } },
@@ -182,7 +216,7 @@ describe("api.asaas-webhook", () => {
     })
 
     it("is idempotent — skips if already paid", async () => {
-      mockFindResult.value = {
+      mockSelectResult.value = {
         id: "pr-1",
         event_participant_id: "ep-1",
         status: "paid",
@@ -205,12 +239,14 @@ describe("api.asaas-webhook", () => {
 
   describe("PAYMENT_OVERDUE", () => {
     it("marks payment as expired", async () => {
-      mockFindResult.value = {
+      const row = {
         id: "pr-1",
         event_participant_id: "ep-1",
         status: "awaiting_payment",
         amount: 220,
       }
+      mockSelectResult.value = row
+      mockUpdateResult.value = { ...row, status: "expired" }
 
       const request = makeRequest(
         { event: "PAYMENT_OVERDUE", payment: { id: "pay_1", value: 220 } },
@@ -223,6 +259,108 @@ describe("api.asaas-webhook", () => {
         expect.stringContaining("marked as expired"),
         expect.anything(),
       )
+    })
+
+    it("does NOT flip paid payment to expired (late/out-of-order webhook)", async () => {
+      // Critical guard: if Asaas sends PAYMENT_OVERDUE AFTER PAYMENT_CONFIRMED
+      // (retry, network reorder), we must NOT overwrite the paid status.
+      // SELECT sees paid; UPDATE with WHERE status IN (pending, awaiting)
+      // matches 0 rows → undefined → skip.
+      mockSelectResult.value = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        status: "paid",
+        amount: 220,
+      }
+      mockUpdateResult.value = undefined
+
+      const request = makeRequest(
+        { event: "PAYMENT_OVERDUE", payment: { id: "pay_1", value: 220 } },
+        "test-webhook-token",
+      )
+      const response = await action(actionArgs(request))
+      expect(response.status).toBe(200)
+      const json = await response.json()
+      expect(json.skipped).toBe("already_terminal")
+    })
+  })
+
+  describe("PAYMENT_REFUNDED", () => {
+    it("marks payment as refunded", async () => {
+      const row = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        status: "paid",
+        amount: 220,
+      }
+      mockSelectResult.value = row
+      mockUpdateResult.value = { ...row, status: "refunded" }
+
+      const request = makeRequest(
+        { event: "PAYMENT_REFUNDED", payment: { id: "pay_1", value: 220 } },
+        "test-webhook-token",
+      )
+      const response = await action(actionArgs(request))
+      const json = await response.json()
+      expect(response.status).toBe(200)
+      expect(json.action).toBe("marked_refunded")
+    })
+
+    it("PAYMENT_REFUND_IN_PROGRESS is also handled", async () => {
+      const row = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        status: "paid",
+        amount: 220,
+      }
+      mockSelectResult.value = row
+      mockUpdateResult.value = { ...row, status: "refunded" }
+
+      const request = makeRequest(
+        {
+          event: "PAYMENT_REFUND_IN_PROGRESS",
+          payment: { id: "pay_1", value: 220 },
+        },
+        "test-webhook-token",
+      )
+      const response = await action(actionArgs(request))
+      const json = await response.json()
+      expect(json.action).toBe("marked_refunded")
+    })
+
+    it("is idempotent — skips if already refunded", async () => {
+      mockSelectResult.value = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        status: "refunded",
+        amount: 220,
+      }
+
+      const request = makeRequest(
+        { event: "PAYMENT_REFUNDED", payment: { id: "pay_1", value: 220 } },
+        "test-webhook-token",
+      )
+      const response = await action(actionArgs(request))
+      const json = await response.json()
+      expect(json.skipped).toBe("already_refunded")
+    })
+
+    it("skips if row is in a non-refundable state (e.g. pending)", async () => {
+      mockSelectResult.value = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        status: "pending",
+        amount: 220,
+      }
+      mockUpdateResult.value = undefined
+
+      const request = makeRequest(
+        { event: "PAYMENT_REFUNDED", payment: { id: "pay_1", value: 220 } },
+        "test-webhook-token",
+      )
+      const response = await action(actionArgs(request))
+      const json = await response.json()
+      expect(json.skipped).toBe("already_terminal")
     })
   })
 })

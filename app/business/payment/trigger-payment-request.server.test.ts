@@ -355,7 +355,8 @@ describe("processRefund", () => {
     }
 
     const updatedRow = { ...paidRequest, status: "refunded" }
-    mockKyselyDb._setResults([paidRequest, updatedRow])
+    const rolledBackRow = { ...paidRequest, status: "paid" }
+    mockKyselyDb._setResults([paidRequest, updatedRow, rolledBackRow])
     vi.mocked(refundAsaasPayment).mockRejectedValueOnce(
       new Error("Asaas API error (500): Internal Server Error"),
     )
