@@ -53,8 +53,8 @@ test.afterAll(async () => {
 })
 
 test.describe("User Payment Page", () => {
-  test.beforeEach(() => {
-    resetAsaasState()
+  test.beforeEach(async () => {
+    await resetAsaasState()
   })
 
   test("non-owner is redirected with error", async ({ page }) => {
@@ -199,12 +199,12 @@ test.describe("User Payment Page", () => {
     expect(invoiceUrl).toMatch(/\/mock-invoice\//)
 
     // Verify the mock received a proper customer + payment creation
-    const customers = getAllAsaasCustomers()
+    const customers = await getAllAsaasCustomers()
     expect(customers, "one customer was created in Asaas").toHaveLength(1)
     expect(customers[0].name).toBeTruthy()
     expect(customers[0].cpfCnpj).toBeTruthy()
 
-    const payments = getAllAsaasPayments()
+    const payments = await getAllAsaasPayments()
     expect(payments, "one payment was created in Asaas").toHaveLength(1)
     expect(payments[0].billingType).toBe("PIX")
     expect(payments[0].value).toBe(220)

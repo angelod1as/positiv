@@ -156,10 +156,30 @@ function handleDelete(paymentId: string, res: ServerResponse): void {
   respondJson(res, 200, { deleted: true, id: payment.id })
 }
 
+function handleMockState(res: ServerResponse): void {
+  respondJson(res, 200, {
+    customers: [...state.customers.values()],
+    payments: [...state.payments.values()],
+    calls: state.calls,
+  })
+}
+
+function handleMockReset(res: ServerResponse): void {
+  state = { customers: new Map(), payments: new Map(), calls: [] }
+  respondJson(res, 200, { reset: true })
+}
+
 function handleRequest(req: IncomingMessage, res: ServerResponse): void {
   let raw = ""
   req.on("data", (chunk: string) => (raw += chunk))
   req.on("end", () => {
+    const method = req.method ?? "UNKNOWN"
+    const url = req.url ?? "/"
+
+    // Introspection endpoints for tests (no auth required, used by e2e helpers)
+    if (method === "GET" && url === "/_mock/state") return handleMockState(res)
+    if (method === "POST" && url === "/_mock/reset") return handleMockReset(res)
+
     if (!requireAuth(req, res)) return
 
     let body: Json = {}
@@ -172,9 +192,6 @@ function handleRequest(req: IncomingMessage, res: ServerResponse): void {
         })
       }
     }
-
-    const method = req.method ?? "UNKNOWN"
-    const url = req.url ?? "/"
 
     state.calls.push({
       method,
@@ -225,34 +242,78 @@ export function stopAsaasMockServer(): Promise<void> {
   })
 }
 
-export function getAsaasCalls(): AsaasCall[] {
-  return [...state.calls]
+/**
+ * The mock server runs in the Playwright global-setup process. Tests run
+ * in separate worker processes and therefore cannot see the in-memory
+ * state directly. The functions below are HTTP clients that talk to the
+ * introspection endpoints on the running mock server.
+ *
+ * They accept an optional `port` argument so tests can override the
+ * default port if needed.
+ */
+
+const MOCK_BASE = (port = 9999) => `http://localhost:${port}`
+
+interface MockStateResponse {
+  customers: MockCustomer[]
+  payments: MockPayment[]
+  calls: AsaasCall[]
 }
 
-export function clearAsaasCalls(): void {
-  state.calls = []
+async function fetchMockState(port = 9999): Promise<MockStateResponse> {
+  const response = await fetch(`${MOCK_BASE(port)}/_mock/state`)
+  if (!response.ok) {
+    throw new Error(`Mock state endpoint failed: ${response.status}`)
+  }
+  return (await response.json()) as MockStateResponse
 }
 
-export function getAsaasCallsByMethod(method: string): AsaasCall[] {
-  return state.calls.filter((c) => c.method === method)
+export async function resetAsaasState(port = 9999): Promise<void> {
+  const response = await fetch(`${MOCK_BASE(port)}/_mock/reset`, {
+    method: "POST",
+  })
+  if (!response.ok) {
+    throw new Error(`Mock reset endpoint failed: ${response.status}`)
+  }
 }
 
-export function getAsaasCallsByPath(pathPattern: RegExp): AsaasCall[] {
-  return state.calls.filter((c) => pathPattern.test(c.path))
+export async function getAsaasCalls(port = 9999): Promise<AsaasCall[]> {
+  const s = await fetchMockState(port)
+  return s.calls
 }
 
-export function resetAsaasState(): void {
-  state = { customers: new Map(), payments: new Map(), calls: [] }
+export async function getAsaasCallsByMethod(
+  method: string,
+  port = 9999,
+): Promise<AsaasCall[]> {
+  const calls = await getAsaasCalls(port)
+  return calls.filter((c) => c.method === method)
 }
 
-export function getAsaasPayment(id: string): MockPayment | undefined {
-  return state.payments.get(id)
+export async function getAsaasCallsByPath(
+  pathPattern: RegExp,
+  port = 9999,
+): Promise<AsaasCall[]> {
+  const calls = await getAsaasCalls(port)
+  return calls.filter((c) => pathPattern.test(c.path))
 }
 
-export function getAllAsaasPayments(): MockPayment[] {
-  return [...state.payments.values()]
+export async function getAsaasPayment(
+  id: string,
+  port = 9999,
+): Promise<MockPayment | undefined> {
+  const s = await fetchMockState(port)
+  return s.payments.find((p) => p.id === id)
 }
 
-export function getAllAsaasCustomers(): MockCustomer[] {
-  return [...state.customers.values()]
+export async function getAllAsaasPayments(port = 9999): Promise<MockPayment[]> {
+  const s = await fetchMockState(port)
+  return s.payments
+}
+
+export async function getAllAsaasCustomers(
+  port = 9999,
+): Promise<MockCustomer[]> {
+  const s = await fetchMockState(port)
+  return s.customers
 }

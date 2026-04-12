@@ -58,7 +58,7 @@ test.afterAll(async () => {
 
 test.beforeEach(async () => {
   await clearAllEmails()
-  resetAsaasState()
+  await resetAsaasState()
 })
 
 function participantUrl(participantIndex: number): string {
@@ -105,8 +105,8 @@ test.describe("Admin Payment Management", () => {
     // Asaas is only called when the participant confirms a payment option
     // (see confirmPaymentChoice). Admin triggering just creates the DB
     // record and sends the email — no Asaas call yet.
-    expect(getAllAsaasPayments(), "no Asaas payment yet").toHaveLength(0)
-    expect(getAllAsaasCustomers(), "no Asaas customer yet").toHaveLength(0)
+    expect(await getAllAsaasPayments(), "no Asaas payment yet").toHaveLength(0)
+    expect(await getAllAsaasCustomers(), "no Asaas customer yet").toHaveLength(0)
 
     const email = await waitForEmail({
       to: participants[0].email,
@@ -207,8 +207,8 @@ test.describe("Admin Payment Management", () => {
     // The seeded asaas_payment_id wasn't created via the mock so the DELETE
     // will 404. The app logs the failure but proceeds with local cancellation
     // — verify at least one DELETE was attempted against the mock.
-    const deleteCalls = getAsaasCallsByPath(
-      /^\/api\/v3\/payments\/[^/]+$/,
+    const deleteCalls = (
+      await getAsaasCallsByPath(/^\/api\/v3\/payments\/[^/]+$/)
     ).filter((c) => c.method === "DELETE")
     expect(
       deleteCalls.length,

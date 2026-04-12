@@ -152,21 +152,35 @@ export async function deleteEmail(emailId: string): Promise<void> {
   }
 }
 
+function decodeQuotedPrintable(input: string): string {
+  // Remove soft line breaks (=<CRLF> or =<LF>)
+  const joined = input.replace(/=\r?\n/g, "")
+  // Decode =XX hex pairs
+  return joined.replace(/=([0-9A-Fa-f]{2})/g, (_, hex) =>
+    Buffer.from([parseInt(hex, 16)]).toString("binary"),
+  )
+}
+
 export function extractEmailBody(email: MailhogMessage): string {
-  // Mailhog stores the body as base64 encoded or plain text
   const body = email.Content.Body
-  
-  // Try to decode if it looks like base64
-  if (body && /^[A-Za-z0-9+/=]+$/.test(body.trim())) {
+
+  // Try base64 decode if the body looks like pure base64
+  if (body && /^[A-Za-z0-9+/=\s]+$/.test(body.trim()) && !body.includes("=\n")) {
     try {
-      return Buffer.from(body, 'base64').toString('utf-8')
+      return Buffer.from(body, "base64").toString("utf-8")
     } catch {
-      // Not base64, return as is
       return body
     }
   }
-  
-  return body
+
+  // Emails are typically multipart with quoted-printable encoding. Decode
+  // so that soft line breaks don't split URLs and =C2=A0 doesn't mask nbsp.
+  const decoded = decodeQuotedPrintable(body)
+  try {
+    return Buffer.from(decoded, "binary").toString("utf-8")
+  } catch {
+    return decoded
+  }
 }
 
 export async function verifyApplicationEmail(recipientEmail: string): Promise<void> {
