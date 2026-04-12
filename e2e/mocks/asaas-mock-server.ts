@@ -3,61 +3,202 @@ import { createServer, type IncomingMessage, type ServerResponse, type Server } 
 interface AsaasCall {
   method: string
   path: string
+  headers: Record<string, string>
   body: Record<string, unknown>
   timestamp: number
 }
 
-let calls: AsaasCall[] = []
+interface MockCustomer {
+  id: string
+  name: string
+  cpfCnpj: string
+  email?: string
+  mobilePhone?: string
+}
+
+type PaymentStatus = "PENDING" | "CONFIRMED" | "REFUNDED" | "DELETED"
+
+interface MockPayment {
+  id: string
+  customer: string
+  billingType: "PIX" | "CREDIT_CARD"
+  value: number
+  dueDate: string
+  description?: string
+  installmentCount?: number
+  status: PaymentStatus
+  invoiceUrl: string
+}
+
+interface AsaasState {
+  customers: Map<string, MockCustomer>
+  payments: Map<string, MockPayment>
+  calls: AsaasCall[]
+}
+
+let state: AsaasState = {
+  customers: new Map(),
+  payments: new Map(),
+  calls: [],
+}
+
 let server: Server | null = null
 
-function handleRequest(req: IncomingMessage, res: ServerResponse) {
-  let body = ""
-  req.on("data", (chunk: string) => (body += chunk))
+type Json = Record<string, unknown>
+
+function asString(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null
+}
+
+function asNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null
+}
+
+function respondJson(res: ServerResponse, status: number, body: Json): void {
+  res.statusCode = status
+  res.setHeader("Content-Type", "application/json")
+  res.end(JSON.stringify(body))
+}
+
+function validationError(res: ServerResponse, description: string): void {
+  respondJson(res, 400, {
+    errors: [{ code: "invalid_field", description }],
+  })
+}
+
+function requireAuth(req: IncomingMessage, res: ServerResponse): boolean {
+  const token = req.headers["access_token"]
+  if (!token || typeof token !== "string" || token.length === 0) {
+    respondJson(res, 401, {
+      errors: [{ code: "unauthorized", description: "Missing access_token header" }],
+    })
+    return false
+  }
+  return true
+}
+
+function handleCreateCustomer(body: Json, res: ServerResponse): void {
+  const name = asString(body.name)
+  const cpfCnpj = asString(body.cpfCnpj)
+  if (!name) return validationError(res, "name is required")
+  if (!cpfCnpj) return validationError(res, "cpfCnpj is required")
+
+  const id = `cus_mock_${Date.now()}_${state.customers.size}`
+  const customer: MockCustomer = {
+    id,
+    name,
+    cpfCnpj,
+    email: asString(body.email) ?? undefined,
+    mobilePhone: asString(body.mobilePhone) ?? undefined,
+  }
+  state.customers.set(id, customer)
+  respondJson(res, 200, { id })
+}
+
+function handleCreatePayment(body: Json, res: ServerResponse): void {
+  const customer = asString(body.customer)
+  const billingType = asString(body.billingType)
+  const value = asNumber(body.value)
+  const dueDate = asString(body.dueDate)
+
+  if (!customer) return validationError(res, "customer is required")
+  if (!state.customers.has(customer))
+    return validationError(res, `customer ${customer} does not exist`)
+  if (billingType !== "PIX" && billingType !== "CREDIT_CARD")
+    return validationError(res, "billingType must be PIX or CREDIT_CARD")
+  if (value === null || value <= 0)
+    return validationError(res, "value must be a positive number")
+  if (!dueDate) return validationError(res, "dueDate is required")
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dueDate))
+    return validationError(res, "dueDate must be in YYYY-MM-DD format")
+
+  const installmentCount = asNumber(body.installmentCount)
+  if (installmentCount !== null && installmentCount <= 0)
+    return validationError(res, "installmentCount must be positive")
+
+  const id = `pay_mock_${Date.now()}_${state.payments.size}`
+  const payment: MockPayment = {
+    id,
+    customer,
+    billingType,
+    value,
+    dueDate,
+    description: asString(body.description) ?? undefined,
+    installmentCount: installmentCount ?? undefined,
+    status: "PENDING",
+    invoiceUrl: `http://localhost:5173/mock-invoice/${id}`,
+  }
+  state.payments.set(id, payment)
+  respondJson(res, 200, { id, invoiceUrl: payment.invoiceUrl })
+}
+
+function handleRefund(paymentId: string, res: ServerResponse): void {
+  const payment = state.payments.get(paymentId)
+  if (!payment)
+    return respondJson(res, 404, {
+      errors: [{ code: "not_found", description: `Payment ${paymentId} not found` }],
+    })
+  if (payment.status === "DELETED")
+    return respondJson(res, 400, {
+      errors: [{ code: "invalid_state", description: "Cannot refund a deleted payment" }],
+    })
+  payment.status = "REFUNDED"
+  respondJson(res, 200, { id: payment.id, status: "REFUNDED" })
+}
+
+function handleDelete(paymentId: string, res: ServerResponse): void {
+  const payment = state.payments.get(paymentId)
+  if (!payment)
+    return respondJson(res, 404, {
+      errors: [{ code: "not_found", description: `Payment ${paymentId} not found` }],
+    })
+  payment.status = "DELETED"
+  respondJson(res, 200, { deleted: true, id: payment.id })
+}
+
+function handleRequest(req: IncomingMessage, res: ServerResponse): void {
+  let raw = ""
+  req.on("data", (chunk: string) => (raw += chunk))
   req.on("end", () => {
-    const parsed: Record<string, unknown> = body ? JSON.parse(body) : {}
+    if (!requireAuth(req, res)) return
+
+    let body: Json = {}
+    if (raw.length > 0) {
+      try {
+        body = JSON.parse(raw)
+      } catch {
+        return respondJson(res, 400, {
+          errors: [{ code: "invalid_json", description: "Request body is not valid JSON" }],
+        })
+      }
+    }
+
     const method = req.method ?? "UNKNOWN"
     const url = req.url ?? "/"
 
-    calls.push({
+    state.calls.push({
       method,
       path: url,
-      body: parsed,
+      headers: { "access_token": String(req.headers["access_token"] ?? "") },
+      body,
       timestamp: Date.now(),
     })
 
-    res.setHeader("Content-Type", "application/json")
+    if (method === "POST" && url === "/api/v3/customers")
+      return handleCreateCustomer(body, res)
 
-    // POST /api/v3/customers
-    if (method === "POST" && url === "/api/v3/customers") {
-      res.end(JSON.stringify({ id: `cus_mock_${Date.now()}` }))
-      return
-    }
+    if (method === "POST" && url === "/api/v3/payments")
+      return handleCreatePayment(body, res)
 
-    // POST /api/v3/payments
-    if (method === "POST" && url === "/api/v3/payments") {
-      res.end(JSON.stringify({
-        id: `pay_mock_${Date.now()}`,
-        invoiceUrl: "http://localhost:5173/",
-      }))
-      return
-    }
+    const refundMatch = url.match(/^\/api\/v3\/payments\/([^/]+)\/refund$/)
+    if (method === "POST" && refundMatch) return handleRefund(refundMatch[1], res)
 
-    // POST /api/v3/payments/:id/refund
-    if (method === "POST" && url.match(/^\/api\/v3\/payments\/[^/]+\/refund$/)) {
-      const id = url.split("/")[4]
-      res.end(JSON.stringify({ id, status: "REFUNDED" }))
-      return
-    }
+    const deleteMatch = url.match(/^\/api\/v3\/payments\/([^/]+)$/)
+    if (method === "DELETE" && deleteMatch) return handleDelete(deleteMatch[1], res)
 
-    // DELETE /api/v3/payments/:id
-    if (method === "DELETE" && url.match(/^\/api\/v3\/payments\/[^/]+$/)) {
-      const id = url.split("/")[4]
-      res.end(JSON.stringify({ deleted: true, id }))
-      return
-    }
-
-    res.statusCode = 404
-    res.end(JSON.stringify({ error: "Unknown Asaas mock endpoint", url, method }))
+    respondJson(res, 404, {
+      errors: [{ code: "unknown_endpoint", description: `${method} ${url} not mocked` }],
+    })
   })
 }
 
@@ -85,17 +226,33 @@ export function stopAsaasMockServer(): Promise<void> {
 }
 
 export function getAsaasCalls(): AsaasCall[] {
-  return [...calls]
+  return [...state.calls]
 }
 
 export function clearAsaasCalls(): void {
-  calls = []
+  state.calls = []
 }
 
 export function getAsaasCallsByMethod(method: string): AsaasCall[] {
-  return calls.filter((c) => c.method === method)
+  return state.calls.filter((c) => c.method === method)
 }
 
 export function getAsaasCallsByPath(pathPattern: RegExp): AsaasCall[] {
-  return calls.filter((c) => pathPattern.test(c.path))
+  return state.calls.filter((c) => pathPattern.test(c.path))
+}
+
+export function resetAsaasState(): void {
+  state = { customers: new Map(), payments: new Map(), calls: [] }
+}
+
+export function getAsaasPayment(id: string): MockPayment | undefined {
+  return state.payments.get(id)
+}
+
+export function getAllAsaasPayments(): MockPayment[] {
+  return [...state.payments.values()]
+}
+
+export function getAllAsaasCustomers(): MockCustomer[] {
+  return [...state.customers.values()]
 }
