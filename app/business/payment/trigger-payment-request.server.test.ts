@@ -314,7 +314,10 @@ describe("processRefund", () => {
       status: "paid",
     }
 
-    mockKyselyDb._setResults([paidRequest, { numUpdatedRows: 1n }])
+    // The optimistic UPDATE uses .returningAll().executeTakeFirst() so the
+    // second result is the returned row, not an UpdateResult.
+    const updatedRow = { ...paidRequest, status: "refunded" }
+    mockKyselyDb._setResults([paidRequest, updatedRow])
     vi.mocked(refundAsaasPayment).mockResolvedValueOnce(undefined)
 
     const result = await processRefund("ep-1")
@@ -332,6 +335,8 @@ describe("processRefund", () => {
       status: "paid",
     }
 
+    // When the WHERE status='paid' guard fails, .returningAll() returns
+    // no rows and executeTakeFirst() returns undefined.
     mockKyselyDb._setResults([paidRequest, undefined])
 
     const result = await processRefund("ep-1")
@@ -349,7 +354,8 @@ describe("processRefund", () => {
       status: "paid",
     }
 
-    mockKyselyDb._setResults([paidRequest, { numUpdatedRows: 1n }])
+    const updatedRow = { ...paidRequest, status: "refunded" }
+    mockKyselyDb._setResults([paidRequest, updatedRow])
     vi.mocked(refundAsaasPayment).mockRejectedValueOnce(
       new Error("Asaas API error (500): Internal Server Error"),
     )
@@ -400,7 +406,7 @@ describe("processRefund", () => {
 
     mockKyselyDb._setResults([
       paidRequest,
-      { numUpdatedRows: 1n },
+      { ...paidRequest, status: "refunded" },
       { email: "joao@test.com", full_name: "João", title: "Positiv Regular" },
     ])
     vi.mocked(refundAsaasPayment).mockResolvedValueOnce(undefined)
@@ -422,7 +428,7 @@ describe("processRefund", () => {
 
     mockKyselyDb._setResults([
       paidRequest,
-      { numUpdatedRows: 1n },
+      { ...paidRequest, status: "refunded" },
       { email: "joao@test.com", full_name: "João", title: "Positiv Regular" },
     ])
     vi.mocked(refundAsaasPayment).mockResolvedValueOnce(undefined)

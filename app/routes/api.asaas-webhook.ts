@@ -32,13 +32,30 @@ function fail(data: AsaasWebhookErrorResponse, status: number) {
 
 const PAYMENT_EVENTS = ["PAYMENT_RECEIVED", "PAYMENT_CONFIRMED"] as const
 
-function isTokenValid(request: Request): boolean {
-  const { asaasWebhookToken } = env()
+let missingTokenWarned = false
+
+type TokenCheckResult =
+  | { ok: true }
+  | { ok: false; reason: "not_configured_in_production" | "invalid_token" }
+
+function checkToken(request: Request): TokenCheckResult {
+  const { asaasWebhookToken, nodeEnv } = env()
   if (!asaasWebhookToken) {
-    logger.warn("ASAAS_WEBHOOK_TOKEN not configured — webhook authentication disabled")
-    return true
+    if (nodeEnv === "production") {
+      return { ok: false, reason: "not_configured_in_production" }
+    }
+    if (!missingTokenWarned) {
+      logger.warn(
+        "ASAAS_WEBHOOK_TOKEN not configured — webhook authentication disabled (dev/test only)",
+      )
+      missingTokenWarned = true
+    }
+    return { ok: true }
   }
-  return request.headers.get("asaas-access-token") === asaasWebhookToken
+  if (request.headers.get("asaas-access-token") !== asaasWebhookToken) {
+    return { ok: false, reason: "invalid_token" }
+  }
+  return { ok: true }
 }
 
 const findPaymentRequest = composable((asaasPaymentId: string) =>
@@ -77,7 +94,14 @@ export async function action({ request }: ActionFunctionArgs) {
     return fail({ error: "Payment system offline" }, 404)
   }
 
-  if (!isTokenValid(request)) {
+  const tokenCheck = checkToken(request)
+  if (!tokenCheck.ok) {
+    if (tokenCheck.reason === "not_configured_in_production") {
+      logger.error(
+        "ASAAS_WEBHOOK_TOKEN not configured in production — rejecting webhook",
+      )
+      return fail({ error: "Webhook token not configured" }, 503)
+    }
     logger.warn("Asaas webhook received with invalid token")
     return fail({ error: "Invalid webhook token" }, 401)
   }

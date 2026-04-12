@@ -137,7 +137,10 @@ export const processRefund = composable(
 
     const now = new Date().toISOString()
 
-    // Optimistic: mark as refunded in DB first (atomic — only if still "paid")
+    // Optimistic: mark as refunded in DB first (atomic — only if still "paid").
+    // Using returningAll() so executeTakeFirst() returns the row (or undefined
+    // when no rows match), rather than Kysely's UpdateResult which is always
+    // truthy.
     const updated = await kyselyDb
       .updateTable("payment_requests")
       .set({
@@ -148,6 +151,7 @@ export const processRefund = composable(
       })
       .where("id", "=", paymentRequest.id)
       .where("status", "=", "paid")
+      .returningAll()
       .executeTakeFirst()
 
     if (!updated) {

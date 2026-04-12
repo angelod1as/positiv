@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 const mockEnv = vi.hoisted(() => ({
   paymentSystemOnline: true,
   asaasWebhookToken: "test-webhook-token",
+  nodeEnv: "test" as "development" | "production" | "test",
 }))
 
 const mockFindResult = vi.hoisted(() => ({ value: undefined as unknown }))
@@ -60,6 +61,7 @@ describe("api.asaas-webhook", () => {
     vi.clearAllMocks()
     mockEnv.paymentSystemOnline = true
     mockEnv.asaasWebhookToken = "test-webhook-token"
+    mockEnv.nodeEnv = "test"
     mockFindResult.value = undefined
   })
 
@@ -87,8 +89,9 @@ describe("api.asaas-webhook", () => {
     expect(response.status).toBe(401)
   })
 
-  it("allows requests but logs warning when ASAAS_WEBHOOK_TOKEN is not configured", async () => {
+  it("allows requests but logs warning when ASAAS_WEBHOOK_TOKEN is not configured (dev/test)", async () => {
     mockEnv.asaasWebhookToken = undefined as unknown as string
+    mockEnv.nodeEnv = "development"
     mockFindResult.value = {
       id: "pr-1",
       event_participant_id: "ep-1",
@@ -99,8 +102,17 @@ describe("api.asaas-webhook", () => {
     const request = makeRequest({ event: "PAYMENT_RECEIVED", payment: { id: "pay_1", value: 220 } })
     const response = await action(actionArgs(request))
     expect(response.status).toBe(200)
-    expect(vi.mocked(logger.warn)).toHaveBeenCalledWith(
-      expect.stringContaining("ASAAS_WEBHOOK_TOKEN not configured"),
+  })
+
+  it("rejects requests with 503 when ASAAS_WEBHOOK_TOKEN is not configured in production", async () => {
+    mockEnv.asaasWebhookToken = undefined as unknown as string
+    mockEnv.nodeEnv = "production"
+
+    const request = makeRequest({ event: "PAYMENT_RECEIVED", payment: { id: "pay_1", value: 220 } })
+    const response = await action(actionArgs(request))
+    expect(response.status).toBe(503)
+    expect(vi.mocked(logger.error)).toHaveBeenCalledWith(
+      expect.stringContaining("not configured in production"),
     )
   })
 

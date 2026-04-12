@@ -16,6 +16,7 @@ import {
   type TestParticipant,
 } from "../../utils/event-helpers"
 import { createSupabaseAdminClient } from "../../utils/db-cleanup"
+import { readAuthenticatedUserInfo } from "../../utils/user-management"
 import {
   resetAsaasState,
   getAllAsaasPayments,
@@ -84,24 +85,18 @@ test.describe("User Payment Page", () => {
   test("owner sees payment options with correct prices", async ({ page }) => {
     const supabase = createSupabaseAdminClient()
 
-    // The E2E setup creates a fresh user with a random email for the user.json auth state.
-    // We need to find that user's profile to create an EP they own.
-    // Navigate to dashboard to get Supabase session cookie, then extract user ID.
-    await page.goto("/dashboard")
-    await page.waitForLoadState("networkidle")
-
-    // Find the authenticated user's profile (most recently created test user, not test-participant)
+    // Look up the specific user created by auth setup for this test project.
+    // This file is written by e2e/tests/auth/setup.ts and is deterministic.
+    const userInfo = await readAuthenticatedUserInfo()
     const { data: profile } = await supabase
       .from("profiles")
       .select("id, email, full_name, user_id")
-      .ilike("email", "test-%@example.com")
-      .not("email", "ilike", "test-participant-%")
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("user_id", userInfo.userId)
       .single()
 
-    if (!profile) throw new Error("Could not find the E2E test user profile")
-    console.info("Authenticated user email:", profile.email)
+    if (!profile) throw new Error(
+      `Could not find profile for authenticated user ${userInfo.email}`,
+    )
 
     const { data: ep, error } = await supabase
       .from("event_participants")
@@ -145,21 +140,20 @@ test.describe("User Payment Page", () => {
   }) => {
     const supabase = createSupabaseAdminClient()
 
-    await page.goto("/dashboard")
-    await page.waitForLoadState("networkidle")
-
+    const userInfo = await readAuthenticatedUserInfo()
     const { data: profile } = await supabase
       .from("profiles")
       .select("id, email, full_name, cpf")
-      .ilike("email", "test-%@example.com")
-      .not("email", "ilike", "test-participant-%")
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("user_id", userInfo.userId)
       .single()
 
-    if (!profile) throw new Error("Could not find the E2E test user profile")
+    if (!profile) throw new Error(
+      `Could not find profile for authenticated user ${userInfo.email}`,
+    )
 
-    // App requires CPF to create an Asaas customer; ensure profile has one
+    // App requires CPF to create an Asaas customer. Snapshot + restore so
+    // we don't leak state to other tests that assume "new user has no CPF".
+    const originalCpf = profile.cpf
     if (!profile.cpf) {
       await supabase
         .from("profiles")
@@ -231,5 +225,11 @@ test.describe("User Payment Page", () => {
 
     await deletePaymentRequestsByParticipant(ep.id)
     await supabase.from("event_participants").delete().eq("id", ep.id)
+
+    // Restore CPF to its pre-test value so we don't leak state
+    await supabase
+      .from("profiles")
+      .update({ cpf: originalCpf })
+      .eq("id", profile.id)
   })
 })

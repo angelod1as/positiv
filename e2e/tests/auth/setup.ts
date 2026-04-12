@@ -35,6 +35,8 @@ setup('authenticate as admin', async ({ page }) => {
   console.info('✅ Admin authentication state saved')
 })
 
+const userInfoFile = path.join(authDir, 'user-info.json')
+
 setup('authenticate as user', async ({ page }) => {
   // Create a fresh regular user
   const email = generateTestEmail()
@@ -43,6 +45,13 @@ setup('authenticate as user', async ({ page }) => {
   console.info('Creating test user:', email)
   const testUser = await createTestUser(email, password)
   setupUsers.user = { ...testUser, password }
+
+  // Persist the email so other test files can look up THIS specific user
+  // rather than guessing with fragile "most recent test-%" queries.
+  await fs.writeFile(
+    userInfoFile,
+    JSON.stringify({ email, userId: testUser.id }, null, 2),
+  )
 
   // User goes through full login flow
   await performUILogin(page, email, password)

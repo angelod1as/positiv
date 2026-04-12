@@ -1,9 +1,35 @@
+import fs from "fs/promises"
+import path from "path"
 import { createSupabaseAdminClient } from './db-cleanup'
 
 export interface TestUser {
   id: string
   email: string
   password: string
+}
+
+export interface SetupUserInfo {
+  email: string
+  userId: string
+}
+
+/**
+ * Reads the email + userId of the user that auth setup created for
+ * `chromium-authenticated-user` tests. The setup writes this file at
+ * `e2e/.auth/user-info.json`. Tests should use this to find "their" user
+ * rather than querying for "most recent test-%" which is non-deterministic
+ * across parallel setup jobs and leaked data from prior runs.
+ */
+export async function readAuthenticatedUserInfo(): Promise<SetupUserInfo> {
+  const file = path.resolve(import.meta.dirname, "..", ".auth", "user-info.json")
+  const content = await fs.readFile(file, "utf-8")
+  const parsed = JSON.parse(content) as SetupUserInfo
+  if (!parsed.email || !parsed.userId) {
+    throw new Error(
+      `user-info.json is missing email or userId — re-run the auth setup`,
+    )
+  }
+  return parsed
 }
 
 export async function createTestUser(email: string, password: string, options?: { 
