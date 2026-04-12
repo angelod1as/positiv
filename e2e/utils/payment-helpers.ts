@@ -1,6 +1,8 @@
+import { expect } from "@playwright/test"
 import type { Database } from "../../app/types/database/database.types"
 import type { AsaasWebhookResponse } from "../../app/routes/api.asaas-webhook"
 import { createSupabaseAdminClient } from "./db-cleanup"
+import { extractEmailBody, type MailhogMessage } from "./email-helpers"
 
 type PaymentRequestStatus =
   Database["public"]["Enums"]["payment_request_status"]
@@ -133,6 +135,88 @@ export async function createTestEvent(params: {
 
   if (error) throw new Error(`Failed to create test event: ${error.message}`)
   return data
+}
+
+function formatBRLForEmail(reais: number): string {
+  const full = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(reais)
+  // Mailhog sometimes mangles the non-breaking space between "R$" and digits
+  // and drops the leading "R$". Keep the numeric portion for robust matching.
+  return full.replace(/^R\$\s*/, "")
+}
+
+export function verifyPaymentLinkEmail(
+  email: MailhogMessage,
+  expectations: {
+    participantName: string
+    eventName: string
+    paymentUrl: string
+    ticketPrice: number
+  },
+): void {
+  const subject = email.Content.Headers.Subject?.[0] ?? ""
+  expect(subject.toLowerCase()).toContain("pagamento")
+
+  const body = extractEmailBody(email)
+  expect(body, "email should contain participant name").toContain(
+    expectations.participantName,
+  )
+  expect(body, "email should contain event name").toContain(
+    expectations.eventName,
+  )
+  expect(body, "email should contain payment URL").toContain(
+    expectations.paymentUrl,
+  )
+  expect(
+    body,
+    "email should contain a Pix pricing row",
+  ).toMatch(/Pix/i)
+  expect(
+    body,
+    "email should contain a Cartão pricing row",
+  ).toMatch(/Cart[ãa]o/i)
+  expect(
+    body,
+    "email should contain formatted ticket price",
+  ).toContain(formatBRLForEmail(expectations.ticketPrice))
+}
+
+export function verifyRefundEmail(
+  email: MailhogMessage,
+  expectations: {
+    participantName: string
+    eventName: string
+    refundAmount: number
+  },
+): void {
+  const subject = email.Content.Headers.Subject?.[0] ?? ""
+  expect(subject.toLowerCase()).toMatch(/reembolso/i)
+
+  const body = extractEmailBody(email)
+  expect(body, "email should contain participant name").toContain(
+    expectations.participantName,
+  )
+  expect(body, "email should contain event name").toContain(
+    expectations.eventName,
+  )
+  expect(
+    body,
+    "email should contain formatted refund amount",
+  ).toContain(formatBRLForEmail(expectations.refundAmount))
+}
+
+export function extractPaymentUrlFromEmail(email: MailhogMessage): string {
+  const body = extractEmailBody(email)
+  const match = body.match(/https?:\/\/[^\s"'<>]+\/pagamento\/[a-f0-9-]+/i)
+  if (!match) {
+    throw new Error(
+      "Could not find payment URL in email body. Body excerpt: " +
+        body.slice(0, 500),
+    )
+  }
+  return match[0]
 }
 
 export async function cleanupTestPaymentEvent(eventId: string) {

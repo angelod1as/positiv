@@ -2,7 +2,7 @@ import { expect } from '@playwright/test'
 
 const MAILHOG_API_BASE = 'http://0.0.0.0:8025/api'
 
-interface MailhogMessage {
+export interface MailhogMessage {
   ID: string
   From: {
     Mailbox: string

@@ -8,6 +8,9 @@ import {
   seedPaymentRequest,
   deletePaymentRequestsByParticipant,
   postWebhook,
+  verifyPaymentLinkEmail,
+  verifyRefundEmail,
+  extractPaymentUrlFromEmail,
 } from "../../utils/payment-helpers"
 import {
   createTestEventWithParticipants,
@@ -19,6 +22,12 @@ import {
   waitForEmail,
   getAllEmails,
 } from "../../utils/email-helpers"
+import {
+  resetAsaasState,
+  getAllAsaasPayments,
+  getAllAsaasCustomers,
+  getAsaasCallsByPath,
+} from "../../mocks/asaas-mock-server"
 
 test.use({
   storageState: path.resolve(import.meta.dirname, "../../.auth/admin.json"),
@@ -49,6 +58,7 @@ test.afterAll(async () => {
 
 test.beforeEach(async () => {
   await clearAllEmails()
+  resetAsaasState()
 })
 
 function participantUrl(participantIndex: number): string {
@@ -92,12 +102,27 @@ test.describe("Admin Payment Management", () => {
     expect(pr.status).toBe("pending")
     expect(pr.payment_mode).toBe("automatic")
 
+    // Asaas is only called when the participant confirms a payment option
+    // (see confirmPaymentChoice). Admin triggering just creates the DB
+    // record and sends the email — no Asaas call yet.
+    expect(getAllAsaasPayments(), "no Asaas payment yet").toHaveLength(0)
+    expect(getAllAsaasCustomers(), "no Asaas customer yet").toHaveLength(0)
+
     const email = await waitForEmail({
       to: participants[0].email,
       subject: "pagamento",
       timeout: 15000,
     })
-    expect(email).toBeTruthy()
+
+    verifyPaymentLinkEmail(email, {
+      participantName: participants[0].fullName,
+      eventName: "[E2E-TEST] Payment Management",
+      paymentUrl: `/pagamento/${epId}`,
+      ticketPrice: 100,
+    })
+
+    const paymentUrl = extractPaymentUrlFromEmail(email)
+    expect(paymentUrl).toContain(`/pagamento/${epId}`)
   })
 
   test("admin triggers manual payment - no email sent", async ({ page }) => {
@@ -145,12 +170,13 @@ test.describe("Admin Payment Management", () => {
       eventId,
     )
     await deletePaymentRequestsByParticipant(epId)
+    const asaasPaymentId = `pay_cancel_test_${Date.now()}`
     await seedPaymentRequest({
       eventParticipantId: epId,
       amount: 100,
       status: "pending",
       paymentMode: "automatic",
-      asaasPaymentId: `pay_cancel_test_${Date.now()}`,
+      asaasPaymentId,
     })
 
     await page.goto(participantUrl(2))
@@ -177,6 +203,17 @@ test.describe("Admin Payment Management", () => {
     const pr = await getPaymentRequestByEventParticipantId(epId)
     assertPaymentRequest(pr)
     expect(pr.status).toBe("cancelled")
+
+    // The seeded asaas_payment_id wasn't created via the mock so the DELETE
+    // will 404. The app logs the failure but proceeds with local cancellation
+    // — verify at least one DELETE was attempted against the mock.
+    const deleteCalls = getAsaasCallsByPath(
+      /^\/api\/v3\/payments\/[^/]+$/,
+    ).filter((c) => c.method === "DELETE")
+    expect(
+      deleteCalls.length,
+      "app should attempt DELETE on Asaas when cancelling",
+    ).toBeGreaterThanOrEqual(1)
   })
 
   test("admin marks manual payment as paid", async ({ page }) => {
@@ -264,7 +301,12 @@ test.describe("Admin Payment Management", () => {
       subject: "eembolso",
       timeout: 15000,
     })
-    expect(email).toBeTruthy()
+
+    verifyRefundEmail(email, {
+      participantName: participants[2].fullName,
+      eventName: "[E2E-TEST] Payment Management",
+      refundAmount: 100,
+    })
   })
 
   test("admin resends payment link", async ({ page }) => {
@@ -284,12 +326,22 @@ test.describe("Admin Payment Management", () => {
         resp.status() === 200,
     )
 
+    const epId = await getEventParticipantId(
+      participants[0].profileId,
+      eventId,
+    )
     const email = await waitForEmail({
       to: participants[0].email,
       subject: "pagamento",
       timeout: 15000,
     })
-    expect(email).toBeTruthy()
+
+    verifyPaymentLinkEmail(email, {
+      participantName: participants[0].fullName,
+      eventName: "[E2E-TEST] Payment Management",
+      paymentUrl: `/pagamento/${epId}`,
+      ticketPrice: 100,
+    })
   })
 
   test("webhook PAYMENT_CONFIRMED marks payment as paid", async ({ page }) => {
@@ -358,5 +410,43 @@ test.describe("Admin Payment Management", () => {
     await page.goto(participantUrl(2))
     await page.waitForLoadState("networkidle")
     await expect(page.getByText("Status: Expirado")).toBeVisible({ timeout: 10000 })
+  })
+
+  test("webhook rejects request with invalid token when ASAAS_WEBHOOK_TOKEN is set", async () => {
+    const epId = await getEventParticipantId(
+      participants[2].profileId,
+      eventId,
+    )
+    await deletePaymentRequestsByParticipant(epId)
+    await seedPaymentRequest({
+      eventParticipantId: epId,
+      amount: 100,
+      status: "awaiting_payment",
+      paymentMode: "automatic",
+      asaasPaymentId: `pay_auth_test_${Date.now()}`,
+    })
+
+    const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN
+    if (!webhookToken) {
+      test.skip(
+        true,
+        "ASAAS_WEBHOOK_TOKEN not configured; auth can't be enforced",
+      )
+      return
+    }
+
+    const response = await fetch(`http://localhost:5173/api/asaas-webhook`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "asaas-access-token": "wrong-token",
+      },
+      body: JSON.stringify({
+        event: "PAYMENT_CONFIRMED",
+        payment: { id: "pay_auth_test" },
+      }),
+    })
+
+    expect(response.status).toBe(401)
   })
 })
