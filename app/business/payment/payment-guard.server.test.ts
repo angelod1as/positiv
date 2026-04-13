@@ -14,7 +14,7 @@ describe("assertPaymentSystemOnline", () => {
     expect(() => assertPaymentSystemOnline()).not.toThrow()
   })
 
-  it("throws a redirect Response when payment system is offline", () => {
+  it("throws a 302 redirect Response to the dashboard when payment system is offline", () => {
     mockEnv.paymentSystemOnline = false
     let thrown: unknown
     try {
@@ -23,7 +23,9 @@ describe("assertPaymentSystemOnline", () => {
       thrown = e
     }
     expect(thrown).toBeInstanceOf(Response)
-    expect((thrown as Response).status).toBeGreaterThanOrEqual(300)
-    expect((thrown as Response).status).toBeLessThan(400)
+    // React Router's `redirect()` defaults to 302. Pinning the exact status
+    // catches accidental swaps (e.g. to a 4xx error response).
+    expect((thrown as Response).status).toBe(302)
+    expect((thrown as Response).headers.get("Location")).toBe("/dashboard")
   })
 })

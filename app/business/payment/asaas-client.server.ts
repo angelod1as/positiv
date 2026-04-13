@@ -72,11 +72,7 @@ export async function createAsaasPayment({
   value,
   dueDate,
   description,
-  // Renamed via destructure to silence the "unused variable" check without
-  // changing the public API — callers still pass `{ installmentCount: N }`.
-  // The value is intentionally ignored in this scaffold; see the comment
-  // block below for why.
-  installmentCount: _installmentCount,
+  installmentCount,
 }: {
   customerId: string
   billingType: "PIX" | "CREDIT_CARD"
@@ -85,6 +81,22 @@ export async function createAsaasPayment({
   description?: string
   installmentCount?: number
 }): Promise<{ id: string; invoiceUrl: string }> {
+  // Installments are not implemented in this scaffold. The correct design
+  // computes per-installment values in integer cents (distributing the
+  // remainder across installments so the total matches `value` exactly)
+  // and lives in `payment-pricing.server.ts` — see
+  // `docs/payment-system-architecture.md` §8 PR #6.
+  //
+  // Fail loudly rather than silently creating a single-payment charge when
+  // a caller genuinely wants installments: better a hard error now than a
+  // miscarried payment in production.
+  if (installmentCount !== undefined && installmentCount > 1) {
+    throw new Error(
+      "createAsaasPayment: installmentCount > 1 is not yet implemented. " +
+        "See docs/payment-system-architecture.md §8 PR #6.",
+    )
+  }
+
   const body: Record<string, unknown> = {
     customer: customerId,
     billingType,
@@ -94,29 +106,6 @@ export async function createAsaasPayment({
     // in the JSON-stringified body — explicit intent for payment payloads).
     ...(description !== undefined ? { description } : {}),
   }
-
-  // Note: installment payload deliberately disabled for now.
-  //
-  // The naive `installmentValue = value / installmentCount` (rounded to
-  // 2 decimals) creates totals that don't match `value` for many inputs
-  // (e.g. 100/3 → 33.33 → 33.33*3 = 99.99). The correct implementation
-  // distributes cents across installments and matches the total exactly,
-  // and lives in `payment-pricing.server.ts` (introduced in a later PR;
-  // see `docs/payment-system-architecture.md` §8 PR #6).
-  //
-  // Once payment-pricing is in place, callers will compute the correct
-  // installmentValue (or just rely on Asaas to derive it from
-  // installmentCount + value) and we'll re-enable the block below — or
-  // remove it entirely if the final design omits installmentValue.
-  //
-  // if (
-  //   billingType === "CREDIT_CARD" &&
-  //   _installmentCount &&
-  //   _installmentCount > 1
-  // ) {
-  //   body.installmentCount = _installmentCount
-  //   body.installmentValue = Number((value / _installmentCount).toFixed(2))
-  // }
 
   return asaasFetch("/payments", body)
 }
