@@ -12,6 +12,7 @@ Positiv runs paid events. The original flow used `event_participants.has_paid` (
 This project integrates **Asaas** (Brazilian payment gateway) so participants can pay via Pix or Credit Card, with admin tooling for refunds, cancellations, and reconciliation.
 
 **Hard requirements:**
+
 - Single source of truth for payment state — no more drift between admin spreadsheets and the app.
 - Atomic state transitions — concurrent admin actions and webhook events MUST NOT corrupt data.
 - Full audit trail for refunds (LGPD + Receita Federal).
@@ -53,6 +54,7 @@ CREATE TABLE payment_requests (
 ```
 
 **`payment_mode` vs `payment_method`** — confusing names, but distinct meanings:
+
 - `payment_mode` answers **WHO processes** the payment: `automatic` (Asaas) or `manual` (admin).
 - `payment_method` answers **HOW** money moved: `PIX`, `CREDIT_CARD`, or `NULL` (manual).
 
@@ -60,15 +62,15 @@ The previous schema had a single `billing_type` column conflating both — repla
 
 ### 2.2. The lifecycle
 
-| Status | Meaning | Set by |
-|--------|---------|--------|
-| `pending` | Created, no Asaas charge yet (awaiting participant to pick PIX/CC) | `createPaymentRequest` |
-| `awaiting_payment` | Asaas charge created, participant has invoice URL | `confirmPaymentChoice` |
-| `paid` | Confirmed by Asaas webhook OR admin marked manual paid | `markAsPaid` (webhook) / `markManualPaymentPaid` |
-| `expired` | Asaas `PAYMENT_OVERDUE` webhook fired before payment | `markAsExpired` (webhook) |
-| `refunded` | Admin refunded (Asaas refund call OR manual) | `processRefund` / `markManualPaymentRefunded` / webhook `PAYMENT_REFUNDED` |
-| `cancelled` | Admin or system cancelled (e.g. before creating a new active request) | `cancelActivePaymentRequest` |
-| `partially_refunded` | Reserved for future partial-refund work (not currently written) | (none yet) |
+| Status               | Meaning                                                               | Set by                                                                     |
+| -------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `pending`            | Created, no Asaas charge yet (awaiting participant to pick PIX/CC)    | `createPaymentRequest`                                                     |
+| `awaiting_payment`   | Asaas charge created, participant has invoice URL                     | `confirmPaymentChoice`                                                     |
+| `paid`               | Confirmed by Asaas webhook OR admin marked manual paid                | `markAsPaid` (webhook) / `markManualPaymentPaid`                           |
+| `expired`            | Asaas `PAYMENT_OVERDUE` webhook fired before payment                  | `markAsExpired` (webhook)                                                  |
+| `refunded`           | Admin refunded (Asaas refund call OR manual)                          | `processRefund` / `markManualPaymentRefunded` / webhook `PAYMENT_REFUNDED` |
+| `cancelled`          | Admin or system cancelled (e.g. before creating a new active request) | `cancelActivePaymentRequest`                                               |
+| `partially_refunded` | Reserved for future partial-refund work (not currently written)       | (none yet)                                                                 |
 
 ### 2.3. Component map
 
@@ -114,6 +116,7 @@ These were discovered the hard way through review cycles. Each violation has cau
 **Why:** Kysely's `executeTakeFirst()` on `updateTable` returns an `UpdateResult` object that is **always truthy** even when 0 rows match. `if (!result) { throw }` is dead code without `.returningAll()`.
 
 **Pattern:**
+
 ```ts
 const updated = await kyselyDb
   .updateTable("payment_requests")
@@ -138,6 +141,7 @@ if (!updated) {
 **Why:** Otherwise a race between admin actions and Asaas webhooks can leave DB and Asaas diverged (e.g. local `cancelled` while Asaas charge is alive and user pays it).
 
 **Pattern (mirrored in `processRefund` and `cancelActivePaymentRequest`):**
+
 ```ts
 const updated = await /* atomic UPDATE with status guard, returningAll */
 
@@ -166,8 +170,10 @@ try {
 **Why:** React Router 7 runs actions BEFORE re-validating loaders. A layout-level admin loader does NOT gate POST mutations. Without an explicit `requireAdmin` in the action itself, any logged-in user could POST `intent=refund-payment` and trigger admin mutations.
 
 **Two layers:**
+
 1. `getAdminContext` (in `app/business/admin/admin.server.ts`) calls `requireAdmin(context.currentProfile)` internally. Loader-side admin pages get this for free.
 2. **Action handlers must call this themselves** — see `view-event-participant.tsx:action`:
+
    ```ts
    export async function action({ request, params }) {
      const { currentProfile } = await getUserContext(request, params)
@@ -201,6 +207,7 @@ function tokensEqual(a: string, b: string): boolean {
 ### 3.6. Webhook handlers must guard status transitions
 
 Without status guards, late/out-of-order webhooks corrupt data:
+
 - `PAYMENT_OVERDUE` arriving after `PAYMENT_CONFIRMED` would flip a paid row to expired.
 - `PAYMENT_REFUNDED` should NOT flip a `partially_refunded` row to fully `refunded` (loses audit trail).
 
@@ -231,12 +238,12 @@ Mock for E2E: `http://localhost:9999/api/v3` (started by `e2e/global-setup.ts`).
 
 ### 4.1. Endpoints we use
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/customers` | Create customer (name + cpfCnpj required) |
-| POST | `/payments` | Create charge (customer + billingType + value + dueDate) |
-| POST | `/payments/:id/refund` | Refund (full) |
-| DELETE | `/payments/:id` | Cancel a not-yet-paid charge |
+| Method | Path                   | Purpose                                                  |
+| ------ | ---------------------- | -------------------------------------------------------- |
+| POST   | `/customers`           | Create customer (name + cpfCnpj required)                |
+| POST   | `/payments`            | Create charge (customer + billingType + value + dueDate) |
+| POST   | `/payments/:id/refund` | Refund (full)                                            |
+| DELETE | `/payments/:id`        | Cancel a not-yet-paid charge                             |
 
 ### 4.2. Headers
 
@@ -245,12 +252,12 @@ Mock for E2E: `http://localhost:9999/api/v3` (started by `e2e/global-setup.ts`).
 
 ### 4.3. Webhook events handled
 
-| Event | Handler action |
-|-------|---------------|
-| `PAYMENT_RECEIVED` (PIX) | `markAsPaid` |
-| `PAYMENT_CONFIRMED` (CC) | `markAsPaid` |
-| `PAYMENT_OVERDUE` | `markAsExpired` |
-| `PAYMENT_REFUNDED` | `markAsRefunded` |
+| Event                        | Handler action                                                                    |
+| ---------------------------- | --------------------------------------------------------------------------------- |
+| `PAYMENT_RECEIVED` (PIX)     | `markAsPaid`                                                                      |
+| `PAYMENT_CONFIRMED` (CC)     | `markAsPaid`                                                                      |
+| `PAYMENT_OVERDUE`            | `markAsExpired`                                                                   |
+| `PAYMENT_REFUNDED`           | `markAsRefunded`                                                                  |
 | `PAYMENT_REFUND_IN_PROGRESS` | `markAsRefunded` (PIX refunds are async; we treat IN_PROGRESS = REFUNDED for now) |
 
 ### 4.4. Webhook events we DO NOT yet handle (gaps)
@@ -297,11 +304,13 @@ These are known design gaps that should NOT be silently re-introduced as bugs. T
 Concurrent `resolvePaymentRequest` or `confirmPaymentChoice` for the same participant can create duplicate Asaas charges. The app's `cancelActivePaymentRequest` cleans up old ones, but a race between two `resolve`s creates two active rows.
 
 **Recommended fix:** partial unique index:
+
 ```sql
 CREATE UNIQUE INDEX payment_requests_one_active_per_participant
 ON payment_requests (event_participant_id)
 WHERE status IN ('pending', 'awaiting_payment');
 ```
+
 Plus: in `confirmPaymentChoice`, atomically reserve the active slot via UPDATE WHERE status='pending' BEFORE calling Asaas; on conflict return existing `invoice_url` rather than creating another charge.
 
 ### 5.3. `getLatestPaymentRequest` returns any status (including cancelled)
@@ -338,11 +347,11 @@ If two webhooks for the same `asaas_payment_id` arrive concurrently, both querie
 
 ### 6.1. Test pyramid
 
-| Tier | When to write | Speed | What it covers |
-|------|---------------|-------|----------------|
-| Unit (vitest) | Pure functions, predicates, formatters | <1s | Logic in isolation; no DB, no network |
-| Integration (vitest, real DB) | Anything that touches `payment_requests` or other tables | ~1s/test | Schema constraints, RLS, race conditions, atomic UPDATEs |
-| E2E (Playwright) | User journeys end-to-end | ~30s/test | Full flow incl. mock Asaas + Mailhog |
+| Tier                          | When to write                                            | Speed     | What it covers                                           |
+| ----------------------------- | -------------------------------------------------------- | --------- | -------------------------------------------------------- |
+| Unit (vitest)                 | Pure functions, predicates, formatters                   | <1s       | Logic in isolation; no DB, no network                    |
+| Integration (vitest, real DB) | Anything that touches `payment_requests` or other tables | ~1s/test  | Schema constraints, RLS, race conditions, atomic UPDATEs |
+| E2E (Playwright)              | User journeys end-to-end                                 | ~30s/test | Full flow incl. mock Asaas + Mailhog                     |
 
 **Rule:** if your fix relates to concurrency, races, or atomic DB transitions — it MUST have an integration test, not a unit test. Mock-based unit tests cannot prove these properties.
 
@@ -360,6 +369,7 @@ If you can't make the test fail against the buggy code, the test is wrong (or wo
 ### 6.3. E2E mock contract
 
 The Asaas mock at `e2e/mocks/asaas-mock-server.ts`:
+
 - Validates request structure (required fields, types, enums).
 - Tracks payment state (PENDING → CONFIRMED → REFUNDED → DELETED).
 - Exposes introspection HTTP endpoints (`GET /_mock/state`, `POST /_mock/reset`) — tests use HTTP rather than direct imports because the mock runs in the global-setup process while tests run in worker processes.
@@ -375,6 +385,51 @@ The full-journey test (`user-payment-page.spec.ts:full journey`) is the one test
 ### 6.5. Email content verification
 
 `verifyPaymentLinkEmail` and `verifyRefundEmail` (in `e2e/utils/payment-helpers.ts`) check participant name, event name, payment URL, and pricing — not just "an email arrived". Mailhog stores bodies in quoted-printable; `extractEmailBody` decodes that. Don't bypass these helpers with raw subject-only checks.
+
+### 6.6. Sandbox E2E (real Asaas, separate suite)
+
+The mock server in §6.3 is fast and catches structural bugs, but has known behavioral gaps (see §4.5 — async PIX refunds, CPF validation, `deleted: false` responses, etc.). To catch those, we also run a thin **sandbox E2E suite** against the **real Asaas sandbox**.
+
+**Command:** `pnpm test:e2e:sandbox` (separate from `pnpm test:e2e`). Does NOT run on every CI push.
+
+**When it runs:**
+
+- **Local, on-demand** — any dev touching `asaas-client.server.ts`, the webhook handler, or payment business logic should run it before opening a PR.
+- **CI nightly** — via a separate workflow, catches Asaas drift we're not aware of.
+- **Release gate** — REQUIRED to pass before merging `payment` → `main`.
+
+**Infrastructure:**
+
+1. **Cloudflare Tunnel for webhook delivery.** Sandbox Asaas needs a public URL to POST webhooks to. We use `cloudflared tunnel --url http://localhost:5173` — free, no account needed, random `*.trycloudflare.com` URL per run.
+
+   - Playwright fixture (`e2e/fixtures/cloudflare-tunnel.ts`) spawns `cloudflared`, parses stdout for the URL, exposes it via the fixture, and kills the process on teardown.
+   - Alternative researched: ngrok (2-hour session cap, 1GB/month bandwidth cap — rejected); localtunnel (unmaintained — rejected); Coolify staging (requires deploy per branch — overkill for this).
+
+2. **Webhook registration per test run.** Before the suite: `POST /webhooks` to Asaas registering the tunnel URL. After: `DELETE /webhooks/:id`. Prevents orphan webhook configs accumulating in the sandbox account.
+
+3. **Test-data isolation.** Every customer/payment created carries a prefix `e2e-sandbox-<timestamp>-<random>` so we can filter. A teardown step (or scheduled cron via `pnpm test:e2e:sandbox:cleanup`) DELETEs all entities matching the prefix.
+
+4. **Credentials.** Real sandbox API key as `ASAAS_SANDBOX_API_KEY` env var. In CI: GitHub Actions secret. Locally: `.env` (gitignored).
+
+**Smoke test coverage** (start minimal; expand only when the mock demonstrably misses something):
+
+| # | Test | What it verifies |
+|---|------|------------------|
+| 1 | PIX full journey | create customer → create payment → sandbox simulates receipt → webhook delivered → DB marks paid |
+| 2 | Credit Card with installments | create customer → create payment with `installmentCount=3` + `installmentValue` → verify Asaas accepts (catches the "installmentValue required" gap) |
+| 3 | Refund flow | paid payment → POST /payments/:id/refund → webhook arrives → DB marks refunded |
+| 4 | Cancel of paid charge | paid payment → DELETE /payments/:id → verify response is `{deleted: false}` and client throws |
+| 5 | Invalid CPF rejection | create customer with `cpfCnpj: "00000000000"` → expect 400 from Asaas |
+
+**NOT in sandbox suite:** admin UI flows, Mailhog verification, status guard races — those stay in mock-based E2E because they're faster and don't benefit from real Asaas.
+
+**Sandbox quirks to document as we learn them** (append below as discovered):
+
+- _(TBD: how does sandbox simulate PIX receipt? Manual via Asaas dashboard, or API endpoint?)_
+- _(TBD: sandbox rate limits on payment creation)_
+- _(TBD: webhook retry policy for sandbox failures)_
+
+**DO NOT delete the mock suite once sandbox suite exists.** The mock is still the primary E2E for fast feedback; sandbox is the acceptance gate.
 
 ---
 
@@ -403,6 +458,7 @@ main
 Title: `[POS-XXX] <imperative description>`
 
 Body sections:
+
 1. **Linear ticket(s)** — Fixes POS-XXX
 2. **Scope** — what this PR does and explicitly does NOT do
 3. **Why this slice** — why it's a coherent atomic chunk
@@ -426,31 +482,33 @@ Body sections:
 
 This is the cherry-pick plan derived from the existing 65-commit branch. Each PR is atomic, reviewable, and rollbackable. Order is significant — earlier PRs are foundations for later ones.
 
-| # | Title | Source commits (approximate) | LOC est. | Depends on |
-|---|-------|------------------------------|----------|------------|
-| 1 | Foundation: env vars + Asaas client scaffold | `95bbe82e`, `1bf1ee79` | ~150 | — |
-| 2 | DB schema: `payment_requests` table + RLS | `59f017f1`, `9d3737dd`+`4252e73c` (squash), `4d0ea5b4` | ~200 | 1 |
-| 3 | Asaas client: validation, refund, cancel, timeout, deleted-check | `4907aa96`, `b40b2c66`, parts of `4da13d5c`/`969f8ef7` | ~250 | 1 |
-| 4 | Webhook endpoint: scaffold + token (timing-safe) + status guards + REFUNDED handler | `a7787647`, `4704569c`, `83c19e46`, parts of `4da13d5c`/`969f8ef7` | ~400 | 2, 3 |
-| 5 | Email system: templates + formatters + senders | `961cd03f`, `0c53ca9d`, `29cb3896`, `70faca73` | ~300 | 1 |
-| 6 | Pricing engine + payment options builder | `51e9db16`, `52e66006` | ~250 | 1 |
-| 7 | Payment-request business logic (CRUD + race-safe atomic transitions) | `19105175`, `e364cbdf`, parts of `4da13d5c`/`d22b21a7` | ~400 | 2, 3, 6 |
-| 8 | Trigger payment from admin status change | `32934cf0`, `32a7be54`, `74f942c1` | ~250 | 5, 7 |
-| 9 | User-facing payment page + auth guard | `fb1e0e7f`, `8c6320ab`, `3cd2d7a2` | ~350 | 6, 7 |
-| 10 | Refund flow: atomic with rollback + email | `e8d2be42`, `e56ea6f3`, `967142a6`, parts of `d22b21a7` | ~300 | 7, 5 |
-| 11 | Custom amounts (POS-469) | `0f4436f9`, `e958e2ac`, `11dd3272` | ~300 | 9 |
-| 12 | Admin UI: payment status section + resend + refund + cancel buttons + **`requireAdmin` enforcement** | `ab85e265`, `9b8e803d`, `46773eee`, `64219b31`, parts of `4da13d5c` | ~500 | 8, 10 |
-| 13 | Manual payment mode (POS-470) | `cf95e70c`, `32a7be54` | ~200 | 7, 12 |
-| 14 | Drop `has_paid`/`payment` columns + admin mutation cleanup | `56b5eea6`, `9f4ab0e0`, `b7b5fd33`, `8c5d14bf`, `066d63b6` | ~500 | 8, 12, 13 |
-| 15 | Drop columns migration (terminal) | `04b1cfbb` | ~150 | 14 |
-| 16 | Seeds for `payment_requests` (diverse scenarios) | `3290db9f`, `8f60ca93` | ~150 | 2, 14 |
-| 17 | E2E infrastructure: mock server + helpers + lifecycle | `154178cc`, `22b80937`, `728fec46`, `74b9ab0d`, `944ba165` | ~500 | 4, 9, 12 |
-| 18 | E2E payment tests | `4ac66b06`, `091df88a`, `8bd1196c` | ~500 | 17 |
-| 19 | Documentation (DIAGRAM.md, this doc, plans) | `af7c14e2`, `8e0b4b5f`, `279f5c26`, this commit | ~300 | — (can land any time) |
+| #   | Title                                                                                                | Source commits (approximate)                                        | LOC est. | Depends on            |
+| --- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | -------- | --------------------- |
+| 1   | Foundation: env vars + Asaas client scaffold                                                         | `95bbe82e`, `1bf1ee79`                                              | ~150     | —                     |
+| 2   | DB schema: `payment_requests` table + RLS                                                            | `59f017f1`, `9d3737dd`+`4252e73c` (squash), `4d0ea5b4`              | ~200     | 1                     |
+| 3   | Asaas client: validation, refund, cancel, timeout, deleted-check                                     | `4907aa96`, `b40b2c66`, parts of `4da13d5c`/`969f8ef7`              | ~250     | 1                     |
+| 4   | Webhook endpoint: scaffold + token (timing-safe) + status guards + REFUNDED handler                  | `a7787647`, `4704569c`, `83c19e46`, parts of `4da13d5c`/`969f8ef7`  | ~400     | 2, 3                  |
+| 5   | Email system: templates + formatters + senders                                                       | `961cd03f`, `0c53ca9d`, `29cb3896`, `70faca73`                      | ~300     | 1                     |
+| 6   | Pricing engine + payment options builder                                                             | `51e9db16`, `52e66006`                                              | ~250     | 1                     |
+| 7   | Payment-request business logic (CRUD + race-safe atomic transitions)                                 | `19105175`, `e364cbdf`, parts of `4da13d5c`/`d22b21a7`              | ~400     | 2, 3, 6               |
+| 8   | Trigger payment from admin status change                                                             | `32934cf0`, `32a7be54`, `74f942c1`                                  | ~250     | 5, 7                  |
+| 9   | User-facing payment page + auth guard                                                                | `fb1e0e7f`, `8c6320ab`, `3cd2d7a2`                                  | ~350     | 6, 7                  |
+| 10  | Refund flow: atomic with rollback + email                                                            | `e8d2be42`, `e56ea6f3`, `967142a6`, parts of `d22b21a7`             | ~300     | 7, 5                  |
+| 11  | Custom amounts (POS-469)                                                                             | `0f4436f9`, `e958e2ac`, `11dd3272`                                  | ~300     | 9                     |
+| 12  | Admin UI: payment status section + resend + refund + cancel buttons + **`requireAdmin` enforcement** | `ab85e265`, `9b8e803d`, `46773eee`, `64219b31`, parts of `4da13d5c` | ~500     | 8, 10                 |
+| 13  | Manual payment mode (POS-470)                                                                        | `cf95e70c`, `32a7be54`                                              | ~200     | 7, 12                 |
+| 14  | Drop `has_paid`/`payment` columns + admin mutation cleanup                                           | `56b5eea6`, `9f4ab0e0`, `b7b5fd33`, `8c5d14bf`, `066d63b6`          | ~500     | 8, 12, 13             |
+| 15  | Drop columns migration (terminal)                                                                    | `04b1cfbb`                                                          | ~150     | 14                    |
+| 16  | Seeds for `payment_requests` (diverse scenarios)                                                     | `3290db9f`, `8f60ca93`                                              | ~150     | 2, 14                 |
+| 17  | E2E infrastructure: mock server + helpers + lifecycle                                                | `154178cc`, `22b80937`, `728fec46`, `74b9ab0d`, `944ba165`          | ~500     | 4, 9, 12              |
+| 18  | E2E payment tests (against mock)                                                                     | `4ac66b06`, `091df88a`, `8bd1196c`                                  | ~500     | 17                    |
+| 19  | Documentation (DIAGRAM.md, this doc, plans)                                                          | `af7c14e2`, `8e0b4b5f`, `279f5c26`, this commit                     | ~300     | — (can land any time) |
+| 20  | Sandbox E2E: Cloudflare Tunnel fixture + webhook registration + 5 smoke tests + cleanup + CI nightly workflow | NEW (not in current branch — see §6.6)                     | ~500     | 4, 10, 17             |
 
 **MEGA fixes** (`4da13d5c`, `d22b21a7`, `969f8ef7`, `4da13d5c`-r2) are NOT separate PRs — their content is folded into the relevant PR above (e.g. webhook timing-safe goes into PR #4; refund race fix goes into PR #7; admin auth goes into PR #12). This way the canonical history is clean.
 
 **Squash candidates** (small fixups merged into related PRs):
+
 - `1399194f`, `b70a1f86`, `02feec89`, `f877bea6`, `3f8edccd` → merge into PR #12 (admin UI)
 - `2faf9783`, `7144b209`, `174eed81`, `a2a4439a` → merge into PR #17 (E2E infra) or PR #18 (E2E tests)
 - `af3f8c7e`, `b20dc6a9`, `a244cad5` → distribute into the PR that owns the fixed file
@@ -462,6 +520,7 @@ This is the cherry-pick plan derived from the existing 65-commit branch. Each PR
 ### Files
 
 **Production code:**
+
 - Schema: `supabase/migrations/20260315*_*.sql` and `20260316*`, `20260318*`
 - Asaas client: `app/business/payment/asaas-client.server.ts`
 - Webhook: `app/routes/api.asaas-webhook.ts`
@@ -475,6 +534,7 @@ This is the cherry-pick plan derived from the existing 65-commit branch. Each PR
 - Auth helpers: `app/business/auth/guards.server.ts` (`requireAdmin`), `app/business/admin/admin.server.ts` (`getAdminContext`)
 
 **Tests:**
+
 - Unit: `app/business/payment/*.test.ts`, `app/routes/api.asaas-webhook.test.ts`
 - Integration (race): `app/business/payment/processRefund-race.integration.test.ts`, `cancelActivePaymentRequest-race.integration.test.ts`
 - Pricing: `app/business/payment/payment-pricing.server.test.ts`
@@ -484,6 +544,7 @@ This is the cherry-pick plan derived from the existing 65-commit branch. Each PR
 - E2E specs: `e2e/tests/authenticated/admin-payment-management.spec.ts`, `user-payment-page.spec.ts`
 
 **Config:**
+
 - Env: `.env.example` (look for `ASAAS_*` and `PAYMENT_SYSTEM_ONLINE`)
 - Playwright: `playwright.config.ts`
 - E2E lifecycle: `e2e/global-setup.ts`, `global-teardown.ts`, `serve-production.ts`
@@ -491,8 +552,8 @@ This is the cherry-pick plan derived from the existing 65-commit branch. Each PR
 
 ### External
 
-- Asaas docs: https://docs.asaas.com (some pages 404 — ambiguities noted in §4.6)
-- Linear project: https://linear.app/positiv/project/sistema-de-pagamentos-cc14e6a9417c
+- Asaas docs: <https://docs.asaas.com> (some pages 404 — ambiguities noted in §4.6)
+- Linear project: <https://linear.app/positiv/project/sistema-de-pagamentos-cc14e6a9417c>
 - This branch: `pos-463-poc-asaas-sandbox-smoke-test`
 - Feature branch: `payment` (PR target)
 - Old companion doc: `DIAGRAM.md` (mermaid flow diagrams) — still useful for visual lifecycle
