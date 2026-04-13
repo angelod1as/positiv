@@ -1,5 +1,5 @@
 export const POSITIV_URL = "https://www.positivparty.com/"
-export const DASHBOARD_URL = `${POSITIV_URL}/dashboard`
+export const DASHBOARD_URL = `${POSITIV_URL}dashboard`
 
 export const POSITIV_EMAIL = "contato@positivparty.com"
 
@@ -47,6 +47,7 @@ export const RACE_COLOR = [
 
 export const LISTMONK_REGISTERED_LIST_ID = 4
 export const LISTMONK_TEST_LIST_ID = 5
+export const LISTMONK_DEVELOPERS_LIST_ID = 16
 
 // Event Opened Template
 export const LISTMONK_EVENT_OPENING_TEMPLATE_ID = 7

@@ -36,6 +36,12 @@ vi.mock("~/components/organisms/tables/admin/recent-feedbacks-table", () => ({
   RecentFeedbacksTable: () => <div data-testid="recent-feedbacks-table" />,
 }))
 
+vi.mock("~/components/pages/admin/listmonk-diagnostic-section", () => ({
+  ListmonkDiagnosticSection: () => (
+    <div data-testid="listmonk-diagnostic-section" />
+  ),
+}))
+
 vi.mock("~/components/ui/button", () => ({
   Button: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
     <button>{children}</button>

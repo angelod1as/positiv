@@ -4,7 +4,6 @@ import { useForm, type SubmitHandler } from "react-hook-form"
 import { Form, redirect, useLoaderData, useSubmit } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getUserContext } from "~/business/auth/auth.server"
 import { rulesSessionStorage } from "~/business/session.server"
 import { Button } from "~/components/atoms/button/button"
@@ -22,6 +21,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import { kyselyDb } from "~/kysely-db"
+import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 import type { FCC } from "~types/utils/utils.types"
@@ -61,7 +61,11 @@ export async function action({ request, params }: Route.ActionArgs) {
     const session = await getSession(request.headers.get("Cookie"))
     session.set("rulesCorrect", true)
 
-    trackServerEvent("rules_quiz_passed", { eventId: params.id }, `/events/${params.id}/rules`)
+    trackServerEvent(
+      "rules_quiz_passed",
+      { eventId: params.id },
+      `/events/${params.id}/rules`,
+    )
 
     return redirect(EVENT_DATA(params.id), {
       headers: {
