@@ -6,7 +6,7 @@ import {
   createAsaasCustomer,
   createAsaasPayment,
 } from "./asaas-client.server"
-import { buildPaymentOptions } from "./payment-pricing.server"
+import { buildPaymentOptions, MAX_INSTALLMENTS } from "./payment-pricing.server"
 import { sendPaymentRefundEmail } from "./send-payment-refund-email.server"
 
 export const PAYMENT_REQUEST_EXPIRY_MS = 2 * 24 * 60 * 60 * 1000
@@ -100,14 +100,42 @@ export async function cancelActivePaymentRequest(eventParticipantId: string) {
         asaasPaymentId: updated.asaas_payment_id,
       })
     } catch (error) {
-      logger.error(
-        "Failed to cancel Asaas payment after local cancellation — manual reconciliation needed",
-        {
-          paymentRequestId: updated.id,
-          asaasPaymentId: updated.asaas_payment_id,
-          error: error instanceof Error ? error.message : String(error),
-        },
-      )
+      // Asaas refused the cancel (most likely the charge was already paid).
+      // If we leave the local row as `cancelled`, the user could still pay
+      // the live Asaas charge and our webhook handlers (which only flip
+      // pending/awaiting_payment rows) would silently no-op. Roll the local
+      // status back so the system stays consistent.
+      const rolledBack = await kyselyDb
+        .updateTable("payment_requests")
+        .set({ status: active.status, updated_at: new Date().toISOString() })
+        .where("id", "=", updated.id)
+        .where("status", "=", "cancelled")
+        .returningAll()
+        .executeTakeFirst()
+
+      if (!rolledBack) {
+        logger.error(
+          "Asaas cancel failed AND local rollback was a no-op — MANUAL RECONCILIATION REQUIRED",
+          {
+            paymentRequestId: updated.id,
+            asaasPaymentId: updated.asaas_payment_id,
+            originalStatus: active.status,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        )
+      } else {
+        logger.error(
+          "Asaas cancel failed, rolled back local status — likely the charge was already paid",
+          {
+            paymentRequestId: updated.id,
+            asaasPaymentId: updated.asaas_payment_id,
+            restoredStatus: active.status,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        )
+      }
+
+      throw error
     }
   }
 }
@@ -117,15 +145,23 @@ function parsePaymentOption(paymentOption: string) {
     return { billingType: "PIX" as const, installments: 1 }
   }
 
-  // Only accept CC_1 through CC_9. Belt-and-suspenders with the schema enum;
-  // a hand-crafted POST that bypasses the schema should fail hard rather than
-  // quietly treat CC_0 as zero installments or CC_999 as supported.
-  const match = paymentOption.match(/^CC_([1-9])$/)
-  if (!match) throw new Error(`Invalid payment option: ${paymentOption}`)
+  // Belt-and-suspenders with the schema enum: parsing accepts only the
+  // supported CC_1..CC_<MAX_INSTALLMENTS>. A hand-crafted POST that bypasses
+  // the schema should fail hard, not quietly accept CC_0 or out-of-range.
+  const match = paymentOption.match(/^CC_(\d+)$/)
+  const installments = match ? Number(match[1]) : NaN
+  if (
+    !match ||
+    !Number.isInteger(installments) ||
+    installments < 1 ||
+    installments > MAX_INSTALLMENTS
+  ) {
+    throw new Error(`Invalid payment option: ${paymentOption}`)
+  }
 
   return {
     billingType: "CREDIT_CARD" as const,
-    installments: Number(match[1]),
+    installments,
   }
 }
 

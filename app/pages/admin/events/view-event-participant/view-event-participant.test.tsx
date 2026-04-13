@@ -3,8 +3,13 @@ import { createMemoryRouter, RouterProvider } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { render, screen } from "~/test/test-utils"
 import ViewEventParticipant, {
+  action,
   shouldRevalidate,
 } from "./view-event-participant"
+
+vi.mock("~/business/auth/auth.server", () => ({
+  getUserContext: vi.fn(),
+}))
 
 // Mock child components that might cause router issues
 vi.mock("~/components/pages/admin/participants/basic-data", () => ({
@@ -257,5 +262,63 @@ describe("shouldRevalidate", () => {
       defaultShouldRevalidate: true,
     })
     expect(resultTrue).toBe(true)
+  })
+})
+
+describe("action — admin authorization", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  function makeActionRequest(intent: string) {
+    const formData = new FormData()
+    formData.set("intent", intent)
+    formData.set("id", "ep-1")
+    return new Request("http://localhost/admin/eventos/e-1/participantes/p-1", {
+      method: "POST",
+      body: formData,
+    })
+  }
+
+  const actionArgs = (request: Request) => ({
+    request,
+    params: { eventId: "e-1", profileId: "p-1" },
+    context: {} as any,
+  })
+
+  // requireAdmin throws `redirectWithError(...)` which is a Promise<Response>.
+  // The promise resolves to a redirect Response — we await both layers and
+  // assert it's a 3xx Response so a future refactor can't silently weaken
+  // the authorization (e.g. swapping requireAdmin for a no-op).
+  async function expectRedirect(p: Promise<unknown>): Promise<void> {
+    const thrown = await p.then(
+      () => null,
+      (err) => err,
+    )
+    expect(thrown, "action must throw").not.toBeNull()
+    const response = await Promise.resolve(thrown)
+    expect(response).toBeInstanceOf(Response)
+    expect((response as Response).status).toBeGreaterThanOrEqual(300)
+    expect((response as Response).status).toBeLessThan(400)
+  }
+
+  it("rejects (throws redirect Response) when user is not logged in", async () => {
+    const { getUserContext } = await import("~/business/auth/auth.server")
+    vi.mocked(getUserContext).mockResolvedValueOnce({
+      currentUser: null,
+      currentProfile: null,
+    } as any)
+
+    await expectRedirect(action(actionArgs(makeActionRequest("refund-payment"))))
+  })
+
+  it("rejects when profile is not admin", async () => {
+    const { getUserContext } = await import("~/business/auth/auth.server")
+    vi.mocked(getUserContext).mockResolvedValueOnce({
+      currentUser: { id: "u-1" },
+      currentProfile: { id: "p-1", is_admin: false },
+    } as any)
+
+    await expectRedirect(action(actionArgs(makeActionRequest("cancel-payment"))))
   })
 })

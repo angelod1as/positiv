@@ -87,6 +87,43 @@ describe("getAdminContext", () => {
     expect(result.supabase).toBeDefined()
     expect(result).not.toHaveProperty("events")
   })
+
+  // requireAdmin throws `redirectWithError(...)` which is a Promise<Response>.
+  async function expectRedirect(p: Promise<unknown>): Promise<void> {
+    const thrown = await p.then(
+      () => null,
+      (err) => err,
+    )
+    expect(thrown, "must throw").not.toBeNull()
+    const response = await Promise.resolve(thrown)
+    expect(response).toBeInstanceOf(Response)
+    expect((response as Response).status).toBeGreaterThanOrEqual(300)
+    expect((response as Response).status).toBeLessThan(400)
+  }
+
+  it("throws redirect when currentProfile is null (not logged in)", async () => {
+    const { getUserContext } = await import("../auth/auth.server")
+    vi.mocked(getUserContext).mockResolvedValueOnce({
+      currentUser: null,
+      currentProfile: null,
+    } as unknown as Awaited<ReturnType<typeof getUserContext>>)
+
+    await expectRedirect(
+      getAdminContext(new Request("http://localhost/admin"), {}),
+    )
+  })
+
+  it("throws redirect when currentProfile.is_admin is false (regular user)", async () => {
+    const { getUserContext } = await import("../auth/auth.server")
+    vi.mocked(getUserContext).mockResolvedValueOnce({
+      currentUser: { id: "u-1" },
+      currentProfile: { id: "p-1", is_admin: false },
+    } as unknown as Awaited<ReturnType<typeof getUserContext>>)
+
+    await expectRedirect(
+      getAdminContext(new Request("http://localhost/admin"), {}),
+    )
+  })
 })
 
 describe("getParticipantFullEventHistory", () => {

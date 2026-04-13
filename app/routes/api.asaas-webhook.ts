@@ -49,12 +49,22 @@ type TokenCheckResult =
   | { ok: true }
   | { ok: false; reason: "not_configured_in_production" | "invalid_token" }
 
+/**
+ * Constant-time compare. The length-mismatch branch deliberately performs a
+ * dummy compare against the SERVER-side token (`b`), not the attacker-controlled
+ * input (`a`). Comparing against the attacker buffer would make the dummy
+ * compare's runtime depend on the attacker's input length, leaking the
+ * server-side token length via observable timing differences.
+ *
+ * `timingSafeEqual` is implemented as a native binding so V8 cannot DCE the
+ * call; the discarded result is still observable side-effect-wise.
+ */
 function tokensEqual(a: string, b: string): boolean {
   const ba = Buffer.from(a)
   const bb = Buffer.from(b)
   if (ba.length !== bb.length) {
-    // Still do a dummy compare against itself to keep timing flat.
-    timingSafeEqual(ba, ba)
+    // Dummy compare against the server token, NOT the attacker input.
+    timingSafeEqual(bb, bb)
     return false
   }
   return timingSafeEqual(ba, bb)
@@ -116,10 +126,16 @@ const markAsExpired = composable((paymentRequestId: string) =>
     .executeTakeFirst(),
 )
 
-// Mark refunded based on external Asaas webhook (PIX refunds are async —
-// the local optimistic update in processRefund may not match). We only
-// mark refunded if the row was paid or partially_refunded; unpaid rows
-// shouldn't be flipped.
+// Mark refunded based on external Asaas webhook. Only flips rows that are
+// currently `paid`. Rows already in `partially_refunded` are intentionally
+// excluded — overwriting `refund_amount` with the full amount would mask
+// existing partial refund history, and we'd need the actual refund value
+// from the webhook payload to handle partials correctly. We don't yet
+// support partial refunds in the app, so this guard keeps us safe.
+//
+// Note: when partial refunds are added in the future, parse the actual refund
+// value from `body.payment.value` (or whichever field Asaas exposes) and
+// update `refund_amount` additively rather than overwriting.
 const markAsRefunded = composable((paymentRequestId: string, amount: number) =>
   kyselyDb
     .updateTable("payment_requests")
@@ -130,7 +146,7 @@ const markAsRefunded = composable((paymentRequestId: string, amount: number) =>
       updated_at: new Date().toISOString(),
     })
     .where("id", "=", paymentRequestId)
-    .where("status", "in", ["paid", "partially_refunded"])
+    .where("status", "=", "paid")
     .returningAll()
     .executeTakeFirst(),
 )

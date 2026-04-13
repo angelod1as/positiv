@@ -362,5 +362,27 @@ describe("api.asaas-webhook", () => {
       const json = await response.json()
       expect(json.skipped).toBe("already_terminal")
     })
+
+    it("does NOT flip partially_refunded to fully refunded (would lose history)", async () => {
+      // Webhook handler must not overwrite refund_amount on a partial
+      // refund row — the actual refund value from the webhook payload
+      // is needed and we don't parse it yet.
+      mockSelectResult.value = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        status: "partially_refunded",
+        amount: 220,
+        refund_amount: 50,
+      }
+      mockUpdateResult.value = undefined
+
+      const request = makeRequest(
+        { event: "PAYMENT_REFUNDED", payment: { id: "pay_1", value: 220 } },
+        "test-webhook-token",
+      )
+      const response = await action(actionArgs(request))
+      const json = await response.json()
+      expect(json.skipped).toBe("already_terminal")
+    })
   })
 })

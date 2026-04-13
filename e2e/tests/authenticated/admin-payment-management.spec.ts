@@ -170,13 +170,35 @@ test.describe("Admin Payment Management", () => {
       eventId,
     )
     await deletePaymentRequestsByParticipant(epId)
-    const asaasPaymentId = `pay_cancel_test_${Date.now()}`
+
+    // Create a real payment on the mock Asaas server so DELETE returns
+    // success. Previously the test seeded a fake asaas_payment_id; now that
+    // cancelActivePaymentRequest rolls back when Asaas refuses (e.g. 404
+    // for unknown payment), we need a real id.
+    const customerResp = await fetch("http://localhost:9999/api/v3/customers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", access_token: "mock" },
+      body: JSON.stringify({ name: "Test", cpfCnpj: "12345678900" }),
+    })
+    const customer = (await customerResp.json()) as { id: string }
+    const paymentResp = await fetch("http://localhost:9999/api/v3/payments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", access_token: "mock" },
+      body: JSON.stringify({
+        customer: customer.id,
+        billingType: "PIX",
+        value: 100,
+        dueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+      }),
+    })
+    const asaasPayment = (await paymentResp.json()) as { id: string }
+
     await seedPaymentRequest({
       eventParticipantId: epId,
       amount: 100,
       status: "pending",
       paymentMode: "automatic",
-      asaasPaymentId,
+      asaasPaymentId: asaasPayment.id,
     })
 
     await page.goto(participantUrl(2))
@@ -204,15 +226,16 @@ test.describe("Admin Payment Management", () => {
     assertPaymentRequest(pr)
     expect(pr.status).toBe("cancelled")
 
-    // The seeded asaas_payment_id wasn't created via the mock so the DELETE
-    // will 404. The app logs the failure but proceeds with local cancellation
-    // — verify at least one DELETE was attempted against the mock.
+    // Verify the app actually called DELETE on the Asaas mock for the
+    // specific payment id we created.
     const deleteCalls = (
       await getAsaasCallsByPath(/^\/api\/v3\/payments\/[^/]+$/)
-    ).filter((c) => c.method === "DELETE")
+    ).filter(
+      (c) => c.method === "DELETE" && c.path.endsWith(asaasPayment.id),
+    )
     expect(
       deleteCalls.length,
-      "app should attempt DELETE on Asaas when cancelling",
+      "app should DELETE the specific Asaas payment when cancelling",
     ).toBeGreaterThanOrEqual(1)
   })
 

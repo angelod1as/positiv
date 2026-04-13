@@ -288,7 +288,7 @@ describe("payment-request.server", () => {
       expect(mockKyselyDb.updateTable).toHaveBeenCalledWith("payment_requests")
     })
 
-    it("still cancels locally when Asaas cancel fails", async () => {
+    it("rolls back and throws when Asaas cancel fails (charge likely already paid)", async () => {
       const activeRequest = {
         id: "pr-active",
         event_participant_id: "ep-1",
@@ -297,16 +297,23 @@ describe("payment-request.server", () => {
         expires_at: new Date(Date.now() + 86400000).toISOString(),
       }
 
+      // First UPDATE: cancel succeeds locally → returns the cancelled row.
+      // Second UPDATE: rollback → returns the restored row.
       mockKyselyDb.selectFrom.mockReturnValue(chainable(activeRequest))
-      mockKyselyDb.updateTable.mockReturnValue(
-        chainable({ ...activeRequest, status: "cancelled" }),
+      mockKyselyDb.updateTable
+        .mockReturnValueOnce(chainable({ ...activeRequest, status: "cancelled" }))
+        .mockReturnValueOnce(chainable({ ...activeRequest })) // rollback
+      vi.mocked(cancelAsaasPayment).mockRejectedValueOnce(
+        new Error("Asaas API error"),
       )
-      vi.mocked(cancelAsaasPayment).mockRejectedValueOnce(new Error("Asaas API error"))
 
-      await cancelActivePaymentRequest("ep-1")
+      await expect(cancelActivePaymentRequest("ep-1")).rejects.toThrow(
+        "Asaas API error",
+      )
 
       expect(cancelAsaasPayment).toHaveBeenCalledWith("pay_old")
-      expect(mockKyselyDb.updateTable).toHaveBeenCalledWith("payment_requests")
+      // Two UPDATEs: the optimistic cancel, then the rollback
+      expect(mockKyselyDb.updateTable).toHaveBeenCalledTimes(2)
     })
 
     it("skips Asaas cancel when status changed concurrently (UPDATE no-op)", async () => {

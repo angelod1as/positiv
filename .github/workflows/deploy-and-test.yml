@@ -132,6 +132,14 @@ jobs:
           LISTMONK_API_URL: ${{ secrets.LISTMONK_API_URL }}
           LISTMONK_API_USERNAME: ${{ secrets.LISTMONK_API_USERNAME }}
           LISTMONK_API_PASSWORD: ${{ secrets.LISTMONK_API_PASSWORD }}
+          # Payment system: turn the feature on for E2E and point the Asaas
+          # client at the local mock server (started by global-setup.ts).
+          PAYMENT_SYSTEM_ONLINE: "true"
+          ASAAS_API_URL: "http://localhost:9999/api/v3"
+          ASAAS_API_KEY: "mock-api-key"
+          # Token must be set in CI so the E2E webhook auth test runs (it
+          # is conditionally skipped when the token is unset).
+          ASAAS_WEBHOOK_TOKEN: "ci-test-webhook-token"
 
       # Upload artifacts
       - uses: actions/upload-artifact@v4
