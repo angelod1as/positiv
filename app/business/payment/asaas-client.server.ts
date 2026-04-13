@@ -15,6 +15,11 @@ function getAsaasConfig() {
   return { apiKey: asaasApiKey, apiUrl: normalizedUrl }
 }
 
+// Note: this is a scaffold-grade fetch wrapper. AbortController/timeout, retry
+// on 429/5xx, and Zod response validation are deferred to the PR that
+// introduces production-grade error handling for the Asaas client (see
+// `docs/payment-system-architecture.md` §8, PR #3). Do NOT use this client
+// from a route until that PR lands.
 async function asaasFetch<T>(
   path: string,
   body: Record<string, unknown>,
@@ -25,6 +30,10 @@ async function asaasFetch<T>(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      // `access_token` (lowercase, underscore) is the header name the Asaas
+      // API expects — non-standard vs. typical `Authorization: Bearer`, but
+      // documented at https://docs.asaas.com (auth section). Don't change
+      // the casing without re-checking the Asaas docs.
       access_token: apiKey,
     },
     body: JSON.stringify(body),
@@ -63,7 +72,11 @@ export async function createAsaasPayment({
   value,
   dueDate,
   description,
-  installmentCount,
+  // Renamed via destructure to silence the "unused variable" check without
+  // changing the public API — callers still pass `{ installmentCount: N }`.
+  // The value is intentionally ignored in this scaffold; see the comment
+  // block below for why.
+  installmentCount: _installmentCount,
 }: {
   customerId: string
   billingType: "PIX" | "CREDIT_CARD"
@@ -82,7 +95,7 @@ export async function createAsaasPayment({
     ...(description !== undefined ? { description } : {}),
   }
 
-  // NOTE: installment payload deliberately disabled for now.
+  // Note: installment payload deliberately disabled for now.
   //
   // The naive `installmentValue = value / installmentCount` (rounded to
   // 2 decimals) creates totals that don't match `value` for many inputs
@@ -98,13 +111,12 @@ export async function createAsaasPayment({
   //
   // if (
   //   billingType === "CREDIT_CARD" &&
-  //   installmentCount &&
-  //   installmentCount > 1
+  //   _installmentCount &&
+  //   _installmentCount > 1
   // ) {
-  //   body.installmentCount = installmentCount
-  //   body.installmentValue = Number((value / installmentCount).toFixed(2))
+  //   body.installmentCount = _installmentCount
+  //   body.installmentValue = Number((value / _installmentCount).toFixed(2))
   // }
-  void installmentCount
 
   return asaasFetch("/payments", body)
 }
