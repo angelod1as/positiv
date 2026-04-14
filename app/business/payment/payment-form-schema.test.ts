@@ -76,4 +76,25 @@ describe("paymentFormSchema", () => {
     })
     expect(result.success).toBe(false)
   })
+
+  it("rejects PIX with installmentCount > 1 (PIX doesn't support installments)", () => {
+    const result = paymentFormSchema.safeParse({
+      billingType: "PIX",
+      installmentCount: 3,
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues.some((i) => i.path[0] === "installmentCount")).toBe(
+        true,
+      )
+    }
+  })
+
+  it("accepts PIX with installmentCount = 1 explicitly", () => {
+    const result = paymentFormSchema.safeParse({
+      billingType: "PIX",
+      installmentCount: 1,
+    })
+    expect(result.success).toBe(true)
+  })
 })
