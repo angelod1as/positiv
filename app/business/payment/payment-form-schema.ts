@@ -1,16 +1,9 @@
 import { type z } from "zod"
 import { zod } from "~/lib/helpers/zod"
 
-/**
- * Transitional payment form schema.
- *
- * @deprecated The final design replaces `billingType` + `installmentCount`
- *   with a single `paymentOption` enum (`["PIX", "CC_1", ..., "CC_<MAX_INSTALLMENTS>"]`)
- *   so the form mirrors the dropdown the user actually sees. See
- *   `docs/payment-system-architecture.md` §3.9 for the rationale and the
- *   constant-drift guard that the unified schema requires. A future PR
- *   will replace this export.
- */
+// Transitional: a later PR replaces `billingType` + `installmentCount` with
+// a single `paymentOption` enum (`["PIX", "CC_1", ..., "CC_<MAX_INSTALLMENTS>"]`)
+// — see `docs/payment-system-architecture.md` §3.9.
 export const paymentFormSchema = zod
   .object({
     billingType: zod.enum(["PIX", "CREDIT_CARD"], {

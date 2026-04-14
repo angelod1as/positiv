@@ -1,12 +1,8 @@
 import { env } from "~/env.server"
 import { logger } from "~/lib/logger/logger.server"
 
-/**
- * Upper bound on how many characters of an Asaas error body we persist
- * to the structured log. The raw body can carry PII (CPF, email, phone),
- * so we truncate defensively. Adjust with care if PR #3's hardening work
- * introduces a different redaction strategy.
- */
+// Defensive PII truncation on the Asaas error body we log (can carry CPF,
+// email, phone).
 const MAX_ERROR_BODY_LOG_CHARS = 500
 
 function getAsaasConfig() {
@@ -23,11 +19,10 @@ function getAsaasConfig() {
   return { apiKey: asaasApiKey, apiUrl: normalizedUrl }
 }
 
-// Note: this is a scaffold-grade fetch wrapper. AbortController/timeout, retry
-// on 429/5xx, and Zod response validation are deferred to the PR that
-// introduces production-grade error handling for the Asaas client (see
-// `docs/payment-system-architecture.md` §8, PR #3). Do NOT use this client
-// from a route until that PR lands.
+// Scaffold-grade fetch wrapper. AbortController/timeout, retry on 429/5xx,
+// and Zod response validation are deferred to PR #3 (see
+// `docs/payment-system-architecture.md` §8). Do NOT use this client from a
+// route until that PR lands.
 async function asaasFetch<T>(
   path: string,
   body: Record<string, unknown>,
@@ -39,19 +34,17 @@ async function asaasFetch<T>(
     headers: {
       "Content-Type": "application/json",
       // `access_token` (lowercase, underscore) is the header name the Asaas
-      // API expects — non-standard vs. typical `Authorization: Bearer`, but
-      // documented at https://docs.asaas.com (auth section). Don't change
-      // the casing without re-checking the Asaas docs.
+      // API expects — non-standard but documented at https://docs.asaas.com
+      // (auth section). Don't change the casing without re-checking.
       access_token: apiKey,
     },
     body: JSON.stringify(body),
   })
 
   if (!response.ok) {
-    // Asaas error bodies can carry PII (CPF, email, phone). Don't put the
-    // raw body in the thrown Error.message — handleApiError() in this
-    // codebase serializes message into JSON responses and logs, which would
-    // leak that data outward. Log the body server-side only.
+    // Asaas error bodies can carry PII. Don't interpolate the raw body into
+    // `Error.message` — the app's `handleApiError` serializes message into
+    // outward-facing JSON responses. Log the body server-side only.
     const errorBody = await response.text().catch(() => "<unreadable>")
     logger.error("Asaas API request failed", {
       path,
@@ -74,6 +67,8 @@ export async function createAsaasCustomer({
   return asaasFetch("/customers", { name, cpfCnpj })
 }
 
+// `invoiceUrl` is nullable because Asaas surfaces the payable artifact
+// differently per billing type (PIX uses `pixQrCodeUrl` on another endpoint).
 export async function createAsaasPayment({
   customerId,
   billingType,
@@ -89,20 +84,8 @@ export async function createAsaasPayment({
   description?: string
   installmentCount?: number
 }): Promise<{ id: string; invoiceUrl: string | null }> {
-  // Note: `invoiceUrl` is typed as nullable because Asaas can return `null`
-  // for some billing types (PIX surfaces the payable artifact via
-  // `pixQrCodeUrl` on a separate endpoint rather than a clickable
-  // invoice). Widening now prevents a breaking signature change when
-  // consumers get wired up in later PRs.
-  // Installments are not implemented in this scaffold. The correct design
-  // computes per-installment values in integer cents (distributing the
-  // remainder across installments so the total matches `value` exactly)
-  // and lives in `payment-pricing.server.ts` — see
-  // `docs/payment-system-architecture.md` §8 PR #6.
-  //
-  // Fail loudly rather than silently creating a single-payment charge when
-  // a caller genuinely wants installments: better a hard error now than a
-  // miscarried payment in production.
+  // Installments deferred to PR #6 (see payment-pricing.server.ts). Fail
+  // loudly rather than silently creating a single-payment charge.
   if (installmentCount !== undefined && installmentCount > 1) {
     throw new Error(
       "createAsaasPayment: installmentCount > 1 is not yet implemented. " +
@@ -115,15 +98,9 @@ export async function createAsaasPayment({
     billingType,
     value,
     dueDate,
-    // Only include description when actually provided (avoids `undefined`
-    // in the JSON-stringified body — explicit intent for payment payloads).
     ...(description !== undefined ? { description } : {}),
-    // Note: when PR #6 enables installments > 1, the implementation will
-    // add `installmentCount` (and likely `installmentValue` or `totalValue`
-    // — check Asaas docs for the current required pairing) to this body.
-    // The throw above intentionally blocks that path in the scaffold, so
-    // the body construction and the throw must be kept in sync when PR #6
-    // lands.
+    // PR #6 will add `installmentCount` (and `installmentValue`/`totalValue`
+    // per current Asaas docs) here — the throw above must be lifted in sync.
   }
 
   return asaasFetch("/payments", body)
