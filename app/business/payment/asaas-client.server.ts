@@ -105,6 +105,12 @@ export async function createAsaasPayment({
     // Only include description when actually provided (avoids `undefined`
     // in the JSON-stringified body — explicit intent for payment payloads).
     ...(description !== undefined ? { description } : {}),
+    // Note: when PR #6 enables installments > 1, the implementation will
+    // add `installmentCount` (and likely `installmentValue` or `totalValue`
+    // — check Asaas docs for the current required pairing) to this body.
+    // The throw above intentionally blocks that path in the scaffold, so
+    // the body construction and the throw must be kept in sync when PR #6
+    // lands.
   }
 
   return asaasFetch("/payments", body)
