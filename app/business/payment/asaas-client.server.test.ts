@@ -14,6 +14,7 @@ vi.mock("~/lib/logger/logger.server", () => ({
 }))
 
 import { createAsaasCustomer, createAsaasPayment } from "./asaas-client.server"
+import { logger } from "~/lib/logger/logger.server"
 
 const okResponse = (body: unknown) =>
   new Response(JSON.stringify(body), { status: 200 })
@@ -135,6 +136,87 @@ describe("asaas-client scaffold guard logic", () => {
       ).resolves.toBeDefined()
 
       expect(fetchSpy).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe("error path — PII-safe error handling", () => {
+    it("does NOT include the Asaas error body in the thrown error message", async () => {
+      // Asaas error bodies can carry PII (CPF, email, phone). The thrown
+      // Error.message is serialized outward by the app's handleApiError,
+      // so PII must never land in it.
+      const sensitivePII =
+        '{"errors":[{"code":"invalid_cpf","description":"CPF 12345678900 for user foo@example.com is invalid"}]}'
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(sensitivePII, { status: 422 }),
+      )
+
+      let thrown: unknown
+      try {
+        await createAsaasCustomer({ name: "x", cpfCnpj: "12345678900" })
+      } catch (e) {
+        thrown = e
+      }
+
+      expect(thrown).toBeInstanceOf(Error)
+      const message = (thrown as Error).message
+      expect(message).toBe("Asaas API error (422)")
+      // Defence-in-depth: no substring of the PII body in the message
+      expect(message).not.toContain("12345678900")
+      expect(message).not.toContain("foo@example.com")
+      expect(message).not.toContain("invalid_cpf")
+    })
+
+    it("logs the truncated error body server-side with status + path", async () => {
+      const errorSpy = vi.mocked(logger.error)
+      const body = '{"errors":[{"code":"x","description":"boom"}]}'
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(body, { status: 500 }),
+      )
+
+      await expect(
+        createAsaasCustomer({ name: "x", cpfCnpj: "123" }),
+      ).rejects.toThrow()
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        "Asaas API request failed",
+        expect.objectContaining({
+          path: "/customers",
+          status: 500,
+          body: expect.any(String),
+        }),
+      )
+    })
+
+    it("truncates the logged body when the Asaas response is long", async () => {
+      const longBody = "x".repeat(5000)
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(longBody, { status: 500 }),
+      )
+
+      await expect(
+        createAsaasCustomer({ name: "x", cpfCnpj: "123" }),
+      ).rejects.toThrow()
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "Asaas API request failed",
+        expect.objectContaining({
+          body: expect.stringMatching(/^x{1,500}$/),
+        }),
+      )
+    })
+
+    it("handles an unreadable response body without crashing", async () => {
+      // `response.text()` can reject if the body stream is already consumed
+      // or otherwise unreadable. The fetch wrapper should still throw a
+      // sanitized Error and log a placeholder rather than surfacing the
+      // text() rejection.
+      const response = new Response("ignored", { status: 500 })
+      vi.spyOn(response, "text").mockRejectedValue(new Error("stream dead"))
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(response)
+
+      await expect(
+        createAsaasCustomer({ name: "x", cpfCnpj: "123" }),
+      ).rejects.toThrow("Asaas API error (500)")
     })
   })
 })

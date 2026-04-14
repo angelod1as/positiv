@@ -1,6 +1,14 @@
 import { env } from "~/env.server"
 import { logger } from "~/lib/logger/logger.server"
 
+/**
+ * Upper bound on how many characters of an Asaas error body we persist
+ * to the structured log. The raw body can carry PII (CPF, email, phone),
+ * so we truncate defensively. Adjust with care if PR #3's hardening work
+ * introduces a different redaction strategy.
+ */
+const MAX_ERROR_BODY_LOG_CHARS = 500
+
 function getAsaasConfig() {
   const { asaasApiKey, asaasApiUrl } = env()
   if (!asaasApiKey || !asaasApiUrl) {
@@ -48,7 +56,7 @@ async function asaasFetch<T>(
     logger.error("Asaas API request failed", {
       path,
       status: response.status,
-      body: errorBody.slice(0, 500),
+      body: errorBody.slice(0, MAX_ERROR_BODY_LOG_CHARS),
     })
     throw new Error(`Asaas API error (${response.status})`)
   }
@@ -80,7 +88,12 @@ export async function createAsaasPayment({
   dueDate: string
   description?: string
   installmentCount?: number
-}): Promise<{ id: string; invoiceUrl: string }> {
+}): Promise<{ id: string; invoiceUrl: string | null }> {
+  // Note: `invoiceUrl` is typed as nullable because Asaas can return `null`
+  // for some billing types (PIX surfaces the payable artifact via
+  // `pixQrCodeUrl` on a separate endpoint rather than a clickable
+  // invoice). Widening now prevents a breaking signature change when
+  // consumers get wired up in later PRs.
   // Installments are not implemented in this scaffold. The correct design
   // computes per-installment values in integer cents (distributing the
   // remainder across installments so the total matches `value` exactly)
