@@ -302,16 +302,11 @@ export async function createTestAdminUser(
 export async function createTestPaymentRequest(
   tracker: TestDataTracker,
   kysely: Kysely<Database>,
-  data: {
-    event_participant_id: string
-    amount: number
-    expires_at: string
-    [key: string]: unknown
-  }
+  data: Insertable<DatabaseTypes["public"]["Tables"]["payment_requests"]["Row"]>
 ): Promise<Selectable<DatabaseTypes["public"]["Tables"]["payment_requests"]["Row"]>> {
   const paymentRequest = await kysely
     .insertInto("payment_requests")
-    .values(data as Insertable<DatabaseTypes["public"]["Tables"]["payment_requests"]["Row"]>)
+    .values(data)
     .returningAll()
     .executeTakeFirstOrThrow()
 
