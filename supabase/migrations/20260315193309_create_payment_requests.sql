@@ -16,8 +16,10 @@ CREATE TABLE IF NOT EXISTS "public"."payment_requests" (
     "asaas_customer_id" text,
     "asaas_payment_id" text,
     "payment_mode" text NOT NULL DEFAULT 'manual'
+        CONSTRAINT payment_requests_payment_mode_valid
         CHECK ("payment_mode" IN ('automatic', 'manual')),
     "payment_method" text
+        CONSTRAINT payment_requests_payment_method_valid
         CHECK ("payment_method" IS NULL OR "payment_method" IN ('PIX', 'CREDIT_CARD')),
     -- NULL for manual payments where installments don't apply; set to a
     -- positive integer once a credit-card installment plan is chosen.
@@ -43,7 +45,12 @@ CREATE TABLE IF NOT EXISTS "public"."payment_requests" (
         CHECK (("refund_amount" IS NULL) = ("refunded_at" IS NULL)),
     -- A refund can never exceed the original charge.
     CONSTRAINT payment_requests_refund_amount_bounded
-        CHECK ("refund_amount" IS NULL OR "refund_amount" <= "amount")
+        CHECK ("refund_amount" IS NULL OR "refund_amount" <= "amount"),
+    -- Expiration must be in the future relative to creation. A stale
+    -- deadline at insert time is almost always a bug in the calling
+    -- code (e.g. timezone mishandling, off-by-one day).
+    CONSTRAINT payment_requests_expires_after_created
+        CHECK ("expires_at" > "created_at")
 );
 
 ALTER TABLE "public"."payment_requests" ENABLE ROW LEVEL SECURITY;
@@ -51,10 +58,14 @@ ALTER TABLE "public"."payment_requests" ENABLE ROW LEVEL SECURITY;
 CREATE INDEX IF NOT EXISTS idx_payment_requests_event_participant_id
     ON "public"."payment_requests" ("event_participant_id");
 
--- Partial index: `asaas_payment_id` is NULL for every manual payment row,
--- so indexing the whole column wastes space. The webhook handler only
--- ever looks up by a non-null value.
-CREATE INDEX IF NOT EXISTS idx_payment_requests_asaas_payment_id
+-- Partial UNIQUE index: `asaas_payment_id` is NULL for every manual payment
+-- row (so indexing the whole column would waste space), and it must be
+-- unique when set — double webhook delivery or a duplicate payment-
+-- creation bug should NEVER produce two rows pointing at the same Asaas
+-- charge. Enforcing this at the DB closes a race condition the webhook
+-- handler would otherwise have to detect explicitly. Cheap to add now;
+-- expensive to retrofit after real data exists.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_payment_requests_asaas_payment_id
     ON "public"."payment_requests" ("asaas_payment_id")
     WHERE "asaas_payment_id" IS NOT NULL;
 
