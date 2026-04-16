@@ -9,19 +9,13 @@ import {
 } from "./payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
 
-/**
- * Called from admin action handlers when application_status changes.
- * Only triggers payment when status is "sent_payment_data".
- * Returns { triggered: false } for other statuses,
- * or { triggered: true, success, errors } when payment was attempted.
- */
 export async function handlePaymentStatusChange(fields: {
   applicationStatus: string | undefined
   eventParticipantId: string
   eventId: string
   profileId: string
   customAmount?: number
-  paymentMode?: string
+  paymentMode?: "automatic" | "manual"
 }) {
   if (fields.applicationStatus !== "sent_payment_data") {
     return { triggered: false as const }
@@ -52,7 +46,7 @@ export const resolvePaymentRequest = composable(
     eventId: string,
     profileId: string,
     customAmount?: number,
-    paymentMode?: string,
+    paymentMode?: "automatic" | "manual",
   ) => {
     const isPaymentSystemOnline = paymentMode
       ? paymentMode === "automatic"
@@ -98,14 +92,22 @@ export const resolvePaymentRequest = composable(
     const { appUrl } = env()
     const paymentUrl = `${appUrl}${paths.payment.PAYMENT(eventParticipantId)}`
 
-    await sendPaymentLinkEmail({
-      participantEmail: profile.email,
-      participantName: profile.full_name ?? "Participante",
-      eventName: event.title ?? "Evento Positiv",
-      ticketPrice: Number(paymentRequest.amount),
-      paymentUrl,
-      expiresAt: new Date(paymentRequest.expires_at),
-    })
+    try {
+      await sendPaymentLinkEmail({
+        participantEmail: profile.email,
+        participantName: profile.full_name ?? "Participante",
+        eventName: event.title ?? "Evento Positiv",
+        ticketPrice: Number(paymentRequest.amount),
+        paymentUrl,
+        expiresAt: new Date(paymentRequest.expires_at),
+      })
+    } catch (emailError) {
+      logger.error("Failed to send payment link email (non-fatal)", {
+        eventParticipantId,
+        paymentRequestId: paymentRequest.id,
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+      })
+    }
 
     logger.info("Payment request resolved", {
       eventParticipantId,

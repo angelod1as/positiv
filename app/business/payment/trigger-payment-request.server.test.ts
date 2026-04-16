@@ -287,6 +287,9 @@ describe("resolvePaymentRequest", () => {
 
     expect(result.triggered).toBe(true)
     if (result.triggered) expect(result.success).toBe(true)
+    expect(createPaymentRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ paymentMode: "manual" }),
+    )
     expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
   })
 })
