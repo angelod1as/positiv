@@ -92,8 +92,8 @@ export async function createAsaasCustomer({
   phone?: string
 }): Promise<{ id: string }> {
   const body: Record<string, unknown> = { name, cpfCnpj }
-  if (email) body.email = email
-  if (phone) body.mobilePhone = phone
+  if (email !== undefined) body.email = email
+  if (phone !== undefined) body.mobilePhone = phone
   return asaasFetch("/customers", body, asaasCustomerResponseSchema)
 }
 
@@ -127,6 +127,10 @@ export async function createAsaasPayment({
     installmentCount &&
     installmentCount > 1
   ) {
+    // NOTE: Asaas also requires installmentValue or totalValue for
+    // installments > 1. PR #6 (pricing engine) adds these — see
+    // docs/payment-system-architecture.md §4.5. Without them, real
+    // Asaas will return 400 (mock accepts it).
     body.installmentCount = installmentCount
   }
 

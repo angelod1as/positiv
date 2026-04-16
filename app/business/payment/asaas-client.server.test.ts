@@ -401,6 +401,10 @@ describe("Asaas client", () => {
   })
 
   describe("timeout", () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
     it("aborts the request after 30 seconds", async () => {
       vi.useFakeTimers()
 
@@ -426,8 +430,6 @@ describe("Asaas client", () => {
       vi.advanceTimersByTime(30_000)
 
       await expect(customerPromise).rejects.toThrow()
-
-      vi.useRealTimers()
     })
   })
 })
