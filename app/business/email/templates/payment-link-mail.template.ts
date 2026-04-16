@@ -54,7 +54,7 @@ export function paymentLinkMailTemplate({
   try {
     parsedUrl = new URL(paymentUrl)
   } catch {
-    throw new Error(`Invalid payment URL: ${paymentUrl}`)
+    throw new Error("Invalid payment URL: failed to parse")
   }
   if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
     throw new Error(`Invalid payment URL protocol: ${parsedUrl.protocol}`)
