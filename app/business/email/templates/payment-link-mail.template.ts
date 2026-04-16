@@ -1,4 +1,5 @@
 import { POSITIV_URL } from "~/lib/constants/constants"
+import { formatCurrency } from "~/lib/helpers/chart-utils"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import type { PaymentOption } from "~/business/email/payment-email.types"
 
@@ -10,18 +11,12 @@ type PaymentLinkMailParams = {
   expiresAt: Date
 }
 
-function formatCurrency(reais: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(reais)
-}
-
 function formatDate(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    timeZone: "America/Sao_Paulo",
   }).format(date)
 }
 
@@ -55,13 +50,20 @@ export function paymentLinkMailTemplate({
   paymentUrl,
   expiresAt,
 }: PaymentLinkMailParams): string {
+  let parsedUrl: URL
+  try {
+    parsedUrl = new URL(paymentUrl)
+  } catch {
+    throw new Error(`Invalid payment URL: ${paymentUrl}`)
+  }
+  if (parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") {
+    throw new Error(`Invalid payment URL protocol: ${parsedUrl.protocol}`)
+  }
+  const safePaymentUrl = parsedUrl.href
+
   const safeName = sanitizeHtml(participantName)
   const safeEventName = sanitizeHtml(eventName)
   const formattedExpiry = formatDate(expiresAt)
-
-  if (!paymentUrl.startsWith("https://") && !paymentUrl.startsWith("http://")) {
-    throw new Error(`Invalid payment URL: must start with https:// or http://`)
-  }
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -111,7 +113,7 @@ export function paymentLinkMailTemplate({
               </table>
 
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${paymentUrl}" style="display: inline-block; background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; box-shadow: 0 4px 12px rgba(191, 3, 195, 0.3);">
+                <a href="${safePaymentUrl}" style="display: inline-block; background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; box-shadow: 0 4px 12px rgba(191, 3, 195, 0.3);">
                   Realizar Pagamento
                 </a>
               </div>

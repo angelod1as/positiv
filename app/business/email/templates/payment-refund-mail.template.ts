@@ -1,17 +1,11 @@
 import { POSITIV_URL } from "~/lib/constants/constants"
+import { formatCurrency } from "~/lib/helpers/chart-utils"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 
 type PaymentRefundMailParams = {
   participantName: string
   eventName: string
   refundAmount: number
-}
-
-function formatCurrency(reais: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(reais)
 }
 
 export function paymentRefundMailTemplate({
