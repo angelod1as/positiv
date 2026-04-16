@@ -1,5 +1,5 @@
 import { htmlToText } from "html-to-text"
-import type { PaymentOption } from "~/business/email/payment-email.types"
+import type { PaymentOption } from "~/business/payment/payment-pricing.server"
 import { paymentLinkMailTemplate } from "./templates/payment-link-mail.template"
 
 type FormatPaymentLinkMailParams = {

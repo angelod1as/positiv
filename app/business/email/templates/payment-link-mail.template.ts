@@ -1,7 +1,7 @@
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { formatCurrency } from "~/lib/helpers/chart-utils"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
-import type { PaymentOption } from "~/business/email/payment-email.types"
+import type { PaymentOption } from "~/business/payment/payment-pricing.server"
 
 type PaymentLinkMailParams = {
   participantName: string
