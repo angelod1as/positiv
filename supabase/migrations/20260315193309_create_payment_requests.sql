@@ -6,21 +6,29 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN null;
 END $$;
 
+DO $$ BEGIN
+  CREATE TYPE "public"."payment_mode" AS ENUM ('automatic', 'manual');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "public"."payment_method" AS ENUM ('PIX', 'CREDIT_CARD');
+EXCEPTION WHEN duplicate_object THEN null;
+END $$;
+
 CREATE TABLE IF NOT EXISTS "public"."payment_requests" (
     "id" uuid DEFAULT gen_random_uuid() NOT NULL PRIMARY KEY,
-    -- Note: ON DELETE CASCADE currently wipes payment audit trail when an
-    -- event_participant is deleted (LGPD / Receita Federal risk). Tracked
-    -- as a caveat in `docs/payment-system-architecture.md` §5.1; the fix
-    -- requires a soft-delete policy decision before changing to RESTRICT.
-    "event_participant_id" uuid NOT NULL REFERENCES "public"."event_participants" ("id") ON DELETE CASCADE,
+    -- ON DELETE RESTRICT preserves the payment audit trail (LGPD / Receita
+    -- Federal): deleting an event_participant with associated payment
+    -- history is blocked. Callers that need to remove a participant must
+    -- first explicitly handle any payment records (soft-delete / archive),
+    -- forcing the policy decision at the call site instead of silently
+    -- cascading.
+    "event_participant_id" uuid NOT NULL REFERENCES "public"."event_participants" ("id") ON DELETE RESTRICT,
     "asaas_customer_id" text,
     "asaas_payment_id" text,
-    "payment_mode" text NOT NULL DEFAULT 'manual'
-        CONSTRAINT payment_requests_payment_mode_valid
-        CHECK ("payment_mode" IN ('automatic', 'manual')),
-    "payment_method" text
-        CONSTRAINT payment_requests_payment_method_valid
-        CHECK ("payment_method" IS NULL OR "payment_method" IN ('PIX', 'CREDIT_CARD')),
+    "payment_mode" "public"."payment_mode" NOT NULL DEFAULT 'manual',
+    "payment_method" "public"."payment_method",
     -- NULL for manual payments where installments don't apply; set to a
     -- positive integer once a credit-card installment plan is chosen.
     "installment_count" integer
@@ -43,9 +51,11 @@ CREATE TABLE IF NOT EXISTS "public"."payment_requests" (
     -- accounting and admin UI.
     CONSTRAINT payment_requests_refund_consistency
         CHECK (("refund_amount" IS NULL) = ("refunded_at" IS NULL)),
-    -- A refund can never exceed the original charge.
+    -- A refund must be strictly positive and can never exceed the original
+    -- charge. A zero refund would be meaningless and indicate a bug in the
+    -- caller (the NULL column already encodes "no refund").
     CONSTRAINT payment_requests_refund_amount_bounded
-        CHECK ("refund_amount" IS NULL OR "refund_amount" <= "amount"),
+        CHECK ("refund_amount" IS NULL OR ("refund_amount" > 0 AND "refund_amount" <= "amount")),
     -- Expiration must be in the future relative to creation. A stale
     -- deadline at insert time is almost always a bug in the calling
     -- code (e.g. timezone mishandling, off-by-one day).

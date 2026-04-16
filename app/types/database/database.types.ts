@@ -458,8 +458,8 @@ export type Database = {
           installment_count: number | null
           invoice_url: string | null
           paid_at: string | null
-          payment_method: string | null
-          payment_mode: string
+          payment_method: Database["public"]["Enums"]["payment_method"] | null
+          payment_mode: Database["public"]["Enums"]["payment_mode"]
           refund_amount: number | null
           refunded_at: string | null
           status: Database["public"]["Enums"]["payment_request_status"]
@@ -476,8 +476,8 @@ export type Database = {
           installment_count?: number | null
           invoice_url?: string | null
           paid_at?: string | null
-          payment_method?: string | null
-          payment_mode?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_mode?: Database["public"]["Enums"]["payment_mode"]
           refund_amount?: number | null
           refunded_at?: string | null
           status?: Database["public"]["Enums"]["payment_request_status"]
@@ -494,8 +494,8 @@ export type Database = {
           installment_count?: number | null
           invoice_url?: string | null
           paid_at?: string | null
-          payment_method?: string | null
-          payment_mode?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"] | null
+          payment_mode?: Database["public"]["Enums"]["payment_mode"]
           refund_amount?: number | null
           refunded_at?: string | null
           status?: Database["public"]["Enums"]["payment_request_status"]
@@ -686,6 +686,8 @@ export type Database = {
         | "Registration Open"
       event_type_enum: "regular" | "bdsm"
       feedback_participation_enum: "never" | "once" | "more_than_once"
+      payment_method: "PIX" | "CREDIT_CARD"
+      payment_mode: "automatic" | "manual"
       payment_request_status:
         | "pending"
         | "awaiting_payment"
@@ -857,6 +859,8 @@ export const Constants = {
       ],
       event_type_enum: ["regular", "bdsm"],
       feedback_participation_enum: ["never", "once", "more_than_once"],
+      payment_method: ["PIX", "CREDIT_CARD"],
+      payment_mode: ["automatic", "manual"],
       payment_request_status: [
         "pending",
         "awaiting_payment",
