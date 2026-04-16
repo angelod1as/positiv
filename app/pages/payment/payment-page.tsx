@@ -48,35 +48,24 @@ async function getEventParticipantWithAuth(request: Request, params: Route.Loade
     throw await redirectWithError(paths.root.HOME, "Link de pagamento inválido.")
   }
 
-  const profile = await kyselyDb
-    .selectFrom("profiles")
-    .select(["id"])
-    .where("user_id", "=", currentUser.id)
-    .executeTakeFirst()
-
-  if (!profile) {
-    throw await redirectWithError(paths.root.HOME, "Perfil não encontrado.")
-  }
-
   const eventParticipant = await kyselyDb
     .selectFrom("event_participants")
     .innerJoin("events", "events.id", "event_participants.event_id")
+    .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
     .select([
       "event_participants.id",
-      "event_participants.profile_id",
       "event_participants.event_id",
       "events.title as event_title",
-      "events.ticket_price",
     ])
     .where("event_participants.id", "=", eventParticipantId)
+    .where("profiles.user_id", "=", currentUser.id)
     .executeTakeFirst()
 
   if (!eventParticipant) {
-    throw await redirectWithError(paths.root.HOME, "Inscrição não encontrada.")
-  }
-
-  if (eventParticipant.profile_id !== profile.id) {
-    throw await redirectWithError(paths.root.HOME, "Você não tem permissão para acessar esta página de pagamento.")
+    throw await redirectWithError(
+      paths.root.HOME,
+      "Inscrição não encontrada ou sem permissão.",
+    )
   }
 
   return { eventParticipant, eventParticipantId }
@@ -138,10 +127,10 @@ export async function action({ request, params }: Route.ActionArgs) {
     request,
     schema: paymentFormSchema,
     mutation,
-    transformResult: (result) => {
+    transformResult: async (result) => {
       if (result.success) {
         if (!result.data.invoiceUrl) {
-          throw redirectWithError(
+          throw await redirectWithError(
             paths.payment.PAYMENT(params.eventParticipantId),
             "Não foi possível gerar o link de pagamento. Tente novamente.",
           )
