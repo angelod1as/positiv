@@ -21,6 +21,10 @@ export default [
   route("/robots.txt", "routes/robots[.txt].ts"),
   route("/sitemap.xml", "routes/sitemap[.xml].ts"),
 
+  // PAYMENT
+  route("/api/asaas-webhook", "routes/api.asaas-webhook.ts"),
+  route("/pagamento/:eventParticipantId", "pages/payment/payment-page.tsx"),
+
   // PUBLIC
   index("pages/homepage/homepage.tsx"),
   route("/auth/confirm", "pages/auth/confirm.tsx"),
