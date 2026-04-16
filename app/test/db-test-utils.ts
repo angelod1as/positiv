@@ -299,14 +299,14 @@ export async function createTestAdminUser(
   return { userId, profile }
 }
 
-type PaymentRequestInsert = Insertable<DatabaseTypes["public"]["Tables"]["payment_requests"]["Row"]>
+type PaymentRequestInsert = DatabaseTypes["public"]["Tables"]["payment_requests"]["Insert"]
 
 export async function createTestPaymentRequest(
   tracker: TestDataTracker,
   kysely: Kysely<Database>,
-  data: Omit<PaymentRequestInsert, "expires_at"> & { expires_at?: PaymentRequestInsert["expires_at"] }
+  data: Omit<PaymentRequestInsert, "expires_at"> & { expires_at?: string }
 ): Promise<Selectable<DatabaseTypes["public"]["Tables"]["payment_requests"]["Row"]>> {
-  const values: PaymentRequestInsert = {
+  const values = {
     expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     ...data,
   }
