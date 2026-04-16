@@ -226,34 +226,65 @@ export async function confirmPaymentChoice({
         : undefined,
   })
 
-  await kyselyDb
-    .updateTable("payment_requests")
-    .set({
-      asaas_customer_id: customer.id,
-      asaas_payment_id: payment.id,
-      payment_mode: "automatic",
-      payment_method: billingType,
-      installment_count: installments,
-      amount: option.totalReais,
-      invoice_url: payment.invoiceUrl,
-      status: "awaiting_payment",
-      updated_at: new Date().toISOString(),
+  try {
+    await kyselyDb
+      .updateTable("payment_requests")
+      .set({
+        asaas_customer_id: customer.id,
+        asaas_payment_id: payment.id,
+        payment_mode: "automatic",
+        payment_method: billingType,
+        installment_count: installments,
+        amount: option.totalReais,
+        invoice_url: payment.invoiceUrl,
+        status: "awaiting_payment",
+        updated_at: new Date().toISOString(),
+      })
+      .where("id", "=", paymentRequest.id)
+      .execute()
+  } catch (dbError) {
+    // Asaas customer + charge were created but our DB doesn't know about
+    // them. Cancel the charge so we don't leave an orphaned Asaas payment
+    // that the participant could pay with no local record.
+    logger.error("DB update failed after Asaas charge creation — cancelling orphaned charge", {
+      paymentRequestId: paymentRequest.id,
+      asaasPaymentId: payment.id,
+      error: dbError instanceof Error ? dbError.message : String(dbError),
     })
-    .where("id", "=", paymentRequest.id)
-    .execute()
+    try {
+      await cancelAsaasPayment(payment.id)
+    } catch (cancelError) {
+      logger.error("MANUAL RECONCILIATION REQUIRED: failed to cancel orphaned Asaas charge", {
+        paymentRequestId: paymentRequest.id,
+        asaasPaymentId: payment.id,
+        cancelError: cancelError instanceof Error ? cancelError.message : String(cancelError),
+      })
+    }
+    throw dbError
+  }
 
   return { invoiceUrl: payment.invoiceUrl }
 }
 
 export async function markPaymentAsExpired(paymentRequestId: string) {
-  await kyselyDb
+  const result = await kyselyDb
     .updateTable("payment_requests")
     .set({
-      status: "expired",
+      status: "expired" as const,
       updated_at: new Date().toISOString(),
     })
     .where("id", "=", paymentRequestId)
-    .execute()
+    .where("status", "in", ["pending", "awaiting_payment"])
+    .returningAll()
+    .executeTakeFirst()
+
+  if (!result) {
+    logger.info("markPaymentAsExpired: row is no longer in a non-terminal state", {
+      paymentRequestId,
+    })
+  }
+
+  return result
 }
 
 export async function markManualPaymentPaid(eventParticipantId: string) {

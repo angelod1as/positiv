@@ -38,6 +38,7 @@ import {
   confirmPaymentChoice,
   markPaymentAsExpired,
   markManualPaymentRefunded,
+  updatePaymentRequestAmount,
 } from "./payment-request.server"
 import { createAsaasCustomer, createAsaasPayment, cancelAsaasPayment } from "./asaas-client.server"
 import { sendPaymentRefundEmail } from "./send-payment-refund-email.server"
@@ -389,6 +390,43 @@ describe("payment-request.server", () => {
 
       const result = await markManualPaymentRefunded("ep-1")
       expect(result).toEqual(refundedRequest)
+    })
+  })
+
+  describe("updatePaymentRequestAmount", () => {
+    it("updates amount for pending manual request", async () => {
+      const updatedRequest = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        amount: 300,
+        status: "pending",
+        payment_mode: "manual",
+      }
+
+      mockKyselyDb.updateTable.mockReturnValue(chainable(updatedRequest))
+
+      const result = await updatePaymentRequestAmount("ep-1", 300)
+      expect(result).toEqual(updatedRequest)
+    })
+
+    it("throws when amount is zero", async () => {
+      await expect(updatePaymentRequestAmount("ep-1", 0)).rejects.toThrow(
+        "Amount must be greater than zero",
+      )
+    })
+
+    it("throws when amount is negative", async () => {
+      await expect(updatePaymentRequestAmount("ep-1", -50)).rejects.toThrow(
+        "Amount must be greater than zero",
+      )
+    })
+
+    it("throws when no pending manual request exists", async () => {
+      mockKyselyDb.updateTable.mockReturnValue(chainable(undefined))
+
+      await expect(updatePaymentRequestAmount("ep-1", 300)).rejects.toThrow(
+        "No pending manual payment request found",
+      )
     })
   })
 })
