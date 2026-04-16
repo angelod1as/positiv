@@ -19,7 +19,7 @@ const ASAAS_FEE_CONFIG: Record<string, InstallmentFeeConfig> = {
 
 function getFeeConfig(installments: number): InstallmentFeeConfig {
   if (installments === 1) return ASAAS_FEE_CONFIG["1"]
-  if (installments <= 6) return ASAAS_FEE_CONFIG["2-6"]
+  if (installments >= 2 && installments <= 6) return ASAAS_FEE_CONFIG["2-6"]
   throw new Error(`Unsupported installment count: ${installments}`)
 }
 
@@ -68,6 +68,10 @@ export function buildPaymentOptions(ticketPrice: number): PaymentOption[] {
 
   for (let i = 1; i <= MAX_INSTALLMENTS; i++) {
     const perInstallmentReais = calculateInstallmentValue(ticketPrice, i)
+    // totalReais is derived from the rounded-up per-installment value × count,
+    // NOT directly from calculateChargeAmount. This can be 1-2 centavos higher
+    // than the Asaas charge — intentional, so the displayed total matches
+    // what the participant actually pays across installments.
     const totalReais =
       Math.round(perInstallmentReais * i * 100) / 100
 
