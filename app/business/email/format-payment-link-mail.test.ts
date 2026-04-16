@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest"
 import { formatPaymentLinkMail } from "./format-payment-link-mail"
-import type { PaymentOption } from "~/business/email/payment-email.types"
+import type { PaymentOption } from "~/business/payment/payment-pricing.server"
 
 const testPaymentOptions: PaymentOption[] = [
   { value: "PIX", billingType: "PIX", installments: 1, totalReais: 220, perInstallmentReais: 220 },
