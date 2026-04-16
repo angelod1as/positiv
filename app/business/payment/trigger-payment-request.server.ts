@@ -63,6 +63,29 @@ export const resolvePaymentRequest = composable(
       throw new Error(`Event ${eventId} has no ticket_price configured and no custom amount provided`)
     }
 
+    // Online mode: validate profile + CPF BEFORE any DB mutations. A missing
+    // CPF would otherwise throw after we've cancelled the old request and
+    // created a new one, leaving the participant with an orphaned pending row.
+    let profile:
+      | {
+          id: string
+          email: string
+          full_name: string | null
+          cpf: string | null
+        }
+      | undefined
+    if (isPaymentSystemOnline) {
+      profile = await kyselyDb
+        .selectFrom("profiles")
+        .select(["id", "email", "full_name", "cpf"])
+        .where("id", "=", profileId)
+        .executeTakeFirstOrThrow()
+
+      if (!profile.cpf) {
+        throw new Error(`Profile ${profileId} has no CPF. Payment requires a valid CPF.`)
+      }
+    }
+
     await cancelActivePaymentRequest(eventParticipantId)
 
     const paymentRequest = await createPaymentRequest({
@@ -79,14 +102,10 @@ export const resolvePaymentRequest = composable(
       return paymentRequest
     }
 
-    const profile = await kyselyDb
-      .selectFrom("profiles")
-      .select(["id", "email", "full_name", "cpf"])
-      .where("id", "=", profileId)
-      .executeTakeFirstOrThrow()
-
-    if (!profile.cpf) {
-      throw new Error(`Profile ${profileId} has no CPF. Payment requires a valid CPF.`)
+    // Invariant: profile is defined here because isPaymentSystemOnline === true
+    // (see the profile fetch + CPF validation above).
+    if (!profile) {
+      throw new Error("Profile not loaded — unreachable")
     }
 
     const { appUrl } = env()

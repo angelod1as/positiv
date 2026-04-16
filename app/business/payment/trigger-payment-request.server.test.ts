@@ -229,6 +229,10 @@ describe("resolvePaymentRequest", () => {
     const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
 
     expect(result.success).toBe(false)
+    // CPF must be validated BEFORE any DB mutation so we don't orphan
+    // a pending payment_request when the profile is incomplete.
+    expect(cancelActivePaymentRequest).not.toHaveBeenCalled()
+    expect(createPaymentRequest).not.toHaveBeenCalled()
   })
 
   it("does not require CPF when offline", async () => {
