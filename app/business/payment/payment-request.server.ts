@@ -172,14 +172,7 @@ export async function confirmPaymentChoice({
   eventParticipantId: string
   paymentOption: string
 }) {
-  const paymentRequest = await kyselyDb
-    .selectFrom("payment_requests")
-    .selectAll()
-    .where("event_participant_id", "=", eventParticipantId)
-    .where("status", "not in", ["expired", "cancelled"])
-    .where("expires_at", ">", new Date().toISOString())
-    .executeTakeFirst()
-
+  const paymentRequest = await getActivePaymentRequest(eventParticipantId)
   if (!paymentRequest) {
     throw new Error("No active payment request found")
   }
@@ -226,8 +219,9 @@ export async function confirmPaymentChoice({
         : undefined,
   })
 
+  let updated: unknown
   try {
-    await kyselyDb
+    updated = await kyselyDb
       .updateTable("payment_requests")
       .set({
         asaas_customer_id: customer.id,
@@ -241,11 +235,10 @@ export async function confirmPaymentChoice({
         updated_at: new Date().toISOString(),
       })
       .where("id", "=", paymentRequest.id)
-      .execute()
+      .where("status", "in", ["pending", "awaiting_payment"])
+      .returningAll()
+      .executeTakeFirst()
   } catch (dbError) {
-    // Asaas customer + charge were created but our DB doesn't know about
-    // them. Cancel the charge so we don't leave an orphaned Asaas payment
-    // that the participant could pay with no local record.
     logger.error("DB update failed after Asaas charge creation — cancelling orphaned charge", {
       paymentRequestId: paymentRequest.id,
       asaasPaymentId: payment.id,
@@ -261,6 +254,23 @@ export async function confirmPaymentChoice({
       })
     }
     throw dbError
+  }
+
+  if (!updated) {
+    logger.error("confirmPaymentChoice: status changed concurrently — cancelling orphaned charge", {
+      paymentRequestId: paymentRequest.id,
+      asaasPaymentId: payment.id,
+    })
+    try {
+      await cancelAsaasPayment(payment.id)
+    } catch (cancelError) {
+      logger.error("MANUAL RECONCILIATION REQUIRED: failed to cancel orphaned Asaas charge after race", {
+        paymentRequestId: paymentRequest.id,
+        asaasPaymentId: payment.id,
+        cancelError: cancelError instanceof Error ? cancelError.message : String(cancelError),
+      })
+    }
+    throw new Error("Payment request was concurrently modified; charge cancelled")
   }
 
   return { invoiceUrl: payment.invoiceUrl }
@@ -359,7 +369,7 @@ export async function markManualPaymentRefunded(eventParticipantId: string) {
         participantEmail: participantInfo.email,
         participantName: participantInfo.full_name ?? "Participante",
         eventName: participantInfo.title ?? "Evento Positiv",
-        refundAmount: Number(result.amount),
+        refundAmount: Number(result.refund_amount),
       })
     }
   } catch (emailError) {

@@ -37,6 +37,7 @@ import {
   cancelActivePaymentRequest,
   confirmPaymentChoice,
   markPaymentAsExpired,
+  markManualPaymentPaid,
   markManualPaymentRefunded,
   updatePaymentRequestAmount,
 } from "./payment-request.server"
@@ -346,12 +347,39 @@ describe("payment-request.server", () => {
     })
   })
 
+  describe("markManualPaymentPaid", () => {
+    it("marks a pending manual payment as paid", async () => {
+      const paidRequest = {
+        id: "pr-1",
+        event_participant_id: "ep-1",
+        amount: 220,
+        status: "paid",
+        payment_mode: "manual",
+        paid_at: expect.any(String),
+      }
+
+      mockKyselyDb.updateTable.mockReturnValue(chainable(paidRequest))
+
+      const result = await markManualPaymentPaid("ep-1")
+      expect(result).toEqual(paidRequest)
+    })
+
+    it("throws when no pending manual request exists", async () => {
+      mockKyselyDb.updateTable.mockReturnValue(chainable(undefined))
+
+      await expect(markManualPaymentPaid("ep-1")).rejects.toThrow(
+        "No pending manual payment request found",
+      )
+    })
+  })
+
   describe("markManualPaymentRefunded", () => {
     it("sends refund notification email after marking as refunded", async () => {
       const refundedRequest = {
         id: "pr-1",
         event_participant_id: "ep-1",
         amount: 100,
+        refund_amount: 100,
         status: "refunded",
         payment_mode: "manual",
       }
@@ -378,6 +406,7 @@ describe("payment-request.server", () => {
         id: "pr-1",
         event_participant_id: "ep-1",
         amount: 100,
+        refund_amount: 100,
         status: "refunded",
         payment_mode: "manual",
       }
