@@ -52,11 +52,18 @@ const ADMIN_CREATE_EVENT = `${ADMIN_EVENTS}/novo`
 const ADMIN_EVENT_VIEW_PARTICIPANT = (eventId: string, participantId: string) =>
   `${ADMIN_EVENTS}/${eventId}/participantes/${participantId}`
 
+const PAYMENT = (eventParticipantId: string) => `/pagamento/${eventParticipantId}`
+const PAYMENT_THANK_YOU = "/pagamento/obrigado"
+
 const paths = {
   root: {
     HOME,
     CODE_OF_CONDUCT,
     FEEDBACK,
+  },
+  payment: {
+    PAYMENT,
+    PAYMENT_THANK_YOU,
   },
   admin: {
     ADMIN_DASHBOARD,
