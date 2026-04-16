@@ -282,7 +282,7 @@ The mock validates request structure but is NOT a faithful behavioral simulation
 - **PIX refund is async**: real API returns `REFUND_IN_PROGRESS`; mock returns `REFUNDED` immediately.
 - **Refund of already-refunded**: real API rejects; mock accepts.
 - **Cancel of paid charge**: real API returns `{deleted: false}`; mock always returns `{deleted: true}` (BUG in mock — fix recommended).
-- **Installment payments require `installmentValue` OR `totalValue`** in addition to `installmentCount`: our client sends only `installmentCount`. **Untested against real sandbox** — likely 400 in production for CC installment > 1.
+- **Installment payments require `installmentValue` OR `totalValue`** in addition to `installmentCount`: our client currently throws for `installmentCount > 1` before calling Asaas (guard added in PR #3). PR #6 (pricing engine) will remove the guard and add the missing fields. **Untested against real sandbox** — sandbox smoke test #2 (§6.6) should verify this.
 
 ### 4.6. Ambiguities (to resolve via real sandbox test)
 

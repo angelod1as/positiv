@@ -426,7 +426,7 @@ describe("Asaas client", () => {
 
       vi.advanceTimersByTime(30_000)
 
-      await expect(customerPromise).rejects.toThrow()
+      await expect(customerPromise).rejects.toThrow("The operation was aborted.")
     })
 
     it("logs network/timeout errors with request context", async () => {
