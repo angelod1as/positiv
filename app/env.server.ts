@@ -48,6 +48,7 @@ const getEnvironment = makeTypedEnvironment(
       .transform((val) => val === "true"),
     ASAAS_API_KEY: zod.string().optional(),
     ASAAS_API_URL: zod.string().optional(),
+    ASAAS_WEBHOOK_TOKEN: zod.string().optional(),
   }),
 )
 
