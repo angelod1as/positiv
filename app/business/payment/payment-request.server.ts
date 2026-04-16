@@ -219,7 +219,25 @@ export async function confirmPaymentChoice({
         : undefined,
   })
 
-  let updated: unknown
+  const paymentRequestId = paymentRequest.id
+
+  async function cancelOrphanedCharge(reason: string) {
+    logger.error(reason, {
+      paymentRequestId,
+      asaasPaymentId: payment.id,
+    })
+    try {
+      await cancelAsaasPayment(payment.id)
+    } catch (cancelError) {
+      logger.error("MANUAL RECONCILIATION REQUIRED: failed to cancel orphaned Asaas charge", {
+        paymentRequestId,
+        asaasPaymentId: payment.id,
+        cancelError: cancelError instanceof Error ? cancelError.message : String(cancelError),
+      })
+    }
+  }
+
+  let updated
   try {
     updated = await kyselyDb
       .updateTable("payment_requests")
@@ -234,42 +252,17 @@ export async function confirmPaymentChoice({
         status: "awaiting_payment",
         updated_at: new Date().toISOString(),
       })
-      .where("id", "=", paymentRequest.id)
+      .where("id", "=", paymentRequestId)
       .where("status", "in", ["pending", "awaiting_payment"])
       .returningAll()
       .executeTakeFirst()
   } catch (dbError) {
-    logger.error("DB update failed after Asaas charge creation — cancelling orphaned charge", {
-      paymentRequestId: paymentRequest.id,
-      asaasPaymentId: payment.id,
-      error: dbError instanceof Error ? dbError.message : String(dbError),
-    })
-    try {
-      await cancelAsaasPayment(payment.id)
-    } catch (cancelError) {
-      logger.error("MANUAL RECONCILIATION REQUIRED: failed to cancel orphaned Asaas charge", {
-        paymentRequestId: paymentRequest.id,
-        asaasPaymentId: payment.id,
-        cancelError: cancelError instanceof Error ? cancelError.message : String(cancelError),
-      })
-    }
+    await cancelOrphanedCharge("DB update failed after Asaas charge creation — cancelling orphaned charge")
     throw dbError
   }
 
   if (!updated) {
-    logger.error("confirmPaymentChoice: status changed concurrently — cancelling orphaned charge", {
-      paymentRequestId: paymentRequest.id,
-      asaasPaymentId: payment.id,
-    })
-    try {
-      await cancelAsaasPayment(payment.id)
-    } catch (cancelError) {
-      logger.error("MANUAL RECONCILIATION REQUIRED: failed to cancel orphaned Asaas charge after race", {
-        paymentRequestId: paymentRequest.id,
-        asaasPaymentId: payment.id,
-        cancelError: cancelError instanceof Error ? cancelError.message : String(cancelError),
-      })
-    }
+    await cancelOrphanedCharge("confirmPaymentChoice: status changed concurrently — cancelling orphaned charge")
     throw new Error("Payment request was concurrently modified; charge cancelled")
   }
 

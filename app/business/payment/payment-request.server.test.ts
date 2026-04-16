@@ -401,6 +401,14 @@ describe("payment-request.server", () => {
       )
     })
 
+    it("throws when no paid manual request exists", async () => {
+      mockKyselyDb.selectFrom.mockReturnValue(chainable(undefined))
+
+      await expect(markManualPaymentRefunded("ep-1")).rejects.toThrow(
+        "No paid manual payment request found",
+      )
+    })
+
     it("still succeeds when refund email fails", async () => {
       const refundedRequest = {
         id: "pr-1",
