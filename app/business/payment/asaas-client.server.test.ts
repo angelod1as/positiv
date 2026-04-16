@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 
 const mockEnv = vi.hoisted(() => ({
   asaasApiKey: "test-key" as string | undefined,
