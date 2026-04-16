@@ -136,20 +136,21 @@ const markAsExpired = composable((paymentRequestId: string) =>
 // Note: when partial refunds are added in the future, parse the actual refund
 // value from `body.payment.value` (or whichever field Asaas exposes) and
 // update `refund_amount` additively rather than overwriting.
-const markAsRefunded = composable((paymentRequestId: string, amount: number) =>
-  kyselyDb
+const markAsRefunded = composable((paymentRequestId: string, amount: number) => {
+  const now = new Date().toISOString()
+  return kyselyDb
     .updateTable("payment_requests")
     .set({
       status: "refunded" as const,
       refund_amount: amount,
-      refunded_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      refunded_at: now,
+      updated_at: now,
     })
     .where("id", "=", paymentRequestId)
     .where("status", "=", "paid")
     .returningAll()
-    .executeTakeFirst(),
-)
+    .executeTakeFirst()
+})
 
 export async function action({ request }: ActionFunctionArgs) {
   if (!env().paymentSystemOnline) {

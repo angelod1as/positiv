@@ -110,6 +110,9 @@ describe("api.asaas-webhook", () => {
     const request = makeRequest({ event: "PAYMENT_RECEIVED", payment: { id: "pay_1", value: 220 } })
     const response = await action(actionArgs(request))
     expect(response.status).toBe(200)
+    expect(vi.mocked(logger.warn)).toHaveBeenCalledWith(
+      expect.stringContaining("webhook authentication disabled"),
+    )
   })
 
   it("rejects requests with 503 when ASAAS_WEBHOOK_TOKEN is not configured in production", async () => {
