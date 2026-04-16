@@ -169,23 +169,20 @@ describe("Asaas client", () => {
       expect(result.invoiceUrl).toBeNull()
     })
 
-    it("sends installmentCount for credit card with > 1 installments", async () => {
-      const fetchSpy = vi
-        .spyOn(globalThis, "fetch")
-        .mockResolvedValue(
-          okResponse({ id: "pay_1", invoiceUrl: "https://x" }),
-        )
+    it("throws when installmentCount > 1 (installmentValue not yet implemented)", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch")
 
-      await createAsaasPayment({
-        customerId: "cus_1",
-        billingType: "CREDIT_CARD",
-        value: 227,
-        dueDate: "2026-03-17",
-        installmentCount: 3,
-      })
+      await expect(
+        createAsaasPayment({
+          customerId: "cus_1",
+          billingType: "CREDIT_CARD",
+          value: 227,
+          dueDate: "2026-03-17",
+          installmentCount: 3,
+        }),
+      ).rejects.toThrow("installmentCount > 1 requires installmentValue")
 
-      const sentBody = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
-      expect(sentBody.installmentCount).toBe(3)
+      expect(fetchSpy).not.toHaveBeenCalled()
     })
 
     it("does not send installmentCount for PIX", async () => {
@@ -430,6 +427,24 @@ describe("Asaas client", () => {
       vi.advanceTimersByTime(30_000)
 
       await expect(customerPromise).rejects.toThrow()
+    })
+
+    it("logs network/timeout errors with request context", async () => {
+      const networkError = new TypeError("fetch failed")
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(networkError)
+
+      await expect(
+        createAsaasCustomer({ name: "x", cpfCnpj: "123" }),
+      ).rejects.toThrow("fetch failed")
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "Asaas API request failed (network/timeout)",
+        expect.objectContaining({
+          path: "/customers",
+          method: "POST",
+          error: "fetch failed",
+        }),
+      )
     })
   })
 })

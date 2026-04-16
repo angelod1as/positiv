@@ -32,14 +32,17 @@ pending → awaiting_payment → paid → refunded
                           ↘ cancelled
 ```
 
+<!-- ⚠️ This snippet is stale — PR #2 changed CASCADE→RESTRICT and
+     converted payment_mode/payment_method to native ENUMs. See the
+     actual migration for the current schema. -->
 ```sql
 CREATE TABLE payment_requests (
   id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_participant_id uuid NOT NULL REFERENCES event_participants(id) ON DELETE CASCADE, -- ⚠️ see §5
+  event_participant_id uuid NOT NULL REFERENCES event_participants(id) ON DELETE RESTRICT,
   asaas_customer_id   text,
   asaas_payment_id    text,
-  payment_mode        text NOT NULL DEFAULT 'manual',  -- 'automatic' | 'manual'
-  payment_method      text,                            -- 'PIX' | 'CREDIT_CARD' | NULL (manual)
+  payment_mode        payment_mode NOT NULL DEFAULT 'manual',
+  payment_method      payment_method,
   installment_count   integer DEFAULT 1,
   amount              numeric(10,2) NOT NULL,
   status              payment_request_status NOT NULL DEFAULT 'pending',
@@ -293,11 +296,11 @@ The mock validates request structure but is NOT a faithful behavioral simulation
 
 These are known design gaps that should NOT be silently re-introduced as bugs. Track each as a follow-up Linear ticket.
 
-### 5.1. CASCADE DELETE on `event_participants` wipes payment history
+### 5.1. ~~CASCADE DELETE on `event_participants` wipes payment history~~
 
-`payment_requests.event_participant_id` is `ON DELETE CASCADE`. Deleting an event_participant deletes its payment audit trail (paid_at, refund_amount, asaas_payment_id, etc.) — **LGPD / Receita Federal violation**. Same applies to `events → event_participants` cascade.
+> **⚠️ Resolved in PR #2** — FK changed to `ON DELETE RESTRICT`. Callers that need to delete a participant with payment history must now make an explicit archive / soft-delete decision at the call site.
 
-**Recommended fix:** change to `ON DELETE RESTRICT` (or `SET NULL` with denormalized snapshot). Add trigger preventing deletion of events with paid/refunded payments. Requires policy decision.
+~~`payment_requests.event_participant_id` is `ON DELETE CASCADE`. Deleting an event_participant deletes its payment audit trail (paid_at, refund_amount, asaas_payment_id, etc.) — **LGPD / Receita Federal violation**.~~
 
 ### 5.2. No unique constraint on active `payment_request` per participant
 

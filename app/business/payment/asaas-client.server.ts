@@ -47,18 +47,28 @@ async function asaasFetch<T>(
 
   try {
     const hasBody = method !== "GET" && method !== "DELETE"
-    const response = await fetch(`${apiUrl}${path}`, {
-      method,
-      signal: controller.signal,
-      headers: {
-        // `access_token` (lowercase, underscore) is the header name the Asaas
-        // API expects — non-standard but documented at https://docs.asaas.com
-        // (auth section). Don't change the casing without re-checking.
-        access_token: apiKey,
-        ...(hasBody && { "Content-Type": "application/json" }),
-      },
-      ...(hasBody && { body: JSON.stringify(body) }),
-    })
+    let response: Response
+    try {
+      response = await fetch(`${apiUrl}${path}`, {
+        method,
+        signal: controller.signal,
+        headers: {
+          // `access_token` (lowercase, underscore) is the header name the Asaas
+          // API expects — non-standard but documented at https://docs.asaas.com
+          // (auth section). Don't change the casing without re-checking.
+          access_token: apiKey,
+          ...(hasBody && { "Content-Type": "application/json" }),
+        },
+        ...(hasBody && { body: JSON.stringify(body) }),
+      })
+    } catch (fetchError) {
+      logger.error("Asaas API request failed (network/timeout)", {
+        path,
+        method,
+        error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+      })
+      throw fetchError
+    }
 
     if (!response.ok) {
       // Asaas error bodies can carry PII. Don't interpolate the raw body into
@@ -122,16 +132,16 @@ export async function createAsaasPayment({
     ...(description !== undefined ? { description } : {}),
   }
 
-  if (
-    billingType === "CREDIT_CARD" &&
-    installmentCount &&
-    installmentCount > 1
-  ) {
-    // NOTE: Asaas also requires installmentValue or totalValue for
-    // installments > 1. PR #6 (pricing engine) adds these — see
-    // docs/payment-system-architecture.md §4.5. Without them, real
-    // Asaas will return 400 (mock accepts it).
-    body.installmentCount = installmentCount
+  // Asaas requires installmentValue or totalValue alongside installmentCount
+  // for installments > 1. PR #6 (pricing engine) adds those fields — see
+  // docs/payment-system-architecture.md §4.5. Until then, fail loudly so
+  // callers don't silently send an invalid request that the mock accepts
+  // but real Asaas rejects with 400.
+  if (installmentCount !== undefined && installmentCount > 1) {
+    throw new Error(
+      "createAsaasPayment: installmentCount > 1 requires installmentValue " +
+        "(not yet implemented). See docs/payment-system-architecture.md §4.5, PR #6.",
+    )
   }
 
   return asaasFetch("/payments", body, asaasPaymentResponseSchema)
