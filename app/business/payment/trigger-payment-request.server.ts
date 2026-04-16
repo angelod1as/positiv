@@ -3,11 +3,13 @@ import { env } from "~/env.server"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
+import { refundAsaasPayment } from "./asaas-client.server"
 import {
   cancelActivePaymentRequest,
   createPaymentRequest,
 } from "./payment-request.server"
 import { sendPaymentLinkEmail } from "./send-payment-link-email.server"
+import { sendPaymentRefundEmail } from "./send-payment-refund-email.server"
 
 export async function handlePaymentStatusChange(fields: {
   applicationStatus: string | undefined
@@ -134,5 +136,115 @@ export const resolvePaymentRequest = composable(
     })
 
     return paymentRequest
+  },
+)
+
+export const processRefund = composable(
+  async (eventParticipantId: string) => {
+    const paymentRequest = await kyselyDb
+      .selectFrom("payment_requests")
+      .selectAll()
+      .where("event_participant_id", "=", eventParticipantId)
+      .where("status", "=", "paid")
+      .executeTakeFirst()
+
+    if (!paymentRequest) {
+      throw new Error("No paid payment request found for this participant")
+    }
+
+    if (!paymentRequest.asaas_payment_id) {
+      throw new Error("Payment request has no Asaas payment ID — cannot refund")
+    }
+
+    const now = new Date().toISOString()
+
+    // Optimistic: mark as refunded in DB first (atomic — only if still "paid").
+    // Using returningAll() so executeTakeFirst() returns the row (or undefined
+    // when no rows match), rather than Kysely's UpdateResult which is always
+    // truthy.
+    const updated = await kyselyDb
+      .updateTable("payment_requests")
+      .set({
+        status: "refunded",
+        refund_amount: paymentRequest.amount,
+        refunded_at: now,
+        updated_at: now,
+      })
+      .where("id", "=", paymentRequest.id)
+      .where("status", "=", "paid")
+      .returningAll()
+      .executeTakeFirst()
+
+    if (!updated) {
+      throw new Error("Payment is no longer in 'paid' status — cannot refund")
+    }
+
+    try {
+      await refundAsaasPayment(paymentRequest.asaas_payment_id)
+    } catch (error) {
+      // Rollback DB to paid if Asaas fails. Guard with WHERE status='refunded'
+      // so we don't clobber a concurrent state change (e.g. PAYMENT_REFUNDED
+      // webhook arrived between our optimistic UPDATE and the Asaas call).
+      const rolledBack = await kyselyDb
+        .updateTable("payment_requests")
+        .set({
+          status: "paid",
+          refund_amount: null,
+          refunded_at: null,
+          updated_at: new Date().toISOString(),
+        })
+        .where("id", "=", paymentRequest.id)
+        .where("status", "=", "refunded")
+        .returningAll()
+        .executeTakeFirst()
+
+      if (!rolledBack) {
+        logger.error(
+          "Asaas refund failed AND rollback was a no-op — MANUAL RECONCILIATION REQUIRED",
+          {
+            paymentRequestId: paymentRequest.id,
+            asaasPaymentId: paymentRequest.asaas_payment_id,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        )
+      } else {
+        logger.error("Asaas refund failed, rolled back DB status to paid", {
+          paymentRequestId: paymentRequest.id,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      }
+
+      throw error
+    }
+
+    try {
+      const participantInfo = await kyselyDb
+        .selectFrom("event_participants")
+        .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+        .innerJoin("events", "events.id", "event_participants.event_id")
+        .select(["profiles.email", "profiles.full_name", "events.title"])
+        .where("event_participants.id", "=", eventParticipantId)
+        .executeTakeFirst()
+
+      if (participantInfo?.email) {
+        await sendPaymentRefundEmail({
+          participantEmail: participantInfo.email,
+          participantName: participantInfo.full_name ?? "Participante",
+          eventName: participantInfo.title ?? "Evento Positiv",
+          refundAmount: Number(paymentRequest.amount),
+        })
+      }
+    } catch (emailError) {
+      logger.error("Failed to send refund notification email (non-fatal)", {
+        eventParticipantId,
+        error: emailError instanceof Error ? emailError.message : String(emailError),
+      })
+    }
+
+    logger.info("Payment refunded", {
+      paymentRequestId: paymentRequest.id,
+      eventParticipantId,
+      amount: paymentRequest.amount,
+    })
   },
 )
