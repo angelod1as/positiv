@@ -33,7 +33,6 @@ function formatOptionLabel(o: PaymentOption) {
   return `Cartão ${o.installments}x de ${formatCurrency(o.perInstallmentReais)} (total ${formatCurrency(o.totalReais)})`
 }
 
-
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { eventParticipant } = await getEventParticipantWithAuth(request, params)
 
@@ -94,7 +93,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (result.success) {
         if (!result.data.invoiceUrl) {
           throw await redirectWithError(
-            paths.payment.PAYMENT(params.eventParticipantId),
+            paths.payment.PAYMENT(eventParticipant.id),
             "Não foi possível gerar o link de pagamento. Tente novamente.",
           )
         }

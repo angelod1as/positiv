@@ -44,5 +44,5 @@ export async function getEventParticipantWithAuth(
     )
   }
 
-  return { eventParticipant, eventParticipantId }
+  return { eventParticipant }
 }
