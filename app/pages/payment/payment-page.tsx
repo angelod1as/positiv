@@ -2,9 +2,7 @@ import { applySchema } from "composable-functions"
 import { redirect, useLoaderData } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
-import { getContext } from "~/business/auth/auth.server"
 import { paymentFormSchema } from "~/business/payment/payment-form-schema"
-import { assertPaymentSystemOnline } from "~/business/payment/payment-guard.server"
 import {
   confirmPaymentChoice,
   getActivePaymentRequest,
@@ -14,9 +12,9 @@ import {
   type PaymentOption,
 } from "~/business/payment/payment-pricing.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
-import { kyselyDb } from "~/kysely-db"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/payment-page"
+import { getEventParticipantWithAuth } from "./payment-page-auth.server"
 
 function formatCurrency(reais: number) {
   return new Intl.NumberFormat("pt-BR", {
@@ -35,41 +33,6 @@ function formatOptionLabel(o: PaymentOption) {
   return `Cartão ${o.installments}x de ${formatCurrency(o.perInstallmentReais)} (total ${formatCurrency(o.totalReais)})`
 }
 
-async function getEventParticipantWithAuth(request: Request, params: Route.LoaderArgs["params"]) {
-  assertPaymentSystemOnline()
-
-  const { currentUser } = await getContext(request, params)
-  if (!currentUser) {
-    throw await redirectWithError(paths.auth.LOGIN, "Você precisa estar logade para acessar esta página.")
-  }
-
-  const eventParticipantId = params.eventParticipantId
-  if (!eventParticipantId) {
-    throw await redirectWithError(paths.root.HOME, "Link de pagamento inválido.")
-  }
-
-  const eventParticipant = await kyselyDb
-    .selectFrom("event_participants")
-    .innerJoin("events", "events.id", "event_participants.event_id")
-    .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
-    .select([
-      "event_participants.id",
-      "event_participants.event_id",
-      "events.title as event_title",
-    ])
-    .where("event_participants.id", "=", eventParticipantId)
-    .where("profiles.user_id", "=", currentUser.id)
-    .executeTakeFirst()
-
-  if (!eventParticipant) {
-    throw await redirectWithError(
-      paths.root.HOME,
-      "Inscrição não encontrada ou sem permissão.",
-    )
-  }
-
-  return { eventParticipant, eventParticipantId }
-}
 
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { eventParticipant } = await getEventParticipantWithAuth(request, params)
