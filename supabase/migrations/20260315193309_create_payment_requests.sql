@@ -60,7 +60,33 @@ CREATE TABLE IF NOT EXISTS "public"."payment_requests" (
     -- deadline at insert time is almost always a bug in the calling
     -- code (e.g. timezone mishandling, off-by-one day).
     CONSTRAINT payment_requests_expires_after_created
-        CHECK ("expires_at" > "created_at")
+        CHECK ("expires_at" > "created_at"),
+    -- `paid_at` is populated iff the row is in a terminal post-payment
+    -- state. Refunded / partially-refunded rows were necessarily paid
+    -- first, so they also carry a `paid_at`. Pending, awaiting_payment,
+    -- expired, and cancelled rows must leave it NULL — otherwise an
+    -- application bug could stamp a paid timestamp on a never-paid row.
+    CONSTRAINT payment_requests_paid_at_matches_status
+        CHECK (
+            ("status" IN ('paid', 'refunded', 'partially_refunded'))
+            = ("paid_at" IS NOT NULL)
+        ),
+    -- Installments only exist on credit-card charges. PIX settles in a
+    -- single transfer; manual payments have no gateway plan. The column
+    -- comment documents the invariant; this constraint enforces it so a
+    -- caller can't slip an installment count onto the wrong method.
+    CONSTRAINT payment_requests_installment_count_only_for_credit_card
+        CHECK ("installment_count" IS NULL OR "payment_method" = 'CREDIT_CARD'),
+    -- A `partially_refunded` row must have returned strictly less than the
+    -- original charge — a full refund belongs in the `refunded` state. The
+    -- refund_amount_bounded constraint already guarantees `> 0 AND <=
+    -- amount`; this narrows the upper bound to `<` for the partial case so
+    -- the two statuses stay semantically distinct.
+    CONSTRAINT payment_requests_partial_refund_amount_strict
+        CHECK (
+            "status" != 'partially_refunded'
+            OR ("refund_amount" IS NOT NULL AND "refund_amount" < "amount")
+        )
 );
 
 ALTER TABLE "public"."payment_requests" ENABLE ROW LEVEL SECURITY;
