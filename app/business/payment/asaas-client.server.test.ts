@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 
 const mockEnv = vi.hoisted(() => ({
   asaasApiKey: "test-key" as string | undefined,
@@ -13,13 +13,18 @@ vi.mock("~/lib/logger/logger.server", () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }))
 
-import { createAsaasCustomer, createAsaasPayment } from "./asaas-client.server"
+import {
+  cancelAsaasPayment,
+  createAsaasCustomer,
+  createAsaasPayment,
+  refundAsaasPayment,
+} from "./asaas-client.server"
 import { logger } from "~/lib/logger/logger.server"
 
 const okResponse = (body: unknown) =>
   new Response(JSON.stringify(body), { status: 200 })
 
-describe("asaas-client scaffold guard logic", () => {
+describe("Asaas client", () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     mockEnv.asaasApiKey = "test-key"
@@ -83,67 +88,244 @@ describe("asaas-client scaffold guard logic", () => {
     })
   })
 
-  describe("createAsaasPayment installment guard", () => {
-    it("throws when installmentCount > 1 (not yet implemented in scaffold)", async () => {
-      // The guard must fire BEFORE any fetch call — we verify that by
-      // not mocking fetch and expecting the throw to happen synchronously
-      // enough that a real fetch would be caught.
+  describe("createAsaasCustomer", () => {
+    it("returns validated customer with id", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        okResponse({ id: "cus_123", name: "Test", cpfCnpj: "12345" }),
+      )
+
+      const result = await createAsaasCustomer({
+        name: "Test",
+        cpfCnpj: "12345",
+      })
+
+      expect(result).toEqual({ id: "cus_123" })
+    })
+
+    it("throws on malformed response (missing id)", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        okResponse({ name: "Test" }),
+      )
+
+      await expect(
+        createAsaasCustomer({ name: "Test", cpfCnpj: "12345" }),
+      ).rejects.toThrow()
+    })
+
+    it("sends optional email and phone as mobilePhone", async () => {
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(okResponse({ id: "cus_1" }))
+
+      await createAsaasCustomer({
+        name: "Test",
+        cpfCnpj: "12345",
+        email: "test@x.com",
+        phone: "11999999999",
+      })
+
+      const sentBody = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+      expect(sentBody.email).toBe("test@x.com")
+      expect(sentBody.mobilePhone).toBe("11999999999")
+    })
+  })
+
+  describe("createAsaasPayment", () => {
+    it("returns validated payment with id and invoiceUrl", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        okResponse({
+          id: "pay_123",
+          invoiceUrl: "https://sandbox.asaas.com/i/123",
+          status: "PENDING",
+        }),
+      )
+
+      const result = await createAsaasPayment({
+        customerId: "cus_123",
+        billingType: "PIX",
+        value: 220,
+        dueDate: "2026-03-17",
+        description: "Test",
+      })
+
+      expect(result).toEqual({
+        id: "pay_123",
+        invoiceUrl: "https://sandbox.asaas.com/i/123",
+      })
+    })
+
+    it("accepts null invoiceUrl (PIX case)", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        okResponse({ id: "pay_123", invoiceUrl: null }),
+      )
+
+      const result = await createAsaasPayment({
+        customerId: "cus_123",
+        billingType: "PIX",
+        value: 220,
+        dueDate: "2026-03-17",
+      })
+
+      expect(result.invoiceUrl).toBeNull()
+    })
+
+    it("throws when installmentCount > 1 (installmentValue not yet implemented)", async () => {
       const fetchSpy = vi.spyOn(globalThis, "fetch")
 
       await expect(
         createAsaasPayment({
           customerId: "cus_1",
           billingType: "CREDIT_CARD",
-          value: 100,
-          dueDate: "2026-06-01",
+          value: 227,
+          dueDate: "2026-03-17",
           installmentCount: 3,
         }),
-      ).rejects.toThrow("installmentCount > 1 is not yet implemented")
+      ).rejects.toThrow("installmentCount > 1 requires installmentValue")
 
       expect(fetchSpy).not.toHaveBeenCalled()
     })
 
-    it("does NOT throw when installmentCount is 1 (proceeds to fetch)", async () => {
+    it("does not send installmentCount for PIX", async () => {
       const fetchSpy = vi
         .spyOn(globalThis, "fetch")
-        .mockResolvedValue(okResponse({ id: "pay_1", invoiceUrl: "https://x" }))
+        .mockResolvedValue(
+          okResponse({ id: "pay_1", invoiceUrl: "https://x" }),
+        )
 
-      await expect(
-        createAsaasPayment({
-          customerId: "cus_1",
-          billingType: "CREDIT_CARD",
-          value: 100,
-          dueDate: "2026-06-01",
-          installmentCount: 1,
-        }),
-      ).resolves.toBeDefined()
+      await createAsaasPayment({
+        customerId: "cus_1",
+        billingType: "PIX",
+        value: 220,
+        dueDate: "2026-03-17",
+      })
 
-      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      const sentBody = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+      expect(sentBody.installmentCount).toBeUndefined()
     })
 
-    it("does NOT throw when installmentCount is undefined (PIX case)", async () => {
+    it("does not send installmentCount when it is 1 (single payment)", async () => {
       const fetchSpy = vi
         .spyOn(globalThis, "fetch")
-        .mockResolvedValue(okResponse({ id: "pay_1", invoiceUrl: "https://x" }))
+        .mockResolvedValue(
+          okResponse({ id: "pay_1", invoiceUrl: "https://x" }),
+        )
 
-      await expect(
-        createAsaasPayment({
-          customerId: "cus_1",
-          billingType: "PIX",
-          value: 100,
-          dueDate: "2026-06-01",
-        }),
-      ).resolves.toBeDefined()
+      await createAsaasPayment({
+        customerId: "cus_1",
+        billingType: "CREDIT_CARD",
+        value: 227,
+        dueDate: "2026-03-17",
+        installmentCount: 1,
+      })
 
-      expect(fetchSpy).toHaveBeenCalledTimes(1)
+      const sentBody = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+      expect(sentBody.installmentCount).toBeUndefined()
+    })
+  })
+
+  describe("refundAsaasPayment", () => {
+    it("calls POST /payments/{id}/refund", async () => {
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(okResponse({ id: "pay_123" }))
+
+      await refundAsaasPayment("pay_123")
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "https://sandbox.asaas.com/api/v3/payments/pay_123/refund",
+        expect.objectContaining({ method: "POST" }),
+      )
+    })
+
+    it("sends value when provided (partial refund)", async () => {
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(okResponse({ id: "pay_123" }))
+
+      await refundAsaasPayment("pay_123", 50)
+
+      const sentBody = JSON.parse(fetchSpy.mock.calls[0][1]?.body as string)
+      expect(sentBody.value).toBe(50)
+    })
+
+    it("throws on HTTP error", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response("Not Found", { status: 404 }),
+      )
+
+      await expect(refundAsaasPayment("pay_123")).rejects.toThrow(
+        "Asaas API error (404)",
+      )
+    })
+  })
+
+  describe("cancelAsaasPayment", () => {
+    it("calls DELETE /payments/{id}", async () => {
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(okResponse({ deleted: true, id: "pay_123" }))
+
+      await cancelAsaasPayment("pay_123")
+
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "https://sandbox.asaas.com/api/v3/payments/pay_123",
+        expect.objectContaining({ method: "DELETE" }),
+      )
+    })
+
+    it("does not send Content-Type header for DELETE requests", async () => {
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(okResponse({ deleted: true, id: "pay_123" }))
+
+      await cancelAsaasPayment("pay_123")
+
+      const headers = fetchSpy.mock.calls[0][1]?.headers as Record<
+        string,
+        string
+      >
+      expect(headers["Content-Type"]).toBeUndefined()
+    })
+
+    it("throws when Asaas returns deleted: false", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        okResponse({ deleted: false, id: "pay_123" }),
+      )
+
+      await expect(cancelAsaasPayment("pay_123")).rejects.toThrow(
+        "Asaas refused to delete payment pay_123 (deleted=false)",
+      )
+    })
+
+    it("throws on HTTP error", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response("Not Found", { status: 404 }),
+      )
+
+      await expect(cancelAsaasPayment("pay_123")).rejects.toThrow(
+        "Asaas API error (404)",
+      )
+    })
+  })
+
+  describe("Zod response validation", () => {
+    it("strips extra fields from response", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        okResponse({ id: "cus_1", extraField: "should be stripped" }),
+      )
+
+      const result = await createAsaasCustomer({
+        name: "x",
+        cpfCnpj: "123",
+      })
+
+      expect(result).toEqual({ id: "cus_1" })
+      expect((result as Record<string, unknown>).extraField).toBeUndefined()
     })
   })
 
   describe("error path — PII-safe error handling", () => {
     it("does NOT include the Asaas error body in the thrown error message", async () => {
-      // Asaas error bodies can carry PII (CPF, email, phone). The thrown
-      // Error.message is serialized outward by the app's handleApiError,
-      // so PII must never land in it.
       const sensitivePII =
         '{"errors":[{"code":"invalid_cpf","description":"CPF 12345678900 for user foo@example.com is invalid"}]}'
       vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -160,7 +342,6 @@ describe("asaas-client scaffold guard logic", () => {
       expect(thrown).toBeInstanceOf(Error)
       const message = (thrown as Error).message
       expect(message).toBe("Asaas API error (422)")
-      // Defence-in-depth: no substring of the PII body in the message
       expect(message).not.toContain("12345678900")
       expect(message).not.toContain("foo@example.com")
       expect(message).not.toContain("invalid_cpf")
@@ -206,10 +387,6 @@ describe("asaas-client scaffold guard logic", () => {
     })
 
     it("handles an unreadable response body without crashing", async () => {
-      // `response.text()` can reject if the body stream is already consumed
-      // or otherwise unreadable. The fetch wrapper should still throw a
-      // sanitized Error and log a placeholder rather than surfacing the
-      // text() rejection.
       const response = new Response("ignored", { status: 500 })
       vi.spyOn(response, "text").mockRejectedValue(new Error("stream dead"))
       vi.spyOn(globalThis, "fetch").mockResolvedValue(response)
@@ -217,6 +394,57 @@ describe("asaas-client scaffold guard logic", () => {
       await expect(
         createAsaasCustomer({ name: "x", cpfCnpj: "123" }),
       ).rejects.toThrow("Asaas API error (500)")
+    })
+  })
+
+  describe("timeout", () => {
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it("aborts the request after 30 seconds", async () => {
+      vi.useFakeTimers()
+
+      vi.spyOn(globalThis, "fetch").mockImplementation(
+        (_url, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => {
+              reject(
+                new DOMException(
+                  "The operation was aborted.",
+                  "AbortError",
+                ),
+              )
+            })
+          }),
+      )
+
+      const customerPromise = createAsaasCustomer({
+        name: "x",
+        cpfCnpj: "123",
+      })
+
+      vi.advanceTimersByTime(30_000)
+
+      await expect(customerPromise).rejects.toThrow("The operation was aborted.")
+    })
+
+    it("logs network/timeout errors with request context", async () => {
+      const networkError = new TypeError("fetch failed")
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(networkError)
+
+      await expect(
+        createAsaasCustomer({ name: "x", cpfCnpj: "123" }),
+      ).rejects.toThrow("fetch failed")
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "Asaas API request failed (network/timeout)",
+        expect.objectContaining({
+          path: "/customers",
+          method: "POST",
+          error: "fetch failed",
+        }),
+      )
     })
   })
 })

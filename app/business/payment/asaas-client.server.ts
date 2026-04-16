@@ -1,9 +1,12 @@
+import { z } from "zod"
 import { env } from "~/env.server"
 import { logger } from "~/lib/logger/logger.server"
 
 // Defensive PII truncation on the Asaas error body we log (can carry CPF,
 // email, phone).
 const MAX_ERROR_BODY_LOG_CHARS = 500
+
+const ASAAS_FETCH_TIMEOUT_MS = 30_000
 
 function getAsaasConfig() {
   const { asaasApiKey, asaasApiUrl } = env()
@@ -19,52 +22,89 @@ function getAsaasConfig() {
   return { apiKey: asaasApiKey, apiUrl: normalizedUrl }
 }
 
-// Scaffold-grade fetch wrapper. AbortController/timeout, retry on 429/5xx,
-// and Zod response validation are deferred to PR #3 (see
-// `docs/payment-system-architecture.md` §8). Do NOT use this client from a
-// route until that PR lands.
+const asaasCustomerResponseSchema = z.object({
+  id: z.string(),
+})
+
+const asaasPaymentResponseSchema = z.object({
+  id: z.string(),
+  invoiceUrl: z.string().nullable(),
+})
+
 async function asaasFetch<T>(
   path: string,
   body: Record<string, unknown>,
+  schema: z.ZodType<T>,
+  method: "POST" | "GET" | "DELETE" = "POST",
 ): Promise<T> {
   const { apiKey, apiUrl } = getAsaasConfig()
 
-  const response = await fetch(`${apiUrl}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      // `access_token` (lowercase, underscore) is the header name the Asaas
-      // API expects — non-standard but documented at https://docs.asaas.com
-      // (auth section). Don't change the casing without re-checking.
-      access_token: apiKey,
-    },
-    body: JSON.stringify(body),
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(
+    () => controller.abort(new Error("Asaas request timeout")),
+    ASAAS_FETCH_TIMEOUT_MS,
+  )
 
-  if (!response.ok) {
-    // Asaas error bodies can carry PII. Don't interpolate the raw body into
-    // `Error.message` — the app's `handleApiError` serializes message into
-    // outward-facing JSON responses. Log the body server-side only.
-    const errorBody = await response.text().catch(() => "<unreadable>")
-    logger.error("Asaas API request failed", {
-      path,
-      status: response.status,
-      body: errorBody.slice(0, MAX_ERROR_BODY_LOG_CHARS),
-    })
-    throw new Error(`Asaas API error (${response.status})`)
+  try {
+    const hasBody = method !== "GET" && method !== "DELETE"
+    let response: Response
+    try {
+      response = await fetch(`${apiUrl}${path}`, {
+        method,
+        signal: controller.signal,
+        headers: {
+          // `access_token` (lowercase, underscore) is the header name the Asaas
+          // API expects — non-standard but documented at https://docs.asaas.com
+          // (auth section). Don't change the casing without re-checking.
+          access_token: apiKey,
+          ...(hasBody && { "Content-Type": "application/json" }),
+        },
+        ...(hasBody && { body: JSON.stringify(body) }),
+      })
+    } catch (fetchError) {
+      logger.error("Asaas API request failed (network/timeout)", {
+        path,
+        method,
+        error: fetchError instanceof Error ? fetchError.message : String(fetchError),
+      })
+      throw fetchError
+    }
+
+    if (!response.ok) {
+      // Asaas error bodies can carry PII. Don't interpolate the raw body into
+      // `Error.message` — the app's `handleApiError` serializes message into
+      // outward-facing JSON responses. Log the body server-side only.
+      const errorBody = await response.text().catch(() => "<unreadable>")
+      logger.error("Asaas API request failed", {
+        path,
+        status: response.status,
+        body: errorBody.slice(0, MAX_ERROR_BODY_LOG_CHARS),
+      })
+      throw new Error(`Asaas API error (${response.status})`)
+    }
+
+    const json = await response.json()
+    return schema.parse(json)
+  } finally {
+    clearTimeout(timeout)
   }
-
-  return response.json() as Promise<T>
 }
 
 export async function createAsaasCustomer({
   name,
   cpfCnpj,
+  email,
+  phone,
 }: {
   name: string
   cpfCnpj: string
+  email?: string
+  phone?: string
 }): Promise<{ id: string }> {
-  return asaasFetch("/customers", { name, cpfCnpj })
+  const body: Record<string, unknown> = { name, cpfCnpj }
+  if (email !== undefined) body.email = email
+  if (phone !== undefined) body.mobilePhone = phone
+  return asaasFetch("/customers", body, asaasCustomerResponseSchema)
 }
 
 // `invoiceUrl` is nullable because Asaas surfaces the payable artifact
@@ -84,24 +124,57 @@ export async function createAsaasPayment({
   description?: string
   installmentCount?: number
 }): Promise<{ id: string; invoiceUrl: string | null }> {
-  // Installments deferred to PR #6 (see payment-pricing.server.ts). Fail
-  // loudly rather than silently creating a single-payment charge.
-  if (installmentCount !== undefined && installmentCount > 1) {
-    throw new Error(
-      "createAsaasPayment: installmentCount > 1 is not yet implemented. " +
-        "See docs/payment-system-architecture.md §8 PR #6.",
-    )
-  }
-
   const body: Record<string, unknown> = {
     customer: customerId,
     billingType,
     value,
     dueDate,
     ...(description !== undefined ? { description } : {}),
-    // PR #6 will add `installmentCount` (and `installmentValue`/`totalValue`
-    // per current Asaas docs) here — the throw above must be lifted in sync.
   }
 
-  return asaasFetch("/payments", body)
+  // Asaas requires installmentValue or totalValue alongside installmentCount
+  // for installments > 1. PR #6 (pricing engine) adds those fields — see
+  // docs/payment-system-architecture.md §4.5. Until then, fail loudly so
+  // callers don't silently send an invalid request that the mock accepts
+  // but real Asaas rejects with 400.
+  if (installmentCount !== undefined && installmentCount > 1) {
+    throw new Error(
+      "createAsaasPayment: installmentCount > 1 requires installmentValue " +
+        "(not yet implemented). See docs/payment-system-architecture.md §4.5, PR #6.",
+    )
+  }
+
+  return asaasFetch("/payments", body, asaasPaymentResponseSchema)
+}
+
+export async function refundAsaasPayment(
+  paymentId: string,
+  value?: number,
+): Promise<void> {
+  const body: Record<string, unknown> = {}
+  if (value !== undefined) {
+    body.value = value
+  }
+  await asaasFetch(
+    `/payments/${paymentId}/refund`,
+    body,
+    z.object({ id: z.string() }),
+  )
+}
+
+export async function cancelAsaasPayment(paymentId: string): Promise<void> {
+  const result = await asaasFetch(
+    `/payments/${paymentId}`,
+    {},
+    z.object({ deleted: z.boolean(), id: z.string() }),
+    "DELETE",
+  )
+  // Asaas returns HTTP 200 with `{ deleted: false }` when the payment cannot
+  // be deleted (e.g. already paid). Treat this as a failure — otherwise we
+  // silently claim "cancelled" while the charge is still alive on Asaas.
+  if (!result.deleted) {
+    throw new Error(
+      `Asaas refused to delete payment ${paymentId} (deleted=false)`,
+    )
+  }
 }
