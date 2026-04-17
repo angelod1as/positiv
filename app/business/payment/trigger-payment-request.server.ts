@@ -141,11 +141,16 @@ export const resolvePaymentRequest = composable(
 
 export const processRefund = composable(
   async (eventParticipantId: string) => {
+    // No unique partial index on (event_participant_id) WHERE status='paid'
+    // exists yet (§5.2), so multiple paid rows are theoretically possible.
+    // Order by created_at DESC so we always refund the most recent paid
+    // request, not an arbitrary one.
     const paymentRequest = await kyselyDb
       .selectFrom("payment_requests")
       .selectAll()
       .where("event_participant_id", "=", eventParticipantId)
       .where("status", "=", "paid")
+      .orderBy("created_at", "desc")
       .executeTakeFirst()
 
     if (!paymentRequest) {
@@ -185,13 +190,15 @@ export const processRefund = composable(
       // Rollback DB to paid if Asaas fails. Guard with WHERE status='refunded'
       // so we don't clobber a concurrent state change (e.g. PAYMENT_REFUNDED
       // webhook arrived between our optimistic UPDATE and the Asaas call).
+      // Fresh timestamp — Asaas call can take seconds to time out, so reusing
+      // the pre-call `now` would make updated_at stale by that much.
       const rolledBack = await kyselyDb
         .updateTable("payment_requests")
         .set({
           status: "paid",
           refund_amount: null,
           refunded_at: null,
-          updated_at: now,
+          updated_at: new Date().toISOString(),
         })
         .where("id", "=", paymentRequest.id)
         .where("status", "=", "refunded")
