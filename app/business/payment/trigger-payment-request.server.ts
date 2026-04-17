@@ -191,7 +191,7 @@ export const processRefund = composable(
           status: "paid",
           refund_amount: null,
           refunded_at: null,
-          updated_at: new Date().toISOString(),
+          updated_at: now,
         })
         .where("id", "=", paymentRequest.id)
         .where("status", "=", "refunded")

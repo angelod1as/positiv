@@ -367,6 +367,7 @@ describe("processRefund", () => {
     const result = await processRefund("ep-1")
 
     expect(result.success).toBe(false)
+    expect(refundAsaasPayment).toHaveBeenCalledTimes(1)
     expect(logger.error).toHaveBeenCalledWith(
       "Asaas refund failed, rolled back DB status to paid",
       expect.objectContaining({
