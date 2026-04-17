@@ -7,7 +7,6 @@ import {
 } from "~/test/db-test-utils"
 import { processRefund } from "./trigger-payment-request.server"
 import * as asaasClient from "./asaas-client.server"
-import { kyselyDb } from "~/kysely-db"
 
 describe("processRefund — race condition (integration)", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -55,19 +54,11 @@ describe("processRefund — race condition (integration)", () => {
       .executeTakeFirstOrThrow()
     tracker.track("payment_requests", pr.id)
 
-    // Simulate the race: the SELECT in processRefund sees the row as "paid",
-    // but by the time the optimistic UPDATE runs, another caller already
-    // flipped it to "refunded". To reproduce this without concurrency, we
-    // spy on refundAsaasPayment and flip the DB inside that spy's side effect
-    // — except the UPDATE in processRefund runs BEFORE Asaas is called.
-    //
-    // The real race point: between processRefund's initial SELECT (line 123)
-    // and the optimistic UPDATE (line 141). We hook into a SELECT-adjacent
-    // operation by using a flag and flipping from another call.
-    //
-    // Cleaner approach: run processRefund twice in parallel. With the bug,
-    // both calls see status='paid' on SELECT, both UPDATE (one no-ops but
-    // gets a truthy UpdateResult), both call Asaas refund.
+    // Race point: two processRefund calls in parallel. Without the
+    // returningAll() guard, both see status='paid' on SELECT, both UPDATE
+    // (one no-ops but returns a truthy UpdateResult), both call Asaas refund.
+    // With the guard, the second UPDATE returns undefined and bails out
+    // before the Asaas call.
     const refundSpy = vi
       .spyOn(asaasClient, "refundAsaasPayment")
       .mockResolvedValue(undefined)
@@ -91,7 +82,7 @@ describe("processRefund — race condition (integration)", () => {
     expect(failed, "exactly one caller should fail").toBe(1)
 
     // Final DB state should be refunded exactly once
-    const finalPr = await kyselyDb
+    const finalPr = await kysely
       .selectFrom("payment_requests")
       .selectAll()
       .where("id", "=", pr.id)
