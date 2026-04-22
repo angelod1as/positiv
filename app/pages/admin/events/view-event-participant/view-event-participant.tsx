@@ -80,15 +80,27 @@ export async function action({ request, params }: Route.ActionArgs) {
     if (entries.application_status !== "sent_payment_data")
       return { success: true }
 
+    const id = entries.id as string
+    const eventId = entries.event_id as string
+    const profileId = entries.profile_id as string
+    if (!id || !eventId || !profileId) {
+      return {
+        success: false,
+        errors: {
+          _global: ["Dados do participante incompletos. Recarregue a página."],
+        },
+      }
+    }
+
     // When application_status changes to "sent_payment_data", we create a payment request
     // and send the payment link email. If this fails, we return success: false even though
     // the DB update succeeded — because from the admin's perspective, the intent was to
     // trigger payment and that part failed. The auto-save form will show the error toast.
     const payment = await handlePaymentStatusChange({
       applicationStatus: entries.application_status as string | undefined,
-      eventParticipantId: entries.id as string,
-      eventId: entries.event_id as string,
-      profileId: entries.profile_id as string,
+      eventParticipantId: id,
+      eventId,
+      profileId,
       customAmount: entries.custom_amount ? Number(entries.custom_amount) : undefined,
       paymentMode: entries.payment_mode as "automatic" | "manual" | undefined,
     })
