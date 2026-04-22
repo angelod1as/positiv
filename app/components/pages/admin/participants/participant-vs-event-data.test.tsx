@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import type { PaymentRequestRow } from "~/business/payment/payment-request.server"
 import type { EventParticipantWithEvent } from "~types/database/entities.types"
 import { ParticipantVsEventData } from "./participant-vs-event-data"
 
@@ -63,11 +64,19 @@ const mockEventParticipant: EventParticipantWithEvent = {
   was_selected_for_rotation: false,
 }
 
-const createTestRouter = (eventParticipant: EventParticipantWithEvent) => {
+const createTestRouter = (
+  eventParticipant: EventParticipantWithEvent,
+  paymentRequest?: PaymentRequestRow | null,
+) => {
   return createMemoryRouter([
     {
       path: "/",
-      element: <ParticipantVsEventData eventParticipant={eventParticipant} />,
+      element: (
+        <ParticipantVsEventData
+          eventParticipant={eventParticipant}
+          paymentRequest={paymentRequest}
+        />
+      ),
     },
   ])
 }
@@ -209,6 +218,72 @@ describe("ParticipantVsEventData", () => {
       render(<RouterProvider router={router} />)
 
       expect(screen.getByText("Test notes")).toBeInTheDocument()
+    })
+  })
+
+  describe("payment status section", () => {
+    const paidRequest: PaymentRequestRow = {
+      id: "pr-1",
+      event_participant_id: "123",
+      amount: 220,
+      status: "paid",
+      payment_mode: "automatic",
+      payment_method: "PIX",
+      installment_count: 1,
+      asaas_customer_id: "cus_1",
+      asaas_payment_id: "pay_1",
+      invoice_url: "https://sandbox.asaas.com/i/pay_1",
+      expires_at: new Date(Date.now() + 86400000).toISOString(),
+      paid_at: new Date().toISOString(),
+      refund_amount: null,
+      refunded_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    it("renders Payment Status Section when paymentRequest exists", () => {
+      const router = createTestRouter(mockEventParticipant, paidRequest)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByRole("heading", { level: 4, name: /pagamento/i })).toBeInTheDocument()
+    })
+
+    it("renders Reembolsar button when status is paid with Asaas id", () => {
+      const router = createTestRouter(mockEventParticipant, paidRequest)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByRole("button", { name: /reembolsar/i })).toBeInTheDocument()
+    })
+
+    it("renders Cancelar pagamento button when status is awaiting_payment (automatic)", () => {
+      const awaitingRequest: PaymentRequestRow = {
+        ...paidRequest,
+        status: "awaiting_payment",
+        paid_at: null,
+      }
+      const router = createTestRouter(mockEventParticipant, awaitingRequest)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByRole("button", { name: /cancelar pagamento/i })).toBeInTheDocument()
+    })
+
+    it("does NOT render cancel button when status is paid", () => {
+      const router = createTestRouter(mockEventParticipant, paidRequest)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.queryByRole("button", { name: /cancelar pagamento/i })).not.toBeInTheDocument()
+    })
+
+    it("does NOT render Reembolsar button when status is not paid", () => {
+      const pendingRequest: PaymentRequestRow = {
+        ...paidRequest,
+        status: "pending",
+        paid_at: null,
+      }
+      const router = createTestRouter(mockEventParticipant, pendingRequest)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.queryByRole("button", { name: /reembolsar/i })).not.toBeInTheDocument()
     })
   })
 })

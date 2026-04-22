@@ -108,11 +108,13 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "resend-payment-link") {
     const entries = Object.fromEntries(formData)
+    const id = entries.id as string
+    if (!id) return { success: false }
     const customAmount = entries.custom_amount
       ? Number(entries.custom_amount)
       : undefined
     const result = await resolvePaymentRequest(
-      entries.id as string,
+      id,
       entries.event_id as string,
       entries.profile_id as string,
       customAmount,
@@ -125,14 +127,18 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "refund-payment") {
     const entries = Object.fromEntries(formData)
-    const result = await processRefund(entries.id as string)
+    const id = entries.id as string
+    if (!id) return { success: false }
+    const result = await processRefund(id)
     return { success: result.success }
   }
 
   if (intent === "mark-manual-payment-paid") {
     const entries = Object.fromEntries(formData)
+    const id = entries.id as string
+    if (!id) return { success: false }
     try {
-      await markManualPaymentPaid(entries.id as string)
+      await markManualPaymentPaid(id)
       return { success: true }
     } catch {
       return { success: false }
@@ -141,8 +147,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "mark-manual-payment-refunded") {
     const entries = Object.fromEntries(formData)
+    const id = entries.id as string
+    if (!id) return { success: false }
     try {
-      await markManualPaymentRefunded(entries.id as string)
+      await markManualPaymentRefunded(id)
       return { success: true }
     } catch {
       return { success: false }
@@ -151,8 +159,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "cancel-payment") {
     const entries = Object.fromEntries(formData)
+    const id = entries.id as string
+    if (!id) return { success: false }
     try {
-      await cancelActivePaymentRequest(entries.id as string)
+      await cancelActivePaymentRequest(id)
       return { success: true }
     } catch {
       return { success: false }
@@ -161,12 +171,14 @@ export async function action({ request, params }: Route.ActionArgs) {
 
   if (intent === "update-manual-payment-amount") {
     const entries = Object.fromEntries(formData)
+    const id = entries.id as string
+    if (!id) return { success: false }
     const amount = Number(entries.amount)
-    if (isNaN(amount) || amount < 0) {
+    if (isNaN(amount) || amount <= 0) {
       return { success: false }
     }
     try {
-      await updatePaymentRequestAmount(entries.id as string, amount)
+      await updatePaymentRequestAmount(id, amount)
       return { success: true }
     } catch {
       return { success: false }

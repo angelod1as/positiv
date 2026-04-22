@@ -101,6 +101,16 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     paymentRequest ? String(Number(paymentRequest.amount)) : "",
   )
 
+  // Keep local state in sync with the loader — after revalidation
+  // (e.g. following a cancel/refund/resend), paymentRequest changes and
+  // the dropdown default + amount input should reflect the new row.
+  useEffect(() => {
+    setPaymentMode(paymentRequest?.payment_mode ?? "automatic")
+    setManualAmount(
+      paymentRequest ? String(Number(paymentRequest.amount)) : "",
+    )
+  }, [paymentRequest?.id, paymentRequest?.payment_mode, paymentRequest?.amount])
+
   const handleResendPaymentLink = () => {
     const formData = new FormData()
     formData.set("intent", "resend-payment-link")
