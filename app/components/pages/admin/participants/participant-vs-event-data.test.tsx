@@ -233,12 +233,12 @@ describe("ParticipantVsEventData", () => {
       asaas_customer_id: "cus_1",
       asaas_payment_id: "pay_1",
       invoice_url: "https://sandbox.asaas.com/i/pay_1",
-      expires_at: new Date(Date.now() + 86400000).toISOString(),
-      paid_at: new Date().toISOString(),
+      expires_at: "2099-12-31T00:00:00.000Z",
+      paid_at: "2026-01-01T00:00:00.000Z",
       refund_amount: null,
       refunded_at: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
     }
 
     it("renders Payment Status Section when paymentRequest exists", () => {
@@ -314,12 +314,12 @@ describe("ParticipantVsEventData", () => {
       asaas_customer_id: "cus_1",
       asaas_payment_id: "pay_1",
       invoice_url: "https://sandbox.asaas.com/i/pay_1",
-      expires_at: new Date(Date.now() + 86400000).toISOString(),
+      expires_at: "2099-12-31T00:00:00.000Z",
       paid_at: null,
       refund_amount: null,
       refunded_at: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
     }
 
     it("renders the custom amount checkbox", () => {
@@ -357,7 +357,7 @@ describe("ParticipantVsEventData", () => {
       render(<RouterProvider router={router} />)
 
       await user.click(screen.getByRole("checkbox", { name: /valor customizado/i }))
-      const input = screen.getByPlaceholderText("R$")
+      const input = screen.getByRole("spinbutton")
       await user.type(input, "150")
 
       await user.click(screen.getByRole("button", { name: /reenviar link/i }))
@@ -369,6 +369,22 @@ describe("ParticipantVsEventData", () => {
       const formData = mockFetcher.submit.mock.calls[0][0] as FormData
       expect(formData.get("intent")).toBe("resend-payment-link")
       expect(formData.get("custom_amount")).toBe("150")
+    })
+
+    it("hides the amount input when the checkbox is unchecked again", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(
+        { ...mockEventParticipant, application_status: "sent_payment_data" },
+        awaitingRequest,
+      )
+      render(<RouterProvider router={router} />)
+
+      const checkbox = screen.getByRole("checkbox", { name: /valor customizado/i })
+      await user.click(checkbox)
+      expect(screen.getByRole("spinbutton")).toBeInTheDocument()
+
+      await user.click(checkbox)
+      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument()
     })
   })
 })
