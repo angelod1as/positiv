@@ -19,6 +19,7 @@ export type ComposableFetcherData =
       success: boolean
       intent: string
       errors?: Record<"_global", string[]>
+      paymentSent?: boolean
     }
   | undefined
 

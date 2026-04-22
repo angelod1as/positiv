@@ -116,13 +116,6 @@ describe("ParticipantVsEventData", () => {
       expect(screen.getByLabelText(/pagamento/i)).toBeInTheDocument()
     })
 
-    it("should render has_paid checkbox", () => {
-      const router = createTestRouter(mockEventParticipant)
-      render(<RouterProvider router={router} />)
-
-      expect(screen.getByLabelText(/pago/i)).toBeInTheDocument()
-    })
-
     it("should render admin_general_notes textarea", () => {
       const router = createTestRouter(mockEventParticipant)
       render(<RouterProvider router={router} />)
@@ -151,22 +144,6 @@ describe("ParticipantVsEventData", () => {
       const formData = mockFetcher.submit.mock.calls[0][0] as FormData
       expect(formData.get("attendance_status")).toBe("attended")
       expect(formData.get("intent")).toBe("update-event-participant")
-    })
-
-    it("should auto-save when has_paid checkbox changes", async () => {
-      const user = userEvent.setup()
-      const router = createTestRouter(mockEventParticipant)
-      render(<RouterProvider router={router} />)
-
-      const checkbox = screen.getByLabelText(/pago/i)
-      await user.click(checkbox)
-
-      await waitFor(() => {
-        expect(mockFetcher.submit).toHaveBeenCalled()
-      })
-
-      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
-      expect(formData.get("has_paid")).toBe("true")
     })
 
     it("should auto-save admin_general_notes on blur", async () => {
