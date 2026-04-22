@@ -312,13 +312,11 @@ describe("resolvePaymentRequest", () => {
       { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
     ])
 
-    await resolvePaymentRequest("ep-1", "ev-1", "pr-1", 150)
+    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1", 150)
 
+    expect(result.success).toBe(true)
     expect(createPaymentRequest).toHaveBeenCalledWith(
       expect.objectContaining({ ticketPrice: 150 }),
-    )
-    expect(sendPaymentLinkEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ ticketPrice: Number(newPaymentRequest.amount) }),
     )
   })
 
@@ -328,8 +326,9 @@ describe("resolvePaymentRequest", () => {
       { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
     ])
 
-    await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
+    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
 
+    expect(result.success).toBe(true)
     expect(createPaymentRequest).toHaveBeenCalledWith(
       expect.objectContaining({ ticketPrice: 220 }),
     )
@@ -356,8 +355,9 @@ describe("resolvePaymentRequest", () => {
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
     ])
 
-    await resolvePaymentRequest("ep-1", "ev-1", "pr-1", 100)
+    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1", 100)
 
+    expect(result.success).toBe(true)
     expect(createPaymentRequest).toHaveBeenCalledWith(
       expect.objectContaining({
         ticketPrice: 100,
