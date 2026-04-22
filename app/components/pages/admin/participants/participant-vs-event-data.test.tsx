@@ -301,4 +301,74 @@ describe("ParticipantVsEventData", () => {
       expect(screen.getByRole("button", { name: /reenviar link/i })).toBeInTheDocument()
     })
   })
+
+  describe("custom amount flow", () => {
+    const awaitingRequest: PaymentRequestRow = {
+      id: "pr-1",
+      event_participant_id: "123",
+      amount: 220,
+      status: "awaiting_payment",
+      payment_mode: "automatic",
+      payment_method: "PIX",
+      installment_count: 1,
+      asaas_customer_id: "cus_1",
+      asaas_payment_id: "pay_1",
+      invoice_url: "https://sandbox.asaas.com/i/pay_1",
+      expires_at: new Date(Date.now() + 86400000).toISOString(),
+      paid_at: null,
+      refund_amount: null,
+      refunded_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    it("renders the custom amount checkbox", () => {
+      const router = createTestRouter(mockEventParticipant, awaitingRequest)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByRole("checkbox", { name: /valor customizado/i })).toBeInTheDocument()
+    })
+
+    it("does NOT send custom_amount on resend when checkbox is off", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(
+        { ...mockEventParticipant, application_status: "sent_payment_data" },
+        awaitingRequest,
+      )
+      render(<RouterProvider router={router} />)
+
+      await user.click(screen.getByRole("button", { name: /reenviar link/i }))
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("resend-payment-link")
+      expect(formData.get("custom_amount")).toBeNull()
+    })
+
+    it("sends custom_amount on resend when checkbox is on and value is entered", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(
+        { ...mockEventParticipant, application_status: "sent_payment_data" },
+        awaitingRequest,
+      )
+      render(<RouterProvider router={router} />)
+
+      await user.click(screen.getByRole("checkbox", { name: /valor customizado/i }))
+      const input = screen.getByPlaceholderText("R$")
+      await user.type(input, "150")
+
+      await user.click(screen.getByRole("button", { name: /reenviar link/i }))
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("resend-payment-link")
+      expect(formData.get("custom_amount")).toBe("150")
+    })
+  })
 })

@@ -162,6 +162,27 @@ describe("handlePaymentStatusChange", () => {
     expect(result.triggered).toBe(true)
     if (result.triggered) expect(result.success).toBe(false)
   })
+
+  it("forwards customAmount to resolvePaymentRequest", async () => {
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
+    ])
+
+    const result = await handlePaymentStatusChange({
+      applicationStatus: "sent_payment_data",
+      eventParticipantId: "ep-1",
+      eventId: "ev-1",
+      profileId: "pr-1",
+      customAmount: 75,
+    })
+
+    expect(result.triggered).toBe(true)
+    if (result.triggered) expect(result.success).toBe(true)
+    expect(createPaymentRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ ticketPrice: 75 }),
+    )
+  })
 })
 
 describe("resolvePaymentRequest", () => {
@@ -282,6 +303,67 @@ describe("resolvePaymentRequest", () => {
     const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1", undefined, "manual")
 
     expect(result.success).toBe(true)
+    expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+  })
+
+  it("uses customAmount to override event.ticket_price", async () => {
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
+    ])
+
+    await resolvePaymentRequest("ep-1", "ev-1", "pr-1", 150)
+
+    expect(createPaymentRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ ticketPrice: 150 }),
+    )
+    expect(sendPaymentLinkEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ ticketPrice: Number(newPaymentRequest.amount) }),
+    )
+  })
+
+  it("falls back to event.ticket_price when customAmount is not provided", async () => {
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
+    ])
+
+    await resolvePaymentRequest("ep-1", "ev-1", "pr-1")
+
+    expect(createPaymentRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ ticketPrice: 220 }),
+    )
+  })
+
+  it("accepts customAmount even when event has no ticket_price (staff discount)", async () => {
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Staff Event", ticket_price: null },
+      { id: "pr-1", email: "joao@test.com", full_name: "João", cpf: "12345678900" },
+    ])
+
+    const result = await resolvePaymentRequest("ep-1", "ev-1", "pr-1", 50)
+
+    expect(result.success).toBe(true)
+    expect(createPaymentRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ ticketPrice: 50 }),
+    )
+  })
+
+  it("customAmount works in offline (manual) mode", async () => {
+    mockEnv.paymentSystemOnline = false
+
+    mockKyselyDb._setResults([
+      { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
+    ])
+
+    await resolvePaymentRequest("ep-1", "ev-1", "pr-1", 100)
+
+    expect(createPaymentRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ticketPrice: 100,
+        paymentMode: "manual",
+      }),
+    )
     expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
   })
 
