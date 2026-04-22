@@ -285,5 +285,20 @@ describe("ParticipantVsEventData", () => {
 
       expect(screen.queryByRole("button", { name: /reembolsar/i })).not.toBeInTheDocument()
     })
+
+    it("renders Reenviar link button when status is sent_payment_data and payment is pending automatic", () => {
+      const awaitingRequest: PaymentRequestRow = {
+        ...paidRequest,
+        status: "awaiting_payment",
+        paid_at: null,
+      }
+      const router = createTestRouter(
+        { ...mockEventParticipant, application_status: "sent_payment_data" },
+        awaitingRequest,
+      )
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByRole("button", { name: /reenviar link/i })).toBeInTheDocument()
+    })
   })
 })

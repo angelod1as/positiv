@@ -184,6 +184,9 @@ export async function action({ request, params }: Route.ActionArgs) {
       return { success: false }
     }
   }
+
+  // Unknown intent — fail closed so the caller gets a deterministic response.
+  return { success: false }
 }
 
 export async function loader({ params }: Route.LoaderArgs) {

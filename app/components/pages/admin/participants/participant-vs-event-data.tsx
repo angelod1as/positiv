@@ -2,6 +2,7 @@ import { type FC, useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { z } from "zod"
+import type { PaymentRequestRow } from "~/business/payment/payment-request.server"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import {
   AlertDialog,
@@ -36,7 +37,6 @@ import {
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import { useAutoSaveForm } from "~/lib/hooks/use-auto-save-form"
-import type { PaymentRequestRow } from "~/business/payment/payment-request.server"
 import type {
   ComposableFetcherData,
   EventParticipantWithEvent,
@@ -92,6 +92,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   const resendFetcher = useFetcher<ComposableFetcherData>()
   const cancelFetcher = useFetcher<ComposableFetcherData>()
   const manualFetcher = useFetcher<ComposableFetcherData>()
+  const refundFetcher = useFetcher<ComposableFetcherData>()
   const [useCustomAmount, setUseCustomAmount] = useState(false)
   const [customAmount, setCustomAmount] = useState("")
   const [paymentMode, setPaymentMode] = useState<string>(
@@ -120,8 +121,6 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     if (useCustomAmount && customAmount) formData.set("custom_amount", customAmount)
     resendFetcher.submit(formData, { method: "POST" })
   }
-
-  const refundFetcher = useFetcher<ComposableFetcherData>()
 
   const handleRefund = () => {
     const formData = new FormData()
@@ -189,6 +188,10 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
   useEffect(() => {
     if (resendFetcher.data?.paymentSent === true) {
       toast.success("Link de pagamento reenviado com sucesso")
+      // Clear the custom-amount inputs so a subsequent resend doesn't
+      // reuse stale values the admin didn't intend to send again.
+      setUseCustomAmount(false)
+      setCustomAmount("")
     }
     if (resendFetcher.data?.paymentSent === false) {
       toast.error("Erro ao reenviar link de pagamento. Tente novamente.", { duration: Infinity, closeButton: true })
@@ -305,6 +308,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                   <Checkbox
                     checked={useCustomAmount}
                     onChange={(e) => setUseCustomAmount(e.target.checked)}
+                    aria-label="Valor customizado"
                   />
                   <span className="text-sm text-muted-foreground">Valor customizado</span>
                   {useCustomAmount && (
