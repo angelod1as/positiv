@@ -351,6 +351,8 @@ describe("resolvePaymentRequest", () => {
   it("customAmount works in offline (manual) mode", async () => {
     mockEnv.paymentSystemOnline = false
 
+    // Offline path returns after createPaymentRequest — profile is never
+    // fetched, so no second _setResults entry is needed.
     mockKyselyDb._setResults([
       { id: "ev-1", title: "Positiv Regular", ticket_price: 220 },
     ])
