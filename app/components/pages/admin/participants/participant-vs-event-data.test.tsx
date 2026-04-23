@@ -386,5 +386,29 @@ describe("ParticipantVsEventData", () => {
       await user.click(checkbox)
       expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument()
     })
+
+    it("omits custom_amount on resend when the checkbox is unchecked after typing a value", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(
+        { ...mockEventParticipant, application_status: "sent_payment_data" },
+        awaitingRequest,
+      )
+      render(<RouterProvider router={router} />)
+
+      const checkbox = screen.getByRole("checkbox", { name: /valor customizado/i })
+      await user.click(checkbox)
+      await user.type(screen.getByRole("spinbutton"), "150")
+      await user.click(checkbox)
+
+      await user.click(screen.getByRole("button", { name: /reenviar link/i }))
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("resend-payment-link")
+      expect(formData.get("custom_amount")).toBeNull()
+    })
   })
 })
