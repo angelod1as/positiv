@@ -315,6 +315,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                     <Input
                       type="number"
                       placeholder="R$"
+                      aria-label="Valor customizado (em reais)"
                       value={customAmount}
                       onChange={(e) => setCustomAmount(e.target.value)}
                       className="w-28"

@@ -357,7 +357,7 @@ describe("ParticipantVsEventData", () => {
       render(<RouterProvider router={router} />)
 
       await user.click(screen.getByRole("checkbox", { name: /valor customizado/i }))
-      const input = screen.getByRole("spinbutton")
+      const input = screen.getByRole("spinbutton", { name: /valor customizado/i })
       await user.type(input, "150")
 
       await user.click(screen.getByRole("button", { name: /reenviar link/i }))
@@ -381,10 +381,10 @@ describe("ParticipantVsEventData", () => {
 
       const checkbox = screen.getByRole("checkbox", { name: /valor customizado/i })
       await user.click(checkbox)
-      expect(screen.getByRole("spinbutton")).toBeInTheDocument()
+      expect(screen.getByRole("spinbutton", { name: /valor customizado/i })).toBeInTheDocument()
 
       await user.click(checkbox)
-      expect(screen.queryByRole("spinbutton")).not.toBeInTheDocument()
+      expect(screen.queryByRole("spinbutton", { name: /valor customizado/i })).not.toBeInTheDocument()
     })
 
     it("omits custom_amount on resend when the checkbox is unchecked after typing a value", async () => {
@@ -397,7 +397,7 @@ describe("ParticipantVsEventData", () => {
 
       const checkbox = screen.getByRole("checkbox", { name: /valor customizado/i })
       await user.click(checkbox)
-      await user.type(screen.getByRole("spinbutton"), "150")
+      await user.type(screen.getByRole("spinbutton", { name: /valor customizado/i }), "150")
       await user.click(checkbox)
 
       await user.click(screen.getByRole("button", { name: /reenviar link/i }))
@@ -419,7 +419,7 @@ describe("ParticipantVsEventData", () => {
       render(<RouterProvider router={router} />)
 
       await user.click(screen.getByRole("checkbox", { name: /valor customizado/i }))
-      await user.type(screen.getByRole("spinbutton"), "180")
+      await user.type(screen.getByRole("spinbutton", { name: /valor customizado/i }), "180")
 
       const statusSelect = screen.getByLabelText(/status de inscrição/i)
       await user.click(statusSelect)
