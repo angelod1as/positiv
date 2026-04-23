@@ -410,5 +410,32 @@ describe("ParticipantVsEventData", () => {
       expect(formData.get("intent")).toBe("resend-payment-link")
       expect(formData.get("custom_amount")).toBeNull()
     })
+
+    it("sends custom_amount when auto-saving application_status change to sent_payment_data", async () => {
+      const user = userEvent.setup()
+      // Participant isn't yet in sent_payment_data — auto-save will fire
+      // when the admin changes the dropdown to that value.
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      await user.click(screen.getByRole("checkbox", { name: /valor customizado/i }))
+      await user.type(screen.getByRole("spinbutton"), "180")
+
+      const statusSelect = screen.getByLabelText(/status de inscrição/i)
+      await user.click(statusSelect)
+      const options = await screen.findAllByRole("option", {
+        name: /dados de pagto enviados/i,
+      })
+      await user.click(options[0])
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("update-event-participant")
+      expect(formData.get("application_status")).toBe("sent_payment_data")
+      expect(formData.get("custom_amount")).toBe("180")
+    })
   })
 })
