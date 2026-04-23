@@ -423,10 +423,10 @@ describe("ParticipantVsEventData", () => {
 
       const statusSelect = screen.getByLabelText(/status de inscrição/i)
       await user.click(statusSelect)
-      const options = await screen.findAllByRole("option", {
+      const option = await screen.findByRole("option", {
         name: /dados de pagto enviados/i,
       })
-      await user.click(options[0])
+      await user.click(option)
 
       await waitFor(() => {
         expect(mockFetcher.submit).toHaveBeenCalled()
