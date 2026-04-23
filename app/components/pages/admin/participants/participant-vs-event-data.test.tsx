@@ -438,4 +438,126 @@ describe("ParticipantVsEventData", () => {
       expect(formData.get("custom_amount")).toBe("180")
     })
   })
+
+  describe("manual payment flow", () => {
+    const pendingManualRequest: PaymentRequestRow = {
+      id: "pr-manual-1",
+      event_participant_id: "123",
+      amount: 220,
+      status: "pending",
+      payment_mode: "manual",
+      payment_method: null,
+      installment_count: null,
+      asaas_customer_id: null,
+      asaas_payment_id: null,
+      invoice_url: null,
+      expires_at: "2099-12-31T00:00:00.000Z",
+      paid_at: null,
+      refund_amount: null,
+      refunded_at: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    }
+
+    const paidManualRequest: PaymentRequestRow = {
+      ...pendingManualRequest,
+      status: "paid",
+      paid_at: "2026-01-02T00:00:00.000Z",
+    }
+
+    it('renders "Marcar como pago" when payment_mode=manual and status is pending', () => {
+      const router = createTestRouter(mockEventParticipant, pendingManualRequest)
+      render(<RouterProvider router={router} />)
+
+      expect(
+        screen.getByRole("button", { name: /marcar como pago/i }),
+      ).toBeInTheDocument()
+    })
+
+    it('does NOT render "Marcar como pago" for automatic payment mode', () => {
+      const pendingAutomatic: PaymentRequestRow = {
+        ...pendingManualRequest,
+        payment_mode: "automatic",
+      }
+      const router = createTestRouter(mockEventParticipant, pendingAutomatic)
+      render(<RouterProvider router={router} />)
+
+      expect(
+        screen.queryByRole("button", { name: /marcar como pago/i }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('renders "Marcar como reembolsado" only for paid manual payments', () => {
+      const router = createTestRouter(mockEventParticipant, paidManualRequest)
+      render(<RouterProvider router={router} />)
+
+      expect(
+        screen.getByRole("button", { name: /marcar como reembolsado/i }),
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole("button", { name: /marcar como pago/i }),
+      ).not.toBeInTheDocument()
+    })
+
+    it("submits mark-manual-payment-paid intent after the confirmation dialog", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(mockEventParticipant, pendingManualRequest)
+      render(<RouterProvider router={router} />)
+
+      await user.click(screen.getByRole("button", { name: /marcar como pago/i }))
+      await user.click(
+        await screen.findByRole("button", { name: /^confirmar pagamento$/i }),
+      )
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("mark-manual-payment-paid")
+      expect(formData.get("id")).toBe("123")
+    })
+
+    it("submits mark-manual-payment-refunded intent after the confirmation dialog", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(mockEventParticipant, paidManualRequest)
+      render(<RouterProvider router={router} />)
+
+      await user.click(
+        screen.getByRole("button", { name: /marcar como reembolsado/i }),
+      )
+      await user.click(
+        await screen.findByRole("button", { name: /^confirmar reembolso$/i }),
+      )
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("mark-manual-payment-refunded")
+      expect(formData.get("id")).toBe("123")
+    })
+
+    it("submits update-manual-payment-amount intent with the typed value", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(mockEventParticipant, pendingManualRequest)
+      render(<RouterProvider router={router} />)
+
+      const input = screen.getByLabelText("Valor:") as HTMLInputElement
+      await user.clear(input)
+      await user.type(input, "175")
+
+      await user.click(screen.getByRole("button", { name: /salvar valor/i }))
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("update-manual-payment-amount")
+      expect(formData.get("id")).toBe("123")
+      expect(formData.get("amount")).toBe("175")
+    })
+  })
 })
