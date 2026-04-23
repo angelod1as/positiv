@@ -233,12 +233,12 @@ describe("ParticipantVsEventData", () => {
       asaas_customer_id: "cus_1",
       asaas_payment_id: "pay_1",
       invoice_url: "https://sandbox.asaas.com/i/pay_1",
-      expires_at: new Date(Date.now() + 86400000).toISOString(),
-      paid_at: new Date().toISOString(),
+      expires_at: "2099-12-31T00:00:00.000Z",
+      paid_at: "2026-01-01T00:00:00.000Z",
       refund_amount: null,
       refunded_at: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
     }
 
     it("renders Payment Status Section when paymentRequest exists", () => {
@@ -299,6 +299,143 @@ describe("ParticipantVsEventData", () => {
       render(<RouterProvider router={router} />)
 
       expect(screen.getByRole("button", { name: /reenviar link/i })).toBeInTheDocument()
+    })
+  })
+
+  describe("custom amount flow", () => {
+    const awaitingRequest: PaymentRequestRow = {
+      id: "pr-1",
+      event_participant_id: "123",
+      amount: 220,
+      status: "awaiting_payment",
+      payment_mode: "automatic",
+      payment_method: "PIX",
+      installment_count: 1,
+      asaas_customer_id: "cus_1",
+      asaas_payment_id: "pay_1",
+      invoice_url: "https://sandbox.asaas.com/i/pay_1",
+      expires_at: "2099-12-31T00:00:00.000Z",
+      paid_at: null,
+      refund_amount: null,
+      refunded_at: null,
+      created_at: "2026-01-01T00:00:00.000Z",
+      updated_at: "2026-01-01T00:00:00.000Z",
+    }
+
+    it("renders the custom amount checkbox", () => {
+      const router = createTestRouter(mockEventParticipant, awaitingRequest)
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByRole("checkbox", { name: /valor customizado/i })).toBeInTheDocument()
+    })
+
+    it("does NOT send custom_amount on resend when checkbox is off", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(
+        { ...mockEventParticipant, application_status: "sent_payment_data" },
+        awaitingRequest,
+      )
+      render(<RouterProvider router={router} />)
+
+      await user.click(screen.getByRole("button", { name: /reenviar link/i }))
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("resend-payment-link")
+      expect(formData.get("custom_amount")).toBeNull()
+    })
+
+    it("sends custom_amount on resend when checkbox is on and value is entered", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(
+        { ...mockEventParticipant, application_status: "sent_payment_data" },
+        awaitingRequest,
+      )
+      render(<RouterProvider router={router} />)
+
+      await user.click(screen.getByRole("checkbox", { name: /valor customizado/i }))
+      const input = screen.getByRole("spinbutton", { name: /valor customizado/i })
+      await user.type(input, "150")
+
+      await user.click(screen.getByRole("button", { name: /reenviar link/i }))
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("resend-payment-link")
+      expect(formData.get("custom_amount")).toBe("150")
+    })
+
+    it("hides the amount input when the checkbox is unchecked again", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(
+        { ...mockEventParticipant, application_status: "sent_payment_data" },
+        awaitingRequest,
+      )
+      render(<RouterProvider router={router} />)
+
+      const checkbox = screen.getByRole("checkbox", { name: /valor customizado/i })
+      await user.click(checkbox)
+      expect(screen.getByRole("spinbutton", { name: /valor customizado/i })).toBeInTheDocument()
+
+      await user.click(checkbox)
+      expect(screen.queryByRole("spinbutton", { name: /valor customizado/i })).not.toBeInTheDocument()
+    })
+
+    it("omits custom_amount on resend when the checkbox is unchecked after typing a value", async () => {
+      const user = userEvent.setup()
+      const router = createTestRouter(
+        { ...mockEventParticipant, application_status: "sent_payment_data" },
+        awaitingRequest,
+      )
+      render(<RouterProvider router={router} />)
+
+      const checkbox = screen.getByRole("checkbox", { name: /valor customizado/i })
+      await user.click(checkbox)
+      await user.type(screen.getByRole("spinbutton", { name: /valor customizado/i }), "150")
+      await user.click(checkbox)
+
+      await user.click(screen.getByRole("button", { name: /reenviar link/i }))
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("resend-payment-link")
+      expect(formData.get("custom_amount")).toBeNull()
+    })
+
+    it("sends custom_amount when auto-saving application_status change to sent_payment_data", async () => {
+      const user = userEvent.setup()
+      // Participant isn't yet in sent_payment_data — auto-save will fire
+      // when the admin changes the dropdown to that value.
+      const router = createTestRouter(mockEventParticipant)
+      render(<RouterProvider router={router} />)
+
+      await user.click(screen.getByRole("checkbox", { name: /valor customizado/i }))
+      await user.type(screen.getByRole("spinbutton", { name: /valor customizado/i }), "180")
+
+      const statusSelect = screen.getByLabelText(/status de inscrição/i)
+      await user.click(statusSelect)
+      const option = await screen.findByRole("option", {
+        name: /dados de pagto enviados/i,
+      })
+      await user.click(option)
+
+      await waitFor(() => {
+        expect(mockFetcher.submit).toHaveBeenCalled()
+      })
+
+      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
+      expect(formData.get("intent")).toBe("update-event-participant")
+      expect(formData.get("application_status")).toBe("sent_payment_data")
+      expect(formData.get("custom_amount")).toBe("180")
     })
   })
 })
