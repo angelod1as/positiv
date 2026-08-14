@@ -1,7 +1,8 @@
 import { Badge } from "~/components/ui/badge"
+import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { cn } from "~/lib/utils"
-import type { Event } from "~/types/database/entities.types"
+import type { Event, EventStatus } from "~/types/database/entities.types"
 
 export const VeteranBadge = ({
   eventCount,
@@ -75,3 +76,15 @@ export const BDSMBadge = ({
 }: {
   event_type: Event["event_type"] | null
 }) => (event_type === "bdsm" ? <Badge variant="bdsm">Edição BDSM</Badge> : null)
+
+export const EventStatusBadge = ({
+  event_status,
+}: {
+  event_status: EventStatus
+}) => {
+  const { isOpen, isScheduled } = checkEventStatus(event_status)
+
+  if (isOpen) return <Badge variant="default">Inscrições abertas</Badge>
+  if (isScheduled) return <Badge variant="secondary">Em breve</Badge>
+  return <Badge variant="outline">Inscrições encerradas</Badge>
+}
