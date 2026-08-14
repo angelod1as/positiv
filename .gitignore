@@ -33,3 +33,5 @@ playwright/.auth/*
 e2e/.auth/
 .vercel/
 .vscode/
+# Superpowers brainstorm artifacts
+.superpowers/
