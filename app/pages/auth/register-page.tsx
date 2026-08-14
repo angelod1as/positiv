@@ -52,7 +52,7 @@ const RegisterPage = ({}: Route.ComponentProps) => {
     <div className={cn("flex flex-col gap-6")}>
       <Card className="my-12">
         <CardHeader>
-          <CardTitle className="text-2xl">Inscreva-se</CardTitle>
+          <CardTitle className="text-2xl">Criar conta</CardTitle>
           <CardDescription>
             <p>
               Depois de se cadastrar, uma mensagem de confirmação vai chegar em

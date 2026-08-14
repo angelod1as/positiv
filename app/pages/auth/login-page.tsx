@@ -89,7 +89,7 @@ const LoginPage = ({}: Route.ComponentProps) => {
             <p>Entre na sua conta com seu e-mail</p>
             <p className="text-sm">
               <b>
-                Não tem uma conta? <Link to={LOGON}>Inscreva-se</Link>
+                Não tem uma conta? <Link to={LOGON}>Criar conta</Link>
               </b>
             </p>
           </CardDescription>

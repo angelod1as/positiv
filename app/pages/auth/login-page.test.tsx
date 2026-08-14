@@ -196,7 +196,7 @@ describe("Login Page Component", () => {
     const router = createTestRouter()
     render(<RouterProvider router={router} />)
 
-    const registerLink = screen.getByRole("link", { name: /Inscreva-se/i })
+    const registerLink = screen.getByRole("link", { name: /Criar conta/i })
     expect(registerLink).toBeInTheDocument()
     expect(registerLink).toHaveAttribute("href", "/registrar")
   })
