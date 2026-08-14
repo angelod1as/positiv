@@ -479,7 +479,7 @@ Order of operations:
 
 When making changes to the application that affect users (new features, bug fixes, UI changes), ALWAYS update the news dialog:
 
-1. **Location**: `app/components/organisms/news-dialog/news.tsx`
+1. **Location**: `DEFAULT_NEWS_ITEMS` and `NEWS_VERSION` live in `app/components/organisms/news-dialog/news-utils.ts`; the `NewsItem` interface and the dialog itself live in `app/components/organisms/news-dialog/news.tsx`
 2. **Update Process**:
    - Add new items to the `DEFAULT_NEWS_ITEMS` array
    - REMOVE items older than 2 weeks (check `createdAt` dates)
@@ -496,7 +496,7 @@ When making changes to the application that affect users (new features, bug fixe
    - `isAdmin`: Boolean (true for admin-only news)
    - `createdAt`: Date object
    - `isActive`: Boolean (usually true)
-5. **IMPORTANT**: ALWAYS update `NEWS_VERSION` in `app/lib/helpers/constants.ts` to current timestamp (use `Date.now()`) whenever you add or modify news items. This ensures the dialog appears for users who haven't seen the new updates.
+5. **IMPORTANT**: ALWAYS update `NEWS_VERSION` in `app/components/organisms/news-dialog/news-utils.ts` to current timestamp (use `Date.now()`) whenever you add or modify news items. This ensures the dialog appears for users who haven't seen the new updates.
 
 ## GitHub Workflow
 
