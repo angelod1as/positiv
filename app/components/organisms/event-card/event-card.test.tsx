@@ -83,4 +83,20 @@ describe("EventCard", () => {
 
     expect(screen.queryByText("Edição BDSM")).not.toBeInTheDocument()
   })
+
+  it("shows the registration status of an open event", () => {
+    render(<EventCard event={mockEvent} data-testid="test-card" />)
+
+    expect(screen.getByText("Inscrições abertas")).toBeInTheDocument()
+  })
+
+  it("shows the registration status of a closed event", () => {
+    const closedEvent = {
+      ...mockEvent,
+      event_status: "Registration Closed" as const,
+    }
+    render(<EventCard event={closedEvent} data-testid="test-card" />)
+
+    expect(screen.getByText("Inscrições encerradas")).toBeInTheDocument()
+  })
 })

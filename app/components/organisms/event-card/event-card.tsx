@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 
-import { BDSMBadge } from "~/components/atoms/badges/badges"
+import { BDSMBadge, EventStatusBadge } from "~/components/atoms/badges/badges"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calendar-link"
 import type { Event } from "~types/database/entities.types"
@@ -65,7 +65,10 @@ export const EventCard: FC<EventCardProps> = ({
               <DataPair pair={["Valor", `R$ ${ticket_price}`]} />
             )}
             {location && <DataPair pair={["Local", location]} />}
-            <BDSMBadge event_type={event_type} />
+            <div className="flex flex-wrap gap-2 mt-2">
+              <EventStatusBadge event_status={event_status} />
+              <BDSMBadge event_type={event_type} />
+            </div>
           </div>
         </div>
       </CardContent>
