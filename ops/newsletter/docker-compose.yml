@@ -1,0 +1,91 @@
+# All LISTMONK_* env variables also support the LISTMONK_*_FILE pattern for loading secrets from files with Docker secrets and Podman
+# eg: LISTMONK_ADMIN_USER -> LISTMONK_ADMIN_USER_FILE=/path/to/file_with_value
+
+x-db-credentials: &db-credentials
+  POSTGRES_USER: &db-user ${POSTGRES_USER}
+  POSTGRES_PASSWORD: &db-password ${POSTGRES_PASSWORD}
+  POSTGRES_DB: &db-name ${POSTGRES_DB}
+
+services:
+  # listmonk app
+  app:
+    image: listmonk/listmonk:latest
+    # Note: container_name removed for Coolify compatibility (Coolify manages container names)
+    restart: unless-stopped
+    # Coolify handle ports
+    # ports:
+    #   - "9000:9000" # To change the externally exposed port, change to: $custom_port:9000
+    # Coolify needs exposed port
+    expose:
+      - "9000"
+    networks:
+      - coolify  # Required for Traefik proxy to reach the app
+    hostname: newsletter.positivparty.com # Recommend using FQDN for hostname
+    depends_on:
+      - db
+    command:
+      [
+        sh,
+        -c,
+        "./listmonk --install --idempotent --yes --config '' && ./listmonk --upgrade --yes --config '' && ./listmonk --config ''",
+      ]
+      # --config (file) param is set to empty so that listmonk only uses the env vars (below) for config.
+      # --install --idempotent ensures that DB installation happens only once on an empty DB, on the first ever start.
+      # --upgrade automatically runs any DB migrations when a new image is pulled.
+
+    environment: # The same params as in config.toml are passed as env vars here.
+      LISTMONK_app__address: 0.0.0.0:9000
+      LISTMONK_db__user: *db-user
+      LISTMONK_db__password: *db-password
+      LISTMONK_db__database: *db-name
+      LISTMONK_db__host: db  # Use service name, not container_name (Coolify compatibility)
+      LISTMONK_db__port: 5432
+      LISTMONK_db__ssl_mode: disable
+      LISTMONK_db__max_open: 25
+      LISTMONK_db__max_idle: 25
+      LISTMONK_db__max_lifetime: 300s
+      TZ: Etc/UTC
+      LISTMONK_ADMIN_USER: ${LISTMONK_ADMIN_USER:-} # If these (optional) are set during the first `docker compose up`, then the Super Admin user is automatically created.
+      LISTMONK_ADMIN_PASSWORD: ${LISTMONK_ADMIN_PASSWORD:-} # Otherwise, the user can be setup on the web app after the first visit to http://localhost:9000
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9000 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    volumes:
+      - ./uploads:/listmonk/uploads:rw # Mount an uploads directory on the host to /listmonk/uploads inside the container.
+        # To use this, change directory path in Admin -> Settings -> Media to /listmonk/uploads
+
+  # Postgres database
+  db:
+    image: postgres:17-alpine
+    # Note: container_name removed for Coolify compatibility (Coolify manages container names)
+    restart: unless-stopped
+    # Coolify needs exposed port
+    # ports:
+    #   - "127.0.0.1:5432:5432" # Only bind on the local interface. To connect to Postgres externally, change this to 0.0.0.0
+    expose:
+      - "5432"
+    networks:
+      - coolify
+    environment:
+      <<: *db-credentials
+    healthcheck:
+      # Fix: specify database name to avoid "database positiv does not exist" error
+      # pg_isready defaults to database name matching username if -d not specified
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    volumes:
+      - type: volume
+        source: listmonk-data
+        target: /var/lib/postgresql/data
+
+networks:
+  coolify:
+    external: true  # Coolify's network that Traefik proxy uses
+
+volumes:
+  listmonk-data:

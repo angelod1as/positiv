@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "supabase-production": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=uxonplqeskiwlsyvtixm"
+    },
+    "supabase-local": {
+      "type": "http",
+      "url": "http://localhost:54321/mcp"
+    }
+  }
+}

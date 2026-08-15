@@ -2,40 +2,88 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Working with Git Worktrees
+Tasks are often written in Portuguese. Everything you produce is in English —
+branch names, commit messages, comments, PR descriptions. The one exception is
+user- or admin-facing copy in the UI (the news dialog, for example), which is
+Brazilian Portuguese.
 
-**IMPORTANT**: Always use git worktrees for feature development to avoid conflicts and maintain clean workspace separation.
+## Non-Negotiable Rules
 
-### Creating a New Feature Worktree
+1. **NEVER `@ts-ignore`** — fix the type error properly
+2. **NEVER skip tests**
+3. **NEVER bypass pre-push hooks**
+4. **NEVER** write off a failing test as "unrelated, let's not fix it"
+5. **NEVER use barrel exports** (`index.ts` files that only re-export)
+6. Use the Context7 MCP for library/API documentation without being asked
+7. To reset the database: `supabase db reset` — no `--local` flag
+
+A PR merges only with tests and lint 100% green. If a test fails, fix it.
+
+## Repository Layout
+
+This repository uses a bare checkout with every worktree — including `main` —
+living under `wt/`:
+
+```
+positiv/
+├── .bare/              # Bare repository: all git objects, no working tree
+├── .git                # A file, not a directory: "gitdir: ./.bare"
+└── wt/
+    ├── main/           # main is a worktree like any other
+    ├── pos-483-form-runtime-prototype/
+    └── <one per task>/
+```
+
+Because `.bare/` holds the objects, worktree commands work from inside any
+worktree — there is no parent directory to return to first.
+
+Two supporting projects live in-tree rather than as separate repositories:
+
+- `ops/newsletter/` — Docker Compose stack for the self-hosted Listmonk
+  newsletter (deployed via Coolify). Copy `.env.example` to `.env` to run it.
+- `.claude/` — shared Claude Code settings and the `worktree-management` skill
+
+### Working with Worktrees
 
 ```bash
-# Create a new worktree for your feature
-git worktree add ../worktrees/feature-name feature/your-feature-name
+# From any worktree — create a new one
+git worktree add ../<branch-name> <branch-name>
 
-# Switch to the new worktree
-cd ../worktrees/feature-name
-
-# Copy environment variables from main worktree
-cp ../positiv/.env .env
-
-# Install dependencies
+cd ../<branch-name>
+cp ../main/.env .env      # env files are not versioned
 pnpm install
 ```
 
-### Worktree Commands
+- `git worktree list` — list all worktrees
+- `git worktree remove ../<name>` — remove one after its PR merges
 
-- `git worktree add ../worktrees/<name> <branch>` - Create new worktree
-- `git worktree list` - List all worktrees
-- `git worktree remove ../worktrees/<name>` - Remove worktree
-- `cd ../worktrees/<name>` - Switch to worktree
+**Best practices**
 
-### Best Practices
-
-1. Create a new worktree for each feature/bug fix
+1. One worktree per feature or bugfix
 2. Name worktrees descriptively but concisely
 3. Always run `pnpm install` after creating a worktree
-4. Remove worktrees after merging PRs with `git worktree remove ../worktrees/<name>`
-5. When a worktree is removed, `git pull` from the main `positiv/` folder
+4. Fast-forward `wt/main` before creating a worktree and after removing one
+
+## Claude Code Settings
+
+Two files, different lifecycles. Getting this wrong is how database
+credentials once ended up committed.
+
+| file | versioned | scope |
+|---|---|---|
+| `.claude/settings.json` | **yes** | shared: project permissions, enabled MCP servers |
+| `.claude/settings.local.json` | **no** — gitignored | per-machine: your own approvals and paths |
+| `~/.claude/settings.json` | n/a | your user-level config, all projects |
+| `.mcp.json` | **yes** | declares MCP servers; consumers opt in via `enabledMcpjsonServers` |
+
+Precedence, strongest first: managed enterprise settings → CLI flags →
+`settings.local.json` → `settings.json` → `~/.claude/settings.json`.
+
+**This repository is public.** When Claude Code records an approved command it
+stores the command *verbatim* — so approving `SECRET=value some-command` writes
+that secret into `settings.local.json`. Never pass a credential inline on a
+command line; use an env file or a secret manager. `settings.json` carries deny
+rules for the common cases, but they are a backstop, not a substitute.
 
 ## Essential Commands
 
@@ -377,6 +425,26 @@ describe("Database Function - Integration Tests", () => {
   })
 })
 ```
+
+## Mandatory Workflow
+
+Before any work:
+
+1. **Create a worktree.** Never work directly in `wt/main`. Every task gets its own.
+2. **Plan first.** Write a detailed plan in baby steps and submit it for approval.
+   Do not start implementing without explicit approval.
+3. **Never open a PR without approval.** When the work is done, ask before creating it.
+
+Order of operations:
+
+1. Fetch and fast-forward `wt/main`
+2. Create a worktree for the task
+3. Read this file
+4. Write a detailed plan — baby steps
+5. **Wait for approval**
+6. Implement following TDD (Red-Green-Refactor)
+7. Run all tests and lint
+8. **Ask before opening the PR**
 
 ## Definition of Done
 

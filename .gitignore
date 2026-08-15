@@ -8,6 +8,11 @@
 /dump/
 *.pem
 
+# Claude Code — settings.json is shared and versioned; the .local variant is
+# per-machine and must never be committed (it records approved commands verbatim,
+# which is how credentials have leaked into this file in the past).
+.claude/settings.local.json
+
 # Apple
 .DS_Store
 /node_modules/
