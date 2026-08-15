@@ -45,27 +45,13 @@ Templates are used automatically by the worktree-management skill when you say:
 - "Plan POS-XXX" (generates plan-full.md)
 - Future: Support for specifying template type
 
-## Testing
-
-Template validation tests are in `__tests__/templates.test.ts`:
-- Verifies all template files exist
-- Checks markdown structure
-- Validates placeholder syntax
-- Ensures delete reminders are present
-
-Run tests:
-```bash
-pnpm test templates.test.ts
-```
-
 ## Maintenance
 
 When updating templates:
 1. Preserve placeholder syntax: `{name}` not `${name}` or `{{name}}`
 2. Keep "DELETE THIS PLAN" reminder in checklist
 3. Follow existing markdown structure
-4. Update tests if adding/removing sections
-5. Keep templates concise but comprehensive
+4. Keep templates concise but comprehensive
 
 ## Plan Lifecycle
 
