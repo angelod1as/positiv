@@ -1,6 +1,7 @@
-onlyBuiltDependencies:
-  - '@tailwindcss/oxide'
-  - '@vercel/speed-insights'
-  - esbuild
-  - puppeteer
-  - supabase
+allowBuilds:
+  '@tailwindcss/oxide': true
+  '@vercel/speed-insights': true
+  core-js: false
+  esbuild: true
+  puppeteer: true
+  supabase: true
