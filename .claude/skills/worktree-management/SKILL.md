@@ -92,7 +92,7 @@ directory to return to first.
    ```
 
 2. **Fetch Linear Task Details** using Linear MCP:
-   - Use `mcp__linear-server-pos__get_issue` with task ID (extract number from "POS-XXX")
+   - Use `mcp__linear-server__get_issue` with task ID (extract number from "POS-XXX")
    - Team ID for Positiv: `20a312f9-eb0b-42c0-b61d-6212ca72d7ef`
    - Extract: title, description, labels, assignee
 
@@ -173,7 +173,7 @@ directory to return to first.
 1. **Read CLAUDE.md Files** (same as Operation 1, step 1)
 
 2. **Fetch Linear Task Details**:
-   - Use `mcp__linear-server-pos__get_issue` with task ID
+   - Use `mcp__linear-server__get_issue` with task ID
    - Display full task details:
      ```
      Linear Task: POS-{number}
@@ -260,7 +260,7 @@ directory to return to first.
 8. **If User Approves** (triggered by "Approve plan for POS-XXX"):
    - Read the generated plan document
    - Extract summary for Linear comment (keep under 10K chars)
-   - Use `mcp__linear-server-pos__create_comment` with:
+   - Use `mcp__linear-server__create_comment` with:
      ```markdown
      📋 Implementation Plan Created & Approved
 
@@ -464,7 +464,7 @@ directory to return to first.
 3. **Extract Linear Task Info** (if applicable):
    - If branch name matches `pos-{number}-*`:
      - Extract task number
-     - Use `mcp__linear-server-pos__get_issue` to fetch current status
+     - Use `mcp__linear-server__get_issue` to fetch current status
      - Show: title, state, assignee
 
 4. **Display Output**:
@@ -662,7 +662,7 @@ directory to return to first.
    ```
 
    If yes:
-   - Use `mcp__linear-server-pos__update_issue` with `state: "Done"`
+   - Use `mcp__linear-server__update_issue` with `state: "Done"`
 
 7. **Confirmation Output**:
    ```
@@ -771,7 +771,7 @@ directory to return to first.
 ## Integration with Linear MCP
 
 ### Linear Server Configuration
-- Server: `linear-server-pos` (from MCP configuration)
+- Server: `linear-server` (from MCP configuration)
 - Team ID: `20a312f9-eb0b-42c0-b61d-6212ca72d7ef`
 - API Key: Configured in `.env` as `LINEAR_API_KEY`
 
@@ -779,20 +779,20 @@ directory to return to first.
 
 1. **Get Issue Details**:
    ```
-   Tool: mcp__linear-server-pos__get_issue
+   Tool: mcp__linear-server__get_issue
    Parameters: { issueId: "POS-314" } (extract number only, add "POS-" prefix)
    Returns: { id, title, description, state, assignee, labels, ... }
    ```
 
 2. **Update Issue State**:
    ```
-   Tool: mcp__linear-server-pos__update_issue
+   Tool: mcp__linear-server__update_issue
    Parameters: { id: "issue-id", state: "Done" }
    ```
 
 3. **List Issues** (for searching):
    ```
-   Tool: mcp__linear-server-pos__list_issues
+   Tool: mcp__linear-server__list_issues
    Parameters: { team: "team-id", query: "POS-314" }
    ```
 
