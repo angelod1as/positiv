@@ -1,8 +1,8 @@
 import winston from "winston"
-import { env } from "~/env.server"
+import { ENV } from "varlock/env"
 import { TelegramTransport } from "./telegram-transport.server"
 
-const isProduction = process.env.NODE_ENV === "production"
+const isProduction = ENV.NODE_ENV === "production"
 
 const consoleFormat = isProduction
   ? winston.format.combine(winston.format.timestamp(), winston.format.json())
@@ -16,10 +16,10 @@ const transports: winston.transport[] = [
 ]
 
 const {
-  telegramAlertsEnabled: telegramEnabled,
-  telegramBotToken: botToken,
-  telegramChatId: chatId,
-} = env()
+  TELEGRAM_ALERTS_ENABLED: telegramEnabled,
+  TELEGRAM_BOT_TOKEN: botToken,
+  TELEGRAM_CHAT_ID: chatId,
+} = ENV
 
 if (telegramEnabled && botToken && chatId) {
   transports.push(

@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { Event } from "~types/database/entities.types"
 
-vi.mock("~/env.server", () => ({
-  env: () => ({
-    listmonkApiUrl: "http://localhost:9000",
-    listmonkApiUsername: "test",
-    listmonkApiPassword: "test",
-  }),
+vi.mock("varlock/env", () => ({
+  ENV: {
+    LISTMONK_API_URL: "http://localhost:9000",
+    LISTMONK_API_USERNAME: "test",
+    LISTMONK_API_PASSWORD: "test",
+  },
 }))
 
 const mockFetch = vi.fn()

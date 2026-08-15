@@ -110,6 +110,17 @@ jobs:
       - name: Install Playwright Browsers
         run: pnpm exec playwright install chromium --with-deps
 
+      # Fail here, with a readable message, when a secret is missing or malformed
+      - name: Validate environment against .env.schema
+        run: pnpm env:check
+        env:
+          CI: true
+          VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
+          VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}
+          SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
+          COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
+
       # Run E2E tests against local Supabase
       - name: Run E2E tests
         run: pnpm test:e2e

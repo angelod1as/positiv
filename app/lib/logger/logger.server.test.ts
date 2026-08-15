@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type winston from "winston"
 
+const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
+vi.mock("varlock/env", () => ({ ENV }))
+
 describe("logger", () => {
   beforeEach(() => {
     vi.resetModules()
-    vi.unstubAllEnvs()
+    Object.keys(ENV).forEach((key) => (ENV[key] = undefined))
   })
 
   afterEach(() => {
@@ -36,9 +39,9 @@ describe("logger", () => {
   })
 
   it("adds Telegram transport when enabled with token and chatId", async () => {
-    vi.stubEnv("TELEGRAM_ALERTS_ENABLED", "true")
-    vi.stubEnv("TELEGRAM_BOT_TOKEN", "123:ABC")
-    vi.stubEnv("TELEGRAM_CHAT_ID", "-100123")
+    ENV.TELEGRAM_ALERTS_ENABLED = true
+    ENV.TELEGRAM_BOT_TOKEN = "123:ABC"
+    ENV.TELEGRAM_CHAT_ID = "-100123"
 
     const { logger } = await import("./logger.server")
     const hasTelegram = logger.transports.some(
@@ -48,8 +51,8 @@ describe("logger", () => {
   })
 
   it("does not add Telegram transport when enabled but missing token", async () => {
-    vi.stubEnv("TELEGRAM_ALERTS_ENABLED", "true")
-    vi.stubEnv("TELEGRAM_CHAT_ID", "-100123")
+    ENV.TELEGRAM_ALERTS_ENABLED = true
+    ENV.TELEGRAM_CHAT_ID = "-100123"
 
     const { logger } = await import("./logger.server")
     const hasTelegram = logger.transports.some(
@@ -59,8 +62,8 @@ describe("logger", () => {
   })
 
   it("does not add Telegram transport when enabled but missing chatId", async () => {
-    vi.stubEnv("TELEGRAM_ALERTS_ENABLED", "true")
-    vi.stubEnv("TELEGRAM_BOT_TOKEN", "123:ABC")
+    ENV.TELEGRAM_ALERTS_ENABLED = true
+    ENV.TELEGRAM_BOT_TOKEN = "123:ABC"
 
     const { logger } = await import("./logger.server")
     const hasTelegram = logger.transports.some(
@@ -70,9 +73,9 @@ describe("logger", () => {
   })
 
   it("sets Telegram transport to error level only", async () => {
-    vi.stubEnv("TELEGRAM_ALERTS_ENABLED", "true")
-    vi.stubEnv("TELEGRAM_BOT_TOKEN", "123:ABC")
-    vi.stubEnv("TELEGRAM_CHAT_ID", "-100123")
+    ENV.TELEGRAM_ALERTS_ENABLED = true
+    ENV.TELEGRAM_BOT_TOKEN = "123:ABC"
+    ENV.TELEGRAM_CHAT_ID = "-100123"
 
     const { logger } = await import("./logger.server")
     const telegram = logger.transports.find(

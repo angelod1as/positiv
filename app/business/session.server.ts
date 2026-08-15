@@ -1,5 +1,5 @@
 import { createCookie, createCookieSessionStorage } from "react-router"
-import { env } from "~/env.server"
+import { ENV } from "varlock/env"
 
 type RulesSessionData = {
   rulesCorrect: boolean
@@ -9,7 +9,7 @@ type SessionFlashData = {
   error: string
 }
 
-const { cookieSecret } = env()
+const { COOKIE_SECRET: cookieSecret } = ENV
 
 export const rulesSessionStorage = createCookieSessionStorage<
   RulesSessionData,
@@ -33,5 +33,5 @@ export const newsCookie = createCookie("show-news", {
 export const newsletterPreferenceCookie = createCookie("newsletter-preference", {
   httpOnly: true,
   sameSite: "lax",
-  secure: process.env.NODE_ENV === "production",
+  secure: ENV.NODE_ENV === "production",
 })

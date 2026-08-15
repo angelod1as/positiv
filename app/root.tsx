@@ -13,6 +13,7 @@ import {
 } from "react-router"
 import { getToast, redirectWithError, redirectWithSuccess } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
+import { ENV } from "varlock/env"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
@@ -241,14 +242,13 @@ export function Layout(props: { children: ReactNode }) {
         <meta name="color-scheme" content="only light" />
         <Meta />
         <Links />
-        {import.meta.env.VITE_UMAMI_WEBSITE_ID &&
-          import.meta.env.VITE_UMAMI_URL && (
-            <script
-              defer
-              src={`${import.meta.env.VITE_UMAMI_URL}/script.js`}
-              data-website-id={import.meta.env.VITE_UMAMI_WEBSITE_ID}
-            />
-          )}
+        {ENV.VITE_UMAMI_WEBSITE_ID && ENV.VITE_UMAMI_URL && (
+          <script
+            defer
+            src={`${ENV.VITE_UMAMI_URL}/script.js`}
+            data-website-id={ENV.VITE_UMAMI_WEBSITE_ID}
+          />
+        )}
       </head>
       <body className="h-screen flex flex-col">
         <TooltipProvider delayDuration={0}>

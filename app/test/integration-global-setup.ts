@@ -1,7 +1,5 @@
 import { Pool } from "pg"
 import type { PoolClient } from "pg"
-import dotenv from "dotenv"
-import path from "path"
 
 // PID-scoped suffix prevents backup table name collisions when two test processes run
 // concurrently against the same database (e.g. CI matrix jobs).
@@ -36,10 +34,6 @@ async function getColumnNames(client: PoolClient, table: string): Promise<string
 }
 
 export default async function setup() {
-  // dotenv.config() is called here because globalSetup runs in a separate Node process
-  // from the test workers and cannot rely on the dotenv.config() in integration-setup.ts.
-  dotenv.config({ path: path.resolve(process.cwd(), ".env") })
-
   const connectionString = process.env.SUPABASE_CONNECT_URL
   if (!connectionString) throw new Error("SUPABASE_CONNECT_URL is not set")
 

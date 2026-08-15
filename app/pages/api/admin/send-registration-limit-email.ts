@@ -1,4 +1,5 @@
 import { type ActionFunctionArgs } from "react-router"
+import { ENV } from "varlock/env"
 import { sendRegistrationLimitAdminMail } from "~/business/admin/send-registration-limit-admin-mail.server"
 import { getAdminEmails } from "~/business/admin/get-admin-emails.server"
 import { logger } from "~/lib/logger/logger.server"
@@ -6,7 +7,7 @@ import { db } from "~/lib/supabase/db.server"
 
 export async function action({ request }: ActionFunctionArgs) {
   try {
-    const internalJobSecret = process.env.INTERNAL_JOB_SECRET
+    const internalJobSecret = ENV.INTERNAL_JOB_SECRET
     const authHeader = request.headers.get("Authorization")
 
     if (!internalJobSecret || authHeader !== `Bearer ${internalJobSecret}`) {

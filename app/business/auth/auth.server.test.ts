@@ -3,8 +3,8 @@ import { logger } from "~/lib/logger/logger.server"
 import type { DBClient } from "~/types/utils/utils.types"
 import { getContext, registerUser } from "./auth.server"
 
-vi.mock("~/env.server", () => ({
-  env: vi.fn(() => ({ isProdInDev: "false" })),
+vi.mock("varlock/env", () => ({
+  ENV: { IS_PROD_IN_DEV: false },
 }))
 
 vi.mock("~/lib/supabase/server", () => ({

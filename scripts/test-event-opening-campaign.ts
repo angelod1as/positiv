@@ -1,4 +1,4 @@
-import "dotenv/config"
+import "varlock/auto-load"
 import { createEventOpeningCampaign } from "~/business/newsletter/create-event-opening-campaign.server"
 import { kyselyDb } from "~/kysely-db"
 import { LISTMONK_TEST_LIST_ID } from "~/lib/constants/constants"

@@ -1,5 +1,5 @@
 import { composable, type Composable } from "composable-functions"
-import "dotenv/config"
+import "varlock/auto-load"
 import { kyselyDb } from "../../app/kysely-db"
 
 /**

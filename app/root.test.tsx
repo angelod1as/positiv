@@ -26,11 +26,14 @@ vi.mock("~/components/ui/tooltip", () => ({
   ),
 }))
 
+const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
+vi.mock("varlock/env", () => ({ ENV }))
+
 describe("Layout", () => {
   describe("Umami Analytics Script", () => {
     it("should render Umami script when VITE_UMAMI_WEBSITE_ID is set", { timeout: 30000 }, async () => {
-      vi.stubEnv("VITE_UMAMI_WEBSITE_ID", "test-website-id-123")
-      vi.stubEnv("VITE_UMAMI_URL", "https://umami.example.com")
+      ENV.VITE_UMAMI_WEBSITE_ID = "test-website-id-123"
+      ENV.VITE_UMAMI_URL = "https://umami.example.com"
 
       vi.resetModules()
       const { Layout } = await import("./root")
@@ -53,8 +56,8 @@ describe("Layout", () => {
     })
 
     it("should not render Umami script when VITE_UMAMI_WEBSITE_ID is not set", { timeout: 15000 }, async () => {
-      vi.stubEnv("VITE_UMAMI_WEBSITE_ID", "")
-      vi.stubEnv("VITE_UMAMI_URL", "")
+      ENV.VITE_UMAMI_WEBSITE_ID = ""
+      ENV.VITE_UMAMI_URL = ""
 
       vi.resetModules()
       const { Layout } = await import("./root")

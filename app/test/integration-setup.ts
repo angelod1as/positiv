@@ -2,11 +2,6 @@ import { Kysely, PostgresDialect } from "kysely"
 import { Pool } from "pg"
 import type { Database } from "~/types/database/kysely.types"
 import { TestDataTracker, cleanupTestData } from "./db-test-utils"
-import dotenv from "dotenv"
-import path from "path"
-
-// Load environment variables for integration tests
-dotenv.config({ path: path.resolve(process.cwd(), ".env") })
 
 // Create a test-specific Kysely instance
 let testKysely: Kysely<Database> | null = null

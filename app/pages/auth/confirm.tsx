@@ -6,10 +6,11 @@ import {
 import { type EmailOtpType } from "@supabase/supabase-js"
 import { type LoaderFunctionArgs } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
+import { ENV } from "varlock/env"
 import paths from "~/lib/paths"
 import type { Database } from "~types/database/database.types"
 
-const { VITE_SUPABASE_URL = "", VITE_SUPABASE_ANON_KEY = "" } = import.meta.env
+const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = ENV
 
 const {
   auth: { LOGIN },

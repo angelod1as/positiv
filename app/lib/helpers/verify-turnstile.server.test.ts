@@ -1,17 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { verifyTurnstileToken } from "./verify-turnstile.server"
 
-describe("verifyTurnstileToken", () => {
-  let originalEnv: NodeJS.ProcessEnv
+const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
+vi.mock("varlock/env", () => ({ ENV }))
 
+describe("verifyTurnstileToken", () => {
   beforeEach(() => {
-    originalEnv = { ...process.env }
-    process.env.NODE_ENV = "test"
+    ENV.NODE_ENV = "test"
     vi.stubGlobal("fetch", vi.fn())
   })
 
   afterEach(() => {
-    process.env = originalEnv
     vi.restoreAllMocks()
   })
 

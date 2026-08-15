@@ -33,3 +33,4 @@ playwright/.auth/*
 e2e/.auth/
 .vercel/
 .vscode/
+!.env.schema

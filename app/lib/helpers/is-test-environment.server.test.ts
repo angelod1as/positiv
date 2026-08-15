@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { isTestEnvironment } from "./is-test-environment.server"
+
+const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
+vi.mock("varlock/env", () => ({ ENV }))
 
 describe("isTestEnvironment", () => {
   it("should return true for localhost IP (127.0.0.1)", () => {
@@ -13,32 +16,32 @@ describe("isTestEnvironment", () => {
   })
 
   it("should return true when NODE_ENV is test", () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = "test"
+    const originalEnv = ENV.NODE_ENV
+    ENV.NODE_ENV = "test"
 
     const result = isTestEnvironment()
     expect(result).toBe(true)
 
-    process.env.NODE_ENV = originalEnv
+    ENV.NODE_ENV = originalEnv
   })
 
   it("should return false for production IP", () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = "production"
+    const originalEnv = ENV.NODE_ENV
+    ENV.NODE_ENV = "production"
 
     const result = isTestEnvironment({ ip: "192.168.1.1" })
     expect(result).toBe(false)
 
-    process.env.NODE_ENV = originalEnv
+    ENV.NODE_ENV = originalEnv
   })
 
   it("should return false when no request and NODE_ENV is production", () => {
-    const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = "production"
+    const originalEnv = ENV.NODE_ENV
+    ENV.NODE_ENV = "production"
 
     const result = isTestEnvironment()
     expect(result).toBe(false)
 
-    process.env.NODE_ENV = originalEnv
+    ENV.NODE_ENV = originalEnv
   })
 })

@@ -3,10 +3,11 @@ import {
   parseCookieHeader,
   serializeCookieHeader,
 } from "@supabase/ssr"
+import { ENV } from "varlock/env"
 import type { Database } from "~types/database/database.types"
 import type { DBClient } from "~types/utils/utils.types"
 
-const { VITE_SUPABASE_URL = "", VITE_SUPABASE_ANON_KEY = "" } = import.meta.env
+const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = ENV
 
 export function createServerClient(request: Request): {
   supabase: DBClient
