@@ -58,6 +58,17 @@ Follow these guides in order for initial setup:
 - Coolify Dashboard: `http://YOUR_VPS_IP:8000`
 - Newsletter System: `https://newsletter.yoursite.com`
 
+### Running the Stack Outside Coolify
+
+`docker-compose.yml` attaches both services to the `coolify` network and declares
+it as `external: true`, because on the VPS that network is created and owned by
+Coolify's Traefik proxy. Compose never creates external networks, so a machine
+without Coolify needs it created once before the first `docker compose up`:
+
+```bash
+docker network create coolify
+```
+
 ### Useful Commands
 
 ```bash
