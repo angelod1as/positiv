@@ -52,7 +52,7 @@ Use this skill when the user:
 ## Project Structure
 
 ```
-/Users/angelodias/Documents/GIT/private/positiv/
+positiv/
 ├── .bare/                       # Bare repository — holds all git objects
 ├── .git                         # File containing "gitdir: ./.bare"
 └── wt/                          # Every worktree lives here, main included
@@ -69,6 +69,11 @@ Use this skill when the user:
 git objects live in `.bare/`, which has no working tree of its own. This means
 worktree commands can be run from inside any worktree — there is no "parent"
 directory to return to first.
+
+**Paths in this skill are relative.** Every worktree is a direct child of `wt/`,
+so from inside any one of them `../main` is the main worktree and
+`../{branch-name}` is a sibling. The absolute location of the checkout differs
+per machine and is never assumed.
 
 ## Core Operations
 
@@ -87,7 +92,7 @@ directory to return to first.
 
 1. **Pull Latest Changes**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    git pull origin main
    ```
 
@@ -108,7 +113,7 @@ directory to return to first.
 
 4. **Check for Existing Worktree/Branch**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    git worktree list | grep "pos-{task-number}"
    git branch -a | grep "pos-{task-number}"
    ```
@@ -116,16 +121,16 @@ directory to return to first.
 
 5. **Create Worktree**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    git worktree add ../{branch-name} {branch-name}
    ```
 
 6. **Setup Environment**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/{branch-name}
+   cd ../{branch-name}
 
    # Copy .env file
-   cp /Users/angelodias/Documents/GIT/private/positiv/wt/main/.env .env
+   cp ../main/.env .env
 
    # Install dependencies
    pnpm install
@@ -133,7 +138,7 @@ directory to return to first.
 
 7. **Verify Setup**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/{branch-name}
+   cd ../{branch-name}
    git status
    ls -la .env
    ls -la node_modules
@@ -141,14 +146,14 @@ directory to return to first.
 
 8. **Confirmation Output**:
    ```
-   ✓ Worktree created: /Users/angelodias/Documents/GIT/private/positiv/wt/{branch-name}
+   ✓ Worktree created: wt/{branch-name}
    ✓ Branch: {branch-name}
    ✓ Linear Task: POS-{number} - {title}
    ✓ Environment configured (.env copied)
    ✓ Dependencies installed (pnpm install complete)
 
    Next steps:
-   - cd /Users/angelodias/Documents/GIT/private/positiv/wt/{branch-name}
+   - cd ../{branch-name}
    - Read task description: {brief-summary}
    - Follow TDD: Red-Green-Refactor cycle
    - Run pnpm lint before committing
@@ -188,12 +193,12 @@ directory to return to first.
 
 3. **Check for Existing Worktree**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    git worktree list | grep "pos-{task-number}"
    ```
    - If worktree exists:
      ```
-     ✓ Worktree already exists: /Users/angelodias/Documents/GIT/private/positiv/wt/{branch-name}
+     ✓ Worktree already exists: wt/{branch-name}
 
      Switching to existing worktree...
      ```
@@ -205,7 +210,7 @@ directory to return to first.
 
 5. **Check for Existing Plan Document**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    ls -la docs/plans/pos-{task-number}-*.md
    ```
    - If plan exists:
@@ -242,7 +247,7 @@ directory to return to first.
 7. **Display Plan for Review**:
    ```
    ✓ Plan Generated: docs/plans/POS-{number}-{slug}.md
-   ✓ Worktree ready: /Users/angelodias/Documents/GIT/private/positiv/wt/{branch-name}
+   ✓ Worktree ready: wt/{branch-name}
 
    Plan Summary:
    - User Stories: {count}
@@ -318,7 +323,7 @@ directory to return to first.
 
 1. **Find Plan Document**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    find docs/plans -name "pos-{number}-*.md"
    ```
 
@@ -397,7 +402,7 @@ directory to return to first.
 
 4. **Pull Latest Changes**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    git pull origin main
    ```
 
@@ -409,7 +414,7 @@ directory to return to first.
 
 6. **Create Worktree**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    git worktree add ../{branch-name} {branch-name}
    ```
 
@@ -419,13 +424,13 @@ directory to return to first.
 
 9. **Confirmation Output**:
    ```
-   ✓ Worktree created: /Users/angelodias/Documents/GIT/private/positiv/wt/{branch-name}
+   ✓ Worktree created: wt/{branch-name}
    ✓ Branch: {branch-name}
    ✓ Environment configured (.env copied)
    ✓ Dependencies installed (pnpm install complete)
 
    Next steps:
-   - cd /Users/angelodias/Documents/GIT/private/positiv/wt/{branch-name}
+   - cd ../{branch-name}
    - Follow TDD: Red-Green-Refactor cycle
    - Run pnpm lint before committing
    ```
@@ -440,7 +445,7 @@ directory to return to first.
 
 1. **Get Worktree List**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    git worktree list
    ```
 
@@ -472,21 +477,21 @@ directory to return to first.
    Active Worktrees:
 
    1. pos-314-email-transacional-no-dia-da-abertura-do-grupo
-      Path: /Users/angelodias/Documents/GIT/private/positiv/wt/pos-314-email-transacional-no-dia-da-abertura-do-grupo
+      Path: wt/pos-314-email-transacional-no-dia-da-abertura-do-grupo
       Linear: POS-314 - Email transacional no dia da abertura do grupo [In Progress]
       Status: 3 files modified, 2 files staged
       Remote: Pushed to origin/pos-314-email-transacional-no-dia-da-abertura-do-grupo
       Last commit: feat(email): add transactional email template
 
    2. pos-357-auto-createdelete-lists
-      Path: /Users/angelodias/Documents/GIT/private/positiv/wt/pos-357-auto-createdelete-lists
+      Path: wt/pos-357-auto-createdelete-lists
       Linear: POS-357 - Auto create/delete lists [Done]
       Status: Clean, no uncommitted changes
       Remote: Pushed to origin/pos-357-auto-createdelete-lists
       Last commit: test: add list deletion tests
 
    3. feature/newsletter-update
-      Path: /Users/angelodias/Documents/GIT/private/positiv/wt/feature/newsletter-update
+      Path: wt/feature/newsletter-update
       Linear: N/A (non-Linear task)
       Status: 1 file modified
       Remote: Not pushed
@@ -528,7 +533,7 @@ directory to return to first.
    git rev-parse --abbrev-ref @{u} 2>/dev/null
 
    # Check if merged to main
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    git branch --merged main | grep {branch-name}
    ```
 
@@ -589,7 +594,7 @@ directory to return to first.
 
    a. **Remove Worktree**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
 
    # Try standard remove first
    git worktree remove ../{worktree-name}
@@ -611,7 +616,7 @@ directory to return to first.
 
    c. **Delete Local Branch**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
 
    # Try standard delete first
    git branch -d {branch-name}
@@ -622,14 +627,14 @@ directory to return to first.
 
    d. **Pull Latest Changes** (MANDATORY):
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    git checkout main
    git pull origin main
    ```
 
    e. **Check for Plan Document**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    find docs/plans -name "pos-{number}-*.md"
    ```
 
@@ -692,7 +697,7 @@ directory to return to first.
 
 1. **Scan for Plan Documents**:
    ```bash
-   cd /Users/angelodias/Documents/GIT/private/positiv/wt/main
+   cd ../main
    find docs/plans -name "pos-{number}-*.md"
    ```
 
@@ -812,7 +817,7 @@ directory to return to first.
 ```
 Worktree already exists for POS-314
 
-Path: /Users/angelodias/Documents/GIT/private/positiv/wt/pos-314-email-transacional
+Path: wt/pos-314-email-transacional
 Branch: pos-314-email-transacional
 Last commit: feat(email): add template
 Status: 2 files modified
@@ -932,5 +937,5 @@ The user's global CLAUDE.md defines shortcuts:
 - PR Template: `.github/pull_request_template.md`
 
 ### Examples of Existing Worktrees
-- `/Users/angelodias/Documents/GIT/private/positiv/wt/pos-314-email-transacional-no-dia-da-abertura-do-grupo`
-- `/Users/angelodias/Documents/GIT/private/positiv/wt/pos-357-auto-createdelete-lists`
+- `wt/pos-314-email-transacional-no-dia-da-abertura-do-grupo`
+- `wt/pos-357-auto-createdelete-lists`
