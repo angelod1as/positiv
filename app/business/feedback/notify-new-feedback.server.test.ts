@@ -24,7 +24,7 @@ const getSentMessage = (fetchMock: ReturnType<typeof vi.fn>) => {
 describe("notifyNewFeedback", () => {
   beforeEach(() => {
     vi.resetModules()
-    Object.keys(ENV).forEach((key) => delete ENV[key])
+    Object.keys(ENV).forEach((key) => (ENV[key] = undefined))
     ENV.TELEGRAM_ALERTS_ENABLED = true
     ENV.TELEGRAM_BOT_TOKEN = "bot-token"
     ENV.TELEGRAM_CHAT_ID = "chat-id"
@@ -84,7 +84,7 @@ describe("notifyNewFeedback", () => {
   it("should not send anything when the bot token is missing", async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal("fetch", fetchMock)
-    delete ENV.TELEGRAM_BOT_TOKEN
+    ENV.TELEGRAM_BOT_TOKEN = undefined
 
     const { notifyNewFeedback } = await import("./notify-new-feedback.server")
     await notifyNewFeedback(feedback)
@@ -95,7 +95,7 @@ describe("notifyNewFeedback", () => {
   it("should not send anything when the chat id is missing", async () => {
     const fetchMock = vi.fn()
     vi.stubGlobal("fetch", fetchMock)
-    delete ENV.TELEGRAM_CHAT_ID
+    ENV.TELEGRAM_CHAT_ID = undefined
 
     const { notifyNewFeedback } = await import("./notify-new-feedback.server")
     await notifyNewFeedback(feedback)
