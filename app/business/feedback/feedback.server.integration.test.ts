@@ -7,6 +7,7 @@ import {
   getAllFeedbacksWithVerification,
   getRecentFeedbacks,
   submitFeedback,
+  updateFeedbackStatus,
 } from "./feedback.server"
 import { createTestProfile } from "~/test/db-test-utils"
 
@@ -48,6 +49,22 @@ describe("Feedback Server - Integration Tests", () => {
       expect(feedbacks[0].has_participated).toBe("never")
       expect(feedbacks[0].feedback_text).toBe("Este é um feedback de teste.")
       expect(feedbacks[0].ip_address).toBe("192.168.1.1")
+      expect(feedbacks[0].status).toBe("new")
+    })
+
+    it("should return the inserted feedback", async () => {
+      const inserted = await submitFeedback(
+        {
+          hasParticipated: "never" as const,
+          feedbackText: "Feedback devolvido pelo insert.",
+          canContact: false,
+        },
+        "192.168.1.9",
+      )
+
+      expect(inserted.id).toBeDefined()
+      expect(inserted.feedback_text).toBe("Feedback devolvido pelo insert.")
+      expect(inserted.status).toBe("new")
     })
 
     it("should store feedback with optional fields as null", async () => {
@@ -135,10 +152,108 @@ describe("Feedback Server - Integration Tests", () => {
       if (!result.success) throw new Error("Expected success")
       expect(result.data).toHaveLength(2)
     })
+
+    it("should not return resolved feedbacks", async () => {
+      await kysely
+        .insertInto("feedbacks")
+        .values([
+          {
+            name: "Resolved",
+            feedback_text: "Already handled",
+            has_participated: "never",
+            ip_address: "1.1.1.1",
+            status: "resolved",
+          },
+          {
+            name: "In progress",
+            feedback_text: "Being handled",
+            has_participated: "never",
+            ip_address: "2.2.2.2",
+            status: "in_progress",
+          },
+          {
+            name: "New",
+            feedback_text: "Untouched",
+            has_participated: "never",
+            ip_address: "3.3.3.3",
+            status: "new",
+          },
+        ])
+        .execute()
+
+      const result = await getRecentFeedbacks(10)
+
+      expect(result.success).toBe(true)
+      if (!result.success) throw new Error("Expected success")
+      expect(result.data.map((feedback) => feedback.name).sort()).toEqual([
+        "In progress",
+        "New",
+      ])
+    })
+  })
+
+  describe("updateFeedbackStatus", () => {
+    it("should persist the new status", async () => {
+      const feedback = await kysely
+        .insertInto("feedbacks")
+        .values({
+          name: "To resolve",
+          feedback_text: "Feedback a resolver",
+          has_participated: "never",
+          ip_address: "1.1.1.1",
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow()
+
+      const result = await updateFeedbackStatus({
+        intent: "update-feedback-status",
+        id: feedback.id,
+        status: "resolved",
+      })
+
+      expect(result.success).toBe(true)
+
+      const updated = await kysely
+        .selectFrom("feedbacks")
+        .selectAll()
+        .where("id", "=", feedback.id)
+        .executeTakeFirst()
+
+      expect(updated?.status).toBe("resolved")
+    })
+
+    it("should reject an unknown status", async () => {
+      const feedback = await kysely
+        .insertInto("feedbacks")
+        .values({
+          name: "Untouched",
+          feedback_text: "Feedback intocado",
+          has_participated: "never",
+          ip_address: "1.1.1.1",
+        })
+        .returningAll()
+        .executeTakeFirstOrThrow()
+
+      const result = await updateFeedbackStatus({
+        intent: "update-feedback-status",
+        id: feedback.id,
+        status: "whatever",
+      })
+
+      expect(result.success).toBe(false)
+
+      const untouched = await kysely
+        .selectFrom("feedbacks")
+        .selectAll()
+        .where("id", "=", feedback.id)
+        .executeTakeFirst()
+
+      expect(untouched?.status).toBe("new")
+    })
   })
 
   describe("getAllFeedbacksWithVerification", () => {
-    it("should return all feedbacks with is_verified false when no matching profiles", async () => {
+    it("should return all feedbacks without a profile when none matches", async () => {
       await kysely
         .insertInto("feedbacks")
         .values({
@@ -155,10 +270,12 @@ describe("Feedback Server - Integration Tests", () => {
       expect(result.success).toBe(true)
       if (!result.success) throw new Error("Expected success")
       expect(result.data).toHaveLength(1)
-      expect(result.data[0].is_verified).toBe(false)
+      expect(result.data[0].profile_id).toBeNull()
+      expect(result.data[0].social_name).toBeNull()
+      expect(result.data[0].full_name).toBeNull()
     })
 
-    it("should set is_verified true when email matches a profile", async () => {
+    it("should link the profile when the email matches", async () => {
       const profile = await createTestProfile(tracker, kysely, {
         user_id: null,
         email: "verified@example.com",
@@ -181,10 +298,10 @@ describe("Feedback Server - Integration Tests", () => {
       expect(result.success).toBe(true)
       if (!result.success) throw new Error("Expected success")
       expect(result.data).toHaveLength(1)
-      expect(result.data[0].is_verified).toBe(true)
+      expect(result.data[0].profile_id).toBe(profile.id)
     })
 
-    it("should set is_verified true when phone matches a profile", async () => {
+    it("should link the profile when the phone matches", async () => {
       const profile = await createTestProfile(tracker, kysely, {
         user_id: null,
         email: "user@example.com",
@@ -208,7 +325,7 @@ describe("Feedback Server - Integration Tests", () => {
       expect(result.success).toBe(true)
       if (!result.success) throw new Error("Expected success")
       expect(result.data).toHaveLength(1)
-      expect(result.data[0].is_verified).toBe(true)
+      expect(result.data[0].profile_id).toBe(profile.id)
     })
   })
 })

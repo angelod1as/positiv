@@ -1,6 +1,7 @@
-import { composable } from "composable-functions"
+import { applySchema, composable } from "composable-functions"
 import { kyselyDb } from "~/kysely-db"
-import type { FeedbackFormData } from "./feedback-schema"
+import type { FeedbackFormData, FeedbackStatus } from "./feedback-schema"
+import { updateFeedbackStatusSchema } from "./feedback-schema"
 
 export interface FeedbackWithVerification {
   id: string
@@ -12,7 +13,7 @@ export interface FeedbackWithVerification {
   can_contact: boolean
   ip_address: string
   created_at: string
-  is_verified: boolean
+  status: FeedbackStatus
   profile_id: string | null
   social_name: string | null
   full_name: string | null
@@ -21,8 +22,8 @@ export interface FeedbackWithVerification {
 export async function submitFeedback(
   data: Omit<FeedbackFormData, "captchaToken">,
   ipAddress: string,
-): Promise<void> {
-  await kyselyDb
+) {
+  return await kyselyDb
     .insertInto("feedbacks")
     .values({
       name: data.name ?? null,
@@ -33,21 +34,32 @@ export async function submitFeedback(
       can_contact: data.canContact ?? false,
       ip_address: ipAddress,
     })
-    .execute()
+    .returningAll()
+    .executeTakeFirstOrThrow()
 }
+
+export const updateFeedbackStatus = applySchema(updateFeedbackStatusSchema)(
+  async ({ id, status }) => {
+    await kyselyDb
+      .updateTable("feedbacks")
+      .set({ status })
+      .where("id", "=", id)
+      .execute()
+  },
+)
 
 export const getRecentFeedbacks = composable(
   async (limit: number = 10): Promise<FeedbackWithVerification[]> => {
     const feedbacks = await kyselyDb
       .selectFrom("feedbacks")
       .selectAll()
+      .where("status", "!=", "resolved")
       .orderBy("created_at", "desc")
       .limit(limit)
       .execute()
 
     return feedbacks.map((f) => ({
       ...f,
-      is_verified: false,
       profile_id: null,
       social_name: null,
       full_name: null,
@@ -111,7 +123,6 @@ export const getAllFeedbacksWithVerification = composable(
     if (profileByEmail.size === 0 && profileByPhone.size === 0) {
       return feedbacks.map((f) => ({
         ...f,
-        is_verified: false,
         profile_id: null,
         social_name: null,
         full_name: null,
@@ -130,7 +141,6 @@ export const getAllFeedbacksWithVerification = composable(
 
       return {
         ...f,
-        is_verified: !!matchedProfile,
         profile_id: matchedProfile?.id ?? null,
         social_name: matchedProfile?.social_name ?? null,
         full_name: matchedProfile?.full_name ?? null,
