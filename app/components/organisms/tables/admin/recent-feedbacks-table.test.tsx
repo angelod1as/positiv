@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react"
-import { describe, expect, it, vi } from "vitest"
+import type { ColDef } from "ag-grid-community"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { FeedbackWithVerification } from "~/business/feedback/feedback.server"
 import { RecentFeedbacksTable } from "./recent-feedbacks-table"
+
+let capturedColumnDefs: ColDef<FeedbackWithVerification>[] = []
 
 vi.mock(
   "~/components/organisms/tables/ag-grid/base/ag-data-table",
@@ -9,25 +12,29 @@ vi.mock(
     AGDataTable: ({
       data,
       emptyMessage,
+      columnDefs,
     }: {
       data: FeedbackWithVerification[]
       emptyMessage: string
-    }) => (
-      <div data-testid="ag-data-table">
-        {data.length === 0 ? (
-          <span>{emptyMessage}</span>
-        ) : (
-          <ul>
-            {data.map((f) => (
-              <li key={f.id} data-testid="feedback-row">
-                {f.name || "Anônimo"} - {f.feedback_text.slice(0, 20)}...
-                {f.is_verified && <span data-testid="verified-badge">✓</span>}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    ),
+      columnDefs: ColDef<FeedbackWithVerification>[]
+    }) => {
+      capturedColumnDefs = columnDefs
+      return (
+        <div data-testid="ag-data-table">
+          {data.length === 0 ? (
+            <span>{emptyMessage}</span>
+          ) : (
+            <ul>
+              {data.map((f) => (
+                <li key={f.id} data-testid="feedback-row">
+                  {f.name || "Anônimo"} - {f.feedback_text.slice(0, 20)}...
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )
+    },
   }),
 )
 
@@ -43,7 +50,7 @@ describe("RecentFeedbacksTable", () => {
       can_contact: true,
       ip_address: "192.168.1.1",
       created_at: "2024-01-15T10:30:00Z",
-      is_verified: true,
+      status: "new",
       profile_id: "profile-123",
       social_name: "João",
       full_name: "João Silva",
@@ -58,12 +65,19 @@ describe("RecentFeedbacksTable", () => {
       can_contact: false,
       ip_address: "192.168.1.2",
       created_at: "2024-01-14T09:00:00Z",
-      is_verified: false,
+      status: "in_progress",
       profile_id: null,
       social_name: null,
       full_name: null,
     },
   ]
+
+  const getColumn = (field: string) =>
+    capturedColumnDefs.find((column) => column.field === field)
+
+  beforeEach(() => {
+    capturedColumnDefs = []
+  })
 
   it("should render the AG Data Table", () => {
     render(<RecentFeedbacksTable feedbacks={mockFeedbacks} />)
@@ -78,11 +92,30 @@ describe("RecentFeedbacksTable", () => {
     expect(rows).toHaveLength(2)
   })
 
-  it("should show verified badge for verified feedbacks", () => {
+  it("should not render a verified column", () => {
     render(<RecentFeedbacksTable feedbacks={mockFeedbacks} />)
 
-    const badges = screen.getAllByTestId("verified-badge")
-    expect(badges).toHaveLength(1)
+    expect(getColumn("is_verified")).toBeUndefined()
+    expect(
+      capturedColumnDefs.some((column) => column.headerName === "Verificado"),
+    ).toBe(false)
+  })
+
+  it("should render the status column with Portuguese labels", () => {
+    render(<RecentFeedbacksTable feedbacks={mockFeedbacks} />)
+
+    const statusColumn = getColumn("status")
+    expect(statusColumn?.headerName).toBe("Status")
+    expect(
+      // @ts-expect-error - AG Grid types the formatter params loosely
+      statusColumn?.valueFormatter?.({ value: "in_progress" }),
+    ).toBe("Em progresso")
+  })
+
+  it("should keep the status column read-only", () => {
+    render(<RecentFeedbacksTable feedbacks={mockFeedbacks} />)
+
+    expect(getColumn("status")?.editable).toBeFalsy()
   })
 
   it("should show empty message when no feedbacks", () => {
