@@ -44,11 +44,7 @@ export const AllAtOnce: Presentation = ({
               {question.prompt}
             </span>
           ) : (
-            <Label
-              id={promptId}
-              htmlFor={question.id}
-              className="text-muted-foreground"
-            >
+            <Label htmlFor={question.id} className="text-muted-foreground">
               {question.prompt}
             </Label>
           )}

@@ -411,6 +411,38 @@ describe("useFormRuntime commit steps", () => {
     expect(result.current.isDone).toBe(true)
   })
 
+  it("reports a rejection naming a question no step asks", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+    const run = vi.fn<CommitFn>().mockReturnValueOnce({
+      ok: false,
+      errors: [
+        { questionId: "nome", message: "Nome inválido" },
+        { questionId: "fantasma", message: "Campo que não existe" },
+      ],
+    })
+    run.mockReturnValue({ ok: true })
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: flowWithCommit(run) }),
+    )
+
+    await fill(result, [
+      ["email", "a@b.com"],
+      ["nome", "Angelo"],
+    ])
+
+    await act(async () => {
+      result.current.answer("nome", "Angelo Dias")
+      await result.current.advance()
+    })
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("fantasma"),
+    )
+    expect(result.current.isDone).toBe(true)
+    consoleError.mockRestore()
+  })
+
   it("ignores a second advance while a commit is still running", async () => {
     // Every call gets its own resolver, so an unguarded second commit fails the
     // assertion rather than hanging the test.

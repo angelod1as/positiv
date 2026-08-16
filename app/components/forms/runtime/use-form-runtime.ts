@@ -146,6 +146,12 @@ export function useFormRuntime({
         setCurrentStepId(target)
         return
       }
+
+      if (process.env.NODE_ENV !== "production") {
+        console.error(
+          `[form-runtime] a commit rejected "${stillPending}", which no step in this flow asks.`,
+        )
+      }
       pendingRef.current = []
     }
 
