@@ -5,13 +5,15 @@ import type {
   RenderQuestion,
 } from "./presentations/presentation.types"
 import type { Answers, Question } from "./question.types"
+import { renderQuestion as defaultRenderQuestion } from "./render-question"
 import { useFormRuntime } from "./use-form-runtime"
 
 type FormRunnerProps = {
   questions: Question[]
   flow: Flow
   presentation: Presentation
-  renderQuestion: RenderQuestion
+  /** Override only to draw controls the built-in renderer does not cover. */
+  renderQuestion?: RenderQuestion
   data?: Record<string, unknown>
   continueLabel?: string
   onDone?: (answers: Answers) => void
@@ -21,7 +23,7 @@ export function FormRunner({
   questions,
   flow,
   presentation: Presentation,
-  renderQuestion,
+  renderQuestion = defaultRenderQuestion,
   data,
   continueLabel = "Continuar",
   onDone,

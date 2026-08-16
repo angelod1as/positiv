@@ -20,7 +20,6 @@ export type Question = {
   help?: string
   input: InputSpec
   schema: ZodType
-  shuffleOptions?: boolean
 }
 
 export type Answers = Record<string, unknown>
