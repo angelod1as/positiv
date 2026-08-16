@@ -2,8 +2,8 @@ import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { TextArea } from "~/components/ui/textarea"
-import { Radio } from "../base/radio"
-import { Select } from "../base/select"
+import { Radio } from "~/components/forms/base/radio"
+import { Select } from "~/components/forms/base/select"
 import type { RenderQuestion } from "./presentations/presentation.types"
 
 const asText = (value: unknown) => (typeof value === "string" ? value : "")

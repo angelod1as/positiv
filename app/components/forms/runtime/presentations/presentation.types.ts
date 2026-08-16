@@ -1,6 +1,9 @@
 import type { ReactNode } from "react"
-import type { Step } from "../flow.types"
-import type { Answers, Question } from "../question.types"
+import type { Step } from "~/components/forms/runtime/flow.types"
+import type {
+  Answers,
+  Question,
+} from "~/components/forms/runtime/question.types"
 
 /**
  * Draws only the control. The prompt, the help text and the error belong to the
@@ -24,6 +27,8 @@ export type PresentationProps = {
   questions: Question[]
   answers: Answers
   errors: Record<string, string>
+  /** A failure that belongs to no single question, such as a commit that threw. */
+  formError: string | null
   onAnswer: (id: string, value: unknown) => void
   onContinue: () => void
   continueLabel: string

@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useRef, useState } from "react"
+import type { CommitResult } from "./commit.types"
 import type { Flow, Step, StepId } from "./flow.types"
 import type { Answers, Question } from "./question.types"
 import { validateQuestion } from "./validate-question"
+
+const COMMIT_FAILURE_MESSAGE = "Não foi possível salvar agora. Tente novamente."
 
 type UseFormRuntimeOptions = {
   questions: Question[]
@@ -58,6 +61,7 @@ export function useFormRuntime({
   const [firstTryCorrect, setFirstTryCorrect] = useState<
     Record<string, boolean>
   >({})
+  const [formError, setFormError] = useState<string | null>(null)
   const [isDone, setIsDone] = useState(false)
 
   // Refs mirror the state so that answering and advancing within the same
@@ -65,6 +69,7 @@ export function useFormRuntime({
   const answersRef = useRef<Answers>({})
   const stepRef = useRef<StepId>(flow.start)
   const firstTryRef = useRef<Record<string, boolean>>({})
+  const pendingRef = useRef<string[]>([])
 
   const currentStep = flow.steps[currentStepId]
 
@@ -79,7 +84,8 @@ export function useFormRuntime({
   }, [])
 
   const advance = useCallback(async () => {
-    const pending = questionsForStep(flow.steps[stepRef.current], questionsById)
+    const origin = stepRef.current
+    const pending = questionsForStep(flow.steps[origin], questionsById)
 
     const failures: Record<string, string> = {}
     for (const question of pending) {
@@ -109,7 +115,37 @@ export function useFormRuntime({
       return
     }
 
-    setErrors({})
+    setFormError(null)
+
+    // Answering a step clears any rejection the server raised against it. While
+    // rejections remain elsewhere, the runtime routes to them instead of
+    // following the flow, so a stale rejected answer can never be resubmitted
+    // without the person seeing it flagged first. Their messages are kept, or
+    // the person would arrive at the question with no idea why they were sent
+    // back to it.
+    const answeredHere = new Set(pending.map((question) => question.id))
+    pendingRef.current = pendingRef.current.filter(
+      (id) => !answeredHere.has(id),
+    )
+
+    setErrors((current) =>
+      Object.fromEntries(
+        pendingRef.current
+          .filter((id) => current[id])
+          .map((id) => [id, current[id]]),
+      ),
+    )
+
+    const stillPending = pendingRef.current[0]
+    if (stillPending) {
+      const target = stepOwning(stillPending, flow.steps)
+      if (target) {
+        stepRef.current = target
+        setCurrentStepId(target)
+        return
+      }
+      pendingRef.current = []
+    }
 
     const resolve = (from: StepId) =>
       flow.next(from, answersRef.current, {
@@ -117,16 +153,37 @@ export function useFormRuntime({
         data,
       })
 
-    let destination = resolve(stepRef.current)
+    const stayPut = () => {
+      setFormError(COMMIT_FAILURE_MESSAGE)
+      stepRef.current = origin
+      setCurrentStepId(origin)
+    }
+
+    let destination = resolve(origin)
 
     // Commit steps have nothing to render, so the runtime runs them and keeps
     // resolving until it reaches a step the person can actually see.
     while (destination !== "done") {
       const step = flow.steps[destination]
 
-      if (step?.kind !== "commit") break
+      if (!step) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error(
+            `[form-runtime] flow.next returned "${destination}", which is not a step in this flow.`,
+          )
+        }
+        return
+      }
 
-      const result = await step.run(answersRef.current)
+      if (step.kind !== "commit") break
+
+      let result: CommitResult
+      try {
+        result = await step.run(answersRef.current)
+      } catch {
+        stayPut()
+        return
+      }
 
       if (result.ok) {
         stepRef.current = destination
@@ -140,11 +197,19 @@ export function useFormRuntime({
       }
       setErrors(rejected)
 
-      const target = stepOwning(result.errors[0].questionId, flow.steps)
-      if (target) {
-        stepRef.current = target
-        setCurrentStepId(target)
+      const first = result.errors[0]
+      const target = first
+        ? stepOwning(first.questionId, flow.steps)
+        : undefined
+
+      if (!target) {
+        stayPut()
+        return
       }
+
+      pendingRef.current = result.errors.map((error) => error.questionId)
+      stepRef.current = target
+      setCurrentStepId(target)
       return
     }
 
@@ -163,6 +228,7 @@ export function useFormRuntime({
     currentQuestions,
     answers,
     errors,
+    formError,
     firstTryCorrect,
     isDone,
     answer,

@@ -116,6 +116,103 @@ describe("FormRunner with allAtOnce", () => {
   })
 })
 
+// These use the real renderer on purpose. The injected fake above draws a bare
+// input for every kind, which hid the fact that choice groups were unlabelled.
+describe("choice groups are labelled by their prompt", () => {
+  const bond: Question = {
+    id: "bond",
+    prompt: "Você vai acompanhade?",
+    input: {
+      kind: "radio",
+      options: [
+        { label: "Sim", value: "sim" },
+        { label: "Não", value: "nao" },
+      ],
+    },
+    schema: zod.string().min(1, { message: "Escolha uma opção" }),
+  }
+
+  const rooms: Question = {
+    id: "rooms",
+    prompt: "Quais espaços você conhece?",
+    input: {
+      kind: "checkbox",
+      options: [
+        { label: "Sala", value: "sala" },
+        { label: "Cozinha", value: "cozinha" },
+      ],
+    },
+    schema: zod.array(zod.string()).min(1, { message: "Escolha ao menos um" }),
+  }
+
+  const choiceFlow: Flow = {
+    start: "escolhas",
+    steps: { escolhas: { kind: "screen", ids: ["bond", "rooms"] } },
+    next: () => "done",
+  }
+
+  it("names a radio group in allAtOnce", () => {
+    render(
+      <FormRunner
+        questions={[bond, rooms]}
+        flow={choiceFlow}
+        presentation={AllAtOnce}
+      />,
+    )
+
+    expect(screen.getByRole("radiogroup")).toHaveAccessibleName(
+      "Você vai acompanhade?",
+    )
+  })
+
+  it("names a checkbox group in allAtOnce", () => {
+    render(
+      <FormRunner
+        questions={[bond, rooms]}
+        flow={choiceFlow}
+        presentation={AllAtOnce}
+      />,
+    )
+
+    expect(screen.getByRole("group")).toHaveAccessibleName(
+      "Quais espaços você conhece?",
+    )
+  })
+
+  it("names a radio group in oneAtATime", () => {
+    render(
+      <FormRunner
+        questions={[bond]}
+        flow={{
+          start: "bond",
+          steps: { bond: { kind: "question", id: "bond" } },
+          next: () => "done",
+        }}
+        presentation={OneAtATime}
+      />,
+    )
+
+    expect(screen.getByRole("radiogroup")).toHaveAccessibleName(
+      "Você vai acompanhade?",
+    )
+  })
+
+  it("still points a text label at its control in allAtOnce", () => {
+    render(
+      <FormRunner
+        questions={questions}
+        flow={screenFlow}
+        presentation={AllAtOnce}
+      />,
+    )
+
+    expect(screen.getByLabelText("Qual seu nome?")).toHaveAttribute(
+      "id",
+      "nome",
+    )
+  })
+})
+
 describe("FormRunner with oneAtATime", () => {
   it("gives the current prompt heading prominence", () => {
     render(
@@ -293,6 +390,77 @@ describe("oneAtATime keyboard flow", () => {
     await user.keyboard("An")
 
     expect(screen.getByLabelText("Qual seu nome?")).toHaveFocus()
+  })
+})
+
+describe("a commit failure nobody can fix is still shown", () => {
+  const brokenFlow: Flow = {
+    start: "nome",
+    steps: {
+      nome: { kind: "question", id: "nome" },
+      salvar: {
+        kind: "commit",
+        run: () => {
+          throw new Error("network down")
+        },
+      },
+    },
+    next: (current) => (current === "nome" ? "salvar" : "done"),
+  }
+
+  it.each([
+    ["allAtOnce", AllAtOnce],
+    ["oneAtATime", OneAtATime],
+  ])("surfaces the failure in %s", async (_name, presentation) => {
+    const user = userEvent.setup()
+    const onDone = vi.fn()
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={brokenFlow}
+        presentation={presentation}
+        renderQuestion={renderQuestion}
+        onDone={onDone}
+      />,
+    )
+
+    await user.type(screen.getByLabelText("Qual seu nome?"), "Angelo")
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Não foi possível salvar agora",
+    )
+    expect(onDone).not.toHaveBeenCalled()
+    expect(screen.getByLabelText("Qual seu nome?")).toBeInTheDocument()
+  })
+})
+
+describe("a misconfigured flow complains instead of going blank", () => {
+  it("reports a step id that does not exist", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+    const user = userEvent.setup()
+
+    const typoFlow: Flow = {
+      start: "nome",
+      steps: { nome: { kind: "question", id: "nome" } },
+      next: () => "cidde",
+    }
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={typoFlow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    await user.type(screen.getByLabelText("Qual seu nome?"), "Angelo")
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(consoleError).toHaveBeenCalledWith(expect.stringContaining("cidde"))
+    consoleError.mockRestore()
   })
 })
 

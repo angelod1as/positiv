@@ -10,6 +10,12 @@ import { useFormRuntime } from "./use-form-runtime"
 
 type FormRunnerProps = {
   questions: Question[]
+  /**
+   * Swapping this for a different flow requires remounting with a new `key`.
+   * Answers, the current step and first-attempt records are seeded once, and a
+   * flow built inline changes identity on every render, so resetting on
+   * identity would wipe the person's answers as they typed.
+   */
   flow: Flow
   presentation: Presentation
   /** Override only to draw controls the built-in renderer does not cover. */
@@ -47,6 +53,7 @@ export function FormRunner({
       questions={runtime.currentQuestions}
       answers={runtime.answers}
       errors={runtime.errors}
+      formError={runtime.formError}
       onAnswer={runtime.answer}
       onContinue={() => {
         void runtime.advance()

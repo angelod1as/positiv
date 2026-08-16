@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { Button } from "~/components/atoms/button/button"
-import { Error } from "../../base/error"
+import { Error } from "~/components/forms/base/error"
 import type { Presentation } from "./presentation.types"
 
 /**
@@ -10,13 +10,16 @@ import type { Presentation } from "./presentation.types"
  * prompt from being announced twice.
  *
  * Focus lands on the control as each screen arrives, so the whole flow can be
- * answered from the keyboard: type, Enter, type, Enter.
+ * answered from the keyboard: type, Enter, type, Enter. It is keyed on which
+ * questions are showing rather than on every render, so surfacing a validation
+ * error does not yank focus away from someone mid-correction.
  */
 export const OneAtATime: Presentation = ({
   step,
   questions,
   answers,
   errors,
+  formError,
   onAnswer,
   onContinue,
   continueLabel,
@@ -24,8 +27,6 @@ export const OneAtATime: Presentation = ({
 }) => {
   const formRef = useRef<HTMLFormElement>(null)
 
-  // Keyed on the questions themselves rather than on every render, so showing
-  // a validation error does not yank focus away from someone mid-correction.
   const screenKey = questions.map((question) => question.id).join("|")
 
   useEffect(() => {
@@ -72,6 +73,8 @@ export const OneAtATime: Presentation = ({
           ) : null}
         </div>
       ))}
+
+      {formError ? <Error role="alert">{formError}</Error> : null}
 
       <Button type="submit">{continueLabel}</Button>
     </form>
