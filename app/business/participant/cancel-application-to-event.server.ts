@@ -3,6 +3,10 @@ import { kyselyDb } from "~/kysely-db"
 import { dateToString } from "~/lib/helpers/date-to-string"
 
 type CancelApplicationToEventProps = { profileId?: string; eventId?: string }
+
+// By design, a cancellation never reopens an event that the participant limit
+// trigger closed: the freed spot is filled by the admins, not by whoever
+// refreshes the dashboard first.
 export const cancelApplicationToEvent = composable(
   async ({ profileId, eventId }: CancelApplicationToEventProps) => {
     if (!profileId || !eventId) {
