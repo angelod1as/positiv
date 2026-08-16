@@ -16,7 +16,10 @@ export type CoercedEnvSchema = {
   
   /**
    * **NODE_ENV**  
-   * Set by the tooling, rarely by hand. Drives bundler and logger behaviour.  
+   * Drives bundler and library behaviour. varlock injects this into any process  
+   * it launches, so anything that needs a different value has to set it in the  
+   * environment, which takes precedence — `pnpm test:integration` does exactly  
+   * that. Use APP_ENV, not this, to reason about the deployment environment.  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M7.885%2010.23L12%203.463l4.116%206.769zm9.606%2011q-1.558%200-2.64-1.081t-1.082-2.64t1.082-2.649t2.64-1.09t2.649%201.09t1.09%202.649t-1.09%202.64t-2.649%201.082m-13.722-.5v-6.462h6.462v6.462z%22%2F%3E%3C%2Fsvg%3E)   
    */
   NODE_ENV?: "development" | "production" | "test";

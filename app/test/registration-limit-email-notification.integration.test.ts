@@ -1,4 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest"
+import { ENV } from "varlock/env"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestEvent, createTestProfile, createTestAdminUser } from "~/test/db-test-utils"
 import { action } from "~/pages/api/admin/send-registration-limit-email"
@@ -6,9 +7,11 @@ import * as sendEmailModule from "~/business/email/send-email"
 
 vi.mock("~/business/email/send-email")
 
+
 describe("Registration Limit Email Notification - E2E Integration", () => {
   const { tracker, kysely } = setupIntegrationTest()
-  const mockSecret = "test-secret-123"
+  // The route authenticates against the configured secret, so use it.
+  const mockSecret = ENV.INTERNAL_JOB_SECRET
 
   beforeEach(async () => {
     tracker.clear()
@@ -18,7 +21,6 @@ describe("Registration Limit Email Notification - E2E Integration", () => {
       data: undefined,
       errors: [],
     })
-    process.env.INTERNAL_JOB_SECRET = mockSecret
 
     // Create an admin user for tests that need admin emails
     await createTestAdminUser(
@@ -31,7 +33,6 @@ describe("Registration Limit Email Notification - E2E Integration", () => {
 
   afterEach(async () => {
     await cleanupAfterTest(tracker, kysely)
-    delete process.env.INTERNAL_JOB_SECRET
   })
 
   it("should return 401 when authorization header is missing", async () => {
