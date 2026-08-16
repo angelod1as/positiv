@@ -197,6 +197,21 @@ export async function ensureEventIsOpen(eventId: string): Promise<void> {
   }
 }
 
+export async function ensureEventIsClosed(eventId: string): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+
+  const { error } = await supabase
+    .from('events')
+    .update({
+      event_status: 'Registration Closed'
+    })
+    .eq('id', eventId)
+
+  if (error) {
+    throw new Error(`Failed to set event as closed: ${error.message}`)
+  }
+}
+
 export async function createClosedEvent(): Promise<{ id: string; title: string }> {
   const supabase = createSupabaseAdminClient()
   

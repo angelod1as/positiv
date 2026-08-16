@@ -55,27 +55,32 @@ export class MyApplicationsPage extends BasePage {
     return await cancelButton.isVisible()
   }
 
-  async cancelApplication(eventTitle: string): Promise<void> {
+  async cancelApplication(eventTitle: string, options: { registrationsClosed?: boolean } = {}): Promise<void> {
     const eventCard = await this.findEventByTitle(eventTitle)
     if (!eventCard) {
       throw new Error(`Event "${eventTitle}" not found`)
     }
-    
+
     // Click cancel button on the event card
     const cancelButton = eventCard.getByRole('button', { name: 'Cancelar inscrição' })
     await cancelButton.click()
-    
+
     // Wait for confirmation dialog
     await this.confirmCancelButton.waitFor({ state: 'visible' })
-    
+
     // Confirm cancellation
     await this.confirmCancelButton.click()
-    
+
     // Wait for the action to complete
     await this.page.waitForLoadState('networkidle')
-    
-    // Wait for button state to change
-    await eventCard.getByRole('link', { name: 'Fazer inscrição' }).waitFor({ state: 'visible' })
+
+    // Wait for button state to change. Closed events never offer a way back in,
+    // so they settle on the disabled "Inscrições encerradas" button instead.
+    if (options.registrationsClosed) {
+      await eventCard.getByText('Inscrições encerradas').waitFor({ state: 'visible' })
+    } else {
+      await eventCard.getByRole('link', { name: 'Fazer inscrição' }).waitFor({ state: 'visible' })
+    }
   }
 
   async reapplyToEvent(eventTitle: string): Promise<void> {
