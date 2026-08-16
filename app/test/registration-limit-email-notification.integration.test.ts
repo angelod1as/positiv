@@ -10,7 +10,6 @@ vi.mock("~/business/email/send-email")
 
 describe("Registration Limit Email Notification - E2E Integration", () => {
   const { tracker, kysely } = setupIntegrationTest()
-  // The route authenticates against the configured secret, so use it.
   const mockSecret = ENV.INTERNAL_JOB_SECRET
 
   beforeEach(async () => {

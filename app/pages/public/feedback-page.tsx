@@ -33,7 +33,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const ip = request.headers.get("cf-connecting-ip") || "unknown"
 
-  const isDev = ENV.NODE_ENV === "development"
+  const isDev = ENV.APP_ENV === "development"
   if (!isDev) {
     if (feedbackRateLimiter.isRateLimited(ip)) {
       return redirectWithError(
