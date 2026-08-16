@@ -1,5 +1,4 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest"
-import { ENV } from "varlock/env"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestEvent, createTestProfile, createTestAdminUser } from "~/test/db-test-utils"
 import { action } from "~/pages/api/admin/send-registration-limit-email"
@@ -7,10 +6,27 @@ import * as sendEmailModule from "~/business/email/send-email"
 
 vi.mock("~/business/email/send-email")
 
+// This suite talks to a real Supabase, so it cannot replace ENV with a blank
+// object the way the suites with mocked databases do — that would strip the
+// connection settings too. Reads fall through to the resolved config; only the
+// secret under test is pinned, so the result does not depend on whether the
+// contributor happens to have INTERNAL_JOB_SECRET set locally.
+const MOCK_SECRET = "test-internal-job-secret"
+vi.mock("varlock/env", async (importOriginal) => {
+  const original = await importOriginal<{ ENV: Record<string, unknown> }>()
+  return {
+    ENV: new Proxy(original.ENV, {
+      get: (target, key: string) =>
+        key === "INTERNAL_JOB_SECRET"
+          ? MOCK_SECRET
+          : Reflect.get(target, key),
+    }),
+  }
+})
 
 describe("Registration Limit Email Notification - E2E Integration", () => {
   const { tracker, kysely } = setupIntegrationTest()
-  const mockSecret = ENV.INTERNAL_JOB_SECRET
+  const mockSecret = MOCK_SECRET
 
   beforeEach(async () => {
     tracker.clear()
