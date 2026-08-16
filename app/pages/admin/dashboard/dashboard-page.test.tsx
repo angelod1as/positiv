@@ -87,7 +87,7 @@ vi.mock("~/business/feedback/feedback.server", () => ({
         feedback_text: "Great event!",
         ip_address: "127.0.0.1",
         created_at: "2025-01-15T10:00:00Z",
-        is_verified: true,
+        status: "new",
       },
     ],
   }),
@@ -140,7 +140,7 @@ describe("Dashboard Page Loader", () => {
       const feedback = result.recentFeedbacks[0]
       expect(feedback).toHaveProperty("id")
       expect(feedback).toHaveProperty("feedback_text")
-      expect(feedback).toHaveProperty("is_verified")
+      expect(feedback).toHaveProperty("status")
     }
   })
 })

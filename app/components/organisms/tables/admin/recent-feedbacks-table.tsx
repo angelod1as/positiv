@@ -2,6 +2,10 @@ import type { ColDef } from "ag-grid-community"
 import type { FC } from "react"
 import { useMemo } from "react"
 import type { FeedbackWithVerification } from "~/business/feedback/feedback.server"
+import {
+  feedbackStatusLabels,
+  type FeedbackStatus,
+} from "~/business/feedback/feedback-schema"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { TruncatedTextRenderer } from "~/components/organisms/tables/ag-grid/renderers/truncated-text-renderer"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
@@ -36,9 +40,10 @@ export const RecentFeedbacksTable: FC<RecentFeedbacksTableProps> = ({
         flex: 2,
       },
       {
-        field: "is_verified",
-        headerName: "Verificado",
-        valueFormatter: (params) => (params.value ? "✓" : "-"),
+        field: "status",
+        headerName: "Status",
+        valueFormatter: (params) =>
+          feedbackStatusLabels[params.value as FeedbackStatus] ?? params.value,
         sortable: true,
       },
     ],
