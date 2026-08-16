@@ -3,7 +3,10 @@ import type { Flow } from "~/components/forms/runtime/flow.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
-import type { Answers, Question } from "~/components/forms/runtime/question.types"
+import type {
+  Answers,
+  Question,
+} from "~/components/forms/runtime/question.types"
 import { Button } from "~/components/atoms/button/button"
 import { zod } from "~/lib/helpers/zod"
 
@@ -46,9 +49,45 @@ const questions: Question[] = [
       }),
   },
   {
+    id: "cidade",
+    prompt: "Em que cidade você mora?",
+    input: {
+      kind: "select",
+      options: [
+        { label: "São Paulo", value: "sp" },
+        { label: "Rio de Janeiro", value: "rj" },
+        { label: "Outra", value: "outra" },
+      ],
+    },
+    schema: zod.string().min(1, { message: "Escolha uma cidade" }),
+  },
+  {
+    id: "espacos",
+    prompt: "Quais espaços te interessam?",
+    help: "Pode marcar mais de um. Testa grupo de checkbox e resposta em lista.",
+    input: {
+      kind: "checkbox",
+      options: [
+        { label: "Sala compartilhada", value: "sala" },
+        { label: "Cozinha", value: "cozinha" },
+        { label: "Área externa", value: "externa" },
+      ],
+    },
+    schema: zod.array(zod.string()).refine((chosen) => chosen.length > 0, {
+      message: "Escolha ao menos um espaço",
+    }),
+  },
+  {
+    id: "notas",
+    prompt: "Quer nos contar mais alguma coisa?",
+    help: "Campo livre, opcional — dá para seguir sem escrever nada.",
+    input: { kind: "textarea" },
+    schema: zod.string().optional(),
+  },
+  {
     id: "email",
     prompt: "Qual seu e-mail?",
-    help: 'Digite "ocupado@positiv.com" para ver o servidor recusar e o fluxo voltar para cá.',
+    help: 'Escreva "ocupado@positiv.com" para o servidor recusar, ou "erro@positiv.com" para o commit estourar.',
     input: { kind: "text" },
     schema: zod.string().email({ message: "E-mail inválido" }),
   },
@@ -57,19 +96,28 @@ const questions: Question[] = [
 const commitStep = {
   kind: "commit" as const,
   run: (answers: Answers) => {
-    if (answers.email === "ocupado@positiv.com") {
-      return {
-        ok: false,
-        errors: [
-          { questionId: "email", message: "Este e-mail já está cadastrado" },
-        ],
-      }
+    if (answers.email === "erro@positiv.com") {
+      throw new Error("simulated network failure")
     }
-    return { ok: true as const }
+
+    const errors = []
+    if (answers.nome === "Recusado") {
+      errors.push({ questionId: "nome", message: "Este nome não é permitido" })
+    }
+    if (answers.email === "ocupado@positiv.com") {
+      errors.push({
+        questionId: "email",
+        message: "Este e-mail já está cadastrado",
+      })
+    }
+
+    return errors.length > 0
+      ? { ok: false as const, errors }
+      : { ok: true as const }
   },
 }
 
-/** Uma pergunta por step. O quiz só aparece para quem nunca participou. */
+/** One question per step. The quiz only appears for a first-time attendee. */
 const steppedFlow: Flow = {
   start: "intro",
   steps: {
@@ -88,30 +136,39 @@ const steppedFlow: Flow = {
     nome: { kind: "question", id: "nome" },
     veterane: { kind: "question", id: "veterane" },
     quiz: { kind: "question", id: "quiz" },
+    cidade: { kind: "question", id: "cidade" },
+    espacos: { kind: "question", id: "espacos" },
+    notas: { kind: "question", id: "notas" },
     email: { kind: "question", id: "email" },
     salvar: commitStep,
   },
   next: (current, answers) => {
     if (current === "intro") return "nome"
     if (current === "nome") return "veterane"
-    // Quem já participou pula o quiz. Ramificação decidida pela resposta.
+    // Someone who has attended before skips the quiz.
     if (current === "veterane")
-      return answers.veterane === "sim" ? "email" : "quiz"
-    if (current === "quiz") return "email"
+      return answers.veterane === "sim" ? "cidade" : "quiz"
+    if (current === "quiz") return "cidade"
+    if (current === "cidade") return "espacos"
+    if (current === "espacos") return "notas"
+    if (current === "notas") return "email"
     if (current === "email") return "salvar"
     return "done"
   },
 }
 
 /**
- * As mesmas perguntas num único step de tela. Sem ramificação: não dá para
- * saber quais perguntas se aplicam antes de respondê-las, então um fluxo de
- * tela única é necessariamente linear.
+ * The same questions in a single screen step. No branching: which questions
+ * apply cannot be known before they are answered, so a single-screen flow is
+ * necessarily linear.
  */
 const singleScreenFlow: Flow = {
   start: "tudo",
   steps: {
-    tudo: { kind: "screen", ids: ["nome", "veterane", "email"] },
+    tudo: {
+      kind: "screen",
+      ids: ["nome", "veterane", "cidade", "espacos", "notas", "email"],
+    },
     salvar: commitStep,
   },
   next: (current) => (current === "tudo" ? "salvar" : "done"),
@@ -142,6 +199,17 @@ export default function FormRuntimeDemoPage() {
           Quantas perguntas dividem uma tela é decisão do fluxo; a apresentação
           cuida do enquadramento.
         </p>
+        <ul className="list-disc pl-5 text-sm text-muted-foreground">
+          <li>
+            Nome <strong>Recusado</strong> e e-mail{" "}
+            <strong>ocupado@positiv.com</strong> juntos: o servidor recusa os
+            dois, e o fluxo passa por cada um antes de tentar salvar de novo.
+          </li>
+          <li>
+            E-mail <strong>erro@positiv.com</strong>: o commit estoura, e a
+            falha aparece sem culpar nenhuma pergunta.
+          </li>
+        </ul>
       </div>
 
       <div className="flex gap-2">
