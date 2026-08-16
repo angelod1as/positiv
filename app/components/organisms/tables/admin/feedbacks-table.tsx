@@ -7,7 +7,13 @@ import type {
 import { EyeIcon } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useMemo, useRef, useState, useEffect } from "react"
+import { useFetcher } from "react-router"
 import type { FeedbackWithVerification } from "~/business/feedback/feedback.server"
+import {
+  feedbackStatusLabels,
+  feedbackStatusValues,
+  type FeedbackStatus,
+} from "~/business/feedback/feedback-schema"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { AGIconButton } from "~/components/organisms/tables/ag-grid/renderers/ag-icon-button"
@@ -15,6 +21,7 @@ import { TextViewModalRenderer } from "~/components/organisms/tables/ag-grid/ren
 import WhatsAppIcon from "~/assets/social/whatsapp.svg"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
+import type { ComposableFetcherData } from "~types/database/entities.types"
 
 interface FeedbacksTableProps {
   feedbacks: FeedbackWithVerification[]
@@ -32,8 +39,16 @@ const participationFilterOptions = [
   { name: "Mais de uma vez", value: "more_than_once" },
 ]
 
+const statusFilterOptions = feedbackStatusValues.map((value) => ({
+  name: feedbackStatusLabels[value],
+  value,
+}))
+
+const EDITABLE_FIELDS = ["status"] as const
+
 const STORAGE_KEYS = {
   participation: "feedbacks-filter-participation",
+  status: "feedbacks-filter-status",
 }
 
 function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
@@ -53,7 +68,7 @@ function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
 function SocialNameRenderer(params: ICellRendererParams<FeedbackWithVerification>) {
   const { data } = params
 
-  if (!data?.is_verified || !data.social_name) {
+  if (!data?.social_name) {
     return <>-</>
   }
 
@@ -63,7 +78,7 @@ function SocialNameRenderer(params: ICellRendererParams<FeedbackWithVerification
 function FullNameRenderer(params: ICellRendererParams<FeedbackWithVerification>) {
   const { data } = params
 
-  if (!data?.is_verified || !data.full_name) {
+  if (!data?.full_name) {
     return <>-</>
   }
 
@@ -73,7 +88,7 @@ function FullNameRenderer(params: ICellRendererParams<FeedbackWithVerification>)
 function ProfileButtonRenderer(params: ICellRendererParams<FeedbackWithVerification>) {
   const { data } = params
 
-  if (!data?.is_verified || !data.profile_id) {
+  if (!data?.profile_id) {
     return null
   }
 
@@ -112,8 +127,12 @@ function WhatsAppButtonRenderer(params: ICellRendererParams<FeedbackWithVerifica
 
 export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
   const gridApiRef = useRef<GridApi<FeedbackWithVerification> | null>(null)
+  const fetcher = useFetcher<ComposableFetcherData>()
   const [participationFilter, setParticipationFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.participation),
+  )
+  const [statusFilter, setStatusFilter] = useState<string[]>(() =>
+    getStoredFilter(STORAGE_KEYS.status),
   )
 
   useEffect(() => {
@@ -121,7 +140,31 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
       STORAGE_KEYS.participation,
       JSON.stringify(participationFilter),
     )
-  }, [participationFilter])
+    sessionStorage.setItem(STORAGE_KEYS.status, JSON.stringify(statusFilter))
+  }, [participationFilter, statusFilter])
+
+  const handleSave = useCallback(
+    async (params: { field: string; newValue: unknown; rowData: unknown }) => {
+      const rowData = params.rowData as FeedbackWithVerification | undefined
+      if (!rowData?.id) return
+
+      if (
+        !EDITABLE_FIELDS.includes(
+          params.field as (typeof EDITABLE_FIELDS)[number],
+        )
+      ) {
+        return
+      }
+
+      const formData = new FormData()
+      formData.append("intent", "update-feedback-status")
+      formData.append("id", rowData.id)
+      formData.append(params.field, String(params.newValue ?? ""))
+
+      fetcher.submit(formData, { method: "POST" })
+    },
+    [fetcher],
+  )
 
   const columnDefs: ColDef<FeedbackWithVerification>[] = useMemo(
     () => [
@@ -132,6 +175,28 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
           formatDateTime(params.value, "numeric").date ?? "-",
         sortable: true,
         sort: "desc",
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        headerTooltip: "Clique duas vezes para mudar o status do feedback",
+        editable: true,
+        cellEditor: "agSelectCellEditor",
+        cellEditorParams: {
+          values: feedbackStatusValues,
+        },
+        valueFormatter: (params) =>
+          feedbackStatusLabels[params.value as FeedbackStatus] ?? params.value,
+        tooltipValueGetter: () => null,
+        filter: BaseMultiSelectFilter,
+        filterParams: {
+          options: statusFilterOptions,
+          field: "status",
+          model: statusFilter,
+          onModelChange: setStatusFilter,
+        },
+        sortable: true,
+        width: 140,
       },
       {
         field: "has_participated",
@@ -205,11 +270,12 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
         width: 90,
       },
     ],
-    [participationFilter],
+    [participationFilter, statusFilter],
   )
 
   const handleClearFilters = useCallback(() => {
     setParticipationFilter([])
+    setStatusFilter([])
     Object.values(STORAGE_KEYS).forEach((key) => sessionStorage.removeItem(key))
   }, [])
 
@@ -235,6 +301,8 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
       showToolbar
       onClearFilters={handleClearFilters}
       onGridReady={handleGridReady}
+      fetcher={fetcher}
+      onSave={handleSave}
     />
   )
 }

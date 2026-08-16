@@ -1,6 +1,12 @@
+import { inputFromForm } from "composable-functions"
 import { useLoaderData } from "react-router"
+import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
-import { getAllFeedbacksWithVerification } from "~/business/feedback/feedback.server"
+import { updateFeedbackStatusSchema } from "~/business/feedback/feedback-schema"
+import {
+  getAllFeedbacksWithVerification,
+  updateFeedbackStatus,
+} from "~/business/feedback/feedback.server"
 import { FeedbacksTable } from "~/components/organisms/tables/admin/feedbacks-table"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
@@ -12,6 +18,21 @@ const {
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray("Admin - Feedbacks")
+}
+
+export async function action({ request }: Route.ActionArgs) {
+  const { intent } = await inputFromForm(request)
+
+  if (intent === "update-feedback-status") {
+    return await formAction({
+      request,
+      schema: updateFeedbackStatusSchema,
+      mutation: updateFeedbackStatus,
+      transformResult: (result) => ({ ...result, intent }),
+    })
+  }
+
+  return { intent }
 }
 
 export async function loader() {
