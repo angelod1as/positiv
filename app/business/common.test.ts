@@ -22,7 +22,7 @@ describe("applyToEventSchema", () => {
           (issue) => issue.path[0] === "referred",
         )
         expect(referredError).toBeDefined()
-        expect(referredError?.message).toBe("Este campo é obrigatório")
+        expect(referredError?.message).toBe("Campo obrigatório")
       }
     })
 
@@ -41,7 +41,7 @@ describe("applyToEventSchema", () => {
           (issue) => issue.path[0] === "referred",
         )
         expect(referredError).toBeDefined()
-        expect(referredError?.message).toBe("Este campo é obrigatório")
+        expect(referredError?.message).toBe("Campo obrigatório")
       }
     })
 

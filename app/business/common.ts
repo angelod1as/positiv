@@ -1,24 +1,19 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { PHONE_REGEXP } from "~/lib/constants/constants"
 import { normalizeName } from "~/lib/helpers/strings"
+import { validationMessages } from "~/lib/helpers/validation-messages"
 import { zod } from "~/lib/helpers/zod"
 import type { Database } from "~types/database/database.types"
 
 /* AUTH */
 
 export const loginSchema = zod.object({
-  email: zod
-    .string()
-    .min(1, "Insira pelo menos um caracter")
-    .email("E-mail inválido"),
-  password: zod.string().min(1, "Insira pelo menos um caracter"),
+  email: zod.string().min(1).email(),
+  password: zod.string().min(1),
 })
 
 export const forgotPasswordSchema = zod.object({
-  email: zod
-    .string()
-    .min(1, "Insira pelo menos um caracter")
-    .email("E-mail inválido"),
+  email: zod.string().min(1).email(),
 })
 
 export const currentUserSchema = zod.object({
@@ -28,9 +23,7 @@ export const currentUserSchema = zod.object({
 
 export const changePasswordSchema = zod
   .object({
-    password: zod
-      .string()
-      .min(6, "A senha precisa ter, no mínimo, 6 caracteres"),
+    password: zod.string().min(6),
     confirm_password: zod.string(),
   })
   .refine((data) => data.password === data.confirm_password, {
@@ -40,8 +33,8 @@ export const changePasswordSchema = zod
 
 export const registerUserSchema = zod
   .object({
-    email: zod.string().email("Insira um e-mail válido"),
-    password: zod.string().min(8, { message: "A senha é muito curta" }),
+    email: zod.string().email(),
+    password: zod.string().min(8),
     confirmPassword: zod.string(),
     over18: zod.boolean().refine((val) => val, {
       message: "Você só pode se inscrever se for maior de 18 anos",
@@ -119,7 +112,7 @@ export const basicDataSchema = zod
     rg_issuer: zod.string().min(2),
     cpf: zod.string().min(2),
     date_of_birth: zod
-      .string({ message: "Obrigatório" })
+      .string()
       .pipe(
         zod.coerce.date({
           error: "Data inválida",
@@ -182,22 +175,22 @@ export const ExtraBasicDataSchema = zod.object({
   gender: zod
     .array(zod.string())
     .refine((value) => value.some((item) => item), {
-      message: "Você precisa escolher pelo menos um",
+      message: validationMessages.minOptions(1),
     }),
   orientation: zod
     .array(zod.string())
     .refine((value) => value.some((item) => item), {
-      message: "Você precisa escolher pelo menos um",
+      message: validationMessages.minOptions(1),
     }),
   pronouns: zod
     .array(zod.string())
     .refine((value) => value.some((item) => item), {
-      message: "Você precisa escolher pelo menos um",
+      message: validationMessages.minOptions(1),
     }),
   race_color: zod
     .array(zod.string())
     .refine((value) => value.some((item) => item), {
-      message: "Você precisa escolher pelo menos um",
+      message: validationMessages.minOptions(1),
     }),
 })
 
@@ -205,7 +198,7 @@ export const applyToEventSchema = zod.object({
   applicationDate: zod.coerce.date(),
   eventId: zod.string(),
   referrals: zod.string().optional(),
-  referred: zod.string().trim().min(1, "Este campo é obrigatório"),
+  referred: zod.string().trim().min(1),
   companions: zod.string().optional(),
   bond: zod
     .enum(["Só vou acompanhade.", "Posso ir sozinhe."])

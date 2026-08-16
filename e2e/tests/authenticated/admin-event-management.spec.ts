@@ -112,6 +112,6 @@ test.describe('Admin Event Management', () => {
     
     // Should show validation errors - looking for minimum characters error
     await expect(page.getByText('No mínimo 2 caracteres').first()).toBeVisible()
-    await expect(page.getByText('precisa ser um emoji')).toBeVisible()
+    await expect(page.getByText('Precisa ser um emoji')).toBeVisible()
   })
 })

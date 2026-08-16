@@ -1,29 +1,56 @@
 import { z } from "zod"
+import { validationMessages } from "./validation-messages"
+
+const countableOrigins = ["array", "set", "file"]
 
 z.config({
   customError: (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        if (issue.received === "undefined") {
-          return "Obrigatório"
+        if (issue.input === undefined || issue.input === null) {
+          return validationMessages.required
         }
-        return `Tipos incorretos. Esperado: ${issue.expected}. Recebido: ${issue.received}`
+        return validationMessages.invalid
+      case "too_small": {
+        const minimum = Number(issue.minimum)
+        if (issue.origin === "string") {
+          return minimum <= 1
+            ? validationMessages.required
+            : validationMessages.minLength(minimum)
+        }
+        if (countableOrigins.includes(issue.origin)) {
+          return minimum <= 1
+            ? validationMessages.required
+            : validationMessages.minOptions(minimum)
+        }
+        if (["number", "int", "bigint"].includes(issue.origin)) {
+          return validationMessages.minValue(minimum)
+        }
+        return validationMessages.invalid
+      }
+      case "too_big": {
+        const maximum = Number(issue.maximum)
+        if (issue.origin === "string") {
+          return validationMessages.maxLength(maximum)
+        }
+        if (countableOrigins.includes(issue.origin)) {
+          return validationMessages.maxOptions(maximum)
+        }
+        if (["number", "int", "bigint"].includes(issue.origin)) {
+          return validationMessages.maxValue(maximum)
+        }
+        return validationMessages.invalid
+      }
       case "invalid_format":
-        if (
-          "validation" in issue &&
-          typeof issue.validation === "string" &&
-          issue.validation === "datetime"
-        ) {
-          return "Formato de data inválido"
+        if (issue.format === "email") {
+          return validationMessages.invalidEmail
         }
-        return "Formato inválido"
-      case "too_big":
-        return `No máximo ${issue.maximum} caracteres`
-      case "too_small":
-        return `No mínimo ${issue.minimum} caracteres`
-      case "custom":
+        if (issue.format === "datetime" || issue.format === "date") {
+          return validationMessages.invalidDate
+        }
+        return validationMessages.invalidFormat
       default:
-        return undefined
+        return validationMessages.invalid
     }
   },
 })

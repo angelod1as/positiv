@@ -26,8 +26,8 @@ export class LoginPage extends BasePage {
     
     // Error locators
     this.generalErrorAlert = page.getByRole('alert').filter({ hasText: 'Credenciais inválidas' })
-    this.emailError = page.locator('#errors-for-email').filter({ hasText: 'Insira pelo menos um caracter' })
-    this.passwordError = page.locator('#errors-for-password').filter({ hasText: 'Insira pelo menos um caracter' })
+    this.emailError = page.locator('#errors-for-email').filter({ hasText: 'Campo obrigatório' })
+    this.passwordError = page.locator('#errors-for-password').filter({ hasText: 'Campo obrigatório' })
     
     // User state indicators
     this.userAvatar = page.locator('[data-testid="user-avatar"]').or(

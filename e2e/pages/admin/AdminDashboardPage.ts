@@ -52,43 +52,22 @@ export class AdminDashboardPage extends BasePage {
   }
 
   async isEventInList(eventTitle: string): Promise<boolean> {
-    // First check if event is visible on current page using AG Grid selectors
-    // Look for a cell in the title column containing the event title
+    // The table paginates at 25 rows and AG Grid keeps only the rows in view in
+    // the DOM, so an event can be on the current page and still not be visible.
+    // The quick filter brings it into view whatever the row count.
+    const searchInput = this.eventsTable.getByLabel("Buscar eventos")
+    await searchInput.waitFor({ state: "visible" })
+    await searchInput.fill(eventTitle)
+
     const eventCell = this.eventsTable
       .locator('.ag-cell[col-id="title"]')
       .filter({ hasText: eventTitle })
       .first()
 
-    if (await eventCell.isVisible()) {
-      return true
-    }
-
-    // If not visible, check if there's pagination (AG Grid uses .ag-paging-panel)
-    const nextPageButton = this.eventsTable
-      .locator(".ag-paging-panel")
-      .getByRole("button", { name: "Next Page" })
-
-    // Check if pagination exists and next button is enabled
-    if (!(await nextPageButton.isVisible())) {
-      return false
-    }
-
-    // Keep clicking next until we find the event or reach the last page
-    while (
-      (await nextPageButton.isVisible()) &&
-      (await nextPageButton.isEnabled())
-    ) {
-      await nextPageButton.click()
-      // Wait for table to update
-      await this.page.waitForTimeout(500)
-
-      if (await eventCell.isVisible()) {
-        return true
-      }
-    }
-
-    // Event not found in any page
-    return false
+    return eventCell
+      .waitFor({ state: "visible", timeout: 10000 })
+      .then(() => true)
+      .catch(() => false)
   }
 
   async waitForEventInList(

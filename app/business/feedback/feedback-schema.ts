@@ -3,19 +3,12 @@ import { zod } from "~/lib/helpers/zod"
 
 export const feedbackFormSchema = zod.object({
   name: zod.string().optional(),
-  email: zod
-    .string()
-    .email("Insira um e-mail válido")
-    .optional()
-    .or(zod.literal("")),
+  email: zod.string().email().optional().or(zod.literal("")),
   whatsapp: zod.string().optional(),
   hasParticipated: zod.enum(["never", "once", "more_than_once"], {
     message: "Selecione uma opção",
   }),
-  feedbackText: zod
-    .string()
-    .min(10, "O feedback deve ter pelo menos 10 caracteres")
-    .max(5000, "O feedback deve ter no máximo 5000 caracteres"),
+  feedbackText: zod.string().min(10).max(5000),
   canContact: zod.preprocess(
     (val) => val === "on" || val === true || val === "true",
     zod.boolean(),
