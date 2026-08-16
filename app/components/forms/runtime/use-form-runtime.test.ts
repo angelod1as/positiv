@@ -209,3 +209,217 @@ describe("useFormRuntime validation gating", () => {
     expect(result.current.errors.b).toBeUndefined()
   })
 })
+
+describe("useFormRuntime branching", () => {
+  const branchingFlow: Flow = {
+    start: "a",
+    steps: {
+      a: { kind: "question", id: "a" },
+      b: { kind: "question", id: "b" },
+      c: { kind: "question", id: "c" },
+    },
+    next: (current, answers) => {
+      if (current === "a") return answers.a === "pular" ? "c" : "b"
+      if (current === "b") return "c"
+      return "done"
+    },
+  }
+
+  it("routes to the step the flow chooses for the given answer", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: branchingFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "pular")
+      await result.current.advance()
+    })
+
+    expect(result.current.currentStepId).toBe("c")
+  })
+
+  it("takes the other branch for a different answer", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: branchingFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "seguir")
+      await result.current.advance()
+    })
+
+    expect(result.current.currentStepId).toBe("b")
+  })
+
+  it("passes caller-supplied data to the flow resolver", async () => {
+    const seen: Record<string, unknown>[] = []
+    const dataFlow: Flow = {
+      start: "a",
+      steps: { a: { kind: "question", id: "a" } },
+      next: (_current, _answers, context) => {
+        seen.push(context.data)
+        return "done"
+      },
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({
+        questions,
+        flow: dataFlow,
+        data: { isVeteran: true },
+      }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+
+    expect(seen).toEqual([{ isVeteran: true }])
+  })
+})
+
+describe("useFormRuntime first-try tracking", () => {
+  const probes = [correctness("a", "certa"), correctness("b", "certa")]
+
+  const probeFlow: Flow = {
+    start: "a",
+    steps: {
+      a: { kind: "question", id: "a" },
+      b: { kind: "question", id: "b" },
+    },
+    next: (current) => (current === "a" ? "b" : "done"),
+  }
+
+  it("records a question answered correctly on the first attempt", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: probes, flow: probeFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "certa")
+      await result.current.advance()
+    })
+
+    expect(result.current.firstTryCorrect.a).toBe(true)
+  })
+
+  it("records a first-attempt mistake even after it is corrected", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: probes, flow: probeFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "errada")
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("a", "certa")
+      await result.current.advance()
+    })
+
+    expect(result.current.currentStepId).toBe("b")
+    expect(result.current.firstTryCorrect.a).toBe(false)
+  })
+
+  it("does not count an unanswered advance as a first-attempt mistake", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: probes, flow: probeFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("a", "certa")
+      await result.current.advance()
+    })
+
+    expect(result.current.firstTryCorrect.a).toBe(true)
+  })
+
+  it("lets a flow branch on first-attempt mistakes", async () => {
+    // The POS-484 veteran rule: fumbling both probes on the first attempt
+    // drops the person into the full quiz, even though gating forced them
+    // to correct both answers before moving on.
+    const veteranFlow: Flow = {
+      start: "a",
+      steps: {
+        a: { kind: "question", id: "a" },
+        b: { kind: "question", id: "b" },
+        full: { kind: "question", id: "c" },
+      },
+      next: (current, _answers, context) => {
+        if (current === "a") return "b"
+        if (current === "b") {
+          const fumbled = ["a", "b"].filter(
+            (id) => context.firstTryCorrect[id] === false,
+          )
+          return fumbled.length === 2 ? "full" : "done"
+        }
+        return "done"
+      },
+    }
+
+    const allQuestions = [...probes, question("c")]
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: allQuestions, flow: veteranFlow }),
+    )
+
+    for (const id of ["a", "b"]) {
+      await act(async () => {
+        result.current.answer(id, "errada")
+        await result.current.advance()
+      })
+      await act(async () => {
+        result.current.answer(id, "certa")
+        await result.current.advance()
+      })
+    }
+
+    expect(result.current.currentStepId).toBe("full")
+  })
+
+  it("sends a veteran who fumbles only one probe straight to done", async () => {
+    const veteranFlow: Flow = {
+      start: "a",
+      steps: {
+        a: { kind: "question", id: "a" },
+        b: { kind: "question", id: "b" },
+        full: { kind: "question", id: "c" },
+      },
+      next: (current, _answers, context) => {
+        if (current === "a") return "b"
+        if (current === "b") {
+          const fumbled = ["a", "b"].filter(
+            (id) => context.firstTryCorrect[id] === false,
+          )
+          return fumbled.length === 2 ? "full" : "done"
+        }
+        return "done"
+      },
+    }
+
+    const allQuestions = [...probes, question("c")]
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: allQuestions, flow: veteranFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "errada")
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("a", "certa")
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("b", "certa")
+      await result.current.advance()
+    })
+
+    expect(result.current.isDone).toBe(true)
+  })
+})
