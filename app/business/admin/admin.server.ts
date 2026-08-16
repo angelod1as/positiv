@@ -160,6 +160,27 @@ const profilesWithExtraDataQuery = kyselyDb
           .orderBy("e_top.time_event_start", "desc")
           .limit(6),
       )
+      // Going through the rodízio restarts the count: an attendance only counts
+      // when no rodízio skip happened at or after its event
+      .where((recentEb) =>
+        recentEb.not(
+          recentEb.exists(
+            recentEb
+              .selectFrom("event_participants as ep_reset")
+              .innerJoin("events as e_reset", "ep_reset.event_id", "e_reset.id")
+              .select(sql`1`.as("one"))
+              .whereRef("ep_reset.profile_id", "=", "ep_recent.profile_id")
+              .where("ep_reset.attendance_status", "=", "skipped")
+              .where("ep_reset.was_selected_for_rotation", "=", true)
+              .where("e_reset.event_status", "=", "Completed")
+              .whereRef(
+                "e_reset.time_event_start",
+                ">=",
+                "e_recent.time_event_start",
+              ),
+          ),
+        ),
+      )
       .as("last_attended_events_count"),
   ])
 
@@ -283,6 +304,27 @@ const globalProfileBaseQuery = kyselyDb
           .where("e_top.event_status", "=", "Completed")
           .orderBy("e_top.time_event_start", "desc")
           .limit(6),
+      )
+      // Going through the rodízio restarts the count: an attendance only counts
+      // when no rodízio skip happened at or after its event
+      .where((recentEb) =>
+        recentEb.not(
+          recentEb.exists(
+            recentEb
+              .selectFrom("event_participants as ep_reset")
+              .innerJoin("events as e_reset", "ep_reset.event_id", "e_reset.id")
+              .select(sql`1`.as("one"))
+              .whereRef("ep_reset.profile_id", "=", "ep_recent.profile_id")
+              .where("ep_reset.attendance_status", "=", "skipped")
+              .where("ep_reset.was_selected_for_rotation", "=", true)
+              .where("e_reset.event_status", "=", "Completed")
+              .whereRef(
+                "e_reset.time_event_start",
+                ">=",
+                "e_recent.time_event_start",
+              ),
+          ),
+        ),
       )
       .as("last_attended_events_count"),
   ])
