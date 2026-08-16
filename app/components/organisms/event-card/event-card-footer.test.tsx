@@ -120,6 +120,39 @@ describe("EventCardFooter", () => {
       expect(cancelButton).toBeInTheDocument()
     })
 
+    it("should render cancel button when user is applied and registrations closed", () => {
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          event_status="Registration Closed"
+          googleLink=""
+          is_applied={true}
+          dataTestId="test-footer"
+          isAdmin={false}
+        />,
+      )
+
+      const cancelButton = screen.getByText(/Cancelar inscrição/i)
+      expect(cancelButton).toBeInTheDocument()
+      expect(screen.queryByText(/Inscrições encerradas/i)).not.toBeInTheDocument()
+    })
+
+    it("should render closed button when registrations closed and user is not applied", () => {
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          event_status="Registration Closed"
+          googleLink=""
+          is_applied={false}
+          dataTestId="test-footer"
+          isAdmin={false}
+        />,
+      )
+
+      const closedButton = screen.getByText(/Inscrições encerradas/i)
+      expect(closedButton).toBeInTheDocument()
+    })
+
     it("should work without isAdmin prop (backward compatibility)", () => {
       render(
         <EventCardFooter
