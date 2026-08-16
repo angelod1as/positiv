@@ -33,11 +33,10 @@ By participating in this project, you agree to abide by our Code of Conduct. Ple
 
 4. Set up environment variables:
 
-   ```bash
-   cp .env.example .env
-   ```
-
-   Edit the `.env` file with your Supabase credentials and other required variables.
+   `.env.schema` is the inventory of every variable the project reads, with no
+   values in it. Create a `.env` with your Supabase credentials and whatever
+   else you need, then check it with `pnpm env:check`, which prints what
+   resolved and what is missing with secrets redacted.
 5. Generate database types:
 
    ```bash

@@ -259,7 +259,7 @@ pnpm email:test   # Start Mailhog for local email testing
 
 4. **Server-Only Code**: Use `.server.ts` suffix for server-only modules to prevent client-side imports.
 
-5. **Environment Variables**: Required variables are documented in `.env.example`. Local development requires Supabase setup.
+5. **Environment Variables**: Every variable the project reads is declared in `.env.schema`, with its type and whether it is required — read that file, never `.env`, which holds the values. Application code reads them through `ENV` from `varlock/env`, not `process.env`. Local development requires Supabase setup.
 
 6. Do not add comments to the code unless it's a particularly complex method
 
