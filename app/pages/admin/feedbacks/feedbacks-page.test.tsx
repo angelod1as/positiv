@@ -1,12 +1,17 @@
 import { render, screen } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { FeedbackWithVerification } from "~/business/feedback/feedback.server"
+import { getAdminContext } from "~/business/admin/admin.server"
 import { updateFeedbackStatus } from "~/business/feedback/feedback.server"
 import { updateFeedbackStatusSchema } from "~/business/feedback/feedback-schema"
 
 vi.mock("~/business/feedback/feedback.server", () => ({
   getAllFeedbacksWithVerification: vi.fn(),
   updateFeedbackStatus: vi.fn(),
+}))
+
+vi.mock("~/business/admin/admin.server", () => ({
+  getAdminContext: vi.fn(),
 }))
 
 const formAction = vi.fn()
@@ -87,6 +92,22 @@ describe("FeedbacksPage action", () => {
   beforeEach(() => {
     formAction.mockReset()
     formAction.mockResolvedValue({ success: true })
+    vi.mocked(getAdminContext).mockReset()
+  })
+
+  it("should refuse to run for a non-admin", async () => {
+    vi.mocked(getAdminContext).mockRejectedValue(new Response(null, { status: 302 }))
+
+    const request = buildRequest({
+      intent: "update-feedback-status",
+      id: "1",
+      status: "resolved",
+    })
+
+    await expect(
+      action({ request } as Parameters<typeof action>[0]),
+    ).rejects.toBeInstanceOf(Response)
+    expect(formAction).not.toHaveBeenCalled()
   })
 
   it("should update the feedback status", async () => {
