@@ -1,8 +1,8 @@
 import { useState } from "react"
 import type { Flow } from "~/components/forms/runtime/flow.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
-import { allAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
-import { oneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
+import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
+import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type { Answers, Question } from "~/components/forms/runtime/question.types"
 import { Button } from "~/components/atoms/button/button"
 import { zod } from "~/lib/helpers/zod"
@@ -182,7 +182,7 @@ export default function FormRuntimeDemoPage() {
           key={runId}
           questions={questions}
           flow={shape === "stepped" ? steppedFlow : singleScreenFlow}
-          presentation={shape === "stepped" ? oneAtATime : allAtOnce}
+          presentation={shape === "stepped" ? OneAtATime : AllAtOnce}
           onDone={setResult}
         />
       )}

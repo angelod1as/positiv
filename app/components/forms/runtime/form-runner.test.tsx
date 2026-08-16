@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
 import type { Flow } from "./flow.types"
 import { FormRunner } from "./form-runner"
-import { allAtOnce } from "./presentations/all-at-once"
-import { oneAtATime } from "./presentations/one-at-a-time"
+import { AllAtOnce } from "./presentations/all-at-once"
+import { OneAtATime } from "./presentations/one-at-a-time"
 import type { RenderQuestion } from "./presentations/presentation.types"
 import type { Question } from "./question.types"
 
@@ -58,7 +58,7 @@ describe("FormRunner with allAtOnce", () => {
       <FormRunner
         questions={questions}
         flow={screenFlow}
-        presentation={allAtOnce}
+        presentation={AllAtOnce}
         renderQuestion={renderQuestion}
       />,
     )
@@ -75,7 +75,7 @@ describe("FormRunner with allAtOnce", () => {
       <FormRunner
         questions={questions}
         flow={screenFlow}
-        presentation={allAtOnce}
+        presentation={AllAtOnce}
         renderQuestion={renderQuestion}
         onDone={onDone}
       />,
@@ -99,7 +99,7 @@ describe("FormRunner with allAtOnce", () => {
       <FormRunner
         questions={questions}
         flow={screenFlow}
-        presentation={allAtOnce}
+        presentation={AllAtOnce}
         renderQuestion={renderQuestion}
         onDone={onDone}
       />,
@@ -122,7 +122,7 @@ describe("FormRunner with oneAtATime", () => {
       <FormRunner
         questions={questions}
         flow={steppedFlow}
-        presentation={oneAtATime}
+        presentation={OneAtATime}
         renderQuestion={renderQuestion}
       />,
     )
@@ -139,7 +139,7 @@ describe("FormRunner with oneAtATime", () => {
       <FormRunner
         questions={questions}
         flow={steppedFlow}
-        presentation={oneAtATime}
+        presentation={OneAtATime}
         renderQuestion={renderQuestion}
       />,
     )
@@ -160,7 +160,7 @@ describe("FormRunner with oneAtATime", () => {
       <FormRunner
         questions={questions}
         flow={steppedFlow}
-        presentation={oneAtATime}
+        presentation={OneAtATime}
         renderQuestion={renderQuestion}
       />,
     )
@@ -189,7 +189,7 @@ describe("FormRunner with oneAtATime", () => {
       <FormRunner
         questions={questions}
         flow={contentFlow}
-        presentation={oneAtATime}
+        presentation={OneAtATime}
         renderQuestion={renderQuestion}
       />,
     )
@@ -204,9 +204,101 @@ describe("FormRunner with oneAtATime", () => {
   })
 })
 
+describe("oneAtATime keyboard flow", () => {
+  it("focuses the control as soon as the question appears", () => {
+    render(
+      <FormRunner
+        questions={questions}
+        flow={steppedFlow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    expect(screen.getByLabelText("Qual seu nome?")).toHaveFocus()
+  })
+
+  it("advances on Enter without reaching for the mouse", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={steppedFlow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    await user.keyboard("Angelo{Enter}")
+
+    expect(
+      screen.getByRole("heading", { name: "Onde você mora?" }),
+    ).toBeInTheDocument()
+  })
+
+  it("moves focus to the next question's control", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={steppedFlow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    await user.keyboard("Angelo{Enter}")
+
+    expect(screen.getByLabelText("Onde você mora?")).toHaveFocus()
+  })
+
+  it("focuses the continue button on a content screen", () => {
+    const contentFlow: Flow = {
+      start: "intro",
+      steps: {
+        intro: { kind: "content", render: <p>Leia as regras</p> },
+        nome: { kind: "question", id: "nome" },
+      },
+      next: (current) => (current === "intro" ? "nome" : "done"),
+    }
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={contentFlow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Continuar" })).toHaveFocus()
+  })
+
+  it("does not steal focus back while the person is still typing", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={steppedFlow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+    await user.click(screen.getByLabelText("Qual seu nome?"))
+    await user.keyboard("An")
+
+    expect(screen.getByLabelText("Qual seu nome?")).toHaveFocus()
+  })
+})
+
 describe("presentation cannot change what is collected", () => {
   it("collects the same answers through either presentation", async () => {
-    const answersFrom = async (presentation: typeof allAtOnce) => {
+    const answersFrom = async (presentation: typeof AllAtOnce) => {
       const user = userEvent.setup()
       const onDone = vi.fn()
 
@@ -229,6 +321,6 @@ describe("presentation cannot change what is collected", () => {
       return onDone.mock.calls[0][0]
     }
 
-    expect(await answersFrom(allAtOnce)).toEqual(await answersFrom(oneAtATime))
+    expect(await answersFrom(AllAtOnce)).toEqual(await answersFrom(OneAtATime))
   })
 })

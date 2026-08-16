@@ -3,7 +3,7 @@ import { Label } from "~/components/ui/label"
 import { Error } from "../../base/error"
 import type { Presentation } from "./presentation.types"
 
-export const allAtOnce: Presentation = ({
+export const AllAtOnce: Presentation = ({
   step,
   questions,
   answers,
