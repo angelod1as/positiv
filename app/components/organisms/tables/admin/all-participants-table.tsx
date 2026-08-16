@@ -230,7 +230,8 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       {
         field: "last_attended_events_count",
         headerName: "Últimos eventos (6 últimos)",
-        headerTooltip: "Presenças nos últimos 6 eventos realizados",
+        headerTooltip:
+          "Presenças nos últimos 6 eventos realizados. Zera quando a pessoa é rodiziada, e recomeça a partir daí",
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,
