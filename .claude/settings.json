@@ -138,9 +138,31 @@
       "Bash(*SUPABASE_DB_PASSWORD=*)",
       "Bash(*POSTGRES_PASSWORD=*)",
       "Bash(*LISTMONK_ADMIN_PASSWORD=*)",
+
       "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./ops/newsletter/.env)"
+      "Read(./.env.local)",
+      "Read(./.env.development)",
+      "Read(./.env.production)",
+      "Read(./.env.test)",
+      "Read(./.env.*.local)",
+      "Read(./.env.github)",
+      "Read(./.env.vercel.*)",
+      "Read(./ops/newsletter/.env)",
+
+      "Bash(cat .env*)",
+      "Bash(cat ./.env*)",
+      "Bash(head .env*)",
+      "Bash(head ./.env*)",
+      "Bash(tail .env*)",
+      "Bash(tail ./.env*)",
+      "Bash(less .env*)",
+      "Bash(more .env*)",
+      "Bash(sed * .env*)",
+      "Bash(awk * .env*)",
+      "Bash(grep * .env*)",
+      "Bash(strings .env*)",
+      "Bash(varlock reveal*)",
+      "Bash(pnpm exec varlock reveal*)"
     ]
   },
   "enableAllProjectMcpServers": true,
