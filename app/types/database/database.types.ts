@@ -361,6 +361,7 @@ export type Database = {
           id: string
           ip_address: string
           name: string | null
+          status: Database["public"]["Enums"]["feedback_status_enum"]
           whatsapp: string | null
         }
         Insert: {
@@ -372,6 +373,7 @@ export type Database = {
           id?: string
           ip_address: string
           name?: string | null
+          status?: Database["public"]["Enums"]["feedback_status_enum"]
           whatsapp?: string | null
         }
         Update: {
@@ -383,6 +385,7 @@ export type Database = {
           id?: string
           ip_address?: string
           name?: string | null
+          status?: Database["public"]["Enums"]["feedback_status_enum"]
           whatsapp?: string | null
         }
         Relationships: []
@@ -621,6 +624,7 @@ export type Database = {
         | "Registration Open"
       event_type_enum: "regular" | "bdsm"
       feedback_participation_enum: "never" | "once" | "more_than_once"
+      feedback_status_enum: "new" | "in_progress" | "resolved"
       profile_flag_enum: "none" | "yellow" | "red" | "gray"
       spot_type: "regular" | "social" | "staff"
     }
@@ -784,6 +788,7 @@ export const Constants = {
       ],
       event_type_enum: ["regular", "bdsm"],
       feedback_participation_enum: ["never", "once", "more_than_once"],
+      feedback_status_enum: ["new", "in_progress", "resolved"],
       profile_flag_enum: ["none", "yellow", "red", "gray"],
       spot_type: ["regular", "social", "staff"],
     },
