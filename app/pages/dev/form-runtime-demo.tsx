@@ -87,7 +87,7 @@ const questions: Question[] = [
   {
     id: "email",
     prompt: "Qual seu e-mail?",
-    help: 'Escreva "ocupado@positiv.com" para o servidor recusar, ou "erro@positiv.com" para o commit estourar.',
+    help: 'Endereços especiais: "ocupado@positiv.com" recusa, "erro@positiv.com" estoura, "lento@positiv.com" demora.',
     input: { kind: "text" },
     schema: zod.string().email({ message: "E-mail inválido" }),
   },
@@ -95,7 +95,12 @@ const questions: Question[] = [
 
 const commitStep = {
   kind: "commit" as const,
-  run: (answers: Answers) => {
+  run: async (answers: Answers) => {
+    if (answers.email === "lento@positiv.com") {
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      return { ok: true as const }
+    }
+
     if (answers.email === "erro@positiv.com") {
       throw new Error("simulated network failure")
     }
@@ -208,6 +213,11 @@ export default function FormRuntimeDemoPage() {
           <li>
             E-mail <strong>erro@positiv.com</strong>: o commit estoura, e a
             falha aparece sem culpar nenhuma pergunta.
+          </li>
+          <li>
+            E-mail <strong>lento@positiv.com</strong>: o commit demora três
+            segundos. O botão fica desabilitado enquanto isso, e um segundo
+            Enter não envia de novo.
           </li>
         </ul>
       </div>
