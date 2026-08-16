@@ -210,6 +210,61 @@ describe("useFormRuntime validation gating", () => {
   })
 })
 
+describe("useFormRuntime content steps", () => {
+  const contentFlow: Flow = {
+    start: "intro",
+    steps: {
+      intro: { kind: "content", render: "Leia as regras" },
+      a: { kind: "question", id: "a" },
+    },
+    next: (current) => (current === "intro" ? "a" : "done"),
+  }
+
+  it("has no questions to answer on a content step", () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: contentFlow }),
+    )
+
+    expect(result.current.currentQuestions).toEqual([])
+  })
+
+  it("exposes the content so a presentation can render it", () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: contentFlow }),
+    )
+
+    expect(result.current.currentStep).toEqual({
+      kind: "content",
+      render: "Leia as regras",
+    })
+  })
+
+  it("advances past a content step without requiring an answer", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: contentFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.currentStepId).toBe("a")
+    expect(result.current.errors).toEqual({})
+  })
+
+  it("collects no answer for a content step", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: contentFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.answers).toEqual({})
+  })
+})
+
 describe("useFormRuntime branching", () => {
   const branchingFlow: Flow = {
     start: "a",
