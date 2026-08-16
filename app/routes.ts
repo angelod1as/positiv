@@ -6,7 +6,16 @@ import {
   route,
 } from "@react-router/dev/routes"
 
+// Development-only routes. Evaluated when the route config is built, so in a
+// production build the module is never referenced and never bundled.
+const devOnly: RouteConfig =
+  process.env.NODE_ENV === "production"
+    ? []
+    : [route("/dev/form-runtime", "pages/dev/form-runtime-demo.tsx")]
+
 export default [
+  ...devOnly,
+
   // API ROUTES (internal endpoints)
   route("/api/process-campaigns", "routes/api.process-campaigns.ts"),
   route("/api/retry-newsletter-syncs", "routes/api.retry-newsletter-syncs.ts"),
