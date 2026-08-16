@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { validationMessages } from "~/lib/helpers/validation-messages"
 import { feedbackFormSchema } from "./feedback-schema"
 
 describe("feedbackFormSchema", () => {
@@ -48,7 +49,7 @@ describe("feedbackFormSchema", () => {
         )
         expect(feedbackError).toBeDefined()
         expect(feedbackError?.message).toBe(
-          "O feedback deve ter pelo menos 10 caracteres",
+          validationMessages.minLength(10),
         )
       }
     })
@@ -77,7 +78,7 @@ describe("feedbackFormSchema", () => {
         )
         expect(feedbackError).toBeDefined()
         expect(feedbackError?.message).toBe(
-          "O feedback deve ter no máximo 5000 caracteres",
+          validationMessages.maxLength(5000),
         )
       }
     })
@@ -107,7 +108,7 @@ describe("feedbackFormSchema", () => {
           (issue) => issue.path[0] === "email",
         )
         expect(emailError).toBeDefined()
-        expect(emailError?.message).toBe("Insira um e-mail válido")
+        expect(emailError?.message).toBe(validationMessages.invalidEmail)
       }
     })
 
