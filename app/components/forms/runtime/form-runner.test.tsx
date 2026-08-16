@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
@@ -433,6 +433,49 @@ describe("a commit failure nobody can fix is still shown", () => {
     )
     expect(onDone).not.toHaveBeenCalled()
     expect(screen.getByLabelText("Qual seu nome?")).toBeInTheDocument()
+  })
+})
+
+describe("the continue button reflects a commit in flight", () => {
+  it.each([
+    ["allAtOnce", AllAtOnce],
+    ["oneAtATime", OneAtATime],
+  ])("disables continue while %s is saving", async (_name, presentation) => {
+    let release: (() => void) | undefined
+    const slowFlow: Flow = {
+      start: "nome",
+      steps: {
+        nome: { kind: "question", id: "nome" },
+        salvar: {
+          kind: "commit",
+          run: () =>
+            new Promise((resolve) => {
+              release = () => resolve({ ok: true })
+            }),
+        },
+      },
+      next: (current) => (current === "nome" ? "salvar" : "done"),
+    }
+
+    const user = userEvent.setup()
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={slowFlow}
+        presentation={presentation}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    await user.type(screen.getByLabelText("Qual seu nome?"), "Angelo")
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
+
+    await act(async () => {
+      release?.()
+    })
   })
 })
 

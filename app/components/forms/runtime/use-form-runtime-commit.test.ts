@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
-import type { CommitFn } from "./commit.types"
+import type { CommitFn, CommitResult } from "./commit.types"
 import type { Flow } from "./flow.types"
 import type { Question } from "./question.types"
 import { useFormRuntime } from "./use-form-runtime"
@@ -231,6 +231,71 @@ describe("useFormRuntime commit steps", () => {
     expect(result.current.errors.nome).toBeUndefined()
   })
 
+  it("keeps another step's rejection while the current answer fails locally", async () => {
+    const run = vi.fn<CommitFn>().mockReturnValue({
+      ok: false,
+      errors: [
+        { questionId: "nome", message: "Nome inválido" },
+        { questionId: "email", message: "E-mail já cadastrado" },
+      ],
+    })
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: flowWithCommit(run) }),
+    )
+
+    await fill(result, [
+      ["email", "a@b.com"],
+      ["nome", "Angelo"],
+    ])
+
+    // Fumbling the correction must not cost the other step its message.
+    await act(async () => {
+      result.current.answer("nome", "")
+      await result.current.advance()
+    })
+
+    expect(result.current.currentStepId).toBe("nome")
+    expect(result.current.errors.nome).toBeTruthy()
+    expect(result.current.errors.email).toBe("E-mail já cadastrado")
+
+    await act(async () => {
+      result.current.answer("nome", "Angelo Dias")
+      await result.current.advance()
+    })
+
+    expect(result.current.currentStepId).toBe("email")
+    expect(result.current.errors.email).toBe("E-mail já cadastrado")
+  })
+
+  it("drops a corrected question's error from a shared screen", async () => {
+    const screenFlow: Flow = {
+      start: "both",
+      steps: {
+        both: { kind: "screen", ids: ["email", "nome"] },
+        save: { kind: "commit", run: () => ({ ok: true }) },
+      },
+      next: (current) => (current === "both" ? "save" : "done"),
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: screenFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+    expect(Object.keys(result.current.errors)).toHaveLength(2)
+
+    await act(async () => {
+      result.current.answer("email", "a@b.com")
+      await result.current.advance()
+    })
+
+    expect(result.current.errors.email).toBeUndefined()
+    expect(result.current.errors.nome).toBeTruthy()
+  })
+
   it("resumes the flow once every rejection has been revisited", async () => {
     const run = vi
       .fn<CommitFn>()
@@ -344,6 +409,66 @@ describe("useFormRuntime commit steps", () => {
 
     expect(result.current.formError).toBeNull()
     expect(result.current.isDone).toBe(true)
+  })
+
+  it("ignores a second advance while a commit is still running", async () => {
+    // Every call gets its own resolver, so an unguarded second commit fails the
+    // assertion rather than hanging the test.
+    const releases: Array<() => void> = []
+    const run = vi.fn<CommitFn>(
+      () =>
+        new Promise<CommitResult>((resolve) => {
+          releases.push(() => resolve({ ok: true }))
+        }),
+    )
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: flowWithCommit(run) }),
+    )
+
+    await fill(result, [["email", "a@b.com"]])
+
+    await act(async () => {
+      result.current.answer("nome", "Angelo")
+      const first = result.current.advance()
+      const second = result.current.advance()
+      releases.forEach((release) => release())
+      await Promise.all([first, second])
+    })
+
+    // A double Enter on a real registration would otherwise submit twice.
+    expect(run).toHaveBeenCalledTimes(1)
+    expect(result.current.isDone).toBe(true)
+  })
+
+  it("reports that a commit is in flight", async () => {
+    let release: (() => void) | undefined
+    const run: CommitFn = () =>
+      new Promise<CommitResult>((resolve) => {
+        release = () => resolve({ ok: true })
+      })
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: flowWithCommit(run) }),
+    )
+
+    await fill(result, [["email", "a@b.com"]])
+    expect(result.current.isBusy).toBe(false)
+
+    let pending: Promise<void> | undefined
+    await act(async () => {
+      result.current.answer("nome", "Angelo")
+      pending = result.current.advance()
+    })
+
+    expect(result.current.isBusy).toBe(true)
+
+    await act(async () => {
+      release?.()
+      await pending
+    })
+
+    expect(result.current.isBusy).toBe(false)
   })
 
   it("retries the commit after the rejected answer is corrected", async () => {

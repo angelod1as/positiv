@@ -18,6 +18,7 @@ export const AllAtOnce: Presentation = ({
   answers,
   errors,
   formError,
+  isBusy,
   onAnswer,
   onContinue,
   continueLabel,
@@ -72,6 +73,8 @@ export const AllAtOnce: Presentation = ({
 
     {formError ? <Error role="alert">{formError}</Error> : null}
 
-    <Button type="submit">{continueLabel}</Button>
+    <Button type="submit" disabled={isBusy}>
+      {continueLabel}
+    </Button>
   </form>
 )

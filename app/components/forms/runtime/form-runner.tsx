@@ -54,6 +54,7 @@ export function FormRunner({
       answers={runtime.answers}
       errors={runtime.errors}
       formError={runtime.formError}
+      isBusy={runtime.isBusy}
       onAnswer={runtime.answer}
       onContinue={() => {
         void runtime.advance()

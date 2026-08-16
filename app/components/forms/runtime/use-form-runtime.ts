@@ -62,6 +62,7 @@ export function useFormRuntime({
     Record<string, boolean>
   >({})
   const [formError, setFormError] = useState<string | null>(null)
+  const [isBusy, setIsBusy] = useState(false)
   const [isDone, setIsDone] = useState(false)
 
   // Refs mirror the state so that answering and advancing within the same
@@ -70,6 +71,7 @@ export function useFormRuntime({
   const stepRef = useRef<StepId>(flow.start)
   const firstTryRef = useRef<Record<string, boolean>>({})
   const pendingRef = useRef<string[]>([])
+  const runningRef = useRef(false)
 
   const currentStep = flow.steps[currentStepId]
 
@@ -83,7 +85,7 @@ export function useFormRuntime({
     setAnswers(answersRef.current)
   }, [])
 
-  const advance = useCallback(async () => {
+  const runAdvance = useCallback(async () => {
     const origin = stepRef.current
     const pending = questionsForStep(flow.steps[origin], questionsById)
 
@@ -110,31 +112,31 @@ export function useFormRuntime({
 
     setFirstTryCorrect(firstTryRef.current)
 
+    const answeredHere = new Set(pending.map((question) => question.id))
+
+    // Rejections the server raised against other steps outlive whatever happens
+    // on this one. Only the current step's own errors are replaced, so a
+    // corrected answer loses its message while a question waiting elsewhere
+    // keeps the reason the person will need when they get there.
+    const elsewhere = (current: Record<string, string>) =>
+      Object.fromEntries(
+        pendingRef.current
+          .filter((id) => !answeredHere.has(id) && current[id])
+          .map((id) => [id, current[id]]),
+      )
+
     if (Object.keys(failures).length > 0) {
-      setErrors(failures)
+      setErrors((current) => ({ ...elsewhere(current), ...failures }))
       return
     }
 
     setFormError(null)
 
-    // Answering a step clears any rejection the server raised against it. While
-    // rejections remain elsewhere, the runtime routes to them instead of
-    // following the flow, so a stale rejected answer can never be resubmitted
-    // without the person seeing it flagged first. Their messages are kept, or
-    // the person would arrive at the question with no idea why they were sent
-    // back to it.
-    const answeredHere = new Set(pending.map((question) => question.id))
     pendingRef.current = pendingRef.current.filter(
       (id) => !answeredHere.has(id),
     )
 
-    setErrors((current) =>
-      Object.fromEntries(
-        pendingRef.current
-          .filter((id) => current[id])
-          .map((id) => [id, current[id]]),
-      ),
-    )
+    setErrors(elsewhere)
 
     const stillPending = pendingRef.current[0]
     if (stillPending) {
@@ -222,6 +224,22 @@ export function useFormRuntime({
     setCurrentStepId(destination)
   }, [flow, questionsById, data])
 
+  // A commit can be a real network call, and this app's commits register people
+  // for events. A second Enter or click while one is in flight must not submit
+  // twice.
+  const advance = useCallback(async () => {
+    if (runningRef.current) return
+
+    runningRef.current = true
+    setIsBusy(true)
+    try {
+      await runAdvance()
+    } finally {
+      runningRef.current = false
+      setIsBusy(false)
+    }
+  }, [runAdvance])
+
   return {
     currentStep,
     currentStepId,
@@ -230,6 +248,7 @@ export function useFormRuntime({
     errors,
     formError,
     firstTryCorrect,
+    isBusy,
     isDone,
     answer,
     advance,

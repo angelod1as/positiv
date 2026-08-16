@@ -29,6 +29,8 @@ export type PresentationProps = {
   errors: Record<string, string>
   /** A failure that belongs to no single question, such as a commit that threw. */
   formError: string | null
+  /** True while a commit is in flight, so the control can refuse a second submit. */
+  isBusy: boolean
   onAnswer: (id: string, value: unknown) => void
   onContinue: () => void
   continueLabel: string
