@@ -78,14 +78,8 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     )
   }
 
-  if (isClosed) {
-    return (
-      <Button data-testid={dataTestId} disabled={true}>
-        Inscrições encerradas
-      </Button>
-    )
-  }
-
+  // Applied users must keep the cancel button after registrations close, which
+  // happens automatically once the event reaches its participant limit.
   if (is_applied) {
     return (
       <div className="flex flex-col sm:flex-row gap-4 w-full">
@@ -142,6 +136,14 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
           </ConfirmDialog>
         </fetcher.Form>
       </div>
+    )
+  }
+
+  if (isClosed) {
+    return (
+      <Button data-testid={dataTestId} disabled={true}>
+        Inscrições encerradas
+      </Button>
     )
   }
 
