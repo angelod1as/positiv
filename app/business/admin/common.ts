@@ -8,16 +8,6 @@ import {
 } from "~types/database/entities.types"
 import { userContextSchema } from "../common"
 
-const messages = {
-  min2: "mínimo de 2 caracters",
-  min1: "mínimo de 1 caracter",
-  max1: "máximo de 1 caracter",
-  max50: "máximo de 50 caracters",
-  max255: "máximo de 255 caracters",
-  emoji: "precisa ser um emoji",
-  min1num: "mínimo 1",
-}
-
 const preprocessDateTime = (value: unknown) => {
   if (typeof value === "string") {
     if (value === "") return ""
@@ -32,12 +22,12 @@ const datetime = zod.preprocess(preprocessDateTime, zod.string().datetime())
 export const eventFormSchema = zod.object({
   id: zod.string().optional(),
   title: zod.string().min(2).max(50),
-  description: zod.string().min(2, messages.min2).max(255, messages.max255),
-  emoji: zod.string().emoji(messages.emoji).min(1, messages.min1),
-  location: zod.string().min(2, messages.min2).max(255, messages.max255),
+  description: zod.string().min(2).max(255),
+  emoji: zod.string().emoji("precisa ser um emoji").min(1),
+  location: zod.string().min(2).max(255),
 
-  ticket_price: zod.coerce.number().min(1, messages.min1num),
-  total_spots: zod.coerce.number().min(1, messages.min1num),
+  ticket_price: zod.coerce.number().min(1),
+  total_spots: zod.coerce.number().min(1),
 
   event_type: zod.enum(["regular", "bdsm"]).default("regular"),
   auto_publish: zod.boolean().default(true),
