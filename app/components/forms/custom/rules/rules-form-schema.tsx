@@ -12,7 +12,7 @@ export const getRulesFormSchema = (eventType: EventType) => {
         // Single-select (radio button)
         acc[key] = zod
           .string()
-          .min(1, { message: "Resposta obrigatória" })
+          .min(1)
           .refine((answer) => question.answers.correct.includes(answer), {
             message: "Você escolheu a resposta errada",
           })
@@ -21,7 +21,7 @@ export const getRulesFormSchema = (eventType: EventType) => {
         acc[key] = zod
           .array(zod.string())
           .default([])
-          .pipe(zod.array(zod.string()).min(1, { message: "Resposta obrigatória" }))
+          .pipe(zod.array(zod.string()).min(1))
           .refine(
             (answers) =>
               answers.some((answer) => question.answers.correct.includes(answer)),
