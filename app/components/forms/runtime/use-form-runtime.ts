@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react"
+import { ENV } from "varlock/env"
 import type { CommitResult } from "./commit.types"
 import type { Flow, Step, StepId } from "./flow.types"
 import type { Answers, Question } from "./question.types"
@@ -147,7 +148,7 @@ export function useFormRuntime({
         return
       }
 
-      if (process.env.NODE_ENV !== "production") {
+      if (ENV.NODE_ENV !== "production") {
         console.error(
           `[form-runtime] a commit rejected "${stillPending}", which no step in this flow asks.`,
         )
@@ -175,7 +176,7 @@ export function useFormRuntime({
       const step = flow.steps[destination]
 
       if (!step) {
-        if (process.env.NODE_ENV !== "production") {
+        if (ENV.NODE_ENV !== "production") {
           console.error(
             `[form-runtime] flow.next returned "${destination}", which is not a step in this flow.`,
           )
