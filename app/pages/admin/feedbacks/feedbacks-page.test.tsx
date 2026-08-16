@@ -1,9 +1,18 @@
 import { render, screen } from "@testing-library/react"
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { FeedbackWithVerification } from "~/business/feedback/feedback.server"
+import { updateFeedbackStatus } from "~/business/feedback/feedback.server"
+import { updateFeedbackStatusSchema } from "~/business/feedback/feedback-schema"
 
 vi.mock("~/business/feedback/feedback.server", () => ({
   getAllFeedbacksWithVerification: vi.fn(),
+  updateFeedbackStatus: vi.fn(),
+}))
+
+const formAction = vi.fn()
+
+vi.mock("remix-forms", () => ({
+  formAction: (...args: unknown[]) => formAction(...args),
 }))
 
 vi.mock("~/components/organisms/tables/admin/feedbacks-table", () => ({
@@ -43,7 +52,7 @@ const mockFeedbacks: FeedbackWithVerification[] = [
     can_contact: true,
     ip_address: "192.168.1.1",
     created_at: "2024-01-15T10:30:00Z",
-    is_verified: true,
+    status: "new",
     profile_id: "profile-123",
     social_name: "João",
     full_name: "João Silva",
@@ -58,14 +67,68 @@ const mockFeedbacks: FeedbackWithVerification[] = [
     can_contact: false,
     ip_address: "192.168.1.2",
     created_at: "2024-01-14T09:00:00Z",
-    is_verified: false,
+    status: "resolved",
     profile_id: null,
     social_name: null,
     full_name: null,
   },
 ]
 
-import FeedbacksPage from "./feedbacks-page"
+import FeedbacksPage, { action } from "./feedbacks-page"
+
+const buildRequest = (fields: Record<string, string>) =>
+  new Request("http://localhost/admin/dashboard/feedbacks", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(fields).toString(),
+  })
+
+describe("FeedbacksPage action", () => {
+  beforeEach(() => {
+    formAction.mockReset()
+    formAction.mockResolvedValue({ success: true })
+  })
+
+  it("should update the feedback status", async () => {
+    const request = buildRequest({
+      intent: "update-feedback-status",
+      id: "1",
+      status: "resolved",
+    })
+
+    await action({ request } as Parameters<typeof action>[0])
+
+    expect(formAction).toHaveBeenCalledTimes(1)
+    expect(formAction.mock.calls[0][0]).toMatchObject({
+      schema: updateFeedbackStatusSchema,
+      mutation: updateFeedbackStatus,
+    })
+  })
+
+  it("should tag the result with the intent", async () => {
+    const request = buildRequest({
+      intent: "update-feedback-status",
+      id: "1",
+      status: "in_progress",
+    })
+
+    await action({ request } as Parameters<typeof action>[0])
+
+    const { transformResult } = formAction.mock.calls[0][0]
+    expect(transformResult({ success: true })).toEqual({
+      success: true,
+      intent: "update-feedback-status",
+    })
+  })
+
+  it("should ignore an unknown intent", async () => {
+    const request = buildRequest({ intent: "delete-everything", id: "1" })
+
+    await action({ request } as Parameters<typeof action>[0])
+
+    expect(formAction).not.toHaveBeenCalled()
+  })
+})
 
 describe("FeedbacksPage", () => {
   it("should render the page title", () => {
