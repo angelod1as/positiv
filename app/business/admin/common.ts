@@ -23,7 +23,7 @@ export const eventFormSchema = zod.object({
   id: zod.string().optional(),
   title: zod.string().min(2).max(50),
   description: zod.string().min(2).max(255),
-  emoji: zod.string().emoji("precisa ser um emoji").min(1),
+  emoji: zod.string().emoji("Precisa ser um emoji").min(1),
   location: zod.string().min(2).max(255),
 
   ticket_price: zod.coerce.number().min(1),
