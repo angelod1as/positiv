@@ -7,7 +7,7 @@ z.config({
   customError: (issue) => {
     switch (issue.code) {
       case "invalid_type":
-        if (issue.input === undefined) {
+        if (issue.input === undefined || issue.input === null) {
           return validationMessages.required
         }
         return validationMessages.invalid

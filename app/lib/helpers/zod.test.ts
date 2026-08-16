@@ -20,6 +20,12 @@ describe("zod default messages", () => {
       expect(firstMessage(result)).toBe("Campo obrigatório")
     })
 
+    it("should say the field is required when the value is null", () => {
+      const result = zod.string().safeParse(null)
+
+      expect(firstMessage(result)).toBe("Campo obrigatório")
+    })
+
     it("should say the field is required when a string is empty", () => {
       const result = zod.string().min(1).safeParse("")
 
