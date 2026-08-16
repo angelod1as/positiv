@@ -7,6 +7,7 @@ import {
   verifyApplicationCanceled,
   getFirstOpenEvent,
   ensureEventIsOpen,
+  ensureEventIsClosed,
   getApplicationState,
   ensureTestUserProfileExists
 } from '../../utils/application-helpers'
@@ -201,6 +202,38 @@ test.describe('POS-191: Application Management Tests', () => {
     } else {
       // Closed events might not be shown on the main events page, which is fine
       expect(true).toBe(true)
+    }
+  })
+
+  test('POS-477: Can cancel application after registrations close', async ({ page: _page }) => {
+    expect(profileId).toBeTruthy()
+    expect(testEvent).toBeTruthy()
+    if (!profileId || !testEvent) return
+
+    // Setup: apply while the event is still open, then close it the same way the
+    // participant limit trigger does once the event reaches 90 applications
+    await createTestApplication(profileId, testEvent.id)
+    createdApplications.push({ profileId, eventId: testEvent.id })
+    await ensureEventIsClosed(testEvent.id)
+
+    try {
+      await myApplicationsPage.goto()
+
+      // The cancel button must survive the event closing
+      const status = await myApplicationsPage.getApplicationStatus(testEvent.title)
+      expect(status).toBe('applied')
+
+      await myApplicationsPage.cancelApplication(testEvent.title, { registrationsClosed: true })
+
+      const isCanceled = await verifyApplicationCanceled(profileId, testEvent.id)
+      expect(isCanceled).toBe(true)
+
+      const canceledApp = await getApplicationState(profileId, testEvent.id)
+      expect(canceledApp?.is_user_applied).toBe(false)
+      expect(canceledApp?.cancellation_date).toBeTruthy()
+    } finally {
+      // Leave the shared event open again for the tests that run after this one
+      await ensureEventIsOpen(testEvent.id)
     }
   })
 })
