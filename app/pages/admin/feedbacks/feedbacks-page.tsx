@@ -2,6 +2,7 @@ import { inputFromForm } from "composable-functions"
 import { useLoaderData } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
+import { getAdminContext } from "~/business/admin/admin.server"
 import { updateFeedbackStatusSchema } from "~/business/feedback/feedback-schema"
 import {
   getAllFeedbacksWithVerification,
@@ -20,7 +21,11 @@ export function meta({}: Route.MetaArgs) {
   return createMetaArray("Admin - Feedbacks")
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, params }: Route.ActionArgs) {
+  // The admin guard is a layout loader, and loaders do not run before a child
+  // action, so the action has to check the context itself
+  await getAdminContext(request, params)
+
   const { intent } = await inputFromForm(request)
 
   if (intent === "update-feedback-status") {
