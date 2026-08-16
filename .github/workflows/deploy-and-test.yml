@@ -110,10 +110,14 @@ jobs:
       - name: Install Playwright Browsers
         run: pnpm exec playwright install chromium --with-deps
 
-      # Fail here, with a readable message, when a secret is missing or malformed
+      # Fail here, with a readable message, when a secret is missing or malformed.
+      # APP_ENV=production is what makes this check meaningful: the secrets that
+      # matter most are @required=forEnv(production) in the schema, so under any
+      # other value an empty COOKIE_SECRET or service role key would pass.
       - name: Validate environment against .env.schema
         run: pnpm env:check
         env:
+          APP_ENV: production
           CI: true
           VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
           VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}

@@ -113,8 +113,9 @@ export type CoercedEnvSchema = {
   SUPABASE_DB_PASSWORD?: string;
   
   /**
-   * **SUPABASE_URL** 🔐 _sensitive_  
+   * **SUPABASE_URL**  
    * Fallback read by the integration test helpers when VITE_SUPABASE_URL is unset.  
+   * Same public API URL, so it carries the same classification.  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M24%2021V9h-2v14h8v-2zm-4-6v-4c0-1.103-.897-2-2-2h-6v14h2v-6h1.48l2.335%206h2.145l-2.333-6H18c1.103%200%202-.897%202-2m-6-4h4v4h-4zM8%2023H4c-1.103%200-2-.897-2-2V9h2v12h4V9h2v12c0%201.103-.897%202-2%202%22%2F%3E%3C%2Fsvg%3E)   
    */
   SUPABASE_URL?: string;
@@ -411,7 +412,7 @@ type _CoercedEnvSchema_d67f44d2 = CoercedEnvSchema;
 
 declare module 'varlock/env' {
   export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_d67f44d2> {}
-  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_d67f44d2, 'APP_ENV' | 'NODE_ENV' | 'CI' | 'IS_PROD_IN_DEV' | 'IS_PROD' | 'APP_URL' | 'VITE_APP_DOMAIN' | 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'SUPABASE_PROJECT_ID' | 'VITE_TURNSTILE_SITE_KEY' | 'IAM_USER_NAME' | 'LISTMONK_API_URL' | 'VITE_GTM_ID' | 'VITE_UMAMI_WEBSITE_ID' | 'VITE_UMAMI_URL' | 'VITE_BANNER_MESSAGE' | 'TELEGRAM_ALERTS_ENABLED' | 'TELEGRAM_CHAT_ID' | 'TEST_USER_ADMIN_EMAIL' | 'E2E_MODE' | 'STRICT_CLEANUP' | 'LINEAR_TEAM_ID' | 'VITEST_MIN_FORKS' | 'VITEST_MAX_FORKS' | 'VPS_USER' | 'VPS_BACKUP_PATH' | 'TELEGRAM_TO'>> {}
+  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_d67f44d2, 'APP_ENV' | 'NODE_ENV' | 'CI' | 'IS_PROD_IN_DEV' | 'IS_PROD' | 'APP_URL' | 'VITE_APP_DOMAIN' | 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'SUPABASE_PROJECT_ID' | 'SUPABASE_URL' | 'VITE_TURNSTILE_SITE_KEY' | 'IAM_USER_NAME' | 'LISTMONK_API_URL' | 'VITE_GTM_ID' | 'VITE_UMAMI_WEBSITE_ID' | 'VITE_UMAMI_URL' | 'VITE_BANNER_MESSAGE' | 'TELEGRAM_ALERTS_ENABLED' | 'TELEGRAM_CHAT_ID' | 'TEST_USER_ADMIN_EMAIL' | 'E2E_MODE' | 'STRICT_CLEANUP' | 'LINEAR_TEAM_ID' | 'VITEST_MIN_FORKS' | 'VITEST_MAX_FORKS' | 'VPS_USER' | 'VPS_BACKUP_PATH' | 'TELEGRAM_TO'>> {}
 }
 
 

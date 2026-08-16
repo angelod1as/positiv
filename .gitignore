@@ -2,7 +2,7 @@
 
 # env files
 .env*
-!.env.example
+!.env.schema
 
 # misc
 /dump/
@@ -33,4 +33,3 @@ playwright/.auth/*
 e2e/.auth/
 .vercel/
 .vscode/
-!.env.schema
