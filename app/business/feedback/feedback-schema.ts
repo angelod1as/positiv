@@ -8,10 +8,7 @@ export const feedbackFormSchema = zod.object({
   hasParticipated: zod.enum(["never", "once", "more_than_once"], {
     message: "Selecione uma opção",
   }),
-  feedbackText: zod
-    .string()
-    .min(10)
-    .max(5000),
+  feedbackText: zod.string().min(10).max(5000),
   canContact: zod.preprocess(
     (val) => val === "on" || val === true || val === "true",
     zod.boolean(),
