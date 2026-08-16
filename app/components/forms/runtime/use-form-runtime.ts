@@ -30,6 +30,18 @@ function questionsForStep(
   })
 }
 
+function stepOwning(
+  questionId: string,
+  steps: Record<StepId, Step>,
+): StepId | undefined {
+  return Object.keys(steps).find((stepId) => {
+    const step = steps[stepId]
+    if (step.kind === "question") return step.id === questionId
+    if (step.kind === "screen") return step.ids.includes(questionId)
+    return false
+  })
+}
+
 export function useFormRuntime({
   questions,
   flow,
@@ -99,10 +111,42 @@ export function useFormRuntime({
 
     setErrors({})
 
-    const destination = flow.next(stepRef.current, answersRef.current, {
-      firstTryCorrect: firstTryRef.current,
-      data,
-    })
+    const resolve = (from: StepId) =>
+      flow.next(from, answersRef.current, {
+        firstTryCorrect: firstTryRef.current,
+        data,
+      })
+
+    let destination = resolve(stepRef.current)
+
+    // Commit steps have nothing to render, so the runtime runs them and keeps
+    // resolving until it reaches a step the person can actually see.
+    while (destination !== "done") {
+      const step = flow.steps[destination]
+
+      if (step?.kind !== "commit") break
+
+      const result = await step.run(answersRef.current)
+
+      if (result.ok) {
+        stepRef.current = destination
+        destination = resolve(destination)
+        continue
+      }
+
+      const rejected: Record<string, string> = {}
+      for (const error of result.errors) {
+        rejected[error.questionId] = error.message
+      }
+      setErrors(rejected)
+
+      const target = stepOwning(result.errors[0].questionId, flow.steps)
+      if (target) {
+        stepRef.current = target
+        setCurrentStepId(target)
+      }
+      return
+    }
 
     if (destination === "done") {
       setIsDone(true)
