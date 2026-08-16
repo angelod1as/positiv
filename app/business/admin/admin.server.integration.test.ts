@@ -1414,13 +1414,15 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       full_name: "Test Last 6 Rodizio Reset"
     })
 
-    // 6 completed events, oldest first
+    // 6 completed events, oldest first. They sit in the last few days on
+    // purpose: the pool of 6 is global, so older events would let seeded
+    // events take a slot
     const completedEvents = []
     for (let i = 0; i < 6; i++) {
       const event = await createTestEvent(tracker, kysely, {
         title: `Rodizio Reset Completed ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (60 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
       completedEvents.push(event)
     }
@@ -1478,7 +1480,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       const event = await createTestEvent(tracker, kysely, {
         title: `Rodizio Latest Completed ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (60 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
       completedEvents.push(event)
     }
@@ -1537,7 +1539,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       const event = await createTestEvent(tracker, kysely, {
         title: `Rodizio Pending Completed ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (30 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (3 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
 
       await createTestEventParticipant(tracker, kysely, {
@@ -1584,7 +1586,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       const event = await createTestEvent(tracker, kysely, {
         title: `Rodizio Attended Completed ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (30 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (3 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
       completedEvents.push(event)
     }
@@ -1633,7 +1635,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       const event = await createTestEvent(tracker, kysely, {
         title: `Rodizio Old Completed ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (80 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (8 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
       completedEvents.push(event)
     }
@@ -1690,7 +1692,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       const event = await createTestEvent(tracker, kysely, {
         title: `Rodizio Global Completed ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (60 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
       completedEvents.push(event)
     }
@@ -1734,7 +1736,7 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       const event = await createTestEvent(tracker, kysely, {
         title: `Rodizio ById Completed ${i + 1}`,
         event_status: "Completed",
-        time_event_start: new Date(Date.now() - (60 - i * 10) * 24 * 60 * 60 * 1000).toISOString()
+        time_event_start: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString()
       })
       completedEvents.push(event)
     }
