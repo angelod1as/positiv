@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1787050211221
+export const NEWS_VERSION = 1787053200000
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "cancel-application-closed-event",
+    title: "❌ Cancelamento liberado mesmo com inscrições encerradas",
+    content:
+      'Se você já estava inscrite e as inscrições do evento encerraram, o botão "Cancelar inscrição" continua disponível no seu painel. Antes, o botão sumia assim que o evento lotava e não dava mais para desistir sozinhe.',
+    isAdmin: false,
+    createdAt: new Date("2026-08-17T12:00:00"),
+    isActive: true,
+  },
   {
     id: "no-more-bdsm-editions",
     title: "🎉 Todas as edições agora são no mesmo formato",
