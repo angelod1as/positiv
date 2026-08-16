@@ -43,12 +43,16 @@ export function useFormRuntime({
   const [currentStepId, setCurrentStepId] = useState<StepId>(flow.start)
   const [answers, setAnswers] = useState<Answers>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [firstTryCorrect, setFirstTryCorrect] = useState<
+    Record<string, boolean>
+  >({})
   const [isDone, setIsDone] = useState(false)
 
   // Refs mirror the state so that answering and advancing within the same
   // event handler sees the fresh values instead of the render's closure.
   const answersRef = useRef<Answers>({})
   const stepRef = useRef<StepId>(flow.start)
+  const firstTryRef = useRef<Record<string, boolean>>({})
 
   const currentStep = flow.steps[currentStepId]
 
@@ -67,11 +71,26 @@ export function useFormRuntime({
 
     const failures: Record<string, string> = {}
     for (const question of pending) {
-      const result = validateQuestion(question, answersRef.current[question.id])
+      const value = answersRef.current[question.id]
+      const result = validateQuestion(question, value)
+
+      // Only a real attempt counts. Advancing with nothing filled in is a
+      // misclick, not a wrong answer, and must not sink a branch that keys
+      // off first-attempt mistakes.
+      const attempted = value !== undefined
+      if (attempted && !(question.id in firstTryRef.current)) {
+        firstTryRef.current = {
+          ...firstTryRef.current,
+          [question.id]: result.ok,
+        }
+      }
+
       if (!result.ok) {
         failures[question.id] = result.message
       }
     }
+
+    setFirstTryCorrect(firstTryRef.current)
 
     if (Object.keys(failures).length > 0) {
       setErrors(failures)
@@ -81,7 +100,7 @@ export function useFormRuntime({
     setErrors({})
 
     const destination = flow.next(stepRef.current, answersRef.current, {
-      firstTryCorrect: {},
+      firstTryCorrect: firstTryRef.current,
       data,
     })
 
@@ -100,6 +119,7 @@ export function useFormRuntime({
     currentQuestions,
     answers,
     errors,
+    firstTryCorrect,
     isDone,
     answer,
     advance,
