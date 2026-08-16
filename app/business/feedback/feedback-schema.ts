@@ -19,3 +19,19 @@ export const feedbackFormSchema = zod.object({
 })
 
 export type FeedbackFormData = z.infer<typeof feedbackFormSchema>
+
+export const feedbackStatusValues = ["new", "in_progress", "resolved"] as const
+
+export type FeedbackStatus = (typeof feedbackStatusValues)[number]
+
+export const feedbackStatusLabels: Record<FeedbackStatus, string> = {
+  new: "Novo",
+  in_progress: "Em progresso",
+  resolved: "Resolvido",
+}
+
+export const updateFeedbackStatusSchema = zod.object({
+  intent: zod.literal("update-feedback-status"),
+  id: zod.string(),
+  status: zod.enum(feedbackStatusValues, { message: "Status inválido" }),
+})
