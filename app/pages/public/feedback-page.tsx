@@ -5,11 +5,13 @@ import { ENV } from "varlock/env"
 import { feedbackRateLimiter } from "~/business/feedback/feedback-rate-limiter"
 import { feedbackFormSchema } from "~/business/feedback/feedback-schema"
 import { submitFeedback } from "~/business/feedback/feedback.server"
+import { notifyNewFeedback } from "~/business/feedback/notify-new-feedback.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import { Card, CardContent } from "~/components/ui/card"
 import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
 import { verifyTurnstileToken } from "~/lib/helpers/verify-turnstile.server"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/feedback-page"
 
@@ -56,7 +58,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
   }
 
   const { captchaToken: _, ...feedbackData } = parsed.data
-  await submitFeedback(feedbackData, ip)
+  const feedback = await submitFeedback(feedbackData, ip)
+
+  void notifyNewFeedback(feedback).catch((error) =>
+    logger.error("Failed to notify a new feedback", { error }),
+  )
 
   if (!isDev) {
     feedbackRateLimiter.recordRequest(ip)

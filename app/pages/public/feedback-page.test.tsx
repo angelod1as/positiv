@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { createMemoryRouter, RouterProvider } from "react-router"
-import { describe, expect, it, vi } from "vitest"
+import { beforeEach, describe, expect, it, vi } from "vitest"
 
 vi.mock("~/lib/helpers/get-turnstile-config.server", () => ({
   getTurnstileConfig: vi.fn(() => ({
@@ -58,7 +58,30 @@ vi.mock("react-router", async () => {
   }
 })
 
-import FeedbackPage, { loader } from "./feedback-page"
+vi.mock("~/business/feedback/feedback.server", () => ({
+  submitFeedback: vi.fn(),
+}))
+
+vi.mock("~/business/feedback/notify-new-feedback.server", () => ({
+  notifyNewFeedback: vi.fn(),
+}))
+
+vi.mock("~/lib/helpers/verify-turnstile.server", () => ({
+  verifyTurnstileToken: vi.fn(async () => ({ success: true })),
+}))
+
+vi.mock("remix-toast", () => ({
+  redirectWithError: vi.fn((_path: string, message: string) => ({
+    error: message,
+  })),
+  redirectWithSuccess: vi.fn((_path: string, message: string) => ({
+    success: message,
+  })),
+}))
+
+import { submitFeedback } from "~/business/feedback/feedback.server"
+import { notifyNewFeedback } from "~/business/feedback/notify-new-feedback.server"
+import FeedbackPage, { action, loader } from "./feedback-page"
 
 const createTestRouter = () => {
   return createMemoryRouter(
@@ -74,7 +97,77 @@ const createTestRouter = () => {
   )
 }
 
+// Each call uses its own IP so the rate limiter does not reject the next test
+let ipCounter = 0
+
+const submitAction = () => {
+  ipCounter += 1
+  const body = new URLSearchParams({
+    hasParticipated: "once",
+    feedbackText: "Feedback com pelo menos dez caracteres",
+    captchaToken: "token",
+    name: "João",
+    email: "joao@example.com",
+    whatsapp: "11999999999",
+    canContact: "on",
+  })
+
+  return action({
+    request: new Request("http://localhost/feedback", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "cf-connecting-ip": `10.0.0.${ipCounter}`,
+      },
+      body: body.toString(),
+    }),
+  } as Parameters<typeof action>[0])
+}
+
 describe("FeedbackPage", () => {
+  describe("action", () => {
+    beforeEach(() => {
+      vi.mocked(submitFeedback).mockReset()
+      vi.mocked(notifyNewFeedback).mockReset()
+      vi.mocked(submitFeedback).mockResolvedValue({
+        id: "feedback-1",
+        name: "João",
+        email: "joao@example.com",
+        whatsapp: "11999999999",
+        has_participated: "once",
+        feedback_text: "Feedback com pelo menos dez caracteres",
+        can_contact: true,
+        ip_address: "unknown",
+        created_at: "2024-01-15T10:30:00Z",
+        status: "new",
+      } as Awaited<ReturnType<typeof submitFeedback>>)
+      vi.mocked(notifyNewFeedback).mockResolvedValue(undefined)
+    })
+
+    it("should notify the new feedback after storing it", async () => {
+      await submitAction()
+
+      expect(submitFeedback).toHaveBeenCalledTimes(1)
+      expect(notifyNewFeedback).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "João",
+          feedback_text: "Feedback com pelo menos dez caracteres",
+        }),
+      )
+    })
+
+    it("should still confirm the feedback when the notification fails", async () => {
+      vi.mocked(notifyNewFeedback).mockRejectedValue(new Error("telegram down"))
+
+      const result = await submitAction()
+
+      expect(submitFeedback).toHaveBeenCalledTimes(1)
+      expect(result).toEqual({
+        success: expect.stringMatching(/obrigado pelo seu feedback/i),
+      })
+    })
+  })
+
   describe("loader", () => {
     it("should return turnstile site key", async () => {
       const result = await loader()
