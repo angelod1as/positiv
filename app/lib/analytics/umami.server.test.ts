@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { trackServerEvent } from "./umami.server"
 
+const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
+vi.mock("varlock/env", () => ({ ENV }))
+
 describe("trackServerEvent", () => {
   const mockFetch = vi.fn()
 
@@ -8,14 +11,15 @@ describe("trackServerEvent", () => {
     vi.stubGlobal("fetch", mockFetch)
     mockFetch.mockResolvedValue({ ok: true })
 
-    vi.stubEnv("VITE_UMAMI_WEBSITE_ID", "test-website-id")
-    vi.stubEnv("VITE_UMAMI_URL", "https://umami.test.com")
-    vi.stubEnv("VITE_APP_DOMAIN", "")
+    Object.assign(ENV, {
+      VITE_UMAMI_WEBSITE_ID: "test-website-id",
+      VITE_UMAMI_URL: "https://umami.test.com",
+      VITE_APP_DOMAIN: "",
+    })
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
-    vi.unstubAllEnvs()
     vi.clearAllMocks()
   })
 
@@ -62,7 +66,7 @@ describe("trackServerEvent", () => {
   })
 
   it("should not send event when website ID is missing", async () => {
-    vi.stubEnv("VITE_UMAMI_WEBSITE_ID", "")
+    ENV.VITE_UMAMI_WEBSITE_ID = ""
 
     await trackServerEvent("test_event")
 
@@ -70,7 +74,7 @@ describe("trackServerEvent", () => {
   })
 
   it("should not send event when Umami URL is missing", async () => {
-    vi.stubEnv("VITE_UMAMI_URL", "")
+    ENV.VITE_UMAMI_URL = ""
 
     await trackServerEvent("test_event")
 
@@ -92,7 +96,7 @@ describe("trackServerEvent", () => {
   })
 
   it("should use custom domain from VITE_APP_DOMAIN env var", async () => {
-    vi.stubEnv("VITE_APP_DOMAIN", "staging.positiv.com")
+    ENV.VITE_APP_DOMAIN = "staging.positiv.com"
 
     await trackServerEvent("test_event", {}, "/test")
 

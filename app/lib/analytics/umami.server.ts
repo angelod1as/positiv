@@ -1,3 +1,4 @@
+import { ENV } from "varlock/env"
 import { logger } from "~/lib/logger/logger.server"
 
 type EventData = Record<string, unknown>
@@ -21,9 +22,9 @@ export async function trackServerEvent(
   data?: EventData,
   url = "/"
 ): Promise<void> {
-  const websiteId = process.env.VITE_UMAMI_WEBSITE_ID
-  const umamiUrl = process.env.VITE_UMAMI_URL
-  const hostname = process.env.VITE_APP_DOMAIN || "positivparty.com"
+  const websiteId = ENV.VITE_UMAMI_WEBSITE_ID
+  const umamiUrl = ENV.VITE_UMAMI_URL
+  const hostname = ENV.VITE_APP_DOMAIN || "positivparty.com"
 
   if (!websiteId || !umamiUrl) {
     return

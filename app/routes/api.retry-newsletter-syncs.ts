@@ -1,4 +1,5 @@
 import type { ActionFunctionArgs } from "react-router"
+import { ENV } from "varlock/env"
 import { processFailedSyncRetries } from "~/business/newsletter/retry-failed-syncs.server"
 import { logger } from "~/lib/logger/logger.server"
 import { timingSafeEqual } from "node:crypto"
@@ -18,7 +19,7 @@ import { timingSafeEqual } from "node:crypto"
 export async function action({ request }: ActionFunctionArgs) {
   // Verify request is from authorized internal source using secret token
   const authHeader = request.headers.get("Authorization")
-  const secret = process.env.INTERNAL_JOB_SECRET
+  const secret = ENV.INTERNAL_JOB_SECRET
 
   if (!secret) {
     return Response.json({ error: "Server misconfigured" }, { status: 500 })

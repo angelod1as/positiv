@@ -9,12 +9,12 @@ import {
 } from "vitest"
 import { createList, deleteList, getListById } from "./listmonk-lists.server"
 
-vi.mock("~/env.server", () => ({
-  env: vi.fn(() => ({
-    listmonkApiUrl: "https://listmonk.test",
-    listmonkApiUsername: "testuser",
-    listmonkApiPassword: "testpass",
-  })),
+vi.mock("varlock/env", () => ({
+  ENV: {
+    LISTMONK_API_URL: "https://listmonk.test",
+    LISTMONK_API_USERNAME: "testuser",
+    LISTMONK_API_PASSWORD: "testpass",
+  },
 }))
 
 describe("createList", () => {
@@ -147,18 +147,24 @@ describe("createList", () => {
   })
 
   it("should fail when credentials are missing", async () => {
-    const { env } = await import("~/env.server")
-    vi.mocked(env).mockReturnValueOnce({
-      listmonkApiUrl: undefined,
-      listmonkApiUsername: undefined,
-      listmonkApiPassword: undefined,
-    } as ReturnType<typeof env>)
-
-    const result = await createList({
-      name: "Test List",
-      type: "private",
-      optin: "single",
+    const { ENV } = await import("varlock/env")
+    const configured = { ...ENV }
+    Object.assign(ENV, {
+      LISTMONK_API_URL: undefined,
+      LISTMONK_API_USERNAME: undefined,
+      LISTMONK_API_PASSWORD: undefined,
     })
+
+    let result
+    try {
+      result = await createList({
+        name: "Test List",
+        type: "private",
+        optin: "single",
+      })
+    } finally {
+      Object.assign(ENV, configured)
+    }
 
     expect(result.success).toBe(false)
   })

@@ -78,11 +78,19 @@ Here are the links for each of the technologies:
 
 5. Set up environment variables:
 
+   `.env.schema` lists every variable the project reads, with its type, whether
+   it is required, and what it is for. It holds no values, so it is committed
+   and safe to read. Create a `.env` and fill in the ones you need — at minimum
+   the local Supabase credentials from the step above. Open an issue if you
+   need a specific value.
+
    ```bash
-   cp .env.example .env
+   pnpm env:check   # shows what resolved and what is missing, secrets redacted
    ```
 
-   Edit the `.env` file with your local Supabase credentials and other required variables. Open an issue if you need any specific variable.
+   `.env` is gitignored and coding agents are denied read access to it in
+   `.claude/settings.json`. Point people at `.env.schema` instead — that is
+   what it is for.
 
 6. Start the development server:
 

@@ -6,6 +6,9 @@ import {
 import { createTestEvent } from "~/test/db-test-utils"
 import type { Database } from "~/types/database/database.types"
 
+const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
+vi.mock("varlock/env", () => ({ ENV }))
+
 type EventNewsletterCampaign = Database["public"]["Tables"]["event_newsletter_campaigns"]["Row"]
 
 // Helper to create mock campaign objects
@@ -60,12 +63,12 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
   beforeEach(() => {
     tracker.clear()
     vi.clearAllMocks()
-    process.env.INTERNAL_JOB_SECRET = VALID_SECRET
+    ENV.INTERNAL_JOB_SECRET = VALID_SECRET
   })
 
   afterEach(async () => {
     await cleanupAfterTest(tracker, db)
-    delete process.env.INTERNAL_JOB_SECRET
+    ENV.INTERNAL_JOB_SECRET = undefined
   })
 
   describe("Authentication", () => {
@@ -124,7 +127,7 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
     })
 
     it("should return 500 when INTERNAL_JOB_SECRET is not configured", async () => {
-      delete process.env.INTERNAL_JOB_SECRET
+      ENV.INTERNAL_JOB_SECRET = undefined
 
       const request = new Request("http://localhost:5173/api/process-pre-opening-reminders", {
         method: "POST",

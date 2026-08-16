@@ -42,6 +42,12 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      # `pnpm lint` regenerates env.d.ts before typechecking, so a stale commit
+      # of it is invisible locally. Codegen reads only .env.schema, no values.
+      - name: Check env.d.ts matches .env.schema
+        run: |
+          pnpm exec varlock codegen
+          git diff --exit-code env.d.ts
       - name: Run unit tests
         run: pnpm test:coverage
       - name: Upload coverage reports
@@ -109,6 +115,21 @@ jobs:
         run: pnpm install
       - name: Install Playwright Browsers
         run: pnpm exec playwright install chromium --with-deps
+
+      # Fail here, with a readable message, when a secret is missing or malformed.
+      # APP_ENV=production is what makes this check meaningful: the secrets that
+      # matter most are @required=forEnv(production) in the schema, so under any
+      # other value an empty COOKIE_SECRET or service role key would pass.
+      - name: Validate environment against .env.schema
+        run: pnpm env:check
+        env:
+          APP_ENV: production
+          CI: true
+          VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
+          VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}
+          SUPABASE_CONNECT_URL: ${{ steps.supabase-creds.outputs.db_url }}
+          COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
 
       # Run E2E tests against local Supabase
       - name: Run E2E tests

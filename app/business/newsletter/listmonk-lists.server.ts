@@ -1,4 +1,5 @@
 import { composable } from "composable-functions"
+import { ENV } from "varlock/env"
 import { getListmonkConfig } from "./listmonk-client.server"
 
 export interface ListmonkList {
@@ -23,7 +24,7 @@ export interface CreateListParams {
 
 export const createList = composable(
   async (params: CreateListParams): Promise<ListmonkList> => {
-    if (process.env.E2E_MODE === "true") {
+    if (ENV.E2E_MODE) {
       return {
         id: -1,
         uuid: "e2e-mock-uuid",
@@ -75,7 +76,7 @@ export const createList = composable(
 
 export const deleteList = composable(
   async (listId: number, options?: { force?: boolean }): Promise<void> => {
-    if (!options?.force && process.env.E2E_MODE === "true") {
+    if (!options?.force && ENV.E2E_MODE) {
       return
     }
 
@@ -102,7 +103,7 @@ export const deleteList = composable(
 
 export const getListById = composable(
   async (listId: number): Promise<ListmonkList | null> => {
-    if (process.env.E2E_MODE === "true") {
+    if (ENV.E2E_MODE) {
       return null
     }
 
@@ -149,7 +150,7 @@ interface ListSubscribersResponse {
 
 export const getListSubscribers = composable(
   async (listId: number): Promise<ListSubscriber[]> => {
-    if (process.env.E2E_MODE === "true") {
+    if (ENV.E2E_MODE) {
       return []
     }
 

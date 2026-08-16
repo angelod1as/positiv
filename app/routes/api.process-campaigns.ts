@@ -1,4 +1,5 @@
 import type { ActionFunctionArgs } from "react-router"
+import { ENV } from "varlock/env"
 import { deleteEventListmonkList } from "~/business/admin/event-listmonk-sync.server"
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
 import { getPendingCampaigns } from "~/business/newsletter/campaign-tracking.server"
@@ -12,7 +13,7 @@ import { logger } from "~/lib/logger/logger.server"
 export async function action({ request }: ActionFunctionArgs) {
   // Verify request is from authorized internal source using secret token
   const authHeader = request.headers.get("Authorization")
-  const secret = process.env.INTERNAL_JOB_SECRET
+  const secret = ENV.INTERNAL_JOB_SECRET
 
   if (!secret) {
     return Response.json({ error: "Server misconfigured" }, { status: 500 })

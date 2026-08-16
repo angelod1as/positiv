@@ -8,7 +8,7 @@
  * - LISTMONK_API_URL, LISTMONK_API_USERNAME, LISTMONK_API_PASSWORD in .env
  */
 
-import "dotenv/config"
+import "varlock/auto-load"
 
 const TEST_LIST_ID = 5
 

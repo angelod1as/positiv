@@ -1,4 +1,4 @@
-import "dotenv/config"
+import "varlock/auto-load"
 import { composable, type Composable } from "composable-functions"
 import { spawn } from "child_process"
 import { appendFileSync, existsSync } from "fs"

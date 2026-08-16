@@ -3,6 +3,7 @@
 import { X } from "lucide-react"
 import { useEffect, useState } from "react"
 import ReactMarkdown from "react-markdown"
+import { ENV } from "varlock/env"
 import { Alert, AlertDescription } from "~/components/ui/alert"
 import { Button } from "~/components/ui/button"
 
@@ -10,7 +11,7 @@ const STORAGE_KEY = "warning-banner-dismissed"
 
 export function WarningBanner() {
   const [isDismissed, setIsDismissed] = useState(true)
-  const bannerMessage = import.meta.env.VITE_BANNER_MESSAGE
+  const bannerMessage = ENV.VITE_BANNER_MESSAGE
 
   useEffect(() => {
     const dismissed = localStorage.getItem(STORAGE_KEY)

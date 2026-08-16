@@ -9,12 +9,12 @@ import {
   updateCampaignStatus,
 } from "./listmonk-client.server"
 
-vi.mock("~/env.server", () => ({
-  env: vi.fn(() => ({
-    listmonkApiUrl: "https://listmonk.test",
-    listmonkApiUsername: "testuser",
-    listmonkApiPassword: "testpass",
-  })),
+vi.mock("varlock/env", () => ({
+  ENV: {
+    LISTMONK_API_URL: "https://listmonk.test",
+    LISTMONK_API_USERNAME: "testuser",
+    LISTMONK_API_PASSWORD: "testpass",
+  },
 }))
 
 vi.mock("~/lib/logger/logger.server", () => ({
@@ -58,14 +58,20 @@ describe("testConnection", () => {
   })
 
   it("should fail when credentials are missing", async () => {
-    const { env } = await import("~/env.server")
-    vi.mocked(env).mockReturnValueOnce({
-      listmonkApiUrl: undefined,
-      listmonkApiUsername: undefined,
-      listmonkApiPassword: undefined,
-    } as ReturnType<typeof env>)
+    const { ENV } = await import("varlock/env")
+    const configured = { ...ENV }
+    Object.assign(ENV, {
+      LISTMONK_API_URL: undefined,
+      LISTMONK_API_USERNAME: undefined,
+      LISTMONK_API_PASSWORD: undefined,
+    })
 
-    const result = await testConnection()
+    let result
+    try {
+      result = await testConnection()
+    } finally {
+      Object.assign(ENV, configured)
+    }
 
     expect(result.success).toBe(false)
   })

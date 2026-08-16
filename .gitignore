@@ -2,7 +2,7 @@
 
 # env files
 .env*
-!.env.example
+!.env.schema
 
 # misc
 /dump/

@@ -1,6 +1,7 @@
 import { Turnstile } from "@marsidev/react-turnstile"
 import { data, useLoaderData } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
+import { ENV } from "varlock/env"
 import { feedbackRateLimiter } from "~/business/feedback/feedback-rate-limiter"
 import { feedbackFormSchema } from "~/business/feedback/feedback-schema"
 import { submitFeedback } from "~/business/feedback/feedback.server"
@@ -32,7 +33,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
   const ip = request.headers.get("cf-connecting-ip") || "unknown"
 
-  const isDev = process.env.NODE_ENV === "development"
+  const isDev = ENV.APP_ENV === "development"
   if (!isDev) {
     if (feedbackRateLimiter.isRateLimited(ip)) {
       return redirectWithError(

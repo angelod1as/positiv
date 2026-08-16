@@ -1,9 +1,9 @@
 import { Kysely, PostgresDialect } from "kysely"
 import { Pool } from "pg"
 import type { Database } from "~types/database/kysely.types"
-import { env } from "./env.server"
+import { ENV } from "varlock/env"
 
-const { supabaseConnectUrl } = env()
+const { SUPABASE_CONNECT_URL: supabaseConnectUrl } = ENV
 
 // Not FULLY implemented right now
 export const kyselyDb = new Kysely<Database>({

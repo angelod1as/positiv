@@ -1,21 +1,18 @@
-import { describe, expect, it, beforeEach, afterEach } from "vitest"
+import { describe, expect, it, beforeEach, vi } from "vitest"
 import { getTurnstileConfig } from "./get-turnstile-config.server"
 
+const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
+vi.mock("varlock/env", () => ({ ENV }))
+
 describe("getTurnstileConfig", () => {
-  let originalEnv: NodeJS.ProcessEnv
-
   beforeEach(() => {
-    originalEnv = { ...process.env }
-  })
-
-  afterEach(() => {
-    process.env = originalEnv
+    Object.keys(ENV).forEach((key) => (ENV[key] = undefined))
   })
 
   it("should return test keys for localhost IP", () => {
-    process.env.NODE_ENV = "production"
-    process.env.VITE_TURNSTILE_SITE_KEY = "prod-site-key"
-    process.env.SUPABASE_TURNSTILE_SECRET = "prod-secret-key"
+    ENV.NODE_ENV = "production"
+    ENV.VITE_TURNSTILE_SITE_KEY = "prod-site-key"
+    ENV.SUPABASE_TURNSTILE_SECRET = "prod-secret-key"
 
     const config = getTurnstileConfig({ ip: "127.0.0.1" })
 
@@ -24,9 +21,9 @@ describe("getTurnstileConfig", () => {
   })
 
   it("should return test keys when NODE_ENV is test", () => {
-    process.env.NODE_ENV = "test"
-    process.env.VITE_TURNSTILE_SITE_KEY = "prod-site-key"
-    process.env.SUPABASE_TURNSTILE_SECRET = "prod-secret-key"
+    ENV.NODE_ENV = "test"
+    ENV.VITE_TURNSTILE_SITE_KEY = "prod-site-key"
+    ENV.SUPABASE_TURNSTILE_SECRET = "prod-secret-key"
 
     const config = getTurnstileConfig()
 
@@ -35,9 +32,9 @@ describe("getTurnstileConfig", () => {
   })
 
   it("should return production keys for production environment", () => {
-    process.env.NODE_ENV = "production"
-    process.env.VITE_TURNSTILE_SITE_KEY = "prod-site-key"
-    process.env.SUPABASE_TURNSTILE_SECRET = "prod-secret-key"
+    ENV.NODE_ENV = "production"
+    ENV.VITE_TURNSTILE_SITE_KEY = "prod-site-key"
+    ENV.SUPABASE_TURNSTILE_SECRET = "prod-secret-key"
 
     const config = getTurnstileConfig({ ip: "192.168.1.1" })
 
@@ -46,9 +43,9 @@ describe("getTurnstileConfig", () => {
   })
 
   it("should throw error if production keys are missing in production", () => {
-    process.env.NODE_ENV = "production"
-    delete process.env.VITE_TURNSTILE_SITE_KEY
-    delete process.env.SUPABASE_TURNSTILE_SECRET
+    ENV.NODE_ENV = "production"
+    delete ENV.VITE_TURNSTILE_SITE_KEY
+    delete ENV.SUPABASE_TURNSTILE_SECRET
 
     expect(() => getTurnstileConfig({ ip: "192.168.1.1" })).toThrow()
   })

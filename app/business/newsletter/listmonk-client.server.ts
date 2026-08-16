@@ -1,5 +1,5 @@
 import { composable } from "composable-functions"
-import { env } from "~/env.server"
+import { ENV } from "varlock/env"
 import { logger } from "~/lib/logger/logger.server"
 
 interface AddSubscriberParams {
@@ -24,7 +24,11 @@ interface ListmonkSearchResponse {
 }
 
 export function getListmonkConfig() {
-  const { listmonkApiUrl, listmonkApiUsername, listmonkApiPassword } = env()
+  const {
+    LISTMONK_API_URL: listmonkApiUrl,
+    LISTMONK_API_USERNAME: listmonkApiUsername,
+    LISTMONK_API_PASSWORD: listmonkApiPassword,
+  } = ENV
 
   if (!listmonkApiUrl || !listmonkApiUsername || !listmonkApiPassword) {
     throw new Error("Listmonk API credentials not configured")
@@ -121,7 +125,7 @@ async function addSubscriberToLists(
  */
 export const addSubscribersToListBulk = composable(
   async (subscriberIds: number[], listId: number): Promise<void> => {
-    if (process.env.E2E_MODE === "true") {
+    if (ENV.E2E_MODE) {
       return
     }
 
@@ -159,7 +163,7 @@ export async function removeSubscriberFromList(
   subscriberId: number,
   listId: number
 ): Promise<void> {
-  if (process.env.E2E_MODE === "true") {
+  if (ENV.E2E_MODE) {
     return
   }
 
@@ -220,7 +224,7 @@ interface AddSubscriberResponse {
 
 export const addSubscriber = composable(
   async (params: AddSubscriberParams): Promise<{ subscriberId: number }> => {
-    if (process.env.E2E_MODE === "true") {
+    if (ENV.E2E_MODE) {
       return { subscriberId: 0 }
     }
 
@@ -270,7 +274,7 @@ export const addSubscriber = composable(
 
 export const removeSubscriber = composable(
   async (email: string, options?: { force?: boolean }): Promise<void> => {
-    if (!options?.force && process.env.E2E_MODE === "true") {
+    if (!options?.force && ENV.E2E_MODE) {
       return
     }
 

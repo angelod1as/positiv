@@ -185,6 +185,11 @@ export async function createTestEventParticipant(
 /**
  * Helper to create a Supabase client for test operations
  * Uses service role key for admin operations in test environment
+ *
+ * Reads process.env rather than ENV on purpose: this is test harness code, not
+ * application code, and it runs in workers that varlock has not initialised.
+ * `varlock run --` populates process.env for the whole process tree, and every
+ * variable read here is declared in .env.schema like any other.
  */
 export function getTestSupabaseClient() {
   const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL

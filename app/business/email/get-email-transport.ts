@@ -1,10 +1,10 @@
 import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2"
 import nodemailer from "nodemailer"
-import { env } from "~/env.server"
+import { ENV } from "varlock/env"
 import { isProd } from "~/lib/helpers/is-prod.server"
 import { logger } from "~/lib/logger/logger.server"
 
-const { awsAccessKeyId, awsSecretAccessKey } = env()
+const { AWS_ACCESS_KEY_ID: awsAccessKeyId, AWS_SECRET_ACCESS_KEY: awsSecretAccessKey } = ENV
 
 export function getEmailTransport() {
   const prod = isProd()

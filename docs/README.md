@@ -49,4 +49,4 @@ When adding new documentation:
 ## Quick Links
 
 - [Project README](../README.md)
-- [Environment Setup](../.env.example)
+- [Environment Setup](../.env.schema)

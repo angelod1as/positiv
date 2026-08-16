@@ -1,3 +1,4 @@
+import { ENV } from "varlock/env"
 import type { RequestLike } from "./is-test-environment.server"
 import { isTestEnvironment } from "./is-test-environment.server"
 
@@ -17,8 +18,8 @@ export const getTurnstileConfig = (request?: RequestLike): TurnstileConfig => {
     }
   }
 
-  const siteKey = process.env.VITE_TURNSTILE_SITE_KEY
-  const secretKey = process.env.SUPABASE_TURNSTILE_SECRET
+  const siteKey = ENV.VITE_TURNSTILE_SITE_KEY
+  const secretKey = ENV.SUPABASE_TURNSTILE_SECRET
 
   if (!siteKey || !secretKey) {
     throw new Error(

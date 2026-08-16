@@ -2,8 +2,8 @@ import { applySchema } from "composable-functions"
 import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
+import { ENV } from "varlock/env"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
-import { env } from "~/env.server"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
@@ -42,7 +42,7 @@ async function _fetchContext(
   request: Request,
   params: Params,
 ): Promise<z.infer<typeof contextSchema>> {
-  const { isProdInDev } = env()
+  const { IS_PROD_IN_DEV: isProdInDev } = ENV
 
   const { supabase, supabaseHeaders } = await getSupabase(request, params)
   const host = request.headers.get("host")
@@ -55,7 +55,7 @@ async function _fetchContext(
     host,
     currentUser: null,
     currentProfile: null,
-    isProdInDev: isProdInDev === "true",
+    isProdInDev,
   }
 
   if (authError) {
@@ -128,7 +128,7 @@ async function _fetchContext(
     supabaseHeaders,
     currentProfile,
     currentUser,
-    isProdInDev: isProdInDev === "true",
+    isProdInDev,
     host,
   }
 }

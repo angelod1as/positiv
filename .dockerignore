@@ -2,3 +2,9 @@
 build
 node_modules
 README.md
+
+# Never let local secrets reach a build layer. .env.schema holds no values and
+# is needed by varlock at runtime, so it stays.
+.env
+.env.*
+!.env.schema
