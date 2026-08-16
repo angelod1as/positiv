@@ -33,5 +33,5 @@ export const newsCookie = createCookie("show-news", {
 export const newsletterPreferenceCookie = createCookie("newsletter-preference", {
   httpOnly: true,
   sameSite: "lax",
-  secure: ENV.NODE_ENV === "production",
+  secure: ENV.APP_ENV === "production",
 })

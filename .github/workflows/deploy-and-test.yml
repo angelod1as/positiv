@@ -42,6 +42,12 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      # `pnpm lint` regenerates env.d.ts before typechecking, so a stale commit
+      # of it is invisible locally. Codegen reads only .env.schema, no values.
+      - name: Check env.d.ts matches .env.schema
+        run: |
+          pnpm exec varlock codegen
+          git diff --exit-code env.d.ts
       - name: Run unit tests
         run: pnpm test:coverage
       - name: Upload coverage reports

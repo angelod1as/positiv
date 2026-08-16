@@ -2,7 +2,7 @@ import winston from "winston"
 import { ENV } from "varlock/env"
 import { TelegramTransport } from "./telegram-transport.server"
 
-const isProduction = ENV.NODE_ENV === "production"
+const isProduction = ENV.APP_ENV === "production"
 
 const consoleFormat = isProduction
   ? winston.format.combine(winston.format.timestamp(), winston.format.json())
