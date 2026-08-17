@@ -4,6 +4,7 @@ import type { CommitResult } from "./commit.types"
 import type { Flow, Step, StepId } from "./flow.types"
 import {
   clearRuntimeState,
+  readKeepOnDone,
   readRuntimeState,
   runtimeStorageKey,
   writeRuntimeState,
@@ -137,6 +138,10 @@ export function useFormRuntime({
   // nothing behind: the write bails on isDone, this one removes the record.
   useEffect(() => {
     if (!storageKey || !isDone) return
+
+    // Read at completion time rather than at mount, so that adding the flag
+    // part way through a run still counts.
+    if (readKeepOnDone(storageKey)) return
 
     clearRuntimeState(storageKey)
   }, [storageKey, isDone])

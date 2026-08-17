@@ -2,7 +2,11 @@ import { act, renderHook, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
 import type { Flow } from "./flow.types"
-import { runtimeStorageKey, writeRuntimeState } from "./persistence"
+import {
+  readKeepOnDone,
+  runtimeStorageKey,
+  writeRuntimeState,
+} from "./persistence"
 import type { Question } from "./question.types"
 import { useFormRuntime } from "./use-form-runtime"
 
@@ -150,6 +154,52 @@ describe("useFormRuntime persistence", () => {
 
     expect(result.current.isDone).toBe(true)
     await waitFor(() => expect(sessionStorage.getItem(key)).toBeNull())
+  })
+
+  // Pasted in before the flow starts, so there is no state beside the flag.
+  it("keeps a record that was told to stay", async () => {
+    sessionStorage.setItem(key, JSON.stringify({ v: 1, keepOnDone: true }))
+
+    const { result } = mount()
+    await waitFor(() => expect(result.current.isRestored).toBe(true))
+
+    for (const id of ["a", "b", "c"]) {
+      await act(async () => {
+        result.current.answer(id, `resposta ${id}`)
+        await result.current.advance()
+      })
+    }
+
+    expect(result.current.isDone).toBe(true)
+    expect(readKeepOnDone(key)).toBe(true)
+    expect(sessionStorage.getItem(key)).not.toBeNull()
+  })
+
+  it("honours a flag added part way through the flow", async () => {
+    const { result } = mount()
+    await waitFor(() => expect(result.current.isRestored).toBe(true))
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+
+    // Someone opens the devtools at this point and adds the flag by hand.
+    const record: unknown = JSON.parse(sessionStorage.getItem(key) ?? "{}")
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({ ...(record as object), keepOnDone: true }),
+    )
+
+    for (const id of ["b", "c"]) {
+      await act(async () => {
+        result.current.answer(id, `resposta ${id}`)
+        await result.current.advance()
+      })
+    }
+
+    expect(result.current.isDone).toBe(true)
+    expect(readKeepOnDone(key)).toBe(true)
   })
 
   it("starts over when the persisted step is gone from the flow", async () => {
