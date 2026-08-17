@@ -1,7 +1,14 @@
-import { useCallback, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ENV } from "varlock/env"
 import type { CommitResult } from "./commit.types"
 import type { Flow, Step, StepId } from "./flow.types"
+import {
+  clearRuntimeState,
+  readKeepOnDone,
+  readRuntimeState,
+  runtimeStorageKey,
+  writeRuntimeState,
+} from "./persistence"
 import type { Answers, Question } from "./question.types"
 import { validateQuestion } from "./validate-question"
 
@@ -11,6 +18,11 @@ type UseFormRuntimeOptions = {
   questions: Question[]
   flow: Flow
   data?: Record<string, unknown>
+  /**
+   * Keeps the run alive across a refresh. Without it the runtime holds
+   * everything in memory, which is what a form with nothing to lose wants.
+   */
+  persistence?: { formId: string; scopeId: string }
 }
 
 type QuestionsById = Map<string, Question>
@@ -50,11 +62,16 @@ export function useFormRuntime({
   questions,
   flow,
   data = {},
+  persistence,
 }: UseFormRuntimeOptions) {
   const questionsById = useMemo(
     () => new Map(questions.map((question) => [question.id, question])),
     [questions],
   )
+
+  const storageKey = persistence
+    ? runtimeStorageKey(persistence.formId, persistence.scopeId)
+    : null
 
   const [currentStepId, setCurrentStepId] = useState<StepId>(flow.start)
   const [answers, setAnswers] = useState<Answers>({})
@@ -66,6 +83,11 @@ export function useFormRuntime({
   const [isBusy, setIsBusy] = useState(false)
   const [isDone, setIsDone] = useState(false)
 
+  // Starts false on the server as well, so the first client render matches the
+  // markup it hydrates. Reading storage during render would be the very
+  // mismatch this exists to avoid.
+  const [isRestored, setIsRestored] = useState(!storageKey)
+
   // Refs mirror the state so that answering and advancing within the same
   // event handler sees the fresh values instead of the render's closure.
   const answersRef = useRef<Answers>({})
@@ -73,8 +95,56 @@ export function useFormRuntime({
   const firstTryRef = useRef<Record<string, boolean>>({})
   const pendingRef = useRef<string[]>([])
   const runningRef = useRef(false)
+  const restoredRef = useRef(false)
 
   const currentStep = flow.steps[currentStepId]
+
+  useEffect(() => {
+    if (!storageKey || restoredRef.current) return
+    restoredRef.current = true
+
+    const stored = readRuntimeState(storageKey)
+
+    // A step the flow no longer has means the flow changed under a record
+    // written by an older shape of it. Nothing there is trustworthy.
+    if (stored && !flow.steps[stored.currentStepId]) {
+      clearRuntimeState(storageKey)
+    } else if (stored) {
+      answersRef.current = stored.answers
+      stepRef.current = stored.currentStepId
+      firstTryRef.current = stored.firstTryCorrect
+      setAnswers(stored.answers)
+      setCurrentStepId(stored.currentStepId)
+      setFirstTryCorrect(stored.firstTryCorrect)
+    }
+
+    setIsRestored(true)
+  }, [storageKey, flow])
+
+  useEffect(() => {
+    if (!storageKey || !isRestored || isDone) return
+
+    writeRuntimeState(storageKey, { answers, currentStepId, firstTryCorrect })
+  }, [
+    storageKey,
+    isRestored,
+    isDone,
+    answers,
+    currentStepId,
+    firstTryCorrect,
+  ])
+
+  // Declared after the write above so that a commit turning isDone true leaves
+  // nothing behind: the write bails on isDone, this one removes the record.
+  useEffect(() => {
+    if (!storageKey || !isDone) return
+
+    // Read at completion time rather than at mount, so that adding the flag
+    // part way through a run still counts.
+    if (readKeepOnDone(storageKey)) return
+
+    clearRuntimeState(storageKey)
+  }, [storageKey, isDone])
 
   const currentQuestions = useMemo(
     () => questionsForStep(currentStep, questionsById),
@@ -257,6 +327,7 @@ export function useFormRuntime({
     firstTryCorrect,
     isBusy,
     isDone,
+    isRestored,
     answer,
     advance,
   }
