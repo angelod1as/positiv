@@ -168,7 +168,7 @@ const profilesWithExtraDataQuery = kyselyDb
             recentEb
               .selectFrom("event_participants as ep_reset")
               .innerJoin("events as e_reset", "ep_reset.event_id", "e_reset.id")
-              .select(sql`1`.as("one"))
+              .select("ep_reset.id")
               .whereRef("ep_reset.profile_id", "=", "ep_recent.profile_id")
               .where("ep_reset.attendance_status", "=", "skipped")
               .where("ep_reset.was_selected_for_rotation", "=", true)
@@ -313,7 +313,7 @@ const globalProfileBaseQuery = kyselyDb
             recentEb
               .selectFrom("event_participants as ep_reset")
               .innerJoin("events as e_reset", "ep_reset.event_id", "e_reset.id")
-              .select(sql`1`.as("one"))
+              .select("ep_reset.id")
               .whereRef("ep_reset.profile_id", "=", "ep_recent.profile_id")
               .where("ep_reset.attendance_status", "=", "skipped")
               .where("ep_reset.was_selected_for_rotation", "=", true)
