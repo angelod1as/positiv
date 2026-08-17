@@ -34,13 +34,16 @@ function parse(key: string): Parsed {
   }
 }
 
+// typeof [] is "object", so arrays have to be turned away by name or they
+// arrive as maps with numeric keys.
+const isMap = (value: unknown) =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+
 function holdsState(record: Record<string, unknown>): boolean {
   return (
-    typeof record.answers === "object" &&
-    record.answers !== null &&
+    isMap(record.answers) &&
     typeof record.currentStepId === "string" &&
-    typeof record.firstTryCorrect === "object" &&
-    record.firstTryCorrect !== null
+    isMap(record.firstTryCorrect)
   )
 }
 
@@ -48,6 +51,10 @@ function holdsState(record: Record<string, unknown>): boolean {
  * Whether the record asks not to be deleted when the flow finishes. Read from
  * the raw payload rather than from a restored state, so that pasting
  * `{"v":1,"keepOnDone":true}` in before the flow has started still counts.
+ *
+ * A version bump drops the flag along with the rest of the record, on purpose:
+ * carrying anything over from a payload the runtime has just declared
+ * untrustworthy is the hole the version exists to close.
  */
 export function readKeepOnDone(key: string): boolean {
   const parsed = parse(key)
@@ -90,13 +97,11 @@ export function writeRuntimeState(
 
   // Read before writing: the flag can be pasted in at any point, and every
   // answer rewrites this record.
-  const keepOnDone = readKeepOnDone(key)
+  const record: Record<string, unknown> = { v: VERSION, ...state }
+  if (readKeepOnDone(key)) record.keepOnDone = true
 
   try {
-    sessionStorage.setItem(
-      key,
-      JSON.stringify({ v: VERSION, ...state, ...(keepOnDone && { keepOnDone }) }),
-    )
+    sessionStorage.setItem(key, JSON.stringify(record))
   } catch {
     // Storage unavailable: the runtime keeps going from memory.
   }

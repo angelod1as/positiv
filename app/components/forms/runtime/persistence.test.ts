@@ -63,6 +63,23 @@ describe("readRuntimeState", () => {
     expect(sessionStorage.getItem(key)).toBeNull()
   })
 
+  // typeof [] is "object", so an array slips past a bare object check and gets
+  // handed on as a map with numeric keys.
+  it("discards a record holding arrays where it wants maps", () => {
+    sessionStorage.setItem(
+      key,
+      JSON.stringify({
+        v: 1,
+        answers: ["nope"],
+        currentStepId: "a",
+        firstTryCorrect: {},
+      }),
+    )
+
+    expect(readRuntimeState(key)).toBeNull()
+    expect(sessionStorage.getItem(key)).toBeNull()
+  })
+
   // A flag pasted in before the flow starts has no state beside it, and
   // discarding it as malformed would defeat the point of pasting it.
   it("leaves a flag-only record in place", () => {
