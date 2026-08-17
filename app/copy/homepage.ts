@@ -3,6 +3,26 @@ type AboutCard = {
   body: string
 }
 
+type Testimonial = {
+  author: string
+  quote: string
+}
+
+const testimonialQuotes: Testimonial[] = [
+  {
+    author: "A., 32",
+    quote: `"Participei do meu primeiro evento da Positiv com muita insegurança, mas a organização foi impecável. O ambiente respeitoso e as regras claras me fizeram sentir segura o tempo todo. Foi uma experiência libertadora que me ajudou a redescobrir minha sexualidade."`,
+  },
+  {
+    author: "C., 40",
+    quote: `"Como casal, estávamos buscando novas experiências para apimentar nosso relacionamento. Os eventos da Positiv superaram nossas expectativas. A seleção criteriosa dos participantes e a organização impecável criaram um ambiente perfeito para explorarmos juntos."`,
+  },
+  {
+    author: "P., 28",
+    quote: `"O processo de seleção é rigoroso, mas vale a pena. Nos eventos da Positiv, encontrei pessoas com a mesma mentalidade, abertas a novas experiências e respeitosas. A atmosfera é de liberdade total, mas com limites claros que todos respeitam."`,
+  },
+]
+
 export const homepageCopy = {
   hero: {
     title: "evento de gente pelada",
@@ -56,5 +76,11 @@ E, claro, nosso evento é para **maiores de 18 anos**.`,
     alreadyApplied: "Já inscrite!",
     apply: "Participar",
     learnMore: "Entre para saber mais",
+  },
+  testimonials: {
+    title: "Quem vai, nunca esquece",
+    subtitle:
+      "Experiências reais de algumas pessoas que participaram dos nossos eventos.",
+    quotes: testimonialQuotes,
   },
 } as const
