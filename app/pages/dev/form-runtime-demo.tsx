@@ -1,6 +1,10 @@
 import { useState } from "react"
 import type { Flow } from "~/components/forms/runtime/flow.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
+import {
+  clearRuntimeState,
+  runtimeStorageKey,
+} from "~/components/forms/runtime/persistence"
 import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type {
@@ -184,8 +188,16 @@ export default function FormRuntimeDemoPage() {
   const [result, setResult] = useState<Answers | null>(null)
   const [runId, setRunId] = useState(0)
 
+  const storageKey = runtimeStorageKey("demo", shape)
+
   const restart = (next: "stepped" | "single") => {
     setShape(next)
+    setResult(null)
+    setRunId((id) => id + 1)
+  }
+
+  const forget = () => {
+    clearRuntimeState(storageKey)
     setResult(null)
     setRunId((id) => id + 1)
   }
@@ -220,6 +232,33 @@ export default function FormRuntimeDemoPage() {
             Enter não envia de novo.
           </li>
         </ul>
+      </div>
+
+      <div className="flex flex-col gap-2 rounded border p-4">
+        <h2 className="text-xl font-bold">Persistência</h2>
+        <p className="text-muted-foreground">
+          Responda algumas perguntas e dê F5: o fluxo volta na mesma tela, com
+          as respostas preenchidas. Cada formato tem o seu próprio registro, e
+          concluir o fluxo apaga o registro daquele formato.
+        </p>
+        <p className="text-muted-foreground">
+          Para o registro <strong>não</strong> ser apagado ao concluir — útil
+          para percorrer o fluxo várias vezes sem responder tudo de novo —
+          guarde isto no <code>sessionStorage</code>, na chave{" "}
+          <code>{storageKey}</code>:
+        </p>
+        <pre className="overflow-x-auto rounded bg-muted p-4 text-sm">
+          {'{"v":1,"keepOnDone":true}'}
+        </pre>
+        <p className="text-muted-foreground">
+          Funciona antes de começar ou no meio do fluxo. É um campo do próprio
+          registro, então vale em produção do mesmo jeito.
+        </p>
+        <div>
+          <Button type="button" variant="outline" onClick={forget}>
+            Apagar o registro deste formato
+          </Button>
+        </div>
       </div>
 
       <div className="flex gap-2">
@@ -261,6 +300,7 @@ export default function FormRuntimeDemoPage() {
           questions={questions}
           flow={shape === "stepped" ? steppedFlow : singleScreenFlow}
           presentation={shape === "stepped" ? OneAtATime : AllAtOnce}
+          persistence={{ formId: "demo", scopeId: shape }}
           onDone={setResult}
         />
       )}
