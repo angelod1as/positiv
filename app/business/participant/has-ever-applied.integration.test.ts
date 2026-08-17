@@ -23,6 +23,7 @@ describe("hasEverApplied", () => {
 
   it("returns false for a profile that never applied to anything", async () => {
     const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
       full_name: "Never Applied",
       email: `never-applied-${Date.now()}@example.com`,
     })
@@ -32,6 +33,7 @@ describe("hasEverApplied", () => {
 
   it("returns true for a profile with an active application", async () => {
     const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
       full_name: "Applied",
       email: `applied-${Date.now()}@example.com`,
     })
@@ -51,6 +53,7 @@ describe("hasEverApplied", () => {
 
   it("returns true after the person cancelled their only application", async () => {
     const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
       full_name: "Cancelled",
       email: `cancelled-${Date.now()}@example.com`,
     })
@@ -71,10 +74,12 @@ describe("hasEverApplied", () => {
 
   it("returns false when the only application belongs to someone else", async () => {
     const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
       full_name: "Bystander",
       email: `bystander-${Date.now()}@example.com`,
     })
     const other = await createTestProfile(tracker, kysely, {
+      user_id: null,
       full_name: "Other Person",
       email: `other-${Date.now()}@example.com`,
     })
