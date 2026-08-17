@@ -999,7 +999,7 @@ describe("Account ready page", () => {
   it("links to the dashboard", () => {
     renderPage()
     expect(
-      screen.getByRole("link", { name: "Ver eventos com inscrições abertas" }),
+      screen.getByRole("link", { name: "Ver eventos da Positiv" }),
     ).toHaveAttribute("href", "/dashboard")
   })
 
@@ -1072,7 +1072,7 @@ const AccountReadyPage = ({}: Route.ComponentProps) => {
       </CardContent>
 
       <CardFooter>
-        <Button to={DASHBOARD}>Ver eventos com inscrições abertas</Button>
+        <Button to={DASHBOARD}>Ver eventos da Positiv</Button>
       </CardFooter>
     </Card>
   )
@@ -1298,7 +1298,7 @@ becomes:
 
       await Promise.all([
         page.waitForNavigation({ url: expectedDashboardUrl, waitUntil: "networkidle" }),
-        page.getByRole("link", { name: "Ver eventos com inscrições abertas" }).click(),
+        page.getByRole("link", { name: "Ver eventos da Positiv" }).click(),
       ])
     }
   }

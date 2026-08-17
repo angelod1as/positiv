@@ -43,7 +43,7 @@ const AccountReadyPage = ({}: Route.ComponentProps) => {
       </CardContent>
 
       <CardFooter>
-        <Button to={DASHBOARD}>Ver eventos com inscrições abertas</Button>
+        <Button to={DASHBOARD}>Ver eventos da Positiv</Button>
       </CardFooter>
     </Card>
   )

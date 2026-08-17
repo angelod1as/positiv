@@ -64,7 +64,7 @@ Copy (Brazilian Portuguese):
 - `Mas atenção: ter conta na Positiv não é o mesmo que estar em uma festa.`
 - `Cada evento tem inscrição própria. Para ir a um evento, você precisa se inscrever nele — e a inscrição vale só para aquele evento.`
 - `Depois que você se inscreve, a organização seleciona quem vai. Você recebe a resposta por email.`
-- Button → `/dashboard`: `Ver eventos com inscrições abertas`
+- Button → `/dashboard`: `Ver eventos da Positiv`
 
 ### 3. Dashboard redesign
 
