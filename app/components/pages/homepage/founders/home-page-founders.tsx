@@ -27,8 +27,9 @@ export const HomePageFounders = () => {
                   image={PICTURES[key as keyof typeof founders.people]}
                   name={name}
                   alt=""
-                  pronouns={pronouns}
+                  pronounsLabel={founders.pronounsLabel(pronouns)}
                   instagram={instagram}
+                  instagramIconAlt={founders.instagramIconAlt}
                 >
                   <Copy>{bio}</Copy>
                 </FounderCard>
@@ -41,7 +42,7 @@ export const HomePageFounders = () => {
             <iframe
               className="h-full w-full rounded-lg"
               src="https://www.youtube.com/embed/WIveBynr7Yc?si=2T_SBw3EwHerW-tf"
-              title="YouTube video player"
+              title={founders.videoTitle}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen={true}
