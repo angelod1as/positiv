@@ -32,9 +32,18 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1786921755721
+export const NEWS_VERSION = 1787010931286
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "dashboard-my-registrations",
+    title: "✨ Ficou mais claro onde ver suas inscrições",
+    content:
+      "Criar conta no site não te inscreve em nenhuma festa — a inscrição é feita evento por evento. Agora o painel começa com a seção \"Eventos em que você se inscreveu\", separada dos eventos da Positiv, e cada evento mostra se as inscrições estão abertas, em breve ou encerradas.",
+    isAdmin: false,
+    createdAt: new Date("2026-08-17T12:00:00"),
+    isActive: true,
+  },
   {
     id: "feedback-status-workflow",
     title: "📬 Feedbacks agora podem ser acompanhados e resolvidos",
