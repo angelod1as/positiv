@@ -40,7 +40,7 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     expect(openEventCount).toBeGreaterThan(0)
     
     // Verify different event sections exist
-    await expect(eventsPage.openEventsHeading).toBeVisible()
+    await expect(eventsPage.availableEventsHeading).toBeVisible()
     
     // Test passed - EventsPage POM created and functional
   })

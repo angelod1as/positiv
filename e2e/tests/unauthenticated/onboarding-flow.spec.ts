@@ -17,7 +17,7 @@ test.describe('Onboarding Flow - New User Journey', () => {
     await expect(forgotPasswordText).toBeVisible()
     
     // Verify register link exists for new users
-    const registerLink = page.getByRole('link', { name: /inscreva-se/i })
+    const registerLink = page.getByRole('link', { name: /criar conta/i })
     await expect(registerLink).toBeVisible()
     
     // Click register link
@@ -25,7 +25,7 @@ test.describe('Onboarding Flow - New User Journey', () => {
     await expect(page).toHaveURL('/registrar')
     
     // Verify registration page elements
-    await expect(page.getByText('Inscreva-se')).toBeVisible()
+    await expect(page.getByText('Criar conta')).toBeVisible()
     await expect(page.getByRole('textbox', { name: /e-mail/i })).toBeVisible()
     await expect(page.getByLabel('Senha', { exact: true })).toBeVisible()
     await expect(page.getByLabel('Confirme a senha')).toBeVisible()

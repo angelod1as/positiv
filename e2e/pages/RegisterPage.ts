@@ -104,7 +104,7 @@ export class RegisterPage extends BasePage {
   }
 
   async verifyRegistrationPageDisplayed(): Promise<void> {
-    await expect(this.page.getByText('Inscreva-se')).toBeVisible()
+    await expect(this.page.getByText('Criar conta')).toBeVisible()
     await expect(this.emailInput).toBeVisible()
     await expect(this.passwordInput).toBeVisible()
     await expect(this.confirmPasswordInput).toBeVisible()

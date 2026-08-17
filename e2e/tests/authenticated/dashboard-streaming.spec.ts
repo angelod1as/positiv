@@ -76,23 +76,13 @@ test.describe('POS-268: Dashboard Event Streaming Tests', () => {
     await page.waitForLoadState('networkidle')
 
     // Wait for events to load (they should appear after skeleton)
-    await page.waitForSelector('h2:has-text("Inscrições abertas")', { timeout: 5000 })
+    await page.waitForSelector('h2:has-text("Eventos em que você se inscreveu")', { timeout: 5000 })
 
-    // Check that all three sections are present in the DOM
-    const openSection = await page.locator('h2:has-text("Inscrições abertas")').isVisible()
-    expect(openSection).toBe(true)
+    const appliedSection = await page.locator('h2:has-text("Eventos em que você se inscreveu")').isVisible()
+    expect(appliedSection).toBe(true)
 
-    // These sections may not always be visible (depends on data)
-    // but they should be in the DOM structure
-    const closedSection = await page.locator('h2:has-text("Inscrições encerradas")').count()
-    const scheduledSection = await page.locator('h2:has-text("Eventos agendados")').count()
-
-    // At minimum, the open section should exist
-    expect(openSection).toBe(true)
-
-    // Sections are conditionally rendered, so count >= 0 is expected
-    expect(closedSection).toBeGreaterThanOrEqual(0)
-    expect(scheduledSection).toBeGreaterThanOrEqual(0)
+    const availableSection = await page.locator('h2:has-text("Eventos da Positiv")').count()
+    expect(availableSection).toBeGreaterThan(0)
   })
 
   test('should display event cards after loading completes', async ({ page }) => {
