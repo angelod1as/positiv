@@ -57,7 +57,7 @@ describe("Account ready page", () => {
   it("links to the dashboard", () => {
     renderPage()
     expect(
-      screen.getByRole("link", { name: "Ver eventos com inscrições abertas" }),
+      screen.getByRole("link", { name: "Ver eventos da Positiv" }),
     ).toHaveAttribute("href", "/dashboard")
   })
 

@@ -184,7 +184,7 @@ export async function performUILogin(
 
       await Promise.all([
         page.waitForNavigation({ url: expectedDashboardUrl, waitUntil: "networkidle" }),
-        page.getByRole("link", { name: "Ver eventos com inscrições abertas" }).click(),
+        page.getByRole("link", { name: "Ver eventos da Positiv" }).click(),
       ])
     }
   }
