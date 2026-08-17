@@ -43,7 +43,7 @@ Here are the links for each of the technologies:
 - **Form Handling**: [Remix Forms](https://remix-forms.seasoned.cc/), [React Hook Form](https://react-hook-form.com/) with [Zod validation](https://zod.dev/)
 - **Database Access**: [Kysely](https://kysely.dev/)
 - **Email**: [Nodemailer](https://nodemailer.com/) with [AWS SES](https://aws.amazon.com/ses/)
-- **Other Notable Libraries**: [Composable Functions](https://github.com/seasonedcc/composable-functions), [AG Grid](https://www.ag-grid.com/), [ShadCN](https://ui.shadcn.com/), [React Email](https://react.email/), [Mailhog](https://github.com/mailhog/MailHog).
+- **Other Notable Libraries**: [Composable Functions](https://github.com/seasonedcc/composable-functions), [AG Grid](https://www.ag-grid.com/), [ShadCN](https://ui.shadcn.com/), [React Email](https://react.email/), [Mailpit](https://mailpit.axllent.org/).
 
 ## Getting Started
 
@@ -71,7 +71,6 @@ Here are the links for each of the technologies:
 3. Install supporting applications
 
    - [Docker](https://www.docker.com/)
-   - [Mailhog](https://github.com/mailhog/MailHog)
    - [Positiv Email](https://github.com/angelod1as/positiv-email) (When developing admin emails)
 
 4. Setup the [local supabase](#setting-up-local-supabase) installation.
@@ -111,7 +110,6 @@ The most important scripts for development are:
 ### Additional scripts
 
 - `pnpm db:types` - Generate database types — add `--local` to generate from the local Supabase instance.
-- `pnpm email:test` - Runs Mailhog
 
 ### Setting Up Local Supabase
 

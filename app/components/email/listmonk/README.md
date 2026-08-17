@@ -199,11 +199,11 @@ Available Listmonk variables:
 
 ## Testing Templates
 
-### Local Testing with Mailhog
+### Local Testing with Mailpit
 
-1. Start Mailhog: `pnpm email:test`
+1. Start local Supabase: `supabase start` (it runs Mailpit)
 2. Send test campaign from Listmonk
-3. View email at <http://localhost:8025>
+3. View email at <http://127.0.0.1:54324>
 
 ### Preview in Listmonk
 
