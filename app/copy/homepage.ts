@@ -35,4 +35,10 @@ E, claro, nosso evento é para **maiores de 18 anos**.`,
       },
     } as const satisfies Record<string, AboutCard>,
   },
+  ctaBanner: {
+    title: "Não perca nossos próximos eventos",
+    body: `Faça login agora, se inscreva para o próximo evento, ou seja lembrade por quando novas inscrições abrirem`,
+    loggedInCta: "Veja os eventos",
+    loggedOutCta: "Entrar e conferir",
+  },
 } as const
