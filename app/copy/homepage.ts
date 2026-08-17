@@ -76,7 +76,7 @@ E, claro, nosso evento é para **maiores de 18 anos**.`,
   nextEvents: {
     title: "Próximos Eventos",
     subtitle: "Confira nossos próximos encontros e garanta sua participação.",
-    schedule: (date = "", startingTime = "", endingTime = "") =>
+    schedule: (date: string, startingTime: string, endingTime: string) =>
       `${date}, das ${startingTime} às ${endingTime}`,
     registrationOpen: `**Inscrições abertas!**`,
     registrationOpensOn: `**Abertura das inscrições:**`,
@@ -93,6 +93,8 @@ E, claro, nosso evento é para **maiores de 18 anos**.`,
   founders: {
     title: "Quem faz a Positiv?",
     pronounsLabel: (pronouns: string) => `(${pronouns})`,
+    instagramIconAlt: "Instagram icon",
+    videoTitle: "YouTube video player",
     people: {
       julia: {
         name: "Julia Fernandez",

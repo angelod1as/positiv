@@ -66,7 +66,11 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                       <div className="text-6xl mb-4">{emoji}</div>
                       <CardTitle>{title}</CardTitle>
                       <CardDescription>
-                        {nextEvents.schedule(date, startingTime, endingTime)}
+                        {nextEvents.schedule(
+                          date ?? "",
+                          startingTime ?? "",
+                          endingTime ?? "",
+                        )}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="text-muted-foreground grow gap-4 flex flex-col items-center">
