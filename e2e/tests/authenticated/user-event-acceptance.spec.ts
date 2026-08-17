@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { EventsPage } from '../../pages/EventsPage'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
-import { clearAllEmails } from '../../utils/email-helpers'
+import { clearAllEmails, getAllEmails } from '../../utils/email-helpers'
 import { ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
 
 test.describe('POS-190: Event Application Acceptance Tests', () => {
@@ -62,14 +62,12 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     // Test passed - EventApplicationPage POM created with all required methods
   })
 
-  test('AC3: email-helpers.ts created with Mailhog integration', async () => {
-    // Test email helpers functionality
+  test('AC3: email-helpers.ts created with Mailpit integration', async () => {
+    // Round trips through the Mailpit API so an unreachable catcher or a
+    // changed payload shape fails here instead of passing silently
     await clearAllEmails()
-    
-    // Verify the helpers exist and work
-    expect(clearAllEmails).toBeDefined()
-    
-    // Test passed - email helpers created and functional
+
+    expect(await getAllEmails()).toEqual([])
   })
 
   test('AC4: Complete flow - navigate to event application', async ({ page }) => {
