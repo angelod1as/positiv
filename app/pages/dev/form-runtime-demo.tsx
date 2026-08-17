@@ -254,6 +254,12 @@ export default function FormRuntimeDemoPage() {
           Funciona antes de começar ou no meio do fluxo. É um campo do próprio
           registro, então vale em produção do mesmo jeito.
         </p>
+        <p className="text-muted-foreground">
+          Com a flag, depois de concluir o F5 devolve a última pergunta em vez
+          de recomeçar, e seguir dali <strong>roda o commit de novo</strong> —
+          que é o ponto de repetir o fluxo. Num formulário de verdade isso
+          significa uma segunda inscrição.
+        </p>
         <div>
           <Button type="button" variant="outline" onClick={forget}>
             Apagar o registro deste formato
