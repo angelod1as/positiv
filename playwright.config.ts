@@ -78,10 +78,13 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         storageState: path.resolve(import.meta.dirname, 'e2e/.auth/user.json'),
       },
-      testMatch: '**/tests/authenticated/user-*.spec.ts',
+      testMatch: [
+        '**/tests/authenticated/user-*.spec.ts',
+        '**/tests/authenticated/account-vs-event-registration.spec.ts',
+      ],
       dependencies: ['setup'],
     },
-    
+
     // Authenticated admin tests
     {
       name: 'chromium-authenticated-admin',
