@@ -85,8 +85,11 @@ sections plus a banner.
 
 **Banner** — rendered only when `hasEverApplied` is false:
 
-- `Sua conta está pronta — mas ter conta não te coloca em nenhuma festa.`
-- `Escolha um evento abaixo e faça sua inscrição.`
+- Title: `Sua conta está pronta`
+- Body: `Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.`
+
+The message lives in the body, not the title: `AlertTitle` clamps to a single line
+(`app/components/ui/alert.tsx`), which would truncate a full sentence on narrow screens.
 
 **Section 1 — `Eventos em que você se inscreveu`**
 

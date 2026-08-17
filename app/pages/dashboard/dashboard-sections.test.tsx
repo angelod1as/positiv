@@ -47,7 +47,7 @@ describe("Dashboard sections", () => {
 
     expect(
       screen.getByText(
-        "Sua conta está pronta — mas ter conta não te coloca em nenhuma festa.",
+        "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.",
       ),
     ).toBeInTheDocument()
   })
@@ -57,7 +57,7 @@ describe("Dashboard sections", () => {
 
     expect(
       screen.queryByText(
-        "Sua conta está pronta — mas ter conta não te coloca em nenhuma festa.",
+        "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.",
       ),
     ).not.toBeInTheDocument()
   })
@@ -89,6 +89,25 @@ describe("Dashboard sections", () => {
     expect(screen.getByTestId("event-card-available")).toHaveTextContent(
       "Festa Disponível",
     )
+  })
+
+  it("keeps an applied event in the applied section after registration closes", () => {
+    renderContent({
+      events: [
+        makeEvent({
+          id: "applied-closed-event",
+          title: "Festa Encerrada",
+          is_applied: true,
+          event_status: "Registration Closed",
+        }),
+      ],
+      hasEverApplied: true,
+    })
+
+    expect(screen.getByTestId("event-card-applied")).toHaveTextContent(
+      "Festa Encerrada",
+    )
+    expect(screen.queryByTestId("event-card-available")).not.toBeInTheDocument()
   })
 
   it("shows an empty state when there are no available events", () => {

@@ -96,12 +96,10 @@ export const EventsContent: FC<{
     <>
       {!hasEverApplied && (
         <Alert>
-          <AlertTitle>
-            Sua conta está pronta — mas ter conta não te coloca em nenhuma
-            festa.
-          </AlertTitle>
+          <AlertTitle>Sua conta está pronta</AlertTitle>
           <AlertDescription>
-            Escolha um evento abaixo e faça sua inscrição.
+            Mas ter conta não te coloca em nenhuma festa. Escolha um evento
+            abaixo e faça sua inscrição.
           </AlertDescription>
         </Alert>
       )}
