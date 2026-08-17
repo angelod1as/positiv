@@ -5,6 +5,7 @@ import { redirectWithInfo } from "remix-toast"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext } from "~/business/auth/auth.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
+import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { EventListSkeleton } from "~/components/organisms/event-list/event-list-skeleton"
@@ -53,6 +54,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   // No defer() wrapper needed in React Router 7
   return {
     events: loadEvents(currentProfile.id),
+    hasEverApplied: await hasEverApplied(currentProfile.id),
   }
 }
 
@@ -148,8 +150,7 @@ const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
         {(events) => (
           <EventsContent
             events={events}
-            // TODO(POS-479): flag arrives with the hasEverApplied query
-            hasEverApplied={false}
+            hasEverApplied={loaderData.hasEverApplied}
           />
         )}
       </Await>
