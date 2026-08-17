@@ -97,7 +97,7 @@ type ExtraBasicDataProps = {
 const {
   dash: {
     DASHBOARD,
-    account: { GENDER_PRONOUNS_ORIENTATION, BASIC_DATA },
+    account: { GENDER_PRONOUNS_ORIENTATION, BASIC_DATA, ACCOUNT_READY },
   },
   admin: { ADMIN_DASHBOARD },
 } = paths
@@ -111,6 +111,8 @@ export const extraBasicData = async ({
   if (!currentProfile) {
     throw new Error("Erro ao buscar usuário")
   }
+
+  const isFirstCompletion = !currentProfile.basic_data_filled
 
   const extraDataValidation = ExtraBasicDataSchema.safeParse(formData)
 
@@ -156,7 +158,11 @@ export const extraBasicData = async ({
     )
   }
 
-  const targetPath = currentProfile.is_admin ? ADMIN_DASHBOARD : DASHBOARD
+  const targetPath = currentProfile.is_admin
+    ? ADMIN_DASHBOARD
+    : isFirstCompletion
+      ? ACCOUNT_READY
+      : DASHBOARD
 
   return redirectWithSuccess(targetPath, "Dados salvos com sucesso", {
     headers: supabaseHeaders,
