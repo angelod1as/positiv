@@ -8,9 +8,9 @@ const BLOCK_COMPONENTS: Components = {
     href?.startsWith("/") ? (
       <Link to={href}>{children}</Link>
     ) : (
-      <a href={href} target="_blank" rel="noreferrer">
+      <Link to={href ?? ""} target="_blank" rel="noreferrer">
         {children}
-      </a>
+      </Link>
     ),
 }
 
