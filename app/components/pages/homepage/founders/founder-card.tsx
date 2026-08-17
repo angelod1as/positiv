@@ -1,6 +1,9 @@
 import Instagram from "~/assets/social/instagram.svg"
 import { Button } from "~/components/atoms/button/button"
+import { homepageCopy } from "~/copy/homepage"
 import type { FCC } from "~types/utils/utils.types"
+
+const { founders } = homepageCopy
 
 type FounderCardProps = {
   name: string
@@ -29,7 +32,9 @@ export const FounderCard: FCC<FounderCardProps> = ({
       />
       <div className="flex flex-col gap-0">
         <h3 className="text-xl font-bold">{name}</h3>
-        <p className="text-sm text-muted-foreground">({pronouns})</p>
+        <p className="text-sm text-muted-foreground">
+          {founders.pronounsLabel(pronouns)}
+        </p>
       </div>
 
       <div className="text-muted-foreground text-center max-w-md flex flex-col gap-4">

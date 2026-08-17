@@ -92,6 +92,7 @@ E, claro, nosso evento é para **maiores de 18 anos**.`,
   },
   founders: {
     title: "Quem faz a Positiv?",
+    pronounsLabel: (pronouns: string) => `(${pronouns})`,
     people: {
       julia: {
         name: "Julia Fernandez",
