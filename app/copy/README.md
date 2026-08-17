@@ -205,7 +205,11 @@ const sections: RulesSection[] = [ /* ... */ ]
 
 ## The lint rule
 
-`react/jsx-no-literals` is enabled in `eslint.config.js` for the directories that
-have been migrated. It fails `pnpm lint` if raw text appears between JSX tags
-there. When you finish migrating a directory, add its glob to that rule's `files`
-list.
+Directories that have finished migrating are guarded by `react/jsx-no-literals`,
+which fails `pnpm lint` if raw text reappears between JSX tags in one of them.
+The guard is a config block in `eslint.config.js` that names those directories
+explicitly. When you finish migrating a directory, add its glob to that block's
+`files` list.
+
+The block only exists once the first directory is migrated — ESLint rejects a
+config block whose `files` array is empty, so there is nothing to add until then.
