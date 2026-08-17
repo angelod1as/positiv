@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
+import { homepageCopy } from "~/copy/homepage"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -17,23 +18,21 @@ describe("HomePageFeedback", () => {
   it("should render the section title", () => {
     render(<HomePageFeedback />)
 
-    expect(screen.getByText("Nos deixe um feedback")).toBeInTheDocument()
+    expect(
+      screen.getByText(homepageCopy.feedback.title),
+    ).toBeInTheDocument()
   })
 
   it("should render the description text", () => {
     render(<HomePageFeedback />)
 
-    expect(
-      screen.getByText(
-        /Estamos sempre buscando melhorias em nossa comunicação e processo/,
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText(homepageCopy.feedback.body)).toBeInTheDocument()
   })
 
   it("should render a link button to the feedback page", () => {
     render(<HomePageFeedback />)
 
-    const link = screen.getByRole("link", { name: /deixar feedback/i })
+    const link = screen.getByRole("link", { name: homepageCopy.feedback.cta })
     expect(link).toBeInTheDocument()
     expect(link).toHaveAttribute("href", "/feedback")
   })

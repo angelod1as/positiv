@@ -41,4 +41,9 @@ E, claro, nosso evento é para **maiores de 18 anos**.`,
     loggedInCta: "Veja os eventos",
     loggedOutCta: "Entrar e conferir",
   },
+  feedback: {
+    title: "Nos deixe um feedback",
+    body: `Estamos sempre buscando melhorias em nossa comunicação e processo. Nos deixe um feedback anônimo (ou não).`,
+    cta: "Deixar feedback",
+  },
 } as const
