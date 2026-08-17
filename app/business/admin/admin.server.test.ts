@@ -9,6 +9,7 @@ vi.mock("../auth/auth.server", () => ({
       email: "admin@test.com",
       user_metadata: { admin: true },
     },
+    currentProfile: { id: "test-profile-id", is_admin: true },
     supabase: {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
@@ -64,6 +65,7 @@ vi.mock("~/lib/supabase/db.server", () => ({
 }))
 
 // Import after mocking
+import { getUserContext } from "../auth/auth.server"
 import { getAdminContext, getParticipantFullEventHistory } from "./admin.server"
 
 describe("getAdminContext", () => {
@@ -76,6 +78,28 @@ describe("getAdminContext", () => {
     expect(result).toBeDefined()
     expect(result.supabase).toBeDefined()
     expect(result).not.toHaveProperty("events")
+  })
+
+  // Actions call this directly: React Router does not run the admin layout
+  // loader before a child action, so this is the only check standing there
+  it("should refuse a signed-in profile that is not an admin", async () => {
+    vi.mocked(getUserContext).mockResolvedValueOnce({
+      currentProfile: { id: "test-profile-id", is_admin: false },
+    } as unknown as Awaited<ReturnType<typeof getUserContext>>)
+
+    await expect(
+      getAdminContext(new Request("http://localhost/admin"), {}),
+    ).rejects.toBeInstanceOf(Response)
+  })
+
+  it("should refuse a user without a profile", async () => {
+    vi.mocked(getUserContext).mockResolvedValueOnce({
+      currentProfile: null,
+    } as unknown as Awaited<ReturnType<typeof getUserContext>>)
+
+    await expect(
+      getAdminContext(new Request("http://localhost/admin"), {}),
+    ).rejects.toBeInstanceOf(Response)
   })
 })
 

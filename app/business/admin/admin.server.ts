@@ -1,8 +1,10 @@
 import { applySchema, composable } from "composable-functions"
 import { sql } from "kysely"
 import type { Params } from "react-router"
+import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { kyselyDb } from "~/kysely-db"
+import paths from "~/lib/paths"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import { logger } from "~/lib/logger/logger.server"
 import type {
@@ -32,11 +34,25 @@ import {
   updateEventListmonkList,
 } from "./event-listmonk-sync.server"
 
+const {
+  root: { HOME },
+} = paths
+
 export const getAdminContext = async (
   request: Request,
   params: Params,
 ): Promise<z.infer<typeof adminContextSchema>> => {
   const context = await getUserContext(request, params)
+
+  // Actions call this directly because React Router does not run the admin
+  // layout loader, which holds the same check, before a child action
+  if (!context.currentProfile?.is_admin) {
+    throw await redirectWithError(
+      HOME,
+      "Você precisa ser administradore para visitar essa página",
+    )
+  }
+
   return context
 }
 
