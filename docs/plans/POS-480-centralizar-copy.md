@@ -333,10 +333,17 @@ file in this folder — never a component.
 2. Change the text between the quotes or backticks.
 3. That is the whole change. No component needs touching.
 
-Not a developer? You can do this straight from GitHub, no setup. Open the file on
-github.com, press the pencil icon, change the text, and press "Propose changes".
-That opens a pull request for review. The edit URL follows the pattern
-`github.com/OWNER/REPOSITORY/edit/main/app/copy/FILENAME.ts`.
+Not a developer? You can do this straight from GitHub, no setup. Not sure which
+file? Use the search box at the top of the repository page, paste a few words of
+the sentence exactly as it appears on the site, and GitHub will show you the
+file. Open it on github.com, press the pencil icon, change the text, press
+"Commit changes…", make sure "Create a new branch and start a pull request" is
+selected, then press "Propose changes". The edit URL follows the pattern
+`github.com/angelod1as/positiv/edit/main/app/copy/FILENAME.ts`. Someone on the
+team reviews and merges it; the change goes live on the next deploy. Nothing you
+do here can break the site — until it is merged, nothing changes.
+
+Everything below is for developers.
 
 ## Adding a NEW string
 
@@ -365,8 +372,8 @@ export const LogoutButton = () => (
 )
 ```
 
-That is it. Because the module ends in `as const`, TypeScript knows every key:
-`sharedCopy.actions.logou` is a compile error, caught by `pnpm lint`.
+That is it. TypeScript checks the object's shape, so `sharedCopy.actions.logou`
+is a compile error, caught by `pnpm lint`.
 
 **When the string has a value in it**, make it a function instead of a string.
 Never build the sentence by concatenating in the component:
@@ -427,6 +434,13 @@ export const About = () => (
 )
 ```
 
+A string can take a value and Markdown at once — it is still just a function
+returning a string, rendered the same way through `Copy`:
+
+```ts
+greeting: (name: string) => `Olá, **${name}**!`,
+```
+
 ### The Markdown you can use
 
 | You write | You get |
@@ -474,7 +488,8 @@ asterisks:
 - the `title` HTML attribute
 
 Write those as plain text. TypeScript cannot catch this one — just keep them
-plain.
+plain. These still live in the copy module like everything else — the only
+difference is that the string must be plain, with no Markdown in it.
 
 ## Long prose pages
 
@@ -499,9 +514,9 @@ Se você não quiser tomar parte em alguma coisa, **simplesmente não o faça**.
 The component maps over `sections`. Adding a section means adding an entry here
 and nothing else.
 
-Note this example has no `as const`. A list that gets iterated does not need one —
-there are no keys to protect. Give the array an explicit type instead, so a
-section missing its `body` is still a compile error:
+Give the sections array an explicit type, so a section missing its `body` is
+still a compile error, then wrap it in a keyed object the same way as every
+other copy module — ending in `as const`:
 
 ```ts
 type RulesSection = {
@@ -510,17 +525,25 @@ type RulesSection = {
 }
 
 const sections: RulesSection[] = [ /* ... */ ]
+
+export const rulesCopy = { title: "Regras e filosofias", sections } as const
 ```
 
 ## Rules
 
 - Every file in this folder is `.ts`. If you need `.tsx`, you are putting JSX in
   copy — put it in the component instead and pass copy into it.
-- End every **keyed** copy object with `as const`. That is what gives the compile
-  error on a typo'd key. Do not add a `satisfies` clause inside one — `as const`
-  only applies to a plain literal and will stop compiling. Arrays that get
-  iterated take an explicit type instead, as shown above.
+- Keys are camelCase and name the thing, not the text — `logout`, not
+  `sairButton` or `sair`.
+- End every **keyed** copy object with `as const`. It makes the values literal
+  and readonly, so copy cannot be reassigned at runtime and keys narrow properly
+  at call sites. Do not add a `satisfies` clause inside one — `as const` only
+  applies to a plain literal and will stop compiling. Arrays that get iterated
+  take an explicit type instead, as shown above.
 - No `index.ts` barrel file. Import from the module directly.
+- A string used in more than one area goes in `shared.ts`. A string used in one
+  area stays in that area's module, even if it looks generic — move it to
+  `shared.ts` when the second use actually appears, not in anticipation.
 - Some Portuguese strings are **not** copy and must not move here: the values in
   `app/lib/constants/constants.ts` (`GENDERS`, `ORIENTATIONS`, `PRONOUNS`,
   `RACE_COLOR`) are stored in the database, and the news dialog in
@@ -547,9 +570,9 @@ export const sharedCopy = {
     cancel: "Cancelar",
     confirm: "Confirmar",
     back: "Voltar",
-    close: "Fechar",
-    delete: "Excluir",
     edit: "Editar",
+  },
+  status: {
     loading: "Carregando...",
   },
 } as const

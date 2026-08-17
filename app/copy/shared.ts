@@ -4,9 +4,9 @@ export const sharedCopy = {
     cancel: "Cancelar",
     confirm: "Confirmar",
     back: "Voltar",
-    close: "Fechar",
-    delete: "Excluir",
     edit: "Editar",
+  },
+  status: {
     loading: "Carregando...",
   },
 } as const
