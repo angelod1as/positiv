@@ -1,6 +1,7 @@
 import { ArrowRightIcon } from "lucide-react"
 import type { FC } from "react"
 import { Button } from "~/components/atoms/button/button"
+import { Copy } from "~/components/atoms/copy/copy"
 import {
   Card,
   CardContent,
@@ -9,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { homepageCopy } from "~/copy/homepage"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import routes from "~/lib/paths"
 import type { Event } from "~types/database/entities.types"
@@ -19,6 +21,8 @@ const {
   auth: { LOGIN },
 } = routes
 
+const { nextEvents } = homepageCopy
+
 type HomePageNextEventsProps = {
   events: Array<Event>
 }
@@ -27,11 +31,8 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
     <Section>
       <div className="px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 ">
-          <HomePageTitle
-            subtitle="Confira nossos próximos encontros e garanta sua
-              participação."
-          >
-            Próximos Eventos
+          <HomePageTitle subtitle={nextEvents.subtitle}>
+            {nextEvents.title}
           </HomePageTitle>
 
           <div className="flex lg:flex-row flex-col gap-8 items-stretch justify-center">
@@ -65,7 +66,7 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                       <div className="text-6xl mb-4">{emoji}</div>
                       <CardTitle>{title}</CardTitle>
                       <CardDescription>
-                        {date}, das {startingTime} às {endingTime}
+                        {nextEvents.schedule(date, startingTime, endingTime)}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="text-muted-foreground grow gap-4 flex flex-col items-center">
@@ -74,20 +75,20 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                     <CardFooter className="flex flex-col gap-2">
                       {isOpen ? (
                         <p className="text-sm">
-                          <b>Candidaturas abertas!</b>
+                          <Copy inline>{nextEvents.registrationOpen}</Copy>
                         </p>
                       ) : (
                         <p className="text-sm">
-                          <b>Abertura das candidaturas:</b>
+                          <Copy inline>{nextEvents.registrationOpensOn}</Copy>
                           <br /> {openDate}
                         </p>
                       )}
                       {is_applied ? (
                         <Button variant="outline" to={LOGIN}>
-                          Já candidate!
+                          {nextEvents.alreadyApplied}
                         </Button>
                       ) : (
-                        <Button to={LOGIN}>Participar</Button>
+                        <Button to={LOGIN}>{nextEvents.apply}</Button>
                       )}
                     </CardFooter>
                   </Card>
@@ -96,7 +97,7 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
             )}
           </div>
           <Button to={LOGIN} variant="outline" className="flex items-center">
-            Entre para saber mais <ArrowRightIcon className="ml-2 h-4 w-4" />
+            {nextEvents.learnMore} <ArrowRightIcon className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </div>

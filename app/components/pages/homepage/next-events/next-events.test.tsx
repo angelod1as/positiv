@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
+import { homepageCopy } from "~/copy/homepage"
 import { renderWithRouter, screen } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
 import { HomePageNextEvents } from "./next-events"
+
+const asRendered = (markdown: string) => markdown.replaceAll("**", "")
 
 const baseEvent: Event = {
   id: "test-event-id",
@@ -37,14 +40,18 @@ describe("HomePageNextEvents", () => {
   it("should show open registration message when event is open", () => {
     renderWithRouter(<HomePageNextEvents events={[baseEvent]} />)
 
-    expect(screen.getByText("Candidaturas abertas!")).toBeInTheDocument()
+    expect(
+      screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpen)),
+    ).toBeInTheDocument()
   })
 
   it("should show scheduled message when event is not open", () => {
     const scheduledEvent = { ...baseEvent, event_status: "Scheduled" as const }
     renderWithRouter(<HomePageNextEvents events={[scheduledEvent]} />)
 
-    expect(screen.getByText("Abertura das candidaturas:")).toBeInTheDocument()
+    expect(
+      screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpensOn)),
+    ).toBeInTheDocument()
   })
 
   it("should not badge a legacy BDSM event", () => {

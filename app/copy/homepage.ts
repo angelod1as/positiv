@@ -46,4 +46,15 @@ E, claro, nosso evento é para **maiores de 18 anos**.`,
     body: `Estamos sempre buscando melhorias em nossa comunicação e processo. Nos deixe um feedback anônimo (ou não).`,
     cta: "Deixar feedback",
   },
+  nextEvents: {
+    title: "Próximos Eventos",
+    subtitle: "Confira nossos próximos encontros e garanta sua participação.",
+    schedule: (date = "", startingTime = "", endingTime = "") =>
+      `${date}, das ${startingTime} às ${endingTime}`,
+    registrationOpen: `**Inscrições abertas!**`,
+    registrationOpensOn: `**Abertura das inscrições:**`,
+    alreadyApplied: "Já inscrite!",
+    apply: "Participar",
+    learnMore: "Entre para saber mais",
+  },
 } as const
