@@ -11,7 +11,7 @@
 **Design doc:** `docs/plans/POS-479-account-vs-event-registration-design.md`
 
 **Before starting:** work inside the worktree
-`/Users/angelodias/Documents/GIT/private/positiv-project/worktrees/pos-479-melhorar-fluxo-pra-pessoa-entender-que-cadastro-no-site-nao`
+`/Users/angelodias/Documents/GIT/private/positiv/wt/pos-479`
 on branch `pos-479-melhorar-fluxo-pra-pessoa-entender-que-cadastro-no-site-nao`.
 
 Useful commands:
@@ -626,7 +626,7 @@ describe("Dashboard sections", () => {
 
     expect(
       screen.getByText(
-        "Sua conta está pronta — mas ter conta não te coloca em nenhuma festa.",
+        "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.",
       ),
     ).toBeInTheDocument()
   })
@@ -636,7 +636,7 @@ describe("Dashboard sections", () => {
 
     expect(
       screen.queryByText(
-        "Sua conta está pronta — mas ter conta não te coloca em nenhuma festa.",
+        "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.",
       ),
     ).not.toBeInTheDocument()
   })
@@ -750,12 +750,10 @@ export const EventsContent: FC<{
     <>
       {!hasEverApplied && (
         <Alert>
-          <AlertTitle>
-            Sua conta está pronta — mas ter conta não te coloca em nenhuma
-            festa.
-          </AlertTitle>
+          <AlertTitle>Sua conta está pronta</AlertTitle>
           <AlertDescription>
-            Escolha um evento abaixo e faça sua inscrição.
+            Mas ter conta não te coloca em nenhuma festa. Escolha um evento
+            abaixo e faça sua inscrição.
           </AlertDescription>
         </Alert>
       )}
@@ -1433,7 +1431,7 @@ test.describe('Account signup versus event registration', () => {
     await page.goto('/dashboard')
 
     await expect(
-      page.getByText('Sua conta está pronta — mas ter conta não te coloca em nenhuma festa.'),
+      page.getByText('Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.'),
     ).toBeVisible()
 
     await expect(
@@ -1471,7 +1469,7 @@ test.describe('Account signup versus event registration', () => {
     await expect(availableCard).toHaveCount(0)
 
     await expect(
-      page.getByText('Sua conta está pronta — mas ter conta não te coloca em nenhuma festa.'),
+      page.getByText('Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.'),
     ).toBeHidden()
   })
 })
