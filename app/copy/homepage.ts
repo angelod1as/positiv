@@ -4,6 +4,10 @@ type AboutCard = {
 }
 
 export const homepageCopy = {
+  hero: {
+    title: "evento de gente pelada",
+    subtitle: `para amantes de saliências **não-mono**, curioses com o mundo da **suruba**, e quem quer explorar a **própria sexualidade**`,
+  },
   about: {
     title: "Como assim?",
     cards: {
