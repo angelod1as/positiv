@@ -78,7 +78,7 @@ export const EventCard: FC<EventCardProps> = ({
           event_status={event_status}
           googleLink={googleLink}
           is_applied={is_applied}
-          dataTestId={dataTestId}
+          dataTestId={undefined}
           isAdmin={isAdmin}
         />
       </CardFooter>

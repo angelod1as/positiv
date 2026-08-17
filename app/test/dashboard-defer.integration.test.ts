@@ -14,51 +14,42 @@ describe("Dashboard Loader - Deferred Loading Integration Tests", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
-  it("should split events into registration categories", () => {
+  it("should split events into applied and available categories", () => {
     // This test verifies the splitEvents function behavior
     // The defer() implementation will use this same logic
 
     const mockEvents: Event[] = [
       {
         id: "1",
-        title: "Open Event",
-        event_status: "Registration Open",
+        title: "Applied Event",
+        is_applied: true,
       } as Event,
       {
         id: "2",
-        title: "Closed Event",
-        event_status: "Registration Closed",
-      } as Event,
-      {
-        id: "3",
-        title: "Scheduled Event",
-        event_status: "Scheduled",
+        title: "Available Event",
+        is_applied: false,
       } as Event,
     ]
 
     const result = splitEvents(mockEvents)
 
-    expect(result.registrationOpen).toHaveLength(1)
-    expect(result.registrationClosed).toHaveLength(1)
-    expect(result.scheduled).toHaveLength(1)
-    expect(result.registrationOpen[0]?.title).toBe("Open Event")
-    expect(result.registrationClosed[0]?.title).toBe("Closed Event")
-    expect(result.scheduled[0]?.title).toBe("Scheduled Event")
+    expect(result.applied).toHaveLength(1)
+    expect(result.available).toHaveLength(1)
+    expect(result.applied[0]?.title).toBe("Applied Event")
+    expect(result.available[0]?.title).toBe("Available Event")
   })
 
   it("should handle empty events array", () => {
     const result = splitEvents([])
 
-    expect(result.registrationOpen).toHaveLength(0)
-    expect(result.registrationClosed).toHaveLength(0)
-    expect(result.scheduled).toHaveLength(0)
+    expect(result.applied).toHaveLength(0)
+    expect(result.available).toHaveLength(0)
   })
 
   it("should handle undefined events", () => {
     const result = splitEvents(undefined)
 
-    expect(result.registrationOpen).toHaveLength(0)
-    expect(result.registrationClosed).toHaveLength(0)
-    expect(result.scheduled).toHaveLength(0)
+    expect(result.applied).toHaveLength(0)
+    expect(result.available).toHaveLength(0)
   })
 })
