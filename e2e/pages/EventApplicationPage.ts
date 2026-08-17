@@ -95,44 +95,40 @@ export class EventApplicationPage extends BasePage {
     // Wait for form to be ready
     await this.page.waitForTimeout(1000)
 
-    // Answer specific known questions by clicking the correct text
-    // These are the typical correct answers in the rules form
+    // Full set of correct answers, mirrored from
+    // app/components/forms/custom/rules/rules-questions.tsx. The quiz shuffles
+    // question and answer order, but the answer text itself is fixed, so
+    // clicking every correct answer text (regardless of order) always yields
+    // a fully and correctly answered quiz. Both event-type variants of the
+    // "not-a-club" question are included since only one is ever rendered.
     const correctAnswers = [
-      "Não. A regra é simples: ninguém é obrigade a nada",
-      "a afirmação está incorreta, o uso de camisinha",
-      "a afirmação está incorreta e até mesmo casais",
-      "Chamarei ou procurarei um membro da equipe organizadora",
-      "Ninguém!",
-      'conversarem juntes e só continuarem quando TODAS as pessoas disserem "sim"',
-      "Tira ele do evento né?!",
-      "os organizadores sabem com quem o participante veio junto",
-      "é perguntar",
-      "Não vai não, bem poupade",
-      "NÃO",
+      "Cada pessoa é responsável por cuidar de seus pertences e por limpar o ambiente, para manter tudo em ordem e no lugar, independente de ter uma equipe de limpeza que irá limpar depois.",
+      "Não. A regra é simples: ninguém é obrigade a nada. Se quiser ficar de roupa, pode, se quiser ficar pelade, pode também",
+      "Não está de acordo. O ideal é curtir a festa na própria festa e, principalmente, não tirar ninguém dela antes do fim.",
+      "Essa frase está incorreta. A Positiv tem apenas espaços compartilhados e celebra a coletividade.",
+      "Tudo lindo! Falar sobre a Positiv é essencial pro crescimento da própria Positiv, desde que você não cite nomes nem características de quem esteve na festa com você.",
+      "A regra é clara: não se fala sobre quem vai à Positiv — mesmo para pessoas que vão à Positiv durante uma Positiv.",
+      "Desde que ela não diga quem vai ou foi à festa com ela, tudo bem — ela pode divulgar sua participação.",
+      "A frase está incorreta. A Positiv se parece mais com um picnic e não tem música alta ou luzes piscando.",
+      "A frase está incorreta. Na Positiv BDSM não há álcool ou outras substâncias.",
+      "A frase está incorreta. É até possível que haja drinks ou cerveja, mas a moderação é essencial.",
+      "Incorreta, o uso dos celulares é permitido apenas na garagem da suíte.",
+      "A afirmação está incorreta, o uso de camisinha interna ou externa, é obrigatório",
+      "A afirmação está incorreta e até mesmo casais que não usam camisinha fora da festa são obrigados a usar durante a festa",
+      "A Positiv não pede que seus participantes enviem resultados de exames de IST para a organização, mas prega que todes façam regularmente seus acompanhamentos, porque assumimos riscos em frequentar festas como a Positiv",
+      "Para interações com mãos e bocas, a Positiv recomenda fortemente que sejam usadas luvas, dental dams e/ou camisinhas.",
+      "Sim, fiz uma autoanálise e tô legal. Entendo meus gatilhos e tô preparade para enfrentar meus medos e inseguranças.",
+      'Senti que um clima rolou na festa. Perguntei: posso te dar um beijo? A pessoa consentiu com um "sim". Nos beijamos. Ela perguntou: "posso fazer um cafuné?" e eu disse que sim.',
+      "A Positiv tem esse nome, também, por conta do movimento body-positive, uma alusão à quebra dos padrões que a sociedade impõe, à aceitação ao próprio corpo e à conscientização de que corpos dissidentes são desejáveis e desejantes.",
+      "Estar numa Positiv exige um autoquestionamento se nos sentimos abertes e prontes para estar em um ambiente E interagir (sexualmente ou não) com uma pluralidade de corpos, raças, cores, etnias.",
+      "Quase todos nós moldamos nosso interesse desde pequenes com uma enxurrada de regras sociais que limitam o que é belo e desejável. É importante que cada participante tenha consciência disso e busque expandir seus conceitos.",
     ]
 
-    // Click each correct answer if visible
+    // Click each correct answer's label text if present on this event's quiz
     for (const answer of correctAnswers) {
-      const element = this.page.locator(`text="${answer}"`)
+      const element = this.page.getByText(answer, { exact: true })
       if (await element.isVisible({ timeout: 500 }).catch(() => false)) {
         await element.click()
-      }
-    }
-
-    // Also handle any remaining radio questions by clicking the last option
-    const uncheckedRadios = await this.page
-      .locator('div[data-testid="question"] input[type="radio"]:not(:checked)')
-      .all()
-    const processedGroups = new Set<string>()
-
-    for (const radio of uncheckedRadios) {
-      const name = await radio.getAttribute("name")
-      if (name && !processedGroups.has(name)) {
-        processedGroups.add(name)
-        const lastInGroup = this.page
-          .locator(`input[type="radio"][name="${name}"]`)
-          .last()
-        await lastInGroup.click()
       }
     }
 
