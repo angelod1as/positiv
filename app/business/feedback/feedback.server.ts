@@ -40,11 +40,15 @@ export async function submitFeedback(
 
 export const updateFeedbackStatus = applySchema(updateFeedbackStatusSchema)(
   async ({ id, status }) => {
-    await kyselyDb
+    const result = await kyselyDb
       .updateTable("feedbacks")
       .set({ status })
       .where("id", "=", id)
-      .execute()
+      .executeTakeFirst()
+
+    if (result.numUpdatedRows === 0n) {
+      throw new Error("Feedback não encontrado")
+    }
   },
 )
 
