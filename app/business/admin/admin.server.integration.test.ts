@@ -1406,6 +1406,365 @@ describe("Computed fields: last_attended_events_count - Integration Tests", () =
       expect(result.data.last_attended_events_count).toBe(3)
     }
   })
+
+  it("should stop counting at a completed rodizio skip (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-rodizio-reset@example.com",
+      full_name: "Test Last 6 Rodizio Reset"
+    })
+
+    // 6 completed events, oldest first. They sit in the last few days on
+    // purpose: the pool of 6 is global, so older events would let seeded
+    // events take a slot
+    const completedEvents = []
+    for (let i = 0; i < 6; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Rodizio Reset Completed ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      completedEvents.push(event)
+    }
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Rodizio Reset Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    // Attended events 1, 2, 4 and 6; rodizio skip on event 3
+    for (const idx of [0, 1, 3, 5]) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: completedEvents[idx].id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvents[2].id,
+      application_status: "finalised",
+      attendance_status: "skipped",
+      was_selected_for_rotation: true
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      // Counting restarts after event 3: only events 4 and 6 count
+      expect(participant?.last_attended_events_count).toBe(2)
+    }
+  })
+
+  it("should use the most recent rodizio skip as the reset point (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-rodizio-latest@example.com",
+      full_name: "Test Last 6 Rodizio Latest"
+    })
+
+    const completedEvents = []
+    for (let i = 0; i < 6; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Rodizio Latest Completed ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      completedEvents.push(event)
+    }
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Rodizio Latest Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    // Attended events 1, 3, 5 and 6; rodizio skips on events 2 and 4
+    for (const idx of [0, 2, 4, 5]) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: completedEvents[idx].id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    for (const idx of [1, 3]) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: completedEvents[idx].id,
+        application_status: "finalised",
+        attendance_status: "skipped",
+        was_selected_for_rotation: true
+      })
+    }
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      // Latest skip is event 4: only events 5 and 6 count
+      expect(participant?.last_attended_events_count).toBe(2)
+    }
+  })
+
+  it("should not reset while the rodizio event is not Completed (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-rodizio-pending-event@example.com",
+      full_name: "Test Last 6 Rodizio Pending Event"
+    })
+
+    for (let i = 0; i < 3; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Rodizio Pending Completed ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (3 - i) * 24 * 60 * 60 * 1000).toISOString()
+      })
+
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: event.id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    // The rodizio happens on the event being looked at, which has not happened yet
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Rodizio Pending Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "finalised",
+      attendance_status: "skipped",
+      was_selected_for_rotation: true
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant?.last_attended_events_count).toBe(3)
+    }
+  })
+
+  it("should not reset when the person was selected for rotation but attended (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-rodizio-attended@example.com",
+      full_name: "Test Last 6 Rodizio Attended"
+    })
+
+    const completedEvents = []
+    for (let i = 0; i < 3; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Rodizio Attended Completed ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (3 - i) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      completedEvents.push(event)
+    }
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Rodizio Attended Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    for (const [idx, event] of completedEvents.entries()) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: event.id,
+        application_status: "finalised",
+        attendance_status: "attended",
+        was_selected_for_rotation: idx === 1
+      })
+    }
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant?.last_attended_events_count).toBe(3)
+    }
+  })
+
+  it("should ignore a rodizio older than the last 6 completed events (event-scoped)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-rodizio-old@example.com",
+      full_name: "Test Last 6 Rodizio Old"
+    })
+
+    const completedEvents = []
+    for (let i = 0; i < 8; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Rodizio Old Completed ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (8 - i) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      completedEvents.push(event)
+    }
+
+    const currentEvent = await createTestEvent(tracker, kysely, {
+      title: "Rodizio Old Current Event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    })
+
+    // Rodizio on event 1, which sits outside the last 6 (pool is events 3 to 8)
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvents[0].id,
+      application_status: "finalised",
+      attendance_status: "skipped",
+      was_selected_for_rotation: true
+    })
+
+    for (const idx of [2, 3, 4, 5, 6, 7]) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: completedEvents[idx].id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: currentEvent.id,
+      application_status: "pending",
+      attendance_status: "pending"
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: currentEvent.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const participant = result.data.find(p => p.profile_id === profile.id)
+      expect(participant?.last_attended_events_count).toBe(6)
+    }
+  })
+
+  it("should stop counting at a completed rodizio skip in global scope (getAllProfiles)", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-rodizio-global@example.com",
+      full_name: "Test Last 6 Rodizio Global"
+    })
+
+    const completedEvents = []
+    for (let i = 0; i < 6; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Rodizio Global Completed ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      completedEvents.push(event)
+    }
+
+    // Attended events 1, 2, 5 and 6; rodizio skip on event 4
+    for (const idx of [0, 1, 4, 5]) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: completedEvents[idx].id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvents[3].id,
+      application_status: "finalised",
+      attendance_status: "skipped",
+      was_selected_for_rotation: true
+    })
+
+    const result = await getAllProfiles()
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      const foundProfile = result.data.find(p => p.id === profile.id)
+      expect(foundProfile?.last_attended_events_count).toBe(2)
+    }
+  })
+
+  it("should stop counting at a completed rodizio skip in getProfileById", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-last6-rodizio-by-id@example.com",
+      full_name: "Test Last 6 Rodizio By Id"
+    })
+
+    const completedEvents = []
+    for (let i = 0; i < 6; i++) {
+      const event = await createTestEvent(tracker, kysely, {
+        title: `Rodizio ById Completed ${i + 1}`,
+        event_status: "Completed",
+        time_event_start: new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000).toISOString()
+      })
+      completedEvents.push(event)
+    }
+
+    for (const idx of [0, 1, 4, 5]) {
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: completedEvents[idx].id,
+        application_status: "finalised",
+        attendance_status: "attended"
+      })
+    }
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: completedEvents[3].id,
+      application_status: "finalised",
+      attendance_status: "skipped",
+      was_selected_for_rotation: true
+    })
+
+    const result = await getProfileById({ profileId: profile.id })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(result.data.last_attended_events_count).toBe(2)
+    }
+  })
 })
 
 describe("getProfilesWithExtraDataById - Rejected Participants - Integration Tests", () => {

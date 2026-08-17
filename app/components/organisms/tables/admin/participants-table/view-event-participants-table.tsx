@@ -275,7 +275,8 @@ export const AdminViewEventParticipantsTable: FC<
       {
         field: "last_attended_events_count",
         headerName: "Últimos eventos (6 últimos)",
-        headerTooltip: "Presenças nos últimos 6 eventos realizados",
+        headerTooltip:
+          "Presenças nos últimos 6 eventos realizados. Zera quando a pessoa é rodiziada, e recomeça a partir daí",
         sortable: true,
         comparator: eventCountComparator,
         ...compactCell,
