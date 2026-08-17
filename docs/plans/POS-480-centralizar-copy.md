@@ -615,6 +615,14 @@ The guard is a config block in `eslint.config.js` that names those directories
 explicitly. When you finish migrating a directory, add its glob to that block's
 `files` list.
 
+**The guard only sees text between JSX tags.** It runs with
+`ignoreProps: true`, and has to — `className` sits on nearly every element.
+A hard-coded string *prop* therefore passes lint silently:
+`subtitle="Um subtitulo solto"` is as green as `subtitle={copy.subtitle}`.
+So a green guard means no literal text is left, not that the directory is
+done. When you migrate one, check the props by eye — `placeholder`, `alt`,
+`aria-label`, `title`, and any prop the component renders as text.
+
 The block only exists once the first directory is migrated — ESLint rejects a
 config block whose `files` array is empty, so there is nothing to add until then.
 ````
@@ -871,6 +879,8 @@ Insert it directly after block 4 (React Specific Configuration), so the base Rea
 ```
 
 `noStrings: true` catches both bare text and `{"text in braces"}`. `ignoreProps: true` leaves `className` and friends alone — prop copy is covered by the README, not by this rule. Test files are excluded because they legitimately render literal text to assert on it.
+
+**This is the guard's blind spot, and it applies to every remaining task.** Because props are ignored, a hard-coded string prop lints clean: replacing `subtitle={nextEvents.subtitle}` with `subtitle="Um subtitulo solto"` in `next-events.tsx` exits 0 (verified). A green guard proves no literal text is left between tags — it does **not** prove the directory is fully migrated. Every task from here on must read the string props by eye: `placeholder`, `alt`, `aria-label`, `title`, and any prop a component renders as text.
 
 - [ ] **Step 3: Run lint and the full unit suite**
 

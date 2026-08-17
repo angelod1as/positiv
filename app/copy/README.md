@@ -292,5 +292,13 @@ The guard is a config block in `eslint.config.js` that names those directories
 explicitly. When you finish migrating a directory, add its glob to that block's
 `files` list.
 
+**The guard only sees text between JSX tags.** It runs with
+`ignoreProps: true`, and has to — `className` sits on nearly every element.
+A hard-coded string *prop* therefore passes lint silently:
+`subtitle="Um subtitulo solto"` is as green as `subtitle={copy.subtitle}`.
+So a green guard means no literal text is left, not that the directory is
+done. When you migrate one, check the props by eye — `placeholder`, `alt`,
+`aria-label`, `title`, and any prop the component renders as text.
+
 The block only exists once the first directory is migrated — ESLint rejects a
 config block whose `files` array is empty, so there is nothing to add until then.
