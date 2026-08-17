@@ -333,15 +333,24 @@ file in this folder — never a component.
 2. Change the text between the quotes or backticks.
 3. That is the whole change. No component needs touching.
 
-Not a developer? You can do this straight from GitHub, no setup. Not sure which
-file? Use the search box at the top of the repository page, paste a few words of
-the sentence exactly as it appears on the site, and GitHub will show you the
-file. Open it on github.com, press the pencil icon, change the text, press
-"Commit changes…", make sure "Create a new branch and start a pull request" is
-selected, then press "Propose changes". The edit URL follows the pattern
-`github.com/angelod1as/positiv/edit/main/app/copy/FILENAME.ts`. Someone on the
-team reviews and merges it; the change goes live on the next deploy. Nothing you
-do here can break the site — until it is merged, nothing changes.
+### Not a developer?
+
+You can do all of this on github.com, with no setup at all.
+
+1. **Find the file.** Use the search box at the top of the repository page and
+   paste a few words of the sentence exactly as they appear on the site.
+2. **Open the file and press the pencil icon** to edit it in the browser.
+3. **Change the text** between the quotes or backticks, and leave everything
+   else alone.
+4. **Press "Commit changes…"**, make sure *"Create a new branch and start a pull
+   request"* is selected, then press **"Propose changes"**.
+
+Someone on the team reviews and merges it, and the change goes live on the next
+deploy. Nothing you do here can break the site — until your change is merged,
+the site does not change at all.
+
+The edit URL follows the pattern
+`github.com/angelod1as/positiv/edit/main/app/copy/FILENAME.ts`.
 
 Everything below is for developers.
 
@@ -487,36 +496,16 @@ asterisks:
 - `aria-label`
 - the `title` HTML attribute
 
-Write those as plain text. TypeScript cannot catch this one — just keep them
-plain. These still live in the copy module like everything else — the only
-difference is that the string must be plain, with no Markdown in it.
+These still live in the copy module like everything else — the only difference is
+that the string must be plain text, with no Markdown in it. TypeScript cannot
+catch this one, so it is on you to keep them plain.
 
 ## Long prose pages
 
 Pages that are mostly text — the rules, the code of conduct, the terms — follow
 the same pattern. They are an array of sections, each a heading plus a Markdown
-body:
-
-```ts
-export const rulesCopy = {
-  title: "Regras e filosofias",
-  sections: [
-    {
-      heading: "🚨 Nenhuma pessoa é obrigada a nada 🚨",
-      body: `“Você não é todo mundo”, já dizia minha mãe.
-
-Se você não quiser tomar parte em alguma coisa, **simplesmente não o faça**.`,
-    },
-  ],
-}
-```
-
-The component maps over `sections`. Adding a section means adding an entry here
-and nothing else.
-
-Give the sections array an explicit type, so a section missing its `body` is
-still a compile error, then wrap it in a keyed object the same way as every
-other copy module — ending in `as const`:
+body. Give the array an explicit type, so a section missing its `body` is a
+compile error, then wrap it in a keyed object like every other copy module:
 
 ```ts
 type RulesSection = {
@@ -524,10 +513,20 @@ type RulesSection = {
   body: string
 }
 
-const sections: RulesSection[] = [ /* ... */ ]
+const sections: RulesSection[] = [
+  {
+    heading: "🚨 Nenhuma pessoa é obrigada a nada 🚨",
+    body: `“Você não é todo mundo”, já dizia minha mãe.
+
+Se você não quiser tomar parte em alguma coisa, **simplesmente não o faça**.`,
+  },
+]
 
 export const rulesCopy = { title: "Regras e filosofias", sections } as const
 ```
+
+The component maps over `rulesCopy.sections`. Adding a section means adding an
+entry here and nothing else.
 
 ## Rules
 
