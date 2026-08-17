@@ -120,6 +120,8 @@
       "mcp__supabase-local__list_tables",
       "mcp__supabase-production__list_migrations",
 
+      "Read(./.env.schema)",
+
       "WebSearch",
       "WebFetch(domain:coolify.io)",
       "WebFetch(domain:deepwiki.com)",
@@ -140,7 +142,13 @@
       "Bash(*LISTMONK_ADMIN_PASSWORD=*)",
 
       "Read(./.env)",
-      "Read(./.env.*)",
+      "Read(./.env.bak)",
+      "Read(./.env.local)",
+      "Read(./.env.*.local)",
+      "Read(./.env.development)",
+      "Read(./.env.production)",
+      "Read(./.env.staging)",
+      "Read(./.env.test)",
       "Read(./ops/newsletter/.env)",
       "Read(./ops/newsletter/.env.*)",
 
