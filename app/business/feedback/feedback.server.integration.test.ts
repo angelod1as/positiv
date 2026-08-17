@@ -222,6 +222,16 @@ describe("Feedback Server - Integration Tests", () => {
       expect(updated?.status).toBe("resolved")
     })
 
+    it("should fail when the feedback does not exist", async () => {
+      const result = await updateFeedbackStatus({
+        intent: "update-feedback-status",
+        id: "6f1d5b3a-0000-4000-8000-000000000000",
+        status: "resolved",
+      })
+
+      expect(result.success).toBe(false)
+    })
+
     it("should reject an unknown status", async () => {
       const feedback = await kysely
         .insertInto("feedbacks")
