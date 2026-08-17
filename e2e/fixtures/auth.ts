@@ -179,7 +179,7 @@ export async function performUILogin(
       ])
 
       await expect(
-        page.getByRole("heading", { name: "Sua conta está pronta! 🎉" }),
+        page.getByRole("heading", { name: /Sua conta está pronta/ }),
       ).toBeVisible()
 
       await Promise.all([
