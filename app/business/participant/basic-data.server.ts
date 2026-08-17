@@ -112,6 +112,7 @@ export const extraBasicData = async ({
     throw new Error("Erro ao buscar usuário")
   }
 
+  // Read before the update below sets basic_data_filled: true
   const isFirstCompletion = !currentProfile.basic_data_filled
 
   const extraDataValidation = ExtraBasicDataSchema.safeParse(formData)
