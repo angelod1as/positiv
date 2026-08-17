@@ -6,6 +6,7 @@ vi.mock("varlock/env", () => ({ ENV }))
 const { logger } = vi.hoisted(() => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }))
+// Recorded so a missing-credential assertion can read what was logged
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
 const feedback = {
@@ -30,6 +31,8 @@ describe("notifyNewFeedback", () => {
     ENV.TELEGRAM_CHAT_ID = "chat-id"
     ENV.APP_URL = "https://positiv.test"
     logger.error.mockClear()
+    logger.info.mockClear()
+    logger.warn.mockClear()
   })
 
   afterEach(() => {
@@ -52,6 +55,32 @@ describe("notifyNewFeedback", () => {
     expect(message.text).toContain("João Silva")
     expect(message.text).toContain("A festa foi ótima")
     expect(message.text).toContain("https://positiv.test/admin/feedbacks")
+  })
+
+  it("should log that the notification was sent", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal("fetch", fetchMock)
+
+    const { notifyNewFeedback } = await import("./notify-new-feedback.server")
+    await notifyNewFeedback(feedback)
+
+    expect(logger.info).toHaveBeenCalledWith(
+      "New feedback notified on Telegram",
+    )
+  })
+
+  it("should say which credential is missing without logging its value", async () => {
+    vi.stubGlobal("fetch", vi.fn())
+    ENV.TELEGRAM_CHAT_ID = undefined
+
+    const { notifyNewFeedback } = await import("./notify-new-feedback.server")
+    await notifyNewFeedback(feedback)
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      "Skipped the new feedback Telegram notification: missing configuration",
+      { alertsEnabled: true, hasBotToken: true, hasChatId: false },
+    )
+    expect(JSON.stringify(logger.warn.mock.calls)).not.toContain("bot-token")
   })
 
   it("should describe a feedback sent without a name as anonymous", async () => {

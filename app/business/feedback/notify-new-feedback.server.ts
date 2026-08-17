@@ -48,7 +48,17 @@ export async function notifyNewFeedback(
     TELEGRAM_CHAT_ID: chatId,
   } = ENV
 
-  if (!alertsEnabled || !botToken || !chatId) return
+  if (!alertsEnabled || !botToken || !chatId) {
+    logger.warn(
+      "Skipped the new feedback Telegram notification: missing configuration",
+      {
+        alertsEnabled: !!alertsEnabled,
+        hasBotToken: !!botToken,
+        hasChatId: !!chatId,
+      },
+    )
+    return
+  }
 
   try {
     const response = await fetch(
@@ -68,7 +78,10 @@ export async function notifyNewFeedback(
       logger.error("Telegram rejected the new feedback notification", {
         status: response.status,
       })
+      return
     }
+
+    logger.info("New feedback notified on Telegram")
   } catch (error) {
     logger.error("Failed to notify a new feedback on Telegram", { error })
   }
