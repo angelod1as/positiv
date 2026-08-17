@@ -1,3 +1,8 @@
+type AboutCard = {
+  title: string
+  body: string
+}
+
 export const homepageCopy = {
   about: {
     title: "Como assim?",
@@ -24,6 +29,6 @@ Criamos um espaço de **liberdade** e **exploração**, ideal para quem foge do 
 
 E, claro, nosso evento é para **maiores de 18 anos**.`,
       },
-    },
+    } as const satisfies Record<string, AboutCard>,
   },
 } as const
