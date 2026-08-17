@@ -40,7 +40,7 @@ describe("getEmailTransport", () => {
     getEmailTransport()
 
     expect(createTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ host: "localhost", port: 1025 }),
+      expect.objectContaining({ host: "localhost", port: 54325 }),
     )
   })
 
@@ -56,7 +56,7 @@ describe("getEmailTransport", () => {
     getEmailTransport()
 
     expect(createTransport).toHaveBeenCalledWith(
-      expect.objectContaining({ host: "localhost", port: 1025 }),
+      expect.objectContaining({ host: "localhost", port: 54325 }),
     )
   })
 
