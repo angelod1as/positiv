@@ -133,6 +133,14 @@ export function useFormRuntime({
     firstTryCorrect,
   ])
 
+  // Declared after the write above so that a commit turning isDone true leaves
+  // nothing behind: the write bails on isDone, this one removes the record.
+  useEffect(() => {
+    if (!storageKey || !isDone) return
+
+    clearRuntimeState(storageKey)
+  }, [storageKey, isDone])
+
   const currentQuestions = useMemo(
     () => questionsForStep(currentStep, questionsById),
     [currentStep, questionsById],

@@ -137,6 +137,21 @@ describe("useFormRuntime persistence", () => {
     )
   })
 
+  it("clears the record once the flow finishes", async () => {
+    const { result } = mount()
+    await waitFor(() => expect(result.current.isRestored).toBe(true))
+
+    for (const id of ["a", "b", "c"]) {
+      await act(async () => {
+        result.current.answer(id, `resposta ${id}`)
+        await result.current.advance()
+      })
+    }
+
+    expect(result.current.isDone).toBe(true)
+    await waitFor(() => expect(sessionStorage.getItem(key)).toBeNull())
+  })
+
   it("starts over when the persisted step is gone from the flow", async () => {
     writeRuntimeState(key, {
       answers: { a: "resposta a" },
