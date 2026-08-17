@@ -246,9 +246,9 @@ const BLOCK_COMPONENTS: Components = {
     href?.startsWith("/") ? (
       <Link to={href}>{children}</Link>
     ) : (
-      <a href={href} target="_blank" rel="noreferrer">
+      <Link to={href ?? ""} target="_blank" rel="noreferrer">
         {children}
-      </a>
+      </Link>
     ),
 }
 
@@ -271,8 +271,16 @@ export const Copy = ({ children, inline = false }: CopyProps): ReactNode => (
 
 The `a` override matters: without it `react-markdown` emits a bare anchor, and an
 internal link in copy would trigger a **full page reload** instead of client-side
-navigation. Routing internal hrefs through the existing `Link` atom also gives
-them the site's link styling for free.
+navigation. Both branches go through the `Link` atom because `app/app.css` has no
+`a` rule at all — a bare anchor renders with no underline, no colour, and no hover
+affordance, which is a WCAG 1.4.1 failure. The external branch differs only by
+`target` and `rel`. This matches how `app/components/organisms/footer/footer.tsx`
+and `app/pages/public/code-of-conduct.tsx` already handle external URLs.
+
+Do not add `noopener` alongside `noreferrer`. The HTML Standard's *get an
+element's noopener* algorithm already returns true for `noreferrer` alone, and
+`target="_blank"` has implied `noopener` since Chrome 88 / Firefox 79 /
+Safari 12.1.
 
 Two details worth stating: `ul` is overridden because `app/app.css` styles `ol`
 globally (line 71) but not `ul` — which is why components currently spell out
@@ -447,6 +455,11 @@ so no paragraph is added:
   <Copy inline>{confirmCopy.cancelEvent}</Copy>
 </Button>
 ```
+
+**`inline` only removes the paragraph.** A list or a `####` heading inside an
+inline string still renders as a real list or heading, which is invalid markup
+inside a button or a label. Treat inline strings as single-paragraph text: bold,
+italic, and links are fine; lists and headings are not.
 
 ### Strings that must NOT contain Markdown
 
