@@ -112,8 +112,6 @@ pnpm test:e2e:ui  # Run E2E tests with UI
 pnpm db:types --local  # Generate TypeScript types from local Supabase instance
 pnpm db:types          # For production Supabase (rarely used)
 
-# Email Testing
-pnpm email:test   # Start Mailhog for local email testing
 ```
 
 ## Database Migration Rules
@@ -238,7 +236,8 @@ pnpm email:test   # Start Mailhog for local email testing
 4. **Email System**:
    - Templates in `/app/components/email/templates`
    - Sending logic in `/app/business/email/`
-   - Local testing with Mailhog
+   - Local testing with Mailpit, bundled with local Supabase: SMTP on
+     port 54325, web UI at <http://127.0.0.1:54324>
    - **Automated Notifications**:
      - Database triggers can send notifications via `pg_net.http_post` to internal API endpoints
      - Example: Registration limit emails sent when event reaches 90 participants

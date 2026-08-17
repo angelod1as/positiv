@@ -32,7 +32,7 @@ export function getEmailTransport() {
 
   return nodemailer.createTransport({
     host: "localhost",
-    port: 1025,
+    port: 54325,
     ignoreTLS: true,
   })
 }

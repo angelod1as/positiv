@@ -20,12 +20,14 @@ We needed a reliable, cost-effective email solution that works in both developme
 We use **Nodemailer** as the email transport abstraction with:
 
 - **AWS SES** in production (cost-effective, high deliverability)
-- **Mailhog** in local development (captures emails without sending)
+- **Mailpit** in local development (captures emails without sending), bundled
+  with local Supabase on SMTP port 54325. Superseded Mailhog on 2026-08-16,
+  once Mailhog went unmaintained and left homebrew-core.
 - **HTML templates** for email content
 
 ```typescript
 // Email transport is environment-aware
-const transport = getEmailTransport() // Returns SES or Mailhog based on env
+const transport = getEmailTransport() // Returns SES or Mailpit based on env
 
 await sendEmail({
   to: user.email,
@@ -42,7 +44,7 @@ await sendEmail({
 - Cost-effective: SES pricing is very low (~$0.10/1000 emails)
 - High deliverability with proper SES configuration
 - Same API for dev/prod (just different transports)
-- Mailhog catches all local emails for easy testing
+- Mailpit catches all local emails for easy testing
 - No vendor lock-in to email marketing platforms
 - Simple HTML templates - no complex tooling needed
 
@@ -81,5 +83,5 @@ await sendEmail({
 
 - [Nodemailer Documentation](https://nodemailer.com/)
 - [AWS SES Developer Guide](https://docs.aws.amazon.com/ses/)
-- [Mailhog](https://github.com/mailhog/MailHog) (local development)
+- [Mailpit](https://mailpit.axllent.org/) (local development)
 - Related: [ADR: Use Listmonk for Newsletter Management](./20250201-use-listmonk-for-newsletters.md)

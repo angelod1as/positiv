@@ -62,12 +62,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-schema, unit-test]
     timeout-minutes: 60
-    services:
-      mailhog:
-        image: mailhog/mailhog
-        ports:
-          - 1025:1025
-          - 8025:8025
 
     steps:
       - uses: actions/checkout@v4
