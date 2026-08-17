@@ -41,8 +41,9 @@ describe("HomePageNextEvents", () => {
     renderWithRouter(<HomePageNextEvents events={[baseEvent]} />)
 
     expect(
-      screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpen)),
-    ).toBeInTheDocument()
+      screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpen))
+        .tagName,
+    ).toBe("STRONG")
   })
 
   it("should show scheduled message when event is not open", () => {
@@ -50,8 +51,9 @@ describe("HomePageNextEvents", () => {
     renderWithRouter(<HomePageNextEvents events={[scheduledEvent]} />)
 
     expect(
-      screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpensOn)),
-    ).toBeInTheDocument()
+      screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpensOn))
+        .tagName,
+    ).toBe("STRONG")
   })
 
   it("should not badge a legacy BDSM event", () => {
