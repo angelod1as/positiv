@@ -146,6 +146,29 @@ Any other link (an `https://` address) opens in a new tab.
 tags, tables, strikethrough, and bare URLs written without brackets. Those show
 up as literal characters on the page. Write a link as `[texto](url)` and it works.
 
+### Two traps to know about
+
+**Indentation turns a paragraph into a code block.** These strings usually sit
+several levels deep in a nested object, so flush-left text looks like a
+mistake — it is not. Keep every continuation line flush left at column 0,
+however deep the string sits:
+
+```ts
+body: `A diferença? Você pode ficar **pelade** na boa.
+    Isso vira um bloco de código.`,
+```
+
+That indented second line renders as `<pre><code>Isso vira um bloco de
+código.</code></pre>`, asterisks and all, instead of plain text. Nothing in
+`pnpm lint` catches this — Prettier does not reformat inside a template
+literal, and `jsx-no-literals` cannot see inside a string.
+
+**A line can accidentally look like a list or heading.** A line that begins
+with `1. `, `- `, or `#` is Markdown syntax even when that was not the intent
+— `"1. lugar: Casa X"` silently becomes an ordered list. (Bare URLs,
+`#hashtag` mid-line, and intraword underscores like `relatorio_final_v2` are
+safe.)
+
 ### `inline` mode
 
 By default `Copy` wraps text in a paragraph. When the text sits somewhere that
@@ -205,6 +228,40 @@ export const rulesCopy = { title: "Regras e filosofias", sections } as const
 The component maps over `rulesCopy.sections`. Adding a section means adding an
 entry here and nothing else.
 
+## A fixed set paired with something in the component
+
+Sometimes a section is a small, fixed number of items, each of which needs to
+pair with something the copy file has no business knowing about — an icon, an
+image import. The homepage's "about" cards are the example: three fixed
+cards, keyed, each matched to an icon component in `about.tsx`.
+
+Keep the copy a plain keyed object — with `as const satisfies` shape-checking,
+as described under Rules below — and iterate it in the component with
+`Object.entries`, keying an adjacent lookup object with the same keys:
+
+```tsx
+const ICONS: Record<keyof typeof homepageCopy.about.cards, ReactElement> = {
+  notAMess: <UsersIcon />,
+  affection: <HeartIcon />,
+  forWhom: <SparklesIcon />,
+}
+
+{Object.entries(homepageCopy.about.cards).map(([key, card]) => (
+  <AboutCard key={key} icon={ICONS[key as keyof typeof ICONS]} title={card.title}>
+    <Copy>{card.body}</Copy>
+  </AboutCard>
+))}
+```
+
+Type `ICONS` as a `Record` over the copy object's own keys, not as an object
+literal TypeScript infers on its own — that way, adding a card without a
+matching icon is a compile error, not a runtime crash.
+
+This **iterated keyed object** pattern is different from the array form
+above: reach for it when the set is fixed and every entry pairs with
+something in the component (an icon, an image). Reach for the array form
+instead when the number of items varies (testimonials, events).
+
 ## Rules
 
 - Every file in this folder is `.ts`. If you need `.tsx`, you are putting JSX in
@@ -213,9 +270,11 @@ entry here and nothing else.
   `sairButton` or `sair`.
 - End every **keyed** copy object with `as const`. It makes the values literal
   and readonly, so copy cannot be reassigned at runtime and keys narrow properly
-  at call sites. Do not add a `satisfies` clause inside one — `as const` only
-  applies to a plain literal and will stop compiling. Arrays that get iterated
-  take an explicit type instead, as shown above.
+  at call sites. To also enforce a shape — so an entry missing a field is a
+  compile error naming that entry — add `satisfies YourType` **after**
+  `as const`: `as const satisfies YourType` is valid and keeps the literal
+  types. The reverse order, `satisfies YourType as const`, does not compile.
+  Arrays that get iterated take an explicit type instead, as shown above.
 - No `index.ts` barrel file. Import from the module directly.
 - A string used in more than one area goes in `shared.ts`. A string used in one
   area stays in that area's module, even if it looks generic — move it to
