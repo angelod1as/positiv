@@ -22,18 +22,9 @@ Useful commands:
 - `pnpm test:e2e` — Playwright, runs against a production build
 - `pnpm lint` — ESLint + type generation + tsc
 
-The locally installed pnpm (11.0.5) aborts every script with `ERR_PNPM_IGNORED_BUILDS` before
-it starts, because its pre-run dependency check runs `pnpm install` and fails. Prefix every
-command with the flag that skips that check:
-
-```bash
-pnpm --config.verify-deps-before-run=false test:unit <path>
-```
-
-Do not run `pnpm approve-builds` and do not commit changes to `pnpm-workspace.yaml`: pnpm
-writes an `allowBuilds:` block full of literal `set this to true or false` placeholders that
-break it further. If that file shows up dirty, restore it with
-`git checkout pnpm-workspace.yaml`.
+Never run `pnpm approve-builds` and never commit changes to `pnpm-workspace.yaml`: pnpm writes
+an `allowBuilds:` block full of literal `set this to true or false` placeholders that break it
+further. If that file shows up dirty, restore it with `git checkout pnpm-workspace.yaml`.
 
 Both plan documents (`POS-479-*-design.md` and `POS-479-*-plan.md`) must be deleted before opening the PR.
 
