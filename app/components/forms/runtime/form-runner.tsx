@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react"
+import { Skeleton } from "~/components/ui/skeleton"
 import type { Flow } from "./flow.types"
 import type {
   Presentation,
@@ -23,6 +24,11 @@ type FormRunnerProps = {
   data?: Record<string, unknown>
   continueLabel?: string
   onDone?: (answers: Answers) => void
+  /**
+   * Keeps the run alive across a refresh, under `form-runtime:<formId>:<scopeId>`.
+   * Omit it for a form with nothing to lose.
+   */
+  persistence?: { formId: string; scopeId: string }
 }
 
 export function FormRunner({
@@ -33,8 +39,9 @@ export function FormRunner({
   data,
   continueLabel = "Continuar",
   onDone,
+  persistence,
 }: FormRunnerProps) {
-  const runtime = useFormRuntime({ questions, flow, data })
+  const runtime = useFormRuntime({ questions, flow, data, persistence })
   const { answers, isDone } = runtime
 
   const reportedRef = useRef(false)
@@ -44,6 +51,19 @@ export function FormRunner({
     reportedRef.current = true
     onDone?.(answers)
   }, [isDone, answers, onDone])
+
+  // The restore reads sessionStorage, which the server does not have, so it
+  // runs after mount. Until it lands there is nothing truthful to draw, and a
+  // placeholder of roughly the right height keeps the card from jumping.
+  if (!runtime.isRestored) {
+    return (
+      <div className="flex flex-col gap-8" aria-busy="true">
+        <Skeleton className="h-8 w-3/4" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+    )
+  }
 
   if (isDone) return null
 
