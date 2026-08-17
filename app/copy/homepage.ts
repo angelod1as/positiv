@@ -3,6 +3,13 @@ type AboutCard = {
   body: string
 }
 
+type Founder = {
+  name: string
+  pronouns: string
+  instagram: string
+  bio: string
+}
+
 type Testimonial = {
   author: string
   quote: string
@@ -82,5 +89,24 @@ E, claro, nosso evento é para **maiores de 18 anos**.`,
     subtitle:
       "Experiências reais de algumas pessoas que participaram dos nossos eventos.",
     quotes: testimonialQuotes,
+  },
+  founders: {
+    title: "Quem faz a Positiv?",
+    people: {
+      julia: {
+        name: "Julia Fernandez",
+        pronouns: "todos os pronomes",
+        instagram: "ju.z.fernandez",
+        bio: `Safofa de marca maior, gosta de todas as identidades de gênero e orientações sexuais, mas se identifica como demissexual. Vive a não monogamia desde 2009 e a cada dia gosta mais da sua versão atual, conectada com a Não Monogamia Política.
+
+Para ela, os eventos são, ao mesmo tempo, sua Pasárgada e a injeção de fé humanidade que a faz querer continuar a criar espaços seguros, de acolhimento e de muito amor.`,
+      },
+      angelo: {
+        name: "Angelo Dias",
+        pronouns: "ele/dele",
+        instagram: "oicronofobico",
+        bio: `Programador, designer e escritor, Angelo vive ativamente a não-monogamia e anarquia relacional desde 2017. Sonha em colocar _organizador de suruba_ no Linkedin, é um nerdola que acha Star Trek melhor que Star Wars, e encontrou nesse tipo de evento um modo seguro de explorar sua sexualidade — e se juntou à Julia para provê-lo para outras pessoas.`,
+      },
+    } as const satisfies Record<string, Founder>,
   },
 } as const
