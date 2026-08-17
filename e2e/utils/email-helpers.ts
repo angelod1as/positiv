@@ -1,57 +1,62 @@
 import { expect } from '@playwright/test'
 
-const MAILHOG_API_BASE = 'http://0.0.0.0:8025/api'
+const MAILPIT_API_BASE = 'http://127.0.0.1:54324/api'
 
-interface MailhogMessage {
+interface MailpitAddress {
+  Name: string
+  Address: string
+}
+
+interface MailpitSummary {
   ID: string
-  From: {
-    Mailbox: string
-    Domain: string
-  }
-  To: Array<{
-    Mailbox: string
-    Domain: string
-  }>
-  Content: {
-    Headers: {
-      Subject: string[]
-      [key: string]: string[]
-    }
-    Body: string
-  }
+  From: MailpitAddress
+  To: MailpitAddress[]
+  Subject: string
+  Snippet: string
   Created: string
 }
 
-interface MailhogResponse {
+interface MailpitMessage extends MailpitSummary {
+  Text: string
+  HTML: string
+}
+
+interface MailpitResponse {
   total: number
   count: number
   start: number
-  items: MailhogMessage[]
+  messages: MailpitSummary[]
 }
 
 export async function clearAllEmails(): Promise<void> {
-  try {
-    const response = await fetch(`${MAILHOG_API_BASE}/v1/messages`, {
-      method: 'DELETE'
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Failed to clear emails: ${response.statusText}`)
-    }
-  } catch (error) {
-    console.warn('Failed to clear Mailhog emails:', error)
+  const response = await fetch(`${MAILPIT_API_BASE}/v1/messages`, {
+    method: 'DELETE'
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to clear emails: ${response.statusText}`)
   }
 }
 
-export async function getAllEmails(): Promise<MailhogMessage[]> {
-  const response = await fetch(`${MAILHOG_API_BASE}/v2/messages`)
-  
+export async function getAllEmails(): Promise<MailpitSummary[]> {
+  const response = await fetch(`${MAILPIT_API_BASE}/v1/messages`)
+
   if (!response.ok) {
     throw new Error(`Failed to fetch emails: ${response.statusText}`)
   }
-  
-  const data: MailhogResponse = await response.json()
-  return data.items || []
+
+  const data: MailpitResponse = await response.json()
+  return data.messages || []
+}
+
+export async function getEmail(id: string): Promise<MailpitMessage> {
+  const response = await fetch(`${MAILPIT_API_BASE}/v1/message/${id}`)
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch email ${id}: ${response.statusText}`)
+  }
+
+  return response.json()
 }
 
 export async function waitForEmail(options: {
@@ -59,81 +64,82 @@ export async function waitForEmail(options: {
   subject?: string
   timeout?: number
   containing?: string
-}): Promise<MailhogMessage> {
+}): Promise<MailpitMessage> {
   const { to, subject, timeout = 30000, containing } = options
   const startTime = Date.now()
-  
+
   while (Date.now() - startTime < timeout) {
     const emails = await getAllEmails()
-    
-    const matchingEmail = emails.find(email => {
+
+    const candidates = emails.filter(email => {
       // Check recipient
       if (to) {
-        const hasRecipient = email.To.some(recipient => 
-          `${recipient.Mailbox}@${recipient.Domain}`.toLowerCase() === to.toLowerCase()
+        const hasRecipient = email.To.some(recipient =>
+          recipient.Address.toLowerCase() === to.toLowerCase()
         )
         if (!hasRecipient) return false
       }
-      
+
       // Check subject
       if (subject) {
-        const emailSubject = email.Content.Headers.Subject?.[0] || ''
-        if (!emailSubject.includes(subject)) return false
+        if (!email.Subject.includes(subject)) return false
       }
-      
-      // Check body content
-      if (containing) {
-        if (!email.Content.Body.includes(containing)) return false
-      }
-      
+
       return true
     })
-    
-    if (matchingEmail) {
-      return matchingEmail
+
+    // The list endpoint only carries a snippet, so the body check needs the
+    // full message.
+    for (const candidate of candidates) {
+      const email = await getEmail(candidate.ID)
+
+      if (containing && !extractEmailBody(email).includes(containing)) {
+        continue
+      }
+
+      return email
     }
-    
+
     // Wait a bit before trying again
     await new Promise(resolve => setTimeout(resolve, 1000))
   }
-  
+
   throw new Error(`Email not found within ${timeout}ms. Criteria: ${JSON.stringify({ to, subject, containing })}`)
 }
 
-export async function getLatestEmail(): Promise<MailhogMessage | null> {
+export async function getLatestEmail(): Promise<MailpitSummary | null> {
   const emails = await getAllEmails()
   return emails.length > 0 ? emails[0] : null
 }
 
-export async function getEmailsByRecipient(recipient: string): Promise<MailhogMessage[]> {
+export async function getEmailsByRecipient(recipient: string): Promise<MailpitSummary[]> {
   const emails = await getAllEmails()
-  
-  return emails.filter(email => 
-    email.To.some(to => 
-      `${to.Mailbox}@${to.Domain}`.toLowerCase() === recipient.toLowerCase()
+
+  return emails.filter(email =>
+    email.To.some(to =>
+      to.Address.toLowerCase() === recipient.toLowerCase()
     )
   )
 }
 
-export async function verifyEmailContent(email: MailhogMessage, expectations: {
+export async function verifyEmailContent(email: MailpitMessage, expectations: {
   subject?: string
   bodyContains?: string[]
   from?: string
 }): Promise<void> {
   if (expectations.subject) {
-    const emailSubject = email.Content.Headers.Subject?.[0] || ''
-    expect(emailSubject).toContain(expectations.subject)
+    expect(email.Subject).toContain(expectations.subject)
   }
-  
+
   if (expectations.bodyContains) {
+    const body = extractEmailBody(email)
     for (const text of expectations.bodyContains) {
-      expect(email.Content.Body).toContain(text)
+      expect(body).toContain(text)
     }
   }
-  
+
   if (expectations.from) {
-    const fromAddress = `${email.From.Mailbox}@${email.From.Domain}`
-    expect(fromAddress.toLowerCase()).toBe(expectations.from.toLowerCase())
+    expect(email.From.Address.toLowerCase()).toBe(expectations.from.toLowerCase())
   }
 }
 
@@ -143,30 +149,20 @@ export async function getEmailCount(): Promise<number> {
 }
 
 export async function deleteEmail(emailId: string): Promise<void> {
-  const response = await fetch(`${MAILHOG_API_BASE}/v1/messages/${emailId}`, {
-    method: 'DELETE'
+  const response = await fetch(`${MAILPIT_API_BASE}/v1/messages`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ IDs: [emailId] })
   })
-  
+
   if (!response.ok) {
     throw new Error(`Failed to delete email: ${response.statusText}`)
   }
 }
 
-export function extractEmailBody(email: MailhogMessage): string {
-  // Mailhog stores the body as base64 encoded or plain text
-  const body = email.Content.Body
-  
-  // Try to decode if it looks like base64
-  if (body && /^[A-Za-z0-9+/=]+$/.test(body.trim())) {
-    try {
-      return Buffer.from(body, 'base64').toString('utf-8')
-    } catch {
-      // Not base64, return as is
-      return body
-    }
-  }
-  
-  return body
+export function extractEmailBody(email: MailpitMessage): string {
+  // Mailpit decodes both parts for us; the plain text one is the easier match.
+  return email.Text || email.HTML
 }
 
 export async function verifyApplicationEmail(recipientEmail: string): Promise<void> {
@@ -192,7 +188,7 @@ export async function verifyReminderEmail(recipientEmail: string, eventTitle: st
     containing: eventTitle,
     timeout: 10000
   })
-  
+
   await verifyEmailContent(email, {
     subject: 'Inscrições abertas',
     bodyContains: [
