@@ -25,6 +25,7 @@ const CHANGE_PASSWORD = `${ACCOUNT}/mudar-senha`
 const BASIC_DATA = `${ACCOUNT}/dados-basicos`
 const GENDER_PRONOUNS_ORIENTATION = `${ACCOUNT}/dados-basicos-cont`
 const AGREE_TO_TERMS = `${ACCOUNT}/termos-e-condicoes`
+const ACCOUNT_READY = `${ACCOUNT}/tudo-pronto`
 
 //// USER
 // EVENTS
@@ -89,6 +90,7 @@ const paths = {
       CHANGE_PASSWORD,
       BASIC_DATA,
       GENDER_PRONOUNS_ORIENTATION,
+      ACCOUNT_READY,
     },
     events: {
       EVENT_VIEW,

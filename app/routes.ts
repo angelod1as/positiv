@@ -99,6 +99,7 @@ export default [
           "/dados-basicos-cont",
           "pages/account/basic-data/gender-pronouns-orientation-page.tsx",
         ),
+        route("/tudo-pronto", "pages/account/account-ready-page.tsx"),
       ]),
     ]),
   ]),
