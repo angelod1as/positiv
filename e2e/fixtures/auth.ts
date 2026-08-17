@@ -165,10 +165,28 @@ export async function performUILogin(
     const continueButton2 = page.getByRole("button", { name: "Continuar" })
     await expect(continueButton2).toBeVisible()
 
-    await Promise.all([
-      page.waitForNavigation({ url: expectedDashboardUrl, waitUntil: "networkidle" }),
-      continueButton2.click(),
-    ])
+    if (isAdmin) {
+      await Promise.all([
+        page.waitForNavigation({ url: expectedDashboardUrl, waitUntil: "networkidle" }),
+        continueButton2.click(),
+      ])
+    } else {
+      // First-time signup now ends on the account-ready page, which explains
+      // that having an account is not the same as being registered for an event
+      await Promise.all([
+        page.waitForNavigation({ url: /conta\/tudo-pronto$/, waitUntil: "networkidle" }),
+        continueButton2.click(),
+      ])
+
+      await expect(
+        page.getByRole("heading", { name: "Sua conta está pronta! 🎉" }),
+      ).toBeVisible()
+
+      await Promise.all([
+        page.waitForNavigation({ url: expectedDashboardUrl, waitUntil: "networkidle" }),
+        page.getByRole("link", { name: "Ver eventos com inscrições abertas" }).click(),
+      ])
+    }
   }
 
   await expect(page).toHaveURL(new RegExp(`${expectedDashboardUrl}$`))
