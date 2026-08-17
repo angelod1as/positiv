@@ -55,7 +55,9 @@ Investigated before deciding:
 
 - `react-markdown@10.1.0` is in `dependencies` and already rendered in production (`warning-banner.tsx:38`). Cost of adopting it for copy: zero packages.
 - `@mdx-js/*` were installed but dead, and MDX would force a second file format anyway. Removed.
-- `app/app.css` already styles `h1`–`h4`, `p`, `ul`, and `li` globally (lines 113–163), so rendered Markdown inherits the site's typography with no extra work. `Copy` therefore does **not** wrap output in `prose` — that would double up on the global rules. The typography plugin is available for full-page prose if a specific page needs it.
+- `app/app.css` already styles headings and paragraphs globally (`h1`–`h6` and `p`, lines 113–163) plus `ol` and `ol > li` (lines 71–77), so rendered Markdown inherits the site's typography with no extra work. `Copy` therefore does **not** wrap output in `prose` — that would double up on the global rules. The typography plugin is available for full-page prose if a specific page needs it.
+- There is **no** global `ul` or `li` rule. That is exactly why components across the repo spell out `list-inside list-disc` by hand, and why `Copy` overrides `ul` to reproduce it.
+- One scoped exception: `app/app.css:294` styles `ul > li` inside `.centered-layout`, giving each item a `⇝` pseudo-element bullet (`⤷` when nested). `.centered-layout` wraps `app/pages/events`, `app/pages/public`, `app/pages/account`, and the agree-to-terms page — which is to say most of the prose this plan migrates. Reproducing `list-inside list-disc` exactly, as `Copy` does, keeps that rendering identical to today. Do not "improve" the `ul` override.
 
 ### Not copy — do not touch
 
@@ -946,7 +948,7 @@ pnpm dev
 Navigate to an event's rules page — the route is `/events/EVENT_ID/rules`, using any real event id from the dashboard. Check specifically:
 
 - **Section spacing.** The original had each separator as a sibling of a fragment; the rewrite nests each separator inside a section wrapper. If vertical rhythm changed, render the separator between items instead of before each one and skip it for the first section.
-- **List markers.** Bullets must still show. `app/app.css:71` styles lists globally — confirm the `list-inside list-disc` override in `copy.tsx` neither doubles up nor conflicts.
+- **List markers.** This page renders inside `.centered-layout` (via `app/pages/events/layout.tsx`), and `app/app.css:294` gives every `ul > li` there a `⇝` pseudo-element bullet on top of whatever list-style the element carries. The current `rules-text.tsx` writes `list-inside list-disc`, and `Copy` reproduces that exactly, so the rendering should be **identical to before** — same markers, same spacing. If it is not, the `ul` override is the thing that changed; fix it there, not in this component.
 - **Alert blocks.** Both must keep their card styling and internal paragraph gaps.
 - **Section count.** Ten sections, same order and same headings as before.
 
