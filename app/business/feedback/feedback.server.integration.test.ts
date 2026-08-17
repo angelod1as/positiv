@@ -302,10 +302,11 @@ describe("Feedback Server - Integration Tests", () => {
     })
 
     it("should link the profile when the phone matches", async () => {
+      // The seeds give ten profiles 11999999999, so this needs its own number
       const profile = await createTestProfile(tracker, kysely, {
         user_id: null,
         email: "user@example.com",
-        phone: 11999999999,
+        phone: 11955550001,
       })
       tracker.track("profile", profile.id)
 
@@ -313,7 +314,7 @@ describe("Feedback Server - Integration Tests", () => {
         .insertInto("feedbacks")
         .values({
           name: "Phone User",
-          whatsapp: "11999999999",
+          whatsapp: "11955550001",
           feedback_text: "Phone feedback",
           has_participated: "more_than_once",
           ip_address: "1.1.1.1",
