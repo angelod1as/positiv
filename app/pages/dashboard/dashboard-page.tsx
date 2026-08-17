@@ -1,10 +1,11 @@
-import type { FC, ReactNode } from "react"
+import type { FC } from "react"
 import { Await } from "react-router"
 import { Suspense } from "react"
 import { redirectWithInfo } from "remix-toast"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext } from "~/business/auth/auth.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { EventListSkeleton } from "~/components/organisms/event-list/event-list-skeleton"
 import { createMetaArray } from "~/lib/helpers/meta"
@@ -35,7 +36,7 @@ async function loadEvents(profileId: string) {
     )
   }
 
-  return splitEvents(result.data)
+  return result.data
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -83,92 +84,60 @@ export async function action({ request, params }: Route.ClientActionArgs) {
   return
 }
 
-type WrapperProps = {
-  openRegistrationEvents: ReactNode
-  scheduledEvents: ReactNode
-  closedRegistrationEvents: ReactNode
-}
+export const EventsContent: FC<{
+  events: Event[]
+  hasEverApplied: boolean
+}> = ({ events, hasEverApplied }) => {
+  const { applied, available } = splitEvents(events)
 
-const Wrapper: FC<WrapperProps> = ({
-  openRegistrationEvents,
-  scheduledEvents,
-  closedRegistrationEvents,
-}) => {
   return (
     <>
+      {!hasEverApplied && (
+        <Alert>
+          <AlertTitle>
+            Sua conta está pronta — mas ter conta não te coloca em nenhuma
+            festa.
+          </AlertTitle>
+          <AlertDescription>
+            Escolha um evento abaixo e faça sua inscrição.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex flex-col gap-4">
-        <h2>Inscrições abertas</h2>
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
-          {openRegistrationEvents}
-        </div>
+        <h2>Eventos em que você se inscreveu</h2>
+        {applied.length ? (
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
+            {applied.map((event) => (
+              <EventCard
+                data-testid="event-card-applied"
+                key={event.id}
+                event={event}
+              />
+            ))}
+          </div>
+        ) : (
+          <p>Você não tem nenhuma inscrição no momento.</p>
+        )}
       </div>
 
-      {closedRegistrationEvents && (
-        <div className="flex flex-col gap-4">
-          <h2>Inscrições encerradas</h2>
+      <div className="flex flex-col gap-4">
+        <h2>Eventos da Positiv</h2>
+        {available.length ? (
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
-            {closedRegistrationEvents}
+            {available.map((event) => (
+              <EventCard
+                data-testid="event-card-available"
+                key={event.id}
+                event={event}
+              />
+            ))}
           </div>
-        </div>
-      )}
-
-      {scheduledEvents && (
-        <div className="flex flex-col gap-4">
-          <h2>Eventos agendados</h2>
-          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
-            {scheduledEvents}
-          </div>
-        </div>
-      )}
-    </>
-  )
-}
-
-const EventsContent: FC<{
-  events: {
-    registrationOpen: Event[]
-    registrationClosed: Event[]
-    scheduled: Event[]
-  }
-}> = ({ events }) => {
-  const { registrationOpen, registrationClosed, scheduled } = events
-
-  return (
-    <Wrapper
-      openRegistrationEvents={
-        registrationOpen.length ? (
-          registrationOpen.map((event) => (
-            <EventCard
-              data-testid="event-card-open"
-              key={event.id}
-              event={event}
-            />
-          ))
         ) : (
-          <p>Nenhum evento com inscrições abertas</p>
-        )
-      }
-      closedRegistrationEvents={
-        !!registrationClosed?.length &&
-        registrationClosed.map((event) => (
-          <EventCard
-            data-testid="event-card-closed"
-            key={event.id}
-            event={event}
-          />
-        ))
-      }
-      scheduledEvents={
-        !!scheduled?.length &&
-        scheduled.map((event) => (
-          <EventCard
-            data-testid="event-card-scheduled"
-            key={event.id}
-            event={event}
-          />
-        ))
-      }
-    />
+          <p>Nenhum evento por aqui no momento.</p>
+        )}
+      </div>
+    </>
   )
 }
 
@@ -176,7 +145,13 @@ const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
   return (
     <Suspense fallback={<EventListSkeleton />}>
       <Await resolve={loaderData.events}>
-        {(events) => <EventsContent events={events} />}
+        {(events) => (
+          <EventsContent
+            events={events}
+            // TODO(POS-479): flag arrives with the hasEverApplied query
+            hasEverApplied={false}
+          />
+        )}
       </Await>
     </Suspense>
   )
