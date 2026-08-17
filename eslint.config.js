@@ -115,6 +115,17 @@ export default defineConfig([
     },
   },
 
+  // 4b. Copy guard: migrated directories must not hold literal JSX text.
+  //     Add a glob here when a directory finishes migrating. See app/copy/README.md.
+  {
+    files: ["app/components/pages/homepage/**/*.tsx"],
+    ignores: ["**/*.test.tsx"],
+    plugins: { react: pluginReact },
+    rules: {
+      "react/jsx-no-literals": ["error", { noStrings: true, ignoreProps: true }],
+    },
+  },
+
   // 5. React Refresh Configuration: For Vite development
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"], // Apply to all applicable files for refresh
