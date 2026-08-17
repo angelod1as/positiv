@@ -69,7 +69,7 @@ test.describe('Admin Access Control', () => {
     } else {
       // On dashboard, verify content
       await expect(page).toHaveURL('/dashboard') 
-      const heading = page.getByRole('heading', { name: 'Inscrições abertas', exact: true })
+      const heading = page.getByRole('heading', { name: 'Eventos da Positiv', exact: true })
       await expect(heading).toBeVisible()
     }
     

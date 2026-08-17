@@ -2,24 +2,20 @@ import { type Page, type Locator, expect } from '@playwright/test'
 import { BasePage } from './BasePage'
 
 export class EventsPage extends BasePage {
-  readonly openRegistrationHeading: Locator
-  readonly closedRegistrationHeading: Locator
-  readonly scheduledEventsHeading: Locator
+  readonly appliedEventsHeading: Locator
+  readonly availableEventsHeading: Locator
   readonly eventCards: Locator
   readonly loadingSpinner: Locator
   readonly dashboardTitle: Locator
-  readonly openEventsHeading: Locator
 
   constructor(page: Page) {
     super(page)
-    
-    this.openRegistrationHeading = page.getByRole('heading', { name: 'Inscrições abertas' })
-    this.closedRegistrationHeading = page.getByRole('heading', { name: 'Inscrições encerradas' })
-    this.scheduledEventsHeading = page.getByRole('heading', { name: 'Próximos eventos' })
+
+    this.appliedEventsHeading = page.getByRole('heading', { name: 'Eventos em que você se inscreveu' })
+    this.availableEventsHeading = page.getByRole('heading', { name: 'Eventos da Positiv' })
     this.eventCards = page.locator('[data-testid^="event-card"]')
     this.loadingSpinner = page.locator('.loading-spinner')
     this.dashboardTitle = page.getByRole('heading', { name: 'Dashboard' })
-    this.openEventsHeading = page.getByRole('heading', { name: 'Inscrições abertas', exact: true }).first()
   }
 
   async goto() {
@@ -130,7 +126,7 @@ export class EventsPage extends BasePage {
     
     // Wait for events to be visible
     await expect(this.eventCards.first()).toBeVisible({ timeout: 15000 })
-    await expect(this.openEventsHeading).toBeVisible({ timeout: 5000 })
+    await expect(this.availableEventsHeading).toBeVisible({ timeout: 5000 })
   }
 
   async getOpenEventCount(): Promise<number> {
