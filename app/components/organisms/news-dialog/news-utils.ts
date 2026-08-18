@@ -32,9 +32,27 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1787010931286
+export const NEWS_VERSION = 1787050211221
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
+  {
+    id: "no-more-bdsm-editions",
+    title: "🎉 Todas as edições agora são no mesmo formato",
+    content:
+      "Não faremos mais edições BDSM da Positiv. Com isso, a página de consentimento que aparecia antes das regras não existe mais: ao se inscrever, você vai direto para as regras e para o teste. As inscrições dos eventos antigos continuam do jeitinho que estavam.",
+    isAdmin: false,
+    createdAt: new Date("2026-08-17T12:00:00"),
+    isActive: true,
+  },
+  {
+    id: "event-form-without-event-type",
+    title: "🗓️ O formulário de evento não pede mais o tipo",
+    content:
+      "Como não há mais edições BDSM, o campo \"Tipo de evento\" saiu do formulário de criação e edição de eventos. Os eventos antigos que eram BDSM continuam marcados assim no banco — editar um deles não muda mais essa informação.",
+    isAdmin: true,
+    createdAt: new Date("2026-08-17T12:00:00"),
+    isActive: true,
+  },
   {
     id: "dashboard-my-registrations",
     title: "✨ Ficou mais claro onde ver suas inscrições",
