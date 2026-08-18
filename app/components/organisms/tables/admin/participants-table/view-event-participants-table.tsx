@@ -346,7 +346,7 @@ export const AdminViewEventParticipantsTable: FC<
         field: "application_status",
         headerName: eventParticipantPropMap("application_status"),
         headerTooltip:
-          "Etapa do processo de inscrição para este evento (conversas, envio de dados, finalização)",
+          "Etapa do processo de candidatura para este evento (conversas, envio de dados, finalização)",
         editable: true,
         cellEditor: "agSelectCellEditor",
         cellEditorParams: {
@@ -592,7 +592,7 @@ export const AdminViewEventParticipantsTable: FC<
   const tableHeader = (
     <div className="flex items-center gap-4 text-sm flex-wrap">
       <p>
-        <b>{applications.total}</b> inscrites
+        <b>{applications.total}</b> candidates
       </p>
       <p>
         <b>{acceptedInProcess.total}</b> aceites no processo
@@ -624,7 +624,7 @@ export const AdminViewEventParticipantsTable: FC<
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Inscrições</h2>
+      <h2 className="text-2xl font-bold">Candidaturas</h2>
       <AGDataTable
         id="participants-table"
         data={participants}

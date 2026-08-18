@@ -2,7 +2,7 @@ import { AreaChart, Brush, XAxis } from "recharts"
 import { ChartContainer, type ChartConfig } from "~/components/ui/chart"
 
 const chartConfig: ChartConfig = {
-  inscritos: { label: "Inscritos", color: "var(--chart-1)" },
+  inscritos: { label: "Candidaturas", color: "var(--chart-1)" },
 }
 
 interface EventRangeSelectorProps {

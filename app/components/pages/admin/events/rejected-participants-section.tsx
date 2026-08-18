@@ -28,7 +28,7 @@ export function RejectedParticipantsSection({
   const count = participants.length
   const text =
     count === 1
-      ? "1 participante rejeitade se inscreveu neste evento"
+      ? "1 participante rejeitade se candidatou neste evento"
       : `${count} participantes rejeitades se inscreveram neste evento`
 
   return (

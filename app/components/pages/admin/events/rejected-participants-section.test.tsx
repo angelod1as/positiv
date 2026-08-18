@@ -94,7 +94,7 @@ describe("RejectedParticipantsSection", () => {
     )
     expect(
       screen.getByText(
-        "1 participante rejeitade se inscreveu neste evento",
+        "1 participante rejeitade se candidatou neste evento",
       ),
     ).toBeDefined()
   })

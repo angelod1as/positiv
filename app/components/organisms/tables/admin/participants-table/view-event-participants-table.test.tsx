@@ -139,13 +139,13 @@ describe("AdminViewEventParticipantsTable", () => {
     it("renders the header with title", () => {
       renderWithRouter()
 
-      expect(screen.getByText("Inscrições")).toBeInTheDocument()
+      expect(screen.getByText("Candidaturas")).toBeInTheDocument()
     })
 
     it("renders participant count statistics", () => {
       renderWithRouter()
 
-      expect(screen.getByText(/inscrites/)).toBeInTheDocument()
+      expect(screen.getByText(/candidates/)).toBeInTheDocument()
     })
 
     it("renders participant data in the table", async () => {
@@ -226,9 +226,9 @@ describe("AdminViewEventParticipantsTable", () => {
     it("displays total participant count", () => {
       renderWithRouter(mockParticipantsMultiple)
 
-      // Should show "3 inscrites" in the header statistics
+      // Should show "3 candidates" in the header statistics
       expect(screen.getByText("3")).toBeInTheDocument()
-      expect(screen.getByText(/inscrites/)).toBeInTheDocument()
+      expect(screen.getByText(/candidates/)).toBeInTheDocument()
     })
 
     it("displays veteran and rookie labels in statistics", () => {

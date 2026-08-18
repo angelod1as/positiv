@@ -99,7 +99,7 @@ describe("ParticipantVsEventData", () => {
       const router = createTestRouter(mockEventParticipant)
       render(<RouterProvider router={router} />)
 
-      expect(screen.getByLabelText(/status de inscrição/i)).toBeInTheDocument()
+      expect(screen.getByLabelText(/status da candidatura/i)).toBeInTheDocument()
     })
 
     it("should render spot type select", () => {

@@ -118,7 +118,7 @@ describe("Registration Limit Email Notification - E2E Integration", () => {
     expect(sendEmailModule.sendEmail).toHaveBeenCalledTimes(1)
     expect(sendEmailModule.sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        subject: expect.stringContaining("limite de inscrições"),
+        subject: expect.stringContaining("limite de candidaturas"),
         html: expect.any(String),
         text: expect.any(String),
       }),

@@ -48,7 +48,7 @@ describe("CategoryLabelWithTooltip", () => {
   describe("tooltip behavior", () => {
     it("should show tooltip content on hover", async () => {
       const user = userEvent.setup()
-      const tooltipText = "Total de todas as inscrições"
+      const tooltipText = "Total de todas as candidaturas"
 
       const { container } = renderWithTooltip(
         <CategoryLabelWithTooltip label="Geral" tooltipContent={tooltipText} />

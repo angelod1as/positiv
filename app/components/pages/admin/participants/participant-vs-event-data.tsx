@@ -113,7 +113,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="application_status">Status de Inscrição</Label>
+                <Label htmlFor="application_status">Status da candidatura</Label>
                 <Select {...register.select("application_status")}>
                   <SelectTrigger id="application_status">
                     <SelectValue placeholder="Selecione..." />

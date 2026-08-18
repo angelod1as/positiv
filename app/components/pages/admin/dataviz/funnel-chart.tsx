@@ -53,28 +53,28 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
       <div className="grid gap-1.5">
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-1)' }} />
-          <span className="chart-tooltip-label">Inscritos</span>
+          <span className="chart-tooltip-label">Candidaturas</span>
           <span className="chart-tooltip-value">{dataPoint.inscritos}</span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-2)' }} />
           <span className="chart-tooltip-label">Finalizados</span>
           <span className="chart-tooltip-value">
-            {dataPoint.finalizados} ({dataPoint.pct_finalizados}% dos inscritos)
+            {dataPoint.finalizados} ({dataPoint.pct_finalizados}% das candidaturas)
           </span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-3)' }} />
           <span className="chart-tooltip-label">Pagaram</span>
           <span className="chart-tooltip-value">
-            {dataPoint.pagaram} ({dataPoint.pct_pagaram}% dos inscritos)
+            {dataPoint.pagaram} ({dataPoint.pct_pagaram}% das candidaturas)
           </span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-4)' }} />
           <span className="chart-tooltip-label">Compareceram</span>
           <span className="chart-tooltip-value">
-            {dataPoint.compareceram} ({dataPoint.pct_compareceram}% dos inscritos)
+            {dataPoint.compareceram} ({dataPoint.pct_compareceram}% das candidaturas)
           </span>
         </div>
       </div>
@@ -104,7 +104,7 @@ const SERIES_CONFIG = [
   {
     dataKey: 'inscritos',
     segmentKey: 'inscritos_segment',
-    label: 'Inscritos',
+    label: 'Candidaturas',
     color: 'var(--chart-1)',
   },
 ] as const
@@ -114,7 +114,7 @@ export function FunnelChart({ data, className }: FunnelChartProps) {
     compareceram: { label: 'Compareceram', color: 'var(--chart-4)' },
     pagaram: { label: 'Pagaram', color: 'var(--chart-3)' },
     finalizados: { label: 'Finalizados', color: 'var(--chart-2)' },
-    inscritos: { label: 'Inscritos', color: 'var(--chart-1)' },
+    inscritos: { label: 'Candidaturas', color: 'var(--chart-1)' },
   }
 
   const chartData = useMemo(

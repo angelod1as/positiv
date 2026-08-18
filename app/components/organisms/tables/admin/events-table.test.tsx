@@ -261,7 +261,7 @@ describe("AdminDashboardEventsTable", () => {
       })
 
       expect(screen.getByText("Agendado")).toBeInTheDocument()
-      expect(screen.getByText("Inscrições abertas")).toBeInTheDocument()
+      expect(screen.getByText("Candidaturas abertas")).toBeInTheDocument()
     })
 
     it("should display formatted dates", async () => {

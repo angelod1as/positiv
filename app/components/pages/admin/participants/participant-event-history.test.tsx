@@ -75,10 +75,10 @@ const renderWithRouter = (ui: React.ReactElement) => {
 }
 
 describe("ParticipantEventHistory", () => {
-  it("should render the history section title as 'Histórico de Inscrições'", () => {
+  it("should render the history section title as 'Histórico de candidaturas'", () => {
     renderWithRouter(<ParticipantEventHistory participantHistory={[]} />)
 
-    expect(screen.getByText("Histórico de Inscrições")).toBeInTheDocument()
+    expect(screen.getByText("Histórico de candidaturas")).toBeInTheDocument()
   })
 
   it("should render an AG Grid table with event history", async () => {
@@ -134,7 +134,7 @@ describe("ParticipantEventHistory", () => {
     await waitFor(
       () => {
         expect(
-          screen.getByText(/Nenhuma inscrição anterior encontrada/i),
+          screen.getByText(/Nenhuma candidatura anterior encontrada/i),
         ).toBeInTheDocument()
       },
       { timeout: 1000 },

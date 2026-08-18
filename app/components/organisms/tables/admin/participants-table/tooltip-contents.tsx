@@ -19,7 +19,7 @@ function createTooltipSection(title: string, items: string[]) {
 
 export const generalTooltipContent = (
   <p>
-    Total de todas as inscrições registradas para este evento, independente de
+    Total de todas as candidaturas registradas para este evento, independente de
     status.
   </p>
 )

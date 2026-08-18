@@ -31,7 +31,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           auto_publish: "Publicar automaticamente",
           time_event_start: "Início do evento",
           time_event_end: "Fim do evento",
-          time_application_start: "Abertura das inscrições",
+          time_application_start: "Abertura das candidaturas",
           time_group_start: "Início",
           time_group_end: "Encerramento",
           time_payment_start: "Início",
@@ -52,7 +52,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
         }}
         descriptions={{
           description: "Use uma frase divertida!",
-          auto_publish: "Quando marcado, o evento será publicado automaticamente na data de abertura das inscrições",
+          auto_publish: "Quando marcado, o evento será publicado automaticamente na data de abertura das candidaturas",
         }}
         placeholders={{
           title: "Rapa do Tacho",
@@ -142,7 +142,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                   <Field name="time_event_end" />
                 </div>
 
-                <h6 className="pt-4 col-span-12">Inscrições</h6>
+                <h6 className="pt-4 col-span-12">Candidaturas</h6>
                 <div className="sm:col-span-6 col-span-12">
                   <Field name="time_application_start" />
                 </div>
