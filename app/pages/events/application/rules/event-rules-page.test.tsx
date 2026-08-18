@@ -106,14 +106,13 @@ import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-que
 import EventRulesPage from "./event-rules-page"
 import { render, screen, waitFor } from "~/test/test-utils"
 
-const quiz = getRulesFormQuestions("regular")
+const quiz = getRulesFormQuestions()
 
 const renderPage = () =>
   render(
     <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
-        loaderData={{ eventType: "regular" }}
         params={{ id: "123" }}
       />
     </MemoryRouter>,
@@ -283,7 +282,6 @@ const renderPageAt = (entry: string) =>
     <MemoryRouter initialEntries={[entry]}>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
-        loaderData={{ eventType: "regular" }}
         params={{ id: "123" }}
       />
       <Location />
@@ -324,7 +322,7 @@ describe("event-rules-page in the url", () => {
     // asking for a random id could name the one the quiz opens on anyway.
     vi.spyOn(Math, "random").mockReturnValue(0)
 
-    const order = buildRulesQuestions("regular")
+    const order = buildRulesQuestions()
     const first = order[0]
     const last = order[order.length - 1]
 

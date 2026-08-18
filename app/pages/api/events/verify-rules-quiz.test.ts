@@ -36,7 +36,7 @@ const mockTrackServerEvent = vi.mocked(trackServerEvent)
 
 const rightAnswers = () =>
   Object.fromEntries(
-    Object.entries(getRulesFormQuestions("regular")).map(([id, question]) => [
+    Object.entries(getRulesFormQuestions()).map(([id, question]) => [
       id,
       question.answers.correct.length === 1
         ? question.answers.correct[0]
@@ -75,7 +75,7 @@ describe("the rules quiz check", () => {
         where: vi.fn().mockReturnValue({
           executeTakeFirst: vi
             .fn()
-            .mockResolvedValue({ event_type: "regular" }),
+            .mockResolvedValue({ id: "123" }),
         }),
       }),
     })
@@ -89,7 +89,7 @@ describe("the rules quiz check", () => {
 
     expect(body.ok).toBe(false)
     expect(body.errors).toHaveLength(
-      Object.keys(getRulesFormQuestions("regular")).length,
+      Object.keys(getRulesFormQuestions()).length,
     )
   })
 
@@ -100,7 +100,7 @@ describe("the rules quiz check", () => {
   })
 
   it("names the question it turned down, with its own message", async () => {
-    const quiz = getRulesFormQuestions("regular")
+    const quiz = getRulesFormQuestions()
     const { body } = await postAnswers({
       ...rightAnswers(),
       phone: quiz.phone.answers.incorrect[0],
