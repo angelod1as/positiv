@@ -6,7 +6,9 @@ import { getUserContext } from "~/business/auth/auth.server"
 import { applyToEventSchema } from "~/business/common"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { rulesSessionStorage } from "~/business/session.server"
+import { Copy } from "~/components/atoms/copy/copy"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { eventApplicationCopy } from "~/copy/events"
 import { useAnalytics } from "~/lib/hooks/use-analytics"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/event-user-data"
@@ -49,9 +51,8 @@ export async function action({ request, params }: Route.ActionArgs) {
           throw await redirectWithWarning(
             EVENT_APPLICATION_SENT(params.id),
             {
-              message: "Não conseguimos enviar o e-mail",
-              description:
-                "Houve um problema no envio do email, mas não se preocupe - sua candidatura foi registrada.",
+              message: eventApplicationCopy.toasts.emailFailed.message,
+              description: eventApplicationCopy.toasts.emailFailed.description,
               duration: 6000,
             },
             {
@@ -75,17 +76,8 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
 
   return (
     <>
-      <h1>Quase lá!</h1>
-      <p>
-        Parabéns, você acertou tudo! Essa é a última etapa: precisamos de
-        algumas informações específicas à candidatura nesse evento.
-      </p>
-      <p>
-        Ao clicar no botão "Enviar candidatura", sua candidatura será enviada
-        (óbvio) e você irá receber um email com os dados do evento, salve na sua
-        agenda!
-      </p>
-      <p>(O email pode demorar uns minutos para chegar)</p>
+      <h1>{eventApplicationCopy.title}</h1>
+      <Copy>{eventApplicationCopy.intro}</Copy>
 
       <div onSubmitCapture={handleFormSubmit}>
         <SchemaForm
@@ -97,26 +89,9 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
             eventId: params.id,
           }}
           multiline={["notes", "companions", "referrals", "referred"]}
-          labels={{
-            notes:
-              "Você tem alguma nota ou comentário que gostaria que as pessoas administradoras soubessem?",
-            referrals: "Há alguma pessoa que você queira indicar? Por quê?",
-            referred: "Você foi indicade por alguém? Diga nomes!",
-            companions:
-              "Você pretende ir acompanhade? Se sim, nos diga o nome completo da(s) pessoa(s).",
-            bond: "Se a pessoa que você quer ir junte não for, você ainda assim quer ir no evento?",
-          }}
-          descriptions={{
-            notes: "Você tem algum aviso, lembrete, ideia, ou sugestão?",
-            referrals:
-              "Diga os nomes completos daquelas pessoas que você acha que têm tudo a ver com a gente e que querem muito participar — não esqueça de escrever a razão.",
-            referred:
-              'Se ninguém te indicou, escreva "ninguém". Diga os nomes completos de quem te indicou a Positiv — precisamos saber se foi uma indicação formal ("tem tudo a ver com você") ou informal ("ouvi numa mesa de bar").',
-            companions:
-              "Diga pra gente se você vai de galera — e quem é esse pessoal.",
-            bond: "Se, pra você, tudo bem se você for selecionade e elas não, selecione a caixinha acima.",
-          }}
-          buttonLabel="🎉 Enviar candidatura!"
+          labels={eventApplicationCopy.labels}
+          descriptions={eventApplicationCopy.descriptions}
+          buttonLabel={eventApplicationCopy.submitLabel}
         />
       </div>
     </>

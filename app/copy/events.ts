@@ -233,3 +233,43 @@ export const eventCardCopy = {
     cancelLabel: "🎉 Voltar",
   },
 } as const
+
+export const eventApplicationCopy = {
+  title: "Quase lá!",
+  intro: `Parabéns, você acertou tudo! Essa é a última etapa: precisamos de algumas informações específicas à inscrição nesse evento.
+
+Ao clicar no botão "Confirmar Inscrição", sua inscrição será confirmada (óbvio) e você irá receber um email com os dados do evento, salve na sua agenda!
+
+(O email pode demorar uns minutos para chegar)`,
+  labels: {
+    notes:
+      "Você tem alguma nota ou comentário que gostaria que as pessoas administradoras soubessem?",
+    referrals: "Há alguma pessoa que você queira indicar? Por quê?",
+    referred: "Você foi indicade por alguém? Diga nomes!",
+    companions:
+      "Você pretende ir acompanhade? Se sim, nos diga o nome completo da(s) pessoa(s).",
+    bond: "Se a pessoa que você quer ir junte não for, você ainda assim quer ir no evento?",
+  },
+  descriptions: {
+    notes: "Você tem algum aviso, lembrete, ideia, ou sugestão?",
+    referrals:
+      "Diga os nomes completos daquelas pessoas que você acha que têm tudo a ver com a gente e que querem muito participar — não esqueça de escrever a razão.",
+    referred:
+      'Se ninguém te indicou, escreva "ninguém". Diga os nomes completos de quem te indicou a Positiv — precisamos saber se foi uma indicação formal ("tem tudo a ver com você") ou informal ("ouvi numa mesa de bar").',
+    companions: "Diga pra gente se você vai de galera — e quem é esse pessoal.",
+    bond: "Se, pra você, tudo bem se você for selecionade e elas não, selecione a caixinha acima.",
+  },
+  submitLabel: "🎉 Confirmar Inscrição!",
+  toasts: {
+    success: {
+      message: "Inscrição efetuada com sucesso",
+      description:
+        "Você receberá as informações do evento em seu email (pode demorar uns minutos)",
+    },
+    emailFailed: {
+      message: "Não conseguimos enviar o e-mail",
+      description:
+        "Houve um problema no envio do email, mas não se preocupe - sua candidatura foi registrada.",
+    },
+  },
+} as const
