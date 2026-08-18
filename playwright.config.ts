@@ -2,8 +2,13 @@ import { defineConfig, devices } from "@playwright/test"
 
 import path from "path"
 
+import { getBaseUrl, getRunId } from "./e2e/utils/run-context"
+
 // Set E2E_MODE to skip external API calls during tests
 process.env.E2E_MODE = "true"
+
+// Publish the run id before workers are forked so they all share it
+process.env.E2E_RUN_ID = getRunId()
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -33,7 +38,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:5173",
+    baseURL: getBaseUrl(),
 
     /* Timeouts for reliability */
     actionTimeout: 30000, // 30s for actions

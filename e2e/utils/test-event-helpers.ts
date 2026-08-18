@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from './db-cleanup'
+import { runEventTitle, runEventTitlePattern } from './run-context'
 
 type EventStatus = 'Draft' | 'Completed' | 'Cancelled' | 'Scheduled' | 'Registration Closed' | 'Registration Open'
 
@@ -33,7 +34,7 @@ export async function ensureMinimumOpenEvents(count: number = 2): Promise<{ id: 
     eventDate.setDate(eventDate.getDate() + 30 + i) // Events 30+ days in future
     
     const testEvent = {
-      title: `[E2E-TEST] Event ${Date.now()}-${i}`,
+      title: runEventTitle(`Event ${Date.now()}-${i}`),
       event_status: 'Registration Open' as EventStatus,
       time_event_start: eventDate.toISOString(),
       time_event_end: new Date(eventDate.getTime() + 3 * 60 * 60 * 1000).toISOString(), // 3 hours later
@@ -107,7 +108,7 @@ export async function ensureClosedTestEvent(): Promise<{ id: string; title: stri
     .from('events')
     .select('id, title')
     .eq('event_status', 'Registration Closed')
-    .like('title', '[E2E-TEST]%')
+    .like('title', runEventTitlePattern())
     .limit(1)
     .single()
   
@@ -121,7 +122,7 @@ export async function ensureClosedTestEvent(): Promise<{ id: string; title: stri
   pastDate.setDate(pastDate.getDate() - 10) // Event 10 days ago
   
   const closedEvent = {
-    title: `[E2E-TEST] Closed Event ${Date.now()}`,
+    title: runEventTitle(`Closed Event ${Date.now()}`),
     event_status: 'Registration Closed' as EventStatus,
     time_event_start: pastDate.toISOString(),
     time_event_end: new Date(pastDate.getTime() + 3 * 60 * 60 * 1000).toISOString(),

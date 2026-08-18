@@ -14,8 +14,12 @@ Brazilian Portuguese.
 3. **NEVER bypass pre-push hooks**
 4. **NEVER** write off a failing test as "unrelated, let's not fix it"
 5. **NEVER use barrel exports** (`index.ts` files that only re-export)
-6. Use the Context7 MCP for library/API documentation without being asked
-7. To reset the database: `supabase db reset` — no `--local` flag
+6. **NEVER reach the database outside `pnpm test:e2e` / `pnpm test:integration`**
+   — both take a cross-worktree lock; running `playwright test` or `vitest
+   --config vitest.integration.config.ts` directly lets two suites corrupt each
+   other's data
+7. Use the Context7 MCP for library/API documentation without being asked
+8. To reset the database: `supabase db reset` — no `--local` flag
 
 A PR merges only with tests and lint 100% green. If a test fails, fix it.
 
@@ -534,9 +538,9 @@ pnpm test:e2e       # Run all E2E tests
 pnpm test:e2e:ui    # Run with Playwright UI for debugging
 
 # Run specific test suites
-pnpm test:e2e -- --project=chromium                    # Unauthenticated tests
-pnpm test:e2e -- --project=chromium-authenticated-user # User tests
-pnpm test:e2e -- --project=chromium-authenticated-admin # Admin tests
+pnpm test:e2e --project=chromium                    # Unauthenticated tests
+pnpm test:e2e --project=chromium-authenticated-user # User tests
+pnpm test:e2e --project=chromium-authenticated-admin # Admin tests
 ```
 
 ### Test Organization

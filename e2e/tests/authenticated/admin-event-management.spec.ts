@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test'
 import path from 'path'
 import { AdminDashboardPage } from '../../pages/admin/AdminDashboardPage'
 import { EventManagementPage } from '../../pages/admin/EventManagementPage'
+import { runEventTitle } from '../../utils/run-context'
 
 test.describe('Admin Event Management', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/admin.json') })
@@ -15,8 +16,8 @@ test.describe('Admin Event Management', () => {
     
     // Generate unique event name
     const timestamp = Date.now()
-    const eventTitle = `[E2E-TEST] Event ${timestamp}`
-    const updatedEventTitle = `[E2E-TEST] Updated Event ${timestamp}`
+    const eventTitle = runEventTitle(`Event ${timestamp}`)
+    const updatedEventTitle = runEventTitle(`Updated Event ${timestamp}`)
     
     // Navigate to admin dashboard
     await adminDashboard.navigate()
