@@ -287,7 +287,7 @@ instead when the number of items varies (testimonials, events).
 - Some Portuguese strings are **not** copy and must not move here: the values in
   `app/lib/constants/constants.ts` (`GENDERS`, `ORIENTATIONS`, `PRONOUNS`,
   `RACE_COLOR`) are stored in the database, and the news dialog in
-  `app/components/organisms/news-dialog/news-utils.ts` has its own workflow.
+  `app/components/organisms/news-dialog/items/` has its own workflow — one file per item.
 
 ## The lint rule
 

@@ -65,7 +65,7 @@ These look like Portuguese strings but are **persisted domain values or wire for
 
 - `app/lib/constants/constants.ts`: `GENDERS`, `ORIENTATIONS`, `PRONOUNS`, `RACE_COLOR` — written to and read from the database.
 - `app/lib/helpers/propMaps.ts` — maps database values to labels. The *label* side is copy; the *key* side is data. Only labels move, and only in Task 10.
-- `app/components/organisms/news-dialog/news-utils.ts` — already a single editable content array with its own documented workflow in CLAUDE.md. Leave it.
+- `app/components/organisms/news-dialog/items/` — one file per news item, loaded by `import.meta.glob`, with its own documented workflow in CLAUDE.md. Leave it.
 
 ### Copy fidelity changes requiring sign-off
 
@@ -610,7 +610,7 @@ instead when the number of items varies (testimonials, events).
 - Some Portuguese strings are **not** copy and must not move here: the values in
   `app/lib/constants/constants.ts` (`GENDERS`, `ORIENTATIONS`, `PRONOUNS`,
   `RACE_COLOR`) are stored in the database, and the news dialog in
-  `app/components/organisms/news-dialog/news-utils.ts` has its own workflow.
+  `app/components/organisms/news-dialog/items/` has its own workflow — one file per item.
 
 ## The lint rule
 
@@ -1343,7 +1343,7 @@ Expected: only the three files listed above as not-copy.
 **Files:**
 
 - Modify: `CLAUDE.md`
-- Modify: `app/components/organisms/news-dialog/news-utils.ts`
+- Create: `app/components/organisms/news-dialog/items/<date>-<slug>.ts`
 - Delete: `docs/plans/POS-480-centralizar-copy.md`
 
 - [ ] **Step 1: Add a "Site Copy" section to `CLAUDE.md`**
@@ -1352,7 +1352,7 @@ Three points, then a pointer: all user-visible strings live in `app/copy/`; form
 
 - [ ] **Step 2: Add the news dialog entry**
 
-Per CLAUDE.md: add an item to `DEFAULT_NEWS_ITEMS` in `app/components/organisms/news-dialog/news-utils.ts`, remove any item older than two weeks, and set `NEWS_VERSION` in that same file to `Date.now()`. Mark it `isAdmin: true` — end users see no behavioural change.
+Per CLAUDE.md: add one file under `app/components/organisms/news-dialog/items/`, named `<YYYY-MM-DD>-<slug>.ts`, default-exporting a `NewsItemContent`. Delete any item file older than two weeks. Do **not** touch `NEWS_VERSION` — `news-utils.ts` derives it from the newest `createdAt`, so adding a file re-opens the dialog on its own. Mark it `isAdmin: true`; end users see no behavioural change.
 
 - [ ] **Step 3: Run the full verification**
 
