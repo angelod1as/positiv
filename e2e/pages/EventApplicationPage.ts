@@ -77,8 +77,7 @@ export class EventApplicationPage extends BasePage {
     // app/components/forms/custom/rules/rules-questions.tsx. The quiz shuffles
     // question and answer order, but the answer text itself is fixed, so
     // clicking every correct answer text (regardless of order) always yields
-    // a fully and correctly answered quiz. Both event-type variants of the
-    // "not-a-club" question are included since only one is ever rendered.
+    // a fully and correctly answered quiz.
     const correctAnswers = [
       "Cada pessoa é responsável por cuidar de seus pertences e por limpar o ambiente, para manter tudo em ordem e no lugar, independente de ter uma equipe de limpeza que irá limpar depois.",
       "Não. A regra é simples: ninguém é obrigade a nada. Se quiser ficar de roupa, pode, se quiser ficar pelade, pode também",
@@ -88,7 +87,6 @@ export class EventApplicationPage extends BasePage {
       "A regra é clara: não se fala sobre quem vai à Positiv — mesmo para pessoas que vão à Positiv durante uma Positiv.",
       "Desde que ela não diga quem vai ou foi à festa com ela, tudo bem — ela pode divulgar sua participação.",
       "A frase está incorreta. A Positiv se parece mais com um picnic e não tem música alta ou luzes piscando.",
-      "A frase está incorreta. Na Positiv BDSM não há álcool ou outras substâncias.",
       "A frase está incorreta. É até possível que haja drinks ou cerveja, mas a moderação é essencial.",
       "Incorreta, o uso dos celulares é permitido apenas na garagem da suíte.",
       "A afirmação está incorreta, o uso de camisinha interna ou externa, é obrigatório",
