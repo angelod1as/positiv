@@ -45,7 +45,7 @@ Only **one** new test file is created by this plan: `app/components/atoms/copy/c
 Everything else is a refactor with no behaviour change, so it gets **no new test files**. Instead:
 
 - Existing component tests that assert literal strings are updated in place to assert against the copy module. They keep testing the same rendered output.
-- Correctness of each migration is verified by `pnpm lint` (the guard rule plus `tsc`), the existing unit suite, and the E2E suite in Task 12.
+- Correctness of each migration is verified by `pnpm lint` (the guard rule plus `tsc`), the existing unit suite, and a per-file fidelity check: render the component before and after, compare the visible text with all whitespace stripped, and compare a census of the rendered tags.
 
 Do not write tests that assert a copy module has a given key, that a directory contains no JSX, or that a string was moved. Those test the migration, not the product.
 
@@ -1318,10 +1318,12 @@ Per CLAUDE.md: add an item to `DEFAULT_NEWS_ITEMS` in `app/components/organisms/
 - [ ] **Step 3: Run the full verification**
 
 ```bash
-pnpm lint && pnpm test:unit && pnpm test:integration && pnpm test:e2e
+pnpm lint && pnpm test:unit && pnpm test:integration
 ```
 
-Expected: all green. E2E matters most here — it drives real pages and catches copy that shifted during a migration.
+Expected: all green.
+
+**Do not run the E2E suite as part of this task.** It is excluded by explicit instruction. That removes the last automated check that drives real pages, so the per-file fidelity checks are the only guard against copy shifting during a migration — treat them as mandatory, not optional. Anything they cannot cover (spacing, layout, list markers, anything visual) needs a human look before merge; list those explicitly in the PR description.
 
 Another agent may be using the same local Supabase instance; if the integration run behaves oddly, check the database state before assuming a code fault.
 
@@ -1341,7 +1343,7 @@ git commit -m "docs(copy): document the copy convention in CLAUDE.md"
 |---|---|
 | Markdown rendering shifts spacing or list styling | `Copy` is built and tested first (Task 1); the pilot (Task 4 Step 4) and the rules page (Task 6 Step 4) both require a visual check. Fixes go into `copy.tsx`, never into individual components. |
 | The typography plugin changed the warning banner | Already flagged; Task 9 Step 1 resolves it explicitly before anything else in that task. |
-| A migration silently changes user-visible text | Prose is copy-pasted, never retyped; only markup is converted. The three deliberate fidelity changes are listed and need sign-off. E2E in Task 12 is the backstop. |
+| A migration silently changes user-visible text | Prose is copy-pasted, never retyped; only markup is converted. The three deliberate fidelity changes are listed and need sign-off. With E2E excluded from this task, the per-file text-and-tag-census comparison is the backstop, and visual review is manual. |
 | Domain enums get treated as copy and corrupt data | The "Not copy" list is explicit; Tasks 8 and 10 repeat the warning at the two files where it bites. |
 | A link written in copy breaks client-side navigation | `Copy` routes any href starting with `/` through the `Link` atom instead of a bare anchor, so internal links do not full-page reload. Covered by a test in Task 1. |
 | The lint rule produces a false positive | It only fires on JSX text children (`ignoreProps: true`), and Task 3 proves it fires on real files before anything depends on it. Legitimate non-copy text — a bare separator glyph, say — goes in `allowedStrings` rather than dropping a directory from the list. |
