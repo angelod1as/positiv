@@ -19,6 +19,10 @@ export const loginCopy = {
   },
 } as const
 
+export const logoutCopy = {
+  successToast: "Você deslogou com sucesso",
+} as const
+
 export const registerCopy = {
   title: "Criar conta",
   description:

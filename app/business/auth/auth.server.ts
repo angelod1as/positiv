@@ -4,6 +4,7 @@ import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { ENV } from "varlock/env"
+import { logoutCopy } from "~/copy/auth"
 import { errorsCopy } from "~/copy/errors"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { kyselyDb } from "~/kysely-db"
@@ -232,7 +233,7 @@ export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
     throw new Error(errorsCopy.auth.logoutFailed(error.code, error.message))
   }
 
-  return redirectWithSuccess(HOME, errorsCopy.auth.logoutSuccess)
+  return redirectWithSuccess(HOME, logoutCopy.successToast)
 }
 
 export const changePassword = applySchema(

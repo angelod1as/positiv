@@ -16,7 +16,6 @@ export const errorsCopy = {
       "Algo deu errado com sua requisição, contate o administrador",
     logoutFailed: (code: string | undefined, message: string) =>
       `Erro de logout — Código: "${code}" — Mensagem: "${message}"`,
-    logoutSuccess: "Você deslogou com sucesso",
     samePassword: "Será que essa não era a sua senha? Tente outra.",
     passwordChangeFailed:
       "Não conseguimos resetar sua senha. Entre em contato com o administrador",
