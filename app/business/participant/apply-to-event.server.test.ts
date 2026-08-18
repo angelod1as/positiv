@@ -208,7 +208,7 @@ describe("applyToEvent", () => {
       if (!result.success) {
         expect(result.errors).toHaveLength(1)
         expect(result.errors[0].message).toBe(
-          "Inscrições encerradas! Este evento atingiu o limite de participantes.",
+          "Candidaturas encerradas! Este evento atingiu o limite de participantes.",
         )
       }
 

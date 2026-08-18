@@ -100,7 +100,7 @@ describe("EventCardFooter", () => {
         />,
       )
 
-      const applyButton = screen.getByText(/Fazer inscrição/i)
+      const applyButton = screen.getByText(/Me candidatar/i)
       expect(applyButton).toBeInTheDocument()
     })
 
@@ -116,7 +116,7 @@ describe("EventCardFooter", () => {
         />,
       )
 
-      const cancelButton = screen.getByText(/Cancelar inscrição/i)
+      const cancelButton = screen.getByText(/Cancelar candidatura/i)
       expect(cancelButton).toBeInTheDocument()
     })
 
@@ -132,9 +132,9 @@ describe("EventCardFooter", () => {
         />,
       )
 
-      const cancelButton = screen.getByText(/Cancelar inscrição/i)
+      const cancelButton = screen.getByText(/Cancelar candidatura/i)
       expect(cancelButton).toBeInTheDocument()
-      expect(screen.queryByText(/Inscrições encerradas/i)).not.toBeInTheDocument()
+      expect(screen.queryByText(/Candidaturas encerradas/i)).not.toBeInTheDocument()
     })
 
     it("should render closed button when registrations closed and user is not applied", () => {
@@ -149,7 +149,7 @@ describe("EventCardFooter", () => {
         />,
       )
 
-      const closedButton = screen.getByText(/Inscrições encerradas/i)
+      const closedButton = screen.getByText(/Candidaturas encerradas/i)
       expect(closedButton).toBeInTheDocument()
     })
 
@@ -164,7 +164,7 @@ describe("EventCardFooter", () => {
         />,
       )
 
-      const applyButton = screen.getByText(/Fazer inscrição/i)
+      const applyButton = screen.getByText(/Me candidatar/i)
       expect(applyButton).toBeInTheDocument()
     })
   })

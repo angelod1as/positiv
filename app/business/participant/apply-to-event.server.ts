@@ -12,7 +12,7 @@ export const applyToEvent = applySchema(
   const { eventId, applicationDate, ...values } = allValues
 
   if (!currentProfile || !eventId) {
-    throw new Error("Oops, algo deu errado na sua inscrição. Tente mais tarde.")
+    throw new Error("Oops, algo deu errado na sua candidatura. Tente mais tarde.")
   }
 
   const profileId = currentProfile.id
@@ -30,7 +30,7 @@ export const applyToEvent = applySchema(
 
   if (event.event_status === "Registration Closed") {
     throw new Error(
-      "Inscrições encerradas! Este evento atingiu o limite de participantes.",
+      "Candidaturas encerradas! Este evento atingiu o limite de participantes.",
     )
   }
 
@@ -51,7 +51,7 @@ export const applyToEvent = applySchema(
   })
 
   if (error) {
-    throw new Error("Sua inscrição teve um erro, tente novamente. Erro: upsert")
+    throw new Error("Sua candidatura teve um erro, tente novamente. Erro: upsert")
   }
 
   let emailSent = false

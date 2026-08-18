@@ -78,7 +78,7 @@ export const EventStatusBadge = ({
 }) => {
   const { isOpen, isScheduled } = checkEventStatus(event_status)
 
-  if (isOpen) return <Badge variant="default">Inscrições abertas</Badge>
+  if (isOpen) return <Badge variant="default">Candidaturas abertas</Badge>
   if (isScheduled) return <Badge variant="secondary">Em breve</Badge>
-  return <Badge variant="outline">Inscrições encerradas</Badge>
+  return <Badge variant="outline">Candidaturas encerradas</Badge>
 }
