@@ -256,6 +256,7 @@ Ao clicar no botão "Enviar candidatura", sua candidatura será enviada (óbvio)
     companions: "Diga pra gente se você vai de galera — e quem é esse pessoal.",
     bond: "Se, pra você, tudo bem se você for selecionade e elas não, selecione a caixinha acima.",
   },
+  submitLabel: "🎉 Enviar candidatura!",
   toasts: {
     success: {
       message: "Candidatura enviada com sucesso",
