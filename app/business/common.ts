@@ -205,3 +205,8 @@ export const applyToEventSchema = zod.object({
     .default("Posso ir sozinhe."),
   notes: zod.string().optional(),
 })
+
+// The form schema draws the form, so a field nobody fills cannot live in it.
+export const applyToEventInputSchema = applyToEventSchema.extend({
+  skipEmail: zod.boolean().optional(),
+})

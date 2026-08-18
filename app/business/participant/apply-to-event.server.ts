@@ -1,15 +1,15 @@
 import { applySchema } from "composable-functions"
 import { dateToString } from "~/lib/helpers/date-to-string"
-import { applyToEventSchema, userContextSchema } from "../common"
+import { applyToEventInputSchema, userContextSchema } from "../common"
 import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
 
 export const applyToEvent = applySchema(
-  applyToEventSchema,
+  applyToEventInputSchema,
   userContextSchema,
 )(async (allValues, context) => {
   const { supabase, currentProfile } = context
-  const { eventId, applicationDate, ...values } = allValues
+  const { eventId, applicationDate, skipEmail, ...values } = allValues
 
   if (!currentProfile || !eventId) {
     throw new Error("Oops, algo deu errado na sua candidatura. Tente mais tarde.")
@@ -56,7 +56,7 @@ export const applyToEvent = applySchema(
 
   let emailSent = false
 
-  if (currentProfile.email) {
+  if (currentProfile.email && !skipEmail) {
     const emailResult = await sendApplicationMail({ profile: currentProfile, event })
     emailSent = emailResult.emailSent
   }
