@@ -3,7 +3,6 @@ import {
   getSubscriptionStatus,
   unsubscribeProfile,
 } from "~/business/newsletter/subscription-helpers.server"
-import { Copy } from "~/components/atoms/copy/copy"
 import { unsubscribeCopy } from "~/copy/newsletter"
 import { sharedCopy } from "~/copy/shared"
 import { db } from "~/lib/supabase/db.server"
@@ -91,7 +90,10 @@ const UnsubscribePage = ({ loaderData }: Route.ComponentProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <Copy>{unsubscribeCopy.already.body(name, email)}</Copy>
+          <p>
+            <strong>{name}</strong>{" "}
+            {unsubscribeCopy.already.body(email)}
+          </p>
           <p>{unsubscribeCopy.already.resubscribe}</p>
         </CardContent>
         <CardFooter>

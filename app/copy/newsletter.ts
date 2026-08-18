@@ -7,8 +7,8 @@ export const unsubscribeCopy = {
   successToast: "Você foi descadastrado da newsletter com sucesso.",
   already: {
     title: "Você já está descadastrado",
-    body: (name: string, email: string) =>
-      `**${name}** (${email}) já está descadastrado da nossa newsletter.`,
+    body: (email: string) =>
+      `(${email}) já está descadastrado da nossa newsletter.`,
     resubscribe:
       "Se quiser voltar a receber nossos emails, você pode se inscrever novamente nas configurações da sua conta.",
   },
