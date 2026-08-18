@@ -3,10 +3,13 @@ import type { z } from "zod"
 import { eventFormSchema } from "~/business/admin/common"
 import { Button } from "~/components/atoms/button/button"
 import { Separator } from "~/components/ui/separator"
+import { adminEventsCopy } from "~/copy/admin/events"
 import { dbValuesToFormSchema } from "~/lib/helpers/db-values-to-form-schema"
 import type { Event } from "~types/database/entities.types"
 import { SchemaForm } from "../base/schema-form"
 import { calculateDerivedDates } from "./calculate-derived-dates"
+
+const formCopy = adminEventsCopy.form
 
 type EventFormProps = {
   event?: Event
@@ -21,22 +24,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
         schema={eventFormSchema}
         values={formattedDateEvent}
         hiddenFields={["id"]}
-        labels={{
-          title: "Nome da festa",
-          emoji: "Emoji",
-          description: "Descrição",
-          location: "Local",
-          ticket_price: "Valor",
-          total_spots: "Lotação",
-          auto_publish: "Publicar automaticamente",
-          time_event_start: "Início do evento",
-          time_event_end: "Fim do evento",
-          time_application_start: "Abertura das candidaturas",
-          time_group_start: "Início",
-          time_group_end: "Encerramento",
-          time_payment_start: "Início",
-          time_payment_end: "Encerramento",
-        }}
+        labels={formCopy.labels}
         multiline={["description"]}
         inputTypes={{
           ticket_price: "textnumber",
@@ -50,17 +38,8 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           time_payment_end: "datetime-local",
           time_payment_start: "datetime-local",
         }}
-        descriptions={{
-          description: "Use uma frase divertida!",
-          auto_publish: "Quando marcado, o evento será publicado automaticamente na data de abertura das candidaturas",
-        }}
-        placeholders={{
-          title: "Rapa do Tacho",
-          description: "Para quem sobreviveu ao carnaval oficial",
-          location: "Motel Harmony",
-          ticket_price: "200",
-          total_spots: "60",
-        }}
+        descriptions={formCopy.descriptions}
+        placeholders={formCopy.placeholders}
       >
         {({
           Field,
@@ -77,7 +56,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
 
             if (!startingTime) {
               setError("time_event_start", {
-                message: "Você deve preencher a data de início",
+                message: formCopy.startDateRequired,
                 type: "value",
               })
               return
@@ -97,7 +76,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
           return (
             <>
               <div className="grid grid-cols-12 gap-x-4 gap-y-2 grid-flow-row">
-                <h5 className="pt-4 col-span-12">Dados gerais</h5>
+                <h5 className="pt-4 col-span-12">{formCopy.sections.generalData}</h5>
                 <div className="sm:col-span-9 col-span-12">
                   <Field name="title" />
                 </div>
@@ -105,16 +84,24 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                   <Field name="emoji" />
                 </div>
                 <div className="sm:col-span-12 col-span-12">
-                  <Field name="description" description="Use uma frase breve" />
+                  <Field name="description" description={formCopy.descriptionHint} />
                 </div>
                 <div className="sm:col-span-7 col-span-12">
                   <Field name="location" />
                 </div>
                 <div className="sm:col-span-2 col-span-12">
-                  <Field name="ticket_price" prefix="R$" type="number" />
+                  <Field
+                    name="ticket_price"
+                    prefix={formCopy.ticketPricePrefix}
+                    type="number"
+                  />
                 </div>
                 <div className="sm:col-span-3 col-span-12">
-                  <Field name="total_spots" suffix="pessoas" type="number" />
+                  <Field
+                    name="total_spots"
+                    suffix={formCopy.totalSpotsSuffix}
+                    type="number"
+                  />
                 </div>
                 <div className="sm:col-span-12 col-span-12">
                   <Field name="auto_publish" />
@@ -125,13 +112,13 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                 </div>
 
                 <div className="pt-4 col-span-12 flex justify-between items-baseline mb-4">
-                  <h5>Datas</h5>
+                  <h5>{formCopy.sections.dates}</h5>
                   <Button
                     type="button"
                     onClick={() => handleDates()}
                     variant="default"
                   >
-                    Calcular datas automaticamente
+                    {formCopy.calculateDates}
                   </Button>
                 </div>
 
@@ -142,12 +129,12 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                   <Field name="time_event_end" />
                 </div>
 
-                <h6 className="pt-4 col-span-12">Candidaturas</h6>
+                <h6 className="pt-4 col-span-12">{formCopy.sections.applications}</h6>
                 <div className="sm:col-span-6 col-span-12">
                   <Field name="time_application_start" />
                 </div>
 
-                <h6 className="pt-4 col-span-12">Grupo</h6>
+                <h6 className="pt-4 col-span-12">{formCopy.sections.group}</h6>
                 <div className="sm:col-span-6 col-span-12">
                   <Field name="time_group_start" />
                 </div>
@@ -155,7 +142,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                   <Field name="time_group_end" />
                 </div>
 
-                <h6 className="pt-4 col-span-12">Pagamentos</h6>
+                <h6 className="pt-4 col-span-12">{formCopy.sections.payments}</h6>
                 <div className="sm:col-span-6 col-span-12">
                   <Field name="time_payment_start" />
                 </div>
@@ -164,7 +151,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                 </div>
               </div>
               <Errors />
-              <SubmitButton className="w-full">Salvar</SubmitButton>
+              <SubmitButton className="w-full">{formCopy.submit}</SubmitButton>
             </>
           )
         }}
