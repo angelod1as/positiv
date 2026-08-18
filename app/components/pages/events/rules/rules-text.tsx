@@ -10,7 +10,7 @@ export const RulesText = () => {
       <Copy>{rulesCopy.intro}</Copy>
 
       {rulesCopy.sections.map((section) => (
-        <div key={section.heading}>
+        <div key={section.heading} className="flex flex-col gap-8">
           <Separator />
           <h4>{section.heading}</h4>
           <Copy>{section.body}</Copy>
