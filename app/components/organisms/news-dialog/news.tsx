@@ -2,12 +2,15 @@ import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { DEFAULT_NEWS_ITEMS, filterAndSortNews } from './news-utils'
 
-export interface NewsItem {
-  id: string
+export interface NewsItemContent {
   title: string
   content: string
   isAdmin: boolean
   createdAt: Date
+}
+
+export interface NewsItem extends NewsItemContent {
+  id: string
   isActive: boolean
 }
 
