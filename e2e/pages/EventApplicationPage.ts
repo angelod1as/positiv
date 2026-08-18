@@ -9,11 +9,6 @@ export class EventApplicationPage extends BasePage {
   readonly requiredError: Locator
   readonly questions: Locator
 
-  // BDSM consent page elements
-  readonly bdsmTitle: Locator
-  readonly bdsmContinueButton: Locator
-  readonly bdsmCheckbox: Locator
-
   // User data page elements
   readonly userDataTitle: Locator
   readonly notesTextbox: Locator
@@ -39,14 +34,6 @@ export class EventApplicationPage extends BasePage {
     })
     this.questions = page.locator('div[data-testid="question"]')
 
-    // BDSM consent page
-    this.bdsmTitle = page.getByRole("heading", {
-      name: "Essa é uma edição BDSM da Positiv",
-      exact: true,
-    })
-    this.bdsmContinueButton = page.getByRole("button", { name: "Continuar" })
-    this.bdsmCheckbox = page.getByRole("checkbox")
-
     // User data page
     this.userDataTitle = page.getByRole("heading", {
       name: "Quase lá!",
@@ -65,15 +52,6 @@ export class EventApplicationPage extends BasePage {
   async isOnRulesPage(): Promise<boolean> {
     try {
       await this.rulesTitle.waitFor({ state: "visible", timeout: 5000 })
-      return true
-    } catch {
-      return false
-    }
-  }
-
-  async isOnBDSMConsentPage(): Promise<boolean> {
-    try {
-      await this.bdsmTitle.waitFor({ state: "visible", timeout: 5000 })
       return true
     } catch {
       return false
@@ -136,25 +114,8 @@ export class EventApplicationPage extends BasePage {
     await this.page.waitForTimeout(500)
   }
 
-  async fillBDSMConsentForm(): Promise<void> {
-    await expect(this.bdsmTitle).toBeVisible({ timeout: 10000 })
-
-    // Find all checkboxes (consent items)
-    const checkboxes = await this.bdsmCheckbox.all()
-
-    // Check all consent checkboxes
-    for (const checkbox of checkboxes) {
-      if (!(await checkbox.isChecked())) {
-        await checkbox.click()
-      }
-    }
-  }
-
   async clickContinue(): Promise<void> {
-    const isBDSM = await this.isOnBDSMConsentPage()
-    const button = isBDSM ? this.bdsmContinueButton : this.continueButton
-
-    await button.click()
+    await this.continueButton.click()
 
     // Don't wait for navigation if we expect validation errors
     await this.page.waitForTimeout(1000)
@@ -201,13 +162,7 @@ export class EventApplicationPage extends BasePage {
     referred?: string
     bondType?: string
   }): Promise<void> {
-    // A BDSM event asks for consent BEFORE the rules quiz, so these are steps in
-    // sequence, not alternatives
-    if (await this.isOnBDSMConsentPage()) {
-      await this.fillBDSMConsentForm()
-      await this.clickContinue()
-    }
-
+    // Handle rules page
     if (await this.isOnRulesPage()) {
       await this.fillRulesForm()
       await this.clickContinue()

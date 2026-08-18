@@ -51,10 +51,8 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     
     // Verify POM has expected methods
     expect(applicationPage.isOnRulesPage).toBeDefined()
-    expect(applicationPage.isOnBDSMConsentPage).toBeDefined()
     expect(applicationPage.isOnUserDataPage).toBeDefined()
     expect(applicationPage.fillRulesForm).toBeDefined()
-    expect(applicationPage.fillBDSMConsentForm).toBeDefined()
     expect(applicationPage.fillUserDataForm).toBeDefined()
     expect(applicationPage.clickContinue).toBeDefined()
     expect(applicationPage.submitApplication).toBeDefined()
@@ -113,12 +111,6 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     
     await applyButtons.first().click()
     await page.waitForLoadState('networkidle')
-    
-    // Handle BDSM info page if present
-    if (await page.getByText('Essa é uma edição BDSM da Positiv').isVisible({ timeout: 1000 }).catch(() => false)) {
-      await page.getByRole('button', { name: 'Continuar' }).click()
-      await page.waitForLoadState('networkidle')
-    }
     
     // Try to continue without filling form
     const continueButton = page.getByRole('button', { name: 'Continuar' })
