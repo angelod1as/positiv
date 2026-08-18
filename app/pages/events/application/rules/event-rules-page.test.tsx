@@ -352,3 +352,42 @@ describe("event-rules-page quiz", () => {
     })
   })
 })
+
+describe("event-rules-page across a refresh", () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+  })
+
+  it("comes back to the question the reader was on", async () => {
+    const user = userEvent.setup()
+    const first = renderPage()
+
+    const { entry } = await firstSingleAnswerQuestion()
+    await answer(user, entry.answers.correct[0])
+
+    const { prompt: reached } = await shownQuestion()
+    first.unmount()
+
+    renderPage()
+
+    expect((await shownQuestion()).prompt).toBe(reached)
+  })
+
+  it("brings the answer already given back with it", async () => {
+    const user = userEvent.setup()
+    const first = renderPage()
+
+    const { entry } = await firstSingleAnswerQuestion()
+    const chosen = entry.answers.correct[0]
+
+    // Chosen but not submitted: the answer is worth keeping from the moment it
+    // is given, not from the moment it is accepted.
+    await user.click(screen.getByRole("radio", { name: chosen }))
+    first.unmount()
+
+    renderPage()
+    await shownQuestion()
+
+    expect(await screen.findByRole("radio", { name: chosen })).toBeChecked()
+  })
+})
