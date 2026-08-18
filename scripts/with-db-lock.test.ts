@@ -24,7 +24,7 @@ function runLocked(command: string, extraEnv: Record<string, string> = {}) {
 }
 
 beforeEach(() => {
-  workDir = mkdtempSync(join(tmpdir(), 'e2e-lock-'))
+  workDir = mkdtempSync(join(tmpdir(), 'db-lock-'))
   lockDir = join(workDir, 'lock')
 })
 

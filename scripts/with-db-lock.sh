@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
 #
-# Serializes E2E runs across every worktree of this repository.
+# Serializes the test suites that reach the database, across every worktree.
 #
-# The suite drives one shared local Supabase instance and one machine, so two
-# runs at once corrupt each other's data and starve each other of CPU. This
-# script hands the command it wraps an exclusive turn, plus the run id and the
-# free port that turn owns.
+# The E2E and integration suites drive one shared local Supabase instance, so
+# two of them at once corrupt each other's data, and two E2E runs also starve
+# each other of CPU. This script hands the command it wraps an exclusive turn,
+# plus the run id and the free port that turn owns.
 set -euo pipefail
 
-WAIT_TIMEOUT="${E2E_LOCK_WAIT_TIMEOUT:-1800}"
-STALE_AFTER="${E2E_LOCK_STALE_AFTER:-1800}"
-POLL_INTERVAL="${E2E_LOCK_POLL_INTERVAL:-2}"
-CLAIM_GRACE="${E2E_LOCK_CLAIM_GRACE:-10}"
+WAIT_TIMEOUT="${DB_LOCK_WAIT_TIMEOUT:-1800}"
+STALE_AFTER="${DB_LOCK_STALE_AFTER:-1800}"
+POLL_INTERVAL="${DB_LOCK_POLL_INTERVAL:-2}"
+CLAIM_GRACE="${DB_LOCK_CLAIM_GRACE:-10}"
 FIRST_PORT="${E2E_FIRST_PORT:-5273}"
 
-if [ -n "${E2E_LOCK_DIR:-}" ]; then
-  LOCK_DIR="$E2E_LOCK_DIR"
+if [ -n "${DB_LOCK_DIR:-}" ]; then
+  LOCK_DIR="$DB_LOCK_DIR"
 else
-  LOCK_DIR="$(git rev-parse --git-common-dir)/e2e-lock"
+  LOCK_DIR="$(git rev-parse --git-common-dir)/db-lock"
 fi
 
 OWNER_FILE="$LOCK_DIR/owner"
@@ -86,19 +86,19 @@ acquire_lock() {
 
   while ! mkdir "$LOCK_DIR" 2>/dev/null; do
     if lock_is_abandoned; then
-      echo "🔓 Clearing an abandoned E2E lock ($(describe_holder))" >&2
+      echo "🔓 Clearing an abandoned database lock ($(describe_holder))" >&2
       rm -rf "$LOCK_DIR"
       continue
     fi
 
     if [ "$waited" -ge "$WAIT_TIMEOUT" ]; then
-      echo "⛔ Gave up waiting ${waited}s for the E2E lock held by $(describe_holder)" >&2
+      echo "⛔ Gave up waiting ${waited}s for the database lock held by $(describe_holder)" >&2
       echo "   Release it by letting that run finish, or remove $LOCK_DIR if it is dead." >&2
       return 1
     fi
 
     if [ $(( waited % 30 )) -eq 0 ]; then
-      echo "⏳ Waiting for the E2E lock held by $(describe_holder)" >&2
+      echo "⏳ Waiting for the database lock held by $(describe_holder)" >&2
     fi
 
     sleep "$POLL_INTERVAL"
@@ -134,6 +134,6 @@ acquire_lock
 export E2E_RUN_ID="${E2E_RUN_ID:-$(printf '%04x%04x' "$(( $(date +%s) % 65536 ))" "$(( $$ % 65536 ))")}"
 export E2E_PORT="${E2E_PORT:-$(first_free_port "$FIRST_PORT")}"
 
-echo "🔒 E2E lock acquired — run ${E2E_RUN_ID} on port ${E2E_PORT}" >&2
+echo "🔒 Database lock acquired — run ${E2E_RUN_ID} on port ${E2E_PORT}" >&2
 
 "$@"

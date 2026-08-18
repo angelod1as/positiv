@@ -23,11 +23,15 @@ The setup automatically detects CI environments (`process.env.CI`) and:
 ## One Run At A Time
 
 Every worktree shares one local Supabase instance and one machine, so runs must
-not overlap. `pnpm test:e2e` goes through `scripts/with-e2e-lock.sh`, which
-waits for its turn before starting anything.
+not overlap. `pnpm test:e2e` goes through `scripts/with-db-lock.sh`, which waits
+for its turn before starting anything. `pnpm test:integration` takes the same
+lock, since it reads and writes the same database.
 
 **Always start the suite with `pnpm test:e2e`.** Calling `playwright test`
-directly skips the lock, and two runs at once corrupt each other's data.
+directly skips the lock, and two suites at once corrupt each other's data.
+
+Waiting behind a full E2E run costs a few minutes. That is the price of the
+data being trustworthy when the suite finally runs.
 
 The lock lives in the shared git directory, so it is the same lock from every
 worktree. While waiting, the script prints who holds it and for how long. It
