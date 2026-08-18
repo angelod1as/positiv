@@ -223,8 +223,9 @@ describe("event-rules-page action", () => {
   })
 })
 
-import { MemoryRouter } from "react-router"
+import { MemoryRouter, useLocation } from "react-router"
 import userEvent from "@testing-library/user-event"
+import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules-questions"
 import EventRulesPage from "./event-rules-page"
 import { render, screen, waitFor } from "~/test/test-utils"
 
@@ -389,5 +390,69 @@ describe("event-rules-page across a refresh", () => {
     await shownQuestion()
 
     expect(await screen.findByRole("radio", { name: chosen })).toBeChecked()
+  })
+})
+
+const Location = () => {
+  const location = useLocation()
+
+  return <output data-testid="location">{location.search}</output>
+}
+
+const renderPageAt = (entry: string) =>
+  render(
+    <MemoryRouter initialEntries={[entry]}>
+      <EventRulesPage
+        {...({} as Route.ComponentProps)}
+        loaderData={{ eventType: "regular" }}
+        params={{ id: "123" }}
+      />
+      <Location />
+    </MemoryRouter>,
+  )
+
+const currentSearch = () => screen.getByTestId("location").textContent
+
+describe("event-rules-page in the url", () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+  })
+
+  it("names the question it is showing", async () => {
+    renderPageAt("/dashboard/123/regras")
+
+    const { prompt } = await shownQuestion()
+    const id = promptHeadings()[0].id.replace(/-prompt$/, "")
+
+    await waitFor(() => expect(currentSearch()).toBe(`?q=${id}`))
+    expect(prompt).not.toBe("")
+  })
+
+  it("follows the reader forward", async () => {
+    const user = userEvent.setup()
+    renderPageAt("/dashboard/123/regras")
+
+    const { entry } = await firstSingleAnswerQuestion()
+    const before = currentSearch()
+
+    await answer(user, entry.answers.correct[0])
+
+    await waitFor(() => expect(currentSearch()).not.toBe(before))
+  })
+
+  it("refuses a question the reader has not reached", async () => {
+    // Pinning the shuffle is what makes "the last question" a fixed target:
+    // asking for a random id could name the one the quiz opens on anyway.
+    vi.spyOn(Math, "random").mockReturnValue(0)
+
+    const order = buildRulesQuestions("regular")
+    const first = order[0]
+    const last = order[order.length - 1]
+
+    renderPageAt(`/dashboard/123/regras?q=${last.id}`)
+
+    await waitFor(() => expect(promptHeadings()[0].id).toBe(`${first.id}-prompt`))
+
+    vi.mocked(Math.random).mockRestore()
   })
 })
