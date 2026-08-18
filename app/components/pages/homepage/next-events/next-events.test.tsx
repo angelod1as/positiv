@@ -47,15 +47,9 @@ describe("HomePageNextEvents", () => {
     expect(screen.getByText("Abertura das inscrições:")).toBeInTheDocument()
   })
 
-  it("should render BDSM badge when event_type is bdsm", () => {
+  it("should not badge a legacy BDSM event", () => {
     const bdsmEvent = { ...baseEvent, event_type: "bdsm" as const }
     renderWithRouter(<HomePageNextEvents events={[bdsmEvent]} />)
-
-    expect(screen.getByText("Edição BDSM")).toBeInTheDocument()
-  })
-
-  it("should not render BDSM badge when event_type is regular", () => {
-    renderWithRouter(<HomePageNextEvents events={[baseEvent]} />)
 
     expect(screen.queryByText("Edição BDSM")).not.toBeInTheDocument()
   })
@@ -63,12 +57,11 @@ describe("HomePageNextEvents", () => {
   it("should render multiple events", () => {
     const events = [
       baseEvent,
-      { ...baseEvent, id: "event-2", title: "Second Event", event_type: "bdsm" as const },
+      { ...baseEvent, id: "event-2", title: "Second Event" },
     ]
     renderWithRouter(<HomePageNextEvents events={events} />)
 
     expect(screen.getByText("Test Event")).toBeInTheDocument()
     expect(screen.getByText("Second Event")).toBeInTheDocument()
-    expect(screen.getByText("Edição BDSM")).toBeInTheDocument()
   })
 })

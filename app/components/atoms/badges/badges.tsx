@@ -2,7 +2,7 @@ import { Badge } from "~/components/ui/badge"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { cn } from "~/lib/utils"
-import type { Event, EventStatus } from "~/types/database/entities.types"
+import type { EventStatus } from "~/types/database/entities.types"
 
 export const VeteranBadge = ({
   eventCount,
@@ -70,12 +70,6 @@ export const GenderWarning = ({ genders }: { genders: string[] | null }) =>
       })}
     </div>
   ) : null
-
-export const BDSMBadge = ({
-  event_type,
-}: {
-  event_type: Event["event_type"] | null
-}) => (event_type === "bdsm" ? <Badge variant="bdsm">Edição BDSM</Badge> : null)
 
 export const EventStatusBadge = ({
   event_status,

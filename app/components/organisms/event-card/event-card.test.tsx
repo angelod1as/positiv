@@ -71,15 +71,9 @@ describe("EventCard", () => {
     expect(footer).toHaveAttribute("data-event-id", "test-event-id")
   })
 
-  it("should render BDSM badge when event_type is bdsm", () => {
+  it("should not badge a legacy BDSM event", () => {
     const bdsmEvent = { ...mockEvent, event_type: "bdsm" as const }
     render(<EventCard event={bdsmEvent} data-testid="test-card" />)
-
-    expect(screen.getByText("Edição BDSM")).toBeInTheDocument()
-  })
-
-  it("should not render BDSM badge when event_type is regular", () => {
-    render(<EventCard event={mockEvent} data-testid="test-card" />)
 
     expect(screen.queryByText("Edição BDSM")).not.toBeInTheDocument()
   })
