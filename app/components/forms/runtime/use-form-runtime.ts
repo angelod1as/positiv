@@ -19,6 +19,12 @@ type UseFormRuntimeOptions = {
   flow: Flow
   data?: Record<string, unknown>
   /**
+   * Where the caller believes the run is — a url, typically. Honoured only for
+   * a step whose questions are all answered, so that it walks back through the
+   * flow without opening a way to skip past a question.
+   */
+  stepId?: StepId
+  /**
    * Keeps the run alive across a refresh. Without it the runtime holds
    * everything in memory, which is what a form with nothing to lose wants.
    */
@@ -63,11 +69,30 @@ export function useFormRuntime({
   flow,
   data = {},
   persistence,
+  stepId,
 }: UseFormRuntimeOptions) {
   const questionsById = useMemo(
     () => new Map(questions.map((question) => [question.id, question])),
     [questions],
   )
+
+  const canShow = (id: StepId | undefined, answers: Answers) => {
+    if (!id) return false
+
+    const step = flow.steps[id]
+    if (!step) return false
+
+    const asked =
+      step.kind === "question"
+        ? [step.id]
+        : step.kind === "screen"
+          ? step.ids
+          : []
+
+    return (
+      asked.length > 0 && asked.every((question) => answers[question] !== undefined)
+    )
+  }
 
   const storageKey = persistence
     ? runtimeStorageKey(persistence.formId, persistence.scopeId)
@@ -111,11 +136,16 @@ export function useFormRuntime({
       clearRuntimeState(storageKey)
     } else if (stored) {
       answersRef.current = stored.answers
-      stepRef.current = stored.currentStepId
       firstTryRef.current = stored.firstTryCorrect
       setAnswers(stored.answers)
-      setCurrentStepId(stored.currentStepId)
       setFirstTryCorrect(stored.firstTryCorrect)
+
+      const resumed = canShow(stepId, stored.answers)
+        ? (stepId as StepId)
+        : stored.currentStepId
+
+      stepRef.current = resumed
+      setCurrentStepId(resumed)
     }
 
     setIsRestored(true)
@@ -145,6 +175,18 @@ export function useFormRuntime({
 
     clearRuntimeState(storageKey)
   }, [storageKey, isDone])
+
+  // The caller can move the run itself — the browser's back button, mirrored in
+  // the url, arrives here as a changed stepId.
+  useEffect(() => {
+    if (!stepId || stepId === stepRef.current) return
+    if (!canShow(stepId, answersRef.current)) return
+
+    stepRef.current = stepId
+    setCurrentStepId(stepId)
+    // Only the caller's request belongs here: answers and flow are read for the
+    // decision, but a change in either is not a reason to move anyone.
+  }, [stepId])
 
   const currentQuestions = useMemo(
     () => questionsForStep(currentStep, questionsById),
