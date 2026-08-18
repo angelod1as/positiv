@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
+import { adminTablesCopy } from "~/copy/admin/tables"
 
 type TextViewModalCellProps = {
   value: string | null | undefined
@@ -35,7 +36,7 @@ export const TextViewModalCell = ({ value, label }: TextViewModalCellProps) => {
           variant="ghost"
           size="sm"
           onClick={() => setIsOpen(true)}
-          aria-label="View full text"
+          aria-label={adminTablesCopy.textModal.viewAriaLabel}
         >
           <EyeIcon className="size-4" />
         </Button>
@@ -44,7 +45,7 @@ export const TextViewModalCell = ({ value, label }: TextViewModalCellProps) => {
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogContent aria-describedby={undefined} className="max-h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{label || "View Text"}</DialogTitle>
+            <DialogTitle>{label || adminTablesCopy.textModal.viewTitle}</DialogTitle>
           </DialogHeader>
           <div className="whitespace-pre-wrap overflow-y-auto flex-1">{text}</div>
         </DialogContent>

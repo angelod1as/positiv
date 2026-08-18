@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from "react"
 import type { CellValueChangedEvent, GridApi } from "ag-grid-community"
 import { toast } from "sonner"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import type { AutoSaveParams } from "./types"
 
 export interface UseAutoSaveOptions {
@@ -26,7 +27,7 @@ interface SaveSnapshot {
 }
 
 const DEFAULT_DEBOUNCE_MS = 500
-const DEFAULT_ERROR_MESSAGE = "Erro ao salvar alteração"
+const DEFAULT_ERROR_MESSAGE = adminTablesCopy.autoSave.saveFailed
 
 export function useAutoSave({
   onSave,

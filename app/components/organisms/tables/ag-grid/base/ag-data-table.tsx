@@ -15,6 +15,7 @@ import { AgGridReact } from "ag-grid-react"
 import { Search } from "lucide-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Input } from "~/components/ui/input"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { escapeHtml } from "~/lib/helpers/escape-html"
 import { cn } from "~/lib/utils"
 import { AGDataTableToolbar } from "./ag-data-table-toolbar"
@@ -32,7 +33,7 @@ function ensureModulesRegistered() {
   }
 }
 
-const DEFAULT_EMPTY_MESSAGE = "Nenhum registro encontrado"
+const DEFAULT_EMPTY_MESSAGE = adminTablesCopy.base.emptyMessage
 
 const gridTheme = themeQuartz.withParams({
   rowBorder: true,
@@ -58,8 +59,8 @@ export function AGDataTable<TData>({
   onRowSelectionChange,
   quickFilterText,
   showSearch = false,
-  searchPlaceholder = "Buscar...",
-  searchAriaLabel = "Buscar",
+  searchPlaceholder = adminTablesCopy.base.searchPlaceholder,
+  searchAriaLabel = adminTablesCopy.base.searchAriaLabel,
   onSave,
   autoSaveOptions,
   fetcher,

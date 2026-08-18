@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
+import { adminTablesCopy } from "~/copy/admin/tables"
 
 const TRUNCATE_LENGTH = 25
 
@@ -38,9 +39,7 @@ export function TextModalEditor(params: ICellRendererParams) {
 
   const handleCancel = () => {
     if (isDirty) {
-      const confirmed = window.confirm(
-        "Você tem alterações não salvas. Deseja descartá-las?",
-      )
+      const confirmed = window.confirm(adminTablesCopy.textModal.discardChanges)
       if (!confirmed) {
         return
       }
@@ -65,8 +64,11 @@ export function TextModalEditor(params: ICellRendererParams) {
       params.node.setDataValue(field, editedValue)
       setIsOpen(false)
     } catch (error) {
-      toast.error("Erro ao salvar alteração", {
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+      toast.error(adminTablesCopy.textModal.saveFailed, {
+        description:
+          error instanceof Error
+            ? error.message
+            : adminTablesCopy.textModal.unknownError,
       })
       // Keep modal open on error
     }
@@ -81,7 +83,7 @@ export function TextModalEditor(params: ICellRendererParams) {
           variant="ghost"
           size="sm"
           onClick={handleOpen}
-          aria-label="Edit text"
+          aria-label={adminTablesCopy.textModal.editAriaLabel}
         >
           <PencilIcon className="size-4" />
         </Button>
@@ -100,21 +102,23 @@ export function TextModalEditor(params: ICellRendererParams) {
           }}
         >
           <DialogHeader>
-            <DialogTitle>{label || "Edit Text"}</DialogTitle>
+            <DialogTitle>
+              {label || adminTablesCopy.textModal.editTitle}
+            </DialogTitle>
           </DialogHeader>
           <textarea
             value={editedValue}
             onChange={(e) => setEditedValue(e.target.value)}
-            aria-label={label || "Edit text"}
+            aria-label={label || adminTablesCopy.textModal.editAriaLabel}
             className="min-h-40 w-full rounded border border-gray-300 p-2"
             rows={6}
           />
           <DialogFooter>
             <Button type="button" variant="outline" onClick={handleCancel}>
-              Cancel
+              {adminTablesCopy.textModal.cancel}
             </Button>
             <Button type="button" onClick={handleSave}>
-              Save
+              {adminTablesCopy.textModal.save}
             </Button>
           </DialogFooter>
         </DialogContent>

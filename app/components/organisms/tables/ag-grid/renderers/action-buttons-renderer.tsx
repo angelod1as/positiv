@@ -1,5 +1,6 @@
 import type { ICellRendererParams } from "ag-grid-community"
 import { EyeIcon } from "lucide-react"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import paths from "~/lib/paths"
 import { AGIconButton } from "./ag-icon-button"
 
@@ -31,7 +32,7 @@ export function ActionButtonsRenderer(params: ICellRendererParams) {
   return (
     <AGIconButton
       to={ADMIN_EVENT_VIEW_PARTICIPANT(eventId, profileId)}
-      title="Ver participante"
+      title={adminTablesCopy.renderers.viewParticipant}
     >
       <EyeIcon className="h-4 w-4" />
     </AGIconButton>
