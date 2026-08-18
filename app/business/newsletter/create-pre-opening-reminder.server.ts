@@ -45,12 +45,12 @@ function generateCampaignBody(event: Event): string {
   return `
 <div style="text-align: center; margin-bottom: 30px;">
   <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2;">
-    <span style="display: inline-block; line-height: 1;">⏰</span> Atenção: Inscrições abrem em ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias! <span style="display: inline-block; line-height: 1;">⏰</span>
+    <span style="display: inline-block; line-height: 1;">⏰</span> Atenção: Candidaturas abrem em ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias! <span style="display: inline-block; line-height: 1;">⏰</span>
   </h1>
 </div>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-  Daqui a ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias as inscrições para <strong>${eventDisplay}</strong> abrem!
+  Daqui a ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias as candidaturas para <strong>${eventDisplay}</strong> abrem!
 </p>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
@@ -81,7 +81,7 @@ function generateCampaignBody(event: Event): string {
     <strong style="color: #333;">${time}</strong>
   </div>
   <div style="margin-bottom: 8px; font-size: 14px;">
-    <span style="color: #666;">📅 Inscrições abrem em:</span>
+    <span style="color: #666;">📅 Candidaturas abrem em:</span>
     <strong style="color: #bf03c3;">${applicationOpenDate} às ${applicationOpenTime}</strong>
   </div>
 </div>
@@ -94,7 +94,7 @@ function generateCampaignBody(event: Event): string {
 
 <ul style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0; padding-left: 20px; color: #333;">
   <li style="margin-bottom: 8px;">
-    <strong>O sistema fecha as inscrições AUTOMATICAMENTE quando bater 90 inscrites</strong>
+    <strong>O sistema fecha as candidaturas AUTOMATICAMENTE quando bater 90 candidates</strong>
   </li>
   <li style="margin-bottom: 8px;">
     <strong>Desses 90, selecionaremos 60 pessoas para o evento</strong>
@@ -117,7 +117,7 @@ export const createPreOpeningReminder = composable(
 
     const sanitizedTitle = sanitizeHtml(event.title || "")
     const campaignName = `Pre-Opening Reminder: ${sanitizedTitle}`
-    const subject = `⏰ Atenção: Inscrições abrem em ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias - ${sanitizedTitle}`
+    const subject = `⏰ Atenção: Candidaturas abrem em ${PRE_OPENING_REMINDER_DAYS_BEFORE} dias - ${sanitizedTitle}`
 
     const body = generateCampaignBody(event)
 
