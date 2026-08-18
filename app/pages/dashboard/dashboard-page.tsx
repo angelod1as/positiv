@@ -103,13 +103,13 @@ export const EventsContent: FC<{
           <AlertTitle>Sua conta está pronta</AlertTitle>
           <AlertDescription>
             Mas ter conta não te coloca em nenhuma festa. Escolha um evento
-            abaixo e faça sua inscrição.
+            abaixo e envie sua candidatura.
           </AlertDescription>
         </Alert>
       )}
 
       <div className="flex flex-col gap-4">
-        <h2>Eventos em que você se inscreveu</h2>
+        <h2>Eventos em que você se candidatou</h2>
         {applied.length ? (
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
             {applied.map((event) => (
@@ -121,7 +121,7 @@ export const EventsContent: FC<{
             ))}
           </div>
         ) : (
-          <p>Você não tem nenhuma inscrição no momento.</p>
+          <p>Você não tem nenhuma candidatura no momento.</p>
         )}
       </div>
 

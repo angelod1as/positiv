@@ -258,7 +258,7 @@ export default function FormRuntimeDemoPage() {
           Com a flag, depois de concluir o F5 devolve a última pergunta em vez
           de recomeçar, e seguir dali <strong>roda o commit de novo</strong> —
           que é o ponto de repetir o fluxo. Num formulário de verdade isso
-          significa uma segunda inscrição.
+          significa uma segunda candidatura.
         </p>
         <div>
           <Button type="button" variant="outline" onClick={forget}>

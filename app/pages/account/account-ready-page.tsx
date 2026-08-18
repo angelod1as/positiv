@@ -33,13 +33,13 @@ const AccountReadyPage = ({}: Route.ComponentProps) => {
           <b>ter conta na Positiv não é o mesmo que estar em uma festa.</b>
         </p>
         <p>
-          Cada evento tem inscrição própria. Para ir a um evento, você precisa
-          se inscrever nele — e a inscrição vale só para aquele evento.
+          Cada evento tem candidatura própria. Para ir a um evento, você precisa
+          se candidatar a ele — e a candidatura vale só para aquele evento.
         </p>
         <p>
-          Depois que você se inscreve, a organização seleciona quem vai e entra
+          Depois que você se candidata, a organização seleciona quem vai e entra
           em contato via Whatsapp. Fique ligade: somos uma equipe minúscula que
-          conversa com cada uma das pessoas inscritas. O processo leva tempo.
+          conversa com cada uma das pessoas candidatas. O processo leva tempo.
         </p>
       </CardContent>
 

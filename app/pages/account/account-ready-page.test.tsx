@@ -36,11 +36,11 @@ describe("Account ready page", () => {
     ).toBeInTheDocument()
   })
 
-  it("explains that each event has its own registration", () => {
+  it("explains that each event has its own application", () => {
     renderPage()
     expect(
       screen.getByText(
-        "Cada evento tem inscrição própria. Para ir a um evento, você precisa se inscrever nele — e a inscrição vale só para aquele evento.",
+        "Cada evento tem candidatura própria. Para ir a um evento, você precisa se candidatar a ele — e a candidatura vale só para aquele evento.",
       ),
     ).toBeInTheDocument()
   })

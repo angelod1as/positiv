@@ -37,14 +37,14 @@ describe("HomePageNextEvents", () => {
   it("should show open registration message when event is open", () => {
     renderWithRouter(<HomePageNextEvents events={[baseEvent]} />)
 
-    expect(screen.getByText("Inscrições abertas!")).toBeInTheDocument()
+    expect(screen.getByText("Candidaturas abertas!")).toBeInTheDocument()
   })
 
   it("should show scheduled message when event is not open", () => {
     const scheduledEvent = { ...baseEvent, event_status: "Scheduled" as const }
     renderWithRouter(<HomePageNextEvents events={[scheduledEvent]} />)
 
-    expect(screen.getByText("Abertura das inscrições:")).toBeInTheDocument()
+    expect(screen.getByText("Abertura das candidaturas:")).toBeInTheDocument()
   })
 
   it("should not badge a legacy BDSM event", () => {

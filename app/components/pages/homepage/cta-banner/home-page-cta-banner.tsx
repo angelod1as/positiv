@@ -16,8 +16,8 @@ export const HomePageCtaBanner = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
           <div className="space-y-2">
             <HomePageTitle>Não perca nossos próximos eventos</HomePageTitle>
             <p className="mx-auto max-w-[700px] md:text-xl">
-              Faça login agora, se inscreva para o próximo evento, ou seja
-              lembrade por quando novas inscrições abrirem
+              Faça login agora, candidate-se ao próximo evento, ou seja
+              lembrade por quando novas candidaturas abrirem
             </p>
           </div>
           {isLoggedIn ? (

@@ -74,17 +74,17 @@ export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
                     <CardFooter className="flex flex-col gap-2">
                       {isOpen ? (
                         <p className="text-sm">
-                          <b>Inscrições abertas!</b>
+                          <b>Candidaturas abertas!</b>
                         </p>
                       ) : (
                         <p className="text-sm">
-                          <b>Abertura das inscrições:</b>
+                          <b>Abertura das candidaturas:</b>
                           <br /> {openDate}
                         </p>
                       )}
                       {is_applied ? (
                         <Button variant="outline" to={LOGIN}>
-                          Já inscrite!
+                          Já candidate!
                         </Button>
                       ) : (
                         <Button to={LOGIN}>Participar</Button>

@@ -7,7 +7,7 @@ describe("EventListSkeleton", () => {
     render(<EventListSkeleton />)
 
     expect(
-      screen.getByRole("heading", { name: "Eventos em que você se inscreveu" }),
+      screen.getByRole("heading", { name: "Eventos em que você se candidatou" }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole("heading", { name: "Eventos da Positiv" }),
@@ -17,7 +17,7 @@ describe("EventListSkeleton", () => {
   it("does not render the old status headings", () => {
     render(<EventListSkeleton />)
 
-    expect(screen.queryByText("Inscrições encerradas")).not.toBeInTheDocument()
+    expect(screen.queryByText("Candidaturas encerradas")).not.toBeInTheDocument()
     expect(screen.queryByText("Eventos agendados")).not.toBeInTheDocument()
   })
 })
