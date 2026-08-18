@@ -1,5 +1,6 @@
 import type { ICellRendererParams } from "ag-grid-community"
 import { Link } from "~/components/atoms/link/link"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 
@@ -27,11 +28,11 @@ export function LastAttendedEventRenderer(params: ICellRendererParams) {
   const profileId = data?.profile_id
 
   if (!title || !date) {
-    return <>-</>
+    return <>{adminTablesCopy.renderers.emptyValue}</>
   }
 
   const formattedDate = formatDateTime(date, "numeric").date
-  if (!formattedDate) return <>-</>
+  if (!formattedDate) return <>{adminTablesCopy.renderers.emptyValue}</>
 
   const truncatedTitle =
     title.length > MAX_TITLE_LENGTH
@@ -43,7 +44,7 @@ export function LastAttendedEventRenderer(params: ICellRendererParams) {
   return (
     <span>
       <span className="text-gray-500">{formattedDate}</span>
-      {" - "}
+      {adminTablesCopy.renderers.lastAttendedSeparator}
       {canLink ? (
         <Link to={ADMIN_EVENT_VIEW_PARTICIPANT(eventId, profileId)} title={title}>
           {truncatedTitle}

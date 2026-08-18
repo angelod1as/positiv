@@ -150,6 +150,9 @@ export const adminDatavizCopy = {
     noData: "Nenhum dado de ocupação disponível",
     occupancyRate: "Taxa de Ocupação",
     occupancy: "Ocupação",
+    percentage: (value: number) => `${value}%`,
+    attendedOfTotal: (attended: number, total: number) =>
+      `${attended} / ${total}`,
     attended: "Compareceram",
     fullCapacity: "Capacidade Total (100%)",
     average: (average: number) => `Média: ${average}%`,
@@ -171,5 +174,6 @@ export const adminDatavizCopy = {
     rookies: "Novatos",
     total: "Total",
     veteranPercentage: "% Veteranos",
+    percentage: (value: string) => `${value}%`,
   },
 } as const

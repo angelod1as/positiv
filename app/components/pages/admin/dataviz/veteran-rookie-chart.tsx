@@ -87,7 +87,7 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
           <span className="chart-tooltip-label">
             {veteranRookieCopy.veteranPercentage}
           </span>
-          <span className="chart-tooltip-value">{veteranPercentage.toFixed(1)}%</span>
+          <span className="chart-tooltip-value">{veteranRookieCopy.percentage(veteranPercentage.toFixed(1))}</span>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ export const adminParticipantsCopy = {
     profileMissing: "Perfil não encontrado ou não existe.",
   },
   detail: {
+    nameAndAge: (name: string | null, age: number | string) => `${name ?? ""}, ${age}`,
     inEvent: (emoji: string | null, title: string | null) => {
       const event = [emoji, title].filter(Boolean).join(" ")
       return event ? `No evento **${event}**` : "No evento"
@@ -51,11 +52,14 @@ export const adminParticipantsCopy = {
   },
   eventHistory: {
     title: "Histórico de candidaturas",
+    surplusPositive: (value: string) => `+${value}`,
+    surplusNegative: (value: string) => `-${value}`,
     surplus: "Diferença",
     empty: "Nenhuma candidatura anterior encontrada",
   },
   financialSummary: {
     title: "Resumo Financeiro",
+    parenthesised: (value: string) => `(${value})`,
     totalInvested: "Total investido",
     paidEvents: "Eventos pagos",
     averagePerEvent: "Média por evento",

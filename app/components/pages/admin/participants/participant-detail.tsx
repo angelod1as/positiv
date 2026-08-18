@@ -42,7 +42,10 @@ export const ParticipantDetail = ({
       <div className="flex">
         <div className="space-y-1">
           <h2>
-            {name}, {getAge(profile.date_of_birth)}
+            {adminParticipantsCopy.detail.nameAndAge(
+              name,
+              getAge(profile.date_of_birth),
+            )}
           </h2>
           {currentEvent && (
             <p>

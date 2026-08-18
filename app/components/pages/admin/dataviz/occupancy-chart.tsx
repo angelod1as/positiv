@@ -66,13 +66,13 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
           <span className="chart-tooltip-label">
             {occupancyCopy.occupancy}
           </span>
-          <span className="chart-tooltip-value">{Number(dataPoint.occupancy_pct ?? 0)}%</span>
+          <span className="chart-tooltip-value">{occupancyCopy.percentage(Number(dataPoint.occupancy_pct ?? 0))}</span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-label">
             {occupancyCopy.attended}
           </span>
-          <span className="chart-tooltip-value">{Number(dataPoint.compareceram ?? 0)} / {Number(dataPoint.total_spots ?? 0)}</span>
+          <span className="chart-tooltip-value">{occupancyCopy.attendedOfTotal(Number(dataPoint.compareceram ?? 0), Number(dataPoint.total_spots ?? 0))}</span>
         </div>
       </div>
     </div>

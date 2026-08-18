@@ -45,6 +45,8 @@ export const adminTablesCopy = {
     unknownError: "Erro desconhecido",
   },
   renderers: {
+    emptyValue: "-",
+    lastAttendedSeparator: " - ",
     viewParticipant: "Ver participante",
     viewProfile: "Ver perfil",
     whatsapp: "WhatsApp",
@@ -113,6 +115,7 @@ export const adminTablesCopy = {
       acceptedInProcessLabel: "Aceites no processo",
     },
     tooltips: {
+      categoryLabel: (label: string) => `${label}:`,
       general:
         "Total de todas as candidaturas registradas para este evento, independente de status.",
       acceptedInProcessIntro:

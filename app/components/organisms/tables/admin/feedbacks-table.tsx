@@ -70,7 +70,7 @@ function SocialNameRenderer(params: ICellRendererParams<FeedbackWithVerification
   const { data } = params
 
   if (!data?.social_name) {
-    return <>-</>
+    return <>{adminTablesCopy.renderers.emptyValue}</>
   }
 
   return <>{data.social_name}</>
@@ -80,7 +80,7 @@ function FullNameRenderer(params: ICellRendererParams<FeedbackWithVerification>)
   const { data } = params
 
   if (!data?.full_name) {
-    return <>-</>
+    return <>{adminTablesCopy.renderers.emptyValue}</>
   }
 
   return <>{data.full_name}</>

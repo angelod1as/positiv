@@ -5,6 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip"
+import { adminTablesCopy } from "~/copy/admin/tables"
 
 type CategoryLabelWithTooltipProps = {
   label: string
@@ -17,7 +18,7 @@ export function CategoryLabelWithTooltip({
 }: CategoryLabelWithTooltipProps) {
   return (
     <div className="flex items-center gap-1">
-      <p>{label}:</p>
+      <p>{adminTablesCopy.eventParticipants.tooltips.categoryLabel(label)}</p>
       <Tooltip>
         <TooltipTrigger asChild>
           <HelpCircle className="h-3.5 w-3.5 text-gray-500 cursor-help" />

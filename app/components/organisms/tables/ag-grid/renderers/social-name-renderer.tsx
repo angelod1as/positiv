@@ -1,5 +1,6 @@
 import type { ICellRendererParams } from "ag-grid-community"
 import { Link } from "~/components/atoms/link/link"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import paths from "~/lib/paths"
 
 const {
@@ -27,7 +28,7 @@ export function SocialNameRenderer(
   const ctx = context as SocialNameContext | undefined
 
   if (!data) {
-    return <>-</>
+    return <>{adminTablesCopy.renderers.emptyValue}</>
   }
 
   const { social_name: socialName, full_name: fullName } = data
@@ -38,7 +39,11 @@ export function SocialNameRenderer(
     content = <>{socialName}</>
   } else {
     const firstName = fullName?.trim().split(/\s+/)[0]
-    content = firstName ? <i>{firstName}</i> : <>-</>
+    content = firstName ? (
+      <i>{firstName}</i>
+    ) : (
+      <>{adminTablesCopy.renderers.emptyValue}</>
+    )
   }
 
   // When in event context, use event-participant route with profile_id

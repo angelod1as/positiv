@@ -101,12 +101,14 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
                     {item.event_emoji} {item.event_title}
                     {formattedDate && (
                       <span className="text-muted-foreground ml-1">
-                        ({formattedDate})
+                        {financialCopy.parenthesised(formattedDate)}
                       </span>
                     )}
                     {item.ticket_price != null && (
                       <span className="text-muted-foreground ml-1">
-                        ({formatCurrency(Number(item.ticket_price))})
+                        {financialCopy.parenthesised(
+                          formatCurrency(Number(item.ticket_price)),
+                        )}
                       </span>
                     )}
                   </span>
@@ -117,7 +119,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
                         surplus >= 0 ? "text-green-600" : "text-red-600"
                       }
                     >
-                      ({formatSurplus(surplus)})
+                      {financialCopy.parenthesised(formatSurplus(surplus))}
                     </span>
                   </span>
                 </li>
