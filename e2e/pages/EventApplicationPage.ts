@@ -41,7 +41,7 @@ export class EventApplicationPage extends BasePage {
 
     // BDSM consent page
     this.bdsmTitle = page.getByRole("heading", {
-      name: "Consentimento BDSM",
+      name: "Essa é uma edição BDSM da Positiv",
       exact: true,
     })
     this.bdsmContinueButton = page.getByRole("button", { name: "Continuar" })
@@ -201,12 +201,15 @@ export class EventApplicationPage extends BasePage {
     referred?: string
     bondType?: string
   }): Promise<void> {
-    // Handle rules or BDSM consent page
+    // A BDSM event asks for consent BEFORE the rules quiz, so these are steps in
+    // sequence, not alternatives
+    if (await this.isOnBDSMConsentPage()) {
+      await this.fillBDSMConsentForm()
+      await this.clickContinue()
+    }
+
     if (await this.isOnRulesPage()) {
       await this.fillRulesForm()
-      await this.clickContinue()
-    } else if (await this.isOnBDSMConsentPage()) {
-      await this.fillBDSMConsentForm()
       await this.clickContinue()
     }
 
