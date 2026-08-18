@@ -37,8 +37,7 @@ test.describe('Admin Event Management', () => {
       description: 'This is a test event created by E2E tests',
       location: 'Test Location',
       price: '100',
-      capacity: '50',
-      type: 'regular'
+      capacity: '50'
     })
     
     // Set event start date
