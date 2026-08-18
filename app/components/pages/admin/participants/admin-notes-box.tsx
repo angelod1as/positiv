@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react"
 import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { Card, CardContent } from "~/components/ui/card"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Label } from "~/components/ui/label"
 import {
@@ -19,6 +20,8 @@ import type {
   ComposableFetcherData,
   ProfileFlagStatus,
 } from "~types/database/entities.types"
+
+const notesCopy = adminParticipantsCopy.adminNotes
 
 type AdminNotesBoxProps = {
   profileId: string
@@ -48,10 +51,10 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
   useEffect(() => {
     if (fetcher.data && fetcher.data !== previousDataRef.current) {
       if (fetcher.data.success) {
-        toast.success("Dados salvos com sucesso")
+        toast.success(notesCopy.saved)
       } else {
         const errorMessage =
-          fetcher.data.errors?._global?.[0] ?? "Erro ao salvar"
+          fetcher.data.errors?._global?.[0] ?? notesCopy.saveFailed
         toast.error(errorMessage)
       }
     }
@@ -81,9 +84,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
     // If changing to a non-"none" flag, validate flag_notes
     if (newFlag !== "none") {
       if (!localFlagNotes.trim()) {
-        toast.warning(
-          "Notas da Flag são obrigatórias quando uma flag é selecionada",
-        )
+        toast.warning(notesCopy.flagNotesRequired)
         return
       }
       // Submit both flag and flag_notes when setting a non-none flag
@@ -101,9 +102,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
   ) => {
     // Prevent clearing flag_notes when a flag is set
     if (field === "flag_notes" && flag !== "none" && !value.trim()) {
-      toast.warning(
-        "Notas da Flag não podem estar vazias enquanto uma flag está selecionada",
-      )
+      toast.warning(notesCopy.flagNotesEmpty)
       setLocalFlagNotes(originalValue ?? "")
       return
     }
@@ -117,13 +116,13 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
   return (
     <Card className="py-4">
       <CardContent>
-        <h3 className="mb-4">Em toda a Positiv</h3>
+        <h3 className="mb-4">{notesCopy.title}</h3>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="flag">Flag</Label>
+            <Label htmlFor="flag">{notesCopy.flag}</Label>
             <Select value={flag} onValueChange={handleFlagChange}>
               <SelectTrigger id="flag">
-                <SelectValue placeholder="Selecione uma flag" />
+                <SelectValue placeholder={notesCopy.flagPlaceholder} />
               </SelectTrigger>
               <SelectContent>
                 {flagStatusOptions.map((option) => (
@@ -136,7 +135,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="flag_notes">Notas da Flag</Label>
+            <Label htmlFor="flag_notes">{notesCopy.flagNotes}</Label>
             <TextArea
               id="flag_notes"
               value={localFlagNotes}
@@ -144,12 +143,12 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
               onBlur={(e) =>
                 handleTextBlur("flag_notes", e.target.value, flagNotes)
               }
-              placeholder="Notas sobre a flag..."
+              placeholder={notesCopy.flagNotesPlaceholder}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="general_notes">Notas Gerais</Label>
+            <Label htmlFor="general_notes">{notesCopy.generalNotes}</Label>
             <TextArea
               id="general_notes"
               value={localGeneralNotes}
@@ -157,7 +156,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
               onBlur={(e) =>
                 handleTextBlur("general_notes", e.target.value, generalNotes)
               }
-              placeholder="Notas gerais sobre o perfil..."
+              placeholder={notesCopy.generalNotesPlaceholder}
             />
           </div>
 
@@ -168,7 +167,7 @@ export const AdminNotesBox: FC<AdminNotesBoxProps> = ({
                 submitField("is_veteran", e.target.checked)
               }
             />
-            <span>Veterano</span>
+            <span>{notesCopy.veteran}</span>
           </Label>
         </div>
       </CardContent>

@@ -1,5 +1,7 @@
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-dropdown/approval-status-dropdown"
+import { Copy } from "~/components/atoms/copy/copy"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { Card, CardContent } from "~/components/ui/card"
 import { getAge } from "~/lib/helpers/get-age"
 import type {
@@ -44,10 +46,12 @@ export const ParticipantDetail = ({
           </h2>
           {currentEvent && (
             <p>
-              No evento{" "}
-              <b>
-                {currentEvent.data.event_emoji} {currentEvent.data.event_title}
-              </b>
+              <Copy inline>
+                {adminParticipantsCopy.detail.inEvent(
+                  currentEvent.data.event_emoji,
+                  currentEvent.data.event_title,
+                )}
+              </Copy>
             </p>
           )}
           <div className="mt-4">

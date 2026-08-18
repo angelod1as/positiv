@@ -1,7 +1,10 @@
 import type { FC } from "react"
 import { Card, CardContent } from "~/components/ui/card"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
+
+const financialCopy = adminParticipantsCopy.financialSummary
 
 type FinancialSummaryProps = {
   participantHistory: ParticipantEventHistoryData[]
@@ -48,31 +51,39 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   return (
     <Card>
       <CardContent>
-        <h3 className="text-lg font-semibold mb-4">Resumo Financeiro</h3>
+        <h3 className="text-lg font-semibold mb-4">{financialCopy.title}</h3>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div>
-            <p className="text-sm text-muted-foreground">Total investido</p>
+            <p className="text-sm text-muted-foreground">
+              {financialCopy.totalInvested}
+            </p>
             <p className="text-xl font-bold">{formatCurrency(totalInvested)}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Eventos pagos</p>
+            <p className="text-sm text-muted-foreground">
+              {financialCopy.paidEvents}
+            </p>
             <p className="text-xl font-bold">{paidEventsCount}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Média por evento</p>
+            <p className="text-sm text-muted-foreground">
+              {financialCopy.averagePerEvent}
+            </p>
             <p className="text-xl font-bold">
               {formatCurrency(averagePerEvent)}
             </p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Diferença total</p>
+            <p className="text-sm text-muted-foreground">
+              {financialCopy.totalSurplus}
+            </p>
             <p className="text-xl font-bold">{formatSurplus(totalSurplus)}</p>
           </div>
         </div>
 
         <div>
-          <h4 className="text-sm font-medium mb-2">Pagamentos</h4>
+          <h4 className="text-sm font-medium mb-2">{financialCopy.payments}</h4>
           <ul className="space-y-2">
             {paidEvents.map((item) => {
               const surplus =

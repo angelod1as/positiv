@@ -4,7 +4,10 @@ import { createMemoryRouter, RouterProvider } from "react-router"
 import { toast } from "sonner"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { ProfileFlagStatus } from "~types/database/entities.types"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { AdminNotesBox } from "./admin-notes-box"
+
+const notesCopy = adminParticipantsCopy.adminNotes
 
 vi.mock("sonner", () => ({
   toast: {
@@ -72,14 +75,14 @@ describe("AdminNotesBox", () => {
     const router = createTestRouter(defaultProps)
     render(<RouterProvider router={router} />)
 
-    expect(screen.getByText("Em toda a Positiv")).toBeInTheDocument()
+    expect(screen.getByText(notesCopy.title)).toBeInTheDocument()
   })
 
   it("should render flag select with correct value", () => {
     const router = createTestRouter({ ...defaultProps, flag: "yellow" })
     render(<RouterProvider router={router} />)
 
-    const flagSelect = screen.getByLabelText("Flag")
+    const flagSelect = screen.getByLabelText(notesCopy.flag)
     expect(flagSelect).toBeInTheDocument()
   })
 
@@ -90,7 +93,7 @@ describe("AdminNotesBox", () => {
     })
     render(<RouterProvider router={router} />)
 
-    const textarea = screen.getByLabelText("Notas da Flag")
+    const textarea = screen.getByLabelText(notesCopy.flagNotes)
     expect(textarea).toHaveValue("Some warning")
   })
 
@@ -101,7 +104,7 @@ describe("AdminNotesBox", () => {
     })
     render(<RouterProvider router={router} />)
 
-    const textarea = screen.getByLabelText("Notas Gerais")
+    const textarea = screen.getByLabelText(notesCopy.generalNotes)
     expect(textarea).toHaveValue("General admin notes")
   })
 
@@ -125,7 +128,7 @@ describe("AdminNotesBox", () => {
     render(<RouterProvider router={router} />)
 
     // Click the trigger to open the dropdown
-    const flagSelect = screen.getByLabelText("Flag")
+    const flagSelect = screen.getByLabelText(notesCopy.flag)
     await user.click(flagSelect)
 
     // Click the "Sem flag" option (none flag)
@@ -183,7 +186,7 @@ describe("AdminNotesBox", () => {
       const router = createTestRouter(defaultProps)
       render(<RouterProvider router={router} />)
 
-      const textarea = screen.getByLabelText("Notas da Flag")
+      const textarea = screen.getByLabelText(notesCopy.flagNotes)
       await user.type(textarea, "typing some notes")
 
       // Should NOT have submitted while typing
@@ -196,7 +199,7 @@ describe("AdminNotesBox", () => {
       const router = createTestRouter(defaultProps)
       render(<RouterProvider router={router} />)
 
-      const textarea = screen.getByLabelText("Notas da Flag")
+      const textarea = screen.getByLabelText(notesCopy.flagNotes)
       await user.type(textarea, "new notes")
       await user.tab() // Move focus away (blur)
 
@@ -217,7 +220,7 @@ describe("AdminNotesBox", () => {
       })
       render(<RouterProvider router={router} />)
 
-      const textarea = screen.getByLabelText("Notas da Flag")
+      const textarea = screen.getByLabelText(notesCopy.flagNotes)
       // Just focus and blur without changing
       await user.click(textarea)
       await user.tab()
@@ -235,13 +238,13 @@ describe("AdminNotesBox", () => {
       })
       render(<RouterProvider router={router} />)
 
-      const textarea = screen.getByLabelText("Notas da Flag")
+      const textarea = screen.getByLabelText(notesCopy.flagNotes)
       await user.clear(textarea)
       await user.tab()
 
       // Should show warning toast
       expect(toast.warning).toHaveBeenCalledWith(
-        "Notas da Flag não podem estar vazias enquanto uma flag está selecionada",
+        notesCopy.flagNotesEmpty,
       )
       // Should NOT submit
       expect(mockFetcher.submit).not.toHaveBeenCalled()
@@ -253,7 +256,7 @@ describe("AdminNotesBox", () => {
       const router = createTestRouter(defaultProps)
       render(<RouterProvider router={router} />)
 
-      const textarea = screen.getByLabelText("Notas Gerais")
+      const textarea = screen.getByLabelText(notesCopy.generalNotes)
       await user.type(textarea, "typing general notes")
 
       expect(mockFetcher.submit).not.toHaveBeenCalled()
@@ -265,7 +268,7 @@ describe("AdminNotesBox", () => {
       const router = createTestRouter(defaultProps)
       render(<RouterProvider router={router} />)
 
-      const textarea = screen.getByLabelText("Notas Gerais")
+      const textarea = screen.getByLabelText(notesCopy.generalNotes)
       await user.type(textarea, "new general notes")
       await user.tab()
 
@@ -286,7 +289,7 @@ describe("AdminNotesBox", () => {
       render(<RouterProvider router={router} />)
 
       // Click the trigger to open the dropdown
-      const flagSelect = screen.getByLabelText("Flag")
+      const flagSelect = screen.getByLabelText(notesCopy.flag)
       await user.click(flagSelect)
 
       // Click the "Amarela" option (yellow flag)
@@ -295,7 +298,7 @@ describe("AdminNotesBox", () => {
 
       await waitFor(() => {
         expect(toast.warning).toHaveBeenCalledWith(
-          "Notas da Flag são obrigatórias quando uma flag é selecionada"
+          notesCopy.flagNotesRequired
         )
       })
 
@@ -313,7 +316,7 @@ describe("AdminNotesBox", () => {
       render(<RouterProvider router={router} />)
 
       // Click the trigger to open the dropdown
-      const flagSelect = screen.getByLabelText("Flag")
+      const flagSelect = screen.getByLabelText(notesCopy.flag)
       await user.click(flagSelect)
 
       // Click the "Amarela" option (yellow flag)
@@ -341,7 +344,7 @@ describe("AdminNotesBox", () => {
 
       // Toast should be shown immediately when fetcher.data has success
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith("Dados salvos com sucesso")
+        expect(toast.success).toHaveBeenCalledWith(notesCopy.saved)
       })
     })
 
@@ -376,7 +379,7 @@ describe("AdminNotesBox", () => {
       render(<RouterProvider router={router} />)
 
       // Click the trigger to open the dropdown
-      const flagSelect = screen.getByLabelText("Flag")
+      const flagSelect = screen.getByLabelText(notesCopy.flag)
       await user.click(flagSelect)
 
       // Click the "Sem flag" option (none flag)
