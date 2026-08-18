@@ -70,7 +70,7 @@ describe("ViewEventParticipant", () => {
         is_veteran: true,
       },
       eventParticipant: {
-        event_title: "Workshop BDSM",
+        event_title: "Workshop de Cordas",
         event_emoji: "🌱",
       },
       fullHistory: [
@@ -101,7 +101,7 @@ describe("ViewEventParticipant", () => {
         is_veteran: false,
       },
       eventParticipant: {
-        event_title: "Workshop BDSM",
+        event_title: "Workshop de Cordas",
         event_emoji: "🌱",
       },
       fullHistory: [],
@@ -127,7 +127,7 @@ describe("ViewEventParticipant", () => {
         is_veteran: true,
       },
       eventParticipant: {
-        event_title: "Workshop BDSM",
+        event_title: "Workshop de Cordas",
         event_emoji: "🌱",
       },
       fullHistory: [], // Empty history
@@ -153,7 +153,7 @@ describe("ViewEventParticipant", () => {
         is_veteran: true,
       },
       eventParticipant: {
-        event_title: "Workshop BDSM",
+        event_title: "Workshop de Cordas",
         event_emoji: "🌱",
       },
       fullHistory: [],
@@ -168,14 +168,14 @@ describe("ViewEventParticipant", () => {
 
     // Should show event info
     expect(screen.getByText(/No evento/)).toBeInTheDocument()
-    expect(screen.getByText(/🌱 Workshop BDSM/)).toBeInTheDocument()
+    expect(screen.getByText(/🌱 Workshop de Cordas/)).toBeInTheDocument()
   })
 
   it("should handle null profile gracefully", () => {
     const mockLoaderData = {
       profile: null,
       eventParticipant: {
-        event_title: "Workshop BDSM",
+        event_title: "Workshop de Cordas",
         event_emoji: "🌱",
       },
       fullHistory: [],

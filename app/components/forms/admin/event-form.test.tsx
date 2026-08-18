@@ -161,9 +161,9 @@ describe("EventForm", () => {
   describe("with existing event data", () => {
     const mockEvent: Event = {
       id: "123",
-      title: "Test BDSM Event",
+      title: "Test Legacy Event",
       emoji: "🔒",
-      description: "A test BDSM event",
+      description: "A test legacy event",
       location: "Test Location",
       ticket_price: 100,
       total_spots: 50,
@@ -185,10 +185,10 @@ describe("EventForm", () => {
     it("populates form fields with existing event data", () => {
       render(<EventForm event={mockEvent} />)
 
-      expect(screen.getByTestId("field-title")).toHaveValue("Test BDSM Event")
+      expect(screen.getByTestId("field-title")).toHaveValue("Test Legacy Event")
       expect(screen.getByTestId("field-emoji")).toHaveValue("🔒")
       expect(screen.getByTestId("field-description")).toHaveValue(
-        "A test BDSM event",
+        "A test legacy event",
       )
       expect(screen.getByTestId("field-location")).toHaveValue("Test Location")
     })

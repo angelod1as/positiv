@@ -62,7 +62,7 @@ const mockCurrentEventData = {
   id: "ep-1",
   profile_id: "profile-1",
   event_id: "event-1",
-  event_title: "Workshop BDSM",
+  event_title: "Workshop de Cordas",
   event_emoji: "🌱",
   is_veteran: true,
   approved_to_attend: "approved",
@@ -187,7 +187,7 @@ describe("ParticipantDetail", () => {
       render(<RouterProvider router={router} />)
 
       expect(screen.getByText(/No evento/)).toBeInTheDocument()
-      expect(screen.getByText(/🌱 Workshop BDSM/)).toBeInTheDocument()
+      expect(screen.getByText(/🌱 Workshop de Cordas/)).toBeInTheDocument()
     })
 
     it("should render ParticipantVsEventData when currentEvent is provided", () => {
