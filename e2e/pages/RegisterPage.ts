@@ -1,5 +1,8 @@
-import { type Page, type Locator, expect } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { BasePage } from './BasePage'
+
+/** Local Supabase runs with captcha verification disabled, so any token passes. */
+const MOCK_CAPTCHA_TOKEN = 'e2e-mock-captcha-token-12345'
 
 export class RegisterPage extends BasePage {
 
@@ -12,99 +15,136 @@ export class RegisterPage extends BasePage {
   readonly confirmPasswordInput: Locator
   readonly over18Checkbox: Locator
   readonly submitButton: Locator
-  readonly generalErrorAlert: Locator
-  readonly emailError: Locator
-  readonly passwordError: Locator
-  readonly confirmPasswordError: Locator
-  readonly over18Error: Locator
-  readonly captchaError: Locator
+  readonly captchaTokenInput: Locator
   readonly turnstileIframe: Locator
   readonly loginLink: Locator
-  readonly successMessage: Locator
+
+  // Errors. The runtime draws each message as an alert beside its own field,
+  // so they are found by what they say rather than by a generated id.
+  readonly confirmPasswordError: Locator
+  readonly over18Error: Locator
+  readonly emailFormatError: Locator
+  readonly claimedProfileError: Locator
+  readonly commitFailureError: Locator
+  readonly anyAlreadyRegisteredWording: Locator
 
   constructor(page: Page) {
     super(page)
 
-    // Initialize locators
-    this.emailInput = page.getByRole('textbox', { name: 'E-mail' })
+    this.emailInput = page.getByLabel('E-mail')
     this.passwordInput = page.getByLabel('Senha', { exact: true })
     this.confirmPasswordInput = page.getByLabel('Confirme a senha')
     this.over18Checkbox = page.getByRole('checkbox', { name: 'Sou maior de 18 anos' })
     this.submitButton = page.getByRole('button', { name: 'Continuar' })
-
-    // Error locators - use last() to get the actual error message, not the label
-    // General error is for server errors, not field validation
-    this.generalErrorAlert = page.getByRole('alert').filter({
-      hasText: /erro|error|ops|já cadastrado|already registered/i
-    })
-    this.emailError = page.locator('#errors-for-email').last()
-    this.passwordError = page.locator('#errors-for-password').last()
-    this.confirmPasswordError = page.locator('#errors-for-confirmPassword').last()
-    this.over18Error = page.locator('#errors-for-over18').last()
-    this.captchaError = page.locator('#errors-for-captchaToken').last()
-
-    // Turnstile iframe (Cloudflare captcha)
+    this.captchaTokenInput = page.locator('input[name="captchaToken"]')
     this.turnstileIframe = page.locator('iframe[src*="challenges.cloudflare.com"]')
-
-    // Navigation
     this.loginLink = page.getByRole('link', { name: 'Entre aqui' })
 
-    // Success message (if displayed on page)
-    this.successMessage = page.getByText('Você precisa confirmar sua conta, veja seu e-mail!')
+    this.confirmPasswordError = page.getByText('As senhas não são iguais')
+    this.over18Error = page.getByText('Você só pode se inscrever se for maior de 18 anos')
+    this.emailFormatError = page.getByRole('alert').filter({ hasText: /e-?mail/i })
+    this.claimedProfileError = page.getByText(/Houve um erro no cadastro da sua conta/i)
+    this.commitFailureError = page.getByText('Não foi possível salvar agora. Tente novamente.')
+
+    // Nothing on this page may ever say that an address is taken. Kept as a
+    // locator so a test can assert its absence.
+    this.anyAlreadyRegisteredWording = page.getByText(
+      /já (est[áa] )?cadastrad|already registered|conta j[áa] existe/i,
+    )
   }
 
   async goto(): Promise<void> {
     await this.page.goto(this.url)
-    // Wait for DOM to be ready, then wait for form element instead of networkidle
-    // networkidle is flaky in CI environments
     await this.page.waitForLoadState('domcontentloaded')
-    // Wait for form to be ready (more reliable than networkidle)
+    // The form is client-rendered, so the field arriving is what says the page
+    // is ready — more reliable than networkidle in CI.
     await this.emailInput.waitFor({ state: 'visible', timeout: 30000 })
   }
 
-  async fillRegistrationForm(email: string, password: string, confirmPassword?: string): Promise<void> {
+  /**
+   * Makes sure the runtime is holding a captcha token before the form is sent.
+   *
+   * The widget is preferred — with the test site key it answers on its own, and
+   * letting it do so is what keeps this honest. But it depends on reaching
+   * Cloudflare, which a CI run may not, so a token is handed over directly when
+   * the widget has produced none in time. Either way it reaches React state
+   * through the mirror input the page renders for exactly this.
+   */
+  async provideCaptchaToken(token: string = MOCK_CAPTCHA_TOKEN): Promise<void> {
+    await this.captchaTokenInput.waitFor({ state: 'attached', timeout: 30000 })
+
+    try {
+      await expect(this.captchaTokenInput).not.toHaveValue('', { timeout: 5000 })
+      return
+    } catch {
+      console.warn('Turnstile produced no token in time; handing one over directly.')
+    }
+
+    await this.setCaptchaToken(token)
+  }
+
+  /**
+   * Writes into the mirror the way a person types: through the native value
+   * setter plus an input event, which is what React listens for. `fill()` would
+   * refuse an element hidden from view.
+   */
+  async setCaptchaToken(token: string = MOCK_CAPTCHA_TOKEN): Promise<void> {
+    await this.captchaTokenInput.evaluate((element, value) => {
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        'value',
+      )?.set
+
+      setter?.call(element, value)
+      element.dispatchEvent(new Event('input', { bubbles: true }))
+    }, token)
+
+    await expect(this.captchaTokenInput).toHaveValue(token)
+  }
+
+  /**
+   * The widget can expire or error after answering, and either wipes the token.
+   * Asserted right before sending, so a submit is never made with one that
+   * quietly went away.
+   */
+  async verifyCaptchaTokenIsHeld(): Promise<void> {
+    await expect(this.captchaTokenInput).not.toHaveValue('')
+  }
+
+  async fillRegistrationForm(
+    email: string,
+    password: string,
+    confirmPassword?: string,
+    { captcha = 'widget' }: { captcha?: 'widget' | 'direct' } = {},
+  ): Promise<void> {
     await this.emailInput.fill(email)
     await this.passwordInput.fill(password)
-    await this.confirmPasswordInput.fill(confirmPassword || password)
-    // Use force click if the checkbox has a label overlay
+    await this.confirmPasswordInput.fill(confirmPassword ?? password)
+    // The visible box is a styled span over a screen-reader-only input.
     await this.over18Checkbox.check({ force: true })
 
-    // Wait for Turnstile to auto-complete (test keys auto-pass in localhost)
-    await this.waitForTurnstileCompletion()
-  }
-
-  async waitForTurnstileCompletion(): Promise<void> {
-    try {
-      // Wait for the Turnstile iframe to appear (may not load in CI)
-      await this.page.waitForSelector('iframe[src*="challenges.cloudflare.com"]', {
-        state: 'attached',
-        timeout: 5000
-      })
-      // With test keys, Turnstile auto-completes. Wait a moment for the token to be set
-      await this.page.waitForTimeout(1000)
-    } catch {
-      // Turnstile may not load in CI environments - inject mock token
-      // Supabase captcha is disabled locally (config.toml), so any token works
-      await this.injectMockCaptchaToken()
+    if (captcha === 'direct') {
+      await this.setCaptchaToken()
+    } else {
+      await this.provideCaptchaToken()
     }
+
+    await this.verifyCaptchaTokenIsHeld()
   }
 
-  private async injectMockCaptchaToken(): Promise<void> {
-    // Use Playwright's fill method on the hidden input - this properly triggers React events
-    const captchaInput = this.page.locator('input[name="captchaToken"]')
-    await captchaInput.fill('e2e-mock-captcha-token-12345', { force: true })
-    // Brief wait for form state to update
-    await this.page.waitForTimeout(200)
-  }
-
-  async register(email: string, password: string, confirmPassword?: string): Promise<void> {
+  async register(
+    email: string,
+    password: string,
+    confirmPassword?: string,
+    options: { captcha?: 'widget' | 'direct' } = {},
+  ): Promise<void> {
     await this.goto()
-    await this.fillRegistrationForm(email, password, confirmPassword)
+    await this.fillRegistrationForm(email, password, confirmPassword, options)
     await this.submitButton.click()
   }
 
   async verifyRegistrationPageDisplayed(): Promise<void> {
-    await expect(this.page.getByText('Criar conta')).toBeVisible()
+    await expect(this.page.getByText('Criar conta', { exact: true })).toBeVisible()
     await expect(this.emailInput).toBeVisible()
     await expect(this.passwordInput).toBeVisible()
     await expect(this.confirmPasswordInput).toBeVisible()
@@ -112,22 +152,26 @@ export class RegisterPage extends BasePage {
     await expect(this.submitButton).toBeVisible()
   }
 
-  async verifyFormErrors(): Promise<void> {
-    // This will verify all required field errors are shown
-    await expect(this.emailError).toBeVisible()
-    await expect(this.passwordError).toBeVisible()
-    await expect(this.confirmPasswordError).toBeVisible()
-    await expect(this.over18Error).toBeVisible()
+  async verifyPasswordsAreMasked(): Promise<void> {
+    await expect(this.passwordInput).toHaveAttribute('type', 'password')
+    await expect(this.confirmPasswordInput).toHaveAttribute('type', 'password')
   }
 
   async waitForSuccessRedirect(): Promise<void> {
-    // Wait for redirect to confirm email message page
-    // Use domcontentloaded instead of networkidle for CI reliability
-    await this.page.waitForURL('/registrar/confirmar-email', { waitUntil: 'domcontentloaded' })
+    await this.page.waitForURL('/registrar/confirmar-email', {
+      waitUntil: 'domcontentloaded',
+    })
   }
 
   async verifyConfirmEmailPageDisplayed(): Promise<void> {
     await expect(this.page.getByText('Confirme sua conta')).toBeVisible()
-    await expect(this.page.getByText(/clique no link na mensagem enviada para seu email/i)).toBeVisible()
+    await expect(
+      this.page.getByText(/clique no link na mensagem enviada para seu email/i),
+    ).toBeVisible()
+  }
+
+  /** Nothing anywhere on the page may reveal that an address already has an account. */
+  async verifyNothingRevealsAnExistingAccount(): Promise<void> {
+    await expect(this.anyAlreadyRegisteredWording).toHaveCount(0)
   }
 }

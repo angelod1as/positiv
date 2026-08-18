@@ -71,10 +71,14 @@ const RegisterPage = ({}: Route.ComponentProps) => {
             onExpire={() => args.onChange("")}
             onError={() => args.onChange("")}
           />
-          {/* The e2e run cannot always reach Cloudflare. This lets the suite
-              hand the runtime a token the way the widget would. */}
+          {/* Mirrors the token the widget handed over, so the e2e run can see
+              that it arrived — and hand one over itself on a run that cannot
+              reach Cloudflare. Hidden through the attribute rather than
+              type="hidden": React only tracks changes on text inputs, so a
+              hidden-typed one would take a value without ever reporting it. */}
           <input
-            type="hidden"
+            hidden
+            type="text"
             name="captchaToken"
             value={typeof args.value === "string" ? args.value : ""}
             onChange={(event) => args.onChange(event.target.value)}
