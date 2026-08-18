@@ -55,11 +55,19 @@ export function FormRunner({
 
   const reportedRef = useRef(false)
 
+  // Held in a ref because callers write this callback inline: keeping it in the
+  // effect's dependencies would report on every render, and a caller that
+  // answers by changing state — a url, say — would never stop rendering.
+  const onStepChangeRef = useRef(onStepChange)
+  useEffect(() => {
+    onStepChangeRef.current = onStepChange
+  })
+
   useEffect(() => {
     if (!isRestored || currentStepId === stepId) return
 
-    onStepChange?.(currentStepId)
-  }, [isRestored, currentStepId, stepId, onStepChange])
+    onStepChangeRef.current?.(currentStepId)
+  }, [isRestored, currentStepId, stepId])
 
   useEffect(() => {
     if (!isDone || reportedRef.current) return

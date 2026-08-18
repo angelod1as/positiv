@@ -153,3 +153,45 @@ describe("FormRunner told which step to show", () => {
     expect(shown()).toBe("Qual seu nome?")
   })
 })
+
+describe("FormRunner reporting to a caller that rebuilds its callback", () => {
+  it("reports once per step, however often the caller rerenders", async () => {
+    const user = userEvent.setup()
+    const seen: string[] = []
+
+    // What a page mirroring the step in the url does: the callback is written
+    // inline, so it is a different function on every render.
+    const view = render(
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+        onStepChange={(step) => seen.push(step)}
+      />,
+    )
+
+    await answerAndAdvance(user, "Angelo")
+
+    view.rerender(
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+        onStepChange={(step) => seen.push(step)}
+      />,
+    )
+    view.rerender(
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+        onStepChange={(step) => seen.push(step)}
+      />,
+    )
+
+    expect(seen).toEqual(["nome", "cidade"])
+  })
+})
