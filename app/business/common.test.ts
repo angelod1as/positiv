@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   applyToEventSchema,
   basicDataSchema,
+  registerUserFieldsSchema,
   registerUserSchema,
 } from "./common"
 
@@ -189,6 +190,33 @@ describe("registerUserSchema", () => {
         expect(result.data.captchaToken).toBe("valid-token")
       }
     })
+  })
+})
+
+describe("registerUserFieldsSchema", () => {
+  it("exposes each field so a question can reuse it", () => {
+    expect(
+      registerUserFieldsSchema.shape.email.safeParse("nao-e-email").success,
+    ).toBe(false)
+    expect(
+      registerUserFieldsSchema.shape.email.safeParse("a@b.com").success,
+    ).toBe(true)
+    expect(
+      registerUserFieldsSchema.shape.password.safeParse("curta").success,
+    ).toBe(false)
+  })
+
+  it("does not check that the passwords match — that is the whole schema's job", () => {
+    const values = {
+      email: "a@b.com",
+      password: "segredo123",
+      confirmPassword: "outra",
+      over18: true,
+      captchaToken: "token",
+    }
+
+    expect(registerUserFieldsSchema.safeParse(values).success).toBe(true)
+    expect(registerUserSchema.safeParse(values).success).toBe(false)
   })
 })
 
