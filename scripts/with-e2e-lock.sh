@@ -130,7 +130,8 @@ first_free_port() {
 
 acquire_lock
 
-export E2E_RUN_ID="${E2E_RUN_ID:-$(printf '%x%04x' "$(date +%s)" "$$")}"
+# Kept short: the id is spent from the 50 character event title budget
+export E2E_RUN_ID="${E2E_RUN_ID:-$(printf '%04x%04x' "$(( $(date +%s) % 65536 ))" "$(( $$ % 65536 ))")}"
 export E2E_PORT="${E2E_PORT:-$(first_free_port "$FIRST_PORT")}"
 
 echo "🔒 E2E lock acquired — run ${E2E_RUN_ID} on port ${E2E_PORT}" >&2

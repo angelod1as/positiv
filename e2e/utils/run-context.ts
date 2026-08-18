@@ -2,12 +2,16 @@ import { randomBytes } from 'node:crypto'
 
 export const DEFAULT_E2E_PORT = 5273
 
-export const ABANDONED_TEST_EVENT_PATTERN = '[E2E-TEST:%'
+export const ABANDONED_TEST_EVENT_PATTERN = '[E2E:%'
 
 const ABANDONED_AFTER_HOURS = 1
 
+// Mirrors the admin event form: `eventFormSchema.title` in app/business/admin/common.ts
+const MAX_EVENT_TITLE_LENGTH = 50
+
 export function generateRunId(): string {
-  return `${Date.now().toString(36)}${randomBytes(4).toString('hex')}`
+  // Short on purpose: the id is spent from the event title's 50 character budget
+  return `${(Date.now() % 1_000_000).toString(36)}${randomBytes(2).toString('hex')}`
 }
 
 export function getRunId(): string {
@@ -19,11 +23,19 @@ export function getRunId(): string {
 }
 
 export function runEventTitlePrefix(): string {
-  return `[E2E-TEST:${getRunId()}]`
+  return `[E2E:${getRunId()}]`
 }
 
 export function runEventTitle(label: string): string {
-  return `${runEventTitlePrefix()} ${label}`
+  const title = `${runEventTitlePrefix()} ${label}`
+
+  if (title.length > MAX_EVENT_TITLE_LENGTH) {
+    throw new Error(
+      `Event title "${title}" is ${title.length} characters; the admin form accepts at most ${MAX_EVENT_TITLE_LENGTH}. Shorten the label.`
+    )
+  }
+
+  return title
 }
 
 export function runEventTitlePattern(): string {

@@ -39,7 +39,7 @@ rather than hanging forever.
 The lock is the first line of defence, not the only one. Each run gets an id
 (`E2E_RUN_ID`) that tags everything it creates:
 
-- events are titled `[E2E-TEST:<runId>] ...`
+- events are titled `[E2E:<runId>] ...`
 - users carry `e2e_run_id` in their metadata and `test-<runId>-...@example.com`
   addresses
 

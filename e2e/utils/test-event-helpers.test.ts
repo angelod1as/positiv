@@ -53,7 +53,7 @@ describe('ensureClosedTestEvent', () => {
 
     await ensureClosedTestEvent()
 
-    expect(double.argumentsOf('events', 'like')).toEqual(['title', '[E2E-TEST:thisrun]%'])
+    expect(double.argumentsOf('events', 'like')).toEqual(['title', '[E2E:thisrun]%'])
   })
 
   it('tags the event it creates with the current run', async () => {
@@ -62,7 +62,7 @@ describe('ensureClosedTestEvent', () => {
 
     await ensureClosedTestEvent()
 
-    expect(insertedTitles(double)).toEqual([expect.stringContaining('[E2E-TEST:thisrun]')])
+    expect(insertedTitles(double)).toEqual([expect.stringContaining('[E2E:thisrun]')])
   })
 })
 
@@ -74,8 +74,8 @@ describe('ensureMinimumOpenEvents', () => {
     await ensureMinimumOpenEvents(2)
 
     expect(insertedTitles(double)).toEqual([
-      expect.stringContaining('[E2E-TEST:thisrun]'),
-      expect.stringContaining('[E2E-TEST:thisrun]'),
+      expect.stringContaining('[E2E:thisrun]'),
+      expect.stringContaining('[E2E:thisrun]'),
     ])
   })
 })

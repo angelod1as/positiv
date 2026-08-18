@@ -11,9 +11,9 @@ vi.mock('../../app/business/newsletter/listmonk-lists.server', () => ({
   deleteList: vi.fn(async () => ({ success: true })),
 }))
 
-const OTHER_RUN_EVENT = { id: 'event-from-another-run', title: '[E2E-TEST:otherrun] Event', listmonk_list_id: null }
-const OWN_EVENT = { id: 'event-from-this-run', title: '[E2E-TEST:thisrun] Event', listmonk_list_id: null }
-const ABANDONED_EVENT = { id: 'event-from-a-crashed-run', title: '[E2E-TEST:deadrun] Event', listmonk_list_id: null }
+const OTHER_RUN_EVENT = { id: 'event-from-another-run', title: '[E2E:otherrun] Event', listmonk_list_id: null }
+const OWN_EVENT = { id: 'event-from-this-run', title: '[E2E:thisrun] Event', listmonk_list_id: null }
+const ABANDONED_EVENT = { id: 'event-from-a-crashed-run', title: '[E2E:deadrun] Event', listmonk_list_id: null }
 
 function useDouble(respond: (query: RecordedQuery) => unknown): SupabaseDouble {
   const double = createSupabaseDouble(respond)
@@ -39,7 +39,7 @@ describe('cleanupTestEvents', () => {
 
     await cleanupTestEvents()
 
-    expect(double.argumentsOf('events', 'ilike')).toEqual(['title', '[E2E-TEST:thisrun]%'])
+    expect(double.argumentsOf('events', 'ilike')).toEqual(['title', '[E2E:thisrun]%'])
   })
 
   it('does not delete events belonging to a run in another worktree', async () => {
