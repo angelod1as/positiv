@@ -7,6 +7,8 @@ import {
 } from "~/business/auth/auth.server"
 import { changePasswordSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { changePasswordCopy } from "~/copy/account"
+import { metaCopy } from "~/copy/meta"
 import paths from "~/lib/paths"
 import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/change-password-page"
@@ -18,7 +20,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Mudar Senha")
+  return createMetaArray(metaCopy.changePassword.title)
 }
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
@@ -31,7 +33,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(ACCOUNT, {
-          message: "Um link chegará em seu e-mail, veja lá!",
+          message: changePasswordCopy.successToast,
           duration: 10_000,
         })
       }
@@ -50,22 +52,22 @@ const ChangePasswordPage = ({}: Route.ComponentProps) => {
   return (
     <div className="flex flex-col w-full max-w-md gap-8">
       <div>
-        <h1>Mudar senha</h1>
+        <h1>{changePasswordCopy.title}</h1>
         <p className="text-muted-foreground">
-          Por favor digite sua nova senha abaixo
+          {changePasswordCopy.description}
         </p>
       </div>
 
       <SchemaForm
         schema={changePasswordSchema}
-        labels={{ password: "Nova senha", confirm_password: "Confirmar senha" }}
-        placeholders={{ password: "senha123", confirm_password: "senha123" }}
+        labels={changePasswordCopy.labels}
+        placeholders={changePasswordCopy.placeholders}
         inputTypes={{
           password: "password",
           confirm_password: "password",
         }}
-        pendingButtonLabel="Mudando..."
-        buttonLabel="Mudar senha"
+        pendingButtonLabel={changePasswordCopy.pendingButtonLabel}
+        buttonLabel={changePasswordCopy.buttonLabel}
       />
     </div>
   )

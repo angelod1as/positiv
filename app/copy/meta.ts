@@ -24,4 +24,7 @@ export const metaCopy = {
   accountReady: {
     title: "Tudo pronto",
   },
+  changePassword: {
+    title: "Mudar Senha",
+  },
 } as const
