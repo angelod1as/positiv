@@ -103,7 +103,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   if (!eventParticipantResult.success || !eventParticipantResult.data) {
     console.error("Error fetching event participant:", eventParticipantResult.errors)
     return redirectWithError(
-      "Participante não inscrite neste evento.",
+      "Participante não candidate neste evento.",
       ADMIN_VIEW_EVENT(eventId),
     )
   }

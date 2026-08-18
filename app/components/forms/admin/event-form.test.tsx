@@ -277,7 +277,7 @@ describe("EventForm", () => {
       // Check section headings
       expect(screen.getByText("Dados gerais")).toBeInTheDocument()
       expect(screen.getByText("Datas")).toBeInTheDocument()
-      expect(screen.getByText("Inscrições")).toBeInTheDocument()
+      expect(screen.getByText("Candidaturas")).toBeInTheDocument()
       expect(screen.getByText("Grupo")).toBeInTheDocument()
       expect(screen.getByText("Pagamentos")).toBeInTheDocument()
     })

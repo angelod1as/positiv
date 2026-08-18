@@ -44,7 +44,7 @@ export const eventPropNameMap = (property: keyof Event) => {
   return {
     created_at: "Criado em",
     id: "Id do evento",
-    time_application_start: "Início das inscrições",
+    time_application_start: "Início das candidaturas",
     description: "Descrição",
     emoji: "Emoji",
     time_event_end: "Fim do evento",
@@ -60,7 +60,7 @@ export const eventPropNameMap = (property: keyof Event) => {
     ticket_price: "Valor",
     title: "Nome",
     total_spots: "Lotação",
-    is_applied: "Inscrite",
+    is_applied: "Candidate",
     listmonk_list_id: "ID da lista Listmonk",
     listmonk_list_synced_at: "Última sincronização da lista",
   }[property]
@@ -71,12 +71,12 @@ export const eventParticipantPropMap = (property: keyof EventParticipant) => {
     id: "Id do participante",
     profile_id: "Id do perfil",
     event_id: "Id do evento",
-    is_user_applied: "Inscrite?",
+    is_user_applied: "Candidate?",
     has_paid: "Pago?",
     payment: "Pagamento",
     attendance_status: "Status de Presença",
     application_status: "Status de Processo",
-    application_date: "Data de inscrição",
+    application_date: "Data da candidatura",
     cancellation_date: "Data de cancelamento",
     created_at: "Criado em",
     notes: "Notas",
@@ -100,11 +100,11 @@ export const eventStatusMap = (event_status: EventStatus) => {
     {
       Draft: "Rascunho",
       Scheduled: "Agendado",
-      "Registration Open": "Inscrições abertas",
-      "Registration Closed": "Inscrições encerradas",
+      "Registration Open": "Candidaturas abertas",
+      "Registration Closed": "Candidaturas encerradas",
       Cancelled: "Cancelado",
       Completed: "Finalizado",
-      "Already Applied": "Já inscrite",
+      "Already Applied": "Já candidate",
     }[event_status] || ""
   )
 }

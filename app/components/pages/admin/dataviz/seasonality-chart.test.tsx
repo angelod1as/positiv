@@ -92,7 +92,7 @@ describe('SeasonalityChart', () => {
     expect(chart).toHaveAttribute('role', 'img')
     expect(chart).toHaveAttribute(
       'aria-label',
-      'Análise de sazonalidade - inscrições e comparecimento ao longo do tempo'
+      'Análise de sazonalidade - candidaturas e comparecimento ao longo do tempo'
     )
   })
 

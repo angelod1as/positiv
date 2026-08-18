@@ -222,12 +222,12 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
 
   return (
     <>
-      <h2>Histórico de Inscrições</h2>
+      <h2>Histórico de candidaturas</h2>
       <AGDataTable
         id="participant-event-history"
         data={participantHistory}
         columnDefs={columnDefs}
-        emptyMessage="Nenhuma inscrição anterior encontrada"
+        emptyMessage="Nenhuma candidatura anterior encontrada"
       />
     </>
   )

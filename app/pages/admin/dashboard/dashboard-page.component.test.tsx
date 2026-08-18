@@ -144,7 +144,7 @@ describe("AdminDashboard Component", () => {
     )
 
     expect(
-      screen.queryByText("Eventos com inscrições abertas"),
+      screen.queryByText("Eventos com candidaturas abertas"),
     ).not.toBeInTheDocument()
     expect(screen.queryByTestId("event-card")).not.toBeInTheDocument()
   })
@@ -165,7 +165,7 @@ describe("AdminDashboard Component", () => {
     )
 
     expect(
-      screen.getByText("Eventos com inscrições abertas"),
+      screen.getByText("Eventos com candidaturas abertas"),
     ).toBeInTheDocument()
     expect(screen.getByTestId("event-card")).toBeInTheDocument()
   })

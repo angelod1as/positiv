@@ -221,7 +221,7 @@ export const createEventListmonkList = composable(
     }
 
     const listResult = await createList({
-      name: `Inscrites - ${event.title ?? "Evento sem título"}`,
+      name: `Candidates - ${event.title ?? "Evento sem título"}`,
       type: "private",
       optin: "single",
     })

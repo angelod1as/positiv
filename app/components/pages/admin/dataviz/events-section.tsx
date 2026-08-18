@@ -69,7 +69,7 @@ export function EventsSection({
       />
       <ChartSection
         title="Presença por Evento"
-        description="Evolução do número de inscritos, comparecimentos e faltas ao longo dos eventos."
+        description="Evolução do número de candidaturas, comparecimentos e faltas ao longo dos eventos."
       >
         <AttendanceChart data={slicedAttendance} />
       </ChartSection>
@@ -81,7 +81,7 @@ export function EventsSection({
       </ChartSection>
       <ChartSection
         title="Funil de Conversão"
-        description="Proporção de inscritos que finalizaram cadastro, pagaram e compareceram."
+        description="Proporção das candidaturas que finalizaram cadastro, pagaram e compareceram."
       >
         <FunnelChart data={slicedFunnel} />
       </ChartSection>

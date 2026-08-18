@@ -86,7 +86,7 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
                   ✋ Publicação Manual
                 </p>
                 <p className="text-gray-700 dark:text-gray-200 mt-1">
-                  Este evento requer publicação manual. Altere o status para "Inscrições Abertas" quando desejar publicar.
+                  Este evento requer publicação manual. Altere o status para "Candidaturas abertas" quando desejar publicar.
                 </p>
               </div>
             )}

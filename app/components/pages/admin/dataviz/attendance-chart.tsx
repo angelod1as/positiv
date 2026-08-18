@@ -19,7 +19,7 @@ import { buildEventLabel } from '~/lib/helpers/chart-utils'
 const LABELED_SERIES = new Set(['inscritos', 'compareceram'])
 
 const SERIES_CONFIG = [
-  { dataKey: 'inscritos', label: 'Inscritos', color: 'var(--chart-1)' },
+  { dataKey: 'inscritos', label: 'Candidaturas', color: 'var(--chart-1)' },
   { dataKey: 'compareceram', label: 'Compareceram', color: 'var(--chart-2)' },
   { dataKey: 'nao_foram', label: 'Não foram', color: 'var(--chart-3)' },
   { dataKey: 'withdrew', label: 'Desistiu', color: 'var(--chart-4)' },

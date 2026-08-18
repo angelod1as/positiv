@@ -88,7 +88,7 @@ describe('AttendanceChart', () => {
 
   it('renders legend items for all series', () => {
     render(<AttendanceChart data={mockData} />)
-    expect(screen.getByText('Inscritos')).toBeInTheDocument()
+    expect(screen.getByText('Candidaturas')).toBeInTheDocument()
     expect(screen.getByText('Compareceram')).toBeInTheDocument()
     expect(screen.getByText('Não foram')).toBeInTheDocument()
     expect(screen.getByText('Desistiu')).toBeInTheDocument()
@@ -102,7 +102,7 @@ describe('AttendanceChart', () => {
     const user = userEvent.setup()
     render(<AttendanceChart data={mockData} />)
 
-    const inscritosLegend = screen.getByText('Inscritos')
+    const inscritosLegend = screen.getByText('Candidaturas')
     await user.click(inscritosLegend)
 
     // After clicking, the series should be visually hidden (opacity reduced)

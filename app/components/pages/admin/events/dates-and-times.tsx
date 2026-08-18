@@ -25,7 +25,7 @@ export const DatesAndTimes: FC<DatesAndTimesProps> = ({
         </thead>
         <tbody>
           <tr>
-            <td className="font-bold">Inscrições</td>
+            <td className="font-bold">Candidaturas</td>
             <td>{formatDateTime(time_application_start).date}</td>
             <td />
           </tr>

@@ -75,7 +75,7 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
       {activeEvents.length > 0 && (
         <div className="flex flex-col gap-8">
-          <h2>Eventos com inscrições abertas</h2>
+          <h2>Eventos com candidaturas abertas</h2>
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
             {activeEvents.map((event) => (
               <EventCard

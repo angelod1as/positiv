@@ -66,7 +66,7 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
       <div className="grid gap-1.5">
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-1)' }} />
-          <span className="chart-tooltip-label">Inscritos</span>
+          <span className="chart-tooltip-label">Candidaturas</span>
           <span className="chart-tooltip-value">{dataPoint.inscritos}</span>
         </div>
         <div className="chart-tooltip-row">
@@ -81,7 +81,7 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
 
 export function SeasonalityChart({ data, className }: SeasonalityChartProps) {
   const chartConfig: ChartConfig = {
-    inscritos: { label: 'Inscritos', color: 'var(--chart-1)' },
+    inscritos: { label: 'Candidaturas', color: 'var(--chart-1)' },
     compareceram: { label: 'Compareceram', color: 'var(--chart-2)' },
   }
 
@@ -103,7 +103,7 @@ export function SeasonalityChart({ data, className }: SeasonalityChartProps) {
         config={chartConfig}
         className={className}
         role="img"
-        aria-label="Análise de sazonalidade - inscrições e comparecimento ao longo do tempo"
+        aria-label="Análise de sazonalidade - candidaturas e comparecimento ao longo do tempo"
       >
         <RechartsBarChart data={chartData}>
           <CartesianGrid vertical={false} />
