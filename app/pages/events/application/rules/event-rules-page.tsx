@@ -108,9 +108,15 @@ const EventRulesPage = ({ loaderData, params }: Route.ComponentProps) => {
               next.set(STEP_PARAM, step)
               return next
             },
-            // The question the quiz opens on is where the reader already is;
-            // only the ones they walk to are worth a trip back.
-            { replace: !requestedStep },
+            {
+              // The question the quiz opens on is where the reader already is;
+              // only the ones they walk to are worth a trip back.
+              replace: !requestedStep,
+              // Every step is a navigation, and the quiz sits under the whole
+              // rules text. Letting the router reset the scroll would throw the
+              // reader back to the top of the rules on every answer.
+              preventScrollReset: true,
+            },
           )
         }}
         onDone={() => {
