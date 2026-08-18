@@ -43,14 +43,22 @@ test.describe('Account signup versus event registration', () => {
 
     await page.goto('/dashboard')
 
-    const applyButton = page.getByRole('link', { name: 'Fazer inscrição' }).first()
-    const applyButtonCount = await page.getByRole('link', { name: 'Fazer inscrição' }).count()
-    test.skip(applyButtonCount === 0, 'No event with open registration in this environment')
+    // Skip BDSM editions: they add a consent step before the rules quiz, and this
+    // test is about where the card lands on the dashboard, not about that step
+    const applyableCards = page
+      .locator('[data-testid^="event-card"]')
+      .filter({ has: page.getByRole('link', { name: 'Fazer inscrição' }) })
+      .filter({ hasNotText: 'BDSM' })
+    const applyButtonCount = await applyableCards.count()
+    for (const card of await page.locator('[data-testid^="event-card"]').all()) {
+    }
+    test.skip(applyButtonCount === 0, 'No non-BDSM event with open registration in this environment')
 
-    const eventTitle = await applyButton
-      .locator('xpath=ancestor::*[starts-with(@data-testid, "event-card")]')
-      .locator('h3')
-      .innerText()
+    const applyButton = applyableCards
+      .first()
+      .getByRole('link', { name: 'Fazer inscrição' })
+
+    const eventTitle = await applyableCards.first().locator('h3').innerText()
 
     await applyButton.click()
     await page.waitForURL(/\/dashboard\/.+/)
