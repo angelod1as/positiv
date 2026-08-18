@@ -1,4 +1,5 @@
 import type { z } from "zod"
+import { rulesQuizCopy } from "~/copy/events"
 import { zod } from "~/lib/helpers/zod"
 import { getRulesFormQuestions } from "./rules-questions"
 
@@ -13,7 +14,7 @@ export const getRulesFormSchema = () => {
           .string()
           .min(1)
           .refine((answer) => question.answers.correct.includes(answer), {
-            message: "Você escolheu a resposta errada",
+            message: rulesQuizCopy.answerErrors.wrongAnswer,
           })
       } else {
         // Multiple-select (checkbox)
@@ -24,7 +25,7 @@ export const getRulesFormSchema = () => {
           .refine(
             (answers) =>
               answers.some((answer) => question.answers.correct.includes(answer)),
-            { message: "Nenhuma das respostas selecionadas está correta" },
+            { message: rulesQuizCopy.answerErrors.noneCorrect },
           )
           .refine(
             (answers) => {
@@ -34,7 +35,7 @@ export const getRulesFormSchema = () => {
               )
               return selectedCorrect.length === correctAnswers.length
             },
-            { message: "Você não selecionou todas as respostas corretas" },
+            { message: rulesQuizCopy.answerErrors.missingCorrect },
           )
           .refine(
             (answers) => {
@@ -43,7 +44,7 @@ export const getRulesFormSchema = () => {
               )
               return incorrectAnswers.length === 0
             },
-            { message: "Você selecionou uma ou mais respostas incorretas" },
+            { message: rulesQuizCopy.answerErrors.hasIncorrect },
           )
       }
 

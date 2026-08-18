@@ -205,6 +205,12 @@ export const rulesQuizCopy = {
   loading: "Carregando perguntas...",
   hasErrors: "Há erros nas suas respostas",
   submitLabel: "Continuar",
+  answerErrors: {
+    wrongAnswer: "Você escolheu a resposta errada",
+    noneCorrect: "Nenhuma das respostas selecionadas está correta",
+    missingCorrect: "Você não selecionou todas as respostas corretas",
+    hasIncorrect: "Você selecionou uma ou mais respostas incorretas",
+  },
 } as const
 
 export const eventListCopy = {
