@@ -75,3 +75,58 @@ describe("buildRulesQuestions input kind", () => {
     )
   })
 })
+
+const orderOf = (eventType: "regular") =>
+  buildRulesQuestions(eventType)
+    .map((question) => question.id)
+    .join("|")
+
+const optionOrderOf = (id: string) => {
+  const question = buildRulesQuestions("regular").find(
+    (item) => item.id === id,
+  )
+
+  return question && "options" in question.input
+    ? question.input.options.map((option) => option.value).join("|")
+    : ""
+}
+
+describe("buildRulesQuestions shuffling", () => {
+  it("does not hand the questions back in the order they are written", () => {
+    const orders = new Set(
+      Array.from({ length: 10 }, () => orderOf("regular")),
+    )
+
+    expect(orders.size).toBeGreaterThan(1)
+  })
+
+  it("shuffles the options of a question too", () => {
+    const orders = new Set(
+      Array.from({ length: 10 }, () => optionOrderOf("not-a-club")),
+    )
+
+    expect(orders.size).toBeGreaterThan(1)
+  })
+
+  it("loses no question and no answer while shuffling", () => {
+    const quiz = getRulesFormQuestions("regular")
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const built = buildRulesQuestions("regular")
+
+      expect(built.map((question) => question.id).sort()).toEqual(
+        Object.keys(quiz).sort(),
+      )
+
+      for (const question of built) {
+        const answers = quiz[question.id as keyof typeof quiz].answers
+        const options =
+          "options" in question.input ? question.input.options : []
+
+        expect(options.map((option) => option.value).sort()).toEqual(
+          [...answers.correct, ...answers.incorrect].sort(),
+        )
+      }
+    }
+  })
+})
