@@ -5,7 +5,7 @@ import { EventStatusBadge } from "./badges"
 describe("EventStatusBadge", () => {
   it("says registration is open", () => {
     render(<EventStatusBadge event_status="Registration Open" />)
-    expect(screen.getByText("Inscrições abertas")).toBeInTheDocument()
+    expect(screen.getByText("Candidaturas abertas")).toBeInTheDocument()
   })
 
   it("says the event is scheduled", () => {
@@ -15,6 +15,6 @@ describe("EventStatusBadge", () => {
 
   it("says registration is closed", () => {
     render(<EventStatusBadge event_status="Registration Closed" />)
-    expect(screen.getByText("Inscrições encerradas")).toBeInTheDocument()
+    expect(screen.getByText("Candidaturas encerradas")).toBeInTheDocument()
   })
 })

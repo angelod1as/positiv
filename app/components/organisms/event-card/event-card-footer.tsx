@@ -73,7 +73,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   if (isScheduled) {
     return (
       <Button data-testid={dataTestId} disabled={true}>
-        Inscrições em breve
+        Candidaturas em breve
       </Button>
     )
   }
@@ -119,10 +119,10 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
 
         <fetcher.Form method="post">
           <ConfirmDialog
-            title="Cancelar inscrição"
+            title="Cancelar candidatura"
             description={
               <div>
-                <p>Você tem certeza que deseja cancelar sua inscrição?</p>
+                <p>Você tem certeza que deseja cancelar sua candidatura?</p>
               </div>
             }
             confirmLabel="😢 Cancelar"
@@ -131,7 +131,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
             onConfirm={handleConfirmCancel}
           >
             <ConfirmDialog.Trigger variant="destructive" className="w-full">
-              Cancelar inscrição
+              Cancelar candidatura
             </ConfirmDialog.Trigger>
           </ConfirmDialog>
         </fetcher.Form>
@@ -142,7 +142,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   if (isClosed) {
     return (
       <Button data-testid={dataTestId} disabled={true}>
-        Inscrições encerradas
+        Candidaturas encerradas
       </Button>
     )
   }
@@ -154,7 +154,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
         to={EVENT_VIEW(eventId)}
         linkProps={{ prefetch: prefetchStrategy }}
       >
-        Fazer inscrição
+        Me candidatar
       </Button>
     )
   }

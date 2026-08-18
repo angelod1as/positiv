@@ -46,7 +46,7 @@ export async function action({ request, params }: Route.ActionArgs) {
           throw await redirectWithSuccess(
             DASHBOARD,
             {
-              message: "Inscrição efetuada com sucesso",
+              message: "Candidatura enviada com sucesso",
               description:
                 "Você receberá as informações do evento em seu email (pode demorar uns minutos)",
               duration: 3000,
@@ -59,9 +59,9 @@ export async function action({ request, params }: Route.ActionArgs) {
           throw await redirectWithWarning(
             DASHBOARD,
             {
-              message: "Inscrição efetuada com sucesso!",
+              message: "Candidatura enviada com sucesso!",
               description:
-                "Houve um problema no envio do email, mas não se preocupe - sua inscrição foi registrada. Você pode verificar no seu painel.",
+                "Houve um problema no envio do email, mas não se preocupe - sua candidatura foi registrada. Você pode verificar no seu painel.",
               duration: 6000,
             },
             {
@@ -88,10 +88,10 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
       <h1>Quase lá!</h1>
       <p>
         Parabéns, você acertou tudo! Essa é a última etapa: precisamos de
-        algumas informações específicas à inscrição nesse evento.
+        algumas informações específicas à candidatura nesse evento.
       </p>
       <p>
-        Ao clicar no botão "Confirmar Inscrição", sua inscrição será confirmada
+        Ao clicar no botão "Enviar candidatura", sua candidatura será enviada
         (óbvio) e você irá receber um email com os dados do evento, salve na sua
         agenda!
       </p>
@@ -126,7 +126,7 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
               "Diga pra gente se você vai de galera — e quem é esse pessoal.",
             bond: "Se, pra você, tudo bem se você for selecionade e elas não, selecione a caixinha acima.",
           }}
-          buttonLabel="🎉 Confirmar Inscrição!"
+          buttonLabel="🎉 Enviar candidatura!"
         />
       </div>
     </>

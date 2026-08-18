@@ -29,7 +29,7 @@ export const RulesDialog: FC<RulesDialogProps> = ({
 
   return (
     <ConfirmDialog
-      title="Confirmar inscrição"
+      title="Enviar candidatura"
       description={
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
@@ -46,7 +46,7 @@ export const RulesDialog: FC<RulesDialogProps> = ({
           <div>
             <p>
               Você acertou tudo! Agora só falta clicar nesse botãozinho abaixo e
-              confirmar sua inscrição.
+              enviar sua candidatura.
             </p>
             <p>
               Você vai receber um email com os dados do evento, salve na sua

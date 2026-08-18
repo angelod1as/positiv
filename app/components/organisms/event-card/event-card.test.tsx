@@ -81,7 +81,7 @@ describe("EventCard", () => {
   it("shows the registration status of an open event", () => {
     render(<EventCard event={mockEvent} data-testid="test-card" />)
 
-    expect(screen.getByText("Inscrições abertas")).toBeInTheDocument()
+    expect(screen.getByText("Candidaturas abertas")).toBeInTheDocument()
   })
 
   it("shows the registration status of a closed event", () => {
@@ -91,6 +91,6 @@ describe("EventCard", () => {
     }
     render(<EventCard event={closedEvent} data-testid="test-card" />)
 
-    expect(screen.getByText("Inscrições encerradas")).toBeInTheDocument()
+    expect(screen.getByText("Candidaturas encerradas")).toBeInTheDocument()
   })
 })
