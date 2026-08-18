@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { EventRevenueDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { RevenueChart } from './revenue-chart'
 
 vi.mock('recharts', async () => {
@@ -64,7 +65,7 @@ describe('RevenueChart', () => {
     const { container } = render(<RevenueChart data={mockData} />)
     const chartContainer = container.querySelector('[data-chart]')
     expect(chartContainer).toHaveAttribute('role', 'img')
-    expect(chartContainer).toHaveAttribute('aria-label', 'Faturamento por evento')
+    expect(chartContainer).toHaveAttribute('aria-label', adminDatavizCopy.revenueChart.ariaLabel)
   })
 
   it('applies custom className prop', () => {

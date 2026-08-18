@@ -1,8 +1,11 @@
 import { ReferenceLine } from 'recharts'
 import type { RetentionDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { BarChart } from '~/components/molecules/charts/bar-chart'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import type { ChartConfig } from '~/components/ui/chart'
 import type { ChartDataPoint, ChartSeries } from '~/types/chart.types'
+
+const retentionCopy = adminDatavizCopy.retentionChart
 
 interface RetentionChartProps {
   data: RetentionDataPoint[]
@@ -55,16 +58,10 @@ function CustomTooltipContent({ active, payload }: CustomTooltipProps) {
   const data = payload[0]?.payload
   if (!data) return null
 
-  const numPeople = data.num_people
-  const eventsLabel = data.events_attended
-  const festasWord = eventsLabel === '1' ? 'festa' : 'festas'
-  const eventsText = eventsLabel === '7+' ? 'a 7 ou mais' : `a ${eventsLabel}`
-
   return (
     <div className="chart-tooltip">
       <div className="font-mono font-medium tabular-nums">
-        {numPeople} {numPeople === 1 ? 'pessoa foi' : 'pessoas foram'} {eventsText}{' '}
-        {festasWord}
+        {retentionCopy.attendance(data.num_people, data.events_attended)}
       </div>
     </div>
   )
@@ -72,7 +69,7 @@ function CustomTooltipContent({ active, payload }: CustomTooltipProps) {
 
 const chartConfig: ChartConfig = {
   num_people: {
-    label: 'Pessoas',
+    label: retentionCopy.people,
     color: 'hsl(var(--chart-1))',
   },
 }
@@ -89,10 +86,10 @@ export function RetentionChart({ data, className }: RetentionChartProps) {
       <div
         data-chart
         role="img"
-        aria-label="Gráfico de frequência de comparecimento"
+        aria-label={retentionCopy.ariaLabel}
         className="flex h-[300px] items-center justify-center text-muted-foreground"
       >
-        Nenhum dado de retenção disponível
+        {retentionCopy.noData}
       </div>
     )
   }
@@ -107,7 +104,7 @@ export function RetentionChart({ data, className }: RetentionChartProps) {
       series={series}
       xAxisKey="events_attended"
       className={className}
-      ariaLabel="Gráfico de frequência de comparecimento"
+      ariaLabel={retentionCopy.ariaLabel}
       tooltipContent={<CustomTooltipContent />}
       showLegend={false}
       showValues
@@ -116,7 +113,7 @@ export function RetentionChart({ data, className }: RetentionChartProps) {
         y={0}
         stroke="transparent"
         label={{
-          value: `Total: ${totalAttendees} pessoas únicas`,
+          value: retentionCopy.total(totalAttendees),
           position: 'insideTopRight',
           fill: 'hsl(var(--muted-foreground))',
           fontSize: 12,

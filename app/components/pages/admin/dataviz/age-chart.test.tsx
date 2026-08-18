@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { AgeChart } from './age-chart'
 
 vi.mock('recharts', async () => {
@@ -170,7 +171,7 @@ describe('AgeChart', () => {
     )
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
-    expect(chart).toHaveAttribute('aria-label', 'Distribuição de idade')
+    expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.ageChart.ariaLabel)
   })
 
   it('should show count and percentage in data', () => {

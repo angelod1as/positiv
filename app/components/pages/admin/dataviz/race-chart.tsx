@@ -4,7 +4,10 @@ import { DemographicFilterToggle } from '~/components/atoms/charts/demographic-f
 import type { FilterMode } from '~/components/atoms/charts/demographic-filter-toggle'
 import { DonutChart } from '~/components/molecules/charts/donut-chart'
 import type { ChartConfig } from '~/components/ui/chart'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { groupSmallCategories, sanitizeCssKey } from '~/lib/helpers/chart-utils'
+
+const raceCopy = adminDatavizCopy.raceChart
 
 interface RaceChartProps {
   data: DemographicDistribution[]
@@ -16,8 +19,8 @@ interface RaceChartProps {
 export function RaceChart({ data, className, mode, onModeChange }: RaceChartProps) {
   if (data.length === 0) {
     return (
-      <div className={className} data-chart role="img" aria-label="Distribuição de raça/cor">
-        <p className="text-center text-muted-foreground">Nenhum dado disponível</p>
+      <div className={className} data-chart role="img" aria-label={raceCopy.ariaLabel}>
+        <p className="text-center text-muted-foreground">{adminDatavizCopy.noData}</p>
       </div>
     )
   }
@@ -58,7 +61,7 @@ export function RaceChart({ data, className, mode, onModeChange }: RaceChartProp
   return (
     <div className={className}>
       <DemographicFilterToggle mode={mode} onModeChange={onModeChange} />
-      <div data-chart role="img" aria-label="Distribuição de raça/cor">
+      <div data-chart role="img" aria-label={raceCopy.ariaLabel}>
         <DonutChart
           data={chartData}
           config={chartConfig}
@@ -66,19 +69,21 @@ export function RaceChart({ data, className, mode, onModeChange }: RaceChartProp
           nameKey="category"
           innerRadius={80}
           outerRadius={130}
-          ariaLabel="Distribuição de raça/cor"
+          ariaLabel={raceCopy.ariaLabel}
           showLabel
           centerLabel={
             <div className="text-center">
               <div className="text-3xl font-bold">{totalCount}</div>
-              <div className="text-sm text-muted-foreground">pessoas</div>
+              <div className="text-sm text-muted-foreground">
+                {adminDatavizCopy.people}
+              </div>
             </div>
           }
           className="h-[400px]"
         />
       </div>
       <p className="mt-4 text-center text-sm text-muted-foreground">
-        Apenas {totalCount} perfis preencheram este campo
+        {raceCopy.filledProfiles(totalCount)}
       </p>
     </div>
   )

@@ -9,12 +9,15 @@ import {
 import { isValid, parseISO } from 'date-fns'
 import type { EventAttendanceDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
 import { buildEventLabel } from '~/lib/helpers/chart-utils'
+
+const seasonalityCopy = adminDatavizCopy.seasonalityChart
 
 interface SeasonalityChartProps {
   data: EventAttendanceDataPoint[]
@@ -66,12 +69,16 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
       <div className="grid gap-1.5">
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-1)' }} />
-          <span className="chart-tooltip-label">Candidaturas</span>
+          <span className="chart-tooltip-label">
+            {seasonalityCopy.applications}
+          </span>
           <span className="chart-tooltip-value">{dataPoint.inscritos}</span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-2)' }} />
-          <span className="chart-tooltip-label">Compareceram</span>
+          <span className="chart-tooltip-label">
+            {seasonalityCopy.attended}
+          </span>
           <span className="chart-tooltip-value">{dataPoint.compareceram}</span>
         </div>
       </div>
@@ -81,8 +88,8 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
 
 export function SeasonalityChart({ data, className }: SeasonalityChartProps) {
   const chartConfig: ChartConfig = {
-    inscritos: { label: 'Candidaturas', color: 'var(--chart-1)' },
-    compareceram: { label: 'Compareceram', color: 'var(--chart-2)' },
+    inscritos: { label: seasonalityCopy.applications, color: 'var(--chart-1)' },
+    compareceram: { label: seasonalityCopy.attended, color: 'var(--chart-2)' },
   }
 
   const chartData = useMemo(
@@ -103,7 +110,7 @@ export function SeasonalityChart({ data, className }: SeasonalityChartProps) {
         config={chartConfig}
         className={className}
         role="img"
-        aria-label="Análise de sazonalidade - candidaturas e comparecimento ao longo do tempo"
+        aria-label={seasonalityCopy.ariaLabel}
       >
         <RechartsBarChart data={chartData}>
           <CartesianGrid vertical={false} />
@@ -123,8 +130,7 @@ export function SeasonalityChart({ data, className }: SeasonalityChartProps) {
       </ChartContainer>
       {totalEvents > 0 && (
         <div className="mt-4 text-center text-sm text-muted-foreground">
-          Baseado em {totalEvents} {totalEvents === 1 ? 'evento' : 'eventos'} ao
-          longo de {yearsSpan} {yearsSpan === 1 ? 'ano' : 'anos'}
+          {seasonalityCopy.summary(totalEvents, yearsSpan)}
         </div>
       )}
     </div>

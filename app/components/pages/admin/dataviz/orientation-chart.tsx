@@ -4,7 +4,10 @@ import { DemographicFilterToggle } from '~/components/atoms/charts/demographic-f
 import type { FilterMode } from '~/components/atoms/charts/demographic-filter-toggle'
 import { DonutChart } from '~/components/molecules/charts/donut-chart'
 import type { ChartConfig } from '~/components/ui/chart'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { groupSmallCategories, sanitizeCssKey } from '~/lib/helpers/chart-utils'
+
+const orientationCopy = adminDatavizCopy.orientationChart
 
 interface OrientationChartProps {
   data: DemographicDistribution[]
@@ -16,8 +19,8 @@ interface OrientationChartProps {
 export function OrientationChart({ data, className, mode, onModeChange }: OrientationChartProps) {
   if (data.length === 0) {
     return (
-      <div className={className} data-chart role="img" aria-label="Distribuição de orientação">
-        <p className="text-center text-muted-foreground">Nenhum dado disponível</p>
+      <div className={className} data-chart role="img" aria-label={orientationCopy.ariaLabel}>
+        <p className="text-center text-muted-foreground">{adminDatavizCopy.noData}</p>
       </div>
     )
   }
@@ -59,7 +62,7 @@ export function OrientationChart({ data, className, mode, onModeChange }: Orient
   return (
     <div className={className}>
       <DemographicFilterToggle mode={mode} onModeChange={onModeChange} />
-      <div data-chart role="img" aria-label="Distribuição de orientação">
+      <div data-chart role="img" aria-label={orientationCopy.ariaLabel}>
         <DonutChart
           data={chartData}
           config={chartConfig}
@@ -67,12 +70,14 @@ export function OrientationChart({ data, className, mode, onModeChange }: Orient
           nameKey="category"
           innerRadius={80}
           outerRadius={130}
-          ariaLabel="Distribuição de orientação"
+          ariaLabel={orientationCopy.ariaLabel}
           showLabel
           centerLabel={
             <div className="text-center">
               <div className="text-3xl font-bold">{totalCount}</div>
-              <div className="text-sm text-muted-foreground">pessoas</div>
+              <div className="text-sm text-muted-foreground">
+                {adminDatavizCopy.people}
+              </div>
             </div>
           }
           className="h-[400px]"

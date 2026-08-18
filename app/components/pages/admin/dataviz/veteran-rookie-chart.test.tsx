@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { VeteranRookieDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { VeteranRookieChart } from './veteran-rookie-chart'
 
 vi.mock('recharts', async () => {
@@ -78,7 +79,7 @@ describe('VeteranRookieChart', () => {
     expect(chart).toHaveAttribute('role', 'img')
     expect(chart).toHaveAttribute(
       'aria-label',
-      'Gráfico de proporção veteranos vs novatos ao longo do tempo'
+      adminDatavizCopy.veteranRookieChart.ariaLabel
     )
   })
 

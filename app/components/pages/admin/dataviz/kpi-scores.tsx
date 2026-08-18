@@ -13,7 +13,10 @@ import {
 } from 'lucide-react'
 import type { KpiScores as KpiScoresData } from '~/business/admin/dataviz/dataviz.types'
 import { ScoreCard } from '~/components/molecules/scores/score-card'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { ScoreGrid } from '~/components/molecules/scores/score-grid'
+
+const kpiCopy = adminDatavizCopy.kpiScores
 
 type KpiScoresProps = {
   data: KpiScoresData
@@ -44,22 +47,22 @@ export function KpiScores({ data }: KpiScoresProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="mb-4 text-lg font-semibold">Comunidade</h2>
+        <h2 className="mb-4 text-lg font-semibold">{kpiCopy.community.title}</h2>
         <ScoreGrid>
           <ScoreCard
             value={formatNumber(data.total_profiles)}
-            label="Total de perfis"
+            label={kpiCopy.community.totalProfiles}
             icon={Users}
           />
           <ScoreCard
             value={formatNumber(data.total_veterans)}
-            label="Veterans"
+            label={kpiCopy.community.veterans}
             description={veteranPercentage}
             icon={Shield}
           />
           <ScoreCard
             value={formatNumber(data.total_approved)}
-            label="Aprovados"
+            label={kpiCopy.community.approved}
             description={approvedPercentage}
             icon={CheckCircle}
           />
@@ -67,60 +70,60 @@ export function KpiScores({ data }: KpiScoresProps) {
       </div>
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold">Engajamento</h2>
+        <h2 className="mb-4 text-lg font-semibold">{kpiCopy.engagement.title}</h2>
         <ScoreGrid>
           <ScoreCard
             value={formatNumber(data.total_unique_attendees)}
-            label="Participantes únicos"
+            label={kpiCopy.engagement.uniqueAttendees}
             icon={UserCheck}
           />
           <ScoreCard
             value={formatNumber(data.avg_attendance_per_event)}
-            label="Média de presença"
-            description="Por evento"
+            label={kpiCopy.engagement.averageAttendance}
+            description={kpiCopy.engagement.averageAttendanceDescription}
             icon={BarChart3}
           />
           <ScoreCard
             value={formatNumber(data.attended_3_plus)}
-            label="Compareceram 3+ vezes"
+            label={kpiCopy.engagement.attendedThreePlus}
             icon={TrendingUp}
           />
           <ScoreCard
             value={formatNumber(data.attended_5_plus)}
-            label="Compareceram 5+ vezes"
+            label={kpiCopy.engagement.attendedFivePlus}
             icon={Award}
           />
         </ScoreGrid>
       </div>
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold">Receita</h2>
+        <h2 className="mb-4 text-lg font-semibold">{kpiCopy.revenue.title}</h2>
         <ScoreGrid>
           <ScoreCard
             value={formatCurrency(data.total_revenue)}
-            label="Receita total"
+            label={kpiCopy.revenue.total}
             icon={DollarSign}
           />
           <ScoreCard
             value={formatCurrency(data.avg_revenue_per_event)}
-            label="Média por evento"
+            label={kpiCopy.revenue.averagePerEvent}
             icon={Receipt}
           />
         </ScoreGrid>
       </div>
 
       <div>
-        <h2 className="mb-4 text-lg font-semibold">Saúde</h2>
+        <h2 className="mb-4 text-lg font-semibold">{kpiCopy.health.title}</h2>
         <ScoreGrid>
           <ScoreCard
             value={`${data.avg_no_show_rate}%`}
-            label="Taxa média de no-show"
+            label={kpiCopy.health.noShowRate}
             icon={AlertCircle}
           />
           <ScoreCard
             value={formatNumber(data.total_flagged)}
-            label="Perfis sinalizados"
-            description="Amarelo + Vermelho"
+            label={kpiCopy.health.flagged}
+            description={kpiCopy.health.flaggedDescription}
             icon={Flag}
           />
         </ScoreGrid>

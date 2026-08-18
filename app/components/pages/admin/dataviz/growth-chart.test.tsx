@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { GrowthDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { GrowthChart } from './growth-chart'
 
 vi.mock('recharts', async () => {
@@ -65,7 +66,7 @@ describe('GrowthChart', () => {
     const { container } = render(<GrowthChart data={mockData} />)
     const chartContainer = container.querySelector('[data-chart]')
     expect(chartContainer).toHaveAttribute('role', 'img')
-    expect(chartContainer).toHaveAttribute('aria-label', 'Gráfico de crescimento de perfis cadastrados')
+    expect(chartContainer).toHaveAttribute('aria-label', adminDatavizCopy.growthChart.ariaLabel)
   })
 
   it('applies custom className prop', () => {

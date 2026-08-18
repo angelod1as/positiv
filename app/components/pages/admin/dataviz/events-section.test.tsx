@@ -6,6 +6,7 @@ import type {
   EventRevenueDataPoint,
   OccupancyDataPoint,
 } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { EventsSection } from './events-section'
 
 vi.mock('recharts', async () => {
@@ -81,7 +82,7 @@ describe('EventsSection', () => {
       />
     )
 
-    expect(screen.getByText('Selecionar intervalo de eventos')).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.eventRangeSelector.label)).toBeInTheDocument()
   })
 
   it('does not render the range selector for empty data', () => {
@@ -94,7 +95,7 @@ describe('EventsSection', () => {
       />
     )
 
-    expect(screen.queryByText('Selecionar intervalo de eventos')).not.toBeInTheDocument()
+    expect(screen.queryByText(adminDatavizCopy.eventRangeSelector.label)).not.toBeInTheDocument()
   })
 
   it('does not render the range selector for single event', () => {
@@ -107,6 +108,6 @@ describe('EventsSection', () => {
       />
     )
 
-    expect(screen.queryByText('Selecionar intervalo de eventos')).not.toBeInTheDocument()
+    expect(screen.queryByText(adminDatavizCopy.eventRangeSelector.label)).not.toBeInTheDocument()
   })
 })

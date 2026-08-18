@@ -4,7 +4,10 @@ import { DemographicFilterToggle } from '~/components/atoms/charts/demographic-f
 import type { FilterMode } from '~/components/atoms/charts/demographic-filter-toggle'
 import { DonutChart } from '~/components/molecules/charts/donut-chart'
 import type { ChartConfig } from '~/components/ui/chart'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { groupSmallCategories, sanitizeCssKey } from '~/lib/helpers/chart-utils'
+
+const genderCopy = adminDatavizCopy.genderChart
 
 interface GenderChartProps {
   data: DemographicDistribution[]
@@ -16,8 +19,8 @@ interface GenderChartProps {
 export function GenderChart({ data, className, mode, onModeChange }: GenderChartProps) {
   if (data.length === 0) {
     return (
-      <div className={className} data-chart role="img" aria-label="Distribuição de gênero">
-        <p className="text-center text-muted-foreground">Nenhum dado disponível</p>
+      <div className={className} data-chart role="img" aria-label={genderCopy.ariaLabel}>
+        <p className="text-center text-muted-foreground">{adminDatavizCopy.noData}</p>
       </div>
     )
   }
@@ -59,7 +62,7 @@ export function GenderChart({ data, className, mode, onModeChange }: GenderChart
   return (
     <div className={className}>
       <DemographicFilterToggle mode={mode} onModeChange={onModeChange} />
-      <div data-chart role="img" aria-label="Distribuição de gênero">
+      <div data-chart role="img" aria-label={genderCopy.ariaLabel}>
         <DonutChart
           data={chartData}
           config={chartConfig}
@@ -67,12 +70,14 @@ export function GenderChart({ data, className, mode, onModeChange }: GenderChart
           nameKey="category"
           innerRadius={80}
           outerRadius={130}
-          ariaLabel="Distribuição de gênero"
+          ariaLabel={genderCopy.ariaLabel}
           showLabel
           centerLabel={
             <div className="text-center">
               <div className="text-3xl font-bold">{totalCount}</div>
-              <div className="text-sm text-muted-foreground">pessoas</div>
+              <div className="text-sm text-muted-foreground">
+                {adminDatavizCopy.people}
+              </div>
             </div>
           }
           className="h-[400px]"

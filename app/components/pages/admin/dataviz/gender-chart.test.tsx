@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { GenderChart } from './gender-chart'
 
 vi.mock('recharts', async () => {
@@ -108,7 +109,7 @@ describe('GenderChart', () => {
 
     // Total is 809 pessoas (sum of all counts)
     expect(centerLabel).toHaveTextContent('809')
-    expect(centerLabel).toHaveTextContent('pessoas')
+    expect(centerLabel).toHaveTextContent(adminDatavizCopy.people)
   })
 
   it('should show percentage and count in tooltip', () => {
@@ -143,6 +144,6 @@ describe('GenderChart', () => {
     )
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
-    expect(chart).toHaveAttribute('aria-label', 'Distribuição de gênero')
+    expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.genderChart.ariaLabel)
   })
 })

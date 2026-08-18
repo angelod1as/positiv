@@ -4,7 +4,10 @@ import { DemographicFilterToggle } from '~/components/atoms/charts/demographic-f
 import type { FilterMode } from '~/components/atoms/charts/demographic-filter-toggle'
 import { BarChart } from '~/components/molecules/charts/bar-chart'
 import type { ChartConfig } from '~/components/ui/chart'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { sortByAgeRange } from '~/lib/helpers/chart-utils'
+
+const ageCopy = adminDatavizCopy.ageChart
 
 interface AgeChartProps {
   data: DemographicDistribution[]
@@ -25,8 +28,8 @@ export function AgeChart({
 }: AgeChartProps) {
   if (data.length === 0) {
     return (
-      <div className={className} data-chart role="img" aria-label="Distribuição de idade">
-        <p className="text-center text-muted-foreground">Nenhum dado disponível</p>
+      <div className={className} data-chart role="img" aria-label={ageCopy.ariaLabel}>
+        <p className="text-center text-muted-foreground">{adminDatavizCopy.noData}</p>
       </div>
     )
   }
@@ -62,16 +65,16 @@ export function AgeChart({
     <div className={className}>
       <DemographicFilterToggle mode={mode} onModeChange={onModeChange} />
       <p className="mb-4 text-center text-sm text-muted-foreground">
-        {filledProfiles} perfis com data de nascimento preenchida (de {totalProfiles} total)
+        {ageCopy.filledProfiles(filledProfiles, totalProfiles)}
       </p>
-      <div data-chart role="img" aria-label="Distribuição de idade">
+      <div data-chart role="img" aria-label={ageCopy.ariaLabel}>
         <BarChart
           data={chartData}
           config={chartConfig}
           series={[{ dataKey: 'count' }]}
           xAxisKey="ageRange"
           horizontal={true}
-          ariaLabel="Distribuição de idade"
+          ariaLabel={ageCopy.ariaLabel}
           showValues
           className="h-[400px]"
         />

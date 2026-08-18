@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { OccupancyDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { OccupancyChart } from './occupancy-chart'
 
 vi.mock('recharts', async () => {
@@ -39,7 +40,7 @@ describe('OccupancyChart', () => {
     const { container } = render(<OccupancyChart data={[]} />)
     const chart = container.querySelector('[data-chart]')
     expect(chart).toBeInTheDocument()
-    expect(chart).toHaveTextContent('Nenhum dado de ocupação disponível')
+    expect(chart).toHaveTextContent(adminDatavizCopy.occupancyChart.noData)
   })
 
   it('renders LineChart with occupancy data', () => {
@@ -55,7 +56,7 @@ describe('OccupancyChart', () => {
     const { container } = render(<OccupancyChart data={mockData} />)
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
-    expect(chart).toHaveAttribute('aria-label', 'Gráfico de taxa de ocupação por evento')
+    expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.occupancyChart.ariaLabel)
   })
 
   it('applies custom className prop', () => {

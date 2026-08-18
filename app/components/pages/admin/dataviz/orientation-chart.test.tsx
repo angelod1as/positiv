@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { OrientationChart } from './orientation-chart'
 
 vi.mock('recharts', async () => {
@@ -107,7 +108,7 @@ describe('OrientationChart', () => {
 
     // Total is 845 pessoas (sum of all counts)
     expect(centerLabel).toHaveTextContent('845')
-    expect(centerLabel).toHaveTextContent('pessoas')
+    expect(centerLabel).toHaveTextContent(adminDatavizCopy.people)
   })
 
   it('should show percentage and count in tooltip', () => {
@@ -142,6 +143,6 @@ describe('OrientationChart', () => {
     )
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
-    expect(chart).toHaveAttribute('aria-label', 'Distribuição de orientação')
+    expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.orientationChart.ariaLabel)
   })
 })

@@ -10,11 +10,14 @@ import {
 import { format, isValid, parse } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { GrowthDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
+
+const growthCopy = adminDatavizCopy.growthChart
 
 interface GrowthChartProps {
   data: GrowthDataPoint[]
@@ -59,12 +62,16 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
       <div className="grid gap-1.5">
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-1)' }} />
-          <span className="chart-tooltip-label">Novos cadastros</span>
+          <span className="chart-tooltip-label">
+            {growthCopy.newProfiles}
+          </span>
           <span className="chart-tooltip-value">{dataPoint.new_profiles}</span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-2)' }} />
-          <span className="chart-tooltip-label">Total acumulado</span>
+          <span className="chart-tooltip-label">
+            {growthCopy.cumulative}
+          </span>
           <span className="chart-tooltip-value">{dataPoint.cumulative}</span>
         </div>
       </div>
@@ -74,8 +81,8 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
 
 export function GrowthChart({ data, className }: GrowthChartProps) {
   const chartConfig: ChartConfig = {
-    new_profiles: { label: 'Novos cadastros', color: 'var(--chart-1)' },
-    cumulative: { label: 'Total acumulado', color: 'var(--chart-2)' },
+    new_profiles: { label: growthCopy.newProfiles, color: 'var(--chart-1)' },
+    cumulative: { label: growthCopy.cumulative, color: 'var(--chart-2)' },
   }
 
   const chartData = data.map((item) => ({
@@ -90,7 +97,7 @@ export function GrowthChart({ data, className }: GrowthChartProps) {
       config={chartConfig}
       className={className}
       role="img"
-      aria-label="Gráfico de crescimento de perfis cadastrados"
+      aria-label={growthCopy.ariaLabel}
     >
       <ComposedChart data={chartData}>
         <CartesianGrid vertical={false} />
@@ -138,7 +145,7 @@ export function GrowthChart({ data, className }: GrowthChartProps) {
             stroke="white"
             strokeWidth={2}
             label={{
-              value: 'Migração do sistema anterior',
+              value: growthCopy.migration,
               position: 'top',
               fill: 'var(--muted-foreground)',
               fontSize: 10,

@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { EventAttendanceDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { SeasonalityChart } from './seasonality-chart'
 
 vi.mock('recharts', async () => {
@@ -92,7 +93,7 @@ describe('SeasonalityChart', () => {
     expect(chart).toHaveAttribute('role', 'img')
     expect(chart).toHaveAttribute(
       'aria-label',
-      'Análise de sazonalidade - candidaturas e comparecimento ao longo do tempo'
+      adminDatavizCopy.seasonalityChart.ariaLabel
     )
   })
 
