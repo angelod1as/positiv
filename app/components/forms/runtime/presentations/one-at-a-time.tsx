@@ -14,9 +14,10 @@ import type { Presentation } from "./presentation.types"
  * questions are showing rather than on every render, so surfacing a validation
  * error does not yank focus away from someone mid-correction.
  *
- * The screen the flow opens on is left alone. Taking focus there scrolls the
- * page down to the control, past whatever the form is asked to sit under — on
- * the rules quiz, that is the rules themselves.
+ * The screen the flow opens on is left alone unless the caller asks otherwise.
+ * Taking focus there scrolls the page down to the control, past whatever the
+ * form is asked to sit under — on the rules quiz, that is the rules themselves.
+ * A form that owns its page has nothing to scroll past, and wants the focus.
  */
 export const OneAtATime: Presentation = ({
   step,
@@ -25,6 +26,7 @@ export const OneAtATime: Presentation = ({
   errors,
   formError,
   isBusy,
+  focusFirstScreen,
   onAnswer,
   onContinue,
   continueLabel,
@@ -36,8 +38,9 @@ export const OneAtATime: Presentation = ({
   const screenKey = questions.map((question) => question.id).join("|")
 
   useEffect(() => {
-    // The screen the flow opens on is recorded without being focused.
-    if (focusedScreenRef.current === null) {
+    // The screen the flow opens on is recorded without being focused, unless
+    // the caller asked for it.
+    if (focusedScreenRef.current === null && !focusFirstScreen) {
       focusedScreenRef.current = screenKey
       return
     }
@@ -58,7 +61,7 @@ export const OneAtATime: Presentation = ({
       form.querySelector<HTMLElement>('button[type="submit"]')
 
     control?.focus()
-  }, [screenKey, isBusy])
+  }, [screenKey, isBusy, focusFirstScreen])
 
   return (
     <form

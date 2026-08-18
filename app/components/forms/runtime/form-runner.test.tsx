@@ -317,6 +317,20 @@ describe("oneAtATime keyboard flow", () => {
     expect(screen.getByLabelText("Qual seu nome?")).not.toHaveFocus()
   })
 
+  it("focuses the opening screen when the form asks for it", () => {
+    render(
+      <FormRunner
+        questions={questions}
+        flow={steppedFlow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+        focusFirstScreen
+      />,
+    )
+
+    expect(screen.getByLabelText("Qual seu nome?")).toHaveFocus()
+  })
+
   it("advances on Enter without reaching for the mouse", async () => {
     const user = userEvent.setup()
 
