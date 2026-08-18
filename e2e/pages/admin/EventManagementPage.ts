@@ -9,7 +9,6 @@ export class EventManagementPage extends BasePage {
   readonly locationInput: Locator
   readonly priceInput: Locator
   readonly capacityInput: Locator
-  readonly eventTypeSelect: Locator
   readonly eventStartInput: Locator
   readonly eventEndInput: Locator
   readonly applicationStartInput: Locator
@@ -41,7 +40,6 @@ export class EventManagementPage extends BasePage {
     this.locationInput = page.getByLabel('Local')
     this.priceInput = page.getByLabel('Valor')
     this.capacityInput = page.getByLabel('Lotação')
-    this.eventTypeSelect = page.getByLabel('Tipo de evento')
     this.eventStartInput = page.getByLabel('Início do evento')
     this.eventEndInput = page.getByLabel('Fim do evento')
     
@@ -77,7 +75,6 @@ export class EventManagementPage extends BasePage {
     location: string
     price: string
     capacity: string
-    type?: 'regular' | 'bdsm'
   }): Promise<void> {
     await this.titleInput.fill(data.title)
     await this.emojiInput.fill(data.emoji)
@@ -85,10 +82,6 @@ export class EventManagementPage extends BasePage {
     await this.locationInput.fill(data.location)
     await this.priceInput.fill(data.price)
     await this.capacityInput.fill(data.capacity)
-    
-    if (data.type) {
-      await this.eventTypeSelect.selectOption(data.type)
-    }
   }
 
   async setEventStartDate(date: Date): Promise<void> {
