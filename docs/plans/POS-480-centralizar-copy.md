@@ -45,7 +45,7 @@ Only **one** new test file is created by this plan: `app/components/atoms/copy/c
 Everything else is a refactor with no behaviour change, so it gets **no new test files**. Instead:
 
 - Existing component tests that assert literal strings are updated in place to assert against the copy module. They keep testing the same rendered output.
-- Correctness of each migration is verified by `pnpm lint` (the guard rule plus `tsc`), the existing unit suite, the E2E suite once at the very end of Task 12, and a per-file fidelity check: render the component before and after, compare the visible text with all whitespace stripped, and compare a census of the rendered tags.
+- Correctness of each migration is verified by `pnpm lint` (the guard rule plus `tsc`), the existing unit suite, the E2E suite once at the very end of Task 13, and a per-file fidelity check: render the component before and after, compare the visible text with all whitespace stripped, and compare a census of the rendered tags.
 
 Do not write tests that assert a copy module has a given key, that a directory contains no JSX, or that a string was moved. Those test the migration, not the product.
 
@@ -1299,7 +1299,46 @@ git commit -m "refactor(email): move the application mail copy into app/copy/ema
 
 ---
 
-## Task 12: Close out
+## Task 12: Migrate the remaining business-layer strings
+
+These sit outside every page and component directory, so no earlier task claimed
+them and the lint guard cannot see them — the guard only inspects JSX. They were
+found by sweeping the whole tree for accented text after the third rebase.
+
+New module: `app/copy/participant.ts`. Extend `app/copy/errors.ts` and
+`app/copy/shared.ts` where a string already has a home.
+
+**Files:**
+
+- `app/lib/hooks/use-auto-save-form.ts` — toast and field-error messages shown while an admin edits a grid cell. Check `app/lib/helpers/validation-messages.ts` first: `"Valor inválido"` is that module's `invalid` concept and should reuse it rather than gain a twin.
+- `app/business/feedback/feedback-schema.ts` — Zod messages on the public feedback form. Same check against `validation-messages.ts`; `"Selecione uma opção"` is close to its `minOptions` but not identical, so read both before deciding.
+- `app/business/participant/agree-to-terms.server.ts` — a thrown auth error and the newsletter-signup failure message, which reaches the user as a toast.
+- `app/business/participant/format-calendar-event.server.ts` — the description embedded in the generated `.ics` file. It is read by a human in their calendar app, so it is copy.
+- `app/business/participant/apply-to-event.server.ts`, `app/business/feedback/feedback.server.ts`, `app/business/feedback/notify-new-feedback.server.ts` — one string each; check whether it reaches the UI or only a log before moving it.
+- `app/lib/helpers/format-date-time.ts` — the `às` joining date and time. Small, but it is user-visible formatting, and leaving it behind means one Portuguese word lives outside `app/copy/` for no reason.
+- `app/lib/helpers/google-contacts.ts`, `app/lib/helpers/generate-google-calendar-link.ts` — inspect; these may be field labels sent to Google rather than site copy.
+
+**Explicitly not copy, leave alone:**
+
+- `app/lib/helpers/strings.ts` — the `À-ÿ` in a regex character class is not text.
+- `app/pages/dev/form-runtime-demo.tsx` — 71 accented lines, but `app/routes.ts:14` registers this route only outside production. It is a developer sandbox, not site copy. If it ever ships, it gets migrated then.
+- `app/lib/helpers/validation-messages.ts` — already the right shape, deliberately stays put.
+
+**Verification** is the same as every other task: `pnpm lint`, `pnpm test:unit`, and for anything that renders, the before/after text and tag-census comparison. For pure server modules, compare the returned or thrown strings directly.
+
+- [ ] **Step 1: Migrate each file, one commit each**
+
+- [ ] **Step 2: Confirm nothing is left**
+
+```bash
+grep -rlE "[áàâãéêíóôõúçÁÀÂÃÉÊÍÓÔÕÚÇ]" app --include="*.ts" --include="*.tsx" | grep -v "\.test\." | grep -v "^app/copy/"
+```
+
+Expected: only the three files listed above as not-copy.
+
+---
+
+## Task 13: Close out
 
 **Files:**
 
