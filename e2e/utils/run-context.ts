@@ -2,6 +2,10 @@ import { randomBytes } from 'node:crypto'
 
 export const DEFAULT_E2E_PORT = 5273
 
+export const ABANDONED_TEST_EVENT_PATTERN = '[E2E-TEST:%'
+
+const ABANDONED_AFTER_HOURS = 1
+
 export function generateRunId(): string {
   return `${Date.now().toString(36)}${randomBytes(4).toString('hex')}`
 }
@@ -52,4 +56,13 @@ export function getServerPort(): number {
 
 export function getBaseUrl(): string {
   return `http://localhost:${getServerPort()}`
+}
+
+/**
+ * A run takes at most a few minutes and the lock keeps runs from overlapping,
+ * so test data older than this belongs to a run that never reached its
+ * teardown.
+ */
+export function abandonedBefore(now: Date = new Date()): string {
+  return new Date(now.getTime() - ABANDONED_AFTER_HOURS * 60 * 60 * 1000).toISOString()
 }

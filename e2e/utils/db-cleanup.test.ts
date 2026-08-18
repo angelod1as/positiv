@@ -44,7 +44,10 @@ describe('cleanupTestEvents', () => {
 
   it('does not delete events belonging to a run in another worktree', async () => {
     const double = useDouble(query => {
-      if (query.table === 'events' && query.operations.some(op => op.name === 'select')) {
+      const isEventLookup = query.table === 'events' && query.operations.some(op => op.name === 'select')
+      const sweepsAbandoned = query.operations.some(op => op.name === 'lt')
+
+      if (isEventLookup && !sweepsAbandoned) {
         const pattern = query.operations.find(op => op.name === 'ilike')?.args[1] as string
         const prefix = pattern.replace(/%$/, '')
         return { data: [OWN_EVENT, OTHER_RUN_EVENT].filter(event => event.title.startsWith(prefix)), error: null }
@@ -90,7 +93,7 @@ describe('cleanupTestEvents, sweeping abandoned data', () => {
     const [column, cutoff] = double.argumentsOf('events', 'lt') as [string, string]
 
     expect(column).toBe('created_at')
-    expect(Date.now() - Date.parse(cutoff)).toBeGreaterThan(5 * 60 * 60 * 1000)
+    expect(Date.now() - Date.parse(cutoff)).toBeGreaterThan(30 * 60 * 1000)
   })
 })
 

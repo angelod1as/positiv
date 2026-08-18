@@ -1,5 +1,5 @@
 import { createSupabaseAdminClient } from './db-cleanup'
-import { getRunId, runEmail } from './run-context'
+import { abandonedBefore, getRunId, runEmail } from './run-context'
 
 export interface TestUser {
   id: string
@@ -116,7 +116,14 @@ export async function deleteAllTestUsers(): Promise<void> {
     }
 
     // Filter to mock users only
-    const mockUsers = users.filter(user => user.user_metadata?.e2e_run_id === getRunId())
+    const cutoff = abandonedBefore()
+    const mockUsers = users.filter(user => {
+      const runId = user.user_metadata?.e2e_run_id
+
+      if (!runId) return false
+
+      return runId === getRunId() || user.created_at < cutoff
+    })
 
     console.info(`Found ${mockUsers.length} test users to delete`)
 

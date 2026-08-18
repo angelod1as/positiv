@@ -3,7 +3,12 @@ import type { Database } from '../../app/types/database/database.types'
 import { TEST_USERS } from '../fixtures/test-users'
 import { TEST_USER_PROFILE_DATA } from '../fixtures/test-data'
 import { removeSubscriber } from '../../app/business/newsletter/listmonk-client.server'
-import { runEmailPattern, runEventTitlePattern } from './run-context'
+import {
+  ABANDONED_TEST_EVENT_PATTERN,
+  abandonedBefore,
+  runEmailPattern,
+  runEventTitlePattern,
+} from './run-context'
 import { deleteList } from '../../app/business/newsletter/listmonk-lists.server'
 
 // Custom error class for database cleanup operations
@@ -232,7 +237,7 @@ export async function cleanupTestEvents(): Promise<void> {
   const supabase = createSupabaseAdminClient()
 
   // Delete only events with the specific E2E test prefix - don't delete seed events
-  const { data: testEvents, error: fetchError } = await supabase
+  const { data: ownEvents, error: fetchError } = await supabase
     .from('events')
     .select('id, title, listmonk_list_id')
     .ilike('title', runEventTitlePattern())
@@ -244,6 +249,22 @@ export async function cleanupTestEvents(): Promise<void> {
       fetchError
     )
   }
+
+  const { data: abandonedEvents, error: abandonedError } = await supabase
+    .from('events')
+    .select('id, title, listmonk_list_id')
+    .ilike('title', ABANDONED_TEST_EVENT_PATTERN)
+    .lt('created_at', abandonedBefore())
+
+  if (abandonedError) {
+    throw new CleanupError(
+      'Failed to fetch abandoned test events for cleanup',
+      'cleanupTestEvents',
+      abandonedError
+    )
+  }
+
+  const testEvents = [...(ownEvents || []), ...(abandonedEvents || [])]
 
   if (!testEvents || testEvents.length === 0) {
     return

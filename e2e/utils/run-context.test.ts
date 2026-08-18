@@ -124,10 +124,10 @@ describe('getBaseUrl', () => {
 })
 
 describe('abandonedBefore', () => {
-  it('treats test data older than six hours as left behind by a dead run', () => {
+  it('treats test data older than an hour as left behind by a dead run', () => {
     const now = new Date('2026-08-18T12:00:00.000Z')
 
-    expect(abandonedBefore(now)).toBe('2026-08-18T06:00:00.000Z')
+    expect(abandonedBefore(now)).toBe('2026-08-18T11:00:00.000Z')
   })
 })
 
