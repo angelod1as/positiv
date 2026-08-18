@@ -52,7 +52,7 @@ describe("createPreOpeningReminder", () => {
           data: {
             id: 123,
             name: "Pre-Opening Reminder: Test Event",
-            subject: "⏰ Atenção: Inscrições abrem em 3 dias - Test Event",
+            subject: "⏰ Atenção: Candidaturas abrem em 3 dias - Test Event",
             status: "draft",
           },
         }),
@@ -77,14 +77,14 @@ describe("createPreOpeningReminder", () => {
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
       expect(callBody.name).toBe("Pre-Opening Reminder: Test Event")
       expect(callBody.subject).toBe(
-        "⏰ Atenção: Inscrições abrem em 3 dias - Test Event",
+        "⏰ Atenção: Candidaturas abrem em 3 dias - Test Event",
       )
       expect(callBody.lists).toEqual([4])
       expect(callBody.type).toBe("regular")
       expect(callBody.content_type).toBe("html")
       expect(callBody.template_id).toBe(7)
       expect(callBody.body).toContain("<h1")
-      expect(callBody.body).toContain("Atenção: Inscrições abrem em 3 dias!")
+      expect(callBody.body).toContain("Atenção: Candidaturas abrem em 3 dias!")
     })
 
     it("should send campaign immediately when sendImmediately is true", async () => {
@@ -95,7 +95,7 @@ describe("createPreOpeningReminder", () => {
             data: {
               id: 123,
               name: "Pre-Opening Reminder: Test Event",
-              subject: "⏰ Atenção: Inscrições abrem em 3 dias - Test Event",
+              subject: "⏰ Atenção: Candidaturas abrem em 3 dias - Test Event",
               status: "draft",
             },
           }),
@@ -130,7 +130,7 @@ describe("createPreOpeningReminder", () => {
             data: {
               id: 123,
               name: "Pre-Opening Reminder: Test Event",
-              subject: "⏰ Atenção: Inscrições abrem em 3 dias - Test Event",
+              subject: "⏰ Atenção: Candidaturas abrem em 3 dias - Test Event",
               status: "draft",
             },
           }),
@@ -161,7 +161,7 @@ describe("createPreOpeningReminder", () => {
           data: {
             id: 123,
             name: "Pre-Opening Reminder: Test Event",
-            subject: "⏰ Atenção: Inscrições abrem em 3 dias - Test Event",
+            subject: "⏰ Atenção: Candidaturas abrem em 3 dias - Test Event",
             status: "draft",
           },
         }),
@@ -248,9 +248,9 @@ describe("createPreOpeningReminder", () => {
       })
 
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(callBody.body).toContain("Atenção: Inscrições abrem em 3 dias!")
+      expect(callBody.body).toContain("Atenção: Candidaturas abrem em 3 dias!")
       expect(callBody.body).toContain(
-        "O sistema fecha as inscrições AUTOMATICAMENTE quando bater 90 inscrites",
+        "O sistema fecha as candidaturas AUTOMATICAMENTE quando bater 90 candidates",
       )
       expect(callBody.body).toContain("selecionaremos 60 pessoas para o evento")
     })

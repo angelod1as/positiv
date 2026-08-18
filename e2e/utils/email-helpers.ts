@@ -184,15 +184,15 @@ export async function verifyApplicationEmail(recipientEmail: string): Promise<vo
 export async function verifyReminderEmail(recipientEmail: string, eventTitle: string): Promise<void> {
   const email = await waitForEmail({
     to: recipientEmail,
-    subject: `Inscrições abertas para o evento`,
+    subject: `Candidaturas abertas para o evento`,
     containing: eventTitle,
     timeout: 10000
   })
 
   await verifyEmailContent(email, {
-    subject: 'Inscrições abertas',
+    subject: 'Candidaturas abertas',
     bodyContains: [
-      'Inscrições abertas!',
+      'Candidaturas abertas!',
       eventTitle
     ]
   })
