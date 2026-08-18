@@ -27,4 +27,108 @@ export const adminEventsCopy = {
     notAppliedToEvent: "Participante não candidate neste evento.",
     updateSuccess: "Atualizado com sucesso",
   },
+  buttons: {
+    download: "Baixar dados",
+  },
+  generalData: {
+    title: "Dados gerais",
+    field: (label: string | undefined, value: string | number) =>
+      `${label ?? ""}: ${value}`,
+    ticketPrice: (label: string | undefined, value: number) =>
+      `${label ?? ""}: R$ ${value}`,
+  },
+  datesAndTimes: {
+    title: "Datas e horários",
+    start: "Início",
+    end: "Fim",
+    applications: "Candidaturas",
+    payment: "Pagamento",
+    group: "Grupo",
+    event: "Evento",
+  },
+  statusForm: {
+    label: "Status do evento",
+    scheduledTitle: "📅 Publicação Automática Agendada",
+    scheduledFor: (date: string | undefined) =>
+      `Este evento será publicado automaticamente em ${date ?? ""}`,
+    awaitingTitle: "⏳ Aguardando Publicação Automática",
+    awaiting:
+      "Este evento está pronto para ser publicado automaticamente (será atualizado em até 5 minutos)",
+    manualTitle: "✋ Publicação Manual",
+    manual: `Este evento requer publicação manual. Altere o status para "Candidaturas abertas" quando desejar publicar.`,
+  },
+  demographics: {
+    title: "Demographics",
+    updating: "Atualizando...",
+    update: "Atualizar Demografia",
+    empty:
+      "Não há dados demográficos. Clique em 'Atualizar Demografia' para calcular.",
+    othersSeparator: " - ",
+    suffixes: {
+      participants: " participantes",
+      percentage: "%",
+      years: " anos",
+    },
+    general: {
+      title: "Geral",
+      total: "Total",
+      veterans: "Veteranes",
+      rookies: "Novates",
+    },
+    gender: {
+      title: "Gênero",
+      cis: "Cis",
+      trans: "Trans",
+      others: "Outros",
+    },
+    orientation: {
+      title: "Orientação",
+      straight: "Héteres",
+      biPan: "Bi/Pan",
+      homo: "Homo",
+      aceDemi: "Ace/Demi",
+      others: "Outros",
+    },
+    raceColor: {
+      title: "Raça ou cor",
+      yellow: "Amarela",
+      white: "Branca",
+      indigenous: "Indígena",
+      brown: "Parda",
+      black: "Preta",
+      others: "Outros",
+    },
+    age: {
+      title: "Idades",
+      min: "Menor",
+      average: "Média",
+      max: "Maior",
+    },
+  },
+  rejectedParticipants: {
+    noName: "(sem nome)",
+    summary: (count: number) =>
+      count === 1
+        ? "1 participante rejeitade se candidatou neste evento"
+        : `${count} participantes rejeitades se inscreveram neste evento`,
+  },
+  listmonk: {
+    createList: "Criar lista da newsletter",
+    updateList: "Atualizar lista da newsletter",
+    creating: "Criando...",
+    updating: "Atualizando...",
+    filtersDescription:
+      "Selecione os filtros para sincronizar participantes com a newsletter.",
+    approvalStatus: "Status de Aprovação",
+    applicationStatus: "Status de Processo",
+    attendanceStatus: "Status de Presença",
+    approvalStatusOption: (name: string | undefined) =>
+      `Status de Aprovação: ${name ?? ""}`,
+    applicationStatusOption: (name: string | undefined) =>
+      `Status de Processo: ${name ?? ""}`,
+    attendanceStatusOption: (name: string | undefined) =>
+      `Status de Presença: ${name ?? ""}`,
+    syncing: "Sincronizando...",
+    sync: "Sincronizar",
+  },
 } as const

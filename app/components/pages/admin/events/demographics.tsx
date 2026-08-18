@@ -3,6 +3,9 @@ import type { FetcherWithComponents } from "react-router"
 import type { Demographics } from "~/business/admin/demographics/demographics"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { Button } from "~/components/ui/button"
+import { adminEventsCopy } from "~/copy/admin/events"
+
+const demographicsCopy = adminEventsCopy.demographics
 
 type DemographicsProps = {
   demographics: Demographics | null
@@ -21,7 +24,7 @@ export const DemographicsData: FC<DemographicsProps> = ({
   return (
     <>
       <div className="flex items-center justify-between">
-        <h2>Demographics</h2>
+        <h2>{demographicsCopy.title}</h2>
         {fetcher && eventId && (
           <fetcher.Form method="post">
             <input type="hidden" name="intent" value="update-demographics" />
@@ -31,7 +34,7 @@ export const DemographicsData: FC<DemographicsProps> = ({
               size="sm"
               disabled={isUpdating}
             >
-              {isUpdating ? "Atualizando..." : "Atualizar Demografia"}
+              {isUpdating ? demographicsCopy.updating : demographicsCopy.update}
             </Button>
           </fetcher.Form>
         )}
@@ -39,105 +42,158 @@ export const DemographicsData: FC<DemographicsProps> = ({
       {demographics ? (
         <div className="flex flex-col gap-4 sm:grid sm:grid-cols-5">
           <div>
-            <h4>Geral</h4>
+            <h4>{demographicsCopy.general.title}</h4>
             <DataPair
-              suffix=" participantes"
-              pair={["Total", demographics.total]}
+              suffix={demographicsCopy.suffixes.participants}
+              pair={[demographicsCopy.general.total, demographics.total]}
             />
             <DataPair
-              suffix="%"
-              pair={["Veteranes", demographics.veteran.yes]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[demographicsCopy.general.veterans, demographics.veteran.yes]}
             />
-            <DataPair suffix="%" pair={["Novates", demographics.veteran.no]} />
+            <DataPair
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[demographicsCopy.general.rookies, demographics.veteran.no]}
+            />
           </div>
           <div>
-            <h4>Gênero</h4>
-            <DataPair suffix="%" pair={["Cis", demographics.gender.cis]} />
-            <DataPair suffix="%" pair={["Trans", demographics.gender.trans]} />
+            <h4>{demographicsCopy.gender.title}</h4>
+            <DataPair
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[demographicsCopy.gender.cis, demographics.gender.cis]}
+            />
+            <DataPair
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[demographicsCopy.gender.trans, demographics.gender.trans]}
+            />
             {!!demographics.gender.other.percentage && (
               <>
                 <DataPair
-                  suffix="%"
-                  pair={["Outros", demographics.gender.other.percentage]}
-                />{" "}
-                - {demographics.gender.other.values?.join(", ")}
+                  suffix={demographicsCopy.suffixes.percentage}
+                  pair={[
+                    demographicsCopy.gender.others,
+                    demographics.gender.other.percentage,
+                  ]}
+                />
+                {demographicsCopy.othersSeparator}
+                {demographics.gender.other.values?.join(", ")}
               </>
             )}
           </div>
           <div>
-            <h4>Orientação</h4>
+            <h4>{demographicsCopy.orientation.title}</h4>
             <DataPair
-              suffix="%"
-              pair={["Héteres", demographics.orientation.straight]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[
+                demographicsCopy.orientation.straight,
+                demographics.orientation.straight,
+              ]}
             />
             <DataPair
-              suffix="%"
-              pair={["Bi/Pan", demographics.orientation.biPan]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[
+                demographicsCopy.orientation.biPan,
+                demographics.orientation.biPan,
+              ]}
             />
             <DataPair
-              suffix="%"
-              pair={["Homo", demographics.orientation.homo]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[
+                demographicsCopy.orientation.homo,
+                demographics.orientation.homo,
+              ]}
             />
             <DataPair
-              suffix="%"
-              pair={["Ace/Demi", demographics.orientation.aceDemi]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[
+                demographicsCopy.orientation.aceDemi,
+                demographics.orientation.aceDemi,
+              ]}
             />
             {!!demographics.orientation.other.percentage && (
               <>
                 <DataPair
-                  suffix="%"
-                  pair={["Outros", demographics.orientation.other.percentage]}
-                />{" "}
-                - {demographics.orientation.other.values?.join(", ")}
+                  suffix={demographicsCopy.suffixes.percentage}
+                  pair={[
+                    demographicsCopy.orientation.others,
+                    demographics.orientation.other.percentage,
+                  ]}
+                />
+                {demographicsCopy.othersSeparator}
+                {demographics.orientation.other.values?.join(", ")}
               </>
             )}
           </div>
           <div>
-            <h4>Raça ou cor</h4>
+            <h4>{demographicsCopy.raceColor.title}</h4>
             <DataPair
-              suffix="%"
-              pair={["Amarela", demographics.race_color.yellow]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[
+                demographicsCopy.raceColor.yellow,
+                demographics.race_color.yellow,
+              ]}
             />
             <DataPair
-              suffix="%"
-              pair={["Branca", demographics.race_color.white]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[
+                demographicsCopy.raceColor.white,
+                demographics.race_color.white,
+              ]}
             />
             <DataPair
-              suffix="%"
-              pair={["Indígena", demographics.race_color.indigenous]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[
+                demographicsCopy.raceColor.indigenous,
+                demographics.race_color.indigenous,
+              ]}
             />
             <DataPair
-              suffix="%"
-              pair={["Parda", demographics.race_color.brown]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[
+                demographicsCopy.raceColor.brown,
+                demographics.race_color.brown,
+              ]}
             />
             <DataPair
-              suffix="%"
-              pair={["Preta", demographics.race_color.black]}
+              suffix={demographicsCopy.suffixes.percentage}
+              pair={[
+                demographicsCopy.raceColor.black,
+                demographics.race_color.black,
+              ]}
             />
             {!!demographics.race_color.other.percentage && (
               <>
                 <DataPair
-                  suffix="%"
-                  pair={["Outros", demographics.race_color.other.percentage]}
-                />{" "}
-                - {demographics.race_color.other.values?.join(", ")}
+                  suffix={demographicsCopy.suffixes.percentage}
+                  pair={[
+                    demographicsCopy.raceColor.others,
+                    demographics.race_color.other.percentage,
+                  ]}
+                />
+                {demographicsCopy.othersSeparator}
+                {demographics.race_color.other.values?.join(", ")}
               </>
             )}
           </div>
           <div>
-            <h4>Idades</h4>
-            <DataPair suffix=" anos" pair={["Menor", demographics.age.min]} />
+            <h4>{demographicsCopy.age.title}</h4>
             <DataPair
-              suffix=" anos"
-              pair={["Média", demographics.age.average]}
+              suffix={demographicsCopy.suffixes.years}
+              pair={[demographicsCopy.age.min, demographics.age.min]}
             />
-            <DataPair suffix=" anos" pair={["Maior", demographics.age.max]} />
+            <DataPair
+              suffix={demographicsCopy.suffixes.years}
+              pair={[demographicsCopy.age.average, demographics.age.average]}
+            />
+            <DataPair
+              suffix={demographicsCopy.suffixes.years}
+              pair={[demographicsCopy.age.max, demographics.age.max]}
+            />
           </div>
         </div>
       ) : (
         <div className="text-sm text-muted-foreground">
-          Não há dados demográficos. Clique em 'Atualizar Demografia' para
-          calcular.
+          {demographicsCopy.empty}
         </div>
       )}
     </>

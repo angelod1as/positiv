@@ -38,3 +38,20 @@ export const adminDashboardCopy = {
     cta: "Ver todos os feedbacks",
   },
 } as const
+
+export const listmonkDiagnosticCopy = {
+  title: "Diagnóstico de Email",
+  description:
+    "Essa ferramenta testa a conexão com o serviço de newsletter (Listmonk) e envia uma campanha de teste para os desenvolvedores. Use quando quiser verificar se os emails de abertura de evento estão funcionando.",
+  stepOk: (label: string) => `✓ ${label}`,
+  stepFailed: (label: string) => `✗ ${label}`,
+  failedBeforeCampaign: "Diagnóstico falhou antes de criar a campanha",
+  confirmTitle: "Testar conexão?",
+  confirmDescription:
+    "Será enviado um email de teste para todos os desenvolvedores cadastrados na lista de devs do Listmonk.",
+  confirmLabel: "Testar",
+  testing: "Testando...",
+  test: "Testar conexão com Listmonk",
+  cleaning: "Limpando...",
+  clean: "Limpar campanha de teste",
+} as const

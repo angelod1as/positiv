@@ -1,6 +1,7 @@
 import { useState } from "react"
 import type { RejectedEventParticipant } from "~/business/admin/admin.server"
 import { Link } from "~/components/atoms/link/link"
+import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
 
 const {
@@ -11,7 +12,11 @@ function formatName(participant: RejectedEventParticipant): string {
   if (participant.social_name && participant.full_name) {
     return `${participant.social_name} (${participant.full_name})`
   }
-  return participant.social_name ?? participant.full_name ?? "(sem nome)"
+  return (
+    participant.social_name ??
+    participant.full_name ??
+    adminEventsCopy.rejectedParticipants.noName
+  )
 }
 
 export function RejectedParticipantsSection({
@@ -25,11 +30,7 @@ export function RejectedParticipantsSection({
     return null
   }
 
-  const count = participants.length
-  const text =
-    count === 1
-      ? "1 participante rejeitade se candidatou neste evento"
-      : `${count} participantes rejeitades se inscreveram neste evento`
+  const text = adminEventsCopy.rejectedParticipants.summary(participants.length)
 
   return (
     <div className="mt-4">

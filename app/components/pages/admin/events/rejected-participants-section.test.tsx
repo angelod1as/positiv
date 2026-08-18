@@ -2,7 +2,10 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it } from "vitest"
 import { renderWithRouter, screen } from "~/test/test-utils"
 import type { RejectedEventParticipant } from "~/business/admin/admin.server"
+import { adminEventsCopy } from "~/copy/admin/events"
 import { RejectedParticipantsSection } from "./rejected-participants-section"
+
+const rejectedCopy = adminEventsCopy.rejectedParticipants
 
 describe("RejectedParticipantsSection", () => {
   it("should render nothing when participants array is empty", () => {
@@ -21,9 +24,7 @@ describe("RejectedParticipantsSection", () => {
       <RejectedParticipantsSection participants={participants} />,
     )
     expect(
-      screen.getByText(
-        "2 participantes rejeitades se inscreveram neste evento",
-      ),
+      screen.getByText(rejectedCopy.summary(2)),
     ).toBeDefined()
   })
 
@@ -80,7 +81,7 @@ describe("RejectedParticipantsSection", () => {
 
     await user.click(screen.getByRole("button"))
 
-    const link = screen.getByRole("link", { name: "(sem nome)" })
+    const link = screen.getByRole("link", { name: rejectedCopy.noName })
     expect(link).toBeDefined()
     expect(link.getAttribute("href")).toBe("/admin/participantes/no-name-123")
   })
@@ -93,9 +94,7 @@ describe("RejectedParticipantsSection", () => {
       <RejectedParticipantsSection participants={participants} />,
     )
     expect(
-      screen.getByText(
-        "1 participante rejeitade se candidatou neste evento",
-      ),
+      screen.getByText(rejectedCopy.summary(1)),
     ).toBeDefined()
   })
 })
