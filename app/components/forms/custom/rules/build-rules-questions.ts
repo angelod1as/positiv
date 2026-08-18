@@ -2,8 +2,8 @@ import type {
   InputSpec,
   Question,
 } from "~/components/forms/runtime/question.types"
-import { zod } from "~/lib/helpers/zod"
 import type { EventType } from "~types/database/entities.types"
+import { getRulesFormSchema } from "./rules-form-schema"
 import { getRulesFormQuestions } from "./rules-questions"
 import { shuffleArray } from "./shuffle-array"
 
@@ -31,12 +31,14 @@ function toInput(answers: Answers): InputSpec {
  * schemas and the server's rejections.
  */
 export function buildRulesQuestions(eventType: EventType): Question[] {
+  const schemas = getRulesFormSchema(eventType)
+
   return shuffleArray(Object.entries(getRulesFormQuestions(eventType))).map(
     ([id, question]) => ({
       id,
       prompt: question.question,
       input: toInput(question.answers),
-      schema: zod.string(),
+      schema: schemas[id],
     }),
   )
 }
