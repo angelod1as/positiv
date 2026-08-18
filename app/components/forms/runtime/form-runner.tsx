@@ -25,6 +25,12 @@ type FormRunnerProps = {
   continueLabel?: string
   onDone?: (answers: Answers) => void
   /**
+   * Whether the screen the flow opens on takes focus. Off by default, because
+   * taking it scrolls the page to the control and past whatever sits above the
+   * form. Turn it on for a form that has the page to itself.
+   */
+  focusFirstScreen?: boolean
+  /**
    * Keeps the run alive across a refresh, under `form-runtime:<formId>:<scopeId>`.
    * Omit it for a form with nothing to lose.
    */
@@ -46,6 +52,7 @@ export function FormRunner({
   data,
   continueLabel = "Continuar",
   onDone,
+  focusFirstScreen = false,
   persistence,
   stepId,
   onStepChange,
@@ -98,6 +105,7 @@ export function FormRunner({
       errors={runtime.errors}
       formError={runtime.formError}
       isBusy={runtime.isBusy}
+      focusFirstScreen={focusFirstScreen}
       onAnswer={runtime.answer}
       onContinue={() => {
         void runtime.advance()

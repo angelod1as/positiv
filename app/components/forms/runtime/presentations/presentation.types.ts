@@ -31,6 +31,12 @@ export type PresentationProps = {
   formError: string | null
   /** True while a commit is in flight, so the control can refuse a second submit. */
   isBusy: boolean
+  /**
+   * Whether the screen the flow opens on takes focus. Off by default: taking it
+   * scrolls the page down to the control, past anything the form sits under.
+   * A form that owns its page wants it on.
+   */
+  focusFirstScreen: boolean
   onAnswer: (id: string, value: unknown) => void
   onContinue: () => void
   continueLabel: string
