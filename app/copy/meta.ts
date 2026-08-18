@@ -3,4 +3,7 @@ export const metaCopy = {
     title: "Código de Conduta",
     description: "Código de conduta da Positiv",
   },
+  feedback: {
+    title: "Feedback",
+  },
 } as const

@@ -8,6 +8,8 @@ import { submitFeedback } from "~/business/feedback/feedback.server"
 import { notifyNewFeedback } from "~/business/feedback/notify-new-feedback.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import { Card, CardContent } from "~/components/ui/card"
+import { metaCopy } from "~/copy/meta"
+import { publicCopy } from "~/copy/public"
 import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
 import { verifyTurnstileToken } from "~/lib/helpers/verify-turnstile.server"
 import { createMetaArray } from "~/lib/helpers/meta"
@@ -15,8 +17,10 @@ import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/feedback-page"
 
+const { feedback } = publicCopy
+
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Feedback")
+  return createMetaArray(metaCopy.feedback.title)
 }
 
 export const loader = async () => {
@@ -38,10 +42,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const isDev = ENV.APP_ENV === "development"
   if (!isDev) {
     if (feedbackRateLimiter.isRateLimited(ip)) {
-      return redirectWithError(
-        paths.root.FEEDBACK,
-        "Você já enviou um feedback recentemente. Por favor, aguarde antes de enviar outro.",
-      )
+      return redirectWithError(paths.root.FEEDBACK, feedback.rateLimited)
     }
   }
 
@@ -52,7 +53,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   )
   if (!turnstileResult.success) {
     return data(
-      { errors: { captchaToken: ["Verificação de segurança falhou"] } },
+      { errors: { captchaToken: [feedback.captchaFailed] } },
       { status: 400 },
     )
   }
@@ -68,10 +69,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     feedbackRateLimiter.recordRequest(ip)
   }
 
-  return redirectWithSuccess(
-    paths.root.HOME,
-    "Obrigado pelo seu feedback! Sua opinião é muito importante para nós.",
-  )
+  return redirectWithSuccess(paths.root.HOME, feedback.success)
 }
 
 const FeedbackPage = () => {
@@ -80,45 +78,22 @@ const FeedbackPage = () => {
   return (
     <div className="flex flex-col gap-6 my-8">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">Envie seu Feedback</h1>
-        <p className="text-sm text-muted-foreground">
-          Compartilhe aqui anonimamente (ou não) sugestões, críticas ou elogios.
-        </p>
+        <h1 className="text-2xl font-bold">{feedback.title}</h1>
+        <p className="text-sm text-muted-foreground">{feedback.subtitle}</p>
         <Card className="bg-muted/50 mt-2">
           <CardContent className="pt-4">
-            <p className="text-sm text-muted-foreground">
-              A Positiv leva em consideração exclusivamente os feedbacks
-              relacionados com a nossa organização e nosso evento. Nos
-              reservamos a não apurar denúncias de casos ocorridos fora dos
-              nossos espaços.
-            </p>
+            <p className="text-sm text-muted-foreground">{feedback.scope}</p>
             <p className="text-sm text-muted-foreground mt-2">
-              Feedbacks de festas só serão aceitos via o formulário oficial
-              enviado no grupo do WhatsApp do evento.
+              {feedback.parties}
             </p>
           </CardContent>
         </Card>
       </div>
       <SchemaForm
         schema={feedbackFormSchema}
-        labels={{
-          name: "Nome (opcional)",
-          email: "E-mail (opcional)",
-          whatsapp: "WhatsApp (opcional)",
-          hasParticipated: "Já participou de algum evento?",
-          feedbackText: "Seu feedback",
-          canContact: "Podemos entrar em contato?",
-        }}
-        descriptions={{
-          canContact:
-            "Se for o caso, podemos continuar uma comunicação por WhatsApp ou e-mail.",
-        }}
-        placeholders={{
-          name: "Seu nome",
-          email: "email@exemplo.com",
-          whatsapp: "11999999999",
-          feedbackText: "Escreva aqui seu feedback, sugestão ou crítica...",
-        }}
+        labels={feedback.labels}
+        descriptions={feedback.descriptions}
+        placeholders={feedback.placeholders}
         inputTypes={{
           email: "email",
           canContact: "checkbox",
@@ -126,14 +101,17 @@ const FeedbackPage = () => {
         multiline={["feedbackText"]}
         options={{
           hasParticipated: [
-            { name: "Nunca participei", value: "never" },
-            { name: "Participei uma vez", value: "once" },
-            { name: "Participei mais de uma vez", value: "more_than_once" },
+            { name: feedback.participation.never, value: "never" },
+            { name: feedback.participation.once, value: "once" },
+            {
+              name: feedback.participation.moreThanOnce,
+              value: "more_than_once",
+            },
           ],
         }}
         hiddenFields={["captchaToken"]}
-        buttonLabel="Enviar Feedback"
-        pendingButtonLabel="Enviando..."
+        buttonLabel={feedback.submit}
+        pendingButtonLabel={feedback.submitting}
       >
         {({ Field, Button, Errors, setValue }) => (
           <div className="flex flex-col gap-4">
