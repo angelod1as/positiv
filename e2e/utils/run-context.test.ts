@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { eventFormSchema } from '~/business/admin/common'
 import {
   ABANDONED_TEST_EVENT_PATTERN,
   abandonedBefore,
@@ -65,26 +66,26 @@ describe('event titles', () => {
   it('scopes the prefix to the current run', () => {
     process.env.E2E_RUN_ID = 'abc123'
 
-    expect(runEventTitlePrefix()).toBe('[E2E-TEST:abc123]')
+    expect(runEventTitlePrefix()).toBe('[E2E:abc123]')
   })
 
   it('builds a title from the scoped prefix and a label', () => {
     process.env.E2E_RUN_ID = 'abc123'
 
-    expect(runEventTitle('Closed Event')).toBe('[E2E-TEST:abc123] Closed Event')
+    expect(runEventTitle('Closed Event')).toBe('[E2E:abc123] Closed Event')
   })
 
   it('matches only titles belonging to the current run', () => {
     process.env.E2E_RUN_ID = 'abc123'
 
-    expect(runEventTitlePattern()).toBe('[E2E-TEST:abc123]%')
+    expect(runEventTitlePattern()).toBe('[E2E:abc123]%')
   })
 
   it('does not match a title created by another run', () => {
     process.env.E2E_RUN_ID = 'abc123'
     const pattern = runEventTitlePattern()
 
-    expect('[E2E-TEST:zzz999] Event 1'.startsWith(pattern.slice(0, -1))).toBe(false)
+    expect('[E2E:zzz999] Event 1'.startsWith(pattern.slice(0, -1))).toBe(false)
   })
 })
 
@@ -135,6 +136,20 @@ describe('ABANDONED_TEST_EVENT_PATTERN', () => {
   it('matches the events of every run, not just this one', () => {
     process.env.E2E_RUN_ID = 'thisrun'
 
-    expect('[E2E-TEST:otherrun] Event'.startsWith(ABANDONED_TEST_EVENT_PATTERN.replace(/%$/, ''))).toBe(true)
+    expect('[E2E:otherrun] Event'.startsWith(ABANDONED_TEST_EVENT_PATTERN.replace(/%$/, ''))).toBe(true)
+  })
+})
+
+describe('run-scoped event titles against the admin form', () => {
+  it('leaves room for the longest label the suite uses', () => {
+    const title = runEventTitle(`Event Detail View ${Date.now()}`)
+
+    expect(eventFormSchema.shape.title.safeParse(title).success).toBe(true)
+  })
+
+  it('refuses a label that would be rejected by the form instead of failing in the browser', () => {
+    expect(() => runEventTitle('A label so long that the admin form will never accept it')).toThrow(
+      /50/
+    )
   })
 })
