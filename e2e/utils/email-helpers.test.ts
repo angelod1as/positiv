@@ -147,7 +147,7 @@ describe('waitForEmail', () => {
     fetchMock.mockImplementation((url: string) =>
       url === `${API_BASE}/v1/messages`
         ? Promise.resolve(jsonResponse(listOf(summary())))
-        : Promise.resolve(jsonResponse(message({ Text: 'Candidaturas abertas! Festa de Verão' })))
+        : Promise.resolve(jsonResponse(message({ Text: 'Inscrições abertas! Festa de Verão' })))
     )
 
     const email = await waitForEmail({ containing: 'Festa de Verão', timeout: 1000 })
