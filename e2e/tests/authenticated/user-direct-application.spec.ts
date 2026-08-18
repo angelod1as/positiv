@@ -1,13 +1,12 @@
 import { test, expect } from '@playwright/test'
 import path from 'path'
-import { createOpenRegularEvent } from '../../utils/test-event-helpers'
-import { DIRECT_APPLY_LABEL, openParticipantDashboard } from '../../utils/direct-application-helpers'
+import { createSoonOpenEvent, DIRECT_APPLY_LABEL, openParticipantDashboard } from '../../utils/direct-application-helpers'
 
 test.describe('POS-503: the direct application is for admins only', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/user.json') })
 
   test('a participant is never offered it', async ({ page }) => {
-    const event = await createOpenRegularEvent()
+    const event = await createSoonOpenEvent(`Direct refused ${Date.now()}`)
 
     await openParticipantDashboard(page)
 
@@ -23,7 +22,7 @@ test.describe('POS-503: the direct application is for admins only', () => {
   })
 
   test('a participant forging the submission is not applied', async ({ page }) => {
-    const event = await createOpenRegularEvent()
+    const event = await createSoonOpenEvent(`Direct refused ${Date.now()}`)
 
     await openParticipantDashboard(page)
 
