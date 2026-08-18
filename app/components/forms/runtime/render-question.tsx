@@ -153,5 +153,17 @@ export const renderQuestion: RenderQuestion = ({
         </div>
       )
     }
+
+    case "boolean":
+      return (
+        <Label className={choiceClassName}>
+          <Checkbox
+            id={question.id}
+            checked={value === true}
+            onChange={(event) => onChange(event.target.checked)}
+          />
+          <span>{question.prompt}</span>
+        </Label>
+      )
   }
 }

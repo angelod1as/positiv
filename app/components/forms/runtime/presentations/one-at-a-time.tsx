@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/base/error"
+import type { Question } from "~/components/forms/runtime/question.types"
 import type { Presentation } from "./presentation.types"
 
 /**
@@ -19,6 +20,12 @@ import type { Presentation } from "./presentation.types"
  * form is asked to sit under — on the rules quiz, that is the rules themselves.
  * A form that owns its page has nothing to scroll past, and wants the focus.
  */
+/**
+ * A boolean is drawn as a box with its prompt beside it, so the presentation
+ * drawing a heading as well would name the same control twice.
+ */
+const ownsItsPrompt = (question: Question) => question.input.kind === "boolean"
+
 export const OneAtATime: Presentation = ({
   step,
   questions,
@@ -76,9 +83,11 @@ export const OneAtATime: Presentation = ({
 
       {questions.map((question) => (
         <div key={question.id} className="flex flex-col gap-4">
-          <h2 id={`${question.id}-prompt`} className="text-2xl font-bold">
-            {question.prompt}
-          </h2>
+          {ownsItsPrompt(question) ? null : (
+            <h2 id={`${question.id}-prompt`} className="text-2xl font-bold">
+              {question.prompt}
+            </h2>
+          )}
 
           {question.help ? (
             <p className="text-muted-foreground">{question.help}</p>

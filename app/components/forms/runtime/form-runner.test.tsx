@@ -557,4 +557,53 @@ describe("presentation cannot change what is collected", () => {
 
     expect(await answersFrom(AllAtOnce)).toEqual(await answersFrom(OneAtATime))
   })
+  it("does not label a boolean question twice", () => {
+    const booleanQuestion: Question = {
+      id: "over18",
+      prompt: "Sou maior de 18 anos",
+      input: { kind: "boolean" },
+      schema: zod.boolean(),
+    }
+
+    const flow: Flow = {
+      start: "screen",
+      steps: { screen: { kind: "screen", ids: ["over18"] } },
+      next: () => "done",
+    }
+
+    render(
+      <FormRunner
+        questions={[booleanQuestion]}
+        flow={flow}
+        presentation={AllAtOnce}
+      />,
+    )
+
+    expect(screen.getAllByText("Sou maior de 18 anos")).toHaveLength(1)
+  })
+
+  it("does not headline a boolean question twice one at a time", () => {
+    const booleanQuestion: Question = {
+      id: "over18",
+      prompt: "Sou maior de 18 anos",
+      input: { kind: "boolean" },
+      schema: zod.boolean(),
+    }
+
+    const flow: Flow = {
+      start: "over18",
+      steps: { over18: { kind: "question", id: "over18" } },
+      next: () => "done",
+    }
+
+    render(
+      <FormRunner
+        questions={[booleanQuestion]}
+        flow={flow}
+        presentation={OneAtATime}
+      />,
+    )
+
+    expect(screen.getAllByText("Sou maior de 18 anos")).toHaveLength(1)
+  })
 })

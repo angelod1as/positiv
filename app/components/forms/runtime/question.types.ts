@@ -19,6 +19,12 @@ export type InputSpec =
   | { kind: "select"; options: Option[] }
   | { kind: "radio"; options: Option[] }
   | { kind: "checkbox"; options: Option[] }
+  /**
+   * One box, answered with `true` or `false`. Distinct from `checkbox`, which
+   * is a list of options answered with `string[]`. The prompt is the text
+   * beside the box, so the presentation leaves the label to the renderer.
+   */
+  | { kind: "boolean" }
 
 export type Question = {
   id: string

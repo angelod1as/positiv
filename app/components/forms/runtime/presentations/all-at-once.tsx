@@ -12,6 +12,12 @@ import type { Presentation } from "./presentation.types"
 const isChoice = (question: Question) =>
   question.input.kind === "radio" || question.input.kind === "checkbox"
 
+/**
+ * A boolean is drawn as a box with its prompt beside it, so the presentation
+ * drawing a label as well would name the same control twice.
+ */
+const ownsItsPrompt = (question: Question) => question.input.kind === "boolean"
+
 export const AllAtOnce: Presentation = ({
   step,
   questions,
@@ -39,7 +45,7 @@ export const AllAtOnce: Presentation = ({
 
       return (
         <div key={question.id} className="flex flex-col gap-2">
-          {choice ? (
+          {ownsItsPrompt(question) ? null : choice ? (
             <span id={promptId} className="mb-2 text-sm font-medium">
               {question.prompt}
             </span>
