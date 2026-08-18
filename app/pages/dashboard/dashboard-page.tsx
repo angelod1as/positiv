@@ -50,10 +50,14 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     )
   }
 
+  // Start the event query before awaiting the flag, so the two run concurrently
+  // rather than one after the other
+  const events = loadEvents(currentProfile.id)
+
   // Return object with unawaited promise for streaming
   // No defer() wrapper needed in React Router 7
   return {
-    events: loadEvents(currentProfile.id),
+    events,
     hasEverApplied: await hasEverApplied(currentProfile.id),
   }
 }
