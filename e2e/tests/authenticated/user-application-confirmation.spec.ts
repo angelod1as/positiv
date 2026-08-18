@@ -1,39 +1,38 @@
 import { expect, test } from '@playwright/test'
-import { EventApplicationPage } from '../../pages/EventApplicationPage'
-import { ensureEventIsOpen, ensureTestUserProfileExists, getFirstOpenEvent } from '../../utils/application-helpers'
+import {
+  createTestApplication,
+  ensureTestUserProfileExists,
+  getFirstOpenEvent,
+} from '../../utils/application-helpers'
 import { cleanupEventParticipations } from '../../utils/db-cleanup'
 import { ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
 
+// Landing here from a finished application is covered by the application page
+// object, which every walk of the flow goes through. These tests are about the
+// page itself: what it says, and who is allowed to read it.
 test.describe('POS-482: Application confirmation page', () => {
-  test('a finished application lands on the confirmation page', async ({ page }) => {
+  test('tells someone who applied what happens next', async ({ page }) => {
     const profileId = await ensureTestUserProfileExists()
     await cleanupEventParticipations(profileId, true)
     const [event] = await ensureMinimumOpenEvents(1)
-    await ensureEventIsOpen(event.id)
+    await createTestApplication(profileId, event.id)
 
-    // Enter the flow by URL instead of through a dashboard card: other
-    // worktrees share this database and delete test events, which turned
-    // clicking a card into a race that sometimes bounced back to /dashboard
-    await page.goto(`/dashboard/${event.id}/regras`)
+    await page.goto(`/dashboard/${event.id}/candidatura-enviada`)
 
-    const applicationPage = new EventApplicationPage(page)
-
-    // The quiz's own last "Continuar" saves, so nothing is left to click
-    await applicationPage.fillRulesForm()
-
-    await applicationPage.fillUserDataForm('Test application notes', 'ninguém')
-    await applicationPage.submitApplication()
-
+    await expect(
+      page.getByRole('heading', { name: 'Candidatura enviada! 🎉' }),
+    ).toBeVisible()
     await expect(page.getByText(/candidatura não garante uma vaga/)).toBeVisible()
     await expect(
       page.getByText(/a organização seleciona quem vai e entra em contato/),
     ).toBeVisible()
     await expect(page.getByText(/um e-mail com os detalhes do evento/)).toBeVisible()
 
-    await applicationPage.returnToDashboard()
+    await page.getByRole('link', { name: 'Voltar para o painel' }).click()
+    await expect(page).toHaveURL(/\/dashboard$/)
   })
 
-  test('the confirmation page is not reachable without an application', async ({ page }) => {
+  test('is not reachable without an application', async ({ page }) => {
     const profileId = await ensureTestUserProfileExists()
     await cleanupEventParticipations(profileId, true)
 
