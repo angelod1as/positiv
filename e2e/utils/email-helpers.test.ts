@@ -16,16 +16,16 @@ const summary = (overrides: Record<string, unknown> = {}) => ({
   ID: 'abc123',
   From: { Name: 'Positiv', Address: 'no-reply@positiv.com.br' },
   To: [{ Name: 'Fulano', Address: 'user@example.com' }],
-  Subject: 'Você se inscreveu no evento Teste',
-  Snippet: 'Sua inscrição foi recebida',
+  Subject: 'Recebemos sua candidatura ao evento Teste',
+  Snippet: 'Sua candidatura foi recebida',
   Created: '2026-08-16T23:14:15.035-03:00',
   ...overrides
 })
 
 const message = (overrides: Record<string, unknown> = {}) => ({
   ...summary(),
-  Text: 'Sua inscrição foi recebida',
-  HTML: '<p>Sua inscrição foi recebida</p>',
+  Text: 'Sua candidatura foi recebida',
+  HTML: '<p>Sua candidatura foi recebida</p>',
   ...overrides
 })
 
@@ -89,7 +89,7 @@ describe('getAllEmails', () => {
 
     expect(fetchMock).toHaveBeenCalledWith(`${API_BASE}/v1/messages`)
     expect(emails).toHaveLength(1)
-    expect(emails[0].Subject).toBe('Você se inscreveu no evento Teste')
+    expect(emails[0].Subject).toBe('Recebemos sua candidatura ao evento Teste')
   })
 
   it('fails loudly on a bad response', async () => {
@@ -135,19 +135,19 @@ describe('waitForEmail', () => {
 
     const email = await waitForEmail({
       to: 'user@example.com',
-      subject: 'Você se inscreveu',
+      subject: 'Recebemos sua candidatura',
       timeout: 1000
     })
 
     expect(fetchMock).toHaveBeenCalledWith(`${API_BASE}/v1/message/abc123`)
-    expect(email.Text).toBe('Sua inscrição foi recebida')
+    expect(email.Text).toBe('Sua candidatura foi recebida')
   })
 
   it('matches on body content fetched from the single message endpoint', async () => {
     fetchMock.mockImplementation((url: string) =>
       url === `${API_BASE}/v1/messages`
         ? Promise.resolve(jsonResponse(listOf(summary())))
-        : Promise.resolve(jsonResponse(message({ Text: 'Inscrições abertas! Festa de Verão' })))
+        : Promise.resolve(jsonResponse(message({ Text: 'Candidaturas abertas! Festa de Verão' })))
     )
 
     const email = await waitForEmail({ containing: 'Festa de Verão', timeout: 1000 })
@@ -168,9 +168,9 @@ describe('verifyEmailContent', () => {
   it('reads the top-level subject and the sender address', async () => {
     await expect(
       verifyEmailContent(message(), {
-        subject: 'Você se inscreveu',
+        subject: 'Recebemos sua candidatura',
         from: 'no-reply@positiv.com.br',
-        bodyContains: ['Sua inscrição foi recebida']
+        bodyContains: ['Sua candidatura foi recebida']
       })
     ).resolves.toBeUndefined()
   })
@@ -184,11 +184,11 @@ describe('verifyEmailContent', () => {
 
 describe('extractEmailBody', () => {
   it('prefers the plain text part', () => {
-    expect(extractEmailBody(message())).toBe('Sua inscrição foi recebida')
+    expect(extractEmailBody(message())).toBe('Sua candidatura foi recebida')
   })
 
   it('falls back to the HTML part', () => {
-    expect(extractEmailBody(message({ Text: '' }))).toBe('<p>Sua inscrição foi recebida</p>')
+    expect(extractEmailBody(message({ Text: '' }))).toBe('<p>Sua candidatura foi recebida</p>')
   })
 })
 

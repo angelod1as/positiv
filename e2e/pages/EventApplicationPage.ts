@@ -45,7 +45,7 @@ export class EventApplicationPage extends BasePage {
     })
     this.bondRadioButtons = page.locator('input[type="radio"]')
     this.confirmButton = page.getByRole("button", {
-      name: "🎉 Confirmar Inscrição!",
+      name: "🎉 Enviar candidatura!",
     })
   }
 

@@ -29,7 +29,7 @@ test.describe('Admin Access Control', () => {
     await expect(page.getByRole('heading', { name: 'Visão geral' })).toBeVisible()
 
     // Check for open events cards section
-    const openEventsHeading = page.getByRole('heading', { name: 'Eventos com inscrições abertas', exact: true })
+    const openEventsHeading = page.getByRole('heading', { name: 'Eventos com candidaturas abertas', exact: true })
     const openEventsCards = page.getByTestId('admin-event-card')
     const openEventsCount = await openEventsCards.count()
 

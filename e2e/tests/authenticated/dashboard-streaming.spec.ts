@@ -76,9 +76,9 @@ test.describe('POS-268: Dashboard Event Streaming Tests', () => {
     await page.waitForLoadState('networkidle')
 
     // Wait for events to load (they should appear after skeleton)
-    await page.waitForSelector('h2:has-text("Eventos em que você se inscreveu")', { timeout: 5000 })
+    await page.waitForSelector('h2:has-text("Eventos em que você se candidatou")', { timeout: 5000 })
 
-    const appliedSection = await page.locator('h2:has-text("Eventos em que você se inscreveu")').isVisible()
+    const appliedSection = await page.locator('h2:has-text("Eventos em que você se candidatou")').isVisible()
     expect(appliedSection).toBe(true)
 
     const availableSection = await page.locator('h2:has-text("Eventos da Positiv")').count()

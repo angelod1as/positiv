@@ -11,7 +11,7 @@ export class EventsPage extends BasePage {
   constructor(page: Page) {
     super(page)
 
-    this.appliedEventsHeading = page.getByRole('heading', { name: 'Eventos em que você se inscreveu' })
+    this.appliedEventsHeading = page.getByRole('heading', { name: 'Eventos em que você se candidatou' })
     this.availableEventsHeading = page.getByRole('heading', { name: 'Eventos da Positiv' })
     this.eventCards = page.locator('[data-testid^="event-card"]')
     this.loadingSpinner = page.locator('.loading-spinner')
@@ -51,8 +51,8 @@ export class EventsPage extends BasePage {
     const eventCard = await this.getEventCardByTitle(title)
     await expect(eventCard).toBeVisible({ timeout: 10000 })
     
-    // Find the "Fazer inscrição" button within the card
-    const applyButton = eventCard.getByRole('link', { name: 'Fazer inscrição' })
+    // Find the "Me candidatar" button within the card
+    const applyButton = eventCard.getByRole('link', { name: 'Me candidatar' })
     await Promise.all([
       this.page.waitForNavigation({ waitUntil: 'networkidle' }),
       applyButton.click()
@@ -60,11 +60,11 @@ export class EventsPage extends BasePage {
   }
 
   async clickFirstOpenEvent(): Promise<void> {
-    // Find the first event card with an "Fazer inscrição" button
-    const openEventCard = this.page.locator('[data-testid^="event-card"]:has(a:has-text("Fazer inscrição"))').first()
+    // Find the first event card with an "Me candidatar" button
+    const openEventCard = this.page.locator('[data-testid^="event-card"]:has(a:has-text("Me candidatar"))').first()
     await expect(openEventCard).toBeVisible({ timeout: 10000 })
     
-    const applyButton = openEventCard.getByRole('link', { name: 'Fazer inscrição' })
+    const applyButton = openEventCard.getByRole('link', { name: 'Me candidatar' })
     await applyButton.click()
     await this.page.waitForLoadState('networkidle')
   }
@@ -91,7 +91,7 @@ export class EventsPage extends BasePage {
   }
 
   async getOpenEventsCount(): Promise<number> {
-    const openEvents = this.page.locator('[data-testid^="event-card"]:has(a:has-text("Fazer inscrição"))')
+    const openEvents = this.page.locator('[data-testid^="event-card"]:has(a:has-text("Me candidatar"))')
     return await openEvents.count()
   }
 
@@ -104,14 +104,14 @@ export class EventsPage extends BasePage {
     const eventCard = await this.getEventCardByTitle(eventTitle)
     await expect(eventCard).toBeVisible()
     
-    // Check for "Cancelar inscrição" button which indicates user already applied
-    const cancelButton = eventCard.getByRole('button', { name: 'Cancelar inscrição' })
+    // Check for "Cancelar candidatura" button which indicates user already applied
+    const cancelButton = eventCard.getByRole('button', { name: 'Cancelar candidatura' })
     await expect(cancelButton).toBeVisible()
   }
 
   async isEventOpen(eventTitle: string): Promise<boolean> {
     const eventCard = await this.getEventCardByTitle(eventTitle)
-    const applyButton = eventCard.getByRole('link', { name: 'Fazer inscrição' })
+    const applyButton = eventCard.getByRole('link', { name: 'Me candidatar' })
     return await applyButton.isVisible()
   }
 

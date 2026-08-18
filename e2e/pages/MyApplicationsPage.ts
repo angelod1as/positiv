@@ -13,11 +13,11 @@ export class MyApplicationsPage extends BasePage {
     
     // Locators for event cards and buttons
     this.appliedEventCards = page.locator('[data-testid*="event-card"]').filter({
-      has: page.getByRole('button', { name: 'Cancelar inscrição' })
+      has: page.getByRole('button', { name: 'Cancelar candidatura' })
     })
     
-    this.cancelApplicationButton = page.getByRole('button', { name: 'Cancelar inscrição' })
-    this.applyButton = page.getByRole('link', { name: 'Fazer inscrição' })
+    this.cancelApplicationButton = page.getByRole('button', { name: 'Cancelar candidatura' })
+    this.applyButton = page.getByRole('link', { name: 'Me candidatar' })
     this.confirmCancelButton = page.getByRole('button', { name: '😢 Cancelar' })
     this.cancelDialogCancelButton = page.getByRole('button', { name: '🎉 Voltar' })
   }
@@ -51,7 +51,7 @@ export class MyApplicationsPage extends BasePage {
     const eventCard = await this.findEventByTitle(eventTitle)
     if (!eventCard) return false
     
-    const cancelButton = eventCard.getByRole('button', { name: 'Cancelar inscrição' })
+    const cancelButton = eventCard.getByRole('button', { name: 'Cancelar candidatura' })
     return await cancelButton.isVisible()
   }
 
@@ -62,7 +62,7 @@ export class MyApplicationsPage extends BasePage {
     }
 
     // Click cancel button on the event card
-    const cancelButton = eventCard.getByRole('button', { name: 'Cancelar inscrição' })
+    const cancelButton = eventCard.getByRole('button', { name: 'Cancelar candidatura' })
     await cancelButton.click()
 
     // Wait for confirmation dialog
@@ -75,14 +75,14 @@ export class MyApplicationsPage extends BasePage {
     await this.page.waitForLoadState('networkidle')
 
     // Wait for button state to change. Closed events never offer a way back in,
-    // so they settle on the disabled "Inscrições encerradas" button instead.
+    // so they settle on the disabled "Candidaturas encerradas" button instead.
     if (options.registrationsClosed) {
       // The card also carries a status badge with this exact text, so match the
       // disabled button by role rather than by text
       await cancelButton.waitFor({ state: 'detached' })
-      await eventCard.getByRole('button', { name: 'Inscrições encerradas' }).waitFor({ state: 'visible' })
+      await eventCard.getByRole('button', { name: 'Candidaturas encerradas' }).waitFor({ state: 'visible' })
     } else {
-      await eventCard.getByRole('link', { name: 'Fazer inscrição' }).waitFor({ state: 'visible' })
+      await eventCard.getByRole('link', { name: 'Me candidatar' }).waitFor({ state: 'visible' })
     }
   }
 
@@ -93,7 +93,7 @@ export class MyApplicationsPage extends BasePage {
     }
     
     // Click apply button on the event card
-    const applyButton = eventCard.getByRole('link', { name: 'Fazer inscrição' })
+    const applyButton = eventCard.getByRole('link', { name: 'Me candidatar' })
     await applyButton.click()
     
     // This will navigate to the application form page
@@ -105,8 +105,8 @@ export class MyApplicationsPage extends BasePage {
     const eventCard = await this.findEventByTitle(eventTitle)
     if (!eventCard) return 'not-found'
     
-    const cancelButton = eventCard.getByRole('button', { name: 'Cancelar inscrição' })
-    const applyButton = eventCard.getByRole('link', { name: 'Fazer inscrição' })
+    const cancelButton = eventCard.getByRole('button', { name: 'Cancelar candidatura' })
+    const applyButton = eventCard.getByRole('link', { name: 'Me candidatar' })
     
     if (await cancelButton.isVisible()) {
       return 'applied'
@@ -125,9 +125,9 @@ export class MyApplicationsPage extends BasePage {
     
     try {
       if (expectedStatus === 'applied') {
-        await eventCard.getByRole('button', { name: 'Cancelar inscrição' }).waitFor({ state: 'visible', timeout })
+        await eventCard.getByRole('button', { name: 'Cancelar candidatura' }).waitFor({ state: 'visible', timeout })
       } else {
-        await eventCard.getByRole('link', { name: 'Fazer inscrição' }).waitFor({ state: 'visible', timeout })
+        await eventCard.getByRole('link', { name: 'Me candidatar' }).waitFor({ state: 'visible', timeout })
       }
     } catch (_error) {
       throw new Error(`Timeout waiting for "${eventTitle}" to change to "${expectedStatus}" status after ${timeout}ms`)
