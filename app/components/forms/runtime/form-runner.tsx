@@ -104,6 +104,7 @@ export function FormRunner({
       answers={runtime.answers}
       errors={runtime.errors}
       formError={runtime.formError}
+      progress={runtime.progress}
       isBusy={runtime.isBusy}
       focusFirstScreen={focusFirstScreen}
       onAnswer={runtime.answer}
