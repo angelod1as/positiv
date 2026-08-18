@@ -18,4 +18,7 @@ export const metaCopy = {
   confirmEmailMessage: {
     title: "Confirme sua Conta",
   },
+  registrationError: {
+    title: "Erro ao Criar Conta",
+  },
 } as const

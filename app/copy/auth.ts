@@ -57,3 +57,10 @@ export const confirmEmailMessageCopy = {
   retry: (forgotPasswordPath: string) =>
     `Se a mensagem demorar mais que 5 minutos para chegar, tente novamente. Se mesmo assim não der certo, tente o processo de ["esqueci minha senha"](${forgotPasswordPath})`,
 } as const
+
+export const registrationErrorCopy = {
+  title: "Erro ao criar conta",
+  body: "Houve um erro ao criar sua conta. Entre em contato com o nosso WhatsApp e informe o erro **ERR-001**.",
+  whatsappMessage: "Olá! Tive o erro ERR-001 ao criar minha conta",
+  whatsappCta: "Falar pelo WhatsApp",
+} as const

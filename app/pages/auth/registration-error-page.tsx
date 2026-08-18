@@ -7,6 +7,10 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import { Button } from "~/components/atoms/button/button"
+import { Copy } from "~/components/atoms/copy/copy"
+import { registrationErrorCopy } from "~/copy/auth"
+import { metaCopy } from "~/copy/meta"
+import { sharedCopy } from "~/copy/shared"
 import paths from "~/lib/paths"
 import { POSITIV_WHATSAPP } from "~/lib/constants/constants"
 import { createMetaArray } from "~/lib/helpers/meta"
@@ -17,24 +21,22 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Erro ao Criar Conta")
+  return createMetaArray(metaCopy.registrationError.title)
 }
 
 const RegistrationErrorPage = () => {
-  const errorMessage = "Olá! Tive o erro ERR-001 ao criar minha conta"
-  const whatsappLink = `https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(errorMessage)}`
+  const whatsappLink = `https://wa.me/${POSITIV_WHATSAPP}?text=${encodeURIComponent(registrationErrorCopy.whatsappMessage)}`
 
   return (
     <Card className="my-12">
       <CardHeader>
-        <CardTitle className="text-2xl">Erro ao criar conta</CardTitle>
+        <CardTitle className="text-2xl">
+          {registrationErrorCopy.title}
+        </CardTitle>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4">
-        <p>
-          Houve um erro ao criar sua conta. Entre em contato com o nosso
-          WhatsApp e informe o erro <strong>ERR-001</strong>.
-        </p>
+        <Copy>{registrationErrorCopy.body}</Copy>
       </CardContent>
       <CardFooter className="flex flex-col gap-6">
         <Link
@@ -44,11 +46,11 @@ const RegistrationErrorPage = () => {
           className="w-full"
         >
           <Button className="w-full bg-green hover:bg-green/90">
-            Falar pelo WhatsApp
+            {registrationErrorCopy.whatsappCta}
           </Button>
         </Link>
         <Button to={HOME} variant="outline">
-          Voltar para a home
+          {sharedCopy.actions.backHome}
         </Button>
       </CardFooter>
     </Card>
