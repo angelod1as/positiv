@@ -4,6 +4,8 @@ import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { basicDataSchema } from "~/business/common"
 import { basicData } from "~/business/participant/basic-data.server"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { basicDataCopy } from "~/copy/account"
+import { metaCopy } from "~/copy/meta"
 import paths from "~/lib/paths"
 import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/basic-data-page"
@@ -15,7 +17,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Dados Básicos")
+  return createMetaArray(metaCopy.basicData.title)
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -28,7 +30,7 @@ export async function action({ request, params }: Route.ActionArgs) {
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(GENDER_PRONOUNS_ORIENTATION, {
-          message: "Dados salvos com sucesso!",
+          message: basicDataCopy.successToast,
         })
       }
       return result
@@ -84,44 +86,25 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
   return (
     <>
       <div>
-        <h1>Dados básicos</h1>
+        <h1>{basicDataCopy.title}</h1>
         <p className="text-muted-foreground">
           {orphanedProfile
-            ? "Encontramos seu perfil anterior! Revise e atualize seus dados se necessário."
+            ? basicDataCopy.intro.orphan
             : profile?.basic_data_filled
-              ? "Atualize seus dados"
-              : "Precisamos destes dados básicos para nosso controle interno de pessoas participantes"}
+              ? basicDataCopy.intro.update
+              : basicDataCopy.intro.initial}
         </p>
       </div>
       <SchemaForm
         schema={basicDataSchema}
         values={defaultValues}
-        labels={{
-          full_name: "Nome completo",
-          social_name: "Nome social ou apelido",
-          date_of_birth: "Data de nascimento",
-          where_lives: "Em que cidade você mora?",
-          how_came_to_us: "Como chegou até nós?",
-          phone: "WhatsApp",
-          confirm_phone: "Confirme seu whatsapp",
-          cpf: "CPF",
-          rg: "RG",
-          rg_issuer: "Emissor do RG",
-        }}
+        labels={basicDataCopy.labels}
         inputTypes={{
           confirm_phone: "textnumber",
           phone: "textnumber",
           date_of_birth: "date",
         }}
-        descriptions={{
-          social_name: "Como você quer ser chamade?",
-          where_lives: "Nossa dúvida: de onde nosso público vêm?",
-          how_came_to_us:
-            "Nos diga o nome de quem te indicou ou se você nos viu em alguma rede social",
-          phone: "Só números, com DDD. Ex: 11955552222",
-          confirm_phone: "Só números, com DDD. Ex: 11955552222",
-          rg_issuer: "Exemplo: SSP/SP",
-        }}
+        descriptions={basicDataCopy.descriptions}
       >
         {({ Field, Button, Errors }) => {
           return (
@@ -135,8 +118,7 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
                 <Field name="phone" className="col-span-6" />
                 <Field name="confirm_phone" className="col-span-6" />
                 <p className="col-span-12 mt-4 text-muted-foreground text-sm">
-                  Os dados abaixo serão utilizados para controle de entrada nos
-                  locais dos eventos:
+                  {basicDataCopy.documentsNotice}
                 </p>
                 <Field name="cpf" className="col-span-4" />
                 <Field name="rg" className="col-span-4" />

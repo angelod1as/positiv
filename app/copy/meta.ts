@@ -30,4 +30,7 @@ export const metaCopy = {
   account: {
     title: "Minha Conta",
   },
+  basicData: {
+    title: "Dados Básicos",
+  },
 } as const

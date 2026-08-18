@@ -35,3 +35,38 @@ export const accountCopy = {
     cancelLabel: "Entendi",
   },
 } as const
+
+export const basicDataCopy = {
+  title: "Dados básicos",
+  intro: {
+    orphan:
+      "Encontramos seu perfil anterior! Revise e atualize seus dados se necessário.",
+    update: "Atualize seus dados",
+    initial:
+      "Precisamos destes dados básicos para nosso controle interno de pessoas participantes",
+  },
+  documentsNotice:
+    "Os dados abaixo serão utilizados para controle de entrada nos locais dos eventos:",
+  labels: {
+    full_name: "Nome completo",
+    social_name: "Nome social ou apelido",
+    date_of_birth: "Data de nascimento",
+    where_lives: "Em que cidade você mora?",
+    how_came_to_us: "Como chegou até nós?",
+    phone: "WhatsApp",
+    confirm_phone: "Confirme seu whatsapp",
+    cpf: "CPF",
+    rg: "RG",
+    rg_issuer: "Emissor do RG",
+  },
+  descriptions: {
+    social_name: "Como você quer ser chamade?",
+    where_lives: "Nossa dúvida: de onde nosso público vêm?",
+    how_came_to_us:
+      "Nos diga o nome de quem te indicou ou se você nos viu em alguma rede social",
+    phone: "Só números, com DDD. Ex: 11955552222",
+    confirm_phone: "Só números, com DDD. Ex: 11955552222",
+    rg_issuer: "Exemplo: SSP/SP",
+  },
+  successToast: "Dados salvos com sucesso!",
+} as const
