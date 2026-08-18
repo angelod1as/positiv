@@ -3,9 +3,9 @@ export const dashboardCopy = {
   cancelFailed: "Ops, seu cancelamento deu errado. Comunique o administrador.",
   welcome: {
     title: "Sua conta está pronta",
-    body: "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.",
+    body: "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.",
   },
-  emptyApplied: "Você não tem nenhuma inscrição no momento.",
+  emptyApplied: "Você não tem nenhuma candidatura no momento.",
   emptyAvailable: "Nenhum evento por aqui no momento.",
   calendarFailed:
     "Erro ao gerar evento no calendário, tente novamente mais tarde",
@@ -71,7 +71,7 @@ export const agreeToTermsCopy = {
   },
   descriptions: {
     commonEmails:
-      "Vamos enviar mensagens sobre o processo de inscrição e, se você quiser, lembrete de datas importantes de eventos futuros (mas só se você clicar no botãozinho).",
+      "Vamos enviar mensagens sobre o processo de candidatura e, se você quiser, lembrete de datas importantes de eventos futuros (mas só se você clicar no botãozinho).",
     mktEmails:
       "Vamos enviar mensagens sobre outros eventos e parcerias, e também atualizações da Positiv que podem ir além das festas tradicionais .",
   },

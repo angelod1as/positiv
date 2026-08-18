@@ -214,21 +214,21 @@ export const rulesQuizCopy = {
 } as const
 
 export const eventListCopy = {
-  appliedHeading: "Eventos em que você se inscreveu",
+  appliedHeading: "Eventos em que você se candidatou",
   availableHeading: "Eventos da Positiv",
 } as const
 
 export const eventCardCopy = {
   adminView: "Ver evento",
   scheduled: "Inscrições em breve",
-  closed: "Inscrições encerradas",
-  apply: "Fazer inscrição",
+  closed: "Candidaturas encerradas",
+  apply: "Me candidatar",
   directApply: "Candidatura direta (admin)",
-  comingSoon: "Inscreva-se em breve",
+  comingSoon: "Candidaturas em breve",
   cancel: {
-    trigger: "Cancelar inscrição",
-    title: "Cancelar inscrição",
-    description: "Você tem certeza que deseja cancelar sua inscrição?",
+    trigger: "Cancelar candidatura",
+    title: "Cancelar candidatura",
+    description: "Você tem certeza que deseja cancelar sua candidatura?",
     confirmLabel: "😢 Cancelar",
     cancelLabel: "🎉 Voltar",
   },
@@ -236,9 +236,9 @@ export const eventCardCopy = {
 
 export const eventApplicationCopy = {
   title: "Quase lá!",
-  intro: `Parabéns, você acertou tudo! Essa é a última etapa: precisamos de algumas informações específicas à inscrição nesse evento.
+  intro: `Parabéns, você acertou tudo! Essa é a última etapa: precisamos de algumas informações específicas à candidatura nesse evento.
 
-Ao clicar no botão "Confirmar Inscrição", sua inscrição será confirmada (óbvio) e você irá receber um email com os dados do evento, salve na sua agenda!
+Ao clicar no botão "Enviar candidatura", sua candidatura será enviada (óbvio) e você irá receber um email com os dados do evento, salve na sua agenda!
 
 (O email pode demorar uns minutos para chegar)`,
   labels: {
@@ -259,10 +259,10 @@ Ao clicar no botão "Confirmar Inscrição", sua inscrição será confirmada (�
     companions: "Diga pra gente se você vai de galera — e quem é esse pessoal.",
     bond: "Se, pra você, tudo bem se você for selecionade e elas não, selecione a caixinha acima.",
   },
-  submitLabel: "🎉 Confirmar Inscrição!",
+  submitLabel: "🎉 Enviar candidatura!",
   toasts: {
     success: {
-      message: "Inscrição efetuada com sucesso",
+      message: "Candidatura enviada com sucesso",
       description:
         "Você receberá as informações do evento em seu email (pode demorar uns minutos)",
     },
