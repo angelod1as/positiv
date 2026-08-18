@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { BDSMBadge, GenderWarning, OrientationWarning, VeteranBadge } from './badges'
+import { GenderWarning, OrientationWarning, VeteranBadge } from './badges'
 
 describe('GenderWarning', () => {
   it('should highlight specified gender identities and handle case variations', () => {
@@ -74,19 +74,3 @@ describe('VeteranBadge', () => {
   })
 })
 
-describe('BDSMBadge', () => {
-  it('should render badge when event_type is bdsm', () => {
-    render(<BDSMBadge event_type="bdsm" />)
-    expect(screen.getByText('Edição BDSM')).toBeInTheDocument()
-  })
-
-  it('should not render when event_type is regular', () => {
-    const { container } = render(<BDSMBadge event_type="regular" />)
-    expect(container.firstChild).toBeNull()
-  })
-
-  it('should not render when event_type is null', () => {
-    const { container } = render(<BDSMBadge event_type={null} />)
-    expect(container.firstChild).toBeNull()
-  })
-})
