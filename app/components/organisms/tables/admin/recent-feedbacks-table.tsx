@@ -8,6 +8,7 @@ import {
 } from "~/business/feedback/feedback-schema"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { TruncatedTextRenderer } from "~/components/organisms/tables/ag-grid/renderers/truncated-text-renderer"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 
 interface RecentFeedbacksTableProps {
@@ -21,7 +22,7 @@ export const RecentFeedbacksTable: FC<RecentFeedbacksTableProps> = ({
     () => [
       {
         field: "created_at",
-        headerName: "Data",
+        headerName: adminTablesCopy.recentFeedbacks.columns.createdAt,
         valueFormatter: (params) =>
           formatDateTime(params.value, "numeric").date ?? "-",
         sortable: true,
@@ -29,19 +30,20 @@ export const RecentFeedbacksTable: FC<RecentFeedbacksTableProps> = ({
       },
       {
         field: "name",
-        headerName: "Nome",
-        valueFormatter: (params) => params.value || "Anônimo",
+        headerName: adminTablesCopy.recentFeedbacks.columns.name,
+        valueFormatter: (params) =>
+          params.value || adminTablesCopy.recentFeedbacks.anonymous,
         sortable: true,
       },
       {
         field: "feedback_text",
-        headerName: "Feedback",
+        headerName: adminTablesCopy.recentFeedbacks.columns.feedback,
         cellRenderer: TruncatedTextRenderer,
         flex: 2,
       },
       {
         field: "status",
-        headerName: "Status",
+        headerName: adminTablesCopy.recentFeedbacks.columns.status,
         valueFormatter: (params) =>
           feedbackStatusLabels[params.value as FeedbackStatus] ?? params.value,
         sortable: true,
@@ -56,7 +58,7 @@ export const RecentFeedbacksTable: FC<RecentFeedbacksTableProps> = ({
       data={feedbacks}
       columnDefs={columnDefs}
       getRowId={(params) => params.data.id}
-      emptyMessage="Nenhum feedback recente"
+      emptyMessage={adminTablesCopy.recentFeedbacks.emptyMessage}
       height="400"
       showToolbar={false}
       persistState={false}

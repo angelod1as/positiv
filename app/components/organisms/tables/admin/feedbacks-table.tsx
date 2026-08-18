@@ -19,6 +19,7 @@ import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/fil
 import { AGIconButton } from "~/components/organisms/tables/ag-grid/renderers/ag-icon-button"
 import { TextViewModalRenderer } from "~/components/organisms/tables/ag-grid/renderers/text-view-modal-renderer"
 import WhatsAppIcon from "~/assets/social/whatsapp.svg"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
@@ -28,15 +29,15 @@ interface FeedbacksTableProps {
 }
 
 const participationLabels: Record<string, string> = {
-  never: "Nunca",
-  once: "Uma vez",
-  more_than_once: "Mais de uma vez",
+  never: adminTablesCopy.feedbacks.participation.never,
+  once: adminTablesCopy.feedbacks.participation.once,
+  more_than_once: adminTablesCopy.feedbacks.participation.moreThanOnce,
 }
 
 const participationFilterOptions = [
-  { name: "Nunca", value: "never" },
-  { name: "Uma vez", value: "once" },
-  { name: "Mais de uma vez", value: "more_than_once" },
+  { name: participationLabels.never, value: "never" },
+  { name: participationLabels.once, value: "once" },
+  { name: participationLabels.more_than_once, value: "more_than_once" },
 ]
 
 const statusFilterOptions = feedbackStatusValues.map((value) => ({
@@ -95,7 +96,7 @@ function ProfileButtonRenderer(params: ICellRendererParams<FeedbackWithVerificat
   return (
     <AGIconButton
       href={paths.admin.ADMIN_VIEW_PARTICIPANT(data.profile_id)}
-      title="Ver perfil"
+      title={adminTablesCopy.renderers.viewProfile}
     >
       <EyeIcon className="h-4 w-4" />
     </AGIconButton>
@@ -116,11 +117,11 @@ function WhatsAppButtonRenderer(params: ICellRendererParams<FeedbackWithVerifica
   return (
     <AGIconButton
       href={link}
-      title="WhatsApp"
+      title={adminTablesCopy.renderers.whatsapp}
       external
       className="border-green-500 hover:border-green-600 hover:bg-green-50"
     >
-      <img src={WhatsAppIcon} alt="WhatsApp" className="h-4 w-4" />
+      <img src={WhatsAppIcon} alt={adminTablesCopy.renderers.whatsapp} className="h-4 w-4" />
     </AGIconButton>
   )
 }
@@ -170,7 +171,7 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
     () => [
       {
         field: "created_at",
-        headerName: "Data",
+        headerName: adminTablesCopy.feedbacks.columns.createdAt,
         valueFormatter: (params) =>
           formatDateTime(params.value, "numeric").date ?? "-",
         sortable: true,
@@ -178,8 +179,8 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
       },
       {
         field: "status",
-        headerName: "Status",
-        headerTooltip: "Clique duas vezes para mudar o status do feedback",
+        headerName: adminTablesCopy.feedbacks.columns.status,
+        headerTooltip: adminTablesCopy.feedbacks.columns.statusTooltip,
         editable: true,
         cellEditor: "agSelectCellEditor",
         cellEditorParams: {
@@ -200,7 +201,7 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
       },
       {
         field: "has_participated",
-        headerName: "Participação",
+        headerName: adminTablesCopy.feedbacks.columns.participation,
         valueFormatter: (params) =>
           participationLabels[params.value] || params.value,
         tooltipValueGetter: (params) =>
@@ -216,31 +217,31 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
       },
       {
         field: "feedback_text",
-        headerName: "Feedback",
+        headerName: adminTablesCopy.feedbacks.columns.feedback,
         cellRenderer: TextViewModalRenderer,
         tooltipValueGetter: () => null,
         flex: 2,
       },
       {
         field: "social_name",
-        headerName: "Nome Social",
-        headerTooltip: "Nome social do perfil cadastrado (quando verificado)",
+        headerName: adminTablesCopy.feedbacks.columns.socialName,
+        headerTooltip: adminTablesCopy.feedbacks.columns.socialNameTooltip,
         cellRenderer: SocialNameRenderer,
         tooltipValueGetter: () => null,
         sortable: true,
       },
       {
         field: "full_name",
-        headerName: "Nome",
-        headerTooltip: "Nome completo do perfil cadastrado (quando verificado)",
+        headerName: adminTablesCopy.feedbacks.columns.fullName,
+        headerTooltip: adminTablesCopy.feedbacks.columns.fullNameTooltip,
         cellRenderer: FullNameRenderer,
         tooltipValueGetter: () => null,
         sortable: true,
       },
       {
         field: "profile_id",
-        headerName: "Perfil",
-        headerTooltip: "Link para o perfil cadastrado",
+        headerName: adminTablesCopy.feedbacks.columns.profile,
+        headerTooltip: adminTablesCopy.feedbacks.columns.profileTooltip,
         cellRenderer: ProfileButtonRenderer,
         tooltipValueGetter: () => null,
         sortable: false,
@@ -248,7 +249,7 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
       },
       {
         field: "whatsapp",
-        headerName: "WhatsApp",
+        headerName: adminTablesCopy.feedbacks.columns.whatsapp,
         cellRenderer: WhatsAppButtonRenderer,
         tooltipValueGetter: () => null,
         sortable: true,
@@ -256,14 +257,14 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
       },
       {
         field: "email",
-        headerName: "E-mail",
+        headerName: adminTablesCopy.feedbacks.columns.email,
         valueFormatter: (params) => params.value || "-",
         sortable: true,
       },
       {
         field: "can_contact",
-        headerName: "Contato?",
-        headerTooltip: "Podemos entrar em contato?",
+        headerName: adminTablesCopy.feedbacks.columns.canContact,
+        headerTooltip: adminTablesCopy.feedbacks.columns.canContactTooltip,
         valueFormatter: (params) => (params.value ? "✓" : "-"),
         tooltipValueGetter: () => null,
         sortable: true,
@@ -292,12 +293,12 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
       data={feedbacks}
       columnDefs={columnDefs}
       getRowId={(params) => params.data.id}
-      emptyMessage="Nenhum feedback encontrado"
+      emptyMessage={adminTablesCopy.feedbacks.emptyMessage}
       pagination
       paginationPageSize={25}
       showSearch
-      searchPlaceholder="Buscar feedbacks..."
-      searchAriaLabel="Buscar feedbacks"
+      searchPlaceholder={adminTablesCopy.feedbacks.searchPlaceholder}
+      searchAriaLabel={adminTablesCopy.feedbacks.searchAriaLabel}
       showToolbar
       onClearFilters={handleClearFilters}
       onGridReady={handleGridReady}

@@ -19,6 +19,8 @@ import { PronounsRenderer } from "~/components/organisms/tables/ag-grid/renderer
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { TextViewModalRenderer } from "~/components/organisms/tables/ag-grid/renderers/text-view-modal-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
+import { Copy } from "~/components/atoms/copy/copy"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import {
   applicationStatusOptions,
@@ -58,6 +60,8 @@ const STORAGE_KEYS = {
   hasPaid: "participants-filter-has_paid",
   spotType: "participants-filter-spot_type",
 }
+
+const tableCopy = adminTablesCopy.eventParticipants
 
 const EDITABLE_FIELDS = [
   "application_status",
@@ -246,7 +250,7 @@ export const AdminViewEventParticipantsTable: FC<
     () => [
       {
         field: "social_name",
-        headerName: "Nome",
+        headerName: tableCopy.columns.socialName,
         pinned: "left",
         cellRenderer: SocialNameRenderer,
         sortable: true,
@@ -263,8 +267,8 @@ export const AdminViewEventParticipantsTable: FC<
       }),
       {
         field: "attended_events_count",
-        headerName: "Total de eventos",
-        headerTooltip: "Total de presenças desde o início do histórico",
+        headerName: tableCopy.columns.attendedEventsCount,
+        headerTooltip: tableCopy.columns.attendedEventsCountTooltip,
         sortable: true,
         sort: "desc",
         comparator: eventCountComparator,
@@ -274,9 +278,8 @@ export const AdminViewEventParticipantsTable: FC<
       },
       {
         field: "last_attended_events_count",
-        headerName: "Últimos eventos (6 últimos)",
-        headerTooltip:
-          "Presenças nos últimos 6 eventos realizados. Zera quando a pessoa é rodiziada, e recomeça a partir daí",
+        headerName: tableCopy.columns.lastAttendedEventsCount,
+        headerTooltip: tableCopy.columns.lastAttendedEventsCountTooltip,
         sortable: true,
         comparator: eventCountComparator,
         ...compactCell,
@@ -285,14 +288,14 @@ export const AdminViewEventParticipantsTable: FC<
       },
       {
         field: "last_attended_event_title",
-        headerName: "Último Evento",
+        headerName: tableCopy.columns.lastAttendedEventTitle,
         cellRenderer: LastAttendedEventRenderer,
         sortable: true,
       },
       {
         field: "flag",
         headerName: profilePropMap("flag"),
-        headerTooltip: "Flag de atenção",
+        headerTooltip: tableCopy.columns.flagTooltip,
         cellRenderer: FlagBadgeRenderer,
         sortable: true,
         ...compactCell,
@@ -345,8 +348,7 @@ export const AdminViewEventParticipantsTable: FC<
       {
         field: "application_status",
         headerName: eventParticipantPropMap("application_status"),
-        headerTooltip:
-          "Etapa do processo de candidatura para este evento (conversas, envio de dados, finalização)",
+        headerTooltip: tableCopy.columns.applicationStatusTooltip,
         editable: true,
         cellEditor: "agSelectCellEditor",
         cellEditorParams: {
@@ -369,8 +371,7 @@ export const AdminViewEventParticipantsTable: FC<
       {
         field: "attendance_status",
         headerName: eventParticipantPropMap("attendance_status"),
-        headerTooltip:
-          "Se a pessoa compareceu ou não ao evento (confirmado após o evento acontecer)",
+        headerTooltip: tableCopy.columns.attendanceStatusTooltip,
         editable: true,
         cellEditor: "agSelectCellEditor",
         cellEditorParams: {
@@ -419,8 +420,8 @@ export const AdminViewEventParticipantsTable: FC<
       },
       {
         field: "was_selected_for_rotation",
-        headerName: "Escolhide p/ rodízio?",
-        headerTooltip: "Escolhide para rodízio neste evento",
+        headerName: tableCopy.columns.wasSelectedForRotation,
+        headerTooltip: tableCopy.columns.wasSelectedForRotationTooltip,
         editable: true,
         cellEditor: "agCheckboxCellEditor",
         cellRenderer: "agCheckboxCellRenderer",
@@ -429,8 +430,7 @@ export const AdminViewEventParticipantsTable: FC<
       {
         field: "approved_to_attend",
         headerName: profilePropMap("approved_to_attend"),
-        headerTooltip:
-          "Status de aprovação geral do perfil para participar dos eventos (independente de evento específico)",
+        headerTooltip: tableCopy.columns.approvedToAttendTooltip,
         editable: true,
         cellEditor: "agSelectCellEditor",
         cellEditorParams: {
@@ -452,8 +452,8 @@ export const AdminViewEventParticipantsTable: FC<
       },
       {
         field: "has_paid",
-        headerName: "Pago?",
-        headerTooltip: "Pagamento realizado",
+        headerName: tableCopy.columns.hasPaid,
+        headerTooltip: tableCopy.columns.hasPaidTooltip,
         editable: true,
         cellEditor: "agCheckboxCellEditor",
         cellRenderer: "agCheckboxCellRenderer",
@@ -549,7 +549,7 @@ export const AdminViewEventParticipantsTable: FC<
       },
       {
         field: "was_admin_skipped_last_event",
-        headerName: "Foi rodízio na última festa?",
+        headerName: tableCopy.columns.wasAdminSkippedLastEvent,
         cellRenderer: BooleanTextRenderer,
       },
       {
@@ -592,39 +592,43 @@ export const AdminViewEventParticipantsTable: FC<
   const tableHeader = (
     <div className="flex items-center gap-4 text-sm flex-wrap">
       <p>
-        <b>{applications.total}</b> candidates
+        <Copy inline>{tableCopy.header.applications(applications.total)}</Copy>
       </p>
       <p>
-        <b>{acceptedInProcess.total}</b> aceites no processo
+        <Copy inline>
+          {tableCopy.header.acceptedInProcess(acceptedInProcess.total)}
+        </Copy>
       </p>
-      <span>|</span>
+      <span>{tableCopy.separator}</span>
       <CategoryLabelWithTooltip
-        label="Geral"
+        label={tableCopy.header.generalLabel}
         tooltipContent={generalTooltipContent}
       />
       <p>
-        <b>{applications.rookies}</b> N
+        <Copy inline>{tableCopy.header.rookies(applications.rookies)}</Copy>
       </p>
       <p>
-        <b>{applications.veterans}</b> V
+        <Copy inline>{tableCopy.header.veterans(applications.veterans)}</Copy>
       </p>
-      <span>|</span>
+      <span>{tableCopy.separator}</span>
       <CategoryLabelWithTooltip
-        label="Aceites no processo"
+        label={tableCopy.header.acceptedInProcessLabel}
         tooltipContent={acceptedInProcessTooltipContent}
       />
       <p>
-        <b>{acceptedInProcess.rookies}</b> N
+        <Copy inline>{tableCopy.header.rookies(acceptedInProcess.rookies)}</Copy>
       </p>
       <p>
-        <b>{acceptedInProcess.veterans}</b> V
+        <Copy inline>
+          {tableCopy.header.veterans(acceptedInProcess.veterans)}
+        </Copy>
       </p>
     </div>
   )
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Candidaturas</h2>
+      <h2 className="text-2xl font-bold">{tableCopy.title}</h2>
       <AGDataTable
         id="participants-table"
         data={participants}
@@ -634,8 +638,8 @@ export const AdminViewEventParticipantsTable: FC<
         pagination
         paginationAutoPageSize
         showSearch
-        searchAriaLabel="Buscar participantes"
-        emptyMessage="Nenhum participante encontrado"
+        searchAriaLabel={tableCopy.searchAriaLabel}
+        emptyMessage={tableCopy.emptyMessage}
         persistState
         stateVersion={2}
         suppressColumnVirtualisation

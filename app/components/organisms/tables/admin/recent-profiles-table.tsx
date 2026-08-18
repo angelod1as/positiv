@@ -8,6 +8,7 @@ import type { FC } from "react"
 import { useMemo } from "react"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   approvedToAttendStatusOptions,
@@ -26,19 +27,20 @@ export const RecentProfilesTable: FC<RecentProfilesTableProps> = ({
     () => [
       {
         field: "social_name",
-        headerName: "Nome Social",
+        headerName: adminTablesCopy.recentProfiles.columns.socialName,
         cellRenderer: SocialNameRenderer,
         sortable: true,
       },
       {
         field: "full_name",
-        headerName: "Nome Completo",
+        headerName: adminTablesCopy.recentProfiles.columns.fullName,
         sortable: true,
       },
       {
         field: "created_at",
-        headerName: "Registro",
-        headerTooltip: "Data de cadastro",
+        headerName: adminTablesCopy.recentProfiles.columns.createdAt,
+        headerTooltip:
+          adminTablesCopy.recentProfiles.columns.createdAtTooltip,
         valueFormatter: (params) =>
           formatDateTime(params.value, "numeric").date ?? "-",
         sortable: true,
@@ -60,8 +62,11 @@ export const RecentProfilesTable: FC<RecentProfilesTableProps> = ({
       },
       {
         field: "is_veteran",
-        headerName: "Veterane",
-        valueFormatter: (params) => (params.value ? "Sim" : "Nao"),
+        headerName: adminTablesCopy.recentProfiles.columns.veteran,
+        valueFormatter: (params) =>
+          params.value
+            ? adminTablesCopy.recentProfiles.columns.isVeteranYes
+            : adminTablesCopy.recentProfiles.columns.isVeteranNo,
         sortable: true,
       },
       {
@@ -85,7 +90,7 @@ export const RecentProfilesTable: FC<RecentProfilesTableProps> = ({
       data={profiles}
       columnDefs={columnDefs}
       getRowId={(params) => params.data.id}
-      emptyMessage="Nenhum perfil recente"
+      emptyMessage={adminTablesCopy.recentProfiles.emptyMessage}
       height="400"
       showToolbar={false}
       persistState={false}
