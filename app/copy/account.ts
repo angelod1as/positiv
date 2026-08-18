@@ -17,3 +17,21 @@ export const changePasswordCopy = {
   buttonLabel: "Mudar senha",
   successToast: "Um link chegará em seu e-mail, veja lá!",
 } as const
+
+export const accountCopy = {
+  title: "Gerenciar conta",
+  changePassword: "Mudar senha",
+  editBasicData: "Editar dados básicos",
+  fillBasicData: "Preencher dados básicos",
+  terms: "Termos e condições",
+  codeOfConduct: "Código de Conduta",
+  logout: "Deslogar conta",
+  deleteAccount: {
+    trigger: "Apagar conta",
+    title: "Apagar conta",
+    description:
+      "Esta funcionalidade está em implementação. Entre em contato conosco para deletar sua conta, através do email",
+    contactEmail: "contato@positivparty.com",
+    cancelLabel: "Entendi",
+  },
+} as const

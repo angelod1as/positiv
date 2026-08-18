@@ -8,6 +8,8 @@ import {
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
+import { accountCopy } from "~/copy/account"
+import { metaCopy } from "~/copy/meta"
 import paths from "~/lib/paths"
 import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/account-page"
@@ -21,7 +23,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Minha Conta")
+  return createMetaArray(metaCopy.account.title)
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -45,56 +47,55 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
 
   return (
     <>
-      <h1>Gerenciar conta</h1>
+      <h1>{accountCopy.title}</h1>
 
       <div className="flex flex-col gap-12 h-full">
         <div className="flex flex-col gap-4">
           <Button variant="outline" to={CHANGE_PASSWORD}>
-            Mudar senha
+            {accountCopy.changePassword}
           </Button>
           {basic_data_filled ? (
             <>
               <Button variant="outline" to={BASIC_DATA}>
-                Editar dados básicos
+                {accountCopy.editBasicData}
               </Button>
               <Button variant="outline" to={AGREE_TO_TERMS}>
-                Termos e condições
+                {accountCopy.terms}
               </Button>
             </>
           ) : (
             <Button variant="outline" to={AGREE_TO_TERMS}>
-              Preencher dados básicos
+              {accountCopy.fillBasicData}
             </Button>
           )}
           <Button variant="outline" to={CODE_OF_CONDUCT}>
-            Código de Conduta
+            {accountCopy.codeOfConduct}
           </Button>
         </div>
         <div className="flex flex-col gap-4">
           <Separator />
           <Form method="POST" className="w-full">
             <Button variant="outline" className="w-full">
-              Deslogar conta
+              {accountCopy.logout}
             </Button>
           </Form>
 
           <ConfirmDialog
-            title="Apagar conta"
+            title={accountCopy.deleteAccount.title}
             description={
               <div>
                 <p>
-                  Esta funcionalidade está em implementação. Entre em contato
-                  conosco para deletar sua conta, através do email{" "}
-                  <Link to="mailto:contato@positivparty.com">
-                    contato@positivparty.com
+                  {accountCopy.deleteAccount.description}{" "}
+                  <Link to={`mailto:${accountCopy.deleteAccount.contactEmail}`}>
+                    {accountCopy.deleteAccount.contactEmail}
                   </Link>
                 </p>
               </div>
             }
-            cancelLabel="Entendi"
+            cancelLabel={accountCopy.deleteAccount.cancelLabel}
           >
             <ConfirmDialog.Trigger variant="destructive">
-              Apagar conta
+              {accountCopy.deleteAccount.trigger}
             </ConfirmDialog.Trigger>
           </ConfirmDialog>
         </div>
