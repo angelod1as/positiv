@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
-const SCRIPT = join(process.cwd(), 'scripts', 'with-e2e-lock.sh')
+const SCRIPT = join(process.cwd(), 'scripts', 'with-db-lock.sh')
 
 let workDir: string
 let lockDir: string
@@ -12,7 +12,7 @@ let lockDir: string
 function runLocked(command: string, extraEnv: Record<string, string> = {}) {
   return new Promise<{ code: number; stdout: string; stderr: string }>(resolve => {
     const child = spawn(SCRIPT, ['sh', '-c', command], {
-      env: { ...process.env, E2E_LOCK_DIR: lockDir, ...extraEnv },
+      env: { ...process.env, DB_LOCK_DIR: lockDir, ...extraEnv },
     })
 
     let stdout = ''
@@ -32,7 +32,7 @@ afterEach(() => {
   rmSync(workDir, { recursive: true, force: true })
 })
 
-describe('with-e2e-lock', () => {
+describe('with-db-lock', () => {
   it('runs the command it was given', async () => {
     const result = await runLocked('echo ran')
 
@@ -80,7 +80,7 @@ describe('with-e2e-lock', () => {
     mkdirSync(lockDir, { recursive: true })
     writeFileSync(join(lockDir, 'owner'), 'pid=999999\nworktree=/gone\nstarted=1\n')
 
-    const result = await runLocked('echo took-over', { E2E_LOCK_WAIT_TIMEOUT: '10' })
+    const result = await runLocked('echo took-over', { DB_LOCK_WAIT_TIMEOUT: '10' })
 
     expect(result.stdout).toContain('took-over')
   })
@@ -89,10 +89,24 @@ describe('with-e2e-lock', () => {
     const blocker = runLocked('sleep 3')
     await new Promise(resolve => setTimeout(resolve, 300))
 
-    const result = await runLocked('echo never', { E2E_LOCK_WAIT_TIMEOUT: '1' })
+    const result = await runLocked('echo never', { DB_LOCK_WAIT_TIMEOUT: '1' })
     await blocker
 
     expect(result.code).not.toBe(0)
     expect(result.stdout).not.toContain('never')
   }, 10000)
+})
+
+describe('the scripts that reach the shared database', () => {
+  const scripts = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')).scripts as Record<
+    string,
+    string
+  >
+
+  it.each(['test:e2e', 'test:e2e:ui', 'test:integration', 'test:integration:changed'])(
+    '%s waits for its turn',
+    name => {
+      expect(scripts[name]).toContain('scripts/with-db-lock.sh')
+    }
+  )
 })
