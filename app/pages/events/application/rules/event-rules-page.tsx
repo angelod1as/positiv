@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react"
-import { redirect, useNavigate } from "react-router"
+import { redirect, useNavigate, useSearchParams } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
 import { rulesSessionStorage } from "~/business/session.server"
 import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
@@ -117,9 +117,14 @@ const Wrapper: FCC = ({ children }) => (
   </>
 )
 
+const STEP_PARAM = "q"
+
 const EventRulesPage = ({ loaderData, params }: Route.ComponentProps) => {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const eventId = params.id
+
+  const requestedStep = searchParams.get(STEP_PARAM) ?? undefined
 
   const questions = useMemo(
     () => buildRulesQuestions(loaderData.eventType),
@@ -151,6 +156,19 @@ const EventRulesPage = ({ loaderData, params }: Route.ComponentProps) => {
         flow={flow}
         presentation={OneAtATime}
         persistence={{ formId: "rules", scopeId: eventId }}
+        stepId={requestedStep}
+        onStepChange={(step) => {
+          setSearchParams(
+            (current) => {
+              const next = new URLSearchParams(current)
+              next.set(STEP_PARAM, step)
+              return next
+            },
+            // The question the quiz opens on is where the reader already is;
+            // only the ones they walk to are worth a trip back.
+            { replace: !requestedStep },
+          )
+        }}
         onDone={() => {
           void navigate(EVENT_DATA(eventId))
         }}
