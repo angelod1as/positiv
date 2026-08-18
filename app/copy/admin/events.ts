@@ -1,5 +1,7 @@
 export const adminEventsCopy = {
   eventNotFound: "Evento não encontrado",
+  saveFailed:
+    "Ocorreu um erro adicionando seu evento, tente novamente. Erro: upsert",
   toasts: {
     errorTitle: "**Erro:**",
     updateParticipantFailed: "Ops, algo deu errado",
@@ -85,6 +87,7 @@ export const adminEventsCopy = {
     descriptionHint: "Use uma frase breve",
     ticketPricePrefix: "R$",
     totalSpotsSuffix: "pessoas",
+    emojiInvalid: "Precisa ser um emoji",
     startDateRequired: "Você deve preencher a data de início",
     calculateDates: "Calcular datas automaticamente",
     submit: "Salvar",

@@ -80,4 +80,9 @@ export const agreeToTermsCopy = {
   newsletterWarning:
     "Suas escolhas foram salvas, mas você não foi inscrito na newsletter. Por favor, entre em contato: partypositiv@gmail.com",
   successToast: "Escolhas salvas com sucesso",
+  validation: {
+    agree: "Você só pode continuar se estiver de acordo.",
+    commonEmails:
+      "Nosso sistema só funciona se você aceitar receber e-mails gerais.",
+  },
 } as const

@@ -16,6 +16,9 @@ export const changePasswordCopy = {
   pendingButtonLabel: "Mudando...",
   buttonLabel: "Mudar senha",
   successToast: "Um link chegará em seu e-mail, veja lá!",
+  validation: {
+    passwordMismatch: "As senhas não combinam",
+  },
 } as const
 
 export const accountCopy = {
@@ -68,6 +71,13 @@ export const basicDataCopy = {
     rg_issuer: "Exemplo: SSP/SP",
   },
   successToast: "Dados salvos com sucesso!",
+  validation: {
+    minimumAge: "Você precisa ter pelo menos 18 anos",
+    phoneNotANumber: "Você tem certeza que digitou um número?",
+    invalidPhone: "Número inválido",
+    phoneMismatch: "Os números de telefone são diferentes",
+    socialNameMustDiffer: "O nome social deve ser diferente do nome completo",
+  },
 } as const
 
 export const genderPronounsOrientationCopy = {
