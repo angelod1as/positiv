@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { Skeleton } from "~/components/ui/skeleton"
-import type { Flow } from "./flow.types"
+import type { Flow, StepId } from "./flow.types"
 import type {
   Presentation,
   RenderQuestion,
@@ -29,6 +29,13 @@ type FormRunnerProps = {
    * Omit it for a form with nothing to lose.
    */
   persistence?: { formId: string; scopeId: string }
+  /** Where the caller believes the run is, typically mirrored from the url. */
+  stepId?: StepId
+  /**
+   * Called with the step actually showing, including when a requested one was
+   * refused, so a url mirroring the run can correct itself.
+   */
+  onStepChange?: (stepId: StepId) => void
 }
 
 export function FormRunner({
@@ -40,11 +47,19 @@ export function FormRunner({
   continueLabel = "Continuar",
   onDone,
   persistence,
+  stepId,
+  onStepChange,
 }: FormRunnerProps) {
-  const runtime = useFormRuntime({ questions, flow, data, persistence })
-  const { answers, isDone } = runtime
+  const runtime = useFormRuntime({ questions, flow, data, persistence, stepId })
+  const { answers, isDone, isRestored, currentStepId } = runtime
 
   const reportedRef = useRef(false)
+
+  useEffect(() => {
+    if (!isRestored || currentStepId === stepId) return
+
+    onStepChange?.(currentStepId)
+  }, [isRestored, currentStepId, stepId, onStepChange])
 
   useEffect(() => {
     if (!isDone || reportedRef.current) return
@@ -55,7 +70,7 @@ export function FormRunner({
   // The restore reads sessionStorage, which the server does not have, so it
   // runs after mount. Until it lands there is nothing truthful to draw, and a
   // placeholder of roughly the right height keeps the card from jumping.
-  if (!runtime.isRestored) {
+  if (!isRestored) {
     return (
       <div className="flex flex-col gap-8" aria-busy="true">
         <Skeleton className="h-8 w-3/4" />
