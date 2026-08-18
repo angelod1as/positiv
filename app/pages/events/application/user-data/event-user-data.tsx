@@ -1,6 +1,6 @@
 import { redirect } from "react-router"
 import { formAction } from "remix-forms"
-import { redirectWithSuccess, redirectWithWarning } from "remix-toast"
+import { redirectWithWarning } from "remix-toast"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getUserContext } from "~/business/auth/auth.server"
 import { applyToEventSchema } from "~/business/common"
@@ -13,8 +13,7 @@ import type { Route } from "./+types/event-user-data"
 
 const {
   dash: {
-    events: { EVENT_RULES },
-    DASHBOARD,
+    events: { EVENT_APPLICATION_SENT, EVENT_RULES },
   },
 } = paths
 
@@ -43,25 +42,16 @@ export async function action({ request, params }: Route.ActionArgs) {
         const emailSent = result.data?.emailSent ?? false
 
         if (emailSent) {
-          throw await redirectWithSuccess(
-            DASHBOARD,
-            {
-              message: "Candidatura enviada com sucesso",
-              description:
-                "Você receberá as informações do evento em seu email (pode demorar uns minutos)",
-              duration: 3000,
-            },
-            {
-              headers: context.supabaseHeaders,
-            },
-          )
+          throw redirect(EVENT_APPLICATION_SENT(params.id), {
+            headers: context.supabaseHeaders,
+          })
         } else {
           throw await redirectWithWarning(
-            DASHBOARD,
+            EVENT_APPLICATION_SENT(params.id),
             {
-              message: "Candidatura enviada com sucesso!",
+              message: "Não conseguimos enviar o e-mail",
               description:
-                "Houve um problema no envio do email, mas não se preocupe - sua candidatura foi registrada. Você pode verificar no seu painel.",
+                "Houve um problema no envio do email, mas não se preocupe - sua candidatura foi registrada.",
               duration: 6000,
             },
             {
