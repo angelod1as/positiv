@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
 import type { Question } from "./question.types"
 import { validateQuestion } from "./validate-question"
@@ -49,6 +49,17 @@ const multiQuestion: Question = {
     }),
 }
 
+const confirmQuestion: Question = {
+  id: "confirmPassword",
+  prompt: "Confirme a senha",
+  input: { kind: "text" },
+  schema: zod.string().min(1, { message: "Resposta obrigatória" }),
+  refine: (value, answers) =>
+    value === answers.password
+      ? null
+      : { ok: false, message: "As senhas não são iguais" },
+}
+
 describe("validateQuestion", () => {
   it("accepts a value that satisfies the question's schema", () => {
     expect(validateQuestion(textQuestion, "Angelo Dias")).toEqual({ ok: true })
@@ -90,5 +101,30 @@ describe("validateQuestion", () => {
     const result = validateQuestion(multiQuestion, [])
 
     expect(result).toEqual({ ok: false, message: "Resposta obrigatória" })
+  })
+  it("passes a refine that agrees with the other answers", () => {
+    const result = validateQuestion(confirmQuestion, "segredo123", {
+      password: "segredo123",
+    })
+
+    expect(result).toEqual({ ok: true })
+  })
+
+  it("fails with the refine's message when the answers disagree", () => {
+    const result = validateQuestion(confirmQuestion, "outra", {
+      password: "segredo123",
+    })
+
+    expect(result).toEqual({ ok: false, message: "As senhas não são iguais" })
+  })
+
+  it("does not reach the refine when the schema already failed", () => {
+    const refine = vi.fn()
+    const result = validateQuestion({ ...confirmQuestion, refine }, "", {
+      password: "segredo123",
+    })
+
+    expect(result).toEqual({ ok: false, message: "Resposta obrigatória" })
+    expect(refine).not.toHaveBeenCalled()
   })
 })

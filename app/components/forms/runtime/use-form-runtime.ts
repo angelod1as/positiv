@@ -221,7 +221,7 @@ export function useFormRuntime({
     const failures: Record<string, string> = {}
     for (const question of pending) {
       const value = answersRef.current[question.id]
-      const result = validateQuestion(question, value)
+      const result = validateQuestion(question, value, answersRef.current)
 
       // Only a real attempt counts. Advancing with nothing filled in is a
       // misclick, not a wrong answer, and must not sink a branch that keys

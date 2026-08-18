@@ -20,6 +20,12 @@ export type Question = {
   help?: string
   input: InputSpec
   schema: ZodType
+  /**
+   * Runs after `schema` passes, with every answer in the run. For a question
+   * whose validity depends on another one — confirming a password, closing a
+   * date range. Returning null means there is nothing to say.
+   */
+  refine?: (value: unknown, answers: Answers) => ValidationResult | null
 }
 
 export type Answers = Record<string, unknown>
