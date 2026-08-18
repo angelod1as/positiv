@@ -1,3 +1,5 @@
+import { redirect } from "react-router"
+import { getUserContext } from "~/business/auth/auth.server"
 import { Button } from "~/components/atoms/button/button"
 import {
   Card,
@@ -8,11 +10,30 @@ import {
 } from "~/components/ui/card"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
+import { kyselyDb } from "~/kysely-db"
 import type { Route } from "./+types/event-application-confirmation-page"
 
 const {
   dash: { DASHBOARD },
 } = paths
+
+export async function loader({ request, params }: Route.LoaderArgs) {
+  const { currentProfile } = await getUserContext(request, params)
+
+  if (!params.id || !currentProfile) return redirect(DASHBOARD)
+
+  const application = await kyselyDb
+    .selectFrom("event_participants")
+    .select("id")
+    .where("event_id", "=", params.id)
+    .where("profile_id", "=", currentProfile.id)
+    .where("is_user_applied", "=", true)
+    .executeTakeFirst()
+
+  if (!application) return redirect(DASHBOARD)
+
+  return null
+}
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray("Candidatura enviada")
