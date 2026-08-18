@@ -118,7 +118,12 @@ export default defineConfig([
   // 4b. Copy guard: migrated directories must not hold literal JSX text.
   //     Add a glob here when a directory finishes migrating. See app/copy/README.md.
   {
-    files: ["app/components/pages/homepage/**/*.tsx"],
+    files: [
+      "app/components/pages/homepage/**/*.tsx",
+      "app/components/pages/events/**/*.tsx",
+      "app/pages/public/**/*.tsx",
+      "app/pages/events/**/*.tsx",
+    ],
     ignores: ["**/*.test.tsx"],
     plugins: { react: pluginReact },
     rules: {
