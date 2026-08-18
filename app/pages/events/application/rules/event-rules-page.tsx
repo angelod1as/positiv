@@ -63,17 +63,14 @@ const Wrapper: FCC = ({ children }) => (
 
 const STEP_PARAM = "q"
 
-const EventRulesPage = ({ loaderData, params }: Route.ComponentProps) => {
+const EventRulesPage = ({ params }: Route.ComponentProps) => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const eventId = params.id
 
   const requestedStep = searchParams.get(STEP_PARAM) ?? undefined
 
-  const questions = useMemo(
-    () => buildRulesQuestions(loaderData.eventType),
-    [loaderData.eventType],
-  )
+  const questions = useMemo(() => buildRulesQuestions(), [])
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {

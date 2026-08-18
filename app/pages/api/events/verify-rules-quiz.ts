@@ -22,7 +22,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const event = await kyselyDb
     .selectFrom("events")
-    .select("event_type")
+    .select("id")
     .where("id", "=", params.id)
     .executeTakeFirst()
 
@@ -40,7 +40,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   // The same schemas the browser used. Answering in the browser is what makes
   // the quiz usable; checking again here is what makes it a gate, because a
   // bare POST used to open it without answering anything.
-  const errors = Object.entries(getRulesFormSchema(event.event_type)).flatMap(
+  const errors = Object.entries(getRulesFormSchema()).flatMap(
     ([questionId, schema]) => {
       const result = schema.safeParse(answers[questionId])
 

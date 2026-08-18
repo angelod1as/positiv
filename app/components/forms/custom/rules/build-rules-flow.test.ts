@@ -6,7 +6,7 @@ import { buildRulesQuestions } from "./build-rules-questions"
 const context: FlowContext = { firstTryCorrect: {}, data: {} }
 
 const walk = (questionCount = 3) => {
-  const questions = buildRulesQuestions("regular").slice(0, questionCount)
+  const questions = buildRulesQuestions().slice(0, questionCount)
   const flow = buildRulesFlow(questions, vi.fn())
 
   const visited: string[] = []
@@ -45,7 +45,7 @@ describe("buildRulesFlow", () => {
 
   it("runs the given commit when it gets there", async () => {
     const commit = vi.fn().mockResolvedValue({ ok: true })
-    const questions = buildRulesQuestions("regular").slice(0, 2)
+    const questions = buildRulesQuestions().slice(0, 2)
     const flow = buildRulesFlow(questions, commit)
 
     const step = flow.steps.commit

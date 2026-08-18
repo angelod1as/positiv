@@ -2,7 +2,6 @@ import type {
   InputSpec,
   Question,
 } from "~/components/forms/runtime/question.types"
-import type { EventType } from "~types/database/entities.types"
 import { getRulesFormSchema } from "./rules-form-schema"
 import { getRulesFormQuestions } from "./rules-questions"
 import { shuffleArray } from "./shuffle-array"
@@ -30,10 +29,10 @@ function toInput(answers: Answers): InputSpec {
  * the quiz by position. Nothing downstream depends on the order: ids key the
  * schemas and the server's rejections.
  */
-export function buildRulesQuestions(eventType: EventType): Question[] {
-  const schemas = getRulesFormSchema(eventType)
+export function buildRulesQuestions(): Question[] {
+  const schemas = getRulesFormSchema()
 
-  return shuffleArray(Object.entries(getRulesFormQuestions(eventType))).map(
+  return shuffleArray(Object.entries(getRulesFormQuestions())).map(
     ([id, question]) => ({
       id,
       prompt: question.question,
