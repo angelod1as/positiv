@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { loader } from "./root"
+
 vi.mock("./business/auth/auth.server", () => ({
   getContext: vi.fn(),
 }))
@@ -75,7 +77,6 @@ describe("root loader", () => {
       headers: toastHeaders,
     })
 
-    const { loader } = await import("./root")
     const request = new Request("http://localhost:5173/")
     await loader({ request, params: {} } as never)
 
@@ -120,7 +121,6 @@ describe("root loader", () => {
       shouldShow: false,
     })
 
-    const { loader } = await import("./root")
     const request = new Request("http://localhost:5173/")
     await loader({ request, params: {} } as never)
 
