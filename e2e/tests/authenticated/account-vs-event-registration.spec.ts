@@ -23,16 +23,16 @@ test.describe('Account signup versus event registration', () => {
 
     await expect(
       page.getByText(
-        'Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.',
+        'Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.',
       ),
     ).toBeVisible()
 
     await expect(
-      page.getByRole('heading', { name: 'Eventos em que você se inscreveu' }),
+      page.getByRole('heading', { name: 'Eventos em que você se candidatou' }),
     ).toBeVisible()
 
     await expect(
-      page.getByText('Você não tem nenhuma inscrição no momento.'),
+      page.getByText('Você não tem nenhuma candidatura no momento.'),
     ).toBeVisible()
   })
 
@@ -45,13 +45,13 @@ test.describe('Account signup versus event registration', () => {
 
     const applyableCards = page
       .locator('[data-testid^="event-card"]')
-      .filter({ has: page.getByRole('link', { name: 'Fazer inscrição' }) })
+      .filter({ has: page.getByRole('link', { name: 'Me candidatar' }) })
     const applyButtonCount = await applyableCards.count()
     test.skip(applyButtonCount === 0, 'No event with open registration in this environment')
 
     const applyButton = applyableCards
       .first()
-      .getByRole('link', { name: 'Fazer inscrição' })
+      .getByRole('link', { name: 'Me candidatar' })
 
     const eventTitle = await applyableCards.first().locator('h3').innerText()
 

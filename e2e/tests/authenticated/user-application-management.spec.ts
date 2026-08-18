@@ -174,14 +174,14 @@ test.describe('POS-191: Application Management Tests', () => {
     await page.goto('/dashboard/eventos')
     await page.waitForLoadState('networkidle')
     
-    // Verify that closed events either don't show "Fazer inscrição" button
+    // Verify that closed events either don't show "Me candidatar" button
     // or show some indication that registration is closed
     const eventCards = page.locator('[data-testid="event-card"]').or(page.locator('.event-card')).or(page.locator('article'))
     const closedEventCard = eventCards.filter({ hasText: closedEvent.title })
     
     if (await closedEventCard.count() > 0) {
       // Check if the apply button is disabled or not present
-      const applyButton = closedEventCard.getByRole('link', { name: 'Fazer inscrição' })
+      const applyButton = closedEventCard.getByRole('link', { name: 'Me candidatar' })
       const buttonCount = await applyButton.count()
       
       if (buttonCount > 0) {
@@ -190,7 +190,7 @@ test.describe('POS-191: Application Management Tests', () => {
         await page.waitForLoadState('networkidle')
         
         // We should see some indication that registration is closed
-        const closedText = page.getByText(/inscrições encerradas|registration closed|evento fechado/i)
+        const closedText = page.getByText(/candidaturas encerradas|registration closed|evento fechado/i)
         await expect(closedText.first()).toBeVisible({ timeout: 5000 }).catch(() => {
           // If no closed text, we might be on a page that just doesn't allow application
           // This is also acceptable behavior

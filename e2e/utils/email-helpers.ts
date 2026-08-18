@@ -168,15 +168,15 @@ export function extractEmailBody(email: MailpitMessage): string {
 export async function verifyApplicationEmail(recipientEmail: string): Promise<void> {
   const email = await waitForEmail({
     to: recipientEmail,
-    subject: 'Você se inscreveu no evento',
+    subject: 'Recebemos sua candidatura ao evento',
     timeout: 10000
   })
 
   await verifyEmailContent(email, {
-    subject: 'Você se inscreveu no evento',
+    subject: 'Recebemos sua candidatura ao evento',
     bodyContains: [
-      'Sua inscrição foi recebida',
-      'você se inscreveu com sucesso'
+      'Sua candidatura foi recebida',
+      'sua candidatura foi enviada com sucesso'
     ]
   })
 }
@@ -184,15 +184,15 @@ export async function verifyApplicationEmail(recipientEmail: string): Promise<vo
 export async function verifyReminderEmail(recipientEmail: string, eventTitle: string): Promise<void> {
   const email = await waitForEmail({
     to: recipientEmail,
-    subject: `Inscrições abertas para o evento`,
+    subject: `Candidaturas abertas para o evento`,
     containing: eventTitle,
     timeout: 10000
   })
 
   await verifyEmailContent(email, {
-    subject: 'Inscrições abertas',
+    subject: 'Candidaturas abertas',
     bodyContains: [
-      'Inscrições abertas!',
+      'Candidaturas abertas!',
       eventTitle
     ]
   })

@@ -369,7 +369,7 @@ test.describe("Admin User Management", () => {
 
     // Find and click on a different event in the history section
     const historySection = page.getByRole("heading", {
-      name: "Histórico de Inscrições",
+      name: "Histórico de candidaturas",
     })
     await expect(historySection).toBeVisible({ timeout: 5000 })
 

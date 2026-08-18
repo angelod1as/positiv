@@ -102,8 +102,8 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     
     await eventsPage.goto()
     
-    // Find any button that says "Fazer inscrição"
-    const applyButtons = page.getByRole('link', { name: 'Fazer inscrição' })
+    // Find any button that says "Me candidatar"
+    const applyButtons = page.getByRole('link', { name: 'Me candidatar' })
     const buttonCount = await applyButtons.count()
     
     // We should always have at least one event now
