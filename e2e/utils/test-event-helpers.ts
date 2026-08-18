@@ -80,7 +80,7 @@ export async function createOpenRegularEvent(): Promise<{ id: string; title: str
   const { data, error } = await supabase
     .from('events')
     .insert({
-      title: `[E2E-TEST] Regular event ${Date.now()}`,
+      title: runEventTitle(`Regular event ${Date.now()}`),
       event_status: 'Registration Open' as EventStatus,
       event_type: 'regular',
       time_event_start: eventDate.toISOString(),
