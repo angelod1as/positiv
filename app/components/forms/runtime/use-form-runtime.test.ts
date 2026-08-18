@@ -429,7 +429,12 @@ describe("useFormRuntime branching", () => {
       await result.current.advance()
     })
 
-    expect(seen).toEqual([{ isVeteran: true }])
+    // The runtime also resolves the flow to project how long the run is, so
+    // how many times `next` was called is not the point — what it was handed is.
+    expect(seen.length).toBeGreaterThan(0)
+    for (const data of seen) {
+      expect(data).toEqual({ isVeteran: true })
+    }
   })
 })
 

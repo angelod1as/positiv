@@ -9,6 +9,7 @@ import {
   runtimeStorageKey,
   writeRuntimeState,
 } from "./persistence"
+import { projectPath } from "./project-path"
 import type { Answers, Question } from "./question.types"
 import { asAnsweredValues, validateQuestion } from "./validate-question"
 
@@ -198,6 +199,22 @@ export function useFormRuntime({
     () => questionsForStep(currentStep, questionsById),
     [currentStep, questionsById],
   )
+
+  // Projected from what is known now, so it revises as answers arrive: a flow
+  // that branches on an early mistake looks short until the mistake happens.
+  // Commit steps are dropped because nobody ever sees one.
+  const progress = useMemo(() => {
+    const path = projectPath(flow, answers, { firstTryCorrect, data }).filter(
+      (id) => flow.steps[id]?.kind !== "commit",
+    )
+
+    if (path.length <= 1) return null
+
+    const position = path.indexOf(currentStepId)
+    if (position < 0) return null
+
+    return { index: position + 1, total: path.length }
+  }, [flow, answers, firstTryCorrect, data, currentStepId])
 
   const answer = useCallback((id: string, value: unknown) => {
     answersRef.current = { ...answersRef.current, [id]: value }
@@ -390,6 +407,7 @@ export function useFormRuntime({
     isBusy,
     isDone,
     isRestored,
+    progress,
     answer,
     advance,
   }
