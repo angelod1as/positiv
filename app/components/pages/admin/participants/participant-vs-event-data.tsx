@@ -15,6 +15,7 @@ import {
 } from "~/components/ui/select"
 import { TextArea } from "~/components/ui/textarea"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { validationMessages } from "~/lib/helpers/validation-messages"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
@@ -33,7 +34,7 @@ const eventParticipantFormSchema = z.object({
   attendance_status: z.string(),
   application_status: z.string(),
   spot_type: z.string(),
-  payment: z.coerce.number().min(0, "O valor não pode ser negativo"),
+  payment: z.coerce.number().min(0, validationMessages.minValue(0)),
   has_paid: z.boolean(),
   was_selected_for_rotation: z.boolean(),
   admin_general_notes: z.string(),
