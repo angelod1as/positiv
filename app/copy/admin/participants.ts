@@ -1,4 +1,8 @@
 export const adminParticipantsCopy = {
+  list: {
+    title: "Perfis",
+    loadFailed: "Erro ao carregar perfis. Tente novamente.",
+  },
   viewProfile: {
     profileNotFound: "Perfil não encontrado",
     profileMissing: "Perfil não encontrado ou não existe.",

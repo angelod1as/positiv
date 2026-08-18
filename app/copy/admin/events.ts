@@ -14,6 +14,12 @@ export const adminEventsCopy = {
     noIntent:
       "A função foi executada mas não há um intent configurado para mostrar uma mensagem compatível",
   },
+  createEdit: {
+    createTitle: "Criar novo evento",
+    editTitle: "Editar evento",
+    saved: (isUpdate: boolean) =>
+      isUpdate ? "Evento atualizado com sucesso" : "Evento criado com sucesso",
+  },
   viewEvent: {
     loadParticipantsFailed: "Falha ao carregar participantes",
     date: (date: string | undefined) => `Data: ${date ?? ""}`,

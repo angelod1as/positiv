@@ -50,4 +50,10 @@ export const metaCopy = {
   adminDashboard: {
     title: "Admin - Visão Geral",
   },
+  adminParticipants: {
+    title: "Admin - Participantes",
+  },
+  adminFeedbacks: {
+    title: "Admin - Feedbacks",
+  },
 } as const

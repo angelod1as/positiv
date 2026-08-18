@@ -39,6 +39,11 @@ export const adminDashboardCopy = {
   },
 } as const
 
+export const adminFeedbacksCopy = {
+  title: "Feedbacks",
+  loadFailed: "Erro ao carregar feedbacks. Tente novamente.",
+} as const
+
 export const listmonkDiagnosticCopy = {
   title: "Diagnóstico de Email",
   description:
