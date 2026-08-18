@@ -9,4 +9,7 @@ export const metaCopy = {
   login: {
     title: "Entrar",
   },
+  register: {
+    title: "Registrar",
+  },
 } as const
