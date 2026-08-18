@@ -47,7 +47,7 @@ describe("Dashboard sections", () => {
 
     expect(
       screen.getByText(
-        "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.",
+        "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.",
       ),
     ).toBeInTheDocument()
   })
@@ -57,7 +57,7 @@ describe("Dashboard sections", () => {
 
     expect(
       screen.queryByText(
-        "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e faça sua inscrição.",
+        "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.",
       ),
     ).not.toBeInTheDocument()
   })
@@ -66,10 +66,10 @@ describe("Dashboard sections", () => {
     renderContent({ events: [], hasEverApplied: true })
 
     expect(
-      screen.getByRole("heading", { name: "Eventos em que você se inscreveu" }),
+      screen.getByRole("heading", { name: "Eventos em que você se candidatou" }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText("Você não tem nenhuma inscrição no momento."),
+      screen.getByText("Você não tem nenhuma candidatura no momento."),
     ).toBeInTheDocument()
   })
 

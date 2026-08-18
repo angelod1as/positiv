@@ -210,7 +210,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         }}
         descriptions={{
           commonEmails:
-            "Vamos enviar mensagens sobre o processo de inscrição e, se você quiser, lembrete de datas importantes de eventos futuros (mas só se você clicar no botãozinho).",
+            "Vamos enviar mensagens sobre o processo de candidatura e, se você quiser, lembrete de datas importantes de eventos futuros (mas só se você clicar no botãozinho).",
           mktEmails:
             "Vamos enviar mensagens sobre outros eventos e parcerias, e também atualizações da Positiv que podem ir além das festas tradicionais .",
         }}
