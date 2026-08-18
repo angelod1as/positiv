@@ -37,11 +37,11 @@ describe("Copy", () => {
     expect(container.querySelectorAll("p")).toHaveLength(2)
   })
 
-  it("renders a markdown list with the site's list classes", () => {
+  it("renders a markdown list without imposing a marker style", () => {
     renderWithRouter(<Copy>{"- Beber água;\n- Seguir as regras;"}</Copy>)
 
     const list = screen.getByRole("list")
-    expect(list).toHaveClass("list-inside", "list-disc")
+    expect(list.className).toBe("")
     expect(screen.getAllByRole("listitem")).toHaveLength(2)
   })
 

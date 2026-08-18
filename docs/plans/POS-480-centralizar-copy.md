@@ -56,8 +56,8 @@ Investigated before deciding:
 - `react-markdown@10.1.0` is in `dependencies` and already rendered in production (`warning-banner.tsx:38`). Cost of adopting it for copy: zero packages.
 - `@mdx-js/*` were installed but dead, and MDX would force a second file format anyway. Removed.
 - `app/app.css` already styles headings and paragraphs globally (`h1`–`h6` and `p`, lines 113–163) plus `ol` and `ol > li` (lines 71–77), so rendered Markdown inherits the site's typography with no extra work. `Copy` therefore does **not** wrap output in `prose` — that would double up on the global rules. The typography plugin is available for full-page prose if a specific page needs it.
-- There is **no** global `ul` or `li` rule. That is exactly why components across the repo spell out `list-inside list-disc` by hand, and why `Copy` overrides `ul` to reproduce it.
-- One scoped exception: `app/app.css:294` styles `ul > li` inside `.centered-layout`, giving each item a `⇝` pseudo-element bullet (`⤷` when nested). `.centered-layout` wraps `app/pages/events`, `app/pages/public`, `app/pages/account`, and the agree-to-terms page — which is to say most of the prose this plan migrates. Reproducing `list-inside list-disc` exactly, as `Copy` does, keeps that rendering identical to today. Do not "improve" the `ul` override.
+- There is **no** global `ul` or `li` rule, and Tailwind preflight strips list markers. Components that wanted a disc spelled out `list-inside list-disc` by hand; `Copy` deliberately does **not**, so a list carries whatever marker its surrounding layout provides.
+- One scoped exception: `app/app.css:294` styles `ul > li` inside `.centered-layout`, giving each item a `⇝` pseudo-element bullet (`⤷` when nested). `.centered-layout` wraps `app/pages/events`, `app/pages/public`, `app/pages/account`, and the agree-to-terms page — which is to say every page whose copy currently contains a list. Since that layout supplies its own marker, `Copy` emitting a bare `ul` is what keeps the rendering right; adding `list-disc` on top produced a doubled `• ⇝` marker.
 
 ### Not copy — do not touch
 
@@ -179,7 +179,7 @@ describe("Copy", () => {
     )
 
     const list = container.querySelector("ul")
-    expect(list).toHaveClass("list-inside", "list-disc")
+    expect(list.className).toBe("")
     expect(container.querySelectorAll("li")).toHaveLength(2)
   })
 
@@ -243,7 +243,6 @@ import Markdown, { type Components } from "react-markdown"
 import { Link } from "~/components/atoms/link/link"
 
 const BLOCK_COMPONENTS: Components = {
-  ul: ({ children }) => <ul className="list-inside list-disc">{children}</ul>,
   a: ({ href, children }) =>
     href?.startsWith("/") ? (
       <Link to={href}>{children}</Link>
@@ -284,11 +283,12 @@ element's noopener* algorithm already returns true for `noreferrer` alone, and
 `target="_blank"` has implied `noopener` since Chrome 88 / Firefox 79 /
 Safari 12.1.
 
-Two details worth stating: `ul` is overridden because `app/app.css` styles `ol`
-globally (line 71) but not `ul` — which is why components currently spell out
-`list-inside list-disc` by hand. And `Copy` deliberately does not wrap its output
-in a `prose` container; the global element styles in `app/app.css` already cover
-headings, paragraphs, and lists, so adding typography classes would double up.
+One detail worth stating: `Copy` deliberately does not wrap its output in a
+`prose` container, and does not impose a list style either. The global element
+styles in `app/app.css` already cover headings and paragraphs, and inside
+`.centered-layout` — which wraps every page whose copy has a list — line 294
+supplies the list marker. Adding typography classes or `list-disc` on top would
+double up.
 
 - [ ] **Step 4: Run the test and confirm it passes**
 
@@ -1048,7 +1048,7 @@ pnpm dev
 Navigate to an event's rules page — the route is `/events/EVENT_ID/rules`, using any real event id from the dashboard. Check specifically:
 
 - **Section spacing.** The original had each separator as a sibling of a fragment; the rewrite nests each separator inside a section wrapper. If vertical rhythm changed, render the separator between items instead of before each one and skip it for the first section.
-- **List markers.** This page renders inside `.centered-layout` (via `app/pages/events/layout.tsx`), and `app/app.css:294` gives every `ul > li` there a `⇝` pseudo-element bullet on top of whatever list-style the element carries. The current `rules-text.tsx` writes `list-inside list-disc`, and `Copy` reproduces that exactly, so the rendering should be **identical to before** — same markers, same spacing. If it is not, the `ul` override is the thing that changed; fix it there, not in this component.
+- **List markers.** This page renders inside `.centered-layout` (via `app/pages/events/layout.tsx`), and `app/app.css:294` gives every `ul > li` there a `⇝` pseudo-element bullet. `Copy` emits a bare `ul`, so that pseudo-element is the only marker. Note the pre-migration page also carried `list-inside list-disc`, which stacked a disc on top; that doubled marker is intentionally gone.
 - **Alert blocks.** Both must keep their card styling and internal paragraph gaps.
 - **Section count.** Ten sections, same order and same headings as before.
 

@@ -3,7 +3,6 @@ import Markdown, { type Components } from "react-markdown"
 import { Link } from "~/components/atoms/link/link"
 
 const BLOCK_COMPONENTS: Components = {
-  ul: ({ children }) => <ul className="list-inside list-disc">{children}</ul>,
   a: ({ href, children }) =>
     href?.startsWith("/") ? (
       <Link to={href}>{children}</Link>
