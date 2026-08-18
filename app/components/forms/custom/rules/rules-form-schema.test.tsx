@@ -5,7 +5,7 @@ import { getRulesFormSchema } from "./rules-form-schema"
 import { getRulesFormQuestions } from "./rules-questions"
 
 const questionKeysByKind = () => {
-  const questions = getRulesFormQuestions("regular")
+  const questions = getRulesFormQuestions()
   const entries = Object.entries(questions)
 
   return {
@@ -16,7 +16,7 @@ const questionKeysByKind = () => {
 
 describe("getRulesFormSchema", () => {
   const parseEmpty = () => {
-    const schema = zod.object(getRulesFormSchema("regular"))
+    const schema = zod.object(getRulesFormSchema())
     const result = schema.safeParse({})
 
     if (result.success) {

@@ -68,13 +68,11 @@ describe("event-rules-page loader", () => {
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
 
-  it("should return event type for regular event", async () => {
+  it("should not redirect when the event exists", async () => {
     const mockSelectFrom = vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({
         where: vi.fn().mockReturnValue({
-          executeTakeFirst: vi
-            .fn()
-            .mockResolvedValue({ event_type: "regular" }),
+          executeTakeFirst: vi.fn().mockResolvedValue({ id: "123" }),
         }),
       }),
     })
@@ -84,40 +82,18 @@ describe("event-rules-page loader", () => {
     const mockRequest = new Request("http://localhost")
     const mockParams = { id: "123" }
 
-    const result = await loader({
+    await loader({
       request: mockRequest,
       params: mockParams,
     } as Route.LoaderArgs)
 
-    expect(result).toEqual({ eventType: "regular" })
+    expect(mockRedirect).not.toHaveBeenCalled()
     expect(mockSelectFrom).toHaveBeenCalledWith("events")
-    expect(mockSelectFrom().select).toHaveBeenCalledWith("event_type")
+    expect(mockSelectFrom().select).toHaveBeenCalledWith("id")
     expect(mockSelectFrom().select().where).toHaveBeenCalledWith(
       "id",
       "=",
       "123",
     )
-  })
-
-  it("should return event type for bdsm event", async () => {
-    const mockSelectFrom = vi.fn().mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          executeTakeFirst: vi.fn().mockResolvedValue({ event_type: "bdsm" }),
-        }),
-      }),
-    })
-
-    mockKysely.selectFrom = mockSelectFrom
-
-    const mockRequest = new Request("http://localhost")
-    const mockParams = { id: "123" }
-
-    const result = await loader({
-      request: mockRequest,
-      params: mockParams,
-    } as Route.LoaderArgs)
-
-    expect(result).toEqual({ eventType: "bdsm" })
   })
 })
