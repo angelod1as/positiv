@@ -15,6 +15,7 @@ export const adminParticipantsCopy = {
   },
   basicData: {
     title: "Dados básicos",
+    rotationWarning: "Essa pessoa **participou do rodízio** no último evento",
   },
   vsEvent: {
     title: "Neste evento",

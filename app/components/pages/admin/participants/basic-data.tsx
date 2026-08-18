@@ -6,6 +6,7 @@ import {
   VeteranBadge,
 } from "~/components/atoms/badges/badges"
 import { FlagBadge } from "~/components/atoms/badges/flag-badge"
+import { Copy } from "~/components/atoms/copy/copy"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import type { Profile } from "~types/database/entities.types"
@@ -67,9 +68,8 @@ export const BasicData: FC<BasicDataProps> = ({ profile }) => {
             <OrientationWarning orientations={orientation} />
           </div>
           {was_admin_skipped_last_event && (
-            <div className="mt-2">
-              Essa pessoa <b className="text-red-600">participou do rodízio</b>{" "}
-              no último evento
+            <div className="mt-2 [&_strong]:text-red-600">
+              <Copy>{adminParticipantsCopy.basicData.rotationWarning}</Copy>
             </div>
           )}
         </div>
