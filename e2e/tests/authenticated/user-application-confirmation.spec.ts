@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
-import { ensureTestUserProfileExists, getFirstOpenEvent } from '../../utils/application-helpers'
+import { ensureEventIsOpen, ensureTestUserProfileExists, getFirstOpenEvent } from '../../utils/application-helpers'
 import { cleanupEventParticipations } from '../../utils/db-cleanup'
 import { ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
 
@@ -8,25 +8,18 @@ test.describe('POS-482: Application confirmation page', () => {
   test('a finished application lands on the confirmation page', async ({ page }) => {
     const profileId = await ensureTestUserProfileExists()
     await cleanupEventParticipations(profileId, true)
-    await ensureMinimumOpenEvents(1)
+    const [event] = await ensureMinimumOpenEvents(1)
+    await ensureEventIsOpen(event.id)
 
-    await page.goto('/dashboard')
-
-    const applyableCards = page
-      .locator('[data-testid^="event-card"]')
-      .filter({ has: page.getByRole('link', { name: 'Me candidatar' }) })
-    const applyButtonCount = await applyableCards.count()
-    test.skip(applyButtonCount === 0, 'No event with open registration in this environment')
-
-    await applyableCards.first().getByRole('link', { name: 'Me candidatar' }).click()
-    await page.waitForURL(/\/dashboard\/.+/)
+    // Enter the flow by URL instead of through a dashboard card: other
+    // worktrees share this database and delete test events, which turned
+    // clicking a card into a race that sometimes bounced back to /dashboard
+    await page.goto(`/dashboard/${event.id}/regras`)
 
     const applicationPage = new EventApplicationPage(page)
 
-    if (await applicationPage.isOnRulesPage()) {
-      await applicationPage.fillRulesForm()
-      await applicationPage.clickContinue()
-    }
+    await applicationPage.fillRulesForm()
+    await applicationPage.clickContinue()
 
     await applicationPage.fillUserDataForm('Test application notes', 'ninguém')
     await applicationPage.submitApplication()
