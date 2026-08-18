@@ -12,16 +12,13 @@ test.describe('POS-482: Application confirmation page', () => {
 
     await page.goto('/dashboard')
 
-    // Skip BDSM editions: their extra consent step is covered elsewhere and is
-    // irrelevant to where the application lands
     const applyableCards = page
       .locator('[data-testid^="event-card"]')
-      .filter({ has: page.getByRole('link', { name: 'Fazer inscrição' }) })
-      .filter({ hasNotText: 'BDSM' })
+      .filter({ has: page.getByRole('link', { name: 'Me candidatar' }) })
     const applyButtonCount = await applyableCards.count()
-    test.skip(applyButtonCount === 0, 'No non-BDSM event with open registration in this environment')
+    test.skip(applyButtonCount === 0, 'No event with open registration in this environment')
 
-    await applyableCards.first().getByRole('link', { name: 'Fazer inscrição' }).click()
+    await applyableCards.first().getByRole('link', { name: 'Me candidatar' }).click()
     await page.waitForURL(/\/dashboard\/.+/)
 
     const applicationPage = new EventApplicationPage(page)
