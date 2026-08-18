@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
+import { errorsCopy } from "~/copy/errors"
 import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 import { createBrowserClient } from "~/lib/supabase/client"
@@ -47,10 +48,7 @@ export const getClientContext = async (): Promise<
 
     if (!authError.message.includes("Auth session missing!")) {
       console.error("AUTH error", errorProps)
-      throw await redirectWithError(
-        DASHBOARD,
-        "Houve um erro com sua autenticação, tente novamente mais tarde",
-      )
+      throw await redirectWithError(DASHBOARD, errorsCopy.auth.sessionFailed)
     }
   }
 
