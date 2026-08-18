@@ -66,19 +66,9 @@ export class EventApplicationPage extends BasePage {
     }
   }
 
-  async currentQuestionId(after?: string): Promise<string> {
+  /** The question on screen now, however the quiz got there. */
+  async currentQuestionId(): Promise<string> {
     await this.questions.waitFor({ state: "visible", timeout: 10000 })
-
-    // The heading is the same element from one screen to the next, so a stale
-    // read here would have the caller looking for answers that are no longer on
-    // the page.
-    if (after) {
-      await expect(this.questions).not.toHaveAttribute(
-        "id",
-        `${after}-prompt`,
-        { timeout: 10000 },
-      )
-    }
 
     const id = (await this.questions.getAttribute("id"))?.replace(
       /-prompt$/,
@@ -90,20 +80,75 @@ export class EventApplicationPage extends BasePage {
     return id
   }
 
-  async answerCurrentQuestionCorrectly(previous?: string): Promise<string> {
+  private choice(text: string): Locator {
+    return this.page
+      .locator("label")
+      .filter({ has: this.page.getByText(text, { exact: true }) })
+  }
+
+  private async markCorrectAnswers(answers: {
+    correct: string[]
+    incorrect: string[]
+  }): Promise<void> {
+    // A single right answer is a radio, where clicking the right one replaces
+    // whatever was picked before. Several are checkboxes, and a screen the quiz
+    // reopens still carries the marks it was left with — so clicking a right
+    // answer that is already marked would clear it.
+    if (answers.correct.length === 1) {
+      const option = this.choice(answers.correct[0])
+
+      if (!(await option.locator("input").isChecked())) await option.click()
+
+      return
+    }
+
+    for (const text of [...answers.correct, ...answers.incorrect]) {
+      const option = this.choice(text)
+      const wanted = answers.correct.includes(text)
+
+      if ((await option.locator("input").isChecked()) !== wanted) {
+        await option.click()
+      }
+    }
+  }
+
+  /**
+   * Waits out the answer, and says whether the quiz moved. A save the server
+   * refuses sends it back to the question it names, and the url mirrors the
+   * question a beat later — one that lands after the quiz has already moved on
+   * puts it back where it was. So an answer does not always advance, and the
+   * caller answers again rather than treating a screen that stayed as a fault.
+   */
+  private async quizMovedOn(question: string): Promise<boolean> {
+    const stopAt = Date.now() + 5000
+
+    while (Date.now() < stopAt) {
+      if (!this.page.url().includes("/regras")) return true
+
+      // Bounded: between two screens the heading is detached, and an unbounded
+      // read would sit there waiting for the next one to arrive.
+      const heading = await this.questions
+        .getAttribute("id", { timeout: 1000 })
+        .catch(() => null)
+
+      if (heading !== `${question}-prompt`) return true
+    }
+
+    return false
+  }
+
+  async answerCurrentQuestionCorrectly(): Promise<string> {
     const quiz = getRulesFormQuestions()
-    const id = await this.currentQuestionId(previous)
+    const id = await this.currentQuestionId()
     const question = quiz[id as keyof typeof quiz]
 
     if (!question) {
       throw new Error(`the quiz is showing a question nobody knows: ${id}`)
     }
 
-    for (const right of question.answers.correct) {
-      await this.page.getByText(right, { exact: true }).click()
-    }
-
+    await this.markCorrectAnswers(question.answers)
     await this.continueButton.click()
+    await this.quizMovedOn(id)
 
     return id
   }
@@ -115,15 +160,16 @@ export class EventApplicationPage extends BasePage {
    */
   async advanceToSingleAnswerQuestion(): Promise<string> {
     const quiz = getRulesFormQuestions()
-    let previous: string | undefined
 
-    for (let asked = 0; asked < Object.keys(quiz).length; asked++) {
-      const id = await this.currentQuestionId(previous)
+    // Three times the questions, because an answer that does not advance is
+    // answered again rather than counted as a screen gone by.
+    for (let asked = 0; asked < Object.keys(quiz).length * 3; asked++) {
+      const id = await this.currentQuestionId()
       const question = quiz[id as keyof typeof quiz]
 
       if (question?.answers.correct.length === 1) return id
 
-      previous = await this.answerCurrentQuestionCorrectly(previous)
+      await this.answerCurrentQuestionCorrectly()
     }
 
     throw new Error("the quiz asked nothing with a single right answer")
@@ -146,21 +192,20 @@ export class EventApplicationPage extends BasePage {
     await expect(this.rulesTitle).toBeVisible({ timeout: 10000 })
 
     const quiz = getRulesFormQuestions()
-    let previous: string | undefined
 
-    // One screen per question, and the last "Continuar" is the one that saves,
-    // so the caller has nothing left to click afterwards. The quiz may already
-    // be part-answered, so this stops when the questions run out rather than
-    // after a fixed count.
-    for (let asked = 0; asked < Object.keys(quiz).length; asked++) {
-      const showing = await this.questions
-        .isVisible({ timeout: 2000 })
-        .catch(() => false)
+    // The last "Continuar" is the one that saves, and finishing the quiz leaves
+    // the rules route — which is what says the walk is over, since the screen
+    // is still mounted while the save is in flight. A refused save reopens
+    // answered screens, and an answer does not always advance, so the walk is
+    // longer than one screen per question; the cap is only there to stop a
+    // runaway loop.
+    for (let screens = 0; screens < Object.keys(quiz).length * 3; screens++) {
+      if (!this.page.url().includes("/regras")) return
 
-      if (!showing) return
-
-      previous = await this.answerCurrentQuestionCorrectly(previous)
+      await this.answerCurrentQuestionCorrectly()
     }
+
+    throw new Error("the quiz never left the rules page")
   }
 
   async clickContinue(): Promise<void> {
