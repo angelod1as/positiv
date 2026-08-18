@@ -120,36 +120,12 @@ describe("EventForm", () => {
       expect(screen.getByLabelText("Local")).toBeInTheDocument()
       expect(screen.getByLabelText("Valor")).toBeInTheDocument()
       expect(screen.getByLabelText("Lotação")).toBeInTheDocument()
-      expect(screen.getByLabelText("Tipo de evento")).toBeInTheDocument()
     })
 
-    it("renders event type field as a select with correct options", () => {
+    it("does not render an event type field", () => {
       render(<EventForm />)
 
-      const eventTypeSelect = screen.getByTestId(
-        "field-event_type",
-      ) as HTMLSelectElement
-      expect(eventTypeSelect.tagName).toBe("SELECT")
-
-      const options = Array.from(eventTypeSelect.options).map((opt) => ({
-        value: opt.value,
-        text: opt.text,
-      }))
-
-      expect(options).toEqual([
-        { value: "regular", text: "Regular" },
-        { value: "bdsm", text: "BDSM" },
-      ])
-    })
-
-    it("displays event type description", () => {
-      render(<EventForm />)
-
-      expect(
-        screen.getByText(
-          "Edições BDSM têm uma página de consentimento adicional",
-        ),
-      ).toBeInTheDocument()
+      expect(screen.queryByTestId("field-event_type")).not.toBeInTheDocument()
     })
 
     it("renders date fields with correct type", () => {
@@ -215,26 +191,12 @@ describe("EventForm", () => {
         "A test BDSM event",
       )
       expect(screen.getByTestId("field-location")).toHaveValue("Test Location")
-      expect(screen.getByTestId("field-event_type")).toHaveValue("bdsm")
     })
 
-    it("preserves event type when editing existing BDSM event", () => {
+    it("does not render an event type field for a legacy BDSM event", () => {
       render(<EventForm event={mockEvent} />)
 
-      const eventTypeSelect = screen.getByTestId(
-        "field-event_type",
-      ) as HTMLSelectElement
-      expect(eventTypeSelect.value).toBe("bdsm")
-    })
-
-    it("preserves event type when editing existing regular event", () => {
-      const regularEvent = { ...mockEvent, event_type: "regular" as const }
-      render(<EventForm event={regularEvent} />)
-
-      const eventTypeSelect = screen.getByTestId(
-        "field-event_type",
-      ) as HTMLSelectElement
-      expect(eventTypeSelect.value).toBe("regular")
+      expect(screen.queryByTestId("field-event_type")).not.toBeInTheDocument()
     })
 
     it("preserves dates when editing existing event", () => {
@@ -308,48 +270,6 @@ describe("EventForm", () => {
     })
   })
 
-  describe("event type field behavior", () => {
-    it("allows changing event type from regular to BDSM", async () => {
-      const user = userEvent.setup()
-      const regularEvent: Event = {
-        ...({} as Event),
-        event_type: "regular",
-      }
-
-      render(<EventForm event={regularEvent} />)
-
-      const eventTypeSelect = screen.getByTestId("field-event_type")
-      await user.selectOptions(eventTypeSelect, "bdsm")
-
-      expect(eventTypeSelect).toHaveValue("bdsm")
-    })
-
-    it("allows changing event type from BDSM to regular", async () => {
-      const user = userEvent.setup()
-      const bdsmEvent: Event = {
-        ...({} as Event),
-        event_type: "bdsm",
-      }
-
-      render(<EventForm event={bdsmEvent} />)
-
-      const eventTypeSelect = screen.getByTestId("field-event_type")
-      await user.selectOptions(eventTypeSelect, "regular")
-
-      expect(eventTypeSelect).toHaveValue("regular")
-    })
-
-    it("defaults to regular event type for new events", () => {
-      render(<EventForm />)
-
-      const eventTypeSelect = screen.getByTestId(
-        "field-event_type",
-      ) as HTMLSelectElement
-      // The select element defaults to the first option when no value is provided
-      expect(eventTypeSelect.value).toBe("regular")
-    })
-  })
-
   describe("form sections", () => {
     it("renders all date sections with proper labels", () => {
       render(<EventForm />)
@@ -367,11 +287,11 @@ describe("EventForm", () => {
 
       // Event info section should contain basic fields
       const titleField = screen.getByLabelText("Nome da festa")
-      const eventTypeField = screen.getByLabelText("Tipo de evento")
+      const locationField = screen.getByLabelText("Local")
 
       // Both should be in the DOM (layout testing would require more specific queries)
       expect(titleField).toBeInTheDocument()
-      expect(eventTypeField).toBeInTheDocument()
+      expect(locationField).toBeInTheDocument()
     })
   })
 })
