@@ -47,3 +47,13 @@ export const forgotPasswordCopy = {
   successToast:
     "Se você tiver uma conta com essas credenciais, veja seu email; um link estará lá te esperando!",
 } as const
+
+export const confirmEmailMessageCopy = {
+  title: "Confirme sua conta",
+  instruction:
+    "Clique no link na mensagem enviada para seu email para confirmar sua conta.",
+  spamNotice:
+    "Não esqueça de checar a caixa de Spam ou as caixas de Promoções do Gmail.",
+  retry: (forgotPasswordPath: string) =>
+    `Se a mensagem demorar mais que 5 minutos para chegar, tente novamente. Se mesmo assim não der certo, tente o processo de ["esqueci minha senha"](${forgotPasswordPath})`,
+} as const

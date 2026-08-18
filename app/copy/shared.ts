@@ -5,6 +5,7 @@ export const sharedCopy = {
     confirm: "Confirmar",
     back: "Voltar",
     edit: "Editar",
+    backHome: "Voltar para a home",
   },
   status: {
     loading: "Carregando...",

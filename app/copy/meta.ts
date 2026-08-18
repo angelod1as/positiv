@@ -15,4 +15,7 @@ export const metaCopy = {
   forgotPassword: {
     title: "Esqueci a Senha",
   },
+  confirmEmailMessage: {
+    title: "Confirme sua Conta",
+  },
 } as const
