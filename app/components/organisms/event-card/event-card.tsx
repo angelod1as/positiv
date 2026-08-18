@@ -19,11 +19,13 @@ type EventCardProps = {
   event: Event
   "data-testid": string
   isAdmin?: boolean
+  directApply?: boolean
 }
 export const EventCard: FC<EventCardProps> = ({
   event,
   "data-testid": dataTestId,
   isAdmin,
+  directApply,
 }) => {
   const googleLink = generateGoogleCalendarLink(event)
 
@@ -78,6 +80,7 @@ export const EventCard: FC<EventCardProps> = ({
           is_applied={is_applied}
           dataTestId={undefined}
           isAdmin={isAdmin}
+          directApply={directApply}
         />
       </CardFooter>
     </Card>

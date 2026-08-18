@@ -64,6 +64,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return {
     events,
     hasEverApplied: await hasEverApplied(currentProfile.id),
+    isAdmin: currentProfile.is_admin ?? false,
   }
 }
 
@@ -130,7 +131,8 @@ export async function action({ request, params }: Route.ClientActionArgs) {
 export const EventsContent: FC<{
   events: Event[]
   hasEverApplied: boolean
-}> = ({ events, hasEverApplied }) => {
+  isAdmin?: boolean
+}> = ({ events, hasEverApplied, isAdmin }) => {
   const { applied, available } = splitEvents(events)
 
   return (
@@ -171,6 +173,7 @@ export const EventsContent: FC<{
                 data-testid="event-card-available"
                 key={event.id}
                 event={event}
+                directApply={isAdmin}
               />
             ))}
           </div>
@@ -190,6 +193,7 @@ const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
           <EventsContent
             events={events}
             hasEverApplied={loaderData.hasEverApplied}
+            isAdmin={loaderData.isAdmin}
           />
         )}
       </Await>

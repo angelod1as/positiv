@@ -21,12 +21,21 @@ vi.mock("~/lib/analytics/umami.server", () => ({
   trackServerEvent: vi.fn(),
 }))
 
-import { getUserContext } from "~/business/auth/auth.server"
-import { applyToEvent } from "~/business/participant/apply-to-event.server"
-import { action } from "./dashboard-page"
+vi.mock("../homepage/fetch/get-next-events", () => ({
+  getNextEvents: vi.fn(),
+}))
 
+import { getContext, getUserContext } from "~/business/auth/auth.server"
+import { applyToEvent } from "~/business/participant/apply-to-event.server"
+import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
+import { getNextEvents } from "../homepage/fetch/get-next-events"
+import { action, loader } from "./dashboard-page"
+
+const mockGetContext = vi.mocked(getContext)
 const mockGetUserContext = vi.mocked(getUserContext)
 const mockApplyToEvent = vi.mocked(applyToEvent)
+const mockHasEverApplied = vi.mocked(hasEverApplied)
+const mockGetNextEvents = vi.mocked(getNextEvents)
 
 const contextFor = (isAdmin: boolean) =>
   ({
@@ -124,5 +133,40 @@ describe("dashboard action — direct admin application", () => {
     expect(mockGetUserContext).not.toHaveBeenCalled()
     expect(mockApplyToEvent).not.toHaveBeenCalled()
     expect(result).toBeUndefined()
+  })
+})
+
+describe("dashboard loader", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockGetNextEvents.mockResolvedValue({ success: true, data: [] } as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockHasEverApplied.mockResolvedValue(true as any)
+  })
+
+  const load = (isAdmin: boolean) => {
+    mockGetContext.mockResolvedValue({
+      currentProfile: {
+        id: "profile-123",
+        basic_data_filled: true,
+        is_admin: isAdmin,
+      },
+    } as unknown as Awaited<ReturnType<typeof getContext>>)
+
+    return loader({
+      request: new Request("http://localhost/painel"),
+      params: {},
+      context: {},
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+  }
+
+  it("tells the page that an admin may apply directly", async () => {
+    await expect(load(true)).resolves.toMatchObject({ isAdmin: true })
+  })
+
+  it("tells the page that anyone else may not", async () => {
+    await expect(load(false)).resolves.toMatchObject({ isAdmin: false })
   })
 })
