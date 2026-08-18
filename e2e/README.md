@@ -10,7 +10,7 @@ This guide explains our E2E testing philosophy and best practices for the Positi
 
 1. **Build Phase**: The application is built using `pnpm build` before tests start
 2. **Server**: A custom production server (`serve-production.ts`) handles the Vercel-preset build
-3. **Port**: Tests run on the same port as development (5173) for consistency
+3. **Port**: Each run is handed a free port starting at 5273, so a dev server on 5173 is never mistaken for the build under test
 4. **Caching**: Build artifacts are cached locally for faster subsequent runs (disabled in CI)
 
 ### CI Compatibility
@@ -19,6 +19,37 @@ The setup automatically detects CI environments (`process.env.CI`) and:
 - Forces a fresh build on every run
 - Disables build caching
 - Ensures all environment variables are available
+
+## One Run At A Time
+
+Every worktree shares one local Supabase instance and one machine, so runs must
+not overlap. `pnpm test:e2e` goes through `scripts/with-e2e-lock.sh`, which
+waits for its turn before starting anything.
+
+**Always start the suite with `pnpm test:e2e`.** Calling `playwright test`
+directly skips the lock, and two runs at once corrupt each other's data.
+
+The lock lives in the shared git directory, so it is the same lock from every
+worktree. While waiting, the script prints who holds it and for how long. It
+reclaims a lock whose owner process is gone, and gives up after thirty minutes
+rather than hanging forever.
+
+### Run Scoping
+
+The lock is the first line of defence, not the only one. Each run gets an id
+(`E2E_RUN_ID`) that tags everything it creates:
+
+- events are titled `[E2E-TEST:<runId>] ...`
+- users carry `e2e_run_id` in their metadata and `test-<runId>-...@example.com`
+  addresses
+
+Teardown deletes only what carries its own id, so a run that escapes the lock
+still cannot delete another's data. It also sweeps anything tagged as test data
+older than an hour, which is how data from a crashed run gets collected.
+
+When adding a fixture that creates events or users, build its titles and
+addresses with the helpers in `utils/run-context.ts`. Anything named by hand
+belongs to no run and will never be cleaned up.
 
 ## Testing Philosophy
 

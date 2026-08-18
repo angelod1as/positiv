@@ -14,8 +14,10 @@ Brazilian Portuguese.
 3. **NEVER bypass pre-push hooks**
 4. **NEVER** write off a failing test as "unrelated, let's not fix it"
 5. **NEVER use barrel exports** (`index.ts` files that only re-export)
-6. Use the Context7 MCP for library/API documentation without being asked
-7. To reset the database: `supabase db reset` — no `--local` flag
+6. **NEVER run E2E outside `pnpm test:e2e`** — it takes a cross-worktree lock;
+   `playwright test` on its own lets two runs corrupt the shared database
+7. Use the Context7 MCP for library/API documentation without being asked
+8. To reset the database: `supabase db reset` — no `--local` flag
 
 A PR merges only with tests and lint 100% green. If a test fails, fix it.
 
