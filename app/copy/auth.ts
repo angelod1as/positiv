@@ -64,3 +64,13 @@ export const registrationErrorCopy = {
   whatsappMessage: "Olá! Tive o erro ERR-001 ao criar minha conta",
   whatsappCta: "Falar pelo WhatsApp",
 } as const
+
+export const authConfirmCopy = {
+  passwordReset: "Senha redefinida com sucesso!",
+  emailConfirmed: "E-mail confirmado com sucesso!",
+  linkExpired:
+    "Link já utilizado ou expirado. Tente fazer login ou solicite um novo link.",
+  confirmFailed: (reason: string) => `Erro ao confirmar: ${reason}`,
+  invalidLinkReason: "link inválido",
+  invalidLink: "Link inválido. Por favor, verifique o link no seu e-mail.",
+} as const
