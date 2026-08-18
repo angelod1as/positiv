@@ -39,4 +39,7 @@ export const metaCopy = {
   dashboard: {
     title: "Meus Eventos",
   },
+  agreeToTerms: {
+    title: "Termos e Condições",
+  },
 } as const
