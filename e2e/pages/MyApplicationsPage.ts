@@ -77,7 +77,10 @@ export class MyApplicationsPage extends BasePage {
     // Wait for button state to change. Closed events never offer a way back in,
     // so they settle on the disabled "Inscrições encerradas" button instead.
     if (options.registrationsClosed) {
-      await eventCard.getByText('Inscrições encerradas').waitFor({ state: 'visible' })
+      // The card also carries a status badge with this exact text, so match the
+      // disabled button by role rather than by text
+      await cancelButton.waitFor({ state: 'detached' })
+      await eventCard.getByRole('button', { name: 'Inscrições encerradas' }).waitFor({ state: 'visible' })
     } else {
       await eventCard.getByRole('link', { name: 'Fazer inscrição' }).waitFor({ state: 'visible' })
     }
