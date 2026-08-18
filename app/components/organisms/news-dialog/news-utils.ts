@@ -30,6 +30,20 @@ export function hasVisibleNews(
   return filteredNews.length > 0
 }
 
+/**
+ * News items live one per file under `items/` and are collected at build time
+ * by `import.meta.glob`. This file is deliberately free of news content: it
+ * used to hold the whole list plus a hand-bumped version, which made every
+ * branch conflict with every other branch.
+ *
+ * To announce something, add `items/<YYYY-MM-DD>-<slug>.ts` — never edit this
+ * file, and never touch an item another branch may also be touching.
+ *
+ * - `id` is the file name without `.ts`, so git guarantees ids stay unique
+ * - `isActive` is implied by the file existing; retire an item by deleting it
+ * - `NEWS_VERSION` is the newest `createdAt`; adding an item re-opens the
+ *   dialog for everyone on its own, so there is no version to bump
+ */
 const newsItemModules = import.meta.glob<{ default: NewsItemContent }>(
   "./items/*.ts",
   { eager: true },

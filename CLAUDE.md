@@ -477,26 +477,38 @@ Order of operations:
 
 ## News Dialog Updates
 
-When making changes to the application that affect users (new features, bug fixes, UI changes), ALWAYS update the news dialog:
+When making changes to the application that affect users (new features, bug
+fixes, UI changes), ALWAYS announce them in the news dialog.
 
-1. **Location**: `DEFAULT_NEWS_ITEMS` and `NEWS_VERSION` live in `app/components/organisms/news-dialog/news-utils.ts`; the `NewsItem` interface and the dialog itself live in `app/components/organisms/news-dialog/news.tsx`
-2. **Update Process**:
-   - Add new items to the `DEFAULT_NEWS_ITEMS` array
-   - REMOVE items older than 2 weeks (check `createdAt` dates)
-   - Follow the `NewsItem` interface structure
-3. **Content Guidelines**:
-   - Write for NON-TECHNICAL USERS (focus on functionality, not implementation)
+1. **Add one file** to `app/components/organisms/news-dialog/items/`, named
+   `<YYYY-MM-DD>-<slug>.ts`:
+
+   ```ts
+   import type { NewsItemContent } from "../news"
+
+   export default {
+     title: "✨ Título curto",
+     content: "O que mudou, para quem não é técnique.",
+     isAdmin: false,
+     createdAt: new Date("2026-08-17T12:00:00"),
+   } satisfies NewsItemContent
+   ```
+
+2. **Never edit `news-utils.ts`** and never edit an existing item. The file
+   collects `items/*.ts` with `import.meta.glob`, derives each `id` from the
+   file name and derives `NEWS_VERSION` from the newest `createdAt`. There is
+   no version to bump and no array to prepend to — that is exactly what used
+   to make every PR conflict.
+
+3. **Content guidelines**:
+   - Write for NON-TECHNICAL USERS (functionality, not implementation)
    - ✅ GOOD: "Now you can generate demographic reports by clicking the new button"
    - ❌ BAD: "Added demographics upsert functionality to the database"
-   - Admin items (`isAdmin: true`) can include operational details but avoid code specifics
-4. **Required Fields**:
-   - `id`: Unique string identifier
-   - `title`: Brief, descriptive title
-   - `content`: Clear explanation of the change/feature
-   - `isAdmin`: Boolean (true for admin-only news)
-   - `createdAt`: Date object
-   - `isActive`: Boolean (usually true)
-5. **IMPORTANT**: ALWAYS update `NEWS_VERSION` in `app/components/organisms/news-dialog/news-utils.ts` to current timestamp (use `Date.now()`) whenever you add or modify news items. This ensures the dialog appears for users who haven't seen the new updates.
+   - `isAdmin: true` items may include operational detail, still no code specifics
+   - Copy is Brazilian Portuguese
+
+4. **Retiring items**: items older than two weeks stop rendering by
+   themselves. Deleting the file is optional housekeeping and never urgent.
 
 ## GitHub Workflow
 
