@@ -1362,21 +1362,24 @@ pnpm lint && pnpm test:unit && pnpm test:integration
 
 Expected: all green.
 
-**E2E runs only here, at the very end, and only when no other Playwright run is active.** Never during a migration task — a browser run mid-task competes with whatever else is using the machine. Check first, wait if something is running, then run:
+**E2E runs only here, at the very end.** Never during a migration task.
+
+Main now serialises this for us: `pnpm test:e2e` goes through
+`./scripts/with-db-lock.sh`, which takes a cross-worktree lock, and `CLAUDE.md`
+rule 6 forbids reaching the database any other way — running `playwright test`
+directly lets two suites corrupt each other's data. So there is nothing to
+coordinate by hand; just run it and let the lock queue behind any other worktree.
 
 ```bash
-while pgrep -f "@playwright/test/cli" > /dev/null; do
-  echo "another Playwright run is active; waiting"
-  sleep 30
-done
 pnpm test:e2e
 ```
 
-That matches the test runner and its `test-server`, not `@playwright/mcp`, which is session tooling and can be ignored. If it never clears, stop and report rather than running two browser suites at once.
+Until this runs, the per-file fidelity checks are the only guard against copy
+shifting, and they are blind to anything visual — spacing, layout, list markers.
+Both of the worst defects found in this effort were exactly that kind, and
+neither showed up in a test.
 
-Until E2E runs, the per-file fidelity checks are the only guard against copy shifting, and they are blind to anything visual — spacing, layout, list markers. Both of the worst defects found in this effort were exactly that kind, and neither showed up in a test.
-
-Another agent may be using the same local Supabase instance; if the integration run behaves oddly, check the database state before assuming a code fault.
+`pnpm test:integration` takes the same lock, so a concurrent worktree no longer corrupts a run — if it still behaves oddly, check the database state before assuming a code fault.
 
 - [ ] **Step 4: Delete this plan and commit**
 
