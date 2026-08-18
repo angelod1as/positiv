@@ -41,7 +41,7 @@ async function loadEvents(profileId: string) {
     // Throwing an error allows the <Await> component's errorElement to catch it
     throw new Error(
       result.errors.map((e) => e.message).join(", ") ||
-        "Failed to load events.",
+        dashboardCopy.loadFailed,
     )
   }
 

@@ -1,6 +1,7 @@
 export const dashboardCopy = {
   termsRequired: "Você precisa aceitar os termos antes de continuar",
   cancelFailed: "Ops, seu cancelamento deu errado. Comunique o administrador.",
+  loadFailed: "Não foi possível carregar os eventos.",
   welcome: {
     title: "Sua conta está pronta",
     body: "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.",
