@@ -65,6 +65,40 @@ export async function ensureMinimumOpenEvents(count: number = 2): Promise<{ id: 
   return allEvents.slice(0, count)
 }
 
+/**
+ * A regular event of its own, so a test that needs the rules quiz is not handed
+ * a BDSM event — that route asks for consent instead of running the quiz.
+ */
+export async function createOpenRegularEvent(): Promise<{ id: string; title: string }> {
+  const supabase = createSupabaseAdminClient()
+
+  const now = new Date()
+  const eventDate = new Date(now)
+  eventDate.setDate(eventDate.getDate() + 45)
+
+  const { data, error } = await supabase
+    .from('events')
+    .insert({
+      title: `[E2E-TEST] Regular event ${Date.now()}`,
+      event_status: 'Registration Open' as EventStatus,
+      event_type: 'regular',
+      time_event_start: eventDate.toISOString(),
+      time_event_end: new Date(eventDate.getTime() + 3 * 60 * 60 * 1000).toISOString(),
+      time_application_start: now.toISOString(),
+      description: 'Test event created for E2E testing',
+      location: 'Test Location',
+      total_spots: 100,
+    })
+    .select('id, title')
+    .single()
+
+  if (error || !data) {
+    throw new Error(`Failed to create a regular test event: ${error?.message}`)
+  }
+
+  return { id: data.id, title: data.title || '' }
+}
+
 export async function ensureClosedTestEvent(): Promise<{ id: string; title: string }> {
   const supabase = createSupabaseAdminClient()
   

@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 import { EventsPage } from '../../pages/EventsPage'
 import { EventApplicationPage } from '../../pages/EventApplicationPage'
 import { clearAllEmails, getAllEmails } from '../../utils/email-helpers'
-import { ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
+import { createOpenRegularEvent, ensureMinimumOpenEvents } from '../../utils/test-event-helpers'
 
 test.describe('POS-190: Event Application Acceptance Tests', () => {
   let eventsPage: EventsPage
@@ -45,19 +45,32 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     // Test passed - EventsPage POM created and functional
   })
 
-  test('AC2: EventApplicationPage POM - manage application forms', async () => {
-    // This test verifies the POM exists and has the expected methods
-    // We can't test the full flow due to form complexity, but we can verify the structure
-    
-    // Verify POM has expected methods
-    expect(applicationPage.isOnRulesPage).toBeDefined()
-    expect(applicationPage.isOnUserDataPage).toBeDefined()
-    expect(applicationPage.fillRulesForm).toBeDefined()
-    expect(applicationPage.fillUserDataForm).toBeDefined()
-    expect(applicationPage.clickContinue).toBeDefined()
-    expect(applicationPage.submitApplication).toBeDefined()
-    
-    // Test passed - EventApplicationPage POM created with all required methods
+  test('AC2: the rules quiz is answered one question at a time', async ({ page }) => {
+    // Fourteen screens, each one a round trip through the runtime.
+    test.setTimeout(120_000)
+
+    const event = await createOpenRegularEvent()
+
+    await page.goto(`/dashboard/${event.id}/regras`)
+
+    // No networkidle here: the page keeps talking to the analytics endpoint, so
+    // the rules heading is the honest signal that it arrived.
+    expect(await applicationPage.isOnRulesPage()).toBe(true)
+
+    // One question on screen, not the whole quiz at once
+    await expect(applicationPage.questions).toHaveCount(1)
+
+    await applicationPage.advanceToSingleAnswerQuestion()
+    const refused = await applicationPage.answerCurrentQuestionWrongly()
+
+    await expect(
+      page.getByText('Você escolheu a resposta errada'),
+    ).toBeVisible()
+    expect(await applicationPage.currentQuestionId()).toBe(refused)
+
+    await applicationPage.fillRulesForm()
+
+    await expect(applicationPage.userDataTitle).toBeVisible({ timeout: 15000 })
   })
 
   test('AC3: email-helpers.ts created with Mailpit integration', async () => {
