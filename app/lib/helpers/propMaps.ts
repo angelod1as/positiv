@@ -1,3 +1,4 @@
+import { adminPropMapsCopy } from "~/copy/admin/prop-maps"
 import { GENDERS, ORIENTATIONS } from "~/lib/constants/constants"
 import {
   type Event,
@@ -11,143 +12,36 @@ import {
 } from "~types/database/entities.types"
 
 export const profilePropMap = (property: keyof Profile) => {
-  return {
-    basic_data_filled: "Dados básico preenchidos?",
-    cpf: "CPF",
-    created_at: "Criado em",
-    date_of_birth: "Data de nascimento",
-    email: "E-mail",
-    full_name: "Nome completo",
-    social_name: "Nome social ou apelido",
-    where_lives: "Em que cidade você mora?",
-    how_came_to_us: "Como chegou até nós?",
-    phone: "WhatsApp",
-    confirm_phone: "Confirme seu whatsapp",
-    rg: "RG",
-    rg_issuer: "Emissor do RG",
-    gender: "Gênero",
-    id: "Id do perfil",
-    is_veteran: "É veterane?",
-    became_veteran_date: "Data que se tornou veterane",
-    orientation: "Orientação",
-    pronouns: "Pronomes",
-    user_id: "Id de usuárie",
-    approved_to_attend: "Status de Aprovação",
-    flag: "Flag",
-    flag_notes: "Notas da flag",
-    general_notes: "Observações gerais",
-    race_color: "Raça ou cor",
-  }[property]
+  return adminPropMapsCopy.profileFields[property]
 }
 
 export const eventPropNameMap = (property: keyof Event) => {
-  return {
-    created_at: "Criado em",
-    id: "Id do evento",
-    time_application_start: "Início das candidaturas",
-    description: "Descrição",
-    emoji: "Emoji",
-    time_event_end: "Fim do evento",
-    event_status: "Status",
-    event_type: "Tipo de evento",
-    auto_publish: "Publicação automática",
-    time_group_end: "Fechamento do grupo",
-    time_group_start: "Abertura do grupo",
-    location: "Locação",
-    time_payment_start: "Fim do pagamento",
-    time_payment_end: "Início do pagamento",
-    time_event_start: "Início do evento",
-    ticket_price: "Valor",
-    title: "Nome",
-    total_spots: "Lotação",
-    is_applied: "Candidate",
-    listmonk_list_id: "ID da lista Listmonk",
-    listmonk_list_synced_at: "Última sincronização da lista",
-  }[property]
+  return adminPropMapsCopy.eventFields[property]
 }
 
 export const eventParticipantPropMap = (property: keyof EventParticipant) => {
-  return {
-    id: "Id do participante",
-    profile_id: "Id do perfil",
-    event_id: "Id do evento",
-    is_user_applied: "Candidate?",
-    has_paid: "Pago?",
-    payment: "Pagamento",
-    attendance_status: "Status de Presença",
-    application_status: "Status de Processo",
-    application_date: "Data da candidatura",
-    cancellation_date: "Data de cancelamento",
-    created_at: "Criado em",
-    notes: "Notas",
-    referrals: "Indicações",
-    referred: "Indicade por",
-    companions: "Vai acompanhade?",
-    bond: "Pode ir só?",
-    admin_general_notes: "Notas gerais da administração para este evento",
-    emoji: "Emoji",
-    title: "Título",
-    spot_type: "Tipo de vaga",
-    flag: "Flag",
-    flag_notes: "Notas da Flag",
-    updated_at: "Atualizado em",
-    was_selected_for_rotation: "Escolhide para rodízio?",
-  }[property]
+  return adminPropMapsCopy.eventParticipantFields[property]
 }
 
 export const eventStatusMap = (event_status: EventStatus) => {
-  return (
-    {
-      Draft: "Rascunho",
-      Scheduled: "Agendado",
-      "Registration Open": "Candidaturas abertas",
-      "Registration Closed": "Candidaturas encerradas",
-      Cancelled: "Cancelado",
-      Completed: "Finalizado",
-      "Already Applied": "Já candidate",
-    }[event_status] || ""
-  )
+  return adminPropMapsCopy.eventStatus[event_status] || ""
 }
 
 const participantApplicationStatus: Record<
   ParticipantApplicationStatus,
   string
-> = {
-  pending: "Pendente",
-  talking: "Conversando",
-  sent_payment_data: "Dados de pagto enviados",
-  sent_rules: "Regras enviadas",
-  think_better: "Pensar melhor",
-  finalised: "Finalizado",
-  no_response: "Não Respondeu",
-}
+> = adminPropMapsCopy.applicationStatus
 
 const participantAttendanceStatus: Record<ParticipantAttendanceStatus, string> =
-  {
-    pending: "Pendente",
-    attended: "Compareceu",
-    "not-attended": "Não compareceu",
-    skipped: "Pulade (rodízio)",
-    withdrew: "Desistiu",
-    "not-selected": "Não Selecionade",
-  }
+  adminPropMapsCopy.attendanceStatus
 
 const profileApprovedToAttendStatus: Record<
   ProfileApprovedToAttendStatus,
   string
-> = {
-  pending: "Pendente",
-  approved: "Aprovade",
-  approved_with_reservations: "Aprovade com Ressalvas",
-  rejected: "Rejeitade",
-}
+> = adminPropMapsCopy.approvedToAttend
 
-const profileFlagStatus: Record<ProfileFlagStatus, string> = {
-  none: "Sem flag",
-  yellow: "Flag amarela",
-  red: "Flag vermelha",
-  gray: "Flag cinza",
-}
+const profileFlagStatus: Record<ProfileFlagStatus, string> =
+  adminPropMapsCopy.flagStatus
 
 export const participantApplicationStatusPropMap = (
   application_status: ParticipantApplicationStatus,
@@ -198,10 +92,7 @@ export const approvedToAttendStatusOptions: Array<{
   value: value as ProfileApprovedToAttendStatus,
 }))
 
-const isVeteranStatusMap: Record<string, string> = {
-  true: "Veterano",
-  false: "Novate",
-}
+const isVeteranStatusMap: Record<string, string> = adminPropMapsCopy.isVeteran
 
 export const isVeteranOptions: Array<{
   name: string
@@ -213,10 +104,7 @@ export const isVeteranOptions: Array<{
   value: value,
 }))
 
-const hasPaidStatusMap: Record<string, string> = {
-  true: "Sim",
-  false: "Não",
-}
+const hasPaidStatusMap: Record<string, string> = adminPropMapsCopy.hasPaid
 
 export const hasPaidOptions: Array<{
   name: string
@@ -346,11 +234,7 @@ export const flagStatusOptions: Array<{
   value: value as ProfileFlagStatus,
 }))
 
-const participantSpotType: Record<string, string> = {
-  regular: "Regular",
-  social: "Social",
-  staff: "Staff",
-}
+const participantSpotType: Record<string, string> = adminPropMapsCopy.spotType
 
 export const participantSpotTypePropMap = (spot_type: string) => {
   return participantSpotType[spot_type] || ""
@@ -416,8 +300,16 @@ function buildFilterOptions(
 }
 
 export const notesFilterOptions = [
-  { value: "has-notes", label: "Com notas", name: "Com notas" },
-  { value: "no-notes", label: "Sem notas", name: "Sem notas" },
+  {
+    value: "has-notes",
+    label: adminPropMapsCopy.notesFilter.hasNotes,
+    name: adminPropMapsCopy.notesFilter.hasNotes,
+  },
+  {
+    value: "no-notes",
+    label: adminPropMapsCopy.notesFilter.noNotes,
+    name: adminPropMapsCopy.notesFilter.noNotes,
+  },
 ]
 
 export function genderFilterOptions(
