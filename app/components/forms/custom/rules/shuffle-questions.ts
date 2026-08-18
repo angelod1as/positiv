@@ -1,4 +1,3 @@
-import type { EventType } from "~types/database/entities.types"
 import { getRulesFormQuestions } from "./rules-questions"
 
 const shuffleArray = <T>(array: T[]): T[] => {
@@ -10,8 +9,8 @@ const shuffleArray = <T>(array: T[]): T[] => {
   return shuffled
 }
 
-export const shuffleQuestions = (eventType: EventType) => {
-  const rulesFormQuestions = getRulesFormQuestions(eventType)
+export const shuffleQuestions = () => {
+  const rulesFormQuestions = getRulesFormQuestions()
   return shuffleArray(Object.entries(rulesFormQuestions)).map(
     ([name, question]) => {
       return {

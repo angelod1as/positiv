@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMemo } from "react"
 import { useForm, type SubmitHandler } from "react-hook-form"
-import { Form, redirect, useLoaderData, useSubmit } from "react-router"
+import { Form, redirect, useSubmit } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
 import { getUserContext } from "~/business/auth/auth.server"
@@ -46,13 +46,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   const event = await kyselyDb
     .selectFrom("events")
-    .select("event_type")
+    .select("id")
     .where("id", "=", params.id)
     .executeTakeFirst()
 
   if (!event) return redirect(DASHBOARD)
 
-  return { eventType: event.event_type }
+  return null
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -109,12 +109,8 @@ export function HydrateFallback() {
 
 const EventRulesPage = ({}: Route.ComponentProps) => {
   const submit = useSubmit()
-  const { eventType } = useLoaderData<typeof loader>()
 
-  const rulesFormSchema = useMemo(
-    () => getRulesFormSchema(eventType),
-    [eventType],
-  )
+  const rulesFormSchema = useMemo(() => getRulesFormSchema(), [])
   const validationSchema = useMemo(
     () => zod.object(rulesFormSchema),
     [rulesFormSchema],
@@ -146,10 +142,7 @@ const EventRulesPage = ({}: Route.ComponentProps) => {
     })
   }
 
-  const shuffledQuestions = useMemo(
-    () => shuffleQuestions(eventType),
-    [eventType],
-  )
+  const shuffledQuestions = useMemo(() => shuffleQuestions(), [])
 
   const handleChange = () => {
     clearErrors()
