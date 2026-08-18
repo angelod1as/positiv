@@ -13,6 +13,10 @@ import type { Presentation } from "./presentation.types"
  * answered from the keyboard: type, Enter, type, Enter. It is keyed on which
  * questions are showing rather than on every render, so surfacing a validation
  * error does not yank focus away from someone mid-correction.
+ *
+ * The screen the flow opens on is left alone. Taking focus there scrolls the
+ * page down to the control, past whatever the form is asked to sit under — on
+ * the rules quiz, that is the rules themselves.
  */
 export const OneAtATime: Presentation = ({
   step,
@@ -27,19 +31,34 @@ export const OneAtATime: Presentation = ({
   renderQuestion,
 }) => {
   const formRef = useRef<HTMLFormElement>(null)
+  const focusedScreenRef = useRef<string | null>(null)
 
   const screenKey = questions.map((question) => question.id).join("|")
 
   useEffect(() => {
+    // The screen the flow opens on is recorded without being focused.
+    if (focusedScreenRef.current === null) {
+      focusedScreenRef.current = screenKey
+      return
+    }
+
+    // The continue button is disabled while a commit is in flight, and a
+    // disabled control cannot take focus, so an arriving screen waits for the
+    // commit to settle. Screens already focused are left alone, which is what
+    // keeps a failed advance from yanking focus back mid-correction.
+    if (isBusy || focusedScreenRef.current === screenKey) return
+
     const form = formRef.current
     if (!form) return
+
+    focusedScreenRef.current = screenKey
 
     const control =
       form.querySelector<HTMLElement>("input, textarea, select") ??
       form.querySelector<HTMLElement>('button[type="submit"]')
 
     control?.focus()
-  }, [screenKey])
+  }, [screenKey, isBusy])
 
   return (
     <form

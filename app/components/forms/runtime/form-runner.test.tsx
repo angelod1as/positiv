@@ -302,7 +302,7 @@ describe("FormRunner with oneAtATime", () => {
 })
 
 describe("oneAtATime keyboard flow", () => {
-  it("focuses the control as soon as the question appears", () => {
+  it("leaves the screen it opens on alone", () => {
     render(
       <FormRunner
         questions={questions}
@@ -312,7 +312,9 @@ describe("oneAtATime keyboard flow", () => {
       />,
     )
 
-    expect(screen.getByLabelText("Qual seu nome?")).toHaveFocus()
+    // Taking focus here scrolls the page down to the control, past whatever the
+    // form was asked to sit under.
+    expect(screen.getByLabelText("Qual seu nome?")).not.toHaveFocus()
   })
 
   it("advances on Enter without reaching for the mouse", async () => {
@@ -327,6 +329,7 @@ describe("oneAtATime keyboard flow", () => {
       />,
     )
 
+    await user.click(screen.getByLabelText("Qual seu nome?"))
     await user.keyboard("Angelo{Enter}")
 
     expect(
@@ -346,19 +349,22 @@ describe("oneAtATime keyboard flow", () => {
       />,
     )
 
+    await user.click(screen.getByLabelText("Qual seu nome?"))
     await user.keyboard("Angelo{Enter}")
 
     expect(screen.getByLabelText("Onde você mora?")).toHaveFocus()
   })
 
-  it("focuses the continue button on a content screen", () => {
+  it("focuses the continue button when a content screen arrives", async () => {
+    const user = userEvent.setup()
+
     const contentFlow: Flow = {
-      start: "intro",
+      start: "nome",
       steps: {
-        intro: { kind: "content", render: <p>Leia as regras</p> },
         nome: { kind: "question", id: "nome" },
+        aviso: { kind: "content", render: <p>Leia as regras</p> },
       },
-      next: (current) => (current === "intro" ? "nome" : "done"),
+      next: (current) => (current === "nome" ? "aviso" : "done"),
     }
 
     render(
@@ -369,6 +375,9 @@ describe("oneAtATime keyboard flow", () => {
         renderQuestion={renderQuestion}
       />,
     )
+
+    await user.click(screen.getByLabelText("Qual seu nome?"))
+    await user.keyboard("Angelo{Enter}")
 
     expect(screen.getByRole("button", { name: "Continuar" })).toHaveFocus()
   })
