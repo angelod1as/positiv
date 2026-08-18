@@ -18,8 +18,8 @@ test.describe('POS-482: Application confirmation page', () => {
 
     const applicationPage = new EventApplicationPage(page)
 
+    // The quiz's own last "Continuar" saves, so nothing is left to click
     await applicationPage.fillRulesForm()
-    await applicationPage.clickContinue()
 
     await applicationPage.fillUserDataForm('Test application notes', 'ninguém')
     await applicationPage.submitApplication()
