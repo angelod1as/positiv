@@ -4,6 +4,7 @@ import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import { Button } from "~/components/atoms/button/button"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
+import { eventCardCopy } from "~/copy/events"
 
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { useAnalytics } from "~/lib/hooks/use-analytics"
@@ -60,7 +61,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
       <div className="flex flex-row gap-4 w-full">
         <Button to={ADMIN_VIEW_EVENT(eventId)}>
           <EyeIcon className="h-4 w-4 mr-2" />
-          Ver evento
+          {eventCardCopy.adminView}
         </Button>
       </div>
     )
@@ -88,7 +89,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   if (isScheduled) {
     return (
       <Button data-testid={dataTestId} disabled={true}>
-        Candidaturas em breve
+        {eventCardCopy.scheduled}
       </Button>
     )
   }
@@ -134,19 +135,19 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
 
         <fetcher.Form method="post">
           <ConfirmDialog
-            title="Cancelar candidatura"
+            title={eventCardCopy.cancel.title}
             description={
               <div>
-                <p>Você tem certeza que deseja cancelar sua candidatura?</p>
+                <p>{eventCardCopy.cancel.description}</p>
               </div>
             }
-            confirmLabel="😢 Cancelar"
-            cancelLabel="🎉 Voltar"
+            confirmLabel={eventCardCopy.cancel.confirmLabel}
+            cancelLabel={eventCardCopy.cancel.cancelLabel}
             isLoading={fetcher.state !== "idle"}
             onConfirm={handleConfirmCancel}
           >
             <ConfirmDialog.Trigger variant="destructive" className="w-full">
-              Cancelar candidatura
+              {eventCardCopy.cancel.trigger}
             </ConfirmDialog.Trigger>
           </ConfirmDialog>
         </fetcher.Form>
@@ -157,7 +158,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   if (isClosed) {
     return (
       <Button data-testid={dataTestId} disabled={true}>
-        Candidaturas encerradas
+        {eventCardCopy.closed}
       </Button>
     )
   }
@@ -170,7 +171,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
           to={EVENT_VIEW(eventId)}
           linkProps={{ prefetch: prefetchStrategy }}
         >
-          Me candidatar
+          {eventCardCopy.apply}
         </Button>
 
         {directApply && (
@@ -179,7 +180,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
             disabled={fetcher.state !== "idle"}
             onClick={handleDirectApply}
           >
-            Candidatura direta (admin)
+            {eventCardCopy.directApply}
           </Button>
         )}
       </div>
@@ -188,7 +189,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
 
   return (
     <Button data-testid={dataTestId} disabled={true}>
-      Inscreva-se em breve
+      {eventCardCopy.comingSoon}
     </Button>
   )
 }

@@ -211,3 +211,19 @@ export const eventListCopy = {
   appliedHeading: "Eventos em que você se inscreveu",
   availableHeading: "Eventos da Positiv",
 } as const
+
+export const eventCardCopy = {
+  adminView: "Ver evento",
+  scheduled: "Inscrições em breve",
+  closed: "Inscrições encerradas",
+  apply: "Fazer inscrição",
+  directApply: "Candidatura direta (admin)",
+  comingSoon: "Inscreva-se em breve",
+  cancel: {
+    trigger: "Cancelar inscrição",
+    title: "Cancelar inscrição",
+    description: "Você tem certeza que deseja cancelar sua inscrição?",
+    confirmLabel: "😢 Cancelar",
+    cancelLabel: "🎉 Voltar",
+  },
+} as const
