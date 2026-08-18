@@ -1,10 +1,8 @@
 import { useCallback, useMemo } from "react"
 import { redirect, useNavigate, useSearchParams } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
-import { rulesSessionStorage } from "~/business/session.server"
 import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
 import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules-questions"
-import { getRulesFormSchema } from "~/components/forms/custom/rules/rules-form-schema"
 import type { CommitResult } from "~/components/forms/runtime/commit.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
@@ -18,7 +16,6 @@ import {
   CardTitle,
 } from "~/components/ui/card"
 import { kyselyDb } from "~/kysely-db"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
 import paths from "~/lib/paths"
 import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
@@ -26,7 +23,7 @@ import type { Route } from "./+types/event-rules-page"
 const {
   dash: {
     DASHBOARD,
-    events: { EVENT_DATA, EVENT_RULES },
+    events: { EVENT_DATA, EVENT_RULES_QUIZ_CHECK },
   },
 } = paths
 
@@ -44,59 +41,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (!event) return redirect(DASHBOARD)
 
   return null
-}
-
-export async function action({ request, params }: Route.ActionArgs) {
-  if (!params.id) return redirect(DASHBOARD)
-
-  await getUserContext(request, params)
-
-  const event = await kyselyDb
-    .selectFrom("events")
-    .select("event_type")
-    .where("id", "=", params.id)
-    .executeTakeFirst()
-
-  if (!event) return redirect(DASHBOARD)
-
-  let answers: Record<string, unknown>
-  try {
-    answers = (await request.json()) as Record<string, unknown>
-  } catch {
-    // No question is to blame for a body the server cannot read, so the runtime
-    // is left to say the save failed.
-    return Response.json({ ok: false, errors: [] }, { status: 400 })
-  }
-
-  // The same schemas the browser used. Answering in the browser is what makes
-  // the quiz usable; checking again here is what makes it a gate, because a
-  // bare POST to this route used to open it without answering anything.
-  const errors = Object.entries(getRulesFormSchema(event.event_type)).flatMap(
-    ([questionId, schema]) => {
-      const result = schema.safeParse(answers[questionId])
-
-      return result.success
-        ? []
-        : [{ questionId, message: result.error.issues[0].message }]
-    },
-  )
-
-  if (errors.length > 0) return Response.json({ ok: false, errors })
-
-  const { commitSession, getSession } = rulesSessionStorage
-  const session = await getSession(request.headers.get("Cookie"))
-  session.set("rulesCorrect", true)
-
-  trackServerEvent(
-    "rules_quiz_passed",
-    { eventId: params.id },
-    `/events/${params.id}/rules`,
-  )
-
-  return Response.json(
-    { ok: true },
-    { headers: { "Set-Cookie": await commitSession(session) } },
-  )
 }
 
 const Wrapper: FCC = ({ children }) => (
@@ -133,7 +77,7 @@ const EventRulesPage = ({ loaderData, params }: Route.ComponentProps) => {
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
-      const response = await fetch(EVENT_RULES(eventId), {
+      const response = await fetch(EVENT_RULES_QUIZ_CHECK(eventId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(answers),

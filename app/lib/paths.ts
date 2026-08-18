@@ -32,6 +32,7 @@ const ACCOUNT_READY = `${ACCOUNT}/tudo-pronto`
 const EVENT_VIEW = (id: string) => `${DASHBOARD}/${id}`
 const EVENT_RULES = (id: string) => `${EVENT_VIEW(id)}/regras`
 const EVENT_DATA = (id: string) => `${EVENT_VIEW(id)}/dados`
+const EVENT_RULES_QUIZ_CHECK = (id: string) => `/api/events/${id}/rules-quiz`
 
 //// ADMIN
 const ADMIN_DASHBOARD = "/admin"
@@ -94,6 +95,7 @@ const paths = {
     events: {
       EVENT_VIEW,
       EVENT_RULES,
+      EVENT_RULES_QUIZ_CHECK,
       EVENT_DATA,
     },
     participant: {
