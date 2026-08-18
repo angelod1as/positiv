@@ -10,6 +10,9 @@ import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { EventCard } from "~/components/organisms/event-card/event-card"
 import { EventListSkeleton } from "~/components/organisms/event-list/event-list-skeleton"
+import { dashboardCopy } from "~/copy/dashboard"
+import { eventListCopy } from "~/copy/events"
+import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Event } from "~types/database/entities.types"
@@ -18,7 +21,7 @@ import type { Route } from "./+types/dashboard-page"
 import { splitEvents } from "./utils/split-events"
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Meus Eventos")
+  return createMetaArray(metaCopy.dashboard.title)
 }
 
 const {
@@ -49,10 +52,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   const { currentProfile } = await getContext(request, params)
 
   if (!currentProfile?.basic_data_filled) {
-    throw await redirectWithInfo(
-      AGREE_TO_TERMS,
-      "Você precisa aceitar os termos antes de continuar",
-    )
+    throw await redirectWithInfo(AGREE_TO_TERMS, dashboardCopy.termsRequired)
   }
 
   // Start the event query before awaiting the flag, so the two run concurrently
@@ -83,9 +83,7 @@ export async function action({ request, params }: Route.ClientActionArgs) {
 
     if (!result.success) {
       // TODO: POS-143 Fix "DataWithError". There MUST be a way!!! (Or return "toast" here)
-      throw new Error(
-        "Ops, seu cancelamento deu errado. Comunique o administrador.",
-      )
+      throw new Error(dashboardCopy.cancelFailed)
     }
 
     trackServerEvent("event_cancel_completed", { eventId }, "/dashboard")
@@ -145,16 +143,13 @@ export const EventsContent: FC<{
     <>
       {!hasEverApplied && (
         <Alert>
-          <AlertTitle>Sua conta está pronta</AlertTitle>
-          <AlertDescription>
-            Mas ter conta não te coloca em nenhuma festa. Escolha um evento
-            abaixo e envie sua candidatura.
-          </AlertDescription>
+          <AlertTitle>{dashboardCopy.welcome.title}</AlertTitle>
+          <AlertDescription>{dashboardCopy.welcome.body}</AlertDescription>
         </Alert>
       )}
 
       <div className="flex flex-col gap-4">
-        <h2>Eventos em que você se candidatou</h2>
+        <h2>{eventListCopy.appliedHeading}</h2>
         {applied.length ? (
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
             {applied.map((event) => (
@@ -166,12 +161,12 @@ export const EventsContent: FC<{
             ))}
           </div>
         ) : (
-          <p>Você não tem nenhuma candidatura no momento.</p>
+          <p>{dashboardCopy.emptyApplied}</p>
         )}
       </div>
 
       <div className="flex flex-col gap-4">
-        <h2>Eventos da Positiv</h2>
+        <h2>{eventListCopy.availableHeading}</h2>
         {available.length ? (
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
             {available.map((event) => (
@@ -184,7 +179,7 @@ export const EventsContent: FC<{
             ))}
           </div>
         ) : (
-          <p>Nenhum evento por aqui no momento.</p>
+          <p>{dashboardCopy.emptyAvailable}</p>
         )}
       </div>
     </>

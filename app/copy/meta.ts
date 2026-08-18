@@ -36,4 +36,7 @@ export const metaCopy = {
   genderPronounsOrientation: {
     title: "Gênero e Orientação",
   },
+  dashboard: {
+    title: "Meus Eventos",
+  },
 } as const
