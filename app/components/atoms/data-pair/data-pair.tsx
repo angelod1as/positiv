@@ -1,4 +1,5 @@
 import type { FC } from "react"
+import { sharedCopy } from "~/copy/shared"
 import { cn } from "~/lib/utils"
 
 type DataPairProps = {
@@ -25,7 +26,7 @@ export const DataPair: FC<DataPairProps> = ({
         {label}
         {label.includes("?") ? "" : ":"}
       </span>{" "}
-      {typeof value === "boolean" ? (value ? "Sim" : "Não") : value}
+      {typeof value === "boolean" ? (value ? sharedCopy.values.yes : sharedCopy.values.no) : value}
       {suffix}
     </p>
   )

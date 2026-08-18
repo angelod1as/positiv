@@ -1,3 +1,5 @@
+import { demographicFilterCopy } from "~/copy/admin"
+
 export type FilterMode = 'all' | 'attended'
 
 interface DemographicFilterToggleProps {
@@ -21,7 +23,7 @@ export function DemographicFilterToggle({
             : 'bg-muted text-muted-foreground hover:bg-muted/80'
         }`}
       >
-        Toda a comunidade
+        {demographicFilterCopy.all}
       </button>
       <button
         type="button"
@@ -33,7 +35,7 @@ export function DemographicFilterToggle({
             : 'bg-muted text-muted-foreground hover:bg-muted/80'
         }`}
       >
-        Quem já compareceu
+        {demographicFilterCopy.attended}
       </button>
     </div>
   )

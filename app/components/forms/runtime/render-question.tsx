@@ -4,6 +4,7 @@ import { Label } from "~/components/ui/label"
 import { TextArea } from "~/components/ui/textarea"
 import { Radio } from "~/components/forms/base/radio"
 import { Select } from "~/components/forms/base/select"
+import { formRuntimeCopy } from "~/copy/forms"
 import type { RenderQuestion } from "./presentations/presentation.types"
 
 const asText = (value: unknown) => (typeof value === "string" ? value : "")
@@ -97,7 +98,7 @@ export const renderQuestion: RenderQuestion = ({
           value={asText(value)}
           onChange={(event) => onChange(event.target.value)}
         >
-          <option value="">Selecione</option>
+          <option value="">{formRuntimeCopy.selectPlaceholder}</option>
           {input.options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

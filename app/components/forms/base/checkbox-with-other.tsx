@@ -6,6 +6,7 @@ import {
   type FieldValues,
   type Path,
 } from "react-hook-form"
+import { checkboxWithOtherCopy } from "~/copy/forms"
 import { cn } from "~/lib/utils"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
@@ -130,7 +131,7 @@ export const CheckboxWithOther = <TFieldValues extends FieldValues>({
                   checked={isOtherChecked}
                   onChange={handleOtherToggle}
                 />
-                <span>Outros</span>
+                <span>{checkboxWithOtherCopy.other}</span>
               </Label>
               {isOtherChecked && (
                 <>
@@ -138,11 +139,11 @@ export const CheckboxWithOther = <TFieldValues extends FieldValues>({
                     data-testid={`outros-${name}`}
                     type="text"
                     className="input"
-                    placeholder="Exemplo 1, Exemplo 2"
+                    placeholder={checkboxWithOtherCopy.placeholder}
                     value={otherInput}
                     onChange={handleOtherInput}
                   />
-                  <FormDescription description="Separe múltiplos por vírgula" />
+                  <FormDescription description={checkboxWithOtherCopy.description} />
                 </>
               )}
             </div>

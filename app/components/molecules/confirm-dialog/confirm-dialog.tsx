@@ -11,6 +11,7 @@ import {
 
 import { useState, type FC, type ReactNode } from "react"
 import { Button, type ButtonProps } from "~/components/atoms/button/button"
+import { sharedCopy } from "~/copy/shared"
 
 type ConfirmDialogProps = {
   onConfirm?: (closeDialog: () => void) => Promise<void> | void
@@ -30,8 +31,8 @@ const ConfirmDialog: FC<ConfirmDialogProps> & {
 } = ({
   onConfirm,
   onCancel,
-  title = "Tem certeza?",
-  description = "Essa ação não pode ser desfeita.",
+  title = sharedCopy.confirmDialog.title,
+  description = sharedCopy.confirmDialog.description,
   confirmLabel,
   cancelLabel,
   open,
@@ -81,7 +82,7 @@ const ConfirmDialog: FC<ConfirmDialogProps> & {
               onClick={handleConfirm}
               disabled={isLoading}
             >
-              {isLoading ? "⏳ Carregando..." : confirmLabel}
+              {isLoading ? sharedCopy.confirmDialog.loading : confirmLabel}
             </Button>
           )}
         </AlertDialogFooter>
