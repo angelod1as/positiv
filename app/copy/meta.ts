@@ -21,4 +21,7 @@ export const metaCopy = {
   registrationError: {
     title: "Erro ao Criar Conta",
   },
+  accountReady: {
+    title: "Tudo pronto",
+  },
 } as const
