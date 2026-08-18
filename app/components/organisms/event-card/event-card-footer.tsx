@@ -28,6 +28,12 @@ type EventCardFooterProps = {
   eventId: string
   dataTestId: string | undefined
   isAdmin?: boolean
+  /**
+   * Whether this person may skip the application flow. Separate from `isAdmin`,
+   * which turns the card into the admin dashboard's own and drops the
+   * application buttons altogether.
+   */
+  directApply?: boolean
 }
 export const EventCardFooter: FC<EventCardFooterProps> = ({
   is_applied,
@@ -36,6 +42,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   eventId,
   dataTestId,
   isAdmin,
+  directApply,
 }) => {
   const fetcher = useFetcher()
   const prefetchStrategy = useSmartPrefetch()
@@ -56,6 +63,13 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
           Ver evento
         </Button>
       </div>
+    )
+  }
+
+  const handleDirectApply = async () => {
+    await fetcher.submit(
+      { fetchId: "handleAdminApply", eventId },
+      { method: "POST" },
     )
   }
 
@@ -149,13 +163,25 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
 
   if (isOpen) {
     return (
-      <Button
-        data-testid={dataTestId}
-        to={EVENT_VIEW(eventId)}
-        linkProps={{ prefetch: prefetchStrategy }}
-      >
-        Me candidatar
-      </Button>
+      <div className="flex flex-col sm:flex-row gap-4 w-full">
+        <Button
+          data-testid={dataTestId}
+          to={EVENT_VIEW(eventId)}
+          linkProps={{ prefetch: prefetchStrategy }}
+        >
+          Me candidatar
+        </Button>
+
+        {directApply && (
+          <Button
+            variant="outline"
+            disabled={fetcher.state !== "idle"}
+            onClick={handleDirectApply}
+          >
+            Candidatura direta (admin)
+          </Button>
+        )}
+      </div>
     )
   }
 

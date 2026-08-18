@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from "vitest"
+import userEvent from "@testing-library/user-event"
 import { render, screen } from "~/test/test-utils"
 import { EventCardFooter } from "./event-card-footer"
+
+const { mockSubmit } = vi.hoisted(() => ({ mockSubmit: vi.fn() }))
 
 vi.mock("react-router", () => ({
   useFetcher: () => ({
     Form: ({ children }: { children: React.ReactNode }) => (
       <form>{children}</form>
     ),
-    submit: vi.fn(),
+    submit: mockSubmit,
     state: "idle",
     data: null,
   }),
@@ -166,6 +169,71 @@ describe("EventCardFooter", () => {
 
       const applyButton = screen.getByText(/Me candidatar/i)
       expect(applyButton).toBeInTheDocument()
+    })
+  })
+
+  describe("when directApply is true", () => {
+    const renderFooter = (
+      props: Partial<React.ComponentProps<typeof EventCardFooter>> = {},
+    ) =>
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          event_status="Registration Open"
+          googleLink=""
+          is_applied={false}
+          dataTestId="test-footer"
+          directApply={true}
+          {...props}
+        />,
+      )
+
+    it("should render the direct application alongside the ordinary one", () => {
+      renderFooter()
+
+      expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
+      expect(
+        screen.getByText(/Candidatura direta \(admin\)/i),
+      ).toBeInTheDocument()
+    })
+
+    it("should submit the direct application for the event", async () => {
+      mockSubmit.mockClear()
+      const user = userEvent.setup()
+
+      renderFooter({ eventId: "event-123" })
+
+      await user.click(screen.getByText(/Candidatura direta \(admin\)/i))
+
+      expect(mockSubmit).toHaveBeenCalledWith(
+        { fetchId: "handleAdminApply", eventId: "event-123" },
+        { method: "POST" },
+      )
+    })
+
+    it("should not render it once the person has applied", () => {
+      renderFooter({ is_applied: true })
+
+      expect(
+        screen.queryByText(/Candidatura direta \(admin\)/i),
+      ).not.toBeInTheDocument()
+    })
+
+    it("should not render it once registrations are closed", () => {
+      renderFooter({ event_status: "Registration Closed" })
+
+      expect(
+        screen.queryByText(/Candidatura direta \(admin\)/i),
+      ).not.toBeInTheDocument()
+    })
+
+    it("should not render it for whoever did not ask for it", () => {
+      renderFooter({ directApply: false })
+
+      expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
+      expect(
+        screen.queryByText(/Candidatura direta \(admin\)/i),
+      ).not.toBeInTheDocument()
     })
   })
 })
