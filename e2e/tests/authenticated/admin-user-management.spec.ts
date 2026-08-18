@@ -66,7 +66,6 @@ test.describe("Admin User Management", () => {
       location: "Test Location",
       price: "100",
       capacity: "50",
-      type: "regular",
     })
 
     // Set event start date (one month from now)
@@ -186,7 +185,6 @@ test.describe("Admin User Management", () => {
       location: "Test Location",
       price: "50",
       capacity: "30",
-      type: "regular",
     })
 
     // Set event start date (one month from now)
