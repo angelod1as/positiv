@@ -17,7 +17,7 @@ import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/feedback-page"
 
-const { feedback } = publicCopy
+const feedbackCopy = publicCopy.feedback
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.feedback.title)
@@ -42,7 +42,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const isDev = ENV.APP_ENV === "development"
   if (!isDev) {
     if (feedbackRateLimiter.isRateLimited(ip)) {
-      return redirectWithError(paths.root.FEEDBACK, feedback.rateLimited)
+      return redirectWithError(paths.root.FEEDBACK, feedbackCopy.rateLimited)
     }
   }
 
@@ -53,7 +53,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
   )
   if (!turnstileResult.success) {
     return data(
-      { errors: { captchaToken: [feedback.captchaFailed] } },
+      { errors: { captchaToken: [feedbackCopy.captchaFailed] } },
       { status: 400 },
     )
   }
@@ -69,7 +69,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     feedbackRateLimiter.recordRequest(ip)
   }
 
-  return redirectWithSuccess(paths.root.HOME, feedback.success)
+  return redirectWithSuccess(paths.root.HOME, feedbackCopy.success)
 }
 
 const FeedbackPage = () => {
@@ -78,22 +78,22 @@ const FeedbackPage = () => {
   return (
     <div className="flex flex-col gap-6 my-8">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold">{feedback.title}</h1>
-        <p className="text-sm text-muted-foreground">{feedback.subtitle}</p>
+        <h1 className="text-2xl font-bold">{feedbackCopy.title}</h1>
+        <p className="text-sm text-muted-foreground">{feedbackCopy.subtitle}</p>
         <Card className="bg-muted/50 mt-2">
           <CardContent className="pt-4">
-            <p className="text-sm text-muted-foreground">{feedback.scope}</p>
+            <p className="text-sm text-muted-foreground">{feedbackCopy.scope}</p>
             <p className="text-sm text-muted-foreground mt-2">
-              {feedback.parties}
+              {feedbackCopy.parties}
             </p>
           </CardContent>
         </Card>
       </div>
       <SchemaForm
         schema={feedbackFormSchema}
-        labels={feedback.labels}
-        descriptions={feedback.descriptions}
-        placeholders={feedback.placeholders}
+        labels={feedbackCopy.labels}
+        descriptions={feedbackCopy.descriptions}
+        placeholders={feedbackCopy.placeholders}
         inputTypes={{
           email: "email",
           canContact: "checkbox",
@@ -101,17 +101,17 @@ const FeedbackPage = () => {
         multiline={["feedbackText"]}
         options={{
           hasParticipated: [
-            { name: feedback.participation.never, value: "never" },
-            { name: feedback.participation.once, value: "once" },
+            { name: feedbackCopy.participation.never, value: "never" },
+            { name: feedbackCopy.participation.once, value: "once" },
             {
-              name: feedback.participation.moreThanOnce,
+              name: feedbackCopy.participation.moreThanOnce,
               value: "more_than_once",
             },
           ],
         }}
         hiddenFields={["captchaToken"]}
-        buttonLabel={feedback.submit}
-        pendingButtonLabel={feedback.submitting}
+        buttonLabel={feedbackCopy.submit}
+        pendingButtonLabel={feedbackCopy.submitting}
       >
         {({ Field, Button, Errors, setValue }) => (
           <div className="flex flex-col gap-4">
