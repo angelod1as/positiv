@@ -127,4 +127,26 @@ describe("renderQuestion", () => {
 
     expect(screen.getByRole("radiogroup")).toHaveAccessibleName("Pergunta")
   })
+  it("draws an e-mail field that reports what was typed", async () => {
+    const user = userEvent.setup()
+    const onChange = draw({ kind: "email" })
+
+    const field = screen.getByLabelText("Pergunta")
+    expect(field).toHaveAttribute("type", "email")
+
+    await user.type(field, "a")
+    expect(onChange).toHaveBeenCalledWith("a")
+  })
+
+  it("draws a masked password field that reports what was typed", async () => {
+    const user = userEvent.setup()
+    const onChange = draw({ kind: "password", autoComplete: "new-password" })
+
+    const field = screen.getByLabelText("Pergunta")
+    expect(field).toHaveAttribute("type", "password")
+    expect(field).toHaveAttribute("autocomplete", "new-password")
+
+    await user.type(field, "a")
+    expect(onChange).toHaveBeenCalledWith("a")
+  })
 })

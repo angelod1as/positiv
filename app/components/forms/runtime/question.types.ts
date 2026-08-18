@@ -7,6 +7,12 @@ export type Option = {
 
 export type InputSpec =
   | { kind: "text" }
+  | { kind: "email" }
+  /**
+   * `autoComplete` is what tells a password manager whether it is looking at a
+   * sign-in or at a new account, so it belongs to the question, not the kind.
+   */
+  | { kind: "password"; autoComplete?: "current-password" | "new-password" }
   | { kind: "textnumber" }
   | { kind: "textarea" }
   | { kind: "date" }

@@ -33,6 +33,28 @@ export const renderQuestion: RenderQuestion = ({
         />
       )
 
+    case "email":
+      return (
+        <Input
+          {...shared}
+          type="email"
+          autoComplete="email"
+          value={asText(value)}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      )
+
+    case "password":
+      return (
+        <Input
+          {...shared}
+          type="password"
+          autoComplete={input.autoComplete}
+          value={asText(value)}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      )
+
     case "textnumber":
       return (
         <Input
