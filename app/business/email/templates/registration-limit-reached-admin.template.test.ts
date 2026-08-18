@@ -37,7 +37,7 @@ describe("registrationLimitReachedAdminTemplate", () => {
     )
 
     expect(html).toContain("<!DOCTYPE html")
-    expect(html).toContain("Evento atingiu limite de inscrições")
+    expect(html).toContain("Evento atingiu limite de candidaturas")
     expect(html).toContain("Test Event")
     expect(html).toContain("🎉")
     expect(html).toContain("90 participantes")

@@ -39,7 +39,7 @@ export const applicationMailTemplate = (
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Inscrição em evento - Positiv</title>
+  <title>Candidatura em evento - Positiv</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
 
@@ -62,12 +62,12 @@ export const applicationMailTemplate = (
 
               <!-- H1 -->
               <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2; text-align: center;">
-                Sua inscrição foi recebida
+                Sua candidatura foi recebida
               </h1>
 
               <!-- Intro Paragraph -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                ${displayName}, você se inscreveu com sucesso no evento <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong>!
+                ${displayName}, sua candidatura foi enviada com sucesso para o evento <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong>!
               </p>
 
               <!-- Event Details Section -->

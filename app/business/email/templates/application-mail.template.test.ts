@@ -392,7 +392,7 @@ describe("applicationMailTemplate - XSS Protection", () => {
       expect(html).toContain("Festa de Ano Novo")
       expect(html).toContain("São Paulo, SP")
       expect(html).toContain("🎉")
-      expect(html).toContain("Sua inscrição foi recebida")
+      expect(html).toContain("Sua candidatura foi recebida")
       expect(html).toContain("Importante!")
     })
   })

@@ -29,7 +29,7 @@ export const registrationLimitReachedAdminTemplate = (
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Evento atingiu limite de inscrições - Positiv</title>
+  <title>Evento atingiu limite de candidaturas - Positiv</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
 
@@ -52,12 +52,12 @@ export const registrationLimitReachedAdminTemplate = (
 
               <!-- H1 -->
               <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2; text-align: center;">
-                📊 Evento atingiu limite de inscrições
+                📊 Evento atingiu limite de candidaturas
               </h1>
 
               <!-- Intro Paragraph -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                O evento <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong> atingiu o limite de <strong>${participantCount} participantes</strong> e as inscrições foram fechadas automaticamente.
+                O evento <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong> atingiu o limite de <strong>${participantCount} participantes</strong> e as candidaturas foram fechadas automaticamente.
               </p>
 
               <!-- Event Details Section -->
@@ -89,7 +89,7 @@ export const registrationLimitReachedAdminTemplate = (
 
               <!-- Info Section -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0; color: #666; text-align: center;">
-                Esta é uma notificação automática enviada pelo sistema quando um evento atinge o limite de 90 inscrições.
+                Esta é uma notificação automática enviada pelo sistema quando um evento atinge o limite de 90 candidaturas.
               </p>
 
             </div>

@@ -18,7 +18,7 @@ export const sendApplicationMail = async ({
 
   const options: MailOptions = {
     to: profile.email,
-    subject: `Você se inscreveu no evento ${event.emoji} ${event.title}`,
+    subject: `Recebemos sua candidatura ao evento ${event.emoji} ${event.title}`,
     text: text,
     html: html,
   }

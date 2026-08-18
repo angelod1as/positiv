@@ -28,7 +28,7 @@ export const eventOpeningMailTemplate = (
     ["Local", sanitizeHtml(event.location || "")],
     ["Data do evento", date],
     ["Horário de início", time],
-    ["Inscrições abrem em", `${applicationOpenDate} às ${applicationOpenTime}`],
+    ["Candidaturas abrem em", `${applicationOpenDate} às ${applicationOpenTime}`],
   ]
 
   const unsubscribeUrl = `${POSITIV_URL}newsletter/unsubscribe?id=${encodeURIComponent(profileId)}`
@@ -67,7 +67,7 @@ export const eventOpeningMailTemplate = (
 
               <!-- Intro Paragraph -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                As inscrições para <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong> acabam de abrir!
+                As candidaturas para <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong> acabam de abrir!
               </p>
 
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
