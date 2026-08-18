@@ -32,14 +32,32 @@ export function hasVisibleNews(
 
 // NEWS_VERSION is a timestamp that triggers the news dialog when updated
 // Update this to Date.now() whenever adding new news items
-export const NEWS_VERSION = 1787053200000
+export const NEWS_VERSION = 1787053941631
 
 export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   {
-    id: "cancel-application-closed-event",
-    title: "❌ Cancelamento liberado mesmo com inscrições encerradas",
+    id: "candidatura-terminology",
+    title: "📝 Inscrição agora se chama candidatura",
     content:
-      'Se você já estava inscrite e as inscrições do evento encerraram, o botão "Cancelar inscrição" continua disponível no seu painel. Antes, o botão sumia assim que o evento lotava e não dava mais para desistir sozinhe.',
+      "Concluir o fluxo de um evento nunca garantiu vaga: a organização escolhe quem vai e entra em contato depois. Para isso ficar claro no texto, o site inteiro passou a falar em candidatura — o botão do evento virou \"Me candidatar\", o último passo virou \"Enviar candidatura\" e, se você mudar de ideia, o botão é \"Cancelar candidatura\".",
+    isAdmin: false,
+    createdAt: new Date("2026-08-18T12:00:00"),
+    isActive: true,
+  },
+  {
+    id: "candidatura-terminology-admin",
+    title: "🗂️ Os rótulos do admin acompanham \"candidatura\"",
+    content:
+      "As tabelas, os filtros, os gráficos e os emails automáticos agora dizem candidatura no lugar de inscrição: o status do evento é \"Candidaturas abertas\" ou \"Candidaturas encerradas\", a aba de participantes mostra \"Candidaturas\" e o histórico de cada pessoa virou \"Histórico de candidaturas\".",
+    isAdmin: true,
+    createdAt: new Date("2026-08-18T12:00:00"),
+    isActive: true,
+  },
+  {
+    id: "cancel-application-closed-event",
+    title: "❌ Cancelamento liberado mesmo com candidaturas encerradas",
+    content:
+      'Se você já tinha se candidatade e as candidaturas do evento encerraram, o botão "Cancelar candidatura" continua disponível no seu painel. Antes, o botão sumia assim que o evento lotava e não dava mais para desistir sozinhe.',
     isAdmin: false,
     createdAt: new Date("2026-08-17T12:00:00"),
     isActive: true,
@@ -48,7 +66,7 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
     id: "no-more-bdsm-editions",
     title: "🎉 Todas as edições agora são no mesmo formato",
     content:
-      "Não faremos mais edições BDSM da Positiv. Com isso, a página de consentimento que aparecia antes das regras não existe mais: ao se inscrever, você vai direto para as regras e para o teste. As inscrições dos eventos antigos continuam do jeitinho que estavam.",
+      "Não faremos mais edições BDSM da Positiv. Com isso, a página de consentimento que aparecia antes das regras não existe mais: ao se candidatar, você vai direto para as regras e para o teste. As candidaturas dos eventos antigos continuam do jeitinho que estavam.",
     isAdmin: false,
     createdAt: new Date("2026-08-17T12:00:00"),
     isActive: true,
@@ -64,9 +82,9 @@ export const DEFAULT_NEWS_ITEMS: NewsItem[] = [
   },
   {
     id: "dashboard-my-registrations",
-    title: "✨ Ficou mais claro onde ver suas inscrições",
+    title: "✨ Ficou mais claro onde ver suas candidaturas",
     content:
-      "Criar conta no site não te inscreve em nenhuma festa — a inscrição é feita evento por evento. Agora o painel começa com a seção \"Eventos em que você se inscreveu\", separada dos eventos da Positiv, e cada evento mostra se as inscrições estão abertas, em breve ou encerradas.",
+      "Criar conta no site não te coloca em nenhuma festa — cada evento tem a sua candidatura. Agora o painel começa com a seção \"Eventos em que você se candidatou\", separada dos eventos da Positiv, e cada evento mostra se as candidaturas estão abertas, em breve ou encerradas.",
     isAdmin: false,
     createdAt: new Date("2026-08-17T12:00:00"),
     isActive: true,
