@@ -206,3 +206,8 @@ export const rulesQuizCopy = {
   hasErrors: "Há erros nas suas respostas",
   submitLabel: "Continuar",
 } as const
+
+export const eventListCopy = {
+  appliedHeading: "Eventos em que você se inscreveu",
+  availableHeading: "Eventos da Positiv",
+} as const
