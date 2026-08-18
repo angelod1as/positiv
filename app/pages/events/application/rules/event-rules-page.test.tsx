@@ -14,6 +14,11 @@ vi.mock("~/kysely-db", () => ({
   },
 }))
 
+const { ENV } = vi.hoisted(() => ({
+  ENV: { NODE_ENV: "development" } as Record<string, unknown>,
+}))
+vi.mock("varlock/env", () => ({ ENV }))
+
 vi.mock("react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router")>()
   return {
@@ -101,6 +106,7 @@ describe("event-rules-page loader", () => {
 import * as reactRouter from "react-router"
 import { MemoryRouter, useLocation, useSearchParams } from "react-router"
 import userEvent from "@testing-library/user-event"
+import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
 import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules-questions"
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 import EventRulesPage from "./event-rules-page"
@@ -386,5 +392,89 @@ describe("event-rules-page scrolling", () => {
     } finally {
       useSearchParamsSpy.mockRestore()
     }
+  })
+})
+
+const Pathname = () => {
+  const location = useLocation()
+
+  return <output data-testid="pathname">{location.pathname}</output>
+}
+
+const renderPageWithPathname = () =>
+  render(
+    <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
+      <EventRulesPage
+        {...({} as Route.ComponentProps)}
+        params={{ id: "123" }}
+      />
+      <Pathname />
+    </MemoryRouter>,
+  )
+
+const currentPathname = () => screen.getByTestId("pathname").textContent
+
+describe("event-rules-page skip in development", () => {
+  const skipLabel = /Pular quiz \(dev\)/i
+
+  beforeEach(() => {
+    sessionStorage.clear()
+    ENV.NODE_ENV = "development"
+    vi.restoreAllMocks()
+  })
+
+  it("is not offered in production", async () => {
+    ENV.NODE_ENV = "production"
+    renderPage()
+
+    await shownQuestion()
+
+    expect(screen.queryByRole("button", { name: skipLabel })).toBeNull()
+  })
+
+  it("is offered in development", async () => {
+    renderPage()
+
+    await shownQuestion()
+
+    expect(
+      await screen.findByRole("button", { name: skipLabel }),
+    ).toBeInTheDocument()
+  })
+
+  it("sends the right answers to the same check everyone passes", async () => {
+    const user = userEvent.setup()
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(Response.json({ ok: true }))
+
+    renderPageWithPathname()
+    await shownQuestion()
+
+    await user.click(await screen.findByRole("button", { name: skipLabel }))
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1))
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe("/api/events/123/rules-quiz")
+    expect(JSON.parse(String(init?.body))).toEqual(buildCorrectRulesAnswers())
+
+    await waitFor(() =>
+      expect(currentPathname()).toBe("/dashboard/123/dados"),
+    )
+  })
+
+  it("stays on the quiz when the check refuses the run", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      Response.json({ ok: false, errors: [] }),
+    )
+
+    renderPageWithPathname()
+    await shownQuestion()
+
+    await user.click(await screen.findByRole("button", { name: skipLabel }))
+
+    await waitFor(() => expect(currentPathname()).toBe("/dashboard/123/regras"))
   })
 })
