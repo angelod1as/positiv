@@ -127,4 +127,31 @@ describe("validateQuestion", () => {
     expect(result).toEqual({ ok: false, message: "Resposta obrigatória" })
     expect(refine).not.toHaveBeenCalled()
   })
+  it("reads an untouched boolean as false, so its own message is what shows", () => {
+    const over18: Question = {
+      id: "over18",
+      prompt: "Sou maior de 18 anos",
+      input: { kind: "boolean" },
+      schema: zod.boolean().refine((value) => value, {
+        message: "Você só pode se inscrever se for maior de 18 anos",
+      }),
+    }
+
+    expect(validateQuestion(over18, undefined)).toEqual({
+      ok: false,
+      message: "Você só pode se inscrever se for maior de 18 anos",
+    })
+    expect(validateQuestion(over18, false)).toEqual({
+      ok: false,
+      message: "Você só pode se inscrever se for maior de 18 anos",
+    })
+    expect(validateQuestion(over18, true)).toEqual({ ok: true })
+  })
+
+  it("leaves an untouched question of any other kind missing", () => {
+    expect(validateQuestion(textQuestion, undefined)).toEqual({
+      ok: false,
+      message: "Campo obrigatório",
+    })
+  })
 })
