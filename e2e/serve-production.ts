@@ -2,8 +2,7 @@ import { spawn } from "node:child_process"
 import type { ChildProcess } from "node:child_process"
 import { existsSync, statSync } from "node:fs"
 import { join, resolve, isAbsolute } from "node:path"
-
-const PORT = 5173
+import { getServerPort } from "./utils/run-context"
 
 let serverProcess: ChildProcess | null = null
 
@@ -45,6 +44,7 @@ function validateServerPath(filePath: string, expectedDir: string): string {
 }
 
 async function startProductionServer() {
+  const port = getServerPort()
   const serverDir = join(process.cwd(), "build", "server")
   const serverPath = validateServerPath(join(serverDir, "index.js"), serverDir)
 
@@ -54,7 +54,7 @@ async function startProductionServer() {
       cwd: process.cwd(),
       env: {
         ...process.env,
-        PORT: String(PORT),
+        PORT: String(port),
         NODE_ENV: "production",
       },
       detached: false,
@@ -77,7 +77,7 @@ async function startProductionServer() {
       const message = data.toString()
       console.info(message.trim())
       
-      if (!serverStarted && message.includes(`localhost:${PORT}`)) {
+      if (!serverStarted && message.includes(`localhost:${port}`)) {
         serverStarted = true
         clearTimeout(startupTimeout)
         resolve()
