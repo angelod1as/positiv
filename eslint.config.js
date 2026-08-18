@@ -123,8 +123,10 @@ export default defineConfig([
       "app/components/molecules/**/*.tsx",
       "app/components/organisms/**/*.tsx",
       "app/components/forms/**/*.tsx",
+      "app/components/pages/admin/**/*.tsx",
       "app/components/pages/homepage/**/*.tsx",
       "app/components/pages/events/**/*.tsx",
+      "app/pages/admin/**/*.tsx",
       "app/pages/public/**/*.tsx",
       "app/pages/events/**/*.tsx",
       "app/pages/auth/**/*.tsx",
@@ -134,9 +136,6 @@ export default defineConfig([
     ],
     ignores: [
       "**/*.test.tsx",
-      // Not migrated yet — the admin surfaces are a separate task.
-      "app/components/organisms/tables/**",
-      "app/components/forms/admin/**",
       // The news dialog's content is not copy: it has its own workflow,
       // documented in CLAUDE.md and app/copy/README.md.
       "app/components/organisms/news-dialog/news.tsx",
