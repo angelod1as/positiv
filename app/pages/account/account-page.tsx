@@ -6,10 +6,11 @@ import {
   logoutUser,
 } from "~/business/auth/auth.server"
 import { Button } from "~/components/atoms/button/button"
-import { Link } from "~/components/atoms/link/link"
+import { Copy } from "~/components/atoms/copy/copy"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import { accountCopy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
+import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import paths from "~/lib/paths"
 import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/account-page"
@@ -83,14 +84,7 @@ const AccountPage = ({ loaderData }: Route.ComponentProps) => {
           <ConfirmDialog
             title={accountCopy.deleteAccount.title}
             description={
-              <div>
-                <p>
-                  {accountCopy.deleteAccount.description}{" "}
-                  <Link to={`mailto:${accountCopy.deleteAccount.contactEmail}`}>
-                    {accountCopy.deleteAccount.contactEmail}
-                  </Link>
-                </p>
-              </div>
+              <Copy>{accountCopy.deleteAccount.description(POSITIV_EMAIL)}</Copy>
             }
             cancelLabel={accountCopy.deleteAccount.cancelLabel}
           >

@@ -29,9 +29,8 @@ export const accountCopy = {
   deleteAccount: {
     trigger: "Apagar conta",
     title: "Apagar conta",
-    description:
-      "Esta funcionalidade está em implementação. Entre em contato conosco para deletar sua conta, através do email",
-    contactEmail: "contato@positivparty.com",
+    description: (email: string) =>
+      `Esta funcionalidade está em implementação. Entre em contato conosco para deletar sua conta, através do email [${email}](mailto:${email})`,
     cancelLabel: "Entendi",
   },
 } as const
