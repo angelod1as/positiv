@@ -45,7 +45,7 @@ Only **one** new test file is created by this plan: `app/components/atoms/copy/c
 Everything else is a refactor with no behaviour change, so it gets **no new test files**. Instead:
 
 - Existing component tests that assert literal strings are updated in place to assert against the copy module. They keep testing the same rendered output.
-- Correctness of each migration is verified by `pnpm lint` (the guard rule plus `tsc`), the existing unit suite, and a per-file fidelity check: render the component before and after, compare the visible text with all whitespace stripped, and compare a census of the rendered tags.
+- Correctness of each migration is verified by `pnpm lint` (the guard rule plus `tsc`), the existing unit suite, the E2E suite once at the very end of Task 12, and a per-file fidelity check: render the component before and after, compare the visible text with all whitespace stripped, and compare a census of the rendered tags.
 
 Do not write tests that assert a copy module has a given key, that a directory contains no JSX, or that a string was moved. Those test the migration, not the product.
 
@@ -1323,7 +1323,19 @@ pnpm lint && pnpm test:unit && pnpm test:integration
 
 Expected: all green.
 
-**Do not run the E2E suite as part of this task.** It is excluded by explicit instruction. That removes the last automated check that drives real pages, so the per-file fidelity checks are the only guard against copy shifting during a migration — treat them as mandatory, not optional. Anything they cannot cover (spacing, layout, list markers, anything visual) needs a human look before merge; list those explicitly in the PR description.
+**E2E runs only here, at the very end, and only when no other Playwright run is active.** Never during a migration task — a browser run mid-task competes with whatever else is using the machine. Check first, wait if something is running, then run:
+
+```bash
+while pgrep -f "@playwright/test/cli" > /dev/null; do
+  echo "another Playwright run is active; waiting"
+  sleep 30
+done
+pnpm test:e2e
+```
+
+That matches the test runner and its `test-server`, not `@playwright/mcp`, which is session tooling and can be ignored. If it never clears, stop and report rather than running two browser suites at once.
+
+Until E2E runs, the per-file fidelity checks are the only guard against copy shifting, and they are blind to anything visual — spacing, layout, list markers. Both of the worst defects found in this effort were exactly that kind, and neither showed up in a test.
 
 Another agent may be using the same local Supabase instance; if the integration run behaves oddly, check the database state before assuming a code fault.
 
@@ -1343,7 +1355,7 @@ git commit -m "docs(copy): document the copy convention in CLAUDE.md"
 |---|---|
 | Markdown rendering shifts spacing or list styling | `Copy` is built and tested first (Task 1); the pilot (Task 4 Step 4) and the rules page (Task 6 Step 4) both require a visual check. Fixes go into `copy.tsx`, never into individual components. |
 | The typography plugin changed the warning banner | Already flagged; Task 9 Step 1 resolves it explicitly before anything else in that task. |
-| A migration silently changes user-visible text | Prose is copy-pasted, never retyped; only markup is converted. The three deliberate fidelity changes are listed and need sign-off. With E2E excluded from this task, the per-file text-and-tag-census comparison is the backstop, and visual review is manual. |
+| A migration silently changes user-visible text | Prose is copy-pasted, never retyped; only markup is converted. The three deliberate fidelity changes are listed and need sign-off. Until the E2E run at the very end, the per-file text-and-tag-census comparison is the backstop, and anything visual needs a human look. |
 | Domain enums get treated as copy and corrupt data | The "Not copy" list is explicit; Tasks 8 and 10 repeat the warning at the two files where it bites. |
 | A link written in copy breaks client-side navigation | `Copy` routes any href starting with `/` through the `Link` atom instead of a bare anchor, so internal links do not full-page reload. Covered by a test in Task 1. |
 | The lint rule produces a false positive | It only fires on JSX text children (`ignoreProps: true`), and Task 3 proves it fires on real files before anything depends on it. Legitimate non-copy text — a bare separator glyph, say — goes in `allowedStrings` rather than dropping a directory from the list. |
