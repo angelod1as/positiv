@@ -536,7 +536,7 @@ type RulesSection = {
   body: string
 }
 
-const sections: RulesSection[] = [
+const sections: readonly RulesSection[] = [
   {
     heading: "🚨 Nenhuma pessoa é obrigada a nada 🚨",
     body: `“Você não é todo mundo”, já dizia minha mãe.
@@ -591,13 +591,18 @@ instead when the number of items varies (testimonials, events).
   copy — put it in the component instead and pass copy into it.
 - Keys are camelCase and name the thing, not the text — `logout`, not
   `sairButton` or `sair`.
-- End every **keyed** copy object with `as const`. It makes the values literal
-  and readonly, so copy cannot be reassigned at runtime and keys narrow properly
-  at call sites. To also enforce a shape — so an entry missing a field is a
-  compile error naming that entry — add `satisfies YourType` **after**
-  `as const`: `as const satisfies YourType` is valid and keeps the literal
-  types. The reverse order, `satisfies YourType as const`, does not compile.
-  Arrays that get iterated take an explicit type instead, as shown above.
+- End every **keyed** copy object with `as const`. It makes the object's own
+  literal values readonly and keys narrow properly at call sites — but that
+  protection stops at a property whose value carries its own explicit type
+  annotation, such as an array of sections. `as const` on the parent cannot
+  override an explicit type, so an array like that needs its own `readonly`
+  modifier (`readonly RulesSection[]`, as shown above) or `.push()` and item
+  mutation compile clean. To also enforce a shape — so an entry missing a
+  field is a compile error naming that entry — add `satisfies YourType`
+  **after** `as const`: `as const satisfies YourType` is valid and keeps the
+  literal types. The reverse order, `satisfies YourType as const`, does not
+  compile. Arrays that get iterated take an explicit type instead, as shown
+  above — make it a `readonly` array type to keep the same protection.
 - No `index.ts` barrel file. Import from the module directly.
 - A string used in more than one area goes in `shared.ts`. A string used in one
   area stays in that area's module, even if it looks generic — move it to

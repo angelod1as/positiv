@@ -15,7 +15,7 @@ type Testimonial = {
   quote: string
 }
 
-const testimonialQuotes: Testimonial[] = [
+const testimonialQuotes: readonly Testimonial[] = [
   {
     author: "A., 32",
     quote: `"Participei do meu primeiro evento da Positiv com muita insegurança, mas a organização foi impecável. O ambiente respeitoso e as regras claras me fizeram sentir segura o tempo todo. Foi uma experiência libertadora que me ajudou a redescobrir minha sexualidade."`,

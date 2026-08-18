@@ -9,7 +9,7 @@ type RulesSection = {
   alert?: RulesAlert
 }
 
-const sections: RulesSection[] = [
+const rulesSections: readonly RulesSection[] = [
   {
     heading: "🚨 Nenhuma pessoa é obrigada a nada 🚨",
     body: `“Você não é todo mundo”, já dizia minha mãe.
@@ -183,5 +183,5 @@ export const rulesCopy = {
 Portanto, criamos esse breve teste! Você só conseguirá se inscrever em nosso evento se todas as respostas estiverem corretas. _(Quem falou que suruba é bagunça, né?)_
 
 Vamos ao que interessa:`,
-  sections,
+  sections: rulesSections,
 } as const
