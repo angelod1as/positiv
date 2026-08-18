@@ -196,6 +196,16 @@ export function useFormRuntime({
   const answer = useCallback((id: string, value: unknown) => {
     answersRef.current = { ...answersRef.current, [id]: value }
     setAnswers(answersRef.current)
+
+    // The message described the answer that was there. Leaving it up while the
+    // person picks a new one reads as "still wrong", and sends them clicking
+    // the button again to find out.
+    setErrors((current) => {
+      if (!(id in current)) return current
+
+      const { [id]: _cleared, ...rest } = current
+      return rest
+    })
   }, [])
 
   const runAdvance = useCallback(async () => {

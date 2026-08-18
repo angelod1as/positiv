@@ -73,6 +73,19 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     await expect(applicationPage.userDataTitle).toBeVisible({ timeout: 15000 })
   })
 
+  test('AC2b: the quiz cannot be skipped by posting to the route', async ({ page }) => {
+    const event = await createOpenRegularEvent()
+
+    // Logged in, and still refused: the page holds no action, and the check
+    // that does exist reads every answer before it opens anything.
+    const response = await page.request.post(`/dashboard/${event.id}/regras`, {
+      data: {},
+      failOnStatusCode: false,
+    })
+
+    expect(response.status()).toBe(405)
+  })
+
   test('AC3: email-helpers.ts created with Mailpit integration', async () => {
     // Round trips through the Mailpit API so an unreachable catcher or a
     // changed payload shape fails here instead of passing silently

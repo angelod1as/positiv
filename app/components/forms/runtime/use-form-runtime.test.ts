@@ -478,3 +478,48 @@ describe("useFormRuntime first-try tracking", () => {
     expect(result.current.isDone).toBe(true)
   })
 })
+
+describe("useFormRuntime clearing an error", () => {
+  it("takes the error off a question as soon as it is answered", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: linearFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.errors.a).toBeTruthy()
+
+    // Leaving it up while the person types or picks reads as "still wrong", and
+    // sends them clicking the button again to find out.
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+    })
+
+    expect(result.current.errors.a).toBeUndefined()
+  })
+
+  it("leaves the other questions on a shared screen alone", async () => {
+    const screenFlow: Flow = {
+      start: "tudo",
+      steps: { tudo: { kind: "screen", ids: ["a", "b"] } },
+      next: () => "done",
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: screenFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+    })
+
+    expect(result.current.errors.a).toBeUndefined()
+    expect(result.current.errors.b).toBeTruthy()
+  })
+})
