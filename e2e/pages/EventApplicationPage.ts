@@ -7,7 +7,6 @@ export class EventApplicationPage extends BasePage {
   readonly rulesTitle: Locator
   readonly rulesTestTitle: Locator
   readonly continueButton: Locator
-  readonly requiredError: Locator
   readonly questions: Locator
 
   // User data page elements
@@ -30,7 +29,6 @@ export class EventApplicationPage extends BasePage {
       exact: true,
     })
     this.continueButton = page.getByRole("button", { name: "Continuar" })
-    this.requiredError = page.getByText("Campo obrigatório", { exact: true })
     // One question shows at a time, and the presentation labels its control
     // with the prompt heading.
     this.questions = page.locator('h2[id$="-prompt"]')

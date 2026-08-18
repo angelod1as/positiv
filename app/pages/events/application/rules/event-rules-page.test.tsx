@@ -336,6 +336,18 @@ describe("event-rules-page in the url", () => {
   })
 })
 
+describe("event-rules-page as a target for a bare POST", () => {
+  it("exports no action, which is what makes the route refuse one", async () => {
+    const page = await import("./event-rules-page")
+
+    // The quiz used to be opened by any POST to this route, because its action
+    // set rulesCorrect without reading the answers. The check lives in
+    // /api/events/:id/rules-quiz now, and this route answering 405 depends on
+    // there being no handler here at all — an easy thing to undo by accident.
+    expect("action" in page).toBe(false)
+  })
+})
+
 describe("event-rules-page scrolling", () => {
   beforeEach(() => {
     sessionStorage.clear()
