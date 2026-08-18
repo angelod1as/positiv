@@ -160,22 +160,22 @@ test('login with invalid credentials shows error', async ({ page }) => {
 pnpm test:e2e
 
 # Run only unauthenticated tests
-pnpm test:e2e -- --project=chromium
+pnpm test:e2e --project=chromium
 
 # Run only user authenticated tests  
-pnpm test:e2e -- --project=chromium-authenticated-user
+pnpm test:e2e --project=chromium-authenticated-user
 
 # Run only admin tests
-pnpm test:e2e -- --project=chromium-authenticated-admin
+pnpm test:e2e --project=chromium-authenticated-admin
 
 # Run specific test file
-pnpm test:e2e -- complete-journey
+pnpm test:e2e complete-journey
 
 # Run in headed mode for debugging
-pnpm test:e2e -- --headed
+pnpm test:e2e --headed
 
 # Run with UI mode for interactive debugging
-pnpm test:e2e -- --ui
+pnpm test:e2e --ui
 ```
 
 ## Best Practices

@@ -42,8 +42,9 @@ describe("integration global setup restore - Integration Tests", () => {
       )
       .execute(kysely)
 
-    // A concurrent E2E run deletes its own auth user; the profile goes with it
-    await kysely.deleteFrom("profiles").where("id", "=", survivor.id).execute()
+    // Teardown truncates the table, and meanwhile a concurrent E2E run has deleted
+    // the auth user one of these profiles belonged to
+    await kysely.deleteFrom("profiles").where("id", "in", [survivor.id, vanishing.id]).execute()
     await cleanupTestAuthUsers([vanishingEmail])
 
     const columns = ["id", "user_id", "email", "basic_data_filled"]

@@ -538,9 +538,9 @@ pnpm test:e2e       # Run all E2E tests
 pnpm test:e2e:ui    # Run with Playwright UI for debugging
 
 # Run specific test suites
-pnpm test:e2e -- --project=chromium                    # Unauthenticated tests
-pnpm test:e2e -- --project=chromium-authenticated-user # User tests
-pnpm test:e2e -- --project=chromium-authenticated-admin # Admin tests
+pnpm test:e2e --project=chromium                    # Unauthenticated tests
+pnpm test:e2e --project=chromium-authenticated-user # User tests
+pnpm test:e2e --project=chromium-authenticated-admin # Admin tests
 ```
 
 ### Test Organization
