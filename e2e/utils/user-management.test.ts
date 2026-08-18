@@ -11,9 +11,25 @@ vi.mock('../../app/business/newsletter/listmonk-lists.server', () => ({
   deleteList: vi.fn(async () => ({ success: true })),
 }))
 
-const OWN_USER = { id: 'own-user', user_metadata: { is_mock_user: true, e2e_run_id: 'thisrun' } }
-const OTHER_RUN_USER = { id: 'other-run-user', user_metadata: { is_mock_user: true, e2e_run_id: 'otherrun' } }
-const REAL_USER = { id: 'real-user', user_metadata: {} }
+const RECENTLY = new Date().toISOString()
+const LONG_AGO = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+
+const OWN_USER = {
+  id: 'own-user',
+  created_at: RECENTLY,
+  user_metadata: { is_mock_user: true, e2e_run_id: 'thisrun' },
+}
+const OTHER_RUN_USER = {
+  id: 'other-run-user',
+  created_at: RECENTLY,
+  user_metadata: { is_mock_user: true, e2e_run_id: 'otherrun' },
+}
+const ABANDONED_USER = {
+  id: 'user-from-a-crashed-run',
+  created_at: LONG_AGO,
+  user_metadata: { is_mock_user: true, e2e_run_id: 'deadrun' },
+}
+const REAL_USER = { id: 'real-user', created_at: LONG_AGO, user_metadata: {} }
 
 function useAuthDouble(users: unknown[] = []) {
   const admin = {
@@ -77,5 +93,25 @@ describe('deleteAllTestUsers', () => {
     await deleteAllTestUsers()
 
     expect(admin.deleteUser).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('deleteAllTestUsers, sweeping abandoned data', () => {
+  it('deletes users left behind by a run that never reached its teardown', async () => {
+    const admin = useAuthDouble([OWN_USER, OTHER_RUN_USER, ABANDONED_USER, REAL_USER])
+    const { deleteAllTestUsers } = await import('./user-management')
+
+    await deleteAllTestUsers()
+
+    expect(admin.deleteUser).toHaveBeenCalledWith(ABANDONED_USER.id)
+  })
+
+  it('never touches an account that was not created by a test run', async () => {
+    const admin = useAuthDouble([OWN_USER, OTHER_RUN_USER, ABANDONED_USER, REAL_USER])
+    const { deleteAllTestUsers } = await import('./user-management')
+
+    await deleteAllTestUsers()
+
+    expect(admin.deleteUser).not.toHaveBeenCalledWith(REAL_USER.id)
   })
 })

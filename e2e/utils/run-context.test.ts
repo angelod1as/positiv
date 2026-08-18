@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
+  ABANDONED_TEST_EVENT_PATTERN,
+  abandonedBefore,
   DEFAULT_E2E_PORT,
   generateRunId,
   getBaseUrl,
@@ -118,5 +120,21 @@ describe('getBaseUrl', () => {
     process.env.E2E_PORT = '5301'
 
     expect(getBaseUrl()).toBe('http://localhost:5301')
+  })
+})
+
+describe('abandonedBefore', () => {
+  it('treats test data older than six hours as left behind by a dead run', () => {
+    const now = new Date('2026-08-18T12:00:00.000Z')
+
+    expect(abandonedBefore(now)).toBe('2026-08-18T06:00:00.000Z')
+  })
+})
+
+describe('ABANDONED_TEST_EVENT_PATTERN', () => {
+  it('matches the events of every run, not just this one', () => {
+    process.env.E2E_RUN_ID = 'thisrun'
+
+    expect('[E2E-TEST:otherrun] Event'.startsWith(ABANDONED_TEST_EVENT_PATTERN.replace(/%$/, ''))).toBe(true)
   })
 })

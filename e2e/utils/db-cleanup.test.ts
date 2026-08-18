@@ -13,6 +13,7 @@ vi.mock('../../app/business/newsletter/listmonk-lists.server', () => ({
 
 const OTHER_RUN_EVENT = { id: 'event-from-another-run', title: '[E2E-TEST:otherrun] Event', listmonk_list_id: null }
 const OWN_EVENT = { id: 'event-from-this-run', title: '[E2E-TEST:thisrun] Event', listmonk_list_id: null }
+const ABANDONED_EVENT = { id: 'event-from-a-crashed-run', title: '[E2E-TEST:deadrun] Event', listmonk_list_id: null }
 
 function useDouble(respond: (query: RecordedQuery) => unknown): SupabaseDouble {
   const double = createSupabaseDouble(respond)
@@ -57,6 +58,39 @@ describe('cleanupTestEvents', () => {
     const deletedIds = double.argumentsOf('event_participants', 'in')
 
     expect(deletedIds).toEqual(['event_id', [OWN_EVENT.id]])
+  })
+})
+
+describe('cleanupTestEvents, sweeping abandoned data', () => {
+  it('collects events left behind by a run that never reached its teardown', async () => {
+    const double = useDouble(query => {
+      if (query.table !== 'events' || !query.operations.some(op => op.name === 'select')) {
+        return { data: [], error: null }
+      }
+      return query.operations.some(op => op.name === 'lt')
+        ? { data: [ABANDONED_EVENT], error: null }
+        : { data: [OWN_EVENT], error: null }
+    })
+    const { cleanupTestEvents } = await import('./db-cleanup')
+
+    await cleanupTestEvents()
+
+    expect(double.argumentsOf('event_participants', 'in')).toEqual([
+      'event_id',
+      [OWN_EVENT.id, ABANDONED_EVENT.id],
+    ])
+  })
+
+  it('only reaches back to events too old to belong to a live run', async () => {
+    const double = useDouble(() => ({ data: [], error: null }))
+    const { cleanupTestEvents } = await import('./db-cleanup')
+
+    await cleanupTestEvents()
+
+    const [column, cutoff] = double.argumentsOf('events', 'lt') as [string, string]
+
+    expect(column).toBe('created_at')
+    expect(Date.now() - Date.parse(cutoff)).toBeGreaterThan(5 * 60 * 60 * 1000)
   })
 })
 
