@@ -52,9 +52,12 @@ const request = (fields: Record<string, string>) =>
     body: new URLSearchParams(fields).toString(),
   })
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const run = (fields: Record<string, string>) =>
-  action({ request: request(fields), params: {}, context: {} } as any)
+  action({
+    request: request(fields),
+    params: {},
+    context: {},
+  } as unknown as Parameters<typeof action>[0])
 
 describe("dashboard action — direct admin application", () => {
   beforeEach(() => {
@@ -77,7 +80,9 @@ describe("dashboard action — direct admin application", () => {
 
     expect(mockApplyToEvent).toHaveBeenCalledTimes(1)
 
-    const [values] = mockApplyToEvent.mock.calls[0]
+    const values = mockApplyToEvent.mock.calls[0][0] as {
+      applicationDate: unknown
+    }
     expect(values).toMatchObject({
       eventId: "event-123",
       referred: "Administração",
@@ -139,10 +144,11 @@ describe("dashboard action — direct admin application", () => {
 describe("dashboard loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockGetNextEvents.mockResolvedValue({ success: true, data: [] } as any)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockHasEverApplied.mockResolvedValue(true as any)
+    mockGetNextEvents.mockResolvedValue({
+      success: true,
+      data: [],
+    } as unknown as Awaited<ReturnType<typeof getNextEvents>>)
+    mockHasEverApplied.mockResolvedValue(true)
   })
 
   const load = (isAdmin: boolean) => {
@@ -158,8 +164,7 @@ describe("dashboard loader", () => {
       request: new Request("http://localhost/painel"),
       params: {},
       context: {},
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any)
+    } as unknown as Parameters<typeof loader>[0])
   }
 
   it("tells the page that an admin may apply directly", async () => {

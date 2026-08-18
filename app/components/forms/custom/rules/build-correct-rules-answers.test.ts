@@ -13,9 +13,12 @@ describe("buildCorrectRulesAnswers", () => {
   it("answers a single-choice question with the one right answer", () => {
     const answers = buildCorrectRulesAnswers()
 
-    const [id, question] = Object.entries(getRulesFormQuestions()).find(
+    const single = Object.entries(getRulesFormQuestions()).find(
       ([, question]) => question.answers.correct.length === 1,
-    )!
+    )
+    if (!single) throw new Error("the quiz asks no single-choice question")
+
+    const [id, question] = single
 
     expect(answers[id]).toBe(question.answers.correct[0])
   })
@@ -23,9 +26,12 @@ describe("buildCorrectRulesAnswers", () => {
   it("answers a multiple-choice question with all of the right ones", () => {
     const answers = buildCorrectRulesAnswers()
 
-    const [id, question] = Object.entries(getRulesFormQuestions()).find(
+    const multiple = Object.entries(getRulesFormQuestions()).find(
       ([, question]) => question.answers.correct.length > 1,
-    )!
+    )
+    if (!multiple) throw new Error("the quiz asks no multiple-choice question")
+
+    const [id, question] = multiple
 
     expect(answers[id]).toEqual(question.answers.correct)
   })
