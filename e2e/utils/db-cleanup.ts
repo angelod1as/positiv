@@ -3,6 +3,7 @@ import type { Database } from '../../app/types/database/database.types'
 import { TEST_USERS } from '../fixtures/test-users'
 import { TEST_USER_PROFILE_DATA } from '../fixtures/test-data'
 import { removeSubscriber } from '../../app/business/newsletter/listmonk-client.server'
+import { runEventTitlePattern } from './run-context'
 import { deleteList } from '../../app/business/newsletter/listmonk-lists.server'
 
 // Custom error class for database cleanup operations
@@ -234,7 +235,7 @@ export async function cleanupTestEvents(): Promise<void> {
   const { data: testEvents, error: fetchError } = await supabase
     .from('events')
     .select('id, title, listmonk_list_id')
-    .ilike('title', '[E2E-TEST]%')
+    .ilike('title', runEventTitlePattern())
 
   if (fetchError) {
     throw new CleanupError(

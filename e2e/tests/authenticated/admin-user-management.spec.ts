@@ -3,6 +3,7 @@ import path from "path"
 import { AdminDashboardPage } from "../../pages/admin/AdminDashboardPage"
 import { EventManagementPage } from "../../pages/admin/EventManagementPage"
 import { UserManagementPage } from "../../pages/admin/UserManagementPage"
+import { runEventTitle } from "../../utils/run-context"
 import {
   waitForAGGridReady,
   sortByColumn,
@@ -53,7 +54,7 @@ test.describe("Admin User Management", () => {
 
     // Create a test event with participants
     const timestamp = Date.now()
-    const eventTitle = `[E2E-TEST] Event ${timestamp}`
+    const eventTitle = runEventTitle(`Event ${timestamp}`)
 
     await adminDashboard.clickCreateEvent()
     await expect(page).toHaveURL("/admin/eventos/novo")
@@ -172,7 +173,7 @@ test.describe("Admin User Management", () => {
 
     // Create a new test event for detail view testing
     const timestamp = Date.now()
-    const eventTitle = `[E2E-TEST] Event Detail View ${timestamp}`
+    const eventTitle = runEventTitle(`Event Detail View ${timestamp}`)
 
     await adminDashboard.clickCreateEvent()
     await expect(page).toHaveURL("/admin/eventos/novo")
