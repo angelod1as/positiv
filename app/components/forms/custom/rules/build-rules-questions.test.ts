@@ -28,3 +28,50 @@ describe("buildRulesQuestions", () => {
     expect(phone?.prompt).toBe(quiz.phone.question)
   })
 })
+
+describe("buildRulesQuestions input kind", () => {
+  it("draws a question with a single right answer as a radio group", () => {
+    const built = buildRulesQuestions("regular")
+
+    const single = built.find((question) => question.id === "phone")
+
+    expect(single?.input.kind).toBe("radio")
+  })
+
+  it("draws a question with several right answers as checkboxes", () => {
+    const built = buildRulesQuestions("regular")
+
+    const several = built.find((question) => question.id === "protection-2")
+
+    expect(several?.input.kind).toBe("checkbox")
+  })
+
+  it("derives the kind from the quiz rather than from a list", () => {
+    const quiz = getRulesFormQuestions("regular")
+    const built = buildRulesQuestions("regular")
+
+    for (const question of built) {
+      const expected =
+        quiz[question.id as keyof typeof quiz].answers.correct.length === 1
+          ? "radio"
+          : "checkbox"
+
+      expect(question.input.kind).toBe(expected)
+    }
+  })
+
+  it("offers every answer, right and wrong, as an option", () => {
+    const quiz = getRulesFormQuestions("regular")
+    const built = buildRulesQuestions("regular")
+
+    const question = built.find((item) => item.id === "not-a-club")
+    const { correct, incorrect } = quiz["not-a-club"].answers
+
+    const options =
+      question && "options" in question.input ? question.input.options : []
+
+    expect(options.map((option) => option.value).sort()).toEqual(
+      [...correct, ...incorrect].sort(),
+    )
+  })
+})
