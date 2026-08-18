@@ -52,7 +52,7 @@ describe("createEventOpeningCampaign", () => {
           data: {
             id: 123,
             name: "Event Opening: Test Event",
-            subject: "Candidaturas abertas: Test Event!",
+            subject: "Inscrições abertas: Test Event!",
             status: "draft",
           },
         }),
@@ -76,12 +76,12 @@ describe("createEventOpeningCampaign", () => {
 
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
       expect(callBody.name).toBe("Event Opening: Test Event")
-      expect(callBody.subject).toBe("Candidaturas abertas: Test Event!")
+      expect(callBody.subject).toBe("Inscrições abertas: Test Event!")
       expect(callBody.lists).toEqual([5])
       expect(callBody.type).toBe("regular")
       expect(callBody.content_type).toBe("html")
       expect(callBody.template_id).toBe(7)
-      expect(callBody.body).toContain("Candidaturas Abertas")
+      expect(callBody.body).toContain("Inscrições Abertas")
     })
 
     it("should send campaign immediately when sendImmediately is true", async () => {
@@ -92,7 +92,7 @@ describe("createEventOpeningCampaign", () => {
             data: {
               id: 123,
               name: "Event Opening: Test Event",
-              subject: "Candidaturas abertas: Test Event!",
+              subject: "Inscrições abertas: Test Event!",
               status: "draft",
             },
           }),
@@ -126,7 +126,7 @@ describe("createEventOpeningCampaign", () => {
           data: {
             id: 123,
             name: "Event Opening: Test Event",
-            subject: "Candidaturas abertas: Test Event!",
+            subject: "Inscrições abertas: Test Event!",
             status: "draft",
           },
         }),
