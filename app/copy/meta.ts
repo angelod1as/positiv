@@ -33,4 +33,7 @@ export const metaCopy = {
   basicData: {
     title: "Dados Básicos",
   },
+  genderPronounsOrientation: {
+    title: "Gênero e Orientação",
+  },
 } as const

@@ -70,3 +70,15 @@ export const basicDataCopy = {
   },
   successToast: "Dados salvos com sucesso!",
 } as const
+
+export const genderPronounsOrientationCopy = {
+  labels: {
+    gender: "Gênero",
+    orientation: "Orientação",
+    pronouns: "Pronomes",
+    raceColor: "Cor ou Raça",
+  },
+  submit: "Continuar",
+  raceNotice:
+    "Não utilizamos a informação de cor ou raça como parâmetro de seleção, apenas para dados demográficos.",
+} as const

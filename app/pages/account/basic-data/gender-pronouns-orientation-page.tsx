@@ -8,6 +8,8 @@ import { extraBasicData } from "~/business/participant/basic-data.server"
 import { CheckboxWithOther } from "~/components/forms/base/checkbox-with-other"
 import { Button } from "~/components/ui/button"
 import { Label } from "~/components/ui/label"
+import { basicDataCopy, genderPronounsOrientationCopy } from "~/copy/account"
+import { metaCopy } from "~/copy/meta"
 import {
   GENDERS,
   ORIENTATIONS,
@@ -23,7 +25,7 @@ const toOptions = (labels: readonly string[]) =>
 type FormData = z.infer<typeof ExtraBasicDataSchema>
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Gênero e Orientação")
+  return createMetaArray(metaCopy.genderPronounsOrientation.title)
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -90,11 +92,11 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
   return (
     <>
       <div>
-        <h1>Dados básicos</h1>
+        <h1>{basicDataCopy.title}</h1>
         <p className="text-muted-foreground">
           {profile?.basic_data_filled
-            ? "Atualize seus dados"
-            : "Precisamos destes dados básicos para nosso controle interno de pessoas participantes"}
+            ? basicDataCopy.intro.update
+            : basicDataCopy.intro.initial}
         </p>
       </div>
       <Form
@@ -104,7 +106,9 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
       >
         <div className="flex flex-col gap-6 sm:grid grid-cols-12 sm:gap-4">
           <div className="flex flex-col col-span-6 gap-4">
-            <Label className="text-muted-foreground">Gênero</Label>
+            <Label className="text-muted-foreground">
+              {genderPronounsOrientationCopy.labels.gender}
+            </Label>
             <CheckboxWithOther
               control={control}
               errors={errors}
@@ -113,7 +117,9 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
             />
           </div>
           <div className="flex flex-col col-span-6 gap-4">
-            <Label className="text-muted-foreground">Orientação</Label>
+            <Label className="text-muted-foreground">
+              {genderPronounsOrientationCopy.labels.orientation}
+            </Label>
             <CheckboxWithOther
               control={control}
               errors={errors}
@@ -124,7 +130,9 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
         </div>
         <div className="flex flex-col gap-6 sm:grid grid-cols-12 sm:gap-4">
           <div className="flex flex-col col-span-6 gap-4">
-            <Label className="text-muted-foreground">Pronomes</Label>
+            <Label className="text-muted-foreground">
+              {genderPronounsOrientationCopy.labels.pronouns}
+            </Label>
             <CheckboxWithOther
               control={control}
               errors={errors}
@@ -133,7 +141,9 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
             />
           </div>
           <div className="flex flex-col col-span-6 gap-4">
-            <Label className="text-muted-foreground">Cor ou Raça</Label>
+            <Label className="text-muted-foreground">
+              {genderPronounsOrientationCopy.labels.raceColor}
+            </Label>
             <CheckboxWithOther
               control={control}
               errors={errors}
@@ -143,11 +153,10 @@ const GenderPronounOrientationPage = ({ loaderData }: Route.ComponentProps) => {
           </div>
         </div>
         <Button type="submit" className="mt-4">
-          Continuar
+          {genderPronounsOrientationCopy.submit}
         </Button>
         <p className="text-sm text-muted-foreground">
-          Não utilizamos a informação de cor ou raça como parâmetro de seleção,
-          apenas para dados demográficos.
+          {genderPronounsOrientationCopy.raceNotice}
         </p>
       </Form>
     </>
