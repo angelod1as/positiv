@@ -2,7 +2,7 @@ import { formAction } from "remix-forms"
 import { redirectWithSuccess } from "remix-toast"
 import { forgotPassword, getContext } from "~/business/auth/auth.server"
 import { forgotPasswordSchema } from "~/business/common"
-import { Link } from "~/components/atoms/link/link"
+import { Copy } from "~/components/atoms/copy/copy"
 import { SchemaForm } from "~/components/forms/base/schema-form"
 import {
   Card,
@@ -12,6 +12,8 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { forgotPasswordCopy } from "~/copy/auth"
+import { metaCopy } from "~/copy/meta"
 import paths from "~/lib/paths"
 import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/forgot-password-page"
@@ -21,7 +23,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Esqueci a Senha")
+  return createMetaArray(metaCopy.forgotPassword.title)
 }
 
 export const action = async ({ request, params }: Route.ActionArgs) => {
@@ -34,8 +36,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     transformResult: async (result) => {
       if (result.success) {
         throw await redirectWithSuccess(LOGIN, {
-          message:
-            "Se você tiver uma conta com essas credenciais, veja seu email; um link estará lá te esperando!",
+          message: forgotPasswordCopy.successToast,
           duration: 10_000,
         })
       }
@@ -50,26 +51,26 @@ const ForgotPasswordPage = ({}: Route.ComponentProps) => {
     <>
       <Card className="my-12">
         <CardHeader>
-          <CardTitle className="text-2xl">Resetar senha</CardTitle>{" "}
+          <CardTitle className="text-2xl">{forgotPasswordCopy.title}</CardTitle>{" "}
           <CardDescription>
-            <p>Nada melhor que uma senha nova, certo?</p>
+            <p>{forgotPasswordCopy.description}</p>
           </CardDescription>
         </CardHeader>
         <CardContent>
           <SchemaForm
             schema={forgotPasswordSchema}
-            labels={{ email: "E-mail" }}
-            placeholders={{ email: "email@exemplo.com" }}
+            labels={forgotPasswordCopy.labels}
+            placeholders={forgotPasswordCopy.placeholders}
             inputTypes={{
               email: "email",
             }}
-            pendingButtonLabel="Entrando..."
-            buttonLabel="Entrar"
+            pendingButtonLabel={forgotPasswordCopy.pendingButtonLabel}
+            buttonLabel={forgotPasswordCopy.buttonLabel}
           />
         </CardContent>
         <CardFooter>
           <p className="text-sm text-muted-foreground">
-            Já tem uma conta? <Link to={LOGIN}>Entre aqui</Link>
+            <Copy inline>{forgotPasswordCopy.loginPrompt(LOGIN)}</Copy>
           </p>
         </CardFooter>
       </Card>

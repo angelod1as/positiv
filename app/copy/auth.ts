@@ -34,3 +34,16 @@ export const registerCopy = {
   placeholders: { email: "email@exemplo.com", password: "senha123" },
   pendingButtonLabel: "Entrando...",
 } as const
+
+export const forgotPasswordCopy = {
+  title: "Resetar senha",
+  description: "Nada melhor que uma senha nova, certo?",
+  loginPrompt: (loginPath: string) =>
+    `Já tem uma conta? [Entre aqui](${loginPath})`,
+  labels: { email: "E-mail" },
+  placeholders: { email: "email@exemplo.com" },
+  pendingButtonLabel: "Entrando...",
+  buttonLabel: "Entrar",
+  successToast:
+    "Se você tiver uma conta com essas credenciais, veja seu email; um link estará lá te esperando!",
+} as const

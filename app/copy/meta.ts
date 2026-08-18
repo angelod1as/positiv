@@ -12,4 +12,7 @@ export const metaCopy = {
   register: {
     title: "Registrar",
   },
+  forgotPassword: {
+    title: "Esqueci a Senha",
+  },
 } as const
