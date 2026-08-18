@@ -622,3 +622,137 @@ describe("useFormRuntime clearing an error", () => {
     expect(result.current.errors.b).toBeTruthy()
   })
 })
+
+describe("useFormRuntime progress", () => {
+  const commitFlow: Flow = {
+    start: "a",
+    steps: {
+      a: { kind: "question", id: "a" },
+      b: { kind: "question", id: "b" },
+      commit: { kind: "commit", run: async () => ({ ok: true }) },
+    },
+    next: (current) => {
+      if (current === "a") return "b"
+      if (current === "b") return "commit"
+      return "done"
+    },
+  }
+
+  it("reports where the run is along the path the flow projects", () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: linearFlow }),
+    )
+
+    expect(result.current.progress).toEqual({ index: 1, total: 3 })
+  })
+
+  it("moves as the run advances", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: linearFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+
+    expect(result.current.progress).toEqual({ index: 2, total: 3 })
+  })
+
+  it("leaves commit steps out of the count", () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: commitFlow }),
+    )
+
+    expect(result.current.progress).toEqual({ index: 1, total: 2 })
+  })
+
+  it("counts a content step, which is a screen like any other", () => {
+    const contentFlow: Flow = {
+      start: "intro",
+      steps: {
+        intro: { kind: "content", render: null },
+        a: { kind: "question", id: "a" },
+      },
+      next: (current) => (current === "intro" ? "a" : "done"),
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: contentFlow }),
+    )
+
+    expect(result.current.progress).toEqual({ index: 1, total: 2 })
+  })
+
+  it("reports nothing for a flow with a single screen", () => {
+    const singleFlow: Flow = {
+      start: "a",
+      steps: { a: { kind: "question", id: "a" } },
+      next: () => "done",
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: singleFlow }),
+    )
+
+    expect(result.current.progress).toBeNull()
+  })
+
+  it("lengthens the total once a stumble sends the run down the long path", async () => {
+    const probeQuestions = [
+      correctness("a", "certa"),
+      correctness("b", "certa"),
+      question("c"),
+      question("d"),
+    ]
+
+    const probeFlow: Flow = {
+      start: "a",
+      steps: {
+        a: { kind: "question", id: "a" },
+        b: { kind: "question", id: "b" },
+        c: { kind: "question", id: "c" },
+        d: { kind: "question", id: "d" },
+      },
+      next: (current, _answers, context) => {
+        if (current === "a") return "b"
+
+        if (current === "b") {
+          const stumbled =
+            context.firstTryCorrect.a === false &&
+            context.firstTryCorrect.b === false
+
+          return stumbled ? "c" : "done"
+        }
+
+        if (current === "c") return "d"
+        return "done"
+      },
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: probeQuestions, flow: probeFlow }),
+    )
+
+    expect(result.current.progress).toEqual({ index: 1, total: 2 })
+
+    await act(async () => {
+      result.current.answer("a", "errada")
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("a", "certa")
+      await result.current.advance()
+    })
+
+    // One stumble is not enough to branch, so the projection is still short.
+    expect(result.current.progress).toEqual({ index: 2, total: 2 })
+
+    await act(async () => {
+      result.current.answer("b", "errada")
+      await result.current.advance()
+    })
+
+    expect(result.current.progress).toEqual({ index: 2, total: 4 })
+  })
+})
