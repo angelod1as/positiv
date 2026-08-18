@@ -59,3 +59,14 @@ describe('cleanupTestEvents', () => {
     expect(deletedIds).toEqual(['event_id', [OWN_EVENT.id]])
   })
 })
+
+describe('cleanupListmonkSubscribers', () => {
+  it('only looks at the email addresses this run created', async () => {
+    const double = useDouble(() => ({ data: [], error: null }))
+    const { cleanupListmonkSubscribers } = await import('./db-cleanup')
+
+    await cleanupListmonkSubscribers()
+
+    expect(double.argumentsOf('profiles', 'ilike')).toEqual(['email', 'test-thisrun-%@example.com'])
+  })
+})
