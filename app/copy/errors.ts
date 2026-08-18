@@ -1,5 +1,18 @@
 export const errorsCopy = {
   system: "Houve um erro no sistema, tente novamente mais tarde",
+  boundary: {
+    title: "Oops!",
+    notFoundTitle: "404",
+    genericTitle: "Error",
+    notFound: "Página não encontrada.",
+    details: (email: string) => `Um erro ocorreu. Isso é frustrante, nós sabemos.
+
+Avise-nos pelo [email](mailto:${email}) com as informações:
+
+- Navegador (Chrome, Firefox, Safari, etc)
+- Sistema operacional (iOS, Android, macOS, Windows)
+- Um breve relato do que você tentou fazer (qual página, qual botão, etc)`,
+  },
   auth: {
     loginRequired: "Você precisa estar logade para continuar",
     adminRequired: "Você não tem permissão para acessar esta página",

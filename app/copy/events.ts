@@ -507,3 +507,9 @@ export const rulesQuestionsCopy = {
     },
   },
 } as const satisfies Record<string, RulesQuestion>
+
+export const eventStatusBadgeCopy = {
+  open: "Candidaturas abertas",
+  scheduled: "Em breve",
+  closed: "Candidaturas encerradas",
+} as const

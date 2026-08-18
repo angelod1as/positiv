@@ -82,3 +82,11 @@ export const genderPronounsOrientationCopy = {
   raceNotice:
     "Não utilizamos a informação de cor ou raça como parâmetro de seleção, apenas para dados demográficos.",
 } as const
+
+export const profileUpdateCopy = {
+  title: "Atualize seu perfil",
+  message: `Precisamos que você atualize seus dados básicos.
+
+Estamos solicitando informações sobre raça ou cor para melhorar nossos dados demográficos.`,
+  cta: "Atualizar meu perfil",
+} as const

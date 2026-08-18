@@ -10,4 +10,13 @@ export const sharedCopy = {
   status: {
     loading: "Carregando...",
   },
+  values: {
+    yes: "Sim",
+    no: "Não",
+  },
+  confirmDialog: {
+    title: "Tem certeza?",
+    description: "Essa ação não pode ser desfeita.",
+    loading: "⏳ Carregando...",
+  },
 } as const
