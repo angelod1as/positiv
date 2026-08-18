@@ -98,7 +98,8 @@ describe("event-rules-page loader", () => {
   })
 })
 
-import { MemoryRouter, useLocation } from "react-router"
+import * as reactRouter from "react-router"
+import { MemoryRouter, useLocation, useSearchParams } from "react-router"
 import userEvent from "@testing-library/user-event"
 import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules-questions"
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
@@ -269,6 +270,8 @@ describe("event-rules-page across a refresh", () => {
   })
 })
 
+const actualUseSearchParams = useSearchParams
+
 const Location = () => {
   const location = useLocation()
 
@@ -330,5 +333,48 @@ describe("event-rules-page in the url", () => {
     await waitFor(() => expect(promptHeadings()[0].id).toBe(`${first.id}-prompt`))
 
     vi.mocked(Math.random).mockRestore()
+  })
+})
+
+describe("event-rules-page scrolling", () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+  })
+
+  it("does not send the reader back to the top of the rules on every answer", async () => {
+    const user = userEvent.setup()
+    const options: unknown[] = []
+
+    const useSearchParamsSpy = vi
+      .spyOn(reactRouter, "useSearchParams")
+      .mockImplementation(() => {
+        const [params, setParams] = actualUseSearchParams()
+
+        return [
+          params,
+          ((next: never, opts: never) => {
+            options.push(opts)
+            setParams(next, opts)
+          }) as never,
+        ]
+      })
+
+    try {
+      renderPage()
+
+      const { entry } = await firstSingleAnswerQuestion()
+      await answer(user, entry.answers.correct[0])
+
+      await waitFor(() => expect(options.length).toBeGreaterThan(0))
+
+      // The quiz sits under the whole rules text, and every step change is a
+      // navigation. Without this the reader is thrown back to the top of the
+      // rules each time they answer.
+      for (const option of options) {
+        expect(option).toMatchObject({ preventScrollReset: true })
+      }
+    } finally {
+      useSearchParamsSpy.mockRestore()
+    }
   })
 })
