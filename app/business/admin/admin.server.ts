@@ -500,7 +500,6 @@ export const createOrUpdateEvent = applySchema(
     .upsert({
       ...parsedValues,
       id: eventId,
-      event_type: values.event_type as "regular" | "bdsm",
     })
     .select("id")
     .single()
