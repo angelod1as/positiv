@@ -573,7 +573,10 @@ describe("registerUser", () => {
     expect(mockResetPassword).toHaveBeenCalledWith("existing@example.com", {
       redirectTo: "http://localhost:5173/auth/confirm",
     })
-    expect(result).toEqual({ success: true, data: values, errors: [] })
+    // Reporting success is the point: an address that already has an account
+    // gets the same answer as a brand new one, so the form cannot be used to
+    // find out who is registered.
+    expect(result).toEqual({ ok: true })
   })
 
   it("should return error when password reset fails for existing user", async () => {
@@ -609,11 +612,9 @@ describe("registerUser", () => {
 
     const result = await registerUser(values, context)
 
-    expect(result.success).toBe(false)
-    expect(result.errors).toHaveLength(1)
-    expect(result.errors[0].message).toContain(
-      "Ops, ocorreu um erro ao tentar enviar o email",
-    )
+    // No question is to blame, so the runtime says the save failed and keeps
+    // everything the person typed.
+    expect(result).toEqual({ ok: false, errors: [] })
   })
 
   it("should return error for other signup errors", async () => {
@@ -645,9 +646,7 @@ describe("registerUser", () => {
 
     const result = await registerUser(values, context)
 
-    expect(result.success).toBe(false)
-    expect(result.errors).toHaveLength(1)
-    expect(result.errors[0].message).toContain("Ops, ocorreu um erro")
+    expect(result).toEqual({ ok: false, errors: [] })
   })
 
   it("should show error when email matches claimed profile (user_id IS NOT NULL)", async () => {
@@ -694,11 +693,18 @@ describe("registerUser", () => {
 
     const result = await registerUser(values, context)
 
-    expect(result.success).toBe(false)
-    expect(result.errors).toHaveLength(1)
-    expect((result.errors[0] as Error).message).toContain(
-      "Houve um erro no cadastro da sua conta",
-    )
+    expect(result.ok).toBe(false)
+    expect(result).toEqual({
+      ok: false,
+      errors: [
+        {
+          questionId: "email",
+          message: expect.stringContaining(
+            "Houve um erro no cadastro da sua conta",
+          ) as unknown as string,
+        },
+      ],
+    })
 
     expect(kysely.selectFrom).toHaveBeenCalledWith("profiles")
     expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "claimed@example.com")
@@ -805,7 +811,7 @@ describe("registerUser", () => {
     expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "orphan@example.com")
     expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is not", null)
     expect(mockSignUp).toHaveBeenCalled()
-    expect(result.success).toBe(true)
+    expect(result).toEqual({ ok: true })
   })
 
   it("should proceed with signup when email does not exist in profiles", async () => {
@@ -854,6 +860,6 @@ describe("registerUser", () => {
     expect(mockWhereEmail).toHaveBeenCalledWith("email", "=", "new@example.com")
     expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is not", null)
     expect(mockSignUp).toHaveBeenCalled()
-    expect(result.success).toBe(true)
+    expect(result).toEqual({ ok: true })
   })
 })

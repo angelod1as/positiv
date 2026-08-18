@@ -1,4 +1,5 @@
 import { applySchema } from "composable-functions"
+import type { CommitResult } from "~/components/forms/runtime/commit.types"
 import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
@@ -274,10 +275,13 @@ export const changePassword = applySchema(
   return {}
 })
 
-export const registerUser = applySchema(
-  registerUserSchema,
-  contextSchema,
-)(async (values, context) => {
+const CLAIMED_PROFILE_MESSAGE =
+  "Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o \"esqueci minha senha\". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou."
+
+export const registerUser = async (
+  values: z.infer<typeof registerUserSchema>,
+  context: z.infer<typeof contextSchema>,
+): Promise<CommitResult> => {
   const { supabase, host } = context
 
   const { over18, confirmPassword, captchaToken, ...data } = values
@@ -311,12 +315,13 @@ export const registerUser = applySchema(
       profileId: claimedProfile.id,
     })
 
-    // Note: this error message differs from the "User already registered" path below,
+    // Note: this message differs from the "User already registered" path below,
     // which could theoretically allow email enumeration. Accepted as a UX tradeoff —
     // users with a claimed profile cannot use password reset without contacting support.
-    throw new Error(
-      "Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o \"esqueci minha senha\". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou.",
-    )
+    return {
+      ok: false,
+      errors: [{ questionId: "email", message: CLAIMED_PROFILE_MESSAGE }],
+    }
   }
 
   const origin =
@@ -333,24 +338,25 @@ export const registerUser = applySchema(
   })
 
   if (error) {
+    // Reporting success here is the point: an address that already has an
+    // account gets a password reset and the same confirmation screen as a new
+    // one, so the form cannot be used to find out who is registered.
     if (error.message === "User already registered") {
       const resetError = await supabase.auth.resetPasswordForEmail(data.email, {
         redirectTo: `${origin}${LOGON_CALLBACK}`,
       })
 
-      if (resetError.error) {
-        throw new Error(
-          "Ops, ocorreu um erro ao tentar enviar o email. Contate o administrador.",
-        )
-      }
+      if (resetError.error) return { ok: false, errors: [] }
 
-      return values
+      return { ok: true }
     }
 
-    throw new Error(`Ops, ocorreu um erro. Erro: ${error}`)
+    // No question is to blame, so the runtime says the save failed and the
+    // person keeps everything they typed.
+    return { ok: false, errors: [] }
   }
 
   trackServerEvent("user_signup_completed", {}, "/auth/register")
 
-  return values
-})
+  return { ok: true }
+}
