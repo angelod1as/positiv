@@ -52,19 +52,19 @@ describe("Event navigation loader", () => {
     await loader(args)
 
     expect(mockSupabase.from).toHaveBeenCalledWith("events")
-    expect(mockSupabase.select).toHaveBeenCalledWith("event_type")
+    expect(mockSupabase.select).toHaveBeenCalledWith("id")
     expect(mockSupabase.eq).toHaveBeenCalledWith("id", "non-existent-id")
     expect(mockSupabase.single).toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard")
   })
 
-  it("redirects to BDSM consent page for BDSM events", async () => {
+  it("redirects legacy BDSM events to the rules page", async () => {
     const mockSupabase = {
       from: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ 
-        data: { event_type: "bdsm" } 
+        data: { id: "bdsm-event-id" } 
       }),
     }
 
@@ -77,11 +77,7 @@ describe("Event navigation loader", () => {
 
     await loader(args)
 
-    expect(mockSupabase.from).toHaveBeenCalledWith("events")
-    expect(mockSupabase.select).toHaveBeenCalledWith("event_type")
-    expect(mockSupabase.eq).toHaveBeenCalledWith("id", "bdsm-event-id")
-    expect(mockSupabase.single).toHaveBeenCalled()
-    expect(mockRedirect).toHaveBeenCalledWith("/dashboard/bdsm-event-id/bdsm-consent")
+    expect(mockRedirect).toHaveBeenCalledWith("/dashboard/bdsm-event-id/regras")
   })
 
   it("redirects to rules page for regular events", async () => {
@@ -90,7 +86,7 @@ describe("Event navigation loader", () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ 
-        data: { event_type: "regular" } 
+        data: { id: "regular-event-id" } 
       }),
     }
 
@@ -104,32 +100,10 @@ describe("Event navigation loader", () => {
     await loader(args)
 
     expect(mockSupabase.from).toHaveBeenCalledWith("events")
-    expect(mockSupabase.select).toHaveBeenCalledWith("event_type")
+    expect(mockSupabase.select).toHaveBeenCalledWith("id")
     expect(mockSupabase.eq).toHaveBeenCalledWith("id", "regular-event-id")
     expect(mockSupabase.single).toHaveBeenCalled()
     expect(mockRedirect).toHaveBeenCalledWith("/dashboard/regular-event-id/regras")
-  })
-
-  it("handles null event_type as regular event", async () => {
-    const mockSupabase = {
-      from: vi.fn().mockReturnThis(),
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ 
-        data: { event_type: null } 
-      }),
-    }
-
-    mockGetContext.mockResolvedValue({ supabase: mockSupabase })
-
-    const args = {
-      request: new Request("http://localhost:3000/events/null-type-event"),
-      params: { id: "null-type-event" },
-    } as Route.LoaderArgs
-
-    await loader(args)
-
-    expect(mockRedirect).toHaveBeenCalledWith("/dashboard/null-type-event/regras")
   })
 
   it("passes request and params to getContext correctly", async () => {
@@ -138,7 +112,7 @@ describe("Event navigation loader", () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({ 
-        data: { event_type: "regular" } 
+        data: { id: "test-event" } 
       }),
     }
 

@@ -6,7 +6,7 @@ import type { Route } from "./+types/event"
 const {
   dash: {
     DASHBOARD,
-    events: { EVENT_RULES, EVENT_BDSM_CONSENT },
+    events: { EVENT_RULES },
   },
 } = paths
 
@@ -17,16 +17,11 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   
   const { data: event } = await supabase
     .from("events")
-    .select("event_type")
+    .select("id")
     .eq("id", params.id)
     .single()
   
   if (!event) return redirect(DASHBOARD)
-  
-  // Redirect to BDSM consent page for BDSM events, otherwise to rules
-  if (event.event_type === "bdsm") {
-    return redirect(EVENT_BDSM_CONSENT(params.id))
-  }
   
   return redirect(EVENT_RULES(params.id))
 }
