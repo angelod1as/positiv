@@ -1,6 +1,7 @@
 import { BellDotIcon } from "lucide-react"
 import { useFetcher } from "react-router"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
+import { newsDialogCopy } from "~/copy/layout"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { News } from "./news"
 import { DEFAULT_NEWS_ITEMS, hasVisibleNews, NEWS_VERSION } from "./news-utils"
@@ -36,9 +37,9 @@ export const NewsDialog = ({
   return (
     <ConfirmDialog
       description={<News isAdmin={isAdmin} />}
-      title="News"
+      title={newsDialogCopy.title}
       onConfirm={handleConfirm}
-      confirmLabel="Não mostrar isso novamente"
+      confirmLabel={newsDialogCopy.dismiss}
     >
       {isHeader ? (
         shouldShowBell && (
@@ -48,7 +49,7 @@ export const NewsDialog = ({
         )
       ) : (
         <ConfirmDialog.Trigger className="text-xs" variant="link">
-          Veja as novidades do site
+          {newsDialogCopy.trigger}
         </ConfirmDialog.Trigger>
       )}
     </ConfirmDialog>

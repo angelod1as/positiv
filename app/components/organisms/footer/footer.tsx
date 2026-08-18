@@ -1,7 +1,9 @@
 import { GithubIcon } from "lucide-react"
 import type { FC } from "react"
 import Instagram from "~/assets/social/instagram.svg"
+import { Copy } from "~/components/atoms/copy/copy"
 import { Link } from "~/components/atoms/link/link"
+import { footerCopy } from "~/copy/layout"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
 
@@ -17,29 +19,20 @@ export const Footer: FC<FooterProps> = ({ isThereAnyNews, currentProfile }) => {
       <div className="px-4 md:px-6">
         <div className="grid grid-cols-1 text-muted-foreground lg:grid-cols-2  gap-4  justify-end items-start text-center">
           <div className="text-muted-foreground">
-            <p>© 2025 Positiv. Todos os direitos reservados.</p>
-            <p>
-              Este website está em constante desenvolvimento por{" "}
-              <Link target="_blank" to="https://www.angelodias.com.br">
-                Angelo Dias
-              </Link>
-              .
-            </p>
+            <Copy>{footerCopy.copyright}</Copy>
+            <Copy>{footerCopy.developedBy}</Copy>
             <p className="flex gap-2 justify-center">
-              Ele é Open Source e aceita colaborações.{" "}
+              {footerCopy.openSource}{" "}
               <Link
                 target="_blank"
                 to="https://github.com/angelod1as/positiv"
                 className="flex items-center"
               >
                 <GithubIcon />
-                Visite nosso repositório.
+                {footerCopy.repository}
               </Link>
             </p>
-            <p>
-              Encontrou um bug?{" "}
-              <Link to={BUG_TRACKER_URL}>Clique aqui e nos avise</Link>.
-            </p>
+            <Copy>{footerCopy.bugReport(BUG_TRACKER_URL)}</Copy>
           </div>
           <div>
             <NewsDialog
@@ -52,8 +45,12 @@ export const Footer: FC<FooterProps> = ({ isThereAnyNews, currentProfile }) => {
                 to="https://instagram.com/positivparty"
                 className="flex gap-2 items-center"
               >
-                <img src={Instagram} alt="Instagram icon" width={20} /> Siga
-                nosso instagram
+                <img
+                  src={Instagram}
+                  alt={footerCopy.instagramIconAlt}
+                  width={20}
+                />{" "}
+                {footerCopy.instagram}
               </Link>
             </div>
           </div>

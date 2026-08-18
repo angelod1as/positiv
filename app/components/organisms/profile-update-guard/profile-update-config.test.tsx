@@ -1,4 +1,3 @@
-import { isValidElement } from "react"
 import { describe, expect, it } from "vitest"
 import { PROFILE_REQUIREMENTS, isExemptPath } from "./profile-update-config"
 
@@ -11,8 +10,10 @@ describe("PROFILE_REQUIREMENTS", () => {
     expect(PROFILE_REQUIREMENTS.targetPath).toBe("/conta/dados-basicos")
   })
 
-  it("should have message as a valid React element", () => {
-    expect(isValidElement(PROFILE_REQUIREMENTS.message)).toBe(true)
+  it("should have message as the markdown copy string", () => {
+    expect(PROFILE_REQUIREMENTS.message).toContain(
+      "Precisamos que você atualize seus dados básicos.",
+    )
   })
 
   it("should have all required exempt paths", () => {

@@ -4,6 +4,7 @@ import { useLocation } from "react-router"
 import PositivLogo from "~/assets/brand/positiv-logo-colors.png"
 import { Button } from "~/components/atoms/button/button"
 import { Link } from "~/components/atoms/link/link"
+import { headerCopy } from "~/copy/layout"
 import paths from "~/lib/paths"
 import type { ProfileWithRoles } from "~types/database/entities.types"
 import { NewsDialog } from "../news-dialog/news-dialog"
@@ -45,7 +46,7 @@ export const Header: FC<HeaderProps> = ({
     <>
       {isProdInDev && (
         <div className="bg-red-400 fixed top-0 left-0 z-50 w-full text-center font-bold">
-          PRODUCTION DATABASE
+          {headerCopy.prodInDevWarning}
         </div>
       )}
       <div className="fixed top-0 left-0 z-30 w-full">
@@ -54,7 +55,7 @@ export const Header: FC<HeaderProps> = ({
           <div className="text-xl font-bold">
             <Link variant="unstyled" to={HOME}>
               <img
-                alt="Logo Positiv"
+                alt={headerCopy.logoAlt}
                 src={PositivLogo}
                 className="w-auto px-2 py-1 rounded-lg max-h-8"
               />
@@ -65,13 +66,13 @@ export const Header: FC<HeaderProps> = ({
               (showButtons ? (
                 <div className="flex items-center space-x-2">
                   {!!displayName && (
-                    <p className="hidden sm:block">Olá, {displayName}</p>
+                    <p className="hidden sm:block">{headerCopy.greeting(displayName)}</p>
                   )}
                   <NewsDialog isThereAnyNews={isThereAnyNews} isHeader={true} currentProfile={profile} />
                   <Button
                     asChild
                     variant="outline"
-                    title="Dashboard"
+                    title={headerCopy.dashboardTitle}
                     to={DASHBOARD}
                   >
                     <CalendarIcon />
@@ -80,18 +81,18 @@ export const Header: FC<HeaderProps> = ({
                     <Button
                       asChild
                       variant="outline"
-                      title="Área Admin"
+                      title={headerCopy.adminTitle}
                       to={ADMIN_DASHBOARD}
                     >
                       <Table2Icon />
                     </Button>
                   )}
-                  <Button asChild variant="outline" title="Conta" to={ACCOUNT}>
+                  <Button asChild variant="outline" title={headerCopy.accountTitle} to={ACCOUNT}>
                     <UserIcon />
                   </Button>
                 </div>
               ) : (
-                <Button to={LOGIN}>Entrar</Button>
+                <Button to={LOGIN}>{headerCopy.login}</Button>
               ))}
           </div>
         </header>
