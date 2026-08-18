@@ -11,6 +11,7 @@ import {
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { updateParticipantVsEventSchema } from "~/business/admin/common"
+import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
@@ -63,7 +64,10 @@ export async function action({ request }: Route.ActionArgs) {
       mutation: updateParticipantVsEvent,
       transformResult: async (result) => {
         if (result.success) {
-          throw await redirectWithSuccess(request.url, "Atualizado com sucesso")
+          throw await redirectWithSuccess(
+            request.url,
+            adminEventsCopy.viewParticipant.updateSuccess,
+          )
         }
         return result
       },
@@ -75,11 +79,11 @@ export async function loader({ params }: Route.LoaderArgs) {
   const { eventId, profileId } = params
 
   if (!eventId) {
-    return redirectWithError("Evento não encontrado", ADMIN_EVENTS)
+    return redirectWithError(adminEventsCopy.eventNotFound, ADMIN_EVENTS)
   }
   if (!profileId) {
     return redirectWithError(
-      "Participante não encontrade",
+      adminEventsCopy.viewParticipant.participantNotFound,
       ADMIN_VIEW_EVENT(eventId),
     )
   }
@@ -93,7 +97,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   if (!profileResult.success) {
     console.error("Error fetching profile:", profileResult.errors)
     return redirectWithError(
-      "Participante não encontrade.",
+      adminEventsCopy.viewParticipant.profileNotFound,
       ADMIN_VIEW_EVENT(eventId),
     )
   }
@@ -103,7 +107,7 @@ export async function loader({ params }: Route.LoaderArgs) {
   if (!eventParticipantResult.success || !eventParticipantResult.data) {
     console.error("Error fetching event participant:", eventParticipantResult.errors)
     return redirectWithError(
-      "Participante não candidate neste evento.",
+      adminEventsCopy.viewParticipant.notAppliedToEvent,
       ADMIN_VIEW_EVENT(eventId),
     )
   }

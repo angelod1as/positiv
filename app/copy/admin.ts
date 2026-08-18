@@ -20,3 +20,21 @@ export const googleContactsCopy = {
   nameCopied: "Nome copiado! Cole no campo de nome do Google Contacts",
   copyFailed: "Erro ao copiar nome para a área de transferência",
 } as const
+
+export const adminLayoutCopy = {
+  accessDenied: "Você precisa ser administradore para visitar essa página",
+} as const
+
+export const adminDashboardCopy = {
+  title: "Visão geral",
+  activeEventsTitle: "Eventos com candidaturas abertas",
+  recentProfiles: {
+    title: "Participantes recentes",
+    cta: "Ver todos os perfis",
+    hint: "Veja a tabela completa para editar os dados",
+  },
+  recentFeedbacks: {
+    title: "Feedbacks recentes",
+    cta: "Ver todos os feedbacks",
+  },
+} as const

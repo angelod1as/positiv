@@ -1,5 +1,7 @@
 import { toast } from "sonner"
+import { Copy } from "~/components/atoms/copy/copy"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import { adminEventsCopy } from "~/copy/admin/events"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 
 export const sendToast = (fetcherData: ComposableFetcherData) => {
@@ -13,9 +15,7 @@ export const sendToast = (fetcherData: ComposableFetcherData) => {
     ))
     return toast.error(
       <div>
-        <p>
-          <b>Erro:</b>
-        </p>
+        <Copy>{adminEventsCopy.toasts.errorTitle}</Copy>
         {errors}
       </div>,
     )
@@ -23,31 +23,29 @@ export const sendToast = (fetcherData: ComposableFetcherData) => {
 
   if (fetcherData.intent === "update-event-participant") {
     if (!fetcherData.success) {
-      return toast.error("Ops, algo deu errado")
+      return toast.error(adminEventsCopy.toasts.updateParticipantFailed)
     }
-    return toast.success("Dados atualizados com sucesso")
+    return toast.success(adminEventsCopy.toasts.updateParticipantSuccess)
   }
 
   if (fetcherData.intent === "send-reminders") {
-    return toast.success("E-mails colocados na fila de envio com sucesso")
+    return toast.success(adminEventsCopy.toasts.remindersQueued)
   }
 
   if (fetcherData.intent === "update-event-status") {
-    return toast.success("Status atualizado com sucesso")
+    return toast.success(adminEventsCopy.toasts.statusUpdated)
   }
 
   if (fetcherData.intent === "update-demographics") {
-    return toast.success("Demografia atualizada com sucesso")
+    return toast.success(adminEventsCopy.toasts.demographicsUpdated)
   }
 
   if (fetcherData.intent === "sync-listmonk-list") {
     if (!fetcherData.success) {
-      return toast.error("Erro ao atualizar lista da newsletter")
+      return toast.error(adminEventsCopy.toasts.listmonkSyncFailed)
     }
-    return toast.success("Lista da newsletter atualizada com sucesso")
+    return toast.success(adminEventsCopy.toasts.listmonkSyncSuccess)
   }
 
-  return toast.info(
-    "A função foi executada mas não há um intent configurado para mostrar uma mensagem compatível",
-  )
+  return toast.info(adminEventsCopy.toasts.noIntent)
 }

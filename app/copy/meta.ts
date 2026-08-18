@@ -47,4 +47,7 @@ export const metaCopy = {
   agreeToTerms: {
     title: "Termos e Condições",
   },
+  adminDashboard: {
+    title: "Admin - Visão Geral",
+  },
 } as const

@@ -29,6 +29,7 @@ import { DemographicsData } from "~/components/pages/admin/events/demographics"
 import { EventStatusForm } from "~/components/pages/admin/events/event-status-form"
 import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { RejectedParticipantsSection } from "~/components/pages/admin/events/rejected-participants-section"
+import { adminEventsCopy } from "~/copy/admin/events"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
@@ -135,7 +136,7 @@ async function loadParticipants(eventId: string) {
   const result = await getProfilesWithExtraDataById({ eventId })
 
   if (!result.success) {
-    throw new Error("Falha ao carregar participantes")
+    throw new Error(adminEventsCopy.viewEvent.loadParticipantsFailed)
   }
 
   return result.data
@@ -145,11 +146,17 @@ async function loadParticipants(eventId: string) {
 export async function loader({ params }: Route.LoaderArgs) {
   const eventId = params.id
   if (!eventId) {
-    throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
+    throw await redirectWithError(
+      ADMIN_DASHBOARD,
+      adminEventsCopy.eventNotFound,
+    )
   }
   const result = await getAdminEventById({ eventId })
   if (!result.success) {
-    throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
+    throw await redirectWithError(
+      ADMIN_DASHBOARD,
+      adminEventsCopy.eventNotFound,
+    )
   }
   const event = result.data
 
@@ -207,7 +214,9 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       <Buttons event={event} isListStale={isListStale} fetcher={fetcher} />
 
       <p className="font-bold">
-        Data: {formatDateTime(time_event_start, "long").full}
+        {adminEventsCopy.viewEvent.date(
+          formatDateTime(time_event_start, "long").full,
+        )}
       </p>
 
       <EventStatusForm {...event} fetcher={fetcher} />

@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import type { DashboardEvent } from "~/components/organisms/tables/admin/events-table"
+import { adminDashboardCopy } from "~/copy/admin"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -165,7 +166,7 @@ describe("AdminDashboard Component", () => {
     )
 
     expect(
-      screen.getByText("Eventos com candidaturas abertas"),
+      screen.getByText(adminDashboardCopy.activeEventsTitle),
     ).toBeInTheDocument()
     expect(screen.getByTestId("event-card")).toBeInTheDocument()
   })

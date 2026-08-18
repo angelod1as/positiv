@@ -26,6 +26,7 @@ import { CommunitySection } from "~/components/pages/admin/dataviz/community-sec
 import { EventsSection } from "~/components/pages/admin/dataviz/events-section"
 import { KpiScores } from "~/components/pages/admin/dataviz/kpi-scores"
 import { Separator } from "~/components/ui/separator"
+import { adminDatavizCopy } from "~/copy/admin/dataviz"
 import paths from "~/lib/paths"
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -95,7 +96,7 @@ export default function NumerosPage() {
 
   return (
     <div className="space-y-12">
-      <h1 className="text-3xl font-bold">Números</h1>
+      <h1 className="text-3xl font-bold">{adminDatavizCopy.title}</h1>
 
       <section>
         <KpiScores data={data.kpiScores} />
