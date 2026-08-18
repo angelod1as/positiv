@@ -32,7 +32,7 @@ export const sendRegistrationLimitAdminMail = async ({
 
   const options: MailOptions = {
     to: adminEmails,
-    subject: `📊 Evento atingiu limite de inscrições - ${event.emoji} ${event.title}`,
+    subject: `📊 Evento atingiu limite de candidaturas - ${event.emoji} ${event.title}`,
     text: text,
     html: html,
   }

@@ -51,7 +51,7 @@ describe("sendRegistrationLimitAdminMail", () => {
     expect(sendEmailModule.sendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: adminEmails,
-        subject: expect.stringContaining("limite de inscrições"),
+        subject: expect.stringContaining("limite de candidaturas"),
         html: expect.any(String),
         text: expect.any(String),
       })

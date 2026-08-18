@@ -109,7 +109,7 @@ describe("eventOpeningMailTemplate", () => {
     expect(result).toContain("Local:")
     expect(result).toContain("Data do evento:")
     expect(result).toContain("Horário de início:")
-    expect(result).toContain("Inscrições abrem em:")
+    expect(result).toContain("Candidaturas abrem em:")
   })
 
   it("should include important notes section", () => {

@@ -80,7 +80,7 @@ describe("sendApplicationMail", () => {
     expect(result).toEqual({ emailSent: true })
     expect(sendEmail).toHaveBeenCalledWith({
       to: "test@example.com",
-      subject: "Você se inscreveu no evento 🎉 Test Event",
+      subject: "Recebemos sua candidatura ao evento 🎉 Test Event",
       text: "Test email",
       html: "<p>Test email</p>",
     })
