@@ -63,7 +63,7 @@ Copy (Brazilian Portuguese):
 - Title: `Sua conta está pronta! 🎉`
 - `Mas atenção: ter conta na Positiv não é o mesmo que estar em uma festa.`
 - `Cada evento tem inscrição própria. Para ir a um evento, você precisa se inscrever nele — e a inscrição vale só para aquele evento.`
-- `Depois que você se inscreve, a organização seleciona quem vai. Você recebe a resposta por email.`
+- `Depois que você se inscreve, a organização seleciona quem vai e entra em contato via Whatsapp. Fique ligade: somos uma equipe minúscula que conversa com cada uma das pessoas inscritas. O processo leva tempo.`
 - Button → `/dashboard`: `Ver eventos da Positiv`
 
 ### 3. Dashboard redesign

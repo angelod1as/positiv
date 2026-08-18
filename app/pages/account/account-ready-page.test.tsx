@@ -31,7 +31,7 @@ describe("Account ready page", () => {
     renderPage()
     expect(
       screen.getByText(
-        "Mas atenção: ter conta na Positiv não é o mesmo que estar em uma festa.",
+        /ter conta na Positiv não é o mesmo que estar em uma festa/,
       ),
     ).toBeInTheDocument()
   })
@@ -49,7 +49,7 @@ describe("Account ready page", () => {
     renderPage()
     expect(
       screen.getByText(
-        "Depois que você se inscreve, a organização seleciona quem vai. Você recebe a resposta por email.",
+        /a organização seleciona quem vai e entra em contato via Whatsapp/,
       ),
     ).toBeInTheDocument()
   })

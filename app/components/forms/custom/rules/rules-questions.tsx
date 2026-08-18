@@ -114,7 +114,7 @@ export const getRulesFormQuestions = (eventType: EventType) => ({
       ],
       incorrect: [
         "Correta, o uso dos celulares é permitido em qualquer lugar",
-        "Incorreta, o uso dos celulares é totalmente proibida",
+        "Incorreta, o uso dos celulares é totalmente proibido.",
       ],
     },
   },

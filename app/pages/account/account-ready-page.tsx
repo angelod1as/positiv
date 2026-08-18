@@ -29,16 +29,17 @@ const AccountReadyPage = ({}: Route.ComponentProps) => {
 
       <CardContent className="flex flex-col gap-4">
         <p>
-          Mas atenção: ter conta na Positiv não é o mesmo que estar em uma
-          festa.
+          Mas atenção:{" "}
+          <b>ter conta na Positiv não é o mesmo que estar em uma festa.</b>
         </p>
         <p>
           Cada evento tem inscrição própria. Para ir a um evento, você precisa
           se inscrever nele — e a inscrição vale só para aquele evento.
         </p>
         <p>
-          Depois que você se inscreve, a organização seleciona quem vai. Você
-          recebe a resposta por email.
+          Depois que você se inscreve, a organização seleciona quem vai e entra
+          em contato via Whatsapp. Fique ligade: somos uma equipe minúscula que
+          conversa com cada uma das pessoas inscritas. O processo leva tempo.
         </p>
       </CardContent>
 
