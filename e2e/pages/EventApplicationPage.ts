@@ -1,4 +1,5 @@
 import { type Locator, type Page, expect } from "@playwright/test"
+import { getRulesFormQuestions } from "../../app/components/forms/custom/rules/rules-questions"
 import { BasePage } from "./BasePage"
 
 export class EventApplicationPage extends BasePage {
@@ -29,10 +30,10 @@ export class EventApplicationPage extends BasePage {
       exact: true,
     })
     this.continueButton = page.getByRole("button", { name: "Continuar" })
-    this.requiredError = page.getByText("Há erros nas suas respostas", {
-      exact: true,
-    })
-    this.questions = page.locator('div[data-testid="question"]')
+    this.requiredError = page.getByText("Campo obrigatório", { exact: true })
+    // One question shows at a time, and the presentation labels its control
+    // with the prompt heading.
+    this.questions = page.locator('h2[id$="-prompt"]')
 
     // User data page
     this.userDataTitle = page.getByRole("heading", {
@@ -67,49 +68,101 @@ export class EventApplicationPage extends BasePage {
     }
   }
 
+  async currentQuestionId(after?: string): Promise<string> {
+    await this.questions.waitFor({ state: "visible", timeout: 10000 })
+
+    // The heading is the same element from one screen to the next, so a stale
+    // read here would have the caller looking for answers that are no longer on
+    // the page.
+    if (after) {
+      await expect(this.questions).not.toHaveAttribute(
+        "id",
+        `${after}-prompt`,
+        { timeout: 10000 },
+      )
+    }
+
+    const id = (await this.questions.getAttribute("id"))?.replace(
+      /-prompt$/,
+      "",
+    )
+
+    if (!id) throw new Error("no question is showing")
+
+    return id
+  }
+
+  async answerCurrentQuestionCorrectly(previous?: string): Promise<string> {
+    const quiz = getRulesFormQuestions()
+    const id = await this.currentQuestionId(previous)
+    const question = quiz[id as keyof typeof quiz]
+
+    if (!question) {
+      throw new Error(`the quiz is showing a question nobody knows: ${id}`)
+    }
+
+    for (const right of question.answers.correct) {
+      await this.page.getByText(right, { exact: true }).click()
+    }
+
+    await this.continueButton.click()
+
+    return id
+  }
+
+  /**
+   * Walks to a question with a single right answer, answering the others along
+   * the way. Only there does one wrong click leave the question unanswerable —
+   * picking another radio replaces it, where a stray checkbox would linger.
+   */
+  async advanceToSingleAnswerQuestion(): Promise<string> {
+    const quiz = getRulesFormQuestions()
+    let previous: string | undefined
+
+    for (let asked = 0; asked < Object.keys(quiz).length; asked++) {
+      const id = await this.currentQuestionId(previous)
+      const question = quiz[id as keyof typeof quiz]
+
+      if (question?.answers.correct.length === 1) return id
+
+      previous = await this.answerCurrentQuestionCorrectly(previous)
+    }
+
+    throw new Error("the quiz asked nothing with a single right answer")
+  }
+
+  async answerCurrentQuestionWrongly(): Promise<string> {
+    const quiz = getRulesFormQuestions()
+    const id = await this.currentQuestionId()
+    const question = quiz[id as keyof typeof quiz]
+
+    await this.page
+      .getByText(question.answers.incorrect[0], { exact: true })
+      .click()
+    await this.continueButton.click()
+
+    return id
+  }
+
   async fillRulesForm(): Promise<void> {
     await expect(this.rulesTitle).toBeVisible({ timeout: 10000 })
 
-    // Wait for form to be ready
-    await this.page.waitForTimeout(1000)
+    const quiz = getRulesFormQuestions()
+    let previous: string | undefined
 
-    // Full set of correct answers, mirrored from
-    // app/components/forms/custom/rules/rules-questions.tsx. The quiz shuffles
-    // question and answer order, but the answer text itself is fixed, so
-    // clicking every correct answer text (regardless of order) always yields
-    // a fully and correctly answered quiz.
-    const correctAnswers = [
-      "Cada pessoa é responsável por cuidar de seus pertences e por limpar o ambiente, para manter tudo em ordem e no lugar, independente de ter uma equipe de limpeza que irá limpar depois.",
-      "Não. A regra é simples: ninguém é obrigade a nada. Se quiser ficar de roupa, pode, se quiser ficar pelade, pode também",
-      "Não está de acordo. O ideal é curtir a festa na própria festa e, principalmente, não tirar ninguém dela antes do fim.",
-      "Essa frase está incorreta. A Positiv tem apenas espaços compartilhados e celebra a coletividade.",
-      "Tudo lindo! Falar sobre a Positiv é essencial pro crescimento da própria Positiv, desde que você não cite nomes nem características de quem esteve na festa com você.",
-      "A regra é clara: não se fala sobre quem vai à Positiv — mesmo para pessoas que vão à Positiv durante uma Positiv.",
-      "Desde que ela não diga quem vai ou foi à festa com ela, tudo bem — ela pode divulgar sua participação.",
-      "A frase está incorreta. A Positiv se parece mais com um picnic e não tem música alta ou luzes piscando.",
-      "A frase está incorreta. É até possível que haja drinks ou cerveja, mas a moderação é essencial.",
-      "Incorreta, o uso dos celulares é permitido apenas na garagem da suíte.",
-      "A afirmação está incorreta, o uso de camisinha interna ou externa, é obrigatório",
-      "A afirmação está incorreta e até mesmo casais que não usam camisinha fora da festa são obrigados a usar durante a festa",
-      "A Positiv não pede que seus participantes enviem resultados de exames de IST para a organização, mas prega que todes façam regularmente seus acompanhamentos, porque assumimos riscos em frequentar festas como a Positiv",
-      "Para interações com mãos e bocas, a Positiv recomenda fortemente que sejam usadas luvas, dental dams e/ou camisinhas.",
-      "Sim, fiz uma autoanálise e tô legal. Entendo meus gatilhos e tô preparade para enfrentar meus medos e inseguranças.",
-      'Senti que um clima rolou na festa. Perguntei: posso te dar um beijo? A pessoa consentiu com um "sim". Nos beijamos. Ela perguntou: "posso fazer um cafuné?" e eu disse que sim.',
-      "A Positiv tem esse nome, também, por conta do movimento body-positive, uma alusão à quebra dos padrões que a sociedade impõe, à aceitação ao próprio corpo e à conscientização de que corpos dissidentes são desejáveis e desejantes.",
-      "Estar numa Positiv exige um autoquestionamento se nos sentimos abertes e prontes para estar em um ambiente E interagir (sexualmente ou não) com uma pluralidade de corpos, raças, cores, etnias.",
-      "Quase todos nós moldamos nosso interesse desde pequenes com uma enxurrada de regras sociais que limitam o que é belo e desejável. É importante que cada participante tenha consciência disso e busque expandir seus conceitos.",
-    ]
+    // One screen per question, and the last "Continuar" is the one that saves,
+    // so the caller has nothing left to click afterwards. The quiz may already
+    // be part-answered, so this stops when the questions run out rather than
+    // after a fixed count.
+    for (let asked = 0; asked < Object.keys(quiz).length; asked++) {
+      const showing = await this.questions
+        .isVisible({ timeout: 2000 })
+        .catch(() => false)
 
-    // Click each correct answer's label text if present on this event's quiz
-    for (const answer of correctAnswers) {
-      const element = this.page.getByText(answer, { exact: true })
-      if (await element.isVisible({ timeout: 500 }).catch(() => false)) {
-        await element.click()
-      }
+      if (!showing) return
+
+      previous = await this.answerCurrentQuestionCorrectly(previous)
     }
-
-    // Wait for form to update
-    await this.page.waitForTimeout(500)
   }
 
   async clickContinue(): Promise<void> {
@@ -160,10 +213,10 @@ export class EventApplicationPage extends BasePage {
     referred?: string
     bondType?: string
   }): Promise<void> {
-    // Handle rules page
     if (await this.isOnRulesPage()) {
+      // The quiz's own last "Continuar" saves, so there is nothing left to
+      // click after it.
       await this.fillRulesForm()
-      await this.clickContinue()
     }
 
     // Wait for user data page
