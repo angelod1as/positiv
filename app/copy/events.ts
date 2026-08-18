@@ -185,3 +185,16 @@ Portanto, criamos esse breve teste! Você só conseguirá se inscrever em nosso 
 Vamos ao que interessa:`,
   sections: rulesSections,
 } as const
+
+export const rulesDialogCopy = {
+  title: "Confirmar inscrição",
+  notesPrompt:
+    "Se você tiver alguma nota ou comentário que gostaria que as pessoas administradoras soubessem, escreva-as abaixo:",
+  notesPlaceholder: "O que quer que a gente saiba?",
+  confirmation:
+    "Você acertou tudo! Agora só falta clicar nesse botãozinho abaixo e confirmar sua inscrição.",
+  emailNotice:
+    "Você vai receber um email com os dados do evento, salve na sua agenda!",
+  confirmLabel: "🎉 Confirmar!",
+  cancelLabel: "😢 Cancelar",
+} as const
