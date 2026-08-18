@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { validationMessages } from "~/lib/helpers/validation-messages"
 import { buildRulesQuestions } from "./build-rules-questions"
 import { getRulesFormQuestions } from "./rules-questions"
 
@@ -128,5 +129,59 @@ describe("buildRulesQuestions shuffling", () => {
         )
       }
     }
+  })
+})
+
+const questionById = (id: string) =>
+  buildRulesQuestions("regular").find((question) => question.id === id)
+
+const messageFor = (id: string, value: unknown) => {
+  const result = questionById(id)?.schema.safeParse(value)
+
+  return result?.success ? null : result?.error.issues[0].message
+}
+
+describe("buildRulesQuestions schemas", () => {
+  it("accepts the right answer of a single-answer question", () => {
+    const quiz = getRulesFormQuestions("regular")
+
+    expect(messageFor("phone", quiz.phone.answers.correct[0])).toBeNull()
+  })
+
+  it("turns down a wrong answer with the message the quiz already had", () => {
+    const quiz = getRulesFormQuestions("regular")
+
+    expect(messageFor("phone", quiz.phone.answers.incorrect[0])).toBe(
+      "Você escolheu a resposta errada",
+    )
+  })
+
+  it("turns down an unanswered question with the standard required message", () => {
+    expect(messageFor("phone", undefined)).toBe(validationMessages.required)
+  })
+
+  it("accepts every right answer of a multi-answer question", () => {
+    const quiz = getRulesFormQuestions("regular")
+
+    expect(
+      messageFor("protection-2", quiz["protection-2"].answers.correct),
+    ).toBeNull()
+  })
+
+  it("turns down a partial answer to a multi-answer question", () => {
+    const quiz = getRulesFormQuestions("regular")
+
+    expect(
+      messageFor("protection-2", [quiz["protection-2"].answers.correct[0]]),
+    ).toBe("Você não selecionou todas as respostas corretas")
+  })
+
+  it("turns down a right answer spoiled by a wrong one", () => {
+    const quiz = getRulesFormQuestions("regular")
+    const { correct, incorrect } = quiz["protection-2"].answers
+
+    expect(messageFor("protection-2", [...correct, incorrect[0]])).toBe(
+      "Você selecionou uma ou mais respostas incorretas",
+    )
   })
 })
