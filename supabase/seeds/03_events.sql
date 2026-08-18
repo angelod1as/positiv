@@ -2,7 +2,7 @@
 
 -- This script creates 30 events with realistic status distribution:
 -- 20 Completed, 4 Cancelled, 2 Registration Open, 2 Registration Closed, 1 Scheduled, 1 Draft
--- 2 BDSM events (1 completed, 1 registration open)
+-- 1 legacy BDSM event (completed)
 
 TRUNCATE public.events CASCADE;
 
@@ -45,7 +45,7 @@ FROM (
         CASE
             WHEN n <= 20 THEN 'Evento Concluído ' || n
             WHEN n <= 24 THEN 'Evento Cancelado ' || (n - 20)
-            WHEN n = 25 THEN 'Festa BDSM - Inscrições Abertas'
+            WHEN n = 25 THEN 'Festa da Colheita - Inscrições Abertas'
             WHEN n = 26 THEN 'Evento Com Inscrições Abertas 1'
             WHEN n <= 28 THEN 'Evento Com Inscrições Fechadas ' || (n - 26)
             WHEN n = 29 THEN 'Evento Agendado 1'
@@ -58,7 +58,7 @@ FROM (
         CASE
             WHEN n <= 20 THEN 'Descricao do evento concluido ' || n || '. Este evento ja aconteceu e foi um sucesso!'
             WHEN n <= 24 THEN 'Aviso: Este evento foi cancelado. Pedimos desculpas pelo inconveniente.'
-            WHEN n = 25 THEN 'Uma edicao especial BDSM da Positiv. Venha explorar seus limites em um ambiente seguro e consensual.'
+            WHEN n = 25 THEN 'Sed ut perspiciatis unde omnis iste natus error. Inscrições abertas!'
             WHEN n = 26 THEN 'Morbi non velit sit amet felis fermentum fermentum ut eget dui. Inscrições abertas!'
             WHEN n <= 28 THEN 'As inscricoes para este evento foram encerradas. Aguarde novas oportunidades.'
             WHEN n = 29 THEN 'Prepare-se para este evento! Marque em seus calendarios!'
@@ -83,7 +83,6 @@ FROM (
         END AS event_status,
         CASE
             WHEN n = 10 THEN 'bdsm'::public.event_type_enum
-            WHEN n = 25 THEN 'bdsm'::public.event_type_enum
             ELSE 'regular'::public.event_type_enum
         END AS event_type,
         CASE
