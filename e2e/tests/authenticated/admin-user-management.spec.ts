@@ -339,7 +339,15 @@ test.describe("Admin User Management", () => {
       .locator(".ag-pinned-left-cols-container a")
       .getByText("user3", { exact: true })
       .first()
-    await user3Link.click()
+    // Read the href and navigate instead of clicking: AG Grid recycles the row
+    // elements while it applies the quick filter, so a click can land on a row
+    // that is being detached. The href is stable once the link is visible.
+    await expect(user3Link).toBeVisible()
+    const user3Href = await user3Link.getAttribute("href")
+    if (!user3Href) {
+      throw new Error("Could not get the href from the user3 link")
+    }
+    await page.goto(user3Href)
 
     // Wait for navigation to participant detail page
     await page.waitForURL(/\/participantes\//)
