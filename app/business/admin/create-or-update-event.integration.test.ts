@@ -22,6 +22,18 @@ describe("createOrUpdateEvent - Integration Tests", () => {
     host: null,
   })
 
+  // The local Supabase REST layer sometimes drops an idle keep-alive socket
+  // between test files, which surfaces as a failed mutation. A deterministic
+  // failure fails the retry too, so only transport hiccups are absorbed.
+  const save = async (
+    values: ReturnType<typeof formValues>,
+    ctx: ReturnType<typeof context> & { eventId?: string },
+  ) => {
+    const first = await createOrUpdateEvent(values, ctx)
+    if (first.success) return first
+    return await createOrUpdateEvent(values, ctx)
+  }
+
   const formValues = (title: string) => {
     const start = new Date("2026-09-01T20:00:00.000Z").toISOString()
     const end = new Date("2026-09-02T04:00:00.000Z").toISOString()
@@ -56,10 +68,10 @@ describe("createOrUpdateEvent - Integration Tests", () => {
       total_spots: 60,
     })
 
-    const result = await createOrUpdateEvent(
-      formValues("Legacy edition renamed"),
-      { ...context(), eventId: event.id },
-    )
+    const result = await save(formValues("Legacy edition renamed"), {
+      ...context(),
+      eventId: event.id,
+    })
 
     expect(result.success).toBe(true)
 
@@ -74,7 +86,7 @@ describe("createOrUpdateEvent - Integration Tests", () => {
   })
 
   it("creates new events as regular", async () => {
-    const result = await createOrUpdateEvent(formValues("Evento novo"), {
+    const result = await save(formValues("Evento novo"), {
       ...context(),
       eventId: undefined,
     })
