@@ -50,8 +50,6 @@ test.describe('Account signup versus event registration', () => {
       .filter({ has: page.getByRole('link', { name: 'Fazer inscrição' }) })
       .filter({ hasNotText: 'BDSM' })
     const applyButtonCount = await applyableCards.count()
-    for (const card of await page.locator('[data-testid^="event-card"]').all()) {
-    }
     test.skip(applyButtonCount === 0, 'No non-BDSM event with open registration in this environment')
 
     const applyButton = applyableCards
