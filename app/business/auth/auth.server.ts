@@ -4,6 +4,7 @@ import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { ENV } from "varlock/env"
+import { errorsCopy } from "~/copy/errors"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
@@ -80,10 +81,7 @@ async function _fetchContext(
 
     if (!authError.message.includes("Auth session missing!")) {
       logger.error("AUTH error", errorProps)
-      throw await redirectWithError(
-        DASHBOARD,
-        "Houve um erro com sua autenticação, tente novamente mais tarde",
-      )
+      throw await redirectWithError(DASHBOARD, errorsCopy.auth.sessionFailed)
     }
   }
 
@@ -157,10 +155,7 @@ export const getUserContext = async (
 ): Promise<z.infer<typeof userContextSchema>> => {
   const { currentUser, ...context } = await getContext(request, params)
   if (!currentUser) {
-    throw await redirectWithError(
-      LOGIN,
-      "Você precisa estar logade para continuar",
-    )
+    throw await redirectWithError(LOGIN, errorsCopy.auth.loginRequired)
   }
   return { ...context, currentUser }
 }
@@ -174,16 +169,12 @@ export const loginUser = applySchema(
 
   if (error) {
     if (error.code === "invalid_credentials") {
-      throw new Error("Credenciais inválidas")
+      throw new Error(errorsCopy.auth.invalidCredentials)
     }
     if (error.code === "email_not_confirmed") {
-      throw new Error(
-        "Você precisa confirmar suas credenciais. Confira seu e-mail!",
-      )
+      throw new Error(errorsCopy.auth.emailNotConfirmed)
     }
-    throw new Error(
-      `Erro de autenticação — Código: "${error.code}" — Mensagem: "${error.message}"`,
-    )
+    throw new Error(errorsCopy.auth.authFailed(error.code, error.message))
   }
 
   trackServerEvent("user_login", { userId: data.user.id }, "/auth/login")
@@ -195,10 +186,7 @@ export const getUserCodeContext = async (request: Request, params: Params) => {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
   if (!code) {
-    throw await redirectWithError(
-      HOME,
-      "O link não continha o código necessário para mudar sua senha",
-    )
+    throw await redirectWithError(HOME, errorsCopy.auth.missingResetCode)
   }
 
   const { supabase, supabaseHeaders } = await getSupabase(request, params)
@@ -207,11 +195,9 @@ export const getUserCodeContext = async (request: Request, params: Params) => {
 
   if (error) {
     if (error.code === "invalid_credentials") {
-      throw new Error("Credenciais inválidas")
+      throw new Error(errorsCopy.auth.invalidCredentials)
     }
-    throw new Error(
-      `Erro de autenticação — Código: "${error.code}" — Mensagem: "${error.message}"`,
-    )
+    throw new Error(errorsCopy.auth.authFailed(error.code, error.message))
   }
 
   return redirect(CHANGE_PASSWORD, { headers: supabaseHeaders })
@@ -230,9 +216,7 @@ export const forgotPassword = applySchema(
 
   if (error) {
     logger.error("Password Reset Error", { error })
-    throw new Error(
-      "Algo deu errado com sua requisição, contate o administrador",
-    )
+    throw new Error(errorsCopy.auth.resetRequestFailed)
   }
 
   return { success: true }
@@ -245,12 +229,10 @@ export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
 
   if (error) {
     logger.error("Logout error", { error })
-    throw new Error(
-      `Erro de logout — Código: "${error.code}" — Mensagem: "${error.message}"`,
-    )
+    throw new Error(errorsCopy.auth.logoutFailed(error.code, error.message))
   }
 
-  return redirectWithSuccess(HOME, "Você deslogou com sucesso")
+  return redirectWithSuccess(HOME, errorsCopy.auth.logoutSuccess)
 }
 
 export const changePassword = applySchema(
@@ -264,19 +246,15 @@ export const changePassword = applySchema(
 
   if (error) {
     if (error.code === "same_password") {
-      throw new Error("Será que essa não era a sua senha? Tente outra.")
+      throw new Error(errorsCopy.auth.samePassword)
     }
     logger.error("Password change error", { error })
-    throw new Error(
-      "Não conseguimos resetar sua senha. Entre em contato com o administrador",
-    )
+    throw new Error(errorsCopy.auth.passwordChangeFailed)
   }
 
   return {}
 })
 
-const CLAIMED_PROFILE_MESSAGE =
-  "Houve um erro no cadastro da sua conta. Se você já tem uma conta, tente acessar o \"esqueci minha senha\". Se não, entre em contato pelo WhatsApp (em nossa homepage) e indique qual email você utilizou."
 
 export const registerUser = async (
   values: z.infer<typeof registerUserSchema>,
@@ -320,7 +298,7 @@ export const registerUser = async (
     // users with a claimed profile cannot use password reset without contacting support.
     return {
       ok: false,
-      errors: [{ questionId: "email", message: CLAIMED_PROFILE_MESSAGE }],
+      errors: [{ questionId: "email", message: errorsCopy.auth.signupBlocked }],
     }
   }
 
