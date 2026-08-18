@@ -198,3 +198,11 @@ export const rulesDialogCopy = {
   confirmLabel: "🎉 Confirmar!",
   cancelLabel: "😢 Cancelar",
 } as const
+
+export const rulesQuizCopy = {
+  title: "✅ Hora do teste! ✅",
+  shuffleNotice: "(As questões e respostas são automaticamente embaralhadas)",
+  loading: "Carregando perguntas...",
+  hasErrors: "Há erros nas suas respostas",
+  submitLabel: "Continuar",
+} as const

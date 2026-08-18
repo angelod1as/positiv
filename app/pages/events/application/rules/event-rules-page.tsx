@@ -35,6 +35,7 @@ import { kyselyDb } from "~/kysely-db"
 import paths from "~/lib/paths"
 import type { FCC } from "~types/utils/utils.types"
 import type { Route } from "./+types/event-rules-page"
+import { rulesQuizCopy } from "~/copy/events"
 
 const {
   dash: {
@@ -66,10 +67,10 @@ const Wrapper: FCC = ({ children }) => (
     <Card>
       <CardHeader>
         <CardTitle>
-          <h2 className="mt-4">✅ Hora do teste! ✅</h2>
+          <h2 className="mt-4">{rulesQuizCopy.title}</h2>
         </CardTitle>
         <CardDescription>
-          <p>(As questões e respostas são automaticamente embaralhadas)</p>
+          <p>{rulesQuizCopy.shuffleNotice}</p>
         </CardDescription>
       </CardHeader>
       <CardContent>{children}</CardContent>
