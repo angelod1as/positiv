@@ -1,6 +1,7 @@
 import { TEST_USER_PROFILE_DATA } from "../fixtures/test-data"
 import { createSupabaseAdminClient } from "./db-cleanup"
 import { createTestUser } from "./user-management"
+import { runEmail } from "./run-context"
 
 export interface TestParticipant {
   profileId: string
@@ -22,7 +23,7 @@ export async function createTestEventWithParticipants(
 
   for (let i = 0; i < count; i++) {
     const timestamp = Date.now()
-    const email = `test-participant-${timestamp}-${i}@example.com`
+    const email = runEmail(`participant-${timestamp}-${i}`)
     const password = `TestPass${timestamp}!`
 
     // Create user

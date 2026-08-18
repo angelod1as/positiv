@@ -26,6 +26,10 @@ export function runEventTitlePattern(): string {
   return `${runEventTitlePrefix()}%`
 }
 
+export function runEmail(label: string): string {
+  return `test-${getRunId()}-${label}@example.com`
+}
+
 export function runEmailPattern(): string {
   return `test-${getRunId()}-%@example.com`
 }

@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from './db-cleanup'
+import { getRunId, runEmail } from './run-context'
 
 export interface TestUser {
   id: string
@@ -20,6 +21,7 @@ export async function createTestUser(email: string, password: string, options?: 
       email_confirm: true,
       user_metadata: {
         is_mock_user: true, // Mark for cleanup
+        e2e_run_id: getRunId(), // Only this run's teardown may delete it
       },
     })
 
@@ -114,7 +116,7 @@ export async function deleteAllTestUsers(): Promise<void> {
     }
 
     // Filter to mock users only
-    const mockUsers = users.filter(user => user.user_metadata?.is_mock_user === true)
+    const mockUsers = users.filter(user => user.user_metadata?.e2e_run_id === getRunId())
 
     console.info(`Found ${mockUsers.length} test users to delete`)
 
@@ -130,7 +132,7 @@ export async function deleteAllTestUsers(): Promise<void> {
 export function generateTestEmail(): string {
   const timestamp = Date.now()
   const random = Math.random().toString(36).substring(7)
-  return `test-${timestamp}-${random}@example.com`
+  return runEmail(`${timestamp}-${random}`)
 }
 
 export function generateTestPassword(): string {

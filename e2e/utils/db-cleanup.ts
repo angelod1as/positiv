@@ -3,7 +3,7 @@ import type { Database } from '../../app/types/database/database.types'
 import { TEST_USERS } from '../fixtures/test-users'
 import { TEST_USER_PROFILE_DATA } from '../fixtures/test-data'
 import { removeSubscriber } from '../../app/business/newsletter/listmonk-client.server'
-import { runEventTitlePattern } from './run-context'
+import { runEmailPattern, runEventTitlePattern } from './run-context'
 import { deleteList } from '../../app/business/newsletter/listmonk-lists.server'
 
 // Custom error class for database cleanup operations
@@ -327,11 +327,11 @@ export async function cleanupTestEvents(): Promise<void> {
 export async function cleanupListmonkSubscribers(): Promise<void> {
   const supabase = createSupabaseAdminClient()
 
-  // Get all profiles with @example.com email (test users)
+  // Get the profiles this run created
   const { data: profiles, error: fetchError } = await supabase
     .from('profiles')
     .select('email')
-    .ilike('email', '%@example.com')
+    .ilike('email', runEmailPattern())
 
   if (fetchError) {
     console.warn('[Non-critical] Failed to fetch test user emails for Listmonk cleanup:', fetchError)
