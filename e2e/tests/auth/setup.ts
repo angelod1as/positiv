@@ -47,21 +47,27 @@ setup('authenticate as user', async ({ page }) => {
   // User goes through full login flow
   await performUILogin(page, email, password)
 
-  // Wait a moment for any async operations to complete (like newsletter subscription)
-  await page.waitForLoadState('networkidle')
+  // Not networkidle: the analytics endpoint keeps the network busy on its own
+  // schedule, and this setup gates every authenticated test in the suite.
+  await page.waitForLoadState('domcontentloaded')
 
   // Navigate to homepage to check if newsletter modal appears
   await page.goto('/')
-  await page.waitForLoadState('networkidle')
+  await page.waitForLoadState('domcontentloaded')
 
   // If newsletter modal appears, dismiss it to ensure clean state for other tests
   const newsletterHeading = page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })
-  const isModalVisible = await newsletterHeading.isVisible().catch(() => false)
+  // The modal arrives with the page's own scripts, so this waits for it rather
+  // than asking whether it happens to be there already.
+  const isModalVisible = await newsletterHeading
+    .waitFor({ state: 'visible', timeout: 5000 })
+    .then(() => true)
+    .catch(() => false)
 
   if (isModalVisible) {
     console.info('Newsletter modal detected, dismissing for clean state')
     await page.getByRole('button', { name: /talvez mais tarde/i }).click()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
   }
 
   await page.context().storageState({ path: userFile })
