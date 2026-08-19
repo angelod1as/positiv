@@ -36,6 +36,7 @@ export const registerCopy = {
     email: "E-mail",
     confirmPassword: "Confirme a senha",
     over18: "Sou maior de 18 anos",
+    captcha: "Verificação de segurança",
   },
   placeholders: { email: "email@exemplo.com", password: "senha123" },
   pendingButtonLabel: "Entrando...",

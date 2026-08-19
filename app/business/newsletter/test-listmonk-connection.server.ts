@@ -1,9 +1,16 @@
+import { listmonkDiagnosticCopy } from "~/copy/admin"
 import { LISTMONK_DEVELOPERS_LIST_ID } from "~/lib/constants/constants"
 import { logger } from "~/lib/logger/logger.server"
 import { getListmonkConfig } from "./listmonk-client.server"
-import type { CleanupResult, DiagnosticResult } from "./test-listmonk-connection.types"
+import type {
+  CleanupResult,
+  DiagnosticResult,
+} from "./test-listmonk-connection.types"
 
-export type { CleanupResult, DiagnosticResult } from "./test-listmonk-connection.types"
+export type {
+  CleanupResult,
+  DiagnosticResult,
+} from "./test-listmonk-connection.types"
 
 export async function testListmonkConnection(): Promise<DiagnosticResult> {
   const steps: DiagnosticResult["steps"] = []
@@ -18,7 +25,7 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
     steps.push({
-      label: "Configuração do Listmonk",
+      label: listmonkDiagnosticCopy.steps.config,
       status: "error",
       error: message,
     })
@@ -33,11 +40,11 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
     if (!response.ok) {
       throw new Error(`${response.status} ${response.statusText}`)
     }
-    steps.push({ label: "Conexão estabelecida", status: "ok" })
+    steps.push({ label: listmonkDiagnosticCopy.steps.connection, status: "ok" })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
     steps.push({
-      label: "Conexão estabelecida",
+      label: listmonkDiagnosticCopy.steps.connection,
       status: "error",
       error: message,
     })
@@ -66,11 +73,14 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
     }
     const result = (await response.json()) as { data: { id: number } }
     campaignId = result.data.id
-    steps.push({ label: "Campanha de teste criada", status: "ok" })
+    steps.push({
+      label: listmonkDiagnosticCopy.steps.campaignCreated,
+      status: "ok",
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
     steps.push({
-      label: "Campanha de teste criada",
+      label: listmonkDiagnosticCopy.steps.campaignCreated,
       status: "error",
       error: message,
     })
@@ -93,11 +103,11 @@ export async function testListmonkConnection(): Promise<DiagnosticResult> {
         .catch(() => "Unable to read error body")
       throw new Error(`${response.status}: ${errorBody}`)
     }
-    steps.push({ label: "Email enviado para devs", status: "ok" })
+    steps.push({ label: listmonkDiagnosticCopy.steps.emailSent, status: "ok" })
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
     steps.push({
-      label: "Email enviado para devs",
+      label: listmonkDiagnosticCopy.steps.emailSent,
       status: "error",
       error: message,
     })
@@ -126,7 +136,7 @@ export async function cleanupListmonkTestCampaign(
     return {
       success: false,
       step: {
-        label: "Campanha de teste removida",
+        label: listmonkDiagnosticCopy.steps.campaignRemoved,
         status: "error",
         error: message,
       },
@@ -149,7 +159,10 @@ export async function cleanupListmonkTestCampaign(
     }
     return {
       success: true,
-      step: { label: "Campanha de teste removida", status: "ok" },
+      step: {
+        label: listmonkDiagnosticCopy.steps.campaignRemoved,
+        status: "ok",
+      },
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error"
@@ -160,7 +173,7 @@ export async function cleanupListmonkTestCampaign(
     return {
       success: false,
       step: {
-        label: "Campanha de teste removida",
+        label: listmonkDiagnosticCopy.steps.campaignRemoved,
         status: "error",
         error: message,
       },

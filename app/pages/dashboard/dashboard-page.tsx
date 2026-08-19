@@ -97,10 +97,10 @@ export async function action({ request, params }: Route.ClientActionArgs) {
     // The only gate this application has. Whoever is not an admin walks the
     // whole flow, quiz included, exactly as before.
     if (!context.currentProfile?.is_admin) {
-      return { error: "Você não tem permissão para se candidatar diretamente" }
+      return { error: dashboardCopy.directApply.notAllowed }
     }
 
-    if (!eventId) return { error: "Evento não encontrado." }
+    if (!eventId) return { error: dashboardCopy.directApply.eventNotFound }
 
     const result = await applyToEvent(
       {
@@ -114,9 +114,7 @@ export async function action({ request, params }: Route.ClientActionArgs) {
 
     if (!result.success) {
       return {
-        error:
-          result.errors[0]?.message ??
-          "Sua candidatura teve um erro, tente novamente.",
+        error: result.errors[0]?.message ?? dashboardCopy.directApply.failed,
       }
     }
 

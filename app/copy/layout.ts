@@ -21,8 +21,21 @@ export const footerCopy = {
 
 export const newsDialogCopy = {
   title: "News",
+  heading: "O que há de novo",
   dismiss: "Não mostrar isso novamente",
   trigger: "Veja as novidades do site",
+  empty: {
+    title: "Olha! Um aviso!",
+    body: `Através dele você poderá saber sobre as atualizações, resoluções de bugs, e novidades do nosso site.
+
+Ele só aparece quando você está logade **nunca mais** enche o saco se você clicar no botão abaixo.
+
+> "Ah, mas eu quero ler de novo"
+
+Simples, é só clicar no link lá no pé da página.
+
+Assim que a houver uma nova atualização, ele voltará a pular na sua frente — assim você poderá saber todas as nossas novidades!`,
+  },
 } as const
 
 export const warningBannerCopy = {

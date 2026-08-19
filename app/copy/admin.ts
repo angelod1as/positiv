@@ -66,6 +66,13 @@ export const listmonkDiagnosticCopy = {
   title: "Diagnóstico de Email",
   description:
     "Essa ferramenta testa a conexão com o serviço de newsletter (Listmonk) e envia uma campanha de teste para os desenvolvedores. Use quando quiser verificar se os emails de abertura de evento estão funcionando.",
+  steps: {
+    config: "Configuração do Listmonk",
+    connection: "Conexão estabelecida",
+    campaignCreated: "Campanha de teste criada",
+    emailSent: "Email enviado para devs",
+    campaignRemoved: "Campanha de teste removida",
+  },
   stepOk: (label: string) => `✓ ${label}`,
   stepFailed: (label: string) => `✗ ${label}`,
   failedBeforeCampaign: "Diagnóstico falhou antes de criar a campanha",

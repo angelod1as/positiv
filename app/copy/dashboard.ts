@@ -6,6 +6,11 @@ export const dashboardCopy = {
     title: "Sua conta está pronta",
     body: "Mas ter conta não te coloca em nenhuma festa. Escolha um evento abaixo e envie sua candidatura.",
   },
+  directApply: {
+    notAllowed: "Você não tem permissão para se candidatar diretamente",
+    eventNotFound: "Evento não encontrado.",
+    failed: "Sua candidatura teve um erro, tente novamente.",
+  },
   emptyApplied: "Você não tem nenhuma candidatura no momento.",
   emptyAvailable: "Nenhum evento por aqui no momento.",
   calendarFailed:
