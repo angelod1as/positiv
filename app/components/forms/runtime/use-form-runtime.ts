@@ -23,6 +23,13 @@ type UseFormRuntimeOptions = {
   flow: Flow
   data?: Record<string, unknown>
   /**
+   * Answers the run opens with — a profile being corrected, typically. Seeded
+   * once, so a caller building the object inline does not undo what someone has
+   * typed since. A stored run wins over it: what was left half-written is
+   * closer to where the person actually is than what the server last knew.
+   */
+  initialAnswers?: Answers
+  /**
    * Where the caller believes the run is — a url, typically. Honoured only for
    * a step whose questions are all answered, so that it walks back through the
    * flow without opening a way to skip past a question.
@@ -72,6 +79,7 @@ export function useFormRuntime({
   questions,
   flow,
   data = NO_DATA,
+  initialAnswers,
   persistence,
   stepId,
 }: UseFormRuntimeOptions) {
@@ -103,7 +111,7 @@ export function useFormRuntime({
     : null
 
   const [currentStepId, setCurrentStepId] = useState<StepId>(flow.start)
-  const [answers, setAnswers] = useState<Answers>({})
+  const [answers, setAnswers] = useState<Answers>(initialAnswers ?? {})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [firstTryCorrect, setFirstTryCorrect] = useState<
     Record<string, boolean>
@@ -134,7 +142,7 @@ export function useFormRuntime({
 
   // Refs mirror the state so that answering and advancing within the same
   // event handler sees the fresh values instead of the render's closure.
-  const answersRef = useRef<Answers>({})
+  const answersRef = useRef<Answers>(initialAnswers ?? {})
   const stepRef = useRef<StepId>(flow.start)
   const firstTryRef = useRef<Record<string, boolean>>({})
   const pendingRef = useRef<string[]>([])

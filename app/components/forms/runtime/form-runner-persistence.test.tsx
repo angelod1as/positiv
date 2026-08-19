@@ -75,6 +75,34 @@ describe("FormRunner with persistence", () => {
     expect(container.querySelector('[data-slot="skeleton"]')).toBeNull()
   })
 
+  it("prefers a stored run to the answers the caller handed over", async () => {
+    const key = runtimeStorageKey(persistence.formId, persistence.scopeId)
+    writeRuntimeState(key, {
+      answers: { nome: "Ana" },
+      currentStepId: "cidade",
+      firstTryCorrect: {},
+    })
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+        persistence={persistence}
+        initialAnswers={{ nome: "Beatriz", cidade: "Recife" }}
+      />,
+    )
+
+    await waitFor(() =>
+      expect(screen.getByText("Onde você mora?")).toBeInTheDocument(),
+    )
+    // The stored run never reached the city, and the seed offered one. An empty
+    // field is the record winning: half a run is closer to where the person
+    // actually is than whatever the server last knew about them.
+    expect(screen.getByDisplayValue("")).toHaveAttribute("id", "cidade")
+  })
+
   // The server has no sessionStorage, so it can only draw the placeholder —
   // and the client's first render has to draw exactly the same thing.
   it("renders the skeleton on the server, where there is no storage", () => {
