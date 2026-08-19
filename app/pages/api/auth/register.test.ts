@@ -74,6 +74,34 @@ describe("register commit route", () => {
     expect(mockRegisterUser).not.toHaveBeenCalled()
   })
 
+  it("says why the age matters even when the box was never sent", async () => {
+    const { over18: _omitted, ...withoutTheBox } = valid
+    const response = await run(withoutTheBox)
+
+    const body = (await response.json()) as {
+      errors: { questionId: string; message: string }[]
+    }
+
+    // A box nobody ticked is a box nobody ticked, whether it arrives as false
+    // or does not arrive at all. Both have to reach the same answer, or the
+    // server contradicts the browser about the same form.
+    expect(
+      body.errors.find((error) => error.questionId === "over18")?.message,
+    ).toBe("Você só pode se inscrever se for maior de 18 anos")
+  })
+
+  it("gives an explicitly refused age the same answer", async () => {
+    const response = await run({ ...valid, over18: false })
+
+    const body = (await response.json()) as {
+      errors: { questionId: string; message: string }[]
+    }
+
+    expect(
+      body.errors.find((error) => error.questionId === "over18")?.message,
+    ).toBe("Você só pode se inscrever se for maior de 18 anos")
+  })
+
   it("blames no question for a body it cannot read", async () => {
     const response = await run("not json")
 

@@ -35,9 +35,15 @@ export const registerUserFieldsSchema = zod.object({
   email: zod.string().email(),
   password: zod.string().min(8),
   confirmPassword: zod.string(),
-  over18: zod.boolean().refine((val) => val, {
-    message: "Você só pode se inscrever se for maior de 18 anos",
-  }),
+  // A box nobody ticked may arrive as false or not arrive at all. Reading the
+  // second as the first is what lets the refine's own message through, instead
+  // of zod refusing it as missing before ever reaching the rule.
+  over18: zod.preprocess(
+    (value) => value ?? false,
+    zod.boolean().refine((val) => val, {
+      message: "Você só pode se inscrever se for maior de 18 anos",
+    }),
+  ),
   captchaToken: zod
     .string()
     .min(1, "Por favor, complete a verificação de segurança"),
