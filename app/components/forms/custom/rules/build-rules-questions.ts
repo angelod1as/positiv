@@ -20,7 +20,9 @@ export type RulesDeal = {
 
 // Equal lengths and every entry present is enough to know the order is an exact
 // permutation: a duplicate or a stray entry would have to push a real one out,
-// and then the membership check fails.
+// and then the membership check fails. That argument needs `all` to be free of
+// duplicates itself, which holds for both callers — object keys and a question's
+// own answers.
 const covers = (order: string[], all: string[]) =>
   order.length === all.length && all.every((entry) => order.includes(entry))
 
@@ -97,7 +99,7 @@ export function buildRulesQuestions(deal?: RulesDeal): Question[] {
   return asked.map(([id, question]) => ({
     id,
     prompt: question.question,
-    input: toInput(question.answers, usable ? deal?.options[id] : undefined),
+    input: toInput(question.answers, usable ? deal?.options?.[id] : undefined),
     schema: schemas[id],
   }))
 }
