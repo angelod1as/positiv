@@ -1338,6 +1338,64 @@ Expected: only the three files listed above as not-copy.
 
 ---
 
+## Task 12b: Settle the inscrição / candidatura / cadastro split
+
+Three different things are called "inscrição" today, and the product means
+three different things by them. Now that the strings sit grouped by area, the
+split is visible for the first time — do it in one pass, before close-out.
+
+**The three buckets:**
+
+1. **Signing up to the site → "cadastro"** (and derivatives: *cadastrar-se*,
+   *se cadastrar*). Currently one string: `app/copy/auth.ts` — the register
+   form's over-18 checkbox, "Você só pode se inscrever se for maior de 18 anos".
+   Sweep for others; the register/login/confirm surfaces are where they hide.
+
+2. **Applying to an event → "candidatura"** (and *candidatar-se*, *se
+   candidatar*). Main renamed this product-wide but the rename is **incomplete** —
+   nine strings still say "inscrição":
+   - `app/copy/homepage.ts` — the CTA banner body, twice in one sentence
+   - `app/copy/events.ts` — the rules text closing line; the rules intro, twice;
+     `rulesDialogCopy.title` ("Confirmar inscrição"); the dialog's confirmation
+     sentence; `eventCardCopy.comingSoon`
+   - `app/copy/dashboard.ts` — the social-entries paragraph
+   - `app/copy/admin/events.ts` — the rejected-participants count
+   Note `eventCardCopy.comingSoon` and `eventCardCopy.scheduled` are both event
+   card buttons for an event you cannot apply to yet; both belong in this bucket.
+
+3. **Newsletter subscription → stays "inscrição"**. Main decided this
+   deliberately in `revert(newsletter): keep the Listmonk copy on "inscrição"`.
+   Do **not** touch `app/copy/newsletter.ts` or `dashboardCopy`'s
+   newsletter-failure line. Subscribing to a mailing list is not applying to
+   anything, and Listmonk's own wording follows it.
+
+**Method:** edit values in `app/copy/**` only. No component should need touching —
+if one does, that string escaped centralisation and belongs in whichever task
+owns its directory.
+
+**Watch for grammar, not just the noun.** "Se inscreva" → "candidate-se" changes
+verb form and clitic placement; "inscrito" → "candidate"; "novas inscrições
+abrirem" → "novas candidaturas abrirem". Read each sentence whole after editing;
+a find-and-replace produces Portuguese nobody would write.
+
+**Verification:** `pnpm lint` and `pnpm test:unit`. Existing tests that pin these
+strings will fail — that is the point; update each assertion to the new wording
+rather than loosening it. Then re-run the sweep:
+
+```bash
+grep -rn "nscri\|nscre" app/copy/
+```
+
+Expected: hits only in `newsletter.ts` and the one newsletter line in
+`dashboard.ts`.
+
+**E2E:** several specs match on these strings — `e2e/fixtures/auth.ts`,
+`e2e/tests/auth/setup.ts`, `e2e/pages/EventApplicationPage.ts`. Update them in
+the same commit, since the E2E suite only runs in Task 13 and a stale matcher
+would not surface until then.
+
+---
+
 ## Task 13: Close out
 
 **Files:**
