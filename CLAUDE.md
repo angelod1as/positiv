@@ -479,6 +479,27 @@ Order of operations:
 - ⁠Use imperative mood for descriptions (e.g., "Add feature" not "Added feature")
 - ⁠Include breaking changes with ⁠ BREAKING CHANGE: ⁠ in footer when applicable
 
+## Site Copy
+
+- **Every user-visible string lives in `app/copy/`**, one module per route or
+  domain area — `homepage.ts`, `events.ts`, `auth.ts`, and so on. Changing text
+  means editing one file there, never a component.
+- **Formatting is Markdown inside the string**, rendered through
+  `~/components/atoms/copy/copy`. Copy is never JSX, so every file in `app/copy/`
+  is a `.ts`.
+- **`react/jsx-no-literals` guards the migrated directories.** The block is 4b in
+  `eslint.config.js` and fails the build if a literal reappears between JSX tags
+  in one of them. It cannot see string props (`ignoreProps: true`), the
+  punctuation in `allowedStrings`, or a literal inside a JSX expression container
+  — so green lint is not proof a directory is finished. Read the props and the
+  ternaries by eye.
+- **Some Portuguese is not copy and must never move here**: the values in
+  `app/lib/constants/constants.ts` are written to the database, the Listmonk list
+  name in `app/business/admin/event-listmonk-sync.server.ts` is an external
+  label, and the news items under `news-dialog/items/` have their own workflow.
+- Full convention, including the Markdown traps and the `as const satisfies`
+  rules: `app/copy/README.md`.
+
 ## News Dialog Updates
 
 When making changes to the application that affect users (new features, bug
