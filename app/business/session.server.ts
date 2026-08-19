@@ -2,7 +2,12 @@ import { createCookie, createCookieSessionStorage } from "react-router"
 import { ENV } from "varlock/env"
 
 type RulesSessionData = {
-  rulesCorrect: boolean
+  /**
+   * The events whose quiz this browser has passed. A single flag used to stand
+   * here, and passing one event's quiz opened every other event's application
+   * for as long as the cookie lived.
+   */
+  rulesCorrect: string[]
 }
 
 type SessionFlashData = {
