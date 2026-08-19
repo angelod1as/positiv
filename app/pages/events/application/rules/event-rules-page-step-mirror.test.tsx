@@ -1,6 +1,13 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, useNavigate, useSearchParams } from "react-router"
+import {
+  Link,
+  MemoryRouter,
+  Route,
+  Routes,
+  useNavigate,
+  useSearchParams,
+} from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 import EventRulesPage from "./event-rules-page"
@@ -56,6 +63,30 @@ const answer = async (user: ReturnType<typeof userEvent.setup>) => {
   return id as string
 }
 
+
+const seedAnsweredQuiz = (openOn: string) => {
+  const quiz = getRulesFormQuestions()
+
+  const answers = Object.fromEntries(
+    Object.entries(quiz).map(([id, question]) => [
+      id,
+      question.answers.correct.length === 1
+        ? question.answers.correct[0]
+        : question.answers.correct,
+    ]),
+  )
+
+  sessionStorage.setItem(
+    `form-runtime:rules:${EVENT}`,
+    JSON.stringify({
+      v: 1,
+      answers,
+      currentStepId: openOn,
+      firstTryCorrect: {},
+    }),
+  )
+}
+
 const renderQuiz = () =>
   render(
     <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
@@ -102,5 +133,39 @@ describe("the rules quiz and the question mirrored in the url", () => {
 
     expect(onScreen()).toBe(second)
     expect(second).not.toBe(first)
+  })
+
+  it("opens on the question a link names", async () => {
+    const user = userEvent.setup()
+
+    // A link into the middle of the quiz is the reader asking for that
+    // question, even though following it is a push like any other.
+    const ids = Object.keys(getRulesFormQuestions())
+    const stored = ids[0]
+    const asked = ids[1]
+
+    seedAnsweredQuiz(stored)
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Link to={`/dashboard/${EVENT}/regras?q=${asked}`}>deep</Link>
+            }
+          />
+          <Route
+            path="/dashboard/:id/regras"
+            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+            element={<EventRulesPage {...({ params: { id: EVENT } } as any)} />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole("link", { name: "deep" }))
+
+    expect(onScreen()).toBe(asked)
   })
 })
