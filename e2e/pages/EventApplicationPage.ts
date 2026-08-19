@@ -2,6 +2,10 @@ import { type Locator, type Page, expect } from "@playwright/test"
 import { getRulesFormQuestions } from "../../app/components/forms/custom/rules/rules-questions"
 import { BasePage } from "./BasePage"
 
+// Long enough that waiting on the quiz costs a handful of reads rather than a
+// tight loop of them, short enough to be invisible against a screen change.
+const POLL_INTERVAL = 50
+
 export class EventApplicationPage extends BasePage {
   // Rules page elements
   readonly rulesTitle: Locator
@@ -94,6 +98,7 @@ export class EventApplicationPage extends BasePage {
 
       if (showing && showing === mirrored) return showing
 
+      await this.page.waitForTimeout(POLL_INTERVAL)
       showing = await this.questionOnScreen()
     }
 
@@ -141,22 +146,21 @@ export class EventApplicationPage extends BasePage {
   }
 
   /**
-   * Waits out the answer, and says whether the quiz moved. A save the server
-   * refuses sends it back to the question it names, and the url mirrors the
-   * question a beat later — one that lands after the quiz has already moved on
-   * puts it back where it was. So an answer does not always advance, and the
-   * caller answers again rather than treating a screen that stayed as a fault.
+   * Waits out the answer. A save the server refuses sends the quiz back to the
+   * question it names, so an answer does not always advance — a screen that
+   * stayed is answered again by the walk rather than treated as a fault, which
+   * is why nothing here reports a verdict.
    */
-  private async quizMovedOn(question: string): Promise<boolean> {
+  private async waitOutAnswer(question: string): Promise<void> {
     const stopAt = Date.now() + 5000
 
     while (Date.now() < stopAt) {
-      if (!this.page.url().includes("/regras")) return true
+      if (!this.page.url().includes("/regras")) return
 
-      if ((await this.questionOnScreen()) !== question) return true
+      if ((await this.questionOnScreen()) !== question) return
+
+      await this.page.waitForTimeout(POLL_INTERVAL)
     }
-
-    return false
   }
 
   async answerCurrentQuestionCorrectly(): Promise<string> {
@@ -170,7 +174,7 @@ export class EventApplicationPage extends BasePage {
 
     await this.markCorrectAnswers(question.answers)
     await this.continueButton.click({ timeout: 5000 }).catch(() => {})
-    await this.quizMovedOn(id)
+    await this.waitOutAnswer(id)
 
     return id
   }
