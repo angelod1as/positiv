@@ -15,6 +15,10 @@ import { asAnsweredValues, validateQuestion } from "./validate-question"
 
 const COMMIT_FAILURE_MESSAGE = "Não foi possível salvar agora. Tente novamente."
 
+// Shared so that a caller with no data to give does not hand the hook a new
+// object on every render, which would sink every memo that reads it.
+const NO_DATA: Record<string, unknown> = {}
+
 type UseFormRuntimeOptions = {
   questions: Question[]
   flow: Flow
@@ -68,7 +72,7 @@ function stepOwning(
 export function useFormRuntime({
   questions,
   flow,
-  data = {},
+  data = NO_DATA,
   persistence,
   stepId,
 }: UseFormRuntimeOptions) {
