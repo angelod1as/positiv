@@ -17,6 +17,9 @@ const toOptions = ({ correct, incorrect }: Answers) =>
     value: answer,
   }))
 
+// Equal lengths and every id present is enough to know the order is an exact
+// permutation: a duplicate or a stray id would have to push a real one out, and
+// then the membership check fails.
 const covers = (order: string[], ids: string[]) =>
   order.length === ids.length && ids.every((id) => order.includes(id))
 

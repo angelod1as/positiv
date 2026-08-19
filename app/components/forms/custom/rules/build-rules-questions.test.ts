@@ -242,4 +242,16 @@ describe("buildRulesQuestions with a given order", () => {
       Object.keys(getRulesFormQuestions()).sort(),
     )
   })
+
+  // Reusing the part of a stale order that still fits would keep most of the
+  // run in place, which reads as the order having been honoured. It is dealt
+  // again instead, whole.
+  it("deals the whole quiz again rather than keeping the part that still fits", () => {
+    const stale = [...Object.keys(getRulesFormQuestions())].reverse()
+    const withGhost = [...stale.slice(0, -1), "long-gone"]
+
+    const dealt = buildRulesQuestions(withGhost).map((question) => question.id)
+
+    expect(dealt.slice(0, stale.length - 1)).not.toEqual(stale.slice(0, -1))
+  })
 })
