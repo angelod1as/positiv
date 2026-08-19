@@ -15,6 +15,14 @@ import EventRulesPage from "./event-rules-page"
 vi.mock("~/business/auth/auth.server", () => ({ getUserContext: vi.fn() }))
 vi.mock("~/kysely-db", () => ({ kyselyDb: { selectFrom: vi.fn() } }))
 
+/**
+ * Three of these tests wait up to five seconds inside themselves, which is
+ * exactly vitest's default budget for a whole test — so the test died before
+ * its own wait could finish, and a loaded machine failed it every time. The
+ * last one waits twice.
+ */
+const WAITS_OUT_A_SLOW_RENDER = 20_000
+
 const EVENT = "11111111-1111-4111-8111-111111111111"
 
 let mirrored = ""
@@ -137,7 +145,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
 
     await waitFor(() => expect(onScreen()).toBe(second), { timeout: 5000 })
     expect(second).not.toBe(first)
-  })
+  }, WAITS_OUT_A_SLOW_RENDER)
 
   it("opens on the question a link names", async () => {
     const user = userEvent.setup()
@@ -171,7 +179,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
     await user.click(screen.getByRole("link", { name: "deep" }))
 
     await waitFor(() => expect(onScreen()).toBe(asked), { timeout: 5000 })
-  })
+  }, WAITS_OUT_A_SLOW_RENDER)
 
   it("does not snap back to where it opened after the reader goes back", async () => {
     const user = userEvent.setup()
@@ -218,5 +226,5 @@ describe("the rules quiz and the question mirrored in the url", () => {
     // and this file renders the whole rules text on every step, which is slow
     // enough under a loaded machine to outlast the default second.
     await waitFor(() => expect(onScreen()).not.toBe(earlier), { timeout: 5000 })
-  })
+  }, WAITS_OUT_A_SLOW_RENDER)
 })

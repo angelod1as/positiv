@@ -33,6 +33,7 @@ const EVENT_VIEW = (id: string) => `${DASHBOARD}/${id}`
 const EVENT_RULES = (id: string) => `${EVENT_VIEW(id)}/regras`
 const EVENT_DATA = (id: string) => `${EVENT_VIEW(id)}/dados`
 const EVENT_RULES_QUIZ_CHECK = (id: string) => `/api/events/${id}/rules-quiz`
+const REGISTER_COMMIT = "/api/auth/register"
 
 //// ADMIN
 const ADMIN_DASHBOARD = "/admin"
@@ -82,6 +83,7 @@ const paths = {
     LOGON_CONFIRM,
     LOGON_EMAIL_MESSAGE,
     REGISTRATION_ERROR,
+    REGISTER_COMMIT,
   },
   dash: {
     DASHBOARD,

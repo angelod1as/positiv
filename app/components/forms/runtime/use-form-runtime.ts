@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ENV } from "varlock/env"
-import type { CommitResult } from "./commit.types"
+import type { CommitResult } from "~types/forms/commit.types"
 import type { Flow, Step, StepId } from "./flow.types"
 import {
   clearRuntimeState,
@@ -10,7 +10,7 @@ import {
   writeRuntimeState,
 } from "./persistence"
 import type { Answers, Question } from "./question.types"
-import { validateQuestion } from "./validate-question"
+import { asAnsweredValues, validateQuestion } from "./validate-question"
 
 const COMMIT_FAILURE_MESSAGE = "Não foi possível salvar agora. Tente novamente."
 
@@ -218,10 +218,14 @@ export function useFormRuntime({
     const origin = stepRef.current
     const pending = questionsForStep(flow.steps[origin], questionsById)
 
+    // A refine may read an answer belonging to another question, so it is
+    // handed the run as those questions read it rather than raw.
+    const values = asAnsweredValues(questionsById.values(), answersRef.current)
+
     const failures: Record<string, string> = {}
     for (const question of pending) {
       const value = answersRef.current[question.id]
-      const result = validateQuestion(question, value)
+      const result = validateQuestion(question, value, values)
 
       // Only a real attempt counts. Advancing with nothing filled in is a
       // misclick, not a wrong answer, and must not sink a branch that keys

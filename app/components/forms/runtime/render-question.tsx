@@ -28,6 +28,31 @@ export const renderQuestion: RenderQuestion = ({
         <Input
           {...shared}
           type="text"
+          placeholder={input.placeholder}
+          value={asText(value)}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      )
+
+    case "email":
+      return (
+        <Input
+          {...shared}
+          type="email"
+          autoComplete="email"
+          placeholder={input.placeholder}
+          value={asText(value)}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      )
+
+    case "password":
+      return (
+        <Input
+          {...shared}
+          type="password"
+          autoComplete={input.autoComplete}
+          placeholder={input.placeholder}
           value={asText(value)}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -39,6 +64,7 @@ export const renderQuestion: RenderQuestion = ({
           {...shared}
           type="number"
           className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          placeholder={input.placeholder}
           value={asText(value)}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -58,6 +84,7 @@ export const renderQuestion: RenderQuestion = ({
       return (
         <TextArea
           {...shared}
+          placeholder={input.placeholder}
           value={asText(value)}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -131,5 +158,17 @@ export const renderQuestion: RenderQuestion = ({
         </div>
       )
     }
+
+    case "boolean":
+      return (
+        <Label className={choiceClassName}>
+          <Checkbox
+            id={question.id}
+            checked={value === true}
+            onChange={(event) => onChange(event.target.checked)}
+          />
+          <span>{question.prompt}</span>
+        </Label>
+      )
   }
 }

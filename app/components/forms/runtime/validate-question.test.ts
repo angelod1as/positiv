@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
 import type { Question } from "./question.types"
 import { validateQuestion } from "./validate-question"
@@ -49,6 +49,17 @@ const multiQuestion: Question = {
     }),
 }
 
+const confirmQuestion: Question = {
+  id: "confirmPassword",
+  prompt: "Confirme a senha",
+  input: { kind: "text" },
+  schema: zod.string().min(1, { message: "Resposta obrigatória" }),
+  refine: (value, answers) =>
+    value === answers.password
+      ? null
+      : { ok: false, message: "As senhas não são iguais" },
+}
+
 describe("validateQuestion", () => {
   it("accepts a value that satisfies the question's schema", () => {
     expect(validateQuestion(textQuestion, "Angelo Dias")).toEqual({ ok: true })
@@ -90,5 +101,74 @@ describe("validateQuestion", () => {
     const result = validateQuestion(multiQuestion, [])
 
     expect(result).toEqual({ ok: false, message: "Resposta obrigatória" })
+  })
+  it("passes a refine that agrees with the other answers", () => {
+    const result = validateQuestion(confirmQuestion, "segredo123", {
+      password: "segredo123",
+    })
+
+    expect(result).toEqual({ ok: true })
+  })
+
+  it("fails with the refine's message when the answers disagree", () => {
+    const result = validateQuestion(confirmQuestion, "outra", {
+      password: "segredo123",
+    })
+
+    expect(result).toEqual({ ok: false, message: "As senhas não são iguais" })
+  })
+
+  it("does not reach the refine when the schema already failed", () => {
+    const refine = vi.fn()
+    const result = validateQuestion({ ...confirmQuestion, refine }, "", {
+      password: "segredo123",
+    })
+
+    expect(result).toEqual({ ok: false, message: "Resposta obrigatória" })
+    expect(refine).not.toHaveBeenCalled()
+  })
+  it("reads an untouched boolean as false, so its own message is what shows", () => {
+    const over18: Question = {
+      id: "over18",
+      prompt: "Sou maior de 18 anos",
+      input: { kind: "boolean" },
+      schema: zod.boolean().refine((value) => value, {
+        message: "Você só pode se inscrever se for maior de 18 anos",
+      }),
+    }
+
+    expect(validateQuestion(over18, undefined)).toEqual({
+      ok: false,
+      message: "Você só pode se inscrever se for maior de 18 anos",
+    })
+    expect(validateQuestion(over18, false)).toEqual({
+      ok: false,
+      message: "Você só pode se inscrever se for maior de 18 anos",
+    })
+    expect(validateQuestion(over18, true)).toEqual({ ok: true })
+  })
+
+  it("hands the refine the same false, so both rules read the box alike", () => {
+    const seen: unknown[] = []
+    const dependent: Question = {
+      id: "mktEmails",
+      prompt: "Quero receber novidades",
+      input: { kind: "boolean" },
+      schema: zod.boolean(),
+      refine: (value) => {
+        seen.push(value)
+        return null
+      },
+    }
+
+    expect(validateQuestion(dependent, undefined)).toEqual({ ok: true })
+    expect(seen).toEqual([false])
+  })
+
+  it("leaves an untouched question of any other kind missing", () => {
+    expect(validateQuestion(textQuestion, undefined)).toEqual({
+      ok: false,
+      message: "Campo obrigatório",
+    })
   })
 })

@@ -127,4 +127,86 @@ describe("renderQuestion", () => {
 
     expect(screen.getByRole("radiogroup")).toHaveAccessibleName("Pergunta")
   })
+  it("draws an e-mail field that reports what was typed", async () => {
+    const user = userEvent.setup()
+    const onChange = draw({ kind: "email" })
+
+    const field = screen.getByLabelText("Pergunta")
+    expect(field).toHaveAttribute("type", "email")
+
+    await user.type(field, "a")
+    expect(onChange).toHaveBeenCalledWith("a")
+  })
+
+  it("draws a masked password field that reports what was typed", async () => {
+    const user = userEvent.setup()
+    const onChange = draw({ kind: "password", autoComplete: "new-password" })
+
+    const field = screen.getByLabelText("Pergunta")
+    expect(field).toHaveAttribute("type", "password")
+    expect(field).toHaveAttribute("autocomplete", "new-password")
+
+    await user.type(field, "a")
+    expect(onChange).toHaveBeenCalledWith("a")
+  })
+  it("draws a single checkbox labelled by the prompt, answering with a boolean", async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+
+    render(
+      <>
+        {renderQuestion({
+          question: {
+            id: "over18",
+            prompt: "Sou maior de 18 anos",
+            input: { kind: "boolean" },
+            schema: zod.boolean(),
+          },
+          value: undefined,
+          onChange,
+        })}
+      </>,
+    )
+
+    const box = screen.getByRole("checkbox", { name: "Sou maior de 18 anos" })
+    expect(box).not.toBeChecked()
+
+    await user.click(box)
+    expect(onChange).toHaveBeenCalledWith(true)
+  })
+
+  it("shows a boolean already answered as checked", () => {
+    render(
+      <>
+        {renderQuestion({
+          question: {
+            id: "over18",
+            prompt: "Sou maior de 18 anos",
+            input: { kind: "boolean" },
+            schema: zod.boolean(),
+          },
+          value: true,
+          onChange: vi.fn(),
+        })}
+      </>,
+    )
+
+    expect(
+      screen.getByRole("checkbox", { name: "Sou maior de 18 anos" }),
+    ).toBeChecked()
+  })
+  it("carries a placeholder through to the control", () => {
+    draw({ kind: "email", placeholder: "email@exemplo.com" })
+
+    expect(screen.getByLabelText("Pergunta")).toHaveAttribute(
+      "placeholder",
+      "email@exemplo.com",
+    )
+  })
+
+  it("draws no placeholder when the question asked for none", () => {
+    draw({ kind: "text" })
+
+    expect(screen.getByLabelText("Pergunta")).not.toHaveAttribute("placeholder")
+  })
 })

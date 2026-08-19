@@ -8,7 +8,10 @@ import {
   getBaseUrl,
   getRunId,
   getServerPort,
+  isRunScopedEmail,
+  runEmail,
   runEmailPattern,
+  runEmailPrefix,
   runEventTitle,
   runEventTitlePattern,
   runEventTitlePrefix,
@@ -151,5 +154,24 @@ describe('run-scoped event titles against the admin form', () => {
     expect(() => runEventTitle('A label so long that the admin form will never accept it')).toThrow(
       /50/
     )
+  })
+})
+
+describe('isRunScopedEmail', () => {
+  it('recognises an address the suite handed out', () => {
+    expect(isRunScopedEmail(runEmail('registro'))).toBe(true)
+  })
+
+  it('refuses a real address, however plain', () => {
+    expect(isRunScopedEmail('pessoa@example.com')).toBe(false)
+    expect(isRunScopedEmail('admin@example.com')).toBe(false)
+    expect(isRunScopedEmail('test-someone@gmail.com')).toBe(false)
+    expect(isRunScopedEmail(undefined)).toBe(false)
+  })
+})
+
+describe('runEmailPrefix', () => {
+  it('is what every address of this run starts with', () => {
+    expect(runEmail('registro').startsWith(runEmailPrefix())).toBe(true)
   })
 })

@@ -210,6 +210,105 @@ describe("useFormRuntime validation gating", () => {
   })
 })
 
+describe("useFormRuntime cross-question validation", () => {
+  const crossQuestions: Question[] = [
+    question("password"),
+    {
+      ...question("confirmPassword"),
+      refine: (value, answers) =>
+        value === answers.password
+          ? null
+          : { ok: false, message: "As senhas não são iguais" },
+    },
+  ]
+
+  const screenFlow: Flow = {
+    start: "screen",
+    steps: {
+      screen: { kind: "screen", ids: ["password", "confirmPassword"] },
+    },
+    next: () => "done",
+  }
+
+  it("blocks an advance when a refine disagrees with another answer", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: crossQuestions, flow: screenFlow }),
+    )
+
+    act(() => {
+      result.current.answer("password", "segredo123")
+      result.current.answer("confirmPassword", "outra")
+    })
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.errors.confirmPassword).toBe(
+      "As senhas não são iguais",
+    )
+    expect(result.current.isDone).toBe(false)
+  })
+
+  it("shows a refine the other answers as their own questions read them", async () => {
+    const seen: unknown[] = []
+    const booleanPair: Question[] = [
+      {
+        id: "agree",
+        prompt: "Estou de acordo",
+        input: { kind: "boolean" },
+        schema: zod.boolean(),
+      },
+      {
+        id: "mktEmails",
+        prompt: "Quero receber novidades",
+        input: { kind: "boolean" },
+        schema: zod.boolean(),
+        refine: (_value, answers) => {
+          seen.push(answers.agree)
+          return null
+        },
+      },
+    ]
+
+    const screenFlow: Flow = {
+      start: "screen",
+      steps: { screen: { kind: "screen", ids: ["agree", "mktEmails"] } },
+      next: () => "done",
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: booleanPair, flow: screenFlow }),
+    )
+
+    // Nobody ticked either box. The refine must read the other one as false,
+    // which is what its own question's rules say it is.
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(seen).toEqual([false])
+  })
+
+  it("advances once the refine agrees", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: crossQuestions, flow: screenFlow }),
+    )
+
+    act(() => {
+      result.current.answer("password", "segredo123")
+      result.current.answer("confirmPassword", "segredo123")
+    })
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.errors.confirmPassword).toBeUndefined()
+    expect(result.current.isDone).toBe(true)
+  })
+})
+
 describe("useFormRuntime content steps", () => {
   const contentFlow: Flow = {
     start: "intro",

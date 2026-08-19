@@ -55,6 +55,19 @@ export function runEmailPattern(): string {
   return `test-${getRunId()}-%@example.com`
 }
 
+export function runEmailPrefix(): string {
+  return `test-${getRunId()}-`
+}
+
+/**
+ * Whether an address is one the suite handed out. Needed because an account
+ * signed up through the form carries no metadata to be marked with — the app
+ * created it, not the fixtures — so the address is all there is to go on.
+ */
+export function isRunScopedEmail(email: string | undefined | null): boolean {
+  return !!email && email.startsWith('test-') && email.endsWith('@example.com')
+}
+
 export function getServerPort(): number {
   const configured = process.env.E2E_PORT
 

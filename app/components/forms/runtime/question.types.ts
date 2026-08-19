@@ -6,13 +6,29 @@ export type Option = {
 }
 
 export type InputSpec =
-  | { kind: "text" }
-  | { kind: "textnumber" }
-  | { kind: "textarea" }
+  | { kind: "text"; placeholder?: string }
+  | { kind: "email"; placeholder?: string }
+  /**
+   * `autoComplete` is what tells a password manager whether it is looking at a
+   * sign-in or at a new account, so it belongs to the question, not the kind.
+   */
+  | {
+      kind: "password"
+      autoComplete?: "current-password" | "new-password"
+      placeholder?: string
+    }
+  | { kind: "textnumber"; placeholder?: string }
+  | { kind: "textarea"; placeholder?: string }
   | { kind: "date" }
   | { kind: "select"; options: Option[] }
   | { kind: "radio"; options: Option[] }
   | { kind: "checkbox"; options: Option[] }
+  /**
+   * One box, answered with `true` or `false`. Distinct from `checkbox`, which
+   * is a list of options answered with `string[]`. The prompt is the text
+   * beside the box, so the presentation leaves the label to the renderer.
+   */
+  | { kind: "boolean" }
 
 export type Question = {
   id: string
@@ -20,6 +36,12 @@ export type Question = {
   help?: string
   input: InputSpec
   schema: ZodType
+  /**
+   * Runs after `schema` passes, with every answer in the run. For a question
+   * whose validity depends on another one — confirming a password, closing a
+   * date range. Returning null means there is nothing to say.
+   */
+  refine?: (value: unknown, answers: Answers) => ValidationResult | null
 }
 
 export type Answers = Record<string, unknown>

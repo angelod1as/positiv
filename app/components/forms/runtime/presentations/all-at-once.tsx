@@ -2,6 +2,7 @@ import { Button } from "~/components/atoms/button/button"
 import { Label } from "~/components/ui/label"
 import { Error } from "~/components/forms/base/error"
 import type { Question } from "~/components/forms/runtime/question.types"
+import { ownsItsPrompt } from "./owns-its-prompt"
 import type { Presentation } from "./presentation.types"
 
 /**
@@ -39,7 +40,7 @@ export const AllAtOnce: Presentation = ({
 
       return (
         <div key={question.id} className="flex flex-col gap-2">
-          {choice ? (
+          {ownsItsPrompt(question) ? null : choice ? (
             <span id={promptId} className="mb-2 text-sm font-medium">
               {question.prompt}
             </span>

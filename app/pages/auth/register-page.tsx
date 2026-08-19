@@ -1,7 +1,15 @@
 import { Turnstile } from "@marsidev/react-turnstile"
-import { useLoaderData } from "react-router"
-import { formAction } from "remix-forms"
+import { useCallback, useMemo } from "react"
+import { useLoaderData, useNavigate } from "react-router"
 import { Link } from "~/components/atoms/link/link"
+import { buildRegisterFlow } from "~/components/forms/custom/register/build-register-flow"
+import { buildRegisterQuestions } from "~/components/forms/custom/register/build-register-questions"
+import type { CommitResult } from "~types/forms/commit.types"
+import { FormRunner } from "~/components/forms/runtime/form-runner"
+import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
+import type { RenderQuestion } from "~/components/forms/runtime/presentations/presentation.types"
+import type { Answers } from "~/components/forms/runtime/question.types"
+import { renderQuestion as defaultRenderQuestion } from "~/components/forms/runtime/render-question"
 import {
   Card,
   CardContent,
@@ -10,18 +18,14 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
-import paths from "~/lib/paths"
-import { cn } from "~/lib/utils"
-
-import { getContext, registerUser } from "~/business/auth/auth.server"
-import { registerUserSchema } from "~/business/common"
-import { SchemaForm } from "~/components/forms/base/schema-form"
 import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
 import { createMetaArray } from "~/lib/helpers/meta"
+import paths from "~/lib/paths"
+import { cn } from "~/lib/utils"
 import type { Route } from "./+types/register-page"
 
 const {
-  auth: { LOGIN, LOGON_EMAIL_MESSAGE },
+  auth: { LOGIN, LOGON_EMAIL_MESSAGE, REGISTER_COMMIT },
 } = paths
 
 export function meta({}: Route.MetaArgs) {
@@ -33,20 +37,60 @@ export const loader = async () => {
   return { turnstileSiteKey: siteKey }
 }
 
-export const action = async ({ request, params }: Route.ActionArgs) => {
-  const context = await getContext(request, params)
-
-  return formAction({
-    request,
-    schema: registerUserSchema,
-    mutation: registerUser,
-    successPath: LOGON_EMAIL_MESSAGE,
-    context,
-  })
-}
-
 const RegisterPage = ({}: Route.ComponentProps) => {
   const { turnstileSiteKey } = useLoaderData<typeof loader>()
+  const navigate = useNavigate()
+
+  const questions = useMemo(() => buildRegisterQuestions(), [])
+
+  const commit = useCallback(async (answers: Answers): Promise<CommitResult> => {
+    const response = await fetch(REGISTER_COMMIT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(answers),
+    })
+
+    return (await response.json()) as CommitResult
+  }, [])
+
+  const flow = useMemo(
+    () => buildRegisterFlow(questions, commit),
+    [questions, commit],
+  )
+
+  const renderQuestion = useCallback<RenderQuestion>(
+    (args) => {
+      if (args.question.id !== "captchaToken") return defaultRenderQuestion(args)
+
+      return (
+        <>
+          <Turnstile
+            siteKey={turnstileSiteKey}
+            options={{ appearance: "always" }}
+            onSuccess={(token) => args.onChange(token)}
+            onExpire={() => args.onChange("")}
+            onError={() => args.onChange("")}
+          />
+          {/* Mirrors the token the widget handed over, so the e2e run can see
+              that it arrived — and hand one over itself on a run that cannot
+              reach Cloudflare. Hidden through the attribute rather than
+              type="hidden": React only tracks changes on text inputs, so a
+              hidden-typed one would take a value without ever reporting it. */}
+          <input
+            hidden
+            // Carries the question's id so that the label the presentation
+            // draws for it points at a real control rather than at nothing.
+            id={args.question.id}
+            type="text"
+            name="captchaToken"
+            value={typeof args.value === "string" ? args.value : ""}
+            onChange={(event) => args.onChange(event.target.value)}
+          />
+        </>
+      )
+    },
+    [turnstileSiteKey],
+  )
 
   return (
     <div className={cn("flex flex-col gap-6")}>
@@ -61,51 +105,17 @@ const RegisterPage = ({}: Route.ComponentProps) => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <SchemaForm
-            schema={registerUserSchema}
-            labels={{
-              password: "Senha",
-              email: "E-mail",
-              confirmPassword: "Confirme a senha",
-              over18: "Sou maior de 18 anos",
+          <FormRunner
+            questions={questions}
+            flow={flow}
+            presentation={AllAtOnce}
+            renderQuestion={renderQuestion}
+            // No persistence, deliberately: the answers include two passwords,
+            // and persistence writes them to sessionStorage.
+            onDone={() => {
+              void navigate(LOGON_EMAIL_MESSAGE)
             }}
-            placeholders={{ email: "email@exemplo.com", password: "senha123" }}
-            inputTypes={{
-              email: "email",
-              password: "password",
-              confirmPassword: "password",
-              over18: "checkbox",
-            }}
-            hiddenFields={["captchaToken"]}
-            pendingButtonLabel="Entrando..."
-          >
-            {({ Field, Button, Errors, setValue }) => (
-              <>
-                <Field name="email" />
-                <Field name="password" />
-                <Field name="confirmPassword" />
-                <Field name="over18" />
-
-                <div className="flex flex-col gap-2">
-                  <Turnstile
-                    siteKey={turnstileSiteKey}
-                    options={{
-                      appearance: "always",
-                    }}
-                    onSuccess={(token) => {
-                      setValue("captchaToken", token)
-                    }}
-                    onExpire={() => setValue("captchaToken", "")}
-                    onError={() => setValue("captchaToken", "")}
-                  />
-                  <Field name="captchaToken" />
-                </div>
-
-                <Errors />
-                <Button />
-              </>
-            )}
-          </SchemaForm>
+          />
         </CardContent>
         <CardFooter>
           <p className="text-sm text-muted-foreground">

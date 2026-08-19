@@ -24,6 +24,7 @@ export default [
     "routes/api.process-pre-opening-reminders.ts",
   ),
   route("/api/events/:id/rules-quiz", "pages/api/events/verify-rules-quiz.ts"),
+  route("/api/auth/register", "pages/api/auth/register.ts"),
   route(
     "/api/admin/send-registration-limit-email",
     "pages/api/admin/send-registration-limit-email.ts",

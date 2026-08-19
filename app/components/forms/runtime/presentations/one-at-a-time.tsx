@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/base/error"
+import { ownsItsPrompt } from "./owns-its-prompt"
 import type { Presentation } from "./presentation.types"
 
 /**
@@ -76,9 +77,11 @@ export const OneAtATime: Presentation = ({
 
       {questions.map((question) => (
         <div key={question.id} className="flex flex-col gap-4">
-          <h2 id={`${question.id}-prompt`} className="text-2xl font-bold">
-            {question.prompt}
-          </h2>
+          {ownsItsPrompt(question) ? null : (
+            <h2 id={`${question.id}-prompt`} className="text-2xl font-bold">
+              {question.prompt}
+            </h2>
+          )}
 
           {question.help ? (
             <p className="text-muted-foreground">{question.help}</p>
@@ -88,7 +91,9 @@ export const OneAtATime: Presentation = ({
             question,
             value: answers[question.id],
             onChange: (value) => onAnswer(question.id, value),
-            labelledBy: `${question.id}-prompt`,
+            labelledBy: ownsItsPrompt(question)
+              ? undefined
+              : `${question.id}-prompt`,
           })}
 
           {errors[question.id] ? (

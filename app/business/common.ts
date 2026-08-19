@@ -31,22 +31,36 @@ export const changePasswordSchema = zod
     path: ["confirm_password"],
   })
 
-export const registerUserSchema = zod
-  .object({
-    email: zod.string().email(),
-    password: zod.string().min(8),
-    confirmPassword: zod.string(),
-    over18: zod.boolean().refine((val) => val, {
+export const registerUserFieldsSchema = zod.object({
+  email: zod.string().email(),
+  password: zod.string().min(8),
+  // Required in its own right, so that a field nobody filled in is reported as
+  // missing rather than as disagreeing with a password it was never compared to.
+  confirmPassword: zod.string().min(1),
+  // A box nobody ticked may arrive as false or not arrive at all. Reading the
+  // second as the first is what lets the refine's own message through, instead
+  // of zod refusing it as missing before ever reaching the rule.
+  over18: zod.preprocess(
+    (value) => value ?? false,
+    zod.boolean().refine((val) => val, {
       message: "Você só pode se inscrever se for maior de 18 anos",
     }),
-    captchaToken: zod
-      .string()
-      .min(1, "Por favor, complete a verificação de segurança"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "As senhas não são iguais",
+  ),
+  captchaToken: zod
+    .string()
+    .min(1, "Por favor, complete a verificação de segurança"),
+})
+
+/** Shared so the browser and the server say the same thing about it. */
+export const PASSWORDS_DIFFER_MESSAGE = "As senhas não são iguais"
+
+export const registerUserSchema = registerUserFieldsSchema.refine(
+  (data) => data.password === data.confirmPassword,
+  {
+    message: PASSWORDS_DIFFER_MESSAGE,
     path: ["confirmPassword"],
-  })
+  },
+)
 
 export const currentProfileSchema = zod.object({
   id: zod.string(),
