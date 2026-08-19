@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { validationMessages } from "~/lib/helpers/validation-messages"
 import { buildRulesQuestions } from "./build-rules-questions"
 import { getRulesFormQuestions } from "./rules-questions"
@@ -183,5 +183,127 @@ describe("buildRulesQuestions schemas", () => {
     expect(messageFor("protection-2", [...correct, incorrect[0]])).toBe(
       "Você selecionou uma ou mais respostas incorretas",
     )
+  })
+})
+
+const deal = (questions: string[]) => ({ questions, options: {} })
+
+describe("buildRulesQuestions with a given order", () => {
+  it("asks the questions in the order it was given", () => {
+    const order = Object.keys(getRulesFormQuestions())
+
+    expect(buildRulesQuestions(deal(order)).map((question) => question.id)).toEqual(
+      order,
+    )
+  })
+
+  it("keeps giving the same order back, where a shuffle would not", () => {
+    const order = Object.keys(getRulesFormQuestions())
+
+    expect(buildRulesQuestions(deal(order)).map((question) => question.id)).toEqual(
+      buildRulesQuestions(deal(order)).map((question) => question.id),
+    )
+  })
+
+  // An order written down by an older shape of the quiz cannot be trusted to
+  // place today's questions, but no question may go missing over it.
+  it("ignores an order that does not name every question", () => {
+    const order = Object.keys(getRulesFormQuestions()).slice(0, 3)
+
+    expect(buildRulesQuestions(deal(order)).map((question) => question.id).sort()).toEqual(
+      Object.keys(getRulesFormQuestions()).sort(),
+    )
+  })
+
+  it("says so when it drops an order, which is otherwise silent", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    buildRulesQuestions(deal(Object.keys(getRulesFormQuestions()).slice(0, 3)))
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[rules]"),
+    )
+
+    consoleError.mockRestore()
+  })
+
+  it("stays quiet about an order it can use", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    buildRulesQuestions(deal(Object.keys(getRulesFormQuestions())))
+
+    expect(consoleError).not.toHaveBeenCalled()
+
+    consoleError.mockRestore()
+  })
+
+  it("ignores an order naming a question the quiz no longer has", () => {
+    const order = [...Object.keys(getRulesFormQuestions()), "long-gone"]
+
+    expect(buildRulesQuestions(deal(order)).map((question) => question.id).sort()).toEqual(
+      Object.keys(getRulesFormQuestions()).sort(),
+    )
+  })
+
+  // Reusing the part of a stale order that still fits would keep most of the
+  // run in place, which reads as the order having been honoured. It is dealt
+  // again instead, whole.
+  it("deals the whole quiz again rather than keeping the part that still fits", () => {
+    const stale = [...Object.keys(getRulesFormQuestions())].reverse()
+    const withGhost = [...stale.slice(0, -1), "long-gone"]
+
+    const dealt = buildRulesQuestions(deal(withGhost)).map((question) => question.id)
+
+    expect(dealt.slice(0, stale.length - 1)).not.toEqual(stale.slice(0, -1))
+  })
+})
+
+describe("buildRulesQuestions with the answers a run was dealt", () => {
+  const ids = () => Object.keys(getRulesFormQuestions())
+
+  const answersOf = (id: string) => {
+    const { answers } = getRulesFormQuestions()[id as keyof ReturnType<typeof getRulesFormQuestions>]
+    return [...answers.correct, ...answers.incorrect]
+  }
+
+  const optionsOf = (questions: ReturnType<typeof buildRulesQuestions>, id: string) => {
+    const input = questions.find((question) => question.id === id)?.input
+    return "options" in (input ?? {})
+      ? (input as { options: { value: string }[] }).options.map(
+          (option) => option.value,
+        )
+      : []
+  }
+
+  it("lays the answers out in the order it was given", () => {
+    const id = ids()[0]
+    const dealt = [...answersOf(id)].sort()
+
+    const built = buildRulesQuestions({
+      questions: ids(),
+      options: { [id]: dealt },
+    })
+
+    expect(optionsOf(built, id)).toEqual(dealt)
+  })
+
+  it("shuffles the answers it was told nothing about", () => {
+    const id = ids()[0]
+
+    const built = buildRulesQuestions({ questions: ids(), options: {} })
+
+    expect(optionsOf(built, id).sort()).toEqual([...answersOf(id)].sort())
+  })
+
+  it("ignores an answer order that does not name every answer", () => {
+    const id = ids()[0]
+    const dealt = [...answersOf(id)].sort().slice(0, 2)
+
+    const built = buildRulesQuestions({
+      questions: ids(),
+      options: { [id]: dealt },
+    })
+
+    expect(optionsOf(built, id).sort()).toEqual([...answersOf(id)].sort())
   })
 })

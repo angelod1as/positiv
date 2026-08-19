@@ -23,6 +23,12 @@ export type FlowContext = {
 export type Flow = {
   start: StepId
   steps: Record<StepId, Step>
+  /**
+   * Called to advance the run and, on every render, to project how long the run
+   * will be — so it must be free of side effects, and must read a missing
+   * `firstTryCorrect` entry as "did not stumble". A flow that branches the other
+   * way would announce the branch before the person reached it.
+   */
   next: (
     current: StepId,
     answers: Answers,

@@ -8,7 +8,7 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 import EventRulesPage from "./event-rules-page"
 
@@ -109,6 +109,20 @@ describe("the rules quiz and the question mirrored in the url", () => {
   beforeEach(() => {
     sessionStorage.clear()
     mirrored = ""
+
+    // Whichever question the shuffle deals last, answering it runs the commit.
+    // Without this the quiz stays put on a failed save, and a test that only
+    // wanted the next question fails once every fourteen runs.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve({ json: () => Promise.resolve({ ok: true }) }),
+      ),
+    )
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   it("stays put when the mirror names a question it has already left", async () => {

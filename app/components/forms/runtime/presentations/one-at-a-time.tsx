@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/base/error"
+import { FormProgress } from "./form-progress"
 import { ownsItsPrompt } from "./owns-its-prompt"
 import type { Presentation } from "./presentation.types"
 
@@ -26,6 +27,7 @@ export const OneAtATime: Presentation = ({
   answers,
   errors,
   formError,
+  progress,
   isBusy,
   focusFirstScreen,
   onAnswer,
@@ -73,6 +75,10 @@ export const OneAtATime: Presentation = ({
         onContinue()
       }}
     >
+      {progress ? (
+        <FormProgress index={progress.index} total={progress.total} />
+      ) : null}
+
       {step?.kind === "content" ? step.render : null}
 
       {questions.map((question) => (

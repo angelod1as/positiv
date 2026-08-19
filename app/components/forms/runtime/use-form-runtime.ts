@@ -9,10 +9,15 @@ import {
   runtimeStorageKey,
   writeRuntimeState,
 } from "./persistence"
+import { projectPath } from "./project-path"
 import type { Answers, Question } from "./question.types"
 import { asAnsweredValues, validateQuestion } from "./validate-question"
 
 const COMMIT_FAILURE_MESSAGE = "Não foi possível salvar agora. Tente novamente."
+
+// Shared so that a caller with no data to give does not hand the hook a new
+// object on every render, which would sink every memo that reads it.
+const NO_DATA: Record<string, unknown> = {}
 
 type UseFormRuntimeOptions = {
   questions: Question[]
@@ -67,7 +72,7 @@ function stepOwning(
 export function useFormRuntime({
   questions,
   flow,
-  data = {},
+  data = NO_DATA,
   persistence,
   stepId,
 }: UseFormRuntimeOptions) {
@@ -199,6 +204,22 @@ export function useFormRuntime({
     [currentStep, questionsById],
   )
 
+  // Projected from what is known now, so it revises as answers arrive: a flow
+  // that branches on an early mistake looks short until the mistake happens.
+  // Commit steps are dropped because nobody ever sees one.
+  const progress = useMemo(() => {
+    const path = projectPath(flow, answers, { firstTryCorrect, data }).filter(
+      (id) => flow.steps[id]?.kind !== "commit",
+    )
+
+    if (path.length <= 1) return null
+
+    const position = path.indexOf(currentStepId)
+    if (position < 0) return null
+
+    return { index: position + 1, total: path.length }
+  }, [flow, answers, firstTryCorrect, data, currentStepId])
+
   const answer = useCallback((id: string, value: unknown) => {
     answersRef.current = { ...answersRef.current, [id]: value }
     setAnswers(answersRef.current)
@@ -321,7 +342,14 @@ export function useFormRuntime({
       let result: CommitResult
       try {
         result = await step.run(answersRef.current)
-      } catch {
+      } catch (thrown) {
+        // The person sees "could not save"; whoever is debugging sees nothing
+        // at all, and a run that simply stops moving reads as a stuck form
+        // rather than as a failed request.
+        if (ENV.NODE_ENV !== "production") {
+          console.error("[form-runtime] a commit threw.", thrown)
+        }
+
         stayPut()
         return
       }
@@ -390,6 +418,7 @@ export function useFormRuntime({
     isBusy,
     isDone,
     isRestored,
+    progress,
     answer,
     advance,
   }

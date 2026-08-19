@@ -370,6 +370,29 @@ describe("useFormRuntime commit steps", () => {
     expect(result.current.currentStepId).toBe("nome")
   })
 
+  it("says what the commit threw, which the form error alone hides", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+    const run: CommitFn = () => {
+      throw new Error("network down")
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: flowWithCommit(run) }),
+    )
+
+    await fill(result, [
+      ["email", "a@b.com"],
+      ["nome", "Angelo"],
+    ])
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[form-runtime]"),
+      expect.objectContaining({ message: "network down" }),
+    )
+
+    consoleError.mockRestore()
+  })
+
   it("survives a commit whose promise rejects", async () => {
     const run: CommitFn = () => Promise.reject(new Error("timeout"))
 

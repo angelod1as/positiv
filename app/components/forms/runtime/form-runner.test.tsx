@@ -636,3 +636,46 @@ describe("presentation cannot change what is collected", () => {
     expect(seen).toEqual([undefined])
   })
 })
+
+describe("FormRunner progress", () => {
+  it("shows the position on every screen of a stepped run", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={steppedFlow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuetext",
+      "Etapa 1 de 2",
+    )
+
+    await user.type(screen.getByRole("textbox"), "Angelo")
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuetext",
+      "Etapa 2 de 2",
+    )
+  })
+
+  // Run on the stepped flow, where there is a position to show, so the test
+  // proves AllAtOnce refuses it rather than that there was nothing to draw.
+  it("leaves the single-screen presentation without one", () => {
+    render(
+      <FormRunner
+        questions={questions}
+        flow={steppedFlow}
+        presentation={AllAtOnce}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument()
+  })
+})

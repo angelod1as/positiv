@@ -115,12 +115,13 @@ describe("useFormRuntime persistence", () => {
       await result.current.advance()
     })
 
-    expect(seen).toEqual([
-      {
-        answers: { a: "resposta a", b: "resposta b" },
-        firstTryCorrect: { a: false, b: true },
-      },
-    ])
+    // The runtime also resolves the flow to project how long the run is, so the
+    // advance is one call among several — what matters is that it saw the
+    // restored answer alongside the new one.
+    expect(seen).toContainEqual({
+      answers: { a: "resposta a", b: "resposta b" },
+      firstTryCorrect: { a: false, b: true },
+    })
   })
 
   it("writes every answer and step back to storage", async () => {
