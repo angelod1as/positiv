@@ -1,21 +1,26 @@
-import { data, redirect } from "react-router"
-import { formAction } from "remix-forms"
-import { redirectWithWarning } from "remix-toast"
-import { trackServerEvent } from "~/lib/analytics/umami.server"
-import { getUserContext } from "~/business/auth/auth.server"
-import { applyToEventSchema } from "~/business/common"
-import { applyToEvent } from "~/business/participant/apply-to-event.server"
+import { useCallback, useMemo, useRef } from "react"
+import { data, redirect, useNavigate } from "react-router"
+import { toast } from "sonner"
 import { rulesSessionStorage } from "~/business/session.server"
 import { Copy } from "~/components/atoms/copy/copy"
-import { SchemaForm } from "~/components/forms/base/schema-form"
+import { buildApplicationFlow } from "~/components/forms/custom/application/build-application-flow"
+import { buildApplicationQuestions } from "~/components/forms/custom/application/build-application-questions"
+import { FormRunner } from "~/components/forms/runtime/form-runner"
+import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
+import type { Answers } from "~/components/forms/runtime/question.types"
 import { eventApplicationCopy } from "~/copy/events"
 import { useAnalytics } from "~/lib/hooks/use-analytics"
 import paths from "~/lib/paths"
+import type { CommitResult } from "~types/forms/commit.types"
 import type { Route } from "./+types/event-user-data"
 
 const {
   dash: {
-    events: { EVENT_APPLICATION_SENT, EVENT_RULES },
+    events: {
+      EVENT_APPLICATION_COMMIT,
+      EVENT_APPLICATION_SENT,
+      EVENT_RULES,
+    },
   },
 } = paths
 
@@ -34,74 +39,81 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   })
 }
 
-export async function action({ request, params }: Route.ActionArgs) {
-  const context = await getUserContext(request, params)
-
-  return formAction({
-    request,
-    schema: applyToEventSchema,
-    mutation: applyToEvent,
-    transformResult: async (result) => {
-      if (result.success) {
-        trackServerEvent(
-          "event_application_completed",
-          { eventId: params.id },
-          `/events/${params.id}/apply`
-        )
-
-        const emailSent = result.data?.emailSent ?? false
-
-        if (emailSent) {
-          throw redirect(EVENT_APPLICATION_SENT(params.id), {
-            headers: context.supabaseHeaders,
-          })
-        } else {
-          throw await redirectWithWarning(
-            EVENT_APPLICATION_SENT(params.id),
-            {
-              message: eventApplicationCopy.toasts.emailFailed.message,
-              description: eventApplicationCopy.toasts.emailFailed.description,
-              duration: 6000,
-            },
-            {
-              headers: context.supabaseHeaders,
-            },
-          )
-        }
-      }
-      return result
-    },
-    context,
-  })
+type ApplicationAnswer = CommitResult & {
+  emailSent?: boolean
+  message?: string
 }
 
 const EventUserInfo = ({ params }: Route.ComponentProps) => {
+  const navigate = useNavigate()
   const { track } = useAnalytics()
+  const eventId = params.id
 
-  const handleFormSubmit = () => {
-    track("event_application_clicked", { eventId: params.id })
-  }
+  const emailSentRef = useRef(true)
+
+  const questions = useMemo(() => buildApplicationQuestions(), [])
+
+  const commit = useCallback(
+    async (answers: Answers): Promise<CommitResult> => {
+      track("event_application_clicked", { eventId })
+
+      const response = await fetch(EVENT_APPLICATION_COMMIT(eventId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(answers),
+      })
+
+      // The quiz is what opens this form, and its cookie outlives the page by
+      // half an hour. Somebody who took longer than that is not at fault and
+      // is not stuck: the quiz is where they can earn their way back in.
+      if (response.status === 403) {
+        void navigate(EVENT_RULES(eventId))
+        return { ok: false, errors: [] }
+      }
+
+      const result = (await response.json()) as ApplicationAnswer
+
+      if (!result.ok) {
+        // A refusal the form cannot pin on any question — registration closed
+        // between the quiz and the button, say — still has something to say.
+        if (result.message) toast.error(result.message)
+        return result
+      }
+
+      emailSentRef.current = result.emailSent ?? true
+
+      return { ok: true }
+    },
+    [eventId, navigate, track],
+  )
+
+  const flow = useMemo(
+    () => buildApplicationFlow(questions, commit),
+    [questions, commit],
+  )
 
   return (
     <>
       <h1>{eventApplicationCopy.title}</h1>
       <Copy>{eventApplicationCopy.intro}</Copy>
 
-      <div onSubmitCapture={handleFormSubmit}>
-        <SchemaForm
-          schema={applyToEventSchema}
-          hiddenFields={["applicationDate", "eventId"]}
-          radio={["bond"]}
-          values={{
-            applicationDate: new Date(),
-            eventId: params.id,
-          }}
-          multiline={["notes", "companions", "referrals", "referred"]}
-          labels={eventApplicationCopy.labels}
-          descriptions={eventApplicationCopy.descriptions}
-          buttonLabel={eventApplicationCopy.submitLabel}
-        />
-      </div>
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={AllAtOnce}
+        persistence={{ formId: "event-application", scopeId: eventId }}
+        continueLabel={eventApplicationCopy.submitLabel}
+        onDone={() => {
+          if (!emailSentRef.current) {
+            const { message, description } =
+              eventApplicationCopy.toasts.emailFailed
+
+            toast.warning(message, { description, duration: 6000 })
+          }
+
+          void navigate(EVENT_APPLICATION_SENT(eventId))
+        }}
+      />
     </>
   )
 }
