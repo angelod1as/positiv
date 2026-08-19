@@ -885,3 +885,84 @@ describe("useFormRuntime going back", () => {
     expect(result.current.formError).toBeNull()
   })
 })
+
+describe("useFormRuntime refused advance", () => {
+  it("has nothing refused before anyone tries to advance", () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: quizQuestions, flow: screenFlow }),
+    )
+
+    expect(result.current.advanceRejection).toBeNull()
+  })
+
+  it("names the questions that refused the advance", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: quizQuestions, flow: screenFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("b", "resposta b")
+      await result.current.advance()
+    })
+
+    expect(result.current.advanceRejection?.questionIds).toEqual(["a"])
+  })
+
+  it("hands out a fresh signal on every refusal, so a second try reads as one", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: quizQuestions, flow: screenFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+    const first = result.current.advanceRejection
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.advanceRejection).not.toBe(first)
+    expect(result.current.advanceRejection?.questionIds).toEqual(["a", "b"])
+  })
+
+  it("clears the signal once the advance goes through", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: quizQuestions, flow: screenFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+    expect(result.current.advanceRejection).not.toBeNull()
+
+    await act(async () => {
+      result.current.answer("a", "certa")
+      result.current.answer("b", "resposta b")
+      await result.current.advance()
+    })
+
+    expect(result.current.advanceRejection).toBeNull()
+  })
+
+  it("clears the signal when the run walks back", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: linearFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+    await act(async () => {
+      await result.current.advance()
+    })
+    expect(result.current.advanceRejection).not.toBeNull()
+
+    act(() => {
+      result.current.goBack()
+    })
+
+    expect(result.current.advanceRejection).toBeNull()
+  })
+})

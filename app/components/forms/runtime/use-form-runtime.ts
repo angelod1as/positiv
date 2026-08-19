@@ -109,6 +109,16 @@ export function useFormRuntime({
     Record<string, boolean>
   >({})
   const [formError, setFormError] = useState<string | null>(null)
+
+  // Which questions refused the last attempt to move on. A presentation showing
+  // many questions at once has to say so beside its button, where the person
+  // clicked, rather than only under a field that may be off screen. Every
+  // refusal writes a new object, even when the same questions refuse again, so
+  // an effect keyed on it fires on each attempt.
+  const [advanceRejection, setAdvanceRejection] = useState<{
+    questionIds: string[]
+  } | null>(null)
+
   const [isBusy, setIsBusy] = useState(false)
   const [isDone, setIsDone] = useState(false)
 
@@ -255,6 +265,7 @@ export function useFormRuntime({
 
     setLastMove("back")
     setFormError(null)
+    setAdvanceRejection(null)
     stepRef.current = previousStepId
     setCurrentStepId(previousStepId)
   }, [isDone, previousStepId])
@@ -307,10 +318,12 @@ export function useFormRuntime({
 
     if (Object.keys(failures).length > 0) {
       setErrors((current) => ({ ...elsewhere(current), ...failures }))
+      setAdvanceRejection({ questionIds: Object.keys(failures) })
       return
     }
 
     setFormError(null)
+    setAdvanceRejection(null)
 
     pendingRef.current = pendingRef.current.filter(
       (id) => !answeredHere.has(id),
@@ -403,6 +416,7 @@ export function useFormRuntime({
       }
 
       pendingRef.current = result.errors.map((error) => error.questionId)
+      setAdvanceRejection({ questionIds: pendingRef.current })
       stepRef.current = target
       setCurrentStepId(target)
       return
@@ -440,6 +454,7 @@ export function useFormRuntime({
     answers,
     errors,
     formError,
+    advanceRejection,
     firstTryCorrect,
     isBusy,
     isDone,
