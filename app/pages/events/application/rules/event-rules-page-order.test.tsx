@@ -37,10 +37,16 @@ const seedDeal = (deal: {
     JSON.stringify({ options: {}, ...deal }),
   )
 
+// A question with one right answer draws radios, one with several draws
+// checkboxes, and only the radio carries the answer as a value — so both are
+// read off the text beside the control. It is the label's last span either way:
+// the checkbox wraps its own input in one.
 const onScreenAnswers = () =>
-  [...document.querySelectorAll<HTMLInputElement>("input[type=radio]")].map(
-    (input) => input.value,
-  )
+  [
+    ...(document
+      .querySelector('form [role="radiogroup"], form [role="group"]')
+      ?.querySelectorAll("label > span:last-child") ?? []),
+  ].map((span) => span.textContent ?? "")
 
 const onScreen = () =>
   document

@@ -9,11 +9,14 @@ import { ENV } from "varlock/env"
 import { getUserContext } from "~/business/auth/auth.server"
 import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
 import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
-import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules-questions"
 import {
-  clearRulesOrder,
-  readRulesOrder,
-  writeRulesOrder,
+  buildRulesQuestions,
+  dealOf,
+} from "~/components/forms/custom/rules/build-rules-questions"
+import {
+  clearRulesDeal,
+  readRulesDeal,
+  writeRulesDeal,
 } from "~/components/forms/custom/rules/rules-order"
 import type { CommitResult } from "~types/forms/commit.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
@@ -106,20 +109,18 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
   // the reader back to a question they have answered.
   const requestedStep = navigationType === "POP" ? mirrored : askedFor.current
 
-  // A run keeps the order it was dealt. Reshuffling on every mount moved the
+  // A run keeps the deal it was given. Shuffling again on every mount moved the
   // remaining questions around underneath the reader, and the progress count
-  // with them: the same question read "1 de 14" before a refresh and "6 de 14"
-  // after it.
+  // with them — the same question read "1 de 14" before a refresh and "6 de 14"
+  // after it — while the alternatives swapped places under a question that had
+  // not changed.
   const questions = useMemo(
-    () => buildRulesQuestions(readRulesOrder(eventId) ?? undefined),
+    () => buildRulesQuestions(readRulesDeal(eventId) ?? undefined),
     [eventId],
   )
 
   useEffect(() => {
-    writeRulesOrder(
-      eventId,
-      questions.map((question) => question.id),
-    )
+    writeRulesDeal(eventId, dealOf(questions))
   }, [eventId, questions])
 
   const commit = useCallback(
@@ -177,9 +178,9 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
           )
         }}
         onDone={() => {
-          // The run is over, so the order it was dealt goes with it — a second
-          // attempt is dealt again, which is the point of shuffling.
-          clearRulesOrder(eventId)
+          // The run is over, so the deal goes with it — a second attempt is
+          // dealt again, which is the point of shuffling.
+          clearRulesDeal(eventId)
           void navigate(EVENT_DATA(eventId))
         }}
       />
