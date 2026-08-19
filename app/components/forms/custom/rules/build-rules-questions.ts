@@ -1,3 +1,4 @@
+import { ENV } from "varlock/env"
 import type {
   InputSpec,
   Question,
@@ -43,8 +44,16 @@ export function buildRulesQuestions(order?: string[]): Question[] {
 
   const byId = new Map(entries)
 
+  const usable = !order || covers(order, entries.map(([id]) => id))
+
+  if (!usable && ENV.NODE_ENV !== "production") {
+    console.error(
+      "[rules] the order this run was dealt does not name today's questions, so the quiz was dealt again.",
+    )
+  }
+
   const asked =
-    order && covers(order, entries.map(([id]) => id))
+    order && usable
       ? order.flatMap((id) => {
           const question = byId.get(id)
           return question ? [[id, question] as const] : []
