@@ -1,7 +1,8 @@
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
+import { renderToStaticMarkup } from "react-dom/server"
 import { MemoryRouter } from "react-router"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { readRulesOrder } from "~/components/forms/custom/rules/rules-order"
 import {
   runtimeStorageKey,
@@ -46,6 +47,10 @@ describe("the order the rules quiz was dealt", () => {
     )
   })
 
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it("opens on the first question of the order the run was dealt", async () => {
     const dealt = [...ids()].reverse()
     sessionStorage.setItem(`rules-order:${EVENT}`, JSON.stringify(dealt))
@@ -83,6 +88,27 @@ describe("the order the rules quiz was dealt", () => {
     expect(written).not.toBeNull()
     expect([...(written ?? [])].sort()).toEqual(ids().sort())
     expect(written?.[0]).toBe(onScreen())
+  })
+
+  // The server has no session storage, so it deals an order of its own. That
+  // would be a hydration mismatch if the order reached the markup — it does
+  // not: the runtime draws a skeleton until it has restored, which it can only
+  // do after mount, on the server and on the first client render alike.
+  it("keeps the dealt order out of the markup it hydrates", () => {
+    sessionStorage.setItem(
+      `rules-order:${EVENT}`,
+      JSON.stringify([...ids()].reverse()),
+    )
+
+    const markup = renderToStaticMarkup(
+      <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+      </MemoryRouter>,
+    )
+
+    expect(markup).not.toContain("-prompt")
+    expect(markup).toContain('aria-busy="true"')
   })
 
   it("forgets the order when the run is finished", async () => {
