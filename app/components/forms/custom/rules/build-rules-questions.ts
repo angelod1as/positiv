@@ -41,9 +41,14 @@ export function buildRulesQuestions(order?: string[]): Question[] {
   const schemas = getRulesFormSchema()
   const entries = Object.entries(getRulesFormQuestions())
 
+  const byId = new Map(entries)
+
   const asked =
     order && covers(order, entries.map(([id]) => id))
-      ? order.map((id) => entries.find(([entry]) => entry === id)!)
+      ? order.flatMap((id) => {
+          const question = byId.get(id)
+          return question ? [[id, question] as const] : []
+        })
       : shuffleArray(entries)
 
   return asked.map(

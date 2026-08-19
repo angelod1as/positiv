@@ -10,6 +10,11 @@ import { getUserContext } from "~/business/auth/auth.server"
 import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
 import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
 import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules-questions"
+import {
+  clearRulesOrder,
+  readRulesOrder,
+  writeRulesOrder,
+} from "~/components/forms/custom/rules/rules-order"
 import type { CommitResult } from "~types/forms/commit.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
@@ -101,7 +106,21 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
   // the reader back to a question they have answered.
   const requestedStep = navigationType === "POP" ? mirrored : askedFor.current
 
-  const questions = useMemo(() => buildRulesQuestions(), [])
+  // A run keeps the order it was dealt. Reshuffling on every mount moved the
+  // remaining questions around underneath the reader, and the progress count
+  // with them: the same question read "1 de 14" before a refresh and "6 de 14"
+  // after it.
+  const questions = useMemo(
+    () => buildRulesQuestions(readRulesOrder(eventId) ?? undefined),
+    [eventId],
+  )
+
+  useEffect(() => {
+    writeRulesOrder(
+      eventId,
+      questions.map((question) => question.id),
+    )
+  }, [eventId, questions])
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
@@ -158,6 +177,9 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
           )
         }}
         onDone={() => {
+          // The run is over, so the order it was dealt goes with it — a second
+          // attempt is dealt again, which is the point of shuffling.
+          clearRulesOrder(eventId)
           void navigate(EVENT_DATA(eventId))
         }}
       />
