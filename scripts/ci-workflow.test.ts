@@ -13,6 +13,17 @@ const workflow = readFileSync(
   "utf8",
 )
 
+function jobBlock(name: string): string {
+  const start = workflow.indexOf(`\n  ${name}:\n`)
+
+  expect(start, `job "${name}" not found`).toBeGreaterThan(-1)
+
+  const rest = workflow.slice(start + 1)
+  const nextJob = rest.slice(1).search(/\n {2}[a-z][a-z0-9-]*:\n/)
+
+  return nextJob === -1 ? rest : rest.slice(0, nextJob + 1)
+}
+
 function runCommand(stepName: string): string {
   const step = workflow.match(
     new RegExp(`- name: ${stepName}\\n(?: +[a-z-]+:.*\\n)*? +run: (.+)`),
@@ -31,5 +42,18 @@ describe("deploy-and-test workflow", () => {
 
     expect(command).toContain("playwright install")
     expect(command).not.toContain("--with-deps")
+  })
+
+  it("keeps the downloaded browser between runs", () => {
+    const e2e = jobBlock("e2e-test")
+
+    expect(e2e).toContain("actions/cache")
+    expect(e2e).toContain("~/.cache/ms-playwright")
+  })
+
+  it("keys that cache on the Playwright version, so a bump downloads afresh", () => {
+    const key = jobBlock("e2e-test").match(/key: (.+)/)?.[1] ?? ""
+
+    expect(key).toContain("steps.playwright-version.outputs.version")
   })
 })

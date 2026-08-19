@@ -111,6 +111,16 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+      # The install runs on a cache hit too. It costs a couple of seconds when
+      # the browser is already there, and skipping it on `cache-hit` is how a
+      # partial or stale cache turns into "browser not found" mid-suite.
       # No --with-deps: every library it installs is already the newest
       # version on the runner image, so all it added was nine font packages —
       # 21 MB that apt fetched at 43 kB/s, eight minutes of every run. The
