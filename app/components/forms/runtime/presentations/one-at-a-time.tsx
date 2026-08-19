@@ -73,7 +73,7 @@ export const OneAtATime: Presentation = ({
   return (
     <form
       ref={formRef}
-      className="flex flex-col gap-8"
+      className="flex flex-col gap-8 wrap-anywhere"
       onSubmit={(event) => {
         event.preventDefault()
         onContinue()
@@ -119,7 +119,7 @@ export const OneAtATime: Presentation = ({
           <Button
             type="button"
             variant="outline"
-            className="w-1/6"
+            className="w-1/6 min-w-11"
             disabled={isBusy}
             onClick={onBack}
           >
