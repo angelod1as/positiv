@@ -1363,11 +1363,25 @@ split is visible for the first time — do it in one pass, before close-out.
    Note `eventCardCopy.comingSoon` and `eventCardCopy.scheduled` are both event
    card buttons for an event you cannot apply to yet; both belong in this bucket.
 
-3. **Newsletter subscription → stays "inscrição"**. Main decided this
-   deliberately in `revert(newsletter): keep the Listmonk copy on "inscrição"`.
-   Do **not** touch `app/copy/newsletter.ts` or `dashboardCopy`'s
-   newsletter-failure line. Subscribing to a mailing list is not applying to
-   anything, and Listmonk's own wording follows it.
+3. **Newsletter → "assinatura" / "assinar"**. Subscribing to a mailing list is
+   neither a cadastro nor a candidatura, and "assinar a newsletter" is what
+   people actually say. Three words for three things.
+
+   Change the site's own wording — the 11 strings in `app/copy/newsletter.ts`
+   (modal body and heading, unsubscribe page, both toasts, `subscribe:
+   "Inscrever-me"` → an *assinar* form) and the newsletter-failure line in
+   `app/copy/dashboard.ts`.
+
+   **Hard boundary: nothing that Listmonk stores may change.**
+   `app/business/admin/event-listmonk-sync.server.ts` builds a **list name**,
+   `` `Inscrites - ${event.title}` ``, and the campaign modules name campaigns
+   the same way. Main reverted exactly these in `revert(newsletter): keep the
+   Listmonk copy on "inscrição"`, for a reason that still holds: *"renaming them
+   means touching lists and campaigns that already exist on the Listmonk side"*.
+   Those are records in a third-party system, not our copy. Leave every one.
+
+   The revert was about that data, not about our interface — which is why the
+   interface is free to move.
 
 **Method:** edit values in `app/copy/**` only. No component should need touching —
 if one does, that string escaped centralisation and belongs in whichever task
@@ -1386,13 +1400,16 @@ rather than loosening it. Then re-run the sweep:
 grep -rn "nscri\|nscre" app/copy/
 ```
 
-Expected: hits only in `newsletter.ts` and the one newsletter line in
-`dashboard.ts`.
+Expected: no hits at all in `app/copy/`. Outside it, the only survivors should
+be the Listmonk list and campaign names in `app/business/admin/` and
+`app/business/newsletter/`.
 
 **E2E:** several specs match on these strings — `e2e/fixtures/auth.ts`,
-`e2e/tests/auth/setup.ts`, `e2e/pages/EventApplicationPage.ts`. Update them in
-the same commit, since the E2E suite only runs in Task 13 and a stale matcher
-would not surface until then.
+`e2e/tests/auth/setup.ts`, `e2e/pages/EventApplicationPage.ts`, and
+`e2e/tests/auth/newsletter-subscription.spec.ts`, which matches
+`/inscrição realizada/i` and will break on the newsletter rename. Update them in
+the same commit: the E2E suite only runs in Task 13, so a stale matcher would
+not surface until the very end.
 
 ---
 
