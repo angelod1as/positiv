@@ -1,10 +1,11 @@
 import type { ColDef, ValueSetterParams } from "ag-grid-community"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { VeteranSelectCellRenderer } from "~/components/organisms/tables/ag-grid/renderers/veteran-select-cell-renderer"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { isVeteranOptions } from "~/lib/helpers/propMaps"
 
-const VETERAN_LABEL = "Veterane"
-const NOVATE_LABEL = "Novate"
+const VETERAN_LABEL = adminTablesCopy.columns.veteran.veteran
+const NOVATE_LABEL = adminTablesCopy.columns.veteran.rookie
 
 interface VeteranColumnParams {
   filterModel: string[]
@@ -19,8 +20,8 @@ export function getVeteranColumn({
 }: VeteranColumnParams): ColDef {
   return {
     field: "is_veteran",
-    headerName: "Vet ou Nov?",
-    headerTooltip: "Veterane ou Novate",
+    headerName: adminTablesCopy.columns.veteran.headerName,
+    headerTooltip: adminTablesCopy.columns.veteran.headerTooltip,
     editable,
     ...(editable && {
       cellEditor: "agSelectCellEditor",

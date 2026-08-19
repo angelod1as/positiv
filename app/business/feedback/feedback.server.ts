@@ -1,4 +1,5 @@
 import { applySchema, composable } from "composable-functions"
+import { adminFeedbacksCopy } from "~/copy/admin"
 import { kyselyDb } from "~/kysely-db"
 import type { FeedbackFormData, FeedbackStatus } from "./feedback-schema"
 import { updateFeedbackStatusSchema } from "./feedback-schema"
@@ -47,7 +48,7 @@ export const updateFeedbackStatus = applySchema(updateFeedbackStatusSchema)(
       .executeTakeFirst()
 
     if (result.numUpdatedRows === 0n) {
-      throw new Error("Feedback não encontrado")
+      throw new Error(adminFeedbacksCopy.notFound)
     }
   },
 )

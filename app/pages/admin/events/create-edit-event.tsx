@@ -7,6 +7,7 @@ import {
 } from "~/business/admin/admin.server"
 import { eventFormSchema } from "~/business/admin/common"
 import { EventForm } from "~/components/forms/admin/event-form"
+import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/create-edit-event"
 
@@ -39,7 +40,7 @@ export async function action({ request, params }: Route.ActionArgs) {
       if (result.success) {
         throw await redirectWithSuccess(
           ADMIN_VIEW_EVENT(result.data),
-          `Evento ${eventId ? "atualizado" : "criado"} com sucesso`,
+          adminEventsCopy.createEdit.saved(Boolean(eventId)),
         )
       }
       return result
@@ -52,7 +53,11 @@ const AdminCreateEditEvent = ({ loaderData }: Route.ComponentProps) => {
   const { event } = loaderData
   return (
     <>
-      {event ? <h1>Editar evento</h1> : <h1>Criar novo evento</h1>}
+      {event ? (
+        <h1>{adminEventsCopy.createEdit.editTitle}</h1>
+      ) : (
+        <h1>{adminEventsCopy.createEdit.createTitle}</h1>
+      )}
 
       <EventForm event={event} />
     </>

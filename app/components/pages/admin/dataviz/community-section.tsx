@@ -5,12 +5,15 @@ import type {
 } from '~/business/admin/dataviz/dataviz.types'
 import { ChartSection } from '~/components/atoms/charts/chart-section'
 import type { FilterMode } from '~/components/atoms/charts/demographic-filter-toggle'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { AgeChart } from './age-chart'
 import { GenderChart } from './gender-chart'
 import { GrowthChart } from './growth-chart'
 import { OrientationChart } from './orientation-chart'
 import { RaceChart } from './race-chart'
 import { RetentionChart } from './retention-chart'
+
+const communityCopy = adminDatavizCopy.communitySection
 
 interface CommunitySectionProps {
   demographics: DemographicsDataResult
@@ -33,11 +36,11 @@ export function CommunitySection({
 }: CommunitySectionProps) {
   return (
     <section className="space-y-8">
-      <h2 className="text-2xl font-semibold">Comunidade</h2>
+      <h2 className="text-2xl font-semibold">{communityCopy.title}</h2>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <ChartSection
-          title="Identidade de Gênero"
-          description="Distribuição de identidades de gênero na comunidade."
+          title={communityCopy.gender.title}
+          description={communityCopy.gender.description}
         >
           <GenderChart
             data={demographics.gender}
@@ -46,8 +49,8 @@ export function CommunitySection({
           />
         </ChartSection>
         <ChartSection
-          title="Orientação Sexual"
-          description="Distribuição de orientações sexuais na comunidade."
+          title={communityCopy.orientation.title}
+          description={communityCopy.orientation.description}
         >
           <OrientationChart
             data={demographics.orientation}
@@ -58,8 +61,8 @@ export function CommunitySection({
       </div>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <ChartSection
-          title="Faixa Etária"
-          description="Distribuição de idades na comunidade."
+          title={communityCopy.age.title}
+          description={communityCopy.age.description}
         >
           <AgeChart
             data={demographics.age}
@@ -70,8 +73,8 @@ export function CommunitySection({
           />
         </ChartSection>
         <ChartSection
-          title="Raça/Cor"
-          description="Distribuição de raça e cor na comunidade."
+          title={communityCopy.race.title}
+          description={communityCopy.race.description}
         >
           <RaceChart
             data={demographics.race}
@@ -82,14 +85,14 @@ export function CommunitySection({
       </div>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <ChartSection
-          title="Crescimento"
-          description="Novos cadastros por mês e total acumulado de perfis."
+          title={communityCopy.growth.title}
+          description={communityCopy.growth.description}
         >
           <GrowthChart data={growth} />
         </ChartSection>
         <ChartSection
-          title="Retenção"
-          description="Quantas pessoas participaram de N ou mais eventos."
+          title={communityCopy.retention.title}
+          description={communityCopy.retention.description}
         >
           <RetentionChart data={retention} />
         </ChartSection>

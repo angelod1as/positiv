@@ -1,6 +1,8 @@
 import type { FetcherWithComponents } from "react-router"
 import { useEffect, useState } from "react"
 import { Button } from "~/components/ui/button"
+import { adminEventsCopy } from "~/copy/admin/events"
+import { sharedCopy } from "~/copy/shared"
 import { Checkbox } from "~/components/ui/checkbox"
 import {
   Dialog,
@@ -22,6 +24,8 @@ import type {
   ProfileApprovedToAttendStatus,
   ComposableFetcherData,
 } from "~/types/database/entities.types"
+
+const listmonkCopy = adminEventsCopy.listmonk
 
 interface ListmonkFilterModalProps {
   isOpen: boolean
@@ -139,18 +143,18 @@ export function ListmonkFilterModal({
         <DialogHeader>
           <DialogTitle>
             {hasExistingList
-              ? "Atualizar lista da newsletter"
-              : "Criar lista da newsletter"}
+              ? listmonkCopy.updateList
+              : listmonkCopy.createList}
           </DialogTitle>
           <DialogDescription>
-            Selecione os filtros para sincronizar participantes com a newsletter.
+            {listmonkCopy.filtersDescription}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="space-y-3">
             <Label className="text-base font-semibold">
-              Status de Aprovação
+              {listmonkCopy.approvalStatus}
             </Label>
             <div className="ml-4 space-y-3">
               {approvedToAttendStatusOptions.map((option) => (
@@ -161,7 +165,7 @@ export function ListmonkFilterModal({
                   <Checkbox
                     checked={approvalStatuses.includes(option.value)}
                     onChange={() => handleApprovalToggle(option.value)}
-                    aria-label={`Status de Aprovação: ${option.name}`}
+                    aria-label={listmonkCopy.approvalStatusOption(option.name)}
                   />
                   <span>{option.name}</span>
                 </Label>
@@ -171,7 +175,7 @@ export function ListmonkFilterModal({
 
           <div className="space-y-3">
             <Label className="text-base font-semibold">
-              Status de Processo
+              {listmonkCopy.applicationStatus}
             </Label>
             <div className="ml-4 space-y-3">
               {applicationStatusOptions.map((option) => (
@@ -182,7 +186,7 @@ export function ListmonkFilterModal({
                   <Checkbox
                     checked={applicationStatuses.includes(option.value)}
                     onChange={() => handleApplicationToggle(option.value)}
-                    aria-label={`Status de Processo: ${option.name}`}
+                    aria-label={listmonkCopy.applicationStatusOption(option.name)}
                   />
                   <span>{option.name}</span>
                 </Label>
@@ -192,7 +196,7 @@ export function ListmonkFilterModal({
 
           <div className="space-y-3">
             <Label className="text-base font-semibold">
-              Status de Presença
+              {listmonkCopy.attendanceStatus}
             </Label>
             <div className="ml-4 space-y-3">
               {attendanceStatusOptions.map((option) => (
@@ -203,7 +207,7 @@ export function ListmonkFilterModal({
                   <Checkbox
                     checked={attendanceStatuses.includes(option.value)}
                     onChange={() => handleAttendanceToggle(option.value)}
-                    aria-label={`Status de Presença: ${option.name}`}
+                    aria-label={listmonkCopy.attendanceStatusOption(option.name)}
                   />
                   <span>{option.name}</span>
                 </Label>
@@ -219,10 +223,10 @@ export function ListmonkFilterModal({
             onClick={onClose}
             disabled={isSubmitting}
           >
-            Cancelar
+            {sharedCopy.actions.cancel}
           </Button>
           <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? "Sincronizando..." : "Sincronizar"}
+            {isSubmitting ? listmonkCopy.syncing : listmonkCopy.sync}
           </Button>
         </DialogFooter>
       </DialogContent>

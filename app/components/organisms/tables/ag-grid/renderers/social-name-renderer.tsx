@@ -38,7 +38,11 @@ export function SocialNameRenderer(
     content = <>{socialName}</>
   } else {
     const firstName = fullName?.trim().split(/\s+/)[0]
-    content = firstName ? <i>{firstName}</i> : <>-</>
+    content = firstName ? (
+      <i>{firstName}</i>
+    ) : (
+      <>-</>
+    )
   }
 
   // When in event context, use event-participant route with profile_id

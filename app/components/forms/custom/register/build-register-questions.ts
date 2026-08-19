@@ -3,6 +3,7 @@ import {
   registerUserFieldsSchema,
 } from "~/business/common"
 import type { Question } from "~/components/forms/runtime/question.types"
+import { registerCopy } from "~/copy/auth"
 
 export function buildRegisterQuestions(): Question[] {
   const { shape } = registerUserFieldsSchema
@@ -10,19 +11,19 @@ export function buildRegisterQuestions(): Question[] {
   return [
     {
       id: "email",
-      prompt: "E-mail",
-      input: { kind: "email", placeholder: "email@exemplo.com" },
+      prompt: registerCopy.labels.email,
+      input: { kind: "email", placeholder: registerCopy.placeholders.email },
       schema: shape.email,
     },
     {
       id: "password",
-      prompt: "Senha",
+      prompt: registerCopy.labels.password,
       input: { kind: "password", autoComplete: "new-password" },
       schema: shape.password,
     },
     {
       id: "confirmPassword",
-      prompt: "Confirme a senha",
+      prompt: registerCopy.labels.confirmPassword,
       input: { kind: "password", autoComplete: "new-password" },
       schema: shape.confirmPassword,
       refine: (value, answers) =>
@@ -32,7 +33,7 @@ export function buildRegisterQuestions(): Question[] {
     },
     {
       id: "over18",
-      prompt: "Sou maior de 18 anos",
+      prompt: registerCopy.labels.over18,
       input: { kind: "boolean" },
       schema: shape.over18,
     },
@@ -40,7 +41,7 @@ export function buildRegisterQuestions(): Question[] {
       // The widget is drawn by the page's own renderer, which reaches for this
       // question by id. The kind is only what the fallback would draw.
       id: "captchaToken",
-      prompt: "Verificação de segurança",
+      prompt: registerCopy.labels.captcha,
       input: { kind: "text" },
       schema: shape.captchaToken,
     },

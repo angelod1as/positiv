@@ -2,6 +2,7 @@ import type { FC } from "react"
 import { useFetcher } from "react-router"
 import { z } from "zod"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
@@ -14,6 +15,7 @@ import {
 } from "~/components/ui/select"
 import { TextArea } from "~/components/ui/textarea"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { validationMessages } from "~/lib/helpers/validation-messages"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
@@ -26,11 +28,13 @@ import type {
   EventParticipantWithEvent,
 } from "~types/database/entities.types"
 
+const vsEventCopy = adminParticipantsCopy.vsEvent
+
 const eventParticipantFormSchema = z.object({
   attendance_status: z.string(),
   application_status: z.string(),
   spot_type: z.string(),
-  payment: z.coerce.number().min(0, "O valor não pode ser negativo"),
+  payment: z.coerce.number().min(0, validationMessages.minValue(0)),
   has_paid: z.boolean(),
   was_selected_for_rotation: z.boolean(),
   admin_general_notes: z.string(),
@@ -89,18 +93,18 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
   return (
     <div className="space-y-4">
-      <h3>Neste evento</h3>
+      <h3>{vsEventCopy.title}</h3>
       <div className="space-y-8">
         <div className="space-y-2">
-          <h4>Administração</h4>
+          <h4>{vsEventCopy.administration}</h4>
 
           <div className="space-y-4">
             <div className="lg:flex gap-4 [&>*]:flex-1">
               <div className="space-y-2">
-                <Label htmlFor="attendance_status">Status de Presença</Label>
+                <Label htmlFor="attendance_status">{vsEventCopy.attendanceStatus}</Label>
                 <Select {...register.select("attendance_status")}>
                   <SelectTrigger id="attendance_status">
-                    <SelectValue placeholder="Selecione..." />
+                    <SelectValue placeholder={vsEventCopy.selectPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     {attendanceStatusOptions.map((option) => (
@@ -113,10 +117,12 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="application_status">Status da candidatura</Label>
+                <Label htmlFor="application_status">
+                  {vsEventCopy.applicationStatus}
+                </Label>
                 <Select {...register.select("application_status")}>
                   <SelectTrigger id="application_status">
-                    <SelectValue placeholder="Selecione..." />
+                    <SelectValue placeholder={vsEventCopy.selectPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     {applicationStatusOptions.map((option) => (
@@ -131,10 +137,10 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
 
             <div className="lg:flex gap-4 [&>*]:flex-1">
               <div className="space-y-2">
-                <Label htmlFor="spot_type">Tipo de Vaga</Label>
+                <Label htmlFor="spot_type">{vsEventCopy.spotType}</Label>
                 <Select {...register.select("spot_type")}>
                   <SelectTrigger id="spot_type">
-                    <SelectValue placeholder="Selecione..." />
+                    <SelectValue placeholder={vsEventCopy.selectPlaceholder} />
                   </SelectTrigger>
                   <SelectContent>
                     {spotTypeOptions.map((option) => (
@@ -147,7 +153,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="payment">Pagamento</Label>
+                <Label htmlFor="payment">{vsEventCopy.payment}</Label>
                 <Input
                   id="payment"
                   type="number"
@@ -158,30 +164,30 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               <div className="flex flex-col justify-end gap-2">
                 <Label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox {...register.checkbox("has_paid")} />
-                  <span>Pago</span>
+                  <span>{vsEventCopy.paid}</span>
                 </Label>
                 <Label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox {...register.checkbox("was_selected_for_rotation")} />
-                  <span>Selecionado para Rodízio</span>
+                  <span>{vsEventCopy.rotation}</span>
                 </Label>
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="admin_general_notes">
-                Notas Gerais do Evento
+                {vsEventCopy.adminNotes}
               </Label>
               <TextArea
                 id="admin_general_notes"
                 {...register.text("admin_general_notes")}
-                placeholder="Notas administrativas para este evento..."
+                placeholder={vsEventCopy.adminNotesPlaceholder}
               />
             </div>
           </div>
         </div>
 
         <div className="space-y-2">
-          <h4>Respostas</h4>
+          <h4>{vsEventCopy.answers}</h4>
           <DataPair
             pair={[
               eventParticipantPropMap("application_date"),
@@ -189,30 +195,30 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
             ]}
           />
           <DataPair
-            pair={[eventParticipantPropMap("bond"), bond || "não respondeu"]}
+            pair={[eventParticipantPropMap("bond"), bond || vsEventCopy.noAnswer]}
           />
           <DataPair
             pair={[
               eventParticipantPropMap("companions"),
-              companions || "não respondeu",
+              companions || vsEventCopy.noAnswer,
             ]}
           />
           <DataPair
             pair={[
-              `${eventParticipantPropMap("notes")} (Participante)`,
-              notes || "não respondeu",
+              vsEventCopy.participantNotes(eventParticipantPropMap("notes")),
+              notes || vsEventCopy.noAnswer,
             ]}
           />
           <DataPair
             pair={[
               eventParticipantPropMap("referrals"),
-              referrals || "não respondeu",
+              referrals || vsEventCopy.noAnswer,
             ]}
           />
           <DataPair
             pair={[
               eventParticipantPropMap("referred"),
-              referred || "não respondeu",
+              referred || vsEventCopy.noAnswer,
             ]}
           />
         </div>

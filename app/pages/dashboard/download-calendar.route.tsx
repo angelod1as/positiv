@@ -1,6 +1,7 @@
 import { redirectWithError } from "remix-toast"
 import { getContext } from "~/business/auth/auth.server"
 import { formatCalendarEvent } from "~/business/participant/format-calendar-event.server"
+import { dashboardCopy } from "~/copy/dashboard"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/download-calendar.route"
 
@@ -17,10 +18,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     .single()
 
   if (error || !data) {
-    throw await redirectWithError(
-      DASHBOARD,
-      "Erro ao gerar evento no calendário, tente novamente mais tarde",
-    )
+    throw await redirectWithError(DASHBOARD, dashboardCopy.calendarFailed)
   }
 
   const calendar = await formatCalendarEvent({

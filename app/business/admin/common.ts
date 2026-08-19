@@ -1,3 +1,5 @@
+import { eventFormValidation } from "~/copy/admin/events"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { zod } from "~/lib/helpers/zod"
 import {
   participantApplicationStatusEnum,
@@ -23,7 +25,7 @@ export const eventFormSchema = zod.object({
   id: zod.string().optional(),
   title: zod.string().min(2).max(50),
   description: zod.string().min(2).max(255),
-  emoji: zod.string().emoji("Precisa ser um emoji").min(1),
+  emoji: zod.string().emoji(eventFormValidation.emojiInvalid).min(1),
   location: zod.string().min(2).max(255),
 
   ticket_price: zod.coerce.number().min(1),
@@ -121,7 +123,7 @@ export const updateEventParticipantByIdSchema = zod.object({
     return true
   },
   {
-    message: "Notas da Flag são obrigatórias quando uma flag é selecionada",
+    message: adminParticipantsCopy.adminNotes.flagNotesRequired,
     path: ["flag_notes"],
   }
 )
@@ -155,7 +157,7 @@ export const updateProfileAdminNotesSchema = zod
       return true
     },
     {
-      message: "Notas da Flag são obrigatórias quando uma flag é selecionada",
+      message: adminParticipantsCopy.adminNotes.flagNotesRequired,
       path: ["flag_notes"],
     }
   )

@@ -9,6 +9,8 @@ import {
   updateFeedbackStatus,
 } from "~/business/feedback/feedback.server"
 import { FeedbacksTable } from "~/components/organisms/tables/admin/feedbacks-table"
+import { adminFeedbacksCopy } from "~/copy/admin"
+import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/feedbacks-page"
@@ -18,7 +20,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Admin - Feedbacks")
+  return createMetaArray(metaCopy.adminFeedbacks.title)
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
@@ -43,10 +45,7 @@ export async function action({ request, params }: Route.ActionArgs) {
 export async function loader() {
   const result = await getAllFeedbacksWithVerification()
   if (!result.success) {
-    return redirectWithError(
-      ADMIN_DASHBOARD,
-      "Erro ao carregar feedbacks. Tente novamente.",
-    )
+    return redirectWithError(ADMIN_DASHBOARD, adminFeedbacksCopy.loadFailed)
   }
   return { feedbacks: result.data }
 }
@@ -56,7 +55,7 @@ const FeedbacksPage = () => {
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-4">Feedbacks</h1>
+      <h1 className="text-2xl font-bold mb-4">{adminFeedbacksCopy.title}</h1>
       <FeedbacksTable feedbacks={feedbacks} />
     </>
   )

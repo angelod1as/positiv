@@ -6,6 +6,7 @@ import type {
   OccupancyDataPoint,
 } from "~/business/admin/dataviz/dataviz.types"
 import { ChartSection } from "~/components/atoms/charts/chart-section"
+import { adminDatavizCopy } from "~/copy/admin/dataviz"
 import { buildEventLabel } from "~/lib/helpers/chart-utils"
 import { useBrushState } from "~/lib/hooks/use-brush-state"
 import { AttendanceChart } from "./attendance-chart"
@@ -13,6 +14,8 @@ import { EventRangeSelector } from "./event-range-selector"
 import { FunnelChart } from "./funnel-chart"
 import { OccupancyChart } from "./occupancy-chart"
 import { RevenueChart } from "./revenue-chart"
+
+const eventsCopy = adminDatavizCopy.eventsSection
 
 interface EventsSectionProps {
   attendance: EventAttendanceDataPoint[]
@@ -60,7 +63,7 @@ export function EventsSection({
 
   return (
     <section className="space-y-8">
-      <h2 className="text-2xl font-semibold">Eventos</h2>
+      <h2 className="text-2xl font-semibold">{eventsCopy.title}</h2>
       <EventRangeSelector
         data={brushPreviewData}
         startIndex={startIndex}
@@ -68,26 +71,26 @@ export function EventsSection({
         onChange={onChange}
       />
       <ChartSection
-        title="Presença por Evento"
-        description="Evolução do número de candidaturas, comparecimentos e faltas ao longo dos eventos."
+        title={eventsCopy.attendance.title}
+        description={eventsCopy.attendance.description}
       >
         <AttendanceChart data={slicedAttendance} />
       </ChartSection>
       <ChartSection
-        title="Faturamento por Evento"
-        description="Receita total e preço do ingresso por evento, com evolução ao longo do tempo."
+        title={eventsCopy.revenue.title}
+        description={eventsCopy.revenue.description}
       >
         <RevenueChart data={slicedRevenue} />
       </ChartSection>
       <ChartSection
-        title="Funil de Conversão"
-        description="Proporção das candidaturas que finalizaram cadastro, pagaram e compareceram."
+        title={eventsCopy.funnel.title}
+        description={eventsCopy.funnel.description}
       >
         <FunnelChart data={slicedFunnel} />
       </ChartSection>
       <ChartSection
-        title="Ocupação"
-        description="Percentual de ocupação das vagas em cada evento."
+        title={eventsCopy.occupancy.title}
+        description={eventsCopy.occupancy.description}
       >
         <OccupancyChart data={slicedOccupancy} />
       </ChartSection>

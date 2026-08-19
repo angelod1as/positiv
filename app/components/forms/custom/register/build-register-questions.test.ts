@@ -64,7 +64,7 @@ describe("buildRegisterQuestions", () => {
   it("refuses someone who did not say they are over 18", () => {
     expect(validateQuestion(find("over18"), false)).toEqual({
       ok: false,
-      message: "Você só pode se inscrever se for maior de 18 anos",
+      message: "Você só pode se cadastrar se for maior de 18 anos",
     })
     expect(validateQuestion(find("over18"), true)).toEqual({ ok: true })
   })

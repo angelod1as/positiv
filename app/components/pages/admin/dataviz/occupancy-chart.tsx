@@ -9,12 +9,15 @@ import {
 } from 'recharts'
 import type { OccupancyDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
 import { buildEventLabel } from '~/lib/helpers/chart-utils'
+
+const occupancyCopy = adminDatavizCopy.occupancyChart
 
 interface OccupancyChartProps {
   data: OccupancyDataPoint[]
@@ -60,12 +63,16 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
       <div className="grid gap-1.5">
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-1)' }} />
-          <span className="chart-tooltip-label">Ocupação</span>
-          <span className="chart-tooltip-value">{Number(dataPoint.occupancy_pct ?? 0)}%</span>
+          <span className="chart-tooltip-label">
+            {occupancyCopy.occupancy}
+          </span>
+          <span className="chart-tooltip-value">{occupancyCopy.percentage(Number(dataPoint.occupancy_pct ?? 0))}</span>
         </div>
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-label">Compareceram</span>
-          <span className="chart-tooltip-value">{Number(dataPoint.compareceram ?? 0)} / {Number(dataPoint.total_spots ?? 0)}</span>
+          <span className="chart-tooltip-label">
+            {occupancyCopy.attended}
+          </span>
+          <span className="chart-tooltip-value">{occupancyCopy.attendedOfTotal(Number(dataPoint.compareceram ?? 0), Number(dataPoint.total_spots ?? 0))}</span>
         </div>
       </div>
     </div>
@@ -74,7 +81,7 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
 
 const chartConfig: ChartConfig = {
   occupancy_pct: {
-    label: 'Taxa de Ocupação',
+    label: occupancyCopy.occupancyRate,
     color: 'var(--chart-1)',
   },
 }
@@ -85,10 +92,10 @@ export function OccupancyChart({ data, className }: OccupancyChartProps) {
       <div
         data-chart
         role="img"
-        aria-label="Gráfico de taxa de ocupação por evento"
+        aria-label={occupancyCopy.ariaLabel}
         className="flex h-[300px] items-center justify-center text-muted-foreground"
       >
-        Nenhum dado de ocupação disponível
+        {occupancyCopy.noData}
       </div>
     )
   }
@@ -108,7 +115,7 @@ export function OccupancyChart({ data, className }: OccupancyChartProps) {
       config={chartConfig}
       className={className}
       role="img"
-      aria-label="Gráfico de taxa de ocupação por evento"
+      aria-label={occupancyCopy.ariaLabel}
     >
       <RechartsLineChart data={chartData}>
         <CartesianGrid vertical={false} />
@@ -142,7 +149,7 @@ export function OccupancyChart({ data, className }: OccupancyChartProps) {
           stroke="var(--chart-5)"
           strokeDasharray="3 3"
           label={{
-            value: 'Capacidade Total (100%)',
+            value: occupancyCopy.fullCapacity,
             position: 'insideTopRight',
             fill: 'var(--chart-5)',
             fontSize: 12,
@@ -153,7 +160,7 @@ export function OccupancyChart({ data, className }: OccupancyChartProps) {
           stroke="var(--chart-2)"
           strokeDasharray="3 3"
           label={{
-            value: `Média: ${averageOccupancy}%`,
+            value: occupancyCopy.average(averageOccupancy),
             position: averageLabelPosition,
             fill: 'var(--chart-2)',
             fontSize: 12,

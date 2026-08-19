@@ -10,6 +10,8 @@ import { FlagBadgeRenderer } from "~/components/organisms/tables/ag-grid/rendere
 import { LastAttendedEventRenderer } from "~/components/organisms/tables/ag-grid/renderers/last-attended-event-renderer"
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
+import { Copy } from "~/components/atoms/copy/copy"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
@@ -20,6 +22,8 @@ import {
   profilePropMap,
 } from "~/lib/helpers/propMaps"
 import type { ProfileGlobal } from "~types/database/entities.types"
+
+const allParticipantsCopy = adminTablesCopy.allParticipants
 
 const EDITABLE_FIELDS = ["is_veteran", "approved_to_attend"] as const
 
@@ -115,20 +119,20 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
     () => [
       {
         field: "social_name",
-        headerName: "Nome Social",
+        headerName: allParticipantsCopy.columns.socialName,
         pinned: "left",
         cellRenderer: SocialNameRenderer,
         sortable: true,
       },
       {
         field: "full_name",
-        headerName: "Nome Completo",
+        headerName: allParticipantsCopy.columns.fullName,
         sortable: true,
       },
       {
         field: "created_at",
-        headerName: "Registro",
-        headerTooltip: "Data de cadastro",
+        headerName: allParticipantsCopy.columns.createdAt,
+        headerTooltip: allParticipantsCopy.columns.createdAtTooltip,
         valueFormatter: (params) =>
           formatDateTime(params.value, "numeric").date ?? "-",
         sortable: true,
@@ -178,7 +182,7 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       {
         field: "flag",
         headerName: profilePropMap("flag"),
-        headerTooltip: "Flag de atenção",
+        headerTooltip: allParticipantsCopy.columns.flagTooltip,
         cellRenderer: FlagBadgeRenderer,
         filter: BaseMultiSelectFilter,
         filterParams: {
@@ -192,7 +196,7 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       },
       {
         field: "where_lives",
-        headerName: "Cidade",
+        headerName: allParticipantsCopy.columns.whereLives,
         sortable: true,
       },
       {
@@ -220,8 +224,8 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       },
       {
         field: "attended_events_count",
-        headerName: "Total de eventos",
-        headerTooltip: "Total de presenças desde o início do histórico",
+        headerName: allParticipantsCopy.columns.attendedEventsCount,
+        headerTooltip: allParticipantsCopy.columns.attendedEventsCountTooltip,
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,
@@ -229,9 +233,9 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       },
       {
         field: "last_attended_events_count",
-        headerName: "Últimos eventos (6 últimos)",
+        headerName: allParticipantsCopy.columns.lastAttendedEventsCount,
         headerTooltip:
-          "Presenças nos últimos 6 eventos realizados. Zera quando a pessoa é rodiziada, e recomeça a partir daí",
+          allParticipantsCopy.columns.lastAttendedEventsCountTooltip,
         ...compactCell,
         cellClass: (params) =>
           `ag-cell-compact ${getEventCountColors(params.value)}`,
@@ -239,7 +243,7 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       },
       {
         field: "last_attended_event_title",
-        headerName: "Último Evento",
+        headerName: allParticipantsCopy.columns.lastAttendedEventTitle,
         cellRenderer: LastAttendedEventRenderer,
         sortable: true,
       },
@@ -310,15 +314,14 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
   const tableHeader = (
     <div className="flex items-center text-sm">
       <p>
-        {isFiltered ? (
-          <>
-            <b>{displayCount}</b> de {profiles.length} perfis
-          </>
-        ) : (
-          <>
-            <b>{profiles.length}</b> perfis
-          </>
-        )}
+        <Copy inline>
+          {isFiltered
+            ? allParticipantsCopy.filteredProfileCount(
+                displayCount,
+                profiles.length,
+              )
+            : allParticipantsCopy.profileCount(profiles.length)}
+        </Copy>
       </p>
     </div>
   )
@@ -332,8 +335,8 @@ export const AllParticipantsTable: FC<AllParticipantsTableProps> = ({
       pagination
       paginationAutoPageSize
       showSearch
-      searchAriaLabel="Buscar perfis"
-      emptyMessage="Nenhum perfil encontrado"
+      searchAriaLabel={allParticipantsCopy.searchAriaLabel}
+      emptyMessage={allParticipantsCopy.emptyMessage}
       persistState
       showToolbar
       onClearFilters={handleClearFilters}

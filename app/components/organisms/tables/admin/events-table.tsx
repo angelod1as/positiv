@@ -11,6 +11,7 @@ import { Button } from "~/components/atoms/button/button"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { Input } from "~/components/ui/input"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   eventPropNameMap,
@@ -77,11 +78,11 @@ export function AdminDashboardEventsTable({
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="text"
-          placeholder="Buscar..."
+          placeholder={adminTablesCopy.events.searchPlaceholder}
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className="pl-9"
-          aria-label="Buscar eventos"
+          aria-label={adminTablesCopy.events.searchAriaLabel}
         />
       </div>
     </div>
@@ -90,9 +91,9 @@ export function AdminDashboardEventsTable({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Todos os eventos</h2>
+        <h2 className="text-2xl font-bold">{adminTablesCopy.events.title}</h2>
         <Button to="/admin/eventos/novo" linkProps={{ prefetch: "intent" }}>
-          Criar evento
+          {adminTablesCopy.events.create}
         </Button>
       </div>
       <AGDataTable
@@ -103,7 +104,7 @@ export function AdminDashboardEventsTable({
         paginationPageSize={25}
         paginationPageSizeSelector={[10, 25, 50, 100]}
         onRowClicked={handleRowClicked}
-        emptyMessage="Nenhum evento encontrado"
+        emptyMessage={adminTablesCopy.events.emptyMessage}
         persistState
         showToolbar
         headerContent={tableHeader}

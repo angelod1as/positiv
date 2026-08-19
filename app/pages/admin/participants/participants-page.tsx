@@ -6,6 +6,8 @@ import {
   updateProfileAdminNotes,
 } from "~/business/admin/admin.server"
 import { AllParticipantsTable } from "~/components/organisms/tables/admin/all-participants-table"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
+import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/participants-page"
@@ -15,7 +17,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Admin - Participantes")
+  return createMetaArray(metaCopy.adminParticipants.title)
 }
 
 export async function loader() {
@@ -23,7 +25,7 @@ export async function loader() {
   if (!result.success) {
     return redirectWithError(
       ADMIN_DASHBOARD,
-      "Erro ao carregar perfis. Tente novamente.",
+      adminParticipantsCopy.list.loadFailed,
     )
   }
   return { profiles: result.data }
@@ -46,7 +48,9 @@ const ParticipantsPage = () => {
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-4">Perfis</h1>
+      <h1 className="text-2xl font-bold mb-4">
+        {adminParticipantsCopy.list.title}
+      </h1>
       <AllParticipantsTable profiles={profiles} />
     </>
   )

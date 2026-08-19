@@ -3,6 +3,8 @@ import {
   getSubscriptionStatus,
   unsubscribeProfile,
 } from "~/business/newsletter/subscription-helpers.server"
+import { unsubscribeCopy } from "~/copy/newsletter"
+import { sharedCopy } from "~/copy/shared"
 import { db } from "~/lib/supabase/db.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/unsubscribe"
@@ -25,16 +27,13 @@ export async function loader({ request }: Route.LoaderArgs) {
   const profileId = url.searchParams.get("id")
 
   if (!profileId) {
-    throw await redirectWithError(HOME, "Link de descadastro inválido")
+    throw await redirectWithError(HOME, unsubscribeCopy.invalidLink)
   }
 
   const result = await getSubscriptionStatus(profileId)
 
   if (!result.success || !result.data) {
-    throw await redirectWithError(
-      HOME,
-      "Não foi possível encontrar sua inscrição na newsletter"
-    )
+    throw await redirectWithError(HOME, unsubscribeCopy.notFound)
   }
 
   const subscription = result.data
@@ -64,20 +63,17 @@ export async function action({ request }: Route.ActionArgs) {
   const profileId = formData.get("profileId") as string
 
   if (!profileId) {
-    throw await redirectWithError(HOME, "Dados de descadastro inválidos")
+    throw await redirectWithError(HOME, unsubscribeCopy.invalidData)
   }
 
   const result = await unsubscribeProfile(profileId)
 
   if (!result.success) {
-    throw await redirectWithError(
-      HOME,
-      "Erro ao cancelar inscrição. Por favor, tente novamente ou entre em contato."
-    )
+    throw await redirectWithError(HOME, unsubscribeCopy.failed)
   }
 
   throw await redirectWithSuccess(HOME, {
-    message: "Você foi descadastrado da newsletter com sucesso.",
+    message: unsubscribeCopy.successToast,
     duration: 10_000,
   })
 }
@@ -89,20 +85,19 @@ const UnsubscribePage = ({ loaderData }: Route.ComponentProps) => {
     return (
       <Card className="my-12 max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle className="text-2xl">Você já está descadastrado</CardTitle>
+          <CardTitle className="text-2xl">
+            {unsubscribeCopy.already.title}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <p>
-            <strong>{name}</strong> ({email}) já está descadastrado da nossa
-            newsletter.
+            <strong>{name}</strong>{" "}
+            {unsubscribeCopy.already.body(email)}
           </p>
-          <p>
-            Se quiser voltar a receber nossos emails, você pode se inscrever
-            novamente nas configurações da sua conta.
-          </p>
+          <p>{unsubscribeCopy.already.resubscribe}</p>
         </CardContent>
         <CardFooter>
-          <Button to={HOME}>Voltar para a home</Button>
+          <Button to={HOME}>{sharedCopy.actions.backHome}</Button>
         </CardFooter>
       </Card>
     )
@@ -111,12 +106,8 @@ const UnsubscribePage = ({ loaderData }: Route.ComponentProps) => {
   return (
     <Card className="my-12 max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-2xl">
-          Deseja cancelar sua inscrição na newsletter?
-        </CardTitle>
-        <CardDescription>
-          Você não receberá mais emails de novidades e eventos da Positiv
-        </CardDescription>
+        <CardTitle className="text-2xl">{unsubscribeCopy.title}</CardTitle>
+        <CardDescription>{unsubscribeCopy.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p>
@@ -128,11 +119,11 @@ const UnsubscribePage = ({ loaderData }: Route.ComponentProps) => {
         <form method="post">
           <input type="hidden" name="profileId" value={loaderData.profileId} />
           <Button type="submit" variant="destructive">
-            Sim, cancelar inscrição
+            {unsubscribeCopy.confirm}
           </Button>
         </form>
         <Button to={HOME} variant="outline">
-          Voltar
+          {sharedCopy.actions.back}
         </Button>
       </CardFooter>
     </Card>

@@ -1,4 +1,5 @@
 import { formAction } from "remix-forms"
+import { Copy } from "~/components/atoms/copy/copy"
 import { Link } from "~/components/atoms/link/link"
 import {
   Card,
@@ -16,6 +17,8 @@ import { redirectWithSuccess } from "remix-toast"
 import { getContext, loginUser } from "~/business/auth/auth.server"
 import { loginSchema } from "~/business/common"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { loginCopy } from "~/copy/auth"
+import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/login-page"
 
@@ -26,7 +29,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Entrar")
+  return createMetaArray(metaCopy.login.title)
 }
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -62,9 +65,8 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
         throw await redirectWithSuccess(
           targetPath,
           {
-            message: "Bem vinde!",
-            description:
-              "Nosso sistema ainda está em desenvolvimento. Nos ajude reportando bugs! Link no pé da página",
+            message: loginCopy.welcomeToast.message,
+            description: loginCopy.welcomeToast.description,
             duration: 10_000,
             closeButton: true,
           },
@@ -84,32 +86,30 @@ const LoginPage = ({}: Route.ComponentProps) => {
     <div className={cn("flex flex-col gap-6")}>
       <Card className="my-12">
         <CardHeader>
-          <CardTitle className="text-2xl">Entrar</CardTitle>
+          <CardTitle className="text-2xl">{loginCopy.title}</CardTitle>
           <CardDescription>
-            <p>Entre na sua conta com seu e-mail</p>
+            <p>{loginCopy.description}</p>
             <p className="text-sm">
-              <b>
-                Não tem uma conta? <Link to={LOGON}>Criar conta</Link>
-              </b>
+              <Copy inline>{loginCopy.signupPrompt(LOGON)}</Copy>
             </p>
           </CardDescription>
         </CardHeader>
         <CardContent>
           <SchemaForm
             schema={loginSchema}
-            labels={{ password: "Senha", email: "E-mail" }}
-            placeholders={{ email: "email@exemplo.com", password: "senha123" }}
+            labels={loginCopy.labels}
+            placeholders={loginCopy.placeholders}
             inputTypes={{
               email: "email",
               password: "password",
             }}
-            pendingButtonLabel="Entrando..."
-            buttonLabel="Entrar"
+            pendingButtonLabel={loginCopy.pendingButtonLabel}
+            buttonLabel={loginCopy.buttonLabel}
           />
         </CardContent>
         <CardFooter>
           <p className="text-sm text-muted-foreground">
-            <Link to={FORGOT_PASSWORD}>Esqueci minha senha</Link>
+            <Link to={FORGOT_PASSWORD}>{loginCopy.forgotPassword}</Link>
           </p>
         </CardFooter>
       </Card>

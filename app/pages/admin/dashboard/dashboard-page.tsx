@@ -15,6 +15,8 @@ import { RecentProfilesTable } from "~/components/organisms/tables/admin/recent-
 import { ListmonkDiagnosticSection } from "~/components/pages/admin/listmonk-diagnostic-section"
 import { Button } from "~/components/ui/button"
 import { Separator } from "~/components/ui/separator"
+import { adminDashboardCopy } from "~/copy/admin"
+import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/dashboard-page"
@@ -24,7 +26,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Admin - Visão Geral")
+  return createMetaArray(metaCopy.adminDashboard.title)
 }
 
 export async function action({ request }: Route.ActionArgs) {
@@ -71,11 +73,11 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
   return (
     <>
-      <h1>Visão geral</h1>
+      <h1>{adminDashboardCopy.title}</h1>
 
       {activeEvents.length > 0 && (
         <div className="flex flex-col gap-8">
-          <h2>Eventos com candidaturas abertas</h2>
+          <h2>{adminDashboardCopy.activeEventsTitle}</h2>
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3">
             {activeEvents.map((event) => (
               <EventCard
@@ -95,14 +97,14 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2>Participantes recentes</h2>
+          <h2>{adminDashboardCopy.recentProfiles.title}</h2>
           <div className="grid grid-cols-1">
             <Button asChild>
-              <Link to={ADMIN_PARTICIPANTS}>Ver todos os perfis</Link>
+              <Link to={ADMIN_PARTICIPANTS}>
+                {adminDashboardCopy.recentProfiles.cta}
+              </Link>
             </Button>
-            <p className="text-xs">
-              Veja a tabela completa para editar os dados
-            </p>
+            <p className="text-xs">{adminDashboardCopy.recentProfiles.hint}</p>
           </div>
         </div>
 
@@ -113,10 +115,12 @@ const AdminDashboard = ({ loaderData }: Route.ComponentProps) => {
 
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
-          <h2>Feedbacks recentes</h2>
+          <h2>{adminDashboardCopy.recentFeedbacks.title}</h2>
           <div className="grid grid-cols-1">
             <Button asChild>
-              <Link to={ADMIN_FEEDBACKS}>Ver todos os feedbacks</Link>
+              <Link to={ADMIN_FEEDBACKS}>
+                {adminDashboardCopy.recentFeedbacks.cta}
+              </Link>
             </Button>
           </div>
         </div>

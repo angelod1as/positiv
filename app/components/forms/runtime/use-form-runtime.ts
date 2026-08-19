@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ENV } from "varlock/env"
+import { formRuntimeCopy } from "~/copy/forms"
 import type { CommitResult } from "~types/forms/commit.types"
 import type { Flow, Step, StepId } from "./flow.types"
 import {
@@ -12,8 +13,6 @@ import {
 import { projectPath } from "./project-path"
 import type { Answers, Question } from "./question.types"
 import { asAnsweredValues, validateQuestion } from "./validate-question"
-
-const COMMIT_FAILURE_MESSAGE = "Não foi possível salvar agora. Tente novamente."
 
 // Shared so that a caller with no data to give does not hand the hook a new
 // object on every render, which would sink every memo that reads it.
@@ -316,7 +315,7 @@ export function useFormRuntime({
       })
 
     const stayPut = () => {
-      setFormError(COMMIT_FAILURE_MESSAGE)
+      setFormError(formRuntimeCopy.commitFailed)
       stepRef.current = origin
       setCurrentStepId(origin)
     }

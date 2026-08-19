@@ -1,4 +1,5 @@
 import { type FC } from "react"
+import { adminEventsCopy } from "~/copy/admin/events"
 import { eventPropNameMap } from "~/lib/helpers/propMaps"
 
 type GeneralDataProps = {
@@ -15,25 +16,37 @@ export const GeneralData: FC<GeneralDataProps> = ({
 }) => {
   return (
     <div className="flex flex-col gap-2">
-      <h2>Dados gerais</h2>
+      <h2>{adminEventsCopy.generalData.title}</h2>
       {description && (
         <p>
-          {eventPropNameMap("description")}: {description}
+          {adminEventsCopy.generalData.field(
+            eventPropNameMap("description"),
+            description,
+          )}
         </p>
       )}
       {location && (
         <p>
-          {eventPropNameMap("location")}: {location}
+          {adminEventsCopy.generalData.field(
+            eventPropNameMap("location"),
+            location,
+          )}
         </p>
       )}
       {ticket_price && (
         <p>
-          {eventPropNameMap("ticket_price")}: R$ {ticket_price}
+          {adminEventsCopy.generalData.ticketPrice(
+            eventPropNameMap("ticket_price"),
+            ticket_price,
+          )}
         </p>
       )}
       {total_spots && (
         <p>
-          {eventPropNameMap("total_spots")}: {total_spots}
+          {adminEventsCopy.generalData.field(
+            eventPropNameMap("total_spots"),
+            total_spots,
+          )}
         </p>
       )}
     </div>

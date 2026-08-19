@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { DemographicDistribution } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { RaceChart } from './race-chart'
 
 vi.mock('recharts', async () => {
@@ -103,7 +104,7 @@ describe('RaceChart', () => {
 
     // Total is 188 pessoas (sum of all counts)
     expect(centerLabel).toHaveTextContent('188')
-    expect(centerLabel).toHaveTextContent('pessoas')
+    expect(centerLabel).toHaveTextContent(adminDatavizCopy.people)
   })
 
   it('should display low coverage annotation', () => {
@@ -147,6 +148,6 @@ describe('RaceChart', () => {
     )
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
-    expect(chart).toHaveAttribute('aria-label', 'Distribuição de raça/cor')
+    expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.raceChart.ariaLabel)
   })
 })

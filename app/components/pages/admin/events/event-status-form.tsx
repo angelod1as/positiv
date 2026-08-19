@@ -3,9 +3,12 @@ import { type FetcherWithComponents } from "react-router"
 
 import { updateEventStatusSchema } from "~/business/admin/common"
 import { SchemaForm } from "~/components/forms/base/schema-form"
+import { adminEventsCopy } from "~/copy/admin/events"
 import { eventStatusMap } from "~/lib/helpers/propMaps"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ComposableFetcherData, EventStatus } from "~types/database/entities.types"
+
+const statusCopy = adminEventsCopy.statusForm
 
 type EventStatusFormProps = {
   event_status: EventStatus
@@ -27,7 +30,7 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
     <SchemaForm
       schema={updateEventStatusSchema}
       fetcher={fetcher}
-      labels={{ event_status: "Status do evento" }}
+      labels={{ event_status: statusCopy.label }}
       hiddenFields={["intent"]}
       values={{
         intent: "update-event-status",
@@ -61,20 +64,21 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
                 {!isPastPublishTime ? (
                   <>
                     <p className="font-semibold text-blue-900 dark:text-blue-100">
-                      📅 Publicação Automática Agendada
+                      {statusCopy.scheduledTitle}
                     </p>
                     <p className="text-blue-700 dark:text-blue-200 mt-1">
-                      Este evento será publicado automaticamente em{" "}
-                      {formatDateTime(time_application_start).full}
+                      {statusCopy.scheduledFor(
+                        formatDateTime(time_application_start).full,
+                      )}
                     </p>
                   </>
                 ) : (
                   <>
                     <p className="font-semibold text-orange-900 dark:text-orange-100">
-                      ⏳ Aguardando Publicação Automática
+                      {statusCopy.awaitingTitle}
                     </p>
                     <p className="text-orange-700 dark:text-orange-200 mt-1">
-                      Este evento está pronto para ser publicado automaticamente (será atualizado em até 5 minutos)
+                      {statusCopy.awaiting}
                     </p>
                   </>
                 )}
@@ -83,10 +87,10 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
             {event_status === "Scheduled" && !auto_publish && (
               <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-900/20 rounded-md text-sm">
                 <p className="font-semibold text-gray-900 dark:text-gray-100">
-                  ✋ Publicação Manual
+                  {statusCopy.manualTitle}
                 </p>
                 <p className="text-gray-700 dark:text-gray-200 mt-1">
-                  Este evento requer publicação manual. Altere o status para "Candidaturas abertas" quando desejar publicar.
+                  {statusCopy.manual}
                 </p>
               </div>
             )}

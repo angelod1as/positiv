@@ -14,19 +14,22 @@ import {
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { buildEventLabel } from '~/lib/helpers/chart-utils'
 
 const LABELED_SERIES = new Set(['inscritos', 'compareceram'])
 
+const seriesCopy = adminDatavizCopy.attendanceChart.series
+
 const SERIES_CONFIG = [
-  { dataKey: 'inscritos', label: 'Candidaturas', color: 'var(--chart-1)' },
-  { dataKey: 'compareceram', label: 'Compareceram', color: 'var(--chart-2)' },
-  { dataKey: 'nao_foram', label: 'Não foram', color: 'var(--chart-3)' },
-  { dataKey: 'withdrew', label: 'Desistiu', color: 'var(--chart-4)' },
-  { dataKey: 'not_selected', label: 'Não selecionade', color: 'var(--chart-8)' },
-  { dataKey: 'rodizio', label: 'Rodízio', color: 'var(--chart-5)' },
-  { dataKey: 'vagas_sociais', label: 'Vagas sociais', color: 'var(--chart-6)' },
-  { dataKey: 'staff', label: 'Staff', color: 'var(--chart-7)' },
+  { dataKey: 'inscritos', label: seriesCopy.applications, color: 'var(--chart-1)' },
+  { dataKey: 'compareceram', label: seriesCopy.attended, color: 'var(--chart-2)' },
+  { dataKey: 'nao_foram', label: seriesCopy.didNotAttend, color: 'var(--chart-3)' },
+  { dataKey: 'withdrew', label: seriesCopy.withdrew, color: 'var(--chart-4)' },
+  { dataKey: 'not_selected', label: seriesCopy.notSelected, color: 'var(--chart-8)' },
+  { dataKey: 'rodizio', label: seriesCopy.rotation, color: 'var(--chart-5)' },
+  { dataKey: 'vagas_sociais', label: seriesCopy.socialSpots, color: 'var(--chart-6)' },
+  { dataKey: 'staff', label: seriesCopy.staff, color: 'var(--chart-7)' },
 ] as const
 
 type SeriesKey = (typeof SERIES_CONFIG)[number]['dataKey']
@@ -123,7 +126,7 @@ export function AttendanceChart({ data, className }: AttendanceChartProps) {
         config={chartConfig}
         className={className}
         role="img"
-        aria-label="Presença por evento"
+        aria-label={adminDatavizCopy.attendanceChart.ariaLabel}
       >
         <RechartsLineChart data={chartData}>
           <CartesianGrid vertical={false} />

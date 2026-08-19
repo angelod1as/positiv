@@ -96,7 +96,7 @@ function createMockListmonkList(overrides: Partial<ListmonkList> = {}): Listmonk
   return {
     id: 456,
     uuid: "test-uuid",
-    name: "Inscrites - Test Event",
+    name: "Candidates - Test Event",
     type: "private",
     optin: "single",
     tags: [],
@@ -122,7 +122,7 @@ describe("createEventListmonkList", () => {
     vi.clearAllMocks()
   })
 
-  it("should create a list with name 'Inscrites - [event title]'", async () => {
+  it("should create a list with name 'Candidates - [event title]'", async () => {
     mockCreateList.mockResolvedValue({
       success: true,
       data: createMockListmonkList(),
@@ -135,7 +135,7 @@ describe("createEventListmonkList", () => {
     expect(result.success).toBe(true)
     expect(mockCreateList).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "Inscrites - Test Event",
+        name: "Candidates - Test Event",
         type: "private",
         optin: "single",
       })

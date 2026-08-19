@@ -9,6 +9,9 @@ import {
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog"
 import { Button } from "~/components/atoms/button/button"
+import { Copy } from "~/components/atoms/copy/copy"
+import { newsletterModalCopy } from "~/copy/newsletter"
+import { sharedCopy } from "~/copy/shared"
 
 interface NewsletterSubscriptionModalProps {
   open: boolean
@@ -45,17 +48,10 @@ export function NewsletterSubscriptionModal({
     <AlertDialog open={isVisible}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Cadastre-se na nossa newsletter!</AlertDialogTitle>
+          <AlertDialogTitle>{newsletterModalCopy.title}</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-2">
-              <p>
-                Receba atualizações sobre os próximos eventos, novidades e
-                conteúdos exclusivos da Positiv diretamente no seu email.
-              </p>
-              <p>
-                Você pode cancelar sua inscrição a qualquer momento, e suas
-                informações nunca serão compartilhadas com terceiros.
-              </p>
+              <Copy>{newsletterModalCopy.body}</Copy>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -65,14 +61,16 @@ export function NewsletterSubscriptionModal({
             onClick={handleDismiss}
             disabled={isSubmitting}
           >
-            Talvez mais tarde
+            {newsletterModalCopy.dismiss}
           </Button>
           <Button
             variant="default"
             onClick={handleSubscribe}
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Carregando..." : "Inscrever-me"}
+            {isSubmitting
+              ? sharedCopy.status.loading
+              : newsletterModalCopy.subscribe}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

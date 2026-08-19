@@ -1,6 +1,9 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card"
+import { homepageCopy } from "~/copy/homepage"
 import { HomePageTitle } from "../home-title/home-title"
 import { Section } from "../section/section"
+
+const { nextEvents } = homepageCopy
 
 const EventCardSkeleton = () => {
   return (
@@ -40,8 +43,8 @@ export const HomePageNextEventsSkeleton = () => {
     <Section>
       <div className="px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4">
-          <HomePageTitle subtitle="Confira nossos próximos encontros e garanta sua participação.">
-            Próximos Eventos
+          <HomePageTitle subtitle={nextEvents.subtitle}>
+            {nextEvents.title}
           </HomePageTitle>
 
           <div

@@ -4,6 +4,7 @@ import type { GridApi, IRowNode } from "ag-grid-community"
 import { Checkbox } from "~/components/ui/checkbox"
 import { Button } from "~/components/ui/button"
 import { Input } from "~/components/ui/input"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { cn } from "~/lib/utils"
 
 interface BaseMultiSelectFilterProps {
@@ -38,10 +39,10 @@ export function BaseMultiSelectFilter({
   matchMode = "exact",
   filterToExistingValues = true,
   api,
-  placeholder = "Buscar...",
-  selectAllLabel = "Selecionar Todos",
-  clearLabel = "Limpar",
-  noResultsLabel = "Nenhum resultado",
+  placeholder = adminTablesCopy.filter.searchPlaceholder,
+  selectAllLabel = adminTablesCopy.filter.selectAll,
+  clearLabel = adminTablesCopy.filter.clear,
+  noResultsLabel = adminTablesCopy.filter.noResults,
 }: BaseMultiSelectFilterProps) {
   // Internal state for uncontrolled mode (when used directly via filterParams)
   const [internalModel, setInternalModel] = useState<string[] | null>(null)
@@ -161,7 +162,7 @@ export function BaseMultiSelectFilter({
           placeholder={placeholder}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          aria-label="Buscar opções de filtro"
+          aria-label={adminTablesCopy.filter.searchAriaLabel}
           className="h-8"
         />
       </div>
@@ -215,7 +216,10 @@ export function BaseMultiSelectFilter({
         )}
       </div>
       <div className="text-xs text-muted-foreground p-2 border-t">
-        {selectedValues.length} de {filteredOptions.length} selecionados
+        {adminTablesCopy.filter.selectedCount(
+          selectedValues.length,
+          filteredOptions.length,
+        )}
       </div>
     </div>
   )

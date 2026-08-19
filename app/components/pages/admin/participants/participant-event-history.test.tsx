@@ -3,7 +3,10 @@ import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it } from "vitest"
 import { render, screen, waitFor } from "~/test/test-utils"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { ParticipantEventHistory } from "./participant-event-history"
+
+const historyCopy = adminParticipantsCopy.eventHistory
 
 const mockParticipantHistory: ParticipantEventHistoryData[] = [
   {
@@ -78,7 +81,7 @@ describe("ParticipantEventHistory", () => {
   it("should render the history section title as 'Histórico de candidaturas'", () => {
     renderWithRouter(<ParticipantEventHistory participantHistory={[]} />)
 
-    expect(screen.getByText("Histórico de candidaturas")).toBeInTheDocument()
+    expect(screen.getByText(historyCopy.title)).toBeInTheDocument()
   })
 
   it("should render an AG Grid table with event history", async () => {
@@ -269,7 +272,7 @@ describe("ParticipantEventHistory", () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText("Diferença")).toBeInTheDocument()
+      expect(screen.getByText(historyCopy.surplus)).toBeInTheDocument()
     })
   })
 

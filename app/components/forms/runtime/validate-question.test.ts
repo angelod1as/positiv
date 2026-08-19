@@ -133,17 +133,17 @@ describe("validateQuestion", () => {
       prompt: "Sou maior de 18 anos",
       input: { kind: "boolean" },
       schema: zod.boolean().refine((value) => value, {
-        message: "Você só pode se inscrever se for maior de 18 anos",
+        message: "Você só pode se cadastrar se for maior de 18 anos",
       }),
     }
 
     expect(validateQuestion(over18, undefined)).toEqual({
       ok: false,
-      message: "Você só pode se inscrever se for maior de 18 anos",
+      message: "Você só pode se cadastrar se for maior de 18 anos",
     })
     expect(validateQuestion(over18, false)).toEqual({
       ok: false,
-      message: "Você só pode se inscrever se for maior de 18 anos",
+      message: "Você só pode se cadastrar se for maior de 18 anos",
     })
     expect(validateQuestion(over18, true)).toEqual({ ok: true })
   })

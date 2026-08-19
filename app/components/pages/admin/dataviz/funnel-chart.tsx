@@ -9,12 +9,15 @@ import {
 } from 'recharts'
 import type { ConversionFunnelDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
 import { buildEventLabel } from '~/lib/helpers/chart-utils'
+
+const funnelCopy = adminDatavizCopy.funnelChart
 
 interface FunnelChartProps {
   data: ConversionFunnelDataPoint[]
@@ -53,28 +56,39 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
       <div className="grid gap-1.5">
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-1)' }} />
-          <span className="chart-tooltip-label">Candidaturas</span>
+          <span className="chart-tooltip-label">
+            {funnelCopy.applications}
+          </span>
           <span className="chart-tooltip-value">{dataPoint.inscritos}</span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-2)' }} />
-          <span className="chart-tooltip-label">Finalizados</span>
+          <span className="chart-tooltip-label">{funnelCopy.finalised}</span>
           <span className="chart-tooltip-value">
-            {dataPoint.finalizados} ({dataPoint.pct_finalizados}% das candidaturas)
+            {funnelCopy.shareOfApplications(
+              dataPoint.finalizados,
+              dataPoint.pct_finalizados
+            )}
           </span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-3)' }} />
-          <span className="chart-tooltip-label">Pagaram</span>
+          <span className="chart-tooltip-label">{funnelCopy.paid}</span>
           <span className="chart-tooltip-value">
-            {dataPoint.pagaram} ({dataPoint.pct_pagaram}% das candidaturas)
+            {funnelCopy.shareOfApplications(
+              dataPoint.pagaram,
+              dataPoint.pct_pagaram
+            )}
           </span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-4)' }} />
-          <span className="chart-tooltip-label">Compareceram</span>
+          <span className="chart-tooltip-label">{funnelCopy.attended}</span>
           <span className="chart-tooltip-value">
-            {dataPoint.compareceram} ({dataPoint.pct_compareceram}% das candidaturas)
+            {funnelCopy.shareOfApplications(
+              dataPoint.compareceram,
+              dataPoint.pct_compareceram
+            )}
           </span>
         </div>
       </div>
@@ -86,35 +100,35 @@ const SERIES_CONFIG = [
   {
     dataKey: 'compareceram',
     segmentKey: 'compareceram_segment',
-    label: 'Compareceram',
+    label: funnelCopy.attended,
     color: 'var(--chart-4)',
   },
   {
     dataKey: 'pagaram',
     segmentKey: 'pagaram_segment',
-    label: 'Pagaram',
+    label: funnelCopy.paid,
     color: 'var(--chart-3)',
   },
   {
     dataKey: 'finalizados',
     segmentKey: 'finalizados_segment',
-    label: 'Finalizados',
+    label: funnelCopy.finalised,
     color: 'var(--chart-2)',
   },
   {
     dataKey: 'inscritos',
     segmentKey: 'inscritos_segment',
-    label: 'Candidaturas',
+    label: funnelCopy.applications,
     color: 'var(--chart-1)',
   },
 ] as const
 
 export function FunnelChart({ data, className }: FunnelChartProps) {
   const chartConfig: ChartConfig = {
-    compareceram: { label: 'Compareceram', color: 'var(--chart-4)' },
-    pagaram: { label: 'Pagaram', color: 'var(--chart-3)' },
-    finalizados: { label: 'Finalizados', color: 'var(--chart-2)' },
-    inscritos: { label: 'Candidaturas', color: 'var(--chart-1)' },
+    compareceram: { label: funnelCopy.attended, color: 'var(--chart-4)' },
+    pagaram: { label: funnelCopy.paid, color: 'var(--chart-3)' },
+    finalizados: { label: funnelCopy.finalised, color: 'var(--chart-2)' },
+    inscritos: { label: funnelCopy.applications, color: 'var(--chart-1)' },
   }
 
   const chartData = useMemo(
@@ -135,7 +149,7 @@ export function FunnelChart({ data, className }: FunnelChartProps) {
       config={chartConfig}
       className={className}
       role="img"
-      aria-label="Funil de conversão por evento"
+      aria-label={funnelCopy.ariaLabel}
     >
       <RechartsBarChart data={chartData}>
         <CartesianGrid vertical={false} />

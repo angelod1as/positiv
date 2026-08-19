@@ -2,6 +2,7 @@ import { composable } from "composable-functions"
 import { redirectWithError } from "remix-toast"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { Button } from "~/components/atoms/button/button"
+import { adminEventsCopy } from "~/copy/admin/events"
 import { kyselyDb } from "~/kysely-db"
 import { mapParticipantsToDownloadFormat } from "~/lib/helpers/download-helpers"
 import { downloadXLSX } from "~/lib/helpers/download-xlsx"
@@ -20,7 +21,10 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   await getAdminContext(request, params)
 
   if (!params.id) {
-    throw await redirectWithError(ADMIN_DASHBOARD, "Evento não encontrado")
+    throw await redirectWithError(
+      ADMIN_DASHBOARD,
+      adminEventsCopy.eventNotFound,
+    )
   }
 
   const result = await composable(async () => {
@@ -36,7 +40,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   if (!result.success) {
     throw await redirectWithError(
       ADMIN_DASHBOARD,
-      "Erro ao buscar participantes do evento",
+      adminEventsCopy.downloadData.fetchParticipantsFailed,
     )
   }
 
@@ -86,9 +90,11 @@ const AdminDownloadEventParticipants = ({
   return (
     <div>
       <Button onClick={handleDownloadAll}>
-        Baixar tabela (Todos os dados)
+        {adminEventsCopy.downloadData.downloadAll}
       </Button>
-      <Button onClick={handleDownloadNames}>Baixar tabela (Nomes e RG)</Button>
+      <Button onClick={handleDownloadNames}>
+        {adminEventsCopy.downloadData.downloadNames}
+      </Button>
     </div>
   )
 }

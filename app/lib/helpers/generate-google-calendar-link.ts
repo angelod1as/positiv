@@ -1,4 +1,5 @@
 import type { Event } from "~types/database/entities.types"
+import { participantCopy } from "~/copy/participant"
 import { POSITIV_URL } from "../constants/constants"
 
 export const generateGoogleCalendarLink = (event: Event) => {
@@ -13,10 +14,7 @@ export const generateGoogleCalendarLink = (event: Event) => {
   root.searchParams.set("text", `${emoji} ${title}`)
   root.searchParams.set("dates", `${startTime}/${endTime}`)
   root.searchParams.set("location", location)
-  root.searchParams.set(
-    "details",
-    "Mais um delicioso evento Positiv para você!",
-  )
+  root.searchParams.set("details", participantCopy.calendar.googleDetails)
   root.searchParams.set("rprop", POSITIV_URL)
   root.searchParams.set("ctz", "America/Sao_Paulo")
 

@@ -87,7 +87,7 @@ describe("register commit route", () => {
     // server contradicts the browser about the same form.
     expect(
       body.errors.find((error) => error.questionId === "over18")?.message,
-    ).toBe("Você só pode se inscrever se for maior de 18 anos")
+    ).toBe("Você só pode se cadastrar se for maior de 18 anos")
   })
 
   it("gives an explicitly refused age the same answer", async () => {
@@ -99,7 +99,7 @@ describe("register commit route", () => {
 
     expect(
       body.errors.find((error) => error.questionId === "over18")?.message,
-    ).toBe("Você só pode se inscrever se for maior de 18 anos")
+    ).toBe("Você só pode se cadastrar se for maior de 18 anos")
   })
 
   it("answers a body the schema refuses with a client-error status", async () => {

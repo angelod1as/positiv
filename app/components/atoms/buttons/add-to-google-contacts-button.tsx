@@ -1,6 +1,7 @@
 import { UserPlus } from "lucide-react"
 import { toast } from "sonner"
 import { Button, type ButtonProps } from "~/components/ui/button"
+import { googleContactsCopy } from "~/copy/admin"
 import {
   formatParticipantNameForGoogleContacts,
   generateGoogleContactsUrl,
@@ -26,10 +27,10 @@ export function AddToGoogleContactsButton({
     
     try {
       await navigator.clipboard.writeText(formattedName)
-      toast.success('Nome copiado! Cole no campo de nome do Google Contacts')
+      toast.success(googleContactsCopy.nameCopied)
     } catch (error) {
       console.error('Failed to copy to clipboard:', error)
-      toast.error('Erro ao copiar nome para a área de transferência')
+      toast.error(googleContactsCopy.copyFailed)
     }
     
     const googleContactsUrl = generateGoogleContactsUrl(email, phone)
@@ -45,7 +46,7 @@ export function AddToGoogleContactsButton({
       {...props}
     >
       <UserPlus className="h-4 w-4" />
-      Adicionar ao Google Contacts
+      {googleContactsCopy.cta}
     </Button>
   )
 }

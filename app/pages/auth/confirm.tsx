@@ -7,6 +7,7 @@ import { type EmailOtpType } from "@supabase/supabase-js"
 import { type LoaderFunctionArgs } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import { ENV } from "varlock/env"
+import { authConfirmCopy } from "~/copy/auth"
 import paths from "~/lib/paths"
 import type { Database } from "~types/database/database.types"
 
@@ -55,8 +56,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
     if (!error) {
       const successMessage =
         type === "recovery"
-          ? "Senha redefinida com sucesso!"
-          : "E-mail confirmado com sucesso!"
+          ? authConfirmCopy.passwordReset
+          : authConfirmCopy.emailConfirmed
 
       return redirectWithSuccess(next, successMessage, { headers })
     }
@@ -66,20 +67,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
       error.message.includes("invalid") ||
       error.code === "otp_expired"
     ) {
-      throw await redirectWithError(
-        LOGIN,
-        "Link já utilizado ou expirado. Tente fazer login ou solicite um novo link.",
-      )
+      throw await redirectWithError(LOGIN, authConfirmCopy.linkExpired)
     }
 
     throw await redirectWithError(
       LOGIN,
-      `Erro ao confirmar: ${error.message || "link inválido"}`,
+      authConfirmCopy.confirmFailed(
+        error.message || authConfirmCopy.invalidLinkReason,
+      ),
     )
   }
 
-  throw await redirectWithError(
-    LOGIN,
-    "Link inválido. Por favor, verifique o link no seu e-mail.",
-  )
+  throw await redirectWithError(LOGIN, authConfirmCopy.invalidLink)
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { render, screen } from "~/test/test-utils"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { FinancialSummary } from "./financial-summary"
 
 const createMockHistoryItem = (
@@ -60,7 +61,7 @@ describe("FinancialSummary", () => {
 
     render(<FinancialSummary participantHistory={history} />)
 
-    expect(screen.getByText("Resumo Financeiro")).toBeInTheDocument()
+    expect(screen.getByText(adminParticipantsCopy.financialSummary.title)).toBeInTheDocument()
   })
 
   it("should display correct total invested (sum of all payments)", () => {

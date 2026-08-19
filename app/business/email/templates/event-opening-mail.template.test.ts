@@ -64,7 +64,7 @@ describe("eventOpeningMailTemplate", () => {
 
   it("should include CTA button", () => {
     const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
-    expect(result).toContain("Inscreva-se agora!")
+    expect(result).toContain("Candidate-se agora!")
     expect(result).toMatch(/background: #bf03c3/)
   })
 
@@ -121,20 +121,20 @@ describe("eventOpeningMailTemplate", () => {
     const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
     expect(result).toContain("Ter participado de edições anteriores")
     expect(result).toContain("Se você quer ir acompanhade")
-    expect(result).toContain("Inscrever-se no formulário")
+    expect(result).toContain("Candidatar-se pelo formulário")
     expect(result).toContain("entradas sociais")
   })
 
   it("should include footer with newsletter subscription message", () => {
     const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
-    expect(result).toContain("Você recebeu este e-mail pois está inscrite na newsletter")
+    expect(result).toContain("Você recebeu este e-mail pois assina a newsletter")
     expect(result).toContain("Positiv")
   })
 
   it("should include unsubscribe link with profile ID", () => {
     const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
     expect(result).toContain("newsletter/unsubscribe?id=test-profile-123")
-    expect(result).toContain("Cancelar inscrição")
+    expect(result).toContain("Cancelar assinatura")
   })
 
   it("should include account settings link", () => {

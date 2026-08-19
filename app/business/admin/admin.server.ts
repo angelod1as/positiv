@@ -3,6 +3,8 @@ import { sql } from "kysely"
 import type { Params } from "react-router"
 import { redirectWithError } from "remix-toast"
 import type { z } from "zod"
+import { adminLayoutCopy } from "~/copy/admin"
+import { adminEventsCopy } from "~/copy/admin/events"
 import { kyselyDb } from "~/kysely-db"
 import paths from "~/lib/paths"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
@@ -47,10 +49,7 @@ export const getAdminContext = async (
   // Actions call this directly because React Router does not run the admin
   // layout loader, which holds the same check, before a child action
   if (!context.currentProfile?.is_admin) {
-    throw await redirectWithError(
-      HOME,
-      "Você precisa ser administradore para visitar essa página",
-    )
+    throw await redirectWithError(HOME, adminLayoutCopy.accessDenied)
   }
 
   return context
@@ -505,9 +504,7 @@ export const createOrUpdateEvent = applySchema(
     .single()
 
   if (error) {
-    throw new Error(
-      "Ocorreu um erro adicionando seu evento, tente novamente. Erro: upsert",
-    )
+    throw new Error(adminEventsCopy.saveFailed)
   }
 
   return data.id

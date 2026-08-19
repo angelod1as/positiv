@@ -1,14 +1,13 @@
 import { ENV } from "varlock/env"
+import { adminFeedbacksCopy } from "~/copy/admin"
+import { sharedCopy } from "~/copy/shared"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 
 const MAX_FEEDBACK_LENGTH = 700
 
-const participationLabels: Record<string, string> = {
-  never: "Nunca participou",
-  once: "Participou uma vez",
-  more_than_once: "Participou mais de uma vez",
-}
+const participationLabels: Record<string, string> =
+  adminFeedbacksCopy.telegramAlert.participation
 
 interface NewFeedbackNotification {
   name: string | null
@@ -19,16 +18,18 @@ interface NewFeedbackNotification {
 }
 
 function buildMessage(feedback: NewFeedbackNotification): string {
-  const author = feedback.name?.trim() || "Anônimo"
-  const contact = [feedback.email, feedback.whatsapp].filter(Boolean).join(" · ")
+  const author = feedback.name?.trim() || sharedCopy.values.anonymous
+  const contact = [feedback.email, feedback.whatsapp]
+    .filter(Boolean)
+    .join(adminFeedbacksCopy.telegramAlert.contactSeparator)
   const text =
     feedback.feedback_text.length > MAX_FEEDBACK_LENGTH
       ? `${feedback.feedback_text.slice(0, MAX_FEEDBACK_LENGTH)}…`
       : feedback.feedback_text
 
   const lines = [
-    "Novo feedback recebido",
-    `De: ${author}${contact ? ` (${contact})` : ""}`,
+    adminFeedbacksCopy.telegramAlert.title,
+    adminFeedbacksCopy.telegramAlert.author(author, contact),
     participationLabels[feedback.has_participated],
     "",
     text,

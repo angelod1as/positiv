@@ -3,6 +3,7 @@ import { useNavigation, useSubmit } from "react-router"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 
 import { TextArea } from "~/components/ui/textarea"
+import { rulesDialogCopy } from "~/copy/events"
 
 type RulesDialogProps = {
   isDialogOpen: boolean
@@ -29,34 +30,25 @@ export const RulesDialog: FC<RulesDialogProps> = ({
 
   return (
     <ConfirmDialog
-      title="Enviar candidatura"
+      title={rulesDialogCopy.title}
       description={
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <p>
-              Se você tiver alguma nota ou comentário que gostaria que as
-              pessoas administradoras soubessem, escreva-as abaixo:
-            </p>
+            <p>{rulesDialogCopy.notesPrompt}</p>
             <TextArea
               value={notes}
               onChange={(val) => setNotes(val.target.value)}
-              placeholder="O que quer que a gente saiba?"
+              placeholder={rulesDialogCopy.notesPlaceholder}
             />
           </div>
           <div>
-            <p>
-              Você acertou tudo! Agora só falta clicar nesse botãozinho abaixo e
-              enviar sua candidatura.
-            </p>
-            <p>
-              Você vai receber um email com os dados do evento, salve na sua
-              agenda!
-            </p>
+            <p>{rulesDialogCopy.confirmation}</p>
+            <p>{rulesDialogCopy.emailNotice}</p>
           </div>
         </div>
       }
-      confirmLabel="🎉 Confirmar!"
-      cancelLabel="😢 Cancelar"
+      confirmLabel={rulesDialogCopy.confirmLabel}
+      cancelLabel={rulesDialogCopy.cancelLabel}
       onConfirm={handleSubmit}
       open={isDialogOpen}
       onOpenChange={setIsDialogOpen}

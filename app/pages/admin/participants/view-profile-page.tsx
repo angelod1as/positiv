@@ -6,6 +6,7 @@ import {
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-profile-page"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
@@ -18,7 +19,10 @@ export async function loader({ params }: Route.LoaderArgs) {
   const { profileId } = params
 
   if (!profileId) {
-    return redirectWithError(ADMIN_PARTICIPANTS, "Perfil não encontrado")
+    return redirectWithError(
+      ADMIN_PARTICIPANTS,
+      adminParticipantsCopy.viewProfile.profileNotFound,
+    )
   }
 
   const [profileResult, historyResult] = await Promise.all([
@@ -33,7 +37,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     console.error("Error fetching profile:", profileResult.errors)
     return redirectWithError(
       ADMIN_PARTICIPANTS,
-      "Perfil não encontrado ou não existe.",
+      adminParticipantsCopy.viewProfile.profileMissing,
     )
   }
 

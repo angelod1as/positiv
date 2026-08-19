@@ -115,6 +115,57 @@ export default defineConfig([
     },
   },
 
+  // 4b. Copy guard: migrated directories must not hold literal JSX text.
+  //     Add a glob here when a directory finishes migrating. See app/copy/README.md.
+  {
+    files: [
+      "app/components/atoms/**/*.tsx",
+      "app/components/molecules/**/*.tsx",
+      "app/components/organisms/**/*.tsx",
+      "app/components/forms/**/*.tsx",
+      "app/components/pages/admin/**/*.tsx",
+      "app/components/pages/homepage/**/*.tsx",
+      "app/components/pages/events/**/*.tsx",
+      "app/pages/admin/**/*.tsx",
+      "app/pages/public/**/*.tsx",
+      "app/pages/events/**/*.tsx",
+      "app/pages/auth/**/*.tsx",
+      "app/pages/account/**/*.tsx",
+      "app/pages/dashboard/**/*.tsx",
+      "app/pages/newsletter/**/*.tsx",
+    ],
+    ignores: [
+      "**/*.test.tsx",
+      // The news dialog's content is not copy: it has its own workflow,
+      // documented in CLAUDE.md and app/copy/README.md.
+      "app/components/organisms/news-dialog/news.tsx",
+    ],
+    plugins: { react: pluginReact },
+    rules: {
+      // allowedStrings holds punctuation and glyphs: formatting, not text.
+      "react/jsx-no-literals": [
+        "error",
+        {
+          noStrings: true,
+          ignoreProps: true,
+          allowedStrings: [
+            "-",
+            " - ",
+            "|",
+            "%",
+            "/",
+            "(",
+            ")",
+            "+",
+            ":",
+            "▼",
+            "▶",
+          ],
+        },
+      ],
+    },
+  },
+
   // 5. React Refresh Configuration: For Vite development
   {
     files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"], // Apply to all applicable files for refresh

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import type { ProfileWithExtraData } from '~/business/admin/admin.server'
+import { adminParticipantsCopy } from '~/copy/admin/participants'
 import { BasicData } from './basic-data'
 
 // Mock the AddToGoogleContactsButton
@@ -84,7 +85,7 @@ describe('BasicData', () => {
   it('should render basic data correctly', () => {
     renderWithRouter(<BasicData profile={mockProfile} />)
 
-    expect(screen.getByText('Dados básicos')).toBeInTheDocument()
+    expect(screen.getByText(adminParticipantsCopy.basicData.title)).toBeInTheDocument()
     expect(screen.getByText('João Silva Santos')).toBeInTheDocument()
     expect(screen.getByText('joao@example.com')).toBeInTheDocument()
     expect(screen.getByText('123.456.789-00')).toBeInTheDocument()

@@ -8,6 +8,8 @@ import {
   AlertDialogTitle,
 } from "~/components/ui/alert-dialog"
 import { Button } from "~/components/atoms/button/button"
+import { Copy } from "~/components/atoms/copy/copy"
+import { profileUpdateCopy } from "~/copy/account"
 import { PROFILE_REQUIREMENTS } from "./profile-update-config"
 
 export const ProfileUpdateModal = () => {
@@ -25,17 +27,19 @@ export const ProfileUpdateModal = () => {
     <AlertDialog open={true}>
       <AlertDialogContent onEscapeKeyDown={preventDismiss}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Atualize seu perfil</AlertDialogTitle>
+          <AlertDialogTitle>{profileUpdateCopy.title}</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div data-testid="profile-update-description">
-              {PROFILE_REQUIREMENTS.message}
+              <div className="space-y-2">
+                <Copy>{PROFILE_REQUIREMENTS.message}</Copy>
+              </div>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
           <Button variant="default" onClick={handleUpdateProfile}>
-            Atualizar meu perfil
+            {profileUpdateCopy.cta}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

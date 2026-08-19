@@ -3,6 +3,8 @@ import { useFetcher } from "react-router"
 import { toast } from "sonner"
 import ConfirmDialog from "~/components/molecules/confirm-dialog/confirm-dialog"
 import { Button } from "~/components/ui/button"
+import { listmonkDiagnosticCopy } from "~/copy/admin"
+import { sharedCopy } from "~/copy/shared"
 import type {
   CleanupResult,
   DiagnosticResult,
@@ -63,9 +65,11 @@ export function ListmonkDiagnosticSection() {
       const delay = index * 800
       setTimeout(() => {
         if (step.status === "ok") {
-          toast.success(`✓ ${step.label}`, { duration: 6000 })
+          toast.success(listmonkDiagnosticCopy.stepOk(step.label), {
+            duration: 6000,
+          })
         } else {
-          toast.error(`✗ ${step.label}`, {
+          toast.error(listmonkDiagnosticCopy.stepFailed(step.label), {
             description: step.error,
             duration: 12000,
           })
@@ -75,7 +79,7 @@ export function ListmonkDiagnosticSection() {
 
     if (!success && !resultCampaignId) {
       setTimeout(() => {
-        toast.error("Diagnóstico falhou antes de criar a campanha", {
+        toast.error(listmonkDiagnosticCopy.failedBeforeCampaign, {
           duration: 8000,
         })
       }, steps.length * 800)
@@ -92,10 +96,12 @@ export function ListmonkDiagnosticSection() {
     const { success, step } = cleanupFetcher.data.cleanupResult
 
     if (success) {
-      toast.success(`✓ ${step.label}`, { duration: 6000 })
+      toast.success(listmonkDiagnosticCopy.stepOk(step.label), {
+        duration: 6000,
+      })
       setCampaignId(null)
     } else {
-      toast.error(`✗ ${step.label}`, {
+      toast.error(listmonkDiagnosticCopy.stepFailed(step.label), {
         description: step.error,
         duration: 12000,
       })
@@ -106,22 +112,19 @@ export function ListmonkDiagnosticSection() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
-          <h2>Diagnóstico de Email</h2>
+          <h2>{listmonkDiagnosticCopy.title}</h2>
           <p className="text-sm text-muted-foreground">
-            Essa ferramenta testa a conexão com o serviço de newsletter
-            (Listmonk) e envia uma campanha de teste para os desenvolvedores.
-            Use quando quiser verificar se os emails de abertura de evento estão
-            funcionando.
+            {listmonkDiagnosticCopy.description}
           </p>
         </div>
       </div>
 
       <div className="flex gap-2">
         <ConfirmDialog
-          title="Testar conexão?"
-          description="Será enviado um email de teste para todos os desenvolvedores cadastrados na lista de devs do Listmonk."
-          confirmLabel="Testar"
-          cancelLabel="Cancelar"
+          title={listmonkDiagnosticCopy.confirmTitle}
+          description={listmonkDiagnosticCopy.confirmDescription}
+          confirmLabel={listmonkDiagnosticCopy.confirmLabel}
+          cancelLabel={sharedCopy.actions.cancel}
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           isLoading={isTestSubmitting}
@@ -131,7 +134,9 @@ export function ListmonkDiagnosticSection() {
             variant="outline"
             disabled={isTestSubmitting}
           >
-            {isTestSubmitting ? "Testando..." : "Testar conexão com Listmonk"}
+            {isTestSubmitting
+              ? listmonkDiagnosticCopy.testing
+              : listmonkDiagnosticCopy.test}
           </ConfirmDialog.Trigger>
         </ConfirmDialog>
 
@@ -143,8 +148,8 @@ export function ListmonkDiagnosticSection() {
             disabled={isCleanupSubmitting}
           >
             {isCleanupSubmitting
-              ? "Limpando..."
-              : "Limpar campanha de teste"}
+              ? listmonkDiagnosticCopy.cleaning
+              : listmonkDiagnosticCopy.clean}
           </Button>
         )}
       </div>

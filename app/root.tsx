@@ -14,8 +14,12 @@ import {
 import { getToast, redirectWithError, redirectWithSuccess } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { ENV } from "varlock/env"
+import { Copy } from "~/components/atoms/copy/copy"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
+import { errorsCopy } from "~/copy/errors"
+import { metaCopy } from "~/copy/meta"
+import { newsletterSubscribeCopy } from "~/copy/newsletter"
 import { POSITIV_EMAIL } from "~/lib/constants/constants"
 import type { Route } from "./+types/root"
 import "./app.css"
@@ -26,7 +30,6 @@ import {
   newsCookie,
   newsletterPreferenceCookie,
 } from "./business/session.server"
-import { Link } from "./components/atoms/link/link"
 import { Footer } from "./components/organisms/footer/footer"
 import { Header } from "./components/organisms/header/header"
 import { NEWS_VERSION } from "./components/organisms/news-dialog/news-utils"
@@ -50,17 +53,15 @@ export const links: Route.LinksFunction = () => []
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Positiv Party" },
-    { property: "og:title", content: "Positiv Party" },
+    { title: metaCopy.root.title },
+    { property: "og:title", content: metaCopy.root.title },
     {
       name: "description",
-      content:
-        "Eventos para amantes de saliências não-mono, curioses com o mundo da suruba, e quem quer explorar a própria sexualidade",
+      content: metaCopy.root.description,
     },
     {
       property: "og:description",
-      content:
-        "Eventos para amantes de saliências não-mono, curioses com o mundo da suruba, e quem quer explorar a própria sexualidade",
+      content: metaCopy.root.description,
     },
     {
       rel: "apple-touch-icon",
@@ -179,7 +180,7 @@ export async function action({ params, request }: Route.ActionArgs) {
     if (!currentProfile) {
       return redirectWithError(
         thisUrl as string,
-        "Você precisa estar logado para se inscrever",
+        newsletterSubscribeCopy.loginRequired,
       )
     }
 
@@ -189,10 +190,7 @@ export async function action({ params, request }: Route.ActionArgs) {
     )
 
     if (!result.success) {
-      return redirectWithError(
-        thisUrl as string,
-        "Não foi possível concluir a inscrição. Tente novamente.",
-      )
+      return redirectWithError(thisUrl as string, newsletterSubscribeCopy.failed)
     }
 
     const headers = new Headers()
@@ -206,8 +204,8 @@ export async function action({ params, request }: Route.ActionArgs) {
 
     const successMessage =
       result.data?.syncStatus === "failed"
-        ? "Inscrição realizada! Houve um problema temporário com o sistema de emails, mas entraremos em contato em breve."
-        : "Inscrição realizada com sucesso!"
+        ? newsletterSubscribeCopy.successWithSyncFailure
+        : newsletterSubscribeCopy.success
 
     return redirectWithSuccess(thisUrl as string, successMessage, { headers })
   }
@@ -325,31 +323,18 @@ export default function App({ loaderData }: Route.ComponentProps) {
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   console.error("ERROR BOUNDARY", error)
-  let message = "Oops!"
-  let details = (
-    <>
-      <p>Um erro ocorreu. Isso é frustrante, nós sabemos.</p>
-      <p>
-        Avise-nos pelo <Link to={`mailto:${POSITIV_EMAIL}`}>email</Link> com as
-        informações:
-      </p>
-      <ul className="list-disc">
-        <li>Navegador (Chrome, Firefox, Safari, etc)</li>
-        <li>Sistema operacional (iOS, Android, macOS, Windows)</li>
-        <li>
-          Um breve relato do que você tentou fazer (qual página, qual botão,
-          etc)
-        </li>
-      </ul>
-    </>
-  )
+  let message: string = errorsCopy.boundary.title
+  let details = <Copy>{errorsCopy.boundary.details(POSITIV_EMAIL)}</Copy>
   let stack: string | undefined
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error"
+    message =
+      error.status === 404
+        ? errorsCopy.boundary.notFoundTitle
+        : errorsCopy.boundary.genericTitle
     details =
       error.status === 404 ? (
-        <p>Página não encontrada.</p>
+        <p>{errorsCopy.boundary.notFound}</p>
       ) : error.statusText ? (
         <p>{error.statusText}</p>
       ) : (
@@ -366,7 +351,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       <main className="grow flex flex-col justify-center items-center">
         <div className="max-w-2xl">
           <h1>{message}</h1>
-          <div>{details}</div>
+          <div className="[&_ul]:list-disc">{details}</div>
           {stack && (
             <pre className="w-full p-4 overflow-x-auto">
               <code>{stack}</code>

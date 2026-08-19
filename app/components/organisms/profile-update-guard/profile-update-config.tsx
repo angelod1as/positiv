@@ -1,4 +1,4 @@
-import type { ReactNode } from "react"
+import { profileUpdateCopy } from "~/copy/account"
 
 /**
  * Profile Update Guard Configuration
@@ -22,7 +22,8 @@ import type { ReactNode } from "react"
  *
  * 3. **Update This Config File**:
  *    - Add field name to `requiredFields` array below
- *    - Update `message` JSX to explain why the field is needed
+ *    - Update `profileUpdateCopy.message` in `app/copy/account.ts` to
+ *      explain why the field is needed
  *    - Update `targetPath` if field is on a different form page
  *    - Add any new form pages to `exemptPaths` if needed
  *
@@ -47,15 +48,7 @@ import type { ReactNode } from "react"
 export const PROFILE_REQUIREMENTS = {
   requiredFields: ["race_color"] as string[],
   targetPath: "/conta/dados-basicos",
-  message: (
-    <div>
-      <p>Precisamos que você atualize seus dados básicos.</p>
-      <p className="mt-2">
-        Estamos solicitando informações sobre raça ou cor para melhorar nossos
-        dados demográficos.
-      </p>
-    </div>
-  ) as ReactNode,
+  message: profileUpdateCopy.message,
   exemptPaths: [
     "/",
     "/entrar",

@@ -6,8 +6,9 @@ type FounderCardProps = {
   name: string
   image: string
   alt: string
-  pronouns: string
+  pronounsLabel: string
   instagram: string
+  instagramIconAlt: string
 }
 
 export const FounderCard: FCC<FounderCardProps> = ({
@@ -15,8 +16,9 @@ export const FounderCard: FCC<FounderCardProps> = ({
   alt,
   name,
   children,
-  pronouns,
+  pronounsLabel,
   instagram,
+  instagramIconAlt,
 }) => {
   return (
     <div className="flex flex-col items-center space-y-4">
@@ -29,7 +31,7 @@ export const FounderCard: FCC<FounderCardProps> = ({
       />
       <div className="flex flex-col gap-0">
         <h3 className="text-xl font-bold">{name}</h3>
-        <p className="text-sm text-muted-foreground">({pronouns})</p>
+        <p className="text-sm text-muted-foreground">{pronounsLabel}</p>
       </div>
 
       <div className="text-muted-foreground text-center max-w-md flex flex-col gap-4">
@@ -41,7 +43,7 @@ export const FounderCard: FCC<FounderCardProps> = ({
           linkProps={{ target: "_blank" }}
           to={`https://instagram.com/${instagram}`}
         >
-          <img src={Instagram} alt="Instagram icon" width={25} />
+          <img src={Instagram} alt={instagramIconAlt} width={25} />
         </Button>
       </div>
     </div>

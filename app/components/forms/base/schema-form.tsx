@@ -12,6 +12,8 @@ import { Label } from "~/components/ui/label"
 import { RadioGroup } from "~/components/ui/radio-group"
 import SchemaFormCheckbox from "~/components/ui/schema-form-checkbox"
 import { TextArea } from "~/components/ui/textarea"
+import { schemaFormCopy } from "~/copy/forms"
+import { sharedCopy } from "~/copy/shared"
 import { Error } from "./error"
 import { Errors } from "./errors"
 import { Field } from "./field"
@@ -49,8 +51,8 @@ function SchemaForm<Schema extends FormSchema>({
         buttonComponent={SubmitButton}
         globalErrorsComponent={Errors}
         errorComponent={Error}
-        buttonLabel="Continuar"
-        pendingButtonLabel="Carregando..."
+        buttonLabel={schemaFormCopy.submit}
+        pendingButtonLabel={sharedCopy.status.loading}
         {...props}
         renderField={({ Field, fieldType, ...props }) => {
           const { name } = props

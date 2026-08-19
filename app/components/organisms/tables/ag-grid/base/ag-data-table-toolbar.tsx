@@ -6,6 +6,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip"
+import { adminTablesCopy } from "~/copy/admin/tables"
 
 interface AGDataTableToolbarProps {
   gridApi: GridApi | null
@@ -40,10 +41,10 @@ export function AGDataTableToolbar({
         variant="outline"
         size="sm"
         onClick={handleClearFilters}
-        title="Limpar todos os filtros"
+        title={adminTablesCopy.toolbar.clearFiltersTitle}
       >
         <FilterXIcon className="mr-2 h-4 w-4" />
-        Limpar filtros
+        {adminTablesCopy.toolbar.clearFilters}
       </Button>
 
       <Tooltip>
@@ -54,13 +55,12 @@ export function AGDataTableToolbar({
             onClick={handleResetTable}
           >
             <RotateCcwIcon className="mr-2 h-4 w-4" />
-            Resetar tabela
+            {adminTablesCopy.toolbar.resetTable}
           </Button>
         </TooltipTrigger>
         <TooltipContent>
           <p className="max-w-xs">
-            Limpa todos os dados salvos da organização da tabela, como
-            filtros, posições de colunas e paginação
+            {adminTablesCopy.toolbar.resetTableDescription}
           </p>
         </TooltipContent>
       </Tooltip>
@@ -69,17 +69,21 @@ export function AGDataTableToolbar({
         variant="outline"
         size="sm"
         onClick={onToggleFullscreen}
-        title={isFullscreen ? "Minimizar" : "Expandir para tela cheia"}
+        title={
+          isFullscreen
+            ? adminTablesCopy.toolbar.minimizeTitle
+            : adminTablesCopy.toolbar.fullscreenTitle
+        }
       >
         {isFullscreen ? (
           <>
             <MinimizeIcon className="mr-2 h-4 w-4" />
-            Minimizar
+            {adminTablesCopy.toolbar.minimize}
           </>
         ) : (
           <>
             <MaximizeIcon className="mr-2 h-4 w-4" />
-            Tela cheia
+            {adminTablesCopy.toolbar.fullscreen}
           </>
         )}
       </Button>

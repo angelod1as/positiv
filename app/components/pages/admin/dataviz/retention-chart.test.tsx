@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { RetentionDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { RetentionChart } from './retention-chart'
 
 vi.mock('recharts', async () => {
@@ -48,7 +49,7 @@ describe('RetentionChart', () => {
     expect(chart).toHaveAttribute('role', 'img')
     expect(chart).toHaveAttribute(
       'aria-label',
-      'Gráfico de frequência de comparecimento'
+      adminDatavizCopy.retentionChart.ariaLabel
     )
   })
 

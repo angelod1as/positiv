@@ -1,5 +1,6 @@
 import type { ICellRendererParams } from "ag-grid-community"
 import WhatsAppIcon from "~/assets/social/whatsapp.svg"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { phoneToWhatsAppLink } from "~/lib/helpers/phone-to-whatsapp-link"
 import { AGIconButton } from "./ag-icon-button"
 
@@ -14,11 +15,11 @@ export function PhoneButtonRenderer(params: ICellRendererParams) {
   return (
     <AGIconButton
       href={link}
-      title="WhatsApp"
+      title={adminTablesCopy.renderers.whatsapp}
       external
       className="border-green-500 hover:border-green-600 hover:bg-green-50"
     >
-      <img src={WhatsAppIcon} alt="WhatsApp" className="h-4 w-4" />
+      <img src={WhatsAppIcon} alt={adminTablesCopy.renderers.whatsapp} className="h-4 w-4" />
     </AGIconButton>
   )
 }

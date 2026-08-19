@@ -1,3 +1,4 @@
+import { adminTablesCopy } from "~/copy/admin/tables"
 import { cn } from "~/lib/utils"
 
 export type SaveStatus = "idle" | "saving" | "success" | "error"
@@ -8,10 +9,10 @@ interface SaveStatusIndicatorProps {
 }
 
 const statusConfig = {
-  idle: { color: "bg-blue-500", text: "Carregado" },
-  saving: { color: "bg-amber-500", text: "Salvando..." },
-  success: { color: "bg-green-500", text: "Salvo" },
-  error: { color: "bg-red-500", text: "Erro ao salvar" },
+  idle: { color: "bg-blue-500", text: adminTablesCopy.saveStatus.idle },
+  saving: { color: "bg-amber-500", text: adminTablesCopy.saveStatus.saving },
+  success: { color: "bg-green-500", text: adminTablesCopy.saveStatus.success },
+  error: { color: "bg-red-500", text: adminTablesCopy.saveStatus.error },
 }
 
 export function SaveStatusIndicator({

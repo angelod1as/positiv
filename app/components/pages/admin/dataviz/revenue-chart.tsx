@@ -9,6 +9,7 @@ import {
 } from 'recharts'
 import type { EventRevenueDataPoint } from '~/business/admin/dataviz/dataviz.types'
 import { MultiLineXAxisTick } from '~/components/atoms/charts/multi-line-x-axis-tick'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import {
   ChartContainer,
   ChartTooltip,
@@ -18,6 +19,8 @@ import {
   buildEventLabel,
   formatCurrency,
 } from '~/lib/helpers/chart-utils'
+
+const revenueCopy = adminDatavizCopy.revenueChart
 
 interface RevenueChartProps {
   data: EventRevenueDataPoint[]
@@ -60,20 +63,24 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
       <div className="grid gap-1.5">
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-1)' }} />
-          <span className="chart-tooltip-label">Faturamento</span>
+          <span className="chart-tooltip-label">{revenueCopy.revenue}</span>
           <span className="chart-tooltip-value">{formatCurrency(dataPoint.faturamento_total)}</span>
         </div>
         <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-2)' }} />
-          <span className="chart-tooltip-label">Preço do ingresso</span>
+          <span className="chart-tooltip-label">
+            {revenueCopy.ticketPrice}
+          </span>
           <span className="chart-tooltip-value">{formatCurrency(dataPoint.ticket_price)}</span>
         </div>
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-label">Pagantes</span>
+          <span className="chart-tooltip-label">{revenueCopy.payers}</span>
           <span className="chart-tooltip-value">{dataPoint.num_pagantes}</span>
         </div>
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-label">Ticket médio</span>
+          <span className="chart-tooltip-label">
+            {revenueCopy.averageTicket}
+          </span>
           <span className="chart-tooltip-value">{formatCurrency(ticketMedio)}</span>
         </div>
       </div>
@@ -83,8 +90,8 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
 
 export function RevenueChart({ data, className }: RevenueChartProps) {
   const chartConfig: ChartConfig = {
-    faturamento_total: { label: 'Faturamento', color: 'var(--chart-1)' },
-    ticket_price: { label: 'Preço do ingresso', color: 'var(--chart-2)' },
+    faturamento_total: { label: revenueCopy.revenue, color: 'var(--chart-1)' },
+    ticket_price: { label: revenueCopy.ticketPrice, color: 'var(--chart-2)' },
   }
 
   const chartData = data.map((item) => ({
@@ -97,7 +104,7 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
       config={chartConfig}
       className={className}
       role="img"
-      aria-label="Faturamento por evento"
+      aria-label={revenueCopy.ariaLabel}
     >
       <ComposedChart data={chartData}>
         <CartesianGrid vertical={false} />

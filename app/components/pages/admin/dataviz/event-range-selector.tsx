@@ -1,8 +1,12 @@
 import { AreaChart, Brush, XAxis } from "recharts"
 import { ChartContainer, type ChartConfig } from "~/components/ui/chart"
+import { adminDatavizCopy } from "~/copy/admin/dataviz"
 
 const chartConfig: ChartConfig = {
-  inscritos: { label: "Candidaturas", color: "var(--chart-1)" },
+  inscritos: {
+    label: adminDatavizCopy.attendanceChart.series.applications,
+    color: "var(--chart-1)",
+  },
 }
 
 interface EventRangeSelectorProps {
@@ -23,13 +27,13 @@ export function EventRangeSelector({
   return (
     <div>
       <p className="text-sm text-muted-foreground">
-        Selecionar intervalo de eventos
+        {adminDatavizCopy.eventRangeSelector.label}
       </p>
       <ChartContainer
         config={chartConfig}
         className="h-[60px]"
         role="img"
-        aria-label="Selecionar intervalo de eventos"
+        aria-label={adminDatavizCopy.eventRangeSelector.label}
       >
         <AreaChart data={data}>
           <XAxis dataKey="label" hide />

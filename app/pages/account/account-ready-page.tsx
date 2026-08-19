@@ -1,4 +1,5 @@
 import { Button } from "~/components/atoms/button/button"
+import { Copy } from "~/components/atoms/copy/copy"
 import {
   Card,
   CardContent,
@@ -6,6 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "~/components/ui/card"
+import { accountReadyCopy } from "~/copy/account"
+import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/account-ready-page"
@@ -15,7 +18,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Tudo pronto")
+  return createMetaArray(metaCopy.accountReady.title)
 }
 
 const AccountReadyPage = ({}: Route.ComponentProps) => {
@@ -23,28 +26,16 @@ const AccountReadyPage = ({}: Route.ComponentProps) => {
     <Card className="my-12">
       <CardHeader>
         <CardTitle className="text-2xl">
-          <h1>Sua conta está pronta! 🎉</h1>
+          <h1>{accountReadyCopy.title}</h1>
         </CardTitle>
       </CardHeader>
 
       <CardContent className="flex flex-col gap-4">
-        <p>
-          Mas atenção:{" "}
-          <b>ter conta na Positiv não é o mesmo que estar em uma festa.</b>
-        </p>
-        <p>
-          Cada evento tem candidatura própria. Para ir a um evento, você precisa
-          se candidatar a ele — e a candidatura vale só para aquele evento.
-        </p>
-        <p>
-          Depois que você se candidata, a organização seleciona quem vai e entra
-          em contato via Whatsapp. Fique ligade: somos uma equipe minúscula que
-          conversa com cada uma das pessoas candidatas. O processo leva tempo.
-        </p>
+        <Copy>{accountReadyCopy.body}</Copy>
       </CardContent>
 
       <CardFooter>
-        <Button to={DASHBOARD}>Ver eventos da Positiv</Button>
+        <Button to={DASHBOARD}>{accountReadyCopy.cta}</Button>
       </CardFooter>
     </Card>
   )

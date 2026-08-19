@@ -13,6 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip"
+import { adminTablesCopy } from "~/copy/admin/tables"
 import type { BaseCellEditorProps } from "./use-cell-editor"
 
 export type TextEditModalCellProps<
@@ -71,7 +72,7 @@ export const TextEditModalCell = <T extends { id: string }, K extends keyof T>({
               variant="ghost"
               size="sm"
               onClick={handleOpen}
-              aria-label="Edit text"
+              aria-label={adminTablesCopy.textModal.editAriaLabel}
             >
               <PencilIcon className="size-4" />
             </Button>
@@ -97,7 +98,7 @@ export const TextEditModalCell = <T extends { id: string }, K extends keyof T>({
           }}
         >
           <DialogHeader>
-            <DialogTitle>{label || "Edit Text"}</DialogTitle>
+            <DialogTitle>{label || adminTablesCopy.textModal.editTitle}</DialogTitle>
           </DialogHeader>
           <textarea
             value={editedValue}
@@ -111,10 +112,10 @@ export const TextEditModalCell = <T extends { id: string }, K extends keyof T>({
               variant="outline"
               onClick={() => handleClose(false)}
             >
-              Cancel
+              {adminTablesCopy.textModal.cancel}
             </Button>
             <Button type="button" onClick={() => handleClose(true)}>
-              Save
+              {adminTablesCopy.textModal.save}
             </Button>
           </DialogFooter>
         </DialogContent>

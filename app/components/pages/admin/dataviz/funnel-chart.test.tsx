@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import type { ConversionFunnelDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { FunnelChart } from './funnel-chart'
 
 vi.mock('recharts', async () => {
@@ -74,7 +75,7 @@ describe('FunnelChart', () => {
     const { container } = render(<FunnelChart data={mockData} />)
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
-    expect(chart).toHaveAttribute('aria-label', 'Funil de conversão por evento')
+    expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.funnelChart.ariaLabel)
   })
 
 })

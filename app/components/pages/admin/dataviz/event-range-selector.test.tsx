@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { EventRangeSelector } from './event-range-selector'
 
 vi.mock('recharts', async () => {
@@ -72,7 +73,7 @@ describe('EventRangeSelector', () => {
     )
 
     const chart = container.querySelector('[data-chart]')
-    expect(chart).toHaveAttribute('aria-label', 'Selecionar intervalo de eventos')
+    expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.eventRangeSelector.label)
   })
 
   it('displays the label text', () => {
@@ -85,6 +86,6 @@ describe('EventRangeSelector', () => {
       />
     )
 
-    expect(screen.getByText('Selecionar intervalo de eventos')).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.eventRangeSelector.label)).toBeInTheDocument()
   })
 })

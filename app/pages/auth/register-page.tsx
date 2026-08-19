@@ -1,7 +1,6 @@
 import { Turnstile } from "@marsidev/react-turnstile"
 import { useCallback, useMemo } from "react"
 import { useLoaderData, useNavigate } from "react-router"
-import { Link } from "~/components/atoms/link/link"
 import { buildRegisterFlow } from "~/components/forms/custom/register/build-register-flow"
 import { buildRegisterQuestions } from "~/components/forms/custom/register/build-register-questions"
 import type { CommitResult } from "~types/forms/commit.types"
@@ -23,13 +22,16 @@ import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import { cn } from "~/lib/utils"
 import type { Route } from "./+types/register-page"
+import { Copy } from "~/components/atoms/copy/copy"
+import { registerCopy } from "~/copy/auth"
+import { metaCopy } from "~/copy/meta"
 
 const {
   auth: { LOGIN, LOGON_EMAIL_MESSAGE, REGISTER_COMMIT },
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray("Registrar")
+  return createMetaArray(metaCopy.register.title)
 }
 
 export const loader = async () => {
@@ -96,12 +98,9 @@ const RegisterPage = ({}: Route.ComponentProps) => {
     <div className={cn("flex flex-col gap-6")}>
       <Card className="my-12">
         <CardHeader>
-          <CardTitle className="text-2xl">Criar conta</CardTitle>
+          <CardTitle className="text-2xl">{registerCopy.title}</CardTitle>
           <CardDescription>
-            <p>
-              Depois de se cadastrar, uma mensagem de confirmação vai chegar em
-              seu email.
-            </p>
+            <Copy>{registerCopy.description}</Copy>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -119,7 +118,7 @@ const RegisterPage = ({}: Route.ComponentProps) => {
         </CardContent>
         <CardFooter>
           <p className="text-sm text-muted-foreground">
-            Já tem uma conta? <Link to={LOGIN}>Entre aqui</Link>
+            <Copy inline>{registerCopy.loginPrompt(LOGIN)}</Copy>
           </p>
         </CardFooter>
       </Card>

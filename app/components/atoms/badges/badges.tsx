@@ -1,4 +1,6 @@
 import { Badge } from "~/components/ui/badge"
+import { participantBadgesCopy } from "~/copy/admin"
+import { eventStatusBadgeCopy } from "~/copy/events"
 import { checkEventStatus } from "~/lib/helpers/check-event-status"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { cn } from "~/lib/utils"
@@ -8,7 +10,7 @@ export const VeteranBadge = ({
   eventCount,
 }: { eventCount?: number | null } = {}) => (
   <div className="flex items-center gap-1.5">
-    <Badge variant="veteran">Veterane</Badge>
+    <Badge variant="veteran">{participantBadgesCopy.veteran}</Badge>
     {eventCount !== undefined && eventCount !== null && (
       <span
         className={cn(
@@ -22,7 +24,7 @@ export const VeteranBadge = ({
   </div>
 )
 
-export const RookieBadge = () => <Badge variant="rookie">Novate</Badge>
+export const RookieBadge = () => <Badge variant="rookie">{participantBadgesCopy.rookie}</Badge>
 
 export const OrientationWarning = ({
   orientations,
@@ -78,7 +80,7 @@ export const EventStatusBadge = ({
 }) => {
   const { isOpen, isScheduled } = checkEventStatus(event_status)
 
-  if (isOpen) return <Badge variant="default">Candidaturas abertas</Badge>
-  if (isScheduled) return <Badge variant="secondary">Em breve</Badge>
-  return <Badge variant="outline">Candidaturas encerradas</Badge>
+  if (isOpen) return <Badge variant="default">{eventStatusBadgeCopy.open}</Badge>
+  if (isScheduled) return <Badge variant="secondary">{eventStatusBadgeCopy.scheduled}</Badge>
+  return <Badge variant="outline">{eventStatusBadgeCopy.closed}</Badge>
 }

@@ -1,4 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { basicDataValidation, changePasswordValidation } from "~/copy/account"
+import { registerCopy } from "~/copy/auth"
+import { agreeToTermsValidation } from "~/copy/dashboard"
 import { PHONE_REGEXP } from "~/lib/constants/constants"
 import { normalizeName } from "~/lib/helpers/strings"
 import { validationMessages } from "~/lib/helpers/validation-messages"
@@ -27,7 +30,7 @@ export const changePasswordSchema = zod
     confirm_password: zod.string(),
   })
   .refine((data) => data.password === data.confirm_password, {
-    message: "As senhas não combinam",
+    message: changePasswordValidation.passwordMismatch,
     path: ["confirm_password"],
   })
 
@@ -43,16 +46,16 @@ export const registerUserFieldsSchema = zod.object({
   over18: zod.preprocess(
     (value) => value ?? false,
     zod.boolean().refine((val) => val, {
-      message: "Você só pode se inscrever se for maior de 18 anos",
+      message: registerCopy.validation.over18,
     }),
   ),
   captchaToken: zod
     .string()
-    .min(1, "Por favor, complete a verificação de segurança"),
+    .min(1, registerCopy.validation.captcha),
 })
 
 /** Shared so the browser and the server say the same thing about it. */
-export const PASSWORDS_DIFFER_MESSAGE = "As senhas não são iguais"
+export const PASSWORDS_DIFFER_MESSAGE = registerCopy.validation.passwordMismatch
 
 export const registerUserSchema = registerUserFieldsSchema.refine(
   (data) => data.password === data.confirmPassword,
@@ -103,11 +106,10 @@ export const userContextSchema = contextSchema.extend({
 
 export const agreeToTermsSchema = zod.object({
   agree: zod.boolean().refine((val) => val, {
-    message: "Você só pode continuar se estiver de acordo.",
+    message: agreeToTermsValidation.agree,
   }),
   commonEmails: zod.boolean().refine((val) => val, {
-    message:
-      "Nosso sistema só funciona se você aceitar receber e-mails gerais.",
+    message: agreeToTermsValidation.commonEmails,
   }),
   mktEmails: zod.boolean().optional(),
 })
@@ -129,7 +131,7 @@ export const basicDataSchema = zod
       .string()
       .pipe(
         zod.coerce.date({
-          error: "Data inválida",
+          error: validationMessages.invalidDate,
         }),
       )
       .refine(
@@ -147,28 +149,28 @@ export const basicDataSchema = zod
           return age >= 18
         },
         {
-          message: "Você precisa ter pelo menos 18 anos",
+          message: basicDataValidation.minimumAge,
         },
       ),
     phone: zod.coerce
       .number({
-        error: "Você tem certeza que digitou um número?",
+        error: basicDataValidation.phoneNotANumber,
       })
       .refine((value) => PHONE_REGEXP.test(value.toString()), {
-        message: "Número inválido",
+        message: basicDataValidation.invalidPhone,
       }),
     confirm_phone: zod.coerce
       .number({
-        error: "Você tem certeza que digitou um número?",
+        error: basicDataValidation.phoneNotANumber,
       })
       .refine((value) => PHONE_REGEXP.test(value.toString()), {
-        message: "Número inválido",
+        message: basicDataValidation.invalidPhone,
       }),
     how_came_to_us: zod.string().optional(),
     where_lives: zod.string().optional(),
   })
   .refine((data) => data.phone === data.confirm_phone, {
-    message: "Os números de telefone são diferentes",
+    message: basicDataValidation.phoneMismatch,
     path: ["phone"],
   })
   .refine(
@@ -180,7 +182,7 @@ export const basicDataSchema = zod
       )
     },
     {
-      message: "O nome social deve ser diferente do nome completo",
+      message: basicDataValidation.socialNameMustDiffer,
       path: ["social_name"],
     },
   )

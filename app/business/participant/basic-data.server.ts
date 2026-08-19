@@ -1,6 +1,8 @@
 import { applySchema } from "composable-functions"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
+import { errorsCopy } from "~/copy/errors"
+import { participantCopy } from "~/copy/participant"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import { db } from "~/lib/supabase/db.server"
@@ -20,7 +22,7 @@ export const basicData = applySchema(
   const { supabase, currentProfile, currentUser } = context
   const parsedValues = schemaValuesToDB(values)
   if (!currentUser || !currentUser.email) {
-    throw await redirectWithError(LOGIN, "Ocorreu um erro com sua autenticação")
+    throw await redirectWithError(LOGIN, errorsCopy.auth.authenticationFailed)
   }
 
   const { confirm_phone, ...data } = parsedValues
@@ -81,9 +83,7 @@ export const basicData = applySchema(
   if (upsertError) {
     const code = upsertError?.code ?? "UNKNOWN"
     const message = upsertError?.message ?? String(upsertError)
-    throw new Error(
-      `Erro atualizando o perfil — Código: "${code}" — Mensagem: "${message}"`,
-    )
+    throw new Error(participantCopy.basicData.profileUpdateFailed(code, message))
   }
 
   return context
@@ -109,7 +109,7 @@ export const extraBasicData = async ({
   const { currentProfile, supabaseHeaders } = context
 
   if (!currentProfile) {
-    throw new Error("Erro ao buscar usuário")
+    throw new Error(participantCopy.basicData.profileNotFound)
   }
 
   // Read before the update below sets basic_data_filled: true
@@ -120,7 +120,7 @@ export const extraBasicData = async ({
   if (!extraDataValidation.success) {
     throw await redirectWithError(
       GENDER_PRONOUNS_ORIENTATION,
-      "Algo deu errado com seu formulário, tente de novo.",
+      participantCopy.basicData.invalidExtraData,
     )
   }
 
@@ -132,7 +132,7 @@ export const extraBasicData = async ({
   if (!basicValidation.success) {
     throw await redirectWithError(
       BASIC_DATA,
-      "Parece que há algo faltando neste formulário, tente novamente.",
+      participantCopy.basicData.incompleteBasicData,
     )
   }
 
@@ -165,7 +165,7 @@ export const extraBasicData = async ({
       ? ACCOUNT_READY
       : DASHBOARD
 
-  return redirectWithSuccess(targetPath, "Dados salvos com sucesso", {
+  return redirectWithSuccess(targetPath, participantCopy.basicData.saved, {
     headers: supabaseHeaders,
   })
 }

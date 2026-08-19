@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import type { EventAttendanceDataPoint } from '~/business/admin/dataviz/dataviz.types'
+import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { AttendanceChart } from './attendance-chart'
 
 vi.mock('recharts', async () => {
@@ -83,26 +84,26 @@ describe('AttendanceChart', () => {
     const { container } = render(<AttendanceChart data={mockData} />)
     const chart = container.querySelector('[data-chart]')
     expect(chart).toHaveAttribute('role', 'img')
-    expect(chart).toHaveAttribute('aria-label', 'Presença por evento')
+    expect(chart).toHaveAttribute('aria-label', adminDatavizCopy.attendanceChart.ariaLabel)
   })
 
   it('renders legend items for all series', () => {
     render(<AttendanceChart data={mockData} />)
-    expect(screen.getByText('Candidaturas')).toBeInTheDocument()
-    expect(screen.getByText('Compareceram')).toBeInTheDocument()
-    expect(screen.getByText('Não foram')).toBeInTheDocument()
-    expect(screen.getByText('Desistiu')).toBeInTheDocument()
-    expect(screen.getByText('Não selecionade')).toBeInTheDocument()
-    expect(screen.getByText('Rodízio')).toBeInTheDocument()
-    expect(screen.getByText('Vagas sociais')).toBeInTheDocument()
-    expect(screen.getByText('Staff')).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.attendanceChart.series.applications)).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.attendanceChart.series.attended)).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.attendanceChart.series.didNotAttend)).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.attendanceChart.series.withdrew)).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.attendanceChart.series.notSelected)).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.attendanceChart.series.rotation)).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.attendanceChart.series.socialSpots)).toBeInTheDocument()
+    expect(screen.getByText(adminDatavizCopy.attendanceChart.series.staff)).toBeInTheDocument()
   })
 
   it('allows toggling series visibility via legend click', async () => {
     const user = userEvent.setup()
     render(<AttendanceChart data={mockData} />)
 
-    const inscritosLegend = screen.getByText('Candidaturas')
+    const inscritosLegend = screen.getByText(adminDatavizCopy.attendanceChart.series.applications)
     await user.click(inscritosLegend)
 
     // After clicking, the series should be visually hidden (opacity reduced)

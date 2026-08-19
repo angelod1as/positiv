@@ -2,6 +2,7 @@ import type { ColDef, ICellRendererParams, IRowNode } from "ag-grid-community"
 import type { FC } from "react"
 import { useMemo } from "react"
 import { Link } from "~/components/atoms/link/link"
+import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
@@ -24,6 +25,8 @@ const {
     events: { ADMIN_EVENT_VIEW_PARTICIPANT },
   },
 } = paths
+
+const historyCopy = adminParticipantsCopy.eventHistory
 
 const applicationStatusMap = new Map<string, string>(
   applicationStatusOptions.map((opt) => [opt.value, opt.name]),
@@ -160,7 +163,7 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         sortable: true,
       },
       {
-        headerName: "Diferença",
+        headerName: historyCopy.surplus,
         cellRenderer: SurplusRenderer,
         sortable: false,
       },
@@ -222,12 +225,12 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
 
   return (
     <>
-      <h2>Histórico de candidaturas</h2>
+      <h2>{historyCopy.title}</h2>
       <AGDataTable
         id="participant-event-history"
         data={participantHistory}
         columnDefs={columnDefs}
-        emptyMessage="Nenhuma candidatura anterior encontrada"
+        emptyMessage={historyCopy.empty}
       />
     </>
   )

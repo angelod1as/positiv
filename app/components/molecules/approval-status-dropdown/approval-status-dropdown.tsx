@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { useFetcher, useRevalidator } from "react-router"
 import { toast } from "sonner"
+import { approvalStatusCopy } from "~/copy/admin"
 import { cn } from "~/lib/utils"
 import { approvedToAttendStatusOptions } from "~/lib/helpers/propMaps"
 import {
@@ -36,10 +37,10 @@ export function ApprovalStatusDropdown({
   useEffect(() => {
     if (fetcher.data && fetcher.data !== previousDataRef.current) {
       if (fetcher.data.success) {
-        toast.success("Status de aprovação atualizado")
+        toast.success(approvalStatusCopy.updated)
         revalidator.revalidate()
       } else {
-        toast.error("Erro ao atualizar status")
+        toast.error(approvalStatusCopy.updateFailed)
       }
     }
     previousDataRef.current = fetcher.data
@@ -65,7 +66,7 @@ export function ApprovalStatusDropdown({
   return (
     <div className="flex items-center gap-3">
       <label id={labelId} className="text-sm font-medium text-gray-700">
-        Status de Aprovação
+        {approvalStatusCopy.label}
       </label>
       <Select value={value} onValueChange={handleChange} disabled={isSubmitting}>
         <SelectTrigger
@@ -77,7 +78,7 @@ export function ApprovalStatusDropdown({
           )}
         >
           <SelectValue>
-            {isSubmitting ? "Salvando..." : currentOption?.name}
+            {isSubmitting ? approvalStatusCopy.saving : currentOption?.name}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>

@@ -1,3 +1,4 @@
+import { Copy } from "~/components/atoms/copy/copy"
 import type { FCC } from "~types/utils/utils.types"
 
 type HomePageTitleProps = {
@@ -14,7 +15,7 @@ export const HomePageTitle: FCC<HomePageTitleProps> = ({
       </h2>
       {subtitle && (
         <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-          {subtitle}
+          <Copy inline>{subtitle}</Copy>
         </p>
       )}
     </div>
