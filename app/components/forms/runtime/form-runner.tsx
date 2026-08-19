@@ -107,10 +107,12 @@ export function FormRunner({
       progress={runtime.progress}
       isBusy={runtime.isBusy}
       focusFirstScreen={focusFirstScreen}
+      canGoBack={runtime.canGoBack}
       onAnswer={runtime.answer}
       onContinue={() => {
         void runtime.advance()
       }}
+      onBack={runtime.goBack}
       continueLabel={continueLabel}
       renderQuestion={renderQuestion}
     />

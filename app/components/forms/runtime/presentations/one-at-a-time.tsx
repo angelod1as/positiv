@@ -1,6 +1,8 @@
+import { ArrowLeft } from "lucide-react"
 import { useEffect, useRef } from "react"
 import { Button } from "~/components/atoms/button/button"
 import { Error } from "~/components/forms/base/error"
+import { formRuntimeCopy } from "~/copy/forms"
 import { FormProgress } from "./form-progress"
 import { ownsItsPrompt } from "./owns-its-prompt"
 import type { Presentation } from "./presentation.types"
@@ -30,8 +32,10 @@ export const OneAtATime: Presentation = ({
   progress,
   isBusy,
   focusFirstScreen,
+  canGoBack,
   onAnswer,
   onContinue,
+  onBack,
   continueLabel,
   renderQuestion,
 }) => {
@@ -110,9 +114,24 @@ export const OneAtATime: Presentation = ({
 
       {formError ? <Error role="alert">{formError}</Error> : null}
 
-      <Button type="submit" disabled={isBusy}>
-        {continueLabel}
-      </Button>
+      <div className="flex gap-2">
+        {canGoBack ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-1/6"
+            disabled={isBusy}
+            onClick={onBack}
+          >
+            <ArrowLeft aria-hidden="true" />
+            <span className="sr-only">{formRuntimeCopy.back}</span>
+          </Button>
+        ) : null}
+
+        <Button type="submit" className="flex-1" disabled={isBusy}>
+          {continueLabel}
+        </Button>
+      </div>
     </form>
   )
 }
