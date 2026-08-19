@@ -122,6 +122,12 @@ export async function action({ request, params }: Route.ClientActionArgs) {
       }
     }
 
+    trackServerEvent(
+      "event_direct_application_completed",
+      { eventId },
+      "/dashboard",
+    )
+
     return
   }
 

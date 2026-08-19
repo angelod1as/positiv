@@ -67,6 +67,7 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   }
 
   const handleDirectApply = async () => {
+    track("event_direct_application_clicked", { eventId })
     await fetcher.submit(
       { fetchId: "handleAdminApply", eventId },
       { method: "POST" },

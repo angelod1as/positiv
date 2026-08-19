@@ -3,7 +3,14 @@ import userEvent from "@testing-library/user-event"
 import { render, screen } from "~/test/test-utils"
 import { EventCardFooter } from "./event-card-footer"
 
-const { mockSubmit } = vi.hoisted(() => ({ mockSubmit: vi.fn() }))
+const { mockSubmit, mockTrack } = vi.hoisted(() => ({
+  mockSubmit: vi.fn(),
+  mockTrack: vi.fn(),
+}))
+
+vi.mock("~/lib/hooks/use-analytics", () => ({
+  useAnalytics: () => ({ track: mockTrack }),
+}))
 
 vi.mock("react-router", () => ({
   useFetcher: () => ({
@@ -209,6 +216,19 @@ describe("EventCardFooter", () => {
         { fetchId: "handleAdminApply", eventId: "event-123" },
         { method: "POST" },
       )
+    })
+
+    it("should record the click that skipped the flow", async () => {
+      mockTrack.mockClear()
+      const user = userEvent.setup()
+
+      renderFooter({ eventId: "event-123" })
+
+      await user.click(screen.getByText(/Candidatura direta \(admin\)/i))
+
+      expect(mockTrack).toHaveBeenCalledWith("event_direct_application_clicked", {
+        eventId: "event-123",
+      })
     })
 
     it("should not render it once the person has applied", () => {

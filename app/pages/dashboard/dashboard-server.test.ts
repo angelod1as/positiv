@@ -25,6 +25,7 @@ vi.mock("../homepage/fetch/get-next-events", () => ({
   getNextEvents: vi.fn(),
 }))
 
+import { trackServerEvent } from "~/lib/analytics/umami.server"
 import { getContext, getUserContext } from "~/business/auth/auth.server"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
@@ -35,6 +36,7 @@ const mockGetContext = vi.mocked(getContext)
 const mockGetUserContext = vi.mocked(getUserContext)
 const mockApplyToEvent = vi.mocked(applyToEvent)
 const mockHasEverApplied = vi.mocked(hasEverApplied)
+const mockTrackServerEvent = vi.mocked(trackServerEvent)
 const mockGetNextEvents = vi.mocked(getNextEvents)
 
 const contextFor = (isAdmin: boolean) =>
@@ -91,6 +93,26 @@ describe("dashboard action — direct admin application", () => {
     expect(values.applicationDate).toBeInstanceOf(Date)
 
     expect(result).toBeUndefined()
+  })
+
+  it("records the application it just made", async () => {
+    mockGetUserContext.mockResolvedValue(contextFor(true))
+
+    await run({ fetchId: "handleAdminApply", eventId: "event-123" })
+
+    expect(mockTrackServerEvent).toHaveBeenCalledWith(
+      "event_direct_application_completed",
+      { eventId: "event-123" },
+      "/dashboard",
+    )
+  })
+
+  it("records nothing when the application never happened", async () => {
+    mockGetUserContext.mockResolvedValue(contextFor(false))
+
+    await run({ fetchId: "handleAdminApply", eventId: "event-123" })
+
+    expect(mockTrackServerEvent).not.toHaveBeenCalled()
   })
 
   it("refuses whoever is not an admin", async () => {
