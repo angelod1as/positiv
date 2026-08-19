@@ -11,4 +11,6 @@ export const schemaFormCopy = {
 export const formRuntimeCopy = {
   commitFailed: "Não foi possível salvar agora. Tente novamente.",
   selectPlaceholder: "Selecione",
+  progressLabel: "Progresso do formulário",
+  progressOf: (index: number, total: number) => `${index}/${total}`,
 } as const

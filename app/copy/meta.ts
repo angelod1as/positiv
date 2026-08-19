@@ -56,4 +56,5 @@ export const metaCopy = {
   adminFeedbacks: {
     title: "Admin - Feedbacks",
   },
+  applicationConfirmation: "Candidatura enviada",
 } as const

@@ -201,6 +201,7 @@ export const rulesDialogCopy = {
 
 export const rulesQuizCopy = {
   title: "✅ Hora do teste! ✅",
+  skipQuizDev: "Pular quiz (dev)",
   shuffleNotice: "(As questões e respostas são automaticamente embaralhadas)",
   answerErrors: {
     wrongAnswer: "Você escolheu a resposta errada",
@@ -217,11 +218,11 @@ export const eventListCopy = {
 
 export const eventCardCopy = {
   adminView: "Ver evento",
-  scheduled: "Inscrições em breve",
+  scheduled: "Candidaturas em breve",
   closed: "Candidaturas encerradas",
   apply: "Me candidatar",
   directApply: "Candidatura direta (admin)",
-  comingSoon: "Candidaturas em breve",
+  comingSoon: "Inscreva-se em breve",
   cancel: {
     trigger: "Cancelar candidatura",
     title: "Cancelar candidatura",
@@ -509,4 +510,12 @@ export const eventStatusBadgeCopy = {
   open: "Candidaturas abertas",
   scheduled: "Em breve",
   closed: "Candidaturas encerradas",
+} as const
+
+export const applicationConfirmationCopy = {
+  title: "Candidatura enviada! 🎉",
+  received: "Recebemos sua candidatura para esse evento.",
+  warning: `Mas atenção: **uma candidatura não garante uma vaga.** Agora a organização seleciona quem vai e entra em contato via Whatsapp. Somos uma equipe minúscula que conversa com cada pessoa candidata, então o processo leva tempo.`,
+  emailOnTheWay: `Enquanto isso, um e-mail com os detalhes do evento está a caminho — ele pode demorar alguns minutos para chegar, e vale olhar a caixa de spam.`,
+  backToDashboard: "Voltar para o painel",
 } as const

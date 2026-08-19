@@ -1,7 +1,6 @@
 import { Turnstile } from "@marsidev/react-turnstile"
 import { useCallback, useMemo } from "react"
 import { useLoaderData, useNavigate } from "react-router"
-import { Link } from "~/components/atoms/link/link"
 import { buildRegisterFlow } from "~/components/forms/custom/register/build-register-flow"
 import { buildRegisterQuestions } from "~/components/forms/custom/register/build-register-questions"
 import type { CommitResult } from "~types/forms/commit.types"
@@ -32,7 +31,7 @@ const {
 } = paths
 
 export function meta({}: Route.MetaArgs) {
-  return createMetaArray(metaCopy.register)
+  return createMetaArray(metaCopy.register.title)
 }
 
 export const loader = async () => {

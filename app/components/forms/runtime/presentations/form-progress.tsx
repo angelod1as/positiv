@@ -1,3 +1,5 @@
+import { formRuntimeCopy } from "~/copy/forms"
+
 type FormProgressProps = {
   index: number
   total: number
@@ -17,7 +19,7 @@ export function FormProgress({ index, total }: FormProgressProps) {
     <div className="flex flex-col gap-2">
       <div
         role="progressbar"
-        aria-label="Progresso do formulário"
+        aria-label={formRuntimeCopy.progressLabel}
         aria-valuemin={1}
         aria-valuemax={total}
         aria-valuenow={index}
@@ -31,7 +33,7 @@ export function FormProgress({ index, total }: FormProgressProps) {
       </div>
 
       <p aria-live="polite" className="text-muted-foreground text-sm">
-        {index}/{total}
+        {formRuntimeCopy.progressOf(index, total)}
       </p>
     </div>
   )

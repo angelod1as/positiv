@@ -194,7 +194,7 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
             void skipQuiz()
           }}
         >
-          Pular quiz (dev)
+          {rulesQuizCopy.skipQuizDev}
         </Button>
       )}
     </Wrapper>
