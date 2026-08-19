@@ -16,6 +16,12 @@ vi.mock("~/kysely-db", () => ({ kyselyDb: { selectFrom: vi.fn() } }))
 
 const EVENT = "11111111-1111-4111-8111-111111111111"
 
+const quizPageProps = {
+  params: { id: EVENT },
+  loaderData: { isVeteran: false },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any
+
 const ids = () => Object.keys(getRulesFormQuestions())
 
 const answersOf = (id: string) => {
@@ -57,13 +63,7 @@ const onScreen = () =>
 const renderQuiz = () =>
   render(
     <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <EventRulesPage
-        {...({
-          params: { id: EVENT },
-          loaderData: { isVeteran: false },
-        } as any)}
-      />
+      <EventRulesPage {...quizPageProps} />
     </MemoryRouter>,
   )
 
@@ -135,13 +135,7 @@ describe("the order the rules quiz was dealt", () => {
 
     const markup = renderToStaticMarkup(
       <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <EventRulesPage
-        {...({
-          params: { id: EVENT },
-          loaderData: { isVeteran: false },
-        } as any)}
-      />
+        <EventRulesPage {...quizPageProps} />
       </MemoryRouter>,
     )
 

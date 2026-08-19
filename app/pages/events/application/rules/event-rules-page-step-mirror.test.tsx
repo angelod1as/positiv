@@ -25,6 +25,12 @@ const WAITS_OUT_A_SLOW_RENDER = 20_000
 
 const EVENT = "11111111-1111-4111-8111-111111111111"
 
+const quizPageProps = {
+  params: { id: EVENT },
+  loaderData: { isVeteran: false },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any
+
 let mirrored = ""
 
 /**
@@ -106,13 +112,7 @@ const seedAnsweredQuiz = (openOn: string) => {
 const renderQuiz = () =>
   render(
     <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <EventRulesPage
-        {...({
-          params: { id: EVENT },
-          loaderData: { isVeteran: false },
-        } as any)}
-      />
+      <EventRulesPage {...quizPageProps} />
       <Mirror />
       <Back />
     </MemoryRouter>,
@@ -260,13 +260,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
           />
           <Route
             path="/dashboard/:id/regras"
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            element={<EventRulesPage
-        {...({
-          params: { id: EVENT },
-          loaderData: { isVeteran: false },
-        } as any)}
-      />}
+            element={<EventRulesPage {...quizPageProps} />}
           />
         </Routes>
       </MemoryRouter>,
@@ -297,13 +291,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
         ]}
         initialIndex={1}
       >
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <EventRulesPage
-        {...({
-          params: { id: EVENT },
-          loaderData: { isVeteran: false },
-        } as any)}
-      />
+        <EventRulesPage {...quizPageProps} />
         <Back />
       </MemoryRouter>,
     )

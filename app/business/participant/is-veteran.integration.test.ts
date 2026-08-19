@@ -20,7 +20,10 @@ describe("isVeteran", () => {
       email: `${label}-${Date.now()}-${Math.random()}@example.com`,
     })
 
-  const anEvent = (title: string, status = "Completed" as const) =>
+  const anEvent = (
+    title: string,
+    status: "Completed" | "Cancelled" | "Registration Open" = "Completed",
+  ) =>
     createTestEvent(tracker, kysely, {
       title,
       event_status: status,

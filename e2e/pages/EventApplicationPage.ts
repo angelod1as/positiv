@@ -288,6 +288,26 @@ export class EventApplicationPage extends BasePage {
     return id
   }
 
+  /**
+   * How many screens the quiz says are left. It revises as the run goes: a
+   * veteran is promised three, and the moment a second first-attempt mistake is
+   * recorded the whole quiz appears in its place, which is the branch happening
+   * with nothing else to announce it.
+   */
+  async currentProgress(): Promise<{ index: number; total: number }> {
+    const text = await this.page
+      .getByRole("progressbar")
+      .getAttribute("aria-valuetext")
+
+    const [, index, total] = /Etapa (\d+) de (\d+)/.exec(text ?? "") ?? []
+
+    if (!index || !total) {
+      throw new Error(`the quiz shows no progress to read: "${text}"`)
+    }
+
+    return { index: Number(index), total: Number(total) }
+  }
+
   async fillRulesForm(): Promise<void> {
     this.walkNotes = []
 
