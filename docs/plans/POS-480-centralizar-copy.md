@@ -1486,3 +1486,63 @@ git commit -m "docs(copy): document the copy convention in CLAUDE.md"
 | Strings no longer hardcoded in components | Tasks 4–11; enforced by `react/jsx-no-literals` in `eslint.config.js` |
 | Editing a text means touching one file | The `app/copy/` structure; one uniform pattern with no per-page exceptions; documented in `app/copy/README.md` |
 | Type-safety on keys (compile error on unknown key) | `as const` objects plus `pnpm lint` running `tsc` |
+
+---
+
+## Task 14: Inventory what has to change inside Listmonk
+
+**Do this last, after everything else has shipped.** It produces a checklist for
+a human to work through in the Listmonk console; it changes no code.
+
+### Why this is safe to do late
+
+Renaming these in our code does **not** break the integration, which is a weaker
+constraint than `revert(newsletter): keep the Listmonk copy on "inscrição"`
+implies. Verified:
+
+- **Lists are resolved by stored id, not by name.** `createEventListmonkList` in
+  `app/business/admin/event-listmonk-sync.server.ts` checks
+  `event.listmonk_list_id` first and only calls `createList` when that column is
+  null. The `name` is used at creation and never looked up again.
+- **Campaigns are created fresh each time.** Neither
+  `create-event-opening-campaign.server.ts` nor
+  `create-pre-opening-reminder.server.ts` searches for an existing campaign; the
+  name is a label written once.
+
+So changing the code affects only records created **from then on**. Existing
+lists keep syncing under their old names, and past campaigns keep theirs. The
+cost is cosmetic: a console showing both wordings until someone tidies it.
+
+### Produce this inventory
+
+For each item: where it comes from in the code, what it says now, what it should
+say, and where to find it in the Listmonk console.
+
+1. **List names** — `\`Inscrites - ${event.title}\`` (`event-listmonk-sync.server.ts`).
+   One list per event that has ever been synced. Query which events have a
+   non-null `listmonk_list_id` to size the job:
+
+   ```sql
+   select id, title, listmonk_list_id from events where listmonk_list_id is not null order by title;
+   ```
+
+2. **Campaign names** — `Event Opening: <title>` and
+   `Pre-Opening Reminder: <title>`. These are English identifiers rather than
+   Portuguese copy, so decide whether they are in scope at all.
+
+3. **The campaign template** — `LISTMONK_EVENT_OPENING_TEMPLATE_ID` in
+   `app/lib/constants/constants.ts` points at a template whose **body lives
+   entirely inside Listmonk**. Nothing in this repository can tell you what it
+   says. Open it and check whether its wording needs the same treatment; it is
+   the one piece of our email copy that centralisation cannot reach.
+
+4. **Anything else Listmonk stores that a subscriber reads** — list
+   descriptions, the double-opt-in and unsubscribe pages Listmonk serves itself,
+   and any per-list custom wording. These are the seams where our site could say
+   "assinatura" while Listmonk still says "inscrição".
+
+### Deliverable
+
+A checklist the user can work through, saved wherever they prefer — not a code
+change. Once they have renamed things over there, the code side can follow in a
+separate commit if any string still disagrees.
