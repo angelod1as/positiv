@@ -4,8 +4,16 @@ import path from "path"
 
 import { getBaseUrl, getRunId } from "./e2e/utils/run-context"
 
-// Set E2E_MODE to skip external API calls during tests
-process.env.E2E_MODE = "true"
+// E2E_MODE has to be in the environment before varlock resolves it. The guards
+// that skip external services read it at runtime out of the config varlock
+// loaded, and `varlock run` freezes that config before this file is imported —
+// so assigning it here would reach this process and never the server under
+// test. `pnpm test:e2e` sets it early enough; refuse to run otherwise.
+if (process.env.E2E_MODE !== "true") {
+  throw new Error(
+    "E2E_MODE is not set. Run the suite with `pnpm test:e2e`, which sets it before varlock resolves the environment.",
+  )
+}
 
 // Publish the run id before workers are forked so they all share it
 process.env.E2E_RUN_ID = getRunId()
