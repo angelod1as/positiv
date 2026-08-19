@@ -4,6 +4,14 @@ export const checkboxWithOtherCopy = {
   description: "Separe múltiplos por vírgula",
 } as const
 
+export const chipSelectCopy = {
+  otherPlaceholder: "Outro? Escreva aqui",
+  otherAdd: "Adicionar",
+  remove: (value: string) => `Remover ${value}`,
+  added: (value: string) => `${value} adicionado`,
+  removed: (value: string) => `${value} removido`,
+} as const
+
 export const schemaFormCopy = {
   submit: "Continuar",
 } as const
