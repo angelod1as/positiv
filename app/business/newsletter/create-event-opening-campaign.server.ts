@@ -1,4 +1,5 @@
 import { composable } from "composable-functions"
+import { eventOpeningCampaignCopy } from "~/copy/emails/event-opening-campaign"
 import {
   DASHBOARD_URL,
   LISTMONK_EVENT_OPENING_TEMPLATE_ID,
@@ -44,65 +45,65 @@ function generateCampaignBody(event: Event): string {
   return `
 <div style="text-align: center; margin-bottom: 30px;">
   <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2;">
-    <span style="display: inline-block; line-height: 1;">🎉</span> Candidaturas Abertas <span style="display: inline-block; line-height: 1;">🎉</span>
+    <span style="display: inline-block; line-height: 1;">${eventOpeningCampaignCopy.headingEmoji}</span> ${eventOpeningCampaignCopy.heading} <span style="display: inline-block; line-height: 1;">${eventOpeningCampaignCopy.headingEmoji}</span>
   </h1>
 </div>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-  As candidaturas para o evento <strong>${eventDisplay}</strong> acabaram de abrir!
+  ${eventOpeningCampaignCopy.intro(eventDisplay)}
 </p>
 
 <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-  Corra já e garanta a sua vaga!
+  ${eventOpeningCampaignCopy.urgency}
 </p>
 
 <div style="text-align: center; margin: 30px 0;">
   <a href="${DASHBOARD_URL}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
-    Inscreva-se agora!
+    ${eventOpeningCampaignCopy.cta}
   </a>
 </div>
 
 <div style="background: #f9f9f9; border-radius: 8px; padding: 16px; margin: 0 0 20px 0;">
   <div style="margin-bottom: 8px; font-size: 14px;">
-    <span style="color: #666;">Evento:</span>
+    <span style="color: #666;">${eventOpeningCampaignCopy.details.event}:</span>
     <strong style="color: #333;">${sanitizedTitle}</strong>
   </div>
   <div style="margin-bottom: 8px; font-size: 14px;">
-    <span style="color: #666;">Local:</span>
+    <span style="color: #666;">${eventOpeningCampaignCopy.details.location}:</span>
     <strong style="color: #333;">${sanitizedLocation}</strong>
   </div>
   <div style="margin-bottom: 8px; font-size: 14px;">
-    <span style="color: #666;">Data do evento:</span>
+    <span style="color: #666;">${eventOpeningCampaignCopy.details.date}:</span>
     <strong style="color: #333;">${date}</strong>
   </div>
   <div style="margin-bottom: 8px; font-size: 14px;">
-    <span style="color: #666;">Horário de início:</span>
+    <span style="color: #666;">${eventOpeningCampaignCopy.details.startTime}:</span>
     <strong style="color: #333;">${time}</strong>
   </div>
   <div style="margin-bottom: 8px; font-size: 14px;">
-    <span style="color: #666;">Candidaturas abrem em:</span>
-    <strong style="color: #333;">${applicationOpenDate} às ${applicationOpenTime}</strong>
+    <span style="color: #666;">${eventOpeningCampaignCopy.details.applicationsOpen}:</span>
+    <strong style="color: #333;">${eventOpeningCampaignCopy.details.dateAtTime(applicationOpenDate, applicationOpenTime)}</strong>
   </div>
 </div>
 
 <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 30px 0;">
 
 <h3 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #333; margin: 0 0 12px 0;">
-  Informações importantes
+  ${eventOpeningCampaignCopy.important.heading}
 </h3>
 
 <ul style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0; padding-left: 20px; color: #333;">
   <li style="margin-bottom: 8px;">
-    Ter participado de edições anteriores <strong>não garante</strong> a sua participação em outras festas;
+    ${eventOpeningCampaignCopy.important.notes.previousEditions}
   </li>
   <li style="margin-bottom: 8px;">
-    Se você quer ir acompanhade, <strong>todas as pessoas</strong> precisam se inscrever e passar pela entrevista;
+    ${eventOpeningCampaignCopy.important.notes.companions}
   </li>
   <li style="margin-bottom: 8px;">
-    Inscrever-se no formulário <strong>não significa</strong> que você será selecionade para participar do evento;
+    ${eventOpeningCampaignCopy.important.notes.notSelected}
   </li>
   <li style="margin-bottom: 8px;">
-    Temos políticas de <strong>entradas sociais</strong> para pessoas trans, negras, indígenas e em vulnerabilidade social. Se você é de um desses grupos e gostaria de participar da festa, fale com Ju ou Angelo pelo nosso WhatsApp.
+    ${eventOpeningCampaignCopy.important.notes.socialTickets}
   </li>
 </ul>
 `.trim()
@@ -116,7 +117,7 @@ export const createEventOpeningCampaign = composable(
 
     const sanitizedTitle = sanitizeHtml(event.title || "")
     const campaignName = `Event Opening: ${sanitizedTitle}`
-    const subject = `Candidaturas abertas: ${sanitizedTitle}!`
+    const subject = eventOpeningCampaignCopy.subject(sanitizedTitle)
 
     const body = generateCampaignBody(event)
 
