@@ -1,3 +1,10 @@
+import type { z } from "zod"
+import type { eventFormSchema } from "~/business/admin/common"
+
+export const eventFormValidation = {
+  emojiInvalid: "Precisa ser um emoji",
+} as const
+
 export const adminEventsCopy = {
   eventNotFound: "Evento não encontrado",
   saveFailed:
@@ -70,19 +77,25 @@ export const adminEventsCopy = {
       time_group_end: "Encerramento",
       time_payment_start: "Início",
       time_payment_end: "Encerramento",
-    },
+    } as const satisfies Partial<
+      Record<keyof z.infer<typeof eventFormSchema>, string>
+    >,
     descriptions: {
       description: "Use uma frase divertida!",
       auto_publish:
         "Quando marcado, o evento será publicado automaticamente na data de abertura das candidaturas",
-    },
+    } as const satisfies Partial<
+      Record<keyof z.infer<typeof eventFormSchema>, string>
+    >,
     placeholders: {
       title: "Rapa do Tacho",
       description: "Para quem sobreviveu ao carnaval oficial",
       location: "Motel Harmony",
       ticket_price: "200",
       total_spots: "60",
-    },
+    } as const satisfies Partial<
+      Record<keyof z.infer<typeof eventFormSchema>, string>
+    >,
     sections: {
       generalData: "Dados gerais",
       dates: "Datas",
@@ -93,7 +106,7 @@ export const adminEventsCopy = {
     descriptionHint: "Use uma frase breve",
     ticketPricePrefix: "R$",
     totalSpotsSuffix: "pessoas",
-    emojiInvalid: "Precisa ser um emoji",
+    emojiInvalid: eventFormValidation.emojiInvalid,
     startDateRequired: "Você deve preencher a data de início",
     calculateDates: "Calcular datas automaticamente",
     submit: "Salvar",

@@ -1,4 +1,4 @@
-import { adminEventsCopy } from "~/copy/admin/events"
+import { eventFormValidation } from "~/copy/admin/events"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { zod } from "~/lib/helpers/zod"
 import {
@@ -25,7 +25,7 @@ export const eventFormSchema = zod.object({
   id: zod.string().optional(),
   title: zod.string().min(2).max(50),
   description: zod.string().min(2).max(255),
-  emoji: zod.string().emoji(adminEventsCopy.form.emojiInvalid).min(1),
+  emoji: zod.string().emoji(eventFormValidation.emojiInvalid).min(1),
   location: zod.string().min(2).max(255),
 
   ticket_price: zod.coerce.number().min(1),

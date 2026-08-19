@@ -1,3 +1,6 @@
+import type { z } from "zod"
+import type { agreeToTermsSchema } from "~/business/common"
+
 export const dashboardCopy = {
   termsRequired: "Você precisa aceitar os termos antes de continuar",
   cancelFailed: "Ops, seu cancelamento deu errado. Comunique o administrador.",
@@ -63,6 +66,12 @@ Lembrando que calculamos a data a partir do pedido de reembolso — não esqueç
   },
 ]
 
+export const agreeToTermsValidation = {
+  agree: "Você só pode continuar se estiver de acordo.",
+  commonEmails:
+    "Nosso sistema só funciona se você aceitar receber e-mails gerais.",
+} as const
+
 export const agreeToTermsCopy = {
   title: "Bem vinde à Positiv!",
   alert: {
@@ -74,20 +83,20 @@ export const agreeToTermsCopy = {
     agree: "Li tudo e estou de acordo!",
     commonEmails: "Aceito receber e-mails gerais do sistema",
     mktEmails: "Aceito receber e-mails sobre a Positiv",
-  },
+  } as const satisfies Partial<
+    Record<keyof z.infer<typeof agreeToTermsSchema>, string>
+  >,
   descriptions: {
     commonEmails:
       "Vamos enviar mensagens sobre o processo de candidatura e, se você quiser, lembrete de datas importantes de eventos futuros (mas só se você clicar no botãozinho).",
     mktEmails:
       "Vamos enviar mensagens sobre outros eventos e parcerias, e também atualizações da Positiv que podem ir além das festas tradicionais .",
-  },
+  } as const satisfies Partial<
+    Record<keyof z.infer<typeof agreeToTermsSchema>, string>
+  >,
   buttonLabel: "Continuar",
   newsletterWarning:
     "Suas escolhas foram salvas, mas sua assinatura da newsletter não foi concluída. Por favor, entre em contato: partypositiv@gmail.com",
   successToast: "Escolhas salvas com sucesso",
-  validation: {
-    agree: "Você só pode continuar se estiver de acordo.",
-    commonEmails:
-      "Nosso sistema só funciona se você aceitar receber e-mails gerais.",
-  },
+  validation: agreeToTermsValidation,
 } as const

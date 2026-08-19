@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { basicDataCopy, changePasswordCopy } from "~/copy/account"
+import { basicDataValidation, changePasswordValidation } from "~/copy/account"
 import { registerCopy } from "~/copy/auth"
-import { agreeToTermsCopy } from "~/copy/dashboard"
+import { agreeToTermsValidation } from "~/copy/dashboard"
 import { PHONE_REGEXP } from "~/lib/constants/constants"
 import { normalizeName } from "~/lib/helpers/strings"
 import { validationMessages } from "~/lib/helpers/validation-messages"
@@ -30,7 +30,7 @@ export const changePasswordSchema = zod
     confirm_password: zod.string(),
   })
   .refine((data) => data.password === data.confirm_password, {
-    message: changePasswordCopy.validation.passwordMismatch,
+    message: changePasswordValidation.passwordMismatch,
     path: ["confirm_password"],
   })
 
@@ -106,10 +106,10 @@ export const userContextSchema = contextSchema.extend({
 
 export const agreeToTermsSchema = zod.object({
   agree: zod.boolean().refine((val) => val, {
-    message: agreeToTermsCopy.validation.agree,
+    message: agreeToTermsValidation.agree,
   }),
   commonEmails: zod.boolean().refine((val) => val, {
-    message: agreeToTermsCopy.validation.commonEmails,
+    message: agreeToTermsValidation.commonEmails,
   }),
   mktEmails: zod.boolean().optional(),
 })
@@ -149,28 +149,28 @@ export const basicDataSchema = zod
           return age >= 18
         },
         {
-          message: basicDataCopy.validation.minimumAge,
+          message: basicDataValidation.minimumAge,
         },
       ),
     phone: zod.coerce
       .number({
-        error: basicDataCopy.validation.phoneNotANumber,
+        error: basicDataValidation.phoneNotANumber,
       })
       .refine((value) => PHONE_REGEXP.test(value.toString()), {
-        message: basicDataCopy.validation.invalidPhone,
+        message: basicDataValidation.invalidPhone,
       }),
     confirm_phone: zod.coerce
       .number({
-        error: basicDataCopy.validation.phoneNotANumber,
+        error: basicDataValidation.phoneNotANumber,
       })
       .refine((value) => PHONE_REGEXP.test(value.toString()), {
-        message: basicDataCopy.validation.invalidPhone,
+        message: basicDataValidation.invalidPhone,
       }),
     how_came_to_us: zod.string().optional(),
     where_lives: zod.string().optional(),
   })
   .refine((data) => data.phone === data.confirm_phone, {
-    message: basicDataCopy.validation.phoneMismatch,
+    message: basicDataValidation.phoneMismatch,
     path: ["phone"],
   })
   .refine(
@@ -182,7 +182,7 @@ export const basicDataSchema = zod
       )
     },
     {
-      message: basicDataCopy.validation.socialNameMustDiffer,
+      message: basicDataValidation.socialNameMustDiffer,
       path: ["social_name"],
     },
   )

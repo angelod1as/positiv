@@ -1,6 +1,6 @@
 import { type z } from "zod"
 import { adminFeedbacksCopy } from "~/copy/admin"
-import { publicCopy } from "~/copy/public"
+import { feedbackValidation } from "~/copy/public"
 import { sharedCopy } from "~/copy/shared"
 import { zod } from "~/lib/helpers/zod"
 
@@ -9,7 +9,7 @@ export const feedbackFormSchema = zod.object({
   email: zod.string().email().optional().or(zod.literal("")),
   whatsapp: zod.string().optional(),
   hasParticipated: zod.enum(["never", "once", "more_than_once"], {
-    message: publicCopy.feedback.validation.hasParticipated,
+    message: feedbackValidation.hasParticipated,
   }),
   feedbackText: zod.string().min(10).max(5000),
   canContact: zod.preprocess(

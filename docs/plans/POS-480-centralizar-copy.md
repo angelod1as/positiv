@@ -603,6 +603,16 @@ instead when the number of items varies (testimonials, events).
   literal types. The reverse order, `satisfies YourType as const`, does not
   compile. Arrays that get iterated take an explicit type instead, as shown
   above — make it a `readonly` array type to keep the same protection.
+- A `labels`, `descriptions`, or `placeholders` object handed to a `SchemaForm`
+  is keyed by the form schema's field names, so close it with
+  `as const satisfies Partial<Record<keyof z.infer<typeof theSchema>, string>>`
+  and pull the schema in with `import type`. A typo'd or stale key is then a
+  compile error naming the key, instead of a field that silently renders
+  unlabelled. When the schema reads its own validation messages back out of
+  that same copy object, TypeScript cannot resolve the loop — keep those
+  messages in a separate top-level const in the copy module
+  (`basicDataValidation`, and so on) that the schema imports directly, and
+  point the copy object's `validation` key at it.
 - No `index.ts` barrel file. Import from the module directly.
 - A string used in more than one area goes in `shared.ts`. A string used in one
   area stays in that area's module, even if it looks generic — move it to

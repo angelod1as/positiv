@@ -1,3 +1,6 @@
+import type { z } from "zod"
+import type { applyToEventSchema } from "~/business/common"
+
 type RulesAlert = {
   title: string
   body: string
@@ -247,7 +250,9 @@ Ao clicar no botão "Enviar candidatura", sua candidatura será enviada (óbvio)
     companions:
       "Você pretende ir acompanhade? Se sim, nos diga o nome completo da(s) pessoa(s).",
     bond: "Se a pessoa que você quer ir junte não for, você ainda assim quer ir no evento?",
-  },
+  } as const satisfies Partial<
+    Record<keyof z.infer<typeof applyToEventSchema>, string>
+  >,
   descriptions: {
     notes: "Você tem algum aviso, lembrete, ideia, ou sugestão?",
     referrals:
@@ -256,7 +261,9 @@ Ao clicar no botão "Enviar candidatura", sua candidatura será enviada (óbvio)
       'Se ninguém te indicou, escreva "ninguém". Diga os nomes completos de quem te indicou a Positiv — precisamos saber se foi uma indicação formal ("tem tudo a ver com você") ou informal ("ouvi numa mesa de bar").',
     companions: "Diga pra gente se você vai de galera — e quem é esse pessoal.",
     bond: "Se, pra você, tudo bem se você for selecionade e elas não, selecione a caixinha acima.",
-  },
+  } as const satisfies Partial<
+    Record<keyof z.infer<typeof applyToEventSchema>, string>
+  >,
   submitLabel: "🎉 Enviar candidatura!",
   toasts: {
     success: {

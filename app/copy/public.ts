@@ -1,3 +1,6 @@
+import type { z } from "zod"
+import type { feedbackFormSchema } from "~/business/feedback/feedback-schema"
+
 type CodeOfConductSection = {
   heading: string
   body: string
@@ -53,6 +56,10 @@ Segurança é responsabilidade coletiva — mas a responsabilidade de agir é no
   },
 ]
 
+export const feedbackValidation = {
+  hasParticipated: "Selecione uma opção",
+} as const
+
 export const publicCopy = {
   codeOfConduct: {
     title: "Código de Conduta",
@@ -74,25 +81,29 @@ export const publicCopy = {
       hasParticipated: "Já participou de algum evento?",
       feedbackText: "Seu feedback",
       canContact: "Podemos entrar em contato?",
-    },
+    } as const satisfies Partial<
+      Record<keyof z.infer<typeof feedbackFormSchema>, string>
+    >,
     descriptions: {
       canContact:
         "Se for o caso, podemos continuar uma comunicação por WhatsApp ou e-mail.",
-    },
+    } as const satisfies Partial<
+      Record<keyof z.infer<typeof feedbackFormSchema>, string>
+    >,
     placeholders: {
       name: "Seu nome",
       email: "email@exemplo.com",
       whatsapp: "11999999999",
       feedbackText: "Escreva aqui seu feedback, sugestão ou crítica...",
-    },
+    } as const satisfies Partial<
+      Record<keyof z.infer<typeof feedbackFormSchema>, string>
+    >,
     participation: {
       never: "Nunca participei",
       once: "Participei uma vez",
       moreThanOnce: "Participei mais de uma vez",
     },
-    validation: {
-      hasParticipated: "Selecione uma opção",
-    },
+    validation: feedbackValidation,
     submit: "Enviar Feedback",
     submitting: "Enviando...",
     rateLimited:

@@ -1,3 +1,5 @@
+import type { z } from "zod"
+import type { forgotPasswordSchema, loginSchema } from "~/business/common"
 import { sharedCopy } from "~/copy/shared"
 
 export const authLayoutCopy = {
@@ -10,8 +12,13 @@ export const loginCopy = {
   signupPrompt: (registerPath: string) =>
     `**Não tem uma conta? [Criar conta](${registerPath})**`,
   forgotPassword: "Esqueci minha senha",
-  labels: { password: "Senha", email: "E-mail" },
-  placeholders: { email: "email@exemplo.com", password: "senha123" },
+  labels: { password: "Senha", email: "E-mail" } as const satisfies Partial<
+    Record<keyof z.infer<typeof loginSchema>, string>
+  >,
+  placeholders: {
+    email: "email@exemplo.com",
+    password: "senha123",
+  } as const satisfies Partial<Record<keyof z.infer<typeof loginSchema>, string>>,
   pendingButtonLabel: "Entrando...",
   buttonLabel: "Entrar",
   welcomeToast: {
@@ -52,8 +59,12 @@ export const forgotPasswordCopy = {
   description: "Nada melhor que uma senha nova, certo?",
   loginPrompt: (loginPath: string) =>
     `Já tem uma conta? [Entre aqui](${loginPath})`,
-  labels: { email: "E-mail" },
-  placeholders: { email: "email@exemplo.com" },
+  labels: { email: "E-mail" } as const satisfies Partial<
+    Record<keyof z.infer<typeof forgotPasswordSchema>, string>
+  >,
+  placeholders: { email: "email@exemplo.com" } as const satisfies Partial<
+    Record<keyof z.infer<typeof forgotPasswordSchema>, string>
+  >,
   pendingButtonLabel: "Entrando...",
   buttonLabel: "Entrar",
   successToast:

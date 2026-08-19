@@ -1,3 +1,6 @@
+import type { z } from "zod"
+import type { basicDataSchema, changePasswordSchema } from "~/business/common"
+
 export const accountReadyCopy = {
   title: "Sua conta está pronta! 🎉",
   body: `Mas atenção: **ter conta na Positiv não é o mesmo que estar em uma festa.**
@@ -8,17 +11,29 @@ Depois que você se candidata, a organização seleciona quem vai e entra em con
   cta: "Ver eventos da Positiv",
 } as const
 
+export const changePasswordValidation = {
+  passwordMismatch: "As senhas não combinam",
+} as const
+
 export const changePasswordCopy = {
   title: "Mudar senha",
   description: "Por favor digite sua nova senha abaixo",
-  labels: { password: "Nova senha", confirm_password: "Confirmar senha" },
-  placeholders: { password: "senha123", confirm_password: "senha123" },
+  labels: {
+    password: "Nova senha",
+    confirm_password: "Confirmar senha",
+  } as const satisfies Partial<
+    Record<keyof z.infer<typeof changePasswordSchema>, string>
+  >,
+  placeholders: {
+    password: "senha123",
+    confirm_password: "senha123",
+  } as const satisfies Partial<
+    Record<keyof z.infer<typeof changePasswordSchema>, string>
+  >,
   pendingButtonLabel: "Mudando...",
   buttonLabel: "Mudar senha",
   successToast: "Um link chegará em seu e-mail, veja lá!",
-  validation: {
-    passwordMismatch: "As senhas não combinam",
-  },
+  validation: changePasswordValidation,
 } as const
 
 export const accountCopy = {
@@ -36,6 +51,14 @@ export const accountCopy = {
       `Esta funcionalidade está em implementação. Entre em contato conosco para deletar sua conta, através do email [${email}](mailto:${email})`,
     cancelLabel: "Entendi",
   },
+} as const
+
+export const basicDataValidation = {
+  minimumAge: "Você precisa ter pelo menos 18 anos",
+  phoneNotANumber: "Você tem certeza que digitou um número?",
+  invalidPhone: "Número inválido",
+  phoneMismatch: "Os números de telefone são diferentes",
+  socialNameMustDiffer: "O nome social deve ser diferente do nome completo",
 } as const
 
 export const basicDataCopy = {
@@ -60,7 +83,9 @@ export const basicDataCopy = {
     cpf: "CPF",
     rg: "RG",
     rg_issuer: "Emissor do RG",
-  },
+  } as const satisfies Partial<
+    Record<keyof z.infer<typeof basicDataSchema>, string>
+  >,
   descriptions: {
     social_name: "Como você quer ser chamade?",
     where_lives: "Nossa dúvida: de onde nosso público vêm?",
@@ -69,15 +94,11 @@ export const basicDataCopy = {
     phone: "Só números, com DDD. Ex: 11955552222",
     confirm_phone: "Só números, com DDD. Ex: 11955552222",
     rg_issuer: "Exemplo: SSP/SP",
-  },
+  } as const satisfies Partial<
+    Record<keyof z.infer<typeof basicDataSchema>, string>
+  >,
   successToast: "Dados salvos com sucesso!",
-  validation: {
-    minimumAge: "Você precisa ter pelo menos 18 anos",
-    phoneNotANumber: "Você tem certeza que digitou um número?",
-    invalidPhone: "Número inválido",
-    phoneMismatch: "Os números de telefone são diferentes",
-    socialNameMustDiffer: "O nome social deve ser diferente do nome completo",
-  },
+  validation: basicDataValidation,
 } as const
 
 export const genderPronounsOrientationCopy = {
