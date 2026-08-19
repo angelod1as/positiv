@@ -1,5 +1,5 @@
 import { applySchema } from "composable-functions"
-import type { CommitResult } from "~/components/forms/runtime/commit.types"
+import type { CommitResult } from "~types/forms/commit.types"
 import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"

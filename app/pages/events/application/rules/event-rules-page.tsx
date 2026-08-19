@@ -8,7 +8,7 @@ import {
 import { getUserContext } from "~/business/auth/auth.server"
 import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
 import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules-questions"
-import type { CommitResult } from "~/components/forms/runtime/commit.types"
+import type { CommitResult } from "~types/forms/commit.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type { Answers } from "~/components/forms/runtime/question.types"

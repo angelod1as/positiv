@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { ENV } from "varlock/env"
-import type { CommitResult } from "./commit.types"
+import type { CommitResult } from "~types/forms/commit.types"
 import type { Flow, Step, StepId } from "./flow.types"
 import {
   clearRuntimeState,
