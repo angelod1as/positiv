@@ -1541,6 +1541,46 @@ say, and where to find it in the Listmonk console.
    and any per-list custom wording. These are the seams where our site could say
    "assinatura" while Listmonk still says "inscrição".
 
+### How to read the Listmonk side
+
+No MCP. The `listmonk-mcp` server exposes 18 tools with **no read-only mode** —
+including deleting subscribers and *sending campaigns* — and this Listmonk is
+production with no staging. Four GETs do not justify that surface.
+
+The credentials already exist and the app already uses them:
+`LISTMONK_API_URL`, `LISTMONK_API_USERNAME`, `LISTMONK_API_PASSWORD`
+(`.env.schema:139-143`, the password marked `@sensitive`).
+`app/business/newsletter/listmonk-client.server.ts:36` authenticates with HTTP
+Basic, so the same works from the shell.
+
+Run through `varlock run --` so the secret is never on a command line — this
+repository is public, and an approved command is recorded verbatim in
+`settings.local.json`:
+
+```bash
+varlock run -- sh -c 'curl -sS -u "$LISTMONK_API_USERNAME:$LISTMONK_API_PASSWORD" "$LISTMONK_API_URL/api/lists?per_page=all"'
+```
+
+**GET only, and only these four:**
+
+| endpoint | answers |
+|---|---|
+| `/api/lists?per_page=all` | which list names still say "Inscrites" |
+| `/api/templates` | what templates exist, by type |
+| `/api/templates/:id` | the campaign template body — the one piece no file here knows |
+| `/api/campaigns?per_page=all` | names and subjects of campaigns already created |
+
+**Do not call `/api/settings`.** It returns the SMTP configuration including its
+password; there is no reason to pull a secret into a transcript. If the opt-in
+and unsubscribe page wording is needed, it comes from the templates or can be
+read in a browser.
+
+Ask the user before the first call: this is production, and the credential is
+almost certainly an admin one, so GET-only is discipline rather than a
+permission boundary. If that should be tightened for future sessions, Listmonk
+v3+ has Users & Roles — a user limited to `lists:get`, `templates:get` and
+`campaigns:get` closes it at the source.
+
 ### Deliverable
 
 A checklist the user can work through, saved wherever they prefer — not a code
