@@ -66,18 +66,40 @@ export class EventApplicationPage extends BasePage {
     }
   }
 
-  /** The question on screen now, however the quiz got there. */
+  private async questionOnScreen(): Promise<string | null> {
+    // Bounded: between two screens the heading is detached, and an unbounded
+    // read would sit there waiting for the next one to arrive.
+    const id = await this.questions
+      .getAttribute("id", { timeout: 1000 })
+      .catch(() => null)
+
+    return id?.replace(/-prompt$/, "") ?? null
+  }
+
+  /**
+   * The question on screen now, however the quiz got there — but only once the
+   * url agrees. The quiz mirrors its question in `?q=` a beat later, and a
+   * mirror that lands after the quiz has moved on puts it back on the question
+   * it names. Answering into that leaves the click chasing a screen that keeps
+   * being replaced, so this waits for the two to say the same thing.
+   */
   async currentQuestionId(): Promise<string> {
     await this.questions.waitFor({ state: "visible", timeout: 10000 })
 
-    const id = (await this.questions.getAttribute("id"))?.replace(
-      /-prompt$/,
-      "",
-    )
+    const stopAt = Date.now() + 5000
+    let showing = await this.questionOnScreen()
 
-    if (!id) throw new Error("no question is showing")
+    while (Date.now() < stopAt) {
+      const mirrored = new URL(this.page.url()).searchParams.get("q")
 
-    return id
+      if (showing && showing === mirrored) return showing
+
+      showing = await this.questionOnScreen()
+    }
+
+    if (!showing) throw new Error("no question is showing")
+
+    return showing
   }
 
   private choice(text: string): Locator {
@@ -95,21 +117,27 @@ export class EventApplicationPage extends BasePage {
     // reopens still carries the marks it was left with — so clicking a right
     // answer that is already marked would clear it.
     if (answers.correct.length === 1) {
-      const option = this.choice(answers.correct[0])
-
-      if (!(await option.locator("input").isChecked())) await option.click()
+      await this.mark(answers.correct[0], true)
 
       return
     }
 
     for (const text of [...answers.correct, ...answers.incorrect]) {
-      const option = this.choice(text)
-      const wanted = answers.correct.includes(text)
-
-      if ((await option.locator("input").isChecked()) !== wanted) {
-        await option.click()
-      }
+      await this.mark(text, answers.correct.includes(text))
     }
+  }
+
+  private async mark(text: string, wanted: boolean): Promise<void> {
+    const option = this.choice(text)
+    const input = option.locator("input")
+
+    if ((await input.isChecked({ timeout: 2000 }).catch(() => false)) === wanted)
+      return
+
+    // A screen replaced under the click loses the element. Rather than spend
+    // the whole action timeout chasing it, this gives up and lets the walk
+    // answer whatever is on screen when it comes round again.
+    await option.click({ timeout: 5000 }).catch(() => {})
   }
 
   /**
@@ -125,13 +153,7 @@ export class EventApplicationPage extends BasePage {
     while (Date.now() < stopAt) {
       if (!this.page.url().includes("/regras")) return true
 
-      // Bounded: between two screens the heading is detached, and an unbounded
-      // read would sit there waiting for the next one to arrive.
-      const heading = await this.questions
-        .getAttribute("id", { timeout: 1000 })
-        .catch(() => null)
-
-      if (heading !== `${question}-prompt`) return true
+      if ((await this.questionOnScreen()) !== question) return true
     }
 
     return false
@@ -147,7 +169,7 @@ export class EventApplicationPage extends BasePage {
     }
 
     await this.markCorrectAnswers(question.answers)
-    await this.continueButton.click()
+    await this.continueButton.click({ timeout: 5000 }).catch(() => {})
     await this.quizMovedOn(id)
 
     return id
