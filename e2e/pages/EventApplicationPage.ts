@@ -212,6 +212,12 @@ export class EventApplicationPage extends BasePage {
 
       await this.page.waitForTimeout(POLL_INTERVAL)
     }
+
+    // A refused save reopens the question it names, and that can be the one
+    // just answered — the screen never changes and the whole budget goes by.
+    // The walk answers it again, which is right, but a run that spends seconds
+    // here should be able to say so.
+    this.note(`"${question}" was still on screen a full wait after answering it`)
   }
 
   async answerCurrentQuestionCorrectly(): Promise<string> {

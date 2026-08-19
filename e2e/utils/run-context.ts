@@ -11,11 +11,12 @@ const MAX_EVENT_TITLE_LENGTH = 50
 
 export function generateRunId(): string {
   // Short on purpose: the id is spent from the event title's 50 character
-  // budget. Four random bytes rather than two, because two is 65536 values
-  // inside a millisecond — enough for two runs starting together to collide,
-  // and enough for fifty ids drawn in one tick to collide about one time in
-  // fifty, which is what the test next door kept catching.
-  return `${(Date.now() % 1_000_000).toString(36)}${randomBytes(4).toString('hex')}`
+  // budget, and the longest title in the suite would sit exactly on the cap
+  // with four random bytes. Three rather than the two it had: two is 65536
+  // values inside a millisecond, which collides about one time in fifty across
+  // fifty draws — what the test next door kept catching — where three is one
+  // in fourteen thousand, and leaves the longest title two characters spare.
+  return `${(Date.now() % 1_000_000).toString(36)}${randomBytes(3).toString('hex')}`
 }
 
 export function getRunId(): string {

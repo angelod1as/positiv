@@ -223,10 +223,13 @@ test.describe('Newsletter Subscription Modal', () => {
       await expect(loadingButton).toBeDisabled()
     }
 
-    // Wait for submission to complete
-    await page.waitForLoadState('domcontentloaded')
+    // Same round trip as the test above, and the same two wordings: the button
+    // says it is loading until the newsletter service answers, and the answer
+    // may name a temporary sync problem while still having subscribed.
+    await expect(loadingButton).toHaveCount(0, { timeout: 30000 })
 
-    // Verify success
-    await expect(page.locator('text=/inscrição realizada com sucesso/i')).toBeVisible()
+    await expect(
+      page.locator('text=/inscrição realizada/i'),
+    ).toBeVisible({ timeout: 10000 })
   })
 })
