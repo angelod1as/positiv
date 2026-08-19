@@ -7,6 +7,7 @@ import {
 } from "react-router"
 import { ENV } from "varlock/env"
 import { getUserContext } from "~/business/auth/auth.server"
+import { isVeteran } from "~/business/participant/is-veteran.server"
 import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
 import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
 import {
@@ -47,7 +48,7 @@ const {
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!params.id) return redirect(DASHBOARD)
 
-  await getUserContext(request, params)
+  const { currentProfile } = await getUserContext(request, params)
 
   const event = await kyselyDb
     .selectFrom("events")
@@ -57,7 +58,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   if (!event) return redirect(DASHBOARD)
 
-  return null
+  // Asked here rather than taken from the browser: the quiz is a gate, and the
+  // shorter run behind it has to be earned against the database.
+  return {
+    isVeteran: currentProfile
+      ? await isVeteran(currentProfile.id, params.id)
+      : false,
+  }
 }
 
 const Wrapper: FCC = ({ children }) => (
@@ -80,7 +87,7 @@ const Wrapper: FCC = ({ children }) => (
 
 const STEP_PARAM = "q"
 
-const EventRulesPage = ({ params }: Route.ComponentProps) => {
+const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
   const navigate = useNavigate()
   const navigationType = useNavigationType()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -147,8 +154,8 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
   )
 
   const flow = useMemo(
-    () => buildRulesFlow(questions, commit),
-    [questions, commit],
+    () => buildRulesFlow(questions, commit, { isVeteran: loaderData.isVeteran }),
+    [questions, commit, loaderData.isVeteran],
   )
 
   // Answering fourteen screens to reach the next page is the cost of testing

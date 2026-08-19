@@ -58,7 +58,12 @@ const renderQuiz = () =>
   render(
     <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+      <EventRulesPage
+        {...({
+          params: { id: EVENT },
+          loaderData: { isVeteran: false },
+        } as any)}
+      />
     </MemoryRouter>,
   )
 
@@ -131,7 +136,12 @@ describe("the order the rules quiz was dealt", () => {
     const markup = renderToStaticMarkup(
       <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+        <EventRulesPage
+        {...({
+          params: { id: EVENT },
+          loaderData: { isVeteran: false },
+        } as any)}
+      />
       </MemoryRouter>,
     )
 

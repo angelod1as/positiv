@@ -107,7 +107,12 @@ const renderQuiz = () =>
   render(
     <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+      <EventRulesPage
+        {...({
+          params: { id: EVENT },
+          loaderData: { isVeteran: false },
+        } as any)}
+      />
       <Mirror />
       <Back />
     </MemoryRouter>,
@@ -256,7 +261,12 @@ describe("the rules quiz and the question mirrored in the url", () => {
           <Route
             path="/dashboard/:id/regras"
             /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            element={<EventRulesPage {...({ params: { id: EVENT } } as any)} />}
+            element={<EventRulesPage
+        {...({
+          params: { id: EVENT },
+          loaderData: { isVeteran: false },
+        } as any)}
+      />}
           />
         </Routes>
       </MemoryRouter>,
@@ -288,7 +298,12 @@ describe("the rules quiz and the question mirrored in the url", () => {
         initialIndex={1}
       >
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+        <EventRulesPage
+        {...({
+          params: { id: EVENT },
+          loaderData: { isVeteran: false },
+        } as any)}
+      />
         <Back />
       </MemoryRouter>,
     )

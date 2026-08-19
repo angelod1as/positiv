@@ -14,6 +14,10 @@ vi.mock("~/kysely-db", () => ({
   },
 }))
 
+vi.mock("~/business/participant/is-veteran.server", () => ({
+  isVeteran: vi.fn(),
+}))
+
 const { ENV } = vi.hoisted(() => ({
   ENV: { NODE_ENV: "development" } as Record<string, unknown>,
 }))
@@ -28,15 +32,35 @@ vi.mock("react-router", async (importOriginal) => {
 })
 
 import { getUserContext } from "~/business/auth/auth.server"
+import { isVeteran } from "~/business/participant/is-veteran.server"
 import { kyselyDb } from "~/kysely-db"
 
-const _mockGetUserContext = vi.mocked(getUserContext)
+const mockGetUserContext = vi.mocked(getUserContext)
+const mockIsVeteran = vi.mocked(isVeteran)
 const mockKysely = vi.mocked(kyselyDb)
 const mockRedirect = vi.mocked(redirect)
+
+const eventExists = () => {
+  mockKysely.selectFrom = vi.fn().mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        executeTakeFirst: vi.fn().mockResolvedValue({ id: "123" }),
+      }),
+    }),
+  })
+}
+
+const signedInAs = (profileId: string | null) => {
+  mockGetUserContext.mockResolvedValue({
+    currentProfile: profileId ? { id: profileId } : null,
+  } as never)
+}
 
 describe("event-rules-page loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    signedInAs("profile-1")
+    mockIsVeteran.mockResolvedValue(false)
   })
 
   it("should redirect to dashboard if no id param", async () => {
@@ -101,6 +125,32 @@ describe("event-rules-page loader", () => {
       "123",
     )
   })
+
+  it("asks the database itself whether the person has been before", async () => {
+    eventExists()
+    mockIsVeteran.mockResolvedValue(true)
+
+    const data = await loader({
+      request: new Request("http://localhost"),
+      params: { id: "123" },
+    } as Route.LoaderArgs)
+
+    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "123")
+    expect(data).toEqual({ isVeteran: true })
+  })
+
+  it("treats a request without a profile as someone who has never been", async () => {
+    eventExists()
+    signedInAs(null)
+
+    const data = await loader({
+      request: new Request("http://localhost"),
+      params: { id: "123" },
+    } as Route.LoaderArgs)
+
+    expect(mockIsVeteran).not.toHaveBeenCalled()
+    expect(data).toEqual({ isVeteran: false })
+  })
 })
 
 import * as reactRouter from "react-router"
@@ -114,12 +164,13 @@ import { render, screen, waitFor } from "~/test/test-utils"
 
 const quiz = getRulesFormQuestions()
 
-const renderPage = () =>
+const renderPage = (loaderData = { isVeteran: false }) =>
   render(
     <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "123" }}
+        loaderData={loaderData}
       />
     </MemoryRouter>,
   )
@@ -289,6 +340,7 @@ const renderPageAt = (entry: string) =>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "123" }}
+        loaderData={{ isVeteran: false }}
       />
       <Location />
     </MemoryRouter>,
@@ -407,6 +459,7 @@ const renderPageWithPathname = () =>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "123" }}
+        loaderData={{ isVeteran: false }}
       />
       <Pathname />
     </MemoryRouter>,
@@ -476,5 +529,41 @@ describe("event-rules-page skip in development", () => {
     await user.click(await screen.findByRole("button", { name: skipLabel }))
 
     await waitFor(() => expect(currentPathname()).toBe("/dashboard/123/regras"))
+  })
+})
+
+describe("event-rules-page for someone who has been before", () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+  })
+
+  it("opens on the question that asks how they are", async () => {
+    renderPage({ isVeteran: true })
+
+    const { prompt } = await shownQuestion()
+
+    expect(prompt).toBe(quiz.trigger.question)
+  })
+
+  it("promises three screens, not fourteen", async () => {
+    renderPage({ isVeteran: true })
+
+    await shownQuestion()
+
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuetext",
+      "Etapa 1 de 3",
+    )
+  })
+
+  it("promises the whole quiz to someone who has never been", async () => {
+    renderPage({ isVeteran: false })
+
+    await shownQuestion()
+
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuetext",
+      `Etapa 1 de ${Object.keys(quiz).length}`,
+    )
   })
 })
