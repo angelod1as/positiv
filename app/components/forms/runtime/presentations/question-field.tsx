@@ -5,12 +5,14 @@ import { ownsItsPrompt } from "./owns-its-prompt"
 import type { RenderQuestion } from "./presentation.types"
 
 /**
- * A radio or checkbox question is drawn as a group rather than as one labelable
- * control, so htmlFor has nothing to point at and the prompt has to reach the
- * group through aria-labelledby instead.
+ * A radio, checkbox or chip question is drawn as a group rather than as one
+ * labelable control, so htmlFor has nothing to point at and the prompt has to
+ * reach the group through aria-labelledby instead.
  */
 const isChoice = (question: Question) =>
-  question.input.kind === "radio" || question.input.kind === "checkbox"
+  question.input.kind === "radio" ||
+  question.input.kind === "checkbox" ||
+  question.input.kind === "chips"
 
 type QuestionFieldProps = {
   question: Question

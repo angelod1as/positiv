@@ -115,7 +115,7 @@ export const ChipSelect = ({
               key={option.value}
               asChild
               variant={isOn ? "default" : "outline"}
-              className="cursor-pointer px-3 py-1 text-sm"
+              className="min-h-11 cursor-pointer px-4 py-1 text-sm"
             >
               <button
                 type="button"
@@ -132,7 +132,7 @@ export const ChipSelect = ({
           <Badge
             key={item}
             variant="secondary"
-            className="gap-1 px-3 py-1 text-sm"
+            className="min-h-11 gap-1 px-4 py-1 text-sm"
           >
             {item}
             <button

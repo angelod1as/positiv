@@ -2,6 +2,7 @@ import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { TextArea } from "~/components/ui/textarea"
+import { ChipSelect } from "~/components/forms/base/chip-select"
 import { Radio } from "~/components/forms/base/radio"
 import { Select } from "~/components/forms/base/select"
 import { formRuntimeCopy } from "~/copy/forms"
@@ -159,6 +160,19 @@ export const renderQuestion: RenderQuestion = ({
         </div>
       )
     }
+
+    case "chips":
+      return (
+        <ChipSelect
+          id={question.id}
+          labelledBy={labelledBy}
+          options={input.options}
+          value={asList(value)}
+          onChange={onChange}
+          allowOther={input.allowOther}
+          otherPlaceholder={input.otherPlaceholder}
+        />
+      )
 
     case "boolean":
       return (

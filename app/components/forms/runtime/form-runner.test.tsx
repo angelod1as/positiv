@@ -185,6 +185,34 @@ describe("choice groups are labelled by their prompt", () => {
     )
   })
 
+  it("names a chip group in allAtOnce", () => {
+    const chips = {
+      id: "genero",
+      prompt: "Como você se identifica?",
+      input: {
+        kind: "chips" as const,
+        options: [{ label: "Travesti", value: "Travesti" }],
+      },
+      schema: zod.array(zod.string()).min(1, { message: "Escolha ao menos um" }),
+    }
+
+    render(
+      <FormRunner
+        questions={[chips]}
+        flow={{
+          start: "escolhas",
+          steps: { escolhas: { kind: "screen", ids: ["genero"] } },
+          next: () => "done",
+        }}
+        presentation={AllAtOnce}
+      />,
+    )
+
+    expect(screen.getByRole("group")).toHaveAccessibleName(
+      "Como você se identifica?",
+    )
+  })
+
   it("names a radio group in oneAtATime", () => {
     render(
       <FormRunner
