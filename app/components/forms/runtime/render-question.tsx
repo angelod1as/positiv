@@ -12,7 +12,7 @@ const asText = (value: unknown) => (typeof value === "string" ? value : "")
 const asList = (value: unknown) =>
   Array.isArray(value) ? (value as string[]) : []
 
-const choiceClassName = "flex items-start gap-2 cursor-pointer mb-0"
+const choiceClassName = "flex min-h-11 items-start gap-2 py-2 cursor-pointer mb-0"
 
 export const renderQuestion: RenderQuestion = ({
   question,
