@@ -13,10 +13,10 @@ export class EventApplicationPage extends BasePage {
   readonly continueButton: Locator
   readonly questions: Locator
 
-  // What went oddly along the way, if anything, kept for the error message of a
-  // walk that runs out of screens.
-  private refusedClick: string | null = null
-  private neverAgreed: string | null = null
+  // What went oddly along the way, kept for the error message of a walk that
+  // runs out of screens. A walk clears them as it starts, so a note never ends
+  // up explaining a failure it had nothing to do with.
+  private walkNotes: string[] = []
 
   // User data page elements
   readonly userDataTitle: Locator
@@ -115,18 +115,19 @@ export class EventApplicationPage extends BasePage {
     // no longer dangerous, since the page ignores a mirror it wrote itself, so
     // the walk answers what is on screen. It is written down all the same, for
     // the error a stuck walk raises.
-    this.neverAgreed = `the question on screen (${showing}) and ?q= never lined up`
+    this.note(`the question on screen (${showing}) and ?q= never lined up`)
 
     return showing
   }
 
-  private whatWentOddly(): string {
-    const notes = [
-      this.refusedClick && `a click kept missing: ${this.refusedClick}`,
-      this.neverAgreed,
-    ].filter(Boolean)
+  private note(what: string): void {
+    if (!this.walkNotes.includes(what)) this.walkNotes.push(what)
+  }
 
-    return notes.length > 0 ? `. ${notes.join("; ")}` : ""
+  private whatWentOddly(): string {
+    return this.walkNotes.length > 0
+      ? `. Along the way: ${this.walkNotes.join("; ")}`
+      : ""
   }
 
   private choice(text: string): Locator {
@@ -158,8 +159,19 @@ export class EventApplicationPage extends BasePage {
     const option = this.choice(text)
     const input = option.locator("input")
 
-    if ((await input.isChecked({ timeout: 2000 }).catch(() => false)) === wanted)
+    const marked = await input
+      .isChecked({ timeout: 2000 })
+      .catch(() => null)
+
+    if (marked === wanted) return
+
+    // Unread, not unmarked. Clicking on a guess would clear an answer that is
+    // already right, which is the very thing this method exists to avoid, and
+    // the walk comes round again anyway.
+    if (marked === null) {
+      this.note(`could not read whether an answer was marked: "${text.slice(0, 40)}…"`)
       return
+    }
 
     await this.clickAndTolerate(option, `answer "${text.slice(0, 40)}…"`)
   }
@@ -176,7 +188,7 @@ export class EventApplicationPage extends BasePage {
       await target.click({ timeout: 5000 })
     } catch (error) {
       const [reason] = String(error).split("\n")
-      this.refusedClick = `${what} — ${reason}`
+      this.note(`a click kept missing — ${what}: ${reason}`)
     }
   }
 
@@ -220,6 +232,8 @@ export class EventApplicationPage extends BasePage {
    * picking another radio replaces it, where a stray checkbox would linger.
    */
   async advanceToSingleAnswerQuestion(): Promise<string> {
+    this.walkNotes = []
+
     const quiz = getRulesFormQuestions()
 
     // Three times the questions, because an answer that does not advance is
@@ -252,6 +266,8 @@ export class EventApplicationPage extends BasePage {
   }
 
   async fillRulesForm(): Promise<void> {
+    this.walkNotes = []
+
     await expect(this.rulesTitle).toBeVisible({ timeout: 10000 })
 
     const quiz = getRulesFormQuestions()
