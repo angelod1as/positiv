@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { validationMessages } from "~/lib/helpers/validation-messages"
 import { buildRulesQuestions } from "./build-rules-questions"
 import { getRulesFormQuestions } from "./rules-questions"
@@ -211,6 +211,28 @@ describe("buildRulesQuestions with a given order", () => {
     expect(buildRulesQuestions(order).map((question) => question.id).sort()).toEqual(
       Object.keys(getRulesFormQuestions()).sort(),
     )
+  })
+
+  it("says so when it drops an order, which is otherwise silent", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    buildRulesQuestions(Object.keys(getRulesFormQuestions()).slice(0, 3))
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[rules]"),
+    )
+
+    consoleError.mockRestore()
+  })
+
+  it("stays quiet about an order it can use", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+
+    buildRulesQuestions(Object.keys(getRulesFormQuestions()))
+
+    expect(consoleError).not.toHaveBeenCalled()
+
+    consoleError.mockRestore()
   })
 
   it("ignores an order naming a question the quiz no longer has", () => {
