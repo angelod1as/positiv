@@ -132,7 +132,9 @@
       "WebFetch(domain:playwright.dev)",
       "WebFetch(domain:supabase.com)",
       "WebFetch(domain:vitest.dev)",
-      "WebFetch(domain:zod.dev)"
+      "WebFetch(domain:zod.dev)",
+
+      "Read(./.env.schema)"
     ],
     "deny": [
       "Bash(*SUPABASE_DB_PASSWORD=*)",
@@ -140,7 +142,7 @@
       "Bash(*LISTMONK_ADMIN_PASSWORD=*)",
 
       "Read(./.env)",
-      "Read(./.env.*)",
+      "Read(./.env.!(schema))",
       "Read(./ops/newsletter/.env)",
       "Read(./ops/newsletter/.env.*)",
 
