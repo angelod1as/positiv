@@ -110,6 +110,15 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
   // the reader back to a question they have answered.
   const requestedStep = navigationType === "POP" ? mirrored : askedFor.current
 
+  // Entries this page pushed for questions the reader walked to. The quiz's own
+  // back button pops one instead of adding another, so that both back buttons
+  // walk the same trail: an added entry would leave the question just left
+  // sitting behind the reader for the browser's to hand straight back.
+  //
+  // Never more than were pushed, so it cannot walk anyone off the site. A run
+  // restored into a fresh tab has none, and replaces the entry it stands on.
+  const pushed = useRef(0)
+
   // A run keeps the deal it was given. Shuffling again on every mount moved the
   // remaining questions around underneath the reader, and the progress count
   // with them — the same question read "1 de 14" before a refresh and "6 de 14"
@@ -161,6 +170,18 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
         persistence={{ formId: "rules", scopeId: eventId }}
         stepId={requestedStep}
         onStepChange={(step, { direction }) => {
+          if (direction === "back" && pushed.current > 0) {
+            pushed.current -= 1
+            void navigate(-1)
+            return
+          }
+
+          // The question the quiz opens on is where the reader already is;
+          // only the ones they walk to are worth a trip back. Neither is a
+          // step reached backwards with nothing of the quiz's own to pop.
+          const replace = !mirrored || direction === "back"
+          if (!replace) pushed.current += 1
+
           setSearchParams(
             (current) => {
               const next = new URLSearchParams(current)
@@ -168,12 +189,7 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
               return next
             },
             {
-              // The question the quiz opens on is where the reader already is;
-              // only the ones they walk to are worth a trip back. Neither is
-              // the quiz's own back button: it stands on the entry it is
-              // leaving, so replacing keeps the browser's back button walking
-              // backwards instead of handing the question back.
-              replace: !mirrored || direction === "back",
+              replace,
               // Every step is a navigation, and the quiz sits under the whole
               // rules text. Letting the router reset the scroll would throw the
               // reader back to the top of the rules on every answer.
