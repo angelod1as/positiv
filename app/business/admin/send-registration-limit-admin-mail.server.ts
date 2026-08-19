@@ -1,5 +1,6 @@
 import { formatRegistrationLimitAdminMail } from "~/business/email/format-registration-limit-admin-mail"
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
+import { registrationLimitAdminCopy } from "~/copy/emails/registration-limit-admin"
 import { logger } from "~/lib/logger/logger.server"
 import { getAdminEmails } from "./get-admin-emails.server"
 import type { Event } from "~types/database/entities.types"
@@ -32,7 +33,7 @@ export const sendRegistrationLimitAdminMail = async ({
 
   const options: MailOptions = {
     to: adminEmails,
-    subject: `📊 Evento atingiu limite de candidaturas - ${event.emoji} ${event.title}`,
+    subject: registrationLimitAdminCopy.subject(event.emoji, event.title),
     text: text,
     html: html,
   }

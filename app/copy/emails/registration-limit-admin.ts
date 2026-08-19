@@ -1,4 +1,6 @@
 export const registrationLimitAdminCopy = {
+  subject: (eventEmoji: string | null, eventTitle: string | null) =>
+    `📊 Evento atingiu limite de candidaturas - ${eventEmoji} ${eventTitle}`,
   documentTitle: "Evento atingiu limite de candidaturas - Positiv",
   logoAlt: "Positiv",
   heading: "📊 Evento atingiu limite de candidaturas",
