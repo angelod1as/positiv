@@ -10,7 +10,7 @@ const tooltipsCopy = adminTablesCopy.eventParticipants.tooltips
 function createTooltipSection(title: string, items: string[]) {
   return (
     <div>
-      <p className="font-semibold">{title}</p>
+      <p className="font-semibold">{tooltipsCopy.categoryLabel(title)}</p>
       <ul className="list-disc list-inside pl-2">
         {items.map((item) => (
           <li key={item}>{item}</li>

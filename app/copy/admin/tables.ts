@@ -120,9 +120,9 @@ export const adminTablesCopy = {
         "Total de todas as candidaturas registradas para este evento, independente de status.",
       acceptedInProcessIntro:
         "Pessoas que atendem simultaneamente aos seguintes critérios:",
-      applicationStatusSection: "Status de Processo (application_status):",
-      attendanceStatusSection: "Status de Presença (attendance_status):",
-      approvedToAttendSection: "Status de Aprovação (approved_to_attend):",
+      applicationStatusSection: "Status de Processo (application_status)",
+      attendanceStatusSection: "Status de Presença (attendance_status)",
+      approvedToAttendSection: "Status de Aprovação (approved_to_attend)",
     },
     columns: {
       socialName: "Nome",
