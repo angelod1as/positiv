@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react"
 import {
   redirect,
   useNavigate,
@@ -76,16 +76,23 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
 
   const mirrored = searchParams.get(STEP_PARAM) ?? undefined
 
-  // The question this page opened on, kept as it was: a link that names one is
-  // the reader asking for it, and following a link is a push like any other.
-  const openedOn = useRef(mirrored)
+  // The last question the reader asked for: the one the page opened on, and
+  // then whichever the back and forward buttons land on. It has to keep up with
+  // them, because the quiz takes a beat to follow and this page writes down the
+  // question it is leaving in the meantime — pinning this to where the page
+  // opened would hand that write back as an instruction.
+  const askedFor = useRef(mirrored)
+
+  useEffect(() => {
+    if (navigationType === "POP") askedFor.current = mirrored
+  }, [navigationType, mirrored])
 
   // The url says where the reader is only when the reader put them there: the
   // question the page opened on, and the back and forward buttons. Every other
   // change to it is this page writing down the question it is showing, and that
   // write can land after the quiz has already moved on — obeying it then drags
   // the reader back to a question they have answered.
-  const requestedStep = navigationType === "POP" ? mirrored : openedOn.current
+  const requestedStep = navigationType === "POP" ? mirrored : askedFor.current
 
   const questions = useMemo(() => buildRulesQuestions(), [])
 

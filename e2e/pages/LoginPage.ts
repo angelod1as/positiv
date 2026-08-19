@@ -56,8 +56,10 @@ export class LoginPage extends BasePage {
       this.submitButton.click()
     ])
 
-    // Wait for page to fully load after navigation
-    await this.page.waitForLoadState('networkidle')
+    // Not networkidle: the url above already says the login went through, and
+    // the app keeps talking to the analytics endpoint on its own schedule. This
+    // sits upstream of the setup that gates every authenticated test.
+    await this.page.waitForLoadState('domcontentloaded')
   }
   
   async verifyLoginPageDisplayed(): Promise<void> {

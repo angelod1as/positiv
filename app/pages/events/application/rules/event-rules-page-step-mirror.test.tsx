@@ -168,4 +168,44 @@ describe("the rules quiz and the question mirrored in the url", () => {
 
     expect(onScreen()).toBe(asked)
   })
+
+  it("does not snap back to where it opened after the reader goes back", async () => {
+    const user = userEvent.setup()
+
+    // Reloading pins the url on the question showing at the time. Going back
+    // from there is the reader moving, and answering on from there must not be
+    // undone by the question the reload happened to open on.
+    const ids = Object.keys(getRulesFormQuestions())
+    const earlier = ids[0]
+    const reloadedOn = ids[1]
+
+    seedAnsweredQuiz(reloadedOn)
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          `/dashboard/${EVENT}/regras?q=${earlier}`,
+          `/dashboard/${EVENT}/regras?q=${reloadedOn}`,
+        ]}
+        initialIndex={1}
+      >
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+        <Back />
+      </MemoryRouter>,
+    )
+
+    expect(onScreen()).toBe(reloadedOn)
+
+    await user.click(screen.getByRole("button", { name: "back" }))
+    expect(onScreen()).toBe(earlier)
+
+    const quiz = getRulesFormQuestions()
+    for (const right of quiz[earlier as keyof typeof quiz].answers.correct) {
+      await user.click(screen.getByText(right, { exact: true }))
+    }
+    await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+    expect(onScreen()).not.toBe(reloadedOn)
+  })
 })
