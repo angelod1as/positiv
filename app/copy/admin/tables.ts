@@ -51,7 +51,7 @@ export const adminTablesCopy = {
     viewParticipant: "Ver participante",
     viewProfile: "Ver perfil",
     whatsapp: "WhatsApp",
-    booleanYes: "Sim",
+    booleanYes: sharedCopy.values.yes,
   },
   columns: {
     veteran: {
@@ -76,7 +76,7 @@ export const adminTablesCopy = {
       createdAt: "Registro",
       createdAtTooltip: "Data de cadastro",
       veteran: "Veterane",
-      isVeteranYes: "Sim",
+      isVeteranYes: sharedCopy.values.yes,
       isVeteranNo: "Nao",
     },
   },
