@@ -1,6 +1,7 @@
 import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
+import { formRuntimeCopy } from "~/copy/forms"
 import { zod } from "~/lib/helpers/zod"
 import type { Flow } from "./flow.types"
 import { FormRunner } from "./form-runner"
@@ -85,8 +86,13 @@ describe("FormRunner with allAtOnce", () => {
     await user.click(screen.getByRole("button", { name: "Continuar" }))
 
     // The wording comes from the schema, not from the runtime, so this asserts
-    // only that the failing question is the one flagged.
-    expect(screen.getAllByRole("alert")).toHaveLength(1)
+    // only that the failing question is the one flagged. The warning beside the
+    // button is an alert too, and belongs to no question.
+    const flagged = screen
+      .getAllByRole("alert")
+      .filter((alert) => alert.textContent !== formRuntimeCopy.fieldsRejected)
+
+    expect(flagged).toHaveLength(1)
     expect(screen.getByLabelText("Qual seu nome?")).toHaveValue("Angelo")
     expect(onDone).not.toHaveBeenCalled()
   })
