@@ -26,7 +26,7 @@ export const preOpeningReminderCopy = {
       previousEditions:
         "Ter participado de edições anteriores <strong>não garante</strong> a sua participação em outras festas",
       companions:
-        "Se você quer ir acompanhade, <strong>todas as pessoas</strong> precisam se inscrever e passar pela entrevista",
+        "Se você quer ir acompanhade, <strong>todas as pessoas</strong> precisam se candidatar e passar pela entrevista",
     },
   },
 } as const

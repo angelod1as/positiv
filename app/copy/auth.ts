@@ -41,7 +41,7 @@ export const registerCopy = {
   placeholders: { email: "email@exemplo.com", password: "senha123" },
   pendingButtonLabel: "Entrando...",
   validation: {
-    over18: "Você só pode se inscrever se for maior de 18 anos",
+    over18: "Você só pode se cadastrar se for maior de 18 anos",
     captcha: sharedCopy.validation.captcha,
     passwordMismatch: "As senhas não são iguais",
   },

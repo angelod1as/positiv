@@ -41,7 +41,7 @@ export class RegisterPage extends BasePage {
     this.loginLink = page.getByRole('link', { name: 'Entre aqui' })
 
     this.confirmPasswordError = page.getByText('As senhas não são iguais')
-    this.over18Error = page.getByText('Você só pode se inscrever se for maior de 18 anos')
+    this.over18Error = page.getByText('Você só pode se cadastrar se for maior de 18 anos')
     this.emailFormatError = page.getByRole('alert').filter({ hasText: /e-?mail/i })
     this.claimedProfileError = page.getByText(/Houve um erro no cadastro da sua conta/i)
     this.commitFailureError = page.getByText('Não foi possível salvar agora. Tente novamente.')

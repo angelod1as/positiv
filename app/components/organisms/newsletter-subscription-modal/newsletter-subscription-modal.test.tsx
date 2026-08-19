@@ -23,7 +23,7 @@ describe("NewsletterSubscriptionModal", () => {
     render(<RouterProvider router={router} />)
 
     expect(
-      screen.getByRole("heading", { name: /cadastre-se na nossa newsletter/i }),
+      screen.getByRole("heading", { name: /assine nossa newsletter/i }),
     ).toBeInTheDocument()
   })
 
@@ -33,7 +33,7 @@ describe("NewsletterSubscriptionModal", () => {
 
     expect(
       screen.queryByRole("heading", {
-        name: /cadastre-se na nossa newsletter/i,
+        name: /assine nossa newsletter/i,
       }),
     ).not.toBeInTheDocument()
   })
@@ -43,7 +43,7 @@ describe("NewsletterSubscriptionModal", () => {
     render(<RouterProvider router={router} />)
 
     expect(
-      screen.getByRole("button", { name: /inscrever-me/i }),
+      screen.getByRole("button", { name: /assinar/i }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole("button", { name: /talvez mais tarde/i }),
@@ -55,7 +55,7 @@ describe("NewsletterSubscriptionModal", () => {
     render(<RouterProvider router={router} />)
 
     const subscribeButton = screen.getByRole("button", {
-      name: /inscrever-me/i,
+      name: /assinar/i,
     })
     expect(subscribeButton).not.toBeDisabled()
   })

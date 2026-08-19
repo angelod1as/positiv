@@ -81,7 +81,7 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     await expect(page).toHaveURL('/conta/termos-e-condicoes')
 
     // Dismiss newsletter modal if it appears (sessionStorage not persisted in storageState)
-    const newsletterHeading = page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })
+    const newsletterHeading = page.getByRole('heading', { name: /assine nossa newsletter/i })
     const isModalVisible = await newsletterHeading.isVisible().catch(() => false)
     if (isModalVisible) {
       await page.getByRole('button', { name: /talvez mais tarde/i }).click()

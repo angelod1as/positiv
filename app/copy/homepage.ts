@@ -64,7 +64,7 @@ E, claro, nosso evento é para **maiores de 18 anos**.`,
   },
   ctaBanner: {
     title: "Não perca nossos próximos eventos",
-    body: `Faça login agora, se inscreva para o próximo evento, ou seja lembrade por quando novas inscrições abrirem`,
+    body: `Faça login agora, candidate-se ao próximo evento, ou seja lembrade por quando novas candidaturas abrirem`,
     loggedInCta: "Veja os eventos",
     loggedOutCta: "Entrar e conferir",
   },

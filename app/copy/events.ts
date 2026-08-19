@@ -172,27 +172,27 @@ Se você não pode levar sua comida embora, tome você mesme a decisão de desca
     heading: "🕺 Não somos uma balada 🪩",
     body: `A palavra "festa" ou "evento" pode confundir algumas pessoas. Não somos uma balada — o evento é de dia, tem piscina, não tem música alta. É muito mais um picnic ou um churrasco com as pessoas amigas.
 
-Tenha isso em mente ao se inscrever — não somos nada parecidos com casas de swing ou festas liberais. Não tem pista de dança, nem drink que pisca.`,
+Tenha isso em mente ao se candidatar — não somos nada parecidos com casas de swing ou festas liberais. Não tem pista de dança, nem drink que pisca.`,
   },
 ]
 
 export const rulesCopy = {
   title: "Regras e filosofias",
-  intro: `Antes de se inscrever em nosso evento, precisamos ter certeza que você **leu** e **entendeu** as nossas principais regras e filosofias.
+  intro: `Antes de se candidatar ao nosso evento, precisamos ter certeza que você **leu** e **entendeu** as nossas principais regras e filosofias.
 
-Portanto, criamos esse breve teste! Você só conseguirá se inscrever em nosso evento se todas as respostas estiverem corretas. _(Quem falou que suruba é bagunça, né?)_
+Portanto, criamos esse breve teste! Você só conseguirá se candidatar ao nosso evento se todas as respostas estiverem corretas. _(Quem falou que suruba é bagunça, né?)_
 
 Vamos ao que interessa:`,
   sections: rulesSections,
 } as const
 
 export const rulesDialogCopy = {
-  title: "Confirmar inscrição",
+  title: "Confirmar candidatura",
   notesPrompt:
     "Se você tiver alguma nota ou comentário que gostaria que as pessoas administradoras soubessem, escreva-as abaixo:",
   notesPlaceholder: "O que quer que a gente saiba?",
   confirmation:
-    "Você acertou tudo! Agora só falta clicar nesse botãozinho abaixo e confirmar sua inscrição.",
+    "Você acertou tudo! Agora só falta clicar nesse botãozinho abaixo e confirmar sua candidatura.",
   emailNotice:
     "Você vai receber um email com os dados do evento, salve na sua agenda!",
   confirmLabel: "🎉 Confirmar!",
@@ -222,7 +222,7 @@ export const eventCardCopy = {
   closed: "Candidaturas encerradas",
   apply: "Me candidatar",
   directApply: "Candidatura direta (admin)",
-  comingSoon: "Inscreva-se em breve",
+  comingSoon: "Candidate-se em breve",
   cancel: {
     trigger: "Cancelar candidatura",
     title: "Cancelar candidatura",

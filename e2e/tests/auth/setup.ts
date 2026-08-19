@@ -56,7 +56,7 @@ setup('authenticate as user', async ({ page }) => {
   await page.waitForLoadState('domcontentloaded')
 
   // If newsletter modal appears, dismiss it to ensure clean state for other tests
-  const newsletterHeading = page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })
+  const newsletterHeading = page.getByRole('heading', { name: /assine nossa newsletter/i })
   // The modal arrives with the page's own scripts, so this waits for it rather
   // than asking whether it happens to be there already.
   const isModalVisible = await newsletterHeading

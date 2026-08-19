@@ -12,7 +12,7 @@ export const participantCopy = {
     profileLinkFailed: "Problema ao vincular perfil",
     profileCreateFailed: "Problema ao criar perfil",
     newsletterFailed:
-      "Não foi possível inscrevê-lo na newsletter. Entre em contato com os administradores em partypositiv@gmail.com",
+      "Não foi possível concluir sua assinatura da newsletter. Entre em contato com os administradores em partypositiv@gmail.com",
   },
   application: {
     failed: "Oops, algo deu errado na sua candidatura. Tente mais tarde.",

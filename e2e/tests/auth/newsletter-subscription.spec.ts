@@ -36,11 +36,11 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Verify modal is visible
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).toBeVisible()
 
     // Verify modal content
     await expect(page.getByText(/receba atualizações sobre os próximos eventos/i)).toBeVisible()
-    await expect(page.getByRole('button', { name: /inscrever-me/i })).toBeVisible()
+    await expect(page.getByRole('button', { name: /assinar/i })).toBeVisible()
     await expect(page.getByRole('button', { name: /talvez mais tarde/i })).toBeVisible()
   })
 
@@ -56,7 +56,7 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Verify modal is NOT visible
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).not.toBeVisible()
   })
 
   test('Subscribe button works and persists subscription', async ({ page }) => {
@@ -71,10 +71,10 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Wait for modal to appear
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).toBeVisible()
 
     // Click subscribe button
-    await page.getByRole('button', { name: /inscrever-me/i }).click()
+    await page.getByRole('button', { name: /assinar/i }).click()
 
     // Subscribing is a round trip to the newsletter service, and it is slower
     // from CI than from a laptop. The button says "Carregando..." until it
@@ -87,18 +87,18 @@ test.describe('Newsletter Subscription Modal', () => {
     // Either wording means the button worked: the service reports a temporary
     // sync problem in its own words while still having subscribed the person.
     await expect(
-      page.locator('text=/inscrição realizada/i'),
+      page.locator('text=/assinatura realizada/i'),
     ).toBeVisible({ timeout: 10000 })
 
     // Verify modal closes (heading should not be visible)
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).not.toBeVisible()
 
     // Refresh page to verify modal doesn't reappear
     await page.reload()
     await page.waitForLoadState('domcontentloaded')
 
     // Modal should NOT reappear (user is now subscribed)
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).not.toBeVisible()
   })
 
   test('Dismiss button works within same session', async ({ page }) => {
@@ -113,7 +113,7 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Wait for modal to appear
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).toBeVisible()
 
     // Click dismiss button
     await page.getByRole('button', { name: /talvez mais tarde/i }).click()
@@ -122,7 +122,7 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Verify modal closes
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).not.toBeVisible()
 
     // Navigate to another page (dashboard)
     await page.goto('/dashboard')
@@ -133,7 +133,7 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Modal should NOT reappear in same session
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).not.toBeVisible()
   })
 
   test('Modal reappears after dismissal in new session', async ({ page }) => {
@@ -148,14 +148,14 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Wait for modal to appear
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).toBeVisible()
 
     // Dismiss modal
     await page.getByRole('button', { name: /talvez mais tarde/i }).click()
     await page.waitForLoadState('domcontentloaded')
 
     // Verify modal closes
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).not.toBeVisible()
 
     // Clear sessionStorage to simulate new session
     await page.evaluate(() => sessionStorage.clear())
@@ -169,7 +169,7 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Modal SHOULD reappear (new session, sessionStorage is cleared)
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).toBeVisible()
   })
 
   test('Modal does not appear on auth flow pages', async ({ page }) => {
@@ -184,14 +184,14 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Verify modal does NOT appear on auth flow pages
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).not.toBeVisible()
 
     // Navigate to terms page (another auth flow page)
     await page.goto('/conta/termos-e-condicoes')
     await page.waitForLoadState('domcontentloaded')
 
     // Verify modal does NOT appear
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).not.toBeVisible()
   })
 
   test('Loading state displays during subscription', async ({ page }) => {
@@ -206,10 +206,10 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.waitForLoadState('domcontentloaded')
 
     // Wait for modal to appear
-    await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
+    await expect(page.getByRole('heading', { name: /assine nossa newsletter/i })).toBeVisible()
 
     // Get the subscribe button
-    const subscribeButton = page.getByRole('button', { name: /inscrever-me/i })
+    const subscribeButton = page.getByRole('button', { name: /assinar/i })
 
     // Click subscribe button and immediately check for loading state
     await subscribeButton.click()
@@ -229,7 +229,7 @@ test.describe('Newsletter Subscription Modal', () => {
     await expect(loadingButton).toHaveCount(0, { timeout: 30000 })
 
     await expect(
-      page.locator('text=/inscrição realizada/i'),
+      page.locator('text=/assinatura realizada/i'),
     ).toBeVisible({ timeout: 10000 })
   })
 })

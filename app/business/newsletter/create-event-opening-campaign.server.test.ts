@@ -211,7 +211,7 @@ describe("createEventOpeningCampaign", () => {
       })
 
       const callBody = JSON.parse(mockFetch.mock.calls[0][1].body)
-      expect(callBody.body).toContain("Inscreva-se agora!")
+      expect(callBody.body).toContain("Candidate-se agora!")
       expect(callBody.body).toContain("background: #bf03c3")
     })
 

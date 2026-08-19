@@ -114,7 +114,7 @@ describe("applicationMailTemplate", () => {
     const result = applicationMailTemplate(mockProfile, mockEvent)
     expect(result).toContain("Ter participado de edições anteriores")
     expect(result).toContain("Se você quer ir acompanhade")
-    expect(result).toContain("Inscrever-se no formulário")
+    expect(result).toContain("Candidatar-se pelo formulário")
     expect(result).toContain("entradas sociais")
   })
 

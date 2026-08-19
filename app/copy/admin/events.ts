@@ -161,8 +161,8 @@ export const adminEventsCopy = {
     noName: "(sem nome)",
     summary: (count: number) =>
       count === 1
-        ? "1 participante rejeitade se candidatou neste evento"
-        : `${count} participantes rejeitades se inscreveram neste evento`,
+        ? "1 participante rejeitade se candidatou a este evento"
+        : `${count} participantes rejeitades se candidataram a este evento`,
   },
   listmonk: {
     createList: "Criar lista da newsletter",

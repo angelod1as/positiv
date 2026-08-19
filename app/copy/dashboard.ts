@@ -45,7 +45,7 @@ Costumamos dizer que nosso evento é, também, uma suruba, mas o foco principal 
   },
   {
     heading: "Entradas sociais",
-    body: `Temos políticas de **entradas sociais** para pessoas trans, negras, indígenas e em vulnerabilidade social. Se você faz parte de um desses grupos e gostaria de participar da festa, se inscreva e avise na hora da entrevista.`,
+    body: `Temos políticas de **entradas sociais** para pessoas trans, negras, indígenas e em vulnerabilidade social. Se você faz parte de um desses grupos e gostaria de participar da festa, candidate-se e avise na hora da entrevista.`,
   },
   {
     heading: "Política de reembolso",
@@ -83,7 +83,7 @@ export const agreeToTermsCopy = {
   },
   buttonLabel: "Continuar",
   newsletterWarning:
-    "Suas escolhas foram salvas, mas você não foi inscrito na newsletter. Por favor, entre em contato: partypositiv@gmail.com",
+    "Suas escolhas foram salvas, mas sua assinatura da newsletter não foi concluída. Por favor, entre em contato: partypositiv@gmail.com",
   successToast: "Escolhas salvas com sucesso",
   validation: {
     agree: "Você só pode continuar se estiver de acordo.",
