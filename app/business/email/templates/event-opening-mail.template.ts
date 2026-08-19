@@ -1,3 +1,4 @@
+import { eventOpeningMailCopy } from "~/copy/emails/event-opening-mail"
 import { DASHBOARD_URL, POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
@@ -24,11 +25,17 @@ export const eventOpeningMailTemplate = (
     .join(" ")
 
   const details = [
-    ["Evento", eventDisplay],
-    ["Local", sanitizeHtml(event.location || "")],
-    ["Data do evento", date],
-    ["Horário de início", time],
-    ["Candidaturas abrem em", `${applicationOpenDate} às ${applicationOpenTime}`],
+    [eventOpeningMailCopy.details.event, eventDisplay],
+    [eventOpeningMailCopy.details.location, sanitizeHtml(event.location || "")],
+    [eventOpeningMailCopy.details.date, date],
+    [eventOpeningMailCopy.details.startTime, time],
+    [
+      eventOpeningMailCopy.details.applicationsOpen,
+      eventOpeningMailCopy.details.dateAtTime(
+        applicationOpenDate,
+        applicationOpenTime,
+      ),
+    ],
   ]
 
   const unsubscribeUrl = `${POSITIV_URL}newsletter/unsubscribe?id=${encodeURIComponent(profileId)}`
@@ -39,7 +46,7 @@ export const eventOpeningMailTemplate = (
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Novo evento aberto - Positiv</title>
+  <title>${eventOpeningMailCopy.documentTitle}</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
 
@@ -54,7 +61,7 @@ export const eventOpeningMailTemplate = (
 
             <!-- Header with Logo -->
             <div style="text-align: center; padding: 30px 24px 20px 24px; background: #ffffff;">
-              <img src="${POSITIV_URL}positiv-logo-colors.png" alt="Positiv" width="250" style="max-width: 250px; height: auto; margin: 0 auto; display: block;">
+              <img src="${POSITIV_URL}positiv-logo-colors.png" alt="${eventOpeningMailCopy.logoAlt}" width="250" style="max-width: 250px; height: auto; margin: 0 auto; display: block;">
             </div>
 
             <!-- Main Content Area -->
@@ -62,22 +69,22 @@ export const eventOpeningMailTemplate = (
 
               <!-- H1 -->
               <h1 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 32px; font-weight: 800; color: #bf03c3; margin: 0 0 16px 0; line-height: 1.2; text-align: center;">
-                Novo evento disponível! 🎉
+                ${eventOpeningMailCopy.heading}
               </h1>
 
               <!-- Intro Paragraph -->
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                As candidaturas para <strong>${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}</strong> acabam de abrir!
+                ${eventOpeningMailCopy.intro(`${sanitizedEmoji ? `${sanitizedEmoji}&nbsp;` : ""}${sanitizedTitle}`)}
               </p>
 
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
-                Corra e garanta sua vaga enquanto há tempo! ⚡
+                ${eventOpeningMailCopy.urgency}
               </p>
 
               <!-- CTA Button -->
               <div style="text-align: center; margin: 30px 0;">
                 <a href="${DASHBOARD_URL}" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
-                  Inscreva-se agora!
+                  ${eventOpeningMailCopy.cta}
                 </a>
               </div>
 
@@ -100,21 +107,21 @@ export const eventOpeningMailTemplate = (
 
               <!-- Important Section -->
               <h3 style="font-family: 'DM Sans', Arial, sans-serif; font-size: 20px; font-weight: 700; color: #333; margin: 0 0 12px 0;">
-                Informações importantes
+                ${eventOpeningMailCopy.important.heading}
               </h3>
 
               <ul style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 16px 0; padding-left: 20px; color: #333;">
                 <li style="margin-bottom: 8px;">
-                  Ter participado de edições anteriores <strong>não garante</strong> a sua participação em outras festas;
+                  ${eventOpeningMailCopy.important.notes.previousEditions}
                 </li>
                 <li style="margin-bottom: 8px;">
-                  Se você quer ir acompanhade, <strong>todas as pessoas</strong> precisam se inscrever e passar pela entrevista;
+                  ${eventOpeningMailCopy.important.notes.companions}
                 </li>
                 <li style="margin-bottom: 8px;">
-                  Inscrever-se no formulário <strong>não significa</strong> que você será selecionade para participar do evento;
+                  ${eventOpeningMailCopy.important.notes.notSelected}
                 </li>
                 <li style="margin-bottom: 8px;">
-                  Temos políticas de <strong>entradas sociais</strong> para pessoas trans, negras, indígenas e em vulnerabilidade social. Se você é de um desses grupos e gostaria de participar da festa, fale com Ju ou Angelo pelo nosso WhatsApp.
+                  ${eventOpeningMailCopy.important.notes.socialTickets}
                 </li>
               </ul>
 
@@ -123,13 +130,13 @@ export const eventOpeningMailTemplate = (
             <!-- Footer -->
             <div style="background: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0 0 8px 0;">
-                Você recebeu este e-mail pois está inscrite na newsletter da
-                <a href="${POSITIV_URL}" style="color: #bf03c3; text-decoration: none; font-weight: 700;">Positiv</a>
+                ${eventOpeningMailCopy.footer.reason}
+                <a href="${POSITIV_URL}" style="color: #bf03c3; text-decoration: none; font-weight: 700;">${eventOpeningMailCopy.footer.brand}</a>
               </p>
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0;">
-                <a href="${unsubscribeUrl}" style="color: #666; text-decoration: underline;">Cancelar inscrição</a>
+                <a href="${unsubscribeUrl}" style="color: #666; text-decoration: underline;">${eventOpeningMailCopy.footer.unsubscribe}</a>
                 &nbsp;|&nbsp;
-                <a href="${POSITIV_URL}conta" style="color: #666; text-decoration: underline;">Configurações</a>
+                <a href="${POSITIV_URL}conta" style="color: #666; text-decoration: underline;">${eventOpeningMailCopy.footer.settings}</a>
               </p>
             </div>
 
