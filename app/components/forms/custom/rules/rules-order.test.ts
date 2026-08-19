@@ -1,52 +1,78 @@
 import { beforeEach, describe, expect, it } from "vitest"
-import { clearRulesOrder, readRulesOrder, writeRulesOrder } from "./rules-order"
+import { clearRulesDeal, readRulesDeal, writeRulesDeal } from "./rules-order"
 
 const EVENT = "11111111-1111-4111-8111-111111111111"
 
-describe("rules order", () => {
+describe("the deal a rules run was dealt", () => {
   beforeEach(() => {
     sessionStorage.clear()
   })
 
+  const dealt = {
+    questions: ["b", "a", "c"],
+    options: { b: ["sim", "não"] },
+  }
+
   it("has nothing to give before a run has started", () => {
-    expect(readRulesOrder(EVENT)).toBeNull()
+    expect(readRulesDeal(EVENT)).toBeNull()
   })
 
-  it("gives back the order a run was dealt", () => {
-    writeRulesOrder(EVENT, ["b", "a", "c"])
+  it("gives back the deal a run was dealt", () => {
+    writeRulesDeal(EVENT, dealt)
 
-    expect(readRulesOrder(EVENT)).toEqual(["b", "a", "c"])
+    expect(readRulesDeal(EVENT)).toEqual(dealt)
   })
 
-  it("keeps one order per event", () => {
-    writeRulesOrder(EVENT, ["b", "a"])
-    writeRulesOrder("22222222-2222-4222-8222-222222222222", ["a", "b"])
+  it("keeps one deal per event", () => {
+    writeRulesDeal(EVENT, dealt)
+    writeRulesDeal("22222222-2222-4222-8222-222222222222", {
+      questions: ["a", "b"],
+      options: {},
+    })
 
-    expect(readRulesOrder(EVENT)).toEqual(["b", "a"])
+    expect(readRulesDeal(EVENT)).toEqual(dealt)
   })
 
-  it("forgets the order once the run is over", () => {
-    writeRulesOrder(EVENT, ["b", "a"])
-    clearRulesOrder(EVENT)
+  it("forgets the deal once the run is over", () => {
+    writeRulesDeal(EVENT, dealt)
+    clearRulesDeal(EVENT)
 
-    expect(readRulesOrder(EVENT)).toBeNull()
+    expect(readRulesDeal(EVENT)).toBeNull()
   })
 
-  it("turns away a payload that is not a list of ids", () => {
+  it("turns away a payload that is not a deal", () => {
     sessionStorage.setItem(`rules-order:${EVENT}`, JSON.stringify({ a: 1 }))
 
-    expect(readRulesOrder(EVENT)).toBeNull()
+    expect(readRulesDeal(EVENT)).toBeNull()
   })
 
-  it("turns away a list holding anything but ids", () => {
-    sessionStorage.setItem(`rules-order:${EVENT}`, JSON.stringify(["a", 2]))
+  it("turns away a bare list, which is how the deal used to be written", () => {
+    sessionStorage.setItem(`rules-order:${EVENT}`, JSON.stringify(["a", "b"]))
 
-    expect(readRulesOrder(EVENT)).toBeNull()
+    expect(readRulesDeal(EVENT)).toBeNull()
+  })
+
+  it("turns away questions holding anything but ids", () => {
+    sessionStorage.setItem(
+      `rules-order:${EVENT}`,
+      JSON.stringify({ questions: ["a", 2], options: {} }),
+    )
+
+    expect(readRulesDeal(EVENT)).toBeNull()
+  })
+
+  it("turns away an answer layout that is not a list of answers", () => {
+    sessionStorage.setItem(
+      `rules-order:${EVENT}`,
+      JSON.stringify({ questions: ["a"], options: { a: "sim" } }),
+    )
+
+    expect(readRulesDeal(EVENT)).toBeNull()
   })
 
   it("turns away a payload that is not json at all", () => {
     sessionStorage.setItem(`rules-order:${EVENT}`, "{")
 
-    expect(readRulesOrder(EVENT)).toBeNull()
+    expect(readRulesDeal(EVENT)).toBeNull()
   })
 })
