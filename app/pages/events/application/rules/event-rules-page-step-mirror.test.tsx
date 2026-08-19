@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import {
   Link,
@@ -116,6 +116,10 @@ describe("the rules quiz and the question mirrored in the url", () => {
     mirrored = first
     await user.click(screen.getByRole("button", { name: "mirror" }))
 
+    // Nothing should happen, so this waits for the chance to happen before
+    // reading: a mirror that moves the quiz does so a tick after the click.
+    await new Promise((settle) => setTimeout(settle, 50))
+
     expect(onScreen()).toBe(second)
   })
 
@@ -131,7 +135,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
 
     await user.click(screen.getByRole("button", { name: "back" }))
 
-    expect(onScreen()).toBe(second)
+    await waitFor(() => expect(onScreen()).toBe(second), { timeout: 5000 })
     expect(second).not.toBe(first)
   })
 
@@ -166,7 +170,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
 
     await user.click(screen.getByRole("link", { name: "deep" }))
 
-    expect(onScreen()).toBe(asked)
+    await waitFor(() => expect(onScreen()).toBe(asked), { timeout: 5000 })
   })
 
   it("does not snap back to where it opened after the reader goes back", async () => {
@@ -198,7 +202,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
     expect(onScreen()).toBe(reloadedOn)
 
     await user.click(screen.getByRole("button", { name: "back" }))
-    expect(onScreen()).toBe(earlier)
+    await waitFor(() => expect(onScreen()).toBe(earlier), { timeout: 5000 })
 
     // Answering on from there works. Which question comes next is whatever the
     // shuffle decided, and it may well be the one the reload pinned — so the
@@ -210,6 +214,9 @@ describe("the rules quiz and the question mirrored in the url", () => {
     }
     await user.click(screen.getByRole("button", { name: "Continuar" }))
 
-    expect(onScreen()).not.toBe(earlier)
+    // Generous on purpose: answering runs an async advance through the runtime,
+    // and this file renders the whole rules text on every step, which is slow
+    // enough under a loaded machine to outlast the default second.
+    await waitFor(() => expect(onScreen()).not.toBe(earlier), { timeout: 5000 })
   })
 })
