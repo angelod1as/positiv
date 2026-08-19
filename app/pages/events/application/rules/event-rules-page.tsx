@@ -1,5 +1,10 @@
 import { useCallback, useMemo } from "react"
-import { redirect, useNavigate, useSearchParams } from "react-router"
+import {
+  redirect,
+  useNavigate,
+  useNavigationType,
+  useSearchParams,
+} from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
 import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
 import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules-questions"
@@ -65,10 +70,18 @@ const STEP_PARAM = "q"
 
 const EventRulesPage = ({ params }: Route.ComponentProps) => {
   const navigate = useNavigate()
+  const navigationType = useNavigationType()
   const [searchParams, setSearchParams] = useSearchParams()
   const eventId = params.id
 
-  const requestedStep = searchParams.get(STEP_PARAM) ?? undefined
+  const mirrored = searchParams.get(STEP_PARAM) ?? undefined
+
+  // The url says where the reader is only when the reader put them there: the
+  // first render, and the back and forward buttons. Every other change to it is
+  // this page writing down the question it is showing, and that write can land
+  // after the quiz has already moved on — obeying it then drags the reader back
+  // to a question they have answered.
+  const requestedStep = navigationType === "POP" ? mirrored : undefined
 
   const questions = useMemo(() => buildRulesQuestions(), [])
 
@@ -108,7 +121,7 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
             {
               // The question the quiz opens on is where the reader already is;
               // only the ones they walk to are worth a trip back.
-              replace: !requestedStep,
+              replace: !mirrored,
               // Every step is a navigation, and the quiz sits under the whole
               // rules text. Letting the router reset the scroll would throw the
               // reader back to the top of the rules on every answer.
