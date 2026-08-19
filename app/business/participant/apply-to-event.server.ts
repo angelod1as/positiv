@@ -1,4 +1,5 @@
 import { applySchema } from "composable-functions"
+import { participantCopy } from "~/copy/participant"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { applyToEventInputSchema, userContextSchema } from "../common"
 import { sendApplicationMail } from "./send-application-mail.server"
@@ -12,7 +13,7 @@ export const applyToEvent = applySchema(
   const { eventId, applicationDate, skipEmail, ...values } = allValues
 
   if (!currentProfile || !eventId) {
-    throw new Error("Oops, algo deu errado na sua candidatura. Tente mais tarde.")
+    throw new Error(participantCopy.application.failed)
   }
 
   const profileId = currentProfile.id
@@ -25,13 +26,11 @@ export const applyToEvent = applySchema(
     .executeTakeFirst()
 
   if (!event) {
-    throw new Error("Evento não encontrado.")
+    throw new Error(participantCopy.application.eventNotFound)
   }
 
   if (event.event_status === "Registration Closed") {
-    throw new Error(
-      "Candidaturas encerradas! Este evento atingiu o limite de participantes.",
-    )
+    throw new Error(participantCopy.application.registrationClosed)
   }
 
   const { data } = await supabase
@@ -51,7 +50,7 @@ export const applyToEvent = applySchema(
   })
 
   if (error) {
-    throw new Error("Sua candidatura teve um erro, tente novamente. Erro: upsert")
+    throw new Error(participantCopy.application.upsertFailed)
   }
 
   let emailSent = false

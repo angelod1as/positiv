@@ -19,6 +19,8 @@ Avise-nos pelo [email](mailto:${email}) com as informações:
     sessionFailed:
       "Houve um erro com sua autenticação, tente novamente mais tarde",
     invalidCredentials: "Credenciais inválidas",
+    authenticationFailed: "Ocorreu um erro com sua autenticação",
+    notAuthenticated: "Usuário não autenticado",
     emailNotConfirmed:
       "Você precisa confirmar suas credenciais. Confira seu e-mail!",
     authFailed: (code: string | undefined, message: string) =>

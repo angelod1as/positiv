@@ -1,5 +1,6 @@
 import ical, { ICalAlarmType, ICalCalendarMethod } from "ical-generator"
 import type { Event } from "~types/database/entities.types"
+import { participantCopy } from "~/copy/participant"
 import { POSITIV_EMAIL, POSITIV_URL } from "~/lib/constants/constants"
 
 export const formatCalendarEvent = async (event: Event) => {
@@ -17,8 +18,7 @@ export const formatCalendarEvent = async (event: Event) => {
     start: startTime,
     end: endTime,
     summary: `${emoji} ${title}`,
-    description:
-      "Você ainda não foi aprovade, hein! Mas já guarde na sua agenda esse delicioso evento Positiv para não esquecer!",
+    description: participantCopy.calendar.icsDescription,
     location,
     organizer: {
       name: "Positiv Party",

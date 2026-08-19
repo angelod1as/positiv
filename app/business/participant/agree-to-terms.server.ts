@@ -1,4 +1,6 @@
 import { applySchema } from "composable-functions"
+import { errorsCopy } from "~/copy/errors"
+import { participantCopy } from "~/copy/participant"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
 import { agreeToTermsSchema, contextSchema } from "../common"
@@ -13,7 +15,7 @@ export const agreeToTerms = applySchema(
 
   // If no user is authenticated, throw an error for proper handling
   if (!currentUser || !currentUser.email) {
-    throw new Error("Usuário não autenticado")
+    throw new Error(errorsCopy.auth.notAuthenticated)
   }
 
   let profileId: string
@@ -47,7 +49,8 @@ export const agreeToTerms = applySchema(
         .returning("id")
         .executeTakeFirst()
 
-      if (!linkedProfile) throw new Error("Problema ao vincular perfil")
+      if (!linkedProfile)
+        throw new Error(participantCopy.terms.profileLinkFailed)
 
       profileId = linkedProfile.id
     } else {
@@ -61,7 +64,7 @@ export const agreeToTerms = applySchema(
         .single()
 
       if (error || !newProfile) {
-        throw new Error("Problema ao criar perfil")
+        throw new Error(participantCopy.terms.profileCreateFailed)
       }
 
       profileId = newProfile.id
@@ -90,8 +93,7 @@ export const agreeToTerms = applySchema(
       )
       return {
         ...context,
-        newsletterSubscriptionError:
-          "Não foi possível inscrevê-lo na newsletter. Entre em contato com os administradores em partypositiv@gmail.com",
+        newsletterSubscriptionError: participantCopy.terms.newsletterFailed,
       }
     }
     if (result.data?.syncStatus === "failed") {
