@@ -1,5 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz"
 import { ptBR } from "date-fns/locale"
+import { sharedCopy } from "~/copy/shared"
 
 // Define the type for length options
 type DateLengthOption = "long" | "short" | "numeric"
@@ -38,7 +39,7 @@ export function formatDateTime(
   const formattedTime = formatInTimeZone(dateString, timeZone, timePattern, {
     locale: ptBR,
   })
-  const fullDateTime = `${formattedDate}, às ${formattedTime}`
+  const fullDateTime = sharedCopy.dateTime.full(formattedDate, formattedTime)
 
   return {
     full: fullDateTime,

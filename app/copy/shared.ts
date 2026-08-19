@@ -15,6 +15,9 @@ export const sharedCopy = {
     no: "Não",
     anonymous: "Anônimo",
   },
+  dateTime: {
+    full: (date: string, time: string) => `${date}, às ${time}`,
+  },
   validation: {
     captcha: "Por favor, complete a verificação de segurança",
   },
