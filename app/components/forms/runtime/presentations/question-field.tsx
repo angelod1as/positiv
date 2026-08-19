@@ -1,4 +1,5 @@
 import { Error } from "~/components/forms/base/error"
+import { cn } from "~/lib/utils"
 import { Label } from "~/components/ui/label"
 import type { Question } from "~/components/forms/runtime/question.types"
 import { ownsItsPrompt } from "./owns-its-prompt"
@@ -20,6 +21,7 @@ type QuestionFieldProps = {
   error: string | undefined
   onAnswer: (value: unknown) => void
   renderQuestion: RenderQuestion
+  className?: string
 }
 
 /**
@@ -33,12 +35,13 @@ export const QuestionField = ({
   error,
   onAnswer,
   renderQuestion,
+  className,
 }: QuestionFieldProps) => {
   const promptId = `${question.id}-prompt`
   const choice = isChoice(question)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className={cn("flex flex-col gap-2", className)}>
       {ownsItsPrompt(question) ? null : choice ? (
         <span id={promptId} className="mb-2 text-sm font-medium">
           {question.prompt}
