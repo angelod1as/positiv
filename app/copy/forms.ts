@@ -8,6 +8,12 @@ export const schemaFormCopy = {
   submit: "Continuar",
 } as const
 
+export const autoSaveFormCopy = {
+  saved: "Dados atualizados com sucesso",
+  saveFailed: "Erro ao salvar",
+  invalidNumber: "Valor numérico inválido",
+} as const
+
 export const formRuntimeCopy = {
   commitFailed: "Não foi possível salvar agora. Tente novamente.",
   selectPlaceholder: "Selecione",

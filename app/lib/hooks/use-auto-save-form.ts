@@ -6,6 +6,8 @@ import type { ComposableFetcherData } from "~types/database/entities.types"
 import { z } from "zod"
 import { useForm, type DefaultValues, type Path, type PathValue } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { autoSaveFormCopy } from "~/copy/forms"
+import { validationMessages } from "~/lib/helpers/validation-messages"
 
 export interface UseAutoSaveFormOptions<T extends ZodRawShape> {
   schema: ZodObject<T>
@@ -61,8 +63,8 @@ export function useAutoSaveForm<T extends ZodRawShape>(
     initialData,
     fetcher,
     onSubmit,
-    successMessage = "Dados atualizados com sucesso",
-    errorMessage = "Erro ao salvar",
+    successMessage = autoSaveFormCopy.saved,
+    errorMessage = autoSaveFormCopy.saveFailed,
   } = options
 
   const form = useForm<FormValues>({
@@ -134,7 +136,7 @@ export function useAutoSaveForm<T extends ZodRawShape>(
         const result = fieldSchema.safeParse(value)
         if (!result.success) {
           const validationErrorMsg =
-            result.error.issues[0]?.message ?? "Valor inválido"
+            result.error.issues[0]?.message ?? validationMessages.invalid
           setFieldErrors((prev) => ({ ...prev, [fieldName]: validationErrorMsg }))
           toast.error(validationErrorMsg)
           return
@@ -228,8 +230,11 @@ export function useAutoSaveForm<T extends ZodRawShape>(
           const numValue = Number(currentValue)
           if (isNaN(numValue)) {
             const fieldName = String(name)
-            setFieldErrors((prev) => ({ ...prev, [fieldName]: "Valor numérico inválido" }))
-            toast.error("Valor numérico inválido")
+            setFieldErrors((prev) => ({
+              ...prev,
+              [fieldName]: autoSaveFormCopy.invalidNumber,
+            }))
+            toast.error(autoSaveFormCopy.invalidNumber)
             return
           }
           doSubmit(name, numValue)
