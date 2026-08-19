@@ -36,7 +36,7 @@ describe("createList", () => {
         data: {
           id: 123,
           uuid: "abc-123",
-          name: "Inscrites - Test Event",
+          name: "Candidates - Test Event",
           type: "private",
           optin: "single",
           tags: [],
@@ -48,7 +48,7 @@ describe("createList", () => {
     } as Response)
 
     const result = await createList({
-      name: "Inscrites - Test Event",
+      name: "Candidates - Test Event",
       type: "private",
       optin: "single",
     })
@@ -56,7 +56,7 @@ describe("createList", () => {
     expect(result.success).toBe(true)
     if (result.success) {
       expect(result.data.id).toBe(123)
-      expect(result.data.name).toBe("Inscrites - Test Event")
+      expect(result.data.name).toBe("Candidates - Test Event")
     }
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://listmonk.test/api/lists",
@@ -67,7 +67,7 @@ describe("createList", () => {
           "Content-Type": "application/json",
         }),
         body: JSON.stringify({
-          name: "Inscrites - Test Event",
+          name: "Candidates - Test Event",
           type: "private",
           optin: "single",
         }),
@@ -82,7 +82,7 @@ describe("createList", () => {
         data: {
           id: 456,
           uuid: "def-456",
-          name: "Inscrites - Another Event",
+          name: "Candidates - Another Event",
           type: "private",
           optin: "single",
           tags: ["event", "2024"],
@@ -94,7 +94,7 @@ describe("createList", () => {
     } as Response)
 
     const result = await createList({
-      name: "Inscrites - Another Event",
+      name: "Candidates - Another Event",
       type: "private",
       optin: "single",
       description: "List for event participants",
@@ -106,7 +106,7 @@ describe("createList", () => {
       "https://listmonk.test/api/lists",
       expect.objectContaining({
         body: JSON.stringify({
-          name: "Inscrites - Another Event",
+          name: "Candidates - Another Event",
           type: "private",
           optin: "single",
           description: "List for event participants",
@@ -257,7 +257,7 @@ describe("getListById", () => {
         data: {
           id: 123,
           uuid: "abc-123",
-          name: "Inscrites - Test Event",
+          name: "Candidates - Test Event",
           type: "private",
           optin: "single",
           tags: [],
@@ -273,7 +273,7 @@ describe("getListById", () => {
     expect(result.success).toBe(true)
     if (result.success && result.data) {
       expect(result.data.id).toBe(123)
-      expect(result.data.name).toBe("Inscrites - Test Event")
+      expect(result.data.name).toBe("Candidates - Test Event")
       expect(result.data.subscriber_count).toBe(42)
     }
     expect(fetchSpy).toHaveBeenCalledWith(
