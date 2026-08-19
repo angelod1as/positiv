@@ -7,6 +7,13 @@ test.describe('Complete Unauthenticated Journey', () => {
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         const text = msg.text()
+        // Only this app's own errors. The homepage embeds a YouTube player,
+        // which reaches for ad and telemetry hosts of its own; a machine that
+        // refuses those — an ad blocker, a sinkholed DNS — would fail a
+        // journey through our pages for something none of our code did.
+        const from = msg.location()?.url ?? ''
+        const isOurs = from === '' || from.includes(new URL(page.url()).host)
+
         // Ignore expected errors:
         // - Authentication errors (422 from invalid credentials)
         // - React Router dev mode manifest patches (only in dev)
@@ -16,7 +23,7 @@ test.describe('Complete Unauthenticated Journey', () => {
           text.includes('Failed to fetch manifest patches') ||
           (text.includes('Failed to load resource') && text.includes('404'))
           
-        if (!isExpectedError) {
+        if (!isExpectedError && isOurs) {
           consoleErrors.push(text)
         }
       }
