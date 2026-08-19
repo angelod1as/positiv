@@ -33,7 +33,7 @@ test.describe('Newsletter Subscription Modal', () => {
 
     // Navigate to homepage
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Verify modal is visible
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
@@ -53,7 +53,7 @@ test.describe('Newsletter Subscription Modal', () => {
 
     // Navigate to homepage
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Verify modal is NOT visible
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
@@ -68,7 +68,7 @@ test.describe('Newsletter Subscription Modal', () => {
 
     // Navigate to homepage
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Wait for modal to appear
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
@@ -76,8 +76,9 @@ test.describe('Newsletter Subscription Modal', () => {
     // Click subscribe button
     await page.getByRole('button', { name: /inscrever-me/i }).click()
 
-    // Wait for submission to complete
-    await page.waitForLoadState('networkidle')
+    // No waiting for the network here: the toast takes itself away, and the app
+    // keeps talking to the analytics endpoint, so waiting for quiet is a good
+    // way to arrive after the toast has gone. The assertion below waits for it.
 
     // Verify success toast appears
     await expect(page.locator('text=/inscrição realizada com sucesso/i')).toBeVisible()
@@ -87,7 +88,7 @@ test.describe('Newsletter Subscription Modal', () => {
 
     // Refresh page to verify modal doesn't reappear
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Modal should NOT reappear (user is now subscribed)
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
@@ -102,7 +103,7 @@ test.describe('Newsletter Subscription Modal', () => {
 
     // Navigate to homepage
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Wait for modal to appear
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
@@ -111,18 +112,18 @@ test.describe('Newsletter Subscription Modal', () => {
     await page.getByRole('button', { name: /talvez mais tarde/i }).click()
 
     // Wait for action to complete
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Verify modal closes
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
 
     // Navigate to another page (dashboard)
     await page.goto('/dashboard')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Navigate back to homepage
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Modal should NOT reappear in same session
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
@@ -137,14 +138,14 @@ test.describe('Newsletter Subscription Modal', () => {
 
     // Navigate to homepage
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Wait for modal to appear
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
 
     // Dismiss modal
     await page.getByRole('button', { name: /talvez mais tarde/i }).click()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Verify modal closes
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
@@ -154,11 +155,11 @@ test.describe('Newsletter Subscription Modal', () => {
 
     // Reload page to simulate new session (user is still logged in)
     await page.reload()
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Navigate to homepage
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Modal SHOULD reappear (new session, sessionStorage is cleared)
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
@@ -173,14 +174,14 @@ test.describe('Newsletter Subscription Modal', () => {
 
     // Navigate to basic data page (auth flow page)
     await page.goto('/conta/dados-basicos')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Verify modal does NOT appear on auth flow pages
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
 
     // Navigate to terms page (another auth flow page)
     await page.goto('/conta/termos-e-condicoes')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Verify modal does NOT appear
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).not.toBeVisible()
@@ -195,7 +196,7 @@ test.describe('Newsletter Subscription Modal', () => {
 
     // Navigate to homepage
     await page.goto('/')
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Wait for modal to appear
     await expect(page.getByRole('heading', { name: /cadastre-se na nossa newsletter/i })).toBeVisible()
@@ -216,7 +217,7 @@ test.describe('Newsletter Subscription Modal', () => {
     }
 
     // Wait for submission to complete
-    await page.waitForLoadState('networkidle')
+    await page.waitForLoadState('domcontentloaded')
 
     // Verify success
     await expect(page.locator('text=/inscrição realizada com sucesso/i')).toBeVisible()
