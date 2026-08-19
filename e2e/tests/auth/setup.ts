@@ -1,6 +1,7 @@
 import { test as setup } from '@playwright/test'
 import { performUILogin } from '../../fixtures/auth'
 import { createTestUser, generateTestEmail, generateTestPassword } from '../../utils/user-management'
+import { writeSetupUser } from '../../utils/setup-user'
 import path from 'path'
 import fs from 'fs/promises'
 
@@ -43,6 +44,10 @@ setup('authenticate as user', async ({ page }) => {
   console.info('Creating test user:', email)
   const testUser = await createTestUser(email, password)
   setupUsers.user = { ...testUser, password }
+
+  // Written down for the specs that need this account's profile: they run in
+  // another process, so the object above never reaches them.
+  await writeSetupUser({ userId: testUser.id, email })
 
   // User goes through full login flow
   await performUILogin(page, email, password)

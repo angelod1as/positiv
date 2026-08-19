@@ -1,4 +1,5 @@
 import { createSupabaseAdminClient } from './db-cleanup'
+import { readSetupUser } from './setup-user'
 
 export interface ApplicationState {
   id: string
@@ -267,35 +268,28 @@ export async function ensureMultipleOpenEvents(count: number = 2): Promise<Array
 }
 
 export async function ensureTestUserProfileExists(): Promise<string> {
-  // For E2E tests, we know the test user is created with a dynamic email
-  // We need to find the most recently created test profile
   const supabase = createSupabaseAdminClient()
-  
-  // Get the most recent profile that was created in the last 5 minutes
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString()
-  
-  const { data: profiles, error } = await supabase
+
+  // The account the setup project logged in as, which is the one these specs
+  // are browsing with. Asked for by id: a lookup by how recently a profile was
+  // created picked the wrong account as soon as the suite took more than five
+  // minutes to reach here, or as soon as another spec signed one up.
+  const { userId, email } = await readSetupUser()
+
+  const { data: testProfile, error } = await supabase
     .from('profiles')
     .select('id, email, user_id, basic_data_filled')
-    .gte('created_at', fiveMinutesAgo)
-    .order('created_at', { ascending: false })
-    .limit(5)
-  
+    .eq('user_id', userId)
+    .maybeSingle()
+
   if (error) {
     throw new Error(`Failed to find test user profile: ${error.message}`)
   }
-  
-  if (!profiles || profiles.length === 0) {
-    throw new Error('No recent test profiles found')
-  }
-  
-  // Find the profile that matches our test pattern
-  const testProfile = profiles.find(p => p.email?.includes('test-') && p.email?.includes('@example.com'))
-  
+
   if (!testProfile) {
-    throw new Error('Could not find matching test profile')
+    throw new Error(`No profile for the setup user ${email}`)
   }
-  
+
   console.info('Found test profile:', testProfile.email)
   
   // Ensure the profile is onboarded
