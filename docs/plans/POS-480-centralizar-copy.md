@@ -630,6 +630,11 @@ The guard is a config block in `eslint.config.js` that names those directories
 explicitly. When you finish migrating a directory, add its glob to that block's
 `files` list.
 
+Punctuation is exempt. The block's `allowedStrings` list carries the glyphs the
+site uses as formatting rather than as words — `-`, `|`, `%`, `/`, `(`, `)`,
+`+`, `:` — so those stay inline in the component instead of becoming a copy key
+that reads like text but is not.
+
 **The guard only sees text between JSX tags.** It runs with
 `ignoreProps: true`, and has to — `className` sits on nearly every element.
 A hard-coded string *prop* therefore passes lint silently:
@@ -637,6 +642,13 @@ A hard-coded string *prop* therefore passes lint silently:
 So a green guard means no literal text is left, not that the directory is
 done. When you migrate one, check the props by eye — `placeholder`, `alt`,
 `aria-label`, `title`, and any prop the component renders as text.
+
+**And it only sees text written as a direct child.** A string literal inside a
+JSX expression container is invisible even when it sits between tags:
+`<span>{isExpanded ? "▼" : "▶"}</span>`, in
+`app/components/pages/admin/events/rejected-participants-section.tsx`, draws
+zero problems from ESLint. Any ternary, `&&`, or `??` that resolves to a string
+hides that string from the guard, so read those by eye alongside the props.
 
 The block only exists once the first directory is migrated — ESLint rejects a
 config block whose `files` array is empty, so there is nothing to add until then.
