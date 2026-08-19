@@ -78,7 +78,10 @@ export async function performUILogin(
 
     // Click and wait for navigation in a single action
     await continueButton.click()
-    await page.waitForURL(/dados-basicos$/, { waitUntil: "networkidle" })
+    // Not networkidle: the page keeps talking to the analytics endpoint, and a
+    // call that hangs there is not a reason to fail signing up. The url is the
+    // honest signal, and what comes next waits on the fields themselves.
+    await page.waitForURL(/dados-basicos$/)
 
     // Fill basic data form - page 1
     await expect(page).toHaveURL(/dados-basicos$/)
@@ -117,7 +120,7 @@ export async function performUILogin(
 
     const continueBtn = page.getByRole("button", { name: "Continuar" })
     await continueBtn.click()
-    await page.waitForURL(/dados-basicos-cont$/, { waitUntil: "networkidle" })
+    await page.waitForURL(/dados-basicos-cont$/)
 
     // Fill basic data form - page 2 (gender/pronouns/orientation)
     await expect(page).toHaveURL(/dados-basicos-cont$/)
