@@ -214,8 +214,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
         ]}
         initialIndex={2}
       >
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+        <EventRulesPage {...quizPageProps} />
         <Back />
       </MemoryRouter>,
     )
