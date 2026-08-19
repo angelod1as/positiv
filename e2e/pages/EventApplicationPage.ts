@@ -13,9 +13,10 @@ export class EventApplicationPage extends BasePage {
   readonly continueButton: Locator
   readonly questions: Locator
 
-  // The last click that never landed, if any, kept for the error message of a
+  // What went oddly along the way, if anything, kept for the error message of a
   // walk that runs out of screens.
   private refusedClick: string | null = null
+  private neverAgreed: string | null = null
 
   // User data page elements
   readonly userDataTitle: Locator
@@ -108,7 +109,24 @@ export class EventApplicationPage extends BasePage {
 
     if (!showing) throw new Error("no question is showing")
 
+    // They can disagree for a moment, because the page writes `?q=` a beat
+    // after the quiz moves. Lining them up keeps a click from landing while the
+    // screen is being replaced — but a disagreement that outlasts the wait is
+    // no longer dangerous, since the page ignores a mirror it wrote itself, so
+    // the walk answers what is on screen. It is written down all the same, for
+    // the error a stuck walk raises.
+    this.neverAgreed = `the question on screen (${showing}) and ?q= never lined up`
+
     return showing
+  }
+
+  private whatWentOddly(): string {
+    const notes = [
+      this.refusedClick && `a click kept missing: ${this.refusedClick}`,
+      this.neverAgreed,
+    ].filter(Boolean)
+
+    return notes.length > 0 ? `. ${notes.join("; ")}` : ""
   }
 
   private choice(text: string): Locator {
@@ -216,9 +234,7 @@ export class EventApplicationPage extends BasePage {
     }
 
     throw new Error(
-      this.refusedClick
-        ? `the quiz asked nothing with a single right answer. A click kept missing: ${this.refusedClick}`
-        : "the quiz asked nothing with a single right answer",
+      `the quiz asked nothing with a single right answer${this.whatWentOddly()}`,
     )
   }
 
@@ -252,11 +268,7 @@ export class EventApplicationPage extends BasePage {
       await this.answerCurrentQuestionCorrectly()
     }
 
-    throw new Error(
-      this.refusedClick
-        ? `the quiz never left the rules page. A click kept missing: ${this.refusedClick}`
-        : "the quiz never left the rules page",
-    )
+    throw new Error(`the quiz never left the rules page${this.whatWentOddly()}`)
   }
 
   async clickContinue(): Promise<void> {
