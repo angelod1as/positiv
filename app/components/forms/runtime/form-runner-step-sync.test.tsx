@@ -64,7 +64,31 @@ describe("FormRunner told which step to show", () => {
 
     await answerAndAdvance(user, "Angelo")
 
-    expect(onStepChange).toHaveBeenLastCalledWith("cidade")
+    expect(onStepChange).toHaveBeenLastCalledWith("cidade", {
+      direction: "forward",
+    })
+  })
+
+  it("says which way it moved when the reader goes back", async () => {
+    const user = userEvent.setup()
+    const onStepChange = vi.fn()
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+        onStepChange={onStepChange}
+      />,
+    )
+
+    await answerAndAdvance(user, "Angelo")
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+
+    expect(onStepChange).toHaveBeenLastCalledWith("nome", {
+      direction: "back",
+    })
   })
 
   it("goes back to a question already answered when asked to", async () => {
@@ -136,7 +160,9 @@ describe("FormRunner told which step to show", () => {
       />,
     )
 
-    expect(onStepChange).toHaveBeenCalledWith("nome")
+    expect(onStepChange).toHaveBeenCalledWith("nome", {
+      direction: "forward",
+    })
   })
 
   it("ignores a step this flow does not have", () => {

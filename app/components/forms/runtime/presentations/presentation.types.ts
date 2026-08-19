@@ -43,8 +43,14 @@ export type PresentationProps = {
    * A form that owns its page wants it on.
    */
   focusFirstScreen: boolean
+  /**
+   * Whether there is a step before this one to return to. False on the screen
+   * the flow opens on, and on a presentation showing everything at once.
+   */
+  canGoBack: boolean
   onAnswer: (id: string, value: unknown) => void
   onContinue: () => void
+  onBack: () => void
   continueLabel: string
   renderQuestion: RenderQuestion
 }

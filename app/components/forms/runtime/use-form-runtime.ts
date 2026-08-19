@@ -112,6 +112,11 @@ export function useFormRuntime({
   const [isBusy, setIsBusy] = useState(false)
   const [isDone, setIsDone] = useState(false)
 
+  // Which way the run last moved, for a caller mirroring the current step
+  // somewhere that remembers — a url, whose history should not grow while
+  // someone walks backwards through it.
+  const [lastMove, setLastMove] = useState<"forward" | "back">("forward")
+
   // Starts false on the server as well, so the first client render matches the
   // markup it hydrates. Reading storage during render would be the very
   // mismatch this exists to avoid.
@@ -206,18 +211,25 @@ export function useFormRuntime({
   // Projected from what is known now, so it revises as answers arrive: a flow
   // that branches on an early mistake looks short until the mistake happens.
   // Commit steps are dropped because nobody ever sees one.
+  const path = useMemo(
+    () =>
+      projectPath(flow, answers, { firstTryCorrect, data }).filter(
+        (id) => flow.steps[id]?.kind !== "commit",
+      ),
+    [flow, answers, firstTryCorrect, data],
+  )
+
+  const position = path.indexOf(currentStepId)
+
   const progress = useMemo(() => {
-    const path = projectPath(flow, answers, { firstTryCorrect, data }).filter(
-      (id) => flow.steps[id]?.kind !== "commit",
-    )
-
-    if (path.length <= 1) return null
-
-    const position = path.indexOf(currentStepId)
-    if (position < 0) return null
+    if (path.length <= 1 || position < 0) return null
 
     return { index: position + 1, total: path.length }
-  }, [flow, answers, firstTryCorrect, data, currentStepId])
+  }, [path, position])
+
+  // The same projection read backwards. A step reached by going back is
+  // persisted like any other, so a refresh lands with the way back intact.
+  const previousStepId = position > 0 ? path[position - 1] : undefined
 
   const answer = useCallback((id: string, value: unknown) => {
     answersRef.current = { ...answersRef.current, [id]: value }
@@ -234,7 +246,22 @@ export function useFormRuntime({
     })
   }, [])
 
+  // Walking back changes nothing that was answered and validates nothing: the
+  // person is going to read what they wrote, and may leave it as it is. The
+  // one thing that goes is a failure belonging to the step being left — a
+  // commit that could not save says nothing about the question before it.
+  const goBack = useCallback(() => {
+    if (runningRef.current || isDone || !previousStepId) return
+
+    setLastMove("back")
+    setFormError(null)
+    stepRef.current = previousStepId
+    setCurrentStepId(previousStepId)
+  }, [isDone, previousStepId])
+
   const runAdvance = useCallback(async () => {
+    setLastMove("forward")
+
     const origin = stepRef.current
     const pending = questionsForStep(flow.steps[origin], questionsById)
 
@@ -417,8 +444,11 @@ export function useFormRuntime({
     isBusy,
     isDone,
     isRestored,
+    lastMove,
     progress,
+    canGoBack: previousStepId !== undefined,
     answer,
     advance,
+    goBack,
   }
 }

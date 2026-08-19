@@ -72,6 +72,14 @@ const answer = async (user: ReturnType<typeof userEvent.setup>) => {
 }
 
 
+// A dealt order, so that the question before another one is known rather than
+// whatever the shuffle decided this run.
+const seedDeal = () =>
+  sessionStorage.setItem(
+    `rules-order:${EVENT}`,
+    JSON.stringify({ questions: Object.keys(getRulesFormQuestions()), options: {} }),
+  )
+
 const seedAnsweredQuiz = (openOn: string) => {
   const quiz = getRulesFormQuestions()
 
@@ -159,6 +167,70 @@ describe("the rules quiz and the question mirrored in the url", () => {
 
     await waitFor(() => expect(onScreen()).toBe(second), { timeout: 5000 })
     expect(second).not.toBe(first)
+  }, WAITS_OUT_A_SLOW_RENDER)
+
+  it("pops the entry it walked in on when the reader uses its back button", async () => {
+    const user = userEvent.setup()
+
+    renderQuiz()
+
+    const first = await answer(user)
+    const second = await answer(user)
+    const third = onScreen()
+
+    expect(third).not.toBe(second)
+
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+    await waitFor(() => expect(onScreen()).toBe(second), { timeout: 5000 })
+
+    // The trail the reader walked forward is the trail they walk back, whether
+    // they use the quiz's button or the browser's: neither leaves an entry
+    // behind for the other to hand back.
+    await user.click(screen.getByRole("button", { name: "back" }))
+
+    await waitFor(() => expect(onScreen()).toBe(first), { timeout: 5000 })
+  }, WAITS_OUT_A_SLOW_RENDER)
+
+  it("replaces the entry it stands on when it pushed none of its own", async () => {
+    const user = userEvent.setup()
+
+    // Every question answered, so that nothing in the quiz refuses to show a
+    // step and the url alone decides where the run lands.
+    const ids = Object.keys(getRulesFormQuestions())
+    seedDeal()
+    seedAnsweredQuiz(ids[2])
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          `/dashboard/${EVENT}/regras?q=${ids[0]}`,
+          `/dashboard/${EVENT}/regras?q=${ids[1]}`,
+          `/dashboard/${EVENT}/regras?q=${ids[2]}`,
+        ]}
+        initialIndex={2}
+      >
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+        <Back />
+      </MemoryRouter>,
+    )
+
+    expect(onScreen()).toBe(ids[2])
+
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+    await waitFor(() => expect(onScreen()).toBe(ids[1]), { timeout: 5000 })
+
+    // A run restored into a fresh tab has no entry of the quiz's own to pop,
+    // so the button replaces the one it stands on rather than adding one. The
+    // browser's back button then keeps walking backwards instead of being
+    // handed back the question the reader just left.
+    await user.click(screen.getByRole("button", { name: "back" }))
+
+    await new Promise((settle) => setTimeout(settle, 50))
+    expect(onScreen()).toBe(ids[1])
+
+    await user.click(screen.getByRole("button", { name: "back" }))
+    await waitFor(() => expect(onScreen()).toBe(ids[0]), { timeout: 5000 })
   }, WAITS_OUT_A_SLOW_RENDER)
 
   it("opens on the question a link names", async () => {

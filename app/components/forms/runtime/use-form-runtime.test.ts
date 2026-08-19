@@ -761,3 +761,127 @@ describe("useFormRuntime progress", () => {
     expect(result.current.progress).toEqual({ index: 2, total: 4 })
   })
 })
+
+describe("useFormRuntime going back", () => {
+  it("has nowhere to go back to on the first step", () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: linearFlow }),
+    )
+
+    expect(result.current.canGoBack).toBe(false)
+  })
+
+  it("can go back once the run has moved on", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: linearFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+
+    expect(result.current.canGoBack).toBe(true)
+  })
+
+  it("shows the previous step with the answer that was left there", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: linearFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+
+    act(() => {
+      result.current.goBack()
+    })
+
+    expect(result.current.currentStepId).toBe("a")
+    expect(result.current.answers.a).toBe("resposta a")
+  })
+
+  it("ignores a request to go back from the first step", () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: linearFlow }),
+    )
+
+    act(() => {
+      result.current.goBack()
+    })
+
+    expect(result.current.currentStepId).toBe("a")
+  })
+
+  it("leaves firstTryCorrect alone when an answer is changed on the way back", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: quizQuestions, flow: quizFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "errada")
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("a", "certa")
+      await result.current.advance()
+    })
+
+    expect(result.current.firstTryCorrect.a).toBe(false)
+
+    act(() => {
+      result.current.goBack()
+    })
+
+    await act(async () => {
+      result.current.answer("a", "certa")
+      await result.current.advance()
+    })
+
+    expect(result.current.firstTryCorrect.a).toBe(false)
+  })
+
+  it("drops a failure that belongs to the step being left", async () => {
+    const failingFlow: Flow = {
+      start: "a",
+      steps: {
+        a: { kind: "question", id: "a" },
+        b: { kind: "question", id: "b" },
+        save: {
+          kind: "commit",
+          run: () => {
+            throw new Error("rede caiu")
+          },
+        },
+      },
+      next: (current) => {
+        if (current === "a") return "b"
+        if (current === "b") return "save"
+        return "done"
+      },
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: failingFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+    await act(async () => {
+      result.current.answer("b", "resposta b")
+      await result.current.advance()
+    })
+
+    expect(result.current.formError).not.toBeNull()
+
+    act(() => {
+      result.current.goBack()
+    })
+
+    expect(result.current.currentStepId).toBe("a")
+    expect(result.current.formError).toBeNull()
+  })
+})

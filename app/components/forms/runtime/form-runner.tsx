@@ -39,9 +39,14 @@ type FormRunnerProps = {
   stepId?: StepId
   /**
    * Called with the step actually showing, including when a requested one was
-   * refused, so a url mirroring the run can correct itself.
+   * refused, so a url mirroring the run can correct itself. The direction says
+   * whether the run walked forward or back, which is what a caller writing to
+   * a history needs to decide between adding an entry and replacing one.
    */
-  onStepChange?: (stepId: StepId) => void
+  onStepChange?: (
+    stepId: StepId,
+    move: { direction: "forward" | "back" },
+  ) => void
 }
 
 export function FormRunner({
@@ -58,7 +63,7 @@ export function FormRunner({
   onStepChange,
 }: FormRunnerProps) {
   const runtime = useFormRuntime({ questions, flow, data, persistence, stepId })
-  const { answers, isDone, isRestored, currentStepId } = runtime
+  const { answers, isDone, isRestored, currentStepId, lastMove } = runtime
 
   const reportedRef = useRef(false)
 
@@ -70,11 +75,18 @@ export function FormRunner({
     onStepChangeRef.current = onStepChange
   })
 
+  // The step last reported, so that a direction settling after the move does
+  // not report the same step twice — a caller writing to a history would take
+  // the second report for a second move and record an entry for it.
+  const reportedStepRef = useRef<StepId | null>(null)
+
   useEffect(() => {
     if (!isRestored || currentStepId === stepId) return
+    if (reportedStepRef.current === currentStepId) return
 
-    onStepChangeRef.current?.(currentStepId)
-  }, [isRestored, currentStepId, stepId])
+    reportedStepRef.current = currentStepId
+    onStepChangeRef.current?.(currentStepId, { direction: lastMove })
+  }, [isRestored, currentStepId, stepId, lastMove])
 
   useEffect(() => {
     if (!isDone || reportedRef.current) return
@@ -107,10 +119,12 @@ export function FormRunner({
       progress={runtime.progress}
       isBusy={runtime.isBusy}
       focusFirstScreen={focusFirstScreen}
+      canGoBack={runtime.canGoBack}
       onAnswer={runtime.answer}
       onContinue={() => {
         void runtime.advance()
       }}
+      onBack={runtime.goBack}
       continueLabel={continueLabel}
       renderQuestion={renderQuestion}
     />

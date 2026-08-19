@@ -15,6 +15,7 @@ export const autoSaveFormCopy = {
 } as const
 
 export const formRuntimeCopy = {
+  back: "Voltar",
   commitFailed: "Não foi possível salvar agora. Tente novamente.",
   selectPlaceholder: "Selecione",
   progressLabel: "Progresso do formulário",
