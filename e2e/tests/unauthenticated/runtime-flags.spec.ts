@@ -27,7 +27,16 @@ test.describe("production build", () => {
   test("keeps the E2E_MODE guard instead of folding it away", () => {
     const bundle = readServerBundle()
 
-    expect(bundle).toContain("E2E_MODE")
-    expect(bundle).toMatch(/subscriberId:\s*0\b/)
+    // The read itself, rather than the bare name: `E2E_MODE` alone also occurs
+    // in the list of valid keys varlock injects, which survives whether or not
+    // anything reads the flag.
+    expect(bundle).toContain("ENV.E2E_MODE")
+
+    // Tied to the guard on purpose. `subscriberId: 0` on its own says nothing
+    // about how it is reached, and would go on passing if the branch around it
+    // were folded away.
+    expect(bundle).toMatch(
+      /if\s*\(\s*ENV\.E2E_MODE\s*\)\s*\{\s*return\s*\{\s*subscriberId:\s*0\s*\}/,
+    )
   })
 })
