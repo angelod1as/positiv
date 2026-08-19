@@ -69,13 +69,15 @@ Copy in `app/copy/forms.ts`: `formRuntimeCopy.fieldsRejected`.
 
 Commit: `feat(form-runtime): warn beside Continue when a field refuses`
 
-### 3. End to end through the runner
+### 3. End to end through the runner — folded into step 2
 
-- **Red/Green** — `form-runner.test.tsx`: an `AllAtOnce` run with a required
-  question, clicking Continue, asserts the alert beside the button and the
-  focused control. Pins the wiring the two unit layers cannot.
+`all-at-once.test.tsx` already drives a real `FormRunner`, the way
+`one-at-a-time.test.tsx` does, so the wiring is pinned there and a third layer
+of the same assertions would only repeat it.
 
-Commit: `test(form-runtime): pin the refused-advance warning end to end`
+One existing assertion moved: `form-runner.test.tsx` counted exactly one alert
+on a refused screen, and the warning beside the button is an alert too. It now
+counts the alerts that belong to a question, which is what it was there to say.
 
 ### 4. Announce it
 
