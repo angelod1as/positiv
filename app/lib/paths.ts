@@ -33,6 +33,8 @@ const EVENT_VIEW = (id: string) => `${DASHBOARD}/${id}`
 const EVENT_RULES = (id: string) => `${EVENT_VIEW(id)}/regras`
 const EVENT_DATA = (id: string) => `${EVENT_VIEW(id)}/dados`
 const EVENT_RULES_QUIZ_CHECK = (id: string) => `/api/events/${id}/rules-quiz`
+const EVENT_APPLICATION_SENT = (id: string) =>
+  `${EVENT_VIEW(id)}/candidatura-enviada`
 const REGISTER_COMMIT = "/api/auth/register"
 
 //// ADMIN
@@ -99,6 +101,7 @@ const paths = {
       EVENT_RULES,
       EVENT_RULES_QUIZ_CHECK,
       EVENT_DATA,
+      EVENT_APPLICATION_SENT,
     },
     participant: {
       DASHBOARD,

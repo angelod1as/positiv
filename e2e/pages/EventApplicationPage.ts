@@ -29,6 +29,10 @@ export class EventApplicationPage extends BasePage {
   readonly bondRadioButtons: Locator
   readonly confirmButton: Locator
 
+  // Confirmation page elements
+  readonly confirmationTitle: Locator
+  readonly backToDashboardButton: Locator
+
   constructor(page: Page) {
     super(page)
 
@@ -58,6 +62,15 @@ export class EventApplicationPage extends BasePage {
     this.bondRadioButtons = page.locator('input[type="radio"]')
     this.confirmButton = page.getByRole("button", {
       name: "🎉 Enviar candidatura!",
+    })
+
+    // Confirmation page
+    this.confirmationTitle = page.getByRole("heading", {
+      name: "Candidatura enviada! 🎉",
+      exact: true,
+    })
+    this.backToDashboardButton = page.getByRole("link", {
+      name: "Voltar para o painel",
     })
   }
 
@@ -336,8 +349,18 @@ export class EventApplicationPage extends BasePage {
     await expect(this.confirmButton).toBeVisible()
     await this.clickAndWait(this.confirmButton, { waitForNavigation: true })
 
-    // Should redirect to dashboard after successful submission
-    await expect(this.page).toHaveURL(/dashboard/)
+    // A successful application lands on its own confirmation page
+    await expect(this.page).toHaveURL(/candidatura-enviada/)
+    await expect(this.confirmationTitle).toBeVisible({ timeout: 10000 })
+  }
+
+  async returnToDashboard(): Promise<void> {
+    await expect(this.backToDashboardButton).toBeVisible()
+    await this.clickAndWait(this.backToDashboardButton, {
+      waitForNavigation: true,
+    })
+
+    await expect(this.page).toHaveURL(/\/dashboard$/)
   }
 
   async completeFullApplication(options?: {
@@ -363,6 +386,9 @@ export class EventApplicationPage extends BasePage {
 
     // Submit application
     await this.submitApplication()
+
+    // Walk back to the dashboard so callers continue from a known page
+    await this.returnToDashboard()
   }
 
   async verifyValidationError(errorText: string): Promise<void> {

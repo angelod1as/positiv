@@ -74,6 +74,11 @@ export default [
           ":id/dados",
           "pages/events/application/user-data/event-user-data.tsx",
         ),
+        // Confirmation
+        route(
+          ":id/candidatura-enviada",
+          "pages/events/application/confirmation/event-application-confirmation-page.tsx",
+        ),
       ]),
 
       route(
