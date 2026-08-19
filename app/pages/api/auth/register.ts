@@ -24,13 +24,18 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const parsed = registerUserSchema.safeParse(body)
 
   if (!parsed.success) {
-    return Response.json({
-      ok: false,
-      errors: parsed.error.issues.map((issue) => ({
-        questionId: String(issue.path[0] ?? ""),
-        message: issue.message,
-      })),
-    })
+    return Response.json(
+      {
+        ok: false,
+        errors: parsed.error.issues.map((issue) => ({
+          questionId: String(issue.path[0] ?? ""),
+          message: issue.message,
+        })),
+      },
+      // The browser only reads the body, but a refused sign-up should not read
+      // as a success to anything watching the status.
+      { status: 422 },
+    )
   }
 
   return Response.json(await registerUser(parsed.data, context))

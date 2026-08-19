@@ -102,6 +102,14 @@ describe("register commit route", () => {
     ).toBe("Você só pode se inscrever se for maior de 18 anos")
   })
 
+  it("answers a body the schema refuses with a client-error status", async () => {
+    const response = await run({ ...valid, email: "nao-e-email" })
+
+    // The browser only ever reads the body, but a log or a monitor reading the
+    // status should not be told a refused sign-up went fine.
+    expect(response.status).toBe(422)
+  })
+
   it("blames no question for a body it cannot read", async () => {
     const response = await run("not json")
 

@@ -606,4 +606,33 @@ describe("presentation cannot change what is collected", () => {
 
     expect(screen.getAllByText("Sou maior de 18 anos")).toHaveLength(1)
   })
+  it("does not point a boolean question at a heading it never drew", () => {
+    const seen: (string | undefined)[] = []
+    const booleanQuestion: Question = {
+      id: "over18",
+      prompt: "Sou maior de 18 anos",
+      input: { kind: "boolean" },
+      schema: zod.boolean(),
+    }
+
+    const flow: Flow = {
+      start: "over18",
+      steps: { over18: { kind: "question", id: "over18" } },
+      next: () => "done",
+    }
+
+    render(
+      <FormRunner
+        questions={[booleanQuestion]}
+        flow={flow}
+        presentation={OneAtATime}
+        renderQuestion={({ labelledBy }) => {
+          seen.push(labelledBy)
+          return <input aria-label="Sou maior de 18 anos" />
+        }}
+      />,
+    )
+
+    expect(seen).toEqual([undefined])
+  })
 })

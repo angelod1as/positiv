@@ -2,6 +2,7 @@ import { Button } from "~/components/atoms/button/button"
 import { Label } from "~/components/ui/label"
 import { Error } from "~/components/forms/base/error"
 import type { Question } from "~/components/forms/runtime/question.types"
+import { ownsItsPrompt } from "./owns-its-prompt"
 import type { Presentation } from "./presentation.types"
 
 /**
@@ -11,12 +12,6 @@ import type { Presentation } from "./presentation.types"
  */
 const isChoice = (question: Question) =>
   question.input.kind === "radio" || question.input.kind === "checkbox"
-
-/**
- * A boolean is drawn as a box with its prompt beside it, so the presentation
- * drawing a label as well would name the same control twice.
- */
-const ownsItsPrompt = (question: Question) => question.input.kind === "boolean"
 
 export const AllAtOnce: Presentation = ({
   step,
