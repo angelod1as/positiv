@@ -28,6 +28,7 @@ export const renderQuestion: RenderQuestion = ({
         <Input
           {...shared}
           type="text"
+          placeholder={input.placeholder}
           value={asText(value)}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -39,6 +40,7 @@ export const renderQuestion: RenderQuestion = ({
           {...shared}
           type="email"
           autoComplete="email"
+          placeholder={input.placeholder}
           value={asText(value)}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -50,6 +52,7 @@ export const renderQuestion: RenderQuestion = ({
           {...shared}
           type="password"
           autoComplete={input.autoComplete}
+          placeholder={input.placeholder}
           value={asText(value)}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -61,6 +64,7 @@ export const renderQuestion: RenderQuestion = ({
           {...shared}
           type="number"
           className="[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          placeholder={input.placeholder}
           value={asText(value)}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -80,6 +84,7 @@ export const renderQuestion: RenderQuestion = ({
       return (
         <TextArea
           {...shared}
+          placeholder={input.placeholder}
           value={asText(value)}
           onChange={(event) => onChange(event.target.value)}
         />

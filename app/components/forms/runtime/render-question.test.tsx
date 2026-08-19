@@ -195,4 +195,18 @@ describe("renderQuestion", () => {
       screen.getByRole("checkbox", { name: "Sou maior de 18 anos" }),
     ).toBeChecked()
   })
+  it("carries a placeholder through to the control", () => {
+    draw({ kind: "email", placeholder: "email@exemplo.com" })
+
+    expect(screen.getByLabelText("Pergunta")).toHaveAttribute(
+      "placeholder",
+      "email@exemplo.com",
+    )
+  })
+
+  it("draws no placeholder when the question asked for none", () => {
+    draw({ kind: "text" })
+
+    expect(screen.getByLabelText("Pergunta")).not.toHaveAttribute("placeholder")
+  })
 })

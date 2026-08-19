@@ -78,6 +78,9 @@ const RegisterPage = ({}: Route.ComponentProps) => {
               hidden-typed one would take a value without ever reporting it. */}
           <input
             hidden
+            // Carries the question's id so that the label the presentation
+            // draws for it points at a real control rather than at nothing.
+            id={args.question.id}
             type="text"
             name="captchaToken"
             value={typeof args.value === "string" ? args.value : ""}

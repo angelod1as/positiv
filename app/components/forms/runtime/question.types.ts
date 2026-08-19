@@ -6,15 +6,19 @@ export type Option = {
 }
 
 export type InputSpec =
-  | { kind: "text" }
-  | { kind: "email" }
+  | { kind: "text"; placeholder?: string }
+  | { kind: "email"; placeholder?: string }
   /**
    * `autoComplete` is what tells a password manager whether it is looking at a
    * sign-in or at a new account, so it belongs to the question, not the kind.
    */
-  | { kind: "password"; autoComplete?: "current-password" | "new-password" }
-  | { kind: "textnumber" }
-  | { kind: "textarea" }
+  | {
+      kind: "password"
+      autoComplete?: "current-password" | "new-password"
+      placeholder?: string
+    }
+  | { kind: "textnumber"; placeholder?: string }
+  | { kind: "textarea"; placeholder?: string }
   | { kind: "date" }
   | { kind: "select"; options: Option[] }
   | { kind: "radio"; options: Option[] }

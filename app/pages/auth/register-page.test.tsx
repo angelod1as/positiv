@@ -197,4 +197,24 @@ describe("RegisterPage", () => {
 
     expect(sessionStorage.length).toBe(0)
   })
+  it("gives the security check's label a control to point at", () => {
+    renderPage()
+
+    // The presentation draws a label for every question. Without an id on the
+    // control the runtime cannot see, that label would reference nothing.
+    const mirror = document.querySelector('input[name="captchaToken"]')
+    expect(mirror).toHaveAttribute("id", "captchaToken")
+
+    const label = document.querySelector('label[for="captchaToken"]')
+    expect(label).toHaveTextContent("Verificação de segurança")
+  })
+
+  it("keeps the e-mail hint the old form showed", () => {
+    renderPage()
+
+    expect(screen.getByLabelText("E-mail")).toHaveAttribute(
+      "placeholder",
+      "email@exemplo.com",
+    )
+  })
 })

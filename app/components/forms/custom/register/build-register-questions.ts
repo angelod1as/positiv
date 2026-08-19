@@ -11,7 +11,7 @@ export function buildRegisterQuestions(): Question[] {
     {
       id: "email",
       prompt: "E-mail",
-      input: { kind: "email" },
+      input: { kind: "email", placeholder: "email@exemplo.com" },
       schema: shape.email,
     },
     {
