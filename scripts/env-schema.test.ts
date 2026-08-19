@@ -40,12 +40,23 @@ const MUST_BE_INLINED_IN_THE_CLIENT_BUNDLE = [
   "VITE_UMAMI_WEBSITE_ID",
 ]
 
+// varlock exits non-zero when a required value is missing, which is the normal
+// state of a unit test run: CI has no .env and does not need one. It still
+// writes the whole schema to stdout, and the classification asked about here
+// comes from the schema rather than from any value — so read stdout either way,
+// as @varlock/vite-integration does with its own failed loads.
 function loadSchema(): Record<string, EnvSchemaItem> {
-  const stdout = execFileSync(
-    "node_modules/.bin/varlock",
-    ["load", "--format", "json-full", "--compact"],
-    { encoding: "utf8" },
-  )
+  let stdout: string
+
+  try {
+    stdout = execFileSync(
+      "node_modules/.bin/varlock",
+      ["load", "--format", "json-full", "--compact"],
+      { encoding: "utf8" },
+    )
+  } catch (error) {
+    stdout = (error as { stdout?: string }).stdout ?? ""
+  }
 
   return JSON.parse(stdout).config
 }
