@@ -1,4 +1,4 @@
-import { redirect } from "react-router"
+import { data, redirect } from "react-router"
 import { formAction } from "remix-forms"
 import { redirectWithWarning } from "remix-toast"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
@@ -20,10 +20,18 @@ const {
 } = paths
 
 export async function loader({ request, params }: Route.LoaderArgs) {
-  const { getSession } = rulesSessionStorage
+  const { commitSession, getSession } = rulesSessionStorage
   const session = await getSession(request.headers.get("Cookie"))
-  const isRulesCorrect = session.get("rulesCorrect")
-  if (!isRulesCorrect) return redirect(EVENT_RULES(params.id))
+  const passed = session.get("rulesCorrect") ?? []
+
+  if (!passed.includes(params.id)) return redirect(EVENT_RULES(params.id))
+
+  // The submit reads this same cookie, and it lives half an hour. Someone
+  // writing their answers slowly would reach the button after it expired, so
+  // the clock restarts every time they are here.
+  return data(null, {
+    headers: { "Set-Cookie": await commitSession(session) },
+  })
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
