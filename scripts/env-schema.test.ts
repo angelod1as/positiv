@@ -83,4 +83,22 @@ describe(".env.schema", () => {
     expect(config[key]).toBeDefined()
     expect(resolvesAtRuntime(config[key])).toBe(false)
   })
+
+  // The rule the two lists are instances of, stated over the whole schema so
+  // that a variable added tomorrow is covered without anyone remembering to
+  // list it here. The lists stay because they record what each variable costs
+  // when it is classified wrong; this catches the ones nobody thought about.
+  it("inlines the browser's variables and nothing else", () => {
+    const misclassified = Object.entries(config)
+      .filter(([key, item]) => {
+        const inlined = !resolvesAtRuntime(item)
+        const belongsInTheClientBundle =
+          key.startsWith("VITE_") || key === "NODE_ENV"
+
+        return inlined !== belongsInTheClientBundle
+      })
+      .map(([key]) => key)
+
+    expect(misclassified).toEqual([])
+  })
 })
