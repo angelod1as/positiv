@@ -342,7 +342,14 @@ export function useFormRuntime({
       let result: CommitResult
       try {
         result = await step.run(answersRef.current)
-      } catch {
+      } catch (thrown) {
+        // The person sees "could not save"; whoever is debugging sees nothing
+        // at all, and a run that simply stops moving reads as a stuck form
+        // rather than as a failed request.
+        if (ENV.NODE_ENV !== "production") {
+          console.error("[form-runtime] a commit threw.", thrown)
+        }
+
         stayPut()
         return
       }
