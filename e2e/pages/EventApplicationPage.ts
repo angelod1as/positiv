@@ -13,6 +13,10 @@ export class EventApplicationPage extends BasePage {
   readonly continueButton: Locator
   readonly questions: Locator
 
+  // The last click that never landed, if any, kept for the error message of a
+  // walk that runs out of screens.
+  private refusedClick: string | null = null
+
   // User data page elements
   readonly userDataTitle: Locator
   readonly notesTextbox: Locator
@@ -139,10 +143,23 @@ export class EventApplicationPage extends BasePage {
     if ((await input.isChecked({ timeout: 2000 }).catch(() => false)) === wanted)
       return
 
-    // A screen replaced under the click loses the element. Rather than spend
-    // the whole action timeout chasing it, this gives up and lets the walk
-    // answer whatever is on screen when it comes round again.
-    await option.click({ timeout: 5000 }).catch(() => {})
+    await this.clickAndTolerate(option, `answer "${text.slice(0, 40)}…"`)
+  }
+
+  /**
+   * A screen replaced under the click loses the element, and the walk answers
+   * whatever is on screen when it comes round again — so a click that does not
+   * land is not a fault in itself. It is remembered all the same: a walk that
+   * runs out of screens can then say which click kept missing, instead of
+   * leaving whoever reads the failure to find it in the trace.
+   */
+  private async clickAndTolerate(target: Locator, what: string): Promise<void> {
+    try {
+      await target.click({ timeout: 5000 })
+    } catch (error) {
+      const [reason] = String(error).split("\n")
+      this.refusedClick = `${what} — ${reason}`
+    }
   }
 
   /**
@@ -173,7 +190,7 @@ export class EventApplicationPage extends BasePage {
     }
 
     await this.markCorrectAnswers(question.answers)
-    await this.continueButton.click({ timeout: 5000 }).catch(() => {})
+    await this.clickAndTolerate(this.continueButton, "Continuar")
     await this.waitOutAnswer(id)
 
     return id
@@ -198,7 +215,11 @@ export class EventApplicationPage extends BasePage {
       await this.answerCurrentQuestionCorrectly()
     }
 
-    throw new Error("the quiz asked nothing with a single right answer")
+    throw new Error(
+      this.refusedClick
+        ? `the quiz asked nothing with a single right answer. A click kept missing: ${this.refusedClick}`
+        : "the quiz asked nothing with a single right answer",
+    )
   }
 
   async answerCurrentQuestionWrongly(): Promise<string> {
@@ -231,7 +252,11 @@ export class EventApplicationPage extends BasePage {
       await this.answerCurrentQuestionCorrectly()
     }
 
-    throw new Error("the quiz never left the rules page")
+    throw new Error(
+      this.refusedClick
+        ? `the quiz never left the rules page. A click kept missing: ${this.refusedClick}`
+        : "the quiz never left the rules page",
+    )
   }
 
   async clickContinue(): Promise<void> {

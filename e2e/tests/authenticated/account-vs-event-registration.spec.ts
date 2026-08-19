@@ -58,7 +58,11 @@ test.describe('Account signup versus event registration', () => {
     await applyButton.click()
     await page.waitForURL(/\/dashboard\/.+/)
 
-    // Walk the real application flow (rules quiz, then user data)
+    // Walk the real application flow (rules quiz, then user data). The quiz is
+    // a screen per question, and a save the server refuses reopens some of
+    // them, so this needs the same room as the tests that walk it directly.
+    test.setTimeout(120_000)
+
     const applicationPage = new EventApplicationPage(page)
     await applicationPage.completeFullApplication()
     await page.waitForURL('/dashboard')
