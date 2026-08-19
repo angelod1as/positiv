@@ -203,7 +203,7 @@ export default function FormRuntimeDemoPage() {
   }
 
   return (
-    <main className="mx-auto flex max-w-xl flex-col gap-8 p-8">
+    <main className="mx-auto flex w-full max-w-xl flex-col gap-8 p-4 sm:p-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold">Runtime de formulários</h1>
         <p className="text-muted-foreground">
@@ -261,16 +261,22 @@ export default function FormRuntimeDemoPage() {
           significa uma segunda candidatura.
         </p>
         <div>
-          <Button type="button" variant="outline" onClick={forget}>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto whitespace-normal py-2"
+            onClick={forget}
+          >
             Apagar o registro deste formato
           </Button>
         </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           type="button"
           variant={shape === "stepped" ? "default" : "outline"}
+          className="h-auto whitespace-normal py-2"
           onClick={() => restart("stepped")}
         >
           Uma por tela, com ramificação
@@ -278,6 +284,7 @@ export default function FormRuntimeDemoPage() {
         <Button
           type="button"
           variant={shape === "single" ? "default" : "outline"}
+          className="h-auto whitespace-normal py-2"
           onClick={() => restart("single")}
         >
           Tela única, linear
