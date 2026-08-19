@@ -9,6 +9,14 @@ describe("FormProgress", () => {
     expect(screen.getByText("3/14")).toBeInTheDocument()
   })
 
+  it("names what is progressing, which the value alone does not say", () => {
+    render(<FormProgress index={3} total={14} />)
+
+    expect(screen.getByRole("progressbar")).toHaveAccessibleName(
+      "Progresso do formulário",
+    )
+  })
+
   it("reports the position to assistive technology in words", () => {
     render(<FormProgress index={3} total={14} />)
 

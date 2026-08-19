@@ -9,13 +9,15 @@ type FormProgressProps = {
  * so a screen reader announces the question and would never reach the bar.
  *
  * The visible copy is the fraction alone. `aria-valuetext` spells it out
- * because "3/14" read aloud is a slash.
+ * because "3/14" read aloud is a slash, and the label says what is advancing —
+ * a value with no name is announced as "progress bar, etapa 3 de 14".
  */
 export function FormProgress({ index, total }: FormProgressProps) {
   return (
     <div className="flex flex-col gap-2">
       <div
         role="progressbar"
+        aria-label="Progresso do formulário"
         aria-valuemin={1}
         aria-valuemax={total}
         aria-valuenow={index}
