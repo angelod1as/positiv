@@ -111,8 +111,12 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      # No --with-deps: every library it installs is already the newest
+      # version on the runner image, so all it added was nine font packages —
+      # 21 MB that apt fetched at 43 kB/s, eight minutes of every run. The
+      # suite makes no screenshot assertions, so no font is load-bearing.
       - name: Install Playwright Browsers
-        run: pnpm exec playwright install chromium --with-deps
+        run: pnpm exec playwright install chromium
 
       # Fail here, with a readable message, when a secret is missing or malformed.
       # APP_ENV=production is what makes this check meaningful: the secrets that
