@@ -147,6 +147,30 @@ describe("applyToEvent", () => {
       }
     })
 
+    it("should not send the email when the caller opted out", async () => {
+      vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
+
+      const result = await applyToEvent(
+        { ...validValues, skipEmail: true },
+        createContext(),
+      )
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.emailSent).toBe(false)
+      }
+      expect(sendApplicationMail).not.toHaveBeenCalled()
+    })
+
+    it("should keep the opt-out flag out of the participant row", async () => {
+      vi.mocked(sendApplicationMail).mockResolvedValue({ emailSent: true })
+
+      await applyToEvent({ ...validValues, skipEmail: true }, createContext())
+
+      expect(mockUpsert).toHaveBeenCalledTimes(1)
+      expect(mockUpsert.mock.calls[0][0]).not.toHaveProperty("skipEmail")
+    })
+
     it("should return emailSent: false when profile has no email", async () => {
       const context = createContext({
         currentProfile: {

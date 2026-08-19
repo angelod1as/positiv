@@ -3,7 +3,8 @@ import { Await } from "react-router"
 import { Suspense } from "react"
 import { redirectWithInfo } from "remix-toast"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
-import { getContext } from "~/business/auth/auth.server"
+import { getContext, getUserContext } from "~/business/auth/auth.server"
+import { applyToEvent } from "~/business/participant/apply-to-event.server"
 import { cancelApplicationToEvent } from "~/business/participant/cancel-application-to-event.server"
 import { hasEverApplied } from "~/business/participant/has-ever-applied.server"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
@@ -25,6 +26,10 @@ const {
     participant: { AGREE_TO_TERMS },
   },
 } = paths
+
+// The application form asks who referred the person, and it is the one answer
+// it will not take empty.
+const ADMIN_APPLICATION_REFERRED = "Administração"
 
 async function loadEvents(profileId: string) {
   const result = await getNextEvents(profileId, 12)
@@ -59,6 +64,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return {
     events,
     hasEverApplied: await hasEverApplied(currentProfile.id),
+    isAdmin: currentProfile.is_admin ?? false,
   }
 }
 
@@ -87,13 +93,52 @@ export async function action({ request, params }: Route.ClientActionArgs) {
     return
   }
 
+  if (fetchId === "handleAdminApply") {
+    const context = await getUserContext(request, params)
+
+    // The only gate this application has. Whoever is not an admin walks the
+    // whole flow, quiz included, exactly as before.
+    if (!context.currentProfile?.is_admin) {
+      return { error: "Você não tem permissão para se candidatar diretamente" }
+    }
+
+    if (!eventId) return { error: "Evento não encontrado." }
+
+    const result = await applyToEvent(
+      {
+        eventId,
+        applicationDate: new Date(),
+        referred: ADMIN_APPLICATION_REFERRED,
+        skipEmail: true,
+      },
+      context,
+    )
+
+    if (!result.success) {
+      return {
+        error:
+          result.errors[0]?.message ??
+          "Sua candidatura teve um erro, tente novamente.",
+      }
+    }
+
+    trackServerEvent(
+      "event_direct_application_completed",
+      { eventId },
+      "/dashboard",
+    )
+
+    return
+  }
+
   return
 }
 
 export const EventsContent: FC<{
   events: Event[]
   hasEverApplied: boolean
-}> = ({ events, hasEverApplied }) => {
+  isAdmin?: boolean
+}> = ({ events, hasEverApplied, isAdmin }) => {
   const { applied, available } = splitEvents(events)
 
   return (
@@ -134,6 +179,7 @@ export const EventsContent: FC<{
                 data-testid="event-card-available"
                 key={event.id}
                 event={event}
+                directApply={isAdmin}
               />
             ))}
           </div>
@@ -153,6 +199,7 @@ const DashboardPage = ({ loaderData }: Route.ComponentProps) => {
           <EventsContent
             events={events}
             hasEverApplied={loaderData.hasEverApplied}
+            isAdmin={loaderData.isAdmin}
           />
         )}
       </Await>

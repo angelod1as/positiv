@@ -22,6 +22,7 @@ const makeEvent = (overrides: Partial<Event>): Event =>
 const renderContent = (props: {
   events: Event[]
   hasEverApplied: boolean
+  isAdmin?: boolean
 }) => {
   const router = createMemoryRouter(
     [
@@ -31,6 +32,7 @@ const renderContent = (props: {
           <EventsContent
             events={props.events}
             hasEverApplied={props.hasEverApplied}
+            isAdmin={props.isAdmin}
           />
         ),
       },
@@ -119,5 +121,29 @@ describe("Dashboard sections", () => {
     expect(
       screen.getByText("Nenhum evento por aqui no momento."),
     ).toBeInTheDocument()
+  })
+})
+
+describe("EventsContent — direct admin application", () => {
+  it("offers the direct application on an open event for an admin", () => {
+    renderContent({
+      events: [makeEvent({ id: "open-event" })],
+      hasEverApplied: true,
+      isAdmin: true,
+    })
+
+    expect(screen.getByText(/Candidatura direta \(admin\)/i)).toBeInTheDocument()
+  })
+
+  it("offers nothing of the sort to anyone else", () => {
+    renderContent({
+      events: [makeEvent({ id: "open-event" })],
+      hasEverApplied: true,
+    })
+
+    expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
+    expect(
+      screen.queryByText(/Candidatura direta \(admin\)/i),
+    ).not.toBeInTheDocument()
   })
 })

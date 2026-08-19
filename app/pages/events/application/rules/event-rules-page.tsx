@@ -5,7 +5,9 @@ import {
   useNavigationType,
   useSearchParams,
 } from "react-router"
+import { ENV } from "varlock/env"
 import { getUserContext } from "~/business/auth/auth.server"
+import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
 import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
 import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules-questions"
 import type { CommitResult } from "~/components/forms/runtime/commit.types"
@@ -13,6 +15,7 @@ import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type { Answers } from "~/components/forms/runtime/question.types"
 import { RulesText } from "~/components/pages/events/rules/rules-text"
+import { Button } from "~/components/atoms/button/button"
 import {
   Card,
   CardContent,
@@ -118,6 +121,16 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
     [questions, commit],
   )
 
+  // Answering fourteen screens to reach the next page is the cost of testing
+  // anything past the quiz, and it is a cost only development pays. The answers
+  // still travel to the same check, so the gate is the one everyone passes.
+  const skipQuiz = useCallback(async () => {
+    const result = await commit(buildCorrectRulesAnswers())
+    if (!result.ok) return
+
+    void navigate(EVENT_DATA(eventId))
+  }, [commit, eventId, navigate])
+
   return (
     <Wrapper>
       <FormRunner
@@ -148,6 +161,18 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
           void navigate(EVENT_DATA(eventId))
         }}
       />
+
+      {ENV.NODE_ENV !== "production" && (
+        <Button
+          className="mt-8"
+          variant="outline"
+          onClick={() => {
+            void skipQuiz()
+          }}
+        >
+          Pular quiz (dev)
+        </Button>
+      )}
     </Wrapper>
   )
 }
