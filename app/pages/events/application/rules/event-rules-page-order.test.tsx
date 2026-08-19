@@ -3,6 +3,10 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { readRulesOrder } from "~/components/forms/custom/rules/rules-order"
+import {
+  runtimeStorageKey,
+  writeRuntimeState,
+} from "~/components/forms/runtime/persistence"
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 import EventRulesPage from "./event-rules-page"
 
@@ -57,15 +61,11 @@ describe("the order the rules quiz was dealt", () => {
     const openOn = dealt[6]
 
     sessionStorage.setItem(`rules-order:${EVENT}`, JSON.stringify(dealt))
-    sessionStorage.setItem(
-      `form-runtime:rules:${EVENT}`,
-      JSON.stringify({
-        v: 1,
-        answers: { [openOn]: "seja lá o que for" },
-        currentStepId: openOn,
-        firstTryCorrect: {},
-      }),
-    )
+    writeRuntimeState(runtimeStorageKey("rules", EVENT), {
+      answers: { [openOn]: "seja lá o que for" },
+      currentStepId: openOn,
+      firstTryCorrect: {},
+    })
 
     renderQuiz()
 
