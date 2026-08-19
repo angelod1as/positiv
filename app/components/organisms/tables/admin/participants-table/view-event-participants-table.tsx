@@ -599,7 +599,7 @@ export const AdminViewEventParticipantsTable: FC<
           {tableCopy.header.acceptedInProcess(acceptedInProcess.total)}
         </Copy>
       </p>
-      <span>{tableCopy.separator}</span>
+      <span>|</span>
       <CategoryLabelWithTooltip
         label={tableCopy.header.generalLabel}
         tooltipContent={generalTooltipContent}
@@ -610,7 +610,7 @@ export const AdminViewEventParticipantsTable: FC<
       <p>
         <Copy inline>{tableCopy.header.veterans(applications.veterans)}</Copy>
       </p>
-      <span>{tableCopy.separator}</span>
+      <span>|</span>
       <CategoryLabelWithTooltip
         label={tableCopy.header.acceptedInProcessLabel}
         tooltipContent={acceptedInProcessTooltipContent}

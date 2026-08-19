@@ -48,28 +48,28 @@ export const DemographicsData: FC<DemographicsProps> = ({
               pair={[demographicsCopy.general.total, demographics.total]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[demographicsCopy.general.veterans, demographics.veteran.yes]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[demographicsCopy.general.rookies, demographics.veteran.no]}
             />
           </div>
           <div>
             <h4>{demographicsCopy.gender.title}</h4>
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[demographicsCopy.gender.cis, demographics.gender.cis]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[demographicsCopy.gender.trans, demographics.gender.trans]}
             />
             {!!demographics.gender.other.percentage && (
               <>
                 <DataPair
-                  suffix={demographicsCopy.suffixes.percentage}
+                  suffix="%"
                   pair={[
                     demographicsCopy.gender.others,
                     demographics.gender.other.percentage,
@@ -83,28 +83,28 @@ export const DemographicsData: FC<DemographicsProps> = ({
           <div>
             <h4>{demographicsCopy.orientation.title}</h4>
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[
                 demographicsCopy.orientation.straight,
                 demographics.orientation.straight,
               ]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[
                 demographicsCopy.orientation.biPan,
                 demographics.orientation.biPan,
               ]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[
                 demographicsCopy.orientation.homo,
                 demographics.orientation.homo,
               ]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[
                 demographicsCopy.orientation.aceDemi,
                 demographics.orientation.aceDemi,
@@ -113,7 +113,7 @@ export const DemographicsData: FC<DemographicsProps> = ({
             {!!demographics.orientation.other.percentage && (
               <>
                 <DataPair
-                  suffix={demographicsCopy.suffixes.percentage}
+                  suffix="%"
                   pair={[
                     demographicsCopy.orientation.others,
                     demographics.orientation.other.percentage,
@@ -127,35 +127,35 @@ export const DemographicsData: FC<DemographicsProps> = ({
           <div>
             <h4>{demographicsCopy.raceColor.title}</h4>
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[
                 demographicsCopy.raceColor.yellow,
                 demographics.race_color.yellow,
               ]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[
                 demographicsCopy.raceColor.white,
                 demographics.race_color.white,
               ]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[
                 demographicsCopy.raceColor.indigenous,
                 demographics.race_color.indigenous,
               ]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[
                 demographicsCopy.raceColor.brown,
                 demographics.race_color.brown,
               ]}
             />
             <DataPair
-              suffix={demographicsCopy.suffixes.percentage}
+              suffix="%"
               pair={[
                 demographicsCopy.raceColor.black,
                 demographics.race_color.black,
@@ -164,7 +164,7 @@ export const DemographicsData: FC<DemographicsProps> = ({
             {!!demographics.race_color.other.percentage && (
               <>
                 <DataPair
-                  suffix={demographicsCopy.suffixes.percentage}
+                  suffix="%"
                   pair={[
                     demographicsCopy.raceColor.others,
                     demographics.race_color.other.percentage,

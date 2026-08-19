@@ -47,7 +47,6 @@ export const adminTablesCopy = {
     unknownError: "Erro desconhecido",
   },
   renderers: {
-    emptyValue: "-",
     lastAttendedSeparator: " - ",
     viewParticipant: "Ver participante",
     viewProfile: "Ver perfil",
@@ -107,7 +106,6 @@ export const adminTablesCopy = {
     title: "Candidaturas",
     searchAriaLabel: "Buscar participantes",
     emptyMessage: "Nenhum participante encontrado",
-    separator: "|",
     header: {
       applications: (total: number) => `**${total}** candidates`,
       acceptedInProcess: (total: number) => `**${total}** aceites no processo`,

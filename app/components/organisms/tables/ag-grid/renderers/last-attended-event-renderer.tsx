@@ -28,11 +28,11 @@ export function LastAttendedEventRenderer(params: ICellRendererParams) {
   const profileId = data?.profile_id
 
   if (!title || !date) {
-    return <>{adminTablesCopy.renderers.emptyValue}</>
+    return <>-</>
   }
 
   const formattedDate = formatDateTime(date, "numeric").date
-  if (!formattedDate) return <>{adminTablesCopy.renderers.emptyValue}</>
+  if (!formattedDate) return <>-</>
 
   const truncatedTitle =
     title.length > MAX_TITLE_LENGTH

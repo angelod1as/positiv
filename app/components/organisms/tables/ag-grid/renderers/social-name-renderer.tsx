@@ -1,6 +1,5 @@
 import type { ICellRendererParams } from "ag-grid-community"
 import { Link } from "~/components/atoms/link/link"
-import { adminTablesCopy } from "~/copy/admin/tables"
 import paths from "~/lib/paths"
 
 const {
@@ -28,7 +27,7 @@ export function SocialNameRenderer(
   const ctx = context as SocialNameContext | undefined
 
   if (!data) {
-    return <>{adminTablesCopy.renderers.emptyValue}</>
+    return <>-</>
   }
 
   const { social_name: socialName, full_name: fullName } = data
@@ -42,7 +41,7 @@ export function SocialNameRenderer(
     content = firstName ? (
       <i>{firstName}</i>
     ) : (
-      <>{adminTablesCopy.renderers.emptyValue}</>
+      <>-</>
     )
   }
 

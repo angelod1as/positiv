@@ -129,17 +129,9 @@ function SurplusRenderer(
   const formattedValue = `R$ ${Math.abs(surplus).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   if (surplus >= 0) {
-    return (
-      <span className="text-green-600">
-        {historyCopy.surplusPositive(formattedValue)}
-      </span>
-    )
+    return <span className="text-green-600">+{formattedValue}</span>
   }
-  return (
-    <span className="text-red-600">
-      {historyCopy.surplusNegative(formattedValue)}
-    </span>
-  )
+  return <span className="text-red-600">-{formattedValue}</span>
 }
 
 export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({

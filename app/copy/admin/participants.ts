@@ -52,14 +52,11 @@ export const adminParticipantsCopy = {
   },
   eventHistory: {
     title: "Histórico de candidaturas",
-    surplusPositive: (value: string) => `+${value}`,
-    surplusNegative: (value: string) => `-${value}`,
     surplus: "Diferença",
     empty: "Nenhuma candidatura anterior encontrada",
   },
   financialSummary: {
     title: "Resumo Financeiro",
-    parenthesised: (value: string) => `(${value})`,
     totalInvested: "Total investido",
     paidEvents: "Eventos pagos",
     averagePerEvent: "Média por evento",

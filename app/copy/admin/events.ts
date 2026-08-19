@@ -131,7 +131,6 @@ export const adminEventsCopy = {
     othersSeparator: " - ",
     suffixes: {
       participants: " participantes",
-      percentage: "%",
       years: " anos",
     },
     general: {

@@ -142,7 +142,27 @@ export default defineConfig([
     ],
     plugins: { react: pluginReact },
     rules: {
-      "react/jsx-no-literals": ["error", { noStrings: true, ignoreProps: true }],
+      // allowedStrings holds punctuation and glyphs: formatting, not text.
+      "react/jsx-no-literals": [
+        "error",
+        {
+          noStrings: true,
+          ignoreProps: true,
+          allowedStrings: [
+            "-",
+            " - ",
+            "|",
+            "%",
+            "/",
+            "(",
+            ")",
+            "+",
+            ":",
+            "▼",
+            "▶",
+          ],
+        },
+      ],
     },
   },
 
