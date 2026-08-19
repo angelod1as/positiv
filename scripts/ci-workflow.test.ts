@@ -56,4 +56,8 @@ describe("deploy-and-test workflow", () => {
 
     expect(key).toContain("steps.playwright-version.outputs.version")
   })
+
+  it("runs e2e alongside the other checks rather than queued behind them", () => {
+    expect(jobBlock("e2e-test")).not.toMatch(/^ {4}needs:/m)
+  })
 })

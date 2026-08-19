@@ -62,9 +62,12 @@ jobs:
           path: coverage/
           retention-days: 30
 
+  # Deliberately ungated. Waiting on validate-schema and unit-test saved a
+  # runner when they failed, but it cost every green pull request their three
+  # and a half minutes in series before e2e could start. All three are required
+  # checks either way, so a failure still blocks the merge.
   e2e-test:
     runs-on: ubuntu-latest
-    needs: [validate-schema, unit-test]
     timeout-minutes: 60
 
     steps:
