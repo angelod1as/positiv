@@ -250,6 +250,46 @@ describe("useFormRuntime cross-question validation", () => {
     expect(result.current.isDone).toBe(false)
   })
 
+  it("shows a refine the other answers as their own questions read them", async () => {
+    const seen: unknown[] = []
+    const booleanPair: Question[] = [
+      {
+        id: "agree",
+        prompt: "Estou de acordo",
+        input: { kind: "boolean" },
+        schema: zod.boolean(),
+      },
+      {
+        id: "mktEmails",
+        prompt: "Quero receber novidades",
+        input: { kind: "boolean" },
+        schema: zod.boolean(),
+        refine: (_value, answers) => {
+          seen.push(answers.agree)
+          return null
+        },
+      },
+    ]
+
+    const screenFlow: Flow = {
+      start: "screen",
+      steps: { screen: { kind: "screen", ids: ["agree", "mktEmails"] } },
+      next: () => "done",
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: booleanPair, flow: screenFlow }),
+    )
+
+    // Nobody ticked either box. The refine must read the other one as false,
+    // which is what its own question's rules say it is.
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(seen).toEqual([false])
+  })
+
   it("advances once the refine agrees", async () => {
     const { result } = renderHook(() =>
       useFormRuntime({ questions: crossQuestions, flow: screenFlow }),
