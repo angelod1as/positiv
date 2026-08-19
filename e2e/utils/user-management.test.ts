@@ -31,6 +31,33 @@ const ABANDONED_USER = {
 }
 const REAL_USER = { id: 'real-user', created_at: LONG_AGO, user_metadata: {} }
 
+// A run that signs someone up through the form cannot mark the account: the
+// app writes it, not the fixtures. The run-scoped address is all it has.
+const SIGNED_UP_THIS_RUN = {
+  id: 'signed-up-this-run',
+  email: 'test-thisrun-registro@example.com',
+  created_at: RECENTLY,
+  user_metadata: {},
+}
+const SIGNED_UP_OTHER_RUN = {
+  id: 'signed-up-other-run',
+  email: 'test-otherrun-registro@example.com',
+  created_at: RECENTLY,
+  user_metadata: {},
+}
+const SIGNED_UP_ABANDONED = {
+  id: 'signed-up-and-abandoned',
+  email: 'test-deadrun-registro@example.com',
+  created_at: LONG_AGO,
+  user_metadata: {},
+}
+const REAL_USER_WITH_EMAIL = {
+  id: 'real-user-with-email',
+  email: 'pessoa@example.com',
+  created_at: LONG_AGO,
+  user_metadata: {},
+}
+
 function useAuthDouble(users: unknown[] = []) {
   const admin = {
     createUser: vi.fn(async () => ({ data: { user: { id: 'created', email: 'created@example.com' } }, error: null })),
@@ -113,5 +140,50 @@ describe('deleteAllTestUsers, sweeping abandoned data', () => {
     await deleteAllTestUsers()
 
     expect(admin.deleteUser).not.toHaveBeenCalledWith(REAL_USER.id)
+  })
+})
+
+describe('deleteAllTestUsers, accounts the suite signed up through the form', () => {
+  const everyone = [
+    SIGNED_UP_THIS_RUN,
+    SIGNED_UP_OTHER_RUN,
+    SIGNED_UP_ABANDONED,
+    REAL_USER_WITH_EMAIL,
+  ]
+
+  it('deletes the ones this run signed up', async () => {
+    const admin = useAuthDouble(everyone)
+    const { deleteAllTestUsers } = await import('./user-management')
+
+    await deleteAllTestUsers()
+
+    expect(admin.deleteUser).toHaveBeenCalledWith(SIGNED_UP_THIS_RUN.id)
+  })
+
+  it('leaves a concurrent run its own', async () => {
+    const admin = useAuthDouble(everyone)
+    const { deleteAllTestUsers } = await import('./user-management')
+
+    await deleteAllTestUsers()
+
+    expect(admin.deleteUser).not.toHaveBeenCalledWith(SIGNED_UP_OTHER_RUN.id)
+  })
+
+  it('sweeps the ones a run left behind', async () => {
+    const admin = useAuthDouble(everyone)
+    const { deleteAllTestUsers } = await import('./user-management')
+
+    await deleteAllTestUsers()
+
+    expect(admin.deleteUser).toHaveBeenCalledWith(SIGNED_UP_ABANDONED.id)
+  })
+
+  it('never touches a real account just because it has no metadata', async () => {
+    const admin = useAuthDouble(everyone)
+    const { deleteAllTestUsers } = await import('./user-management')
+
+    await deleteAllTestUsers()
+
+    expect(admin.deleteUser).not.toHaveBeenCalledWith(REAL_USER_WITH_EMAIL.id)
   })
 })

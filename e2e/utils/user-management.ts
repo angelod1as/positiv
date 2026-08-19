@@ -1,5 +1,11 @@
 import { createSupabaseAdminClient } from './db-cleanup'
-import { abandonedBefore, getRunId, runEmail } from './run-context'
+import {
+  abandonedBefore,
+  getRunId,
+  isRunScopedEmail,
+  runEmail,
+  runEmailPrefix,
+} from './run-context'
 
 export interface TestUser {
   id: string
@@ -120,9 +126,17 @@ export async function deleteAllTestUsers(): Promise<void> {
     const mockUsers = users.filter(user => {
       const runId = user.user_metadata?.e2e_run_id
 
-      if (!runId) return false
+      if (runId) {
+        return runId === getRunId() || user.created_at < cutoff
+      }
 
-      return runId === getRunId() || user.created_at < cutoff
+      // An account the suite signed up through the form carries no metadata to
+      // be marked with — the app wrote it, not the fixtures. Its run-scoped
+      // address is the only thing that says which run it belongs to.
+      const email = user.email ?? ''
+      if (!isRunScopedEmail(email)) return false
+
+      return email.startsWith(runEmailPrefix()) || user.created_at < cutoff
     })
 
     console.info(`Found ${mockUsers.length} test users to delete`)

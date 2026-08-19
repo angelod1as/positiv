@@ -1,11 +1,10 @@
 import { expect, test } from '@playwright/test'
-import {
-  deleteTestUser,
-  generateTestEmail,
-  waitForUserCreation,
-} from '../../fixtures/supabase-mock'
+import { deleteTestUser, waitForUserCreation } from '../../fixtures/supabase-mock'
 import { RegisterPage } from '../../pages/RegisterPage'
 import { createSupabaseAdminClient } from '../../utils/db-cleanup'
+// Run-scoped, so that a run killed before its cleanup still has its accounts
+// swept by the teardown — an address is all a form signup leaves to go on.
+import { generateTestEmail } from '../../utils/user-management'
 
 const PASSWORD = 'segredo123'
 
