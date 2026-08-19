@@ -6,14 +6,20 @@ import { describe, expect, it } from "vitest"
 // bundle as dead code. `@varlock/vite-integration` decides with
 // `itemInfo.isDynamic ?? itemInfo.isSensitive`, and `varlock load` omits
 // isDynamic when it matches that inferred default — so the effective value is
-// what this file asserts, not the raw field.
+// what this file asserts, not the raw field. That inference is varlock's own
+// and is not part of its documented output; it was read out of varlock 1.16.1
+// and @varlock/vite-integration 1.4.0, so a major bump is worth re-reading.
+// runtime-flags.spec.ts checks the built bundle instead, which is what catches
+// this file agreeing with itself while varlock changed underneath.
 
 type EnvSchemaItem = { isSensitive?: boolean; isDynamic?: boolean }
 
 // Read on the server, where the value only exists at runtime. Inlining any of
 // these freezes a build-time value into production: APP_ENV decides the secure
 // cookie flag and the logger, APP_URL builds absolute links in emails, E2E_MODE
-// guards every Listmonk call.
+// guards every Listmonk call. IS_PROD_IN_DEV and LISTMONK_API_URL are read by
+// destructuring today, which the replacement never touched, so neither was
+// actually broken — they are here so that dot access stays a safe refactor.
 const MUST_RESOLVE_AT_RUNTIME = [
   "APP_ENV",
   "APP_URL",
