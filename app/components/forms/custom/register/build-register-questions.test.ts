@@ -40,6 +40,15 @@ describe("buildRegisterQuestions", () => {
     expect(validateQuestion(find("password"), "segredo123").ok).toBe(true)
   })
 
+  it("asks for a confirmation before comparing it to anything", () => {
+    // An empty field is missing, not mismatched. Saying the passwords differ
+    // when one of them was never typed describes the wrong problem.
+    expect(validateQuestion(find("confirmPassword"), "", {})).toEqual({
+      ok: false,
+      message: "Campo obrigatório",
+    })
+  })
+
   it("rejects a confirmation that does not match the password", () => {
     const confirm = find("confirmPassword")
 

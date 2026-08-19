@@ -34,7 +34,9 @@ export const changePasswordSchema = zod
 export const registerUserFieldsSchema = zod.object({
   email: zod.string().email(),
   password: zod.string().min(8),
-  confirmPassword: zod.string(),
+  // Required in its own right, so that a field nobody filled in is reported as
+  // missing rather than as disagreeing with a password it was never compared to.
+  confirmPassword: zod.string().min(1),
   // A box nobody ticked may arrive as false or not arrive at all. Reading the
   // second as the first is what lets the refine's own message through, instead
   // of zod refusing it as missing before ever reaching the rule.
