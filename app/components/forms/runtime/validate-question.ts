@@ -14,11 +14,12 @@ export function validateQuestion(
   value: unknown,
   answers: Answers = {},
 ): ValidationResult {
-  const result = question.schema.safeParse(asAnswered(question, value))
+  const answered = asAnswered(question, value)
+  const result = question.schema.safeParse(answered)
 
   if (!result.success) {
     return { ok: false, message: result.error.issues[0].message }
   }
 
-  return question.refine?.(value, answers) ?? { ok: true }
+  return question.refine?.(answered, answers) ?? { ok: true }
 }

@@ -148,6 +148,23 @@ describe("validateQuestion", () => {
     expect(validateQuestion(over18, true)).toEqual({ ok: true })
   })
 
+  it("hands the refine the same false, so both rules read the box alike", () => {
+    const seen: unknown[] = []
+    const dependent: Question = {
+      id: "mktEmails",
+      prompt: "Quero receber novidades",
+      input: { kind: "boolean" },
+      schema: zod.boolean(),
+      refine: (value) => {
+        seen.push(value)
+        return null
+      },
+    }
+
+    expect(validateQuestion(dependent, undefined)).toEqual({ ok: true })
+    expect(seen).toEqual([false])
+  })
+
   it("leaves an untouched question of any other kind missing", () => {
     expect(validateQuestion(textQuestion, undefined)).toEqual({
       ok: false,

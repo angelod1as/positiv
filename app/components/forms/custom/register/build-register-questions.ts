@@ -1,7 +1,8 @@
-import { registerUserFieldsSchema } from "~/business/common"
+import {
+  PASSWORDS_DIFFER_MESSAGE,
+  registerUserFieldsSchema,
+} from "~/business/common"
 import type { Question } from "~/components/forms/runtime/question.types"
-
-const PASSWORDS_DIFFER = "As senhas não são iguais"
 
 export function buildRegisterQuestions(): Question[] {
   const { shape } = registerUserFieldsSchema
@@ -27,7 +28,7 @@ export function buildRegisterQuestions(): Question[] {
       refine: (value, answers) =>
         value === answers.password
           ? null
-          : { ok: false, message: PASSWORDS_DIFFER },
+          : { ok: false, message: PASSWORDS_DIFFER_MESSAGE },
     },
     {
       id: "over18",

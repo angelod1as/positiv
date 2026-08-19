@@ -43,10 +43,13 @@ export const registerUserFieldsSchema = zod.object({
     .min(1, "Por favor, complete a verificação de segurança"),
 })
 
+/** Shared so the browser and the server say the same thing about it. */
+export const PASSWORDS_DIFFER_MESSAGE = "As senhas não são iguais"
+
 export const registerUserSchema = registerUserFieldsSchema.refine(
   (data) => data.password === data.confirmPassword,
   {
-    message: "As senhas não são iguais",
+    message: PASSWORDS_DIFFER_MESSAGE,
     path: ["confirmPassword"],
   },
 )
