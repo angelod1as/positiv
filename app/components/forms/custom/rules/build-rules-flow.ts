@@ -10,9 +10,12 @@ import type { Question } from "~/components/forms/runtime/question.types"
 const COMMIT: StepId = "commit"
 
 /** "Você... tá legal?" — the one screen a veteran is always asked. */
-const TRIGGER = "trigger"
+export const OPENING_QUESTION = "trigger"
 
 const PROBE_COUNT = 2
+
+/** The opening question and the two probes behind it. */
+export const SHORT_RUN_LENGTH = PROBE_COUNT + 1
 
 type RulesFlowOptions = {
   /** Someone who has been to a Positiv before, as the server counted it. */
@@ -46,10 +49,10 @@ export function buildRulesFlow(
   // A quiz too short to shorten, or one without the opening question, is walked
   // as it was dealt: there would be nothing to save anyone.
   const branches =
-    isVeteran && dealt.includes(TRIGGER) && dealt.length > PROBE_COUNT + 1
+    isVeteran && dealt.includes(OPENING_QUESTION) && dealt.length > SHORT_RUN_LENGTH
 
   const order = branches
-    ? [TRIGGER, ...dealt.filter((id) => id !== TRIGGER)]
+    ? [OPENING_QUESTION, ...dealt.filter((id) => id !== OPENING_QUESTION)]
     : dealt
 
   const probes = order.slice(1, PROBE_COUNT + 1)

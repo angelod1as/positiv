@@ -22,10 +22,16 @@ vi.mock("~/lib/analytics/umami.server", () => ({
   trackServerEvent: vi.fn(),
 }))
 
+vi.mock("~/business/participant/is-veteran.server", () => ({
+  isVeteran: vi.fn(),
+}))
+
 import { kyselyDb } from "~/kysely-db"
 
 const mockKysely = vi.mocked(kyselyDb)
 
+import { getUserContext } from "~/business/auth/auth.server"
+import { isVeteran } from "~/business/participant/is-veteran.server"
 import { rulesSessionStorage } from "~/business/session.server"
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
@@ -33,6 +39,13 @@ import { trackServerEvent } from "~/lib/analytics/umami.server"
 const mockGetSession = vi.mocked(rulesSessionStorage.getSession)
 const mockCommitSession = vi.mocked(rulesSessionStorage.commitSession)
 const mockTrackServerEvent = vi.mocked(trackServerEvent)
+const mockGetUserContext = vi.mocked(getUserContext)
+const mockIsVeteran = vi.mocked(isVeteran)
+
+const rightAnswersTo = (...ids: string[]) =>
+  Object.fromEntries(
+    Object.entries(rightAnswers()).filter(([id]) => ids.includes(id)),
+  )
 
 const rightAnswers = () =>
   Object.fromEntries(
@@ -82,6 +95,10 @@ describe("the rules quiz check", () => {
 
     mockGetSession.mockResolvedValue({ set: vi.fn() } as never)
     mockCommitSession.mockResolvedValue("__session_rules=signed")
+    mockGetUserContext.mockResolvedValue({
+      currentProfile: { id: "profile-1" },
+    } as never)
+    mockIsVeteran.mockResolvedValue(false)
   })
 
   it("turns down a post that answers nothing", async () => {
@@ -138,5 +155,90 @@ describe("the rules quiz check", () => {
       { eventId: "123" },
       "/events/123/rules",
     )
+  })
+})
+
+describe("the rules quiz check for someone who has been to a Positiv", () => {
+  const quiz = getRulesFormQuestions()
+  const twoOthers = Object.keys(quiz)
+    .filter((id) => id !== "trigger")
+    .slice(0, 2)
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+
+    mockKysely.selectFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          executeTakeFirst: vi.fn().mockResolvedValue({ id: "123" }),
+        }),
+      }),
+    })
+
+    mockGetSession.mockResolvedValue({ set: vi.fn() } as never)
+    mockCommitSession.mockResolvedValue("__session_rules=signed")
+    mockGetUserContext.mockResolvedValue({
+      currentProfile: { id: "profile-1" },
+    } as never)
+    mockIsVeteran.mockResolvedValue(true)
+  })
+
+  it("counts the past editions itself instead of believing the post", async () => {
+    await postAnswers(rightAnswersTo("trigger", ...twoOthers))
+
+    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "123")
+  })
+
+  it("lets three right answers through", async () => {
+    const { body } = await postAnswers(
+      rightAnswersTo("trigger", ...twoOthers),
+    )
+
+    expect(body).toEqual({ ok: true })
+  })
+
+  it("still turns down a wrong answer among the three", async () => {
+    const { body } = await postAnswers({
+      ...rightAnswersTo("trigger", ...twoOthers),
+      [twoOthers[0]]: quiz[twoOthers[0] as keyof typeof quiz].answers
+        .incorrect[0],
+    })
+
+    expect(body.ok).toBe(false)
+    expect(body.errors?.map((error) => error.questionId)).toEqual([
+      twoOthers[0],
+    ])
+  })
+
+  it("turns down a run that never said it was doing fine", async () => {
+    const { body } = await postAnswers(
+      rightAnswersTo(...Object.keys(quiz).filter((id) => id !== "trigger")
+        .slice(0, 3)),
+    )
+
+    expect(body.ok).toBe(false)
+    expect(body.errors?.map((error) => error.questionId)).toContain("trigger")
+  })
+
+  it("turns down fewer answers than the short run asks for", async () => {
+    const { body } = await postAnswers(rightAnswersTo("trigger", twoOthers[0]))
+
+    expect(body.ok).toBe(false)
+  })
+
+  it("lets the whole quiz through, for a veteran who tripped and walked it", async () => {
+    const { body } = await postAnswers(rightAnswers())
+
+    expect(body).toEqual({ ok: true })
+  })
+
+  it("holds someone who has never been to the whole quiz", async () => {
+    mockIsVeteran.mockResolvedValue(false)
+
+    const { body } = await postAnswers(
+      rightAnswersTo("trigger", ...twoOthers),
+    )
+
+    expect(body.ok).toBe(false)
   })
 })
