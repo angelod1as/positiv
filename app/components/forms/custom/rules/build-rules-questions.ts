@@ -16,6 +16,9 @@ const toOptions = ({ correct, incorrect }: Answers) =>
     value: answer,
   }))
 
+const covers = (order: string[], ids: string[]) =>
+  order.length === ids.length && ids.every((id) => order.includes(id))
+
 function toInput(answers: Answers): InputSpec {
   const options = toOptions(answers)
 
@@ -28,11 +31,22 @@ function toInput(answers: Answers): InputSpec {
  * Shuffled on every call, questions and answers alike, so that nobody can learn
  * the quiz by position. Nothing downstream depends on the order: ids key the
  * schemas and the server's rejections.
+ *
+ * A run that has already started passes the order it was given the first time,
+ * so that a refresh does not deal the quiz again underneath it. An order that
+ * does not name today's questions exactly is from an older shape of the quiz
+ * and is dropped for a fresh shuffle — no question may go missing over it.
  */
-export function buildRulesQuestions(): Question[] {
+export function buildRulesQuestions(order?: string[]): Question[] {
   const schemas = getRulesFormSchema()
+  const entries = Object.entries(getRulesFormQuestions())
 
-  return shuffleArray(Object.entries(getRulesFormQuestions())).map(
+  const asked =
+    order && covers(order, entries.map(([id]) => id))
+      ? order.map((id) => entries.find(([entry]) => entry === id)!)
+      : shuffleArray(entries)
+
+  return asked.map(
     ([id, question]) => ({
       id,
       prompt: question.question,
