@@ -185,3 +185,39 @@ describe("buildRulesQuestions schemas", () => {
     )
   })
 })
+
+describe("buildRulesQuestions with a given order", () => {
+  it("asks the questions in the order it was given", () => {
+    const order = Object.keys(getRulesFormQuestions())
+
+    expect(buildRulesQuestions(order).map((question) => question.id)).toEqual(
+      order,
+    )
+  })
+
+  it("keeps giving the same order back, where a shuffle would not", () => {
+    const order = Object.keys(getRulesFormQuestions())
+
+    expect(buildRulesQuestions(order).map((question) => question.id)).toEqual(
+      buildRulesQuestions(order).map((question) => question.id),
+    )
+  })
+
+  // An order written down by an older shape of the quiz cannot be trusted to
+  // place today's questions, but no question may go missing over it.
+  it("ignores an order that does not name every question", () => {
+    const order = Object.keys(getRulesFormQuestions()).slice(0, 3)
+
+    expect(buildRulesQuestions(order).map((question) => question.id).sort()).toEqual(
+      Object.keys(getRulesFormQuestions()).sort(),
+    )
+  })
+
+  it("ignores an order naming a question the quiz no longer has", () => {
+    const order = [...Object.keys(getRulesFormQuestions()), "long-gone"]
+
+    expect(buildRulesQuestions(order).map((question) => question.id).sort()).toEqual(
+      Object.keys(getRulesFormQuestions()).sort(),
+    )
+  })
+})
