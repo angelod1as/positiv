@@ -17,12 +17,13 @@ form inherits it, exactly as the progress indicator from POS-504 does.
    previous step is the entry before the current one on that same path. It
    costs no change to persistence, survives a refresh for free, and stays
    faithful across branches because `firstTryCorrect` is frozen once written.
-3. **Going back replaces the url entry** instead of pushing one. The browser's
-   history does not grow while the reader walks backwards, and the browser's
-   own back button keeps moving backwards rather than being turned into a
-   forward button. The cost, accepted: the first browser-back press right after
-   an in-form back lands on the entry the runtime is already showing and does
-   nothing.
+3. **Going back pops the entry the page pushed**, and replaces the entry it
+   stands on when it has none of its own to pop. Replacing alone was the first
+   decision and turned out to be half a fix: measured, two presses of the
+   button leave the question walked past sitting behind the reader, and the
+   browser's back button hands it forward again. The page counts only the
+   entries it pushed itself, so popping can never walk anyone off the site,
+   and a run restored into a fresh tab still replaces.
 
 ## What already holds
 
@@ -105,10 +106,11 @@ Commit: `feat(form-runtime): tell the caller which way the run moved`
 
 `app/pages/events/application/rules/event-rules-page.tsx`
 
-- `replace: direction === "back" || !mirrored`.
-- The `askedFor` guard needs no change: a replace is not a `POP`, so the step
-  the reader asked for is untouched and the page's own write is still not
-  handed back as an instruction.
+- Count the entries pushed for questions the reader walked to. Going back pops
+  one with `navigate(-1)` while the count allows, and otherwise replaces the
+  entry it stands on.
+- The `askedFor` guard needs no change: a pop is a `POP`, which is exactly the
+  reader moving, and the runtime is already on the step the popped entry names.
 
 Commit: `fix(rules): replace the url entry when the reader goes back`
 
