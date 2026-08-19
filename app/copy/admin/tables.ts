@@ -1,3 +1,5 @@
+import { sharedCopy } from "~/copy/shared"
+
 export const adminTablesCopy = {
   base: {
     emptyMessage: "Nenhum registro encontrado",
@@ -176,7 +178,7 @@ export const adminTablesCopy = {
   },
   recentFeedbacks: {
     emptyMessage: "Nenhum feedback recente",
-    anonymous: "Anônimo",
+    anonymous: sharedCopy.values.anonymous,
     columns: {
       createdAt: "Data",
       name: "Nome",

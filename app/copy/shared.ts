@@ -13,6 +13,7 @@ export const sharedCopy = {
   values: {
     yes: "Sim",
     no: "Não",
+    anonymous: "Anônimo",
   },
   validation: {
     captcha: "Por favor, complete a verificação de segurança",

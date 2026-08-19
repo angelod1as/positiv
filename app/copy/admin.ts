@@ -42,6 +42,24 @@ export const adminDashboardCopy = {
 export const adminFeedbacksCopy = {
   title: "Feedbacks",
   loadFailed: "Erro ao carregar feedbacks. Tente novamente.",
+  notFound: "Feedback não encontrado",
+  invalidStatus: "Status inválido",
+  statusLabels: {
+    new: "Novo",
+    in_progress: "Em progresso",
+    resolved: "Resolvido",
+  },
+  telegramAlert: {
+    title: "Novo feedback recebido",
+    author: (author: string, contact: string) =>
+      `De: ${author}${contact ? ` (${contact})` : ""}`,
+    contactSeparator: " · ",
+    participation: {
+      never: "Nunca participou",
+      once: "Participou uma vez",
+      more_than_once: "Participou mais de uma vez",
+    },
+  },
 } as const
 
 export const listmonkDiagnosticCopy = {

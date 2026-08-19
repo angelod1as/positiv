@@ -90,6 +90,9 @@ export const publicCopy = {
       once: "Participei uma vez",
       moreThanOnce: "Participei mais de uma vez",
     },
+    validation: {
+      hasParticipated: "Selecione uma opção",
+    },
     submit: "Enviar Feedback",
     submitting: "Enviando...",
     rateLimited:
