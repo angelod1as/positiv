@@ -72,6 +72,14 @@ const answer = async (user: ReturnType<typeof userEvent.setup>) => {
 }
 
 
+// A dealt order, so that the question before another one is known rather than
+// whatever the shuffle decided this run.
+const seedDeal = () =>
+  sessionStorage.setItem(
+    `rules-order:${EVENT}`,
+    JSON.stringify({ questions: Object.keys(getRulesFormQuestions()), options: {} }),
+  )
+
 const seedAnsweredQuiz = (openOn: string) => {
   const quiz = getRulesFormQuestions()
 
@@ -159,6 +167,47 @@ describe("the rules quiz and the question mirrored in the url", () => {
 
     await waitFor(() => expect(onScreen()).toBe(second), { timeout: 5000 })
     expect(second).not.toBe(first)
+  }, WAITS_OUT_A_SLOW_RENDER)
+
+  it("leaves the browser's back button walking backwards after the button does", async () => {
+    const user = userEvent.setup()
+
+    // Every question answered, so that nothing in the quiz refuses to show a
+    // step and the url alone decides where the run lands.
+    const ids = Object.keys(getRulesFormQuestions())
+    seedDeal()
+    seedAnsweredQuiz(ids[2])
+
+    render(
+      <MemoryRouter
+        initialEntries={[
+          `/dashboard/${EVENT}/regras?q=${ids[0]}`,
+          `/dashboard/${EVENT}/regras?q=${ids[1]}`,
+          `/dashboard/${EVENT}/regras?q=${ids[2]}`,
+        ]}
+        initialIndex={2}
+      >
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+        <Back />
+      </MemoryRouter>,
+    )
+
+    expect(onScreen()).toBe(ids[2])
+
+    await user.click(screen.getByRole("button", { name: "Voltar" }))
+    await waitFor(() => expect(onScreen()).toBe(ids[1]), { timeout: 5000 })
+
+    // The button replaced the entry it was standing on rather than adding one,
+    // so the browser's back button keeps walking backwards instead of handing
+    // back the question the reader just left.
+    await user.click(screen.getByRole("button", { name: "back" }))
+
+    await new Promise((settle) => setTimeout(settle, 50))
+    expect(onScreen()).toBe(ids[1])
+
+    await user.click(screen.getByRole("button", { name: "back" }))
+    await waitFor(() => expect(onScreen()).toBe(ids[0]), { timeout: 5000 })
   }, WAITS_OUT_A_SLOW_RENDER)
 
   it("opens on the question a link names", async () => {

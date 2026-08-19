@@ -160,7 +160,7 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
         presentation={OneAtATime}
         persistence={{ formId: "rules", scopeId: eventId }}
         stepId={requestedStep}
-        onStepChange={(step) => {
+        onStepChange={(step, { direction }) => {
           setSearchParams(
             (current) => {
               const next = new URLSearchParams(current)
@@ -169,8 +169,11 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
             },
             {
               // The question the quiz opens on is where the reader already is;
-              // only the ones they walk to are worth a trip back.
-              replace: !mirrored,
+              // only the ones they walk to are worth a trip back. Neither is
+              // the quiz's own back button: it stands on the entry it is
+              // leaving, so replacing keeps the browser's back button walking
+              // backwards instead of handing the question back.
+              replace: !mirrored || direction === "back",
               // Every step is a navigation, and the quiz sits under the whole
               // rules text. Letting the router reset the scroll would throw the
               // reader back to the top of the rules on every answer.
