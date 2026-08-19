@@ -1518,7 +1518,7 @@ cost is cosmetic: a console showing both wordings until someone tidies it.
 For each item: where it comes from in the code, what it says now, what it should
 say, and where to find it in the Listmonk console.
 
-1. **List names** — `\`Inscrites - ${event.title}\`` (`event-listmonk-sync.server.ts`).
+1. **List names** — `` `Inscrites - ${event.title}` `` (`event-listmonk-sync.server.ts`).
    One list per event that has ever been synced. Query which events have a
    non-null `listmonk_list_id` to size the job:
 
