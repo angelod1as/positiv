@@ -178,6 +178,12 @@ export function useFormRuntime({
 
   // The caller can move the run itself — the browser's back button, mirrored in
   // the url, arrives here as a changed stepId.
+  //
+  // Which is why a caller that mirrors the current step in the url must not
+  // hand that mirror straight back: this effect cannot tell a reader asking to
+  // return to a question from an echo of the question the run just left, and
+  // would obey both. See `event-rules-page.tsx`, which keeps the last step the
+  // reader asked for rather than passing every url change through.
   useEffect(() => {
     if (!stepId || stepId === stepRef.current) return
     if (!canShow(stepId, answersRef.current)) return

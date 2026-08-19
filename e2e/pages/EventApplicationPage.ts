@@ -6,6 +6,10 @@ import { BasePage } from "./BasePage"
 // tight loop of them, short enough to be invisible against a screen change.
 const POLL_INTERVAL = 50
 
+// How long either wait gives the quiz before carrying on with what is there:
+// past this, whatever is on screen is what the walk answers.
+const SETTLE_BUDGET = 5000
+
 export class EventApplicationPage extends BasePage {
   // Rules page elements
   readonly rulesTitle: Locator
@@ -95,7 +99,7 @@ export class EventApplicationPage extends BasePage {
   async currentQuestionId(): Promise<string> {
     await this.questions.waitFor({ state: "visible", timeout: 10000 })
 
-    const stopAt = Date.now() + 5000
+    const stopAt = Date.now() + SETTLE_BUDGET
     let showing = await this.questionOnScreen()
 
     while (Date.now() < stopAt) {
@@ -199,7 +203,7 @@ export class EventApplicationPage extends BasePage {
    * is why nothing here reports a verdict.
    */
   private async waitOutAnswer(question: string): Promise<void> {
-    const stopAt = Date.now() + 5000
+    const stopAt = Date.now() + SETTLE_BUDGET
 
     while (Date.now() < stopAt) {
       if (!this.page.url().includes("/regras")) return

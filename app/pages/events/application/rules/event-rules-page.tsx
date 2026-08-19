@@ -83,6 +83,10 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
   // opened would hand that write back as an instruction.
   const askedFor = useRef(mirrored)
 
+  // Only to carry it forward: on the render a back or forward button causes,
+  // the branch below already reads the right thing, because navigationType and
+  // the url change together. This is what keeps it around for the renders after
+  // that, which are this page's own writes.
   useEffect(() => {
     if (navigationType === "POP") askedFor.current = mirrored
   }, [navigationType, mirrored])

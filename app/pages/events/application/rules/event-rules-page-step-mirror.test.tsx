@@ -200,12 +200,16 @@ describe("the rules quiz and the question mirrored in the url", () => {
     await user.click(screen.getByRole("button", { name: "back" }))
     expect(onScreen()).toBe(earlier)
 
+    // Answering on from there works. Which question comes next is whatever the
+    // shuffle decided, and it may well be the one the reload pinned — so the
+    // regression this test guards is the assertion above, that going back lands
+    // where the reader asked to be instead of snapping to the pinned question.
     const quiz = getRulesFormQuestions()
     for (const right of quiz[earlier as keyof typeof quiz].answers.correct) {
       await user.click(screen.getByText(right, { exact: true }))
     }
     await user.click(screen.getByRole("button", { name: "Continuar" }))
 
-    expect(onScreen()).not.toBe(reloadedOn)
+    expect(onScreen()).not.toBe(earlier)
   })
 })
