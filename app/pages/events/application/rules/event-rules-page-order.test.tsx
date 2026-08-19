@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { renderToStaticMarkup } from "react-dom/server"
 import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { readRulesOrder } from "~/components/forms/custom/rules/rules-order"
+import { readRulesDeal } from "~/components/forms/custom/rules/rules-order"
 import {
   runtimeStorageKey,
   writeRuntimeState,
@@ -17,6 +17,30 @@ vi.mock("~/kysely-db", () => ({ kyselyDb: { selectFrom: vi.fn() } }))
 const EVENT = "11111111-1111-4111-8111-111111111111"
 
 const ids = () => Object.keys(getRulesFormQuestions())
+
+const answersOf = (id: string) => {
+  const { answers } = getRulesFormQuestions()[
+    id as keyof ReturnType<typeof getRulesFormQuestions>
+  ]
+
+  return [...answers.correct, ...answers.incorrect]
+}
+
+const dealtQuestions = () => [...ids()].reverse()
+
+const seedDeal = (deal: {
+  questions: string[]
+  options?: Record<string, string[]>
+}) =>
+  sessionStorage.setItem(
+    `rules-order:${EVENT}`,
+    JSON.stringify({ options: {}, ...deal }),
+  )
+
+const onScreenAnswers = () =>
+  [...document.querySelectorAll<HTMLInputElement>("input[type=radio]")].map(
+    (input) => input.value,
+  )
 
 const onScreen = () =>
   document
@@ -52,8 +76,8 @@ describe("the order the rules quiz was dealt", () => {
   })
 
   it("opens on the first question of the order the run was dealt", async () => {
-    const dealt = [...ids()].reverse()
-    sessionStorage.setItem(`rules-order:${EVENT}`, JSON.stringify(dealt))
+    const dealt = dealtQuestions()
+    seedDeal({ questions: dealt })
 
     renderQuiz()
 
@@ -62,10 +86,10 @@ describe("the order the rules quiz was dealt", () => {
   })
 
   it("counts the question by its place in that order", async () => {
-    const dealt = [...ids()].reverse()
+    const dealt = dealtQuestions()
     const openOn = dealt[6]
 
-    sessionStorage.setItem(`rules-order:${EVENT}`, JSON.stringify(dealt))
+    seedDeal({ questions: dealt })
     writeRuntimeState(runtimeStorageKey("rules", EVENT), {
       answers: { [openOn]: "seja lá o que for" },
       currentStepId: openOn,
@@ -83,11 +107,12 @@ describe("the order the rules quiz was dealt", () => {
 
     await waitFor(() => expect(onScreen()).toBeDefined())
 
-    const written = readRulesOrder(EVENT)
+    const written = readRulesDeal(EVENT)
 
     expect(written).not.toBeNull()
-    expect([...(written ?? [])].sort()).toEqual(ids().sort())
-    expect(written?.[0]).toBe(onScreen())
+    expect([...(written?.questions ?? [])].sort()).toEqual(ids().sort())
+    expect(written?.questions[0]).toBe(onScreen())
+    expect(written?.options[onScreen() as string]).toEqual(onScreenAnswers())
   })
 
   // The server has no session storage, so it deals an order of its own. That
@@ -95,10 +120,7 @@ describe("the order the rules quiz was dealt", () => {
   // not: the runtime draws a skeleton until it has restored, which it can only
   // do after mount, on the server and on the first client render alike.
   it("keeps the dealt order out of the markup it hydrates", () => {
-    sessionStorage.setItem(
-      `rules-order:${EVENT}`,
-      JSON.stringify([...ids()].reverse()),
-    )
+    seedDeal({ questions: dealtQuestions() })
 
     const markup = renderToStaticMarkup(
       <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
@@ -109,6 +131,20 @@ describe("the order the rules quiz was dealt", () => {
 
     expect(markup).not.toContain("-prompt")
     expect(markup).toContain('aria-busy="true"')
+  })
+
+  // A refresh that keeps the question but swaps its alternatives around is the
+  // same rearrangement, one level down.
+  it("lays the answers out the way the run was dealt them", async () => {
+    const dealt = dealtQuestions()
+    const laid = [...answersOf(dealt[0])].sort()
+
+    seedDeal({ questions: dealt, options: { [dealt[0]]: laid } })
+
+    renderQuiz()
+
+    await waitFor(() => expect(onScreen()).toBe(dealt[0]))
+    expect(onScreenAnswers()).toEqual(laid)
   })
 
   it("forgets the order when the run is finished", async () => {
@@ -128,6 +164,6 @@ describe("the order the rules quiz was dealt", () => {
       await user.click(screen.getByRole("button", { name: "Continuar" }))
     }
 
-    await waitFor(() => expect(readRulesOrder(EVENT)).toBeNull())
+    await waitFor(() => expect(readRulesDeal(EVENT)).toBeNull())
   })
 })
