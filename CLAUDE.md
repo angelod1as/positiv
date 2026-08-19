@@ -262,7 +262,7 @@ pnpm db:types          # For production Supabase (rarely used)
 
 4. **Server-Only Code**: Use `.server.ts` suffix for server-only modules to prevent client-side imports.
 
-5. **Environment Variables**: Every variable the project reads is declared in `.env.schema`, with its type and whether it is required — read that file, never `.env`, which holds the values. Application code reads them through `ENV` from `varlock/env`, not `process.env`. Local development requires Supabase setup.
+5. **Environment Variables**: Every variable the project reads is declared in `.env.schema`, with its type and whether it is required — read that file, never `.env`, which holds the values. Application code reads them through `ENV` from `varlock/env`, not `process.env`. Every variable resolves at runtime; the handful the browser reads carry `@static` and are inlined into the bundle at build time. Adding `@static` to a server-only variable freezes its build-time value into the artifact and lets the bundler delete any `if (ENV.FLAG)` around it — `scripts/env-schema.test.ts` guards that line. Local development requires Supabase setup.
 
 6. Do not add comments to the code unless it's a particularly complex method
 
