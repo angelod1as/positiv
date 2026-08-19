@@ -2083,10 +2083,24 @@ describe("getEventsForDashboard - Integration Tests", () => {
     expect(newerIndex).toBeLessThan(olderIndex)
   })
 
-  it("should limit results to 50 events", async () => {
+  it("should return every event, without truncating the list", async () => {
+    for (const index of [1, 2, 3]) {
+      await createTestEvent(tracker, kysely, {
+        title: `Unlimited Dashboard Event ${index}`,
+        time_event_start: new Date(
+          Date.now() + index * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+      })
+    }
+
+    const [{ total }] = await kysely
+      .selectFrom("events")
+      .select((eb) => eb.fn.countAll<string>().as("total"))
+      .execute()
+
     const events = await getEventsForDashboard()
 
-    expect(events.length).toBeLessThanOrEqual(50)
+    expect(events).toHaveLength(Number(total))
   })
 })
 
