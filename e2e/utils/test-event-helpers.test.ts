@@ -79,3 +79,14 @@ describe('ensureMinimumOpenEvents', () => {
     ])
   })
 })
+
+describe('createOpenRegularEvent', () => {
+  it('tags the event it creates with the current run', async () => {
+    const double = useDouble(respondWithNoExistingEvents)
+    const { createOpenRegularEvent } = await import('./test-event-helpers')
+
+    await createOpenRegularEvent()
+
+    expect(insertedTitles(double)).toEqual([expect.stringContaining('[E2E:thisrun]')])
+  })
+})

@@ -105,7 +105,8 @@ The most important scripts for development are:
 
 - `pnpm dev` - Start the development server
 - `pnpm lint` - Run linting checks
-- `pnpm test` - Run Playwright tests
+- `pnpm test` - Run the unit and integration suites
+- `pnpm test:e2e` - Run the Playwright end-to-end suite
 
 ### Additional scripts
 
@@ -127,7 +128,8 @@ The project uses various testing frameworks:
 ### Unit and Integration Tests
 
 ```bash
-pnpm test         # Run unit tests with Vitest
+pnpm test         # Run both suites: unit, then integration
+pnpm test:unit    # Run unit tests with Vitest
 pnpm test:integration  # Run integration tests (requires database)
 pnpm test:ui      # Run tests with Vitest UI
 pnpm test:coverage # Run tests with coverage report

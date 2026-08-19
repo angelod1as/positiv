@@ -73,6 +73,51 @@ test.describe('POS-190: Event Application Acceptance Tests', () => {
     await expect(applicationPage.userDataTitle).toBeVisible({ timeout: 15000 })
   })
 
+  test('AC2c: the quiz sends the reader back and the walk still finishes', async ({ page }) => {
+    // A rejected save reopens answered screens, so this walk is longer than
+    // one screen per question.
+    test.setTimeout(120_000)
+
+    const event = await createOpenRegularEvent()
+
+    // The first save is refused the way the server refuses one, naming a
+    // multiple-choice question and a single-choice one. The runtime reopens
+    // both, with the answers already on them.
+    let saves = 0
+    await page.route(`**/api/events/${event.id}/rules-quiz`, async (route) => {
+      saves++
+
+      if (saves > 1) return route.continue()
+
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: false,
+          errors: [
+            {
+              questionId: 'protection-2',
+              message: 'Você não selecionou todas as respostas corretas',
+            },
+            {
+              questionId: 'trigger',
+              message: 'Você escolheu a resposta errada',
+            },
+          ],
+        }),
+      })
+    })
+
+    await page.goto(`/dashboard/${event.id}/regras`)
+
+    expect(await applicationPage.isOnRulesPage()).toBe(true)
+
+    await applicationPage.fillRulesForm()
+
+    expect(saves).toBeGreaterThan(1)
+    await expect(applicationPage.userDataTitle).toBeVisible({ timeout: 15000 })
+  })
+
   test('AC2b: the quiz cannot be skipped by posting to the route', async ({ page }) => {
     const event = await createOpenRegularEvent()
 

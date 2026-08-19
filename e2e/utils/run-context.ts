@@ -10,8 +10,13 @@ const ABANDONED_AFTER_HOURS = 1
 const MAX_EVENT_TITLE_LENGTH = 50
 
 export function generateRunId(): string {
-  // Short on purpose: the id is spent from the event title's 50 character budget
-  return `${(Date.now() % 1_000_000).toString(36)}${randomBytes(2).toString('hex')}`
+  // Short on purpose: the id is spent from the event title's 50 character
+  // budget, and the longest title in the suite would sit exactly on the cap
+  // with four random bytes. Three rather than the two it had: two is 65536
+  // values inside a millisecond, which collides about one time in fifty across
+  // fifty draws — what the test next door kept catching — where three is one
+  // in fourteen thousand, and leaves the longest title two characters spare.
+  return `${(Date.now() % 1_000_000).toString(36)}${randomBytes(3).toString('hex')}`
 }
 
 export function getRunId(): string {

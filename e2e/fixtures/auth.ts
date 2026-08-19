@@ -24,8 +24,11 @@ export async function performUILoginWithPrefilledData(
   // Perform login
   await loginPage.login(email, password)
 
-  // Let the natural flow happen - user might be on terms page or dashboard
-  await page.waitForLoadState("networkidle")
+  // Let the natural flow happen - user might be on terms page or dashboard.
+  // Never networkidle anywhere in this file: the app talks to the analytics
+  // endpoint on its own schedule, and a call that hangs there once took the
+  // whole suite down before a single test ran.
+  await page.waitForLoadState("domcontentloaded")
 
   // We should be either on dashboard, admin dashboard, or terms page
   const currentUrl = page.url()
@@ -78,7 +81,10 @@ export async function performUILogin(
 
     // Click and wait for navigation in a single action
     await continueButton.click()
-    await page.waitForURL(/dados-basicos$/, { waitUntil: "networkidle" })
+    // Not networkidle: the page keeps talking to the analytics endpoint, and a
+    // call that hangs there is not a reason to fail signing up. The url is the
+    // honest signal, and what comes next waits on the fields themselves.
+    await page.waitForURL(/dados-basicos$/)
 
     // Fill basic data form - page 1
     await expect(page).toHaveURL(/dados-basicos$/)
@@ -117,11 +123,11 @@ export async function performUILogin(
 
     const continueBtn = page.getByRole("button", { name: "Continuar" })
     await continueBtn.click()
-    await page.waitForURL(/dados-basicos-cont$/, { waitUntil: "networkidle" })
+    await page.waitForURL(/dados-basicos-cont$/)
 
     // Fill basic data form - page 2 (gender/pronouns/orientation)
     await expect(page).toHaveURL(/dados-basicos-cont$/)
-    await page.waitForLoadState("networkidle")
+    await page.waitForLoadState("domcontentloaded")
 
     // Wait for form to be fully loaded
     await expect(page.getByText("Gênero")).toBeVisible()
@@ -167,14 +173,14 @@ export async function performUILogin(
 
     if (isAdmin) {
       await Promise.all([
-        page.waitForNavigation({ url: expectedDashboardUrl, waitUntil: "networkidle" }),
+        page.waitForURL(expectedDashboardUrl),
         continueButton2.click(),
       ])
     } else {
       // First-time signup now ends on the account-ready page, which explains
       // that having an account is not the same as being registered for an event
       await Promise.all([
-        page.waitForNavigation({ url: /conta\/tudo-pronto$/, waitUntil: "networkidle" }),
+        page.waitForURL(/conta\/tudo-pronto$/),
         continueButton2.click(),
       ])
 
@@ -183,14 +189,14 @@ export async function performUILogin(
       ).toBeVisible()
 
       await Promise.all([
-        page.waitForNavigation({ url: expectedDashboardUrl, waitUntil: "networkidle" }),
+        page.waitForURL(expectedDashboardUrl),
         page.getByRole("link", { name: "Ver eventos da Positiv" }).click(),
       ])
     }
   }
 
   await expect(page).toHaveURL(new RegExp(`${expectedDashboardUrl}$`))
-  await page.waitForLoadState("networkidle")
+  await page.waitForLoadState("domcontentloaded")
 }
 
 // These functions are deprecated - use performUILogin directly with dynamic users
@@ -212,7 +218,7 @@ export async function logout(page: Page): Promise<void> {
     await expect(logoutButton).toBeVisible({ timeout: 5000 })
 
     await Promise.all([
-      page.waitForNavigation({ url: "/", waitUntil: "networkidle" }),
+      page.waitForURL("/"),
       logoutButton.click(),
     ])
   }
@@ -224,12 +230,12 @@ export async function logout(page: Page): Promise<void> {
   })
 
   await page.goto("/")
-  await page.waitForLoadState("networkidle")
+  await page.waitForLoadState("domcontentloaded")
 }
 
 export async function ensureLoggedOut(page: Page): Promise<void> {
   await page.goto("/")
-  await page.waitForLoadState("networkidle")
+  await page.waitForLoadState("domcontentloaded")
 
   const isLoggedIn = await isAuthenticated(page)
   if (isLoggedIn) {
@@ -254,11 +260,10 @@ export async function getCurrentUserEmail(page: Page): Promise<string | null> {
 }
 
 export async function waitForAuthRedirect(page: Page): Promise<void> {
-  await page.waitForNavigation({
-    url: (url) => url.pathname === DASHBOARD_URL || url.pathname === ADMIN_DASHBOARD_URL || url.pathname === TERMS_URL,
-    waitUntil: "networkidle",
-    timeout: 30000,
-  })
+  await page.waitForURL(
+    (url) => url.pathname === DASHBOARD_URL || url.pathname === ADMIN_DASHBOARD_URL || url.pathname === TERMS_URL,
+    { timeout: 30000 },
+  )
 }
 
 export async function verifyAuthenticated(

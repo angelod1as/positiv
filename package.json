@@ -12,7 +12,7 @@
     "start": "varlock run -- react-router-serve ./build/server/index.js",
     "lint": "varlock codegen && eslint && react-router typegen && tsc",
     "env:check": "varlock load",
-    "test": "pnpm test:unit",
+    "test": "pnpm test:all",
     "test:all": "pnpm test:unit && pnpm test:integration",
     "test:unit": "vitest --run",
     "test:integration": "./scripts/with-db-lock.sh sh -c 'NODE_ENV=test varlock run -- vitest --run --config vitest.integration.config.ts'",

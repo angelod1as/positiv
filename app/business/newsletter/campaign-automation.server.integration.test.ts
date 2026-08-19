@@ -22,6 +22,11 @@ describe("Campaign Automation - Integration Tests", () => {
   afterEach(async () => {
     await cleanupAfterTest(tracker, db)
     vi.restoreAllMocks()
+    // restoreAllMocks strips a plain vi.fn() of its implementation, so a fetch
+    // left assigned here would answer every later call with undefined. Every
+    // integration file shares one process, and whichever ones ran after this
+    // failed on a database call that never left the mock.
+    vi.unstubAllGlobals()
   })
 
   describe("createCampaignForEvent", () => {
@@ -145,10 +150,13 @@ describe("Campaign Automation - Integration Tests", () => {
         .execute()
 
       // Mock fetch to simulate Listmonk API
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { status: "running" } }),
-      })
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({ data: { status: "running" } }),
+        }),
+      )
 
       const result = await sendCampaign(event.id)
 
@@ -216,12 +224,15 @@ describe("Campaign Automation - Integration Tests", () => {
         .execute()
 
       // Mock fetch to simulate Listmonk API failure
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 500,
-        statusText: "Internal Server Error",
-        text: async () => "Server error",
-      })
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 500,
+          statusText: "Internal Server Error",
+          text: async () => "Server error",
+        }),
+      )
 
       const result = await sendCampaign(event.id)
 
@@ -273,10 +284,13 @@ describe("Campaign Automation - Integration Tests", () => {
       })
 
       // Mock campaign sending
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { status: "running" } }),
-      })
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({ data: { status: "running" } }),
+        }),
+      )
 
       const result = await processCampaignForEvent(event.id)
 
@@ -351,10 +365,13 @@ describe("Campaign Automation - Integration Tests", () => {
         .execute()
 
       // Mock campaign sending
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ data: { status: "running" } }),
-      })
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: true,
+          json: async () => ({ data: { status: "running" } }),
+        }),
+      )
 
       const result = await processCampaignForEvent(event.id)
 
