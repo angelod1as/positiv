@@ -14,6 +14,9 @@ export const sharedCopy = {
     yes: "Sim",
     no: "Não",
   },
+  validation: {
+    captcha: "Por favor, complete a verificação de segurança",
+  },
   confirmDialog: {
     title: "Tem certeza?",
     description: "Essa ação não pode ser desfeita.",

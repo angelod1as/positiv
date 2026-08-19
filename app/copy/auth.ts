@@ -1,3 +1,5 @@
+import { sharedCopy } from "~/copy/shared"
+
 export const authLayoutCopy = {
   logoAlt: "Positiv Logo",
 } as const
@@ -39,7 +41,7 @@ export const registerCopy = {
   pendingButtonLabel: "Entrando...",
   validation: {
     over18: "Você só pode se inscrever se for maior de 18 anos",
-    captcha: "Por favor, complete a verificação de segurança",
+    captcha: sharedCopy.validation.captcha,
     passwordMismatch: "As senhas não são iguais",
   },
 } as const
