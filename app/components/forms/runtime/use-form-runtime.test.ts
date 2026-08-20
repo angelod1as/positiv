@@ -870,6 +870,35 @@ describe("useFormRuntime going back", () => {
     expect(result.current.firstTryCorrect.a).toBe(false)
   })
 
+  it("says what a refusal said, when it named no question", async () => {
+    const refusingFlow: Flow = {
+      start: "a",
+      steps: {
+        a: { kind: "question", id: "a" },
+        save: {
+          kind: "commit",
+          run: () => ({
+            ok: false as const,
+            errors: [],
+            message: "Inscrições encerradas",
+          }),
+        },
+      },
+      next: (current) => (current === "a" ? "save" : "done"),
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: refusingFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+
+    expect(result.current.formError).toBe("Inscrições encerradas")
+  })
+
   it("drops a failure that belongs to the step being left", async () => {
     const failingFlow: Flow = {
       start: "a",

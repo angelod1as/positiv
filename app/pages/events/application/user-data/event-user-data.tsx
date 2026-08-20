@@ -39,10 +39,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   })
 }
 
-type ApplicationAnswer = CommitResult & {
-  emailSent?: boolean
-  message?: string
-}
+type ApplicationAnswer = CommitResult & { emailSent?: boolean }
 
 const EventUserInfo = ({ params }: Route.ComponentProps) => {
   const navigate = useNavigate()
@@ -73,12 +70,10 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
 
       const result = (await response.json()) as ApplicationAnswer
 
-      if (!result.ok) {
-        // A refusal the form cannot pin on any question — registration closed
-        // between the quiz and the button, say — still has something to say.
-        if (result.message) toast.error(result.message)
-        return result
-      }
+      // A refusal the form cannot pin on any question — registration closed
+      // between the quiz and the button, say — travels as the result's own
+      // message, which the runtime shows in place of its generic one.
+      if (!result.ok) return result
 
       emailSentRef.current = result.emailSent ?? true
 

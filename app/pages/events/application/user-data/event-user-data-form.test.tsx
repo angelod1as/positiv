@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { eventApplicationCopy } from "~/copy/events"
+import { formRuntimeCopy } from "~/copy/forms"
 import EventUserInfo from "./event-user-data"
 
 vi.mock("~/business/auth/auth.server", () => ({ getUserContext: vi.fn() }))
@@ -156,10 +157,26 @@ describe("the event application form", () => {
     renderForm()
     await fillAndSend()
 
-    await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Inscrições encerradas")
-    })
-
+    expect(await screen.findByText("Inscrições encerradas")).toBeInTheDocument()
     expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it("says why, rather than telling the person to try again", async () => {
+    vi.stubGlobal(
+      "fetch",
+      answered({ ok: false, errors: [], message: "Inscrições encerradas" }),
+    )
+
+    renderForm()
+    await fillAndSend()
+
+    await screen.findByText("Inscrições encerradas")
+
+    // Retrying is exactly what will not help, and the two messages sat on
+    // screen together: the reason as a toast, the invitation to retry inline.
+    expect(
+      screen.queryByText(formRuntimeCopy.commitFailed),
+    ).not.toBeInTheDocument()
+    expect(toast.error).not.toHaveBeenCalled()
   })
 })

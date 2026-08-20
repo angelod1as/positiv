@@ -373,8 +373,8 @@ export function useFormRuntime({
         data,
       })
 
-    const stayPut = () => {
-      setFormError(formRuntimeCopy.commitFailed)
+    const stayPut = (reason?: string) => {
+      setFormError(reason ?? formRuntimeCopy.commitFailed)
       stepRef.current = origin
       setCurrentStepId(origin)
     }
@@ -430,7 +430,7 @@ export function useFormRuntime({
         : undefined
 
       if (!target) {
-        stayPut()
+        stayPut(result.message)
         return
       }
 
