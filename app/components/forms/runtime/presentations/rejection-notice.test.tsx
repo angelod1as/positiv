@@ -101,4 +101,23 @@ describe("RejectionNotice", () => {
 
     expect(screen.getByLabelText("Nome")).not.toHaveFocus()
   })
+
+  it("stays inside its own form when another one asks the same question", () => {
+    render(
+      <>
+        <form>
+          <div data-question-id="nome">
+            <input aria-label="Nome noutro formulário" />
+          </div>
+        </form>
+
+        <Screen
+          rejection={{ questionIds: ["nome"] }}
+          errors={{ nome: "Campo obrigatório" }}
+        />
+      </>,
+    )
+
+    expect(screen.getByLabelText("Nome")).toHaveFocus()
+  })
 })

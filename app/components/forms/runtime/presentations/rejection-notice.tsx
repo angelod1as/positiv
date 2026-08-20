@@ -25,6 +25,7 @@ export const RejectionNotice = ({
   rejection,
   errors,
 }: RejectionNoticeProps) => {
+  const noticeRef = useRef<HTMLDivElement>(null)
   const errorsRef = useRef(errors)
 
   useEffect(() => {
@@ -37,7 +38,11 @@ export const RejectionNotice = ({
     const first = rejection.questionIds.find((id) => errorsRef.current[id])
     if (!first) return
 
-    const field = document.querySelector<HTMLElement>(
+    // The form this notice sits in, so that two forms asking the same question
+    // on one page each keep their own focus.
+    const scope = noticeRef.current?.closest("form") ?? document
+
+    const field = scope.querySelector<HTMLElement>(
       `[data-question-id="${CSS.escape(first)}"]`,
     )
 
@@ -47,5 +52,9 @@ export const RejectionNotice = ({
   const standing = rejection?.questionIds.some((id) => errors[id]) ?? false
   if (!standing) return null
 
-  return <Error role="alert">{formRuntimeCopy.fieldsRejected}</Error>
+  return (
+    <Error ref={noticeRef} role="alert">
+      {formRuntimeCopy.fieldsRejected}
+    </Error>
+  )
 }
