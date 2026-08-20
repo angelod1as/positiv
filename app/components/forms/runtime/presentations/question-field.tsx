@@ -41,7 +41,12 @@ export const QuestionField = ({
   const choice = isChoice(question)
 
   return (
-    <div className={cn("flex flex-col gap-2", className)}>
+    // The id rides on the wrapper because a group of alternatives carries it on
+    // no control at all, and the rejection notice has to find the field.
+    <div
+      data-question-id={question.id}
+      className={cn("flex flex-col gap-2", className)}
+    >
       {ownsItsPrompt(question) ? null : choice ? (
         <span id={promptId} className="mb-2 text-sm font-medium">
           {question.prompt}

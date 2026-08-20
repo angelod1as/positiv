@@ -4,6 +4,7 @@ import { Error } from "~/components/forms/base/error"
 import { cn } from "~/lib/utils"
 import type { Presentation } from "./presentation.types"
 import { QuestionField } from "./question-field"
+import { RejectionNotice } from "./rejection-notice"
 
 export type GridSpan = 3 | 4 | 5 | 6 | 12
 
@@ -40,6 +41,7 @@ export function gridPresentation(slots: GridSlot[]): Presentation {
     answers,
     errors,
     formError,
+    advanceRejection,
     isBusy,
     onAnswer,
     onContinue,
@@ -96,6 +98,8 @@ export function gridPresentation(slots: GridSlot[]): Presentation {
         </div>
 
         {formError ? <Error role="alert">{formError}</Error> : null}
+
+        <RejectionNotice rejection={advanceRejection} errors={errors} />
 
         <Button type="submit" disabled={isBusy}>
           {continueLabel}

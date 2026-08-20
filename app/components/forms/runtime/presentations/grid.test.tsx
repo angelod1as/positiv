@@ -36,6 +36,7 @@ const draw = (slots: GridSlot[], overrides: Partial<PresentationProps> = {}) => 
       focusFirstScreen={false}
       canGoBack={false}
       onBack={vi.fn()}
+      advanceRejection={null}
       onAnswer={onAnswer}
       onContinue={onContinue}
       continueLabel="Continuar"
@@ -136,6 +137,31 @@ describe("gridPresentation", () => {
     draw([{ kind: "question", id: "full_name" }], { isBusy: true })
 
     expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
+  })
+
+  it("names the question each field belongs to, so a refusal can find it", () => {
+    draw([{ kind: "question", id: "cpf", span: 4 }])
+
+    expect(fieldOf("CPF")).toHaveAttribute("data-question-id", "cpf")
+  })
+
+  it("says beside the button that the screen refused to move on", () => {
+    draw([{ kind: "question", id: "cpf", span: 4 }], {
+      errors: { cpf: "CPF inválido" },
+      advanceRejection: { questionIds: ["cpf"] },
+    })
+
+    const alerts = screen.getAllByRole("alert").map((node) => node.textContent)
+    expect(alerts).toContain("CPF inválido")
+    expect(alerts.length).toBeGreaterThan(1)
+  })
+
+  it("stays quiet while nothing has been refused", () => {
+    draw([{ kind: "question", id: "cpf", span: 4 }], {
+      errors: { cpf: "CPF inválido" },
+    })
+
+    expect(screen.getAllByRole("alert")).toHaveLength(1)
   })
 
   it("draws the content a step brought with it", () => {
