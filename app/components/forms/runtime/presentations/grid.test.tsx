@@ -63,6 +63,16 @@ describe("gridPresentation", () => {
     expect(fieldOf("CPF")).toHaveClass("sm:col-span-4")
   })
 
+  it("knows every width the twelve columns can be cut into", () => {
+    draw([
+      { kind: "question", id: "full_name", span: 9 },
+      { kind: "question", id: "cpf", span: 2 },
+    ])
+
+    expect(fieldOf("Nome completo")).toHaveClass("sm:col-span-9")
+    expect(fieldOf("CPF")).toHaveClass("sm:col-span-2")
+  })
+
   it("gives a slot with no width of its own the whole row", () => {
     draw([{ kind: "question", id: "full_name" }, { kind: "question", id: "cpf" }])
 
