@@ -1,4 +1,3 @@
-import { applySchema } from "composable-functions"
 import type { CommitResult } from "~types/forms/commit.types"
 import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
@@ -12,7 +11,6 @@ import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import {
-  changePasswordSchema,
   contextSchema,
   getSupabaseSchema,
   registerUserSchema,
@@ -192,27 +190,6 @@ export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
 
   return redirectWithSuccess(HOME, logoutCopy.successToast)
 }
-
-export const changePassword = applySchema(
-  changePasswordSchema,
-  contextSchema,
-)(async (values, context) => {
-  const { supabase } = context
-  const { error } = await supabase.auth.updateUser({
-    password: values.password,
-  })
-
-  if (error) {
-    if (error.code === "same_password") {
-      throw new Error(errorsCopy.auth.samePassword)
-    }
-    logger.error("Password change error", { error })
-    throw new Error(errorsCopy.auth.passwordChangeFailed)
-  }
-
-  return {}
-})
-
 
 export const registerUser = async (
   values: z.infer<typeof registerUserSchema>,

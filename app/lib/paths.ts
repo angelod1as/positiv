@@ -40,6 +40,7 @@ const REGISTER_COMMIT = "/api/auth/register"
 const LOGIN_COMMIT = "/api/auth/login"
 const FORGOT_PASSWORD_COMMIT = "/api/auth/esqueci-senha"
 const BASIC_DATA_COMMIT = "/api/account/dados-basicos"
+const CHANGE_PASSWORD_COMMIT = "/api/account/mudar-senha"
 
 //// ADMIN
 const ADMIN_DASHBOARD = "/admin"
@@ -98,6 +99,7 @@ const paths = {
     account: {
       ACCOUNT,
       CHANGE_PASSWORD,
+      CHANGE_PASSWORD_COMMIT,
       BASIC_DATA,
       BASIC_DATA_COMMIT,
       ACCOUNT_READY,
