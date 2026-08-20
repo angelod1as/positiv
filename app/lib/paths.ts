@@ -23,7 +23,6 @@ const DOWNLOAD_CALENDAR = (eventId: string) =>
 const ACCOUNT = `/conta`
 const CHANGE_PASSWORD = `${ACCOUNT}/mudar-senha`
 const BASIC_DATA = `${ACCOUNT}/dados-basicos`
-const GENDER_PRONOUNS_ORIENTATION = `${ACCOUNT}/dados-basicos-cont`
 const AGREE_TO_TERMS = `${ACCOUNT}/termos-e-condicoes`
 const ACCOUNT_READY = `${ACCOUNT}/tudo-pronto`
 
@@ -36,6 +35,7 @@ const EVENT_RULES_QUIZ_CHECK = (id: string) => `/api/events/${id}/rules-quiz`
 const EVENT_APPLICATION_SENT = (id: string) =>
   `${EVENT_VIEW(id)}/candidatura-enviada`
 const REGISTER_COMMIT = "/api/auth/register"
+const BASIC_DATA_COMMIT = "/api/account/dados-basicos"
 
 //// ADMIN
 const ADMIN_DASHBOARD = "/admin"
@@ -93,7 +93,7 @@ const paths = {
       ACCOUNT,
       CHANGE_PASSWORD,
       BASIC_DATA,
-      GENDER_PRONOUNS_ORIENTATION,
+      BASIC_DATA_COMMIT,
       ACCOUNT_READY,
     },
     events: {

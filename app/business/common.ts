@@ -167,9 +167,11 @@ export const basicDataFieldsSchema = zod.object({
 })
 
 export const basicDataSchema = basicDataFieldsSchema
+  // Blamed on the confirmation rather than on the phone: the number typed
+  // first is not the one someone is being asked to look at again.
   .refine((data) => data.phone === data.confirm_phone, {
     message: basicDataValidation.phoneMismatch,
-    path: ["phone"],
+    path: ["confirm_phone"],
   })
   .refine(
     (data) => {

@@ -1,18 +1,35 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile, getTestSupabaseClient } from "~/test/db-test-utils"
-import { extraBasicData } from "./basic-data.server"
-import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
+import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
 import * as listmonkClient from "../newsletter/listmonk-client.server"
+import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
+import { saveBasicData } from "./basic-data.server"
 
-describe("Basic Data Newsletter Re-sync - Integration Tests", () => {
+const answersFor = (email: string) => ({
+  full_name: "Maria Silva",
+  social_name: "Mari",
+  date_of_birth: "1990-01-01",
+  where_lives: "São Paulo",
+  how_came_to_us: "Uma amiga",
+  phone: "11999999999",
+  confirm_phone: "11999999999",
+  cpf: "12345678901",
+  rg: "123456789",
+  rg_issuer: "SSP/SP",
+  gender: ["Travesti"],
+  orientation: ["Bi"],
+  pronouns: ["Ela/dela"],
+  race_color: ["Preta"],
+  email,
+})
+
+describe("saveBasicData - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
   let supabase: ReturnType<typeof getTestSupabaseClient>
 
-  beforeEach(async () => {
+  beforeEach(() => {
     tracker.clear()
     vi.clearAllMocks()
-    // Create a fresh Supabase client for each test to avoid connection state issues
     supabase = getTestSupabaseClient()
   })
 
@@ -21,115 +38,138 @@ describe("Basic Data Newsletter Re-sync - Integration Tests", () => {
     vi.restoreAllMocks()
   })
 
-  describe("Newsletter re-sync when basic data is filled", () => {
-    it("should re-sync newsletter with real name when profile completes basic data", async () => {
-      const addSubscriberSpy = vi.spyOn(listmonkClient, "addSubscriber")
-      addSubscriberSpy.mockResolvedValue({ success: true, data: { subscriberId: 123 }, errors: [] })
+  const contextFor = (email: string, userId: string) => ({
+    supabase,
+    supabaseHeaders: new Headers(),
+    currentUser: { id: userId, email },
+    currentProfile: null,
+    isProdInDev: false,
+    host: null,
+  })
 
-      const email = "test-newsletter-resync@example.com"
+  it("adopts the profile waiting under the same e-mail instead of writing a second one", async () => {
+    const email = "test-orphan-adoption@example.com"
+    const userId = crypto.randomUUID()
 
-      // Create profile with null full_name and social_name (simulating incomplete profile)
-      const profile = await createTestProfile(tracker, kysely, {
-        email,
-        user_id: null,
-        full_name: null,
-        social_name: null,
-        is_veteran: false,
-        approved_to_attend: "pending",
-        phone: 11999999999,
-        rg: "123456789",
-        rg_issuer: "SSP",
-        cpf: "12345678901",
-        date_of_birth: "1990-01-01",
-        gender: ["Mulher cisgênero"],
-        orientation: ["Lésbica"],
-        pronouns: ["Ela/Dela"],
-        race_color: ["Preta"],
-      })
-
-      // Subscribe to newsletter (simulating user opted in during agree-to-terms)
-      // This will call addSubscriber with email as name since full_name is null
-      await subscribeProfileToNewsletter(profile.id, "terms_and_conditions")
-
-      // Verify initial sync used email as name
-      expect(addSubscriberSpy).toHaveBeenCalledOnce()
-      const initialCallArgs = addSubscriberSpy.mock.calls[0][0]
-      expect(initialCallArgs.name).toBe(email)
-
-      addSubscriberSpy.mockClear()
-
-      // Now fill in the basic data (including full_name)
-      const formData = {
-        gender: ["Mulher cisgênero"],
-        orientation: ["Lésbica"],
-        pronouns: ["Ela/Dela"],
-        race_color: ["Preta"],
-      }
-
-      // First update the profile with full_name (simulating the basicData step)
-      await kysely
-        .updateTable("profiles")
-        .set({
-          full_name: "Maria Silva",
-        })
-        .where("id", "=", profile.id)
-        .execute()
-
-      // Add small delay to ensure database operations are settled
-      // This prevents race conditions when rapidly updating the same row
-      await new Promise(resolve => setTimeout(resolve, 100))
-
-      // Fetch updated profile using Kysely
-      const updatedProfile = await kysely
-        .selectFrom("profiles")
-        .selectAll()
-        .where("id", "=", profile.id)
-        .executeTakeFirstOrThrow()
-
-      // Then call extraBasicData to set basic_data_filled = true
-      // This will throw a redirect response, which is expected behavior
-      try {
-        await extraBasicData({
-          formData,
-          context: {
-            supabase,
-            supabaseHeaders: new Headers(),
-            currentUser: null,
-            currentProfile: {
-              ...updatedProfile,
-              is_admin: false,
-              basic_data_filled: false,
-              created_at: updatedProfile.created_at || new Date().toISOString(),
-              date_of_birth: updatedProfile.date_of_birth
-                ? typeof updatedProfile.date_of_birth === "string"
-                  ? updatedProfile.date_of_birth
-                  : new Date(updatedProfile.date_of_birth).toISOString().split('T')[0]
-                : "1990-01-01",
-              how_came_to_us: updatedProfile.how_came_to_us || undefined,
-              where_lives: updatedProfile.where_lives || undefined,
-            },
-            isProdInDev: false,
-            host: null,
-          },
-        })
-      } catch (redirectOrError) {
-        // Catch the redirect response - this is expected
-        // If it's an error, log it for debugging
-        if (redirectOrError instanceof Error) {
-          console.error("Unexpected error:", redirectOrError.message)
-          throw redirectOrError
-        }
-        expect(redirectOrError).toHaveProperty("status", 302)
-      }
-
-      // Assert that addSubscriber was called again to re-sync with updated name
-      expect(addSubscriberSpy).toHaveBeenCalledOnce()
-
-      // Assert it was called with the real name (Maria), not the email
-      const callArgs = addSubscriberSpy.mock.calls[0][0]
-      expect(callArgs.name).toBe("Maria")
-      expect(callArgs.attributes.full_name).toBe("Maria Silva")
-      expect(callArgs.attributes.name).toBe("Maria")
+    const orphan = await createTestProfile(tracker, kysely, {
+      email,
+      user_id: null,
+      full_name: null,
+      is_veteran: true,
+      approved_to_attend: "approved",
     })
+
+    const result = await saveBasicData({
+      answers: answersFor(email),
+      // The context is what the route hands over; the cast keeps this test to
+      // the save itself rather than to the shape of an authenticated request.
+      context: contextFor(email, userId) as never,
+    })
+
+    expect(result).toEqual({ ok: true })
+
+    const rows = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("email", "=", email)
+      .execute()
+
+    expect(rows).toHaveLength(1)
+    expect(rows[0].id).toBe(orphan.id)
+    expect(rows[0].user_id).toBe(userId)
+    expect(rows[0].full_name).toBe("Maria Silva")
+    expect(rows[0].basic_data_filled).toBe(true)
+    // The history the orphan carried is why adopting it matters at all.
+    expect(rows[0].is_veteran).toBe(true)
+  })
+
+  it("writes every field of the profile, including the demographic ones", async () => {
+    const email = "test-save-basic-data@example.com"
+    const userId = crypto.randomUUID()
+
+    const profile = await createTestProfile(tracker, kysely, {
+      email,
+      user_id: userId,
+      full_name: null,
+    })
+
+    await saveBasicData({
+      answers: answersFor(email),
+      context: contextFor(email, userId) as never,
+    })
+
+    const saved = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirstOrThrow()
+
+    expect(saved.cpf).toBe("12345678901")
+    expect(saved.phone).toBe(11999999999)
+    expect(saved.gender).toEqual(["Travesti"])
+    expect(saved.race_color).toEqual(["Preta"])
+    expect(saved.basic_data_filled).toBe(true)
+  })
+
+  it("re-syncs the newsletter now that there is a real name to file it under", async () => {
+    const addSubscriber = vi.spyOn(listmonkClient, "addSubscriber")
+    addSubscriber.mockResolvedValue({
+      success: true,
+      data: { subscriberId: 123 },
+      errors: [],
+    })
+
+    const email = "test-newsletter-resync@example.com"
+    const userId = crypto.randomUUID()
+
+    const profile = await createTestProfile(tracker, kysely, {
+      email,
+      user_id: userId,
+      full_name: null,
+      social_name: null,
+    })
+
+    await subscribeProfileToNewsletter(profile.id, "terms_and_conditions")
+
+    // Filed under the e-mail, because that is all the profile had.
+    expect(addSubscriber.mock.calls[0][0].name).toBe(email)
+    addSubscriber.mockClear()
+
+    await saveBasicData({
+      answers: answersFor(email),
+      context: contextFor(email, userId) as never,
+    })
+
+    expect(addSubscriber).toHaveBeenCalledOnce()
+    expect(addSubscriber.mock.calls[0][0].attributes.full_name).toBe(
+      "Maria Silva",
+    )
+  })
+
+  it("writes nothing when an answer is refused", async () => {
+    const email = "test-refused-basic-data@example.com"
+    const userId = crypto.randomUUID()
+
+    const profile = await createTestProfile(tracker, kysely, {
+      email,
+      user_id: userId,
+      full_name: null,
+    })
+
+    const result = await saveBasicData({
+      answers: { ...answersFor(email), cpf: "" },
+      context: contextFor(email, userId) as never,
+    })
+
+    expect(result.ok).toBe(false)
+
+    const saved = await kysely
+      .selectFrom("profiles")
+      .selectAll()
+      .where("id", "=", profile.id)
+      .executeTakeFirstOrThrow()
+
+    expect(saved.full_name).toBeNull()
+    expect(saved.basic_data_filled).toBe(false)
   })
 })

@@ -1,171 +1,116 @@
-import { applySchema } from "composable-functions"
-import { redirectWithError, redirectWithSuccess } from "remix-toast"
+import type { ZodError } from "zod"
 import type { z } from "zod"
-import { errorsCopy } from "~/copy/errors"
-import { participantCopy } from "~/copy/participant"
+import type { CommitError, CommitResult } from "~types/forms/commit.types"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
 import { db } from "~/lib/supabase/db.server"
-import paths from "~/lib/paths"
-import { basicDataSchema, contextSchema, ExtraBasicDataSchema } from "../common"
+import { participantCopy } from "~/copy/participant"
+import { basicDataSchema, ExtraBasicDataSchema, userContextSchema } from "../common"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import type { SubscriptionSource } from "../newsletter/types"
 
-const {
-  auth: { LOGIN },
-} = paths
+type SaveBasicDataProps = {
+  answers: Record<string, unknown>
+  context: z.infer<typeof userContextSchema>
+}
 
-export const basicData = applySchema(
-  basicDataSchema,
-  contextSchema,
-)(async (values, context) => {
-  const { supabase, currentProfile, currentUser } = context
-  const parsedValues = schemaValuesToDB(values)
-  if (!currentUser || !currentUser.email) {
-    throw await redirectWithError(LOGIN, errorsCopy.auth.authenticationFailed)
+const toCommitErrors = (error: ZodError): CommitError[] =>
+  error.issues.map((issue) => ({
+    questionId: String(issue.path[0] ?? ""),
+    message: issue.message,
+  }))
+
+/**
+ * Writes the fourteen fields of a profile in one go, adopting the profile left
+ * behind under the same e-mail if there is one — someone who attended before
+ * signing up already has a row, and it holds their history.
+ */
+export async function saveBasicData({
+  answers,
+  context,
+}: SaveBasicDataProps): Promise<CommitResult> {
+  const { supabase, currentUser } = context
+
+  // The e-mail is how a profile left behind is found and how a new one is
+  // keyed, so there is nothing to save without it.
+  if (!currentUser.email) return { ok: false, errors: [] }
+  const email = currentUser.email
+
+  const basic = basicDataSchema.safeParse(answers)
+  const extra = ExtraBasicDataSchema.safeParse(answers)
+
+  if (!basic.success || !extra.success) {
+    return {
+      ok: false,
+      errors: [
+        ...(basic.success ? [] : toCommitErrors(basic.error)),
+        ...(extra.success ? [] : toCommitErrors(extra.error)),
+      ],
+    }
   }
 
-  const { confirm_phone, ...data } = parsedValues
+  // The same conversion the profile has always been written through: a field
+  // left empty becomes null rather than vanishing from the write, so clearing
+  // one clears it on the row too.
+  const { confirm_phone, ...values } = schemaValuesToDB(basic.data)
 
-  // Check for orphaned profile with user's email
   const { data: orphanedProfile, error: orphanedError } = await supabase
     .from("profiles")
     .select("*")
-    .eq("email", currentUser.email)
+    .eq("email", email)
     .is("user_id", null)
     .single()
 
-  // If there's an error other than "no rows", throw it
+  // Anything other than "no rows" means the question of whether a profile is
+  // waiting under this e-mail went unanswered, and writing a second one would
+  // strand the first.
   if (orphanedError && orphanedError.code !== "PGRST116") {
     throw new Error(
       `Error checking for orphaned profile: ${orphanedError.message}`,
     )
   }
 
-  // Build upsert data with optional id
-  const profileId = orphanedProfile?.id || currentProfile?.id
+  const profileId = orphanedProfile?.id ?? context.currentProfile?.id
 
-  // Build base upsert data
-  interface ProfileUpsertData {
-    [key: string]:
-      | string
-      | number
-      | boolean
-      | null
-      | undefined
-      | Date
-      | string[]
-    id?: string
-    user_id: string
-    email: string
-    date_of_birth: string | null
-  }
-
-  const upsertData: ProfileUpsertData = {
-    ...data,
-    date_of_birth: dateToString(data.date_of_birth),
-    user_id: currentUser.id,
-    email: currentUser.email,
-  }
-
-  // Add profile ID if exists
-  if (profileId) {
-    upsertData.id = profileId
-  }
-
-  // Note: Newsletter subscription preferences are now managed via newsletter_subscriptions table
-  // No need to preserve allow_marketing_email here
-
-  const { error: upsertError } = await supabase
+  const { data: saved, error: upsertError } = await supabase
     .from("profiles")
-    .upsert(upsertData, { onConflict: 'user_id' })
+    .upsert(
+      {
+        ...values,
+        ...extra.data,
+        ...(profileId ? { id: profileId } : {}),
+        date_of_birth: dateToString(values.date_of_birth),
+        user_id: currentUser.id,
+        email,
+        basic_data_filled: true,
+      },
+      { onConflict: "user_id" },
+    )
+    .select("id")
+    .single()
 
-  if (upsertError) {
+  if (upsertError || !saved) {
     const code = upsertError?.code ?? "UNKNOWN"
     const message = upsertError?.message ?? String(upsertError)
     throw new Error(participantCopy.basicData.profileUpdateFailed(code, message))
   }
 
-  return context
-})
-
-type ExtraBasicDataProps = {
-  formData: z.infer<typeof ExtraBasicDataSchema>
-  context: z.infer<typeof contextSchema>
-}
-
-const {
-  dash: {
-    DASHBOARD,
-    account: { GENDER_PRONOUNS_ORIENTATION, BASIC_DATA, ACCOUNT_READY },
-  },
-  admin: { ADMIN_DASHBOARD },
-} = paths
-
-export const extraBasicData = async ({
-  formData,
-  context,
-}: ExtraBasicDataProps) => {
-  const { currentProfile, supabaseHeaders } = context
-
-  if (!currentProfile) {
-    throw new Error(participantCopy.basicData.profileNotFound)
-  }
-
-  // Read before the update below sets basic_data_filled: true
-  const isFirstCompletion = !currentProfile.basic_data_filled
-
-  const extraDataValidation = ExtraBasicDataSchema.safeParse(formData)
-
-  if (!extraDataValidation.success) {
-    throw await redirectWithError(
-      GENDER_PRONOUNS_ORIENTATION,
-      participantCopy.basicData.invalidExtraData,
-    )
-  }
-
-  const basicValidation = basicDataSchema.safeParse({
-    ...currentProfile,
-    confirm_phone: currentProfile.phone,
-  })
-
-  if (!basicValidation.success) {
-    throw await redirectWithError(
-      BASIC_DATA,
-      participantCopy.basicData.incompleteBasicData,
-    )
-  }
-
-  await db
-    .updateTable("profiles")
-    .set({
-      ...extraDataValidation.data,
-      basic_data_filled: true,
-    })
-    .where("id", "=", currentProfile.id)
-    .execute()
-
+  // The name reaching the profile is often the first real one the newsletter
+  // could have: before this, a subscriber taken at sign-up is filed under an
+  // e-mail address.
   const subscription = await db
     .selectFrom("newsletter_subscriptions")
     .select(["consent_given", "subscription_source"])
-    .where("profile_id", "=", currentProfile.id)
+    .where("profile_id", "=", saved.id)
     .where("consent_given", "=", true)
     .executeTakeFirst()
 
   if (subscription?.subscription_source) {
     await subscribeProfileToNewsletter(
-      currentProfile.id,
+      saved.id,
       subscription.subscription_source as SubscriptionSource,
     )
   }
 
-  const targetPath = currentProfile.is_admin
-    ? ADMIN_DASHBOARD
-    : isFirstCompletion
-      ? ACCOUNT_READY
-      : DASHBOARD
-
-  return redirectWithSuccess(targetPath, participantCopy.basicData.saved, {
-    headers: supabaseHeaders,
-  })
+  return { ok: true }
 }
