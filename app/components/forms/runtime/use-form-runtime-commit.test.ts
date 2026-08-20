@@ -554,3 +554,45 @@ describe("useFormRuntime commit steps", () => {
     expect(result.current.isDone).toBe(true)
   })
 })
+
+describe("useFormRuntime a commit's rejections beside the button", () => {
+  it("names the questions the commit rejected", async () => {
+    const run: CommitFn = () => ({
+      ok: false,
+      errors: [
+        { questionId: "nome", message: "Nome inválido" },
+        { questionId: "email", message: "E-mail já cadastrado" },
+      ],
+    })
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: flowWithCommit(run) }),
+    )
+
+    await fill(result, [
+      ["email", "a@b.com"],
+      ["nome", "Angelo"],
+    ])
+
+    expect(result.current.advanceRejection?.questionIds).toEqual([
+      "nome",
+      "email",
+    ])
+  })
+
+  it("leaves the signal alone when the commit failed as a whole", async () => {
+    const run: CommitFn = () => {
+      throw new Error("rede caiu")
+    }
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: flowWithCommit(run) }),
+    )
+
+    await fill(result, [
+      ["email", "a@b.com"],
+      ["nome", "Angelo"],
+    ])
+
+    expect(result.current.formError).not.toBeNull()
+    expect(result.current.advanceRejection).toBeNull()
+  })
+})

@@ -30,6 +30,13 @@ export type PresentationProps = {
   /** A failure that belongs to no single question, such as a commit that threw. */
   formError: string | null
   /**
+   * The questions that refused the last attempt to move on, written fresh on
+   * every refusal. A presentation showing one question at a time can ignore it:
+   * the message is already on the screen. One showing many at once has to say
+   * so beside its button — see `RejectionNotice`.
+   */
+  advanceRejection: { questionIds: string[] } | null
+  /**
    * Where the run is along the path the flow currently projects. Null when
    * there is a single screen, or when the runtime cannot place the current one.
    * A presentation that shows everything at once has no use for it.

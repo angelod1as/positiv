@@ -4,6 +4,7 @@ import { Error } from "~/components/forms/base/error"
 import type { Question } from "~/components/forms/runtime/question.types"
 import { ownsItsPrompt } from "./owns-its-prompt"
 import type { Presentation } from "./presentation.types"
+import { RejectionNotice } from "./rejection-notice"
 
 /**
  * A radio or checkbox question is drawn as a group rather than as one labelable
@@ -19,6 +20,7 @@ export const AllAtOnce: Presentation = ({
   answers,
   errors,
   formError,
+  advanceRejection,
   isBusy,
   onAnswer,
   onContinue,
@@ -39,7 +41,11 @@ export const AllAtOnce: Presentation = ({
       const choice = isChoice(question)
 
       return (
-        <div key={question.id} className="flex flex-col gap-2">
+        <div
+          key={question.id}
+          data-question-id={question.id}
+          className="flex flex-col gap-2"
+        >
           {ownsItsPrompt(question) ? null : choice ? (
             <span id={promptId} className="mb-2 text-sm font-medium">
               {question.prompt}
@@ -69,6 +75,8 @@ export const AllAtOnce: Presentation = ({
     })}
 
     {formError ? <Error role="alert">{formError}</Error> : null}
+
+    <RejectionNotice rejection={advanceRejection} errors={errors} />
 
     <Button type="submit" disabled={isBusy}>
       {continueLabel}

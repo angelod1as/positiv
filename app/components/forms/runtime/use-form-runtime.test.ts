@@ -885,3 +885,112 @@ describe("useFormRuntime going back", () => {
     expect(result.current.formError).toBeNull()
   })
 })
+
+describe("useFormRuntime refused advance", () => {
+  it("has nothing refused before anyone tries to advance", () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: quizQuestions, flow: screenFlow }),
+    )
+
+    expect(result.current.advanceRejection).toBeNull()
+  })
+
+  it("names the questions that refused the advance", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: quizQuestions, flow: screenFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("b", "resposta b")
+      await result.current.advance()
+    })
+
+    expect(result.current.advanceRejection?.questionIds).toEqual(["a"])
+  })
+
+  it("hands out a fresh signal on every refusal, so a second try reads as one", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: quizQuestions, flow: screenFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+    const first = result.current.advanceRejection
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.advanceRejection).not.toBe(first)
+    expect(result.current.advanceRejection?.questionIds).toEqual(["a", "b"])
+  })
+
+  it("clears the signal once the advance goes through", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: quizQuestions, flow: screenFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+    expect(result.current.advanceRejection).not.toBeNull()
+
+    await act(async () => {
+      result.current.answer("a", "certa")
+      result.current.answer("b", "resposta b")
+      await result.current.advance()
+    })
+
+    expect(result.current.advanceRejection).toBeNull()
+  })
+
+  it("clears the signal when the run walks back", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions, flow: linearFlow }),
+    )
+
+    await act(async () => {
+      result.current.answer("a", "resposta a")
+      await result.current.advance()
+    })
+    await act(async () => {
+      await result.current.advance()
+    })
+    expect(result.current.advanceRejection).not.toBeNull()
+
+    act(() => {
+      result.current.goBack()
+    })
+
+    expect(result.current.advanceRejection).toBeNull()
+  })
+})
+
+describe("useFormRuntime refusal order", () => {
+  // A digit-only key is reordered ahead of the rest by every JS engine, so the
+  // refusing questions are collected in the order the step asks them rather
+  // than read back off an object.
+  it("names the refusing questions in the order the screen asks them", async () => {
+    const numbered = [question("nome"), question("2"), question("1")]
+    const numberedFlow: Flow = {
+      start: "tela",
+      steps: { tela: { kind: "screen", ids: ["nome", "2", "1"] } },
+      next: () => "done",
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: numbered, flow: numberedFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.advanceRejection?.questionIds).toEqual([
+      "nome",
+      "2",
+      "1",
+    ])
+  })
+})
