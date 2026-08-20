@@ -151,12 +151,12 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
   // not changed.
   const questions = useMemo(
     () => buildRulesQuestions(readRulesDeal(runId) ?? undefined),
-    [eventId],
+    [runId],
   )
 
   useEffect(() => {
     writeRulesDeal(runId, dealOf(questions))
-  }, [eventId, questions])
+  }, [runId, questions])
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
@@ -195,6 +195,11 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
   return (
     <Wrapper notice={notice}>
       <FormRunner
+        // The runtime seeds its answers and its first-attempt records once, at
+        // mount. A loader that comes back with someone else while the route
+        // stays put would otherwise leave them holding the previous person's
+        // run — in memory, where no storage key can separate them.
+        key={runId}
         questions={questions}
         flow={flow}
         presentation={OneAtATime}

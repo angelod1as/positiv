@@ -596,6 +596,35 @@ describe("event-rules-page for two people in one browser session", () => {
 
     expect((await shownQuestion()).prompt).toBe(quiz.trigger.question)
   })
+
+  it("does not keep the first person's quiz when the loader revalidates in place", async () => {
+    const user = userEvent.setup()
+
+    const { rerender } = renderPage({
+      isVeteran: false,
+      profileId: "profile-1",
+    })
+    const started = await firstSingleAnswerQuestion()
+    await answer(user, started.entry.answers.correct[0])
+    await waitFor(async () => {
+      expect((await shownQuestion()).prompt).not.toBe(started.prompt)
+    })
+
+    // The route can stay mounted while the loader comes back with a different
+    // person — no remount to reset anything, so the page has to notice on its
+    // own that the run it is showing is not theirs.
+    rerender(
+      <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
+        <EventRulesPage
+          {...({} as Route.ComponentProps)}
+          params={{ id: "123" }}
+          loaderData={{ isVeteran: true, profileId: "profile-2" }}
+        />
+      </MemoryRouter>,
+    )
+
+    expect((await shownQuestion()).prompt).toBe(quiz.trigger.question)
+  })
 })
 
 // A checkbox question keeps whatever was marked on it, so a wrong answer left
