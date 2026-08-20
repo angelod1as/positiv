@@ -316,6 +316,10 @@ export function useFormRuntime({
           .map((id) => [id, current[id]]),
       )
 
+    // The rejection travels with the errors it refers to, here and in the
+    // commit branch below. `RejectionNotice` reads the two together to decide
+    // which field to reach for, and one arriving a render ahead of the other
+    // would send it to a question whose message has not landed yet.
     if (Object.keys(failures).length > 0) {
       setErrors((current) => ({ ...elsewhere(current), ...failures }))
       setAdvanceRejection({ questionIds: Object.keys(failures) })

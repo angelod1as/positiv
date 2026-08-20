@@ -12,7 +12,9 @@ const question = (id: string, prompt: string): Question => ({
   id,
   prompt,
   input: { kind: "text" },
-  schema: zod.string().min(1, { message: "Resposta obrigatória" }),
+  // No custom message: these tests refuse fields nobody touched, which zod
+  // rejects as the wrong type before any rule of the schema's own runs.
+  schema: zod.string().min(1),
 })
 
 const questions = [
