@@ -73,10 +73,10 @@ export const adminEventsCopy = {
       time_event_start: "Início do evento",
       time_event_end: "Fim do evento",
       time_application_start: "Abertura das candidaturas",
-      time_group_start: "Início",
-      time_group_end: "Encerramento",
-      time_payment_start: "Início",
-      time_payment_end: "Encerramento",
+      time_group_start: "Início do grupo",
+      time_group_end: "Encerramento do grupo",
+      time_payment_start: "Início dos pagamentos",
+      time_payment_end: "Encerramento dos pagamentos",
     } as const satisfies Partial<
       Record<keyof z.infer<typeof eventFormSchema>, string>
     >,
@@ -103,7 +103,6 @@ export const adminEventsCopy = {
       group: "Grupo",
       payments: "Pagamentos",
     },
-    descriptionHint: "Use uma frase breve",
     ticketPricePrefix: "R$",
     totalSpotsSuffix: "pessoas",
     emojiInvalid: eventFormValidation.emojiInvalid,

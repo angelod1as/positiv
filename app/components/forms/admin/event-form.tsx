@@ -84,7 +84,7 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
                   <Field name="emoji" />
                 </div>
                 <div className="sm:col-span-12 col-span-12">
-                  <Field name="description" description={formCopy.descriptionHint} />
+                  <Field name="description" />
                 </div>
                 <div className="sm:col-span-7 col-span-12">
                   <Field name="location" />
