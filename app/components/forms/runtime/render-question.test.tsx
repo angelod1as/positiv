@@ -52,6 +52,22 @@ describe("renderQuestion", () => {
     expect(screen.getByRole("spinbutton")).toBeInTheDocument()
   })
 
+  it("draws the prefix and the suffix a number question carries", () => {
+    draw({ kind: "textnumber", prefix: "R$", suffix: "pessoas" })
+
+    expect(screen.getByText("R$")).toBeInTheDocument()
+    expect(screen.getByText("pessoas")).toBeInTheDocument()
+    expect(screen.getByRole("spinbutton")).toBeInTheDocument()
+  })
+
+  it("draws no affixes for a number question without them", () => {
+    const { container } = render(
+      <>{renderQuestion({ question: question({ kind: "textnumber" }), value: undefined, onChange: vi.fn() })}</>,
+    )
+
+    expect(container.textContent).toBe("")
+  })
+
   it("draws a multiline field that reports what was typed", async () => {
     const user = userEvent.setup()
     const onChange = draw({ kind: "textarea" })

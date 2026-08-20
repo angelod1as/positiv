@@ -19,6 +19,8 @@ const asList = (value: unknown) =>
 const choiceClassName =
   "flex items-start gap-2 py-0.5 cursor-pointer mb-0 pointer-coarse:min-h-11 pointer-coarse:py-2"
 
+const affixClassName = "text-sm text-muted-foreground shrink-0"
+
 export const renderQuestion: RenderQuestion = ({
   question,
   value,
@@ -64,8 +66,8 @@ export const renderQuestion: RenderQuestion = ({
         />
       )
 
-    case "textnumber":
-      return (
+    case "textnumber": {
+      const field = (
         <Input
           {...shared}
           type="number"
@@ -75,6 +77,21 @@ export const renderQuestion: RenderQuestion = ({
           onChange={(event) => onChange(event.target.value)}
         />
       )
+
+      if (!input.prefix && !input.suffix) return field
+
+      return (
+        <div className="flex items-center gap-2">
+          {input.prefix ? (
+            <span className={affixClassName}>{input.prefix}</span>
+          ) : null}
+          {field}
+          {input.suffix ? (
+            <span className={affixClassName}>{input.suffix}</span>
+          ) : null}
+        </div>
+      )
+    }
 
     case "date":
       return (
