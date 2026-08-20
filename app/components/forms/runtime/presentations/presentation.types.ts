@@ -59,6 +59,8 @@ export type PresentationProps = {
   onContinue: () => void
   onBack: () => void
   continueLabel: string
+  /** What the button says while a commit is in flight, in place of the label. */
+  pendingLabel: string
   renderQuestion: RenderQuestion
 }
 

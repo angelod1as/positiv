@@ -109,6 +109,7 @@ const FeedbackPage = () => {
         presentation={AllAtOnce}
         renderQuestion={renderQuestion}
         continueLabel={feedbackCopy.submit}
+        pendingLabel={feedbackCopy.submitting}
         onDone={() => {
           toast.success(feedbackCopy.success)
           void navigate(HOME)

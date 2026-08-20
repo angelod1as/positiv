@@ -74,6 +74,7 @@ const ChangePasswordPage = ({}: Route.ComponentProps) => {
         flow={flow}
         presentation={AllAtOnce}
         continueLabel={changePasswordCopy.buttonLabel}
+        pendingLabel={changePasswordCopy.pendingButtonLabel}
         // No persistence, deliberately: the answers are two passwords, and
         // persistence writes them to sessionStorage.
         onDone={() => {

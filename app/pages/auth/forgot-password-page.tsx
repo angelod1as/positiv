@@ -65,6 +65,7 @@ const ForgotPasswordPage = ({}: Route.ComponentProps) => {
             flow={flow}
             presentation={AllAtOnce}
             continueLabel={forgotPasswordCopy.buttonLabel}
+            pendingLabel={forgotPasswordCopy.pendingButtonLabel}
             onDone={() => {
               toast.success(forgotPasswordCopy.successToast, {
                 duration: 10_000,

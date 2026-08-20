@@ -97,6 +97,7 @@ const LoginPage = ({}: Route.ComponentProps) => {
             flow={flow}
             presentation={AllAtOnce}
             continueLabel={loginCopy.buttonLabel}
+            pendingLabel={loginCopy.pendingButtonLabel}
             // No persistence, deliberately: the answers include a password, and
             // persistence writes them to sessionStorage.
             onDone={() => {
