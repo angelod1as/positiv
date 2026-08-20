@@ -1,4 +1,8 @@
-import { createCookie, createCookieSessionStorage } from "react-router"
+import {
+  createCookie,
+  createCookieSessionStorage,
+  type Session,
+} from "react-router"
 import { ENV } from "varlock/env"
 
 type RulesSessionData = {
@@ -30,6 +34,19 @@ export const rulesSessionStorage = createCookieSessionStorage<
     secrets: [cookieSecret || ""],
   },
 })
+
+export type RulesSession = Session<RulesSessionData, SessionFlashData>
+
+/**
+ * Both the form's loader and its submit ask this, and they have to agree: a
+ * guard that only ran on the way in is the hole this pair was written to close.
+ */
+export function hasPassedRulesQuiz(
+  session: RulesSession,
+  eventId: string,
+): boolean {
+  return (session.get("rulesCorrect") ?? []).includes(eventId)
+}
 
 export const newsCookie = createCookie("show-news", {
   maxAge: 34560000, // max value

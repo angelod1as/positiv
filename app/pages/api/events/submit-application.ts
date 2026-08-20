@@ -1,7 +1,10 @@
 import { redirect, type ActionFunctionArgs } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
 import { applyToEvent } from "~/business/participant/apply-to-event.server"
-import { rulesSessionStorage } from "~/business/session.server"
+import {
+  hasPassedRulesQuiz,
+  rulesSessionStorage,
+} from "~/business/session.server"
 import { buildApplicationQuestions } from "~/components/forms/custom/application/build-application-questions"
 import { participantCopy } from "~/copy/participant"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
@@ -28,7 +31,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
     request.headers.get("Cookie"),
   )
 
-  if (!(session.get("rulesCorrect") ?? []).includes(params.id)) {
+  if (!hasPassedRulesQuiz(session, params.id)) {
     return Response.json({ ok: false, errors: [] }, { status: 403 })
   }
 

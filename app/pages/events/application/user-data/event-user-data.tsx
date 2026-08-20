@@ -1,7 +1,10 @@
 import { useCallback, useMemo, useRef } from "react"
 import { data, redirect, useNavigate } from "react-router"
 import { toast } from "sonner"
-import { rulesSessionStorage } from "~/business/session.server"
+import {
+  hasPassedRulesQuiz,
+  rulesSessionStorage,
+} from "~/business/session.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { buildApplicationFlow } from "~/components/forms/custom/application/build-application-flow"
 import { buildApplicationQuestions } from "~/components/forms/custom/application/build-application-questions"
@@ -27,9 +30,9 @@ const {
 export async function loader({ request, params }: Route.LoaderArgs) {
   const { commitSession, getSession } = rulesSessionStorage
   const session = await getSession(request.headers.get("Cookie"))
-  const passed = session.get("rulesCorrect") ?? []
-
-  if (!passed.includes(params.id)) return redirect(EVENT_RULES(params.id))
+  if (!hasPassedRulesQuiz(session, params.id)) {
+    return redirect(EVENT_RULES(params.id))
+  }
 
   // The submit reads this same cookie, and it lives half an hour. Someone
   // writing their answers slowly would reach the button after it expired, so
