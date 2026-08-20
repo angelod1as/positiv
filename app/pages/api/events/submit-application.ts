@@ -41,7 +41,9 @@ export async function action({ request, params }: ActionFunctionArgs) {
     return Response.json({ ok: false, errors: [] }, { status: 400 })
   }
 
-  const errors = buildApplicationQuestions().flatMap((question) => {
+  const questions = buildApplicationQuestions()
+
+  const errors = questions.flatMap((question) => {
     const result = question.schema.safeParse(answers[question.id])
 
     return result.success
@@ -51,8 +53,16 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   if (errors.length > 0) return Response.json({ ok: false, errors })
 
+  // Only what the form asked. `applyToEventInputSchema` also accepts
+  // `skipEmail`, which belongs to the admin's one-click application, and
+  // spreading the raw body would let anyone past the quiz turn off their own
+  // confirmation e-mail by adding a key to it.
+  const values = Object.fromEntries(
+    questions.map((question) => [question.id, answers[question.id]]),
+  )
+
   const result = await applyToEvent(
-    { ...answers, eventId: params.id, applicationDate: new Date() },
+    { ...values, eventId: params.id, applicationDate: new Date() },
     context,
   )
 
