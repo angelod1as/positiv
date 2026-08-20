@@ -6,11 +6,11 @@ import {
   rulesSessionStorage,
 } from "~/business/session.server"
 import { Copy } from "~/components/atoms/copy/copy"
-import { buildApplicationFlow } from "~/components/forms/custom/application/build-application-flow"
 import { buildApplicationQuestions } from "~/components/forms/custom/application/build-application-questions"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
 import type { Answers } from "~/components/forms/runtime/question.types"
+import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
 import { eventApplicationCopy } from "~/copy/events"
 import { useAnalytics } from "~/lib/hooks/use-analytics"
 import paths from "~/lib/paths"
@@ -94,7 +94,13 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
   )
 
   const flow = useMemo(
-    () => buildApplicationFlow(questions, commit),
+    // The step names are the ones a run left half-written already carries:
+    // a stored record naming a step this flow does not have is discarded.
+    () =>
+      buildSingleScreenFlow(questions, commit, {
+        screenId: "form",
+        commitId: "commit",
+      }),
     [questions, commit],
   )
 

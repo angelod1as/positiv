@@ -2,8 +2,15 @@ import type { CommitFn } from "./commit.types"
 import type { Flow, StepId } from "./flow.types"
 import type { Question } from "./question.types"
 
-const SCREEN: StepId = "screen"
-const COMMIT: StepId = "commit"
+type SingleScreenFlowOptions = {
+  /**
+   * What to call the two steps. Worth setting for a form that persists its
+   * run: the record names the step it was left on, and a record naming a step
+   * the flow no longer has is thrown away — with everything typed into it.
+   */
+  screenId?: StepId
+  commitId?: StepId
+}
 
 /**
  * Every question on one screen, then a single save — the shape a short form
@@ -14,16 +21,17 @@ const COMMIT: StepId = "commit"
 export function buildSingleScreenFlow(
   questions: Question[],
   commit: CommitFn,
+  { screenId = "screen", commitId = "commit" }: SingleScreenFlowOptions = {},
 ): Flow {
   return {
-    start: SCREEN,
+    start: screenId,
     steps: {
-      [SCREEN]: {
+      [screenId]: {
         kind: "screen",
         ids: questions.map((question) => question.id),
       },
-      [COMMIT]: { kind: "commit", run: commit },
+      [commitId]: { kind: "commit", run: commit },
     },
-    next: (current) => (current === SCREEN ? COMMIT : "done"),
+    next: (current) => (current === screenId ? commitId : "done"),
   }
 }

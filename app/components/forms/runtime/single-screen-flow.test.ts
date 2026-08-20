@@ -40,6 +40,22 @@ describe("buildSingleScreenFlow", () => {
     expect(Object.keys(flow.steps)).toHaveLength(2)
   })
 
+  it("takes the step names a stored run already knows", () => {
+    const commit = vi.fn()
+    const flow = buildSingleScreenFlow(questions, commit, {
+      screenId: "form",
+      commitId: "salvar",
+    })
+
+    expect(flow.start).toBe("form")
+    expect(flow.steps.form).toEqual({
+      kind: "screen",
+      ids: ["email", "senha"],
+    })
+    expect(flow.next("form", {}, context)).toBe("salvar")
+    expect(flow.next("salvar", {}, context)).toBe("done")
+  })
+
   it("asks nothing when there is nothing to ask", () => {
     const flow = buildSingleScreenFlow([], vi.fn())
 
