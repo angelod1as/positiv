@@ -1,4 +1,4 @@
-import { isInputError, type Result } from "composable-functions"
+import { InputError, type Result } from "composable-functions"
 import type { CommitError, CommitResult } from "~types/forms/commit.types"
 
 /**
@@ -21,7 +21,9 @@ export function toCommitResult(result: Result<unknown>): CommitResult {
   let message: string | undefined
 
   for (const error of result.errors) {
-    if (isInputError(error)) {
+    // Asked by class rather than through isInputError, which answers with a
+    // boolean and so leaves the path out of reach of the types.
+    if (error instanceof InputError) {
       errors.push({
         questionId: String(error.path[0] ?? ""),
         message: error.message,
