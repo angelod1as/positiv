@@ -55,18 +55,13 @@ git worktree add ../<branch-name> <branch-name>
 
 cd ../<branch-name>
 cp ../main/.env .env      # env files are not versioned
-pnpm install
+pnpm install              # always, right after creating it
 ```
 
 - `git worktree list` — list all worktrees
 - `git worktree remove ../<name>` — remove one after its PR merges
-
-**Best practices**
-
-1. One worktree per feature or bugfix
-2. Name worktrees descriptively but concisely
-3. Always run `pnpm install` after creating a worktree
-4. Fast-forward `wt/main` before creating a worktree and after removing one
+- Fast-forward `wt/main` before creating a worktree and after removing one
+- Name worktrees descriptively but concisely
 
 ## Claude Code Settings
 
@@ -92,31 +87,17 @@ rules for the common cases, but they are a backstop, not a substitute.
 ## Essential Commands
 
 ```bash
-# Development
-pnpm dev          # Start development server (port 5173)
-
-# Build & Production
-pnpm build        # Build for production
-pnpm start        # Start production server
-
-# Code Quality - ALWAYS run before committing
-pnpm lint         # Runs ESLint, generates types, and checks TypeScript
-
-# Testing
-pnpm test         # Run unit tests and integration tests
-pnpm test:unit    # Run unit tests only with Vitest
-pnpm test:integration # Run integration tests only (requires database)
-pnpm test:ui      # Run unit tests with Vitest UI
-pnpm test:coverage # Run unit tests with coverage report
-pnpm test:watch   # Run unit tests in watch mode
-pnpm test:e2e     # Run Playwright E2E tests
-pnpm test:e2e:ui  # Run E2E tests with UI
-
-# Database Types Generation
-pnpm db:types --local  # Generate TypeScript types from local Supabase instance
-pnpm db:types          # For production Supabase (rarely used)
-
+pnpm dev                 # dev server, port 5173
+pnpm lint                # ESLint + type generation + tsc — run before committing
+pnpm test                # unit + integration
+pnpm test:unit           # unit only
+pnpm test:integration    # integration only — takes the database lock
+pnpm test:e2e            # E2E — takes the database lock, read the E2E section first
+pnpm db:types --local    # regenerate types from local Supabase
 ```
+
+`pnpm build` and `pnpm start` produce and serve the production build.
+`package.json` carries the rest — `test:ui`, `test:watch`, `test:coverage`.
 
 ## Database Migration Rules
 
@@ -141,35 +122,18 @@ pnpm db:types          # For production Supabase (rarely used)
 
 ### Migration Best Practices
 
-1. Handle duplicate object creation gracefully:
+- Make creation idempotent: `CREATE EXTENSION IF NOT EXISTS`, `DROP ... IF
+  EXISTS`, and a `DO $$ ... EXCEPTION WHEN duplicate_object THEN null; END $$`
+  block around `CREATE TYPE`.
 
-   ```sql
-   -- Use DO blocks with exception handling for types
-   DO $$ BEGIN
-     CREATE TYPE "public"."my_type" as ("field" varchar);
-   EXCEPTION
-     WHEN duplicate_object THEN null;
-   END $$;
-   
-   -- Use IF NOT EXISTS for extensions
-   CREATE EXTENSION IF NOT EXISTS pg_cron;
-   ```
+- Nested SQL needs its own delimiter — `$$` inside `$$` does not parse, so a
+  job body gets `$job$`:
 
-2. Use proper delimiters for complex SQL in functions:
-
-   ```sql
-   -- Use $job$ or other delimiters instead of $$ when nesting
-   PERFORM cron.schedule('job-name', '*/5 * * * *', $job$
-     SELECT some_function();
-   $job$);
-   ```
-
-3. Always check if objects exist before dropping:
-
-   ```sql
-   DROP EXTENSION IF EXISTS pg_net;
-   DROP TYPE IF EXISTS "public"."my_type";
-   ```
+  ```sql
+  PERFORM cron.schedule('job-name', '*/5 * * * *', $job$
+    SELECT some_function();
+  $job$);
+  ```
 
 ## High-Level Architecture
 
@@ -184,50 +148,18 @@ pnpm db:types          # For production Supabase (rarely used)
 
 ### Project Structure
 
-```sh
-/app
-  /business       - Core business logic modules
-    /admin        - Admin-specific logic
-      /demographics - Demographics calculations and history
-    /auth         - Authentication flows
-    /email        - Email formatting and sending
-    /participant  - Participant-facing logic
-  /components     - React components (atomic design)
-    /atoms        - Basic building blocks
-    /forms        - Form components
-      /base       - Remix-forms components
-      /custom     - Custom form implementations
-        /rules    - Rules form (react-hook-form)
-      /admin      - Admin-specific form components
-    /molecules    - Composite components
-    /organisms    - Complex components
-      /tables     - Table components
-        /base     - Base data table
-        /admin    - Admin-specific tables
-    /pages        - Page-specific components
-      /homepage   - Homepage components
-      /admin      - Admin page components
-        /events   - Event management components
-        /participants - Participant management components
-      /events     - Event page components
-        /rules    - Rules-related components
-    /email        - Email templates
-      /common     - Shared email components
-      /templates  - Email templates
-    /ui           - ShadcN UI components
-  /lib            - Utilities and integrations
-    /constants    - Application constants
-    /helpers      - General utilities
-    /hooks        - Custom React hooks
-    /supabase     - Database client and types
-  /pages          - Application pages (follows route structure)
-  /types          - TypeScript type definitions
-    /database     - Database-related types
-    /forms        - Form schemas and types
-    /api          - API types (empty)
-    /components   - Component prop types
-    /utils        - Utility types
-```
+`ls` gives you the tree. These are the parts it does not:
+
+- `app/business/` — domain logic, split by actor (`admin`, `auth`, `email`,
+  `participant`). Route files stay thin and call into it.
+- `app/pages/` — the routes themselves, mirroring the URL structure. Not to be
+  confused with `app/components/pages/`, which holds the components a given
+  page renders.
+- `app/components/` — atomic design (`atoms`, `molecules`, `organisms`), plus
+  `ui` for ShadcN and `forms` for the form layer.
+- `app/copy/` — every user-visible string; see Site Copy below.
+- `app/lib/supabase/` — the Kysely client and the generated database types.
+- `~/*` resolves to `/app/*`.
 
 ### Key Architectural Patterns
 
@@ -237,217 +169,76 @@ pnpm db:types          # For production Supabase (rarely used)
 
 3. **Form Handling**: Consistent pattern using React Hook Form + Zod schemas. Forms are organized in `/app/components/forms` with base components for remix-forms and custom implementations.
 
-4. **Email System**:
-   - Templates in `/app/components/email/templates`
-   - Sending logic in `/app/business/email/`
-   - Local testing with Mailpit, bundled with local Supabase: SMTP on
-     port 54325, web UI at <http://127.0.0.1:54324>
-   - **Automated Notifications**:
-     - Database triggers can send notifications via `pg_net.http_post` to internal API endpoints
-     - Example: Registration limit emails sent when event reaches 90 participants
-     - Tracking tables prevent duplicate notifications (e.g., `event_registration_limit_emails`)
-     - API endpoints handle email formatting and sending (e.g., `/api/admin/send-registration-limit-email`)
+4. **Email System**: templates in `/app/components/email/templates`, sending logic in `/app/business/email/`. Locally, mail goes to Mailpit, bundled with local Supabase — SMTP on port 54325, web UI at <http://127.0.0.1:54324>. Some emails are fired by database triggers rather than by a request; see Recipes.
 
-5. **Type Safety**: Strict TypeScript with database types generated from schema. Path aliases use `~/*` for `/app/*`.
-
-6. **Protected Routes**: Admin routes require authentication and admin role verification through loaders.
+5. **Protected Routes**: admin routes verify authentication and the admin role in their loaders.
 
 ### Development Guidelines
 
-1. **Before Committing**: Always run `pnpm lint` to ensure code quality and type safety.
+1. **Database changes**: local Supabase only — never `supabase db push`. After a
+   schema change run `supabase db reset`, then `pnpm db:types --local`.
 
-2. **Database Changes**: After schema changes, reset the local database using `supabase db reset`. Never use `supabase db push` as we're developing with local supabase. Regenerate types with `pnpm db:types --local`.
+2. **Components**: atomic design. New UI extends ShadcN UI where possible.
 
-3. **Component Organization**: Follow atomic design principles. New UI components should extend ShadcN UI when possible.
+3. **Server-only code**: the `.server.ts` suffix keeps a module out of the
+   client bundle.
 
-4. **Server-Only Code**: Use `.server.ts` suffix for server-only modules to prevent client-side imports.
+4. **Environment variables**: Every variable the project reads is declared in `.env.schema`, with its type and whether it is required — read that file, never `.env`, which holds the values. Application code reads them through `ENV` from `varlock/env`, not `process.env`. Every variable resolves at runtime; the handful the browser reads carry `@static` and are inlined into the bundle at build time. Adding `@static` to a server-only variable freezes its build-time value into the artifact and lets the bundler delete any `if (ENV.FLAG)` around it — `scripts/env-schema.test.ts` guards that line. The replacement matches `ENV.X` and not `const { X } = ENV`, so the two forms do not behave alike for a `@static` variable: destructuring keeps the runtime read that dot access gives up. Local development requires Supabase setup.
 
-5. **Environment Variables**: Every variable the project reads is declared in `.env.schema`, with its type and whether it is required — read that file, never `.env`, which holds the values. Application code reads them through `ENV` from `varlock/env`, not `process.env`. Every variable resolves at runtime; the handful the browser reads carry `@static` and are inlined into the bundle at build time. Adding `@static` to a server-only variable freezes its build-time value into the artifact and lets the bundler delete any `if (ENV.FLAG)` around it — `scripts/env-schema.test.ts` guards that line. The replacement matches `ENV.X` and not `const { X } = ENV`, so the two forms do not behave alike for a `@static` variable: destructuring keeps the runtime read that dot access gives up. Local development requires Supabase setup.
+5. No comments in code unless the method is genuinely complex.
 
-6. Do not add comments to the code unless it's a particularly complex method
+### Recipes
 
-7. Avoid barrel exports (index.ts) - import directly from source files instead of re-exporting through index files
-
-### Common Tasks
-
-**Adding a new page**:
-
-1. Create route file in `/app/pages` following existing structure
-2. Implement loader for data fetching
-3. Add authentication checks if needed
-4. Use existing UI components from `/app/components`
-
-**Working with database**:
-
-1. Use Kysely query builder from `~/lib/supabase/db.server`
-2. Regenerate types after schema changes
-3. Follow existing patterns in `/app/business` modules
-
-**Creating forms**:
-
-1. Define Zod schema for validation
-2. Use form components from `/app/components/forms`
-3. Handle submission in action functions
-4. Show errors using existing error handling patterns
-
-**Adding automated email notifications**:
-
-1. Create tracking table to prevent duplicates (e.g., `event_registration_limit_emails`)
-   - Include unique constraint on the identifier (e.g., event_id)
-   - Track admin emails sent and timestamp
-2. Create HTML email template in `/app/business/email/templates/`
-   - Use existing design patterns (purple gradient, brand colors)
-   - Sanitize all user-controlled fields with `sanitizeHtml()`
-   - Include unit tests with XSS protection tests
-3. Create email formatter function to convert HTML to text
-   - Use `html-to-text` library for plain text version
-4. Create email sender function in `/app/business/admin/`
-   - Query recipients from database
-   - Call formatter and send via `sendEmail()`
-   - Handle empty recipient list and sending failures
-5. Create API endpoint in `/app/pages/api/admin/`
-   - Validate request parameters
-   - Fetch required data from database
-   - Call email sender function
-   - Record notification in tracking table using `onConflict().doNothing()`
-6. Create database function to call API endpoint
-   - Use `pg_net.http_post` for async HTTP calls
-   - Check tracking table for duplicates before calling
-   - Get app URL from `current_setting('app.url')` with fallback
-7. Update or create database trigger to call notification function
-   - Call notification function at appropriate time (e.g., AFTER INSERT/UPDATE)
-   - Only trigger when necessary conditions are met
-8. Add integration tests
-   - Test API endpoint directly (mock email sending)
-   - Verify tracking table prevents duplicates
-   - Test error cases (missing params, not found, send failures)
+**Automated email notification** — a database trigger that calls an internal API
+endpoint, which sends the email. Follow the registration-limit implementation
+end to end rather than inventing a new shape: a tracking table with a unique
+constraint on the identifier, a template in `app/business/email/templates/`, a
+sender in `app/business/admin/`, an endpoint under `app/pages/api/admin/` that
+records the send with `onConflict().doNothing()`, and a database function that
+checks the tracking table before it fires `pg_net.http_post`. Sanitize every
+user-controlled field with `sanitizeHtml()`, and cover the duplicate guard and
+the failure paths with integration tests.
 
 ### Testing
 
-#### Unit Testing with Vitest and React Testing Library
+**Unit** — Vitest and React Testing Library. Tests sit next to the component as
+`.test.tsx` or `.spec.tsx`. Config in `vitest.config.ts`, setup in
+`app/test/setup.ts`, render helpers in `app/test/test-utils.tsx`.
 
-- Framework: Vitest with React Testing Library for component testing
-- Test files: Place tests next to components with `.test.tsx` or `.spec.tsx` extension
-- Setup: Configuration in `vitest.config.ts` and setup in `app/test/setup.ts`
+**Integration** — a real database. Files end in `.integration.test.ts`, run in
+the Node environment through `vitest.integration.config.ts`, sequentially,
+against local Supabase. Build fixtures with the factories in
+`app/test/db-test-utils.ts` and wrap the suite in `setupIntegrationTest` /
+`cleanupAfterTest` from `app/test/integration-setup.ts` — the tracker they share
+is what lets cleanup find the rows a test created. Copy the shape from an
+existing suite; `app/test/registration-limit.integration.test.ts` is a good one.
 
-#### Integration Testing
+**TDD is non-negotiable.** Red, green, refactor, in baby steps: the test exists
+and fails before the implementation does. A test that fails only because a file
+or an import is missing proves nothing — it has to fail on behaviour that stays
+testable once the code is there.
 
-- Integration tests use real database connections and are kept separate from unit tests
-- Test files: Use `.integration.test.ts` extension
-- Configuration: `vitest.integration.config.ts` uses Node environment
-- Database: Tests run against local Supabase instance
-- Test utilities:
-  - `TestDataTracker` for tracking created test data
-  - `cleanupTestData` for cleaning up after tests
-  - Helper functions for creating test entities
-- Best practices:
-  - Clear existing data before tests to ensure clean state
-  - Track all created data for cleanup
-  - Run tests sequentially to avoid conflicts
+**Guidelines**
 
-#### TDD Workflow (Red-Green-Refactor)
-
-1. **Red Phase**: Write a failing test first
-   - Define the expected behavior
-   - Run the test to ensure it fails
-   - The failure confirms the test is checking the right thing
-   - The test should test functionality — not missing imports or similar. They should test (and fail) something that can be tested again that relates to the actual code function and not if the file exists or not.
-
-2. **Green Phase**: Write minimal code to pass
-   - Implement just enough code to make the test pass
-   - Don't worry about perfection yet
-   - Run the test to confirm it passes
-
-3. **Refactor Phase**: Improve the code
-   - Clean up implementation while keeping tests green
-   - Extract reusable patterns
-   - Ensure all tests still pass
-
-#### Testing Guidelines
-
-- Test the exposed API, inputs and outputs rather than implementation details
-- TDD is non-negotiable. Always write tests first and ensure they fail before implementing
-- Move in baby steps through red-green-refactor cycles
-- Focus on user behavior and interactions
-- Use data-testid sparingly, prefer accessible queries (getByRole, getByLabelText, etc.)
+- Test the exposed API — inputs and outputs, not implementation details
+- Focus on user behaviour and interactions
+- Prefer accessible queries (`getByRole`, `getByLabelText`); `data-testid` sparingly
 - Mock external dependencies and API calls
 - Keep tests isolated and independent
 
-#### Example Test Structure
-
-**Unit Test Example:**
-
-```typescript
-import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
-import { Component } from './component'
-
-describe('Component', () => {
-  it('should handle user interaction', async () => {
-    const user = userEvent.setup()
-    const mockHandler = vi.fn()
-    
-    render(<Component onClick={mockHandler} />)
-    
-    await user.click(screen.getByRole('button'))
-    expect(mockHandler).toHaveBeenCalledTimes(1)
-  })
-})
-```
-
-**Integration Test Example:**
-
-```typescript
-import { describe, expect, it, beforeEach, afterEach } from "vitest"
-import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { createTestProfile, createTestEvent } from "~/test/db-test-utils"
-
-describe("Database Function - Integration Tests", () => {
-  const { tracker, kysely } = setupIntegrationTest()
-
-  beforeEach(async () => {
-    tracker.clear()
-    // Clear existing test data if needed
-  })
-
-  afterEach(async () => {
-    await cleanupAfterTest(tracker, kysely)
-  })
-
-  it("should perform database operation", async () => {
-    const event = await createTestEvent(tracker, kysely, {
-      title: "Test Event",
-      // ... other fields
-    })
-
-    // Test your database function
-    const result = await myDatabaseFunction(event.id)
-    
-    expect(result).toBeDefined()
-  })
-})
-```
-
 ## Mandatory Workflow
 
-Before any work:
-
-1. **Create a worktree.** Never work directly in `wt/main`. Every task gets its own.
-2. **Plan first.** Write a detailed plan in baby steps and submit it for approval.
-   Do not start implementing without explicit approval.
-3. **Never open a PR without approval.** When the work is done, ask before creating it.
-
-Order of operations:
+Two of these steps are gates: work does not continue past them without an
+explicit yes.
 
 1. Fetch and fast-forward `wt/main`
-2. Create a worktree for the task
+2. Create a worktree — never work directly in `wt/main`, every task gets its own
 3. Read this file
-4. Write a detailed plan — baby steps
-5. **Wait for approval**
-6. Implement following TDD (Red-Green-Refactor)
+4. Write a detailed plan, in baby steps
+5. **Wait for approval.** Do not start implementing without it.
+6. Implement following TDD (red-green-refactor)
 7. Run all tests and lint
-8. **Ask before opening the PR**
+8. **Ask before opening the PR.** Never open one unprompted.
 
 ## Definition of Done
 
@@ -457,27 +248,12 @@ Order of operations:
 
 ## Commit Guidelines
 
-### Conventional Commit Style
-
-- Always do minimal commits with detailed descriptions, so I can review the process commit by commit. Show me the commit plan when planning.
-- ⁠Always run related tests before committing changes.
-- ⁠Follow [Conventional Commits](https://www.conventionalcommits.org/) specification
-- ⁠Commit message structure: ⁠ {type}(optional scope): {description}
-- ⁠Types include:
-  - ⁠ feat ⁠: New feature
-  - ⁠ fix ⁠: Bug fix
-  - ⁠ docs ⁠: Documentation changes
-  - ⁠ style ⁠: Code formatting, no logic change
-  - ⁠ refactor ⁠: Code restructuring without changing behavior
-  - ⁠ test ⁠: Adding or modifying tests
-  - ⁠ chore ⁠: Maintenance tasks, dependency updates
-  - ⁠Examples:
-  - ⁠ feat(auth): add user registration flow ⁠
-  - ⁠ fix(payments): resolve stripe webhook parsing error ⁠
-  - ⁠ docs: update README with new setup instructions ⁠
-  - ⁠ refactor(services): simplify user creation service ⁠
-- ⁠Use imperative mood for descriptions (e.g., "Add feature" not "Added feature")
-- ⁠Include breaking changes with ⁠ BREAKING CHANGE: ⁠ in footer when applicable
+- Minimal commits with detailed descriptions, so the work is reviewable commit
+  by commit. Show the commit plan when planning.
+- Run the related tests before committing.
+- [Conventional Commits](https://www.conventionalcommits.org/):
+  `{type}(optional scope): {description}`, imperative mood ("add", not
+  "added"), `BREAKING CHANGE:` in the footer when applicable.
 
 ## Site Copy
 
@@ -502,8 +278,36 @@ Order of operations:
 
 ## News Dialog Updates
 
-When making changes to the application that affect users (new features, bug
-fixes, UI changes), ALWAYS announce them in the news dialog.
+The news dialog is for users, not a changelog. Announce a change only when it
+clears the bar below. Most PRs do not clear it, and a dialog full of noise is
+worse than an empty one — every item shown is attention taken from the items
+that mattered.
+
+**The bar: the change gives someone a new thing they can do, or removes work
+they used to have to do.** If nobody changes what they do because of it, there
+is no news item.
+
+Clears the bar:
+
+- "O admin agora candidata alguém com um botão só" — several steps became one
+- A page, report, export, or permission that did not exist before
+- A bug that was visibly breaking someone's work, now fixed
+- A change to how someone has to work: a moved flow, a new required field, a
+  screen that is gone
+
+Does not clear the bar:
+
+- "O formulário agora mostra progresso" — pleasant, but nobody works differently
+- Visual polish, copy tweaks, layout, spacing, wording
+- Performance, refactors, tests, CI, types, dependencies — invisible by
+  definition
+- Bugs nobody hit, or fixed before anyone noticed
+
+Test: would a user be annoyed to have missed this? If not, skip it. In doubt,
+skip it and say so in the PR rather than writing a weak item — a missing item
+costs nothing, a noisy one costs the dialog's credibility.
+
+When a change does clear the bar:
 
 1. **Add one file** to `app/components/organisms/news-dialog/items/`, named
    `<YYYY-MM-DD>-<slug>.ts`:
@@ -540,50 +344,50 @@ fixes, UI changes), ALWAYS announce them in the news dialog.
 - ⁠Whenever the user has it, use the GitHub CLI to create pull requests
 - ⁠PR titles should not use the Conventional Commit Style. Instead, they should add the Linear ticket(s) to the start of the title, like in "[POS-923, POS-924] Add rake tasks for failed searches import and book brief generation". If no Linear ticket exists, use "[NO-TICKET]" prefix.
 - The Linear tasks should also be in the description using keywords like "Solve POS-123" or "Fixes POS-123". For PRs without Linear tickets, use "Fixes NO-TICKET"
-- ⁠Follow PR description style from @.github/pull_request_template.md
-
-## PR Template
-
-There's a PR template. Follow it closely.
+- Follow @.github/pull_request_template.md closely — every heading in it gets filled in
 
 ## E2E Tests
 
-### Overview
+E2E runs against the production build (`pnpm build`), never the dev server, one
+test at a time. Tests live in `/e2e/tests/`, split by authentication state —
+`auth/`, `unauthenticated/`, `authenticated/` — and follow user journeys rather
+than isolated actions. Page objects extend `BasePage` and carry the wait
+strategies. Conventions and how to add a test: [E2E Readme](e2e/README.md).
 
-E2E tests run against a production build to ensure realistic testing conditions. The test suite is organized by authentication state and follows user journeys rather than isolated atomic tests.
+### Before Running E2E — Other Agents Are Working Too
 
+Most of the time several agents are working in this repository at once, and
+every one of them drives the same local Supabase instance. `pnpm test:e2e` and
+`pnpm test:integration` go through `scripts/with-db-lock.sh`, which gives one
+run at a time an exclusive turn; a second run blocks for up to 30 minutes and
+then fails. E2E is the worst offender — it takes ~13 minutes and holds the
+database and a port for all of it.
+
+1. **Run E2E once, as the last step.** Code written, unit and integration
+   tests green, lint green — then E2E. Never as a mid-task check, never a
+   second time "to be sure".
+2. **Check the lock before starting**:
+
+   ```bash
+   cat "$(git rev-parse --git-common-dir)/db-lock/owner" 2>/dev/null
+   ```
+
+   Output — `pid`, the `worktree` it runs from, `started` as a Unix timestamp
+   — means another run holds the lock. No output means it is free.
+3. **If it is held, do not queue behind it.** Wait and check again; 5 minutes
+   is a reasonable default. Do other work in the meantime, or tell the user
+   the run is pending.
+4. **Never route around the lock.** Calling `playwright test` or `vitest
+   --config vitest.integration.config.ts` directly skips it and lets two
+   suites corrupt each other's data. Do not delete the lock directory unless
+   the `pid` in `owner` is genuinely dead.
 ### Running Tests
 
 ```bash
-pnpm test:e2e       # Run all E2E tests
-pnpm test:e2e:ui    # Run with Playwright UI for debugging
+pnpm test:e2e       # every project
+pnpm test:e2e:ui    # Playwright UI, for debugging
 
-# Run specific test suites
-pnpm test:e2e --project=chromium                    # Unauthenticated tests
-pnpm test:e2e --project=chromium-authenticated-user # User tests
-pnpm test:e2e --project=chromium-authenticated-admin # Admin tests
+pnpm test:e2e --project=chromium                     # unauthenticated
+pnpm test:e2e --project=chromium-authenticated-user  # user
+pnpm test:e2e --project=chromium-authenticated-admin # admin
 ```
-
-### Test Organization
-
-Tests are located in `/e2e/tests/` and organized as:
-
-- `auth/` - Authentication setup and flows
-- `unauthenticated/` - Tests that don't require login
-- `authenticated/` - Tests requiring authentication (user and admin)
-
-### Key Principles
-
-1. **Sequential Execution**: Tests run sequentially for reliability
-2. **User Journeys**: Tests follow realistic user flows rather than isolated actions
-3. **Page Object Model**: All pages extend `BasePage` with smart wait strategies
-4. **Production Build**: Tests run against `pnpm build` output, not dev server
-
-### Adding New Tests
-
-1. Determine the authentication context needed
-2. Place in appropriate directory
-3. Follow existing POM patterns in `/e2e/pages/`
-4. Use smart waits and proper error handling
-
-For detailed information, see the [E2E Readme](e2e/README.md)
