@@ -65,7 +65,15 @@ const EventUserInfo = ({ params }: Route.ComponentProps) => {
       // is not stuck: the quiz is where they can earn their way back in.
       if (response.status === 403) {
         void navigate(EVENT_RULES(eventId))
-        return { ok: false, errors: [] }
+
+        // The route takes a moment to swap, and the runtime writes its own
+        // "could not save, try again" under the button meanwhile — the one
+        // thing that will not work.
+        return {
+          ok: false,
+          errors: [],
+          message: eventApplicationCopy.quizExpired,
+        }
       }
 
       const result = (await response.json()) as ApplicationAnswer

@@ -148,6 +148,24 @@ describe("the event application form", () => {
     })
   })
 
+  it("says the quiz expired rather than to try again", async () => {
+    vi.stubGlobal("fetch", answered({ ok: false, errors: [] }, 403))
+
+    renderForm()
+    await fillAndSend()
+
+    expect(
+      await screen.findByText(eventApplicationCopy.quizExpired),
+    ).toBeInTheDocument()
+
+    // The route takes a moment to swap, and until it does the runtime's own
+    // "try again" would be sitting under the button telling the person to do
+    // the one thing that cannot work.
+    expect(
+      screen.queryByText(formRuntimeCopy.commitFailed),
+    ).not.toBeInTheDocument()
+  })
+
   it("keeps the person on the form when the application is refused", async () => {
     vi.stubGlobal(
       "fetch",
