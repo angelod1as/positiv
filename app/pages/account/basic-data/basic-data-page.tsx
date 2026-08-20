@@ -1,42 +1,35 @@
-import { formAction } from "remix-forms"
-import { redirectWithSuccess } from "remix-toast"
-import { getContext, getUserContext } from "~/business/auth/auth.server"
-import { basicDataSchema } from "~/business/common"
-import { basicData } from "~/business/participant/basic-data.server"
-import { SchemaForm } from "~/components/forms/base/schema-form"
+import { useCallback, useMemo } from "react"
+import { useNavigate } from "react-router"
+import { toast } from "sonner"
+import { getUserContext } from "~/business/auth/auth.server"
+import { buildBasicDataFlow } from "~/components/forms/custom/basic-data/build-basic-data-flow"
+import { buildBasicDataLayout } from "~/components/forms/custom/basic-data/build-basic-data-layout"
+import { buildBasicDataQuestions } from "~/components/forms/custom/basic-data/build-basic-data-questions"
+import { toBasicDataAnswers } from "~/components/forms/custom/basic-data/to-basic-data-answers"
+import { FormRunner } from "~/components/forms/runtime/form-runner"
+import { gridPresentation } from "~/components/forms/runtime/presentations/grid"
+import type { Answers } from "~/components/forms/runtime/question.types"
 import { basicDataCopy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
-import paths from "~/lib/paths"
 import { createMetaArray } from "~/lib/helpers/meta"
+import paths from "~/lib/paths"
+import type { CommitResult } from "~types/forms/commit.types"
 import type { Route } from "./+types/basic-data-page"
 
 const {
   dash: {
-    account: { GENDER_PRONOUNS_ORIENTATION },
+    DASHBOARD,
+    account: { ACCOUNT_READY, BASIC_DATA_COMMIT },
   },
+  admin: { ADMIN_DASHBOARD },
 } = paths
+
+// Built once: a presentation that changes identity remounts the run, and with
+// it everything already typed.
+const BasicDataScreen = gridPresentation(buildBasicDataLayout())
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.basicData.title)
-}
-
-export async function action({ request, params }: Route.ActionArgs) {
-  const context = await getContext(request, params)
-
-  return formAction({
-    request,
-    schema: basicDataSchema,
-    mutation: basicData,
-    transformResult: async (result) => {
-      if (result.success) {
-        throw await redirectWithSuccess(GENDER_PRONOUNS_ORIENTATION, {
-          message: basicDataCopy.successToast,
-        })
-      }
-      return result
-    },
-    context,
-  })
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -70,18 +63,40 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
 const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
   const { profile, orphanedProfile } = loaderData || {}
+  const navigate = useNavigate()
 
-  // Use orphaned profile data if available, otherwise use current profile
+  // A profile waiting under this e-mail is the person's own history, from
+  // before they had an account. It is what the form should open holding.
   const profileData = orphanedProfile || profile
 
-  const defaultValues = {
-    ...(profileData || {}),
-    ...(profileData?.phone
-      ? {
-          confirm_phone: profileData.phone,
-        }
-      : {}),
-  }
+  const questions = useMemo(() => buildBasicDataQuestions(), [])
+  const initialAnswers = useMemo(
+    () => toBasicDataAnswers(profileData ?? null),
+    [profileData],
+  )
+
+  const commit = useCallback(async (answers: Answers): Promise<CommitResult> => {
+    const response = await fetch(BASIC_DATA_COMMIT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(answers),
+    })
+
+    return (await response.json()) as CommitResult
+  }, [])
+
+  const flow = useMemo(
+    () => buildBasicDataFlow(questions, commit),
+    [questions, commit],
+  )
+
+  // Read before the save, which is what makes "first time" answerable: by the
+  // time the run is done, basic_data_filled is true for everyone.
+  const destination = profile?.is_admin
+    ? ADMIN_DASHBOARD
+    : profile?.basic_data_filled
+      ? DASHBOARD
+      : ACCOUNT_READY
 
   return (
     <>
@@ -95,41 +110,19 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
               : basicDataCopy.intro.initial}
         </p>
       </div>
-      <SchemaForm
-        schema={basicDataSchema}
-        values={defaultValues}
-        labels={basicDataCopy.labels}
-        inputTypes={{
-          confirm_phone: "textnumber",
-          phone: "textnumber",
-          date_of_birth: "date",
+
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={BasicDataScreen}
+        initialAnswers={initialAnswers}
+        // No persistence, deliberately: the answers include a CPF and an RG,
+        // and persistence writes them to sessionStorage.
+        onDone={() => {
+          toast.success(basicDataCopy.successToast)
+          void navigate(destination)
         }}
-        descriptions={basicDataCopy.descriptions}
-      >
-        {({ Field, Button, Errors }) => {
-          return (
-            <div>
-              <div className="flex flex-col gap-6 sm:grid grid-cols-12 sm:gap-4">
-                <Field name="full_name" className="col-span-5" />
-                <Field name="social_name" className="col-span-4" />
-                <Field name="date_of_birth" className="col-span-3" />
-                <Field name="where_lives" className="col-span-6" />
-                <Field name="how_came_to_us" className="col-span-6" />
-                <Field name="phone" className="col-span-6" />
-                <Field name="confirm_phone" className="col-span-6" />
-                <p className="col-span-12 mt-4 text-muted-foreground text-sm">
-                  {basicDataCopy.documentsNotice}
-                </p>
-                <Field name="cpf" className="col-span-4" />
-                <Field name="rg" className="col-span-4" />
-                <Field name="rg_issuer" className="col-span-4" />
-              </div>
-              <Errors />
-              <Button />
-            </div>
-          )
-        }}
-      </SchemaForm>
+      />
     </>
   )
 }

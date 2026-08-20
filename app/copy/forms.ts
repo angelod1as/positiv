@@ -1,9 +1,3 @@
-export const checkboxWithOtherCopy = {
-  other: "Outros",
-  placeholder: "Exemplo 1, Exemplo 2",
-  description: "Separe múltiplos por vírgula",
-} as const
-
 export const chipSelectCopy = {
   otherPlaceholder: "Outro? Escreva aqui",
   otherAdd: "Adicionar",
