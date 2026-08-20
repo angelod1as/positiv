@@ -14,7 +14,6 @@ import { createServerClient } from "~/lib/supabase/server"
 import {
   changePasswordSchema,
   contextSchema,
-  forgotPasswordSchema,
   getSupabaseSchema,
   registerUserSchema,
   userContextSchema,
@@ -180,25 +179,6 @@ export const getUserCodeContext = async (request: Request, params: Params) => {
 
   return redirect(CHANGE_PASSWORD, { headers: supabaseHeaders })
 }
-
-export const forgotPassword = applySchema(
-  forgotPasswordSchema,
-  contextSchema,
-)(async (values, context) => {
-  const { email } = values
-  const { supabase, host } = context
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${host}auth/confirm`,
-  })
-
-  if (error) {
-    logger.error("Password Reset Error", { error })
-    throw new Error(errorsCopy.auth.resetRequestFailed)
-  }
-
-  return { success: true }
-})
 
 // Not a applySchema purposefully
 export const logoutUser = async (context: z.infer<typeof contextSchema>) => {

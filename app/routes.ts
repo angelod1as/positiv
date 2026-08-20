@@ -30,6 +30,7 @@ export default [
   ),
   route("/api/auth/register", "pages/api/auth/register.ts"),
   route("/api/auth/login", "pages/api/auth/login.ts"),
+  route("/api/auth/esqueci-senha", "pages/api/auth/forgot-password.ts"),
   route("/api/account/dados-basicos", "pages/api/account/basic-data.ts"),
   route(
     "/api/admin/send-registration-limit-email",
