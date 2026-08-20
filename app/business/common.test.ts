@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest"
+import { validationMessages } from "~/lib/helpers/validation-messages"
 import {
   applyToEventSchema,
   basicDataFieldsSchema,
   basicDataSchema,
+  ExtraBasicDataSchema,
   registerUserFieldsSchema,
   registerUserSchema,
 } from "./common"
@@ -405,4 +407,49 @@ describe("basicDataSchema", () => {
       expect(result.success).toBe(true)
     })
   })
+})
+describe("ExtraBasicDataSchema", () => {
+  const validExtraData = {
+    gender: ["Travesti"],
+    orientation: ["Bi"],
+    pronouns: ["Ela/dela"],
+    race_color: ["Preta"],
+  }
+
+  it("accepts an answer someone wrote themselves", () => {
+    const result = ExtraBasicDataSchema.safeParse({
+      ...validExtraData,
+      gender: ["Pessoa não binária transmasculina"],
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it.each(["gender", "orientation", "pronouns", "race_color"])(
+    "refuses a %s answer longer than fifty characters",
+    (field) => {
+      const result = ExtraBasicDataSchema.safeParse({
+        ...validExtraData,
+        [field]: ["a".repeat(51)],
+      })
+
+      expect(result.success).toBe(false)
+      if (result.success) throw new Error("expected a refusal")
+      expect(result.error.issues[0].message).toBe(validationMessages.maxLength(50))
+    },
+  )
+
+  it.each(["gender", "orientation", "pronouns", "race_color"])(
+    "refuses more than ten %s answers",
+    (field) => {
+      const result = ExtraBasicDataSchema.safeParse({
+        ...validExtraData,
+        [field]: Array.from({ length: 11 }, (_, index) => `answer ${index}`),
+      })
+
+      expect(result.success).toBe(false)
+      if (result.success) throw new Error("expected a refusal")
+      expect(result.error.issues[0].message).toBe(validationMessages.maxOptions(10))
+    },
+  )
 })

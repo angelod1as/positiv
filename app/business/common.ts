@@ -189,22 +189,26 @@ export const basicDataSchema = basicDataFieldsSchema
 
 export const ExtraBasicDataSchema = zod.object({
   gender: zod
-    .array(zod.string())
+    .array(zod.string().max(50))
+    .max(10)
     .refine((value) => value.some((item) => item), {
       message: validationMessages.minOptions(1),
     }),
   orientation: zod
-    .array(zod.string())
+    .array(zod.string().max(50))
+    .max(10)
     .refine((value) => value.some((item) => item), {
       message: validationMessages.minOptions(1),
     }),
   pronouns: zod
-    .array(zod.string())
+    .array(zod.string().max(50))
+    .max(10)
     .refine((value) => value.some((item) => item), {
       message: validationMessages.minOptions(1),
     }),
   race_color: zod
-    .array(zod.string())
+    .array(zod.string().max(50))
+    .max(10)
     .refine((value) => value.some((item) => item), {
       message: validationMessages.minOptions(1),
     }),
