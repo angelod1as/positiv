@@ -53,6 +53,15 @@ export async function action({ request, params }: ActionFunctionArgs) {
   // are entitled to is recounted here rather than read off the post: otherwise
   // the short run would be a claim anyone could make, and the bypass this route
   // exists to close would come back through the same door.
+  //
+  // Deliberately looser than the run the browser walked: any three right
+  // answers including the opening question pass, not the three that were
+  // dealt. The server is never told which two the deal picked, and the gate it
+  // is here to hold is "has this person been to a Positiv" — which it recounts
+  // — not "did they answer the exact questions their screen showed". So a
+  // veteran who tripped on both probes can still post three easy ones by hand
+  // and skip the long quiz they were sent to. That is a nudge, not a lock, and
+  // it is meant to be.
   const shortRun =
     given.includes(OPENING_QUESTION) &&
     given.length >= SHORT_RUN_LENGTH &&
