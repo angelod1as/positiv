@@ -156,6 +156,57 @@ describe("BasicDataPage", () => {
       await waitFor(() => expect(navigate).toHaveBeenCalledWith("/admin"))
     })
 
+    it("sends someone whose old profile was found where their history says", async () => {
+      // The row is adopted by the save, so what it knows decides where they
+      // land — reading the account they just made would call a returning
+      // person new.
+      draw({
+        profile: null,
+        orphanedProfile: { ...filledProfile, basic_data_filled: true },
+      })
+
+      await save()
+
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith("/dashboard"))
+    })
+
+    it("does not read admin from a profile left behind", async () => {
+      // Roles hang off user_id, which an orphaned profile has none of, so the
+      // account is the only thing that can say someone is an admin.
+      draw({
+        profile: null,
+        orphanedProfile: { ...filledProfile, is_admin: true },
+      })
+
+      await save()
+
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith("/dashboard"))
+      expect(navigate).not.toHaveBeenCalledWith("/admin")
+    })
+
+    it("takes a session that expired mid-form to the login page", async () => {
+      // The endpoint answers an expired session with a redirect, which fetch
+      // follows to the login page's HTML — parsing that as JSON would only
+      // say "could not save".
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          redirected: true,
+          url: "http://localhost/entrar",
+          json: async () => {
+            throw new SyntaxError("Unexpected token <")
+          },
+        }),
+      )
+
+      draw({ profile: filledProfile, orphanedProfile: null })
+
+      await save()
+
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith("/entrar"))
+      expect(success).not.toHaveBeenCalled()
+    })
+
     it("stays put when the save refuses an answer", async () => {
       vi.stubGlobal(
         "fetch",

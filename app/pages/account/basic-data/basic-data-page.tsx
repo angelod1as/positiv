@@ -75,26 +75,42 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
     [profileData],
   )
 
-  const commit = useCallback(async (answers: Answers): Promise<CommitResult> => {
-    const response = await fetch(BASIC_DATA_COMMIT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(answers),
-    })
+  const commit = useCallback(
+    async (answers: Answers): Promise<CommitResult> => {
+      const response = await fetch(BASIC_DATA_COMMIT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(answers),
+      })
 
-    return (await response.json()) as CommitResult
-  }, [])
+      // A session that expired mid-form is answered with a redirect, which
+      // fetch follows to a page of HTML. Reading that as JSON would only say
+      // the save failed, when what someone needs is to sign in again.
+      if (response.redirected) {
+        void navigate(new URL(response.url).pathname)
+        return { ok: false, errors: [] }
+      }
+
+      return (await response.json()) as CommitResult
+    },
+    [navigate],
+  )
 
   const flow = useMemo(
     () => buildBasicDataFlow(questions, commit),
     [questions, commit],
   )
 
-  // Read before the save, which is what makes "first time" answerable: by the
-  // time the run is done, basic_data_filled is true for everyone.
+  // Whether this has been done before is read from the row that will be
+  // adopted, and before the save: a returning person whose profile was waiting
+  // under their e-mail is not filling this in for the first time, and by the
+  // time the run is done basic_data_filled is true for everyone.
+  //
+  // Being an admin is read from the account instead, because roles hang off
+  // user_id and a profile left behind has none — an orphan is never an admin.
   const destination = profile?.is_admin
     ? ADMIN_DASHBOARD
-    : profile?.basic_data_filled
+    : profileData?.basic_data_filled
       ? DASHBOARD
       : ACCOUNT_READY
 

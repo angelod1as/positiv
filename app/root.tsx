@@ -288,7 +288,6 @@ export default function App({ loaderData }: Route.ComponentProps) {
     "/entrar",
     "/registrar",
     "/conta/dados-basicos",
-    "/conta/dados-basicos-cont",
     "/conta/termos-e-condicoes",
   ]
   const isAuthFlow = authFlowPaths.some((path) =>
