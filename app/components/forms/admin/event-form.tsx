@@ -1,161 +1,92 @@
-import type { FC } from "react"
-import type { z } from "zod"
-import { eventFormSchema } from "~/business/admin/common"
-import { Button } from "~/components/atoms/button/button"
-import { Separator } from "~/components/ui/separator"
+import { useCallback, useMemo, useRef, type FC } from "react"
+import { useNavigate } from "react-router"
+import { toast } from "sonner"
+import { buildEventFlow } from "~/components/forms/custom/event/build-event-flow"
+import { buildEventLayout } from "~/components/forms/custom/event/build-event-layout"
+import { buildEventQuestions } from "~/components/forms/custom/event/build-event-questions"
+import { toEventAnswers } from "~/components/forms/custom/event/to-event-answers"
+import { FormRunner } from "~/components/forms/runtime/form-runner"
+import { gridPresentation } from "~/components/forms/runtime/presentations/grid"
+import type { Answers } from "~/components/forms/runtime/question.types"
 import { adminEventsCopy } from "~/copy/admin/events"
-import { dbValuesToFormSchema } from "~/lib/helpers/db-values-to-form-schema"
+import paths from "~/lib/paths"
 import type { Event } from "~types/database/entities.types"
-import { SchemaForm } from "../base/schema-form"
-import { calculateDerivedDates } from "./calculate-derived-dates"
+import type { CommitResult } from "~types/forms/commit.types"
+
+const {
+  admin: {
+    events: { ADMIN_EVENT_COMMIT, ADMIN_VIEW_EVENT },
+  },
+} = paths
 
 const formCopy = adminEventsCopy.form
+
+// Built once: a presentation that changes identity remounts the run, and with
+// it everything already typed.
+const EventScreen = gridPresentation(buildEventLayout())
 
 type EventFormProps = {
   event?: Event
 }
 
 export const EventForm: FC<EventFormProps> = ({ event }) => {
-  const formattedDateEvent = event?.id ? dbValuesToFormSchema(event) : event
+  const navigate = useNavigate()
+
+  // Where to go once it saves. Editing knows from the start; creating only
+  // finds out from the save itself, which answers with the event it wrote.
+  const savedId = useRef(event?.id ?? "")
+
+  const questions = useMemo(() => buildEventQuestions(), [])
+  const initialAnswers = useMemo(() => toEventAnswers(event), [event])
+
+  const commit = useCallback(
+    async (answers: Answers): Promise<CommitResult> => {
+      const response = await fetch(ADMIN_EVENT_COMMIT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // Which event this is, is not something the form asks about.
+        body: JSON.stringify({ ...answers, id: event?.id }),
+      })
+
+      // An admin whose session expired mid-form is answered with a redirect,
+      // which fetch follows to a page of HTML. Reading that as JSON would only
+      // say the save failed, when what they need is to sign in again.
+      if (response.redirected) {
+        void navigate(new URL(response.url).pathname)
+        return { ok: false, errors: [] }
+      }
+
+      const result = (await response.json()) as CommitResult & { id?: string }
+
+      if (result.ok && result.id) savedId.current = result.id
+
+      return result
+    },
+    [event?.id, navigate],
+  )
+
+  const flow = useMemo(
+    () => buildEventFlow(questions, commit),
+    [questions, commit],
+  )
 
   return (
-    <div>
-      <SchemaForm
-        schema={eventFormSchema}
-        values={formattedDateEvent}
-        hiddenFields={["id"]}
-        labels={formCopy.labels}
-        multiline={["description"]}
-        inputTypes={{
-          ticket_price: "textnumber",
-          total_spots: "textnumber",
-          auto_publish: "checkbox",
-          time_event_start: "datetime-local",
-          time_event_end: "datetime-local",
-          time_application_start: "datetime-local",
-          time_group_start: "datetime-local",
-          time_group_end: "datetime-local",
-          time_payment_end: "datetime-local",
-          time_payment_start: "datetime-local",
-        }}
-        descriptions={formCopy.descriptions}
-        placeholders={formCopy.placeholders}
-      >
-        {({
-          Field,
-          Button: SubmitButton,
-          Errors,
-          clearErrors,
-          getValues,
-          setError,
-          setValue,
-        }) => {
-          const handleDates = () => {
-            clearErrors()
-            const startingTime = getValues("time_event_start")
-
-            if (!startingTime) {
-              setError("time_event_start", {
-                message: formCopy.startDateRequired,
-                type: "value",
-              })
-              return
-            }
-
-            const derivedDates = calculateDerivedDates(startingTime)
-
-            if (derivedDates) {
-              Object.entries(derivedDates).forEach(([key, value]) => {
-                setValue(key as keyof z.infer<typeof eventFormSchema>, value, {
-                  shouldValidate: true,
-                })
-              })
-            }
-          }
-
-          return (
-            <>
-              <div className="grid grid-cols-12 gap-x-4 gap-y-2 grid-flow-row">
-                <h5 className="pt-4 col-span-12">{formCopy.sections.generalData}</h5>
-                <div className="sm:col-span-9 col-span-12">
-                  <Field name="title" />
-                </div>
-                <div className="sm:col-span-3 col-span-12">
-                  <Field name="emoji" />
-                </div>
-                <div className="sm:col-span-12 col-span-12">
-                  <Field name="description" />
-                </div>
-                <div className="sm:col-span-7 col-span-12">
-                  <Field name="location" />
-                </div>
-                <div className="sm:col-span-2 col-span-12">
-                  <Field
-                    name="ticket_price"
-                    prefix={formCopy.ticketPricePrefix}
-                    type="number"
-                  />
-                </div>
-                <div className="sm:col-span-3 col-span-12">
-                  <Field
-                    name="total_spots"
-                    suffix={formCopy.totalSpotsSuffix}
-                    type="number"
-                  />
-                </div>
-                <div className="sm:col-span-12 col-span-12">
-                  <Field name="auto_publish" />
-                </div>
-
-                <div className="col-span-12">
-                  <Separator className="mt-8" />
-                </div>
-
-                <div className="pt-4 col-span-12 flex justify-between items-baseline mb-4">
-                  <h5>{formCopy.sections.dates}</h5>
-                  <Button
-                    type="button"
-                    onClick={() => handleDates()}
-                    variant="default"
-                  >
-                    {formCopy.calculateDates}
-                  </Button>
-                </div>
-
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_event_start" />
-                </div>
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_event_end" />
-                </div>
-
-                <h6 className="pt-4 col-span-12">{formCopy.sections.applications}</h6>
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_application_start" />
-                </div>
-
-                <h6 className="pt-4 col-span-12">{formCopy.sections.group}</h6>
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_group_start" />
-                </div>
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_group_end" />
-                </div>
-
-                <h6 className="pt-4 col-span-12">{formCopy.sections.payments}</h6>
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_payment_start" />
-                </div>
-                <div className="sm:col-span-6 col-span-12">
-                  <Field name="time_payment_end" />
-                </div>
-              </div>
-              <Errors />
-              <SubmitButton className="w-full">{formCopy.submit}</SubmitButton>
-            </>
-          )
-        }}
-      </SchemaForm>
-    </div>
+    <FormRunner
+      questions={questions}
+      flow={flow}
+      presentation={EventScreen}
+      initialAnswers={initialAnswers}
+      continueLabel={formCopy.submit}
+      // Only while the event is being invented. An event that already exists is
+      // read from the database every time the page opens, and a draft kept in
+      // the browser would quietly shadow what anyone else had changed since.
+      persistence={
+        event ? undefined : { formId: "admin-event", scopeId: "novo" }
+      }
+      onDone={() => {
+        toast.success(adminEventsCopy.createEdit.saved(Boolean(event)))
+        void navigate(ADMIN_VIEW_EVENT(savedId.current))
+      }}
+    />
   )
 }
