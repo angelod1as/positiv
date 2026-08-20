@@ -82,7 +82,8 @@ export function FormRunner({
   const reportedRef = useRef(false)
 
   // Held in a ref because callers write this inline: in the effect's deps it
-  // would report every render, and a caller answering with state never settle.
+  // would report every render, and a caller answering with state would never
+  // settle.
   const onStepChangeRef = useRef(onStepChange)
   useEffect(() => {
     onStepChangeRef.current = onStepChange

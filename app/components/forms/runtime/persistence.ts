@@ -49,7 +49,9 @@ function holdsState(record: Record<string, unknown>): boolean {
 /**
  * Whether the record asks not to be deleted when the flow finishes. Read raw,
  * so pasting `{"v":1,"keepOnDone":true}` in before the flow starts still counts.
- * A version bump drops the flag with the rest of the record, on purpose.
+ * A version bump drops the flag with the rest of the record, on purpose:
+ * carrying anything over from a payload just declared untrustworthy is the hole
+ * the version exists to close.
  */
 export function readKeepOnDone(key: string): boolean {
   const parsed = parse(key)
@@ -89,7 +91,8 @@ export function writeRuntimeState(
 ): void {
   if (typeof window === "undefined") return
 
-  // Read before writing: the flag can be pasted in at any point.
+  // Read before writing: the flag can be pasted in at any point, and every
+  // answer rewrites this record.
   const record: Record<string, unknown> = { v: VERSION, ...state }
   if (readKeepOnDone(key)) record.keepOnDone = true
 

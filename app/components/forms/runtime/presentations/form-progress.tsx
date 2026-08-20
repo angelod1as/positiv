@@ -9,7 +9,8 @@ type FormProgressProps = {
  * The bar carries the position for whoever sees it, the live region for whoever
  * does not: each screen moves focus to its control, so a screen reader would
  * never reach the bar. `aria-valuetext` spells the fraction out, because "3/14"
- * read aloud is a slash.
+ * read aloud is a slash, and the label names what is advancing — a value with no
+ * name is announced as "progress bar, etapa 3 de 14".
  */
 export function FormProgress({ index, total }: FormProgressProps) {
   return (

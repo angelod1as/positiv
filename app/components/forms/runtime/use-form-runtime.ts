@@ -228,7 +228,8 @@ export function useFormRuntime({
     return { index: position + 1, total: path.length }
   }, [path, position])
 
-  // The same projection read backwards.
+  // The same projection read backwards. A step reached by going back is
+  // persisted like any other, so a refresh lands with the way back intact.
   const previousStepId = position > 0 ? path[position - 1] : undefined
 
   const answer = useCallback((id: string, value: unknown) => {
