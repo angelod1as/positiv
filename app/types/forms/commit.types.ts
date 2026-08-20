@@ -9,4 +9,16 @@ export type CommitError = {
   message: string
 }
 
-export type CommitResult = { ok: true } | { ok: false; errors: CommitError[] }
+export type CommitResult =
+  | { ok: true }
+  | {
+      ok: false
+      errors: CommitError[]
+      /**
+       * Why the save was refused, when no question is to blame — registration
+       * closed between the quiz and the button, say. The runtime shows it in
+       * place of its own "could not save", which would tell someone to retry
+       * something retrying cannot fix.
+       */
+      message?: string
+    }

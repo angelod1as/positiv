@@ -22,6 +22,11 @@ type FormRunnerProps = {
   /** Override only to draw controls the built-in renderer does not cover. */
   renderQuestion?: RenderQuestion
   data?: Record<string, unknown>
+  /**
+   * Answers the run opens with, for a form that is correcting something rather
+   * than collecting it. Read once: changing it later does not reset the run.
+   */
+  initialAnswers?: Answers
   continueLabel?: string
   onDone?: (answers: Answers) => void
   /**
@@ -61,6 +66,7 @@ export function FormRunner({
   presentation: Presentation,
   renderQuestion = defaultRenderQuestion,
   data,
+  initialAnswers,
   continueLabel = "Continuar",
   onDone,
   focusFirstScreen = false,
@@ -69,7 +75,14 @@ export function FormRunner({
   onStepChange,
   onProgressChange,
 }: FormRunnerProps) {
-  const runtime = useFormRuntime({ questions, flow, data, persistence, stepId })
+  const runtime = useFormRuntime({
+    questions,
+    flow,
+    data,
+    initialAnswers,
+    persistence,
+    stepId,
+  })
   const { answers, isDone, isRestored, currentStepId, lastMove } = runtime
 
   const reportedRef = useRef(false)

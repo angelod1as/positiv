@@ -21,6 +21,14 @@ const Screen = ({ rejection, errors }: ScreenProps) => (
       </div>
     </div>
 
+    <div data-question-id="genero">
+      <div role="group" aria-label="Gênero">
+        <button type="button" aria-pressed="false">
+          {"Travesti"}
+        </button>
+      </div>
+    </div>
+
     <RejectionNotice rejection={rejection} errors={errors} />
     <button type="submit">{"Continuar"}</button>
   </form>
@@ -81,6 +89,17 @@ describe("RejectionNotice", () => {
     expect(screen.getByLabelText("Azul")).toHaveFocus()
   })
 
+  it("takes focus to a refused question answered with pills", () => {
+    render(
+      <Screen
+        rejection={{ questionIds: ["genero"] }}
+        errors={{ genero: "Escolha ao menos uma" }}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Travesti" })).toHaveFocus()
+  })
+
   it("takes focus back on a second refusal of the same field", () => {
     const props = {
       rejection: { questionIds: ["nome"] },
@@ -88,8 +107,9 @@ describe("RejectionNotice", () => {
     }
     const { rerender } = render(<Screen {...props} />)
 
-    screen.getByRole("button").focus()
-    expect(screen.getByRole("button")).toHaveFocus()
+    const submit = screen.getByRole("button", { name: "Continuar" })
+    submit.focus()
+    expect(submit).toHaveFocus()
 
     rerender(<Screen {...props} rejection={{ questionIds: ["nome"] }} />)
 

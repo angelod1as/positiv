@@ -93,7 +93,10 @@ describe("the rules quiz check", () => {
       }),
     })
 
-    mockGetSession.mockResolvedValue({ set: vi.fn() } as never)
+    mockGetSession.mockResolvedValue({
+      get: vi.fn().mockReturnValue(undefined),
+      set: vi.fn(),
+    } as never)
     mockCommitSession.mockResolvedValue("__session_rules=signed")
     mockGetUserContext.mockResolvedValue({
       currentProfile: { id: "profile-1" },
@@ -135,14 +138,41 @@ describe("the rules quiz check", () => {
     expect(body).toEqual({ ok: true })
   })
 
-  it("marks the quiz as passed in the session it hands back", async () => {
+  it("names the event the quiz was passed for", async () => {
     const set = vi.fn()
-    mockGetSession.mockResolvedValue({ set } as never)
+    mockGetSession.mockResolvedValue({
+      get: vi.fn().mockReturnValue(undefined),
+      set,
+    } as never)
 
     const { response } = await postAnswers(rightAnswers())
 
-    expect(set).toHaveBeenCalledWith("rulesCorrect", true)
+    expect(set).toHaveBeenCalledWith("rulesCorrect", ["123"])
     expect(response.headers.get("Set-Cookie")).toBe("__session_rules=signed")
+  })
+
+  it("keeps the events already passed", async () => {
+    const set = vi.fn()
+    mockGetSession.mockResolvedValue({
+      get: vi.fn().mockReturnValue(["456"]),
+      set,
+    } as never)
+
+    await postAnswers(rightAnswers())
+
+    expect(set).toHaveBeenCalledWith("rulesCorrect", ["456", "123"])
+  })
+
+  it("names an event once, however many times the quiz is passed", async () => {
+    const set = vi.fn()
+    mockGetSession.mockResolvedValue({
+      get: vi.fn().mockReturnValue(["123"]),
+      set,
+    } as never)
+
+    await postAnswers(rightAnswers())
+
+    expect(set).toHaveBeenCalledWith("rulesCorrect", ["123"])
   })
 
   it("records the quiz as passed only once it is", async () => {
@@ -175,7 +205,10 @@ describe("the rules quiz check for someone who has been to a Positiv", () => {
       }),
     })
 
-    mockGetSession.mockResolvedValue({ set: vi.fn() } as never)
+    mockGetSession.mockResolvedValue({
+      get: vi.fn().mockReturnValue(undefined),
+      set: vi.fn(),
+    } as never)
     mockCommitSession.mockResolvedValue("__session_rules=signed")
     mockGetUserContext.mockResolvedValue({
       currentProfile: { id: "profile-1" },

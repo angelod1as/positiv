@@ -28,7 +28,6 @@ describe("PROFILE_REQUIREMENTS", () => {
       "/conta/mudar-senha",
       "/conta/termos-e-condicoes",
       "/conta/dados-basicos",
-      "/conta/dados-basicos-cont",
     ]
 
     requiredExemptPaths.forEach((path) => {

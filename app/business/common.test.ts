@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest"
+import { validationMessages } from "~/lib/helpers/validation-messages"
 import {
   applyToEventSchema,
+  basicDataFieldsSchema,
   basicDataSchema,
+  ExtraBasicDataSchema,
   registerUserFieldsSchema,
   registerUserSchema,
 } from "./common"
@@ -220,6 +223,34 @@ describe("registerUserFieldsSchema", () => {
   })
 })
 
+describe("basicDataFieldsSchema", () => {
+  it("exposes each field so a question can reuse it", () => {
+    const { shape } = basicDataFieldsSchema
+
+    expect(shape.full_name.safeParse("M").success).toBe(false)
+    expect(shape.full_name.safeParse("Maria Silva").success).toBe(true)
+    expect(shape.phone.safeParse(1).success).toBe(false)
+    expect(shape.phone.safeParse(11999999999).success).toBe(true)
+    expect(shape.date_of_birth.safeParse("2020-01-01").success).toBe(false)
+  })
+
+  it("does not compare one field with another — that is the whole schema's job", () => {
+    const mismatched = {
+      full_name: "Maria Silva",
+      social_name: null,
+      rg: "123456789",
+      rg_issuer: "SSP-SP",
+      cpf: "12345678900",
+      date_of_birth: "1990-01-01",
+      phone: 11999999999,
+      confirm_phone: 11888888888,
+    }
+
+    expect(basicDataFieldsSchema.safeParse(mismatched).success).toBe(true)
+    expect(basicDataSchema.safeParse(mismatched).success).toBe(false)
+  })
+})
+
 describe("basicDataSchema", () => {
   const validBasicData = {
     full_name: "Maria Silva",
@@ -376,4 +407,49 @@ describe("basicDataSchema", () => {
       expect(result.success).toBe(true)
     })
   })
+})
+describe("ExtraBasicDataSchema", () => {
+  const validExtraData = {
+    gender: ["Travesti"],
+    orientation: ["Bi"],
+    pronouns: ["Ela/dela"],
+    race_color: ["Preta"],
+  }
+
+  it("accepts an answer someone wrote themselves", () => {
+    const result = ExtraBasicDataSchema.safeParse({
+      ...validExtraData,
+      gender: ["Pessoa não binária transmasculina"],
+    })
+
+    expect(result.success).toBe(true)
+  })
+
+  it.each(["gender", "orientation", "pronouns", "race_color"])(
+    "refuses a %s answer longer than fifty characters",
+    (field) => {
+      const result = ExtraBasicDataSchema.safeParse({
+        ...validExtraData,
+        [field]: ["a".repeat(51)],
+      })
+
+      expect(result.success).toBe(false)
+      if (result.success) throw new Error("expected a refusal")
+      expect(result.error.issues[0].message).toBe(validationMessages.maxLength(50))
+    },
+  )
+
+  it.each(["gender", "orientation", "pronouns", "race_color"])(
+    "refuses more than ten %s answers",
+    (field) => {
+      const result = ExtraBasicDataSchema.safeParse({
+        ...validExtraData,
+        [field]: Array.from({ length: 11 }, (_, index) => `answer ${index}`),
+      })
+
+      expect(result.success).toBe(false)
+      if (result.success) throw new Error("expected a refusal")
+      expect(result.error.issues[0].message).toBe(validationMessages.maxOptions(10))
+    },
+  )
 })

@@ -24,7 +24,12 @@ export default [
     "routes/api.process-pre-opening-reminders.ts",
   ),
   route("/api/events/:id/rules-quiz", "pages/api/events/verify-rules-quiz.ts"),
+  route(
+    "/api/events/:id/application",
+    "pages/api/events/submit-application.ts",
+  ),
   route("/api/auth/register", "pages/api/auth/register.ts"),
+  route("/api/account/dados-basicos", "pages/api/account/basic-data.ts"),
   route(
     "/api/admin/send-registration-limit-email",
     "pages/api/admin/send-registration-limit-email.ts",
@@ -97,10 +102,6 @@ export default [
         ),
         route("/mudar-senha", "pages/account/change-password-page.tsx"),
         route("/dados-basicos", "pages/account/basic-data/basic-data-page.tsx"),
-        route(
-          "/dados-basicos-cont",
-          "pages/account/basic-data/gender-pronouns-orientation-page.tsx",
-        ),
         route("/tudo-pronto", "pages/account/account-ready-page.tsx"),
       ]),
     ]),

@@ -130,17 +130,77 @@ describe("renderQuestion", () => {
 
   // A finger needs 44px, and a one-line alternative was drawing a 25px row.
   // jsdom has no layout, so the size is measured in the browser; what a test
-  // can hold onto is the class asking for it.
+  // can hold onto is the class asking for it. Asked for only where the pointer
+  // is a finger: with a mouse the same row reads as three separate questions.
   it.each(["radio", "checkbox"] as const)(
     "gives each %s alternative a row a finger can hit",
     (kind) => {
       draw({ kind, options })
 
       for (const control of screen.getAllByRole(kind)) {
-        expect(control.closest("label")).toHaveClass("min-h-11")
+        expect(control.closest("label")).toHaveClass("pointer-coarse:min-h-11")
       }
     },
   )
+
+  it("draws a chip per option and reports an array", async () => {
+    const user = userEvent.setup()
+    const onChange = draw({ kind: "chips", options })
+
+    await user.click(screen.getByRole("button", { name: "Sim" }))
+
+    expect(onChange).toHaveBeenCalledWith(["sim"])
+  })
+
+  it("labels a chip group with the prompt", () => {
+    draw({ kind: "chips", options })
+
+    expect(screen.getByRole("group")).toHaveAccessibleName("Pergunta")
+  })
+
+  it("keeps chips to the listed options unless the question allows more", () => {
+    draw({ kind: "chips", options })
+
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument()
+  })
+
+  it("lets a chip question take an answer that is not listed", async () => {
+    const user = userEvent.setup()
+    const onChange = draw(
+      { kind: "chips", options, allowOther: true },
+      ["sim"],
+    )
+
+    await user.type(screen.getByRole("textbox"), "Quem sabe{Enter}")
+
+    expect(onChange).toHaveBeenCalledWith(["sim", "Quem sabe"])
+  })
+
+  it("words the invitation the way the question asked", () => {
+    draw({
+      kind: "chips",
+      options,
+      allowOther: true,
+      otherPlaceholder: "Não se vê aqui?",
+    })
+
+    expect(screen.getByRole("textbox")).toHaveAttribute(
+      "placeholder",
+      "Não se vê aqui?",
+    )
+  })
+
+  // Same 44px a finger needs, for the same reason: a pill is a control. Only
+  // where the pointer is a finger, though — a pill is small type in a form of
+  // many questions, and a mouse does not need the room.
+  it("gives each chip a target a finger can hit", () => {
+    draw({ kind: "chips", options })
+
+    for (const pill of screen.getAllByRole("button")) {
+      expect(pill).toHaveClass("pointer-coarse:min-h-11")
+    }
+  })
+
   it("draws an e-mail field that reports what was typed", async () => {
     const user = userEvent.setup()
     const onChange = draw({ kind: "email" })

@@ -16,31 +16,22 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     await page.goto('/conta/dados-basicos')
     await expect(page).toHaveURL('/conta/dados-basicos')
     
-    // Update social name
-    const socialNameInput = page.locator('input[name="social_name"]')
+    // Update social name. The form opens holding what the profile knows, so
+    // this is the only field the test has to touch before saving.
+    const socialNameInput = page.getByLabel('Nome social ou apelido')
     const newName = `Test ${Date.now()}`
     await socialNameInput.clear()
     await socialNameInput.fill(newName)
-    
-    // Click continue button
+
+    // One screen, one save
     await page.getByRole('button', { name: /continuar|salvar/i }).click()
-    
-    // Wait for any response
-    await page.waitForLoadState('networkidle')
-    
-    // If we're on gender page, that's fine
-    if (page.url().includes('genero-pronomes')) {
-      // Just submit this form too
-      await page.getByRole('button', { name: 'Continuar' }).click()
-      await page.waitForLoadState('networkidle')
-    }
-    
+    await page.waitForURL('**/dashboard', { timeout: 10000 })
+
     // Go back to basic data
     await page.goto('/conta/dados-basicos')
-    
+
     // Verify the value persisted
-    const currentValue = await socialNameInput.inputValue()
-    expect(currentValue).toBe(newName)
+    await expect(page.getByLabel('Nome social ou apelido')).toHaveValue(newName)
   })
 
   test('Can navigate to change password page', async ({ page }) => {

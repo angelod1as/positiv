@@ -86,7 +86,7 @@ export async function performUILogin(
     // honest signal, and what comes next waits on the fields themselves.
     await page.waitForURL(/dados-basicos$/)
 
-    // Fill basic data form - page 1
+    // One screen holds every field the profile needs.
     await expect(page).toHaveURL(/dados-basicos$/)
 
     // Fill all required fields
@@ -121,67 +121,34 @@ export async function performUILogin(
       .getByRole("textbox", { name: "Em que cidade você mora?" })
       .fill(TEST_USER_PROFILE_DATA.where_lives)
 
-    const continueBtn = page.getByRole("button", { name: "Continuar" })
-    await continueBtn.click()
-    await page.waitForURL(/dados-basicos-cont$/)
+    // The demographic questions share the screen with everything above them:
+    // one form, one Continuar. Their options are pills, not checkboxes.
+    for (const answer of [
+      TEST_USER_PROFILE_DATA.gender[0],
+      TEST_USER_PROFILE_DATA.orientation[0],
+      TEST_USER_PROFILE_DATA.pronouns[0],
+      TEST_USER_PROFILE_DATA.race_color[0],
+    ]) {
+      const pill = page.getByRole("button", { name: answer, exact: true })
+      await expect(pill).toBeVisible({ timeout: 10000 })
+      await pill.click()
+      await expect(pill).toHaveAttribute("aria-pressed", "true")
+    }
 
-    // Fill basic data form - page 2 (gender/pronouns/orientation)
-    await expect(page).toHaveURL(/dados-basicos-cont$/)
-    await page.waitForLoadState("domcontentloaded")
-
-    // Wait for form to be fully loaded
-    await expect(page.getByText("Gênero")).toBeVisible()
-    await expect(page.getByText("Orientação")).toBeVisible()
-    await expect(page.getByText("Pronomes")).toBeVisible()
-    await expect(page.getByText("Cor ou Raça", { exact: true })).toBeVisible()
-
-    // Select checkboxes using label locators for better reliability
-    // Gender
-    const genderLabel = page
-      .locator("label")
-      .filter({ hasText: TEST_USER_PROFILE_DATA.gender[0] })
-    await expect(genderLabel).toBeVisible({ timeout: 10000 })
-    await genderLabel.click()
-
-    // Orientation
-    const orientationLabel = page
-      .locator("label")
-      .filter({ hasText: TEST_USER_PROFILE_DATA.orientation[0] })
-    await expect(orientationLabel).toBeVisible({ timeout: 10000 })
-    await orientationLabel.click()
-
-    // Pronouns
-    const pronounsLabel = page
-      .locator("label")
-      .filter({ hasText: TEST_USER_PROFILE_DATA.pronouns[0] })
-    await expect(pronounsLabel).toBeVisible({ timeout: 10000 })
-    await pronounsLabel.click()
-
-    // Race and Color
-    const raceColorLabel = page
-      .locator("label")
-      .filter({ hasText: TEST_USER_PROFILE_DATA.race_color[0] })
-    await expect(raceColorLabel).toBeVisible({ timeout: 10000 })
-    await raceColorLabel.click()
-
-    // Give a moment for the checkboxes to be checked
-    await page.waitForTimeout(500)
-
-    // Click continue button
-    const continueButton2 = page.getByRole("button", { name: "Continuar" })
-    await expect(continueButton2).toBeVisible()
+    const saveBasicData = page.getByRole("button", { name: "Continuar" })
+    await expect(saveBasicData).toBeVisible()
 
     if (isAdmin) {
       await Promise.all([
         page.waitForURL(expectedDashboardUrl),
-        continueButton2.click(),
+        saveBasicData.click(),
       ])
     } else {
       // First-time signup now ends on the account-ready page, which explains
       // that having an account is not the same as being registered for an event
       await Promise.all([
         page.waitForURL(/conta\/tudo-pronto$/),
-        continueButton2.click(),
+        saveBasicData.click(),
       ])
 
       await expect(

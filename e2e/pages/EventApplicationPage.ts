@@ -370,10 +370,13 @@ export class EventApplicationPage extends BasePage {
 
   async submitApplication(): Promise<void> {
     await expect(this.confirmButton).toBeVisible()
-    await this.clickAndWait(this.confirmButton, { waitForNavigation: true })
+
+    // The form saves over fetch and moves the router itself, so there is no
+    // document navigation to wait for — the url is what says it went through.
+    await this.confirmButton.click()
 
     // A successful application lands on its own confirmation page
-    await expect(this.page).toHaveURL(/candidatura-enviada/)
+    await expect(this.page).toHaveURL(/candidatura-enviada/, { timeout: 15000 })
     await expect(this.confirmationTitle).toBeVisible({ timeout: 10000 })
   }
 

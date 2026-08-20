@@ -86,7 +86,12 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   const { commitSession, getSession } = rulesSessionStorage
   const session = await getSession(request.headers.get("Cookie"))
-  session.set("rulesCorrect", true)
+  const passed = session.get("rulesCorrect") ?? []
+
+  session.set(
+    "rulesCorrect",
+    passed.includes(params.id) ? passed : [...passed, params.id],
+  )
 
   trackServerEvent(
     "rules_quiz_passed",

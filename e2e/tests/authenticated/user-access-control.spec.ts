@@ -11,7 +11,7 @@ test.describe('User Access Control', () => {
     const currentUrl = page.url()
 
     // Accept dashboard, terms page, or profile completion pages (common redirects for new users)
-    const validPaths = ['/dashboard', '/conta/termos-e-condicoes', '/conta/dados-basicos', '/conta/dados-basicos-cont']
+    const validPaths = ['/dashboard', '/conta/termos-e-condicoes', '/conta/dados-basicos']
     const isValidPath = validPaths.some(path => currentUrl.includes(path))
     expect(isValidPath, `Expected URL to include one of ${validPaths.join(', ')}, but got: ${currentUrl}`).toBe(true)
     
