@@ -1,6 +1,9 @@
-import { render, screen } from "@testing-library/react"
-import { createMemoryRouter, RouterProvider } from "react-router"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { MemoryRouter } from "react-router"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+
+const navigate = vi.fn()
 
 vi.mock("~/lib/helpers/get-turnstile-config.server", () => ({
   getTurnstileConfig: vi.fn(() => ({
@@ -9,236 +12,199 @@ vi.mock("~/lib/helpers/get-turnstile-config.server", () => ({
   })),
 }))
 
-vi.mock("~/components/forms/base/schema-form", () => ({
-  SchemaForm: ({
-    children,
-  }: {
-    children: (props: {
-      Field: React.FC<{ name: string }>
-      Button: React.FC
-      Errors: React.FC
-      setValue: (name: string, value: string) => void
-    }) => React.ReactNode
-  }) => {
-    const Field = ({ name }: { name: string }) => {
-      if (name === "hasParticipated") {
-        return (
-          <select aria-label="Já participou de algum evento?">
-            <option value="never">Nunca participei</option>
-          </select>
-        )
-      }
-      if (name === "feedbackText") {
-        return <textarea aria-label="Seu feedback" />
-      }
-      const labels: Record<string, string> = {
-        name: "Nome (opcional)",
-        email: "E-mail (opcional)",
-        whatsapp: "WhatsApp (opcional)",
-        captchaToken: "Captcha",
-      }
-      return <input aria-label={labels[name] || name} />
-    }
-    const Button = () => <button type="submit">Enviar Feedback</button>
-    const Errors = () => null
-    const setValue = () => {}
-    return <form data-testid="mock-schema-form">{children({ Field, Button, Errors, setValue })}</form>
-  },
-}))
-
 vi.mock("@marsidev/react-turnstile", () => ({
-  Turnstile: () => <div data-testid="turnstile">Turnstile Mock</div>,
+  Turnstile: ({ onSuccess }: { onSuccess: (token: string) => void }) => (
+    <button type="button" onClick={() => onSuccess("token-de-teste")}>
+      Resolver captcha
+    </button>
+  ),
 }))
 
-vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router")
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn() },
+}))
+
+vi.mock("react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router")>()
   return {
     ...actual,
     useLoaderData: () => ({ turnstileSiteKey: "test-site-key" }),
+    useNavigate: () => navigate,
   }
 })
 
-vi.mock("~/business/feedback/feedback.server", () => ({
-  submitFeedback: vi.fn(),
-}))
+import { toast } from "sonner"
+import FeedbackPage, { loader } from "./feedback-page"
 
-vi.mock("~/business/feedback/notify-new-feedback.server", () => ({
-  notifyNewFeedback: vi.fn(),
-}))
-
-vi.mock("~/lib/helpers/verify-turnstile.server", () => ({
-  verifyTurnstileToken: vi.fn(async () => ({ success: true })),
-}))
-
-vi.mock("remix-toast", () => ({
-  redirectWithError: vi.fn((_path: string, message: string) => ({
-    error: message,
-  })),
-  redirectWithSuccess: vi.fn((_path: string, message: string) => ({
-    success: message,
-  })),
-}))
-
-import { submitFeedback } from "~/business/feedback/feedback.server"
-import { notifyNewFeedback } from "~/business/feedback/notify-new-feedback.server"
-import FeedbackPage, { action, loader } from "./feedback-page"
-
-const createTestRouter = () => {
-  return createMemoryRouter(
-    [
-      {
-        path: "/feedback",
-        element: <FeedbackPage />,
-      },
-    ],
-    {
-      initialEntries: ["/feedback"],
-    },
+const renderPage = () =>
+  render(
+    <MemoryRouter initialEntries={["/feedback"]}>
+      <FeedbackPage />
+    </MemoryRouter>,
   )
+
+const fill = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.selectOptions(
+    screen.getByLabelText("Já participou de algum evento?"),
+    "once",
+  )
+  await user.type(
+    screen.getByLabelText("Seu feedback"),
+    "Um feedback de tamanho decente",
+  )
+  await user.click(screen.getByRole("button", { name: "Resolver captcha" }))
 }
 
-// Each call uses its own IP so the rate limiter does not reject the next test
-let ipCounter = 0
+const submit = (user: ReturnType<typeof userEvent.setup>) =>
+  user.click(screen.getByRole("button", { name: "Enviar Feedback" }))
 
-const submitAction = () => {
-  ipCounter += 1
-  const body = new URLSearchParams({
-    hasParticipated: "once",
-    feedbackText: "Feedback com pelo menos dez caracteres",
-    captchaToken: "token",
-    name: "João",
-    email: "joao@example.com",
-    whatsapp: "11999999999",
-    canContact: "on",
-  })
-
-  return action({
-    request: new Request("http://localhost/feedback", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "cf-connecting-ip": `10.0.0.${ipCounter}`,
-      },
-      body: body.toString(),
-    }),
-  } as Parameters<typeof action>[0])
-}
+const answers = (result: unknown, init?: ResponseInit) =>
+  vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue(Response.json(result, init) as Response)
 
 describe("FeedbackPage", () => {
-  describe("action", () => {
-    beforeEach(() => {
-      vi.mocked(submitFeedback).mockReset()
-      vi.mocked(notifyNewFeedback).mockReset()
-      vi.mocked(submitFeedback).mockResolvedValue({
-        id: "feedback-1",
-        name: "João",
-        email: "joao@example.com",
-        whatsapp: "11999999999",
-        has_participated: "once",
-        feedback_text: "Feedback com pelo menos dez caracteres",
-        can_contact: true,
-        ip_address: "unknown",
-        created_at: "2024-01-15T10:30:00Z",
-        status: "new",
-      } as Awaited<ReturnType<typeof submitFeedback>>)
-      vi.mocked(notifyNewFeedback).mockResolvedValue(undefined)
-    })
+  beforeEach(() => {
+    navigate.mockClear()
+    vi.mocked(toast.success).mockClear()
+  })
 
-    it("should notify the new feedback after storing it", async () => {
-      await submitAction()
-
-      expect(submitFeedback).toHaveBeenCalledTimes(1)
-      expect(notifyNewFeedback).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: "João",
-          feedback_text: "Feedback com pelo menos dez caracteres",
-        }),
-      )
-    })
-
-    it("should still confirm the feedback when the notification fails", async () => {
-      vi.mocked(notifyNewFeedback).mockRejectedValue(new Error("telegram down"))
-
-      const result = await submitAction()
-
-      expect(submitFeedback).toHaveBeenCalledTimes(1)
-      expect(result).toEqual({
-        success: expect.stringMatching(/obrigado pelo seu feedback/i),
-      })
-    })
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   describe("loader", () => {
     it("should return turnstile site key", async () => {
       const result = await loader()
 
-      expect(result).toHaveProperty("turnstileSiteKey", "test-site-key")
+      expect(result).toEqual({ turnstileSiteKey: "test-site-key" })
     })
   })
 
   describe("component", () => {
-    it("should render the feedback form", () => {
-      const router = createTestRouter()
-      render(<RouterProvider router={router} />)
+    it("asks everything on one screen", () => {
+      renderPage()
 
-      expect(screen.getByRole("heading", { name: /envie seu feedback/i })).toBeInTheDocument()
-      expect(screen.getByTestId("mock-schema-form")).toBeInTheDocument()
+      expect(screen.getByLabelText("Nome (opcional)")).toBeVisible()
+      expect(screen.getByLabelText("E-mail (opcional)")).toBeVisible()
+      expect(screen.getByLabelText("WhatsApp (opcional)")).toBeVisible()
+      expect(
+        screen.getByLabelText("Já participou de algum evento?"),
+      ).toBeVisible()
+      expect(screen.getByLabelText("Seu feedback")).toBeVisible()
+      expect(
+        screen.getByRole("checkbox", { name: /Podemos entrar em contato/ }),
+      ).toBeVisible()
     })
 
-    it("should render participation select", () => {
-      const router = createTestRouter()
-      render(<RouterProvider router={router} />)
+    it("displays the information box about feedback acceptance", () => {
+      renderPage()
 
-      expect(
-        screen.getByRole("combobox", { name: /participou/i }),
-      ).toBeInTheDocument()
+      expect(screen.getByText(/formulário oficial/)).toBeVisible()
     })
 
-    it("should render optional contact fields", () => {
-      const router = createTestRouter()
-      render(<RouterProvider router={router} />)
+    it("draws the security check", () => {
+      renderPage()
 
       expect(
-        screen.getByRole("textbox", { name: /nome/i }),
-      ).toBeInTheDocument()
-      expect(
-        screen.getByRole("textbox", { name: /e-mail/i }),
-      ).toBeInTheDocument()
-      expect(
-        screen.getByRole("textbox", { name: /whatsapp/i }),
-      ).toBeInTheDocument()
+        screen.getByRole("button", { name: "Resolver captcha" }),
+      ).toBeVisible()
     })
 
-    it("should render submit button", () => {
-      const router = createTestRouter()
-      render(<RouterProvider router={router} />)
+    it("refuses to send anything until the captcha has answered", async () => {
+      const user = userEvent.setup()
+      const fetch = answers({ ok: true })
+      renderPage()
 
-      expect(
-        screen.getByRole("button", { name: /enviar/i }),
-      ).toBeInTheDocument()
+      await user.selectOptions(
+        screen.getByLabelText("Já participou de algum evento?"),
+        "once",
+      )
+      await user.type(
+        screen.getByLabelText("Seu feedback"),
+        "Um feedback de tamanho decente",
+      )
+      await submit(user)
+
+      expect(await screen.findByText("Campo obrigatório")).toBeVisible()
+      expect(fetch).not.toHaveBeenCalled()
     })
 
-    it("should render turnstile widget", () => {
-      const router = createTestRouter()
-      render(<RouterProvider router={router} />)
+    it("sends the answers to the feedback route", async () => {
+      const user = userEvent.setup()
+      const fetch = answers({ ok: true })
+      renderPage()
 
-      expect(screen.getByTestId("turnstile")).toBeInTheDocument()
+      await fill(user)
+      await submit(user)
+
+      await waitFor(() => expect(fetch).toHaveBeenCalled())
+      const [url, init] = fetch.mock.calls[0] as [string, RequestInit]
+      expect(url).toBe("/api/feedback")
+      expect(JSON.parse(String(init.body))).toMatchObject({
+        hasParticipated: "once",
+        feedbackText: "Um feedback de tamanho decente",
+        captchaToken: "token-de-teste",
+      })
     })
 
-    it("should display the information box about feedback acceptance", () => {
-      const router = createTestRouter()
-      render(<RouterProvider router={router} />)
+    it("thanks the person and takes them home", async () => {
+      const user = userEvent.setup()
+      answers({ ok: true })
+      renderPage()
+
+      await fill(user)
+      await submit(user)
+
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith("/"))
+      expect(toast.success).toHaveBeenCalled()
+    })
+
+    it("says a feedback sent too soon was refused, and stays put", async () => {
+      const user = userEvent.setup()
+      answers(
+        {
+          ok: false,
+          errors: [],
+          message:
+            "Você já enviou um feedback recentemente. Por favor, aguarde antes de enviar outro.",
+        },
+        { status: 422 },
+      )
+      renderPage()
+
+      await fill(user)
+      await submit(user)
 
       expect(
-        screen.getByText(
-          /A Positiv leva em consideração exclusivamente os feedbacks relacionados com a nossa organização e nosso evento/i,
-        ),
-      ).toBeInTheDocument()
+        await screen.findByText(/já enviou um feedback recentemente/),
+      ).toBeVisible()
+      expect(navigate).not.toHaveBeenCalled()
+    })
+
+    it("blames the captcha when the security check refused it", async () => {
+      const user = userEvent.setup()
+      answers(
+        {
+          ok: false,
+          errors: [
+            {
+              questionId: "captchaToken",
+              message: "Verificação de segurança falhou",
+            },
+          ],
+        },
+        { status: 422 },
+      )
+      renderPage()
+
+      await fill(user)
+      await submit(user)
+
       expect(
-        screen.getByText(
-          /Feedbacks de festas só serão aceitos via o formulário oficial enviado no grupo do WhatsApp do evento/i,
-        ),
-      ).toBeInTheDocument()
+        await screen.findByText("Verificação de segurança falhou"),
+      ).toBeVisible()
+      expect(navigate).not.toHaveBeenCalled()
     })
   })
 })

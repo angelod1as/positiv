@@ -11,6 +11,7 @@ const LOGON_CALLBACK = "/auth/confirm"
 const LOGON_CONFIRM = `${LOGON}/confirm`
 const CODE_OF_CONDUCT = `/codigo-de-conduta`
 const FEEDBACK = `/feedback`
+const FEEDBACK_COMMIT = "/api/feedback"
 
 ////////
 // PRIVATE
@@ -67,6 +68,7 @@ const paths = {
     HOME,
     CODE_OF_CONDUCT,
     FEEDBACK,
+    FEEDBACK_COMMIT,
   },
   admin: {
     ADMIN_DASHBOARD,

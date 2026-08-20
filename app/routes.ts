@@ -34,6 +34,7 @@ export default [
   route("/api/account/dados-basicos", "pages/api/account/basic-data.ts"),
   route("/api/account/mudar-senha", "pages/api/account/change-password.ts"),
   route("/api/account/termos", "pages/api/account/terms.ts"),
+  route("/api/feedback", "pages/api/feedback.ts"),
   route(
     "/api/admin/send-registration-limit-email",
     "pages/api/admin/send-registration-limit-email.ts",
