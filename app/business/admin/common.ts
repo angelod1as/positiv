@@ -77,7 +77,6 @@ export const eventStatusEnum = zod.enum(
 )
 
 export const updateEventStatusSchema = zod.object({
-  intent: zod.string(),
   event_status: eventStatusEnum,
 })
 

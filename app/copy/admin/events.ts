@@ -15,6 +15,7 @@ export const adminEventsCopy = {
     updateParticipantSuccess: "Dados atualizados com sucesso",
     remindersQueued: "E-mails colocados na fila de envio com sucesso",
     statusUpdated: "Status atualizado com sucesso",
+    statusUpdateFailed: "Não foi possível atualizar o status",
     demographicsUpdated: "Demografia atualizada com sucesso",
     listmonkSyncFailed: "Erro ao atualizar lista da newsletter",
     listmonkSyncSuccess: "Lista da newsletter atualizada com sucesso",

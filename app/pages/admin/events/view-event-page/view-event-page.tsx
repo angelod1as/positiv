@@ -12,12 +12,8 @@ import {
   getRejectedEventParticipants,
   updateEventDemographics,
   updateEventParticipantById,
-  updateEventStatus,
 } from "~/business/admin/admin.server"
-import {
-  updateEventParticipantByIdSchema,
-  updateEventStatusSchema,
-} from "~/business/admin/common"
+import { updateEventParticipantByIdSchema } from "~/business/admin/common"
 import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
@@ -50,16 +46,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       request,
       schema: updateEventParticipantByIdSchema,
       mutation: updateEventParticipantById,
-      transformResult: (result) => ({ ...result, intent }),
-    })
-  }
-
-  if (intent === "update-event-status") {
-    return await formAction({
-      request,
-      schema: updateEventStatusSchema,
-      mutation: updateEventStatus,
-      context: { ...context, eventId: params.id },
       transformResult: (result) => ({ ...result, intent }),
     })
   }
@@ -219,7 +205,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
         )}
       </p>
 
-      <EventStatusForm {...event} fetcher={fetcher} />
+      <EventStatusForm {...event} />
 
       {demographics && (
         <DemographicsData

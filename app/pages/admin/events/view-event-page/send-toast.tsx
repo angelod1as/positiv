@@ -32,10 +32,6 @@ export const sendToast = (fetcherData: ComposableFetcherData) => {
     return toast.success(adminEventsCopy.toasts.remindersQueued)
   }
 
-  if (fetcherData.intent === "update-event-status") {
-    return toast.success(adminEventsCopy.toasts.statusUpdated)
-  }
-
   if (fetcherData.intent === "update-demographics") {
     return toast.success(adminEventsCopy.toasts.demographicsUpdated)
   }
