@@ -20,6 +20,12 @@ export type InputSpec =
   | { kind: "textnumber"; placeholder?: string }
   | { kind: "textarea"; placeholder?: string }
   | { kind: "date" }
+  /**
+   * A date and a time in one control. Distinct from `date`, which is the day
+   * alone — an event that opens at eight in the morning is not the same answer
+   * as the day it opens on.
+   */
+  | { kind: "datetime" }
   | { kind: "select"; options: Option[] }
   | { kind: "radio"; options: Option[] }
   | { kind: "checkbox"; options: Option[] }

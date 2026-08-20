@@ -86,6 +86,16 @@ export const renderQuestion: RenderQuestion = ({
         />
       )
 
+    case "datetime":
+      return (
+        <Input
+          {...shared}
+          type="datetime-local"
+          value={asText(value)}
+          onChange={(event) => onChange(event.target.value)}
+        />
+      )
+
     case "textarea":
       return (
         <TextArea

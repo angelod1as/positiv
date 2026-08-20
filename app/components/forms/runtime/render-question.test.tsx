@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
@@ -67,6 +67,24 @@ describe("renderQuestion", () => {
     draw({ kind: "date" })
 
     expect(screen.getByLabelText("Pergunta")).toHaveAttribute("type", "date")
+  })
+
+  it("draws a datetime field holding what it was given", () => {
+    draw({ kind: "datetime" }, "2026-09-01T20:00")
+
+    const field = screen.getByLabelText("Pergunta")
+    expect(field).toHaveAttribute("type", "datetime-local")
+    expect(field).toHaveValue("2026-09-01T20:00")
+  })
+
+  it("reports the datetime that was picked", () => {
+    const onChange = draw({ kind: "datetime" })
+
+    fireEvent.change(screen.getByLabelText("Pergunta"), {
+      target: { value: "2026-09-01T20:00" },
+    })
+
+    expect(onChange).toHaveBeenCalledWith("2026-09-01T20:00")
   })
 
   it("draws a select and reports the chosen option", async () => {
