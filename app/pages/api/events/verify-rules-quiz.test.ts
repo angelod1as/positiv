@@ -205,7 +205,10 @@ describe("the rules quiz check for someone who has been to a Positiv", () => {
       }),
     })
 
-    mockGetSession.mockResolvedValue({ set: vi.fn() } as never)
+    mockGetSession.mockResolvedValue({
+      get: vi.fn().mockReturnValue(undefined),
+      set: vi.fn(),
+    } as never)
     mockCommitSession.mockResolvedValue("__session_rules=signed")
     mockGetUserContext.mockResolvedValue({
       currentProfile: { id: "profile-1" },
