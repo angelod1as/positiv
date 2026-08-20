@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   redirect,
   useNavigate,
@@ -9,7 +9,10 @@ import { ENV } from "varlock/env"
 import { getUserContext } from "~/business/auth/auth.server"
 import { isVeteran } from "~/business/participant/is-veteran.server"
 import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
-import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
+import {
+  buildRulesFlow,
+  SHORT_RUN_LENGTH,
+} from "~/components/forms/custom/rules/build-rules-flow"
 import {
   buildRulesQuestions,
   dealOf,
@@ -64,10 +67,13 @@ export async function loader({ request, params }: Route.LoaderArgs) {
     isVeteran: currentProfile
       ? await isVeteran(currentProfile.id, params.id)
       : false,
+    profileId: currentProfile?.id ?? "",
   }
 }
 
-const Wrapper: FCC = ({ children }) => (
+type WrapperProps = { notice?: string }
+
+const Wrapper: FCC<WrapperProps> = ({ children, notice }) => (
   <>
     <RulesText />
 
@@ -78,6 +84,7 @@ const Wrapper: FCC = ({ children }) => (
         </CardTitle>
         <CardDescription>
           <p>{rulesQuizCopy.shuffleNotice}</p>
+          {notice ? <p className="mt-2">{notice}</p> : null}
         </CardDescription>
       </CardHeader>
       <CardContent>{children}</CardContent>
@@ -92,6 +99,17 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
   const navigationType = useNavigationType()
   const [searchParams, setSearchParams] = useSearchParams()
   const eventId = params.id
+
+  // A tab can see two people sign in, and the run kept in session storage
+  // outlives the sign-out. Keyed by the event alone, the second person resumed
+  // the first one's quiz — on a question the flow they are owed may never ask,
+  // with answers that were not theirs.
+  const runId = `${eventId}:${loaderData.profileId}`
+
+  // How long the run says it will be, which is the only thing that knows
+  // whether a veteran is still on the short path: the wager is on while three
+  // screens are promised, and off the moment the quiz grows.
+  const [screens, setScreens] = useState<number | null>(null)
 
   const mirrored = searchParams.get(STEP_PARAM) ?? undefined
 
@@ -132,12 +150,12 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
   // after it — while the alternatives swapped places under a question that had
   // not changed.
   const questions = useMemo(
-    () => buildRulesQuestions(readRulesDeal(eventId) ?? undefined),
+    () => buildRulesQuestions(readRulesDeal(runId) ?? undefined),
     [eventId],
   )
 
   useEffect(() => {
-    writeRulesDeal(eventId, dealOf(questions))
+    writeRulesDeal(runId, dealOf(questions))
   }, [eventId, questions])
 
   const commit = useCallback(
@@ -168,14 +186,23 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
     void navigate(EVENT_DATA(eventId))
   }, [commit, eventId, navigate])
 
+  const notice = !loaderData.isVeteran
+    ? undefined
+    : screens !== null && screens > SHORT_RUN_LENGTH
+      ? rulesQuizCopy.veteranLostWager
+      : rulesQuizCopy.veteranWager
+
   return (
-    <Wrapper>
+    <Wrapper notice={notice}>
       <FormRunner
         questions={questions}
         flow={flow}
         presentation={OneAtATime}
-        persistence={{ formId: "rules", scopeId: eventId }}
+        persistence={{ formId: "rules", scopeId: runId }}
         stepId={requestedStep}
+        onProgressChange={(progress) => {
+          setScreens(progress?.total ?? null)
+        }}
         onStepChange={(step, { direction }) => {
           if (direction === "back" && pushed.current > 0) {
             pushed.current -= 1
@@ -207,7 +234,7 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
         onDone={() => {
           // The run is over, so the deal goes with it — a second attempt is
           // dealt again, which is the point of shuffling.
-          clearRulesDeal(eventId)
+          clearRulesDeal(runId)
           void navigate(EVENT_DATA(eventId))
         }}
       />

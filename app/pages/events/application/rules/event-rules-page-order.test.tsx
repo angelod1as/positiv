@@ -16,9 +16,15 @@ vi.mock("~/kysely-db", () => ({ kyselyDb: { selectFrom: vi.fn() } }))
 
 const EVENT = "11111111-1111-4111-8111-111111111111"
 
+const PROFILE = "22222222-2222-4222-8222-222222222222"
+
+// The run is kept per event *and* person, so a test that seeds or reads it has
+// to name both.
+const RUN = `${EVENT}:${PROFILE}`
+
 const quizPageProps = {
   params: { id: EVENT },
-  loaderData: { isVeteran: false },
+  loaderData: { isVeteran: false, profileId: PROFILE },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any
 
@@ -39,7 +45,7 @@ const seedDeal = (deal: {
   options?: Record<string, string[]>
 }) =>
   sessionStorage.setItem(
-    `rules-order:${EVENT}`,
+    `rules-order:${RUN}`,
     JSON.stringify({ options: {}, ...deal }),
   )
 
@@ -101,7 +107,7 @@ describe("the order the rules quiz was dealt", () => {
     const openOn = dealt[6]
 
     seedDeal({ questions: dealt })
-    writeRuntimeState(runtimeStorageKey("rules", EVENT), {
+    writeRuntimeState(runtimeStorageKey("rules", RUN), {
       answers: { [openOn]: "seja lá o que for" },
       currentStepId: openOn,
       firstTryCorrect: {},
@@ -118,7 +124,7 @@ describe("the order the rules quiz was dealt", () => {
 
     await waitFor(() => expect(onScreen()).toBeDefined())
 
-    const written = readRulesDeal(EVENT)
+    const written = readRulesDeal(RUN)
 
     expect(written).not.toBeNull()
     expect([...(written?.questions ?? [])].sort()).toEqual(ids().sort())
@@ -174,6 +180,6 @@ describe("the order the rules quiz was dealt", () => {
       await user.click(screen.getByRole("button", { name: "Continuar" }))
     }
 
-    await waitFor(() => expect(readRulesDeal(EVENT)).toBeNull())
+    await waitFor(() => expect(readRulesDeal(RUN)).toBeNull())
   })
 })
