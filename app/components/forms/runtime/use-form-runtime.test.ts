@@ -966,3 +966,31 @@ describe("useFormRuntime refused advance", () => {
     expect(result.current.advanceRejection).toBeNull()
   })
 })
+
+describe("useFormRuntime refusal order", () => {
+  // A digit-only key is reordered ahead of the rest by every JS engine, so the
+  // refusing questions are collected in the order the step asks them rather
+  // than read back off an object.
+  it("names the refusing questions in the order the screen asks them", async () => {
+    const numbered = [question("nome"), question("2"), question("1")]
+    const numberedFlow: Flow = {
+      start: "tela",
+      steps: { tela: { kind: "screen", ids: ["nome", "2", "1"] } },
+      next: () => "done",
+    }
+
+    const { result } = renderHook(() =>
+      useFormRuntime({ questions: numbered, flow: numberedFlow }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.advanceRejection?.questionIds).toEqual([
+      "nome",
+      "2",
+      "1",
+    ])
+  })
+})

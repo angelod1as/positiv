@@ -322,7 +322,14 @@ export function useFormRuntime({
     // would send it to a question whose message has not landed yet.
     if (Object.keys(failures).length > 0) {
       setErrors((current) => ({ ...elsewhere(current), ...failures }))
-      setAdvanceRejection({ questionIds: Object.keys(failures) })
+      setAdvanceRejection({
+        // Read off the step rather than off `failures`, whose keys a digit-only
+        // question id would reorder — and the first of these is the one focus
+        // goes to.
+        questionIds: pending
+          .map((question) => question.id)
+          .filter((id) => id in failures),
+      })
       return
     }
 
