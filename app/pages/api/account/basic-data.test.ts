@@ -59,6 +59,16 @@ describe("basic data commit endpoint", () => {
     })
   })
 
+  it("answers a save the database refused with the refusal, not an error page", async () => {
+    getUserContext.mockResolvedValue(context)
+    save.mockResolvedValue({ ok: false, errors: [] })
+
+    const response = await post(JSON.stringify({ full_name: "Ana" }))
+
+    expect(response.status).toBe(422)
+    expect(await response.json()).toEqual({ ok: false, errors: [] })
+  })
+
   it("blames no question for a body it cannot read", async () => {
     getUserContext.mockResolvedValue(context)
 

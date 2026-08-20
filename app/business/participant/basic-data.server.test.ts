@@ -61,6 +61,7 @@ const mockSupabase = (orphan: Orphan = null, savedId = "profile-1") => {
     upsert,
     update,
     updateEq,
+    wroteSingle,
   }
 }
 
@@ -161,10 +162,36 @@ describe("saveBasicData", () => {
       error: { code: "08006", message: "connection failure" },
     })
 
-    await expect(
-      saveBasicData({ answers, context: contextWith(supabase) }),
-    ).rejects.toThrow()
+    const result = await saveBasicData({
+      answers,
+      context: contextWith(supabase),
+    })
+
+    expect(result).toEqual({ ok: false, errors: [] })
     expect(supabase.upsert).not.toHaveBeenCalled()
+  })
+
+  it("refuses rather than throws when the write itself failed", async () => {
+    const supabase = mockSupabase()
+    supabase.wroteSingle.mockResolvedValue({
+      data: null,
+      error: { code: "23505", message: "duplicate key" },
+    })
+
+    const result = await saveBasicData({
+      answers,
+      context: contextWith(supabase),
+    })
+
+    expect(result).toEqual({ ok: false, errors: [] })
+  })
+
+  it("asks the orphan lookup for the id it is there to find", async () => {
+    const supabase = mockSupabase()
+
+    await saveBasicData({ answers, context: contextWith(supabase) })
+
+    expect(supabase.select).toHaveBeenCalledWith("id")
   })
 
   it("names the question behind each rejected field", async () => {

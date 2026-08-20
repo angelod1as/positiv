@@ -3,6 +3,7 @@ import type { z } from "zod"
 import type { CommitError, CommitResult } from "~types/forms/commit.types"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
+import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
 import { participantCopy } from "~/copy/participant"
 import { basicDataSchema, ExtraBasicDataSchema, userContextSchema } from "../common"
@@ -56,7 +57,7 @@ export async function saveBasicData({
 
   const { data: orphanedProfile, error: orphanedError } = await supabase
     .from("profiles")
-    .select("*")
+    .select("id")
     .eq("email", email)
     .is("user_id", null)
     .single()
@@ -65,9 +66,10 @@ export async function saveBasicData({
   // waiting under this e-mail went unanswered, and writing a second one would
   // strand the first.
   if (orphanedError && orphanedError.code !== "PGRST116") {
-    throw new Error(
+    logger.error(
       `Error checking for orphaned profile: ${orphanedError.message}`,
     )
+    return { ok: false, errors: [] }
   }
 
   const profileId = orphanedProfile?.id ?? context.currentProfile?.id
@@ -101,7 +103,8 @@ export async function saveBasicData({
   if (upsertError || !saved) {
     const code = upsertError?.code ?? "UNKNOWN"
     const message = upsertError?.message ?? String(upsertError)
-    throw new Error(participantCopy.basicData.profileUpdateFailed(code, message))
+    logger.error(participantCopy.basicData.profileUpdateFailed(code, message))
+    return { ok: false, errors: [] }
   }
 
   // The name reaching the profile is often the first real one the newsletter
