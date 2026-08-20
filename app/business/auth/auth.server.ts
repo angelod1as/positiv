@@ -6,6 +6,7 @@ import { ENV } from "varlock/env"
 import { logoutCopy } from "~/copy/auth"
 import { errorsCopy } from "~/copy/errors"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
+import { originFromHost } from "~/lib/helpers/origin-from-host"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
@@ -237,16 +238,11 @@ export const registerUser = async (
     }
   }
 
-  const origin =
-    host?.startsWith("http://") || host?.startsWith("https://")
-      ? host
-      : `${host?.includes("localhost") ? "http://" : "https://"}${host}`
-
   const { error } = await supabase.auth.signUp({
     ...data,
     options: {
       captchaToken,
-      emailRedirectTo: `${origin}${LOGON_CALLBACK}`,
+      emailRedirectTo: `${originFromHost(host)}${LOGON_CALLBACK}`,
     },
   })
 
@@ -256,7 +252,7 @@ export const registerUser = async (
     // one, so the form cannot be used to find out who is registered.
     if (error.message === "User already registered") {
       const resetError = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${origin}${LOGON_CALLBACK}`,
+        redirectTo: `${originFromHost(host)}${LOGON_CALLBACK}`,
       })
 
       if (resetError.error) return { ok: false, errors: [] }

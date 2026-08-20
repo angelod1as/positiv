@@ -16,10 +16,10 @@ const supabaseThat = (error: unknown = null) => {
   }
 }
 
-const contextWith = (supabase: DBClient) => ({
+const contextWith = (supabase: DBClient, host = "localhost:5173") => ({
   supabase,
   supabaseHeaders: new Headers(),
-  host: "http://localhost:5173/",
+  host,
   currentUser: null,
   currentProfile: null,
 })
@@ -41,6 +41,19 @@ describe("requestPasswordReset", () => {
       redirectTo: "http://localhost:5173/auth/confirm",
     })
     expect(result).toEqual({ ok: true })
+  })
+
+  it("sends a deployed host back to its own confirm page, over https", async () => {
+    const { supabase, resetPasswordForEmail } = supabaseThat()
+
+    await requestPasswordReset({
+      answers: { email: "pessoa@exemplo.com" },
+      context: contextWith(supabase, "positiv.com.br"),
+    })
+
+    expect(resetPasswordForEmail).toHaveBeenCalledWith("pessoa@exemplo.com", {
+      redirectTo: "https://positiv.com.br/auth/confirm",
+    })
   })
 
   it("refuses an address that is not an e-mail without asking supabase", async () => {

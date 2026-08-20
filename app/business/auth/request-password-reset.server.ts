@@ -1,9 +1,15 @@
 import type { z } from "zod"
 import { errorsCopy } from "~/copy/errors"
+import { originFromHost } from "~/lib/helpers/origin-from-host"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
 import type { CommitResult } from "~types/forms/commit.types"
+import paths from "~/lib/paths"
 import { contextSchema, forgotPasswordSchema } from "../common"
+
+const {
+  auth: { LOGON_CALLBACK },
+} = paths
 
 type RequestPasswordResetProps = {
   answers: Record<string, unknown>
@@ -24,7 +30,7 @@ export async function requestPasswordReset({
 
   const { error } = await supabase.auth.resetPasswordForEmail(
     parsed.data.email,
-    { redirectTo: `${host}auth/confirm` },
+    { redirectTo: `${originFromHost(host)}${LOGON_CALLBACK}` },
   )
 
   if (error) {
