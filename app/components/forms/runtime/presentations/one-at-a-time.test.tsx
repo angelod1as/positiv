@@ -121,6 +121,53 @@ describe("OneAtATime's way back", () => {
   })
 })
 
+// jsdom has no layout, so what a phone actually does with these is measured in
+// the browser. What a test can hold onto is the class that carries the rule.
+describe("what the presentations promise a narrow screen", () => {
+  const drawn = (presentation: typeof OneAtATime) => {
+    const { container } = render(
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={presentation}
+        renderQuestion={renderQuestion}
+      />,
+    )
+    return container.querySelector("form")
+  }
+
+  it.each([
+    ["OneAtATime", OneAtATime],
+    ["AllAtOnce", AllAtOnce],
+  ])("lets %s break a word with nowhere to break", (_name, presentation) => {
+    // overflow-wrap inherits, so one rule on the form reaches the prompt, the
+    // help text, the error and every alternative. It has to be `anywhere` and
+    // not `break-word`: only `anywhere` lowers the min-content width, and an
+    // alternative's text is a flex item, which refuses to shrink under its
+    // min-content. With `break-word` a long url still pushed the page sideways.
+    expect(drawn(presentation)).toHaveClass("wrap-anywhere")
+  })
+
+  it("keeps the way back wide enough to tap in a narrow container", async () => {
+    const user = userEvent.setup()
+
+    render(
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={OneAtATime}
+        renderQuestion={renderQuestion}
+      />,
+    )
+
+    await answerAndAdvance(user, "Angelo")
+
+    // w-1/6 is a sixth of whatever holds the form. Inside a card on a phone
+    // that lands under the 44px a finger needs.
+    expect(back()).toHaveClass("min-w-11")
+  })
+})
+
 describe("AllAtOnce", () => {
   it("draws no way back, having a single screen to show", async () => {
     const user = userEvent.setup()

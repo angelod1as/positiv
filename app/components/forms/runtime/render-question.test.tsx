@@ -127,6 +127,20 @@ describe("renderQuestion", () => {
 
     expect(screen.getByRole("radiogroup")).toHaveAccessibleName("Pergunta")
   })
+
+  // A finger needs 44px, and a one-line alternative was drawing a 25px row.
+  // jsdom has no layout, so the size is measured in the browser; what a test
+  // can hold onto is the class asking for it.
+  it.each(["radio", "checkbox"] as const)(
+    "gives each %s alternative a row a finger can hit",
+    (kind) => {
+      draw({ kind, options })
+
+      for (const control of screen.getAllByRole(kind)) {
+        expect(control.closest("label")).toHaveClass("min-h-11")
+      }
+    },
+  )
   it("draws an e-mail field that reports what was typed", async () => {
     const user = userEvent.setup()
     const onChange = draw({ kind: "email" })

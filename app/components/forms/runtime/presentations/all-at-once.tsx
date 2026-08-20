@@ -26,7 +26,7 @@ export const AllAtOnce: Presentation = ({
   renderQuestion,
 }) => (
   <form
-    className="flex flex-col gap-8"
+    className="flex flex-col gap-8 wrap-anywhere"
     onSubmit={(event) => {
       event.preventDefault()
       onContinue()
