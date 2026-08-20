@@ -6,9 +6,9 @@ import { ownsItsPrompt } from "./owns-its-prompt"
 import type { RenderQuestion } from "./presentation.types"
 
 /**
- * A radio, checkbox or chip question is drawn as a group rather than as one
- * labelable control, so htmlFor has nothing to point at and the prompt has to
- * reach the group through aria-labelledby instead.
+ * A radio, checkbox or chip question is a group rather than one labelable
+ * control, so htmlFor has nothing to point at and the prompt reaches the group
+ * through aria-labelledby.
  */
 const isChoice = (question: Question) =>
   question.input.kind === "radio" ||
@@ -26,17 +26,15 @@ type QuestionFieldProps = {
 
 /**
  * One question with its prompt, its help text and its error — shared by every
- * presentation that lays questions out side by side, so that the rules about
- * which prompt labels what are written once.
+ * presentation laying questions out side by side, so the rules about which
+ * prompt labels what are written once.
  *
- * Three bands: what is being asked, the control, then what went wrong. The
- * prompt and its help text sit together in the first, close enough and small
- * enough to read as one thing — spaced like the rest, they read as two prompts
- * with an input under the wrong one.
+ * Three bands: what is asked, the control, what went wrong. The prompt and its
+ * help sit together in the first, close enough to read as one thing; spaced
+ * like the rest they read as two prompts with an input under the wrong one.
  *
  * The control is pushed to the bottom of whatever height the field is given, so
- * that questions sharing a row line their controls up however much explaining
- * each one needed.
+ * questions sharing a row line their controls up however much each explained.
  */
 export const QuestionField = ({
   question,

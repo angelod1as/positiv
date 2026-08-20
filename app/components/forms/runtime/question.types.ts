@@ -9,8 +9,8 @@ export type InputSpec =
   | { kind: "text"; placeholder?: string }
   | { kind: "email"; placeholder?: string }
   /**
-   * `autoComplete` is what tells a password manager whether it is looking at a
-   * sign-in or at a new account, so it belongs to the question, not the kind.
+   * `autoComplete` tells a password manager sign-in from new account, so it
+   * belongs to the question rather than to the kind.
    */
   | {
       kind: "password"
@@ -35,9 +35,9 @@ export type InputSpec =
       otherPlaceholder?: string
     }
   /**
-   * One box, answered with `true` or `false`. Distinct from `checkbox`, which
-   * is a list of options answered with `string[]`. The prompt is the text
-   * beside the box, so the presentation leaves the label to the renderer.
+   * One box, answered `true` or `false` — `checkbox` is a list answered
+   * `string[]`. The prompt is the text beside the box, so the presentation
+   * leaves the label to the renderer.
    */
   | { kind: "boolean" }
 
@@ -48,9 +48,9 @@ export type Question = {
   input: InputSpec
   schema: ZodType
   /**
-   * Runs after `schema` passes, with every answer in the run. For a question
-   * whose validity depends on another one — confirming a password, closing a
-   * date range. Returning null means there is nothing to say.
+   * Runs after `schema` passes, with every answer in the run, for a question
+   * whose validity depends on another — confirming a password, closing a date
+   * range. Null means there is nothing to say.
    */
   refine?: (value: unknown, answers: Answers) => ValidationResult | null
 }

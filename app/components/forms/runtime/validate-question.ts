@@ -1,18 +1,17 @@
 import type { Answers, Question, ValidationResult } from "./question.types"
 
 /**
- * A box nobody touched is a box nobody ticked. Left as undefined it would fail
- * the schema as missing, and the shared "required" copy would bury whatever the
- * question actually wanted to say about not being ticked.
+ * A box nobody touched is a box nobody ticked. Left undefined it fails the
+ * schema as missing, and the shared "required" copy buries what the question
+ * wanted to say.
  */
 function asAnswered(question: Question, value: unknown): unknown {
   return question.input.kind === "boolean" ? value === true : value
 }
 
 /**
- * The whole run as each question's own rules read it, for a `refine` that has
- * to look at an answer other than its own. Without it a refine would see an
- * unticked box as undefined while the box's own question sees it as false.
+ * The run as each question's own rules read it, for a `refine` looking at
+ * someone else's answer: an unticked box is false there, not undefined.
  */
 export function asAnsweredValues(
   questions: Iterable<Question>,
@@ -23,8 +22,8 @@ export function asAnsweredValues(
   for (const question of questions) {
     const answered = asAnswered(question, answers[question.id])
 
-    // Only what normalising actually changed is written back, so a question
-    // nobody has reached yet does not gain a key saying it was answered.
+    // Only what normalising changed is written back, so a question nobody
+    // reached gains no key saying it was answered.
     if (answered !== answers[question.id]) values[question.id] = answered
   }
 

@@ -14,8 +14,8 @@ import { projectPath } from "./project-path"
 import type { Answers, Question } from "./question.types"
 import { asAnsweredValues, validateQuestion } from "./validate-question"
 
-// Shared so that a caller with no data to give does not hand the hook a new
-// object on every render, which would sink every memo that reads it.
+// Shared so a caller with no data of its own does not sink every memo that
+// reads it with a fresh object each render.
 const NO_DATA: Record<string, unknown> = {}
 
 type UseFormRuntimeOptions = {
@@ -25,20 +25,15 @@ type UseFormRuntimeOptions = {
   /**
    * Answers the run opens with — a profile being corrected, typically. Seeded
    * once, so a caller building the object inline does not undo what someone has
-   * typed since. A stored run wins over it: what was left half-written is
-   * closer to where the person actually is than what the server last knew.
+   * typed since. A stored run wins over it, being closer to where they are.
    */
   initialAnswers?: Answers
   /**
    * Where the caller believes the run is — a url, typically. Honoured only for
-   * a step whose questions are all answered, so that it walks back through the
-   * flow without opening a way to skip past a question.
+   * a step whose questions are all answered, so it cannot skip past one.
    */
   stepId?: StepId
-  /**
-   * Keeps the run alive across a refresh. Without it the runtime holds
-   * everything in memory, which is what a form with nothing to lose wants.
-   */
+  /** Keeps the run alive across a refresh. Without it, memory only. */
   persistence?: { formId: string; scopeId: string }
 }
 
@@ -118,11 +113,8 @@ export function useFormRuntime({
   >({})
   const [formError, setFormError] = useState<string | null>(null)
 
-  // Which questions refused the last attempt to move on. A presentation showing
-  // many questions at once has to say so beside its button, where the person
-  // clicked, rather than only under a field that may be off screen. Every
-  // refusal writes a new object, even when the same questions refuse again, so
-  // an effect keyed on it fires on each attempt.
+  // Which questions refused the last attempt to move on. A new object per
+  // refusal, even for the same questions, so an effect keyed on it fires again.
   const [advanceRejection, setAdvanceRejection] = useState<{
     questionIds: string[]
   } | null>(null)
@@ -130,18 +122,16 @@ export function useFormRuntime({
   const [isBusy, setIsBusy] = useState(false)
   const [isDone, setIsDone] = useState(false)
 
-  // Which way the run last moved, for a caller mirroring the current step
-  // somewhere that remembers — a url, whose history should not grow while
-  // someone walks backwards through it.
+  // Which way the run last moved, for a caller mirroring the step in a history
+  // that should not grow while someone walks backwards through it.
   const [lastMove, setLastMove] = useState<"forward" | "back">("forward")
 
-  // Starts false on the server as well, so the first client render matches the
-  // markup it hydrates. Reading storage during render would be the very
-  // mismatch this exists to avoid.
+  // False on the server too, so the first client render matches the markup it
+  // hydrates.
   const [isRestored, setIsRestored] = useState(!storageKey)
 
-  // Refs mirror the state so that answering and advancing within the same
-  // event handler sees the fresh values instead of the render's closure.
+  // Refs mirror the state so answering and advancing in one handler sees fresh
+  // values rather than the render's closure.
   const answersRef = useRef<Answers>(initialAnswers ?? {})
   const stepRef = useRef<StepId>(flow.start)
   const firstTryRef = useRef<Record<string, boolean>>({})
@@ -157,8 +147,7 @@ export function useFormRuntime({
 
     const stored = readRuntimeState(storageKey)
 
-    // A step the flow no longer has means the flow changed under a record
-    // written by an older shape of it. Nothing there is trustworthy.
+    // A step the flow no longer has means the record predates a change to it.
     if (stored && !flow.steps[stored.currentStepId]) {
       clearRuntimeState(storageKey)
     } else if (stored) {
@@ -191,26 +180,21 @@ export function useFormRuntime({
     firstTryCorrect,
   ])
 
-  // Declared after the write above so that a commit turning isDone true leaves
-  // nothing behind: the write bails on isDone, this one removes the record.
+  // After the write above, so a commit that finishes leaves nothing behind.
   useEffect(() => {
     if (!storageKey || !isDone) return
 
-    // Read at completion time rather than at mount, so that adding the flag
-    // part way through a run still counts.
+    // Read at completion, so a flag added part way through the run still counts.
     if (readKeepOnDone(storageKey)) return
 
     clearRuntimeState(storageKey)
   }, [storageKey, isDone])
 
-  // The caller can move the run itself — the browser's back button, mirrored in
-  // the url, arrives here as a changed stepId.
-  //
-  // Which is why a caller that mirrors the current step in the url must not
-  // hand that mirror straight back: this effect cannot tell a reader asking to
-  // return to a question from an echo of the question the run just left, and
-  // would obey both. See `event-rules-page.tsx`, which keeps the last step the
-  // reader asked for rather than passing every url change through.
+  // The browser's back button, mirrored in the url, arrives here as a changed
+  // stepId. Which is why a caller mirroring the current step must not hand that
+  // mirror straight back: a request to return and an echo of the step just left
+  // are indistinguishable here, and both would be obeyed. See
+  // `event-rules-page.tsx`.
   useEffect(() => {
     if (!stepId || stepId === stepRef.current) return
     if (!canShow(stepId, answersRef.current)) return
@@ -218,7 +202,7 @@ export function useFormRuntime({
     stepRef.current = stepId
     setCurrentStepId(stepId)
     // Only the caller's request belongs here: answers and flow are read for the
-    // decision, but a change in either is not a reason to move anyone.
+    // decision, not watched for one.
   }, [stepId])
 
   const currentQuestions = useMemo(
@@ -226,9 +210,8 @@ export function useFormRuntime({
     [currentStep, questionsById],
   )
 
-  // Projected from what is known now, so it revises as answers arrive: a flow
-  // that branches on an early mistake looks short until the mistake happens.
-  // Commit steps are dropped because nobody ever sees one.
+  // Projected from what is known now, so it revises as answers arrive. Commit
+  // steps are dropped because nobody ever sees one.
   const path = useMemo(
     () =>
       projectPath(flow, answers, { firstTryCorrect, data }).filter(
@@ -245,17 +228,15 @@ export function useFormRuntime({
     return { index: position + 1, total: path.length }
   }, [path, position])
 
-  // The same projection read backwards. A step reached by going back is
-  // persisted like any other, so a refresh lands with the way back intact.
+  // The same projection read backwards.
   const previousStepId = position > 0 ? path[position - 1] : undefined
 
   const answer = useCallback((id: string, value: unknown) => {
     answersRef.current = { ...answersRef.current, [id]: value }
     setAnswers(answersRef.current)
 
-    // The message described the answer that was there. Leaving it up while the
-    // person picks a new one reads as "still wrong", and sends them clicking
-    // the button again to find out.
+    // The message described the answer that was there; left up while someone
+    // picks a new one it reads as "still wrong".
     setErrors((current) => {
       if (!(id in current)) return current
 
@@ -264,10 +245,9 @@ export function useFormRuntime({
     })
   }, [])
 
-  // Walking back changes nothing that was answered and validates nothing: the
-  // person is going to read what they wrote, and may leave it as it is. The
-  // one thing that goes is a failure belonging to the step being left — a
-  // commit that could not save says nothing about the question before it.
+  // Walking back validates nothing — the answers stay as they are. What goes is
+  // the failure belonging to the step being left, which says nothing about the
+  // one before it.
   const goBack = useCallback(() => {
     if (runningRef.current || isDone || !previousStepId) return
 
@@ -284,8 +264,8 @@ export function useFormRuntime({
     const origin = stepRef.current
     const pending = questionsForStep(flow.steps[origin], questionsById)
 
-    // A refine may read an answer belonging to another question, so it is
-    // handed the run as those questions read it rather than raw.
+    // A refine may read another question's answer, so it gets the run as those
+    // questions read it rather than raw.
     const values = asAnsweredValues(questionsById.values(), answersRef.current)
 
     const failures: Record<string, string> = {}
@@ -293,9 +273,8 @@ export function useFormRuntime({
       const value = answersRef.current[question.id]
       const result = validateQuestion(question, value, values)
 
-      // Only a real attempt counts. Advancing with nothing filled in is a
-      // misclick, not a wrong answer, and must not sink a branch that keys
-      // off first-attempt mistakes.
+      // Advancing with nothing filled in is a misclick, not a wrong answer, and
+      // must not sink a branch keyed off first-attempt mistakes.
       const attempted = value !== undefined
       if (attempted && !(question.id in firstTryRef.current)) {
         firstTryRef.current = {
@@ -313,10 +292,8 @@ export function useFormRuntime({
 
     const answeredHere = new Set(pending.map((question) => question.id))
 
-    // Rejections the server raised against other steps outlive whatever happens
-    // on this one. Only the current step's own errors are replaced, so a
-    // corrected answer loses its message while a question waiting elsewhere
-    // keeps the reason the person will need when they get there.
+    // Only this step's errors are replaced, so a question the server rejected
+    // elsewhere keeps the reason until someone reaches it.
     const elsewhere = (current: Record<string, string>) =>
       Object.fromEntries(
         pendingRef.current
@@ -324,16 +301,14 @@ export function useFormRuntime({
           .map((id) => [id, current[id]]),
       )
 
-    // The rejection travels with the errors it refers to, here and in the
-    // commit branch below. `RejectionNotice` reads the two together to decide
-    // which field to reach for, and one arriving a render ahead of the other
-    // would send it to a question whose message has not landed yet.
+    // The rejection travels with the errors it refers to, here and in the commit
+    // branch below: `RejectionNotice` reads both to pick a field, and one
+    // landing a render early points it at a message that is not there yet.
     if (Object.keys(failures).length > 0) {
       setErrors((current) => ({ ...elsewhere(current), ...failures }))
       setAdvanceRejection({
-        // Read off the step rather than off `failures`, whose keys a digit-only
-        // question id would reorder — and the first of these is the one focus
-        // goes to.
+        // Off the step, not off `failures`, whose keys a digit-only id would
+        // reorder — and the first of these is where focus goes.
         questionIds: pending
           .map((question) => question.id)
           .filter((id) => id in failures),
@@ -381,8 +356,7 @@ export function useFormRuntime({
 
     let destination = resolve(origin)
 
-    // Commit steps have nothing to render, so the runtime runs them and keeps
-    // resolving until it reaches a step the person can actually see.
+    // Commit steps have nothing to render, so keep resolving until a visible one.
     while (destination !== "done") {
       const step = flow.steps[destination]
 
@@ -401,9 +375,8 @@ export function useFormRuntime({
       try {
         result = await step.run(answersRef.current)
       } catch (thrown) {
-        // The person sees "could not save"; whoever is debugging sees nothing
-        // at all, and a run that simply stops moving reads as a stuck form
-        // rather than as a failed request.
+        // Without this a run that stops moving reads as a stuck form rather than
+        // as a failed request.
         if (ENV.NODE_ENV !== "production") {
           console.error("[form-runtime] a commit threw.", thrown)
         }
@@ -450,9 +423,8 @@ export function useFormRuntime({
     setCurrentStepId(destination)
   }, [flow, questionsById, data])
 
-  // A commit can be a real network call, and this app's commits register people
-  // for events. A second Enter or click while one is in flight must not submit
-  // twice.
+  // Commits here register people for events, so a second Enter while one is in
+  // flight must not submit twice.
   const advance = useCallback(async () => {
     if (runningRef.current) return
 

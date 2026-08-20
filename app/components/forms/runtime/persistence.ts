@@ -34,8 +34,7 @@ function parse(key: string): Parsed {
   }
 }
 
-// typeof [] is "object", so arrays have to be turned away by name or they
-// arrive as maps with numeric keys.
+// typeof [] is "object", so arrays have to be turned away by name.
 const isMap = (value: unknown) =>
   typeof value === "object" && value !== null && !Array.isArray(value)
 
@@ -48,13 +47,9 @@ function holdsState(record: Record<string, unknown>): boolean {
 }
 
 /**
- * Whether the record asks not to be deleted when the flow finishes. Read from
- * the raw payload rather than from a restored state, so that pasting
- * `{"v":1,"keepOnDone":true}` in before the flow has started still counts.
- *
- * A version bump drops the flag along with the rest of the record, on purpose:
- * carrying anything over from a payload the runtime has just declared
- * untrustworthy is the hole the version exists to close.
+ * Whether the record asks not to be deleted when the flow finishes. Read raw,
+ * so pasting `{"v":1,"keepOnDone":true}` in before the flow starts still counts.
+ * A version bump drops the flag with the rest of the record, on purpose.
  */
 export function readKeepOnDone(key: string): boolean {
   const parsed = parse(key)
@@ -82,8 +77,7 @@ export function readRuntimeState(key: string): PersistedRuntimeState | null {
     }
   }
 
-  // Unusable, so it goes — unless it is a flag someone pasted in ahead of the
-  // flow, which has no state in it yet by design.
+  // Unusable, so it goes — unless it is a flag pasted in ahead of the flow.
   if (!readKeepOnDone(key)) clearRuntimeState(key)
 
   return null
@@ -95,8 +89,7 @@ export function writeRuntimeState(
 ): void {
   if (typeof window === "undefined") return
 
-  // Read before writing: the flag can be pasted in at any point, and every
-  // answer rewrites this record.
+  // Read before writing: the flag can be pasted in at any point.
   const record: Record<string, unknown> = { v: VERSION, ...state }
   if (readKeepOnDone(key)) record.keepOnDone = true
 

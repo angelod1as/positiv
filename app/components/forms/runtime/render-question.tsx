@@ -13,9 +13,9 @@ const asText = (value: unknown) => (typeof value === "string" ? value : "")
 const asList = (value: unknown) =>
   Array.isArray(value) ? (value as string[]) : []
 
-// The 44px row a finger needs, kept for the pointer that needs it. With a
-// mouse the same row is dead space: three alternatives read as three separate
-// questions when each one is a thumb tall and spaced like a paragraph.
+// The 44px row a finger needs, kept for the pointer that needs it. With a mouse
+// the same row is dead space: three alternatives a thumb tall read as three
+// separate questions.
 const choiceClassName =
   "flex items-start gap-2 py-0.5 cursor-pointer mb-0 pointer-coarse:min-h-11 pointer-coarse:py-2"
 
