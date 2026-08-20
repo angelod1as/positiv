@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
+import { applyToEventSchema } from "~/business/common"
 import { eventApplicationCopy } from "~/copy/events"
 import { buildApplicationQuestions } from "./build-application-questions"
+
+// The endpoint takes these from the url and its own clock, so the form has no
+// business asking for them.
+const SERVER_OWNED = ["applicationDate", "eventId"]
 
 const questionsById = () =>
   Object.fromEntries(
@@ -16,6 +21,15 @@ describe("the event application questions", () => {
       "bond",
       "notes",
     ])
+  })
+
+  it("asks everything the schema asks, minus what the server fills in", () => {
+    const inSchema = Object.keys(applyToEventSchema.shape).filter(
+      (field) => !SERVER_OWNED.includes(field),
+    )
+
+    expect(buildApplicationQuestions().map((question) => question.id).sort())
+      .toEqual(inSchema.sort())
   })
 
   it("carries the copy the form is written with", () => {
