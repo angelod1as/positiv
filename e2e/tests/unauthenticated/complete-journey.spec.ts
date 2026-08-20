@@ -1,12 +1,36 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Complete Unauthenticated Journey', () => {
-  test('from homepage through navigation to login', async ({ page }) => {
+  test('from homepage through navigation to login', async ({ page, baseURL }) => {
+    // Pinned from the configuration rather than read off the page: a console
+    // message can arrive while the page is still about:blank, whose host is
+    // the empty string — and every url contains that.
+    if (!baseURL) throw new Error('the suite runs against a baseURL; none was configured')
+
+    const ourHost = new URL(baseURL).host
+
+    const hostOf = (url: string) => {
+      try {
+        return new URL(url).host
+      } catch {
+        return ''
+      }
+    }
+
     // Monitor console errors throughout the test (excluding expected errors)
     const consoleErrors: string[] = []
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         const text = msg.text()
+        // Only this app's own errors. The homepage embeds a YouTube player,
+        // which reaches for ad and telemetry hosts of its own; a machine that
+        // refuses those — an ad blocker, a sinkholed DNS — would fail a
+        // journey through our pages for something none of our code did.
+        // A message the browser raised with no url of its own belongs to the
+        // page that was running.
+        const from = msg.location()?.url ?? ''
+        const isOurs = from === '' || hostOf(from) === ourHost
+
         // Ignore expected errors:
         // - Authentication errors (422 from invalid credentials)
         // - React Router dev mode manifest patches (only in dev)
@@ -16,7 +40,7 @@ test.describe('Complete Unauthenticated Journey', () => {
           text.includes('Failed to fetch manifest patches') ||
           (text.includes('Failed to load resource') && text.includes('404'))
           
-        if (!isExpectedError) {
+        if (!isExpectedError && isOurs) {
           consoleErrors.push(text)
         }
       }

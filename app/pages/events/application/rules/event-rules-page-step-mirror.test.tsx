@@ -25,6 +25,18 @@ const WAITS_OUT_A_SLOW_RENDER = 20_000
 
 const EVENT = "11111111-1111-4111-8111-111111111111"
 
+const PROFILE = "22222222-2222-4222-8222-222222222222"
+
+// The run is kept per event *and* person, so a test that seeds or reads it has
+// to name both.
+const RUN = `${EVENT}:${PROFILE}`
+
+const quizPageProps = {
+  params: { id: EVENT },
+  loaderData: { isVeteran: false, profileId: PROFILE },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any
+
 let mirrored = ""
 
 /**
@@ -76,7 +88,7 @@ const answer = async (user: ReturnType<typeof userEvent.setup>) => {
 // whatever the shuffle decided this run.
 const seedDeal = () =>
   sessionStorage.setItem(
-    `rules-order:${EVENT}`,
+    `rules-order:${RUN}`,
     JSON.stringify({ questions: Object.keys(getRulesFormQuestions()), options: {} }),
   )
 
@@ -93,7 +105,7 @@ const seedAnsweredQuiz = (openOn: string) => {
   )
 
   sessionStorage.setItem(
-    `form-runtime:rules:${EVENT}`,
+    `form-runtime:rules:${RUN}`,
     JSON.stringify({
       v: 1,
       answers,
@@ -106,8 +118,7 @@ const seedAnsweredQuiz = (openOn: string) => {
 const renderQuiz = () =>
   render(
     <MemoryRouter initialEntries={[`/dashboard/${EVENT}/regras`]}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+      <EventRulesPage {...quizPageProps} />
       <Mirror />
       <Back />
     </MemoryRouter>,
@@ -209,8 +220,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
         ]}
         initialIndex={2}
       >
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+        <EventRulesPage {...quizPageProps} />
         <Back />
       </MemoryRouter>,
     )
@@ -255,8 +265,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
           />
           <Route
             path="/dashboard/:id/regras"
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            element={<EventRulesPage {...({ params: { id: EVENT } } as any)} />}
+            element={<EventRulesPage {...quizPageProps} />}
           />
         </Routes>
       </MemoryRouter>,
@@ -287,8 +296,7 @@ describe("the rules quiz and the question mirrored in the url", () => {
         ]}
         initialIndex={1}
       >
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <EventRulesPage {...({ params: { id: EVENT } } as any)} />
+        <EventRulesPage {...quizPageProps} />
         <Back />
       </MemoryRouter>,
     )

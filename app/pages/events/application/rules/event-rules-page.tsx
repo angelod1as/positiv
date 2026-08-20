@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   redirect,
   useNavigate,
@@ -7,8 +7,12 @@ import {
 } from "react-router"
 import { ENV } from "varlock/env"
 import { getUserContext } from "~/business/auth/auth.server"
+import { isVeteran } from "~/business/participant/is-veteran.server"
 import { buildCorrectRulesAnswers } from "~/components/forms/custom/rules/build-correct-rules-answers"
-import { buildRulesFlow } from "~/components/forms/custom/rules/build-rules-flow"
+import {
+  buildRulesFlow,
+  SHORT_RUN_LENGTH,
+} from "~/components/forms/custom/rules/build-rules-flow"
 import {
   buildRulesQuestions,
   dealOf,
@@ -47,7 +51,7 @@ const {
 export async function loader({ request, params }: Route.LoaderArgs) {
   if (!params.id) return redirect(DASHBOARD)
 
-  await getUserContext(request, params)
+  const { currentProfile } = await getUserContext(request, params)
 
   const event = await kyselyDb
     .selectFrom("events")
@@ -57,10 +61,19 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 
   if (!event) return redirect(DASHBOARD)
 
-  return null
+  // Asked here rather than taken from the browser: the quiz is a gate, and the
+  // shorter run behind it has to be earned against the database.
+  return {
+    isVeteran: currentProfile
+      ? await isVeteran(currentProfile.id, params.id)
+      : false,
+    profileId: currentProfile?.id ?? "",
+  }
 }
 
-const Wrapper: FCC = ({ children }) => (
+type WrapperProps = { notice?: string }
+
+const Wrapper: FCC<WrapperProps> = ({ children, notice }) => (
   <>
     <RulesText />
 
@@ -71,6 +84,7 @@ const Wrapper: FCC = ({ children }) => (
         </CardTitle>
         <CardDescription>
           <p>{rulesQuizCopy.shuffleNotice}</p>
+          {notice ? <p className="mt-2">{notice}</p> : null}
         </CardDescription>
       </CardHeader>
       <CardContent>{children}</CardContent>
@@ -80,11 +94,32 @@ const Wrapper: FCC = ({ children }) => (
 
 const STEP_PARAM = "q"
 
-const EventRulesPage = ({ params }: Route.ComponentProps) => {
+const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
   const navigate = useNavigate()
   const navigationType = useNavigationType()
   const [searchParams, setSearchParams] = useSearchParams()
   const eventId = params.id
+
+  // A tab can see two people sign in, and the run kept in session storage
+  // outlives the sign-out. Keyed by the event alone, the second person resumed
+  // the first one's quiz — on a question the flow they are owed may never ask,
+  // with answers that were not theirs.
+  const runId = `${eventId}:${loaderData.profileId}`
+
+  // How long the run says it will be, which is the only thing that knows
+  // whether a veteran is still on the short path: the wager is on while three
+  // screens are promised, and off the moment the quiz grows.
+  //
+  // Stamped with the run it belongs to rather than reset when that changes:
+  // the runner reports its length after it has restored itself, so a plain
+  // reset would leave the person who just signed in reading the line the last
+  // one earned until the report lands.
+  const [screens, setScreens] = useState<{
+    runId: string
+    total: number
+  } | null>(null)
+
+  const screensAhead = screens?.runId === runId ? screens.total : null
 
   const mirrored = searchParams.get(STEP_PARAM) ?? undefined
 
@@ -125,13 +160,13 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
   // after it — while the alternatives swapped places under a question that had
   // not changed.
   const questions = useMemo(
-    () => buildRulesQuestions(readRulesDeal(eventId) ?? undefined),
-    [eventId],
+    () => buildRulesQuestions(readRulesDeal(runId) ?? undefined),
+    [runId],
   )
 
   useEffect(() => {
-    writeRulesDeal(eventId, dealOf(questions))
-  }, [eventId, questions])
+    writeRulesDeal(runId, dealOf(questions))
+  }, [runId, questions])
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
@@ -147,8 +182,8 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
   )
 
   const flow = useMemo(
-    () => buildRulesFlow(questions, commit),
-    [questions, commit],
+    () => buildRulesFlow(questions, commit, { isVeteran: loaderData.isVeteran }),
+    [questions, commit, loaderData.isVeteran],
   )
 
   // Answering fourteen screens to reach the next page is the cost of testing
@@ -161,14 +196,28 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
     void navigate(EVENT_DATA(eventId))
   }, [commit, eventId, navigate])
 
+  const notice = !loaderData.isVeteran
+    ? undefined
+    : screensAhead !== null && screensAhead > SHORT_RUN_LENGTH
+      ? rulesQuizCopy.veteranLostWager
+      : rulesQuizCopy.veteranWager
+
   return (
-    <Wrapper>
+    <Wrapper notice={notice}>
       <FormRunner
+        // The runtime seeds its answers and its first-attempt records once, at
+        // mount. A loader that comes back with someone else while the route
+        // stays put would otherwise leave them holding the previous person's
+        // run — in memory, where no storage key can separate them.
+        key={runId}
         questions={questions}
         flow={flow}
         presentation={OneAtATime}
-        persistence={{ formId: "rules", scopeId: eventId }}
+        persistence={{ formId: "rules", scopeId: runId }}
         stepId={requestedStep}
+        onProgressChange={(progress) => {
+          setScreens(progress ? { runId, total: progress.total } : null)
+        }}
         onStepChange={(step, { direction }) => {
           if (direction === "back" && pushed.current > 0) {
             pushed.current -= 1
@@ -200,7 +249,7 @@ const EventRulesPage = ({ params }: Route.ComponentProps) => {
         onDone={() => {
           // The run is over, so the deal goes with it — a second attempt is
           // dealt again, which is the point of shuffling.
-          clearRulesDeal(eventId)
+          clearRulesDeal(runId)
           void navigate(EVENT_DATA(eventId))
         }}
       />

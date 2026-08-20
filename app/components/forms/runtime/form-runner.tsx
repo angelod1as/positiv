@@ -47,6 +47,12 @@ type FormRunnerProps = {
     stepId: StepId,
     move: { direction: "forward" | "back" },
   ) => void
+  /**
+   * Called with how long the run is projected to be, and again whenever that
+   * changes — a flow that branches on an early mistake grows mid-run, and a
+   * caller drawing anything around the form may need to say so.
+   */
+  onProgressChange?: (progress: { index: number; total: number } | null) => void
 }
 
 export function FormRunner({
@@ -61,6 +67,7 @@ export function FormRunner({
   persistence,
   stepId,
   onStepChange,
+  onProgressChange,
 }: FormRunnerProps) {
   const runtime = useFormRuntime({ questions, flow, data, persistence, stepId })
   const { answers, isDone, isRestored, currentStepId, lastMove } = runtime
@@ -87,6 +94,17 @@ export function FormRunner({
     reportedStepRef.current = currentStepId
     onStepChangeRef.current?.(currentStepId, { direction: lastMove })
   }, [isRestored, currentStepId, stepId, lastMove])
+
+  const onProgressChangeRef = useRef(onProgressChange)
+  useEffect(() => {
+    onProgressChangeRef.current = onProgressChange
+  })
+
+  useEffect(() => {
+    if (!isRestored) return
+
+    onProgressChangeRef.current?.(runtime.progress)
+  }, [isRestored, runtime.progress])
 
   useEffect(() => {
     if (!isDone || reportedRef.current) return

@@ -1,6 +1,11 @@
 import { redirect, type ActionFunctionArgs } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
+import { isVeteran } from "~/business/participant/is-veteran.server"
 import { rulesSessionStorage } from "~/business/session.server"
+import {
+  OPENING_QUESTION,
+  SHORT_RUN_LENGTH,
+} from "~/components/forms/custom/rules/build-rules-flow"
 import { getRulesFormSchema } from "~/components/forms/custom/rules/rules-form-schema"
 import { kyselyDb } from "~/kysely-db"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
@@ -18,7 +23,7 @@ const {
 export async function action({ request, params }: ActionFunctionArgs) {
   if (!params.id) return redirect(DASHBOARD)
 
-  await getUserContext(request, params)
+  const { currentProfile } = await getUserContext(request, params)
 
   const event = await kyselyDb
     .selectFrom("events")
@@ -37,12 +42,39 @@ export async function action({ request, params }: ActionFunctionArgs) {
     return Response.json({ ok: false, errors: [] }, { status: 400 })
   }
 
+  const schemas = getRulesFormSchema()
+
+  const given = Object.keys(schemas).filter(
+    (questionId) => answers[questionId] !== undefined,
+  )
+
+  // Someone who has been to a Positiv before answers three questions instead of
+  // fourteen, so the whole quiz can no longer be the measure. Which run they
+  // are entitled to is recounted here rather than read off the post: otherwise
+  // the short run would be a claim anyone could make, and the bypass this route
+  // exists to close would come back through the same door.
+  //
+  // Deliberately looser than the run the browser walked: any three right
+  // answers including the opening question pass, not the three that were
+  // dealt. The server is never told which two the deal picked, and the gate it
+  // is here to hold is "has this person been to a Positiv" — which it recounts
+  // — not "did they answer the exact questions their screen showed". So a
+  // veteran who tripped on both probes can still post three easy ones by hand
+  // and skip the long quiz they were sent to. That is a nudge, not a lock, and
+  // it is meant to be.
+  const shortRun =
+    given.includes(OPENING_QUESTION) &&
+    given.length >= SHORT_RUN_LENGTH &&
+    Boolean(
+      currentProfile && (await isVeteran(currentProfile.id, params.id)),
+    )
+
   // The same schemas the browser used. Answering in the browser is what makes
   // the quiz usable; checking again here is what makes it a gate, because a
   // bare POST used to open it without answering anything.
-  const errors = Object.entries(getRulesFormSchema()).flatMap(
-    ([questionId, schema]) => {
-      const result = schema.safeParse(answers[questionId])
+  const errors = (shortRun ? given : Object.keys(schemas)).flatMap(
+    (questionId) => {
+      const result = schemas[questionId].safeParse(answers[questionId])
 
       return result.success
         ? []

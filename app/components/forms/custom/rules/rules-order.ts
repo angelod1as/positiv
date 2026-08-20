@@ -12,8 +12,10 @@ import type { RulesDeal } from "./build-rules-questions"
  * swapped places under a question that had not changed.
  *
  * Session storage, like the runtime's own record, so both die with the tab.
+ * Scoped the same way the runtime's record is — by event *and* person, because
+ * a tab can see two people sign in and neither should inherit the other's run.
  */
-const key = (eventId: string) => `rules-order:${eventId}`
+const key = (scopeId: string) => `rules-order:${scopeId}`
 
 const isIdList = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((id) => typeof id === "string")
@@ -34,11 +36,11 @@ function isDeal(value: unknown): value is RulesDeal {
   return Object.values(options).every(isIdList)
 }
 
-export function readRulesDeal(eventId: string): RulesDeal | null {
+export function readRulesDeal(scopeId: string): RulesDeal | null {
   if (typeof window === "undefined") return null
 
   try {
-    const raw = sessionStorage.getItem(key(eventId))
+    const raw = sessionStorage.getItem(key(scopeId))
     if (!raw) return null
 
     const parsed: unknown = JSON.parse(raw)
@@ -49,22 +51,22 @@ export function readRulesDeal(eventId: string): RulesDeal | null {
   }
 }
 
-export function writeRulesDeal(eventId: string, deal: RulesDeal): void {
+export function writeRulesDeal(scopeId: string, deal: RulesDeal): void {
   if (typeof window === "undefined") return
 
   try {
-    sessionStorage.setItem(key(eventId), JSON.stringify(deal))
+    sessionStorage.setItem(key(scopeId), JSON.stringify(deal))
   } catch {
     // Storage unavailable: the run keeps the deal it holds in memory, and a
     // refresh deals again — which is where this started.
   }
 }
 
-export function clearRulesDeal(eventId: string): void {
+export function clearRulesDeal(scopeId: string): void {
   if (typeof window === "undefined") return
 
   try {
-    sessionStorage.removeItem(key(eventId))
+    sessionStorage.removeItem(key(scopeId))
   } catch {
     // Storage unavailable: nothing was ever written to remove.
   }

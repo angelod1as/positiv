@@ -206,6 +206,9 @@ export const rulesQuizCopy = {
   title: "✅ Hora do teste! ✅",
   skipQuizDev: "Pular quiz (dev)",
   shuffleNotice: "(As questões e respostas são automaticamente embaralhadas)",
+  veteranWager:
+    "Você é veterane? Adivinha! Se acertar estas três perguntas de primeira, não precisa responder as outras. Boa sorte!",
+  veteranLostWager: "Acho que você precisa relembrar as regras...",
   answerErrors: {
     wrongAnswer: "Você escolheu a resposta errada",
     noneCorrect: "Nenhuma das respostas selecionadas está correta",

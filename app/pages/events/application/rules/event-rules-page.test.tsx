@@ -14,6 +14,10 @@ vi.mock("~/kysely-db", () => ({
   },
 }))
 
+vi.mock("~/business/participant/is-veteran.server", () => ({
+  isVeteran: vi.fn(),
+}))
+
 const { ENV } = vi.hoisted(() => ({
   ENV: { NODE_ENV: "development" } as Record<string, unknown>,
 }))
@@ -28,15 +32,35 @@ vi.mock("react-router", async (importOriginal) => {
 })
 
 import { getUserContext } from "~/business/auth/auth.server"
+import { isVeteran } from "~/business/participant/is-veteran.server"
 import { kyselyDb } from "~/kysely-db"
 
-const _mockGetUserContext = vi.mocked(getUserContext)
+const mockGetUserContext = vi.mocked(getUserContext)
+const mockIsVeteran = vi.mocked(isVeteran)
 const mockKysely = vi.mocked(kyselyDb)
 const mockRedirect = vi.mocked(redirect)
+
+const eventExists = () => {
+  mockKysely.selectFrom = vi.fn().mockReturnValue({
+    select: vi.fn().mockReturnValue({
+      where: vi.fn().mockReturnValue({
+        executeTakeFirst: vi.fn().mockResolvedValue({ id: "123" }),
+      }),
+    }),
+  })
+}
+
+const signedInAs = (profileId: string | null) => {
+  mockGetUserContext.mockResolvedValue({
+    currentProfile: profileId ? { id: profileId } : null,
+  } as never)
+}
 
 describe("event-rules-page loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    signedInAs("profile-1")
+    mockIsVeteran.mockResolvedValue(false)
   })
 
   it("should redirect to dashboard if no id param", async () => {
@@ -101,6 +125,32 @@ describe("event-rules-page loader", () => {
       "123",
     )
   })
+
+  it("asks the database itself whether the person has been before", async () => {
+    eventExists()
+    mockIsVeteran.mockResolvedValue(true)
+
+    const data = await loader({
+      request: new Request("http://localhost"),
+      params: { id: "123" },
+    } as Route.LoaderArgs)
+
+    expect(mockIsVeteran).toHaveBeenCalledWith("profile-1", "123")
+    expect(data).toEqual({ isVeteran: true, profileId: "profile-1" })
+  })
+
+  it("treats a request without a profile as someone who has never been", async () => {
+    eventExists()
+    signedInAs(null)
+
+    const data = await loader({
+      request: new Request("http://localhost"),
+      params: { id: "123" },
+    } as Route.LoaderArgs)
+
+    expect(mockIsVeteran).not.toHaveBeenCalled()
+    expect(data).toEqual({ isVeteran: false, profileId: "" })
+  })
 })
 
 import * as reactRouter from "react-router"
@@ -111,15 +161,20 @@ import { buildRulesQuestions } from "~/components/forms/custom/rules/build-rules
 import { getRulesFormQuestions } from "~/components/forms/custom/rules/rules-questions"
 import EventRulesPage from "./event-rules-page"
 import { render, screen, waitFor } from "~/test/test-utils"
+import { rulesQuizCopy } from "~/copy/events"
 
 const quiz = getRulesFormQuestions()
 
-const renderPage = () =>
+const renderPage = ({
+  isVeteran = false,
+  profileId = "profile-1",
+}: { isVeteran?: boolean; profileId?: string } = {}) =>
   render(
     <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "123" }}
+        loaderData={{ isVeteran, profileId }}
       />
     </MemoryRouter>,
   )
@@ -289,6 +344,7 @@ const renderPageAt = (entry: string) =>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "123" }}
+        loaderData={{ isVeteran: false, profileId: "profile-1" }}
       />
       <Location />
     </MemoryRouter>,
@@ -407,6 +463,7 @@ const renderPageWithPathname = () =>
       <EventRulesPage
         {...({} as Route.ComponentProps)}
         params={{ id: "123" }}
+        loaderData={{ isVeteran: false, profileId: "profile-1" }}
       />
       <Pathname />
     </MemoryRouter>,
@@ -476,5 +533,223 @@ describe("event-rules-page skip in development", () => {
     await user.click(await screen.findByRole("button", { name: skipLabel }))
 
     await waitFor(() => expect(currentPathname()).toBe("/dashboard/123/regras"))
+  })
+})
+
+describe("event-rules-page for someone who has been before", () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+  })
+
+  it("opens on the question that asks how they are", async () => {
+    renderPage({ isVeteran: true })
+
+    const { prompt } = await shownQuestion()
+
+    expect(prompt).toBe(quiz.trigger.question)
+  })
+
+  it("promises three screens, not fourteen", async () => {
+    renderPage({ isVeteran: true })
+
+    await shownQuestion()
+
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuetext",
+      "Etapa 1 de 3",
+    )
+  })
+
+  it("promises the whole quiz to someone who has never been", async () => {
+    renderPage({ isVeteran: false })
+
+    await shownQuestion()
+
+    expect(screen.getByRole("progressbar")).toHaveAttribute(
+      "aria-valuetext",
+      `Etapa 1 de ${Object.keys(quiz).length}`,
+    )
+  })
+})
+
+describe("event-rules-page for two people in one browser session", () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+  })
+
+  it("does not hand one person's run to the next", async () => {
+    const user = userEvent.setup()
+
+    const first = renderPage({ isVeteran: false, profileId: "profile-1" })
+    const started = await firstSingleAnswerQuestion()
+    await answer(user, started.entry.answers.correct[0])
+    await waitFor(async () => {
+      expect((await shownQuestion()).prompt).not.toBe(started.prompt)
+    })
+    first.unmount()
+
+    // Same tab, same event, different person: signing in as someone else must
+    // not resume a run that was not theirs — the quiz they are owed depends on
+    // whether they have been to a Positiv, and the answers are not theirs
+    // either.
+    renderPage({ isVeteran: true, profileId: "profile-2" })
+
+    expect((await shownQuestion()).prompt).toBe(quiz.trigger.question)
+  })
+
+  it("does not keep the first person's quiz when the loader revalidates in place", async () => {
+    const user = userEvent.setup()
+
+    const { rerender } = renderPage({
+      isVeteran: false,
+      profileId: "profile-1",
+    })
+    const started = await firstSingleAnswerQuestion()
+    await answer(user, started.entry.answers.correct[0])
+    await waitFor(async () => {
+      expect((await shownQuestion()).prompt).not.toBe(started.prompt)
+    })
+
+    // The route can stay mounted while the loader comes back with a different
+    // person — no remount to reset anything, so the page has to notice on its
+    // own that the run it is showing is not theirs.
+    rerender(
+      <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
+        <EventRulesPage
+          {...({} as Route.ComponentProps)}
+          params={{ id: "123" }}
+          loaderData={{ isVeteran: true, profileId: "profile-2" }}
+        />
+      </MemoryRouter>,
+    )
+
+    expect((await shownQuestion()).prompt).toBe(quiz.trigger.question)
+  })
+})
+
+// A checkbox question keeps whatever was marked on it, so a wrong answer left
+// behind would sink the corrected attempt too. Clicking a radio replaces the
+// selection on its own, which is why unmarking one is never asked for.
+const setOption = async (
+  user: ReturnType<typeof userEvent.setup>,
+  text: string,
+  wanted: boolean,
+) => {
+  const control = (screen.queryByRole("radio", { name: text }) ??
+    screen.getByRole("checkbox", { name: text })) as HTMLInputElement
+
+  if (control.checked === wanted) return
+
+  await user.click(control)
+}
+
+const answerCorrectly = async (user: ReturnType<typeof userEvent.setup>) => {
+  const { entry, prompt } = await shownQuestion()
+
+  for (const right of entry.answers.correct) await setOption(user, right, true)
+  for (const wrong of entry.answers.incorrect) {
+    await setOption(user, wrong, false)
+  }
+  await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+  await waitFor(async () => {
+    expect((await shownQuestion()).prompt).not.toBe(prompt)
+  })
+}
+
+const answerWrongly = async (user: ReturnType<typeof userEvent.setup>) => {
+  const { entry, prompt } = await shownQuestion()
+
+  await setOption(user, entry.answers.incorrect[0], true)
+  await user.click(screen.getByRole("button", { name: "Continuar" }))
+
+  // A wrong answer never advances, so the message arriving is what says the
+  // attempt landed — the rules above the quiz carry alerts of their own, so it
+  // is found by its own words.
+  await waitFor(() => {
+    expect(
+      screen.getByText((text) =>
+        Object.values(rulesQuizCopy.answerErrors).includes(
+          text as (typeof rulesQuizCopy.answerErrors)[keyof typeof rulesQuizCopy.answerErrors],
+        ),
+      ),
+    ).toBeInTheDocument()
+  })
+  expect((await shownQuestion()).prompt).toBe(prompt)
+}
+
+describe("what the quiz tells a veteran it is about to ask", () => {
+  beforeEach(() => {
+    sessionStorage.clear()
+  })
+
+  it("offers the short run as a wager", async () => {
+    renderPage({ isVeteran: true, profileId: "profile-1" })
+
+    await shownQuestion()
+
+    expect(screen.getByText(rulesQuizCopy.veteranWager)).toBeInTheDocument()
+  })
+
+  it("says nothing of the sort to someone who has never been", async () => {
+    renderPage({ isVeteran: false, profileId: "profile-1" })
+
+    await shownQuestion()
+
+    expect(screen.queryByText(rulesQuizCopy.veteranWager)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(rulesQuizCopy.veteranLostWager),
+    ).not.toBeInTheDocument()
+  })
+
+  it("does not greet the next person with the line the last one earned", async () => {
+    const user = userEvent.setup()
+
+    const { rerender } = renderPage({ isVeteran: true, profileId: "profile-1" })
+
+    await answerCorrectly(user)
+    await answerWrongly(user)
+    await answerCorrectly(user)
+    await answerWrongly(user)
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(rulesQuizCopy.veteranLostWager),
+      ).toBeInTheDocument()
+    })
+
+    rerender(
+      <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
+        <EventRulesPage
+          {...({} as Route.ComponentProps)}
+          params={{ id: "123" }}
+          loaderData={{ isVeteran: true, profileId: "profile-2" }}
+        />
+      </MemoryRouter>,
+    )
+
+    // A run of their own, three screens long: the line the previous person
+    // earned belongs to a quiz that is over.
+    expect(screen.getByText(rulesQuizCopy.veteranWager)).toBeInTheDocument()
+    expect(
+      screen.queryByText(rulesQuizCopy.veteranLostWager),
+    ).not.toBeInTheDocument()
+  })
+
+  it("changes its tune once both probes have gone wrong", async () => {
+    const user = userEvent.setup()
+    renderPage({ isVeteran: true, profileId: "profile-1" })
+
+    await answerCorrectly(user)
+    await answerWrongly(user)
+    await answerCorrectly(user)
+    await answerWrongly(user)
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(rulesQuizCopy.veteranLostWager),
+      ).toBeInTheDocument()
+    })
+    expect(screen.queryByText(rulesQuizCopy.veteranWager)).not.toBeInTheDocument()
   })
 })

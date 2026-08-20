@@ -1,5 +1,6 @@
 import { type Locator, type Page, expect } from "@playwright/test"
 import { getRulesFormQuestions } from "../../app/components/forms/custom/rules/rules-questions"
+import { formRuntimeCopy } from "../../app/copy/forms"
 import { BasePage } from "./BasePage"
 
 // Long enough that waiting on the quiz costs a handful of reads rather than a
@@ -286,6 +287,28 @@ export class EventApplicationPage extends BasePage {
     await this.continueButton.click()
 
     return id
+  }
+
+  /**
+   * How many screens the quiz says are left. It revises as the run goes: a
+   * veteran is promised three, and the moment a second first-attempt mistake is
+   * recorded the whole quiz appears in its place, which is the branch happening
+   * with nothing else to announce it.
+   */
+  async currentProgress(): Promise<{ index: number; total: number }> {
+    // Named, because the app draws a progress bar of its own while a page
+    // loads and an unnamed role matches both.
+    const text = await this.page
+      .getByRole("progressbar", { name: formRuntimeCopy.progressLabel })
+      .getAttribute("aria-valuetext")
+
+    const [, index, total] = /Etapa (\d+) de (\d+)/.exec(text ?? "") ?? []
+
+    if (!index || !total) {
+      throw new Error(`the quiz shows no progress to read: "${text}"`)
+    }
+
+    return { index: Number(index), total: Number(total) }
   }
 
   async fillRulesForm(): Promise<void> {
