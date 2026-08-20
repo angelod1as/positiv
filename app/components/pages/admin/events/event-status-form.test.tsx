@@ -124,6 +124,21 @@ describe("EventStatusForm", () => {
     )
   })
 
+  it("holds the status that was saved while the page catches up", async () => {
+    const user = userEvent.setup()
+    const fetchMock = answered()
+    draw({ event_status: "Draft" })
+
+    await choose(user, "Completed")
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    await waitFor(() => expect(revalidate).toHaveBeenCalled())
+
+    // The loader has not come back yet, and going back to what it last said
+    // would show the old status for as long as that takes — a flicker through
+    // the status the admin has just moved away from.
+    expect(screen.getByLabelText(statusCopy.label)).toHaveValue("Completed")
+  })
+
   it("shows the status the event is in again, not the one that was refused", async () => {
     const user = userEvent.setup()
     answered({ ok: false, errors: [] })

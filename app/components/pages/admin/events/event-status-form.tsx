@@ -36,10 +36,15 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
   const navigate = useNavigate()
   const revalidator = useRevalidator()
 
-  // Counted so that every finished save starts the run again, seeded from the
-  // loader. A refused save used to leave the select showing the status the
-  // database had just turned down.
-  const [saves, setSaves] = useState(0)
+  // Counted so that a refused save starts the run again, seeded from the
+  // loader: the select would otherwise be left showing the status the database
+  // had just turned down.
+  //
+  // Only a refused one. Starting again after a save that worked showed the
+  // status the admin had just moved away from, for as long as the loader took
+  // to come back with the new one — a flicker through the old answer on every
+  // single change.
+  const [refusals, setRefusals] = useState(0)
 
   const isScheduledForAutoPublish =
     event_status === "Scheduled" && auto_publish && time_application_start
@@ -74,9 +79,9 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
         toast.success(adminEventsCopy.toasts.statusUpdated)
       } else {
         toast.error(result.message ?? adminEventsCopy.toasts.statusUpdateFailed)
+        setRefusals((current) => current + 1)
       }
 
-      setSaves((current) => current + 1)
       void revalidator.revalidate()
 
       return result
@@ -93,9 +98,9 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
     <>
       <FormRunner
         // What the event is, as the database last answered, plus how many saves
-        // have been made against it: either changing means the control should
-        // be showing something other than what it is showing now.
-        key={`${event_status}:${saves}`}
+        // it has turned down: either changing means the control is showing
+        // something the database does not agree with.
+        key={`${event_status}:${refusals}`}
         questions={questions}
         flow={flow}
         presentation={EventStatusScreen}
