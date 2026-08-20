@@ -41,6 +41,7 @@ const LOGIN_COMMIT = "/api/auth/login"
 const FORGOT_PASSWORD_COMMIT = "/api/auth/esqueci-senha"
 const BASIC_DATA_COMMIT = "/api/account/dados-basicos"
 const CHANGE_PASSWORD_COMMIT = "/api/account/mudar-senha"
+const TERMS_COMMIT = "/api/account/termos"
 
 //// ADMIN
 const ADMIN_DASHBOARD = "/admin"
@@ -102,6 +103,7 @@ const paths = {
       CHANGE_PASSWORD_COMMIT,
       BASIC_DATA,
       BASIC_DATA_COMMIT,
+      TERMS_COMMIT,
       ACCOUNT_READY,
     },
     events: {
