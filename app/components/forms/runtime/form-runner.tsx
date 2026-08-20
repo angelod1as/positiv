@@ -12,10 +12,9 @@ import { useFormRuntime } from "./use-form-runtime"
 type FormRunnerProps = {
   questions: Question[]
   /**
-   * Swapping this for a different flow requires remounting with a new `key`.
-   * Answers, the current step and first-attempt records are seeded once, and a
-   * flow built inline changes identity on every render, so resetting on
-   * identity would wipe the person's answers as they typed.
+   * Swapping this for a different flow requires remounting with a new `key`:
+   * answers and first-attempt records are seeded once, and a flow built inline
+   * changes identity every render, so resetting on identity would wipe them.
    */
   flow: Flow
   presentation: Presentation
@@ -23,30 +22,26 @@ type FormRunnerProps = {
   renderQuestion?: RenderQuestion
   data?: Record<string, unknown>
   /**
-   * Answers the run opens with, for a form that is correcting something rather
-   * than collecting it. Read once: changing it later does not reset the run.
+   * Answers the run opens with, for a form correcting something rather than
+   * collecting it. Read once: changing it later does not reset the run.
    */
   initialAnswers?: Answers
   continueLabel?: string
   onDone?: (answers: Answers) => void
   /**
-   * Whether the screen the flow opens on takes focus. Off by default, because
-   * taking it scrolls the page to the control and past whatever sits above the
-   * form. Turn it on for a form that has the page to itself.
+   * Whether the screen the flow opens on takes focus. Off by default: taking it
+   * scrolls the page past whatever the form sits under. On for a form that owns
+   * its page.
    */
   focusFirstScreen?: boolean
-  /**
-   * Keeps the run alive across a refresh, under `form-runtime:<formId>:<scopeId>`.
-   * Omit it for a form with nothing to lose.
-   */
+  /** Keeps the run alive across a refresh, under `form-runtime:<formId>:<scopeId>`. */
   persistence?: { formId: string; scopeId: string }
   /** Where the caller believes the run is, typically mirrored from the url. */
   stepId?: StepId
   /**
    * Called with the step actually showing, including when a requested one was
-   * refused, so a url mirroring the run can correct itself. The direction says
-   * whether the run walked forward or back, which is what a caller writing to
-   * a history needs to decide between adding an entry and replacing one.
+   * refused, so a url mirroring the run can correct itself. The direction is
+   * what lets a caller writing history choose between pushing and replacing.
    */
   onStepChange?: (
     stepId: StepId,
@@ -54,8 +49,7 @@ type FormRunnerProps = {
   ) => void
   /**
    * Called with how long the run is projected to be, and again whenever that
-   * changes — a flow that branches on an early mistake grows mid-run, and a
-   * caller drawing anything around the form may need to say so.
+   * changes — a flow branching on an early mistake grows mid-run.
    */
   onProgressChange?: (progress: { index: number; total: number } | null) => void
 }
@@ -87,17 +81,16 @@ export function FormRunner({
 
   const reportedRef = useRef(false)
 
-  // Held in a ref because callers write this callback inline: keeping it in the
-  // effect's dependencies would report on every render, and a caller that
-  // answers by changing state — a url, say — would never stop rendering.
+  // Held in a ref because callers write this inline: in the effect's deps it
+  // would report every render, and a caller answering with state would never
+  // settle.
   const onStepChangeRef = useRef(onStepChange)
   useEffect(() => {
     onStepChangeRef.current = onStepChange
   })
 
-  // The step last reported, so that a direction settling after the move does
-  // not report the same step twice — a caller writing to a history would take
-  // the second report for a second move and record an entry for it.
+  // The step last reported, so a direction settling after the move is not taken
+  // for a second move and written to a history as one.
   const reportedStepRef = useRef<StepId | null>(null)
 
   useEffect(() => {
@@ -125,9 +118,9 @@ export function FormRunner({
     onDone?.(answers)
   }, [isDone, answers, onDone])
 
-  // The restore reads sessionStorage, which the server does not have, so it
-  // runs after mount. Until it lands there is nothing truthful to draw, and a
-  // placeholder of roughly the right height keeps the card from jumping.
+  // The restore reads sessionStorage, so it runs after mount. Until it lands
+  // there is nothing truthful to draw, and a placeholder of roughly the right
+  // height keeps the card from jumping.
   if (!isRestored) {
     return (
       <div className="flex flex-col gap-8" aria-busy="true">

@@ -12,9 +12,9 @@ export type Step =
 
 export type FlowContext = {
   /**
-   * Whether each question was answered correctly on the first attempt.
-   * Populated by the runtime, read by `next` — a flow can only branch on
-   * early mistakes because a wrong answer never advances past its question.
+   * Whether each question was right on the first attempt. Written by the
+   * runtime, read by `next` — and only early mistakes can be branched on,
+   * because a wrong answer never advances past its question.
    */
   firstTryCorrect: Record<string, boolean>
   data: Record<string, unknown>
@@ -24,10 +24,9 @@ export type Flow = {
   start: StepId
   steps: Record<StepId, Step>
   /**
-   * Called to advance the run and, on every render, to project how long the run
-   * will be — so it must be free of side effects, and must read a missing
-   * `firstTryCorrect` entry as "did not stumble". A flow that branches the other
-   * way would announce the branch before the person reached it.
+   * Called to advance the run and, on every render, to project its length — so
+   * no side effects, and a missing `firstTryCorrect` entry has to read as "did
+   * not stumble", or the branch is announced before anyone reaches it.
    */
   next: (
     current: StepId,

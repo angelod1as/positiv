@@ -13,7 +13,7 @@ export type GridSlot =
   | { kind: "note"; id: string; render: ReactNode; span?: GridSpan }
 
 // Written out because an interpolated col-span-* is a class the Tailwind
-// scanner never sees, and so a class that never reaches the stylesheet.
+// scanner never sees, and so never reaches the stylesheet.
 const SPAN_CLASS: Record<GridSpan, string> = {
   3: "sm:col-span-3",
   4: "sm:col-span-4",
@@ -23,16 +23,16 @@ const SPAN_CLASS: Record<GridSpan, string> = {
 }
 
 /**
- * Every question of the screen at once, laid out on twelve columns — for a form
- * that collects things someone already has in their head, where a column of
- * fourteen stacked fields would read as a much longer errand than it is.
+ * Every question of the screen at once, on twelve columns — for a form
+ * collecting what someone already has in their head, where fourteen stacked
+ * fields would read as a longer errand than it is.
  *
- * The caller describes the layout as an ordered list of slots, so a note can
- * sit between two questions without a presentation of its own. Build the list
- * once and hold it: a presentation that changes identity remounts the run.
+ * The caller describes the layout as an ordered list of slots, so a note can sit
+ * between two questions without a presentation of its own. Build the list once
+ * and hold it: a presentation that changes identity remounts the run.
  *
  * A question the slots forgot is drawn at the end in full width rather than
- * dropped, so that adding one to the flow can never make it vanish from view.
+ * dropped, so adding one to the flow can never make it vanish.
  */
 export function gridPresentation(slots: GridSlot[]): Presentation {
   return function Grid({
