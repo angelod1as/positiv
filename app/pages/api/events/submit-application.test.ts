@@ -175,4 +175,25 @@ describe("the event application submit", () => {
     expect(response.status).toBe(400)
     expect(body).toEqual({ ok: false, errors: [] })
   })
+
+  // `null` and `"ninguém"` are both valid JSON, so they walk past the parse and
+  // reach the reading of answers off them.
+  it("blames nobody for a body that is not a set of answers", async () => {
+    for (const body of ["null", '"ninguém"', "42"]) {
+      const answered = await submit(body)
+
+      expect(answered.response.status).toBe(400)
+      expect(answered.body).toEqual({ ok: false, errors: [] })
+    }
+
+    expect(mockApplyToEvent).not.toHaveBeenCalled()
+  })
+
+  it("writes the answer the schema made, not the one that arrived", async () => {
+    await submit({ ...filledIn, referred: "  ninguém  " })
+
+    const [payload] = mockApplyToEvent.mock.calls[0]
+
+    expect(payload).toMatchObject({ referred: "ninguém" })
+  })
 })
