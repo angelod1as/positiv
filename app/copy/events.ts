@@ -268,6 +268,8 @@ Ao clicar no botão "Enviar candidatura", sua candidatura será enviada (óbvio)
     Record<keyof z.infer<typeof applyToEventSchema>, string>
   >,
   submitLabel: "🎉 Enviar candidatura!",
+  quizExpired:
+    "Faz um tempo que você respondeu o quiz de regras. Responda de novo e sua candidatura segue daqui.",
   toasts: {
     success: {
       message: "Candidatura enviada com sucesso",

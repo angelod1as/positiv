@@ -24,6 +24,10 @@ export default [
     "routes/api.process-pre-opening-reminders.ts",
   ),
   route("/api/events/:id/rules-quiz", "pages/api/events/verify-rules-quiz.ts"),
+  route(
+    "/api/events/:id/application",
+    "pages/api/events/submit-application.ts",
+  ),
   route("/api/auth/register", "pages/api/auth/register.ts"),
   route("/api/account/dados-basicos", "pages/api/account/basic-data.ts"),
   route(

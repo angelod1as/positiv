@@ -32,6 +32,8 @@ const EVENT_VIEW = (id: string) => `${DASHBOARD}/${id}`
 const EVENT_RULES = (id: string) => `${EVENT_VIEW(id)}/regras`
 const EVENT_DATA = (id: string) => `${EVENT_VIEW(id)}/dados`
 const EVENT_RULES_QUIZ_CHECK = (id: string) => `/api/events/${id}/rules-quiz`
+const EVENT_APPLICATION_COMMIT = (id: string) =>
+  `/api/events/${id}/application`
 const EVENT_APPLICATION_SENT = (id: string) =>
   `${EVENT_VIEW(id)}/candidatura-enviada`
 const REGISTER_COMMIT = "/api/auth/register"
@@ -100,6 +102,7 @@ const paths = {
       EVENT_VIEW,
       EVENT_RULES,
       EVENT_RULES_QUIZ_CHECK,
+      EVENT_APPLICATION_COMMIT,
       EVENT_DATA,
       EVENT_APPLICATION_SENT,
     },
