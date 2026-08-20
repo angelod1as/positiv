@@ -307,6 +307,7 @@ export function AGDataTable<TData>({
           onStateUpdated={handleStateUpdated}
           onRowClicked={onRowClicked}
           maintainColumnOrder={persistState}
+          enableCellTextSelection
           suppressColumnVirtualisation={suppressColumnVirtualisation}
           tooltipShowDelay={0}
           tooltipInteraction={true}
