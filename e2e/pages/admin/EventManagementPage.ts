@@ -1,4 +1,4 @@
-import { type Locator, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 import { BasePage } from '../BasePage'
 
 export class EventManagementPage extends BasePage {
@@ -44,15 +44,15 @@ export class EventManagementPage extends BasePage {
     this.eventEndInput = page.getByLabel('Fim do evento')
     
     // Application period
-    this.applicationStartInput = page.locator('#time_application_start')
+    this.applicationStartInput = page.getByLabel('Abertura das candidaturas')
 
     // Group period
-    this.groupStartInput = page.locator('#time_group_start')
-    this.groupEndInput = page.locator('#time_group_end')
+    this.groupStartInput = page.getByLabel('Início do grupo')
+    this.groupEndInput = page.getByLabel('Encerramento do grupo')
 
     // Payment period
-    this.paymentStartInput = page.locator('#time_payment_start')
-    this.paymentEndInput = page.locator('#time_payment_end')
+    this.paymentStartInput = page.getByLabel('Início dos pagamentos')
+    this.paymentEndInput = page.getByLabel('Encerramento dos pagamentos')
     
     // Buttons
     this.calculateDatesButton = page.getByRole('button', { name: 'Calcular datas automaticamente' })
@@ -152,8 +152,10 @@ export class EventManagementPage extends BasePage {
 
   async changeStatus(status: string): Promise<void> {
     await this.statusDropdown.selectOption(status)
-    // Wait for auto-submit
-    await this.page.waitForTimeout(1000)
+    // The select saves itself and refuses a second answer while it does, so it
+    // comes back enabled holding whatever the database now says.
+    await expect(this.statusDropdown).toBeEnabled()
+    await expect(this.statusDropdown).toHaveValue(status)
   }
 
   async getEventTitle(): Promise<string> {
