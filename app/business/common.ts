@@ -49,9 +49,7 @@ export const registerUserFieldsSchema = zod.object({
       message: registerCopy.validation.over18,
     }),
   ),
-  captchaToken: zod
-    .string()
-    .min(1, registerCopy.validation.captcha),
+  captchaToken: zod.string().min(1, registerCopy.validation.captcha),
 })
 
 /** Shared so the browser and the server say the same thing about it. */
@@ -115,63 +113,65 @@ export const agreeToTermsSchema = zod.object({
 })
 
 /* BASIC DATA */
-export const basicDataSchema = zod
-  .object({
-    full_name: zod.string().min(2).max(255).transform(normalizeName),
-    social_name: zod
-      .string()
-      .min(2)
-      .max(255)
-      .transform(normalizeName)
-      .nullish(),
-    rg: zod.string().min(2),
-    rg_issuer: zod.string().min(2),
-    cpf: zod.string().min(2),
-    date_of_birth: zod
-      .string()
-      .pipe(
-        zod.coerce.date({
-          error: validationMessages.invalidDate,
-        }),
-      )
-      .refine(
-        (date) => {
-          const now = new Date()
-          const birthDate = new Date(date)
-          let age = now.getFullYear() - birthDate.getFullYear()
-          const monthDifference = now.getMonth() - birthDate.getMonth()
-          if (
-            monthDifference < 0 ||
-            (monthDifference === 0 && now.getDate() < birthDate.getDate())
-          ) {
-            age--
-          }
-          return age >= 18
-        },
-        {
-          message: basicDataValidation.minimumAge,
-        },
-      ),
-    phone: zod.coerce
-      .number({
-        error: basicDataValidation.phoneNotANumber,
-      })
-      .refine((value) => PHONE_REGEXP.test(value.toString()), {
-        message: basicDataValidation.invalidPhone,
+/**
+ * The fields on their own, so a question can reuse the rule for exactly one of
+ * them. What one field says about another lives in `basicDataSchema`.
+ */
+export const basicDataFieldsSchema = zod.object({
+  full_name: zod.string().min(2).max(255).transform(normalizeName),
+  social_name: zod.string().min(2).max(255).transform(normalizeName).nullish(),
+  rg: zod.string().min(2),
+  rg_issuer: zod.string().min(2),
+  cpf: zod.string().min(2),
+  date_of_birth: zod
+    .string()
+    .pipe(
+      zod.coerce.date({
+        error: validationMessages.invalidDate,
       }),
-    confirm_phone: zod.coerce
-      .number({
-        error: basicDataValidation.phoneNotANumber,
-      })
-      .refine((value) => PHONE_REGEXP.test(value.toString()), {
-        message: basicDataValidation.invalidPhone,
-      }),
-    how_came_to_us: zod.string().optional(),
-    where_lives: zod.string().optional(),
-  })
+    )
+    .refine(
+      (date) => {
+        const now = new Date()
+        const birthDate = new Date(date)
+        let age = now.getFullYear() - birthDate.getFullYear()
+        const monthDifference = now.getMonth() - birthDate.getMonth()
+        if (
+          monthDifference < 0 ||
+          (monthDifference === 0 && now.getDate() < birthDate.getDate())
+        ) {
+          age--
+        }
+        return age >= 18
+      },
+      {
+        message: basicDataValidation.minimumAge,
+      },
+    ),
+  phone: zod.coerce
+    .number({
+      error: basicDataValidation.phoneNotANumber,
+    })
+    .refine((value) => PHONE_REGEXP.test(value.toString()), {
+      message: basicDataValidation.invalidPhone,
+    }),
+  confirm_phone: zod.coerce
+    .number({
+      error: basicDataValidation.phoneNotANumber,
+    })
+    .refine((value) => PHONE_REGEXP.test(value.toString()), {
+      message: basicDataValidation.invalidPhone,
+    }),
+  how_came_to_us: zod.string().optional(),
+  where_lives: zod.string().optional(),
+})
+
+export const basicDataSchema = basicDataFieldsSchema
+  // Blamed on the confirmation rather than on the phone: the number typed
+  // first is not the one someone is being asked to look at again.
   .refine((data) => data.phone === data.confirm_phone, {
     message: basicDataValidation.phoneMismatch,
-    path: ["phone"],
+    path: ["confirm_phone"],
   })
   .refine(
     (data) => {

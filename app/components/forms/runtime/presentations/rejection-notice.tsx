@@ -46,7 +46,10 @@ export const RejectionNotice = ({
       `[data-question-id="${CSS.escape(first)}"]`,
     )
 
-    field?.querySelector<HTMLElement>("input, select, textarea")?.focus()
+    // Buttons count: a question answered with pills has no input of its own
+    // unless it also takes free text, and landing on nothing would leave
+    // someone at the bottom of the screen with no idea where to look.
+    field?.querySelector<HTMLElement>("input, select, textarea, button")?.focus()
   }, [rejection])
 
   const standing = rejection?.questionIds.some((id) => errors[id]) ?? false

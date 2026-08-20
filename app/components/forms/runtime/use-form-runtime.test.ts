@@ -38,6 +38,34 @@ describe("useFormRuntime", () => {
     expect(result.current.isDone).toBe(false)
   })
 
+  it("opens with the answers it was handed", () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({
+        questions,
+        flow: linearFlow,
+        initialAnswers: { a: "Ana", b: "Bahia" },
+      }),
+    )
+
+    expect(result.current.answers).toEqual({ a: "Ana", b: "Bahia" })
+  })
+
+  it("advances on an answer it was handed, without it being retyped", async () => {
+    const { result } = renderHook(() =>
+      useFormRuntime({
+        questions,
+        flow: linearFlow,
+        initialAnswers: { a: "Ana" },
+      }),
+    )
+
+    await act(async () => {
+      await result.current.advance()
+    })
+
+    expect(result.current.currentStepId).toBe("b")
+  })
+
   it("exposes the questions belonging to the current step", () => {
     const { result } = renderHook(() =>
       useFormRuntime({ questions, flow: linearFlow }),

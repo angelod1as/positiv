@@ -1,7 +1,9 @@
-export const checkboxWithOtherCopy = {
-  other: "Outros",
-  placeholder: "Exemplo 1, Exemplo 2",
-  description: "Separe múltiplos por vírgula",
+export const chipSelectCopy = {
+  otherPlaceholder: "Outro? Escreva aqui",
+  otherAdd: "Adicionar",
+  remove: (value: string) => `Remover ${value}`,
+  added: (value: string) => `${value} adicionado`,
+  removed: (value: string) => `${value} removido`,
 } as const
 
 export const schemaFormCopy = {

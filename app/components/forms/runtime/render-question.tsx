@@ -2,6 +2,7 @@ import { Checkbox } from "~/components/ui/checkbox"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { TextArea } from "~/components/ui/textarea"
+import { ChipSelect } from "~/components/forms/base/chip-select"
 import { Radio } from "~/components/forms/base/radio"
 import { Select } from "~/components/forms/base/select"
 import { formRuntimeCopy } from "~/copy/forms"
@@ -12,7 +13,11 @@ const asText = (value: unknown) => (typeof value === "string" ? value : "")
 const asList = (value: unknown) =>
   Array.isArray(value) ? (value as string[]) : []
 
-const choiceClassName = "flex min-h-11 items-start gap-2 py-2 cursor-pointer mb-0"
+// The 44px row a finger needs, kept for the pointer that needs it. With a
+// mouse the same row is dead space: three alternatives read as three separate
+// questions when each one is a thumb tall and spaced like a paragraph.
+const choiceClassName =
+  "flex items-start gap-2 py-0.5 cursor-pointer mb-0 pointer-coarse:min-h-11 pointer-coarse:py-2"
 
 export const renderQuestion: RenderQuestion = ({
   question,
@@ -112,7 +117,7 @@ export const renderQuestion: RenderQuestion = ({
         <div
           role="radiogroup"
           aria-labelledby={labelledBy}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-0.5 pointer-coarse:gap-2"
         >
           {input.options.map((option) => (
             <Label key={option.value} className={choiceClassName}>
@@ -135,7 +140,7 @@ export const renderQuestion: RenderQuestion = ({
         <div
           role="group"
           aria-labelledby={labelledBy}
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-0.5 pointer-coarse:gap-2"
         >
           {input.options.map((option) => {
             const checked = selected.includes(option.value)
@@ -159,6 +164,19 @@ export const renderQuestion: RenderQuestion = ({
         </div>
       )
     }
+
+    case "chips":
+      return (
+        <ChipSelect
+          id={question.id}
+          labelledBy={labelledBy}
+          options={input.options}
+          value={asList(value)}
+          onChange={onChange}
+          allowOther={input.allowOther}
+          otherPlaceholder={input.otherPlaceholder}
+        />
+      )
 
     case "boolean":
       return (

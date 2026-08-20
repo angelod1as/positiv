@@ -6,6 +6,7 @@ import {
   runtimeStorageKey,
 } from "~/components/forms/runtime/persistence"
 import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
+import { gridPresentation } from "~/components/forms/runtime/presentations/grid"
 import { OneAtATime } from "~/components/forms/runtime/presentations/one-at-a-time"
 import type { Presentation } from "~/components/forms/runtime/presentations/presentation.types"
 import type {
@@ -80,6 +81,44 @@ const questions: Question[] = [
     },
     schema: zod.array(zod.string()).refine((chosen) => chosen.length > 0, {
       message: "Escolha ao menos um espaço",
+    }),
+  },
+  {
+    id: "identidade",
+    prompt: "Como você se identifica?",
+    help: "Pílulas. O que não estiver na lista você escreve — e vira pílula também.",
+    input: {
+      kind: "chips",
+      options: [
+        { label: "Homem cis", value: "Homem cis" },
+        { label: "Homem trans", value: "Homem trans" },
+        { label: "Mulher cis", value: "Mulher cis" },
+        { label: "Mulher trans", value: "Mulher trans" },
+        { label: "Pessoa agênera", value: "Pessoa agênera" },
+        { label: "Pessoa não binária", value: "Pessoa não binária" },
+        { label: "Travesti", value: "Travesti" },
+      ],
+      allowOther: true,
+    },
+    schema: zod.array(zod.string()).refine((chosen) => chosen.length > 0, {
+      message: "Escolha ao menos uma",
+    }),
+  },
+  {
+    id: "pronomes",
+    prompt: "Quais pronomes?",
+    help: "As mesmas pílulas, sem campo livre — é o que allowOther liga e desliga.",
+    input: {
+      kind: "chips",
+      options: [
+        { label: "Ela/dela", value: "Ela/dela" },
+        { label: "Ele/dele", value: "Ele/dele" },
+        { label: "Elu/delu", value: "Elu/delu" },
+        { label: "Ile/dile", value: "Ile/dile" },
+      ],
+    },
+    schema: zod.array(zod.string()).refine((chosen) => chosen.length > 0, {
+      message: "Escolha ao menos um",
     }),
   },
   {
@@ -304,6 +343,8 @@ const steppedFlow: Flow = {
     quiz: { kind: "question", id: "quiz" },
     cidade: { kind: "question", id: "cidade" },
     espacos: { kind: "question", id: "espacos" },
+    identidade: { kind: "question", id: "identidade" },
+    pronomes: { kind: "question", id: "pronomes" },
     notas: { kind: "question", id: "notas" },
     email: { kind: "question", id: "email" },
     salvar: commitStep,
@@ -316,7 +357,9 @@ const steppedFlow: Flow = {
       return answers.veterane === "sim" ? "cidade" : "quiz"
     if (current === "quiz") return "cidade"
     if (current === "cidade") return "espacos"
-    if (current === "espacos") return "notas"
+    if (current === "espacos") return "identidade"
+    if (current === "identidade") return "pronomes"
+    if (current === "pronomes") return "notas"
     if (current === "notas") return "email"
     if (current === "email") return "salvar"
     return "done"
@@ -333,7 +376,16 @@ const singleScreenFlow: Flow = {
   steps: {
     tudo: {
       kind: "screen",
-      ids: ["nome", "veterane", "cidade", "espacos", "notas", "email"],
+      ids: [
+        "nome",
+        "veterane",
+        "cidade",
+        "espacos",
+        "identidade",
+        "pronomes",
+        "notas",
+        "email",
+      ],
     },
     salvar: commitStep,
   },
@@ -368,7 +420,37 @@ const stressSingleScreenFlow: Flow = {
   next: (current) => (current === "tudo" ? "salvar" : "done"),
 }
 
-type Shape = "stepped" | "single" | "stress-stepped" | "stress-single"
+/**
+ * The same single screen on twelve columns, with a note between the questions.
+ * Built once at module scope: a presentation that changes identity remounts the
+ * run, and with it everything already typed.
+ */
+const GridScreen = gridPresentation([
+  { kind: "question", id: "nome", span: 6 },
+  { kind: "question", id: "veterane", span: 6 },
+  { kind: "question", id: "cidade", span: 4 },
+  { kind: "question", id: "espacos", span: 4 },
+  { kind: "question", id: "email", span: 4 },
+  {
+    kind: "note",
+    id: "identidade",
+    render: (
+      <p className="mt-4 text-sm text-muted-foreground">
+        Daqui para baixo, só para nossos dados demográficos.
+      </p>
+    ),
+  },
+  { kind: "question", id: "identidade", span: 6 },
+  { kind: "question", id: "pronomes", span: 6 },
+  { kind: "question", id: "notas", span: 12 },
+])
+
+type Shape =
+  | "stepped"
+  | "single"
+  | "grid"
+  | "stress-stepped"
+  | "stress-single"
 
 const shapes: Record<
   Shape,
@@ -385,6 +467,12 @@ const shapes: Record<
     questions,
     flow: singleScreenFlow,
     presentation: AllAtOnce,
+  },
+  grid: {
+    label: "Tela única, em grid",
+    questions,
+    flow: singleScreenFlow,
+    presentation: GridScreen,
   },
   "stress-stepped": {
     label: "Casos extremos, uma por tela",

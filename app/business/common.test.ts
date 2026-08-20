@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   applyToEventSchema,
+  basicDataFieldsSchema,
   basicDataSchema,
   registerUserFieldsSchema,
   registerUserSchema,
@@ -217,6 +218,34 @@ describe("registerUserFieldsSchema", () => {
 
     expect(registerUserFieldsSchema.safeParse(values).success).toBe(true)
     expect(registerUserSchema.safeParse(values).success).toBe(false)
+  })
+})
+
+describe("basicDataFieldsSchema", () => {
+  it("exposes each field so a question can reuse it", () => {
+    const { shape } = basicDataFieldsSchema
+
+    expect(shape.full_name.safeParse("M").success).toBe(false)
+    expect(shape.full_name.safeParse("Maria Silva").success).toBe(true)
+    expect(shape.phone.safeParse(1).success).toBe(false)
+    expect(shape.phone.safeParse(11999999999).success).toBe(true)
+    expect(shape.date_of_birth.safeParse("2020-01-01").success).toBe(false)
+  })
+
+  it("does not compare one field with another — that is the whole schema's job", () => {
+    const mismatched = {
+      full_name: "Maria Silva",
+      social_name: null,
+      rg: "123456789",
+      rg_issuer: "SSP-SP",
+      cpf: "12345678900",
+      date_of_birth: "1990-01-01",
+      phone: 11999999999,
+      confirm_phone: 11888888888,
+    }
+
+    expect(basicDataFieldsSchema.safeParse(mismatched).success).toBe(true)
+    expect(basicDataSchema.safeParse(mismatched).success).toBe(false)
   })
 })
 

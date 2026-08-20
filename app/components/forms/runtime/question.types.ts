@@ -24,6 +24,17 @@ export type InputSpec =
   | { kind: "radio"; options: Option[] }
   | { kind: "checkbox"; options: Option[] }
   /**
+   * A list answered with `string[]`, drawn as pills. With `allowOther` the
+   * answer may also be something the list never offered, which arrives in the
+   * same array — so a value loaded from elsewhere needs no unpacking.
+   */
+  | {
+      kind: "chips"
+      options: Option[]
+      allowOther?: boolean
+      otherPlaceholder?: string
+    }
+  /**
    * One box, answered with `true` or `false`. Distinct from `checkbox`, which
    * is a list of options answered with `string[]`. The prompt is the text
    * beside the box, so the presentation leaves the label to the renderer.
