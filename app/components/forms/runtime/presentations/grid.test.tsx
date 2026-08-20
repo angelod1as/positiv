@@ -48,7 +48,8 @@ const draw = (slots: GridSlot[], overrides: Partial<PresentationProps> = {}) => 
   return { onAnswer, onContinue }
 }
 
-const fieldOf = (prompt: string) => screen.getByLabelText(prompt).closest("div")
+const fieldOf = (prompt: string) =>
+  screen.getByLabelText(prompt).closest("[data-question-id]")
 
 describe("gridPresentation", () => {
   it("gives each slot the width it asked for", () => {

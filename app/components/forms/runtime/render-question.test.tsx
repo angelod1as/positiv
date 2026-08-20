@@ -130,14 +130,15 @@ describe("renderQuestion", () => {
 
   // A finger needs 44px, and a one-line alternative was drawing a 25px row.
   // jsdom has no layout, so the size is measured in the browser; what a test
-  // can hold onto is the class asking for it.
+  // can hold onto is the class asking for it. Asked for only where the pointer
+  // is a finger: with a mouse the same row reads as three separate questions.
   it.each(["radio", "checkbox"] as const)(
     "gives each %s alternative a row a finger can hit",
     (kind) => {
       draw({ kind, options })
 
       for (const control of screen.getAllByRole(kind)) {
-        expect(control.closest("label")).toHaveClass("min-h-11")
+        expect(control.closest("label")).toHaveClass("pointer-coarse:min-h-11")
       }
     },
   )
@@ -189,12 +190,14 @@ describe("renderQuestion", () => {
     )
   })
 
-  // Same 44px a finger needs, for the same reason: a pill is a control.
+  // Same 44px a finger needs, for the same reason: a pill is a control. Only
+  // where the pointer is a finger, though — a pill is small type in a form of
+  // many questions, and a mouse does not need the room.
   it("gives each chip a target a finger can hit", () => {
     draw({ kind: "chips", options })
 
     for (const pill of screen.getAllByRole("button")) {
-      expect(pill).toHaveClass("min-h-11")
+      expect(pill).toHaveClass("pointer-coarse:min-h-11")
     }
   })
 

@@ -104,9 +104,9 @@ export const ChipSelect = ({
       id={id}
       role="group"
       aria-labelledby={labelledBy}
-      className={cn("flex flex-col gap-3", className)}
+      className={cn("flex flex-col gap-2", className)}
     >
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         {options.map((option) => {
           const isOn = value.includes(option.value)
 
@@ -115,7 +115,10 @@ export const ChipSelect = ({
               key={option.value}
               asChild
               variant={isOn ? "default" : "outline"}
-              className="min-h-11 cursor-pointer px-4 py-1 text-sm"
+              // Small enough to sit four abreast in a form of many questions;
+              // still 44px where the pointer is a finger, which is the size a
+              // touch target has to be however tidy the desktop looks.
+              className="min-h-7 cursor-pointer rounded-full px-3 py-0.5 text-xs leading-4 pointer-coarse:min-h-11"
             >
               <button
                 type="button"
@@ -132,7 +135,7 @@ export const ChipSelect = ({
           <Badge
             key={item}
             variant="secondary"
-            className="min-h-11 gap-1 px-4 py-1 text-sm"
+            className="min-h-7 gap-1 rounded-full px-3 py-0.5 text-xs leading-4 pointer-coarse:min-h-11"
           >
             {item}
             <button
@@ -150,6 +153,7 @@ export const ChipSelect = ({
       {allowOther ? (
         <div className="flex gap-2">
           <Input
+            className="h-8 text-xs md:text-xs"
             value={draft}
             placeholder={otherPlaceholder ?? chipSelectCopy.otherPlaceholder}
             // A soft keyboard has no key called Enter; this is what turns the
@@ -162,6 +166,8 @@ export const ChipSelect = ({
           <Button
             type="button"
             variant="outline"
+            size="sm"
+            className="text-xs"
             disabled={draft.trim() === ""}
             onClick={commitDraft}
           >
