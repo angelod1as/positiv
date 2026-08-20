@@ -16,7 +16,6 @@ import {
   contextSchema,
   forgotPasswordSchema,
   getSupabaseSchema,
-  loginSchema,
   registerUserSchema,
   userContextSchema,
 } from "../common"
@@ -160,28 +159,6 @@ export const getUserContext = async (
   }
   return { ...context, currentUser }
 }
-
-export const loginUser = applySchema(
-  loginSchema,
-  contextSchema,
-)(async (values, context) => {
-  const { supabase } = context
-  const { error, data } = await supabase.auth.signInWithPassword(values)
-
-  if (error) {
-    if (error.code === "invalid_credentials") {
-      throw new Error(errorsCopy.auth.invalidCredentials)
-    }
-    if (error.code === "email_not_confirmed") {
-      throw new Error(errorsCopy.auth.emailNotConfirmed)
-    }
-    throw new Error(errorsCopy.auth.authFailed(error.code, error.message))
-  }
-
-  trackServerEvent("user_login", { userId: data.user.id }, "/auth/login")
-
-  return { user: data.user }
-})
 
 export const getUserCodeContext = async (request: Request, params: Params) => {
   const requestUrl = new URL(request.url)

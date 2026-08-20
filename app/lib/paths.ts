@@ -37,6 +37,7 @@ const EVENT_APPLICATION_COMMIT = (id: string) =>
 const EVENT_APPLICATION_SENT = (id: string) =>
   `${EVENT_VIEW(id)}/candidatura-enviada`
 const REGISTER_COMMIT = "/api/auth/register"
+const LOGIN_COMMIT = "/api/auth/login"
 const BASIC_DATA_COMMIT = "/api/account/dados-basicos"
 
 //// ADMIN
@@ -88,6 +89,7 @@ const paths = {
     LOGON_EMAIL_MESSAGE,
     REGISTRATION_ERROR,
     REGISTER_COMMIT,
+    LOGIN_COMMIT,
   },
   dash: {
     DASHBOARD,
