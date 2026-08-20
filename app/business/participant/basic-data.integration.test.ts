@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { createTestProfile, getTestSupabaseClient } from "~/test/db-test-utils"
+import {
+  createTestAuthUser,
+  createTestProfile,
+  getTestSupabaseClient,
+} from "~/test/db-test-utils"
 import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
 import * as listmonkClient from "../newsletter/listmonk-client.server"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
@@ -49,7 +53,7 @@ describe("saveBasicData - Integration Tests", () => {
 
   it("adopts the profile waiting under the same e-mail instead of writing a second one", async () => {
     const email = "test-orphan-adoption@example.com"
-    const userId = crypto.randomUUID()
+    const userId = await createTestAuthUser(email, "test1234", tracker)
 
     const orphan = await createTestProfile(tracker, kysely, {
       email,
@@ -85,7 +89,7 @@ describe("saveBasicData - Integration Tests", () => {
 
   it("writes every field of the profile, including the demographic ones", async () => {
     const email = "test-save-basic-data@example.com"
-    const userId = crypto.randomUUID()
+    const userId = await createTestAuthUser(email, "test1234", tracker)
 
     const profile = await createTestProfile(tracker, kysely, {
       email,
@@ -105,7 +109,8 @@ describe("saveBasicData - Integration Tests", () => {
       .executeTakeFirstOrThrow()
 
     expect(saved.cpf).toBe("12345678901")
-    expect(saved.phone).toBe(11999999999)
+    // The driver hands an int8 column back as a string.
+    expect(Number(saved.phone)).toBe(11999999999)
     expect(saved.gender).toEqual(["Travesti"])
     expect(saved.race_color).toEqual(["Preta"])
     expect(saved.basic_data_filled).toBe(true)
@@ -120,7 +125,7 @@ describe("saveBasicData - Integration Tests", () => {
     })
 
     const email = "test-newsletter-resync@example.com"
-    const userId = crypto.randomUUID()
+    const userId = await createTestAuthUser(email, "test1234", tracker)
 
     const profile = await createTestProfile(tracker, kysely, {
       email,
@@ -148,12 +153,15 @@ describe("saveBasicData - Integration Tests", () => {
 
   it("writes nothing when an answer is refused", async () => {
     const email = "test-refused-basic-data@example.com"
-    const userId = crypto.randomUUID()
+    const userId = await createTestAuthUser(email, "test1234", tracker)
 
     const profile = await createTestProfile(tracker, kysely, {
       email,
       user_id: userId,
       full_name: null,
+      // The helper defaults this to true; the point here is that a refused save
+      // does not turn it on.
+      basic_data_filled: false,
     })
 
     const result = await saveBasicData({

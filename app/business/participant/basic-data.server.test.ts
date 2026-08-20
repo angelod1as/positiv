@@ -38,18 +38,30 @@ type Orphan = { id: string } | null
 const mockSupabase = (orphan: Orphan = null, savedId = "profile-1") => {
   const single = vi.fn().mockResolvedValue({ data: orphan, error: null })
   const is = vi.fn().mockReturnValue({ single })
-  const eq = vi.fn().mockReturnValue({ is })
-  const select = vi.fn().mockReturnValue({ eq })
+  const lookupEq = vi.fn().mockReturnValue({ is })
+  const select = vi.fn().mockReturnValue({ eq: lookupEq })
 
-  const upsertSingle = vi
+  const wroteSingle = vi
     .fn()
     .mockResolvedValue({ data: { id: savedId }, error: null })
-  const upsertSelect = vi.fn().mockReturnValue({ single: upsertSingle })
-  const upsert = vi.fn().mockReturnValue({ select: upsertSelect })
+  const wroteSelect = vi.fn().mockReturnValue({ single: wroteSingle })
 
-  const from = vi.fn().mockReturnValue({ select, upsert })
+  const upsert = vi.fn().mockReturnValue({ select: wroteSelect })
+  const updateEq = vi.fn().mockReturnValue({ select: wroteSelect })
+  const update = vi.fn().mockReturnValue({ eq: updateEq })
 
-  return { from, select, eq, is, single, upsert }
+  const from = vi.fn().mockReturnValue({ select, upsert, update })
+
+  return {
+    from,
+    select,
+    eq: lookupEq,
+    is,
+    single,
+    upsert,
+    update,
+    updateEq,
+  }
 }
 
 const contextWith = (supabase: {
@@ -117,10 +129,14 @@ describe("saveBasicData", () => {
 
     expect(supabase.eq).toHaveBeenCalledWith("email", "test@example.com")
     expect(supabase.is).toHaveBeenCalledWith("user_id", null)
-    expect(supabase.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "orphaned-123", user_id: "user-123" }),
-      { onConflict: "user_id" },
+    // Updated by its own id rather than upserted: a profile left behind has no
+    // user_id to conflict on, so an upsert would try to insert a second row
+    // under the same primary key.
+    expect(supabase.update).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: "user-123" }),
     )
+    expect(supabase.updateEq).toHaveBeenCalledWith("id", "orphaned-123")
+    expect(supabase.upsert).not.toHaveBeenCalled()
   })
 
   it("keeps going when the orphan lookup finds nothing", async () => {

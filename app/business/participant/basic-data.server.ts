@@ -72,22 +72,31 @@ export async function saveBasicData({
 
   const profileId = orphanedProfile?.id ?? context.currentProfile?.id
 
-  const { data: saved, error: upsertError } = await supabase
-    .from("profiles")
-    .upsert(
-      {
-        ...values,
-        ...extra.data,
-        ...(profileId ? { id: profileId } : {}),
-        date_of_birth: dateToString(values.date_of_birth),
-        user_id: currentUser.id,
-        email,
-        basic_data_filled: true,
-      },
-      { onConflict: "user_id" },
-    )
-    .select("id")
-    .single()
+  const written = {
+    ...values,
+    ...extra.data,
+    date_of_birth: dateToString(values.date_of_birth),
+    user_id: currentUser.id,
+    email,
+    basic_data_filled: true,
+  }
+
+  // Updated by id when the row to write is already known, and only inserted
+  // when it is not. An upsert cannot do both: its conflict target is user_id,
+  // which a profile left behind has none of — so adopting one used to insert a
+  // second row with the same primary key and fail on it.
+  const { data: saved, error: upsertError } = profileId
+    ? await supabase
+        .from("profiles")
+        .update(written)
+        .eq("id", profileId)
+        .select("id")
+        .single()
+    : await supabase
+        .from("profiles")
+        .upsert(written, { onConflict: "user_id" })
+        .select("id")
+        .single()
 
   if (upsertError || !saved) {
     const code = upsertError?.code ?? "UNKNOWN"
