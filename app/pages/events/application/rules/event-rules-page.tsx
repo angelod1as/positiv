@@ -109,7 +109,17 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
   // How long the run says it will be, which is the only thing that knows
   // whether a veteran is still on the short path: the wager is on while three
   // screens are promised, and off the moment the quiz grows.
-  const [screens, setScreens] = useState<number | null>(null)
+  //
+  // Stamped with the run it belongs to rather than reset when that changes:
+  // the runner reports its length after it has restored itself, so a plain
+  // reset would leave the person who just signed in reading the line the last
+  // one earned until the report lands.
+  const [screens, setScreens] = useState<{
+    runId: string
+    total: number
+  } | null>(null)
+
+  const screensAhead = screens?.runId === runId ? screens.total : null
 
   const mirrored = searchParams.get(STEP_PARAM) ?? undefined
 
@@ -188,7 +198,7 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
 
   const notice = !loaderData.isVeteran
     ? undefined
-    : screens !== null && screens > SHORT_RUN_LENGTH
+    : screensAhead !== null && screensAhead > SHORT_RUN_LENGTH
       ? rulesQuizCopy.veteranLostWager
       : rulesQuizCopy.veteranWager
 
@@ -206,7 +216,7 @@ const EventRulesPage = ({ params, loaderData }: Route.ComponentProps) => {
         persistence={{ formId: "rules", scopeId: runId }}
         stepId={requestedStep}
         onProgressChange={(progress) => {
-          setScreens(progress?.total ?? null)
+          setScreens(progress ? { runId, total: progress.total } : null)
         }}
         onStepChange={(step, { direction }) => {
           if (direction === "back" && pushed.current > 0) {

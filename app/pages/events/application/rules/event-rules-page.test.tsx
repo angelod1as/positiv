@@ -702,6 +702,40 @@ describe("what the quiz tells a veteran it is about to ask", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("does not greet the next person with the line the last one earned", async () => {
+    const user = userEvent.setup()
+
+    const { rerender } = renderPage({ isVeteran: true, profileId: "profile-1" })
+
+    await answerCorrectly(user)
+    await answerWrongly(user)
+    await answerCorrectly(user)
+    await answerWrongly(user)
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(rulesQuizCopy.veteranLostWager),
+      ).toBeInTheDocument()
+    })
+
+    rerender(
+      <MemoryRouter initialEntries={["/dashboard/123/regras"]}>
+        <EventRulesPage
+          {...({} as Route.ComponentProps)}
+          params={{ id: "123" }}
+          loaderData={{ isVeteran: true, profileId: "profile-2" }}
+        />
+      </MemoryRouter>,
+    )
+
+    // A run of their own, three screens long: the line the previous person
+    // earned belongs to a quiz that is over.
+    expect(screen.getByText(rulesQuizCopy.veteranWager)).toBeInTheDocument()
+    expect(
+      screen.queryByText(rulesQuizCopy.veteranLostWager),
+    ).not.toBeInTheDocument()
+  })
+
   it("changes its tune once both probes have gone wrong", async () => {
     const user = userEvent.setup()
     renderPage({ isVeteran: true, profileId: "profile-1" })
