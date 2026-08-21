@@ -42,3 +42,43 @@ jobs:
       # migration already on the remote. This happens when a branch with an older
       # timestamp is merged after a newer migration is already deployed to production.
       - run: supabase db push --include-all --db-url "$SUPABASE_CONNECT_URL"
+
+  # Nothing here used to look at the site. A merge that produced an image which
+  # could not boot took production down, and the way anyone found out was by
+  # opening the page. This is the detector that was missing.
+  #
+  # What it proves: the site answers. What it does not prove: that it answers
+  # from this commit — Coolify deploys on its own trigger, and with the
+  # Dockerfile healthcheck in place a failed deploy deliberately leaves the
+  # previous container serving. That case shows up as a red deploy in Coolify,
+  # not here. Pinning this to a commit needs an endpoint that reports one.
+  smoke:
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      # Coolify starts its build from its own webhook, not from this workflow,
+      # so there is no handle to wait on. A cached image redeploys in seconds
+      # and a cold build takes minutes; the polling below covers the spread.
+      - name: Give the deploy time to land
+        run: sleep 120
+
+      # Not a secret — it is the address the site answers on.
+      - name: Fetch the site until it answers
+        env:
+          APP_URL: https://www.positivparty.com
+        run: |
+          for attempt in $(seq 1 30); do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$APP_URL/" || echo 000)
+
+            if [ "$code" = "200" ]; then
+              echo "answered 200 on attempt $attempt"
+              exit 0
+            fi
+
+            echo "attempt $attempt: $code"
+            sleep 20
+          done
+
+          echo "::error::$APP_URL never answered 200 after 12 minutes"
+          exit 1
