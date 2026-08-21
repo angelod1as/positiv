@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  ALL_EVENT_STATUS_OPTIONS,
   applicationStatusOptions,
   isVeteranOptions,
   notesFilterOptions,
@@ -123,5 +124,18 @@ describe("propMaps - new enum values (POS-447, POS-448)", () => {
         "Não Selecionade",
       )
     })
+  })
+})
+
+describe("ALL_EVENT_STATUS_OPTIONS", () => {
+  it("offers every status, in the order an admin reads them", () => {
+    expect(ALL_EVENT_STATUS_OPTIONS).toEqual([
+      "Draft",
+      "Scheduled",
+      "Registration Open",
+      "Registration Closed",
+      "Cancelled",
+      "Completed",
+    ])
   })
 })

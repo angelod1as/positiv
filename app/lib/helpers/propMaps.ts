@@ -180,14 +180,26 @@ export const PARTICIPANTS_TABLE_FILTER_CONFIGS = {
   },
 } as const
 
-export const ALL_EVENT_STATUS_OPTIONS: EventStatus[] = [
-  "Draft",
-  "Scheduled",
-  "Registration Open",
-  "Registration Closed",
-  "Cancelled",
-  "Completed",
-]
+/**
+ * Keyed by the type rather than listed loose, so that a status added to the
+ * database cannot quietly go missing here: this stops compiling until it is
+ * written down, and the screens that offer a status — and the schema that
+ * accepts one — all read the list below.
+ *
+ * The order is the order an admin is offered them in.
+ */
+const EVERY_EVENT_STATUS: Record<EventStatus, true> = {
+  Draft: true,
+  Scheduled: true,
+  "Registration Open": true,
+  "Registration Closed": true,
+  Cancelled: true,
+  Completed: true,
+}
+
+export const ALL_EVENT_STATUS_OPTIONS = Object.keys(
+  EVERY_EVENT_STATUS,
+) as EventStatus[]
 
 export const eventStatusOptions = ALL_EVENT_STATUS_OPTIONS.map((status) => ({
   name: eventStatusMap(status),

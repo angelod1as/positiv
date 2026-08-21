@@ -71,6 +71,9 @@ export const adminContextSchema = userContextSchema.extend({
 /**
  * The statuses an event can be in, read from the one list the admin screens
  * offer, so that what the form shows and what the save accepts cannot drift.
+ * That list is built from a record keyed by `EventStatus`, so it cannot fall
+ * behind the database either; the cast here only says it is not empty, which
+ * zod asks for and a record with six keys cannot fail to be.
  */
 export const eventStatusEnum = zod.enum(
   ALL_EVENT_STATUS_OPTIONS as [EventStatus, ...EventStatus[]],

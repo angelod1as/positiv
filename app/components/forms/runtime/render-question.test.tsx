@@ -62,7 +62,13 @@ describe("renderQuestion", () => {
 
   it("draws no affixes for a number question without them", () => {
     const { container } = render(
-      <>{renderQuestion({ question: question({ kind: "textnumber" }), value: undefined, onChange: vi.fn() })}</>,
+      <>
+        {renderQuestion({
+          question: question({ kind: "textnumber" }),
+          value: undefined,
+          onChange: vi.fn(),
+        })}
+      </>,
     )
 
     expect(container.textContent).toBe("")
