@@ -123,6 +123,45 @@ describe("ChangePasswordPage", () => {
     expect(toast.success).toHaveBeenCalled()
   })
 
+  it("sends someone whose session expired back to the sign-in", async () => {
+    const user = userEvent.setup()
+    // What fetch does with a redirect: it follows it and hands back the page it
+    // landed on. Read as JSON that would only say the change failed, when what
+    // the person needs is to sign in again.
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      redirected: true,
+      url: "http://localhost/entrar",
+      json: async () => ({}),
+    } as Response)
+    renderPage()
+
+    await fill(user)
+    await submit(user)
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/entrar"))
+  })
+
+  it("keeps what was typed when the server answers with something else", async () => {
+    const user = userEvent.setup()
+    // A 500 comes back as an HTML error page, which json() rejects on.
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("<html>erro</html>", {
+        status: 500,
+        headers: { "Content-Type": "text/html" },
+      }),
+    )
+    renderPage()
+
+    await fill(user)
+    await submit(user)
+
+    expect(
+      await screen.findByText("Não foi possível salvar agora. Tente novamente."),
+    ).toBeVisible()
+    expect(screen.getByLabelText("Nova senha")).toHaveValue("segredo123")
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
   it("says why the change was refused, and stays put", async () => {
     const user = userEvent.setup()
     answers(

@@ -125,6 +125,38 @@ describe("AgreeToTermsPage", () => {
     expect(fetch).not.toHaveBeenCalled()
   })
 
+  it("refuses to continue without the e-mails the system has to send", async () => {
+    const user = userEvent.setup()
+    const fetch = answers({ ok: true, newsletterFailed: false })
+    renderPage()
+
+    await user.click(box("Li tudo e estou de acordo!"))
+    await user.click(box("Aceito receber e-mails gerais do sistema"))
+    await submit(user)
+
+    expect(
+      await screen.findByText(
+        "Nosso sistema só funciona se você aceitar receber e-mails gerais.",
+      ),
+    ).toBeVisible()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("sends someone whose session expired back to the sign-in", async () => {
+    const user = userEvent.setup()
+    vi.spyOn(globalThis, "fetch").mockResolvedValue({
+      redirected: true,
+      url: "http://localhost/entrar",
+      json: async () => ({}),
+    } as Response)
+    renderPage()
+
+    await user.click(box("Li tudo e estou de acordo!"))
+    await submit(user)
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/entrar"))
+  })
+
   it("sends the choices to the terms route", async () => {
     const user = userEvent.setup()
     const fetch = answers({ ok: true, newsletterFailed: false })

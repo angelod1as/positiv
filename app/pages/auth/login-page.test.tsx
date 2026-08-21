@@ -281,4 +281,20 @@ describe("Login Page Component", () => {
     expect(await screen.findByText("Credenciais inválidas")).toBeVisible()
     expect(navigate).not.toHaveBeenCalled()
   })
+
+  it("leaves the answers on screen for a second attempt", async () => {
+    const user = userEvent.setup()
+    answers(
+      { ok: false, errors: [], message: "Credenciais inválidas" },
+      { status: 422 },
+    )
+    renderPage()
+
+    await answer(user)
+    await submit(user)
+
+    await screen.findByText("Credenciais inválidas")
+    expect(screen.getByLabelText("E-mail")).toHaveValue("pessoa@exemplo.com")
+    expect(screen.getByLabelText("Senha")).toHaveValue("segredo123")
+  })
 })
