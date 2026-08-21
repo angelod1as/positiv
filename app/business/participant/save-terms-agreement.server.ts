@@ -2,7 +2,7 @@ import type { z } from "zod"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
 import type { CommitError } from "~types/forms/commit.types"
-import { agreeToTermsSchema, contextSchema } from "../common"
+import { agreeToTermsSchema, userContextSchema } from "../common"
 import { agreeToTerms } from "./agree-to-terms.server"
 
 /**
@@ -15,7 +15,13 @@ export type TermsAgreementResult =
 
 type SaveTermsAgreementProps = {
   answers: Record<string, unknown>
-  context: z.infer<typeof contextSchema>
+  /**
+   * Narrower than the context the composable behind this takes: agreeing to
+   * the terms is something only a signed-in person does, and saying so here
+   * makes a caller that forgot to authenticate a type error rather than a
+   * refusal raised at runtime.
+   */
+  context: z.infer<typeof userContextSchema>
 }
 
 export async function saveTermsAgreement({
