@@ -5,6 +5,7 @@ import { calculateDerivedDates } from "~/components/forms/admin/calculate-derive
 import { gridPresentation } from "~/components/forms/runtime/presentations/grid"
 import type { Answers } from "~/components/forms/runtime/question.types"
 import { renderQuestion } from "~/components/forms/runtime/render-question"
+import { sharedCopy } from "~/copy/shared"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { buildEventLayout } from "./build-event-layout"
 import { buildEventQuestions } from "./build-event-questions"
@@ -33,6 +34,7 @@ const draw = (answers: Answers = {}) => {
       onAnswer={onAnswer}
       onContinue={vi.fn()}
       continueLabel={formCopy.submit}
+      pendingLabel={sharedCopy.status.loading}
       renderQuestion={renderQuestion}
     />,
   )

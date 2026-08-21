@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import type { PresentationProps } from "~/components/forms/runtime/presentations/presentation.types"
 import { renderQuestion } from "~/components/forms/runtime/render-question"
+import { sharedCopy } from "~/copy/shared"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { buildEventStatusQuestions } from "./build-event-status-questions"
 import { EventStatusScreen } from "./event-status-presentation"
@@ -30,6 +31,7 @@ const draw = (overrides: Partial<PresentationProps> = {}) => {
       onAnswer={onAnswer}
       onContinue={onContinue}
       continueLabel="Continuar"
+      pendingLabel={sharedCopy.status.loading}
       renderQuestion={renderQuestion}
       {...overrides}
     />,
