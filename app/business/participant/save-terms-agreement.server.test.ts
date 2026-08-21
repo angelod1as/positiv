@@ -5,6 +5,10 @@ vi.mock("./agree-to-terms.server", () => ({
   agreeToTerms: vi.fn(),
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}))
+
 import { agreeToTerms } from "./agree-to-terms.server"
 
 const mockAgreeToTerms = vi.mocked(agreeToTerms)
@@ -57,6 +61,29 @@ describe("saveTermsAgreement", () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.errors.map((error) => error.questionId)).toEqual(["agree"])
+  })
+
+  it("records the refusals the person is never shown", async () => {
+    // Only the first message reaches the form. A second one would otherwise
+    // vanish with nothing anywhere saying it happened.
+    const { logger } = await import("~/lib/logger/logger.server")
+    mockAgreeToTerms.mockResolvedValue({
+      success: false,
+      data: undefined,
+      errors: [
+        { message: "Problema ao criar perfil" },
+        { message: "E mais isto" },
+      ],
+    } as never)
+
+    await saveTermsAgreement({ answers, context })
+
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining("terms"),
+      expect.objectContaining({
+        errors: ["Problema ao criar perfil", "E mais isto"],
+      }),
+    )
   })
 
   it("passes on a refusal that belongs to no box", async () => {

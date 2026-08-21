@@ -1,5 +1,6 @@
 import type { z } from "zod"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
+import { logger } from "~/lib/logger/logger.server"
 import type { CommitError } from "~types/forms/commit.types"
 import { agreeToTermsSchema, contextSchema } from "../common"
 import { agreeToTerms } from "./agree-to-terms.server"
@@ -30,6 +31,13 @@ export async function saveTermsAgreement({
   const result = await agreeToTerms(parsed.data, context)
 
   if (!result.success) {
+    // Only the first message has anywhere to go: the form shows one failure
+    // above its button. The rest are written down rather than dropped, so a
+    // second failure mode added later is not invisible.
+    logger.error("Refused to save the terms agreement", {
+      errors: result.errors.map((error) => error.message),
+    })
+
     // Linking a profile, creating one, unsubscribing — nothing that fails here
     // belongs to a box someone ticked.
     return { ok: false, errors: [], message: result.errors[0]?.message }
