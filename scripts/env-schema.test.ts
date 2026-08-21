@@ -116,6 +116,13 @@ describe(".env.schema", () => {
 // environment had it, and the container refused to boot.
 const PRODUCTION_SOURCE = /^#\s*production value:/m
 
+// A blank line ends a comment block: anything that is neither a comment nor a
+// declaration resets what has been collected. The schema relies on this to keep
+// its section headers — `# ---` / `# Supabase` / `# ---` — from being read as
+// the doc comment of whatever variable happens to follow them. The cost is that
+// a blank line inserted between a comment and its variable silently detaches
+// the two, and the only symptom is this file failing for a reason that has
+// nothing to do with what was edited.
 function declarationsIn(schema: string) {
   const declarations: { key: string; comments: string }[] = []
   let comments: string[] = []
