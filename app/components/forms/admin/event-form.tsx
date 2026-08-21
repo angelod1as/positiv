@@ -5,6 +5,7 @@ import { buildEventFlow } from "~/components/forms/custom/event/build-event-flow
 import { buildEventLayout } from "~/components/forms/custom/event/build-event-layout"
 import { buildEventQuestions } from "~/components/forms/custom/event/build-event-questions"
 import { toEventAnswers } from "~/components/forms/custom/event/to-event-answers"
+import { commitJson } from "~/components/forms/runtime/commit-json"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { gridPresentation } from "~/components/forms/runtime/presentations/grid"
 import type { Answers } from "~/components/forms/runtime/question.types"
@@ -41,22 +42,12 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
-      const response = await fetch(ADMIN_EVENT_COMMIT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const result = await commitJson<{ id: string }>(
+        ADMIN_EVENT_COMMIT,
         // Which event this is, is not something the form asks about.
-        body: JSON.stringify({ ...answers, id: event?.id }),
-      })
-
-      // An admin whose session expired mid-form is answered with a redirect,
-      // which fetch follows to a page of HTML. Reading that as JSON would only
-      // say the save failed, when what they need is to sign in again.
-      if (response.redirected) {
-        void navigate(new URL(response.url).pathname)
-        return { ok: false, errors: [] }
-      }
-
-      const result = (await response.json()) as CommitResult & { id?: string }
+        { ...answers, id: event?.id },
+        (pathname) => void navigate(pathname),
+      )
 
       if (result.ok && result.id) savedId.current = result.id
 

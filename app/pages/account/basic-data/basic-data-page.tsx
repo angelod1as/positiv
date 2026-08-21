@@ -5,6 +5,7 @@ import { getUserContext } from "~/business/auth/auth.server"
 import { buildBasicDataLayout } from "~/components/forms/custom/basic-data/build-basic-data-layout"
 import { buildBasicDataQuestions } from "~/components/forms/custom/basic-data/build-basic-data-questions"
 import { toBasicDataAnswers } from "~/components/forms/custom/basic-data/to-basic-data-answers"
+import { commitJson } from "~/components/forms/runtime/commit-json"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { gridPresentation } from "~/components/forms/runtime/presentations/grid"
 import type { Answers } from "~/components/forms/runtime/question.types"
@@ -77,21 +78,9 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
-      const response = await fetch(BASIC_DATA_COMMIT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(answers),
-      })
-
-      // A session that expired mid-form is answered with a redirect, which
-      // fetch follows to a page of HTML. Reading that as JSON would only say
-      // the save failed, when what someone needs is to sign in again.
-      if (response.redirected) {
-        void navigate(new URL(response.url).pathname)
-        return { ok: false, errors: [] }
-      }
-
-      return (await response.json()) as CommitResult
+      return commitJson(BASIC_DATA_COMMIT, answers, (pathname) =>
+        void navigate(pathname),
+      )
     },
     [navigate],
   )

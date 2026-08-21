@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { buildEventStatusFlow } from "~/components/forms/custom/event-status/build-event-status-flow"
 import { buildEventStatusQuestions } from "~/components/forms/custom/event-status/build-event-status-questions"
 import { EventStatusScreen } from "~/components/forms/custom/event-status/event-status-presentation"
+import { commitJson } from "~/components/forms/runtime/commit-json"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import type { Answers } from "~/components/forms/runtime/question.types"
 import { adminEventsCopy } from "~/copy/admin/events"
@@ -61,21 +62,11 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
-      const response = await fetch(ADMIN_EVENT_STATUS_COMMIT(id), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(answers),
-      })
-
-      // An admin whose session expired is answered with a redirect, which fetch
-      // follows to a page of HTML. Reading that as JSON would only say the save
-      // failed, when what they need is to sign in again.
-      if (response.redirected) {
-        void navigate(new URL(response.url).pathname)
-        return { ok: false, errors: [] }
-      }
-
-      const result = (await response.json()) as CommitResult
+      const result = await commitJson(
+        ADMIN_EVENT_STATUS_COMMIT(id),
+        answers,
+        (pathname) => void navigate(pathname),
+      )
 
       if (result.ok) {
         toast.success(adminEventsCopy.toasts.statusUpdated)
