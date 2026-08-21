@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react"
 import { Skeleton } from "~/components/ui/skeleton"
+import { sharedCopy } from "~/copy/shared"
 import type { Flow, StepId } from "./flow.types"
 import type {
   Presentation,
@@ -27,6 +28,11 @@ type FormRunnerProps = {
    */
   initialAnswers?: Answers
   continueLabel?: string
+  /**
+   * What the button says while a commit is in flight. A greyed-out button says
+   * that it cannot be pressed, not that anything is happening.
+   */
+  pendingLabel?: string
   onDone?: (answers: Answers) => void
   /**
    * Whether the screen the flow opens on takes focus. Off by default: taking it
@@ -62,6 +68,7 @@ export function FormRunner({
   data,
   initialAnswers,
   continueLabel = "Continuar",
+  pendingLabel = sharedCopy.status.loading,
   onDone,
   focusFirstScreen = false,
   persistence,
@@ -151,6 +158,7 @@ export function FormRunner({
       }}
       onBack={runtime.goBack}
       continueLabel={continueLabel}
+      pendingLabel={pendingLabel}
       renderQuestion={renderQuestion}
     />
   )

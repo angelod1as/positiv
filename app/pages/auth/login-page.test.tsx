@@ -1,28 +1,27 @@
-import { describe, expect, it, vi, beforeEach } from "vitest"
-import { render, screen } from "@testing-library/react"
-import { createMemoryRouter, RouterProvider } from "react-router"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { render, screen, waitFor } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { MemoryRouter } from "react-router"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { Database } from "~/types/database/database.types"
+
+const navigate = vi.fn()
 
 vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
-  loginUser: vi.fn(),
 }))
 
-vi.mock("~/components/forms/base/schema-form", () => ({
-  SchemaForm: () => (
-    <form data-testid="mock-schema-form">
-      <input type="email" placeholder="email@exemplo.com" />
-      <input type="password" placeholder="senha123" />
-      <button type="submit">Entrar</button>
-    </form>
-  ),
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn() },
 }))
 
 vi.mock("react-router", async () => {
-  const actual = await vi.importActual("react-router")
+  const actual = await vi.importActual<typeof import("react-router")>(
+    "react-router",
+  )
   return {
     ...actual,
+    useNavigate: () => navigate,
     redirect: vi.fn((path: string, options?: { headers: Headers }) => {
       const headers = new Headers(options?.headers)
       headers.set("Location", path)
@@ -35,33 +34,33 @@ vi.mock("react-router", async () => {
   }
 })
 
-import * as authServer from "~/business/auth/auth.server"
 import { redirect } from "react-router"
-import { loader } from "./login-page"
+import { toast } from "sonner"
+import * as authServer from "~/business/auth/auth.server"
 import type { Route } from "./+types/login-page"
-import LoginPage from "./login-page"
+import LoginPage, { loader } from "./login-page"
 
-const createTestRouter = () => {
-  return createMemoryRouter(
-    [
-      {
-        path: "/entrar",
-        element: <LoginPage loaderData={null} actionData={undefined} params={{}} matches={[] as never} />,
-      },
-      {
-        path: "/registrar",
-        element: <div>Register Page</div>,
-      },
-      {
-        path: "/entrar/esqueci",
-        element: <div>Forgot Password Page</div>,
-      },
-    ],
-    {
-      initialEntries: ["/entrar"],
-    },
+type PageProps = Parameters<typeof LoginPage>[0]
+
+const renderPage = () =>
+  render(
+    <MemoryRouter initialEntries={["/entrar"]}>
+      <LoginPage {...({} as PageProps)} />
+    </MemoryRouter>,
   )
+
+const answer = async (user: ReturnType<typeof userEvent.setup>) => {
+  await user.type(screen.getByLabelText("E-mail"), "pessoa@exemplo.com")
+  await user.type(screen.getByLabelText("Senha"), "segredo123")
 }
+
+const submit = (user: ReturnType<typeof userEvent.setup>) =>
+  user.click(screen.getByRole("button", { name: "Entrar" }))
+
+const answers = (result: unknown, init?: ResponseInit) =>
+  vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue(Response.json(result, init) as Response)
 
 describe("Login Page Loader", () => {
   const mockRequest = new Request("http://localhost:3000/entrar")
@@ -82,7 +81,11 @@ describe("Login Page Loader", () => {
       isProdInDev: false,
     })
 
-    const result = await loader({ request: mockRequest, params: mockParams, context: {} })
+    const result = await loader({
+      request: mockRequest,
+      params: mockParams,
+      context: {},
+    })
 
     expect(result).toBeNull()
   })
@@ -117,7 +120,7 @@ describe("Login Page Loader", () => {
     })
 
     await expect(
-      loader({ request: mockRequest, params: mockParams, context: {} })
+      loader({ request: mockRequest, params: mockParams, context: {} }),
     ).rejects.toThrow()
 
     expect(redirect).toHaveBeenCalledWith("/dashboard", {
@@ -155,7 +158,7 @@ describe("Login Page Loader", () => {
     })
 
     await expect(
-      loader({ request: mockRequest, params: mockParams, context: {} })
+      loader({ request: mockRequest, params: mockParams, context: {} }),
     ).rejects.toThrow()
 
     expect(redirect).toHaveBeenCalledWith("/admin", {
@@ -174,7 +177,7 @@ describe("Login Page Loader", () => {
     })
 
     await expect(
-      loader({ request: mockRequest, params: mockParams, context: {} })
+      loader({ request: mockRequest, params: mockParams, context: {} }),
     ).rejects.toThrow()
 
     expect(redirect).toHaveBeenCalledWith("/dashboard", {
@@ -184,29 +187,114 @@ describe("Login Page Loader", () => {
 })
 
 describe("Login Page Component", () => {
-  it("should render login form with title and description", () => {
-    const router = createTestRouter()
-    render(<RouterProvider router={router} />)
-
-    expect(screen.getByTestId("mock-schema-form")).toBeInTheDocument()
-    expect(screen.getByText("Entre na sua conta com seu e-mail")).toBeInTheDocument()
+  beforeEach(() => {
+    navigate.mockClear()
+    vi.mocked(toast.success).mockClear()
   })
 
-  it("should display link to registration page", () => {
-    const router = createTestRouter()
-    render(<RouterProvider router={router} />)
-
-    const registerLink = screen.getByRole("link", { name: /Criar conta/i })
-    expect(registerLink).toBeInTheDocument()
-    expect(registerLink).toHaveAttribute("href", "/registrar")
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
-  it("should display link to forgot password page", () => {
-    const router = createTestRouter()
-    render(<RouterProvider router={router} />)
+  it("asks for an e-mail and a password on one screen", () => {
+    renderPage()
 
-    const forgotPasswordLink = screen.getByRole("link", { name: /Esqueci minha senha/i })
-    expect(forgotPasswordLink).toBeInTheDocument()
-    expect(forgotPasswordLink).toHaveAttribute("href", "/entrar/esqueci")
+    expect(screen.getByLabelText("E-mail")).toBeVisible()
+    expect(screen.getByLabelText("Senha")).toBeVisible()
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeVisible()
+  })
+
+  it("masks the password", () => {
+    renderPage()
+
+    expect(screen.getByLabelText("Senha")).toHaveAttribute("type", "password")
+  })
+
+  it("shows the way to the account someone does not have yet", () => {
+    renderPage()
+
+    expect(screen.getByRole("link", { name: /Criar conta/i })).toHaveAttribute(
+      "href",
+      "/registrar",
+    )
+    expect(
+      screen.getByRole("link", { name: /Esqueci minha senha/i }),
+    ).toHaveAttribute("href", "/entrar/esqueci")
+  })
+
+  it("refuses an empty form without asking the server", async () => {
+    const user = userEvent.setup()
+    const fetch = answers({ ok: true, redirectTo: "/dashboard" })
+    renderPage()
+
+    await submit(user)
+
+    expect(await screen.findAllByText("Campo obrigatório")).toHaveLength(2)
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it("sends the answers to the sign-in", async () => {
+    const user = userEvent.setup()
+    const fetch = answers({ ok: true, redirectTo: "/dashboard" })
+    renderPage()
+
+    await answer(user)
+    await submit(user)
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled())
+    const [url, init] = fetch.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe("/api/auth/login")
+    expect(JSON.parse(String(init.body))).toEqual({
+      email: "pessoa@exemplo.com",
+      password: "segredo123",
+    })
+  })
+
+  it("goes where the sign-in says, with a welcome", async () => {
+    const user = userEvent.setup()
+    answers({ ok: true, redirectTo: "/admin" })
+    renderPage()
+
+    await answer(user)
+    await submit(user)
+
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/admin"))
+    expect(toast.success).toHaveBeenCalledWith(
+      "Bem vinde!",
+      expect.objectContaining({
+        description: expect.stringContaining("desenvolvimento"),
+      }),
+    )
+  })
+
+  it("says the credentials were refused, and stays put", async () => {
+    const user = userEvent.setup()
+    answers(
+      { ok: false, errors: [], message: "Credenciais inválidas" },
+      { status: 422 },
+    )
+    renderPage()
+
+    await answer(user)
+    await submit(user)
+
+    expect(await screen.findByText("Credenciais inválidas")).toBeVisible()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it("leaves the answers on screen for a second attempt", async () => {
+    const user = userEvent.setup()
+    answers(
+      { ok: false, errors: [], message: "Credenciais inválidas" },
+      { status: 422 },
+    )
+    renderPage()
+
+    await answer(user)
+    await submit(user)
+
+    await screen.findByText("Credenciais inválidas")
+    expect(screen.getByLabelText("E-mail")).toHaveValue("pessoa@exemplo.com")
+    expect(screen.getByLabelText("Senha")).toHaveValue("segredo123")
   })
 })

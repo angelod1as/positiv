@@ -46,6 +46,7 @@ export function gridPresentation(slots: GridSlot[]): Presentation {
     onAnswer,
     onContinue,
     continueLabel,
+    pendingLabel,
     renderQuestion,
   }) {
     const placed = new Set(
@@ -102,7 +103,7 @@ export function gridPresentation(slots: GridSlot[]): Presentation {
         <RejectionNotice rejection={advanceRejection} errors={errors} />
 
         <Button type="submit" disabled={isBusy}>
-          {continueLabel}
+          {isBusy ? pendingLabel : continueLabel}
         </Button>
       </form>
     )

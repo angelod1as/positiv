@@ -1,4 +1,3 @@
-import { applySchema } from "composable-functions"
 import type { CommitResult } from "~types/forms/commit.types"
 import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
@@ -7,16 +6,14 @@ import { ENV } from "varlock/env"
 import { logoutCopy } from "~/copy/auth"
 import { errorsCopy } from "~/copy/errors"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
+import { appOrigin } from "~/lib/helpers/app-origin"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import { createServerClient } from "~/lib/supabase/server"
 import {
-  changePasswordSchema,
   contextSchema,
-  forgotPasswordSchema,
   getSupabaseSchema,
-  loginSchema,
   registerUserSchema,
   userContextSchema,
 } from "../common"
@@ -161,28 +158,6 @@ export const getUserContext = async (
   return { ...context, currentUser }
 }
 
-export const loginUser = applySchema(
-  loginSchema,
-  contextSchema,
-)(async (values, context) => {
-  const { supabase } = context
-  const { error, data } = await supabase.auth.signInWithPassword(values)
-
-  if (error) {
-    if (error.code === "invalid_credentials") {
-      throw new Error(errorsCopy.auth.invalidCredentials)
-    }
-    if (error.code === "email_not_confirmed") {
-      throw new Error(errorsCopy.auth.emailNotConfirmed)
-    }
-    throw new Error(errorsCopy.auth.authFailed(error.code, error.message))
-  }
-
-  trackServerEvent("user_login", { userId: data.user.id }, "/auth/login")
-
-  return { user: data.user }
-})
-
 export const getUserCodeContext = async (request: Request, params: Params) => {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
@@ -204,25 +179,6 @@ export const getUserCodeContext = async (request: Request, params: Params) => {
   return redirect(CHANGE_PASSWORD, { headers: supabaseHeaders })
 }
 
-export const forgotPassword = applySchema(
-  forgotPasswordSchema,
-  contextSchema,
-)(async (values, context) => {
-  const { email } = values
-  const { supabase, host } = context
-
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${host}auth/confirm`,
-  })
-
-  if (error) {
-    logger.error("Password Reset Error", { error })
-    throw new Error(errorsCopy.auth.resetRequestFailed)
-  }
-
-  return { success: true }
-})
-
 // Not a applySchema purposefully
 export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
   const { supabase } = context
@@ -235,27 +191,6 @@ export const logoutUser = async (context: z.infer<typeof contextSchema>) => {
 
   return redirectWithSuccess(HOME, logoutCopy.successToast)
 }
-
-export const changePassword = applySchema(
-  changePasswordSchema,
-  contextSchema,
-)(async (values, context) => {
-  const { supabase } = context
-  const { error } = await supabase.auth.updateUser({
-    password: values.password,
-  })
-
-  if (error) {
-    if (error.code === "same_password") {
-      throw new Error(errorsCopy.auth.samePassword)
-    }
-    logger.error("Password change error", { error })
-    throw new Error(errorsCopy.auth.passwordChangeFailed)
-  }
-
-  return {}
-})
-
 
 export const registerUser = async (
   values: z.infer<typeof registerUserSchema>,
@@ -303,16 +238,11 @@ export const registerUser = async (
     }
   }
 
-  const origin =
-    host?.startsWith("http://") || host?.startsWith("https://")
-      ? host
-      : `${host?.includes("localhost") ? "http://" : "https://"}${host}`
-
   const { error } = await supabase.auth.signUp({
     ...data,
     options: {
       captchaToken,
-      emailRedirectTo: `${origin}${LOGON_CALLBACK}`,
+      emailRedirectTo: `${appOrigin(host)}${LOGON_CALLBACK}`,
     },
   })
 
@@ -322,7 +252,7 @@ export const registerUser = async (
     // one, so the form cannot be used to find out who is registered.
     if (error.message === "User already registered") {
       const resetError = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${origin}${LOGON_CALLBACK}`,
+        redirectTo: `${appOrigin(host)}${LOGON_CALLBACK}`,
       })
 
       if (resetError.error) return { ok: false, errors: [] }

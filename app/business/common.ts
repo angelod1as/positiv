@@ -24,11 +24,12 @@ export const currentUserSchema = zod.object({
   email: zod.string().optional(),
 })
 
-export const changePasswordSchema = zod
-  .object({
-    password: zod.string().min(6),
-    confirm_password: zod.string(),
-  })
+export const changePasswordFieldsSchema = zod.object({
+  password: zod.string().min(6),
+  confirm_password: zod.string(),
+})
+
+export const changePasswordSchema = changePasswordFieldsSchema
   .refine((data) => data.password === data.confirm_password, {
     message: changePasswordValidation.passwordMismatch,
     path: ["confirm_password"],

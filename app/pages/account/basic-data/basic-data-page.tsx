@@ -2,13 +2,13 @@ import { useCallback, useMemo } from "react"
 import { useNavigate } from "react-router"
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
-import { buildBasicDataFlow } from "~/components/forms/custom/basic-data/build-basic-data-flow"
 import { buildBasicDataLayout } from "~/components/forms/custom/basic-data/build-basic-data-layout"
 import { buildBasicDataQuestions } from "~/components/forms/custom/basic-data/build-basic-data-questions"
 import { toBasicDataAnswers } from "~/components/forms/custom/basic-data/to-basic-data-answers"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { gridPresentation } from "~/components/forms/runtime/presentations/grid"
 import type { Answers } from "~/components/forms/runtime/question.types"
+import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
 import { basicDataCopy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
@@ -97,7 +97,7 @@ const BasicDataPage = ({ loaderData }: Route.ComponentProps) => {
   )
 
   const flow = useMemo(
-    () => buildBasicDataFlow(questions, commit),
+    () => buildSingleScreenFlow(questions, commit),
     [questions, commit],
   )
 

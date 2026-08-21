@@ -1,23 +1,32 @@
 import { Turnstile } from "@marsidev/react-turnstile"
-import { data, useLoaderData } from "react-router"
-import { redirectWithError, redirectWithSuccess } from "remix-toast"
-import { ENV } from "varlock/env"
-import { feedbackRateLimiter } from "~/business/feedback/feedback-rate-limiter"
-import { feedbackFormSchema } from "~/business/feedback/feedback-schema"
-import { submitFeedback } from "~/business/feedback/feedback.server"
-import { notifyNewFeedback } from "~/business/feedback/notify-new-feedback.server"
-import { SchemaForm } from "~/components/forms/base/schema-form"
+import { useCallback, useMemo } from "react"
+import { useLoaderData, useNavigate } from "react-router"
+import { toast } from "sonner"
+import { buildFeedbackQuestions } from "~/components/forms/custom/feedback/build-feedback-questions"
+import { FormRunner } from "~/components/forms/runtime/form-runner"
+import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
+import type { RenderQuestion } from "~/components/forms/runtime/presentations/presentation.types"
+import type { Answers } from "~/components/forms/runtime/question.types"
+import { renderQuestion as defaultRenderQuestion } from "~/components/forms/runtime/render-question"
+import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
 import { Card, CardContent } from "~/components/ui/card"
 import { metaCopy } from "~/copy/meta"
 import { publicCopy } from "~/copy/public"
 import { getTurnstileConfig } from "~/lib/helpers/get-turnstile-config.server"
-import { verifyTurnstileToken } from "~/lib/helpers/verify-turnstile.server"
 import { createMetaArray } from "~/lib/helpers/meta"
-import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
+import type { CommitResult } from "~types/forms/commit.types"
 import type { Route } from "./+types/feedback-page"
 
 const feedbackCopy = publicCopy.feedback
+
+const {
+  root: { HOME, FEEDBACK_COMMIT },
+} = paths
+
+// Built once, outside the component: the runtime reads the seed on its first
+// render, and an object written inline would be a new one every time.
+const EMPTY_CAPTCHA = { captchaToken: "" }
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.feedback.title)
@@ -28,52 +37,60 @@ export const loader = async () => {
   return { turnstileSiteKey: siteKey }
 }
 
-export const action = async ({ request }: Route.ActionArgs) => {
-  const formData = await request.formData()
-  const formValues = Object.fromEntries(formData)
-
-  const parsed = feedbackFormSchema.safeParse(formValues)
-  if (!parsed.success) {
-    return data({ errors: parsed.error.flatten().fieldErrors }, { status: 400 })
-  }
-
-  const ip = request.headers.get("cf-connecting-ip") || "unknown"
-
-  const isDev = ENV.APP_ENV === "development"
-  if (!isDev) {
-    if (feedbackRateLimiter.isRateLimited(ip)) {
-      return redirectWithError(paths.root.FEEDBACK, feedbackCopy.rateLimited)
-    }
-  }
-
-  const turnstileResult = await verifyTurnstileToken(
-    parsed.data.captchaToken,
-    ip,
-    { ip },
-  )
-  if (!turnstileResult.success) {
-    return data(
-      { errors: { captchaToken: [feedbackCopy.captchaFailed] } },
-      { status: 400 },
-    )
-  }
-
-  const { captchaToken: _, ...feedbackData } = parsed.data
-  const feedback = await submitFeedback(feedbackData, ip)
-
-  void notifyNewFeedback(feedback).catch((error) =>
-    logger.error("Failed to notify a new feedback", { error }),
-  )
-
-  if (!isDev) {
-    feedbackRateLimiter.recordRequest(ip)
-  }
-
-  return redirectWithSuccess(paths.root.HOME, feedbackCopy.success)
-}
-
 const FeedbackPage = () => {
   const { turnstileSiteKey } = useLoaderData<typeof loader>()
+  const navigate = useNavigate()
+
+  const questions = useMemo(() => buildFeedbackQuestions(), [])
+
+  const commit = useCallback(async (answers: Answers): Promise<CommitResult> => {
+    const response = await fetch(FEEDBACK_COMMIT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(answers),
+    })
+
+    return (await response.json()) as CommitResult
+  }, [])
+
+  const flow = useMemo(
+    () => buildSingleScreenFlow(questions, commit),
+    [questions, commit],
+  )
+
+  const renderQuestion = useCallback<RenderQuestion>(
+    (args) => {
+      if (args.question.id !== "captchaToken") return defaultRenderQuestion(args)
+
+      return (
+        <>
+          <Turnstile
+            siteKey={turnstileSiteKey}
+            options={{ appearance: "always" }}
+            onSuccess={(token) => args.onChange(token)}
+            onExpire={() => args.onChange("")}
+            onError={() => args.onChange("")}
+          />
+          {/* Mirrors the token the widget handed over, so the e2e run can see
+              that it arrived — and hand one over itself on a run that cannot
+              reach Cloudflare. Hidden through the attribute rather than
+              type="hidden": React only tracks changes on text inputs, so a
+              hidden-typed one would take a value without ever reporting it. */}
+          <input
+            hidden
+            // Carries the question's id so that the label the presentation
+            // draws for it points at a real control rather than at nothing.
+            id={args.question.id}
+            type="text"
+            name="captchaToken"
+            value={typeof args.value === "string" ? args.value : ""}
+            onChange={(event) => args.onChange(event.target.value)}
+          />
+        </>
+      )
+    },
+    [turnstileSiteKey],
+  )
 
   return (
     <div className="flex flex-col gap-6 my-8">
@@ -89,59 +106,23 @@ const FeedbackPage = () => {
           </CardContent>
         </Card>
       </div>
-      <SchemaForm
-        schema={feedbackFormSchema}
-        labels={feedbackCopy.labels}
-        descriptions={feedbackCopy.descriptions}
-        placeholders={feedbackCopy.placeholders}
-        inputTypes={{
-          email: "email",
-          canContact: "checkbox",
-        }}
-        multiline={["feedbackText"]}
-        options={{
-          hasParticipated: [
-            { name: feedbackCopy.participation.never, value: "never" },
-            { name: feedbackCopy.participation.once, value: "once" },
-            {
-              name: feedbackCopy.participation.moreThanOnce,
-              value: "more_than_once",
-            },
-          ],
-        }}
-        hiddenFields={["captchaToken"]}
-        buttonLabel={feedbackCopy.submit}
-        pendingButtonLabel={feedbackCopy.submitting}
-      >
-        {({ Field, Button, Errors, setValue }) => (
-          <div className="flex flex-col gap-4">
-            <Field name="name" />
-            <Field name="email" />
-            <Field name="whatsapp" />
-            <Field name="hasParticipated" />
-            <Field name="feedbackText" />
-            <Field name="canContact" />
 
-            <div className="flex flex-col gap-2">
-              <Turnstile
-                siteKey={turnstileSiteKey}
-                options={{
-                  appearance: "always",
-                }}
-                onSuccess={(token) => {
-                  setValue("captchaToken", token)
-                }}
-                onExpire={() => setValue("captchaToken", "")}
-                onError={() => setValue("captchaToken", "")}
-              />
-              <Field name="captchaToken" />
-            </div>
-
-            <Errors />
-            <Button />
-          </div>
-        )}
-      </SchemaForm>
+      <FormRunner
+        questions={questions}
+        flow={flow}
+        presentation={AllAtOnce}
+        renderQuestion={renderQuestion}
+        // The captcha opens as an empty answer rather than as no answer at
+        // all, so a form sent before the widget replies is refused in the
+        // captcha's own words instead of the shared "required" copy.
+        initialAnswers={EMPTY_CAPTCHA}
+        continueLabel={feedbackCopy.submit}
+        pendingLabel={feedbackCopy.submitting}
+        onDone={() => {
+          toast.success(feedbackCopy.success)
+          void navigate(HOME)
+        }}
+      />
     </div>
   )
 }

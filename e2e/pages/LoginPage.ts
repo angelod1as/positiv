@@ -26,8 +26,14 @@ export class LoginPage extends BasePage {
     
     // Error locators
     this.generalErrorAlert = page.getByRole('alert').filter({ hasText: 'Credenciais inválidas' })
-    this.emailError = page.locator('#errors-for-email').filter({ hasText: 'Campo obrigatório' })
-    this.passwordError = page.locator('#errors-for-password').filter({ hasText: 'Campo obrigatório' })
+    // The runtime marks each question's block with its id, and draws the
+    // message inside it. The remix-forms "errors-for-<field>" element is gone.
+    this.emailError = page.locator('[data-question-id="email"]')
+      .getByRole('alert')
+      .filter({ hasText: 'Campo obrigatório' })
+    this.passwordError = page.locator('[data-question-id="password"]')
+      .getByRole('alert')
+      .filter({ hasText: 'Campo obrigatório' })
     
     // User state indicators
     this.userAvatar = page.locator('[data-testid="user-avatar"]').or(

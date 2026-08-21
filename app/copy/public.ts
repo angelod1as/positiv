@@ -81,6 +81,7 @@ export const publicCopy = {
       hasParticipated: "Já participou de algum evento?",
       feedbackText: "Seu feedback",
       canContact: "Podemos entrar em contato?",
+      captchaToken: "Verificação de segurança",
     } as const satisfies Partial<
       Record<keyof z.infer<typeof feedbackFormSchema>, string>
     >,
