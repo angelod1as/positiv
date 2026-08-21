@@ -124,6 +124,7 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         presentation={TermsScreen}
         initialAnswers={initialAnswers}
         continueLabel={agreeToTermsCopy.buttonLabel}
+        pendingLabel={agreeToTermsCopy.pendingButtonLabel}
         onDone={() => {
           if (newsletterFailed.current) {
             toast.warning(agreeToTermsCopy.newsletterWarning, {
