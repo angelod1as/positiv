@@ -15,7 +15,6 @@ export const AllAtOnce: Presentation = ({
   onAnswer,
   onContinue,
   continueLabel,
-  pendingLabel,
   renderQuestion,
 }) => (
   <form
@@ -43,7 +42,7 @@ export const AllAtOnce: Presentation = ({
     <RejectionNotice rejection={advanceRejection} errors={errors} />
 
     <Button type="submit" disabled={isBusy}>
-      {isBusy ? pendingLabel : continueLabel}
+      {continueLabel}
     </Button>
   </form>
 )

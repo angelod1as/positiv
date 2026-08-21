@@ -55,9 +55,7 @@ test.describe('POS-192: User Settings and Profile Management', () => {
     await page.getByRole('button', { name: 'Mudar senha' }).click()
     
     // Should see validation errors
-    // The runtime draws each message inside the block carrying its question's
-    // id; remix-forms' errors-for-<field> element is gone.
-    await expect(page.locator('[data-question-id] [role="alert"]').first()).toBeVisible()
+    await expect(page.locator('[id^="errors-for-"]').first()).toBeVisible()
     
     // Try with mismatched passwords
     await page.getByLabel('Nova senha').fill('ValidPassword123')

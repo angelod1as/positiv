@@ -1,27 +1,46 @@
-import { useCallback, useMemo } from "react"
-import { useNavigate } from "react-router"
-import { toast } from "sonner"
-import { getUserContext } from "~/business/auth/auth.server"
-import { buildChangePasswordQuestions } from "~/components/forms/custom/change-password/build-change-password-questions"
-import { FormRunner } from "~/components/forms/runtime/form-runner"
-import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
-import type { Answers } from "~/components/forms/runtime/question.types"
-import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
+import { formAction } from "remix-forms"
+import { redirectWithSuccess } from "remix-toast"
+import {
+  changePassword,
+  getContext,
+  getUserContext,
+} from "~/business/auth/auth.server"
+import { changePasswordSchema } from "~/business/common"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import { changePasswordCopy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
-import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
-import type { CommitResult } from "~types/forms/commit.types"
+import { createMetaArray } from "~/lib/helpers/meta"
 import type { Route } from "./+types/change-password-page"
 
 const {
   dash: {
-    account: { ACCOUNT, CHANGE_PASSWORD_COMMIT },
+    account: { ACCOUNT },
   },
 } = paths
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.changePassword.title)
+}
+
+export const action = async ({ request, params }: Route.ActionArgs) => {
+  const context = await getContext(request, params)
+
+  return formAction({
+    request,
+    schema: changePasswordSchema,
+    mutation: changePassword,
+    transformResult: async (result) => {
+      if (result.success) {
+        throw await redirectWithSuccess(ACCOUNT, {
+          message: changePasswordCopy.successToast,
+          duration: 10_000,
+        })
+      }
+      return result
+    },
+    context,
+  })
 }
 
 export async function loader({ request, params }: Route.LoaderArgs) {
@@ -30,36 +49,6 @@ export async function loader({ request, params }: Route.LoaderArgs) {
 }
 
 const ChangePasswordPage = ({}: Route.ComponentProps) => {
-  const navigate = useNavigate()
-
-  const questions = useMemo(() => buildChangePasswordQuestions(), [])
-
-  const commit = useCallback(
-    async (answers: Answers): Promise<CommitResult> => {
-      const response = await fetch(CHANGE_PASSWORD_COMMIT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(answers),
-      })
-
-      // A session that expired mid-form is answered with a redirect, which
-      // fetch follows to a page of HTML. Reading that as JSON would only say
-      // the change failed, when what someone needs is to sign in again.
-      if (response.redirected) {
-        void navigate(new URL(response.url).pathname)
-        return { ok: false, errors: [] }
-      }
-
-      return (await response.json()) as CommitResult
-    },
-    [navigate],
-  )
-
-  const flow = useMemo(
-    () => buildSingleScreenFlow(questions, commit),
-    [questions, commit],
-  )
-
   return (
     <div className="flex flex-col w-full max-w-md gap-8">
       <div>
@@ -69,18 +58,16 @@ const ChangePasswordPage = ({}: Route.ComponentProps) => {
         </p>
       </div>
 
-      <FormRunner
-        questions={questions}
-        flow={flow}
-        presentation={AllAtOnce}
-        continueLabel={changePasswordCopy.buttonLabel}
-        pendingLabel={changePasswordCopy.pendingButtonLabel}
-        // No persistence, deliberately: the answers are two passwords, and
-        // persistence writes them to sessionStorage.
-        onDone={() => {
-          toast.success(changePasswordCopy.successToast, { duration: 10_000 })
-          void navigate(ACCOUNT)
+      <SchemaForm
+        schema={changePasswordSchema}
+        labels={changePasswordCopy.labels}
+        placeholders={changePasswordCopy.placeholders}
+        inputTypes={{
+          password: "password",
+          confirm_password: "password",
         }}
+        pendingButtonLabel={changePasswordCopy.pendingButtonLabel}
+        buttonLabel={changePasswordCopy.buttonLabel}
       />
     </div>
   )

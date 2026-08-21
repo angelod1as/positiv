@@ -1,16 +1,13 @@
 import { SirenIcon } from "lucide-react"
-import { Fragment, useCallback, useMemo, useRef } from "react"
-import { useNavigate } from "react-router"
-import { toast } from "sonner"
-import { getUserContext } from "~/business/auth/auth.server"
+import { Fragment } from "react"
+import { formAction } from "remix-forms"
+import { redirectWithSuccess, redirectWithWarning } from "remix-toast"
+import { getContext, getUserContext } from "~/business/auth/auth.server"
+import { agreeToTermsSchema } from "~/business/common"
 import { getSubscriptionStatus } from "~/business/newsletter/subscription-helpers.server"
-import type { TermsAgreementResult } from "~/business/participant/save-terms-agreement.server"
+import { agreeToTerms } from "~/business/participant/agree-to-terms.server"
 import { Copy } from "~/components/atoms/copy/copy"
-import { buildTermsQuestions } from "~/components/forms/custom/terms/build-terms-questions"
-import { FormRunner } from "~/components/forms/runtime/form-runner"
-import { gridPresentation } from "~/components/forms/runtime/presentations/grid"
-import type { Answers } from "~/components/forms/runtime/question.types"
-import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
+import { SchemaForm } from "~/components/forms/base/schema-form"
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert"
 import { agreeToTermsCopy } from "~/copy/dashboard"
 import { metaCopy } from "~/copy/meta"
@@ -20,18 +17,9 @@ import type { Route } from "./+types/agree-to-terms-page"
 
 const {
   dash: {
-    account: { BASIC_DATA, TERMS_COMMIT },
+    account: { BASIC_DATA },
   },
 } = paths
-
-// Built once: a presentation that changes identity remounts the run, and with
-// it every box already ticked. The two e-mail choices share a row, the way they
-// always have.
-const TermsScreen = gridPresentation([
-  { kind: "question", id: "agree", span: 12 },
-  { kind: "question", id: "commonEmails", span: 6 },
-  { kind: "question", id: "mktEmails", span: 6 },
-])
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.agreeToTerms.title)
@@ -52,57 +40,49 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   return { mktEmails }
 }
 
-const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
-  const { mktEmails } = loaderData
-  const navigate = useNavigate()
+export async function action({ request, params }: Route.ActionArgs) {
+  const context = await getContext(request, params)
 
-  const questions = useMemo(() => buildTermsQuestions(), [])
+  return formAction({
+    request,
+    schema: agreeToTermsSchema,
+    mutation: agreeToTerms,
+    transformResult: async (result) => {
+      if (result.success) {
+        const data = result.data as typeof context & {
+          newsletterSubscriptionError?: string
+        }
 
-  // The newsletter opens where the person left it; someone arriving for the
-  // first time is offered it ticked.
-  const initialAnswers = useMemo(
-    () => ({
-      agree: false,
-      commonEmails: true,
-      mktEmails: mktEmails === undefined ? true : mktEmails,
-    }),
-    [mktEmails],
-  )
+        if (data.newsletterSubscriptionError) {
+          throw await redirectWithWarning(
+            BASIC_DATA,
+            {
+              message: agreeToTermsCopy.newsletterWarning,
+              duration: Infinity,
+              closeButton: true,
+            },
+            {
+              headers: context.supabaseHeaders,
+            },
+          )
+        }
 
-  // Whether the newsletter part of the save failed. Held in a ref rather than
-  // in state because the run is over by the time it is read, and a render in
-  // between would only redraw a form nobody is looking at any more.
-  const newsletterFailed = useRef(false)
-
-  const commit = useCallback(
-    async (answers: Answers): Promise<TermsAgreementResult> => {
-      const response = await fetch(TERMS_COMMIT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(answers),
-      })
-
-      // A session that expired mid-form is answered with a redirect, which
-      // fetch follows to a page of HTML. Reading that as JSON would only say
-      // the save failed, when what someone needs is to sign in again.
-      if (response.redirected) {
-        void navigate(new URL(response.url).pathname)
-        return { ok: false, errors: [] }
+        throw await redirectWithSuccess(
+          BASIC_DATA,
+          agreeToTermsCopy.successToast,
+          {
+            headers: context.supabaseHeaders,
+          },
+        )
       }
-
-      const result = (await response.json()) as TermsAgreementResult
-      if (result.ok) newsletterFailed.current = result.newsletterFailed
-
       return result
     },
-    [navigate],
-  )
+    context,
+  })
+}
 
-  const flow = useMemo(
-    () => buildSingleScreenFlow(questions, commit),
-    [questions, commit],
-  )
-
+const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
+  const { mktEmails } = loaderData
   return (
     <>
       <h1>{agreeToTermsCopy.title}</h1>
@@ -118,26 +98,42 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
         </Fragment>
       ))}
 
-      <FormRunner
-        questions={questions}
-        flow={flow}
-        presentation={TermsScreen}
-        initialAnswers={initialAnswers}
-        continueLabel={agreeToTermsCopy.buttonLabel}
-        pendingLabel={agreeToTermsCopy.pendingButtonLabel}
-        onDone={() => {
-          if (newsletterFailed.current) {
-            toast.warning(agreeToTermsCopy.newsletterWarning, {
-              duration: Infinity,
-              closeButton: true,
-            })
-          } else {
-            toast.success(agreeToTermsCopy.successToast)
-          }
-
-          void navigate(BASIC_DATA)
+      <SchemaForm
+        schema={agreeToTermsSchema}
+        values={{
+          agree: false,
+          commonEmails: true,
+          mktEmails: mktEmails === undefined ? true : mktEmails,
         }}
-      />
+        inputTypes={{
+          agree: "checkbox",
+          commonEmails: "checkbox",
+          mktEmails: "checkbox",
+        }}
+        labels={agreeToTermsCopy.labels}
+        descriptions={agreeToTermsCopy.descriptions}
+        buttonLabel={agreeToTermsCopy.buttonLabel}
+      >
+        {({ Field, Errors, Button }) => (
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-center">
+              <Field name="agree" />
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 my-4">
+              <div className="flex-1">
+                <Field name="commonEmails" />
+              </div>
+              <div className="flex-1">
+                <Field name="mktEmails" />
+              </div>
+            </div>
+
+            <Errors />
+
+            <Button alignment="center" />
+          </div>
+        )}
+      </SchemaForm>
     </>
   )
 }

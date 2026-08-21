@@ -32,7 +32,6 @@ export const OneAtATime: Presentation = ({
   onContinue,
   onBack,
   continueLabel,
-  pendingLabel,
   renderQuestion,
 }) => {
   const formRef = useRef<HTMLFormElement>(null)
@@ -123,7 +122,7 @@ export const OneAtATime: Presentation = ({
         ) : null}
 
         <Button type="submit" className="flex-1" disabled={isBusy}>
-          {isBusy ? pendingLabel : continueLabel}
+          {continueLabel}
         </Button>
       </div>
     </form>

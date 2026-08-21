@@ -87,15 +87,6 @@ export const QuestionField = ({
           labelledBy: choice ? promptId : undefined,
         })}
 
-        {/* A question that carries its own prompt has no band above to explain
-            itself in, so the explanation goes under the control it belongs to
-            — a box saying what ticking it means. */}
-        {!carriesPrompt && question.help ? (
-          <p className="text-xs leading-4 text-muted-foreground">
-            {question.help}
-          </p>
-        ) : null}
-
         {error ? <Error role="alert">{error}</Error> : null}
       </div>
     </div>

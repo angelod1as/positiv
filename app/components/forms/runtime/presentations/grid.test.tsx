@@ -40,7 +40,6 @@ const draw = (slots: GridSlot[], overrides: Partial<PresentationProps> = {}) => 
       onAnswer={onAnswer}
       onContinue={onContinue}
       continueLabel="Continuar"
-      pendingLabel="Carregando..."
       renderQuestion={renderQuestion}
       {...overrides}
     />,
@@ -135,12 +134,10 @@ describe("gridPresentation", () => {
     expect(onContinue).toHaveBeenCalled()
   })
 
-  it("refuses a second submit while a commit is in flight, and says so", () => {
+  it("refuses a second submit while a commit is in flight", () => {
     draw([{ kind: "question", id: "full_name" }], { isBusy: true })
 
-    expect(
-      screen.getByRole("button", { name: "Carregando..." }),
-    ).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
   })
 
   it("names the question each field belongs to, so a refusal can find it", () => {

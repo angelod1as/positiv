@@ -95,7 +95,6 @@ export const agreeToTermsCopy = {
     Record<keyof z.infer<typeof agreeToTermsSchema>, string>
   >,
   buttonLabel: "Continuar",
-  pendingButtonLabel: "Salvando...",
   newsletterWarning:
     "Suas escolhas foram salvas, mas sua assinatura da newsletter não foi concluída. Por favor, entre em contato: partypositiv@gmail.com",
   successToast: "Escolhas salvas com sucesso",

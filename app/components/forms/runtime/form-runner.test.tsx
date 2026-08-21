@@ -2,7 +2,6 @@ import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { formRuntimeCopy } from "~/copy/forms"
-import { sharedCopy } from "~/copy/shared"
 import { zod } from "~/lib/helpers/zod"
 import type { Flow } from "./flow.types"
 import { FormRunner } from "./form-runner"
@@ -529,11 +528,7 @@ describe("the continue button reflects a commit in flight", () => {
     await user.type(screen.getByLabelText("Qual seu nome?"), "Angelo")
     await user.click(screen.getByRole("button", { name: "Continuar" }))
 
-    // The button says what it is doing while it is doing it; the label the
-    // caller gave is back once the commit answers.
-    expect(
-      screen.getByRole("button", { name: sharedCopy.status.loading }),
-    ).toBeDisabled()
+    expect(screen.getByRole("button", { name: "Continuar" })).toBeDisabled()
 
     await act(async () => {
       release?.()

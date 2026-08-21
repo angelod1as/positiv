@@ -141,11 +141,6 @@ jobs:
         env:
           APP_ENV: production
           CI: true
-          # Not a secret — it is the address the site answers on. It is here
-          # because APP_URL is @required=forEnv(production): the origin of a
-          # password reset link comes from it, and falls back to the request's
-          # own Host header without it.
-          APP_URL: https://www.positivparty.com
           VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
           VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ steps.supabase-creds.outputs.service_role_key }}

@@ -1,8 +1,8 @@
+import type { ZodError } from "zod"
 import type { z } from "zod"
-import type { CommitResult } from "~types/forms/commit.types"
+import type { CommitError, CommitResult } from "~types/forms/commit.types"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { schemaValuesToDB } from "~/lib/helpers/db-values-to-form-schema"
-import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
 import { participantCopy } from "~/copy/participant"
@@ -14,6 +14,12 @@ type SaveBasicDataProps = {
   answers: Record<string, unknown>
   context: z.infer<typeof userContextSchema>
 }
+
+const toCommitErrors = (error: ZodError): CommitError[] =>
+  error.issues.map((issue) => ({
+    questionId: String(issue.path[0] ?? ""),
+    message: issue.message,
+  }))
 
 /**
  * Writes the fourteen fields of a profile in one go, adopting the profile left

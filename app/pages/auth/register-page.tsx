@@ -1,13 +1,13 @@
 import { Turnstile } from "@marsidev/react-turnstile"
 import { useCallback, useMemo } from "react"
 import { useLoaderData, useNavigate } from "react-router"
+import { buildRegisterFlow } from "~/components/forms/custom/register/build-register-flow"
 import { buildRegisterQuestions } from "~/components/forms/custom/register/build-register-questions"
 import type { CommitResult } from "~types/forms/commit.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
 import type { RenderQuestion } from "~/components/forms/runtime/presentations/presentation.types"
 import type { Answers } from "~/components/forms/runtime/question.types"
-import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-flow"
 import { renderQuestion as defaultRenderQuestion } from "~/components/forms/runtime/render-question"
 import {
   Card,
@@ -56,7 +56,7 @@ const RegisterPage = ({}: Route.ComponentProps) => {
   }, [])
 
   const flow = useMemo(
-    () => buildSingleScreenFlow(questions, commit),
+    () => buildRegisterFlow(questions, commit),
     [questions, commit],
   )
 

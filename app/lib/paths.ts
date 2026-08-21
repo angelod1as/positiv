@@ -11,7 +11,6 @@ const LOGON_CALLBACK = "/auth/confirm"
 const LOGON_CONFIRM = `${LOGON}/confirm`
 const CODE_OF_CONDUCT = `/codigo-de-conduta`
 const FEEDBACK = `/feedback`
-const FEEDBACK_COMMIT = "/api/feedback"
 
 ////////
 // PRIVATE
@@ -38,11 +37,7 @@ const EVENT_APPLICATION_COMMIT = (id: string) =>
 const EVENT_APPLICATION_SENT = (id: string) =>
   `${EVENT_VIEW(id)}/candidatura-enviada`
 const REGISTER_COMMIT = "/api/auth/register"
-const LOGIN_COMMIT = "/api/auth/login"
-const FORGOT_PASSWORD_COMMIT = "/api/auth/esqueci-senha"
 const BASIC_DATA_COMMIT = "/api/account/dados-basicos"
-const CHANGE_PASSWORD_COMMIT = "/api/account/mudar-senha"
-const TERMS_COMMIT = "/api/account/termos"
 
 //// ADMIN
 const ADMIN_DASHBOARD = "/admin"
@@ -68,7 +63,6 @@ const paths = {
     HOME,
     CODE_OF_CONDUCT,
     FEEDBACK,
-    FEEDBACK_COMMIT,
   },
   admin: {
     ADMIN_DASHBOARD,
@@ -94,18 +88,14 @@ const paths = {
     LOGON_EMAIL_MESSAGE,
     REGISTRATION_ERROR,
     REGISTER_COMMIT,
-    LOGIN_COMMIT,
-    FORGOT_PASSWORD_COMMIT,
   },
   dash: {
     DASHBOARD,
     account: {
       ACCOUNT,
       CHANGE_PASSWORD,
-      CHANGE_PASSWORD_COMMIT,
       BASIC_DATA,
       BASIC_DATA_COMMIT,
-      TERMS_COMMIT,
       ACCOUNT_READY,
     },
     events: {
