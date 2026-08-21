@@ -68,21 +68,15 @@ pnpm install              # always, right after creating it
 Two files, different lifecycles. Getting this wrong is how database
 credentials once ended up committed.
 
-| file | versioned | scope |
-|---|---|---|
-| `.claude/settings.json` | **yes** | shared: project permissions, enabled MCP servers |
-| `.claude/settings.local.json` | **no** — gitignored | per-machine: your own approvals and paths |
-| `~/.claude/settings.json` | n/a | your user-level config, all projects |
-| `.mcp.json` | **yes** | declares MCP servers; consumers opt in via `enabledMcpjsonServers` |
-
-Precedence, strongest first: managed enterprise settings → CLI flags →
-`settings.local.json` → `settings.json` → `~/.claude/settings.json`.
-
 **This repository is public.** When Claude Code records an approved command it
 stores the command *verbatim* — so approving `SECRET=value some-command` writes
 that secret into `settings.local.json`. Never pass a credential inline on a
 command line; use an env file or a secret manager. `settings.json` carries deny
 rules for the common cases, but they are a backstop, not a substitute.
+
+The `coolify` MCP server in `.mcp.json` reads `POSITIV_COOLIFY_DOMAIN` and
+`POSITIV_COOLIFY_TOKEN` from the shell profile (`~/.zshrc`) — not from `.env`
+and not through varlock, so the token never lands in a versioned file.
 
 ## Essential Commands
 
@@ -137,15 +131,6 @@ pnpm db:types --local    # regenerate types from local Supabase
 
 ## High-Level Architecture
 
-### Tech Stack
-
-- **Frontend**: React 19 + React Router 7 + TypeScript
-- **Backend**: Supabase (PostgreSQL + Auth)
-- **Styling**: Tailwind CSS v4
-- **Forms**: React Hook Form + Zod validation
-- **Database Queries**: Kysely (type-safe SQL query builder)
-- **Email**: Nodemailer (AWS SES) + React Email templates
-
 ### Project Structure
 
 `ls` gives you the tree. These are the parts it does not:
@@ -189,15 +174,8 @@ pnpm db:types --local    # regenerate types from local Supabase
 
 ### Recipes
 
-**Automated email notification** — a database trigger that calls an internal API
-endpoint, which sends the email. Follow the registration-limit implementation
-end to end rather than inventing a new shape: a tracking table with a unique
-constraint on the identifier, a template in `app/business/email/templates/`, a
-sender in `app/business/admin/`, an endpoint under `app/pages/api/admin/` that
-records the send with `onConflict().doNothing()`, and a database function that
-checks the tracking table before it fires `pg_net.http_post`. Sanitize every
-user-controlled field with `sanitizeHtml()`, and cover the duplicate guard and
-the failure paths with integration tests.
+Automated email notification fired by a database trigger: the
+`email-notification` skill.
 
 ### Testing
 
@@ -278,66 +256,9 @@ explicit yes.
 
 ## News Dialog Updates
 
-The news dialog is for users, not a changelog. Announce a change only when it
-clears the bar below. Most PRs do not clear it, and a dialog full of noise is
-worse than an empty one — every item shown is attention taken from the items
-that mattered.
-
-**The bar: the change gives someone a new thing they can do, or removes work
-they used to have to do.** If nobody changes what they do because of it, there
-is no news item.
-
-Clears the bar:
-
-- "O admin agora candidata alguém com um botão só" — several steps became one
-- A page, report, export, or permission that did not exist before
-- A bug that was visibly breaking someone's work, now fixed
-- A change to how someone has to work: a moved flow, a new required field, a
-  screen that is gone
-
-Does not clear the bar:
-
-- "O formulário agora mostra progresso" — pleasant, but nobody works differently
-- Visual polish, copy tweaks, layout, spacing, wording
-- Performance, refactors, tests, CI, types, dependencies — invisible by
-  definition
-- Bugs nobody hit, or fixed before anyone noticed
-
-Test: would a user be annoyed to have missed this? If not, skip it. In doubt,
-skip it and say so in the PR rather than writing a weak item — a missing item
-costs nothing, a noisy one costs the dialog's credibility.
-
-When a change does clear the bar:
-
-1. **Add one file** to `app/components/organisms/news-dialog/items/`, named
-   `<YYYY-MM-DD>-<slug>.ts`:
-
-   ```ts
-   import type { NewsItemContent } from "../news"
-
-   export default {
-     title: "✨ Título curto",
-     content: "O que mudou, para quem não é técnique.",
-     isAdmin: false,
-     createdAt: new Date("2026-08-17T12:00:00"),
-   } satisfies NewsItemContent
-   ```
-
-2. **Never edit `news-utils.ts`** and never edit an existing item. The file
-   collects `items/*.ts` with `import.meta.glob`, derives each `id` from the
-   file name and derives `NEWS_VERSION` from the newest `createdAt`. There is
-   no version to bump and no array to prepend to — that is exactly what used
-   to make every PR conflict.
-
-3. **Content guidelines**:
-   - Write for NON-TECHNICAL USERS (functionality, not implementation)
-   - ✅ GOOD: "Now you can generate demographic reports by clicking the new button"
-   - ❌ BAD: "Added demographics upsert functionality to the database"
-   - `isAdmin: true` items may include operational detail, still no code specifics
-   - Copy is Brazilian Portuguese
-
-4. **Retiring items**: items older than two weeks stop rendering by
-   themselves. Deleting the file is optional housekeeping and never urgent.
+The news dialog is for users, not a changelog, and most PRs do not earn an item.
+Whether a change clears the bar, and how to add one: the `news-dialog` skill.
+**Never edit `news-utils.ts`**, and never edit an existing item.
 
 ## GitHub Workflow
 
