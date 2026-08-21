@@ -57,4 +57,15 @@ COPY ./package.json pnpm-lock.yaml .env.schema /app/
 COPY --from=production-dependencies-env /app/node_modules /app/node_modules
 COPY --from=build-env /app/build /app/build
 WORKDIR /app
+
+# A container that cannot boot must not be allowed to replace one that is
+# serving. Coolify's rolling update stops the old container as soon as the new
+# one reports "Started", which Docker says the moment the process is spawned —
+# so an image that exits on a bad environment took the whole site down with it,
+# and Traefik answered every request with "no available server". With a
+# healthcheck the new container never becomes healthy, the old one keeps
+# serving, and the deploy fails where a deploy should fail.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=40s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+
 CMD ["pnpm", "run", "start"]

@@ -132,19 +132,29 @@ jobs:
         timeout-minutes: 10
         run: pnpm exec playwright install chromium
 
-      # Fail here, with a readable message, when a secret is missing or malformed.
-      # APP_ENV=production is what makes this check meaningful: the secrets that
-      # matter most are @required=forEnv(production) in the schema, so under any
-      # other value an empty COOKIE_SECRET or service role key would pass.
+      # Fail here, with a readable message, when a value is malformed or a
+      # required variable has no declaration. APP_ENV=production is what reaches
+      # the @required=forEnv(production) items at all; under any other value an
+      # empty COOKIE_SECRET or service role key would pass.
+      #
+      # Read what this does and does not prove. Every value below is supplied
+      # here, so the check says the schema is satisfiable — not that the
+      # production deploy satisfies it. Production's values live in Coolify and
+      # in GitHub secrets, and nothing in this workflow can read Coolify. A
+      # variable that is required and missing from the deploy passes here and
+      # fails at boot, which is what happened with APP_URL. The guards for that
+      # are the Dockerfile healthcheck, the smoke job in production.yml, and the
+      # "production value:" lines the schema test requires.
       - name: Validate environment against .env.schema
         run: pnpm env:check
         env:
           APP_ENV: production
           CI: true
           # Not a secret — it is the address the site answers on. It is here
-          # because APP_URL is @required=forEnv(production): the origin of a
-          # password reset link comes from it, and falls back to the request's
-          # own Host header without it.
+          # because the check runs as production, and production is the shape
+          # worth exercising: the origin of a password reset link comes from
+          # APP_URL, and production refuses to substitute the request's own Host
+          # header for it.
           APP_URL: https://www.positivparty.com
           VITE_SUPABASE_URL: ${{ steps.supabase-creds.outputs.api_url }}
           VITE_SUPABASE_ANON_KEY: ${{ steps.supabase-creds.outputs.anon_key }}
