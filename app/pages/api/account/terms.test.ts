@@ -62,6 +62,19 @@ describe("terms commit route", () => {
     expect(response.headers.get("Set-Cookie")).toContain("sb-access-token=abc")
   })
 
+  it("lets a redirect for an anonymous caller through, rather than saving", async () => {
+    // getUserContext throws a redirect when nobody is signed in. Catching it
+    // here would let a bare POST agree to the terms on somebody's behalf.
+    const redirect = new Response(null, {
+      status: 302,
+      headers: { Location: "/entrar" },
+    })
+    mockGetUserContext.mockRejectedValue(redirect)
+
+    await expect(run(answers)).rejects.toBe(redirect)
+    expect(mockSaveTermsAgreement).not.toHaveBeenCalled()
+  })
+
   it("refuses a body it cannot read", async () => {
     const response = await run("not json")
 

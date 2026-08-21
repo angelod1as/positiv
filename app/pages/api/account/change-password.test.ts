@@ -30,7 +30,9 @@ const run = (body: unknown) =>
 describe("change password commit route", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockGetUserContext.mockResolvedValue({} as never)
+    mockGetUserContext.mockResolvedValue({
+      supabaseHeaders: new Headers(),
+    } as never)
     mockUpdatePassword.mockResolvedValue({ ok: true })
   })
 
@@ -48,6 +50,29 @@ describe("change password commit route", () => {
     await run(answers)
 
     expect(mockGetUserContext).toHaveBeenCalled()
+  })
+
+  it("carries the cookies the session refresh wrote", async () => {
+    const supabaseHeaders = new Headers()
+    supabaseHeaders.append("Set-Cookie", "sb-access-token=abc; Path=/")
+    mockGetUserContext.mockResolvedValue({ supabaseHeaders } as never)
+
+    const response = await run(answers)
+
+    expect(response.headers.get("Set-Cookie")).toContain("sb-access-token=abc")
+  })
+
+  it("lets a redirect for an anonymous caller through, rather than saving", async () => {
+    // getUserContext throws a redirect when nobody is signed in. Catching it
+    // here would answer a bare POST with a password change.
+    const redirect = new Response(null, {
+      status: 302,
+      headers: { Location: "/entrar" },
+    })
+    mockGetUserContext.mockRejectedValue(redirect)
+
+    await expect(run(answers)).rejects.toBe(redirect)
+    expect(mockUpdatePassword).not.toHaveBeenCalled()
   })
 
   it("refuses a body it cannot read", async () => {

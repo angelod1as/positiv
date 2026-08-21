@@ -25,6 +25,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
   })
 
   // The browser only reads the body, but a refused change should not read as a
-  // success to anything watching the status.
-  return Response.json(result, { status: result.ok ? 200 : 422 })
+  // success to anything watching the status. The cookies ride along because
+  // changing a password refreshes the session supabase handed this request.
+  return Response.json(result, {
+    status: result.ok ? 200 : 422,
+    headers: context.supabaseHeaders,
+  })
 }
