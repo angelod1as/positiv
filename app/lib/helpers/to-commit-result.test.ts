@@ -75,6 +75,22 @@ describe("toCommitResult", () => {
     })
   })
 
+  it("lets an error that names no field speak for the save", () => {
+    // A body of the wrong shape entirely is refused with an empty path. Filed
+    // under a question id of "", the message reached no question and was
+    // swapped for the runtime's own "could not save".
+    const result = toCommitResult({
+      success: false,
+      errors: [new InputError("Valor inválido", [])],
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      errors: [],
+      message: "Valor inválido",
+    })
+  })
+
   it("names the field a nested path starts at", () => {
     const result = toCommitResult({
       success: false,

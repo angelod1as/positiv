@@ -64,6 +64,24 @@ describe("commitJson", () => {
     expect(result).toEqual({ ok: false, errors: [] })
   })
 
+  it("refuses a verdict it cannot read, rather than handing on a shape nobody checked", async () => {
+    // A proxy's json error page parses, and would otherwise travel as a verdict
+    // whose errors nothing set — which the runtime walks over without looking.
+    answering({ error: "gateway timeout" })
+
+    const result = await commitJson("/api/admin/event", {}, onRedirect)
+
+    expect(result).toEqual({ ok: false, errors: [] })
+  })
+
+  it("refuses a refusal that names no errors", async () => {
+    answering({ ok: false })
+
+    const result = await commitJson("/api/admin/event", {}, onRedirect)
+
+    expect(result).toEqual({ ok: false, errors: [] })
+  })
+
   it("does not read a redirected response as a verdict", async () => {
     // The body of a followed redirect is a page of HTML. Reading it as JSON
     // would only say the save failed, when what someone needs is to sign in.

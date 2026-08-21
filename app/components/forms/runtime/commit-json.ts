@@ -29,5 +29,22 @@ export async function commitJson<Extra extends object = object>(
     return { ok: false, errors: [] }
   }
 
-  return (await response.json()) as CommitResult & Partial<Extra>
+  const answer: unknown = await response.json()
+
+  // Anything can come back with a 200 and a json body — a proxy's error page,
+  // a route that changed shape. Handed on unchecked, a refusal carrying no
+  // errors reaches a runtime that reads them without looking, and the run stops
+  // dead with nothing said. A verdict nobody can read is a save nobody can
+  // confirm.
+  if (!isVerdict(answer)) return { ok: false, errors: [] }
+
+  return answer as CommitResult & Partial<Extra>
+}
+
+function isVerdict(answer: unknown): answer is CommitResult {
+  if (typeof answer !== "object" || answer === null) return false
+
+  const { ok, errors } = answer as { ok?: unknown; errors?: unknown }
+
+  return ok === true || (ok === false && Array.isArray(errors))
 }

@@ -24,9 +24,14 @@ export function toCommitResult(result: Result<unknown>): CommitResult {
   for (const error of result.errors) {
     // Asked by class rather than through isInputError, which answers with a
     // boolean and so leaves the path out of reach of the types.
-    if (error instanceof InputError) {
+    //
+    // An input error with no path names no field — a body refused for its whole
+    // shape rather than for one of its fields. Filed under an empty question id
+    // it reached no question, and the runtime swapped what it said for its own
+    // "could not save", so it speaks for the save instead.
+    if (error instanceof InputError && error.path.length > 0) {
       errors.push({
-        questionId: String(error.path[0] ?? ""),
+        questionId: String(error.path[0]),
         message: error.message,
       })
       continue

@@ -139,6 +139,20 @@ describe("EventStatusForm", () => {
     expect(screen.getByLabelText(statusCopy.label)).toHaveValue("Completed")
   })
 
+  it("says so, and puts the status back, when the save never reached the server", async () => {
+    const user = userEvent.setup()
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")))
+    draw({ event_status: "Draft" })
+
+    await choose(user, "Completed")
+
+    await waitFor(() =>
+      expect(error).toHaveBeenCalledWith(toasts.statusUpdateFailed),
+    )
+    expect(revalidate).toHaveBeenCalled()
+    expect(screen.getByLabelText(statusCopy.label)).toHaveValue("Draft")
+  })
+
   it("shows the status the event is in again, not the one that was refused", async () => {
     const user = userEvent.setup()
     answered({ ok: false, errors: [] })

@@ -62,11 +62,15 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
+      // A save that never reached the server throws rather than answering, and
+      // an unsaved status must be said out loud and put back whichever of the
+      // two happened. Left to the runtime alone it would be a line of small
+      // print under a select still showing the status nobody wrote.
       const result = await commitJson(
         ADMIN_EVENT_STATUS_COMMIT(id),
         answers,
         (pathname) => void navigate(pathname),
-      )
+      ).catch((): CommitResult => ({ ok: false, errors: [] }))
 
       if (result.ok) {
         toast.success(adminEventsCopy.toasts.statusUpdated)

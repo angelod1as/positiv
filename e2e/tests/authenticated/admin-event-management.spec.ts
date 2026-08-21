@@ -102,6 +102,24 @@ test.describe('Admin Event Management', () => {
     expect(finalStatus).toBe('Completed')
   })
 
+  test('a half-written event survives a reload', async ({ page }) => {
+    const eventManagement = new EventManagementPage(page)
+    const draftTitle = runEventTitle(`Draft ${Date.now()}`)
+
+    await page.goto('/admin/eventos/novo')
+
+    await eventManagement.titleInput.fill(draftTitle)
+    await eventManagement.locationInput.fill('Motel Harmony')
+
+    // The draft is written as it is typed. Reloading is the whole point: an
+    // admin who closes the tab half way through used to start again.
+    await expect(eventManagement.titleInput).toHaveValue(draftTitle)
+    await page.reload()
+
+    await expect(eventManagement.titleInput).toHaveValue(draftTitle)
+    await expect(eventManagement.locationInput).toHaveValue('Motel Harmony')
+  })
+
   test('validates required fields when creating event', async ({ page }) => {
     const eventManagement = new EventManagementPage(page)
     
