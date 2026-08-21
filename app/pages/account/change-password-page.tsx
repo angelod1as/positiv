@@ -3,6 +3,7 @@ import { useNavigate } from "react-router"
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
 import { buildChangePasswordQuestions } from "~/components/forms/custom/change-password/build-change-password-questions"
+import { commitJson } from "~/components/forms/runtime/commit-json"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { AllAtOnce } from "~/components/forms/runtime/presentations/all-at-once"
 import type { Answers } from "~/components/forms/runtime/question.types"
@@ -36,21 +37,9 @@ const ChangePasswordPage = ({}: Route.ComponentProps) => {
 
   const commit = useCallback(
     async (answers: Answers): Promise<CommitResult> => {
-      const response = await fetch(CHANGE_PASSWORD_COMMIT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(answers),
-      })
-
-      // A session that expired mid-form is answered with a redirect, which
-      // fetch follows to a page of HTML. Reading that as JSON would only say
-      // the change failed, when what someone needs is to sign in again.
-      if (response.redirected) {
-        void navigate(new URL(response.url).pathname)
-        return { ok: false, errors: [] }
-      }
-
-      return (await response.json()) as CommitResult
+      return commitJson(CHANGE_PASSWORD_COMMIT, answers, (pathname) =>
+        void navigate(pathname),
+      )
     },
     [navigate],
   )

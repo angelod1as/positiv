@@ -4,9 +4,10 @@ import { useNavigate } from "react-router"
 import { toast } from "sonner"
 import { getUserContext } from "~/business/auth/auth.server"
 import { getSubscriptionStatus } from "~/business/newsletter/subscription-helpers.server"
-import type { TermsAgreementResult } from "~/business/participant/save-terms-agreement.server"
 import { Copy } from "~/components/atoms/copy/copy"
 import { buildTermsQuestions } from "~/components/forms/custom/terms/build-terms-questions"
+import { commitJson } from "~/components/forms/runtime/commit-json"
+import type { CommitResult } from "~types/forms/commit.types"
 import { FormRunner } from "~/components/forms/runtime/form-runner"
 import { gridPresentation } from "~/components/forms/runtime/presentations/grid"
 import type { Answers } from "~/components/forms/runtime/question.types"
@@ -75,23 +76,19 @@ const AgreeToTermsPage = ({ loaderData }: Route.ComponentProps) => {
   const newsletterFailed = useRef(false)
 
   const commit = useCallback(
-    async (answers: Answers): Promise<TermsAgreementResult> => {
-      const response = await fetch(TERMS_COMMIT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(answers),
-      })
+    // The verdict is what the run reads; whether the newsletter took the
+    // address is this page's own business, and is kept in the ref above.
+    async (answers: Answers): Promise<CommitResult> => {
+      const result = await commitJson<{ newsletterFailed: boolean }>(
+        TERMS_COMMIT,
+        answers,
+        (pathname) => void navigate(pathname),
+      )
 
-      // A session that expired mid-form is answered with a redirect, which
-      // fetch follows to a page of HTML. Reading that as JSON would only say
-      // the save failed, when what someone needs is to sign in again.
-      if (response.redirected) {
-        void navigate(new URL(response.url).pathname)
-        return { ok: false, errors: [] }
-      }
-
-      const result = (await response.json()) as TermsAgreementResult
-      if (result.ok) newsletterFailed.current = result.newsletterFailed
+      // A save that worked without saying whether the newsletter did is read as
+      // one that did: the thanks that follows says so, and claiming a failure
+      // nobody reported would send someone chasing nothing.
+      if (result.ok) newsletterFailed.current = result.newsletterFailed ?? false
 
       return result
     },
