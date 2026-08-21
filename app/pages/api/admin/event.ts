@@ -33,6 +33,11 @@ export async function action({ request, params }: ActionFunctionArgs) {
   // It is read through a schema rather than cast, because the id is the one
   // field here that no schema downstream would blame a question for: it belongs
   // to no question, so a rejection naming it would have nowhere to be drawn.
+  //
+  // The save is an upsert, so an id naming no event writes a new one under that
+  // id rather than failing. That is what the form's hidden id field has always
+  // done, and it is harmless while every writer is an admin who may write any
+  // event — but it is inherited on purpose, not by accident.
   const target = eventTarget.safeParse(answers)
 
   if (!target.success) {

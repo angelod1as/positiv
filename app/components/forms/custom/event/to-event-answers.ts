@@ -36,7 +36,10 @@ export function toEventAnswers(event: Event | null | undefined): Answers {
     if (value) answers[field] = value
   }
 
-  // Written as text because that is what a number field reads back.
+  // Written as text because that is what a number field reads back, and asked
+  // about by name rather than for truthiness: a price of zero is an answer, and
+  // a text field left empty is not. Dropping a zero here would hand the admin a
+  // blank field where the database says nothing was charged.
   for (const field of NUMBER_FIELDS) {
     const value = event[field]
     if (value !== null && value !== undefined) answers[field] = String(value)

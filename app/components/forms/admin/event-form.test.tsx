@@ -19,7 +19,7 @@ vi.mock("sonner", () => ({ toast: { success } }))
 
 const {
   admin: {
-    events: { ADMIN_EVENT_COMMIT, ADMIN_VIEW_EVENT },
+    events: { ADMIN_EVENT_COMMIT, ADMIN_EVENTS, ADMIN_VIEW_EVENT },
   },
 } = paths
 
@@ -228,6 +228,35 @@ describe("EventForm", () => {
       await waitFor(() =>
         expect(navigate).toHaveBeenCalledWith(ADMIN_VIEW_EVENT("event-9")),
       )
+    })
+
+    it("goes to the events themselves when the save named none", async () => {
+      const user = userEvent.setup()
+      // Nothing enforces that a save answers with the event it wrote, and
+      // sending someone to an event with no id sends them nowhere.
+      answered({ ok: true })
+      render(<EventForm />)
+
+      await user.type(screen.getByLabelText(labels.title), "Rapa do Tacho")
+      await user.type(screen.getByLabelText(labels.emoji), "🎉")
+      await user.type(
+        screen.getByLabelText(labels.description),
+        "Para quem sobreviveu",
+      )
+      await user.type(screen.getByLabelText(labels.location), "Motel Harmony")
+      await user.type(screen.getByLabelText(labels.ticket_price), "200")
+      await user.type(screen.getByLabelText(labels.total_spots), "60")
+      await user.type(
+        screen.getByLabelText(labels.time_event_start),
+        "2026-02-01T10:00",
+      )
+      await user.click(
+        screen.getByRole("button", { name: formCopy.calculateDates }),
+      )
+
+      await save(user)
+
+      await waitFor(() => expect(navigate).toHaveBeenCalledWith(ADMIN_EVENTS))
     })
 
     it("refuses to save what the questions refuse", async () => {

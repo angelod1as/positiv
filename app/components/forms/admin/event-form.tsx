@@ -16,7 +16,7 @@ import type { CommitResult } from "~types/forms/commit.types"
 
 const {
   admin: {
-    events: { ADMIN_EVENT_COMMIT, ADMIN_VIEW_EVENT },
+    events: { ADMIN_EVENT_COMMIT, ADMIN_EVENTS, ADMIN_VIEW_EVENT },
   },
 } = paths
 
@@ -76,7 +76,13 @@ export const EventForm: FC<EventFormProps> = ({ event }) => {
       }
       onDone={() => {
         toast.success(adminEventsCopy.createEdit.saved(Boolean(event)))
-        void navigate(ADMIN_VIEW_EVENT(savedId.current))
+
+        // Nothing enforces that a save answers with the event it wrote, and an
+        // event's page with no event in it is nowhere. The list is where the
+        // one that was just saved can be found by hand.
+        void navigate(
+          savedId.current ? ADMIN_VIEW_EVENT(savedId.current) : ADMIN_EVENTS,
+        )
       }}
     />
   )
