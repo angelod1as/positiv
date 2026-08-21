@@ -2,15 +2,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { ENV } from "varlock/env"
 import { appOrigin } from "./app-origin"
 
-vi.mock("varlock/env", () => ({ ENV: { APP_URL: "" } }))
+vi.mock("varlock/env", () => ({ ENV: { APP_URL: "", APP_ENV: "development" } }))
 
 const configured = (url: string) => {
   ;(ENV as { APP_URL: string }).APP_URL = url
 }
 
+const runningIn = (env: string) => {
+  ;(ENV as { APP_ENV: string }).APP_ENV = env
+}
+
 describe("appOrigin", () => {
   beforeEach(() => {
     configured("")
+    runningIn("development")
   })
 
   it("uses the url the app was told it is served from", () => {
@@ -43,6 +48,18 @@ describe("appOrigin", () => {
   it("leaves a host that already carries its scheme alone", () => {
     expect(appOrigin("http://localhost:5173")).toBe("http://localhost:5173")
     expect(appOrigin("https://positiv.com.br/")).toBe("https://positiv.com.br")
+  })
+
+  it("refuses the Host header in production, where nothing should trust it", () => {
+    // Production has no business reading an origin off the request. Without a
+    // configured url the link is built from whatever the caller said the host
+    // was, and it arrives in the mailbox looking exactly as legitimate as any
+    // other. A reset link that goes nowhere is a bug; one that goes to somebody
+    // else's server is an account takeover.
+    runningIn("production")
+
+    expect(appOrigin("evil.example.com")).toBe("")
+    expect(appOrigin("positiv.com.br")).toBe("")
   })
 
   it("answers with nothing it could not build an origin from", () => {
