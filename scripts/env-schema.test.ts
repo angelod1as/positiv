@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process"
+import { readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 // varlock replaces `ENV.X` with a build-time constant for every item it
@@ -100,5 +101,54 @@ describe(".env.schema", () => {
       .map(([key]) => key)
 
     expect(misclassified).toEqual([])
+  })
+})
+
+// Production's values do not live in one place: some are GitHub secrets, some
+// are set in Coolify, some only ever exist on a laptop. Nothing can read all
+// three from here, so CI cannot check that production holds a value — the
+// production env check in deploy-and-test.yml supplies its own, and proves the
+// schema is satisfiable rather than that the deploy is.
+//
+// What is checkable is whether anyone wrote down where a required value comes
+// from. A variable that production must have and that nobody sourced is the
+// shape of the outage that prompted this: APP_URL became required, no
+// environment had it, and the container refused to boot.
+const PRODUCTION_SOURCE = /^#\s*production value:/m
+
+function declarationsIn(schema: string) {
+  const declarations: { key: string; comments: string }[] = []
+  let comments: string[] = []
+
+  for (const line of schema.split("\n")) {
+    if (line.startsWith("#")) {
+      comments.push(line)
+      continue
+    }
+
+    const [, key] = /^([A-Z][A-Z0-9_]*)=/.exec(line) ?? []
+
+    if (key) declarations.push({ key, comments: comments.join("\n") })
+
+    comments = []
+  }
+
+  return declarations
+}
+
+describe(".env.schema required values", () => {
+  const declarations = declarationsIn(readFileSync(".env.schema", "utf8"))
+
+  it("finds the variables it is meant to be reading", () => {
+    expect(declarations.map(({ key }) => key)).toContain("COOKIE_SECRET")
+  })
+
+  it("says where production gets every value it requires", () => {
+    const unsourced = declarations
+      .filter(({ comments }) => comments.includes("@required"))
+      .filter(({ comments }) => !PRODUCTION_SOURCE.test(comments))
+      .map(({ key }) => key)
+
+    expect(unsourced).toEqual([])
   })
 })
