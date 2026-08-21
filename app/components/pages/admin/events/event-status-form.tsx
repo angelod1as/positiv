@@ -75,6 +75,10 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
         setRefusals((current) => current + 1)
       }
 
+      // Read again on a refusal too, not only on a save. A refusal is the most
+      // likely moment for this page to be holding an event that has moved on
+      // without it — one deleted, or changed by another admin — and the loader
+      // is what says so, in the notices as well as in the select.
       void revalidator.revalidate()
 
       return result

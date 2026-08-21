@@ -4,6 +4,9 @@ import {
   getAdminContext,
 } from "~/business/admin/admin.server"
 import { toCommitResult } from "~/lib/helpers/to-commit-result"
+import { zod } from "~/lib/helpers/zod"
+
+const eventTarget = zod.object({ id: zod.string().optional() })
 
 /**
  * A route of its own rather than the page's action: a POST to a page route is a
@@ -24,10 +27,22 @@ export async function action({ request, params }: ActionFunctionArgs) {
 
   // Which event is being written is the body's to say: the form is the same one
   // whether it is creating or correcting, and the page holds the id the run
-  // never asks about.
-  const { id } = answers as { id?: string }
+  // never asks about. Deriving it from the url instead would only say the same
+  // thing twice — this route is admin-gated, and an admin may write any event.
+  //
+  // It is read through a schema rather than cast, because the id is the one
+  // field here that no schema downstream would blame a question for: it belongs
+  // to no question, so a rejection naming it would have nowhere to be drawn.
+  const target = eventTarget.safeParse(answers)
 
-  const result = await createOrUpdateEvent(answers, { ...context, eventId: id })
+  if (!target.success) {
+    return Response.json({ ok: false, errors: [] }, { status: 400 })
+  }
+
+  const result = await createOrUpdateEvent(answers, {
+    ...context,
+    eventId: target.data.id,
+  })
 
   if (!result.success) {
     // The browser only reads the body, but a refused save should not read as a

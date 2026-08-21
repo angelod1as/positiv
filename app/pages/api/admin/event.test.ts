@@ -102,6 +102,21 @@ describe("event commit endpoint", () => {
     })
   })
 
+  it("refuses an id that is not an event id at all", async () => {
+    const response = await post(JSON.stringify({ ...answers, id: { evil: 1 } }))
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ ok: false, errors: [] })
+    expect(createOrUpdateEvent).not.toHaveBeenCalled()
+  })
+
+  it("refuses a body that is not an object", async () => {
+    const response = await post(JSON.stringify(["nao", "e", "um", "evento"]))
+
+    expect(response.status).toBe(400)
+    expect(createOrUpdateEvent).not.toHaveBeenCalled()
+  })
+
   it("blames no question for a body it cannot read", async () => {
     const response = await post("não é json")
 
