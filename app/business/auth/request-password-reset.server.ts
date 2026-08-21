@@ -1,6 +1,6 @@
 import type { z } from "zod"
 import { errorsCopy } from "~/copy/errors"
-import { originFromHost } from "~/lib/helpers/origin-from-host"
+import { appOrigin } from "~/lib/helpers/app-origin"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
 import type { CommitResult } from "~types/forms/commit.types"
@@ -30,7 +30,7 @@ export async function requestPasswordReset({
 
   const { error } = await supabase.auth.resetPasswordForEmail(
     parsed.data.email,
-    { redirectTo: `${originFromHost(host)}${LOGON_CALLBACK}` },
+    { redirectTo: `${appOrigin(host)}${LOGON_CALLBACK}` },
   )
 
   if (error) {
