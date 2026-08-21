@@ -24,6 +24,10 @@ const {
   root: { HOME, FEEDBACK_COMMIT },
 } = paths
 
+// Built once, outside the component: the runtime reads the seed on its first
+// render, and an object written inline would be a new one every time.
+const EMPTY_CAPTCHA = { captchaToken: "" }
+
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.feedback.title)
 }
@@ -108,6 +112,10 @@ const FeedbackPage = () => {
         flow={flow}
         presentation={AllAtOnce}
         renderQuestion={renderQuestion}
+        // The captcha opens as an empty answer rather than as no answer at
+        // all, so a form sent before the widget replies is refused in the
+        // captcha's own words instead of the shared "required" copy.
+        initialAnswers={EMPTY_CAPTCHA}
         continueLabel={feedbackCopy.submit}
         pendingLabel={feedbackCopy.submitting}
         onDone={() => {

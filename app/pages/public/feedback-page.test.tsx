@@ -126,7 +126,11 @@ describe("FeedbackPage", () => {
       )
       await submit(user)
 
-      expect(await screen.findByText("Campo obrigatório")).toBeVisible()
+      // The wording is the captcha's own, not the shared "required" copy: what
+      // is missing is a security check nobody can type into.
+      expect(
+        await screen.findByText("Por favor, complete a verificação de segurança"),
+      ).toBeVisible()
       expect(fetch).not.toHaveBeenCalled()
     })
 
