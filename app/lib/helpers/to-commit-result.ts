@@ -12,7 +12,8 @@ import type { CommitError, CommitResult } from "~types/forms/commit.types"
  * An error that names an input belongs to the question that asked for it. One
  * that names nothing belongs to the whole save, and is said in place of the
  * runtime's own "could not save", which would tell someone to retry something
- * retrying cannot fix.
+ * retrying cannot fix. The first of those speaks for the save and the rest are
+ * dropped: there is one line beside the button, not a list.
  */
 export function toCommitResult(result: Result<unknown>): CommitResult {
   if (result.success) return { ok: true }

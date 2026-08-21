@@ -40,10 +40,12 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
   // loader: the select would otherwise be left showing the status the database
   // had just turned down.
   //
-  // Only a refused one. Starting again after a save that worked showed the
-  // status the admin had just moved away from, for as long as the loader took
-  // to come back with the new one — a flicker through the old answer on every
-  // single change.
+  // A save that worked remounts as well, once the revalidation comes back and
+  // changes the other half of the key — but by then the run is already showing
+  // that status, so nothing moves on screen. What must not happen is remounting
+  // on the way there, which is what counting every save did: it seeded the
+  // select from a loader that had not caught up yet, and flickered through the
+  // status the admin had just moved away from.
   const [refusals, setRefusals] = useState(0)
 
   const isScheduledForAutoPublish =
@@ -98,8 +100,9 @@ export const EventStatusForm: FC<EventStatusFormProps> = ({
     <>
       <FormRunner
         // What the event is, as the database last answered, plus how many saves
-        // it has turned down: either changing means the control is showing
-        // something the database does not agree with.
+        // it has turned down. The first changes only once the revalidation
+        // lands, which is the whole point: the run is not restarted before the
+        // loader knows what it would be restarted with.
         key={`${event_status}:${refusals}`}
         questions={questions}
         flow={flow}
