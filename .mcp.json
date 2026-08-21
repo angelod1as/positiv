@@ -7,6 +7,13 @@
     "supabase-local": {
       "type": "http",
       "url": "http://localhost:54321/mcp"
+    },
+    "coolify": {
+      "type": "http",
+      "url": "${POSITIV_COOLIFY_DOMAIN}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${POSITIV_COOLIFY_TOKEN}"
+      }
     }
   }
 }
