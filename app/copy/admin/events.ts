@@ -17,6 +17,7 @@ export const adminEventsCopy = {
     statusUpdated: "Status atualizado com sucesso",
     statusUpdateFailed: "Não foi possível atualizar o status",
     demographicsUpdated: "Demografia atualizada com sucesso",
+    demographicsUpdateFailed: "Não foi possível atualizar a demografia",
     listmonkSyncFailed: "Erro ao atualizar lista da newsletter",
     listmonkSyncSuccess: "Lista da newsletter atualizada com sucesso",
     noIntent:
@@ -41,7 +42,6 @@ export const adminEventsCopy = {
     participantNotFound: "Participante não encontrade",
     profileNotFound: "Participante não encontrade.",
     notAppliedToEvent: "Participante não candidate neste evento.",
-    updateSuccess: "Atualizado com sucesso",
   },
   buttons: {
     download: "Baixar dados",

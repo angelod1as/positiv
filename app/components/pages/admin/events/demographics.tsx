@@ -1,42 +1,77 @@
-import type { FC } from "react"
-import type { FetcherWithComponents } from "react-router"
+import { useState, type FC } from "react"
+import { useNavigate, useRevalidator } from "react-router"
+import { toast } from "sonner"
 import type { Demographics } from "~/business/admin/demographics/demographics"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
+import { commitJson } from "~/components/forms/runtime/commit-json"
 import { Button } from "~/components/ui/button"
 import { adminEventsCopy } from "~/copy/admin/events"
+import paths from "~/lib/paths"
+import type { CommitResult } from "~types/forms/commit.types"
+
+const {
+  admin: {
+    events: { ADMIN_EVENT_DEMOGRAPHICS_COMMIT },
+  },
+} = paths
 
 const demographicsCopy = adminEventsCopy.demographics
 
 type DemographicsProps = {
   demographics: Demographics | null
-  fetcher?: FetcherWithComponents<unknown>
   eventId?: string
 }
 export const DemographicsData: FC<DemographicsProps> = ({
   demographics,
-  fetcher,
   eventId,
 }: DemographicsProps) => {
-  const isUpdating =
-    fetcher?.state === "submitting" &&
-    fetcher?.formData?.get("intent") === "update-demographics"
+  const navigate = useNavigate()
+  const revalidator = useRevalidator()
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  const countAgain = async () => {
+    if (!eventId) return
+
+    setIsUpdating(true)
+
+    // A count that never reached the server throws rather than answering, and
+    // either way the numbers on screen are the ones the loader last gave.
+    const result = await commitJson(
+      ADMIN_EVENT_DEMOGRAPHICS_COMMIT(eventId),
+      {},
+      (pathname) => void navigate(pathname),
+    ).catch((): CommitResult => ({ ok: false, errors: [] }))
+
+    setIsUpdating(false)
+
+    if (result.ok) {
+      toast.success(adminEventsCopy.toasts.demographicsUpdated)
+    } else {
+      toast.error(
+        result.message ?? adminEventsCopy.toasts.demographicsUpdateFailed,
+      )
+    }
+
+    // Read again on a refusal too: the count is written before the page can
+    // show it, and a refusal is the likeliest moment for this page to be
+    // holding an event that has moved on without it.
+    void revalidator.revalidate()
+  }
 
   return (
     <>
       <div className="flex items-center justify-between">
         <h2>{demographicsCopy.title}</h2>
-        {fetcher && eventId && (
-          <fetcher.Form method="post">
-            <input type="hidden" name="intent" value="update-demographics" />
-            <Button
-              type="submit"
-              variant="secondary"
-              size="sm"
-              disabled={isUpdating}
-            >
-              {isUpdating ? demographicsCopy.updating : demographicsCopy.update}
-            </Button>
-          </fetcher.Form>
+        {eventId && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={isUpdating}
+            onClick={() => void countAgain()}
+          >
+            {isUpdating ? demographicsCopy.updating : demographicsCopy.update}
+          </Button>
         )}
       </div>
       {demographics ? (

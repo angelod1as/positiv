@@ -41,6 +41,15 @@ export default [
     "pages/api/admin/event-status.ts",
   ),
   route(
+    "/api/admin/event-participant",
+    "pages/api/admin/event-participant.ts",
+  ),
+  route(
+    "/api/admin/event-demographics/:id",
+    "pages/api/admin/event-demographics.ts",
+  ),
+  route("/api/admin/feedback-status", "pages/api/admin/feedback-status.ts"),
+  route(
     "/api/admin/send-registration-limit-email",
     "pages/api/admin/send-registration-limit-email.ts",
   ),

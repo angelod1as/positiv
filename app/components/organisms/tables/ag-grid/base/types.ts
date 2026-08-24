@@ -51,7 +51,12 @@ export interface AGDataTableProps<TData> {
 
   onSave?: (params: AutoSaveParams) => Promise<void>
   autoSaveOptions?: AutoSaveOptions
-  fetcher?: FetcherWithComponents<{ success?: boolean; error?: string }>
+  // Only what the toolbar's save indicator reads, so a table that writes
+  // through fetch rather than a fetcher can still say how the save went.
+  fetcher?: Pick<
+    FetcherWithComponents<{ success?: boolean; error?: string }>,
+    "state" | "data"
+  >
 
   onCellValueChanged?: (params: CellValueChangedEvent<TData>) => void
   onGridReady?: (params: GridReadyEvent<TData>) => void

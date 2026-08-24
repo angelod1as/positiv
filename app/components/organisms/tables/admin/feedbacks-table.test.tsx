@@ -4,18 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { FeedbacksTable } from "./feedbacks-table"
 import type { FeedbackWithVerification } from "~/business/feedback/feedback.server"
 
-const submit = vi.fn()
+const commitJson = vi.hoisted(() => vi.fn())
+const navigate = vi.hoisted(() => vi.fn())
+
+vi.mock("~/components/forms/runtime/commit-json", () => ({ commitJson }))
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
-  return {
-    ...actual,
-    useFetcher: () => ({
-      submit,
-      state: "idle",
-      data: null,
-    }),
-  }
+  return { ...actual, useNavigate: () => navigate }
 })
 
 let capturedColumnDefs: ColDef<FeedbackWithVerification>[] = []
@@ -106,7 +102,8 @@ describe("FeedbacksTable", () => {
   beforeEach(() => {
     capturedColumnDefs = []
     capturedOnSave = undefined
-    submit.mockClear()
+    vi.clearAllMocks()
+    commitJson.mockResolvedValue({ ok: true })
     sessionStorage.clear()
   })
 
@@ -154,7 +151,7 @@ describe("FeedbacksTable", () => {
     })
   })
 
-  it("should submit the status change with the update intent", async () => {
+  it("should write the status change to the feedback status route", async () => {
     render(<FeedbacksTable feedbacks={mockFeedbacks} />)
 
     await capturedOnSave?.({
@@ -163,12 +160,24 @@ describe("FeedbacksTable", () => {
       rowData: mockFeedbacks[0],
     })
 
-    expect(submit).toHaveBeenCalledTimes(1)
-    const [formData, options] = submit.mock.calls[0]
-    expect(options).toEqual({ method: "POST" })
-    expect(formData.get("intent")).toBe("update-feedback-status")
-    expect(formData.get("id")).toBe("1")
-    expect(formData.get("status")).toBe("resolved")
+    expect(commitJson).toHaveBeenCalledWith(
+      "/api/admin/feedback-status",
+      { id: "1", status: "resolved" },
+      expect.any(Function),
+    )
+  })
+
+  it("should survive a save that never reached the server", async () => {
+    commitJson.mockRejectedValueOnce(new Error("offline"))
+    render(<FeedbacksTable feedbacks={mockFeedbacks} />)
+
+    await expect(
+      capturedOnSave?.({
+        field: "status",
+        newValue: "resolved",
+        rowData: mockFeedbacks[0],
+      }),
+    ).resolves.toBeUndefined()
   })
 
   it("should not submit changes to a non-editable field", async () => {
@@ -180,7 +189,7 @@ describe("FeedbacksTable", () => {
       rowData: mockFeedbacks[0],
     })
 
-    expect(submit).not.toHaveBeenCalled()
+    expect(commitJson).not.toHaveBeenCalled()
   })
 
   it("should show empty message when no feedbacks", () => {

@@ -4,9 +4,11 @@ import type {
   ValueSetterParams,
 } from "ag-grid-community"
 import type { FC } from "react"
-import { useCallback, useEffect, useMemo, useState } from "react"
-import { useFetcher } from "react-router"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useNavigate } from "react-router"
+import { toast } from "sonner"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import { commitJson } from "~/components/forms/runtime/commit-json"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { getVeteranColumn } from "~/components/organisms/tables/ag-grid/columns/veteran-column"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
@@ -20,6 +22,7 @@ import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/render
 import { TextViewModalRenderer } from "~/components/organisms/tables/ag-grid/renderers/text-view-modal-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
 import { Copy } from "~/components/atoms/copy/copy"
+import { adminEventsCopy } from "~/copy/admin/events"
 import { adminTablesCopy } from "~/copy/admin/tables"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import {
@@ -33,7 +36,8 @@ import {
   profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
-import type { ComposableFetcherData } from "~types/database/entities.types"
+import paths from "~/lib/paths"
+import type { CommitResult } from "~types/forms/commit.types"
 import { CategoryLabelWithTooltip } from "./category-label-with-tooltip"
 import { countParticipants } from "./count-participants"
 import { eventCountComparator } from "./event-count-column-helpers"
@@ -46,6 +50,12 @@ import {
   acceptedInProcessTooltipContent,
   generalTooltipContent,
 } from "./tooltip-contents"
+
+const {
+  admin: {
+    events: { ADMIN_EVENT_PARTICIPANT_COMMIT },
+  },
+} = paths
 
 // Filter state uses sessionStorage (clears when tab closes) - intentional so admins
 // start fresh each session. Grid layout state uses localStorage (persists across sessions)
@@ -99,12 +109,56 @@ function getStoredFilter(key: string, defaultValue: string[] = []): string[] {
 type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
   eventId: string
+  onParticipantSaved?: () => void
 }
 
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
-> = ({ participants, eventId }) => {
-  const fetcher = useFetcher<ComposableFetcherData>()
+> = ({ participants, eventId, onParticipantSaved }) => {
+  const navigate = useNavigate()
+
+  // What the toolbar's indicator used to read off the page's fetcher. Off the
+  // fetcher there is no state to read, so the save keeps its own.
+  const [saveState, setSaveState] = useState<{
+    state: "idle" | "submitting"
+    data: { success: boolean } | undefined
+  }>({ state: "idle", data: undefined })
+
+  // Two saves can be in flight at once: bumping a payment on a paid row writes
+  // the payment and the has_paid that follows it. Whichever answers last is
+  // not necessarily the last one asked, and the indicator should speak for the
+  // newest save rather than the slowest.
+  const latestSaveRef = useRef(0)
+
+  const saveParticipant = useCallback(
+    async (fields: Record<string, string>) => {
+      const save = ++latestSaveRef.current
+      setSaveState({ state: "submitting", data: undefined })
+
+      // A save that never reached the server throws rather than answering, and
+      // either way the admin is owed a line saying the cell was not written.
+      const result = await commitJson(
+        ADMIN_EVENT_PARTICIPANT_COMMIT,
+        fields,
+        (pathname) => void navigate(pathname),
+      ).catch((): CommitResult => ({ ok: false, errors: [] }))
+
+      if (save === latestSaveRef.current) {
+        setSaveState({ state: "idle", data: { success: result.ok } })
+      }
+
+      if (!result.ok) {
+        toast.error(
+          result.message ?? adminEventsCopy.toasts.updateParticipantFailed,
+        )
+        return
+      }
+
+      toast.success(adminEventsCopy.toasts.updateParticipantSuccess)
+      onParticipantSaved?.()
+    },
+    [navigate, onParticipantSaved],
+  )
 
   const [applicationStatusFilter, setApplicationStatusFilter] = useState<
     string[]
@@ -188,15 +242,13 @@ export const AdminViewEventParticipantsTable: FC<
         return
       }
 
-      const formData = new FormData()
-      formData.append("intent", "update-event-participant")
-      formData.append("id", rowData.id)
-      formData.append("profile_id", rowData.profile_id ?? "")
-      formData.append(params.field, String(params.newValue ?? ""))
-
-      fetcher.submit(formData, { method: "POST" })
+      await saveParticipant({
+        id: rowData.id,
+        profile_id: rowData.profile_id ?? "",
+        [params.field]: String(params.newValue ?? ""),
+      })
     },
-    [fetcher],
+    [saveParticipant],
   )
 
   const handleCellValueChanged = useCallback(
@@ -209,12 +261,11 @@ export const AdminViewEventParticipantsTable: FC<
         event.data?.has_paid === true &&
         event.oldValue !== event.newValue
       ) {
-        const formData = new FormData()
-        formData.append("intent", "update-event-participant")
-        formData.append("id", event.data.id)
-        formData.append("profile_id", event.data.profile_id ?? "")
-        formData.append("has_paid", "true")
-        fetcher.submit(formData, { method: "POST" })
+        void saveParticipant({
+          id: event.data.id,
+          profile_id: event.data.profile_id ?? "",
+          has_paid: "true",
+        })
       }
 
       // Auto-persist was_selected_for_rotation when transitioning to 'skipped'
@@ -225,15 +276,14 @@ export const AdminViewEventParticipantsTable: FC<
         event.newValue === "skipped" &&
         event.data?.was_selected_for_rotation === true
       ) {
-        const formData = new FormData()
-        formData.append("intent", "update-event-participant")
-        formData.append("id", event.data.id)
-        formData.append("profile_id", event.data.profile_id ?? "")
-        formData.append("was_selected_for_rotation", "true")
-        fetcher.submit(formData, { method: "POST" })
+        void saveParticipant({
+          id: event.data.id,
+          profile_id: event.data.profile_id ?? "",
+          was_selected_for_rotation: "true",
+        })
       }
     },
-    [fetcher],
+    [saveParticipant],
   )
 
   // Memoize dynamic filter options to prevent recalculation on every render
@@ -645,7 +695,7 @@ export const AdminViewEventParticipantsTable: FC<
         suppressColumnVirtualisation
         showToolbar
         onClearFilters={handleClearFilters}
-        fetcher={fetcher}
+        fetcher={saveState}
         onSave={handleSave}
         onCellValueChanged={handleCellValueChanged}
         headerContent={tableHeader}

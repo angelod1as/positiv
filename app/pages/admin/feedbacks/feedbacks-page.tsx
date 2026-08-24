@@ -1,13 +1,6 @@
-import { inputFromForm } from "composable-functions"
 import { useLoaderData } from "react-router"
-import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
-import { getAdminContext } from "~/business/admin/admin.server"
-import { updateFeedbackStatusSchema } from "~/business/feedback/feedback-schema"
-import {
-  getAllFeedbacksWithVerification,
-  updateFeedbackStatus,
-} from "~/business/feedback/feedback.server"
+import { getAllFeedbacksWithVerification } from "~/business/feedback/feedback.server"
 import { FeedbacksTable } from "~/components/organisms/tables/admin/feedbacks-table"
 import { adminFeedbacksCopy } from "~/copy/admin"
 import { metaCopy } from "~/copy/meta"
@@ -21,25 +14,6 @@ const {
 
 export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.adminFeedbacks.title)
-}
-
-export async function action({ request, params }: Route.ActionArgs) {
-  // The admin guard is a layout loader, and loaders do not run before a child
-  // action, so the action has to check the context itself
-  await getAdminContext(request, params)
-
-  const { intent } = await inputFromForm(request)
-
-  if (intent === "update-feedback-status") {
-    return await formAction({
-      request,
-      schema: updateFeedbackStatusSchema,
-      mutation: updateFeedbackStatus,
-      transformResult: (result) => ({ ...result, intent }),
-    })
-  }
-
-  return { intent }
 }
 
 export async function loader() {

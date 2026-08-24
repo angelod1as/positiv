@@ -1,19 +1,13 @@
-import { inputFromForm } from "composable-functions"
 import { useEffect, useState } from "react"
-import { useFetcher, type ShouldRevalidateFunctionArgs } from "react-router"
-import { formAction } from "remix-forms"
+import { useFetcher } from "react-router"
 import { redirectWithError } from "remix-toast"
-import { z as zod } from "zod"
 import {
   getAdminContext,
   getAdminEventById,
   getEventDemographicsById,
   getProfilesWithExtraDataById,
   getRejectedEventParticipants,
-  updateEventDemographics,
-  updateEventParticipantById,
 } from "~/business/admin/admin.server"
-import { updateEventParticipantByIdSchema } from "~/business/admin/common"
 import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
@@ -38,27 +32,10 @@ const {
 
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
-  const context = await getAdminContext(request, params)
-  const { intent } = await inputFromForm(request)
+  await getAdminContext(request, params)
 
-  if (intent === "update-event-participant") {
-    return await formAction({
-      request,
-      schema: updateEventParticipantByIdSchema,
-      mutation: updateEventParticipantById,
-      transformResult: (result) => ({ ...result, intent }),
-    })
-  }
-
-  if (intent === "update-demographics") {
-    return await formAction({
-      request,
-      schema: zod.object({ intent: zod.string() }),
-      mutation: updateEventDemographics,
-      context: { ...context, eventId: params.id },
-      transformResult: (result) => ({ ...result, intent }),
-    })
-  }
+  const formData = await request.formData()
+  const intent = String(formData.get("intent") ?? "")
 
   if (intent === "sync-listmonk-list") {
     const eventId = params.id
@@ -70,7 +47,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
     }
 
-    const formData = await request.formData()
     const approvalStatuses = formData.getAll("approvalStatuses")
     const applicationStatuses = formData.getAll("applicationStatuses")
     const attendanceStatuses = formData.getAll("attendanceStatuses")
@@ -101,21 +77,6 @@ export async function action({ request, params }: Route.ActionArgs) {
     errors: [{ message: "Unknown intent" }],
     intent,
   }
-}
-
-/** SHOULD REVALIDATE
- * Prevents loader revalidation after inline participant edits.
- * This stops AG Grid from re-sorting when a cell value is updated.
- */
-export function shouldRevalidate({
-  actionResult,
-  defaultShouldRevalidate,
-}: ShouldRevalidateFunctionArgs): boolean {
-  const result = actionResult as { intent?: string } | undefined
-  if (result?.intent === "update-event-participant") {
-    return false
-  }
-  return defaultShouldRevalidate
 }
 
 async function loadParticipants(eventId: string) {
@@ -176,13 +137,6 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
 
     if (!fetcher.data) return
 
-    if (
-      fetcher.data.intent === "update-event-participant" &&
-      fetcher.data.success
-    ) {
-      setIsListStale(true)
-    }
-
     if (fetcher.data.intent === "sync-listmonk-list" && fetcher.data.success) {
       setIsListStale(false)
     }
@@ -208,17 +162,14 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       <EventStatusForm {...event} />
 
       {demographics && (
-        <DemographicsData
-          demographics={demographics}
-          fetcher={fetcher}
-          eventId={event.id}
-        />
+        <DemographicsData demographics={demographics} eventId={event.id} />
       )}
 
       <div>
         <AdminViewEventParticipantsTable
           participants={participants}
           eventId={event.id}
+          onParticipantSaved={() => setIsListStale(true)}
         />
         <RejectedParticipantsSection participants={rejectedParticipants} />
       </div>
