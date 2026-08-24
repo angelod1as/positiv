@@ -1,4 +1,3 @@
-import { inputFromForm } from "composable-functions"
 import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { redirectWithError } from "remix-toast"
@@ -34,7 +33,9 @@ const {
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
   await getAdminContext(request, params)
-  const { intent } = await inputFromForm(request)
+
+  const formData = await request.formData()
+  const intent = String(formData.get("intent") ?? "")
 
   if (intent === "sync-listmonk-list") {
     const eventId = params.id
@@ -46,7 +47,6 @@ export async function action({ request, params }: Route.ActionArgs) {
       }
     }
 
-    const formData = await request.formData()
     const approvalStatuses = formData.getAll("approvalStatuses")
     const applicationStatuses = formData.getAll("applicationStatuses")
     const attendanceStatuses = formData.getAll("attendanceStatuses")
