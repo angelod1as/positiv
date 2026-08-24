@@ -4,7 +4,7 @@ import type {
   ValueSetterParams,
 } from "ag-grid-community"
 import type { FC } from "react"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router"
 import { toast } from "sonner"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
@@ -124,8 +124,15 @@ export const AdminViewEventParticipantsTable: FC<
     data: { success: boolean } | undefined
   }>({ state: "idle", data: undefined })
 
+  // Two saves can be in flight at once: bumping a payment on a paid row writes
+  // the payment and the has_paid that follows it. Whichever answers last is
+  // not necessarily the last one asked, and the indicator should speak for the
+  // newest save rather than the slowest.
+  const latestSaveRef = useRef(0)
+
   const saveParticipant = useCallback(
     async (fields: Record<string, string>) => {
+      const save = ++latestSaveRef.current
       setSaveState({ state: "submitting", data: undefined })
 
       // A save that never reached the server throws rather than answering, and
@@ -136,7 +143,9 @@ export const AdminViewEventParticipantsTable: FC<
         (pathname) => void navigate(pathname),
       ).catch((): CommitResult => ({ ok: false, errors: [] }))
 
-      setSaveState({ state: "idle", data: { success: result.ok } })
+      if (save === latestSaveRef.current) {
+        setSaveState({ state: "idle", data: { success: result.ok } })
+      }
 
       if (!result.ok) {
         toast.error(

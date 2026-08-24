@@ -121,6 +121,26 @@ describe("participants table saving", () => {
     )
   })
 
+  it("lets the newest save have the last word on the indicator", async () => {
+    let settleFirst: (result: { ok: boolean }) => void = () => {}
+    commitJson
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (settleFirst = resolve)),
+      )
+      .mockResolvedValueOnce({ ok: false, errors: [] })
+    renderTable()
+
+    const first = save("payment", 250)
+    await save("payment", 300)
+
+    settleFirst({ ok: true })
+    await first
+
+    await vi.waitFor(() =>
+      expect(tableProps.fetcher?.data).toEqual({ success: false }),
+    )
+  })
+
   it("writes nothing for a field the grid does not edit", async () => {
     renderTable()
 
