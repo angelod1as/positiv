@@ -25,10 +25,6 @@ export const sendToast = (fetcherData: ComposableFetcherData) => {
     return toast.success(adminEventsCopy.toasts.remindersQueued)
   }
 
-  if (fetcherData.intent === "update-demographics") {
-    return toast.success(adminEventsCopy.toasts.demographicsUpdated)
-  }
-
   if (fetcherData.intent === "sync-listmonk-list") {
     if (!fetcherData.success) {
       return toast.error(adminEventsCopy.toasts.listmonkSyncFailed)

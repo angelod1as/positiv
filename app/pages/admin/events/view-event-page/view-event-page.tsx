@@ -1,16 +1,13 @@
 import { inputFromForm } from "composable-functions"
 import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
-import { formAction } from "remix-forms"
 import { redirectWithError } from "remix-toast"
-import { z as zod } from "zod"
 import {
   getAdminContext,
   getAdminEventById,
   getEventDemographicsById,
   getProfilesWithExtraDataById,
   getRejectedEventParticipants,
-  updateEventDemographics,
 } from "~/business/admin/admin.server"
 import {
   listmonkSyncFiltersSchema,
@@ -36,18 +33,8 @@ const {
 
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
-  const context = await getAdminContext(request, params)
+  await getAdminContext(request, params)
   const { intent } = await inputFromForm(request)
-
-  if (intent === "update-demographics") {
-    return await formAction({
-      request,
-      schema: zod.object({ intent: zod.string() }),
-      mutation: updateEventDemographics,
-      context: { ...context, eventId: params.id },
-      transformResult: (result) => ({ ...result, intent }),
-    })
-  }
 
   if (intent === "sync-listmonk-list") {
     const eventId = params.id
@@ -175,11 +162,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       <EventStatusForm {...event} />
 
       {demographics && (
-        <DemographicsData
-          demographics={demographics}
-          fetcher={fetcher}
-          eventId={event.id}
-        />
+        <DemographicsData demographics={demographics} eventId={event.id} />
       )}
 
       <div>
