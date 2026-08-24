@@ -468,8 +468,18 @@ ASAAS_ANTICIPATION_MONTHLY_RATE=
 
 ## 10. Delivery — one PR per line, each green and mergeable on its own
 
+Two phases. **Phase A (PRs 1–6)** puts the house in order with no Asaas
+dependency: money in cents, one `payments` table holding the whole history,
+`has_paid`/`payment` gone, admins recording payments through the modal. It
+can reach production before the next event on its own — every PR merges to
+`main` and its migration runs there through the production workflow. **Phase
+B (PRs 7–13)** adds Asaas behind `PAYMENTS_ENABLED`; while it is off, the
+status change to `sent_payment_data` is just a status change and admins keep
+registering PIX transfers manually, exactly as today.
+
 | # | PR | Contents |
 |---|---|---|
+| **A** | | |
 | 0 | (no code) | Asaas account checklist: production account, commercial data approved (card), PIX key registered, anticipation automática on, `positivparty.com` in commercial data (needed for `successUrl`), sandbox account, both API keys in the secret store |
 | 1 | `ticket_price` in cents | migration + event form/card/dashboard/admin readers + `formatCurrency(cents)` helper |
 | 2 | Payments schema | enums, `payments`, `payment_webhook_events`, `profiles.asaas_customer_id`, view, indexes, RLS, `updated_at` trigger, cron; test utils + cleanup lists; regenerated types |
@@ -477,6 +487,7 @@ ASAAS_ANTICIPATION_MONTHLY_RATE=
 | 4 | Readers on the view | grid (read-only columns, `$` placeholder), financial summary, history, dataviz, seeds, schemas |
 | 5 | Drop `has_paid`/`payment` | migration + remove dead code + POS-385 helper |
 | 6 | Manual payments | modal skeleton, register manual, mark refunded, cancel — value without Asaas |
+| **B** | | |
 | 7 | Asaas client + env | `.env.schema`, client, fees, CPF validator, `scripts/asaas/register-webhook.ts` |
 | 8 | Pricing | `pricing.ts`, option builder, copy for labels |
 | 9 | Payment offer | status → row, link email, WhatsApp message copy, resend, resend with amount, cancel (Asaas delete), withdraw cancels |
@@ -485,8 +496,7 @@ ASAAS_ANTICIPATION_MONTHLY_RATE=
 | 12 | Refund | modal action, Asaas call, refund email |
 | 13 | E2E + sandbox | mock server, E2E specs, `scripts/asaas/smoke.ts`, runbook `docs/payments-runbook.md`, news item, flag on in production |
 
-PR 0 blocks only PR 13. PRs 1–6 ship value (cents, single truth, manual
-ledger) with no Asaas dependency.
+PR 0 blocks only PR 13 and can run in parallel with all of Phase A.
 
 ## 11. Out of scope
 
