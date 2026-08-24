@@ -498,6 +498,42 @@ registering PIX transfers manually, exactly as today.
 
 PR 0 blocks only PR 13 and can run in parallel with all of Phase A.
 
+## 10b. Where each PR's plan lives
+
+One plan per PR, in baby steps, beside this file. Each is deleted when its own
+PR is opened — `docs/plans/README.md` treats plans as temporary, and these are
+no exception; the design document is the one that stays.
+
+| PR | Linear | Plan |
+|---|---|---|
+| 0 | POS-519 | no code — the checklist is the Linear issue |
+| 1 | POS-520 | `POS-520-ticket-price-in-cents.md` |
+| 2 | POS-521 | `POS-521-payments-schema.md` |
+| 3 | POS-522 | `POS-522-backfill-payments.md` |
+| 4 | POS-523 | `POS-523-readers-on-the-view.md` |
+| 5 | POS-524 | `POS-524-drop-old-columns.md` |
+| 6 | POS-525 | `POS-525-manage-payment-modal.md` |
+| 7 | POS-526 | `POS-526-asaas-client.md` |
+| 8 | POS-527 | `POS-527-pricing-engine.md` |
+| 9 | POS-528 | `POS-528-payment-offer.md` |
+| 10 | POS-529 | `POS-529-payment-page.md` |
+| 11 | POS-530 | `POS-530-asaas-webhook.md` |
+| 12 | POS-531 | `POS-531-refunds.md` |
+| 13 | POS-532 | `POS-532-e2e-and-launch.md` |
+
+Two things the plans decided that this document only implied:
+
+- **`ON DELETE RESTRICT` costs a cleanup change.** Every path that deletes an
+  `event_participants` row — the integration test tracker, the E2E cleanup, the
+  global setup — must delete its payments first. POS-521 does that. A
+  foreign-key error while deleting participants is that ordering being wrong,
+  never a reason to relax the constraint.
+- **The admin actions were never guarded.** `view-event-participant.tsx` and
+  `view-event-page.tsx` dispatch on `intent` without calling `getAdminContext`;
+  React Router runs an action before revalidating loaders, so the admin layout's
+  loader does not gate a POST. POS-525 adds the check, because it is the PR that
+  starts moving money through those actions.
+
 ## 11. Out of scope
 
 - `events.time_payment_start/end` are swapped in the schema and the labels —
