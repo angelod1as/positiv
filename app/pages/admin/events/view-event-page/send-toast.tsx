@@ -21,13 +21,6 @@ export const sendToast = (fetcherData: ComposableFetcherData) => {
     )
   }
 
-  if (fetcherData.intent === "update-event-participant") {
-    if (!fetcherData.success) {
-      return toast.error(adminEventsCopy.toasts.updateParticipantFailed)
-    }
-    return toast.success(adminEventsCopy.toasts.updateParticipantSuccess)
-  }
-
   if (fetcherData.intent === "send-reminders") {
     return toast.success(adminEventsCopy.toasts.remindersQueued)
   }
