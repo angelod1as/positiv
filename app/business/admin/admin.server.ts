@@ -704,7 +704,7 @@ export const updateParticipantVsEvent = applySchema(
 export const updateEventParticipantById = applySchema(
   updateEventParticipantByIdSchema,
 )(async (formData) => {
-  const { intent, id, profile_id, is_veteran, flag, flag_notes, approved_to_attend, ...data } =
+  const { id, profile_id, is_veteran, flag, flag_notes, approved_to_attend, ...data } =
     formData
 
   return await kyselyDb.transaction().execute(async (transaction) => {

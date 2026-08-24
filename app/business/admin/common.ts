@@ -111,7 +111,6 @@ const parseBoolean = zod.union([
 export const updateEventParticipantByIdSchema = zod.object({
   id: zod.string(),
   profile_id: zod.string(),
-  intent: zod.literal("update-event-participant"),
   payment: zod.coerce.number().optional(),
   attendance_status: participantAttendanceStatusEnum.optional(),
   application_status: participantApplicationStatusEnum.optional(),

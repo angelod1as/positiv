@@ -63,6 +63,7 @@ const ADMIN_CREATE_EVENT = `${ADMIN_EVENTS}/novo`
 const ADMIN_EVENT_COMMIT = "/api/admin/event"
 const ADMIN_EVENT_STATUS_COMMIT = (id: string) =>
   `/api/admin/event-status/${id}`
+const ADMIN_EVENT_PARTICIPANT_COMMIT = "/api/admin/event-participant"
 const ADMIN_EVENT_VIEW_PARTICIPANT = (eventId: string, participantId: string) =>
   `${ADMIN_EVENTS}/${eventId}/participantes/${participantId}`
 
@@ -87,6 +88,7 @@ const paths = {
       ADMIN_CREATE_EVENT,
       ADMIN_EVENT_COMMIT,
       ADMIN_EVENT_STATUS_COMMIT,
+      ADMIN_EVENT_PARTICIPANT_COMMIT,
       ADMIN_EVENT_VIEW_PARTICIPANT,
     },
   },
