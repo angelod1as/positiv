@@ -39,7 +39,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 
 | Date | Title | Status |
 |------|-------|--------|
-| [2025-01-29](./20250129-use-react-hook-form-and-remix-forms-with-zod.md) | Use React Hook Form + Remix Forms with Zod | Accepted |
+| [2025-01-29](./20250129-use-react-hook-form-and-remix-forms-with-zod.md) | Use React Hook Form + Remix Forms with Zod | Superseded |
 | [2025-01-30](./20250130-use-composable-functions-for-error-handling.md) | Use Composable Functions for Error Handling | Accepted |
 | [2025-02-02](./20250202-use-ag-grid-for-admin-tables.md) | Use AG Grid for Admin Tables | Accepted |
 

@@ -40,7 +40,7 @@ Here are the links for each of the technologies:
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
 - **Testing**: [Playwright](https://playwright.dev/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **Form Handling**: [Remix Forms](https://remix-forms.seasoned.cc/), [React Hook Form](https://react-hook-form.com/) with [Zod validation](https://zod.dev/)
+- **Form Handling**: [React Hook Form](https://react-hook-form.com/) with [Zod validation](https://zod.dev/)
 - **Database Access**: [Kysely](https://kysely.dev/)
 - **Email**: [Nodemailer](https://nodemailer.com/) with [AWS SES](https://aws.amazon.com/ses/)
 - **Other Notable Libraries**: [Composable Functions](https://github.com/seasonedcc/composable-functions), [AG Grid](https://www.ag-grid.com/), [ShadCN](https://ui.shadcn.com/), [React Email](https://react.email/), [Mailpit](https://mailpit.axllent.org/).

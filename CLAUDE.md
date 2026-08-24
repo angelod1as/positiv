@@ -152,7 +152,7 @@ pnpm db:types --local    # regenerate types from local Supabase
 
 2. **Authentication**: Supabase Auth with SSR support. Auth state is managed through React Router's session handling.
 
-3. **Form Handling**: Consistent pattern using React Hook Form + Zod schemas. Forms are organized in `/app/components/forms` with base components for remix-forms and custom implementations.
+3. **Form Handling**: Consistent pattern using React Hook Form + Zod schemas. Forms are organized in `/app/components/forms`: `runtime` is the form runtime every form runs on, `base` holds the shared field components it renders, and `admin` and `custom` hold the forms built on top.
 
 4. **Email System**: templates in `/app/components/email/templates`, sending logic in `/app/business/email/`. Locally, mail goes to Mailpit, bundled with local Supabase — SMTP on port 54325, web UI at <http://127.0.0.1:54324>. Some emails are fired by database triggers rather than by a request; see Recipes.
 
