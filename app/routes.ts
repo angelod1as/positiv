@@ -35,6 +35,11 @@ export default [
   route("/api/account/mudar-senha", "pages/api/account/change-password.ts"),
   route("/api/account/termos", "pages/api/account/terms.ts"),
   route("/api/feedback", "pages/api/feedback.ts"),
+  route("/api/admin/event", "pages/api/admin/event.ts"),
+  route(
+    "/api/admin/event-status/:id",
+    "pages/api/admin/event-status.ts",
+  ),
   route(
     "/api/admin/send-registration-limit-email",
     "pages/api/admin/send-registration-limit-email.ts",

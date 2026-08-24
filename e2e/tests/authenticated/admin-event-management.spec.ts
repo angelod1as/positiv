@@ -102,6 +102,24 @@ test.describe('Admin Event Management', () => {
     expect(finalStatus).toBe('Completed')
   })
 
+  test('a half-written event survives a reload', async ({ page }) => {
+    const eventManagement = new EventManagementPage(page)
+    const draftTitle = runEventTitle(`Draft ${Date.now()}`)
+
+    await page.goto('/admin/eventos/novo')
+
+    await eventManagement.titleInput.fill(draftTitle)
+    await eventManagement.locationInput.fill('Motel Harmony')
+
+    // The draft is written as it is typed. Reloading is the whole point: an
+    // admin who closes the tab half way through used to start again.
+    await expect(eventManagement.titleInput).toHaveValue(draftTitle)
+    await page.reload()
+
+    await expect(eventManagement.titleInput).toHaveValue(draftTitle)
+    await expect(eventManagement.locationInput).toHaveValue('Motel Harmony')
+  })
+
   test('validates required fields when creating event', async ({ page }) => {
     const eventManagement = new EventManagementPage(page)
     
@@ -110,8 +128,14 @@ test.describe('Admin Event Management', () => {
     // Try to save without filling required fields
     await eventManagement.clickSaveButton()
     
-    // Should show validation errors - looking for minimum characters error
-    await expect(page.getByText('No mínimo 2 caracteres').first()).toBeVisible()
-    await expect(page.getByText('Precisa ser um emoji')).toBeVisible()
+    // An untouched required field says it is required, rather than complaining
+    // about the length of what was never typed
+    await expect(page.getByText('Campo obrigatório').first()).toBeVisible()
+
+    // And the notice beside the button says the form refused to move on, so it
+    // is not only the fields far above it that say so
+    await expect(
+      page.getByText('Há campos que precisam da sua atenção.', { exact: false })
+    ).toBeVisible()
   })
 })

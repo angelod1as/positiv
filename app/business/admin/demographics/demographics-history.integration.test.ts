@@ -188,7 +188,7 @@ describe("Demographics History - Integration Tests", () => {
 
     // Update event status to Completed
     const result = await updateEventStatus(
-      { event_status: "Completed" as EventStatus, intent: "update-event-status" },
+      { event_status: "Completed" as EventStatus },
       mockContext
     )
 
@@ -273,7 +273,7 @@ describe("Demographics History - Integration Tests", () => {
 
     // Try to update event status
     const result = await updateEventStatus(
-      { event_status: "Completed" as EventStatus, intent: "update-event-status" },
+      { event_status: "Completed" as EventStatus },
       mockContext
     )
 
@@ -356,11 +356,11 @@ describe("Demographics History - Integration Tests", () => {
     // Simulate concurrent updates
     const results = await Promise.allSettled([
       updateEventStatus(
-        { event_status: "Completed" as EventStatus, intent: "update-event-status" },
+        { event_status: "Completed" as EventStatus },
         mockContext
       ),
       updateEventStatus(
-        { event_status: "Completed" as EventStatus, intent: "update-event-status" },
+        { event_status: "Completed" as EventStatus },
         mockContext
       ),
     ])
@@ -466,7 +466,7 @@ describe("Demographics History - Integration Tests", () => {
 
     // Update event status to Completed
     await updateEventStatus(
-      { event_status: "Completed" as EventStatus, intent: "update-event-status" },
+      { event_status: "Completed" as EventStatus },
       mockContext
     )
 
@@ -556,7 +556,7 @@ describe("Demographics History - Integration Tests", () => {
 
     // Update event status to Completed
     const result = await updateEventStatus(
-      { event_status: "Completed" as EventStatus, intent: "update-event-status" },
+      { event_status: "Completed" as EventStatus },
       mockContext
     )
 

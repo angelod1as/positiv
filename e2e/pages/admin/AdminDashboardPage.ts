@@ -1,4 +1,5 @@
 import { type Locator, type Page } from "@playwright/test"
+import { waitForAGGridReady } from "../../helpers/ag-grid"
 import { BasePage } from "../BasePage"
 
 export class AdminDashboardPage extends BasePage {
@@ -22,9 +23,13 @@ export class AdminDashboardPage extends BasePage {
   }
 
   async navigate(): Promise<void> {
-    await this.page.goto('/admin')
-    // Wait for loading state to disappear
-    await this.page.waitForFunction(() => !document.body.textContent?.includes('Carregando...'), { timeout: 30000 })
+    await this.page.goto("/admin")
+
+    // The dashboard streams its data in, and what says it arrived is the grid
+    // having drawn something. The page's own text cannot say so: AG Grid keeps
+    // the word "Carregando..." in its pagination panel after the rows are
+    // there, so waiting for that word to leave the document waits forever.
+    await waitForAGGridReady(this.page, "admin-events", 30000)
   }
 
   async verifyAdminAccess(): Promise<void> {

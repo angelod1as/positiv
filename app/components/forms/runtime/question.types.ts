@@ -17,9 +17,25 @@ export type InputSpec =
       autoComplete?: "current-password" | "new-password"
       placeholder?: string
     }
-  | { kind: "textnumber"; placeholder?: string }
+  /**
+   * `prefix` and `suffix` are the unit the number is read in — a currency, a
+   * count of people. They belong to the question rather than to the layout: the
+   * number means something different without them.
+   */
+  | {
+      kind: "textnumber"
+      placeholder?: string
+      prefix?: string
+      suffix?: string
+    }
   | { kind: "textarea"; placeholder?: string }
   | { kind: "date" }
+  /**
+   * A date and a time in one control. Distinct from `date`, which is the day
+   * alone — an event that opens at eight in the morning is not the same answer
+   * as the day it opens on.
+   */
+  | { kind: "datetime" }
   | { kind: "select"; options: Option[] }
   | { kind: "radio"; options: Option[] }
   | { kind: "checkbox"; options: Option[] }

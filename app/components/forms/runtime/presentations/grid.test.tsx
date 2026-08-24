@@ -63,6 +63,16 @@ describe("gridPresentation", () => {
     expect(fieldOf("CPF")).toHaveClass("sm:col-span-4")
   })
 
+  it("knows every width the twelve columns can be cut into", () => {
+    draw([
+      { kind: "question", id: "full_name", span: 9 },
+      { kind: "question", id: "cpf", span: 2 },
+    ])
+
+    expect(fieldOf("Nome completo")).toHaveClass("sm:col-span-9")
+    expect(fieldOf("CPF")).toHaveClass("sm:col-span-2")
+  })
+
   it("gives a slot with no width of its own the whole row", () => {
     draw([{ kind: "question", id: "full_name" }, { kind: "question", id: "cpf" }])
 
@@ -96,6 +106,62 @@ describe("gridPresentation", () => {
     ])
 
     expect(screen.getByText("Aviso sobre documentos")).toBeInTheDocument()
+  })
+
+  it("hands a note that asks for it what the run is holding", () => {
+    draw(
+      [
+        {
+          kind: "note",
+          id: "resumo",
+          render: ({ answers }) => <p>{`Nome: ${answers.full_name ?? ""}`}</p>,
+        },
+        { kind: "question", id: "full_name" },
+      ],
+      { answers: { full_name: "Ana" } },
+    )
+
+    expect(screen.getByText("Nome: Ana")).toBeInTheDocument()
+  })
+
+  it("lets a note answer for the run", async () => {
+    const user = userEvent.setup()
+    const { onAnswer } = draw([
+      {
+        kind: "note",
+        id: "preencher",
+        render: ({ onAnswer }) => (
+          <button type="button" onClick={() => onAnswer("full_name", "Ana")}>
+            Preencher
+          </button>
+        ),
+      },
+      { kind: "question", id: "full_name" },
+    ])
+
+    await user.click(screen.getByRole("button", { name: "Preencher" }))
+
+    expect(onAnswer).toHaveBeenCalledWith("full_name", "Ana")
+  })
+
+  it("tells a note that a commit is in flight", () => {
+    draw(
+      [
+        {
+          kind: "note",
+          id: "preencher",
+          render: ({ isBusy }) => (
+            <button type="button" disabled={isBusy}>
+              Preencher
+            </button>
+          ),
+        },
+        { kind: "question", id: "full_name" },
+      ],
+      { isBusy: true },
+    )
+
+    expect(screen.getByRole("button", { name: "Preencher" })).toBeDisabled()
   })
 
   it("does not ask the runtime about a note", () => {
