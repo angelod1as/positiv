@@ -72,8 +72,10 @@ jobs:
             # curl writes its own 000 on a connection failure and exits
             # non-zero with it, so appending a fallback would log 000 twice
             # while somebody is reading this during an incident. Assigning on
-            # failure replaces the value instead of adding to it.
-            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$APP_URL/" 2>/dev/null) || code=000
+            # failure replaces the value instead of adding to it. Only stdout
+            # reaches the substitution, so -S still puts curl's reason for
+            # failing in the log next to the code.
+            code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "$APP_URL/") || code=000
 
             if [ "$code" = "200" ]; then
               echo "answered 200 on attempt $attempt"
