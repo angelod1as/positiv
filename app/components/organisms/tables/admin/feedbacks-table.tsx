@@ -7,13 +7,14 @@ import type {
 import { EyeIcon } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useMemo, useRef, useState, useEffect } from "react"
-import { useFetcher } from "react-router"
+import { useNavigate } from "react-router"
 import type { FeedbackWithVerification } from "~/business/feedback/feedback.server"
 import {
   feedbackStatusLabels,
   feedbackStatusValues,
   type FeedbackStatus,
 } from "~/business/feedback/feedback-schema"
+import { commitJson } from "~/components/forms/runtime/commit-json"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
 import { AGIconButton } from "~/components/organisms/tables/ag-grid/renderers/ag-icon-button"
@@ -22,7 +23,7 @@ import WhatsAppIcon from "~/assets/social/whatsapp.svg"
 import { adminTablesCopy } from "~/copy/admin/tables"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
-import type { ComposableFetcherData } from "~types/database/entities.types"
+import type { CommitResult } from "~types/forms/commit.types"
 
 interface FeedbacksTableProps {
   feedbacks: FeedbackWithVerification[]
@@ -128,7 +129,14 @@ function WhatsAppButtonRenderer(params: ICellRendererParams<FeedbackWithVerifica
 
 export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
   const gridApiRef = useRef<GridApi<FeedbackWithVerification> | null>(null)
-  const fetcher = useFetcher<ComposableFetcherData>()
+  const navigate = useNavigate()
+
+  // What the toolbar's indicator used to read off the page's fetcher. Off the
+  // fetcher there is no state to read, so the save keeps its own.
+  const [saveState, setSaveState] = useState<{
+    state: "idle" | "submitting"
+    data: { success: boolean } | undefined
+  }>({ state: "idle", data: undefined })
   const [participationFilter, setParticipationFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.participation),
   )
@@ -157,14 +165,20 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
         return
       }
 
-      const formData = new FormData()
-      formData.append("intent", "update-feedback-status")
-      formData.append("id", rowData.id)
-      formData.append(params.field, String(params.newValue ?? ""))
+      setSaveState({ state: "submitting", data: undefined })
 
-      fetcher.submit(formData, { method: "POST" })
+      // A save that never reached the server throws rather than answering, and
+      // the indicator says the same thing either way: the status was not
+      // written.
+      const result = await commitJson(
+        paths.admin.ADMIN_FEEDBACK_STATUS_COMMIT,
+        { id: rowData.id, [params.field]: String(params.newValue ?? "") },
+        (pathname) => void navigate(pathname),
+      ).catch((): CommitResult => ({ ok: false, errors: [] }))
+
+      setSaveState({ state: "idle", data: { success: result.ok } })
     },
-    [fetcher],
+    [navigate],
   )
 
   const columnDefs: ColDef<FeedbackWithVerification>[] = useMemo(
@@ -302,7 +316,7 @@ export const FeedbacksTable: FC<FeedbacksTableProps> = ({ feedbacks }) => {
       showToolbar
       onClearFilters={handleClearFilters}
       onGridReady={handleGridReady}
-      fetcher={fetcher}
+      fetcher={saveState}
       onSave={handleSave}
     />
   )
