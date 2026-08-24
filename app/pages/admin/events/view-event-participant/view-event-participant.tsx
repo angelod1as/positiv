@@ -1,16 +1,13 @@
-import { formAction } from "remix-forms"
 import type { ShouldRevalidateFunctionArgs } from "react-router"
-import { redirectWithError, redirectWithSuccess } from "remix-toast"
+import { redirectWithError } from "remix-toast"
 import {
   getEventParticipantBasic,
   getParticipantFullEventHistory,
   getProfileById,
   updateEventParticipantById,
-  updateParticipantVsEvent,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
-import { updateParticipantVsEventSchema } from "~/business/admin/common"
 import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
@@ -52,26 +49,6 @@ export async function action({ request }: Route.ActionArgs) {
   if (intent === "update-event-participant") {
     const result = await updateEventParticipantById(Object.fromEntries(formData))
     return { success: result.success, errors: result.success ? undefined : result.errors }
-  }
-
-  if (intent === "participant-vs-event-schema") {
-    return formAction({
-      request: new Request(request.url, {
-        method: "POST",
-        body: formData,
-      }),
-      schema: updateParticipantVsEventSchema,
-      mutation: updateParticipantVsEvent,
-      transformResult: async (result) => {
-        if (result.success) {
-          throw await redirectWithSuccess(
-            request.url,
-            adminEventsCopy.viewParticipant.updateSuccess,
-          )
-        }
-        return result
-      },
-    })
   }
 }
 

@@ -42,7 +42,6 @@ export const adminEventsCopy = {
     participantNotFound: "Participante não encontrade",
     profileNotFound: "Participante não encontrade.",
     notAppliedToEvent: "Participante não candidate neste evento.",
-    updateSuccess: "Atualizado com sucesso",
   },
   buttons: {
     download: "Baixar dados",
