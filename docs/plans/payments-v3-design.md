@@ -528,11 +528,13 @@ Two things the plans decided that this document only implied:
   global setup — must delete its payments first. POS-521 does that. A
   foreign-key error while deleting participants is that ordering being wrong,
   never a reason to relax the constraint.
-- **The admin actions were never guarded.** `view-event-participant.tsx` and
-  `view-event-page.tsx` dispatch on `intent` without calling `getAdminContext`;
+- **Four admin actions were never guarded.** `view-event-participant.tsx`,
+  `view-profile-page.tsx`, `participants-page.tsx` and the admin
+  `dashboard-page.tsx` dispatch on `intent` without calling `getAdminContext`;
   React Router runs an action before revalidating loaders, so the admin layout's
-  loader does not gate a POST. POS-525 adds the check, because it is the PR that
-  starts moving money through those actions.
+  loader does not gate a POST. (`view-event-page.tsx` and `feedbacks-page.tsx`
+  do call it — they are the model.) This has nothing to do with payments and is
+  not waiting for them: **POS-533** fixes it across every admin route.
 
 ## 11. Out of scope
 
