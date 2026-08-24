@@ -6,10 +6,6 @@ export const chipSelectCopy = {
   removed: (value: string) => `${value} removido`,
 } as const
 
-export const schemaFormCopy = {
-  submit: "Continuar",
-} as const
-
 export const autoSaveFormCopy = {
   saved: "Dados atualizados com sucesso",
   saveFailed: "Erro ao salvar",
