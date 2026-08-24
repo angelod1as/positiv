@@ -1,5 +1,6 @@
 import { Link } from "react-router"
 import {
+  getAdminContext,
   getEventsForDashboard,
   getRecentProfiles,
 } from "~/business/admin/admin.server"
@@ -29,7 +30,9 @@ export function meta({}: Route.MetaArgs) {
   return createMetaArray(metaCopy.adminDashboard.title)
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, params }: Route.ActionArgs) {
+  await getAdminContext(request, params)
+
   const formData = await request.formData()
   const intent = formData.get("intent")
 
