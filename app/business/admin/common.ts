@@ -83,9 +83,7 @@ export const updateEventStatusSchema = zod.object({
   event_status: eventStatusEnum,
 })
 
-export const updateEventDemographicsSchema = zod.object({
-  intent: zod.string(),
-})
+export const updateEventDemographicsSchema = zod.object({})
 
 const spotTypeEnum = zod.enum(["regular", "social", "staff"])
 
