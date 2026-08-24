@@ -149,9 +149,6 @@ importers:
       recharts:
         specifier: ^3.7.0
         version: 3.7.0(@types/react@19.1.8)(react-dom@19.1.0(react@19.1.0))(react-is@17.0.2)(react@19.1.0)(redux@5.0.1)
-      remix-forms:
-        specifier: ^4.0.0
-        version: 4.0.0(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@4.3.5)
       remix-toast:
         specifier: ^3.1.0
         version: 3.1.0(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))
@@ -6484,15 +6481,6 @@ packages:
 
   remark-rehype@11.1.2:
     resolution: {integrity: sha512-Dh7l57ianaEoIpzbp0PC9UKAdCSVklD8E5Rpw7ETfbTl3FqcOOgq5q2LVDhgGCkaBv7p24JXikPdvhhmHvKMsw==}
-
-  remix-forms@4.0.0:
-    resolution: {integrity: sha512-JxhUsBOeHpiuhYoetMXXUloCr7s1qwD+mlME9PrcAeGJU6E+yOjcbinWuH18j1+WOgHM4ny+MkyN4y/BB5kpBg==}
-    peerDependencies:
-      composable-functions: '>=4'
-      react: '>=16.8'
-      react-hook-form: '>=7.27'
-      react-router: '>=7'
-      zod: '>=4.0.0'
 
   remix-toast@3.1.0:
     resolution: {integrity: sha512-qCXyoGt2aoYUQal9P3B+w5LkQ4dGnftH1Kk4Txeb5dmBp03YEdrKOETnQDklmvPSpSDyGYyxkC7L4JqzDlrwRw==}
@@ -15053,14 +15041,6 @@ snapshots:
       mdast-util-to-hast: 13.2.0
       unified: 11.0.5
       vfile: 6.0.3
-
-  remix-forms@4.0.0(composable-functions@5.0.0)(react-hook-form@7.59.0(react@19.1.0))(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react@19.1.0)(zod@4.3.5):
-    dependencies:
-      composable-functions: 5.0.0
-      react: 19.1.0
-      react-hook-form: 7.59.0(react@19.1.0)
-      react-router: 7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
-      zod: 4.3.5
 
   remix-toast@3.1.0(react-router@7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)):
     dependencies:
