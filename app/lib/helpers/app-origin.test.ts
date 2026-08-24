@@ -50,6 +50,18 @@ describe("appOrigin", () => {
     expect(appOrigin("https://positiv.com.br/")).toBe("https://positiv.com.br")
   })
 
+  it("still answers with the configured url in production", () => {
+    // The ordinary, correctly configured production case, and the one the two
+    // checks below could silently swap places on: a reordering that put the
+    // production check first would return nothing here, and every e-mail link
+    // production sends would quietly stop working.
+    configured("https://positiv.com.br")
+    runningIn("production")
+
+    expect(appOrigin("evil.example.com")).toBe("https://positiv.com.br")
+    expect(appOrigin(null)).toBe("https://positiv.com.br")
+  })
+
   it("refuses the Host header in production, where nothing should trust it", () => {
     // Production has no business reading an origin off the request. Without a
     // configured url the link is built from whatever the caller said the host
