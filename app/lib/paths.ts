@@ -52,6 +52,7 @@ const ADMIN_VIEW_PARTICIPANT = (profileId: string) =>
   `${ADMIN_PARTICIPANTS}/${profileId}`
 // FEEDBACKS
 const ADMIN_FEEDBACKS = `${ADMIN_DASHBOARD}/feedbacks`
+const ADMIN_FEEDBACK_STATUS_COMMIT = "/api/admin/feedback-status"
 // DATAVIZ
 const ADMIN_DATAVIZ = `${ADMIN_DASHBOARD}/numeros`
 // EVENTS
@@ -81,6 +82,7 @@ const paths = {
     ADMIN_PARTICIPANTS,
     ADMIN_VIEW_PARTICIPANT,
     ADMIN_FEEDBACKS,
+    ADMIN_FEEDBACK_STATUS_COMMIT,
     ADMIN_DATAVIZ,
     events: {
       ADMIN_EDIT_EVENT,

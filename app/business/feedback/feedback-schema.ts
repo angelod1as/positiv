@@ -31,7 +31,6 @@ export const feedbackStatusLabels: Record<FeedbackStatus, string> =
   adminFeedbacksCopy.statusLabels
 
 export const updateFeedbackStatusSchema = zod.object({
-  intent: zod.literal("update-feedback-status"),
   id: zod.string(),
   status: zod.enum(feedbackStatusValues, {
     message: adminFeedbacksCopy.invalidStatus,
