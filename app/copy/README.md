@@ -280,8 +280,8 @@ instead when the number of items varies (testimonials, events).
   literal types. The reverse order, `satisfies YourType as const`, does not
   compile. Arrays that get iterated take an explicit type instead, as shown
   above — make it a `readonly` array type to keep the same protection.
-- A `labels`, `descriptions`, or `placeholders` object handed to a `SchemaForm`
-  is keyed by the form schema's field names, so close it with
+- A `labels`, `descriptions`, or `placeholders` object handed to a form is
+  keyed by the form schema's field names, so close it with
   `as const satisfies Partial<Record<keyof z.infer<typeof theSchema>, string>>`
   and pull the schema in with `import type`. A typo'd or stale key is then a
   compile error naming the key, instead of a field that silently renders

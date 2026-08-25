@@ -1,8 +1,15 @@
 # Use React Hook Form and Remix Forms with Zod
 
-- Status: accepted
+- Status: superseded
 - Date: 2025-01-29
 - Tags: forms, validation, frontend
+
+> **Superseded (POS-490).** remix-forms and the `SchemaForm` wrapper this ADR
+> describes were removed from the codebase. Every form now runs on the form
+> runtime in `app/components/forms/runtime`, which drives a flow of questions
+> from a schema and renders it through one of the presentations in
+> `runtime/presentations`. React Hook Form and Zod stay. The document is kept
+> for the record of why the original choice was made.
 
 ## Context
 

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   getAdminContext,
   updateEventParticipantById,
-  updateParticipantVsEvent,
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
@@ -14,15 +13,8 @@ vi.mock("~/business/admin/admin.server", () => ({
   getParticipantFullEventHistory: vi.fn(),
   getProfileById: vi.fn(),
   updateEventParticipantById: vi.fn(),
-  updateParticipantVsEvent: vi.fn(),
   updateProfileAdminNotes: vi.fn(),
   updateProfileApprovalStatus: vi.fn(),
-}))
-
-const formAction = vi.fn()
-
-vi.mock("remix-forms", () => ({
-  formAction: (...args: unknown[]) => formAction(...args),
 }))
 
 const buildRequest = (fields: Record<string, string>) =>
@@ -55,11 +47,6 @@ const INTENTS = [
     fields: { id: "participant-1", spot_type: "social" },
     mutation: updateEventParticipantById,
   },
-  {
-    intent: "participant-vs-event-schema",
-    fields: { id: "participant-1", application_status: "applied" },
-    mutation: updateParticipantVsEvent,
-  },
 ] as const
 
 describe("ViewEventParticipant action", () => {
@@ -77,7 +64,6 @@ describe("ViewEventParticipant action", () => {
     vi.mocked(updateEventParticipantById).mockResolvedValue({
       success: true,
     } as never)
-    formAction.mockResolvedValue({ success: true })
   })
 
   describe.each(INTENTS)("$intent", ({ intent, fields, mutation }) => {
@@ -91,18 +77,13 @@ describe("ViewEventParticipant action", () => {
       )
 
       expect(mutation).not.toHaveBeenCalled()
-      expect(formAction).not.toHaveBeenCalled()
     })
 
     it("should run for an admin", async () => {
       await runAction({ intent, ...fields })
 
       expect(getAdminContext).toHaveBeenCalledTimes(1)
-      if (intent === "participant-vs-event-schema") {
-        expect(formAction).toHaveBeenCalledTimes(1)
-      } else {
-        expect(mutation).toHaveBeenCalledTimes(1)
-      }
+      expect(mutation).toHaveBeenCalledTimes(1)
     })
   })
 })
