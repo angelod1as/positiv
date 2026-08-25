@@ -1,0 +1,108 @@
+import { beforeEach, describe, expect, it, vi } from "vitest"
+import {
+  getAdminContext,
+  updateEventParticipantById,
+  updateParticipantVsEvent,
+  updateProfileAdminNotes,
+  updateProfileApprovalStatus,
+} from "~/business/admin/admin.server"
+import { action } from "./view-event-participant"
+
+vi.mock("~/business/admin/admin.server", () => ({
+  getAdminContext: vi.fn(),
+  getEventParticipantBasic: vi.fn(),
+  getParticipantFullEventHistory: vi.fn(),
+  getProfileById: vi.fn(),
+  updateEventParticipantById: vi.fn(),
+  updateParticipantVsEvent: vi.fn(),
+  updateProfileAdminNotes: vi.fn(),
+  updateProfileApprovalStatus: vi.fn(),
+}))
+
+const formAction = vi.fn()
+
+vi.mock("remix-forms", () => ({
+  formAction: (...args: unknown[]) => formAction(...args),
+}))
+
+const buildRequest = (fields: Record<string, string>) =>
+  new Request("http://localhost/admin/eventos/event-1/participantes/profile-1", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(fields).toString(),
+  })
+
+const params = { eventId: "event-1", profileId: "profile-1" }
+
+const runAction = (fields: Record<string, string>) =>
+  action({ request: buildRequest(fields), params } as Parameters<
+    typeof action
+  >[0])
+
+const INTENTS = [
+  {
+    intent: "update-profile-approval-status",
+    fields: { profile_id: "profile-1", approved_to_attend: "approved" },
+    mutation: updateProfileApprovalStatus,
+  },
+  {
+    intent: "update-profile-admin-notes",
+    fields: { profile_id: "profile-1", admin_notes: "a note" },
+    mutation: updateProfileAdminNotes,
+  },
+  {
+    intent: "update-event-participant",
+    fields: { id: "participant-1", spot_type: "social" },
+    mutation: updateEventParticipantById,
+  },
+  {
+    intent: "participant-vs-event-schema",
+    fields: { id: "participant-1", application_status: "applied" },
+    mutation: updateParticipantVsEvent,
+  },
+] as const
+
+describe("ViewEventParticipant action", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(getAdminContext).mockResolvedValue(
+      {} as Awaited<ReturnType<typeof getAdminContext>>,
+    )
+    vi.mocked(updateProfileApprovalStatus).mockResolvedValue({
+      success: true,
+    } as never)
+    vi.mocked(updateProfileAdminNotes).mockResolvedValue({
+      success: true,
+    } as never)
+    vi.mocked(updateEventParticipantById).mockResolvedValue({
+      success: true,
+    } as never)
+    formAction.mockResolvedValue({ success: true })
+  })
+
+  describe.each(INTENTS)("$intent", ({ intent, fields, mutation }) => {
+    it("should refuse to run for a non-admin", async () => {
+      vi.mocked(getAdminContext).mockRejectedValue(
+        new Response(null, { status: 302 }),
+      )
+
+      await expect(runAction({ intent, ...fields })).rejects.toBeInstanceOf(
+        Response,
+      )
+
+      expect(mutation).not.toHaveBeenCalled()
+      expect(formAction).not.toHaveBeenCalled()
+    })
+
+    it("should run for an admin", async () => {
+      await runAction({ intent, ...fields })
+
+      expect(getAdminContext).toHaveBeenCalledTimes(1)
+      if (intent === "participant-vs-event-schema") {
+        expect(formAction).toHaveBeenCalledTimes(1)
+      } else {
+        expect(mutation).toHaveBeenCalledTimes(1)
+      }
+    })
+  })
+})

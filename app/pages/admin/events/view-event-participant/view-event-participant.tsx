@@ -1,6 +1,7 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { redirectWithError } from "remix-toast"
 import {
+  getAdminContext,
   getEventParticipantBasic,
   getParticipantFullEventHistory,
   getProfileById,
@@ -32,7 +33,9 @@ export function shouldRevalidate({
   return hasParamsChanged || defaultShouldRevalidate
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, params }: Route.ActionArgs) {
+  await getAdminContext(request, params)
+
   const formData = await request.formData()
   const intent = formData.get("intent")
 

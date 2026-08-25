@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "react-router"
 import { useLoaderData } from "react-router"
 import { redirectWithError } from "remix-toast"
 import {
+  getAdminContext,
   getAllProfiles,
   updateProfileAdminNotes,
 } from "~/business/admin/admin.server"
@@ -31,7 +32,9 @@ export async function loader() {
   return { profiles: result.data }
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, params }: ActionFunctionArgs) {
+  await getAdminContext(request, params)
+
   const formData = await request.formData()
   const intent = formData.get("intent")
 
