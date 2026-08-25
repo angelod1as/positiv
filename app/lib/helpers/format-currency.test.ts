@@ -61,6 +61,26 @@ describe("reaisToCents", () => {
   })
 })
 
+describe("reaisToCents, on what the price field actually produces", () => {
+  // The field is an `<input type="number">`, so its value is always a plain
+  // period-decimal string. A period there is the decimal point, never a
+  // thousands separator.
+  it("reads a period as the decimal point when there is no comma", () => {
+    expect(reaisToCents("220.5")).toBe(22050)
+    expect(reaisToCents("150.55")).toBe(15055)
+    expect(reaisToCents("0.05")).toBe(5)
+    expect(reaisToCents("1234567.89")).toBe(123456789)
+  })
+
+  it("survives the round trip the edit form puts a price through", () => {
+    for (const cents of [
+      0, 5, 100, 999, 1000, 15055, 22000, 22050, 123456789,
+    ]) {
+      expect(reaisToCents(centsToReaisInput(cents))).toBe(cents)
+    }
+  })
+})
+
 describe("centsToReaisInput", () => {
   it("renders cents as the decimal a number input reads back", () => {
     expect(centsToReaisInput(22000)).toBe("220")
