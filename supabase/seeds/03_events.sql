@@ -141,7 +141,7 @@ FROM (
             WHEN n = 29 THEN now() + interval '8 months' - interval '9 days'
             ELSE now() + interval '10 months' - interval '9 days'
         END AS time_payment_end,
-        (10 + (random() * 140))::numeric(10,2) AS ticket_price,
+        ((10 + (random() * 140)) * 100)::int AS ticket_price,
         (50 + floor(random() * 150))::int AS total_spots
     FROM generate_series(1, 30) AS n
 ) AS event_data;
