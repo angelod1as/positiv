@@ -536,7 +536,7 @@ no exception; the design document is the one that stays.
 | PR | Linear | Plan |
 |---|---|---|
 | 0 | POS-519 | no code — the checklist is the Linear issue |
-| 1 | POS-520 | `POS-520-ticket-price-in-cents.md` |
+| 1 | POS-520 | retired — the PR is open |
 | 2 | POS-521 | `POS-521-payments-schema.md` |
 | 3 | POS-522 | `POS-522-backfill-payments.md` |
 | 4 | POS-523 | `POS-523-readers-on-the-view.md` |
