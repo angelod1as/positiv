@@ -12,6 +12,26 @@
 
 **Branch:** `pos-527-pricing-engine` from `main`, worktree `wt/pos-527-pricing-engine`.
 
+> **Correction, 2026-08-24 (POS-519).** The real `GET /v3/myAccount/fees/`
+> payload disagrees with this plan in two places, and the numbers below were
+> written before it was read:
+>
+> - **Anticipation is two monthly rates, not one.**
+>   `detachedMonthlyFeeValue` (1.15%/month) applies at `n = 1`,
+>   `installmentMonthlyFeeValue` (1.60%/month) at `n = 2…6`. So
+>   `AsaasFees.anticipationMonthlyRate` — a single field here, used by
+>   `LIST_FEES`, the property test and `buildPaymentOptions` — has to become
+>   two, and the worked values in "Formula (from the spec)" and the test
+>   table need recomputing against them. At 6x the anticipation term is 5.6%,
+>   not the 4.375% these examples assume.
+> - **`pix.percentageFee` is `null`**, not `0`, whenever `pix.type` is
+>   `FIXED`. Mapping happens in POS-526, but a test table here that hardcodes
+>   `percent: 0` is testing a shape the API does not return.
+>
+> Full payload and reasoning: POS-519 and the POS-527 comment on Linear.
+> `docs/plans/payments-v3-design.md` §6 is already corrected.
+
+
 ---
 
 ## Formula (from the spec)

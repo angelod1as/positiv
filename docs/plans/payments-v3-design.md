@@ -346,16 +346,33 @@ Inputs from `GET /v3/myAccount/fees/` (cached in memory for 12 h; on failure
 fall back to the constants in `app/business/payment/asaas-fees.ts`, which
 mirror the public price list):
 
-- PIX: `fixedFeeValue`, `percentageFee` (list: R$ 1.99, 0%).
+- PIX: `fixedFeeValue` (R$ 1.99) and `percentageFee`. When `pix.type` is
+  `FIXED` the percentage fields — `percentageFee`, `minimumFeeValue`,
+  `maximumFeeValue` — come back `null`, not `0`; read them as zero or the
+  gross-up evaluates to `NaN`.
 - Card: `operationValue` (R$ 0.49), `oneInstallmentPercentage` (2.99%),
-  `upToSixInstallmentsPercentage` (3.49%).
-- Anticipation: monthly rate `r` from the anticipation block (list: from
-  1.25%/month); configurable override `ASAAS_ANTICIPATION_MONTHLY_RATE`.
+  `upToSixInstallmentsPercentage` (3.49%). Asaas ships a second, discounted
+  set of percentages alongside them and a `hasValidDiscount` flag; branch on
+  the flag rather than hardcoding the plain set, or a negotiated discount
+  silently over-charges participants.
+- Anticipation: **two** monthly rates, not one.
+  `anticipation.creditCard.detachedMonthlyFeeValue` (1.15%/month) applies to
+  a single-installment charge, `installmentMonthlyFeeValue` (1.60%/month) to
+  2–6x — so `r` below is a function of `n`. Ignore `cardSale.anticipation`:
+  that block is card-present (maquininha, Asaas Tap) and does not apply to
+  charges created through the payments API. `ASAAS_ANTICIPATION_MONTHLY_RATE`
+  is a single scalar and cannot express this; it has to be split in two or
+  dropped in favour of the payload.
+
+The percentages above were read from the sandbox account on 2026-08-24, where
+they are the public price list. POS-519 carries the full payload; production
+may have negotiated rates, which is why PR 13 re-runs the lookup and
+re-calibrates before the flag goes on.
 
 Positiv must net `base`. With card fee `p` (percentage) and `f` (fixed), and
-anticipation charged per installment for the months until each one settles
-(installment k settles at k×32 days ≈ k months), the gross `G` for `n`
-installments solves
+anticipation at the monthly rate `r` that matches `n`, charged per
+installment for the months until each one settles (installment k settles at
+k×32 days ≈ k months), the gross `G` for `n` installments solves
 
 ```
 G − (p·G + f) − r·Σ_{k=1..n} (G/n)·k = base
@@ -365,6 +382,11 @@ G = (base + f) / (1 − p − r·(n+1)/2)
 - `perInstallment = ceil(G / n)` cents; `total = perInstallment × n`
   (rounded up so Positiv is never short).
 - PIX: `G = ceil((base + pixFixed) / (1 − pixPercent))`.
+- The rate split is not a rounding detail: at 6x the anticipation term
+  `r·(n+1)/2` is 5.6% at 1.60%/month, against 4.375% under the single
+  1.25%/month this document assumed before. On a R$ 200 base that is
+  R$ 220,50 instead of R$ 217,60 — R$ 2,90 per sale Positiv would have
+  absorbed.
 - `buildPaymentOptions(base, fees)` is pure and unit-tested against a table
   of known values; the sandbox calibration step compares `asaas_net` from a
   real confirmed charge with `base` and adjusts the anticipation term if
