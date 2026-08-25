@@ -3,6 +3,7 @@ import type { eventFormSchema } from "~/business/admin/common"
 
 export const eventFormValidation = {
   emojiInvalid: "Precisa ser um emoji",
+  ticketPriceTooSmall: "O valor deve ser de pelo menos R$ 1,00",
 } as const
 
 export const adminEventsCopy = {

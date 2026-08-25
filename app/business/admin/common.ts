@@ -1,5 +1,6 @@
 import { eventFormValidation } from "~/copy/admin/events"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
+import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
 import {
   participantApplicationStatusEnum,
@@ -29,7 +30,13 @@ export const eventFormSchema = zod.object({
   emoji: zod.string().emoji(eventFormValidation.emojiInvalid).min(1),
   location: zod.string().min(2).max(255),
 
-  ticket_price: zod.coerce.number().min(1),
+  // The admin types reais; the column is cents.
+  ticket_price: zod
+    .union([zod.string(), zod.number()])
+    .transform(reaisToCents)
+    .refine((cents) => Number.isFinite(cents) && cents >= 100, {
+      error: eventFormValidation.ticketPriceTooSmall,
+    }),
   total_spots: zod.coerce.number().min(1),
 
   auto_publish: zod.boolean().default(true),
