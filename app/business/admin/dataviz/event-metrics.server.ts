@@ -98,7 +98,9 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
       "events.emoji",
       "events.time_event_start as date",
       "events.ticket_price",
-      sql<number>`coalesce(sum(event_participants.payment), 0)::int`.as(
+      // `payment` is still numeric reais in the column; POS-523 moves this
+      // query to the view, which is already cents.
+      sql<number>`(coalesce(sum(event_participants.payment), 0) * 100)::int`.as(
         "faturamento_total"
       ),
       sql<number>`count(*) filter (where event_participants.has_paid = true)::int`.as(

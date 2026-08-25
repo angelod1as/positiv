@@ -642,7 +642,7 @@ describe("DataViz - Integration Tests", () => {
         expect(result.length).toBe(1)
         expect(result[0].title).toBe("Revenue Event")
         expect(result[0].emoji).toBe("💰")
-        expect(result[0].faturamento_total).toBe(180)
+        expect(result[0].faturamento_total).toBe(18000)
         expect(result[0].ticket_price).toBe(100)
         expect(result[0].num_pagantes).toBe(2)
       })
@@ -694,7 +694,7 @@ describe("DataViz - Integration Tests", () => {
 
         expect(eventResult).toBeDefined()
         if (eventResult) {
-          expect(eventResult.faturamento_total).toBe(270)
+          expect(eventResult.faturamento_total).toBe(27000)
           expect(eventResult.num_pagantes).toBe(2)
         }
       })
@@ -1415,10 +1415,10 @@ describe("DataViz - Integration Tests", () => {
         expect(result.avg_occupancy_pct).toBeLessThanOrEqual(5)
 
         // Total revenue: 100 + 100 + 150 + 150 = 500
-        expect(result.total_revenue).toBe(500)
+        expect(result.total_revenue).toBe(50000)
 
         // Average revenue per event: 500 / 2 = 250
-        expect(result.avg_revenue_per_event).toBe(250)
+        expect(result.avg_revenue_per_event).toBe(25000)
 
         // Average ticket price: (100 + 150) / 2 = 125
         expect(result.avg_ticket_price).toBe(125)
@@ -1483,7 +1483,7 @@ describe("DataViz - Integration Tests", () => {
         // Only completed event should be counted
         expect(result.total_events_completed).toBe(1)
         expect(result.total_unique_attendees).toBe(1)
-        expect(result.total_revenue).toBe(100)
+        expect(result.total_revenue).toBe(10000)
         expect(result.avg_ticket_price).toBe(100)
       })
 

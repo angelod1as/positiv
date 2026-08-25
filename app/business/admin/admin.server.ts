@@ -480,9 +480,20 @@ export const getParticipantFullEventHistory = composable(
 
     const results = await query.execute()
     // Filter out results with null time_event_start since we need it for sorting
-    return results.filter(
-      (r): r is ParticipantEventHistoryData => r.time_event_start !== null,
-    )
+    return results
+      .filter(
+        (r): r is ParticipantEventHistoryData => r.time_event_start !== null,
+      )
+      .map((row) => ({
+        // `payment` is still numeric reais in the column, and Kysely hands it
+        // over as a string. POS-523 moves this query to the view, which is
+        // already cents.
+        ...row,
+        payment:
+          row.payment === null
+            ? row.payment
+            : Math.round(Number(row.payment) * 100),
+      }))
   },
 )
 

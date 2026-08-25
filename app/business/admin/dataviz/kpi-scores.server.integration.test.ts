@@ -42,6 +42,31 @@ describe("getKpiScores - Extended KPI Data", () => {
     expect(result.total_approved).toBe(1)
   })
 
+  it("returns the total revenue in cents, though the column still holds reais", async () => {
+    const payer = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "revenue@test.com",
+    })
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Revenue KPI Event",
+      event_status: "Completed",
+      time_event_start: new Date("2025-07-01").toISOString(),
+      time_event_end: new Date("2025-07-01").toISOString(),
+      ticket_price: 10000,
+      total_spots: 10,
+    })
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: payer.id,
+      event_id: event.id,
+      has_paid: true,
+      payment: 90,
+    })
+
+    const result = await getKpiScores()
+
+    expect(result.total_revenue).toBe(9000)
+  })
+
   it("should return flagged profiles count (yellow + red)", async () => {
     await createTestProfile(tracker, kysely, {
       user_id: null,

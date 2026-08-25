@@ -110,6 +110,40 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     }
   })
 
+  it("hands the payment over in cents, though the column still holds reais", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-payment-cents@example.com",
+      full_name: "Payment Cents User",
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Payment Cents Event",
+      event_status: "Completed",
+      time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
+      ticket_price: 15000,
+      total_spots: 10,
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      has_paid: true,
+      payment: 150,
+    })
+
+    const result = await getParticipantFullEventHistory({
+      profileId: profile.id,
+      excludeEventId: undefined,
+    })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(result.data[0].payment).toBe(15000)
+      expect(result.data[0].ticket_price).toBe(15000)
+    }
+  })
+
   it("should return ALL registrations including admin-added participants", async () => {
     // This test verifies that getParticipantFullEventHistory returns ALL registrations,
     // not just those where is_user_applied = true (fixing POS-238)
