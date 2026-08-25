@@ -60,12 +60,24 @@ describe("events.ticket_price in cents - Integration Tests", () => {
   })
 
   it("seeds every event with a price already in the cents range", async () => {
-    const { rows } = await sql<{ min: number | null }>`
-      SELECT min(ticket_price) AS min
+    // Matched by the titles `03_events.sql` writes rather than read off the
+    // whole table: the seeds are what this asserts, and any other suite's rows
+    // would otherwise decide whether it passes.
+    const { rows } = await sql<{
+      min: number | null
+      max: number | null
+      seeded: number
+    }>`
+      SELECT min(ticket_price) AS min,
+             max(ticket_price) AS max,
+             count(*)::int      AS seeded
         FROM public.events
        WHERE ticket_price IS NOT NULL
+         AND title ~ '^(Evento (Concluído|Cancelado|Com Inscrições|Agendado)|Festa da Colheita)'
     `.execute(kysely)
 
+    expect(rows[0].seeded).toBeGreaterThan(0)
     expect(Number(rows[0].min)).toBeGreaterThanOrEqual(1000)
+    expect(Number(rows[0].max)).toBeLessThanOrEqual(15000)
   })
 })

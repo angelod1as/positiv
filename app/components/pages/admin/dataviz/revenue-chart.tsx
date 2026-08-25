@@ -114,7 +114,13 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
           height={50}
           tick={MultiLineXAxisTick}
         />
-        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          width={100}
+          tickFormatter={(value) => formatCurrency(Number(value))}
+        />
         <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
         <Bar
           dataKey="faturamento_total"

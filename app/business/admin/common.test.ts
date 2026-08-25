@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import { eventFormValidation } from "~/copy/admin/events"
 import { eventFormSchema } from "./common"
 
 const base = {
@@ -29,13 +30,20 @@ describe("eventFormSchema.ticket_price", () => {
     ).toBe(22000)
   })
 
-  it("still refuses a price below one real", () => {
-    expect(() =>
-      eventFormSchema.parse({ ...base, ticket_price: "0" }),
-    ).toThrow()
-    expect(() =>
-      eventFormSchema.parse({ ...base, ticket_price: "0,50" }),
-    ).toThrow()
+  it("still refuses a price below one real, saying why", () => {
+    for (const tooSmall of ["0", "0,50", "0.50"]) {
+      const result = eventFormSchema.safeParse({
+        ...base,
+        ticket_price: tooSmall,
+      })
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          eventFormValidation.ticketPriceTooSmall,
+        )
+      }
+    }
   })
 
   it("refuses something that is not a number", () => {

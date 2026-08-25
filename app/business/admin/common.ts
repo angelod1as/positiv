@@ -35,7 +35,7 @@ export const eventFormSchema = zod.object({
     .union([zod.string(), zod.number()])
     .transform(reaisToCents)
     .refine((cents) => Number.isFinite(cents) && cents >= 100, {
-      error: eventFormValidation.ticketPriceTooSmall,
+      message: eventFormValidation.ticketPriceTooSmall,
     }),
   total_spots: zod.coerce.number().min(1),
 
