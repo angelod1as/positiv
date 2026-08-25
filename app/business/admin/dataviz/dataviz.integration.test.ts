@@ -598,14 +598,14 @@ describe("DataViz - Integration Tests", () => {
           emoji: "💰",
           event_status: "Completed" as EventStatus,
           time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
-          ticket_price: 100,
+          ticket_price: 10000,
         })
 
         const draftEvent = await createTestEvent(tracker, kysely, {
           title: "Draft Event",
           event_status: "Draft" as EventStatus,
           time_event_start: new Date("2025-08-15T19:00:00Z").toISOString(),
-          ticket_price: 200,
+          ticket_price: 20000,
         })
 
         const profile1 = await createTestProfile(tracker, kysely, {
@@ -643,7 +643,7 @@ describe("DataViz - Integration Tests", () => {
         expect(result[0].title).toBe("Revenue Event")
         expect(result[0].emoji).toBe("💰")
         expect(result[0].faturamento_total).toBe(18000)
-        expect(result[0].ticket_price).toBe(100)
+        expect(result[0].ticket_price).toBe(10000)
         expect(result[0].num_pagantes).toBe(2)
       })
 
@@ -652,7 +652,7 @@ describe("DataViz - Integration Tests", () => {
           title: "Mixed Payments Event",
           event_status: "Completed" as EventStatus,
           time_event_start: new Date("2025-09-01T19:00:00Z").toISOString(),
-          ticket_price: 150,
+          ticket_price: 15000,
         })
 
         const profiles = await Promise.all([
@@ -704,7 +704,7 @@ describe("DataViz - Integration Tests", () => {
           title: "Empty Revenue Event",
           event_status: "Completed" as EventStatus,
           time_event_start: new Date("2025-10-01T19:00:00Z").toISOString(),
-          ticket_price: 100,
+          ticket_price: 10000,
         })
 
         const result = await getEventRevenueData()
@@ -714,7 +714,7 @@ describe("DataViz - Integration Tests", () => {
         if (emptyEvent) {
           expect(emptyEvent.faturamento_total).toBe(0)
           expect(emptyEvent.num_pagantes).toBe(0)
-          expect(emptyEvent.ticket_price).toBe(100)
+          expect(emptyEvent.ticket_price).toBe(10000)
         }
       })
 
@@ -1345,14 +1345,14 @@ describe("DataViz - Integration Tests", () => {
           event_status: "Completed" as EventStatus,
           time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
           total_spots: 50,
-          ticket_price: 100,
+          ticket_price: 10000,
         })
         const event2 = await createTestEvent(tracker, kysely, {
           title: "KPI Event 2",
           event_status: "Completed" as EventStatus,
           time_event_start: new Date("2025-08-15T19:00:00Z").toISOString(),
           total_spots: 40,
-          ticket_price: 150,
+          ticket_price: 15000,
         })
         // Draft event should not be counted
         await createTestEvent(tracker, kysely, {
@@ -1360,7 +1360,7 @@ describe("DataViz - Integration Tests", () => {
           event_status: "Draft" as EventStatus,
           time_event_start: new Date("2025-09-15T19:00:00Z").toISOString(),
           total_spots: 30,
-          ticket_price: 200,
+          ticket_price: 20000,
         })
 
         // Event 1: veteran1 and nonVeteran attended, paid
@@ -1421,7 +1421,7 @@ describe("DataViz - Integration Tests", () => {
         expect(result.avg_revenue_per_event).toBe(25000)
 
         // Average ticket price: (100 + 150) / 2 = 125
-        expect(result.avg_ticket_price).toBe(125)
+        expect(result.avg_ticket_price).toBe(12500)
       })
 
       it("should return zeros for event metrics when no completed events exist", async () => {
@@ -1453,14 +1453,14 @@ describe("DataViz - Integration Tests", () => {
           event_status: "Completed" as EventStatus,
           time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
           total_spots: 50,
-          ticket_price: 100,
+          ticket_price: 10000,
         })
         const draftEvent = await createTestEvent(tracker, kysely, {
           title: "Draft",
           event_status: "Draft" as EventStatus,
           time_event_start: new Date("2025-08-15T19:00:00Z").toISOString(),
           total_spots: 50,
-          ticket_price: 200,
+          ticket_price: 20000,
         })
 
         await createTestEventParticipant(tracker, kysely, {
@@ -1484,7 +1484,7 @@ describe("DataViz - Integration Tests", () => {
         expect(result.total_events_completed).toBe(1)
         expect(result.total_unique_attendees).toBe(1)
         expect(result.total_revenue).toBe(10000)
-        expect(result.avg_ticket_price).toBe(100)
+        expect(result.avg_ticket_price).toBe(10000)
       })
 
       it("should handle events with zero total_spots in occupancy calculation", async () => {
@@ -1494,7 +1494,7 @@ describe("DataViz - Integration Tests", () => {
           event_status: "Completed" as EventStatus,
           time_event_start: new Date("2025-07-15T19:00:00Z").toISOString(),
           total_spots: 0,
-          ticket_price: 100,
+          ticket_price: 10000,
         })
 
         const result = await getKpiScores()

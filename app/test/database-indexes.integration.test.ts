@@ -75,7 +75,7 @@ describe("Database Indexes - Integration Tests", () => {
         time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
         time_application_start: new Date().toISOString(),
-        ticket_price: 100,
+        ticket_price: 10000,
         total_spots: 50
       })
 
@@ -146,7 +146,7 @@ describe("Database Indexes - Integration Tests", () => {
         time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
         time_application_start: new Date().toISOString(),
-        ticket_price: 100,
+        ticket_price: 10000,
         total_spots: 50
       })
 

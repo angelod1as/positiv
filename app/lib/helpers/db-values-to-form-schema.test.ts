@@ -92,13 +92,13 @@ describe("dbValuesToFormSchema", () => {
   it("preserves number values", () => {
     const input = {
       id: "123",
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50,
     }
 
     const result = dbValuesToFormSchema(input)
 
-    expect(result.ticket_price).toBe(100)
+    expect(result.ticket_price).toBe(10000)
     expect(result.total_spots).toBe(50)
   })
 
@@ -153,13 +153,13 @@ describe("schemaValuesToDB", () => {
     const input = {
       id: "123",
       title: "Test Event",
-      ticket_price: 100,
+      ticket_price: 10000,
     }
 
     const result = schemaValuesToDB(input)
 
     expect(result.id).toBe("123")
     expect(result.title).toBe("Test Event")
-    expect(result.ticket_price).toBe(100)
+    expect(result.ticket_price).toBe(10000)
   })
 })

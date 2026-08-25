@@ -16,7 +16,7 @@ describe("formatRegistrationLimitAdminMail", () => {
     time_group_end: "2026-02-14T20:00:00Z",
     time_payment_start: "2026-02-12T00:00:00Z",
     time_payment_end: "2026-02-14T23:59:59Z",
-    ticket_price: 30,
+    ticket_price: 3000,
     event_status: "Registration Closed",
     event_type: "regular",
     auto_publish: false,

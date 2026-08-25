@@ -52,7 +52,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -66,7 +66,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 150,
+      ticket_price: 15000,
       total_spots: 30
     })
 
@@ -165,7 +165,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -179,7 +179,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 150,
+      ticket_price: 15000,
       total_spots: 30
     })
 
@@ -193,7 +193,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 40
     })
 
@@ -273,7 +273,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -287,7 +287,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 150,
+      ticket_price: 15000,
       total_spots: 30
     })
 
@@ -339,7 +339,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days from now
       time_event_end: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -353,7 +353,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 150,
+      ticket_price: 15000,
       total_spots: 30
     })
 
@@ -444,7 +444,7 @@ describe("getProfileWithExtraDataById - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -487,7 +487,7 @@ describe("getProfileWithExtraDataById - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -535,7 +535,7 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -581,7 +581,7 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -2060,7 +2060,7 @@ describe("getEventsForDashboard - Integration Tests", () => {
       emoji: "🎉",
       description: "This is a full test event",
       location: "Test Location",
-      ticket_price: 100,
+      ticket_price: 10000,
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),

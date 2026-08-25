@@ -165,7 +165,7 @@ async function createTestEvent(): Promise<{ id: string; title: string }> {
     time_application_start: new Date().toISOString(),
     description: 'Automated test event for E2E testing',
     location: 'Test Location - São Paulo, SP',
-    ticket_price: 50,
+    ticket_price: 5000,
     total_spots: 65,
     event_type: 'regular' as const
   }
@@ -231,7 +231,7 @@ export async function createClosedEvent(): Promise<{ id: string; title: string }
     time_application_start: new Date(pastDate.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
     description: 'Automated test event for E2E testing - closed',
     location: 'Test Location - São Paulo, SP',
-    ticket_price: 50,
+    ticket_price: 5000,
     total_spots: 65,
     event_type: 'regular' as const
   }

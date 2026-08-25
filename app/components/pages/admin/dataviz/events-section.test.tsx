@@ -43,7 +43,7 @@ const makeRevenue = (count: number): EventRevenueDataPoint[] =>
     emoji: '🎉',
     date: `2024-0${i + 1}-15`,
     faturamento_total: 5000 + i * 1000,
-    ticket_price: 50,
+    ticket_price: 5000,
     num_pagantes: 100 + i * 10,
   }))
 

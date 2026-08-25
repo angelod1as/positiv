@@ -43,6 +43,7 @@ describe("createOrUpdateEvent - Integration Tests", () => {
       description: "Descrição do evento",
       emoji: "🎉",
       location: "Motel Harmony",
+      // Form values: the admin types reais, the schema converts to cents.
       ticket_price: 200,
       total_spots: 60,
       auto_publish: true,
@@ -64,7 +65,7 @@ describe("createOrUpdateEvent - Integration Tests", () => {
       location: "Motel Harmony",
       event_status: "Completed",
       event_type: "bdsm",
-      ticket_price: 200,
+      ticket_price: 20000,
       total_spots: 60,
     })
 

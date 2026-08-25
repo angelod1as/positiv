@@ -118,7 +118,7 @@ describe("getKpiScores - Extended KPI Data", () => {
           time_event_start: new Date(`2025-${String(i + 7).padStart(2, '0')}-01`).toISOString(),
           time_event_end: new Date(`2025-${String(i + 7).padStart(2, '0')}-01`).toISOString(),
           total_spots: 10,
-          ticket_price: 100,
+          ticket_price: 10000,
         })
       )
     )
@@ -184,7 +184,7 @@ describe("getKpiScores - Extended KPI Data", () => {
           time_event_start: new Date(`2025-${String(i + 7).padStart(2, '0')}-01`).toISOString(),
           time_event_end: new Date(`2025-${String(i + 7).padStart(2, '0')}-01`).toISOString(),
           total_spots: 10,
-          ticket_price: 100,
+          ticket_price: 10000,
         })
       )
     )

@@ -13,7 +13,7 @@ const makeEvent = (overrides: Partial<Event>): Event =>
     event_status: "Registration Open",
     event_type: "regular",
     location: "São Paulo",
-    ticket_price: 120,
+    ticket_price: 12000,
     time_event_start: new Date("2030-08-23T22:00:00.000Z").toISOString(),
     is_applied: false,
     ...overrides,
