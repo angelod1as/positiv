@@ -16,7 +16,7 @@ const mockEvent: Event = {
   time_payment_start: null,
   time_payment_end: null,
   location: "Test Location",
-  ticket_price: 50,
+  ticket_price: 5000,
   event_status: "Registration Open",
   is_applied: false,
   event_type: "regular",
@@ -44,6 +44,14 @@ vi.mock("./event-card-footer", () => ({
 }))
 
 describe("EventCard", () => {
+  it("shows the price formatted from cents", () => {
+    const { getByText } = render(
+      <EventCard event={mockEvent} data-testid="test-card" />,
+    )
+
+    expect(getByText("R$ 50,00")).toBeInTheDocument()
+  })
+
   it("should pass isAdmin prop to EventCardFooter when isAdmin is true", () => {
     const { getByTestId } = render(
       <EventCard event={mockEvent} data-testid="test-card" isAdmin={true} />,

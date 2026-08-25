@@ -32,7 +32,7 @@ const event: Event = {
   emoji: "🎉",
   description: "Para quem sobreviveu ao carnaval",
   location: "Motel Harmony",
-  ticket_price: 200,
+  ticket_price: 20000,
   total_spots: 60,
   event_type: "bdsm",
   event_status: "Draft",

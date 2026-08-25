@@ -15,10 +15,8 @@ import {
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
-import {
-  buildEventLabel,
-  formatCurrency,
-} from '~/lib/helpers/chart-utils'
+import { buildEventLabel } from '~/lib/helpers/chart-utils'
+import { formatCurrency } from '~/lib/helpers/format-currency'
 
 const revenueCopy = adminDatavizCopy.revenueChart
 
