@@ -346,16 +346,33 @@ Inputs from `GET /v3/myAccount/fees/` (cached in memory for 12 h; on failure
 fall back to the constants in `app/business/payment/asaas-fees.ts`, which
 mirror the public price list):
 
-- PIX: `fixedFeeValue`, `percentageFee` (list: R$ 1.99, 0%).
+- PIX: `fixedFeeValue` (R$ 1.99) and `percentageFee`. When `pix.type` is
+  `FIXED` the percentage fields — `percentageFee`, `minimumFeeValue`,
+  `maximumFeeValue` — come back `null`, not `0`; read them as zero or the
+  gross-up evaluates to `NaN`.
 - Card: `operationValue` (R$ 0.49), `oneInstallmentPercentage` (2.99%),
-  `upToSixInstallmentsPercentage` (3.49%).
-- Anticipation: monthly rate `r` from the anticipation block (list: from
-  1.25%/month); configurable override `ASAAS_ANTICIPATION_MONTHLY_RATE`.
+  `upToSixInstallmentsPercentage` (3.49%). Asaas ships a second, discounted
+  set of percentages alongside them and a `hasValidDiscount` flag; branch on
+  the flag rather than hardcoding the plain set, or a negotiated discount
+  silently over-charges participants.
+- Anticipation: **two** monthly rates, not one.
+  `anticipation.creditCard.detachedMonthlyFeeValue` (1.15%/month) applies to
+  a single-installment charge, `installmentMonthlyFeeValue` (1.60%/month) to
+  2–6x — so `r` below is a function of `n`. Ignore `cardSale.anticipation`:
+  that block is card-present (maquininha, Asaas Tap) and does not apply to
+  charges created through the payments API. `ASAAS_ANTICIPATION_MONTHLY_RATE`
+  is a single scalar and cannot express this; it has to be split in two or
+  dropped in favour of the payload.
+
+The percentages above were read from the sandbox account on 2026-08-24, where
+they are the public price list. POS-519 carries the full payload; production
+may have negotiated rates, which is why PR 13 re-runs the lookup and
+re-calibrates before the flag goes on.
 
 Positiv must net `base`. With card fee `p` (percentage) and `f` (fixed), and
-anticipation charged per installment for the months until each one settles
-(installment k settles at k×32 days ≈ k months), the gross `G` for `n`
-installments solves
+anticipation at the monthly rate `r` that matches `n`, charged per
+installment for the months until each one settles (installment k settles at
+k×32 days ≈ k months), the gross `G` for `n` installments solves
 
 ```
 G − (p·G + f) − r·Σ_{k=1..n} (G/n)·k = base
@@ -365,6 +382,11 @@ G = (base + f) / (1 − p − r·(n+1)/2)
 - `perInstallment = ceil(G / n)` cents; `total = perInstallment × n`
   (rounded up so Positiv is never short).
 - PIX: `G = ceil((base + pixFixed) / (1 − pixPercent))`.
+- The rate split is not a rounding detail: at 6x the anticipation term
+  `r·(n+1)/2` is 5.6% at 1.60%/month, against 4.375% under the single
+  1.25%/month this document assumed before. On a R$ 200 base that is
+  R$ 220,50 instead of R$ 217,60 — R$ 2,90 per sale Positiv would have
+  absorbed.
 - `buildPaymentOptions(base, fees)` is pure and unit-tested against a table
   of known values; the sandbox calibration step compares `asaas_net` from a
   real confirmed charge with `base` and adjusts the anticipation term if
@@ -480,7 +502,7 @@ registering PIX transfers manually, exactly as today.
 | # | PR | Contents |
 |---|---|---|
 | **A** | | |
-| 0 | (no code) | Asaas account checklist: production account, commercial data approved (card), PIX key registered, anticipation automática on, `positivparty.com` in commercial data (needed for `successUrl`), sandbox account, both API keys in the secret store |
+| 0 | (no code) | Asaas account checklist: sandbox account, its API key and PIX key, the fee snapshot everything is calibrated against, and the address that receives webhook failure alerts. The production account is confirmed to exist and be approved, but is only wired up in PR 13 |
 | 1 | `ticket_price` in cents | migration + event form/card/dashboard/admin readers + `formatCurrency(cents)` helper |
 | 2 | Payments schema | enums, `payments`, `payment_webhook_events`, `profiles.asaas_customer_id`, view, indexes, RLS, `updated_at` trigger, cron; test utils + cleanup lists; regenerated types |
 | 3 | Backfill | migration + integration test on seeded data (columns still present) |
@@ -494,9 +516,16 @@ registering PIX transfers manually, exactly as today.
 | 10 | Payment page | `/pagamento`, CPF gate, `pickOption`, dashboard CTA, thank-you page |
 | 11 | Webhook | endpoint, inbox, transitions, confirmation email, Telegram alerts |
 | 12 | Refund | modal action, Asaas call, refund email |
-| 13 | E2E + sandbox | mock server, E2E specs, `scripts/asaas/smoke.ts`, runbook `docs/payments-runbook.md`, news item, flag on in production |
+| 13 | E2E + sandbox | mock server, E2E specs, `scripts/asaas/smoke.ts`, runbook `docs/payments-runbook.md`, news item, production cutover, flag on in production |
 
 PR 0 blocks only PR 13 and can run in parallel with all of Phase A.
+
+Everything up to PR 12 is built and calibrated against the Asaas **sandbox**,
+and PR 0 is scoped to it. An idle Asaas account is closed after a period of
+inactivity, so the production account is only wired up in PR 13, whose
+cutover step re-verifies the account facts PR 0 recorded — approval and
+anticipation both decay if the account lapses — and re-runs the fee lookup,
+since sandbox returns the public price list and production may not.
 
 ## 10b. Where each PR's plan lives
 
@@ -554,8 +583,8 @@ Two things the plans decided that this document only implied:
   installments confirm, so `fee` is exact only after the last one.
 - **`successUrl` domain**: must match the commercial data on the Asaas
   account, otherwise charge creation fails with `invalid_callback` — the
-  checklist in PR 0 covers it; the client falls back to no callback when the
-  env is not production.
+  cutover checklist in PR 13 covers it; the client falls back to no callback
+  when the env is not production.
 - **Webhook queue interruption** after 15 consecutive failures: alert email
   goes to the address on the webhook config; runbook has the
   `PUT /v3/webhooks/{id} { interrupted: false }` step.

@@ -12,6 +12,27 @@
 
 **Branch:** `pos-526-asaas-client` from `main`, worktree `wt/pos-526-asaas-client`.
 
+> **Correction, 2026-08-24 (POS-519).** The real `GET /v3/myAccount/fees/`
+> payload disagrees with the Zod schema and fallback constants below:
+>
+> - `payment.pix.percentageFee`, `minimumFeeValue` and `maximumFeeValue` come
+>   back **`null`** when `payment.pix.type` is `FIXED`, which is the current
+>   state of the account. `zod.number()` rejects the response outright — they
+>   need `.nullable()`, and the mapper has to read null as zero before
+>   `pricing.ts` divides by `1 − pixPercent`.
+> - The anticipation block has no `monthlyFeePercentage` for credit card. It
+>   carries **two** fields: `detachedMonthlyFeeValue` (1.15) for
+>   single-installment charges and `installmentMonthlyFeeValue` (1.60) for
+>   instalments. `ASAAS_ANTICIPATION_MONTHLY_RATE`, declared in Task 1 as one
+>   scalar, cannot express that — split it or drop it and read the payload.
+> - `payment.creditCard` also ships `discount*Percentage` fields and a
+>   `hasValidDiscount` flag. Branch on the flag instead of hardcoding the
+>   plain percentages.
+>
+> Full payload: POS-519. `docs/plans/payments-v3-design.md` §6 is already
+> corrected.
+
+
 ---
 
 ### Task 1: Environment variables
