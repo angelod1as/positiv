@@ -12,7 +12,7 @@
 
 **Branch:** `pos-532-e2e-and-launch` from `main`, worktree `wt/pos-532-e2e-and-launch`.
 
-**Depends on:** POS-531 for the code, POS-519 for the production account.
+**Depends on:** POS-531 for the code, POS-519 for the sandbox account. The production account is only touched in Task 6.
 
 **Read first:** `e2e/README.md` and the E2E section of `CLAUDE.md`. E2E runs against `pnpm build`, one at a time, behind the database lock, and takes ~8 minutes. Run it **once, at the end** — never as a mid-task check.
 
@@ -497,15 +497,26 @@ export default {
 } satisfies NewsItemContent
 ```
 
-- [ ] **Step 2: Production checklist**
+- [ ] **Step 2: Production cutover**
 
-Before flipping the flag, confirm every item of POS-519 is done, then:
+Everything before this step — every PR from 1 to 12, and Tasks 1 to 5 of this
+one — was built and calibrated against the Asaas **sandbox**. The production
+account is deliberately left untouched until here, because an idle Asaas
+account is closed after a period of inactivity.
 
+POS-519 recorded the production account as PJ, its commercial data approved
+and "antecipação automática" on. Those facts decay if the account lapsed, so
+re-verify them instead of trusting the ticks:
+
+- [ ] `GET /v3/myAccount/status/` on production returns `general: APPROVED` — if the account closed this is the long pole, redo it before anything else
+- [ ] "Antecipação automática" still enabled (PJ-only; a reopened account may have lost it)
+- [ ] A production PIX key is registered and `ACTIVE` (`GET /v3/pix/addressKeys`) — without one a production PIX charge generates no QR code
+- [ ] `positivparty.com` is in the account's commercial data, or `callback.successUrl` will be refused
+- [ ] `GET /v3/myAccount/fees/` on production, compared against the sandbox snapshot in POS-519. Sandbox returns the public price list; negotiated production rates mean the engine was calibrated on the wrong numbers and the `buildPaymentOptions` table has to be re-run against the production values
 - [ ] `ASAAS_API_URL=https://api.asaas.com/v3` and the **production** key are set in Coolify
 - [ ] `ASAAS_WEBHOOK_TOKEN` is set and is at least 32 characters
-- [ ] `pnpm asaas:register-webhook https://www.positivparty.com` has run against production
-- [ ] `positivparty.com` is in the account's commercial data, or `callback.successUrl` will be refused
-- [ ] One real charge of R$ 1,00 to a personal card or PIX key, confirmed and then refunded, before anyone else is invited to pay
+- [ ] `pnpm asaas:register-webhook https://www.positivparty.com` has run against production — the sandbox webhook is a separate registration and does not carry over
+- [ ] One real charge of R$ 1,00 to a personal card or PIX key, confirmed and then refunded, before anyone else is invited to pay — `POST /v3/sandbox/payment/{id}/confirm` does not exist in production, so this one is paid by hand
 - [ ] `PAYMENTS_ENABLED=true` and redeploy
 - [ ] Watch `payment_webhook_events` for the first hour
 
@@ -529,6 +540,6 @@ git commit -m "docs(news): announce paying online"
 ## Definition of done
 
 - PR title: `[POS-532] Cover the payment journey end to end and turn payments on`
-- `Fixes POS-532`; the calibration table under Testing; the production checklist under How to test manually
+- `Fixes POS-532`; the calibration table under Testing; the production cutover under How to test manually
 - Delete this plan file before opening the PR
 - After the deploy: flip `PAYMENTS_ENABLED` to `true`, and only then tell the community

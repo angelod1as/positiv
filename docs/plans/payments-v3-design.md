@@ -480,7 +480,7 @@ registering PIX transfers manually, exactly as today.
 | # | PR | Contents |
 |---|---|---|
 | **A** | | |
-| 0 | (no code) | Asaas account checklist: production account, commercial data approved (card), PIX key registered, anticipation automática on, `positivparty.com` in commercial data (needed for `successUrl`), sandbox account, both API keys in the secret store |
+| 0 | (no code) | Asaas account checklist: sandbox account, its API key and PIX key, the fee snapshot everything is calibrated against, and the address that receives webhook failure alerts. The production account is confirmed to exist and be approved, but is only wired up in PR 13 |
 | 1 | `ticket_price` in cents | migration + event form/card/dashboard/admin readers + `formatCurrency(cents)` helper |
 | 2 | Payments schema | enums, `payments`, `payment_webhook_events`, `profiles.asaas_customer_id`, view, indexes, RLS, `updated_at` trigger, cron; test utils + cleanup lists; regenerated types |
 | 3 | Backfill | migration + integration test on seeded data (columns still present) |
@@ -494,9 +494,16 @@ registering PIX transfers manually, exactly as today.
 | 10 | Payment page | `/pagamento`, CPF gate, `pickOption`, dashboard CTA, thank-you page |
 | 11 | Webhook | endpoint, inbox, transitions, confirmation email, Telegram alerts |
 | 12 | Refund | modal action, Asaas call, refund email |
-| 13 | E2E + sandbox | mock server, E2E specs, `scripts/asaas/smoke.ts`, runbook `docs/payments-runbook.md`, news item, flag on in production |
+| 13 | E2E + sandbox | mock server, E2E specs, `scripts/asaas/smoke.ts`, runbook `docs/payments-runbook.md`, news item, production cutover, flag on in production |
 
 PR 0 blocks only PR 13 and can run in parallel with all of Phase A.
+
+Everything up to PR 12 is built and calibrated against the Asaas **sandbox**,
+and PR 0 is scoped to it. An idle Asaas account is closed after a period of
+inactivity, so the production account is only wired up in PR 13, whose
+cutover step re-verifies the account facts PR 0 recorded — approval and
+anticipation both decay if the account lapses — and re-runs the fee lookup,
+since sandbox returns the public price list and production may not.
 
 ## 10b. Where each PR's plan lives
 
@@ -554,8 +561,8 @@ Two things the plans decided that this document only implied:
   installments confirm, so `fee` is exact only after the last one.
 - **`successUrl` domain**: must match the commercial data on the Asaas
   account, otherwise charge creation fails with `invalid_callback` — the
-  checklist in PR 0 covers it; the client falls back to no callback when the
-  env is not production.
+  cutover checklist in PR 13 covers it; the client falls back to no callback
+  when the env is not production.
 - **Webhook queue interruption** after 15 consecutive failures: alert email
   goes to the address on the webhook config; runbook has the
   `PUT /v3/webhooks/{id} { interrupted: false }` step.
