@@ -92,15 +92,15 @@ CREATE TABLE payments (
     CHECK ((status IN ('refunded','partially_refunded')) = (refunded_at IS NOT NULL)
            AND (status NOT IN ('refunded','partially_refunded') OR refund_amount IS NOT NULL)),
   CONSTRAINT payments_refund_bounded
-    CHECK (refund_amount IS NULL OR refund_amount <= amount),
+    CHECK (refund_amount IS NULL OR (amount IS NOT NULL AND refund_amount <= amount)),
   CONSTRAINT payments_partial_is_partial
-    CHECK (status <> 'partially_refunded' OR refund_amount < amount),
+    CHECK (status <> 'partially_refunded' OR (refund_amount IS NOT NULL AND refund_amount < amount)),
   CONSTRAINT payments_manual_shape
-    CHECK (kind <> 'manual' OR (asaas_payment_id IS NULL AND (method IS NULL OR method IN ('pix','cash','transfer','other')))),
+    CHECK (kind <> 'manual' OR (asaas_payment_id IS NULL AND method IS NOT NULL AND method IN ('pix','cash','transfer','other'))),
   CONSTRAINT payments_asaas_shape
     CHECK (kind <> 'asaas' OR method IS NULL OR method IN ('pix','credit_card')),
   CONSTRAINT payments_installments_only_on_card
-    CHECK (installment_count IS NULL OR method = 'credit_card')
+    CHECK (installment_count IS NULL OR (method IS NOT NULL AND method = 'credit_card'))
 );
 
 CREATE UNIQUE INDEX payments_one_active_per_participant

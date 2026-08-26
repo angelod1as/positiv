@@ -137,6 +137,44 @@ describe("payments schema", () => {
       ).rejects.toThrow(/payments_refund_shape/)
     })
 
+    it("refuses a refund amount on a row that has no amount", async () => {
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: participantId,
+          kind: "asaas",
+          status: "pending",
+          amount: null,
+          method: null,
+          paid_at: null,
+          refund_amount: 500,
+        }),
+      ).rejects.toThrow(/payments_refund_bounded/)
+    })
+
+    it("refuses installments on a row with no method at all", async () => {
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: participantId,
+          kind: "asaas",
+          status: "pending",
+          amount: null,
+          method: null,
+          paid_at: null,
+          installment_count: 3,
+        }),
+      ).rejects.toThrow(/payments_installments_only_on_card/)
+    })
+
+    it("refuses a manual row that does not say how it was paid", async () => {
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: participantId,
+          kind: "manual",
+          method: null,
+        }),
+      ).rejects.toThrow(/payments_manual_shape/)
+    })
+
     it("refuses a manual row carrying an Asaas payment id", async () => {
       await expect(
         createTestPayment(tracker, kysely, {

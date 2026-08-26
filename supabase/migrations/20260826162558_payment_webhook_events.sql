@@ -50,11 +50,9 @@ error records why it was not.';
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS asaas_customer_id text;
 
-DO $$ BEGIN
-  CREATE UNIQUE INDEX profiles_asaas_customer_id
-    ON public.profiles (asaas_customer_id)
-    WHERE asaas_customer_id IS NOT NULL;
-EXCEPTION WHEN duplicate_table THEN null; END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS profiles_asaas_customer_id
+  ON public.profiles (asaas_customer_id)
+  WHERE asaas_customer_id IS NOT NULL;
 
 COMMENT ON COLUMN public.profiles.asaas_customer_id IS
 'Asaas customer id (cus_...), created on the first charge and reused afterwards.';

@@ -74,17 +74,21 @@ CREATE TABLE IF NOT EXISTS public.payments (
                 OR refund_amount IS NOT NULL)),
 
   CONSTRAINT payments_refund_bounded
-    CHECK (refund_amount IS NULL OR refund_amount <= amount),
+    CHECK (refund_amount IS NULL
+           OR (amount IS NOT NULL AND refund_amount <= amount)),
 
   CONSTRAINT payments_partial_is_partial
     CHECK (status <> 'partially_refunded'
            OR (refund_amount IS NOT NULL AND refund_amount < amount)),
 
+  -- A manual row is only ever written after the money arrived — the admin
+  -- modal and the backfill both state how — so its method is mandatory,
+  -- unlike an Asaas row that has none until the participant picks one.
   CONSTRAINT payments_manual_shape
     CHECK (kind <> 'manual'
            OR (asaas_payment_id IS NULL
-               AND (method IS NULL
-                    OR method IN ('pix', 'cash', 'transfer', 'other')))),
+               AND method IS NOT NULL
+               AND method IN ('pix', 'cash', 'transfer', 'other'))),
 
   CONSTRAINT payments_asaas_shape
     CHECK (kind <> 'asaas'
@@ -92,7 +96,8 @@ CREATE TABLE IF NOT EXISTS public.payments (
            OR method IN ('pix', 'credit_card')),
 
   CONSTRAINT payments_installments_only_on_card
-    CHECK (installment_count IS NULL OR method = 'credit_card')
+    CHECK (installment_count IS NULL
+           OR (method IS NOT NULL AND method = 'credit_card'))
 );
 
 -- At most one open charge per participant: "cancel the old, insert the new"
