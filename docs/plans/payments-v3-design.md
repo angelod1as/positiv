@@ -86,7 +86,8 @@ CREATE TABLE payments (
   updated_at           timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT payments_paid_shape
-    CHECK ((status IN ('paid','refunded','partially_refunded')) = (paid_at IS NOT NULL AND amount IS NOT NULL)),
+    CHECK ((status IN ('paid','refunded','partially_refunded')) = (paid_at IS NOT NULL)
+           AND (status NOT IN ('paid','refunded','partially_refunded') OR amount IS NOT NULL)),
   CONSTRAINT payments_refund_shape
     CHECK ((status IN ('refunded','partially_refunded')) = (refunded_at IS NOT NULL AND refund_amount IS NOT NULL)),
   CONSTRAINT payments_refund_bounded
