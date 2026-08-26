@@ -66,6 +66,20 @@ export async function getTestUserIds(): Promise<string[]> {
 export async function cleanupEventParticipations(userId: string, throwOnError: boolean = false): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
+  // payments references event_participants with RESTRICT, so it goes first.
+  const { data: participants } = await supabase
+    .from('event_participants')
+    .select('id')
+    .eq('profile_id', userId)
+  const participantIds = participants?.map(participant => participant.id) ?? []
+  
+  if (participantIds.length > 0) {
+    await supabase
+      .from('payments')
+      .delete()
+      .in('event_participant_id', participantIds)
+  }
+  
   const { error } = await supabase
     .from('event_participants')
     .delete()
@@ -296,6 +310,25 @@ export async function cleanupTestEvents(): Promise<void> {
   // Delete associated event participants first (due to foreign key constraints)
   const eventIds = testEvents.map(event => event.id)
   let hasErrors = false
+  
+  // payments references event_participants with RESTRICT, so it goes first.
+  const { data: eventParticipants } = await supabase
+    .from('event_participants')
+    .select('id')
+    .in('event_id', eventIds)
+  const eventParticipantIds = eventParticipants?.map(participant => participant.id) ?? []
+  
+  if (eventParticipantIds.length > 0) {
+    const { error: paymentsError } = await supabase
+      .from('payments')
+      .delete()
+      .in('event_participant_id', eventParticipantIds)
+  
+    if (paymentsError) {
+      console.error('Error deleting payments:', paymentsError)
+      hasErrors = true
+    }
+  }
   
   const { error: participantsError } = await supabase
     .from('event_participants')

@@ -12,6 +12,8 @@ const TABLES = [
   "user_roles",                 // seeded; references auth.users, not profiles
   "events",                     // seeded; referenced by event_participants
   "event_participants",         // seeded; wiped by kpi-scores and dataviz (no WHERE)
+  "payments",                   // references event_participants; RESTRICT, so restored after it
+  "payment_webhook_events",     // independent, but snapshotted so a suite cannot leak events
   "event_demographics_history", // wiped by demographics-history (no WHERE)
   "newsletter_subscriptions",   // seeded; not in TestDataTracker tableOrder — relies on this global restore
 ]
