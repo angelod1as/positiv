@@ -6,9 +6,23 @@ on:
       - main
   workflow_dispatch:
 
+# Coolify deploys the application from its own webhook on this same push, in
+# parallel with everything below and answering to nothing here. So this workflow
+# does not decide whether the app ships — only whether the schema it needs is
+# already there when it does. Every minute this gate spends is a minute the app
+# can be live against the old schema, which is how POS-520 put an app reading
+# integer cents in front of a column still holding reais: the gate hung for
+# fifteen minutes and was cancelled, `deploy` was skipped, and the site served
+# every price at a hundredth of itself while Coolify reported healthy.
+#
+# The gate stays. Keeping it short is what makes it safe.
 jobs:
   unit-test:
     runs-on: ubuntu-latest
+    # Stated, so a run that stops making progress fails as a run that took too
+    # long rather than as an unexplained cancellation. The suite takes about
+    # three minutes.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Install pnpm
@@ -19,8 +33,11 @@ jobs:
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
+      # Not test:coverage. Instrumenting the suite is worth its cost on a pull
+      # request, where deploy-and-test.yml runs it and keeps the artifact; here
+      # it only widens the window above.
       - name: Run unit tests
-        run: pnpm test:coverage
+        run: pnpm test:unit
 
   deploy:
     runs-on: ubuntu-latest
