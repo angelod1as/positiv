@@ -74,10 +74,20 @@ export async function cleanupEventParticipations(userId: string, throwOnError: b
   const participantIds = participants?.map(participant => participant.id) ?? []
   
   if (participantIds.length > 0) {
-    await supabase
+    const { error: paymentsError } = await supabase
       .from('payments')
       .delete()
       .in('event_participant_id', participantIds)
+  
+    if (paymentsError) {
+      const message = `Failed to clean up payments for user ${userId}`
+  
+      if (throwOnError) {
+        throw new CleanupError(message, 'cleanupEventParticipations', paymentsError)
+      } else {
+        console.warn(`[Non-critical] ${message}:`, paymentsError)
+      }
+    }
   }
   
   const { error } = await supabase

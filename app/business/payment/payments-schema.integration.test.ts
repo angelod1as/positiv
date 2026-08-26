@@ -94,6 +94,49 @@ describe("payments schema", () => {
       ).rejects.toThrow(/payments_refund_bounded/)
     })
 
+    it("refuses an Asaas row paid by a method Asaas cannot take", async () => {
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: participantId,
+          kind: "asaas",
+          method: "cash",
+        }),
+      ).rejects.toThrow(/payments_asaas_shape/)
+    })
+
+    it("refuses a refunded row without a refund amount", async () => {
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: participantId,
+          status: "refunded",
+          amount: 22000,
+          refunded_at: new Date().toISOString(),
+        }),
+      ).rejects.toThrow(/payments_refund_shape/)
+    })
+
+    it("refuses a refund amount without a refund timestamp", async () => {
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: participantId,
+          status: "refunded",
+          amount: 22000,
+          refund_amount: 5000,
+        }),
+      ).rejects.toThrow(/payments_refund_shape/)
+    })
+
+    it("refuses a paid row that carries a refund timestamp", async () => {
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: participantId,
+          status: "paid",
+          amount: 22000,
+          refunded_at: new Date().toISOString(),
+        }),
+      ).rejects.toThrow(/payments_refund_shape/)
+    })
+
     it("refuses a manual row carrying an Asaas payment id", async () => {
       await expect(
         createTestPayment(tracker, kysely, {

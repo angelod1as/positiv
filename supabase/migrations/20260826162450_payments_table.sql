@@ -63,9 +63,15 @@ CREATE TABLE IF NOT EXISTS public.payments (
            AND (status NOT IN ('paid', 'refunded', 'partially_refunded')
                 OR amount IS NOT NULL)),
 
+  -- Same shape as payments_paid_shape, for the same reason: written as one
+  -- biconditional, a paid row could carry a stray refunded_at because both
+  -- sides come out false. refund_amount stays allowed before the refund lands,
+  -- so a requested-but-unsettled refund can record what it will return.
   CONSTRAINT payments_refund_shape
     CHECK ((status IN ('refunded', 'partially_refunded'))
-           = (refunded_at IS NOT NULL AND refund_amount IS NOT NULL)),
+             = (refunded_at IS NOT NULL)
+           AND (status NOT IN ('refunded', 'partially_refunded')
+                OR refund_amount IS NOT NULL)),
 
   CONSTRAINT payments_refund_bounded
     CHECK (refund_amount IS NULL OR refund_amount <= amount),
@@ -77,7 +83,8 @@ CREATE TABLE IF NOT EXISTS public.payments (
   CONSTRAINT payments_manual_shape
     CHECK (kind <> 'manual'
            OR (asaas_payment_id IS NULL
-               AND method IN ('pix', 'cash', 'transfer', 'other'))),
+               AND (method IS NULL
+                    OR method IN ('pix', 'cash', 'transfer', 'other')))),
 
   CONSTRAINT payments_asaas_shape
     CHECK (kind <> 'asaas'
