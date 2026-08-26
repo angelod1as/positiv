@@ -77,6 +77,13 @@ CREATE TABLE IF NOT EXISTS public.payments (
     CHECK (refund_amount IS NULL
            OR (amount IS NOT NULL AND refund_amount <= amount)),
 
+  -- The mirror of payments_partial_is_partial: a full refund returned the
+  -- whole amount. PAYMENT_REFUNDED sets refund_amount = amount (§4), and the
+  -- manual "Marcar reembolsado" picks the status from what it returns.
+  CONSTRAINT payments_full_is_full
+    CHECK (status <> 'refunded'
+           OR (refund_amount IS NOT NULL AND refund_amount = amount)),
+
   CONSTRAINT payments_partial_is_partial
     CHECK (status <> 'partially_refunded'
            OR (refund_amount IS NOT NULL AND refund_amount < amount)),

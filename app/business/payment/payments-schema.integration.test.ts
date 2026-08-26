@@ -82,14 +82,25 @@ describe("payments schema", () => {
       ).rejects.toThrow(/payments_partial_is_partial/)
     })
 
-    it("refuses a refund larger than the amount", async () => {
+    it("refuses a full refund that returned less than the amount", async () => {
       await expect(
         createTestPayment(tracker, kysely, {
           event_participant_id: participantId,
           status: "refunded",
           amount: 22000,
-          refund_amount: 30000,
+          refund_amount: 5000,
           refunded_at: new Date().toISOString(),
+        }),
+      ).rejects.toThrow(/payments_full_is_full/)
+    })
+
+    it("refuses a refund larger than the amount", async () => {
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: participantId,
+          status: "paid",
+          amount: 22000,
+          refund_amount: 30000,
         }),
       ).rejects.toThrow(/payments_refund_bounded/)
     })
@@ -112,7 +123,7 @@ describe("payments schema", () => {
           amount: 22000,
           refunded_at: new Date().toISOString(),
         }),
-      ).rejects.toThrow(/payments_refund_shape/)
+      ).rejects.toThrow(/payments_full_is_full/)
     })
 
     it("refuses a refund amount without a refund timestamp", async () => {
@@ -121,7 +132,7 @@ describe("payments schema", () => {
           event_participant_id: participantId,
           status: "refunded",
           amount: 22000,
-          refund_amount: 5000,
+          refund_amount: 22000,
         }),
       ).rejects.toThrow(/payments_refund_shape/)
     })
@@ -371,6 +382,25 @@ describe("payments schema", () => {
       expect(row.refunded).toBe(5000)
       expect(row.net).toBe(17000)
       expect(row.has_paid).toBe(true)
+    })
+
+    it("keeps net at the gross when Asaas never reported a net", async () => {
+      await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "asaas",
+        method: "pix",
+        amount: 22000,
+        asaas_net: null,
+      })
+
+      const row = await kysely
+        .selectFrom("event_participant_payments")
+        .selectAll()
+        .where("event_participant_id", "=", participantId)
+        .executeTakeFirstOrThrow()
+
+      expect(row.fee).toBe(0)
+      expect(row.net).toBe(22000)
     })
 
     it("sums several payments", async () => {

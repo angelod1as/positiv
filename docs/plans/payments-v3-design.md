@@ -93,6 +93,8 @@ CREATE TABLE payments (
            AND (status NOT IN ('refunded','partially_refunded') OR refund_amount IS NOT NULL)),
   CONSTRAINT payments_refund_bounded
     CHECK (refund_amount IS NULL OR (amount IS NOT NULL AND refund_amount <= amount)),
+  CONSTRAINT payments_full_is_full
+    CHECK (status <> 'refunded' OR (refund_amount IS NOT NULL AND refund_amount = amount)),
   CONSTRAINT payments_partial_is_partial
     CHECK (status <> 'partially_refunded' OR (refund_amount IS NOT NULL AND refund_amount < amount)),
   CONSTRAINT payments_manual_shape
