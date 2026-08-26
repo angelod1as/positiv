@@ -98,7 +98,9 @@ CREATE TABLE payments (
   CONSTRAINT payments_partial_is_partial
     CHECK (status <> 'partially_refunded' OR (refund_amount IS NOT NULL AND refund_amount < amount)),
   CONSTRAINT payments_manual_shape
-    CHECK (kind <> 'manual' OR (asaas_payment_id IS NULL AND method IS NOT NULL AND method IN ('pix','cash','transfer','other'))),
+    CHECK (kind <> 'manual' OR (asaas_payment_id IS NULL AND asaas_installment_id IS NULL AND asaas_invoice_url IS NULL
+                                AND asaas_customer_id IS NULL AND asaas_net IS NULL
+                                AND method IS NOT NULL AND method IN ('pix','cash','transfer','other'))),
   CONSTRAINT payments_asaas_shape
     CHECK (kind <> 'asaas' OR method IS NULL OR method IN ('pix','credit_card')),
   CONSTRAINT payments_installments_only_on_card

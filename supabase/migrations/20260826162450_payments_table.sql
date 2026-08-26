@@ -94,9 +94,16 @@ CREATE TABLE IF NOT EXISTS public.payments (
   CONSTRAINT payments_manual_shape
     CHECK (kind <> 'manual'
            OR (asaas_payment_id IS NULL
+               AND asaas_installment_id IS NULL
+               AND asaas_invoice_url IS NULL
+               AND asaas_customer_id IS NULL
+               AND asaas_net IS NULL
                AND method IS NOT NULL
                AND method IN ('pix', 'cash', 'transfer', 'other'))),
 
+  -- method stays NULL until the participant picks one; from then on the
+  -- payment page and the webhook handler both write it, so there is no
+  -- status at which an Asaas row is expected to have lost it.
   CONSTRAINT payments_asaas_shape
     CHECK (kind <> 'asaas'
            OR method IS NULL

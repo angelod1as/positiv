@@ -176,6 +176,17 @@ describe("payments schema", () => {
       ).rejects.toThrow(/payments_installments_only_on_card/)
     })
 
+    it("refuses a manual row carrying an Asaas net", async () => {
+      await expect(
+        createTestPayment(tracker, kysely, {
+          event_participant_id: participantId,
+          kind: "manual",
+          method: "pix",
+          asaas_net: 22050,
+        }),
+      ).rejects.toThrow(/payments_manual_shape/)
+    })
+
     it("refuses a manual row that does not say how it was paid", async () => {
       await expect(
         createTestPayment(tracker, kysely, {
@@ -401,6 +412,29 @@ describe("payments schema", () => {
 
       expect(row.fee).toBe(0)
       expect(row.net).toBe(22000)
+    })
+
+    it("stops counting a fully refunded participant as having paid", async () => {
+      await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "manual",
+        method: "pix",
+        amount: 22000,
+        status: "refunded",
+        refund_amount: 22000,
+        refunded_at: new Date().toISOString(),
+      })
+
+      const row = await kysely
+        .selectFrom("event_participant_payments")
+        .selectAll()
+        .where("event_participant_id", "=", participantId)
+        .executeTakeFirstOrThrow()
+
+      expect(row.has_paid).toBe(false)
+      expect(row.paid_gross).toBe(22000)
+      expect(row.refunded).toBe(22000)
+      expect(row.net).toBe(0)
     })
 
     it("sums several payments", async () => {
