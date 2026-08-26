@@ -8,7 +8,7 @@ const event: Event = {
   emoji: "🎉",
   description: "Para quem sobreviveu ao carnaval",
   location: "Motel Harmony",
-  ticket_price: 200,
+  ticket_price: 20000,
   total_spots: 60,
   event_type: "bdsm",
   event_status: "Draft",
@@ -42,8 +42,19 @@ describe("toEventAnswers", () => {
   it("writes the numbers as the number fields read them back", () => {
     const answers = toEventAnswers(event)
 
-    expect(answers.ticket_price).toBe("200")
     expect(answers.total_spots).toBe("60")
+  })
+
+  it("hands the ticket price back as reais, because the field asks for reais", () => {
+    const answers = toEventAnswers({ ...event, ticket_price: 22050 })
+
+    expect(answers.ticket_price).toBe("220.5")
+  })
+
+  it("keeps a zero price rather than dropping the field", () => {
+    const answers = toEventAnswers({ ...event, ticket_price: 0 })
+
+    expect(answers.ticket_price).toBe("0")
   })
 
   it("cuts the times down to what a datetime control shows", () => {

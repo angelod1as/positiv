@@ -430,7 +430,7 @@ export const getEventParticipantHistoryById = composable(
     profileId: string
     eventId: string
   }): Promise<Array<ParticipantVsEvent>> => {
-    return await kyselyDb
+    const results = await kyselyDb
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
@@ -447,6 +447,18 @@ export const getEventParticipantHistoryById = composable(
       .where("event_participants.event_id", "=", eventId)
       .orderBy("events.time_event_start", "desc")
       .execute()
+
+    // Same conversion, and for the same reason, as
+    // getParticipantFullEventHistory above: the column is still numeric reais
+    // and Kysely hands it over as a string. Both return one shape, so both owe
+    // the caller one unit. POS-523 moves them to the view and deletes this.
+    return results.map((row) => ({
+      ...row,
+      payment:
+        row.payment === null
+          ? row.payment
+          : Math.round(Number(row.payment) * 100),
+    }))
   },
 )
 
@@ -480,9 +492,20 @@ export const getParticipantFullEventHistory = composable(
 
     const results = await query.execute()
     // Filter out results with null time_event_start since we need it for sorting
-    return results.filter(
-      (r): r is ParticipantEventHistoryData => r.time_event_start !== null,
-    )
+    return results
+      .filter(
+        (r): r is ParticipantEventHistoryData => r.time_event_start !== null,
+      )
+      .map((row) => ({
+        // `payment` is still numeric reais in the column, and Kysely hands it
+        // over as a string. POS-523 moves this query to the view, which is
+        // already cents.
+        ...row,
+        payment:
+          row.payment === null
+            ? row.payment
+            : Math.round(Number(row.payment) * 100),
+      }))
   },
 )
 

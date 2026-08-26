@@ -16,7 +16,7 @@ const mockParticipantHistory: ParticipantEventHistoryData[] = [
     event_title: "Workshop de Introdução",
     event_emoji: "🌱",
     time_event_start: "2024-03-01T10:00:00",
-    ticket_price: 100,
+    ticket_price: 10000,
     application_status: "finalised",
     attendance_status: "attended",
     admin_general_notes: "Participou ativamente",
@@ -44,7 +44,7 @@ const mockParticipantHistory: ParticipantEventHistoryData[] = [
     event_title: "Roda de Conversa",
     event_emoji: "💬",
     time_event_start: "2024-02-15T14:00:00",
-    ticket_price: 80,
+    ticket_price: 8000,
     application_status: "finalised",
     attendance_status: "not-attended",
     admin_general_notes: "Faltou por motivo de saúde",
@@ -193,7 +193,7 @@ describe("ParticipantEventHistory", () => {
     > = [
       {
         ...mockParticipantHistory[0],
-        payment: 150,
+        payment: 15000,
         has_paid: true,
       },
     ]
@@ -280,8 +280,8 @@ describe("ParticipantEventHistory", () => {
     const historyWithSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 150,
-        ticket_price: 100,
+        payment: 15000,
+        ticket_price: 10000,
       },
     ]
     renderWithRouter(
@@ -299,8 +299,8 @@ describe("ParticipantEventHistory", () => {
     const historyWithNegativeSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 80,
-        ticket_price: 100,
+        payment: 8000,
+        ticket_price: 10000,
       },
     ]
     renderWithRouter(
@@ -318,8 +318,8 @@ describe("ParticipantEventHistory", () => {
     const historyWithZeroSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 100,
-        ticket_price: 100,
+        payment: 10000,
+        ticket_price: 10000,
       },
     ]
     renderWithRouter(

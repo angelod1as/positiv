@@ -5,6 +5,7 @@ import { runtimeStorageKey } from "~/components/forms/runtime/persistence"
 import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
 import type { Event } from "~types/database/entities.types"
+import { eventFormSchema } from "~/business/admin/common"
 import { EventForm } from "./event-form"
 
 const navigate = vi.hoisted(() => vi.fn())
@@ -32,7 +33,7 @@ const event: Event = {
   emoji: "🎉",
   description: "Para quem sobreviveu ao carnaval",
   location: "Motel Harmony",
-  ticket_price: 200,
+  ticket_price: 20000,
   total_spots: 60,
   event_type: "bdsm",
   event_status: "Draft",
@@ -202,6 +203,23 @@ describe("EventForm", () => {
         ticket_price: "200",
         auto_publish: true,
       })
+    })
+
+    it("gives a fractional price back untouched, in the cents it came from", async () => {
+      // The field is an `<input type="number">`, so it shows R$ 150,55 as
+      // "150.55". Reading that period as a thousands separator is what turned
+      // every price that is not a whole number of reais into a hundredfold of
+      // itself the next time anyone saved the event.
+      const user = userEvent.setup()
+      const fetchMock = answered()
+      render(<EventForm event={{ ...event, ticket_price: 15055 }} />)
+
+      await save(user)
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+      const sent = bodyOf(fetchMock)
+      expect(sent.ticket_price).toBe("150.55")
+      expect(eventFormSchema.parse(sent).ticket_price).toBe(15055)
     })
 
     it("says it saved and goes to the event", async () => {

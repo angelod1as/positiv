@@ -1,11 +1,12 @@
 import { format } from "date-fns/format"
 import type { Answers } from "~/components/forms/runtime/question.types"
+import { centsToReaisInput } from "~/lib/helpers/format-currency"
 import { dateTimeFormat } from "~/lib/utils"
 import type { Event } from "~types/database/entities.types"
 
 const TEXT_FIELDS = ["title", "emoji", "description", "location"] as const
 
-const NUMBER_FIELDS = ["ticket_price", "total_spots"] as const
+const NUMBER_FIELDS = ["total_spots"] as const
 
 const TIME_FIELDS = [
   "time_event_start",
@@ -43,6 +44,11 @@ export function toEventAnswers(event: Event | null | undefined): Answers {
   for (const field of NUMBER_FIELDS) {
     const value = event[field]
     if (value !== null && value !== undefined) answers[field] = String(value)
+  }
+
+  // Stored in cents, asked for in reais: the field shows what the admin typed.
+  if (event.ticket_price !== null && event.ticket_price !== undefined) {
+    answers.ticket_price = centsToReaisInput(event.ticket_price)
   }
 
   // The column keeps seconds and sometimes a zone; a datetime control shows

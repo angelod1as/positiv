@@ -1,6 +1,10 @@
 import type { FC } from "react"
 import { Card, CardContent } from "~/components/ui/card"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
+import {
+  formatCurrency,
+  formatSignedCurrency,
+} from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 
@@ -8,17 +12,6 @@ const financialCopy = adminParticipantsCopy.financialSummary
 
 type FinancialSummaryProps = {
   participantHistory: ParticipantEventHistoryData[]
-}
-
-function formatCurrency(value: number): string {
-  return `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
-function formatSurplus(value: number): string {
-  if (value >= 0) {
-    return `+${formatCurrency(value)}`
-  }
-  return `-${formatCurrency(Math.abs(value))}`
 }
 
 export const FinancialSummary: FC<FinancialSummaryProps> = ({
@@ -78,7 +71,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
             <p className="text-sm text-muted-foreground">
               {financialCopy.totalSurplus}
             </p>
-            <p className="text-xl font-bold">{formatSurplus(totalSurplus)}</p>
+            <p className="text-xl font-bold">{formatSignedCurrency(totalSurplus)}</p>
           </div>
         </div>
 
@@ -117,7 +110,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
                         surplus >= 0 ? "text-green-600" : "text-red-600"
                       }
                     >
-                      ({formatSurplus(surplus)})
+                      ({formatSignedCurrency(surplus)})
                     </span>
                   </span>
                 </li>

@@ -15,20 +15,12 @@ import type { KpiScores as KpiScoresData } from '~/business/admin/dataviz/datavi
 import { ScoreCard } from '~/components/molecules/scores/score-card'
 import { adminDatavizCopy } from '~/copy/admin/dataviz'
 import { ScoreGrid } from '~/components/molecules/scores/score-grid'
+import { formatCurrency } from '~/lib/helpers/format-currency'
 
 const kpiCopy = adminDatavizCopy.kpiScores
 
 type KpiScoresProps = {
   data: KpiScoresData
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value)
 }
 
 function formatNumber(value: number): string {

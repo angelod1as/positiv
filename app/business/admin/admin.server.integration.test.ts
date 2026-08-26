@@ -52,7 +52,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -66,7 +66,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 150,
+      ticket_price: 15000,
       total_spots: 30
     })
 
@@ -110,6 +110,40 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     }
   })
 
+  it("hands the payment over in cents, though the column still holds reais", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-payment-cents@example.com",
+      full_name: "Payment Cents User",
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Payment Cents Event",
+      event_status: "Completed",
+      time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
+      ticket_price: 15000,
+      total_spots: 10,
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      has_paid: true,
+      payment: 150,
+    })
+
+    const result = await getParticipantFullEventHistory({
+      profileId: profile.id,
+      excludeEventId: undefined,
+    })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(result.data[0].payment).toBe(15000)
+      expect(result.data[0].ticket_price).toBe(15000)
+    }
+  })
+
   it("should return ALL registrations including admin-added participants", async () => {
     // This test verifies that getParticipantFullEventHistory returns ALL registrations,
     // not just those where is_user_applied = true (fixing POS-238)
@@ -131,7 +165,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -145,7 +179,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 20 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 150,
+      ticket_price: 15000,
       total_spots: 30
     })
 
@@ -159,7 +193,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 40
     })
 
@@ -239,7 +273,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -253,7 +287,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 150,
+      ticket_price: 15000,
       total_spots: 30
     })
 
@@ -305,7 +339,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days from now
       time_event_end: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -319,7 +353,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 150,
+      ticket_price: 15000,
       total_spots: 30
     })
 
@@ -410,7 +444,7 @@ describe("getProfileWithExtraDataById - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -453,7 +487,7 @@ describe("getProfileWithExtraDataById - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -484,6 +518,42 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
+  it("hands the payment over in cents, like its sibling does", async () => {
+    // It returns the same `ParticipantVsEvent` shape as
+    // getParticipantFullEventHistory. Two functions with one return type and
+    // two different units is how the next caller gets it wrong.
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-history-lookup-cents@example.com",
+      full_name: "Payment Cents Lookup",
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Payment Cents Lookup Event",
+      event_status: "Completed",
+      time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
+      ticket_price: 15000,
+      total_spots: 10,
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      has_paid: true,
+      payment: 150,
+    })
+
+    const result = await getEventParticipantHistoryById({
+      profileId: profile.id,
+      eventId: event.id,
+    })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(result.data[0].payment).toBe(15000)
+    }
+  })
+
   it("should fetch event participant history using profileId and eventId", async () => {
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,
@@ -501,7 +571,7 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -547,7 +617,7 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       time_event_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50
     })
 
@@ -2026,7 +2096,7 @@ describe("getEventsForDashboard - Integration Tests", () => {
       emoji: "🎉",
       description: "This is a full test event",
       location: "Test Location",
-      ticket_price: 100,
+      ticket_price: 10000,
       event_status: "Registration Open",
       event_type: "regular",
       time_event_start: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),

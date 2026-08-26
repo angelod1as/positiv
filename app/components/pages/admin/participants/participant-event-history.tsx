@@ -5,6 +5,10 @@ import { Link } from "~/components/atoms/link/link"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { AGDataTable } from "~/components/organisms/tables/ag-grid/base/ag-data-table"
 import { BaseMultiSelectFilter } from "~/components/organisms/tables/ag-grid/filters/base-multi-select-filter"
+import {
+  formatCurrency,
+  formatSignedCurrency,
+} from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import {
   applicationStatusOptions,
@@ -111,7 +115,7 @@ function PaymentRenderer(
 ) {
   const value = params.value as number | null | undefined
   if (value === null || value === undefined || value === 0) return null
-  return `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return formatCurrency(value)
 }
 
 function SurplusRenderer(
@@ -125,13 +129,12 @@ function SurplusRenderer(
 
   const ticketPrice = data.ticket_price ?? 0
   const surplus = payment - ticketPrice
-
-  const formattedValue = `R$ ${Math.abs(surplus).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const formattedValue = formatSignedCurrency(surplus)
 
   if (surplus >= 0) {
-    return <span className="text-green-600">+{formattedValue}</span>
+    return <span className="text-green-600">{formattedValue}</span>
   }
-  return <span className="text-red-600">-{formattedValue}</span>
+  return <span className="text-red-600">{formattedValue}</span>
 }
 
 export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({

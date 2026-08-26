@@ -15,10 +15,8 @@ import {
   ChartTooltip,
   type ChartConfig,
 } from '~/components/ui/chart'
-import {
-  buildEventLabel,
-  formatCurrency,
-} from '~/lib/helpers/chart-utils'
+import { buildEventLabel } from '~/lib/helpers/chart-utils'
+import { formatCurrency } from '~/lib/helpers/format-currency'
 
 const revenueCopy = adminDatavizCopy.revenueChart
 
@@ -116,7 +114,13 @@ export function RevenueChart({ data, className }: RevenueChartProps) {
           height={50}
           tick={MultiLineXAxisTick}
         />
-        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          tickMargin={8}
+          width={100}
+          tickFormatter={(value) => formatCurrency(Number(value))}
+        />
         <ChartTooltip content={<CustomTooltipContent />} isAnimationActive={false} />
         <Bar
           dataKey="faturamento_total"

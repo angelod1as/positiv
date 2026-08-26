@@ -106,7 +106,13 @@ export async function getKpiScores(): Promise<KpiScores> {
     .innerJoin("events", "events.id", "event_participants.event_id")
     .where("events.event_status", "=", "Completed")
     .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
-    .select([sql<number>`coalesce(sum(event_participants.payment), 0)::int`.as("total_revenue")])
+    .select([
+      // `payment` is still numeric reais in the column; POS-523 moves this
+      // query to the view, which is already cents.
+      sql<number>`(coalesce(sum(event_participants.payment), 0) * 100)::int`.as(
+        "total_revenue",
+      ),
+    ])
     .executeTakeFirstOrThrow()
 
   const avgRevenuePerEvent =

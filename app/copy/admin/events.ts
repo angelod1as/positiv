@@ -1,8 +1,10 @@
 import type { z } from "zod"
 import type { eventFormSchema } from "~/business/admin/common"
+import { formatCurrency } from "~/lib/helpers/format-currency"
 
 export const eventFormValidation = {
   emojiInvalid: "Precisa ser um emoji",
+  ticketPriceTooSmall: "O valor deve ser de pelo menos R$ 1,00",
 } as const
 
 export const adminEventsCopy = {
@@ -50,8 +52,8 @@ export const adminEventsCopy = {
     title: "Dados gerais",
     field: (label: string | undefined, value: string | number) =>
       `${label ?? ""}: ${value}`,
-    ticketPrice: (label: string | undefined, value: number) =>
-      `${label ?? ""}: R$ ${value}`,
+    ticketPrice: (label: string | undefined, cents: number) =>
+      `${label ?? ""}: ${formatCurrency(cents)}`,
   },
   datesAndTimes: {
     title: "Datas e horários",

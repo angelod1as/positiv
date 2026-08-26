@@ -52,7 +52,7 @@ describe("getEventParticipantBasic - Integration Tests", () => {
         Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000
       ).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50,
     })
 
@@ -109,7 +109,7 @@ describe("getEventParticipantBasic - Integration Tests", () => {
         Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000
       ).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50,
     })
 
@@ -145,7 +145,7 @@ describe("getEventParticipantBasic - Integration Tests", () => {
         Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000
       ).toISOString(),
       time_application_start: new Date().toISOString(),
-      ticket_price: 100,
+      ticket_price: 10000,
       total_spots: 50,
     })
 

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   formatChartDate,
-  formatCurrency,
   buildEventLabel,
   groupSmallCategories,
   sanitizeCssKey,
@@ -24,25 +23,6 @@ describe('formatChartDate', () => {
 
   it('returns empty string for empty input', () => {
     expect(formatChartDate('')).toBe('')
-  })
-})
-
-describe('formatCurrency', () => {
-  it('formats number as BRL currency', () => {
-    const result = formatCurrency(1500)
-    expect(result).toContain('1.500')
-    expect(result).toContain('R$')
-  })
-
-  it('formats zero', () => {
-    const result = formatCurrency(0)
-    expect(result).toContain('0')
-    expect(result).toContain('R$')
-  })
-
-  it('formats decimal values', () => {
-    const result = formatCurrency(99.99)
-    expect(result).toContain('99,99')
   })
 })
 
