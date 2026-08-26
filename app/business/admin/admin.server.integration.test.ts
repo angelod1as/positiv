@@ -518,6 +518,42 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
+  it("hands the payment over in cents, like its sibling does", async () => {
+    // It returns the same `ParticipantVsEvent` shape as
+    // getParticipantFullEventHistory. Two functions with one return type and
+    // two different units is how the next caller gets it wrong.
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-history-lookup-cents@example.com",
+      full_name: "Payment Cents Lookup",
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Payment Cents Lookup Event",
+      event_status: "Completed",
+      time_event_start: new Date("2025-07-01T19:00:00Z").toISOString(),
+      ticket_price: 15000,
+      total_spots: 10,
+    })
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      has_paid: true,
+      payment: 150,
+    })
+
+    const result = await getEventParticipantHistoryById({
+      profileId: profile.id,
+      eventId: event.id,
+    })
+
+    expect(result).toHaveProperty("success", true)
+    if (result.success) {
+      expect(result.data[0].payment).toBe(15000)
+    }
+  })
+
   it("should fetch event participant history using profileId and eventId", async () => {
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,
