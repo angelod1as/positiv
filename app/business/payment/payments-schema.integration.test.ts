@@ -115,6 +115,10 @@ describe("payments schema", () => {
       ).rejects.toThrow(/payments_asaas_shape/)
     })
 
+    // Two rules forbid this row — a full refund must return the whole amount,
+    // and a refunded row must carry an amount at all — and Postgres reports
+    // whichever it reaches first. The alternation keeps the test about the
+    // row being refused rather than about the catalog's scan order.
     it("refuses a refunded row without a refund amount", async () => {
       await expect(
         createTestPayment(tracker, kysely, {
@@ -123,7 +127,7 @@ describe("payments schema", () => {
           amount: 22000,
           refunded_at: new Date().toISOString(),
         }),
-      ).rejects.toThrow(/payments_full_is_full/)
+      ).rejects.toThrow(/payments_(full_is_full|refund_shape)/)
     })
 
     it("refuses a refund amount without a refund timestamp", async () => {
