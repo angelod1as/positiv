@@ -57,6 +57,7 @@ export async function cleanupTestData(
   // Perform batch deletions for each table
   // Order matters due to foreign key constraints - delete in reverse order of dependencies
   const tableOrder = [
+    "payments",
     "event_participants",
     "event_demographics_history",
     "events",
@@ -70,6 +71,12 @@ export async function cleanupTestData(
 
     try {
       switch (table) {
+        case "payments":
+          await kysely
+            .deleteFrom("payments")
+            .where("id", "in", ids)
+            .execute()
+          break
         case "event_participants":
           await kysely
             .deleteFrom("event_participants")
@@ -180,6 +187,41 @@ export async function createTestEventParticipant(
   
   tracker.track("event_participants", participant.id)
   return participant
+}
+
+interface TestPaymentData {
+  event_participant_id: string
+  [key: string]: unknown
+}
+
+/**
+ * A payments row for a fixture. Defaults describe the common case — a manual
+ * payment already paid in full — so a test only states what it cares about.
+ */
+export async function createTestPayment(
+  tracker: TestDataTracker,
+  kysely: Kysely<Database>,
+  data: TestPaymentData
+): Promise<Selectable<DatabaseTypes["public"]["Tables"]["payments"]["Row"]>> {
+  const now = new Date().toISOString()
+  const defaults = {
+    kind: "manual" as const,
+    status: "paid" as const,
+    base_amount: 22000,
+    amount: 22000,
+    method: "pix" as const,
+    paid_at: now,
+    due_at: now,
+  }
+
+  const payment = await kysely
+    .insertInto("payments")
+    .values({ ...defaults, ...data } as Insertable<DatabaseTypes["public"]["Tables"]["payments"]["Row"]>)
+    .returningAll()
+    .executeTakeFirstOrThrow()
+
+  tracker.track("payments", payment.id)
+  return payment
 }
 
 /**

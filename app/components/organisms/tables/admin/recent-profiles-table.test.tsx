@@ -66,6 +66,7 @@ describe("RecentProfilesTable", () => {
       flag_notes: null,
       general_notes: null,
       race_color: null,
+      asaas_customer_id: null,
     } as ProfileGlobal,
     {
       id: "2",
@@ -98,6 +99,7 @@ describe("RecentProfilesTable", () => {
       flag_notes: null,
       general_notes: null,
       race_color: null,
+      asaas_customer_id: null,
     } as ProfileGlobal,
   ]
 

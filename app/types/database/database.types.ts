@@ -449,9 +449,140 @@ export type Database = {
           },
         ]
       }
+      payment_webhook_events: {
+        Row: {
+          asaas_event_id: string
+          asaas_payment_id: string | null
+          error: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed_at: string | null
+          received_at: string
+        }
+        Insert: {
+          asaas_event_id: string
+          asaas_payment_id?: string | null
+          error?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed_at?: string | null
+          received_at?: string
+        }
+        Update: {
+          asaas_event_id?: string
+          asaas_payment_id?: string | null
+          error?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed_at?: string | null
+          received_at?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number | null
+          asaas_customer_id: string | null
+          asaas_installment_id: string | null
+          asaas_invoice_url: string | null
+          asaas_net: number | null
+          asaas_payment_id: string | null
+          base_amount: number
+          created_at: string
+          created_by: string | null
+          due_at: string
+          event_participant_id: string
+          id: string
+          installment_count: number | null
+          kind: Database["public"]["Enums"]["payment_kind"]
+          method: Database["public"]["Enums"]["payment_method"] | null
+          note: string | null
+          paid_at: string | null
+          refund_amount: number | null
+          refund_requested_at: string | null
+          refunded_at: string | null
+          status: Database["public"]["Enums"]["payment_status"]
+          updated_at: string
+        }
+        Insert: {
+          amount?: number | null
+          asaas_customer_id?: string | null
+          asaas_installment_id?: string | null
+          asaas_invoice_url?: string | null
+          asaas_net?: number | null
+          asaas_payment_id?: string | null
+          base_amount: number
+          created_at?: string
+          created_by?: string | null
+          due_at: string
+          event_participant_id: string
+          id?: string
+          installment_count?: number | null
+          kind: Database["public"]["Enums"]["payment_kind"]
+          method?: Database["public"]["Enums"]["payment_method"] | null
+          note?: string | null
+          paid_at?: string | null
+          refund_amount?: number | null
+          refund_requested_at?: string | null
+          refunded_at?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Update: {
+          amount?: number | null
+          asaas_customer_id?: string | null
+          asaas_installment_id?: string | null
+          asaas_invoice_url?: string | null
+          asaas_net?: number | null
+          asaas_payment_id?: string | null
+          base_amount?: number
+          created_at?: string
+          created_by?: string | null
+          due_at?: string
+          event_participant_id?: string
+          id?: string
+          installment_count?: number | null
+          kind?: Database["public"]["Enums"]["payment_kind"]
+          method?: Database["public"]["Enums"]["payment_method"] | null
+          note?: string | null
+          paid_at?: string | null
+          refund_amount?: number | null
+          refund_requested_at?: string | null
+          refunded_at?: string | null
+          status?: Database["public"]["Enums"]["payment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_event_participant_id_fkey"
+            columns: ["event_participant_id"]
+            isOneToOne: false
+            referencedRelation: "event_participant_payments"
+            referencedColumns: ["event_participant_id"]
+          },
+          {
+            foreignKeyName: "payments_event_participant_id_fkey"
+            columns: ["event_participant_id"]
+            isOneToOne: false
+            referencedRelation: "event_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           approved_to_attend: Database["public"]["Enums"]["approved_to_attend_enum"]
+          asaas_customer_id: string | null
           basic_data_filled: boolean
           became_veteran_date: string | null
           cpf: string | null
@@ -478,6 +609,7 @@ export type Database = {
         }
         Insert: {
           approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
+          asaas_customer_id?: string | null
           basic_data_filled?: boolean
           became_veteran_date?: string | null
           cpf?: string | null
@@ -504,6 +636,7 @@ export type Database = {
         }
         Update: {
           approved_to_attend?: Database["public"]["Enums"]["approved_to_attend_enum"]
+          asaas_customer_id?: string | null
           basic_data_filled?: boolean
           became_veteran_date?: string | null
           cpf?: string | null
@@ -550,7 +683,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      event_participant_payments: {
+        Row: {
+          active_payment_id: string | null
+          current_status: Database["public"]["Enums"]["payment_status"] | null
+          event_participant_id: string | null
+          fee: number | null
+          has_paid: boolean | null
+          net: number | null
+          paid_gross: number | null
+          refunded: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_user_role: {
@@ -625,6 +770,16 @@ export type Database = {
       event_type_enum: "regular" | "bdsm"
       feedback_participation_enum: "never" | "once" | "more_than_once"
       feedback_status_enum: "new" | "in_progress" | "resolved"
+      payment_kind: "asaas" | "manual"
+      payment_method: "pix" | "credit_card" | "cash" | "transfer" | "other"
+      payment_status:
+        | "pending"
+        | "awaiting_payment"
+        | "paid"
+        | "expired"
+        | "cancelled"
+        | "refunded"
+        | "partially_refunded"
       profile_flag_enum: "none" | "yellow" | "red" | "gray"
       spot_type: "regular" | "social" | "staff"
     }
@@ -789,6 +944,17 @@ export const Constants = {
       event_type_enum: ["regular", "bdsm"],
       feedback_participation_enum: ["never", "once", "more_than_once"],
       feedback_status_enum: ["new", "in_progress", "resolved"],
+      payment_kind: ["asaas", "manual"],
+      payment_method: ["pix", "credit_card", "cash", "transfer", "other"],
+      payment_status: [
+        "pending",
+        "awaiting_payment",
+        "paid",
+        "expired",
+        "cancelled",
+        "refunded",
+        "partially_refunded",
+      ],
       profile_flag_enum: ["none", "yellow", "red", "gray"],
       spot_type: ["regular", "social", "staff"],
     },

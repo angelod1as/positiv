@@ -66,6 +66,41 @@ export async function getTestUserIds(): Promise<string[]> {
 export async function cleanupEventParticipations(userId: string, throwOnError: boolean = false): Promise<void> {
   const supabase = createSupabaseAdminClient()
   
+  // payments references event_participants with RESTRICT, so it goes first.
+  const { data: participants, error: lookupError } = await supabase
+    .from('event_participants')
+    .select('id')
+    .eq('profile_id', userId)
+
+  if (lookupError) {
+    const message = `Failed to look up participations for user ${userId}`
+
+    if (throwOnError) {
+      throw new CleanupError(message, 'cleanupEventParticipations', lookupError)
+    } else {
+      console.warn(`[Non-critical] ${message}:`, lookupError)
+    }
+  }
+
+  const participantIds = participants?.map(participant => participant.id) ?? []
+
+  if (participantIds.length > 0) {
+    const { error: paymentsError } = await supabase
+      .from('payments')
+      .delete()
+      .in('event_participant_id', participantIds)
+
+    if (paymentsError) {
+      const message = `Failed to clean up payments for user ${userId}`
+
+      if (throwOnError) {
+        throw new CleanupError(message, 'cleanupEventParticipations', paymentsError)
+      } else {
+        console.warn(`[Non-critical] ${message}:`, paymentsError)
+      }
+    }
+  }
+
   const { error } = await supabase
     .from('event_participants')
     .delete()
@@ -297,6 +332,31 @@ export async function cleanupTestEvents(): Promise<void> {
   const eventIds = testEvents.map(event => event.id)
   let hasErrors = false
   
+  // payments references event_participants with RESTRICT, so it goes first.
+  const { data: eventParticipants, error: participantLookupError } = await supabase
+    .from('event_participants')
+    .select('id')
+    .in('event_id', eventIds)
+
+  if (participantLookupError) {
+    console.error('Error looking up event participants:', participantLookupError)
+    hasErrors = true
+  }
+
+  const eventParticipantIds = eventParticipants?.map(participant => participant.id) ?? []
+
+  if (eventParticipantIds.length > 0) {
+    const { error: paymentsError } = await supabase
+      .from('payments')
+      .delete()
+      .in('event_participant_id', eventParticipantIds)
+
+    if (paymentsError) {
+      console.error('Error deleting payments:', paymentsError)
+      hasErrors = true
+    }
+  }
+
   const { error: participantsError } = await supabase
     .from('event_participants')
     .delete()
