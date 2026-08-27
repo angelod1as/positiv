@@ -54,6 +54,11 @@ ALTER VIEW public.event_participant_payments SET (security_invoker = true);
 GRANT SELECT ON public.event_participant_payments TO service_role;
 REVOKE ALL ON public.event_participant_payments FROM anon, authenticated;
 
+COMMENT ON COLUMN public.event_participant_payments.has_paid IS
+'Whether Positiv currently holds this participant''s money — not whether they
+ever paid. A fully refunded participant reports false; a partially refunded one
+still reports true.';
+
 COMMENT ON VIEW public.event_participant_payments IS
 'Per-participant money totals in cents. The one read surface for the admin grid,
 the financial summary, the participant history and the dataviz queries.';

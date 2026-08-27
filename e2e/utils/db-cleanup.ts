@@ -83,7 +83,7 @@ export async function cleanupEventParticipations(userId: string, throwOnError: b
   }
 
   const participantIds = participants?.map(participant => participant.id) ?? []
-  
+
   if (participantIds.length > 0) {
     const { error: paymentsError } = await supabase
       .from('payments')
@@ -100,7 +100,7 @@ export async function cleanupEventParticipations(userId: string, throwOnError: b
       }
     }
   }
-  
+
   const { error } = await supabase
     .from('event_participants')
     .delete()
@@ -356,7 +356,7 @@ export async function cleanupTestEvents(): Promise<void> {
       hasErrors = true
     }
   }
-  
+
   const { error: participantsError } = await supabase
     .from('event_participants')
     .delete()

@@ -170,6 +170,11 @@ COMMENT ON COLUMN public.payments.asaas_net IS
 'netValue reported by Asaas. amount - asaas_net is the fee Asaas took, and the
 audit of the pricing formula.';
 
+COMMENT ON COLUMN public.payments.asaas_customer_id IS
+'The Asaas customer this charge was created against, snapshotted here so the
+row stays readable on its own. profiles.asaas_customer_id is the canonical one
+and the source this is copied from.';
+
 COMMENT ON COLUMN public.payments.due_at IS
 'When the charge stops being payable. The expire-payments cron and the Asaas
 PAYMENT_OVERDUE event both act on it.';
