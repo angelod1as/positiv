@@ -2,11 +2,14 @@
 
 -- The payments ledger for every participant seeded above.
 --
--- Seeds run after migrations, so the backfill migration cannot reach them, and
--- participants are created by more than one seed file -- hence a single pass at
--- the end rather than a statement in each. The mapping is the backfill's: the
--- money the seeds record in has_paid and a reais amount becomes a manual PIX
--- payment in cents, which is where the application reads it from.
+-- Seeds run after migrations, so 20260827143204_backfill_payments.sql cannot
+-- reach them, and participants are created by more than one seed file -- hence
+-- a single pass at the end rather than a statement in each. The mapping is that
+-- migration's, copied: the money the seeds record in has_paid and a reais
+-- amount becomes a manual PIX payment in cents, which is where the application
+-- reads it from. Change the mapping there and it has to change here too --
+-- nothing enforces it, because a migration is frozen once applied and a seed
+-- never is.
 --
 -- 04_event_participants.sql truncates event_participants with CASCADE, so the
 -- rows this creates are cleared with it.
