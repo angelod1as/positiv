@@ -32,6 +32,9 @@ describe("DataViz - Integration Tests", () => {
 
   beforeEach(async () => {
     tracker.clear()
+    // payments references event_participants ON DELETE RESTRICT, and the
+    // seeds give the paid ones a ledger row.
+    await kysely.deleteFrom("payments").execute()
     await kysely.deleteFrom("event_participants").execute()
     await kysely
       .updateTable("events")
