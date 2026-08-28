@@ -114,12 +114,27 @@ export type EventParticipant = Selectable<
   Database["public"]["Tables"]["event_participants"]["Row"]
 >
 
-export type ParticipantVsEvent = EventParticipant & {
-  event_title: Event["title"]
-  event_emoji: Event["emoji"]
-  is_veteran: Profile["is_veteran"]
-  approved_to_attend: Profile["approved_to_attend"]
+/**
+ * What `event_participant_payments` reports for one participant. Every query
+ * that joins the view returns these, in cents, and they are the only place the
+ * application reads money from.
+ */
+export type ParticipantPaymentTotals = {
+  paid_gross: number
+  net: number
+  fee: number
+  refunded: number
+  payment_status: Database["public"]["Enums"]["payment_status"] | null
+  active_payment_id: string | null
 }
+
+export type ParticipantVsEvent = EventParticipant &
+  ParticipantPaymentTotals & {
+    event_title: Event["title"]
+    event_emoji: Event["emoji"]
+    is_veteran: Profile["is_veteran"]
+    approved_to_attend: Profile["approved_to_attend"]
+  }
 
 /**
  * Participant event history with event timing and pricing info
@@ -134,10 +149,11 @@ export type ParticipantEventHistoryData = ParticipantVsEvent & {
  * Event participant with basic event info (title, emoji)
  * No profile fields - just event_participants table + event display info
  */
-export type EventParticipantWithEvent = EventParticipant & {
-  event_title: Event["title"]
-  event_emoji: Event["emoji"]
-}
+export type EventParticipantWithEvent = EventParticipant &
+  ParticipantPaymentTotals & {
+    event_title: Event["title"]
+    event_emoji: Event["emoji"]
+  }
 
 /**
  * Global profile with aggregated event data (no event scope)

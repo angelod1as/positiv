@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { clearParticipantsForProfiles, createTestEvent, createTestEventParticipant, createTestProfile } from "~/test/db-test-utils"
+import { clearParticipantsForProfiles, createTestEvent, createTestEventParticipant, createTestPayment, createTestProfile } from "~/test/db-test-utils"
 import {
   getParticipantFullEventHistory,
   updateEventParticipantById,
@@ -105,7 +105,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     }
   })
 
-  it("hands the payment over in cents, though the column still holds reais", async () => {
+  it("hands the payment totals over in cents, from the ledger", async () => {
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,
       email: "test-payment-cents@example.com",
@@ -120,11 +120,14 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       total_spots: 10,
     })
 
-    await createTestEventParticipant(tracker, kysely, {
+    const participant = await createTestEventParticipant(tracker, kysely, {
       profile_id: profile.id,
       event_id: event.id,
-      has_paid: true,
-      payment: 150,
+    })
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: participant.id,
+      base_amount: 15000,
+      amount: 15000,
     })
 
     const result = await getParticipantFullEventHistory({
@@ -134,7 +137,8 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
 
     expect(result).toHaveProperty("success", true)
     if (result.success) {
-      expect(result.data[0].payment).toBe(15000)
+      expect(result.data[0].paid_gross).toBe(15000)
+      expect(result.data[0].net).toBe(15000)
       expect(result.data[0].ticket_price).toBe(15000)
     }
   })
@@ -503,7 +507,7 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
-  it("hands the payment over in cents, like its sibling does", async () => {
+  it("hands the payment totals over in cents, like its sibling does", async () => {
     // It returns the same `ParticipantVsEvent` shape as
     // getParticipantFullEventHistory. Two functions with one return type and
     // two different units is how the next caller gets it wrong.
@@ -521,11 +525,14 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
       total_spots: 10,
     })
 
-    await createTestEventParticipant(tracker, kysely, {
+    const participant = await createTestEventParticipant(tracker, kysely, {
       profile_id: profile.id,
       event_id: event.id,
-      has_paid: true,
-      payment: 150,
+    })
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: participant.id,
+      base_amount: 15000,
+      amount: 15000,
     })
 
     const result = await getEventParticipantHistoryById({
@@ -535,7 +542,8 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
 
     expect(result).toHaveProperty("success", true)
     if (result.success) {
-      expect(result.data[0].payment).toBe(15000)
+      expect(result.data[0].paid_gross).toBe(15000)
+      expect(result.data[0].net).toBe(15000)
     }
   })
 
