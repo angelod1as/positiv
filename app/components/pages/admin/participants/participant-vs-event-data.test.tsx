@@ -115,18 +115,32 @@ describe("ParticipantVsEventData", () => {
       expect(screen.getByLabelText(/tipo de vaga/i)).toBeInTheDocument()
     })
 
-    it("should render payment input", () => {
+    it("no longer offers the payment input or the paid checkbox", () => {
       const router = createTestRouter(mockEventParticipant)
       render(<RouterProvider router={router} />)
 
-      expect(screen.getByLabelText(/pagamento/i)).toBeInTheDocument()
+      expect(screen.queryByLabelText(/^pagamento$/i)).not.toBeInTheDocument()
+      expect(screen.queryByRole("checkbox", { name: /pago/i })).not.toBeInTheDocument()
     })
 
-    it("should render has_paid checkbox", () => {
+    it("shows what the participant paid, read-only", () => {
+      const router = createTestRouter({
+        ...mockEventParticipant,
+        paid_gross: 22000,
+        net: 21500,
+        payment_status: "paid",
+      })
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByText(/R\$ 220,00/)).toBeInTheDocument()
+      expect(screen.getByText(/Pago/)).toBeInTheDocument()
+    })
+
+    it("shows a dash when the ledger holds nothing for the participant", () => {
       const router = createTestRouter(mockEventParticipant)
       render(<RouterProvider router={router} />)
 
-      expect(screen.getByLabelText(/pago/i)).toBeInTheDocument()
+      expect(screen.getByText("—")).toBeInTheDocument()
     })
 
     it("should render admin_general_notes textarea", () => {
@@ -157,22 +171,6 @@ describe("ParticipantVsEventData", () => {
       const formData = mockFetcher.submit.mock.calls[0][0] as FormData
       expect(formData.get("attendance_status")).toBe("attended")
       expect(formData.get("intent")).toBe("update-event-participant")
-    })
-
-    it("should auto-save when has_paid checkbox changes", async () => {
-      const user = userEvent.setup()
-      const router = createTestRouter(mockEventParticipant)
-      render(<RouterProvider router={router} />)
-
-      const checkbox = screen.getByLabelText(/pago/i)
-      await user.click(checkbox)
-
-      await waitFor(() => {
-        expect(mockFetcher.submit).toHaveBeenCalled()
-      })
-
-      const formData = mockFetcher.submit.mock.calls[0][0] as FormData
-      expect(formData.get("has_paid")).toBe("true")
     })
 
     it("should auto-save admin_general_notes on blur", async () => {
