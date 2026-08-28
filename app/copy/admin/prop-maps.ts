@@ -123,9 +123,15 @@ export const adminPropMapsCopy = {
     true: "Veterano",
     false: "Novate",
   },
-  hasPaid: {
-    true: "Sim",
-    false: "Não",
+  paymentStatus: {
+    none: "Sem pagamento",
+    pending: "Aguardando escolha",
+    awaiting_payment: "Aguardando pagamento",
+    paid: "Pago",
+    expired: "Expirado",
+    cancelled: "Cancelado",
+    refunded: "Reembolsado",
+    partially_refunded: "Reembolsado em parte",
   },
   notesFilter: {
     hasNotes: "Com notas",

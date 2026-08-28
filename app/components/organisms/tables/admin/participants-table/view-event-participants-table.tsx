@@ -1,8 +1,10 @@
 import type {
   CellValueChangedEvent,
   ColDef,
+  ICellRendererParams,
   ValueSetterParams,
 } from "ag-grid-community"
+import { DollarSign } from "lucide-react"
 import type { FC } from "react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate } from "react-router"
@@ -21,18 +23,21 @@ import { PronounsRenderer } from "~/components/organisms/tables/ag-grid/renderer
 import { SocialNameRenderer } from "~/components/organisms/tables/ag-grid/renderers/social-name-renderer"
 import { TextViewModalRenderer } from "~/components/organisms/tables/ag-grid/renderers/text-view-modal-renderer"
 import { WarningIndicatorRenderer } from "~/components/organisms/tables/ag-grid/renderers/warning-indicator-renderer"
+import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { adminTablesCopy } from "~/copy/admin/tables"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
+import { formatCurrency } from "~/lib/helpers/format-currency"
 import {
   applicationStatusOptions,
   approvedToAttendStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
   genderFilterOptions,
-  hasPaidOptions,
   orientationFilterOptions,
+  paymentStatusOptions,
+  paymentStatusPropMap,
   profilePropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
@@ -41,10 +46,6 @@ import type { CommitResult } from "~types/forms/commit.types"
 import { CategoryLabelWithTooltip } from "./category-label-with-tooltip"
 import { countParticipants } from "./count-participants"
 import { eventCountComparator } from "./event-count-column-helpers"
-import {
-  parsePaymentValue,
-  shouldAutoCheckHasPaid,
-} from "./payment-column-helpers"
 import { shouldAutoCheckWasSelectedForRotation } from "./rotation-column-helpers"
 import {
   acceptedInProcessTooltipContent,
@@ -67,7 +68,7 @@ const STORAGE_KEYS = {
   gender: "participants-filter-gender",
   orientation: "participants-filter-orientation",
   isVeteran: "participants-filter-is_veteran",
-  hasPaid: "participants-filter-has_paid",
+  paymentStatus: "participants-filter-payment_status",
   spotType: "participants-filter-spot_type",
 }
 
@@ -77,8 +78,6 @@ const EDITABLE_FIELDS = [
   "application_status",
   "attendance_status",
   "approved_to_attend",
-  "has_paid",
-  "payment",
   "spot_type",
   "is_veteran",
   "notes",
@@ -110,11 +109,13 @@ type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
   eventId: string
   onParticipantSaved?: () => void
+  /** POS-525 hangs the payment modal on this; until then the button is inert. */
+  onManagePayment?: (eventParticipantId: string) => void
 }
 
 export const AdminViewEventParticipantsTable: FC<
   AdminViewEventParticipantsTableProps
-> = ({ participants, eventId, onParticipantSaved }) => {
+> = ({ participants, eventId, onParticipantSaved, onManagePayment }) => {
   const navigate = useNavigate()
 
   // What the toolbar's indicator used to read off the page's fetcher. Off the
@@ -124,10 +125,10 @@ export const AdminViewEventParticipantsTable: FC<
     data: { success: boolean } | undefined
   }>({ state: "idle", data: undefined })
 
-  // Two saves can be in flight at once: bumping a payment on a paid row writes
-  // the payment and the has_paid that follows it. Whichever answers last is
-  // not necessarily the last one asked, and the indicator should speak for the
-  // newest save rather than the slowest.
+  // Two saves can be in flight at once: marking a row as skipped writes the
+  // attendance status and the rotation flag that follows it. Whichever answers
+  // last is not necessarily the last one asked, and the indicator should speak
+  // for the newest save rather than the slowest.
   const latestSaveRef = useRef(0)
 
   const saveParticipant = useCallback(
@@ -178,8 +179,8 @@ export const AdminViewEventParticipantsTable: FC<
   const [isVeteranFilter, setIsVeteranFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.isVeteran),
   )
-  const [hasPaidFilter, setHasPaidFilter] = useState<string[]>(() =>
-    getStoredFilter(STORAGE_KEYS.hasPaid),
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string[]>(() =>
+    getStoredFilter(STORAGE_KEYS.paymentStatus),
   )
   const [spotTypeFilter, setSpotTypeFilter] = useState<string[]>(() =>
     getStoredFilter(STORAGE_KEYS.spotType),
@@ -208,7 +209,10 @@ export const AdminViewEventParticipantsTable: FC<
       STORAGE_KEYS.isVeteran,
       JSON.stringify(isVeteranFilter),
     )
-    sessionStorage.setItem(STORAGE_KEYS.hasPaid, JSON.stringify(hasPaidFilter))
+    sessionStorage.setItem(
+      STORAGE_KEYS.paymentStatus,
+      JSON.stringify(paymentStatusFilter),
+    )
     sessionStorage.setItem(
       STORAGE_KEYS.spotType,
       JSON.stringify(spotTypeFilter),
@@ -220,7 +224,7 @@ export const AdminViewEventParticipantsTable: FC<
     genderFilter,
     orientationFilter,
     isVeteranFilter,
-    hasPaidFilter,
+    paymentStatusFilter,
     spotTypeFilter,
   ])
 
@@ -253,21 +257,6 @@ export const AdminViewEventParticipantsTable: FC<
 
   const handleCellValueChanged = useCallback(
     (event: CellValueChangedEvent<ProfileWithExtraData>) => {
-      // Auto-persist has_paid when payment > 0
-      if (
-        event.colDef.field === "payment" &&
-        event.newValue !== null &&
-        event.newValue > 0 &&
-        event.data?.has_paid === true &&
-        event.oldValue !== event.newValue
-      ) {
-        void saveParticipant({
-          id: event.data.id,
-          profile_id: event.data.profile_id ?? "",
-          has_paid: "true",
-        })
-      }
-
       // Auto-persist was_selected_for_rotation when transitioning to 'skipped'
       // This provides immediate persistence without waiting for DB trigger
       if (
@@ -501,52 +490,52 @@ export const AdminViewEventParticipantsTable: FC<
         },
       },
       {
-        field: "has_paid",
-        headerName: tableCopy.columns.hasPaid,
-        headerTooltip: tableCopy.columns.hasPaidTooltip,
-        editable: true,
-        cellEditor: "agCheckboxCellEditor",
-        cellRenderer: "agCheckboxCellRenderer",
+        field: "payment_status",
+        headerName: tableCopy.columns.paymentStatus,
+        headerTooltip: tableCopy.columns.paymentStatusTooltip,
+        editable: false,
+        // BaseMultiSelectFilter drops a null cell value outright, so a
+        // participant who never paid would vanish the moment the filter is
+        // touched. They get a value of their own; the formatter still shows a
+        // dash.
+        valueGetter: (params) => params.data?.payment_status ?? "none",
+        valueFormatter: (params) =>
+          params.value === "none" ? "—" : paymentStatusPropMap(params.value),
         filter: BaseMultiSelectFilter,
         filterParams: {
-          options: hasPaidOptions,
-          field: "has_paid",
-          model: hasPaidFilter,
-          onModelChange: setHasPaidFilter,
+          options: paymentStatusOptions,
+          field: "payment_status",
+          model: paymentStatusFilter,
+          onModelChange: setPaymentStatusFilter,
         },
       },
       {
-        field: "payment",
-        headerName: eventParticipantPropMap("payment"),
-        editable: true,
-        cellEditor: "agNumberCellEditor",
-        valueParser: (params) =>
-          parsePaymentValue(params.newValue, params.oldValue),
-        valueSetter: (params: ValueSetterParams<ProfileWithExtraData>) => {
-          const parsedValue = parsePaymentValue(
-            params.newValue,
-            params.data.payment,
-          )
-          const newValue = parsedValue ?? 0
-
-          if (newValue === params.data.payment) {
-            return false
-          }
-
-          params.data.payment = newValue
-
-          if (shouldAutoCheckHasPaid(newValue, params.data.has_paid ?? false)) {
-            params.data.has_paid = true
-            if (params.node) {
-              params.api.refreshCells({
-                rowNodes: [params.node],
-                columns: ["has_paid"],
-              })
+        field: "paid_gross",
+        headerName: tableCopy.columns.paidGross,
+        headerTooltip: tableCopy.columns.paidGrossTooltip,
+        editable: false,
+        valueFormatter: (params) =>
+          params.value ? formatCurrency(params.value) : "—",
+      },
+      {
+        colId: "manage_payment",
+        headerName: "",
+        editable: false,
+        sortable: false,
+        filter: false,
+        width: 60,
+        cellRenderer: (params: ICellRendererParams<ProfileWithExtraData>) => (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={tableCopy.columns.managePayment}
+            onClick={() =>
+              params.data && onManagePayment?.(params.data.id)
             }
-          }
-
-          return true
-        },
+          >
+            <DollarSign className="h-4 w-4" />
+          </Button>
+        ),
       },
       {
         field: "spot_type",
@@ -621,8 +610,9 @@ export const AdminViewEventParticipantsTable: FC<
       genderFilter,
       orientationFilter,
       isVeteranFilter,
-      hasPaidFilter,
+      paymentStatusFilter,
       spotTypeFilter,
+      onManagePayment,
     ],
   )
 
@@ -633,7 +623,7 @@ export const AdminViewEventParticipantsTable: FC<
     setGenderFilter([])
     setOrientationFilter([])
     setIsVeteranFilter([])
-    setHasPaidFilter([])
+    setPaymentStatusFilter([])
     setSpotTypeFilter([])
   }, [])
 
@@ -691,7 +681,7 @@ export const AdminViewEventParticipantsTable: FC<
         searchAriaLabel={tableCopy.searchAriaLabel}
         emptyMessage={tableCopy.emptyMessage}
         persistState
-        stateVersion={2}
+        stateVersion={3}
         suppressColumnVirtualisation
         showToolbar
         onClearFilters={handleClearFilters}

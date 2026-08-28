@@ -142,8 +142,11 @@ export const adminTablesCopy = {
       wasSelectedForRotationTooltip: "Escolhide para rodízio neste evento",
       approvedToAttendTooltip:
         "Status de aprovação geral do perfil para participar dos eventos (independente de evento específico)",
-      hasPaid: "Pago?",
-      hasPaidTooltip: "Pagamento realizado",
+      paymentStatus: "Pagamento",
+      paymentStatusTooltip: "Situação do pagamento no sistema",
+      paidGross: "Valor pago",
+      paidGrossTooltip: "Valor bruto pago pela pessoa, taxas incluídas",
+      managePayment: "Gerenciar pagamento",
       wasAdminSkippedLastEvent: "Foi rodízio na última festa?",
     },
   },

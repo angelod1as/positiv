@@ -108,12 +108,14 @@ const mockParticipantsMultiple = [
 
 function renderWithRouter(
   participants: ProfileWithExtraData[] = mockParticipants,
+  onManagePayment?: (eventParticipantId: string) => void,
 ) {
   return render(
     <MemoryRouter>
       <AdminViewEventParticipantsTable
         participants={participants}
         eventId="event-123"
+        onManagePayment={onManagePayment}
       />
     </MemoryRouter>,
   )
@@ -264,6 +266,56 @@ describe("AdminViewEventParticipantsTable", () => {
 
       const paginationPanel = container.querySelector(".ag-paging-panel")
       expect(paginationPanel).toBeInTheDocument()
+    })
+  })
+
+
+  describe("payment column", () => {
+    it("shows the payment status and the amount, read-only", async () => {
+      renderWithRouter([
+        createMockParticipant({
+          payment_status: "paid",
+          paid_gross: 22000,
+          net: 22000,
+        }),
+      ])
+
+      await waitFor(() => {
+        expect(screen.getByText("Pago")).toBeInTheDocument()
+      })
+      expect(screen.getByText("R$ 220,00")).toBeInTheDocument()
+      expect(
+        screen.queryByRole("checkbox", { name: /pago/i }),
+      ).not.toBeInTheDocument()
+    })
+
+    it("shows a dash for a participant with no payment", async () => {
+      renderWithRouter([
+        createMockParticipant({
+          payment_status: null,
+          paid_gross: 0,
+          net: 0,
+        }),
+      ])
+
+      await waitFor(() => {
+        expect(screen.getAllByText("—").length).toBeGreaterThan(0)
+      })
+    })
+
+    it("offers a button that opens payment management for the row", async () => {
+      const onManagePayment = vi.fn()
+      renderWithRouter(
+        [createMockParticipant({ payment_status: "paid", paid_gross: 22000 })],
+        onManagePayment,
+      )
+
+      const button = await screen.findByRole("button", {
+        name: "Gerenciar pagamento",
+      })
+      await userEvent.click(button)
+
+      expect(onManagePayment).toHaveBeenCalledWith("ep-1")
     })
   })
 
