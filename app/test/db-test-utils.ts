@@ -338,3 +338,37 @@ export async function createTestAdminUser(
 
   return { userId, profile }
 }
+
+/**
+ * Removes the event_participants rows belonging to the profiles a suite owns.
+ *
+ * payments references event_participants ON DELETE RESTRICT, and the seeds give
+ * every participant whose money was recorded a ledger row — so the payments go
+ * first or the delete is refused.
+ */
+export async function clearParticipantsForProfiles(
+  kysely: Kysely<Database>,
+  emailPattern: string
+): Promise<void> {
+  await kysely
+    .deleteFrom("payments")
+    .where("event_participant_id", "in", (eb) =>
+      eb
+        .selectFrom("event_participants")
+        .select("id")
+        .where("profile_id", "in", (inner) =>
+          inner
+            .selectFrom("profiles")
+            .select("id")
+            .where("email", "like", emailPattern)
+        )
+    )
+    .execute()
+
+  await kysely
+    .deleteFrom("event_participants")
+    .where("profile_id", "in", (eb) =>
+      eb.selectFrom("profiles").select("id").where("email", "like", emailPattern)
+    )
+    .execute()
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { createTestEvent, createTestEventParticipant, createTestProfile } from "~/test/db-test-utils"
+import { clearParticipantsForProfiles, createTestEvent, createTestEventParticipant, createTestProfile } from "~/test/db-test-utils"
 import { sql } from "kysely"
 
 interface ExplainPlan {
@@ -21,12 +21,7 @@ describe("Database Indexes - Integration Tests", () => {
     tracker.clear()
 
     // Clear any existing test data
-    await kysely
-      .deleteFrom("event_participants")
-      .where("profile_id", "in", (eb) =>
-        eb.selectFrom("profiles").select("id").where("email", "like", "test-%")
-      )
-      .execute()
+    await clearParticipantsForProfiles(kysely, "test-%")
   })
 
   afterEach(async () => {

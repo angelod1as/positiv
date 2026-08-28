@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { createTestEvent, createTestEventParticipant, createTestProfile } from "~/test/db-test-utils"
+import { clearParticipantsForProfiles, createTestEvent, createTestEventParticipant, createTestProfile } from "~/test/db-test-utils"
 import {
   getParticipantFullEventHistory,
   updateEventParticipantById,
@@ -22,12 +22,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     
     // Clear any existing event participants for test profiles
     // This ensures tests start with a clean slate
-    await kysely
-      .deleteFrom("event_participants")
-      .where("profile_id", "in", (eb) =>
-        eb.selectFrom("profiles").select("id").where("email", "like", "test-%")
-      )
-      .execute()
+    await clearParticipantsForProfiles(kysely, "test-%")
   })
 
   afterEach(async () => {
@@ -415,12 +410,7 @@ describe("getProfileWithExtraDataById - Integration Tests", () => {
   beforeEach(async () => {
     tracker.clear()
 
-    await kysely
-      .deleteFrom("event_participants")
-      .where("profile_id", "in", (eb) =>
-        eb.selectFrom("profiles").select("id").where("email", "like", "test-%")
-      )
-      .execute()
+    await clearParticipantsForProfiles(kysely, "test-%")
   })
 
   afterEach(async () => {
@@ -506,12 +496,7 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
   beforeEach(async () => {
     tracker.clear()
 
-    await kysely
-      .deleteFrom("event_participants")
-      .where("profile_id", "in", (eb) =>
-        eb.selectFrom("profiles").select("id").where("email", "like", "test-%")
-      )
-      .execute()
+    await clearParticipantsForProfiles(kysely, "test-%")
   })
 
   afterEach(async () => {
