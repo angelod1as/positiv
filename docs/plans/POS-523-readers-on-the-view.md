@@ -27,7 +27,8 @@ This is the moment the grid stops being the way money is edited. Between this PR
 ### Task 1: The admin queries join the view
 
 **Files:**
-- Modify: `app/business/admin/admin.server.ts` — `profilesWithExtraDataQuery` (~line 89), `getParticipantFullEventHistory` (~line 453), `getEventParticipantBasic` (~line 764)
+- Modify: `app/business/admin/admin.server.ts` — `profilesWithExtraDataQuery` (line 89), `getEventParticipantHistoryById` (line 425), `getParticipantFullEventHistory` (line 465), `getEventParticipantBasic` (line 787)
+- Modify: `app/types/database/entities.types.ts` — `ParticipantVsEvent` (line 117), `EventParticipantWithEvent` (line 137). `ParticipantEventHistoryData` extends the first and inherits the fields
 - Test: `app/business/admin/profile-event-queries.integration.test.ts`
 
 - [ ] **Step 1: Write the failing test**
@@ -117,7 +118,16 @@ Extend `ProfileWithExtraData` (declared around line 78) with the six fields:
   active_payment_id: string | null
 ```
 
-Do the same join and selects in `getParticipantFullEventHistory` (which already selects `events.ticket_price`) and in `getEventParticipantBasic`. In `app/types/database/entities.types.ts`, add the same six fields to `ParticipantVsEvent` and to `ParticipantEventHistoryData`.
+Do the same join and selects in `getEventParticipantHistoryById` (line 425), in `getParticipantFullEventHistory` (which already selects `events.ticket_price`) and in `getEventParticipantBasic`.
+
+In `app/types/database/entities.types.ts`, add the same six fields to `ParticipantVsEvent` (line 117) and to `EventParticipantWithEvent` (line 137). `ParticipantEventHistoryData` extends `ParticipantVsEvent`, so it inherits them; `EventParticipantWithEvent` does not, and it is what `getEventParticipantBasic` returns and what Task 4's component reads.
+
+Delete both reais→cents conversions while you are in the file — their comments name this ticket:
+
+- `getEventParticipantHistoryById`, lines 452–460: the whole `.map((row) => ({ ...row, payment: ... }))`, so the function returns `results` directly
+- `getParticipantFullEventHistory`, lines 499–508: the same `payment` key and its comment inside the existing `.map()`, keeping the `...row` spread and the `.filter()` above it
+
+`payment` stays in the row (`selectAll` still picks the column up until POS-524) — it is simply no longer converted, and nothing reads it after Task 5.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -136,10 +146,14 @@ git commit -m "feat(payments): read the participant totals from the ledger view"
 ### Task 2: The write path stops accepting the two fields
 
 **Files:**
-- Modify: `app/business/admin/common.ts` — `updateParticipantVsEventSchema` (line 98 `has_paid`, 101 `payment`), `updateEventParticipantByIdSchema` (line 115 `payment`, 118 `has_paid`)
+- Modify: `app/business/admin/common.ts` — `updateParticipantVsEventSchema` (line 103 `has_paid`, 106 `payment`), `updateEventParticipantByIdSchema` (line 119 `payment`, 122 `has_paid`)
 - Test: `app/business/admin/admin.server.test.ts` and `admin.server.integration.test.ts`
 
 Both mutations spread their validated input straight into `.set(data)`, so removing the fields from the schemas removes the writes.
+
+Only `updateEventParticipantById` matters in practice: nothing submits `intent: "participant-vs-event-schema"`, so `updateParticipantVsEvent` (line 713) is unreachable. Strip both schemas anyway — leaving one accepting the fields is exactly the loophole POS-524 would trip over — but write the tests against `updateEventParticipantById`.
+
+Order matters and this is the safe direction: the schema stops accepting the fields before Tasks 3 and 4 stop sending them, and zod strips unknown keys, so the intermediate commits ignore a stale field rather than rejecting the form.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -226,7 +240,7 @@ git commit -m "feat(payments): stop writing has_paid and payment from the admin 
 - Modify: `app/components/organisms/tables/admin/participants-table/view-event-participants-table.tsx`
 - Delete: `app/components/organisms/tables/admin/participants-table/payment-column-helpers.ts` and its test
 - Modify: `app/copy/admin/tables.ts`, `app/copy/admin/prop-maps.ts`, `app/lib/helpers/propMaps.ts`
-- Test: `view-event-participants-table.test.tsx`
+- Test: `view-event-participants-table.test.tsx` and `view-event-participants-table.save.test.tsx` (the second also builds `has_paid` rows)
 
 - [ ] **Step 1: Write the failing test**
 
@@ -240,9 +254,11 @@ git commit -m "feat(payments): stop writing has_paid and payment from the admin 
     expect(screen.getByText("R$ 220,00")).toBeInTheDocument()
   })
 
-  it("shows a dash for a participant with no payment", async () => {
+  it("shows a dash for a participant with no payment, and keeps them filterable", async () => {
     renderTable([{ ...baseRow, payment_status: null, paid_gross: 0, net: 0 }])
 
+    // the cell reads "—" but the column's value is "none", which is what the
+    // multi-select filter matches on; a null would drop the row entirely
     expect(await screen.findByText("—")).toBeInTheDocument()
   })
 
@@ -270,7 +286,7 @@ Expected: FAIL.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Replace the two column definitions (lines ~453–500) with three:
+Replace the two column definitions (lines 503–560) with three:
 
 ```tsx
       {
@@ -278,8 +294,13 @@ Replace the two column definitions (lines ~453–500) with three:
         headerName: tableCopy.columns.paymentStatus,
         headerTooltip: tableCopy.columns.paymentStatusTooltip,
         editable: false,
+        // `BaseMultiSelectFilter.doesFilterPass` (line 111) rejects a null cell
+        // value outright, so a participant who never paid would vanish the
+        // moment the filter is touched. The getter gives them a value of their
+        // own instead; the formatter still renders them as a dash.
+        valueGetter: (params) => params.data?.payment_status ?? "none",
         valueFormatter: (params) =>
-          params.value ? paymentStatusPropMap(params.value) : "—",
+          params.value === "none" ? "—" : paymentStatusPropMap(params.value),
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: paymentStatusOptions,
@@ -318,11 +339,11 @@ Replace the two column definitions (lines ~453–500) with three:
 
 Then:
 
-- delete `"has_paid"` and `"payment"` from `EDITABLE_FIELDS` (line ~70)
-- delete `STORAGE_KEYS.hasPaid` and the `hasPaidFilter` state, its `sessionStorage` effect, and its entries in the two dependency arrays (lines 60, 127–129, 157, 169, 574, 586); add `paymentStatusFilter` in the same shape
-- delete the `payment` branch of `handleCellValueChanged` (lines 204–218) — POS-385's auto-check has nothing left to check
-- delete the imports of `shouldAutoCheckHasPaid`, `parsePaymentValue`, `hasPaidOptions`
-- bump `stateVersion` from `2` to `3` (line ~644) so a stored column layout mentioning the removed fields is discarded
+- delete `"has_paid"` and `"payment"` from `EDITABLE_FIELDS` (lines 80–81)
+- delete `STORAGE_KEYS.hasPaid` (line 70) and the `hasPaidFilter` state (181–183), its `sessionStorage` effect (211) and its entries in the two dependency arrays (223, 624); add `paymentStatusFilter` in the same shape
+- delete the auto-persist branch of `handleCellValueChanged` (lines 256–270) and the comment above it at 127–129 — POS-385's auto-check has nothing left to check
+- delete the imports of `shouldAutoCheckHasPaid`, `parsePaymentValue`, `hasPaidOptions` (lines 34, 45, 47) and of `ValueSetterParams` if nothing else uses it
+- bump `stateVersion` from `2` to `3` (line 694) so a stored column layout mentioning the removed fields is discarded
 - add an `onManagePayment?: (eventParticipantId: string) => void` prop; the page passes `undefined` for now and POS-525 wires it
 
 New copy in `app/copy/admin/tables.ts`, replacing `hasPaid`/`hasPaidTooltip`:
@@ -339,6 +360,7 @@ New status labels in `app/copy/admin/prop-maps.ts`, replacing the `hasPaid` map:
 
 ```ts
   paymentStatus: {
+    none: "Sem pagamento",
     pending: "Aguardando escolha",
     awaiting_payment: "Aguardando pagamento",
     paid: "Pago",
@@ -349,7 +371,9 @@ New status labels in `app/copy/admin/prop-maps.ts`, replacing the `hasPaid` map:
   },
 ```
 
-and in `app/lib/helpers/propMaps.ts`, replace `hasPaidOptions` with `paymentStatusOptions` + a `paymentStatusPropMap(value)` lookup, in the same shape as the existing `spotTypeOptions`.
+`none` is not a database value — it is the placeholder the column's `valueGetter` produces for a participant with no payment, and it earns a filter option so those rows can be found.
+
+and in `app/lib/helpers/propMaps.ts`, replace `hasPaidStatusMap`/`hasPaidOptions` (lines 107–117) with `paymentStatusOptions` + a `paymentStatusPropMap(value)` lookup, in the same shape as the existing `spotTypeOptions`. `PARTICIPANTS_TABLE_FILTER_CONFIGS` never mentioned `has_paid`, so it needs nothing.
 
 Delete `payment-column-helpers.ts` and `payment-column-helpers.test.ts`.
 
@@ -371,8 +395,10 @@ git commit -m "feat(payments): show payment status and amount in the grid, read-
 ### Task 4: The participant detail form drops its money fields
 
 **Files:**
-- Modify: `app/components/pages/admin/participants/participant-vs-event-data.tsx` (schema line 38, destructure 59, initialData 78, JSX 155–168)
+- Modify: `app/components/pages/admin/participants/participant-vs-event-data.tsx` (schema lines 36–37, destructure 57–58, `initialData` 76–77, JSX 155–171)
 - Test: `participant-vs-event-data.test.tsx` (names at 112, 119, 156)
+
+The component takes a single `eventParticipant` prop typed `EventParticipantWithEvent` — the type Task 1 extends. There is no `participant` prop.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -387,8 +413,12 @@ git commit -m "feat(payments): show payment status and amount in the grid, read-
   it("shows what the participant paid, read-only", () => {
     render(
       <ParticipantVsEventData
-        {...baseProps}
-        participant={{ ...baseProps.participant, paid_gross: 22000, net: 21500, payment_status: "paid" }}
+        eventParticipant={{
+          ...baseProps.eventParticipant,
+          paid_gross: 22000,
+          net: 21500,
+          payment_status: "paid",
+        }}
       />,
     )
 
@@ -404,7 +434,7 @@ Expected: FAIL.
 
 - [ ] **Step 3: Write minimal implementation**
 
-Remove `has_paid` from the local zod schema, from the destructure and from `initialData`; delete the `<Checkbox {...register.checkbox("has_paid")} />` block and the payment number input. In their place render a read-only pair, using the copy already added in Task 3:
+Remove `has_paid` and `payment` from the local `eventParticipantFormSchema` (lines 36–37), from the destructure (57–58) and from `initialData` (76–77); delete the payment `<Input>` block (155–161) and the `<Checkbox {...register.checkbox("has_paid")} />` label (166–169), keeping the `was_selected_for_rotation` checkbox that shares the wrapper. In their place render a read-only pair:
 
 ```tsx
         <div className="flex flex-col gap-1">
@@ -481,7 +511,7 @@ Expected: FAIL.
 
 - [ ] **Step 3: Write minimal implementation**
 
-In `financial-summary.tsx`: delete the local `formatCurrency`/`formatSurplus` and import the shared ones from POS-520. Filter on `item.paid_gross > 0` instead of `Number(item.payment) > 0`. The four tiles become five: total pago (`Σ paid_gross`), taxas (`Σ fee`), líquido (`Σ net`), eventos pagos, média por evento (`Σ net / count`). Surplus is `Σ (net − ticket_price)` — both cents, no conversion. Each row in the list shows `formatCurrency(item.paid_gross)` with the surplus beside it.
+In `financial-summary.tsx`: the shared `formatCurrency`/`formatSignedCurrency` are already imported (POS-520 landed that) — there is nothing local left to delete. Filter on `item.paid_gross > 0` (line 21) instead of `Number(item.payment) > 0`, and drop every `Number(item.payment ?? 0)` (lines 29, 39, 83, 107) in favour of the view's fields. The four tiles become five: total pago (`Σ paid_gross`), taxas (`Σ fee`), líquido (`Σ net`), eventos pagos, média por evento (`Σ net / count`). Surplus is `Σ (net − ticket_price)` — both cents, no conversion. Each row in the list shows `formatCurrency(item.paid_gross)` with the surplus beside it.
 
 New copy keys in `app/copy/admin/participants.ts` under `financialSummary`:
 
@@ -490,7 +520,7 @@ New copy keys in `app/copy/admin/participants.ts` under `financialSummary`:
     totalNet: "Líquido",
 ```
 
-In `participant-event-history.tsx`, `PaymentRenderer` shows `formatCurrency(data.paid_gross)` and `SurplusRenderer` computes `data.net - (data.ticket_price ?? 0)`. Delete the reais/cents mixing comment added by POS-520 — both sides are cents now.
+In `participant-event-history.tsx`, `PaymentRenderer` (line 127) shows `formatCurrency(data.paid_gross)` and returns null on `paid_gross === 0`; `SurplusRenderer` computes `data.net - (data.ticket_price ?? 0)`. The `payment` column at line 163 becomes `field: "paid_gross"` — keep `eventParticipantPropMap("payment")` as its header for now, since that copy key survives until POS-524. Delete the reais/cents mixing comment added by POS-520 — both sides are cents.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -515,7 +545,9 @@ git commit -m "feat(payments): show gross, fees and net in the financial summary
 - Modify: `app/components/pages/admin/dataviz/revenue-chart.tsx`
 - Test: `app/business/admin/dataviz/dataviz.integration.test.ts`, `kpi-scores.server.integration.test.ts`
 
-Revenue becomes **net** — what Positiv actually kept. Gross and fee ride along so the tooltip can show all three.
+Revenue becomes **net** — what Positiv kept. Gross and fee ride along so the tooltip can show all three.
+
+`num_pagantes` follows the view's `has_paid`: a payer is someone whose money Positiv still holds. A refund means the person is not coming, so they stop counting as a payer and their money stops counting as revenue, together. A partial refund leaves both standing.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -532,11 +564,20 @@ In `dataviz.integration.test.ts`, replace every `createTestEventParticipant({ ha
       expect(row.num_pagantes).toBe(1)
     })
 
-    it("counts a refunded payment as a payer but not as revenue", async () => {
+    it("drops a refunded participant from the revenue and from the payer count", async () => {
+      // the event's only payment, 220,00 manual, refunded in full
+      const [row] = await getEventRevenueData()
+
+      expect(row.num_pagantes).toBe(0)
+      expect(row.faturamento_total).toBe(0)
+    })
+
+    it("still counts a partially refunded participant as a payer", async () => {
+      // 220,00 manual, 50,00 given back
       const [row] = await getEventRevenueData()
 
       expect(row.num_pagantes).toBe(1)
-      expect(row.faturamento_total).toBe(0)
+      expect(row.faturamento_total).toBe(17000)
     })
 ```
 
@@ -564,7 +605,11 @@ In `getEventRevenueData`, join the view and replace the two aggregates:
       sql<number>`count(*) filter (where epp.has_paid)::int`.as("num_pagantes"),
 ```
 
-Same join in `getConversionFunnelData`, with `count(*) filter (where epp.has_paid)` replacing the `has_paid = true` filter. Same in `kpi-scores.server.ts` for the revenue sum (line ~104). `avg(ticket_price)` at line 31 already reads cents after POS-520 — leave it.
+Delete the "still numeric reais" comments at `event-metrics.server.ts:101-102` and `kpi-scores.server.ts:110-111` along with the `* 100` they explain — the view is already cents.
+
+Same join in `getConversionFunnelData`, with `count(*) filter (where epp.has_paid)` replacing the `event_participants.has_paid = true` filter. Same in `kpi-scores.server.ts` for the revenue sum (line 104), joining the view to `event_participants.id`. `avg(ticket_price)` at line 31 already reads cents after POS-520 — leave it.
+
+The view holds exactly one row per participant, so the join cannot fan a sum out; an event with no participants still yields one all-null row and aggregates to zero, as it does today.
 
 Add `faturamento_bruto` and `taxas` to `EventRevenueDataPoint` in `dataviz.types.ts`. In `revenue-chart.tsx`, keep the bar on `faturamento_total` and add both new numbers to the tooltip, with copy in `app/copy/admin/dataviz.ts`:
 
@@ -590,49 +635,64 @@ git commit -m "feat(payments): count revenue from the ledger, net of fees"
 ### Task 7: Seeds and E2E helpers
 
 **Files:**
-- Modify: `supabase/seeds/04_event_participants.sql`, `supabase/seeds/07_test_registration_history.sql`
-- Create: `supabase/seeds/08_payments.sql` (or the next free number — check `ls supabase/seeds`)
-- Modify: `e2e/utils/event-helpers.ts:93`
+- Modify: `supabase/seeds/04_event_participants.sql` — six column lists and the values behind them
+- Modify: `supabase/seeds/07_test_registration_history.sql` (lines 70, 73)
+- Rewrite: `supabase/seeds/10_payments.sql`
+- Modify: `e2e/utils/event-helpers.ts:93-94`
 
-- [ ] **Step 1: Move the seeded money into `payments`**
+Seeds may be rewritten at will; migrations may not. `10_payments.sql` already exists — POS-522 added it — and today it derives every row from the very columns this task removes: `WHERE (ep.has_paid = true OR ep.payment > 0)`, with the amounts computed from `ROUND(ep.payment * 100)`. Strip the columns without rewriting that file and the seeds produce **zero** payments, which reads as every admin screen showing zero.
 
-Remove `has_paid` and `payment` from the six column lists in `04_event_participants.sql` and the positional values that go with them, and from `07_test_registration_history.sql`. Create a new seed that inserts a `payments` row for the participants that used to be marked paid:
+- [ ] **Step 1: Stop the seeds writing the two columns**
+
+Remove `has_paid` and `payment` from the six column lists in `04_event_participants.sql` (lines 43, 82, 133, 185, 234, 283) and the positional values behind them, and from `07_test_registration_history.sql` (lines 70, 73).
+
+Three rows in `04` are hand-written as paid on live events (lines 47, 52, 56 — the admin on `event_id_reg_open_1`, `user1` on `event_id_reg_closed_1`, `user3` at zero). Their `application_status` is `sent_payment_data`, so the rule in Step 2 will not reach them. Give the two that carried money an explicit `INSERT INTO public.payments` in the same block, where the profile and event ids are still in scope; `user3` paid nothing and gets nothing.
+
+- [ ] **Step 2: Rewrite `10_payments.sql` so it stands on its own**
+
+The rule replaces the columns as the source of truth: a participant who finalised and either showed up or did not is someone who paid.
 
 ```sql
--- Payments for the seeded history. Everything before the ledger existed was a
--- PIX transfer arranged by hand, so that is what the seed produces.
 INSERT INTO public.payments (
-  event_participant_id, kind, status, method,
-  base_amount, amount, paid_at, due_at, note
+    event_participant_id, kind, status, method,
+    base_amount, amount, paid_at, due_at, note, created_at, updated_at
 )
 SELECT
-  ep.id,
-  'manual',
-  'paid',
-  'pix',
-  COALESCE(NULLIF(e.ticket_price, 0), 20000),
-  COALESCE(NULLIF(e.ticket_price, 0), 20000),
-  ep.updated_at,
-  ep.updated_at,
-  'seed'
+    ep.id,
+    'manual',
+    'paid',
+    'pix',
+    GREATEST(COALESCE(NULLIF(e.ticket_price, 0), 20000), 1),
+    GREATEST(COALESCE(NULLIF(e.ticket_price, 0), 20000), 1),
+    ep.updated_at,
+    ep.updated_at,
+    'seed',
+    ep.updated_at,
+    ep.updated_at
 FROM public.event_participants ep
 JOIN public.events e ON e.id = ep.event_id
 WHERE ep.application_status = 'finalised'
   AND ep.attendance_status IN ('attended', 'not-attended')
-  AND NOT EXISTS (SELECT 1 FROM public.payments p WHERE p.event_participant_id = ep.id);
+  AND NOT EXISTS (
+      SELECT 1 FROM public.payments p WHERE p.event_participant_id = ep.id
+  );
 ```
 
-In `e2e/utils/event-helpers.ts:93`, drop `has_paid: i === 0` from the insert; if a spec needs a paid participant, insert a `payments` row instead.
+The `NOT EXISTS` guard is what lets Step 1's hand-written rows coexist with this pass. Rewrite the file's header comment too: it currently explains that the mapping is copied from `20260827143204_backfill_payments.sql`, and that mapping dies with the columns. The new comment describes the rule and says why the seeds no longer follow the migration.
 
-- [ ] **Step 2: Verify**
+- [ ] **Step 3: E2E helper**
+
+In `e2e/utils/event-helpers.ts:93-94`, drop `has_paid: i === 0` and `payment: i === 0 ? 100 : 0`. No spec asserts on either — outside this helper the suite mentions payments only in `db-cleanup.ts`, which deletes them — so nothing needs a replacement row.
+
+- [ ] **Step 4: Verify**
 
 Run: `supabase db reset`
 Run: `psql "$SUPABASE_CONNECT_URL" -c "SELECT count(*) FROM public.payments WHERE note = 'seed';"`
-Expected: a few hundred, not zero.
+Expected: a few hundred, not zero. The old file wrote `note = 'backfill'`; this one writes `'seed'`, so an unreset database will show both.
 
 Open `/admin/eventos/<id>` on the dev server: the grid shows "Pago" and an amount for the finalised participants.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add supabase/seeds e2e/utils/event-helpers.ts
@@ -655,6 +715,12 @@ grep -rn "has_paid\|hasPaid\|\bpayment\b" app e2e supabase/seeds --include='*.ts
 
 Every remaining hit is either a fixture literal to delete or a name that means something else (`time_payment_start`, the `payments` table itself). The generated `database.types.ts` still declares the columns — that is correct until POS-524.
 
+Three suites carry `has_paid` fixtures that no earlier task touches, and they are the ones this sweep exists for:
+
+- `app/business/admin/admin-query-optimization.integration.test.ts`
+- `app/pages/api/admin/event-participant.test.ts` (lines 43, 51)
+- `app/components/organisms/tables/admin/participants-table/view-event-participants-table.save.test.tsx`
+
 - [ ] **Step 2: Run everything**
 
 Run: `pnpm lint`
@@ -674,15 +740,17 @@ git commit -m "test(payments): drop the last has_paid and payment fixtures"
 
 - [ ] Run: `supabase db reset`, `pnpm lint`, `pnpm test` — all clean
 - [ ] Manually: the admin grid shows status + amount and a `$` button; the participant page shows the payment read-only; `/admin/numeros` shows revenue with gross and fees in the tooltip; the financial summary adds up
-- [ ] Compare against the old columns before merging:
+- [ ] Compare against the old columns before merging — on a database whose columns were actually backfilled (staging, or a local dump of it). A fresh `supabase db reset` no longer writes `has_paid` at all after Task 7, so there the query compares the ledger against a column of `false` and is meaningless:
   ```bash
   psql "$SUPABASE_CONNECT_URL" -c "
-    SELECT count(*) AS mismatches
+    SELECT
+      count(*) FILTER (WHERE ep.has_paid AND NOT epp.has_paid) AS lost,
+      count(*) FILTER (WHERE NOT ep.has_paid AND epp.has_paid AND ep.payment > 0) AS gained_with_amount,
+      count(*) FILTER (WHERE NOT ep.has_paid AND epp.has_paid AND ep.payment = 0) AS gained_without_amount
       FROM public.event_participants ep
-      JOIN public.event_participant_payments epp ON epp.event_participant_id = ep.id
-     WHERE ep.has_paid <> epp.has_paid;"
+      JOIN public.event_participant_payments epp ON epp.event_participant_id = ep.id;"
   ```
-  Expected: `0`
+  Expected: `lost = 0` and `gained_without_amount = 0`. `gained_with_amount` is **not** zero and must not be — `20260827143204_backfill_payments.sql` selects on `has_paid = true OR payment > 0` on purpose, because a row carrying an amount without the tick is still money that changed hands. A plain `has_paid <> epp.has_paid` count reports those as mismatches and is the wrong check; locally it reads 52, all of them in that column.
 - [ ] Run E2E **once, last**, after checking the lock: `pnpm test:e2e`
 
 ## Definition of done
