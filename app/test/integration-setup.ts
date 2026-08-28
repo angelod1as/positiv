@@ -1,6 +1,7 @@
 import { Kysely, PostgresDialect } from "kysely"
 import { Pool } from "pg"
 import type { Database } from "~/types/database/kysely.types"
+import { assertLocalDatabaseUrl } from "./assert-local-database"
 import { TestDataTracker, cleanupTestData } from "./db-test-utils"
 
 // Create a test-specific Kysely instance
@@ -9,10 +10,9 @@ let testKysely: Kysely<Database> | null = null
 // Export the test Kysely instance
 export function getTestKysely(): Kysely<Database> {
   if (!testKysely) {
-    const connectionString = process.env.SUPABASE_CONNECT_URL
-    if (!connectionString) {
-      throw new Error("SUPABASE_CONNECT_URL environment variable is not set")
-    }
+    const connectionString = assertLocalDatabaseUrl(
+      process.env.SUPABASE_CONNECT_URL,
+    )
 
     testKysely = new Kysely<Database>({
       dialect: new PostgresDialect({
