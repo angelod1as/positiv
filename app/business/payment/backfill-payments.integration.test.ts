@@ -40,12 +40,21 @@ describe("backfilling the payments ledger", () => {
       title: "Backfill Event",
       ticket_price: 20000,
     })
+    const freeEvent = await createTestEvent(tracker, kysely, {
+      title: "Backfill Event Without A Price",
+      ticket_price: null,
+    })
 
     const cases = {
-      paidWithAmount: { has_paid: true, payment: 220 },
-      paidWithoutAmount: { has_paid: true, payment: 0 },
-      amountWithoutFlag: { has_paid: false, payment: 150 },
-      nothing: { has_paid: false, payment: 0 },
+      paidWithAmount: { event_id: event.id, has_paid: true, payment: 220 },
+      paidWithoutAmount: { event_id: event.id, has_paid: true, payment: 0 },
+      amountWithoutFlag: { event_id: event.id, has_paid: false, payment: 150 },
+      nothing: { event_id: event.id, has_paid: false, payment: 0 },
+      paidWithoutPrice: {
+        event_id: freeEvent.id,
+        has_paid: true,
+        payment: 0,
+      },
     }
 
     for (const [name, columns] of Object.entries(cases)) {
@@ -55,7 +64,6 @@ describe("backfilling the payments ledger", () => {
         full_name: name,
       })
       const participant = await createTestEventParticipant(tracker, kysely, {
-        event_id: event.id,
         profile_id: profile.id,
         ...columns,
       })
@@ -108,6 +116,18 @@ describe("backfilling the payments ledger", () => {
 
     const payment = await paymentFor(participants.paidWithoutAmount)
     expect(payment?.amount).toBe(20000)
+    expect(payment?.status).toBe("paid")
+  })
+
+  it("credits a paid participant with one cent when nobody recorded a price", async () => {
+    await backfill()
+
+    const payment = await paymentFor(participants.paidWithoutPrice)
+    // amount > 0 and base_amount > 0 are table constraints, so a row with no
+    // price on either side still has to carry something. One cent says the
+    // money moved without claiming an amount nobody wrote down.
+    expect(payment?.amount).toBe(1)
+    expect(payment?.base_amount).toBe(1)
     expect(payment?.status).toBe("paid")
   })
 

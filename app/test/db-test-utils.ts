@@ -338,6 +338,7 @@ export async function createTestAdminUser(
 
   return { userId, profile }
 }
+
 /**
  * Removes the event_participants rows belonging to the profiles a suite owns.
  *
