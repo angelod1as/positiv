@@ -100,10 +100,8 @@ export const updateParticipantVsEventSchema = zod.object({
   intent: zod.literal("participant-vs-event-schema"),
   attendance_status: participantAttendanceStatusEnum,
   application_status: participantApplicationStatusEnum,
-  has_paid: zod.boolean(),
   spot_type: spotTypeEnum,
   was_selected_for_rotation: zod.boolean(),
-  payment: zod.coerce.number(),
   admin_general_notes: zod.string(),
 })
 
@@ -116,10 +114,8 @@ const parseBoolean = zod.union([
 export const updateEventParticipantByIdSchema = zod.object({
   id: zod.string(),
   profile_id: zod.string(),
-  payment: zod.coerce.number().optional(),
   attendance_status: participantAttendanceStatusEnum.optional(),
   application_status: participantApplicationStatusEnum.optional(),
-  has_paid: parseBoolean.optional(),
   spot_type: spotTypeEnum.optional(),
   is_veteran: parseBoolean.optional(),
   was_selected_for_rotation: parseBoolean.optional(),
