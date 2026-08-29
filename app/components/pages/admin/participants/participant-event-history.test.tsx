@@ -205,8 +205,9 @@ describe("ParticipantEventHistory", () => {
     > = [
       {
         ...mockParticipantHistory[0],
-        payment: 15000,
-        has_paid: true,
+        paid_gross: 15000,
+        net: 15000,
+        payment_status: "paid",
       },
     ]
     renderWithRouter(
@@ -292,7 +293,8 @@ describe("ParticipantEventHistory", () => {
     const historyWithSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 15000,
+        paid_gross: 15000,
+        net: 15000,
         ticket_price: 10000,
       },
     ]
@@ -311,7 +313,8 @@ describe("ParticipantEventHistory", () => {
     const historyWithNegativeSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 8000,
+        paid_gross: 8000,
+        net: 8000,
         ticket_price: 10000,
       },
     ]
@@ -330,7 +333,8 @@ describe("ParticipantEventHistory", () => {
     const historyWithZeroSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 10000,
+        paid_gross: 10000,
+        net: 10000,
         ticket_price: 10000,
       },
     ]

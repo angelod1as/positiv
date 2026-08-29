@@ -124,11 +124,10 @@ function SurplusRenderer(
   const data = params.data
   if (!data) return null
 
-  const payment = data.payment ?? 0
-  if (payment === 0) return null
+  if (data.paid_gross === 0) return null
 
   const ticketPrice = data.ticket_price ?? 0
-  const surplus = payment - ticketPrice
+  const surplus = data.net - ticketPrice
   const formattedValue = formatSignedCurrency(surplus)
 
   if (surplus >= 0) {
@@ -160,7 +159,7 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         },
       },
       {
-        field: "payment",
+        field: "paid_gross",
         headerName: eventParticipantPropMap("payment"),
         cellRenderer: PaymentRenderer,
         sortable: true,

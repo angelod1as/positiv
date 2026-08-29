@@ -45,8 +45,8 @@ const createMockHistoryItem = (
 describe("FinancialSummary", () => {
   it("should render nothing when no payments exist", () => {
     const historyWithNoPayments: ParticipantEventHistoryData[] = [
-      createMockHistoryItem({ payment: 0 }),
-      createMockHistoryItem({ id: "2", payment: null as unknown as number }),
+      createMockHistoryItem({ paid_gross: 0, net: 0 }),
+      createMockHistoryItem({ id: "2", paid_gross: 0, net: 0 }),
     ]
 
     const { container } = render(
@@ -62,6 +62,49 @@ describe("FinancialSummary", () => {
     expect(container).toBeEmptyDOMElement()
   })
 
+
+  it("separates what was paid from what Positiv kept", () => {
+    const history: ParticipantEventHistoryData[] = [
+      createMockHistoryItem({
+        paid_gross: 23000,
+        fee: 1000,
+        net: 22000,
+        ticket_price: 20000,
+      }),
+      createMockHistoryItem({
+        id: "2",
+        paid_gross: 11000,
+        fee: 500,
+        net: 10500,
+        ticket_price: 10000,
+      }),
+    ]
+
+    render(<FinancialSummary participantHistory={history} />)
+
+    expect(screen.getByText("R$ 340,00")).toBeInTheDocument() // total pago
+    expect(screen.getByText("R$ 15,00")).toBeInTheDocument() // taxas
+    expect(screen.getByText("R$ 325,00")).toBeInTheDocument() // líquido
+    expect(screen.getByText("R$ 162,50")).toBeInTheDocument() // média, do líquido
+    expect(screen.getByText("+R$ 25,00")).toBeInTheDocument() // diferença
+  })
+
+  it("counts an event as paid when the ledger says so, even at zero surplus", () => {
+    const history: ParticipantEventHistoryData[] = [
+      createMockHistoryItem({
+        paid_gross: 20000,
+        fee: 0,
+        net: 20000,
+        ticket_price: 20000,
+      }),
+    ]
+
+    render(<FinancialSummary participantHistory={history} />)
+
+    expect(screen.getByText("1")).toBeInTheDocument()
+    expect(screen.getByText("+R$ 0,00")).toBeInTheDocument()
+  })
+
   it("should display section title 'Resumo Financeiro'", () => {
     const history = [createMockHistoryItem()]
 
@@ -70,23 +113,24 @@ describe("FinancialSummary", () => {
     expect(screen.getByText(adminParticipantsCopy.financialSummary.title)).toBeInTheDocument()
   })
 
-  it("should display correct total invested (sum of all payments)", () => {
+  it("should display correct total paid (sum of all payments)", () => {
     const history: ParticipantEventHistoryData[] = [
-      createMockHistoryItem({ payment: 15000 }),
-      createMockHistoryItem({ id: "2", payment: 20000 }),
-      createMockHistoryItem({ id: "3", payment: 10000 }),
+      createMockHistoryItem({ paid_gross: 15000, net: 15000 }),
+      createMockHistoryItem({ id: "2", paid_gross: 20000, net: 20000 }),
+      createMockHistoryItem({ id: "3", paid_gross: 10000, net: 10000 }),
     ]
 
     render(<FinancialSummary participantHistory={history} />)
 
-    expect(screen.getByText("R$ 450,00")).toBeInTheDocument()
+    // no fees on these, so the gross tile and the net tile read the same
+    expect(screen.getAllByText("R$ 450,00")).toHaveLength(2)
   })
 
   it("should display correct count of paid events", () => {
     const history: ParticipantEventHistoryData[] = [
-      createMockHistoryItem({ payment: 15000 }),
-      createMockHistoryItem({ id: "2", payment: 20000 }),
-      createMockHistoryItem({ id: "3", payment: 0 }),
+      createMockHistoryItem({ paid_gross: 15000, net: 15000 }),
+      createMockHistoryItem({ id: "2", paid_gross: 20000, net: 20000 }),
+      createMockHistoryItem({ id: "3", paid_gross: 0, net: 0 }),
     ]
 
     render(<FinancialSummary participantHistory={history} />)
@@ -96,8 +140,8 @@ describe("FinancialSummary", () => {
 
   it("should display correct average per event", () => {
     const history: ParticipantEventHistoryData[] = [
-      createMockHistoryItem({ payment: 10000 }),
-      createMockHistoryItem({ id: "2", payment: 20000 }),
+      createMockHistoryItem({ paid_gross: 10000, net: 10000 }),
+      createMockHistoryItem({ id: "2", paid_gross: 20000, net: 20000 }),
     ]
 
     render(<FinancialSummary participantHistory={history} />)
@@ -107,8 +151,8 @@ describe("FinancialSummary", () => {
 
   it("should display diferença total (sum of payment - ticket_price)", () => {
     const history: ParticipantEventHistoryData[] = [
-      createMockHistoryItem({ payment: 15000, ticket_price: 10000 }),
-      createMockHistoryItem({ id: "2", payment: 20000, ticket_price: 18000 }),
+      createMockHistoryItem({ paid_gross: 15000, net: 15000, ticket_price: 10000 }),
+      createMockHistoryItem({ id: "2", paid_gross: 20000, net: 20000, ticket_price: 18000 }),
     ]
 
     render(<FinancialSummary participantHistory={history} />)
@@ -118,8 +162,8 @@ describe("FinancialSummary", () => {
 
   it("should handle null ticket_price when calculating surplus", () => {
     const history: ParticipantEventHistoryData[] = [
-      createMockHistoryItem({ payment: 15000, ticket_price: null }),
-      createMockHistoryItem({ id: "2", payment: 10000, ticket_price: 8000 }),
+      createMockHistoryItem({ paid_gross: 15000, net: 15000, ticket_price: null }),
+      createMockHistoryItem({ id: "2", paid_gross: 10000, net: 10000, ticket_price: 8000 }),
     ]
 
     render(<FinancialSummary participantHistory={history} />)
@@ -132,14 +176,14 @@ describe("FinancialSummary", () => {
       createMockHistoryItem({
         event_title: "Evento Alpha",
         event_emoji: "🎉",
-        payment: 15000,
+        paid_gross: 15000, net: 15000,
         ticket_price: 10000,
       }),
       createMockHistoryItem({
         id: "2",
         event_title: "Evento Beta",
         event_emoji: "🎊",
-        payment: 20000,
+        paid_gross: 20000, net: 20000,
         ticket_price: 18000,
       }),
     ]
@@ -154,7 +198,7 @@ describe("FinancialSummary", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         event_title: "Evento Alpha",
-        payment: 15000,
+        paid_gross: 15000, net: 15000,
         ticket_price: 10000,
       }),
     ]
@@ -170,7 +214,7 @@ describe("FinancialSummary", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         event_title: "Evento Desconto",
-        payment: 8000,
+        paid_gross: 8000, net: 8000,
         ticket_price: 10000,
       }),
     ]
@@ -186,12 +230,12 @@ describe("FinancialSummary", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         event_title: "Evento Pago",
-        payment: 15000,
+        paid_gross: 15000, net: 15000,
       }),
       createMockHistoryItem({
         id: "2",
         event_title: "Evento Gratis",
-        payment: 0,
+        paid_gross: 0, net: 0,
       }),
     ]
 
