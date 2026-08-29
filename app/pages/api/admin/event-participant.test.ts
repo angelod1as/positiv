@@ -40,7 +40,7 @@ describe("event participant commit endpoint", () => {
       JSON.stringify({
         id: "participant-1",
         profile_id: "profile-2",
-        has_paid: true,
+        attendance_status: "attended",
       }),
     )
 
@@ -48,7 +48,7 @@ describe("event participant commit endpoint", () => {
     expect(updateEventParticipantById).toHaveBeenCalledWith({
       id: "participant-1",
       profile_id: "profile-2",
-      has_paid: true,
+      attendance_status: "attended",
     })
   })
 

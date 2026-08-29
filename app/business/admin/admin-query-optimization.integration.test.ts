@@ -304,7 +304,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
               "ep.profile_id",
               "ep.application_status",
               "ep.attendance_status",
-              "ep.has_paid",
               sql<number>`row_number() over (
               partition by ep.profile_id
               order by e.time_event_start desc
