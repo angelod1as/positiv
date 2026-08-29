@@ -83,6 +83,11 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
       "event_participants.event_id",
       "events.id"
     )
+    .leftJoin(
+      "event_participant_payments as epp",
+      "epp.event_participant_id",
+      "event_participants.id"
+    )
     .where("events.event_status", "=", "Completed")
     .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .groupBy([
@@ -98,14 +103,14 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
       "events.emoji",
       "events.time_event_start as date",
       "events.ticket_price",
-      // `payment` is still numeric reais in the column; POS-523 moves this
-      // query to the view, which is already cents.
-      sql<number>`(coalesce(sum(event_participants.payment), 0) * 100)::int`.as(
-        "faturamento_total"
+      // Revenue is what Positiv kept. A refund takes the money back and the
+      // payer with it: someone who was refunded is not coming.
+      sql<number>`coalesce(sum(epp.net), 0)::int`.as("faturamento_total"),
+      sql<number>`coalesce(sum(epp.paid_gross), 0)::int`.as(
+        "faturamento_bruto"
       ),
-      sql<number>`count(*) filter (where event_participants.has_paid = true)::int`.as(
-        "num_pagantes"
-      ),
+      sql<number>`coalesce(sum(epp.fee), 0)::int`.as("taxas"),
+      sql<number>`count(*) filter (where epp.has_paid)::int`.as("num_pagantes"),
     ])
     .execute()
 
@@ -114,6 +119,8 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
     emoji: row.emoji ?? "",
     date: row.date ? new Date(row.date).toISOString() : "",
     faturamento_total: row.faturamento_total,
+    faturamento_bruto: row.faturamento_bruto,
+    taxas: row.taxas,
     ticket_price: Number(row.ticket_price ?? 0),
     num_pagantes: row.num_pagantes,
   }))
@@ -128,6 +135,11 @@ export async function getConversionFunnelData(): Promise<
       "event_participants",
       "event_participants.event_id",
       "events.id"
+    )
+    .leftJoin(
+      "event_participant_payments as epp",
+      "epp.event_participant_id",
+      "event_participants.id"
     )
     .where("events.event_status", "=", "Completed")
     .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
@@ -146,9 +158,7 @@ export async function getConversionFunnelData(): Promise<
       sql<number>`count(*) filter (where event_participants.application_status = 'finalised')::int`.as(
         "finalizados"
       ),
-      sql<number>`count(*) filter (where event_participants.has_paid = true)::int`.as(
-        "pagaram"
-      ),
+      sql<number>`count(*) filter (where epp.has_paid)::int`.as("pagaram"),
       sql<number>`count(*) filter (where event_participants.attendance_status = 'attended')::int`.as(
         "compareceram"
       ),
