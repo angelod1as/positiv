@@ -25,6 +25,11 @@ describe("assertLocalDatabaseUrl", () => {
         "postgresql://postgres.abcdefghijklmnop:hunter2@aws-0-sa-east-1.pooler.supabase.com:5432/postgres",
       ),
     ).toThrow(expect.not.stringContaining("hunter2"))
+    expect(() =>
+      assertLocalDatabaseUrl(
+        "postgresql://postgres.abcdefghijklmnop:hunter2@aws-0-sa-east-1.pooler.supabase.com:5432/postgres",
+      ),
+    ).toThrow(expect.not.stringContaining("postgres.abcdefghijklmnop"))
   })
 
   it("refuses an unset or unparseable connection string", () => {

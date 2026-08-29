@@ -82,6 +82,15 @@ BEGIN
       FROM public.event_participants ep
      WHERE ep.profile_id = user1_profile_id
        AND ep.event_id = event_id_reg_closed_1;
+
+    INSERT INTO public.payments (
+        event_participant_id, kind, status, method,
+        base_amount, amount, paid_at, due_at, note
+    )
+    SELECT ep.id, 'manual', 'paid', 'pix', 2000, 2000, ep.application_date, ep.application_date, 'seed'
+      FROM public.event_participants ep
+     WHERE ep.profile_id = user4_profile_id
+       AND ep.event_id = event_id_scheduled_1;
 END $$;
 
 -- ============================================================================

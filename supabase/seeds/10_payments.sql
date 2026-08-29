@@ -5,9 +5,12 @@
 -- Until POS-523 this file derived each row from event_participants.has_paid and
 -- .payment, mirroring 20260827143204_backfill_payments.sql. Nothing reads those
 -- columns any more and the seeds no longer write them, so the rule stands on
--- its own: a participation that finalised and either showed up or did not is
--- one that was paid for. Everything before the ledger existed was a PIX
--- transfer arranged by hand, which is what this produces.
+-- its own: a participation that finalised was paid for, unless the person
+-- withdrew or was sent to the rodizio. That keeps the live events seeded with
+-- money too -- their participants have not attended anything yet, so a rule
+-- resting on attendance alone would leave the admin grid empty exactly where
+-- an admin looks. Everything before the ledger existed was a PIX transfer
+-- arranged by hand, which is what this produces.
 --
 -- Participants come from more than one seed file, hence a single pass at the
 -- end rather than a statement in each. 04_event_participants.sql adds the two
@@ -32,7 +35,7 @@ SELECT
 FROM public.event_participants ep
 JOIN public.events e ON e.id = ep.event_id
 WHERE ep.application_status = 'finalised'
-  AND ep.attendance_status IN ('attended', 'not-attended')
+  AND ep.attendance_status IN ('attended', 'not-attended', 'pending')
   AND NOT EXISTS (
       SELECT 1 FROM public.payments p WHERE p.event_participant_id = ep.id
   );
