@@ -67,10 +67,8 @@ BEGIN
         is_user_applied,
         application_status,
         attendance_status,
-        has_paid,
         application_date,
         cancellation_date,
-        payment,
         notes,
         spot_type,
         admin_general_notes,
@@ -84,10 +82,8 @@ BEGIN
         TRUE,  -- User applied
         'finalised',
         'pending',
-        TRUE,
         now() - interval '5 days',
         NULL,
-        25.00,
         'Applied for current event',
         'regular',
         'Waiting for event to happen',
@@ -100,10 +96,8 @@ BEGIN
         FALSE,  -- ADMIN ADDED - This should still show in history!
         'finalised',
         'attended',
-        TRUE,
         now() - interval '4 months',
         NULL,
-        0,
         'Admin added this person directly to the event',
         'staff',
         'Admin added as staff member',
@@ -116,10 +110,8 @@ BEGIN
         TRUE,  -- User applied
         'finalised',
         'not-attended',  -- NO-SHOW - This should still show in history!
-        TRUE,
         now() - interval '6 months',
         NULL,
-        30.00,
         'User was a no-show',
         'regular',
         'Did not attend despite confirming',

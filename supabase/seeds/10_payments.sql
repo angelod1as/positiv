@@ -2,17 +2,17 @@
 
 -- The payments ledger for every participant seeded above.
 --
--- Seeds run after migrations, so 20260827143204_backfill_payments.sql cannot
--- reach them, and participants are created by more than one seed file -- hence
--- a single pass at the end rather than a statement in each. The mapping is that
--- migration's, copied: the money the seeds record in has_paid and a reais
--- amount becomes a manual PIX payment in cents, which is where the application
--- reads it from. Change the mapping there and it has to change here too --
--- nothing enforces it, because a migration is frozen once applied and a seed
--- never is.
+-- Until POS-523 this file derived each row from event_participants.has_paid and
+-- .payment, mirroring 20260827143204_backfill_payments.sql. Nothing reads those
+-- columns any more and the seeds no longer write them, so the rule stands on
+-- its own: a participation that finalised and either showed up or did not is
+-- one that was paid for. Everything before the ledger existed was a PIX
+-- transfer arranged by hand, which is what this produces.
 --
--- 04_event_participants.sql truncates event_participants with CASCADE, so the
--- rows this creates are cleared with it.
+-- Participants come from more than one seed file, hence a single pass at the
+-- end rather than a statement in each. 04_event_participants.sql adds the two
+-- payments this rule cannot reach, and truncates event_participants with
+-- CASCADE, so the rows created here are cleared with it.
 INSERT INTO public.payments (
     event_participant_id, kind, status, method,
     base_amount, amount, paid_at, due_at, note, created_at, updated_at
@@ -22,16 +22,17 @@ SELECT
     'manual',
     'paid',
     'pix',
-    GREATEST(COALESCE(NULLIF(e.ticket_price, 0), ROUND(ep.payment * 100)::int, 1), 1),
-    GREATEST(COALESCE(NULLIF(ROUND(ep.payment * 100)::int, 0), NULLIF(e.ticket_price, 0), 1), 1),
+    GREATEST(COALESCE(NULLIF(e.ticket_price, 0), 20000), 1),
+    GREATEST(COALESCE(NULLIF(e.ticket_price, 0), 20000), 1),
     ep.updated_at,
     ep.updated_at,
-    'backfill',
+    'seed',
     ep.updated_at,
     ep.updated_at
 FROM public.event_participants ep
 JOIN public.events e ON e.id = ep.event_id
-WHERE (ep.has_paid = true OR ep.payment > 0)
+WHERE ep.application_status = 'finalised'
+  AND ep.attendance_status IN ('attended', 'not-attended')
   AND NOT EXISTS (
       SELECT 1 FROM public.payments p WHERE p.event_participant_id = ep.id
   );
