@@ -1,6 +1,6 @@
 import type { FetcherWithComponents } from "react-router"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { renderWithRouter, screen } from "~/test/test-utils"
+import { renderWithRouter, screen, waitFor } from "~/test/test-utils"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import { downloadXLSX } from "~/lib/helpers/download-xlsx"
 import type {
@@ -71,6 +71,7 @@ describe("Buttons", () => {
 
     screen.getByRole("button", { name: /baixar dados/i }).click()
 
+    await waitFor(() => expect(downloadXLSX).toHaveBeenCalled())
     expect(downloadXLSX).toHaveBeenCalledWith([
       {
         "Nº": 1,
@@ -84,11 +85,12 @@ describe("Buttons", () => {
     ])
   })
 
-  it("should leave out participants who will not go to the event", () => {
+  it("should leave out participants who will not go to the event", async () => {
     renderButtons([goingParticipant, withdrewParticipant])
 
     screen.getByRole("button", { name: /baixar dados/i }).click()
 
+    await waitFor(() => expect(downloadXLSX).toHaveBeenCalled())
     const [rows] = vi.mocked(downloadXLSX).mock.calls[0] as [
       Array<Record<string, unknown>>,
     ]

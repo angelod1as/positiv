@@ -6,7 +6,6 @@ import { Button } from "~/components/atoms/button/button"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { sharedCopy } from "~/copy/shared"
 import { mapParticipantsToDownloadFormat } from "~/lib/helpers/download-helpers"
-import { downloadXLSX } from "~/lib/helpers/download-xlsx"
 import { getWillGoToEventParticipants } from "~/lib/helpers/get-filtered-participants"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData, Event } from "~types/database/entities.types"
@@ -32,7 +31,10 @@ export const Buttons: FC<ButtonProps> = ({
 }) => {
   const { id, event_status, listmonk_list_id } = event
 
-  const handleDownload = () => {
+  // The spreadsheet library is heavy and only an admin who actually clicks
+  // needs it, so it is fetched here rather than with the page
+  const handleDownload = async () => {
+    const { downloadXLSX } = await import("~/lib/helpers/download-xlsx")
     const filteredParticipants =
       getWillGoToEventParticipants(participants).participants
     downloadXLSX(mapParticipantsToDownloadFormat(filteredParticipants))
