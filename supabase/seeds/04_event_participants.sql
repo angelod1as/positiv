@@ -62,7 +62,7 @@ BEGIN
     (user4_profile_id, event_id_scheduled_1, TRUE, 'sent_rules', 'pending', now() - interval '7 months', NULL, 'Admin sent participation rules to user', NULL, 'ninguem', NULL, NULL, 'regular', NULL),
     (user4_profile_id, event_id_cancelled_1, TRUE, 'finalised', 'withdrew', now() - interval '1 month', now() - interval '15 days', 'User decided they will not go', NULL, 'ninguem', NULL, NULL, 'regular', NULL);
 
-    -- Two of the rows above are paid on events that are still live, which the
+    -- Three of the rows above are paid on events that are still live, which the
     -- rule in 10_payments.sql does not reach: it only covers a participation
     -- that finalised. Their money is stated here, where the ids are in scope.
     INSERT INTO public.payments (

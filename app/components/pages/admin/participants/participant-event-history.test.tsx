@@ -309,6 +309,27 @@ describe("ParticipantEventHistory", () => {
     })
   })
 
+  it("shows no surplus for a participation that was refunded", async () => {
+    const historyWithRefund: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        paid_gross: 22000,
+        net: 0,
+        refunded: 22000,
+        payment_status: "refunded",
+        ticket_price: 20000,
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithRefund} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("R$ 220,00")).toBeInTheDocument()
+    })
+    expect(screen.queryByText("-R$ 200,00")).not.toBeInTheDocument()
+  })
+
   it("should display negative surplus with red color", async () => {
     const historyWithNegativeSurplus: ParticipantEventHistoryData[] = [
       {

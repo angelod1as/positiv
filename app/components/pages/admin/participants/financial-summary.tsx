@@ -17,7 +17,12 @@ type FinancialSummaryProps = {
 export const FinancialSummary: FC<FinancialSummaryProps> = ({
   participantHistory,
 }) => {
-  const paidEvents = participantHistory.filter((item) => item.paid_gross > 0)
+  // What Positiv still holds decides whether an event counts, the same test the
+  // dataviz queries make. A participation that was refunded in full has a gross
+  // but nothing behind it, and counting it would report a surplus of minus the
+  // ticket price — the shape of someone who underpaid, which is not what
+  // happened.
+  const paidEvents = participantHistory.filter((item) => item.net > 0)
 
   if (paidEvents.length === 0) {
     return null

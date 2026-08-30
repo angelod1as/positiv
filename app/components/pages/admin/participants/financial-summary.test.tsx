@@ -63,6 +63,27 @@ describe("FinancialSummary", () => {
   })
 
 
+  it("leaves a fully refunded participation out of what Positiv kept", () => {
+    const history: ParticipantEventHistoryData[] = [
+      createMockHistoryItem({
+        paid_gross: 22000,
+        fee: 0,
+        net: 0,
+        refunded: 22000,
+        payment_status: "refunded",
+        ticket_price: 20000,
+      }),
+    ]
+
+    const { container } = render(
+      <FinancialSummary participantHistory={history} />,
+    )
+
+    // the money went back, so there is nothing to summarise — and above all no
+    // surplus of -R$ 200,00, which would read as someone who underpaid
+    expect(container).toBeEmptyDOMElement()
+  })
+
   it("separates what was paid from what Positiv kept", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({

@@ -124,7 +124,9 @@ function SurplusRenderer(
   const data = params.data
   if (!data) return null
 
-  if (data.paid_gross === 0) return null
+  // A refunded participation keeps its gross — the charge happened — but there
+  // is no difference to report on money that went back.
+  if (data.net === 0) return null
 
   const ticketPrice = data.ticket_price ?? 0
   const surplus = data.net - ticketPrice
