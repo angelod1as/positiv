@@ -35,11 +35,6 @@ export const adminEventsCopy = {
     loadParticipantsFailed: "Falha ao carregar participantes",
     date: (date: string | undefined) => `Data: ${date ?? ""}`,
   },
-  downloadData: {
-    fetchParticipantsFailed: "Erro ao buscar participantes do evento",
-    downloadAll: "Baixar tabela (Todos os dados)",
-    downloadNames: "Baixar tabela (Nomes e RG)",
-  },
   viewParticipant: {
     participantNotFound: "Participante não encontrade",
     profileNotFound: "Participante não encontrade.",
