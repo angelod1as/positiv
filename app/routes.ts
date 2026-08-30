@@ -157,8 +157,6 @@ export default [
           ),
           // Criar ou Editar
           route("/novo/:id?", "pages/admin/events/create-edit-event.tsx"),
-          // Baixar dados
-          route("/:id/baixar", "pages/admin/events/download-data.tsx"),
           // Participante vs Evento
           route(
             "/:eventId/participantes/:profileId",

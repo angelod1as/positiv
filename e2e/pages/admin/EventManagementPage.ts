@@ -21,6 +21,7 @@ export class EventManagementPage extends BasePage {
   readonly calculateDatesButton: Locator
   readonly saveButton: Locator
   readonly editButton: Locator
+  readonly downloadDataButton: Locator
   
   // Status dropdown
   readonly statusDropdown: Locator
@@ -58,6 +59,7 @@ export class EventManagementPage extends BasePage {
     this.calculateDatesButton = page.getByRole('button', { name: 'Calcular datas automaticamente' })
     this.saveButton = page.getByRole('button', { name: 'Salvar' })
     this.editButton = page.getByRole('link', { name: 'Editar' })
+    this.downloadDataButton = page.getByRole('button', { name: 'Baixar dados' })
     
     // Status dropdown on view page
     this.statusDropdown = page.getByLabel('Status do evento')
@@ -134,6 +136,10 @@ export class EventManagementPage extends BasePage {
 
   async clickEdit(): Promise<void> {
     await this.editButton.click()
+  }
+
+  async clickDownloadData(): Promise<void> {
+    await this.downloadDataButton.click()
   }
 
   async clearField(field: Locator): Promise<void> {

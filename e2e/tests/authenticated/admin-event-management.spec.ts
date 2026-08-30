@@ -61,6 +61,12 @@ test.describe('Admin Event Management', () => {
     
     // Verify we're on the view event page with the created event
     await expect(eventManagement.eventHeading).toContainText(eventTitle)
+
+    // The sheet is produced here, on the event page itself, rather than on a
+    // page of its own
+    const downloadPromise = page.waitForEvent('download')
+    await eventManagement.clickDownloadData()
+    expect((await downloadPromise).suggestedFilename()).toBe('planilha.xlsx')
     
     // Go back to dashboard
     await adminDashboard.navigate()
