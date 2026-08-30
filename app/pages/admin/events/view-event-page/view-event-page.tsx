@@ -151,7 +151,12 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
       <h1>
         {emoji} {title}
       </h1>
-      <Buttons event={event} isListStale={isListStale} fetcher={fetcher} />
+      <Buttons
+        event={event}
+        participants={participants}
+        isListStale={isListStale}
+        fetcher={fetcher}
+      />
 
       <p className="font-bold">
         {adminEventsCopy.viewEvent.date(
