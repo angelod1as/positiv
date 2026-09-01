@@ -6,6 +6,7 @@ import {
   formatSignedCurrency,
 } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { holdsPayment } from "~/lib/helpers/payment-status"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 
 const financialCopy = adminParticipantsCopy.financialSummary
@@ -17,41 +18,62 @@ type FinancialSummaryProps = {
 export const FinancialSummary: FC<FinancialSummaryProps> = ({
   participantHistory,
 }) => {
-  const paidEvents = participantHistory.filter(
-    (item) => Number(item.payment) > 0,
+  // Money Positiv still holds is the question, not the amount: a staff spot
+  // owed nothing and still took part, an open charge collected nothing, and a
+  // refund gave back what it collected. All three read as zero, so the status
+  // is what separates them.
+  const paidEvents = participantHistory.filter((item) =>
+    holdsPayment(item.payment_status),
   )
 
   if (paidEvents.length === 0) {
     return null
   }
 
-  const totalInvested = paidEvents.reduce(
-    (sum, item) => sum + Number(item.payment ?? 0),
-    0,
-  )
+  const totalPaid = paidEvents.reduce((sum, item) => sum + item.paid_gross, 0)
+  const totalFees = paidEvents.reduce((sum, item) => sum + item.fee, 0)
+  const totalNet = paidEvents.reduce((sum, item) => sum + item.net, 0)
 
   const paidEventsCount = paidEvents.length
 
-  const averagePerEvent =
-    paidEventsCount > 0 ? totalInvested / paidEventsCount : 0
+  // What Positiv kept is what an average is worth knowing about; the gross
+  // carries whatever Asaas took that month.
+  const averagePerEvent = paidEventsCount > 0 ? totalNet / paidEventsCount : 0
 
-  const totalSurplus = paidEvents.reduce((sum, item) => {
-    const payment = Number(item.payment)
-    const ticketPrice = Number(item.ticket_price ?? 0)
-    return sum + (payment - ticketPrice)
-  }, 0)
+  // Only a participation with an amount can be compared to the ticket price. A
+  // staff spot and a participation from before anyone wrote the amount down
+  // both read as zero, and calling that a difference of minus the ticket price
+  // describes someone who underpaid, which is not what either of them did.
+  const eventsWithAnAmount = paidEvents.filter((item) => item.paid_gross > 0)
+
+  const totalSurplus = eventsWithAnAmount.reduce(
+    (sum, item) => sum + (item.net - Number(item.ticket_price ?? 0)),
+    0,
+  )
 
   return (
     <Card>
       <CardContent>
         <h3 className="text-lg font-semibold mb-4">{financialCopy.title}</h3>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <div>
             <p className="text-sm text-muted-foreground">
               {financialCopy.totalInvested}
             </p>
-            <p className="text-xl font-bold">{formatCurrency(totalInvested)}</p>
+            <p className="text-xl font-bold">{formatCurrency(totalPaid)}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {financialCopy.totalFees}
+            </p>
+            <p className="text-xl font-bold">{formatCurrency(totalFees)}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {financialCopy.totalNet}
+            </p>
+            <p className="text-xl font-bold">{formatCurrency(totalNet)}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">
@@ -79,8 +101,8 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
           <h4 className="text-sm font-medium mb-2">{financialCopy.payments}</h4>
           <ul className="space-y-2">
             {paidEvents.map((item) => {
-              const surplus =
-                Number(item.payment ?? 0) - Number(item.ticket_price ?? 0)
+              const hasAnAmount = item.paid_gross > 0
+              const surplus = item.net - Number(item.ticket_price ?? 0)
               const formattedDate = item.time_event_start
                 ? formatDateTime(item.time_event_start).date
                 : null
@@ -104,14 +126,16 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
                     )}
                   </span>
                   <span className="font-medium">
-                    {formatCurrency(Number(item.payment ?? 0))}{" "}
-                    <span
-                      className={
-                        surplus >= 0 ? "text-green-600" : "text-red-600"
-                      }
-                    >
-                      ({formatSignedCurrency(surplus)})
-                    </span>
+                    {formatCurrency(item.paid_gross)}{" "}
+                    {hasAnAmount && (
+                      <span
+                        className={
+                          surplus >= 0 ? "text-green-600" : "text-red-600"
+                        }
+                      >
+                        ({formatSignedCurrency(surplus)})
+                      </span>
+                    )}
                   </span>
                 </li>
               )

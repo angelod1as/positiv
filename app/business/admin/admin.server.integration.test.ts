@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { clearParticipantsForProfiles, createTestEvent, createTestEventParticipant, createTestProfile } from "~/test/db-test-utils"
+import { clearParticipantsForProfiles, createTestEvent, createTestEventParticipant, createTestPayment, createTestProfile } from "~/test/db-test-utils"
 import {
   getParticipantFullEventHistory,
   updateEventParticipantById,
@@ -105,7 +105,7 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
     }
   })
 
-  it("hands the payment over in cents, though the column still holds reais", async () => {
+  it("hands the payment totals over in cents, from the ledger", async () => {
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,
       email: "test-payment-cents@example.com",
@@ -120,11 +120,14 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
       total_spots: 10,
     })
 
-    await createTestEventParticipant(tracker, kysely, {
+    const participant = await createTestEventParticipant(tracker, kysely, {
       profile_id: profile.id,
       event_id: event.id,
-      has_paid: true,
-      payment: 150,
+    })
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: participant.id,
+      base_amount: 15000,
+      amount: 15000,
     })
 
     const result = await getParticipantFullEventHistory({
@@ -134,7 +137,8 @@ describe("getParticipantFullEventHistory - Integration Tests", () => {
 
     expect(result).toHaveProperty("success", true)
     if (result.success) {
-      expect(result.data[0].payment).toBe(15000)
+      expect(result.data[0].paid_gross).toBe(15000)
+      expect(result.data[0].net).toBe(15000)
       expect(result.data[0].ticket_price).toBe(15000)
     }
   })
@@ -503,7 +507,7 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
-  it("hands the payment over in cents, like its sibling does", async () => {
+  it("hands the payment totals over in cents, like its sibling does", async () => {
     // It returns the same `ParticipantVsEvent` shape as
     // getParticipantFullEventHistory. Two functions with one return type and
     // two different units is how the next caller gets it wrong.
@@ -521,11 +525,14 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
       total_spots: 10,
     })
 
-    await createTestEventParticipant(tracker, kysely, {
+    const participant = await createTestEventParticipant(tracker, kysely, {
       profile_id: profile.id,
       event_id: event.id,
-      has_paid: true,
-      payment: 150,
+    })
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: participant.id,
+      base_amount: 15000,
+      amount: 15000,
     })
 
     const result = await getEventParticipantHistoryById({
@@ -535,7 +542,8 @@ describe("getEventParticipantHistoryById - Integration Tests", () => {
 
     expect(result).toHaveProperty("success", true)
     if (result.success) {
-      expect(result.data[0].payment).toBe(15000)
+      expect(result.data[0].paid_gross).toBe(15000)
+      expect(result.data[0].net).toBe(15000)
     }
   })
 
@@ -655,16 +663,15 @@ describe("updateEventParticipantById - Integration Tests", () => {
       profile_id: profile.id,
       event_id: event.id,
       is_user_applied: true,
-      payment: 100,
       attendance_status: "pending"
     })
 
-    // Test updating payment field when participant has flag
+    // Test updating a field when participant has flag
     const result = await updateEventParticipantById({
       id: participant.id,
       profile_id: profile.id,
       intent: "update-event-participant",
-      payment: 150
+      attendance_status: "attended"
     })
 
     expect(result.success).toBe(true)
@@ -676,7 +683,53 @@ describe("updateEventParticipantById - Integration Tests", () => {
       .where("id", "=", participant.id)
       .executeTakeFirst()
 
-    expect(updatedParticipant?.payment).toBe("150.00")
+    expect(updatedParticipant?.attendance_status).toBe("attended")
+  })
+
+  it("leaves the deprecated money columns untouched", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-flag-money-columns@example.com",
+      full_name: "Test Money Columns",
+    })
+
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Test Event Money Columns",
+      time_event_start: new Date().toISOString(),
+    })
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+    })
+
+    const before = await kysely
+      .selectFrom("event_participants")
+      .select(["has_paid", "payment"])
+      .where("id", "=", participant.id)
+      .executeTakeFirstOrThrow()
+
+    const result = await updateEventParticipantById({
+      id: participant.id,
+      profile_id: profile.id,
+      intent: "update-event-participant",
+      has_paid: "true",
+      payment: 999,
+      notes: "touched",
+    })
+
+    expect(result.success).toBe(true)
+
+    const after = await kysely
+      .selectFrom("event_participants")
+      .select(["has_paid", "payment", "notes"])
+      .where("id", "=", participant.id)
+      .executeTakeFirstOrThrow()
+
+    expect(after.has_paid).toBe(before.has_paid)
+    expect(Number(after.payment)).toBe(Number(before.payment))
+    expect(after.notes).toBe("touched")
   })
 
   it("should fail when updating participant with flag but without flag_notes", async () => {
@@ -775,7 +828,6 @@ describe("updateEventParticipantById - Integration Tests", () => {
       profile_id: profile.id,
       event_id: event.id,
       is_user_applied: true,
-      payment: 100,
       attendance_status: "pending"
     })
 
@@ -783,7 +835,7 @@ describe("updateEventParticipantById - Integration Tests", () => {
       id: participant.id,
       profile_id: profile.id,
       intent: "update-event-participant",
-      payment: 150,
+      attendance_status: "attended",
       flag: "gray",
       flag_notes: "Previously had red flag for behavior in 2023. Cleared after 1 year of good behavior."
     })

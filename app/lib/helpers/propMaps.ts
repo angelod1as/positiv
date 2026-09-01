@@ -104,17 +104,21 @@ export const isVeteranOptions: Array<{
   value: value,
 }))
 
-const hasPaidStatusMap: Record<string, string> = adminPropMapsCopy.hasPaid
+const paymentStatusMap: Record<string, string> = adminPropMapsCopy.paymentStatus
 
-export const hasPaidOptions: Array<{
+export const paymentStatusOptions: Array<{
   name: string
   value: string
   label: string
-}> = Object.entries(hasPaidStatusMap).map(([value, name]) => ({
+}> = Object.entries(paymentStatusMap).map(([value, name]) => ({
   name: name,
   label: name,
   value: value,
 }))
+
+/** `none` is the value the grid gives a participant with no payment at all. */
+export const paymentStatusPropMap = (status: string) =>
+  paymentStatusMap[status] || ""
 
 export const PARTICIPANTS_TABLE_FILTER_CONFIGS = {
   application_status: {

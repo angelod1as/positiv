@@ -51,6 +51,12 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | [2025-02-01](./20250201-use-listmonk-for-newsletters.md) | Use Listmonk for Newsletters | Accepted |
 | [2025-02-03](./20250203-use-cloudflare-turnstile.md) | Use Cloudflare Turnstile for CAPTCHA | Accepted |
 
+### Payments
+
+| Date | Title | Status |
+|------|-------|--------|
+| [2026-09-01](./20260901-a-payment-can-be-zero.md) | A payment can be zero | Accepted |
+
 ### Testing
 
 | Date | Title | Status |

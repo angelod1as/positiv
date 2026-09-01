@@ -4,6 +4,7 @@ import {
   createTestProfile,
   createTestEvent,
   createTestEventParticipant,
+  createTestPayment,
 } from "~/test/db-test-utils"
 import { getKpiScores } from "./kpi-scores.server"
 
@@ -45,7 +46,7 @@ describe("getKpiScores - Extended KPI Data", () => {
     expect(result.total_approved).toBe(1)
   })
 
-  it("returns the total revenue in cents, though the column still holds reais", async () => {
+  it("returns the total revenue in cents, from the ledger", async () => {
     const payer = await createTestProfile(tracker, kysely, {
       user_id: null,
       email: "revenue@test.com",
@@ -58,11 +59,14 @@ describe("getKpiScores - Extended KPI Data", () => {
       ticket_price: 10000,
       total_spots: 10,
     })
-    await createTestEventParticipant(tracker, kysely, {
+    const kpiParticipant1 = await createTestEventParticipant(tracker, kysely, {
       profile_id: payer.id,
       event_id: event.id,
-      has_paid: true,
-      payment: 90,
+    })
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: kpiParticipant1.id,
+      base_amount: 9000,
+      amount: 9000,
     })
 
     const result = await getKpiScores()
@@ -133,7 +137,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile3Events.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )
@@ -145,7 +148,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile5Events.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )
@@ -157,7 +159,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile2Events.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )
@@ -199,7 +200,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile5Plus.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )
@@ -211,7 +211,6 @@ describe("getKpiScores - Extended KPI Data", () => {
           profile_id: profile4.id,
           event_id: event.id,
           attendance_status: "attended",
-          payment: 100,
         })
       )
     )

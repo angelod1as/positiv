@@ -104,14 +104,15 @@ export async function getKpiScores(): Promise<KpiScores> {
   const revenueData = await kyselyDb
     .selectFrom("event_participants")
     .innerJoin("events", "events.id", "event_participants.event_id")
+    .leftJoin(
+      "event_participant_payments as epp",
+      "epp.event_participant_id",
+      "event_participants.id",
+    )
     .where("events.event_status", "=", "Completed")
     .where("events.time_event_start", ">=", DATAVIZ_EVENT_CUTOFF_DATE)
     .select([
-      // `payment` is still numeric reais in the column; POS-523 moves this
-      // query to the view, which is already cents.
-      sql<number>`(coalesce(sum(event_participants.payment), 0) * 100)::int`.as(
-        "total_revenue",
-      ),
+      sql<number>`coalesce(sum(epp.net), 0)::int`.as("total_revenue"),
     ])
     .executeTakeFirstOrThrow()
 

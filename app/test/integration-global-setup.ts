@@ -1,5 +1,6 @@
 import { Pool } from "pg"
 import type { PoolClient } from "pg"
+import { assertLocalDatabaseUrl } from "./assert-local-database"
 
 // PID-scoped suffix prevents backup table name collisions when two test processes run
 // concurrently against the same database (e.g. CI matrix jobs).
@@ -114,8 +115,9 @@ async function dropAbandonedBackups(client: PoolClient): Promise<void> {
 }
 
 export default async function setup() {
-  const connectionString = process.env.SUPABASE_CONNECT_URL
-  if (!connectionString) throw new Error("SUPABASE_CONNECT_URL is not set")
+  const connectionString = assertLocalDatabaseUrl(
+    process.env.SUPABASE_CONNECT_URL,
+  )
 
   const pool = new Pool({ connectionString, connectionTimeoutMillis: 5000 })
 

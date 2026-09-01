@@ -27,6 +27,12 @@ const mockParticipantHistory: ParticipantEventHistoryData[] = [
     notes: null,
     has_paid: false,
     payment: 0,
+    paid_gross: 0,
+    net: 0,
+    fee: 0,
+    refunded: 0,
+    payment_status: null,
+    active_payment_id: null,
     referrals: null,
     referred: "",
     companions: null,
@@ -55,6 +61,12 @@ const mockParticipantHistory: ParticipantEventHistoryData[] = [
     notes: null,
     has_paid: false,
     payment: 0,
+    paid_gross: 0,
+    net: 0,
+    fee: 0,
+    refunded: 0,
+    payment_status: null,
+    active_payment_id: null,
     referrals: null,
     referred: "",
     companions: null,
@@ -193,8 +205,9 @@ describe("ParticipantEventHistory", () => {
     > = [
       {
         ...mockParticipantHistory[0],
-        payment: 15000,
-        has_paid: true,
+        paid_gross: 15000,
+        net: 15000,
+        payment_status: "paid",
       },
     ]
     renderWithRouter(
@@ -280,7 +293,8 @@ describe("ParticipantEventHistory", () => {
     const historyWithSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 15000,
+        paid_gross: 15000,
+        net: 15000,
         ticket_price: 10000,
       },
     ]
@@ -295,11 +309,75 @@ describe("ParticipantEventHistory", () => {
     })
   })
 
+  it("shows a settled zero as an amount", async () => {
+    const historyWithZero: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        paid_gross: 0,
+        net: 0,
+        payment_status: "paid",
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithZero} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("R$ 0,00")).toBeInTheDocument()
+    })
+  })
+
+  it("shows nothing for a charge that was never collected", async () => {
+    const historyWithOpenCharge: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        paid_gross: 0,
+        net: 0,
+        payment_status: "awaiting_payment",
+        active_payment_id: "payment-1",
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithOpenCharge} />,
+    )
+
+    // an open R$ 200,00 charge has collected nothing; printing "R$ 0,00" would
+    // read exactly like a staff spot that was settled at zero
+    // wait for the row itself to paint before asserting on what is absent,
+    // or the assertion passes on an empty grid and proves nothing
+    await waitFor(() => {
+      expect(screen.getByText(/Workshop de Introdução/)).toBeInTheDocument()
+    })
+    expect(screen.queryByText("R$ 0,00")).not.toBeInTheDocument()
+  })
+
+  it("shows no surplus for a participation that was refunded", async () => {
+    const historyWithRefund: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        paid_gross: 22000,
+        net: 0,
+        refunded: 22000,
+        payment_status: "refunded",
+        ticket_price: 20000,
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithRefund} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("R$ 220,00")).toBeInTheDocument()
+    })
+    expect(screen.queryByText("-R$ 200,00")).not.toBeInTheDocument()
+  })
+
   it("should display negative surplus with red color", async () => {
     const historyWithNegativeSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 8000,
+        paid_gross: 8000,
+        net: 8000,
         ticket_price: 10000,
       },
     ]
@@ -318,7 +396,8 @@ describe("ParticipantEventHistory", () => {
     const historyWithZeroSurplus: ParticipantEventHistoryData[] = [
       {
         ...mockParticipantHistory[0],
-        payment: 10000,
+        paid_gross: 10000,
+        net: 10000,
         ticket_price: 10000,
       },
     ]

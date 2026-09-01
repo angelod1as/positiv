@@ -31,8 +31,7 @@ const participant = {
   id: "ep-1",
   profile_id: "profile-1",
   social_name: "Bia",
-  has_paid: false,
-  payment: 100,
+  notes: "",
   attendance_status: "pending",
 } as unknown as ProfileWithExtraData
 
@@ -65,11 +64,11 @@ describe("participants table saving", () => {
   it("writes an edited cell to the participant route", async () => {
     renderTable()
 
-    await save("payment", 250)
+    await save("notes", "Chegou cedo")
 
     expect(commitJson).toHaveBeenCalledWith(
       "/api/admin/event-participant",
-      { id: "ep-1", profile_id: "profile-1", payment: "250" },
+      { id: "ep-1", profile_id: "profile-1", notes: "Chegou cedo" },
       expect.any(Function),
     )
   })
@@ -77,7 +76,7 @@ describe("participants table saving", () => {
   it("says the save worked and marks the newsletter list stale", async () => {
     const onParticipantSaved = renderTable()
 
-    await save("payment", 250)
+    await save("notes", "Chegou cedo")
 
     expect(success).toHaveBeenCalledWith(
       adminEventsCopy.toasts.updateParticipantSuccess,
@@ -93,7 +92,7 @@ describe("participants table saving", () => {
     })
     const onParticipantSaved = renderTable()
 
-    await save("payment", 250)
+    await save("notes", "Chegou cedo")
 
     expect(error).toHaveBeenCalledWith("Escreva o motivo da flag")
     expect(onParticipantSaved).not.toHaveBeenCalled()
@@ -103,7 +102,7 @@ describe("participants table saving", () => {
     commitJson.mockResolvedValue({ ok: false, errors: [] })
     renderTable()
 
-    await save("payment", 250)
+    await save("notes", "Chegou cedo")
 
     expect(error).toHaveBeenCalledWith(
       adminEventsCopy.toasts.updateParticipantFailed,
@@ -114,7 +113,7 @@ describe("participants table saving", () => {
     commitJson.mockRejectedValue(new Error("offline"))
     renderTable()
 
-    await save("payment", 250)
+    await save("notes", "Chegou cedo")
 
     expect(error).toHaveBeenCalledWith(
       adminEventsCopy.toasts.updateParticipantFailed,
@@ -130,8 +129,8 @@ describe("participants table saving", () => {
       .mockResolvedValueOnce({ ok: false, errors: [] })
     renderTable()
 
-    const first = save("payment", 250)
-    await save("payment", 300)
+    const first = save("notes", "Chegou cedo")
+    await save("notes", "Chegou tarde")
 
     settleFirst({ ok: true })
     await first
@@ -149,22 +148,12 @@ describe("participants table saving", () => {
     expect(commitJson).not.toHaveBeenCalled()
   })
 
-  it("keeps has_paid written when a payment lands on a paid row", async () => {
+  it("writes nothing for the money columns the ledger owns now", async () => {
     renderTable()
 
-    tableProps.onCellValueChanged?.({
-      colDef: { field: "payment" },
-      newValue: 250,
-      oldValue: 100,
-      data: { ...participant, has_paid: true },
-    } as Parameters<NonNullable<typeof tableProps.onCellValueChanged>>[0])
+    await save("has_paid", true)
+    await save("payment", 250)
 
-    await vi.waitFor(() =>
-      expect(commitJson).toHaveBeenCalledWith(
-        "/api/admin/event-participant",
-        { id: "ep-1", profile_id: "profile-1", has_paid: "true" },
-        expect.any(Function),
-      ),
-    )
+    expect(commitJson).not.toHaveBeenCalled()
   })
 })

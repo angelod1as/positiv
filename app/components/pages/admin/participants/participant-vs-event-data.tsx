@@ -4,7 +4,6 @@ import { z } from "zod"
 import { DataPair } from "~/components/atoms/data-pair/data-pair"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
 import { Checkbox } from "~/components/ui/checkbox"
-import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import {
   Select,
@@ -15,11 +14,13 @@ import {
 } from "~/components/ui/select"
 import { TextArea } from "~/components/ui/textarea"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import { validationMessages } from "~/lib/helpers/validation-messages"
+import { formatCurrency } from "~/lib/helpers/format-currency"
+import { isSettledPayment } from "~/lib/helpers/payment-status"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
   eventParticipantPropMap,
+  paymentStatusPropMap,
   spotTypeOptions,
 } from "~/lib/helpers/propMaps"
 import { useAutoSaveForm } from "~/lib/hooks/use-auto-save-form"
@@ -34,8 +35,6 @@ const eventParticipantFormSchema = z.object({
   attendance_status: z.string(),
   application_status: z.string(),
   spot_type: z.string(),
-  payment: z.coerce.number().min(0, validationMessages.minValue(0)),
-  has_paid: z.boolean(),
   was_selected_for_rotation: z.boolean(),
   admin_general_notes: z.string(),
 })
@@ -55,8 +54,8 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     attendance_status,
     application_status,
     spot_type,
-    payment,
-    has_paid,
+    paid_gross,
+    payment_status,
     was_selected_for_rotation,
     admin_general_notes,
     bond,
@@ -74,8 +73,6 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
       attendance_status,
       application_status,
       spot_type,
-      payment: payment ?? 0,
-      has_paid,
       was_selected_for_rotation,
       admin_general_notes: admin_general_notes ?? "",
     },
@@ -153,19 +150,21 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="payment">{vsEventCopy.payment}</Label>
-                <Input
-                  id="payment"
-                  type="number"
-                  {...register.number("payment")}
-                />
+                <span className="text-sm font-medium">
+                  {vsEventCopy.payment}
+                </span>
+                <p>
+                  {payment_status === null
+                    ? vsEventCopy.noPayment
+                    : `${paymentStatusPropMap(payment_status)}${
+                        isSettledPayment(payment_status)
+                          ? `${vsEventCopy.paymentSeparator}${formatCurrency(paid_gross)}`
+                          : ""
+                      }`}
+                </p>
               </div>
 
               <div className="flex flex-col justify-end gap-2">
-                <Label className="flex items-center gap-2 cursor-pointer">
-                  <Checkbox {...register.checkbox("has_paid")} />
-                  <span>{vsEventCopy.paid}</span>
-                </Label>
                 <Label className="flex items-center gap-2 cursor-pointer">
                   <Checkbox {...register.checkbox("was_selected_for_rotation")} />
                   <span>{vsEventCopy.rotation}</span>

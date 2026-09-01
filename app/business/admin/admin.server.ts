@@ -14,6 +14,7 @@ import type {
   EventParticipantWithEvent,
   GetAllProfilesFilters,
   ParticipantEventHistoryData,
+  ParticipantPaymentTotals,
   ParticipantVsEvent,
   Profile,
   ProfileApprovedToAttendStatus,
@@ -76,7 +77,8 @@ export const getAdminEventById = composable(
 )
 
 export type ProfileWithExtraData = Profile &
-  EventParticipant & {
+  EventParticipant &
+  ParticipantPaymentTotals & {
     was_admin_skipped_last_event?: boolean | null
     attended_events_count?: number | null
     last_attended_events_count?: number | null
@@ -94,7 +96,20 @@ const profilesWithExtraDataQuery = kyselyDb
     "current_ep.event_id",
     "current_event.id",
   )
+  .leftJoin(
+    "event_participant_payments as epp",
+    "epp.event_participant_id",
+    "current_ep.id",
+  )
   .selectAll(["p", "current_ep"])
+  .select([
+    sql<number>`coalesce(epp.paid_gross, 0)`.as("paid_gross"),
+    sql<number>`coalesce(epp.net, 0)`.as("net"),
+    sql<number>`coalesce(epp.fee, 0)`.as("fee"),
+    sql<number>`coalesce(epp.refunded, 0)`.as("refunded"),
+    "epp.current_status as payment_status",
+    "epp.active_payment_id",
+  ])
   .select((eb) => [
     eb
       .selectFrom("event_participants as ep")
@@ -430,10 +445,15 @@ export const getEventParticipantHistoryById = composable(
     profileId: string
     eventId: string
   }): Promise<Array<ParticipantVsEvent>> => {
-    const results = await kyselyDb
+    return await kyselyDb
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+      .leftJoin(
+        "event_participant_payments as epp",
+        "epp.event_participant_id",
+        "event_participants.id",
+      )
       .selectAll("event_participants")
       .select([
         "events.title as event_title",
@@ -443,22 +463,18 @@ export const getEventParticipantHistoryById = composable(
         "profiles.flag as flag",
         "profiles.flag_notes as flag_notes",
       ])
+      .select([
+        sql<number>`coalesce(epp.paid_gross, 0)`.as("paid_gross"),
+        sql<number>`coalesce(epp.net, 0)`.as("net"),
+        sql<number>`coalesce(epp.fee, 0)`.as("fee"),
+        sql<number>`coalesce(epp.refunded, 0)`.as("refunded"),
+        "epp.current_status as payment_status",
+        "epp.active_payment_id",
+      ])
       .where("event_participants.profile_id", "=", profileId)
       .where("event_participants.event_id", "=", eventId)
       .orderBy("events.time_event_start", "desc")
       .execute()
-
-    // Same conversion, and for the same reason, as
-    // getParticipantFullEventHistory above: the column is still numeric reais
-    // and Kysely hands it over as a string. Both return one shape, so both owe
-    // the caller one unit. POS-523 moves them to the view and deletes this.
-    return results.map((row) => ({
-      ...row,
-      payment:
-        row.payment === null
-          ? row.payment
-          : Math.round(Number(row.payment) * 100),
-    }))
   },
 )
 
@@ -474,6 +490,11 @@ export const getParticipantFullEventHistory = composable(
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
       .innerJoin("profiles", "profiles.id", "event_participants.profile_id")
+      .leftJoin(
+        "event_participant_payments as epp",
+        "epp.event_participant_id",
+        "event_participants.id",
+      )
       .selectAll("event_participants")
       .select([
         "events.title as event_title",
@@ -482,6 +503,14 @@ export const getParticipantFullEventHistory = composable(
         "events.ticket_price as ticket_price",
         "profiles.is_veteran as is_veteran",
         "profiles.approved_to_attend as approved_to_attend",
+      ])
+      .select([
+        sql<number>`coalesce(epp.paid_gross, 0)`.as("paid_gross"),
+        sql<number>`coalesce(epp.net, 0)`.as("net"),
+        sql<number>`coalesce(epp.fee, 0)`.as("fee"),
+        sql<number>`coalesce(epp.refunded, 0)`.as("refunded"),
+        "epp.current_status as payment_status",
+        "epp.active_payment_id",
       ])
       .where("event_participants.profile_id", "=", profileId)
       .orderBy("events.time_event_start", "desc")
@@ -492,20 +521,9 @@ export const getParticipantFullEventHistory = composable(
 
     const results = await query.execute()
     // Filter out results with null time_event_start since we need it for sorting
-    return results
-      .filter(
-        (r): r is ParticipantEventHistoryData => r.time_event_start !== null,
-      )
-      .map((row) => ({
-        // `payment` is still numeric reais in the column, and Kysely hands it
-        // over as a string. POS-523 moves this query to the view, which is
-        // already cents.
-        ...row,
-        payment:
-          row.payment === null
-            ? row.payment
-            : Math.round(Number(row.payment) * 100),
-      }))
+    return results.filter(
+      (r): r is ParticipantEventHistoryData => r.time_event_start !== null,
+    )
   },
 )
 
@@ -795,8 +813,21 @@ export const getEventParticipantBasic = composable(
     const result = await kyselyDb
       .selectFrom("event_participants")
       .innerJoin("events", "events.id", "event_participants.event_id")
+      .leftJoin(
+        "event_participant_payments as epp",
+        "epp.event_participant_id",
+        "event_participants.id",
+      )
       .selectAll("event_participants")
       .select(["events.title as event_title", "events.emoji as event_emoji"])
+      .select([
+        sql<number>`coalesce(epp.paid_gross, 0)`.as("paid_gross"),
+        sql<number>`coalesce(epp.net, 0)`.as("net"),
+        sql<number>`coalesce(epp.fee, 0)`.as("fee"),
+        sql<number>`coalesce(epp.refunded, 0)`.as("refunded"),
+        "epp.current_status as payment_status",
+        "epp.active_payment_id",
+      ])
       .where("event_participants.profile_id", "=", profileId)
       .where("event_participants.event_id", "=", eventId)
       .executeTakeFirst()

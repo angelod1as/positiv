@@ -17,6 +17,7 @@ Current ADRs:
 - [ADR-0001: Git Worktree Workflow](./architecture/decisions/0001-git-worktree-workflow.md) - Using git worktrees for parallel development
 - [ADR: Use Log4brains](./architecture/decisions/20250630-use-log4brains-to-manage-the-adrs.md) - ADR management tool
 - [ADR: Use Markdown ADRs](./architecture/decisions/20250630-use-markdown-architectural-decision-records.md) - Decision to use MADR format
+- [ADR: A payment can be zero](./architecture/decisions/20260901-a-payment-can-be-zero.md) - Why a settled participation may carry no money
 
 To create a new ADR: `pnpm adr:new`
 

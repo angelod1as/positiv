@@ -10,6 +10,7 @@ import {
   formatSignedCurrency,
 } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { isSettledPayment } from "~/lib/helpers/payment-status"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
@@ -113,9 +114,11 @@ function SpotTypeRenderer(
 function PaymentRenderer(
   params: ICellRendererParams<ParticipantEventHistoryData>,
 ) {
-  const value = params.value as number | null | undefined
-  if (value === null || value === undefined || value === 0) return null
-  return formatCurrency(value)
+  // Zero is an amount when the ledger settled the participation — a staff or
+  // social spot owed nothing — and nothing at all when the charge is still
+  // open or was never made.
+  if (!isSettledPayment(params.data?.payment_status)) return null
+  return formatCurrency(params.value as number | null | undefined)
 }
 
 function SurplusRenderer(
@@ -124,11 +127,12 @@ function SurplusRenderer(
   const data = params.data
   if (!data) return null
 
-  const payment = data.payment ?? 0
-  if (payment === 0) return null
+  // A refunded participation keeps its gross — the charge happened — but there
+  // is no difference to report on money that went back.
+  if (data.net === 0) return null
 
   const ticketPrice = data.ticket_price ?? 0
-  const surplus = payment - ticketPrice
+  const surplus = data.net - ticketPrice
   const formattedValue = formatSignedCurrency(surplus)
 
   if (surplus >= 0) {
@@ -160,7 +164,7 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
         },
       },
       {
-        field: "payment",
+        field: "paid_gross",
         headerName: eventParticipantPropMap("payment"),
         cellRenderer: PaymentRenderer,
         sortable: true,

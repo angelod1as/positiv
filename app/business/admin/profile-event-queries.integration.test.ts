@@ -3,10 +3,12 @@ import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup
 import {
   createTestEvent,
   createTestEventParticipant,
+  createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
 import {
   getEventParticipantBasic,
+  getProfilesWithExtraDataById,
   updateProfileAdminNotes,
 } from "./admin.server"
 
@@ -63,8 +65,6 @@ describe("getEventParticipantBasic - Integration Tests", () => {
       application_status: "finalised",
       attendance_status: "pending",
       admin_general_notes: "Test admin notes",
-      payment: 100,
-      has_paid: true,
     })
 
     const result = await getEventParticipantBasic({
@@ -79,7 +79,6 @@ describe("getEventParticipantBasic - Integration Tests", () => {
       expect(result.data.application_status).toBe("finalised")
       expect(result.data.attendance_status).toBe("pending")
       expect(result.data.admin_general_notes).toBe("Test admin notes")
-      expect(result.data.has_paid).toBe(true)
       // Should NOT include profile fields like full_name, is_veteran, flag, etc.
       expect(result.data).not.toHaveProperty("full_name")
       expect(result.data).not.toHaveProperty("email")
@@ -177,8 +176,8 @@ describe("getEventParticipantBasic - Integration Tests", () => {
       expect(result.data).toHaveProperty("event_id")
       expect(result.data).toHaveProperty("application_status")
       expect(result.data).toHaveProperty("attendance_status")
-      expect(result.data).toHaveProperty("has_paid")
-      expect(result.data).toHaveProperty("payment")
+      expect(result.data).toHaveProperty("paid_gross")
+      expect(result.data).toHaveProperty("payment_status")
       expect(result.data).toHaveProperty("spot_type")
       expect(result.data).toHaveProperty("was_selected_for_rotation")
       expect(result.data).toHaveProperty("admin_general_notes")
@@ -394,5 +393,174 @@ describe("updateProfileAdminNotes - Integration Tests", () => {
       .executeTakeFirst()
 
     expect(updatedProfile?.flag).toBe("none")
+  })
+})
+
+describe("ledger totals on the admin queries - Integration Tests", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  beforeEach(async () => {
+    tracker.clear()
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  const createLedgerEvent = () =>
+    createTestEvent(tracker, kysely, {
+      title: "Test Event Ledger Totals",
+      emoji: "💰",
+      location: "Test Location",
+      description: "Test Description",
+      event_status: "Registration Open",
+      event_type: "regular",
+      time_event_start: new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000
+      ).toISOString(),
+      time_event_end: new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000
+      ).toISOString(),
+      time_application_start: new Date().toISOString(),
+      ticket_price: 20000,
+      total_spots: 50,
+    })
+
+  it("reports the payment totals from the ledger", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-ledger-paid@example.com",
+      full_name: "Test Ledger Paid",
+    })
+    const event = await createLedgerEvent()
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+    })
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: participant.id,
+      kind: "asaas",
+      method: "credit_card",
+      base_amount: 20000,
+      amount: 21000,
+      asaas_net: 20050,
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: event.id })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const row = result.data.find((r) => r.profile_id === profile.id)
+
+      expect(row).toMatchObject({
+        paid_gross: 21000,
+        net: 20050,
+        fee: 950,
+        refunded: 0,
+        payment_status: "paid",
+      })
+      expect(row?.active_payment_id).toBeNull()
+    }
+  })
+
+  it("reports zeros and a null status for a participant who never paid", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-ledger-unpaid@example.com",
+      full_name: "Test Ledger Unpaid",
+    })
+    const event = await createLedgerEvent()
+
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: event.id })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const row = result.data.find((r) => r.profile_id === profile.id)
+
+      expect(row).toMatchObject({ paid_gross: 0, net: 0, fee: 0, refunded: 0 })
+      expect(row?.payment_status).toBeNull()
+      expect(row?.active_payment_id).toBeNull()
+    }
+  })
+
+  it("reports the same totals on the single participant lookup", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-ledger-basic@example.com",
+      full_name: "Test Ledger Basic",
+    })
+    const event = await createLedgerEvent()
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+    })
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: participant.id,
+      base_amount: 20000,
+      amount: 20000,
+    })
+
+    const result = await getEventParticipantBasic({
+      profileId: profile.id,
+      eventId: event.id,
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success && result.data) {
+      expect(result.data).toMatchObject({
+        paid_gross: 20000,
+        net: 20000,
+        fee: 0,
+        payment_status: "paid",
+      })
+    }
+  })
+
+  it("keeps an open charge visible while it is unpaid", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "test-ledger-open@example.com",
+      full_name: "Test Ledger Open",
+    })
+    const event = await createLedgerEvent()
+
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: event.id,
+      is_user_applied: true,
+    })
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participant.id,
+      kind: "asaas",
+      method: null,
+      status: "awaiting_payment",
+      base_amount: 20000,
+      amount: 20000,
+      paid_at: null,
+    })
+
+    const result = await getProfilesWithExtraDataById({ eventId: event.id })
+
+    expect(result.success).toBe(true)
+    if (result.success) {
+      const row = result.data.find((r) => r.profile_id === profile.id)
+
+      expect(row).toMatchObject({
+        paid_gross: 0,
+        net: 0,
+        payment_status: "awaiting_payment",
+        active_payment_id: payment.id,
+      })
+    }
   })
 })
