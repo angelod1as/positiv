@@ -26,3 +26,15 @@ export const isSettledPayment = (
 export const holdsPayment = (
   status: PaymentStatus | null | undefined,
 ): boolean => status === "paid" || status === "partially_refunded"
+
+/**
+ * What the grid reads for a participant's payment status, cell and filter
+ * alike. `BaseMultiSelectFilter` drops a null value — the option never appears
+ * and every unpaid participant vanishes the moment any status is picked — so
+ * "no payment" needs a value of its own rather than an absence.
+ */
+export const NO_PAYMENT_STATUS = "none"
+
+export const paymentStatusFilterValue = (
+  row: { payment_status?: PaymentStatus | null } | null | undefined,
+): string => row?.payment_status ?? NO_PAYMENT_STATUS

@@ -2,6 +2,7 @@ import type {
   CellValueChangedEvent,
   ColDef,
   ICellRendererParams,
+  IRowNode,
   ValueSetterParams,
 } from "ag-grid-community"
 import { DollarSign } from "lucide-react"
@@ -29,7 +30,11 @@ import { adminEventsCopy } from "~/copy/admin/events"
 import { adminTablesCopy } from "~/copy/admin/tables"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { formatCurrency } from "~/lib/helpers/format-currency"
-import { isSettledPayment } from "~/lib/helpers/payment-status"
+import {
+  NO_PAYMENT_STATUS,
+  isSettledPayment,
+  paymentStatusFilterValue,
+} from "~/lib/helpers/payment-status"
 import {
   applicationStatusOptions,
   approvedToAttendStatusOptions,
@@ -495,19 +500,20 @@ export const AdminViewEventParticipantsTable: FC<
         headerName: tableCopy.columns.paymentStatus,
         headerTooltip: tableCopy.columns.paymentStatusTooltip,
         editable: false,
-        // BaseMultiSelectFilter drops a null cell value outright, so a
-        // participant who never paid would vanish the moment the filter is
-        // touched. They get a value of their own; the formatter still shows a
-        // dash.
-        valueGetter: (params) => params.data?.payment_status ?? "none",
+        // The cell and the filter read the same function on purpose: the
+        // filter takes its value straight off the row, so pointing it at the
+        // raw field while the cell mapped null itself would drop every unpaid
+        // participant the moment a status was picked.
+        valueGetter: (params) => paymentStatusFilterValue(params.data),
         valueFormatter: (params) =>
-          params.value === "none"
+          params.value === NO_PAYMENT_STATUS
             ? tableCopy.columns.noAmount
             : paymentStatusPropMap(params.value),
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: paymentStatusOptions,
-          field: "payment_status",
+          getValue: (node: IRowNode<ProfileWithExtraData>) =>
+            paymentStatusFilterValue(node.data),
           model: paymentStatusFilter,
           onModelChange: setPaymentStatusFilter,
         },

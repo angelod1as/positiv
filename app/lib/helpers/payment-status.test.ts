@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { holdsPayment, isSettledPayment } from "./payment-status"
+import {
+  holdsPayment,
+  isSettledPayment,
+  paymentStatusFilterValue,
+} from "./payment-status"
 
 describe("isSettledPayment", () => {
   it("says money changed hands, whatever happened after", () => {
@@ -27,5 +31,19 @@ describe("holdsPayment", () => {
     expect(holdsPayment("partially_refunded")).toBe(true)
     expect(holdsPayment("refunded")).toBe(false)
     expect(holdsPayment(null)).toBe(false)
+  })
+})
+
+describe("paymentStatusFilterValue", () => {
+  it("gives a participant with no payment a value of their own", () => {
+    expect(paymentStatusFilterValue({ payment_status: null })).toBe("none")
+    expect(paymentStatusFilterValue(undefined)).toBe("none")
+  })
+
+  it("passes a real status through untouched", () => {
+    expect(paymentStatusFilterValue({ payment_status: "paid" })).toBe("paid")
+    expect(paymentStatusFilterValue({ payment_status: "awaiting_payment" })).toBe(
+      "awaiting_payment",
+    )
   })
 })

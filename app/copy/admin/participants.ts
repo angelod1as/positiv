@@ -25,6 +25,8 @@ export const adminParticipantsCopy = {
     applicationStatus: "Status da candidatura",
     spotType: "Tipo de Vaga",
     payment: "Pagamento",
+    noPayment: "—",
+    paymentSeparator: " · ",
     selectPlaceholder: "Selecione...",
     paid: "Pago",
     rotation: "Selecionado para Rodízio",

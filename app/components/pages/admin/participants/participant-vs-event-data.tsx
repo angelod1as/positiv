@@ -154,9 +154,11 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                 </span>
                 <p>
                   {payment_status === null
-                    ? "—"
+                    ? vsEventCopy.noPayment
                     : `${paymentStatusPropMap(payment_status)}${
-                        paid_gross > 0 ? ` · ${formatCurrency(paid_gross)}` : ""
+                        paid_gross > 0
+                          ? `${vsEventCopy.paymentSeparator}${formatCurrency(paid_gross)}`
+                          : ""
                       }`}
                 </p>
               </div>
