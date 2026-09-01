@@ -6,6 +6,7 @@ import {
   formatSignedCurrency,
 } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { holdsPayment } from "~/lib/helpers/payment-status"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 
 const financialCopy = adminParticipantsCopy.financialSummary
@@ -17,12 +18,13 @@ type FinancialSummaryProps = {
 export const FinancialSummary: FC<FinancialSummaryProps> = ({
   participantHistory,
 }) => {
-  // What Positiv still holds decides whether an event counts, the same test the
-  // dataviz queries make. A participation that was refunded in full has a gross
-  // but nothing behind it, and counting it would report a surplus of minus the
-  // ticket price — the shape of someone who underpaid, which is not what
-  // happened.
-  const paidEvents = participantHistory.filter((item) => item.net > 0)
+  // Money Positiv still holds is the question, not the amount: a staff spot
+  // owed nothing and still took part, an open charge collected nothing, and a
+  // refund gave back what it collected. All three read as zero, so the status
+  // is what separates them.
+  const paidEvents = participantHistory.filter((item) =>
+    holdsPayment(item.payment_status),
+  )
 
   if (paidEvents.length === 0) {
     return null
@@ -38,7 +40,13 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   // carries whatever Asaas took that month.
   const averagePerEvent = paidEventsCount > 0 ? totalNet / paidEventsCount : 0
 
-  const totalSurplus = paidEvents.reduce(
+  // Only a participation with an amount can be compared to the ticket price. A
+  // staff spot and a participation from before anyone wrote the amount down
+  // both read as zero, and calling that a difference of minus the ticket price
+  // describes someone who underpaid, which is not what either of them did.
+  const eventsWithAnAmount = paidEvents.filter((item) => item.paid_gross > 0)
+
+  const totalSurplus = eventsWithAnAmount.reduce(
     (sum, item) => sum + (item.net - Number(item.ticket_price ?? 0)),
     0,
   )
@@ -93,6 +101,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
           <h4 className="text-sm font-medium mb-2">{financialCopy.payments}</h4>
           <ul className="space-y-2">
             {paidEvents.map((item) => {
+              const hasAnAmount = item.paid_gross > 0
               const surplus = item.net - Number(item.ticket_price ?? 0)
               const formattedDate = item.time_event_start
                 ? formatDateTime(item.time_event_start).date
@@ -118,13 +127,15 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
                   </span>
                   <span className="font-medium">
                     {formatCurrency(item.paid_gross)}{" "}
-                    <span
-                      className={
-                        surplus >= 0 ? "text-green-600" : "text-red-600"
-                      }
-                    >
-                      ({formatSignedCurrency(surplus)})
-                    </span>
+                    {hasAnAmount && (
+                      <span
+                        className={
+                          surplus >= 0 ? "text-green-600" : "text-red-600"
+                        }
+                      >
+                        ({formatSignedCurrency(surplus)})
+                      </span>
+                    )}
                   </span>
                 </li>
               )

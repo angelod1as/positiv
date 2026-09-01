@@ -45,8 +45,8 @@ const createMockHistoryItem = (
 describe("FinancialSummary", () => {
   it("should render nothing when no payments exist", () => {
     const historyWithNoPayments: ParticipantEventHistoryData[] = [
-      createMockHistoryItem({ paid_gross: 0, net: 0 }),
-      createMockHistoryItem({ id: "2", paid_gross: 0, net: 0 }),
+      createMockHistoryItem({ paid_gross: 0, net: 0, payment_status: null }),
+      createMockHistoryItem({ id: "2", paid_gross: 0, net: 0, payment_status: null }),
     ]
 
     const { container } = render(
@@ -81,6 +81,43 @@ describe("FinancialSummary", () => {
 
     // the money went back, so there is nothing to summarise — and above all no
     // surplus of -R$ 200,00, which would read as someone who underpaid
+    expect(container).toBeEmptyDOMElement()
+  })
+
+  it("counts a spot that owed nothing as a settled participation", () => {
+    const history: ParticipantEventHistoryData[] = [
+      createMockHistoryItem({
+        paid_gross: 0,
+        fee: 0,
+        net: 0,
+        payment_status: "paid",
+        spot_type: "staff",
+        ticket_price: 20000,
+      }),
+    ]
+
+    render(<FinancialSummary participantHistory={history} />)
+
+    // it counts as an event that was settled, contributes nothing to the money
+    // and has no difference to report — a staff spot did not underpay
+    expect(screen.getByText("1")).toBeInTheDocument()
+    expect(screen.queryByText("-R$ 200,00")).not.toBeInTheDocument()
+  })
+
+  it("ignores a charge that was never collected", () => {
+    const history: ParticipantEventHistoryData[] = [
+      createMockHistoryItem({
+        paid_gross: 0,
+        fee: 0,
+        net: 0,
+        payment_status: "awaiting_payment",
+      }),
+    ]
+
+    const { container } = render(
+      <FinancialSummary participantHistory={history} />,
+    )
+
     expect(container).toBeEmptyDOMElement()
   })
 
@@ -151,7 +188,7 @@ describe("FinancialSummary", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({ paid_gross: 15000, net: 15000 }),
       createMockHistoryItem({ id: "2", paid_gross: 20000, net: 20000 }),
-      createMockHistoryItem({ id: "3", paid_gross: 0, net: 0 }),
+      createMockHistoryItem({ id: "3", paid_gross: 0, net: 0, payment_status: null }),
     ]
 
     render(<FinancialSummary participantHistory={history} />)
@@ -247,7 +284,7 @@ describe("FinancialSummary", () => {
     expect(surplusElements.length).toBeGreaterThanOrEqual(1)
   })
 
-  it("should only list events with payments > 0", () => {
+  it("lists a settled participation whatever it cost, and nothing else", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         event_title: "Evento Pago",
@@ -257,12 +294,20 @@ describe("FinancialSummary", () => {
         id: "2",
         event_title: "Evento Gratis",
         paid_gross: 0, net: 0,
+        payment_status: "paid",
+      }),
+      createMockHistoryItem({
+        id: "3",
+        event_title: "Evento Sem Pagamento",
+        paid_gross: 0, net: 0,
+        payment_status: null,
       }),
     ]
 
     render(<FinancialSummary participantHistory={history} />)
 
     expect(screen.getByText(/Evento Pago/)).toBeInTheDocument()
-    expect(screen.queryByText(/Evento Gratis/)).not.toBeInTheDocument()
+    expect(screen.getByText(/Evento Gratis/)).toBeInTheDocument()
+    expect(screen.queryByText(/Evento Sem Pagamento/)).not.toBeInTheDocument()
   })
 })

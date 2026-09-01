@@ -145,6 +145,7 @@ export const adminTablesCopy = {
       paymentStatus: "Pagamento",
       paymentStatusTooltip: "Situação do pagamento no sistema",
       paidGross: "Valor pago",
+      noAmount: "—",
       paidGrossTooltip: "Valor bruto pago pela pessoa, taxas incluídas",
       managePayment: "Gerenciar pagamento",
       wasAdminSkippedLastEvent: "Foi rodízio na última festa?",

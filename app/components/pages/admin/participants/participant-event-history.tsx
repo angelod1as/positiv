@@ -10,6 +10,7 @@ import {
   formatSignedCurrency,
 } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { isSettledPayment } from "~/lib/helpers/payment-status"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
@@ -114,8 +115,9 @@ function PaymentRenderer(
   params: ICellRendererParams<ParticipantEventHistoryData>,
 ) {
   // Zero is an amount when the ledger settled the participation — a staff or
-  // social spot owed nothing — and nothing at all when it never did.
-  if (!params.data?.payment_status) return null
+  // social spot owed nothing — and nothing at all when the charge is still
+  // open or was never made.
+  if (!isSettledPayment(params.data?.payment_status)) return null
   return formatCurrency(params.value as number | null | undefined)
 }
 

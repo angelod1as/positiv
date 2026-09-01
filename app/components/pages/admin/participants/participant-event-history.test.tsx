@@ -327,6 +327,30 @@ describe("ParticipantEventHistory", () => {
     })
   })
 
+  it("shows nothing for a charge that was never collected", async () => {
+    const historyWithOpenCharge: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        paid_gross: 0,
+        net: 0,
+        payment_status: "awaiting_payment",
+        active_payment_id: "payment-1",
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithOpenCharge} />,
+    )
+
+    // an open R$ 200,00 charge has collected nothing; printing "R$ 0,00" would
+    // read exactly like a staff spot that was settled at zero
+    // wait for the row itself to paint before asserting on what is absent,
+    // or the assertion passes on an empty grid and proves nothing
+    await waitFor(() => {
+      expect(screen.getByText(/Workshop de Introdução/)).toBeInTheDocument()
+    })
+    expect(screen.queryByText("R$ 0,00")).not.toBeInTheDocument()
+  })
+
   it("shows no surplus for a participation that was refunded", async () => {
     const historyWithRefund: ParticipantEventHistoryData[] = [
       {

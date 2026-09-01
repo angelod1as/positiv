@@ -320,6 +320,21 @@ describe("AdminViewEventParticipantsTable", () => {
       expect(screen.queryByText("—")).not.toBeInTheDocument()
     })
 
+    it("shows a dash for a charge that was never collected", async () => {
+      renderWithRouter([
+        createMockParticipant({
+          payment_status: "awaiting_payment",
+          paid_gross: 0,
+          net: 0,
+        }),
+      ])
+
+      await waitFor(() => {
+        expect(screen.getByText("Aguardando pagamento")).toBeInTheDocument()
+      })
+      expect(screen.queryByText("R$ 0,00")).not.toBeInTheDocument()
+    })
+
     it("offers a button that opens payment management for the row", async () => {
       const onManagePayment = vi.fn()
       renderWithRouter(

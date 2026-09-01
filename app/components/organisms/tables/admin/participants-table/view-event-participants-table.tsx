@@ -29,6 +29,7 @@ import { adminEventsCopy } from "~/copy/admin/events"
 import { adminTablesCopy } from "~/copy/admin/tables"
 import { getEventCountColors } from "~/lib/helpers/cell-colors"
 import { formatCurrency } from "~/lib/helpers/format-currency"
+import { isSettledPayment } from "~/lib/helpers/payment-status"
 import {
   applicationStatusOptions,
   approvedToAttendStatusOptions,
@@ -500,7 +501,9 @@ export const AdminViewEventParticipantsTable: FC<
         // dash.
         valueGetter: (params) => params.data?.payment_status ?? "none",
         valueFormatter: (params) =>
-          params.value === "none" ? "—" : paymentStatusPropMap(params.value),
+          params.value === "none"
+            ? tableCopy.columns.noAmount
+            : paymentStatusPropMap(params.value),
         filter: BaseMultiSelectFilter,
         filterParams: {
           options: paymentStatusOptions,
@@ -514,14 +517,13 @@ export const AdminViewEventParticipantsTable: FC<
         headerName: tableCopy.columns.paidGross,
         headerTooltip: tableCopy.columns.paidGrossTooltip,
         editable: false,
-        // The amount is zero both for a spot that owed nothing and for a
-        // participant with no payment at all, so the status is what tells them
-        // apart: settled at zero reads "R$ 0,00", nothing at all reads as a
-        // dash.
+        // The amount is zero for a spot that owed nothing, for a participant
+        // with no payment at all, and for a charge still waiting to be paid.
+        // Only the first of those is an amount, and the status is what says so.
         valueFormatter: (params) =>
-          params.data?.payment_status
+          isSettledPayment(params.data?.payment_status)
             ? formatCurrency(params.value ?? 0)
-            : "—",
+            : tableCopy.columns.noAmount,
       },
       {
         colId: "manage_payment",
