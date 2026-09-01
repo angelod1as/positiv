@@ -136,6 +136,31 @@ describe("ParticipantVsEventData", () => {
       expect(screen.getByText(/Pago/)).toBeInTheDocument()
     })
 
+    it("shows a settled zero as an amount, like the grid does", () => {
+      const router = createTestRouter({
+        ...mockEventParticipant,
+        paid_gross: 0,
+        net: 0,
+        payment_status: "paid",
+      })
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByText(/Pago.*R\$ 0,00/)).toBeInTheDocument()
+    })
+
+    it("shows no amount for a charge that was never collected", () => {
+      const router = createTestRouter({
+        ...mockEventParticipant,
+        paid_gross: 0,
+        net: 0,
+        payment_status: "awaiting_payment",
+      })
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByText("Aguardando pagamento")).toBeInTheDocument()
+      expect(screen.queryByText(/R\$ 0,00/)).not.toBeInTheDocument()
+    })
+
     it("shows a dash when the ledger holds nothing for the participant", () => {
       const router = createTestRouter(mockEventParticipant)
       render(<RouterProvider router={router} />)

@@ -15,6 +15,7 @@ import {
 import { TextArea } from "~/components/ui/textarea"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { formatCurrency } from "~/lib/helpers/format-currency"
+import { isSettledPayment } from "~/lib/helpers/payment-status"
 import {
   applicationStatusOptions,
   attendanceStatusOptions,
@@ -156,7 +157,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                   {payment_status === null
                     ? vsEventCopy.noPayment
                     : `${paymentStatusPropMap(payment_status)}${
-                        paid_gross > 0
+                        isSettledPayment(payment_status)
                           ? `${vsEventCopy.paymentSeparator}${formatCurrency(paid_gross)}`
                           : ""
                       }`}
