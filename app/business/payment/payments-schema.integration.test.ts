@@ -334,6 +334,30 @@ describe("payments schema", () => {
       })
     })
 
+    it("accepts a settled payment of zero, and reports it as paid", async () => {
+      // A staff or social spot pays nothing and is still settled, and so is a
+      // participation from before anyone wrote the amount down.
+      await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        base_amount: 0,
+        amount: 0,
+      })
+
+      const row = await kysely
+        .selectFrom("event_participant_payments")
+        .selectAll()
+        .where("event_participant_id", "=", participantId)
+        .executeTakeFirstOrThrow()
+
+      expect(row).toMatchObject({
+        paid_gross: 0,
+        net: 0,
+        fee: 0,
+        has_paid: true,
+        current_status: "paid",
+      })
+    })
+
     it("splits gross, fee and net for an Asaas payment", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
