@@ -54,6 +54,7 @@ export const adminParticipantsCopy = {
   },
   eventHistory: {
     title: "Histórico de candidaturas",
+    payment: "Pagamento",
     surplus: "Diferença",
     empty: "Nenhuma candidatura anterior encontrada",
   },

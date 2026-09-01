@@ -46,8 +46,6 @@ const mockEventParticipant: EventParticipantWithEvent = {
   application_status: "finalised",
   attendance_status: "pending",
   spot_type: "regular",
-  payment: 100,
-  has_paid: false,
   paid_gross: 0,
   net: 0,
   fee: 0,

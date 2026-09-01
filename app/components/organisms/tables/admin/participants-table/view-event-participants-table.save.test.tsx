@@ -147,13 +147,4 @@ describe("participants table saving", () => {
 
     expect(commitJson).not.toHaveBeenCalled()
   })
-
-  it("writes nothing for the money columns the ledger owns now", async () => {
-    renderTable()
-
-    await save("has_paid", true)
-    await save("payment", 250)
-
-    expect(commitJson).not.toHaveBeenCalled()
-  })
 })

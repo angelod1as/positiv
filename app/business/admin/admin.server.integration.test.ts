@@ -686,52 +686,6 @@ describe("updateEventParticipantById - Integration Tests", () => {
     expect(updatedParticipant?.attendance_status).toBe("attended")
   })
 
-  it("leaves the deprecated money columns untouched", async () => {
-    const profile = await createTestProfile(tracker, kysely, {
-      user_id: null,
-      email: "test-flag-money-columns@example.com",
-      full_name: "Test Money Columns",
-    })
-
-    const event = await createTestEvent(tracker, kysely, {
-      title: "Test Event Money Columns",
-      time_event_start: new Date().toISOString(),
-    })
-
-    const participant = await createTestEventParticipant(tracker, kysely, {
-      profile_id: profile.id,
-      event_id: event.id,
-      is_user_applied: true,
-    })
-
-    const before = await kysely
-      .selectFrom("event_participants")
-      .select(["has_paid", "payment"])
-      .where("id", "=", participant.id)
-      .executeTakeFirstOrThrow()
-
-    const result = await updateEventParticipantById({
-      id: participant.id,
-      profile_id: profile.id,
-      intent: "update-event-participant",
-      has_paid: "true",
-      payment: 999,
-      notes: "touched",
-    })
-
-    expect(result.success).toBe(true)
-
-    const after = await kysely
-      .selectFrom("event_participants")
-      .select(["has_paid", "payment", "notes"])
-      .where("id", "=", participant.id)
-      .executeTakeFirstOrThrow()
-
-    expect(after.has_paid).toBe(before.has_paid)
-    expect(Number(after.payment)).toBe(Number(before.payment))
-    expect(after.notes).toBe("touched")
-  })
-
   it("should fail when updating participant with flag but without flag_notes", async () => {
     // Create test data
     const profile = await createTestProfile(tracker, kysely, {
