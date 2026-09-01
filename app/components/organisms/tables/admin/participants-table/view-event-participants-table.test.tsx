@@ -303,6 +303,23 @@ describe("AdminViewEventParticipantsTable", () => {
       })
     })
 
+    it("shows a settled zero as an amount, not as a dash", async () => {
+      renderWithRouter([
+        createMockParticipant({
+          payment_status: "paid",
+          paid_gross: 0,
+          net: 0,
+        }),
+      ])
+
+      // a staff or social spot owed nothing and is settled: "Pago, R$ 0,00",
+      // which is a different fact from having no payment at all
+      await waitFor(() => {
+        expect(screen.getByText("R$ 0,00")).toBeInTheDocument()
+      })
+      expect(screen.queryByText("—")).not.toBeInTheDocument()
+    })
+
     it("offers a button that opens payment management for the row", async () => {
       const onManagePayment = vi.fn()
       renderWithRouter(

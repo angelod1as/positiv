@@ -309,6 +309,24 @@ describe("ParticipantEventHistory", () => {
     })
   })
 
+  it("shows a settled zero as an amount", async () => {
+    const historyWithZero: ParticipantEventHistoryData[] = [
+      {
+        ...mockParticipantHistory[0],
+        paid_gross: 0,
+        net: 0,
+        payment_status: "paid",
+      },
+    ]
+    renderWithRouter(
+      <ParticipantEventHistory participantHistory={historyWithZero} />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText("R$ 0,00")).toBeInTheDocument()
+    })
+  })
+
   it("shows no surplus for a participation that was refunded", async () => {
     const historyWithRefund: ParticipantEventHistoryData[] = [
       {

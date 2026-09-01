@@ -113,9 +113,10 @@ function SpotTypeRenderer(
 function PaymentRenderer(
   params: ICellRendererParams<ParticipantEventHistoryData>,
 ) {
-  const value = params.value as number | null | undefined
-  if (value === null || value === undefined || value === 0) return null
-  return formatCurrency(value)
+  // Zero is an amount when the ledger settled the participation — a staff or
+  // social spot owed nothing — and nothing at all when it never did.
+  if (!params.data?.payment_status) return null
+  return formatCurrency(params.value as number | null | undefined)
 }
 
 function SurplusRenderer(

@@ -514,8 +514,14 @@ export const AdminViewEventParticipantsTable: FC<
         headerName: tableCopy.columns.paidGross,
         headerTooltip: tableCopy.columns.paidGrossTooltip,
         editable: false,
+        // The amount is zero both for a spot that owed nothing and for a
+        // participant with no payment at all, so the status is what tells them
+        // apart: settled at zero reads "R$ 0,00", nothing at all reads as a
+        // dash.
         valueFormatter: (params) =>
-          params.value ? formatCurrency(params.value) : "—",
+          params.data?.payment_status
+            ? formatCurrency(params.value ?? 0)
+            : "—",
       },
       {
         colId: "manage_payment",
