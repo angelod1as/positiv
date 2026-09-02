@@ -167,7 +167,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{manage.title}</DialogTitle>
           <DialogDescription>

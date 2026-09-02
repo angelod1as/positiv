@@ -14,10 +14,15 @@ test.describe('POS-525: managing a payment from the admin grid', () => {
     await page.goto(`/admin/eventos/${event.id}`)
     const grid = await waitForAGGridReady(page, 'participants-table')
 
-    const row = grid.locator('.ag-row').filter({ hasText: participant.socialName })
+    // AG Grid renders a row twice, once per pinned section, so a row filter
+    // matches two elements carrying the same row-id.
+    const row = grid
+      .locator('.ag-row')
+      .filter({ hasText: participant.socialName })
+      .first()
     await expect(row).toBeVisible({ timeout: 30000 })
 
-    await row.getByRole('button', { name: 'Gerenciar pagamento' }).click()
+    await grid.getByRole('button', { name: 'Gerenciar pagamento' }).first().click()
 
     const modal = page.getByRole('dialog')
     await expect(modal.getByText('Nenhum pagamento registrado.')).toBeVisible()
