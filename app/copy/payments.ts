@@ -69,7 +69,7 @@ export const paymentsCopy = {
     description:
       "A cobrança deixa de valer e a pessoa pode receber uma nova. Nada é movimentado no Asaas.",
     keep: "Manter cobrança",
-    submit: "Cancelar cobrança",
+    submit: "Confirmar cancelamento",
     success: "Cobrança cancelada.",
   },
   errors: {
