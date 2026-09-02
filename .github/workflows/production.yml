@@ -125,6 +125,13 @@ jobs:
       # answered got the dump: a full copy of every profile's name, email, CPF,
       # RG, phone and date of birth. VPS_SSH_KNOWN_HOSTS holds the ed25519 line
       # checked against the fingerprint read on the VPS itself.
+      #
+      # Stored unhashed, where `ssh-keyscan -H` wrote a hashed hostname.
+      # Hashing hides which hosts a known_hosts file has visited from whoever
+      # steals the file; here the file is one line, on a single-tenant runner,
+      # for the length of one job, naming a host the adjacent steps pass to ssh
+      # in the clear anyway. What it would cost is the ability to read the
+      # secret and see which host it pins.
       - name: Setup SSH
         timeout-minutes: 2
         env:
