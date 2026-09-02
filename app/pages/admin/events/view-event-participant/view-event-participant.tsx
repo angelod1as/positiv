@@ -9,6 +9,10 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
+import { registerManualPayment } from "~/business/payment/manual-payment.server"
+import { cancelPayment } from "~/business/payment/payment-cancel.server"
+import { markManualRefunded } from "~/business/payment/payment-refund.server"
+import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
@@ -34,7 +38,7 @@ export function shouldRevalidate({
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-  await getAdminContext(request, params)
+  const context = await getAdminContext(request, params)
 
   const formData = await request.formData()
   const intent = formData.get("intent")
@@ -52,6 +56,36 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (intent === "update-event-participant") {
     const result = await updateEventParticipantById(Object.fromEntries(formData))
     return { success: result.success, errors: result.success ? undefined : result.errors }
+  }
+
+  if (intent === "payment-manual") {
+    const result = await registerManualPayment({
+      ...Object.fromEntries(formData),
+      createdBy: context.currentProfile?.id,
+    })
+    return {
+      success: result.success,
+      intent,
+      errors: result.success ? undefined : result.errors,
+    }
+  }
+
+  if (intent === "payment-manual-refund") {
+    const result = await markManualRefunded(Object.fromEntries(formData))
+    return {
+      success: result.success,
+      intent,
+      errors: result.success ? undefined : result.errors,
+    }
+  }
+
+  if (intent === "payment-cancel") {
+    const result = await cancelPayment(Object.fromEntries(formData))
+    return {
+      success: result.success,
+      intent,
+      errors: result.success ? undefined : result.errors,
+    }
   }
 }
 
@@ -105,16 +139,27 @@ export async function loader({ params }: Route.LoaderArgs) {
     fullHistory = historyResult.data
   }
 
+  const participantPayments = await getPaymentsForParticipant(
+    eventParticipant.id,
+  )
+
   return {
     profile,
     eventParticipant,
     fullHistory,
     eventId,
+    participantPayments,
   }
 }
 
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
-  const { eventParticipant, profile, fullHistory, eventId } = loaderData
+  const {
+    eventParticipant,
+    profile,
+    fullHistory,
+    eventId,
+    participantPayments,
+  } = loaderData
 
   if (!profile) return null
 
@@ -126,6 +171,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
         data: eventParticipant,
         eventId,
       }}
+      payments={participantPayments}
     />
   )
 }

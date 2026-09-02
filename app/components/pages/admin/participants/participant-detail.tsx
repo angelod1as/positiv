@@ -1,7 +1,12 @@
+import { useState } from "react"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
+import type { ParticipantPayments } from "~/business/payment/payment-totals.server"
 import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-dropdown/approval-status-dropdown"
+import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
+import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
+import { paymentsCopy } from "~/copy/payments"
 import { Card, CardContent } from "~/components/ui/card"
 import { getAge } from "~/lib/helpers/get-age"
 import type {
@@ -22,13 +27,16 @@ type ParticipantDetailProps = {
     data: EventParticipantWithEvent
     eventId: string
   }
+  payments?: ParticipantPayments
 }
 
 export const ParticipantDetail = ({
   profile,
   fullHistory,
   currentEvent,
+  payments,
 }: ParticipantDetailProps) => {
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const name = profile.social_name || profile.full_name
   // ProfileWithExtraData has profile_id from event_participants join (id is overwritten)
   // ProfileGlobal has id directly from profiles table
@@ -57,11 +65,19 @@ export const ParticipantDetail = ({
               </Copy>
             </p>
           )}
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-2">
             <ApprovalStatusDropdown
               value={profile.approved_to_attend ?? "pending"}
               profileId={profileId}
             />
+            {currentEvent && payments && (
+              <Button
+                variant="outline"
+                onClick={() => setIsPaymentModalOpen(true)}
+              >
+                {paymentsCopy.manage.trigger}
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -105,6 +121,18 @@ export const ParticipantDetail = ({
           <ParticipantEventHistory participantHistory={fullHistory} />
           <FinancialSummary participantHistory={fullHistory} />
         </>
+      )}
+
+      {currentEvent && payments && (
+        <ManagePaymentModal
+          open={isPaymentModalOpen}
+          onOpenChange={setIsPaymentModalOpen}
+          eventParticipantId={currentEvent.data.id}
+          participantName={name ?? ""}
+          payments={payments.payments}
+          totals={payments.totals}
+          active={payments.active}
+        />
       )}
     </>
   )

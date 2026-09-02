@@ -1,6 +1,7 @@
+import userEvent from "@testing-library/user-event"
 import { createMemoryRouter, RouterProvider } from "react-router"
 import { describe, expect, it, vi } from "vitest"
-import { render, screen } from "~/test/test-utils"
+import { render, screen, within } from "~/test/test-utils"
 import { ParticipantDetail } from "./participant-detail"
 
 vi.mock("~/components/pages/admin/participants/basic-data", () => ({
@@ -168,6 +169,59 @@ describe("ParticipantDetail", () => {
 
       expect(
         screen.queryByTestId("participant-event-history"),
+      ).not.toBeInTheDocument()
+    })
+  })
+
+  describe("Payments", () => {
+    const payments = {
+      payments: [],
+      totals: {
+        paid_gross: 0,
+        refunded: 0,
+        fee: 0,
+        net: 0,
+        has_paid: false,
+        current_status: null,
+      },
+      active: null,
+    }
+
+    it("should open the payment modal from the event mode button", async () => {
+      const router = createTestRouter(
+        <ParticipantDetail
+          profile={mockProfile as never}
+          fullHistory={[]}
+          currentEvent={{
+            data: mockCurrentEventData as never,
+            eventId: "event-1",
+          }}
+          payments={payments as never}
+        />,
+      )
+      render(<RouterProvider router={router} />)
+
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Gerenciar pagamento" }),
+      )
+
+      expect(
+        within(screen.getByRole("dialog")).getByText(
+          "Nenhum pagamento registrado.",
+        ),
+      ).toBeInTheDocument()
+    })
+
+    it("should not offer the payment modal outside an event", () => {
+      const router = createTestRouter(
+        <ParticipantDetail profile={mockProfile as never} fullHistory={[]} />,
+      )
+      render(<RouterProvider router={router} />)
+
+      expect(
+        screen.queryByRole("button", { name: "Gerenciar pagamento" }),
       ).not.toBeInTheDocument()
     })
   })

@@ -13,7 +13,8 @@ vi.mock("~/kysely-db", () => ({
     insertInto: vi.fn().mockReturnThis(),
     deleteFrom: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
-    execute: vi.fn().mockResolvedValue(undefined)
+    execute: vi.fn().mockResolvedValue(undefined),
+    destroy: vi.fn().mockResolvedValue(undefined)
   }
 }))
 
