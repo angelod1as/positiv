@@ -264,7 +264,6 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
         ) : (
           <form onSubmit={handleManualSubmit} className="flex flex-col gap-4">
             <h3 className="font-bold">{manual.title}</h3>
-            <p className="text-muted-foreground text-sm">{manual.description}</p>
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="manual-amount">{manual.amount}</Label>
@@ -276,9 +275,6 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                 step="0.01"
                 required
               />
-              <p className="text-muted-foreground text-sm">
-                {manual.amountHint}
-              </p>
             </div>
 
             <div className="flex flex-col gap-2">

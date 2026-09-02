@@ -41,11 +41,7 @@ export const paymentsCopy = {
   },
   manual: {
     title: "Registrar pagamento manual",
-    description:
-      "Para dinheiro que não passou pelo Asaas: transferência, dinheiro ou cortesia combinada por fora.",
     amount: "Valor recebido",
-    amountHint:
-      "Zero registra uma cortesia: a participação fica quitada sem dinheiro nenhum.",
     method: "Forma",
     methodPlaceholder: "Escolha a forma",
     paidAt: "Data do pagamento",
