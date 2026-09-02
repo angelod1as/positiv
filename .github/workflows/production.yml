@@ -42,6 +42,11 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: unit-test
+    # The dump steps below reach the network four times, and ssh with no
+    # ConnectTimeout waits forever. Unbounded, a stalled upload holds the gate
+    # open in exactly the shape the header describes -- the app live against a
+    # schema this job has not pushed yet. The work takes about two minutes.
+    timeout-minutes: 10
 
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -68,6 +73,13 @@ jobs:
       #
       # Named predeploy_* rather than backup_*, so these and the daily dumps
       # prune on their own schedules and one cannot mask the other.
+      #
+      # The four steps below restate database-backup.yml rather than sharing a
+      # composite action with it, on purpose. Factoring them together would put
+      # the nightly backup and the deploy gate behind one piece of code, so a
+      # change made for this path could stop the backup that runs when nobody
+      # is looking. Two copies drift; one copy fails in two places at once, and
+      # of those two the drift is the one that gets noticed.
       - name: Install PostgreSQL client
         run: sudo apt-get install -y postgresql-client
 
