@@ -1,18 +1,19 @@
 import userEvent from "@testing-library/user-event"
-import { beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import { render, screen, within } from "~/test/test-utils"
 import { ManagePaymentModal } from "./manage-payment-modal"
 
 const submit = vi.fn()
 let fetcherData: unknown = undefined
+let fetcherState = "idle"
 
 vi.mock("react-router", async () => {
   const actual =
     await vi.importActual<typeof import("react-router")>("react-router")
   return {
     ...actual,
-    useFetcher: () => ({ submit, state: "idle", data: fetcherData }),
+    useFetcher: () => ({ submit, state: fetcherState, data: fetcherData }),
   }
 })
 
@@ -55,6 +56,11 @@ describe("ManagePaymentModal", () => {
   beforeEach(() => {
     submit.mockClear()
     fetcherData = undefined
+    fetcherState = "idle"
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
   it("says when there is nothing recorded", () => {
@@ -190,6 +196,50 @@ describe("ManagePaymentModal", () => {
     rerender(<ManagePaymentModal {...baseProps} onOpenChange={onOpenChange} />)
 
     expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it("refuses a second click while a refund is in flight", async () => {
+    fetcherState = "submitting"
+
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /marcar como reembolsado/i }),
+    )
+
+    expect(screen.getByRole("button", { name: "Marcar reembolso" })).toBeDisabled()
+  })
+
+  it("refuses a second click while a cancellation is in flight", async () => {
+    fetcherState = "submitting"
+    const open = payment({
+      status: "pending",
+      kind: "asaas",
+      amount: null,
+      method: null,
+      paid_at: null,
+    })
+
+    render(<ManagePaymentModal {...baseProps} active={open} payments={[open]} />)
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Cancelar cobrança" }),
+    )
+
+    expect(
+      screen.getByRole("button", { name: "Confirmar cancelamento" }),
+    ).toBeDisabled()
+  })
+
+  it("defaults the date to today where the party is, not in UTC", () => {
+    vi.useFakeTimers()
+    // 01:30 UTC is still the previous evening in São Paulo, which is the day
+    // the admin means when they record a payment taken that night.
+    vi.setSystemTime(new Date("2026-08-21T01:30:00Z"))
+
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.getByLabelText("Data do pagamento")).toHaveValue("2026-08-20")
   })
 
   it("counts what was given back out of the total paid", () => {

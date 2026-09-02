@@ -49,11 +49,11 @@ export const markManualRefunded = applySchema(markManualRefundedSchema)(
 
     const refundAmount = values.amount ?? payment.amount
 
-    if (
-      !Number.isFinite(refundAmount) ||
-      refundAmount <= 0 ||
-      refundAmount > payment.amount
-    ) {
+    if (!Number.isFinite(refundAmount) || refundAmount <= 0) {
+      throw new Error(paymentsCopy.errors.refundAmountRequired)
+    }
+
+    if (refundAmount > payment.amount) {
       throw new Error(paymentsCopy.errors.refundTooLarge)
     }
 

@@ -171,6 +171,9 @@ describe("markManualRefunded", () => {
       amount: "300",
     })
     expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toMatch(/maior que o valor pago/i)
+    }
 
     const after = await kysely
       .selectFrom("payments")
@@ -192,6 +195,10 @@ describe("markManualRefunded", () => {
       amount: null,
     })
     expect(result.success).toBe(false)
+    if (!result.success) {
+      // Not "bigger than the amount paid": nothing was paid to be bigger than.
+      expect(result.errors[0].message).toMatch(/maior que zero/i)
+    }
   })
 
   it("refuses to refund a payment that is not paid", async () => {

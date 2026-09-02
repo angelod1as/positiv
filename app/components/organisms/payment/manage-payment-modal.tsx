@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "~/components/ui/table"
 import { paymentsCopy } from "~/copy/payments"
+import { formatInTimeZone } from "date-fns-tz"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 
@@ -42,7 +43,11 @@ const { manage, manual, refund, cancel, errors } = paymentsCopy
 /** Every payment recorded by hand arrived by PIX; nothing else is offered. */
 const MANUAL_METHOD = "pix"
 
-const today = () => new Date().toISOString().slice(0, 10)
+// Where the party is, not where the server is: past 21h in São Paulo, a UTC
+// date is already tomorrow, and the admin recording that night's money would
+// be offered the wrong day.
+const today = () =>
+  formatInTimeZone(new Date(), "America/Sao_Paulo", "yyyy-MM-dd")
 
 export type ManagePaymentModalProps = {
   open: boolean
@@ -56,10 +61,15 @@ export type ManagePaymentModalProps = {
 
 type RefundDialogProps = {
   payment: PaymentRow
+  isSubmitting: boolean
   onConfirm: (paymentId: string, amount: string) => void
 }
 
-const RefundDialog: FC<RefundDialogProps> = ({ payment, onConfirm }) => {
+const RefundDialog: FC<RefundDialogProps> = ({
+  payment,
+  isSubmitting,
+  onConfirm,
+}) => {
   const [amount, setAmount] = useState("")
   const amountId = `refund-amount-${payment.id}`
 
@@ -90,7 +100,10 @@ const RefundDialog: FC<RefundDialogProps> = ({ payment, onConfirm }) => {
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>{manage.close}</AlertDialogCancel>
-          <AlertDialogAction onClick={() => onConfirm(payment.id, amount)}>
+          <AlertDialogAction
+            disabled={isSubmitting}
+            onClick={() => onConfirm(payment.id, amount)}
+          >
             {refund.submit}
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -101,10 +114,15 @@ const RefundDialog: FC<RefundDialogProps> = ({ payment, onConfirm }) => {
 
 type CancelDialogProps = {
   payment: PaymentRow
+  isSubmitting: boolean
   onConfirm: (paymentId: string) => void
 }
 
-const CancelDialog: FC<CancelDialogProps> = ({ payment, onConfirm }) => (
+const CancelDialog: FC<CancelDialogProps> = ({
+  payment,
+  isSubmitting,
+  onConfirm,
+}) => (
   <AlertDialog>
     <AlertDialogTrigger asChild>
       <Button variant="outline" size="sm">
@@ -118,7 +136,10 @@ const CancelDialog: FC<CancelDialogProps> = ({ payment, onConfirm }) => (
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>{cancel.keep}</AlertDialogCancel>
-        <AlertDialogAction onClick={() => onConfirm(payment.id)}>
+        <AlertDialogAction
+          disabled={isSubmitting}
+          onClick={() => onConfirm(payment.id)}
+        >
           {cancel.submit}
         </AlertDialogAction>
       </AlertDialogFooter>
@@ -154,6 +175,8 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
       onOpenChange(false)
     }
   }, [fetcher.data, onOpenChange])
+
+  const isSubmitting = fetcher.state !== "idle"
 
   const post = (values: Record<string, string>) => {
     const formData = new FormData()
@@ -263,6 +286,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                     {payment.kind === "manual" && payment.status === "paid" && (
                       <RefundDialog
                         payment={payment}
+                        isSubmitting={isSubmitting}
                         onConfirm={(paymentId, amount) =>
                           post({
                             intent: "payment-manual-refund",
@@ -275,6 +299,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                     {active?.id === payment.id && (
                       <CancelDialog
                         payment={payment}
+                        isSubmitting={isSubmitting}
                         onConfirm={(paymentId) =>
                           post({ intent: "payment-cancel", paymentId })
                         }
@@ -316,7 +341,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
               />
             </div>
 
-            <Button type="submit" disabled={fetcher.state !== "idle"}>
+            <Button type="submit" disabled={isSubmitting}>
               {manual.submit}
             </Button>
           </form>

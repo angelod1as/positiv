@@ -70,6 +70,7 @@ export const paymentsCopy = {
     amountRequired: "Informe um valor de zero ou mais.",
     activeChargeExists:
       "Existe uma cobrança em aberto. Cancele-a antes de registrar um pagamento manual.",
+    refundAmountRequired: "Informe um valor de reembolso maior que zero.",
     refundTooLarge: "O reembolso não pode ser maior que o valor pago.",
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
