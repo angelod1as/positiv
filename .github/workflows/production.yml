@@ -80,6 +80,13 @@ jobs:
       # change made for this path could stop the backup that runs when nobody
       # is looking. Two copies drift; one copy fails in two places at once, and
       # of those two the drift is the one that gets noticed.
+      #
+      # No Telegram notification, unlike database-backup.yml, and deliberately.
+      # That one runs at 3am with nobody watching, so a silent failure could go
+      # unnoticed for days. This one fails in front of whoever just merged, and
+      # takes `db push` down with it: the migration does not run, which is the
+      # outcome the dump exists to allow. A page would tell someone what the
+      # red build already tells them.
       - name: Install PostgreSQL client
         run: sudo apt-get install -y postgresql-client
 
