@@ -22,8 +22,6 @@ const createMockHistoryItem = (
   created_at: "2024-02-15T10:00:00",
   bond: null,
   notes: null,
-  has_paid: true,
-  payment: 15000,
   paid_gross: 15000,
   net: 15000,
   fee: 0,

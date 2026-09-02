@@ -177,11 +177,9 @@ export type Database = {
           companions: string | null
           created_at: string
           event_id: string
-          has_paid: boolean
           id: string
           is_user_applied: boolean
           notes: string | null
-          payment: number
           profile_id: string | null
           referrals: string | null
           referred: string
@@ -199,11 +197,9 @@ export type Database = {
           companions?: string | null
           created_at?: string
           event_id: string
-          has_paid?: boolean
           id?: string
           is_user_applied?: boolean
           notes?: string | null
-          payment?: number
           profile_id?: string | null
           referrals?: string | null
           referred?: string
@@ -221,11 +217,9 @@ export type Database = {
           companions?: string | null
           created_at?: string
           event_id?: string
-          has_paid?: boolean
           id?: string
           is_user_applied?: boolean
           notes?: string | null
-          payment?: number
           profile_id?: string | null
           referrals?: string | null
           referred?: string

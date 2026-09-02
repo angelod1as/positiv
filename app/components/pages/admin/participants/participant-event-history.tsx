@@ -165,7 +165,7 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
       },
       {
         field: "paid_gross",
-        headerName: eventParticipantPropMap("payment"),
+        headerName: historyCopy.payment,
         cellRenderer: PaymentRenderer,
         sortable: true,
       },

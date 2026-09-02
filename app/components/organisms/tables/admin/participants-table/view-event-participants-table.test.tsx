@@ -64,8 +64,6 @@ const createMockParticipant = (
     application_status: "payment_data_sent",
     attendance_status: "pending",
     approved_to_attend: "approved",
-    has_paid: false,
-    payment: 100,
     spot_type: "regular",
     companions: null,
     notes: null,

@@ -10,8 +10,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # apt-get update first: the client is not on the runner image, it is
+      # fetched every run, and the shipped package index goes stale as the image
+      # ages. Installing against a stale index 404s when the mirror has moved on.
       - name: Install PostgreSQL client
-        run: sudo apt-get install -y postgresql-client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
 
       - name: Create database dump
         env:

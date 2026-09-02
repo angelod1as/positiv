@@ -29,7 +29,7 @@ jobs:
         uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version-file: .nvmrc
           cache: 'pnpm'
       - name: Install dependencies
         run: pnpm install
@@ -42,6 +42,25 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     needs: unit-test
+    # The bound is on the steps that can hang, not on the job, and the two are
+    # not interchangeable. What needs bounding is the dump: it reaches the
+    # network four times and ssh with no ConnectTimeout waits forever, which
+    # would hold the gate open in the shape the header describes. What must not
+    # be bounded tightly is `db push` -- killing a migration part-way through is
+    # worse than a slow gate, and before this job took a timeout at all it had
+    # the 360-minute default to run in.
+    #
+    # So: a short leash on each network step, and a job budget generous enough
+    # that a long migration reaches its own end rather than this one. The step
+    # leashes total 24 minutes against a 30-minute job, so `db push` is left at
+    # least six even if every one of them runs to its limit.
+    #
+    # This does cap `db push`, which had the 360-minute default before the job
+    # took a budget at all. Thirty minutes is wide for the DDL this repository
+    # ships. A migration that rewrites a large table could outgrow it, and would
+    # fail the same way on every retry -- if you are writing one, raise this
+    # number in the same PR rather than discovering the ceiling on merge day.
+    timeout-minutes: 30
 
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -54,6 +73,85 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: latest
+
+      # The dump below is the only thing standing between a bad migration and
+      # permanent data loss: `db push` runs unattended on every merge, and a
+      # migration that drops a column takes the last copy of it with it. The
+      # daily backup in database-backup.yml is up to 24 hours stale by the time
+      # a merge lands, which is the wrong recovery point for a change nobody is
+      # watching.
+      #
+      # It costs the gate about a minute. That is the trade this file's opening
+      # comment is about, and it is worth it here: the failure this guards
+      # against is unrecoverable, while a slow gate is merely bad.
+      #
+      # Named predeploy_* rather than backup_*, so these and the daily dumps
+      # prune on their own schedules and one cannot mask the other.
+      #
+      # The four steps below restate database-backup.yml rather than sharing a
+      # composite action with it, on purpose. Factoring them together would put
+      # the nightly backup and the deploy gate behind one piece of code, so a
+      # change made for this path could stop the backup that runs when nobody
+      # is looking. Two copies drift; one copy fails in two places at once, and
+      # of those two the drift is the one that gets noticed.
+      #
+      # No Telegram notification, unlike database-backup.yml, and deliberately.
+      # That one runs at 3am with nobody watching, so a silent failure could go
+      # unnoticed for days. This one fails in front of whoever just merged, and
+      # takes `db push` down with it: the migration does not run, which is the
+      # outcome the dump exists to allow. A page would tell someone what the
+      # red build already tells them.
+      #
+      # apt-get update first: the client is not on the runner image, it is
+      # fetched every run, and the shipped package index goes stale as the image
+      # ages. Installing against a stale index 404s when the mirror has moved
+      # on -- a red deploy for a reason that has nothing to do with the merge.
+      - name: Install PostgreSQL client
+        timeout-minutes: 3
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Dump production before migrating
+        timeout-minutes: 8
+        run: |
+          FILENAME="predeploy_$(date +%Y%m%d_%H%M%S)_${GITHUB_SHA::7}.dump"
+          pg_dump -Fc "$SUPABASE_CONNECT_URL" -f "$FILENAME"
+          echo "DUMP_FILE=$FILENAME" >> "$GITHUB_ENV"
+
+      - name: Setup SSH
+        timeout-minutes: 2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload the pre-deploy dump
+        timeout-minutes: 8
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_BACKUP_PATH: ${{ secrets.VPS_BACKUP_PATH }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" "mkdir -p $VPS_BACKUP_PATH"
+          scp "$DUMP_FILE" "$VPS_USER@$VPS_HOST:$VPS_BACKUP_PATH/$DUMP_FILE"
+
+      # Same 30 days the daily dumps get. One per merge is a handful a week, so
+      # the window costs little and is the one that matters: a schema change
+      # noticed late is noticed within weeks, not months.
+      - name: Prune pre-deploy dumps older than 30 days
+        timeout-minutes: 3
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_BACKUP_PATH: ${{ secrets.VPS_BACKUP_PATH }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" \
+            "find $VPS_BACKUP_PATH -name 'predeploy_*.dump' -mtime +30 -delete"
 
       # --include-all: applies migrations whose timestamps fall before the last
       # migration already on the remote. This happens when a branch with an older

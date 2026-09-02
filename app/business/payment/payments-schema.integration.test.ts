@@ -547,4 +547,18 @@ describe("payments schema", () => {
       expect(after.find((r) => r.id === paid.id)?.status).toBe("paid")
     })
   })
+
+  describe("event_participants", () => {
+    it("no longer carries the money columns the ledger replaced", async () => {
+      const { rows } = await sql<{ column_name: string }>`
+        SELECT column_name
+          FROM information_schema.columns
+         WHERE table_schema = 'public'
+           AND table_name = 'event_participants'
+           AND column_name IN ('has_paid', 'payment')
+      `.execute(kysely)
+
+      expect(rows).toEqual([])
+    })
+  })
 })
