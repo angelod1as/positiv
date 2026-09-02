@@ -63,4 +63,14 @@ describe.each(workflows)("$file", ({ yaml }) => {
     expect(step).toContain('if [ -z "$VPS_SSH_KNOWN_HOSTS" ]; then')
     expect(step).toContain("exit 1")
   })
+
+  it("checks the value is a host key rather than something shaped like one", () => {
+    // The near miss is pasting the output of `ssh-keygen -lf` -- the
+    // fingerprint -- in place of the known_hosts line it was read from. Both
+    // mention the host and the key type, and ssh rejects the wrong one with
+    // "Host key verification failed.", indistinguishable from interception.
+    const step = setupSshStep(yaml)
+
+    expect(step).toContain("ssh-keygen -lf ~/.ssh/known_hosts")
+  })
 })

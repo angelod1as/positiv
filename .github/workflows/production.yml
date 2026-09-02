@@ -145,6 +145,15 @@ jobs:
 
           echo "$VPS_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
 
+          # The likely mistake is pasting the fingerprint -- the output of
+          # `ssh-keygen -lf` -- in place of the known_hosts line it was read
+          # from. ssh rejects that with "Host key verification failed.", the
+          # same words a genuine interception produces.
+          if ! ssh-keygen -lf ~/.ssh/known_hosts > /dev/null 2>&1; then
+            echo "::error::VPS_SSH_KNOWN_HOSTS is not a known_hosts line"
+            exit 1
+          fi
+
       - name: Upload the pre-deploy dump
         timeout-minutes: 8
         env:
