@@ -135,7 +135,17 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   totals,
   active,
 }) => {
-  const fetcher = useFetcher<{ success?: boolean; intent?: string }>()
+  const fetcher = useFetcher<{
+    success?: boolean
+    intent?: string
+    errors?: { message?: string }[]
+  }>()
+
+  const failure =
+    fetcher.data && fetcher.data.success === false ? fetcher.data : null
+  const failureMessages = failure
+    ? (failure.errors ?? []).flatMap((error) => error.message ?? [])
+    : []
 
   // A recorded payment is the end of the errand: the admin came here to write
   // it down, and the grid behind the dialog already shows the result.
@@ -202,6 +212,19 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             <dd className="font-bold">{formatCurrency(totals.net)}</dd>
           </div>
         </dl>
+
+        {failure && (
+          <div
+            role="alert"
+            className="border-destructive text-destructive rounded-md border p-3 text-sm"
+          >
+            {failureMessages.length > 0 ? (
+              failureMessages.map((message) => <p key={message}>{message}</p>)
+            ) : (
+              <p>{errors.generic}</p>
+            )}
+          </div>
+        )}
 
         {payments.length === 0 ? (
           <p>{manage.empty}</p>

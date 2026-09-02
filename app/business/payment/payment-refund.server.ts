@@ -6,9 +6,16 @@ import { zod } from "~/lib/helpers/zod"
 
 export const markManualRefundedSchema = zod.object({
   paymentId: zod.string().uuid(),
+  // An empty field is the form saying "the whole amount", so it has to reach
+  // the handler as null. `reaisToCents("")` answers NaN, which is neither an
+  // amount nor nullish, and would fail every full refund the modal offers.
   amount: zod
     .union([zod.string(), zod.number()])
-    .transform(reaisToCents)
+    .transform((value) =>
+      typeof value === "string" && value.trim() === ""
+        ? null
+        : reaisToCents(value),
+    )
     .nullish(),
 })
 
@@ -24,11 +31,19 @@ export const markManualRefunded = applySchema(markManualRefundedSchema)(
   async (values) => {
     const payment = await kyselyDb
       .selectFrom("payments")
-      .select(["amount", "status"])
+      .select(["amount", "status", "kind"])
       .where("id", "=", values.paymentId)
       .executeTakeFirst()
 
-    if (!payment || payment.status !== "paid" || payment.amount === null) {
+    // Only a payment taken by hand can be given back by hand. Marking an Asaas
+    // row refunded here would move nothing at Asaas, leaving the participant's
+    // money where it is and Positiv's ledger saying otherwise.
+    if (
+      !payment ||
+      payment.kind !== "manual" ||
+      payment.status !== "paid" ||
+      payment.amount === null
+    ) {
       throw new Error(paymentsCopy.errors.notRefundable)
     }
 
@@ -52,6 +67,7 @@ export const markManualRefunded = applySchema(markManualRefundedSchema)(
       })
       .where("id", "=", values.paymentId)
       .where("status", "=", "paid")
+      .where("kind", "=", "manual")
       .returning("id")
       .executeTakeFirst()
 

@@ -133,6 +133,49 @@ describe("ManagePaymentModal", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
+  it("says why a payment was refused", () => {
+    const { rerender } = render(<ManagePaymentModal {...baseProps} />)
+
+    fetcherData = {
+      success: false,
+      intent: "payment-manual",
+      errors: [{ message: "Informe um valor de zero ou mais." }],
+    }
+    rerender(<ManagePaymentModal {...baseProps} />)
+
+    expect(
+      screen.getByText("Informe um valor de zero ou mais."),
+    ).toBeInTheDocument()
+  })
+
+  it("says why a refund was refused", () => {
+    const { rerender } = render(
+      <ManagePaymentModal {...baseProps} payments={[payment({})]} />,
+    )
+
+    fetcherData = {
+      success: false,
+      intent: "payment-manual-refund",
+      errors: [{ message: "O reembolso não pode ser maior que o valor pago." }],
+    }
+    rerender(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    expect(
+      screen.getByText("O reembolso não pode ser maior que o valor pago."),
+    ).toBeInTheDocument()
+  })
+
+  it("falls back to a generic message when the failure carries none", () => {
+    const { rerender } = render(<ManagePaymentModal {...baseProps} />)
+
+    fetcherData = { success: false, intent: "payment-cancel" }
+    rerender(<ManagePaymentModal {...baseProps} />)
+
+    expect(
+      screen.getByText("Não foi possível concluir a operação."),
+    ).toBeInTheDocument()
+  })
+
   it("stays open when the payment was refused", () => {
     const onOpenChange = vi.fn()
     const { rerender } = render(

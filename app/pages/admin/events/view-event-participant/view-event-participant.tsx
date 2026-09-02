@@ -9,9 +9,7 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
-import { registerManualPayment } from "~/business/payment/manual-payment.server"
-import { cancelPayment } from "~/business/payment/payment-cancel.server"
-import { markManualRefunded } from "~/business/payment/payment-refund.server"
+import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
@@ -58,35 +56,12 @@ export async function action({ request, params }: Route.ActionArgs) {
     return { success: result.success, errors: result.success ? undefined : result.errors }
   }
 
-  if (intent === "payment-manual") {
-    const result = await registerManualPayment({
-      ...Object.fromEntries(formData),
-      createdBy: context.currentProfile?.id,
-    })
-    return {
-      success: result.success,
-      intent,
-      errors: result.success ? undefined : result.errors,
-    }
-  }
-
-  if (intent === "payment-manual-refund") {
-    const result = await markManualRefunded(Object.fromEntries(formData))
-    return {
-      success: result.success,
-      intent,
-      errors: result.success ? undefined : result.errors,
-    }
-  }
-
-  if (intent === "payment-cancel") {
-    const result = await cancelPayment(Object.fromEntries(formData))
-    return {
-      success: result.success,
-      intent,
-      errors: result.success ? undefined : result.errors,
-    }
-  }
+  const paymentResult = await handlePaymentIntent(
+    String(intent),
+    formData,
+    context.currentProfile?.id,
+  )
+  if (paymentResult) return paymentResult
 }
 
 export async function loader({ params }: Route.LoaderArgs) {

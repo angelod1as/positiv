@@ -141,6 +141,20 @@ describe("registerManualPayment", () => {
     expect(await trackPayments()).toHaveLength(0)
   })
 
+  it("refuses a date it cannot read", async () => {
+    const result = await registerManualPayment({
+      eventParticipantId: participantId,
+      amount: "150",
+      method: "pix",
+      paidAt: "não é uma data",
+      note: null,
+      createdBy: adminProfileId,
+    })
+
+    expect(result.success).toBe(false)
+    expect(await trackPayments()).toHaveLength(0)
+  })
+
   it("refuses to record one while a charge is still open", async () => {
     await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,

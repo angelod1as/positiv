@@ -14,7 +14,10 @@ export const manualPaymentSchema = zod.object({
       error: paymentsCopy.errors.amountRequired,
     }),
   method: zod.enum(["pix", "cash", "transfer", "other"]),
-  paidAt: zod.string().min(1),
+  // The date is read back with `new Date`, which answers an Invalid Date for
+  // anything it cannot parse and then throws on toISOString. Refusing it here
+  // makes that a validation message instead of a RangeError.
+  paidAt: zod.iso.date(),
   note: zod.string().nullish(),
   createdBy: zod.string().uuid().nullish(),
 })

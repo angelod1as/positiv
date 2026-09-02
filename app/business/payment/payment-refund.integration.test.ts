@@ -64,6 +64,54 @@ describe("markManualRefunded", () => {
     expect(after.refunded_at).not.toBeNull()
   })
 
+  it("marks a full refund when the amount arrives blank", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      amount: 20000,
+      base_amount: 20000,
+    })
+
+    // What the modal posts when the admin takes up the offer to leave the
+    // field empty: an empty string, not a missing key.
+    const result = await markManualRefunded({
+      paymentId: payment.id,
+      amount: "",
+    })
+    expect(result.success).toBe(true)
+
+    const after = await kysely
+      .selectFrom("payments")
+      .selectAll()
+      .where("id", "=", payment.id)
+      .executeTakeFirstOrThrow()
+
+    expect(after.status).toBe("refunded")
+    expect(after.refund_amount).toBe(20000)
+  })
+
+  it("refuses to mark an Asaas payment refunded by hand", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      amount: 20000,
+      base_amount: 20000,
+      method: "pix",
+    })
+
+    const result = await markManualRefunded({
+      paymentId: payment.id,
+      amount: null,
+    })
+    expect(result.success).toBe(false)
+
+    const after = await kysely
+      .selectFrom("payments")
+      .select("status")
+      .where("id", "=", payment.id)
+      .executeTakeFirstOrThrow()
+    expect(after.status).toBe("paid")
+  })
+
   it("marks a partial refund", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,

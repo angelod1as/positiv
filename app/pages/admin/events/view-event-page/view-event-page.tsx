@@ -12,9 +12,7 @@ import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
 } from "~/business/admin/event-listmonk-sync.server"
-import { registerManualPayment } from "~/business/payment/manual-payment.server"
-import { cancelPayment } from "~/business/payment/payment-cancel.server"
-import { markManualRefunded } from "~/business/payment/payment-refund.server"
+import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
@@ -43,35 +41,12 @@ export async function action({ request, params }: Route.ActionArgs) {
   const formData = await request.formData()
   const intent = String(formData.get("intent") ?? "")
 
-  if (intent === "payment-manual") {
-    const result = await registerManualPayment({
-      ...Object.fromEntries(formData),
-      createdBy: context.currentProfile?.id,
-    })
-    return {
-      success: result.success,
-      intent,
-      errors: result.success ? undefined : result.errors,
-    }
-  }
-
-  if (intent === "payment-manual-refund") {
-    const result = await markManualRefunded(Object.fromEntries(formData))
-    return {
-      success: result.success,
-      intent,
-      errors: result.success ? undefined : result.errors,
-    }
-  }
-
-  if (intent === "payment-cancel") {
-    const result = await cancelPayment(Object.fromEntries(formData))
-    return {
-      success: result.success,
-      intent,
-      errors: result.success ? undefined : result.errors,
-    }
-  }
+  const paymentResult = await handlePaymentIntent(
+    intent,
+    formData,
+    context.currentProfile?.id,
+  )
+  if (paymentResult) return paymentResult
 
   if (intent === "sync-listmonk-list") {
     const eventId = params.id
