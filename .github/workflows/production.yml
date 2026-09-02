@@ -95,9 +95,16 @@ jobs:
       # takes `db push` down with it: the migration does not run, which is the
       # outcome the dump exists to allow. A page would tell someone what the
       # red build already tells them.
+      #
+      # apt-get update first: the client is not on the runner image, it is
+      # fetched every run, and the shipped package index goes stale as the image
+      # ages. Installing against a stale index 404s when the mirror has moved
+      # on -- a red deploy for a reason that has nothing to do with the merge.
       - name: Install PostgreSQL client
         timeout-minutes: 3
-        run: sudo apt-get install -y postgresql-client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
 
       - name: Dump production before migrating
         timeout-minutes: 8
