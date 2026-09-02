@@ -55,6 +55,59 @@ jobs:
         with:
           version: latest
 
+      # The dump below is the only thing standing between a bad migration and
+      # permanent data loss: `db push` runs unattended on every merge, and a
+      # migration that drops a column takes the last copy of it with it. The
+      # daily backup in database-backup.yml is up to 24 hours stale by the time
+      # a merge lands, which is the wrong recovery point for a change nobody is
+      # watching.
+      #
+      # It costs the gate about a minute. That is the trade this file's opening
+      # comment is about, and it is worth it here: the failure this guards
+      # against is unrecoverable, while a slow gate is merely bad.
+      #
+      # Named predeploy_* rather than backup_*, so these and the daily dumps
+      # prune on their own schedules and one cannot mask the other.
+      - name: Install PostgreSQL client
+        run: sudo apt-get install -y postgresql-client
+
+      - name: Dump production before migrating
+        run: |
+          FILENAME="predeploy_$(date +%Y%m%d_%H%M%S)_${GITHUB_SHA::7}.dump"
+          pg_dump -Fc "$SUPABASE_CONNECT_URL" -f "$FILENAME"
+          echo "DUMP_FILE=$FILENAME" >> "$GITHUB_ENV"
+
+      - name: Setup SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload the pre-deploy dump
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_BACKUP_PATH: ${{ secrets.VPS_BACKUP_PATH }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" "mkdir -p $VPS_BACKUP_PATH"
+          scp "$DUMP_FILE" "$VPS_USER@$VPS_HOST:$VPS_BACKUP_PATH/$DUMP_FILE"
+
+      # Same 30 days the daily dumps get. One per merge is a handful a week, so
+      # the window costs little and is the one that matters: a schema change
+      # noticed late is noticed within weeks, not months.
+      - name: Prune pre-deploy dumps older than 30 days
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_BACKUP_PATH: ${{ secrets.VPS_BACKUP_PATH }}
+        run: |
+          ssh "$VPS_USER@$VPS_HOST" \
+            "find $VPS_BACKUP_PATH -name 'predeploy_*.dump' -mtime +30 -delete"
+
       # --include-all: applies migrations whose timestamps fall before the last
       # migration already on the remote. This happens when a branch with an older
       # timestamp is merged after a newer migration is already deployed to production.
