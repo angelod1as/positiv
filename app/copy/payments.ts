@@ -36,6 +36,7 @@ export const paymentsCopy = {
       refunded: "Reembolsado",
       partially_refunded: "Reembolsado em parte",
     },
+    noAmount: "—",
     noMethod: "—",
     noDate: "—",
   },

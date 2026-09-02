@@ -250,7 +250,11 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       ? manage.methods[payment.method]
                       : manage.noMethod}
                   </TableCell>
-                  <TableCell>{formatCurrency(payment.amount)}</TableCell>
+                  <TableCell>
+                    {payment.amount === null
+                      ? manage.noAmount
+                      : formatCurrency(payment.amount)}
+                  </TableCell>
                   <TableCell>
                     {formatDateTime(payment.paid_at, "numeric").date ??
                       manage.noDate}

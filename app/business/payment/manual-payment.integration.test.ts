@@ -180,6 +180,35 @@ describe("registerManualPayment", () => {
     }
   })
 
+  it("serialises two payments recorded at the same moment", async () => {
+    // The check and the insert run inside one transaction holding the
+    // participant's row, so two admins recording at once take turns. Both
+    // amounts are real payments and both belong in the ledger — what must not
+    // happen is a deadlock, a lost row, or one of them slipping past the
+    // open-charge check.
+    const record = (amount: string) =>
+      registerManualPayment({
+        eventParticipantId: participantId,
+        amount,
+        method: "pix",
+        paidAt: "2026-08-20",
+        note: null,
+        createdBy: adminProfileId,
+      })
+
+    const results = await Promise.all([record("100"), record("50")])
+
+    expect(results.every((result) => result.success)).toBe(true)
+    expect(await trackPayments()).toHaveLength(2)
+
+    const totals = await kysely
+      .selectFrom("event_participant_payments")
+      .selectAll()
+      .where("event_participant_id", "=", participantId)
+      .executeTakeFirstOrThrow()
+    expect(totals.paid_gross).toBe(15000)
+  })
+
   it("allows a second manual payment once the first is recorded", async () => {
     await registerManualPayment({
       eventParticipantId: participantId,

@@ -233,6 +233,22 @@ describe("ManagePaymentModal", () => {
     expect(formData.get("amount")).toBe("0")
   })
 
+  it("does not read an open charge as a payment of zero", () => {
+    const open = payment({
+      status: "pending",
+      kind: "asaas",
+      amount: null,
+      base_amount: 22000,
+      method: null,
+      paid_at: null,
+    })
+
+    render(<ManagePaymentModal {...baseProps} active={open} payments={[open]} />)
+
+    const row = screen.getByRole("row", { name: /aguardando envio/i })
+    expect(within(row).queryByText("R$ 0,00")).not.toBeInTheDocument()
+  })
+
   it("offers a refund only for a paid row", () => {
     const { rerender } = render(
       <ManagePaymentModal {...baseProps} payments={[payment({})]} />,

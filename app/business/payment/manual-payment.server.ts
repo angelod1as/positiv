@@ -32,34 +32,46 @@ export const manualPaymentSchema = zod.object({
  */
 export const registerManualPayment = applySchema(manualPaymentSchema)(
   async (values) => {
-    const open = await kyselyDb
-      .selectFrom("payments")
-      .select("id")
-      .where("event_participant_id", "=", values.eventParticipantId)
-      .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
-      .executeTakeFirst()
-
-    if (open) {
-      throw new Error(paymentsCopy.errors.activeChargeExists)
-    }
-
     const paidAt = new Date(values.paidAt).toISOString()
 
-    await kyselyDb
-      .insertInto("payments")
-      .values({
-        event_participant_id: values.eventParticipantId,
-        kind: "manual",
-        status: "paid",
-        method: values.method,
-        base_amount: values.amount,
-        amount: values.amount,
-        paid_at: paidAt,
-        due_at: paidAt,
-        note: values.note ?? null,
-        created_by: values.createdBy ?? null,
-      })
-      .execute()
+    // Checking for an open charge and writing the payment are one statement.
+    // Apart, a charge opening between the two would be recorded as paid and
+    // charged, and the participant would be asked for money twice.
+    await kyselyDb.transaction().execute(async (trx) => {
+      await trx
+        .selectFrom("event_participants")
+        .select("id")
+        .where("id", "=", values.eventParticipantId)
+        .forUpdate()
+        .executeTakeFirst()
+
+      const open = await trx
+        .selectFrom("payments")
+        .select("id")
+        .where("event_participant_id", "=", values.eventParticipantId)
+        .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
+        .executeTakeFirst()
+
+      if (open) {
+        throw new Error(paymentsCopy.errors.activeChargeExists)
+      }
+
+      await trx
+        .insertInto("payments")
+        .values({
+          event_participant_id: values.eventParticipantId,
+          kind: "manual",
+          status: "paid",
+          method: values.method,
+          base_amount: values.amount,
+          amount: values.amount,
+          paid_at: paidAt,
+          due_at: paidAt,
+          note: values.note ?? null,
+          created_by: values.createdBy ?? null,
+        })
+        .execute()
+    })
 
     return { ok: true as const }
   },

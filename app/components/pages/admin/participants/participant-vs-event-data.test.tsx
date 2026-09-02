@@ -134,6 +134,20 @@ describe("ParticipantVsEventData", () => {
       expect(screen.getByText(/Pago/)).toBeInTheDocument()
     })
 
+    it("takes a refund out of what it reports, like the grid does", () => {
+      const router = createTestRouter({
+        ...mockEventParticipant,
+        paid_gross: 22000,
+        refunded: 5000,
+        net: 17000,
+        payment_status: "partially_refunded",
+      })
+      render(<RouterProvider router={router} />)
+
+      expect(screen.getByText(/R\$ 170,00/)).toBeInTheDocument()
+      expect(screen.queryByText(/R\$ 220,00/)).not.toBeInTheDocument()
+    })
+
     it("shows a settled zero as an amount, like the grid does", () => {
       const router = createTestRouter({
         ...mockEventParticipant,

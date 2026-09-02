@@ -123,9 +123,9 @@ export const ParticipantDetail = ({
         </>
       )}
 
-      {currentEvent && payments && (
+      {currentEvent && payments && isPaymentModalOpen && (
         <ManagePaymentModal
-          open={isPaymentModalOpen}
+          open
           onOpenChange={setIsPaymentModalOpen}
           eventParticipantId={currentEvent.data.id}
           participantName={name ?? ""}
