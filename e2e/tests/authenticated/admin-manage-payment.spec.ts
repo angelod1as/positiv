@@ -31,7 +31,12 @@ test.describe('POS-525: managing a payment from the admin grid', () => {
     await modal.getByLabel('Data do pagamento').fill('2026-08-20')
     await modal.getByRole('button', { name: 'Registrar pagamento' }).click()
 
-    // The row is written, the loader revalidates, and the grid answers with it.
+    // Recording is the end of the errand: the modal closes and the grid,
+    // revalidated, carries the answer.
+    await expect(modal).toBeHidden()
+    await expect(grid.getByText('R$ 150,00').first()).toBeVisible()
+
+    await grid.getByRole('button', { name: 'Gerenciar pagamento' }).first().click()
     await expect(modal.getByRole('row', { name: /pix/i })).toContainText('R$ 150,00')
     await expect(modal.getByRole('row', { name: /pix/i })).toContainText('Pago')
 
@@ -39,9 +44,10 @@ test.describe('POS-525: managing a payment from the admin grid', () => {
     await page.getByRole('alertdialog').getByLabel('Valor devolvido').fill('50')
     await page.getByRole('alertdialog').getByRole('button', { name: 'Marcar reembolso' }).click()
 
+    // A refund leaves the modal open — the admin is still reading the ledger.
     await expect(modal.getByRole('row', { name: /pix/i })).toContainText(
       'Reembolsado em parte',
     )
-    await expect(modal.getByText('R$ 100,00')).toBeVisible()
+    await expect(modal.getByText('R$ 100,00').first()).toBeVisible()
   })
 })

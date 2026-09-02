@@ -115,7 +115,7 @@ type AdminViewEventParticipantsTableProps = {
   participants: ProfileWithExtraData[]
   eventId: string
   onParticipantSaved?: () => void
-  /** POS-525 hangs the payment modal on this; until then the button is inert. */
+  /** Opens the manage-payment modal on the row's participant. */
   onManagePayment?: (eventParticipantId: string) => void
 }
 
@@ -523,6 +523,11 @@ export const AdminViewEventParticipantsTable: FC<
         headerName: tableCopy.columns.paidGross,
         headerTooltip: tableCopy.columns.paidGrossTooltip,
         editable: false,
+        // What the participant paid and Positiv still holds: the fees stay in,
+        // because the participant paid them, and a refund comes out, because
+        // it went back.
+        valueGetter: (params) =>
+          (params.data?.paid_gross ?? 0) - (params.data?.refunded ?? 0),
         // The amount is zero for a spot that owed nothing, for a participant
         // with no payment at all, and for a charge still waiting to be paid.
         // Only the first of those is an amount, and the status is what says so.
@@ -533,7 +538,7 @@ export const AdminViewEventParticipantsTable: FC<
       },
       {
         colId: "manage_payment",
-        headerName: "",
+        headerName: tableCopy.columns.managePaymentHeader,
         editable: false,
         sortable: false,
         filter: false,

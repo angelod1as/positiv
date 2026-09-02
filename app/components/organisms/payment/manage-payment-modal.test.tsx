@@ -5,13 +5,14 @@ import { render, screen, within } from "~/test/test-utils"
 import { ManagePaymentModal } from "./manage-payment-modal"
 
 const submit = vi.fn()
+let fetcherData: unknown = undefined
 
 vi.mock("react-router", async () => {
   const actual =
     await vi.importActual<typeof import("react-router")>("react-router")
   return {
     ...actual,
-    useFetcher: () => ({ submit, state: "idle", data: undefined }),
+    useFetcher: () => ({ submit, state: "idle", data: fetcherData }),
   }
 })
 
@@ -53,6 +54,7 @@ const baseProps = {
 describe("ManagePaymentModal", () => {
   beforeEach(() => {
     submit.mockClear()
+    fetcherData = undefined
   })
 
   it("says when there is nothing recorded", () => {
@@ -95,6 +97,85 @@ describe("ManagePaymentModal", () => {
     expect(formData.get("eventParticipantId")).toBe("ep-1")
     expect(formData.get("method")).toBe("pix")
     expect(formData.get("paidAt")).toBeTruthy()
+  })
+
+  it("only ever records a payment as pix", async () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.queryByLabelText("Forma")).not.toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText("Valor recebido"), "150")
+    await userEvent.click(
+      screen.getByRole("button", { name: "Registrar pagamento" }),
+    )
+
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect(formData.get("method")).toBe("pix")
+  })
+
+  it("does not ask for a note", () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.queryByLabelText("Observação")).not.toBeInTheDocument()
+  })
+
+  it("closes itself once the payment is recorded", () => {
+    const onOpenChange = vi.fn()
+    const { rerender } = render(
+      <ManagePaymentModal {...baseProps} onOpenChange={onOpenChange} />,
+    )
+
+    expect(onOpenChange).not.toHaveBeenCalled()
+
+    fetcherData = { success: true, intent: "payment-manual" }
+    rerender(<ManagePaymentModal {...baseProps} onOpenChange={onOpenChange} />)
+
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it("stays open when the payment was refused", () => {
+    const onOpenChange = vi.fn()
+    const { rerender } = render(
+      <ManagePaymentModal {...baseProps} onOpenChange={onOpenChange} />,
+    )
+
+    fetcherData = {
+      success: false,
+      intent: "payment-manual",
+      errors: [{ message: "Informe um valor de zero ou mais." }],
+    }
+    rerender(<ManagePaymentModal {...baseProps} onOpenChange={onOpenChange} />)
+
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it("counts what was given back out of the total paid", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          payment({
+            status: "partially_refunded",
+            refund_amount: 5000,
+            refunded_at: "2026-08-21T12:00:00Z",
+            amount: 10000,
+            base_amount: 10000,
+          }),
+        ]}
+        totals={{
+          ...baseProps.totals,
+          paid_gross: 10000,
+          refunded: 5000,
+          fee: 1000,
+          net: 4000,
+          has_paid: true,
+        }}
+      />,
+    )
+
+    expect(screen.getByText("Total pago").closest("div")).toHaveTextContent(
+      "R$ 50,00",
+    )
   })
 
   it("records a courtesy spot settled at zero", async () => {

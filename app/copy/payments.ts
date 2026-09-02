@@ -42,10 +42,7 @@ export const paymentsCopy = {
   manual: {
     title: "Registrar pagamento manual",
     amount: "Valor recebido",
-    method: "Forma",
-    methodPlaceholder: "Escolha a forma",
     paidAt: "Data do pagamento",
-    note: "Observação",
     submit: "Registrar pagamento",
     success: "Pagamento registrado.",
   },

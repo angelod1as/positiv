@@ -1,4 +1,4 @@
-import { useState, type FC, type FormEvent } from "react"
+import { useEffect, useState, type FC, type FormEvent } from "react"
 import { useFetcher } from "react-router"
 import type {
   ParticipantPaymentTotals,
@@ -26,13 +26,6 @@ import {
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select"
-import {
   Table,
   TableBody,
   TableCell,
@@ -40,14 +33,14 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table"
-import { TextArea } from "~/components/ui/textarea"
 import { paymentsCopy } from "~/copy/payments"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 
 const { manage, manual, refund, cancel, errors } = paymentsCopy
 
-const MANUAL_METHODS = ["pix", "cash", "transfer", "other"] as const
+/** Every payment recorded by hand arrived by PIX; nothing else is offered. */
+const MANUAL_METHOD = "pix"
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -142,8 +135,15 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   totals,
   active,
 }) => {
-  const fetcher = useFetcher()
-  const [method, setMethod] = useState<string>(MANUAL_METHODS[0])
+  const fetcher = useFetcher<{ success?: boolean; intent?: string }>()
+
+  // A recorded payment is the end of the errand: the admin came here to write
+  // it down, and the grid behind the dialog already shows the result.
+  useEffect(() => {
+    if (fetcher.data?.success && fetcher.data.intent === "payment-manual") {
+      onOpenChange(false)
+    }
+  }, [fetcher.data, onOpenChange])
 
   const post = (values: Record<string, string>) => {
     const formData = new FormData()
@@ -159,15 +159,14 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
       intent: "payment-manual",
       eventParticipantId,
       amount: String(formData.get("amount") ?? ""),
-      method,
+      method: MANUAL_METHOD,
       paidAt: String(formData.get("paidAt") ?? ""),
-      note: String(formData.get("note") ?? ""),
     })
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>{manage.title}</DialogTitle>
           <DialogDescription>
@@ -180,7 +179,9 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             <dt className="text-muted-foreground text-sm">
               {manage.totals.gross}
             </dt>
-            <dd className="font-bold">{formatCurrency(totals.paid_gross)}</dd>
+            <dd className="font-bold">
+              {formatCurrency(totals.paid_gross - totals.refunded)}
+            </dd>
           </div>
           <div>
             <dt className="text-muted-foreground text-sm">
@@ -278,22 +279,6 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="manual-method">{manual.method}</Label>
-              <Select value={method} onValueChange={setMethod}>
-                <SelectTrigger id="manual-method">
-                  <SelectValue placeholder={manual.methodPlaceholder} />
-                </SelectTrigger>
-                <SelectContent>
-                  {MANUAL_METHODS.map((value) => (
-                    <SelectItem key={value} value={value}>
-                      {manage.methods[value]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-2">
               <Label htmlFor="manual-paid-at">{manual.paidAt}</Label>
               <Input
                 id="manual-paid-at"
@@ -302,11 +287,6 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                 defaultValue={today()}
                 required
               />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="manual-note">{manual.note}</Label>
-              <TextArea id="manual-note" name="note" />
             </div>
 
             <Button type="submit" disabled={fetcher.state !== "idle"}>
