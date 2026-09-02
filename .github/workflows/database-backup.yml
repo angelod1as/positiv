@@ -45,7 +45,7 @@ jobs:
           # "Host key verification failed." -- the right refusal, worded as
           # though the VPS had changed its key.
           if [ -z "$VPS_SSH_KNOWN_HOSTS" ]; then
-            echo "VPS_SSH_KNOWN_HOSTS is unset" >&2
+            echo "::error::VPS_SSH_KNOWN_HOSTS is unset"
             exit 1
           fi
 
