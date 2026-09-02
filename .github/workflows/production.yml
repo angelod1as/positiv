@@ -54,6 +54,12 @@ jobs:
     # that a long migration reaches its own end rather than this one. The step
     # leashes total 24 minutes against a 30-minute job, so `db push` is left at
     # least six even if every one of them runs to its limit.
+    #
+    # This does cap `db push`, which had the 360-minute default before the job
+    # took a budget at all. Thirty minutes is wide for the DDL this repository
+    # ships. A migration that rewrites a large table could outgrow it, and would
+    # fail the same way on every retry -- if you are writing one, raise this
+    # number in the same PR rather than discovering the ceiling on merge day.
     timeout-minutes: 30
 
     env:
