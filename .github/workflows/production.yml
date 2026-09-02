@@ -119,16 +119,47 @@ jobs:
           pg_dump -Fc "$SUPABASE_CONNECT_URL" -f "$FILENAME"
           echo "DUMP_FILE=$FILENAME" >> "$GITHUB_ENV"
 
+      # The host key is pinned, not discovered. `ssh-keyscan` asks the server
+      # for its own key and believes the answer, and known_hosts starts empty on
+      # every runner, so there was never a stored key to contradict it. Whoever
+      # answered got the dump: a full copy of every profile's name, email, CPF,
+      # RG, phone and date of birth. VPS_SSH_KNOWN_HOSTS holds the ed25519 line
+      # checked against the fingerprint read on the VPS itself.
+      #
+      # Stored unhashed, where `ssh-keyscan -H` wrote a hashed hostname.
+      # Hashing hides which hosts a known_hosts file has visited from whoever
+      # steals the file; here the file is one line, on a single-tenant runner,
+      # for the length of one job, naming a host the adjacent steps pass to ssh
+      # in the clear anyway. What it would cost is the ability to read the
+      # secret and see which host it pins.
       - name: Setup SSH
         timeout-minutes: 2
         env:
           SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
-          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
         run: |
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+          # An unset secret writes an empty known_hosts, and ssh then reports
+          # "Host key verification failed." -- the right refusal, worded as
+          # though the VPS had changed its key.
+          if [ -z "$VPS_SSH_KNOWN_HOSTS" ]; then
+            echo "::error::VPS_SSH_KNOWN_HOSTS is unset"
+            exit 1
+          fi
+
+          echo "$VPS_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+          # The likely mistake is pasting the fingerprint -- the output of
+          # `ssh-keygen -lf` -- in place of the known_hosts line it was read
+          # from. ssh rejects that with "Host key verification failed.", the
+          # same words a genuine interception produces.
+          if ! ssh-keygen -lf ~/.ssh/known_hosts > /dev/null 2>&1; then
+            echo "::error::VPS_SSH_KNOWN_HOSTS is not a known_hosts line"
+            exit 1
+          fi
 
       - name: Upload the pre-deploy dump
         timeout-minutes: 8
