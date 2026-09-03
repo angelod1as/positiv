@@ -23,6 +23,9 @@ jobs:
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
 
     runs-on: ubuntu-latest
+    # The median review takes 3.5 minutes and the slowest genuine one took
+    # 15.4, so twenty stops a stuck run without cutting off a slow one.
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: read
@@ -40,6 +43,15 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          # A run that finishes without posting has to say why. The report is
+          # the readable half; the full output is the half that carries tool
+          # results, which is where a failed `gh pr comment` shows up. Both
+          # land in a public log, but so does everything this job can reach:
+          # Bash is allowlisted to `gh` against this public repository, and a
+          # pull request from a fork gets no token and never runs at all.
+          display_report: true
+          show_full_output: true
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
