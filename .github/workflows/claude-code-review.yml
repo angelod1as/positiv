@@ -23,6 +23,9 @@ jobs:
     #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
 
     runs-on: ubuntu-latest
+    # The median review takes 3.5 minutes and the slowest genuine one took
+    # 15.4, so twenty stops a stuck run without cutting off a slow one.
+    timeout-minutes: 20
     permissions:
       contents: read
       pull-requests: read
