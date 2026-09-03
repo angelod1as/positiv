@@ -24,7 +24,6 @@ import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { RejectedParticipantsSection } from "~/components/pages/admin/events/rejected-participants-section"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
-import { holdsPayment } from "~/lib/helpers/payment-status"
 import paths from "~/lib/paths"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
@@ -219,14 +218,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
             managedParticipant.social_name || managedParticipant.full_name || ""
           }
           payments={managedPayments}
-          totals={{
-            paid_gross: managedParticipant.paid_gross,
-            refunded: managedParticipant.refunded,
-            fee: managedParticipant.fee,
-            net: managedParticipant.net,
-            has_paid: holdsPayment(managedParticipant.payment_status),
-            current_status: managedParticipant.payment_status,
-          }}
+          totals={managedParticipant}
           active={
             managedPayments.find(
               (payment) => payment.id === managedParticipant.active_payment_id,

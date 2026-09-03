@@ -40,7 +40,7 @@ export const registerManualPayment = applySchema(manualPaymentSchema)(
     // Checking for an open charge and writing the payment are one statement.
     // Apart, a charge opening between the two would be recorded as paid and
     // charged, and the participant would be asked for money twice.
-    await kyselyDb.transaction().execute(async (trx) => {
+    const write = kyselyDb.transaction().execute(async (trx) => {
       await trx
         .selectFrom("event_participants")
         .select("id")
@@ -74,6 +74,20 @@ export const registerManualPayment = applySchema(manualPaymentSchema)(
           created_by: values.createdBy ?? null,
         })
         .execute()
+    })
+
+    // Whatever the database has to say about a stale participant id or a
+    // violated constraint is for the log, not for the admin's screen.
+    await write.catch((error) => {
+      if (
+        error instanceof Error &&
+        error.message === paymentsCopy.errors.activeChargeExists
+      ) {
+        throw error
+      }
+
+      console.error("Failed to record a manual payment", error)
+      throw new Error(paymentsCopy.errors.generic)
     })
 
     return { ok: true as const }

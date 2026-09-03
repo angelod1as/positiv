@@ -46,8 +46,8 @@ const baseProps = {
     refunded: 0,
     fee: 0,
     net: 0,
-    has_paid: false,
-    current_status: null,
+    payment_status: null,
+    active_payment_id: null,
   },
   active: null as PaymentRow | null,
 }
@@ -78,7 +78,7 @@ describe("ManagePaymentModal", () => {
           ...baseProps.totals,
           paid_gross: 22000,
           net: 22000,
-          has_paid: true,
+          payment_status: "paid",
         }}
       />,
     )
@@ -261,7 +261,7 @@ describe("ManagePaymentModal", () => {
           refunded: 5000,
           fee: 1000,
           net: 4000,
-          has_paid: true,
+          payment_status: "partially_refunded",
         }}
       />,
     )

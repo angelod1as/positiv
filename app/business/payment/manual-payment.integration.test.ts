@@ -165,6 +165,24 @@ describe("registerManualPayment", () => {
     expect(await trackPayments()).toHaveLength(0)
   })
 
+  it("answers a sentence, not a Postgres error, when the participant is gone", async () => {
+    const result = await registerManualPayment({
+      eventParticipantId: "00000000-0000-0000-0000-000000000000",
+      amount: "150",
+      method: "pix",
+      paidAt: "2026-08-20",
+      note: null,
+      createdBy: adminProfileId,
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toBe(
+        "Não foi possível concluir a operação.",
+      )
+    }
+  })
+
   it("refuses to record one while a charge is still open", async () => {
     await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,

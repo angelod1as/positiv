@@ -181,8 +181,8 @@ describe("ParticipantDetail", () => {
         refunded: 0,
         fee: 0,
         net: 0,
-        has_paid: false,
-        current_status: null,
+        payment_status: null,
+        active_payment_id: null,
       },
       active: null,
     }

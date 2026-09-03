@@ -50,7 +50,7 @@ describe("getPaymentsForParticipant", () => {
       paid_gross: 0,
       net: 0,
       fee: 0,
-      has_paid: false,
+      payment_status: null,
     })
     expect(result.active).toBeNull()
   })

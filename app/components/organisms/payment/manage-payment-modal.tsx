@@ -1,9 +1,7 @@
 import { useEffect, useState, type FC, type FormEvent } from "react"
 import { useFetcher } from "react-router"
-import type {
-  ParticipantPaymentTotals,
-  PaymentRow,
-} from "~/business/payment/payment-totals.server"
+import type { PaymentRow } from "~/business/payment/payment-totals.server"
+import type { ParticipantPaymentTotals } from "~types/database/entities.types"
 import { Button } from "~/components/atoms/button/button"
 import {
   AlertDialog,

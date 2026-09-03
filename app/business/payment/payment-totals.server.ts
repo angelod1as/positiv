@@ -1,17 +1,9 @@
 import type { Selectable } from "kysely"
 import { kyselyDb } from "~/kysely-db"
+import type { ParticipantPaymentTotals } from "~types/database/entities.types"
 import type { Database } from "~types/database/kysely.types"
 
 export type PaymentRow = Selectable<Database["payments"]>
-
-export type ParticipantPaymentTotals = {
-  paid_gross: number
-  refunded: number
-  fee: number
-  net: number
-  has_paid: boolean
-  current_status: PaymentRow["status"] | null
-}
 
 export type ParticipantPayments = {
   payments: PaymentRow[]
@@ -48,8 +40,8 @@ export async function getPaymentsForParticipant(
       refunded: totals?.refunded ?? 0,
       fee: totals?.fee ?? 0,
       net: totals?.net ?? 0,
-      has_paid: totals?.has_paid ?? false,
-      current_status: totals?.current_status ?? null,
+      payment_status: totals?.current_status ?? null,
+      active_payment_id: totals?.active_payment_id ?? null,
     },
     active: payments.find(isActive) ?? null,
   }
