@@ -34,6 +34,7 @@ import {
 import { paymentsCopy } from "~/copy/payments"
 import { formatInTimeZone } from "date-fns-tz"
 import { formatCurrency } from "~/lib/helpers/format-currency"
+import { paymentStatusPropMap } from "~/lib/helpers/propMaps"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 
 const { manage, manual, refund, cancel, errors } = paymentsCopy
@@ -71,8 +72,11 @@ const RefundDialog: FC<RefundDialogProps> = ({
   const [amount, setAmount] = useState("")
   const amountId = `refund-amount-${payment.id}`
 
+  // The dialog's content unmounts but this component does not, so without the
+  // reset an amount typed and abandoned is still there next time — and the
+  // hint below the field promises an empty field refunds everything.
   return (
-    <AlertDialog>
+    <AlertDialog onOpenChange={(open) => open && setAmount("")}>
       <AlertDialogTrigger asChild>
         <Button variant="outline" size="sm">
           {refund.title}
@@ -88,9 +92,8 @@ const RefundDialog: FC<RefundDialogProps> = ({
           <Input
             id={amountId}
             name="amount"
-            type="number"
-            min="0"
-            step="0.01"
+            type="text"
+            inputMode="decimal"
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
           />
@@ -264,7 +267,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             <TableBody>
               {payments.map((payment) => (
                 <TableRow key={payment.id}>
-                  <TableCell>{manage.statuses[payment.status]}</TableCell>
+                  <TableCell>{paymentStatusPropMap(payment.status)}</TableCell>
                   <TableCell>{manage.kinds[payment.kind]}</TableCell>
                   <TableCell>
                     {payment.method
@@ -280,8 +283,11 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                     {formatDateTime(payment.paid_at, "numeric").date ??
                       manage.noDate}
                   </TableCell>
-                  <TableCell className="flex gap-2">
-                    {payment.kind === "manual" && payment.status === "paid" && (
+                  <TableCell>
+                    <div className="flex gap-2">
+                    {payment.kind === "manual" &&
+                      payment.status === "paid" &&
+                      (payment.amount ?? 0) > 0 && (
                       <RefundDialog
                         payment={payment}
                         isSubmitting={isSubmitting}
@@ -294,15 +300,16 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                         }
                       />
                     )}
-                    {active?.id === payment.id && (
-                      <CancelDialog
-                        payment={payment}
-                        isSubmitting={isSubmitting}
-                        onConfirm={(paymentId) =>
-                          post({ intent: "payment-cancel", paymentId })
-                        }
-                      />
-                    )}
+                      {active?.id === payment.id && (
+                        <CancelDialog
+                          payment={payment}
+                          isSubmitting={isSubmitting}
+                          onConfirm={(paymentId) =>
+                            post({ intent: "payment-cancel", paymentId })
+                          }
+                        />
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

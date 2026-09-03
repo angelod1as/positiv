@@ -295,8 +295,55 @@ describe("ManagePaymentModal", () => {
 
     render(<ManagePaymentModal {...baseProps} active={open} payments={[open]} />)
 
-    const row = screen.getByRole("row", { name: /aguardando envio/i })
+    const row = screen.getByRole("row", { name: /aguardando escolha/i })
     expect(within(row).queryByText("R$ 0,00")).not.toBeInTheDocument()
+  })
+
+  it("offers no refund on a courtesy spot that received nothing", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[payment({ amount: 0, base_amount: 0 })]}
+      />,
+    )
+
+    // markManualRefunded refuses every refund of zero, so the button could only
+    // ever produce an error.
+    expect(
+      screen.queryByRole("button", { name: /marcar como reembolsado/i }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("forgets an abandoned refund amount when the dialog is reopened", async () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /marcar como reembolsado/i }),
+    )
+    await userEvent.type(screen.getByLabelText("Valor devolvido"), "50")
+    await userEvent.click(screen.getByRole("button", { name: "Fechar" }))
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /marcar como reembolsado/i }),
+    )
+
+    // The hint under the field promises a blank one refunds everything.
+    expect(screen.getByLabelText("Valor devolvido")).toHaveValue("")
+  })
+
+  it("sends a mistyped refund amount instead of reading it as a full refund", async () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /marcar como reembolsado/i }),
+    )
+    await userEvent.type(screen.getByLabelText("Valor devolvido"), "5o")
+    await userEvent.click(screen.getByRole("button", { name: "Marcar reembolso" }))
+
+    // A number input answers "" for anything the browser rejects, and "" is the
+    // sentinel for "refund the whole payment" — so R$ 220 would go back.
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect(formData.get("amount")).toBe("5o")
   })
 
   it("offers a refund only for a paid row", () => {

@@ -65,8 +65,8 @@ describe("FinancialSummary", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
         paid_gross: 22000,
-        fee: 0,
-        net: 17000,
+        fee: 1000,
+        net: 16000,
         refunded: 5000,
         payment_status: "partially_refunded",
         ticket_price: 20000,
@@ -75,7 +75,11 @@ describe("FinancialSummary", () => {
 
     render(<FinancialSummary participantHistory={history} />)
 
-    expect(screen.getAllByText("R$ 170,00").length).toBeGreaterThan(0)
+    // gross minus the refund, fees left in: 22000 - 5000. Not net, which is
+    // 16000 here and has its own tile beside this one.
+    expect(
+      screen.getByText("Total pago").closest("div"),
+    ).toHaveTextContent("R$ 170,00")
     expect(screen.queryByText("R$ 220,00")).not.toBeInTheDocument()
   })
 

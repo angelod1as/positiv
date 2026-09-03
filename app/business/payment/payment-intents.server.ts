@@ -12,13 +12,22 @@ type ComposableResult =
   | { success: true }
   | { success: false; errors: { message: string }[] }
 
+
+/**
+ * composable-functions answers with Error instances, and React Router replaces
+ * every Error in action data with "Unexpected Server Error" once the build is a
+ * production one — so the sentences these guards raise would only ever be read
+ * in `pnpm dev`. Copying the message out keeps them.
+ */
 const toIntentResult = (
   intent: string,
   result: ComposableResult,
 ): PaymentIntentResult => ({
   success: result.success,
   intent,
-  errors: result.success ? undefined : result.errors,
+  errors: result.success
+    ? undefined
+    : result.errors.map((error) => ({ message: error.message })),
 })
 
 /**

@@ -208,12 +208,12 @@ describe("registerManualPayment", () => {
     }
   })
 
-  it("serialises two payments recorded at the same moment", async () => {
-    // The check and the insert run inside one transaction holding the
-    // participant's row, so two admins recording at once take turns. Both
-    // amounts are real payments and both belong in the ledger — what must not
-    // happen is a deadlock, a lost row, or one of them slipping past the
-    // open-charge check.
+  it("lets two payments recorded at the same moment both land", async () => {
+    // Note what this does and does not prove: two paid rows never see each
+    // other as an open charge, so it passes with the row lock removed. It
+    // guards against a deadlock and a lost row, not against the race the lock
+    // is there for — that one needs a charge opening mid-transaction, which
+    // nothing here can schedule deterministically.
     const record = (amount: string) =>
       registerManualPayment({
         eventParticipantId: participantId,

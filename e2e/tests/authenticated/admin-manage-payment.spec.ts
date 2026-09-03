@@ -2,14 +2,23 @@ import { expect, test } from '@playwright/test'
 import path from 'path'
 import { waitForAGGridReady } from '../../helpers/ag-grid'
 import { createSoonOpenEvent } from '../../utils/direct-application-helpers'
-import { createTestEventWithParticipants } from '../../utils/event-helpers'
+import { cleanupTestParticipants, createTestEventWithParticipants, type TestParticipant } from '../../utils/event-helpers'
 
 test.describe('POS-525: managing a payment from the admin grid', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/admin.json') })
 
+  // profiles.user_id is ON DELETE SET NULL, so deleting the auth user in global
+  // teardown only orphans the profile. This is what actually removes it.
+  const created: TestParticipant[] = []
+
+  test.afterAll(async () => {
+    await cleanupTestParticipants(created)
+  })
+
   test('admin records a manual payment and then refunds part of it', async ({ page }) => {
     const event = await createSoonOpenEvent(`Manage payment ${Date.now()}`)
     const [participant] = await createTestEventWithParticipants(event.id, 1)
+    created.push(participant)
 
     await page.goto(`/admin/eventos/${event.id}`)
     const grid = await waitForAGGridReady(page, 'participants-table')
@@ -39,6 +48,18 @@ test.describe('POS-525: managing a payment from the admin grid', () => {
     await grid.getByRole('button', { name: 'Gerenciar pagamento' }).first().click()
     await expect(modal.getByRole('row', { name: /pix/i })).toContainText('R$ 150,00')
     await expect(modal.getByRole('row', { name: /pix/i })).toContainText('Pago')
+
+    // A refused refund has to say why. Every message here is raised as an Error
+    // server-side, and a production build replaces those with "Unexpected
+    // Server Error" unless the message is copied out — which only this suite
+    // can catch, because only this suite runs the production build.
+    await modal.getByRole('button', { name: 'Marcar como reembolsado' }).click()
+    await page.getByRole('alertdialog').getByLabel('Valor devolvido').fill('9999')
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Marcar reembolso' }).click()
+
+    await expect(
+      modal.getByText('O reembolso não pode ser maior que o valor pago.'),
+    ).toBeVisible()
 
     await modal.getByRole('button', { name: 'Marcar como reembolsado' }).click()
     await page.getByRole('alertdialog').getByLabel('Valor devolvido').fill('50')

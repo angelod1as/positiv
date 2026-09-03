@@ -49,7 +49,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   // staff spot and a participation from before anyone wrote the amount down
   // both read as zero, and calling that a difference of minus the ticket price
   // describes someone who underpaid, which is not what either of them did.
-  const eventsWithAnAmount = paidEvents.filter((item) => item.paid_gross > 0)
+  const eventsWithAnAmount = paidEvents.filter((item) => heldAmount(item) > 0)
 
   const totalSurplus = eventsWithAnAmount.reduce(
     (sum, item) => sum + (item.net - Number(item.ticket_price ?? 0)),
@@ -106,7 +106,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
           <h4 className="text-sm font-medium mb-2">{financialCopy.payments}</h4>
           <ul className="space-y-2">
             {paidEvents.map((item) => {
-              const hasAnAmount = item.paid_gross > 0
+              const hasAnAmount = heldAmount(item) > 0
               const surplus = item.net - Number(item.ticket_price ?? 0)
               const formattedDate = item.time_event_start
                 ? formatDateTime(item.time_event_start).date
