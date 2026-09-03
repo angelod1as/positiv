@@ -30,4 +30,16 @@ describe("claude code review workflow", () => {
     // request.
     expect(jobBlock("claude-review")).toContain("timeout-minutes: 20")
   })
+
+  it("writes what the review concluded into the run's summary", () => {
+    // Without this the #647 run left no trace of its reasoning: it reported
+    // success and there was nothing anywhere to read.
+    expect(jobBlock("claude-review")).toContain("display_report: true")
+  })
+
+  it("keeps the raw message stream, where a failed post would show", () => {
+    // The report alone would not have said whether `gh pr comment` ran and
+    // errored. Only the full output carries tool results.
+    expect(jobBlock("claude-review")).toContain("show_full_output: true")
+  })
 })
