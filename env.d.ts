@@ -265,6 +265,51 @@ export type CoercedEnvSchema = {
   TELEGRAM_CHAT_ID?: string;
   
   /**
+   * **PAYMENTS_ENABLED**  
+   * Master switch for everything that talks to Asaas. Off: a status change is  
+   * just a status change, and the payment page and the webhook answer 404.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M23%2023a7%207%200%201%201%207-7a7.01%207.01%200%200%201-7%207m0-12a5%205%200%201%200%205%205a5.006%205.006%200%200%200-5-5%22%2F%3E%3Ccircle%20cx%3D%229%22%20cy%3D%2216%22%20r%3D%227%22%20fill%3D%22%23808080%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  PAYMENTS_ENABLED?: boolean;
+  
+  /**
+   * **ASAAS_API_URL**  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M24%2021V9h-2v14h8v-2zm-4-6v-4c0-1.103-.897-2-2-2h-6v14h2v-6h1.48l2.335%206h2.145l-2.333-6H18c1.103%200%202-.897%202-2m-6-4h4v4h-4zM8%2023H4c-1.103%200-2-.897-2-2V9h2v12h4V9h2v12c0%201.103-.897%202-2%202%22%2F%3E%3C%2Fsvg%3E)   
+   *   
+   * 📚 {@link https://docs.asaas.com/reference | Asaas API reference}  
+   */
+  ASAAS_API_URL?: string;
+  
+  /**
+   * **ASAAS_API_KEY** 🔐 _sensitive_  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  ASAAS_API_KEY?: string;
+  
+  /**
+   * **ASAAS_WEBHOOK_TOKEN** 🔐 _sensitive_  
+   * Token Asaas echoes in the `asaas-access-token` header of every webhook call.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M29%2022h-5a2.003%202.003%200%200%201-2-2v-6a2%202%200%200%201%202-2h5v2h-5v6h5ZM18%2012h-4V8h-2v14h6a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-4%208v-6h4v6Zm-6-8H3v2h5v2H4a2%202%200%200%200-2%202v2a2%202%200%200%200%202%202h6v-8a2%202%200%200%200-2-2m0%208H4v-2h4Z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  ASAAS_WEBHOOK_TOKEN?: string;
+  
+  /**
+   * **ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE**  
+   * Monthly rates of "antecipação automática", as fractions (0.0115 = 1,15 %).  
+   * Asaas charges two: the detached rate on a single-installment card charge, the  
+   * installment rate on 2-6x. Leave both empty to use whatever  
+   * GET /v3/myAccount/fees/ reports; set one only to override a negotiated rate.  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M26%2012h-4v2h4v2h-3v2h3v2h-4v2h4a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-7%2010h-6v-4a2%202%200%200%201%202-2h2v-2h-4v-2h4a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202h-2v2h4ZM8%2020v-8H6v1H4v2h2v5H4v2h6v-2z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE?: number;
+  
+  /**
+   * **ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE**  
+   * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cpath%20fill%3D%22%23808080%22%20d%3D%22M26%2012h-4v2h4v2h-3v2h3v2h-4v2h4a2.003%202.003%200%200%200%202-2v-6a2%202%200%200%200-2-2m-7%2010h-6v-4a2%202%200%200%201%202-2h2v-2h-4v-2h4a2%202%200%200%201%202%202v2a2%202%200%200%201-2%202h-2v2h4ZM8%2020v-8H6v1H4v2h2v5H4v2h6v-2z%22%2F%3E%3C%2Fsvg%3E)   
+   */
+  ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE?: number;
+  
+  /**
    * **TEST_USER_ADMIN_EMAIL**  
    * Identity of the e2e admin account. The password beside it is the secret.  
    * ![icon](data:image/svg+xml;utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23808080%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%221.5%22%3E%3Cpath%20d%3D%22M17.5%2019.125A9%209%200%201%201%2021%2012c0%205.5-6%205.5-6%202V8%22%2F%3E%3Cpath%20d%3D%22M15%2012v-1.5C15%209.12%2013.657%208%2012%208s-3%201.12-3%202.5V12m6%200v1.5c0%201.38-1.343%202.5-3%202.5s-3-1.12-3-2.5V12%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E)   
@@ -442,11 +487,11 @@ export type CoercedEnvSchema = {
   
 };
 
-type _CoercedEnvSchema_0aa2762b = CoercedEnvSchema;
+type _CoercedEnvSchema_62330404 = CoercedEnvSchema;
 
 declare module 'varlock/env' {
-  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_0aa2762b> {}
-  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_0aa2762b, 'APP_ENV' | 'NODE_ENV' | 'CI' | 'IS_PROD_IN_DEV' | 'IS_PROD' | 'APP_URL' | 'VITE_APP_DOMAIN' | 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'SUPABASE_PROJECT_ID' | 'SUPABASE_URL' | 'VITE_TURNSTILE_SITE_KEY' | 'IAM_USER_NAME' | 'LISTMONK_API_URL' | 'VITE_GTM_ID' | 'VITE_UMAMI_WEBSITE_ID' | 'VITE_UMAMI_URL' | 'VITE_BANNER_MESSAGE' | 'TELEGRAM_ALERTS_ENABLED' | 'TELEGRAM_CHAT_ID' | 'TEST_USER_ADMIN_EMAIL' | 'E2E_MODE' | 'STRICT_CLEANUP' | 'LINEAR_TEAM_ID' | 'VITEST_MIN_FORKS' | 'VITEST_MAX_FORKS' | 'VPS_USER' | 'VPS_BACKUP_PATH' | 'TELEGRAM_TO'>> {}
+  export interface TypedEnvSchema extends Readonly<_CoercedEnvSchema_62330404> {}
+  export interface PublicTypedEnvSchema extends Readonly<Pick<_CoercedEnvSchema_62330404, 'APP_ENV' | 'NODE_ENV' | 'CI' | 'IS_PROD_IN_DEV' | 'IS_PROD' | 'APP_URL' | 'VITE_APP_DOMAIN' | 'VITE_SUPABASE_URL' | 'VITE_SUPABASE_ANON_KEY' | 'SUPABASE_PROJECT_ID' | 'SUPABASE_URL' | 'VITE_TURNSTILE_SITE_KEY' | 'IAM_USER_NAME' | 'LISTMONK_API_URL' | 'VITE_GTM_ID' | 'VITE_UMAMI_WEBSITE_ID' | 'VITE_UMAMI_URL' | 'VITE_BANNER_MESSAGE' | 'TELEGRAM_ALERTS_ENABLED' | 'TELEGRAM_CHAT_ID' | 'PAYMENTS_ENABLED' | 'ASAAS_API_URL' | 'ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE' | 'ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE' | 'TEST_USER_ADMIN_EMAIL' | 'E2E_MODE' | 'STRICT_CLEANUP' | 'LINEAR_TEAM_ID' | 'VITEST_MIN_FORKS' | 'VITEST_MAX_FORKS' | 'VPS_USER' | 'VPS_BACKUP_PATH' | 'TELEGRAM_TO'>> {}
 }
 
 
@@ -456,11 +501,11 @@ export type EnvSchemaAsStrings = {
       : (CoercedEnvSchema[Property] extends boolean ? ('true' | 'false') : string)
 };
 
-type _EnvSchemaAsStrings_0aa2762b = EnvSchemaAsStrings;
+type _EnvSchemaAsStrings_62330404 = EnvSchemaAsStrings;
 declare global {
 
   // add types for global process.env
   namespace NodeJS {
-    interface ProcessEnv extends _EnvSchemaAsStrings_0aa2762b {}
+    interface ProcessEnv extends _EnvSchemaAsStrings_62330404 {}
   }
 }

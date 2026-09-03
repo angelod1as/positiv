@@ -455,8 +455,13 @@ ASAAS_API_KEY=
 # @sensitive
 ASAAS_WEBHOOK_TOKEN=
 # @public @type=number
-ASAAS_ANTICIPATION_MONTHLY_RATE=
+ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE=
+# @public @type=number
+ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE=
 ```
+
+The anticipation rate is two variables because Asaas charges two rates (§6).
+Both are overrides: empty means the value `GET /v3/myAccount/fees/` reports.
 
 `User-Agent` is the constant `Positiv/<package version> (<APP_ENV>)`.
 
