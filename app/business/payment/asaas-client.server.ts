@@ -1,6 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz"
 import { ENV } from "varlock/env"
-import type { ZodType } from "zod"
+import type { z, ZodType } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { normalizeCpf } from "./cpf"
@@ -238,4 +238,46 @@ export async function refundAsaasInstallment(
     zod.object({ id: zod.string() }),
     description ? { description } : {},
   )
+}
+
+// Only the fields the fee mapper reads are described. Everything Asaas ships
+// alongside them — the boleto block, PIX credit allowances, the card-present
+// rates — is left out on purpose, so a change there cannot fail the parse.
+const accountFees = zod.object({
+  payment: zod.object({
+    creditCard: zod.object({
+      operationValue: zod.number(),
+      oneInstallmentPercentage: zod.number(),
+      upToSixInstallmentsPercentage: zod.number(),
+      discountOneInstallmentPercentage: zod.number().nullable().optional(),
+      discountUpToSixInstallmentsPercentage: zod.number().nullable().optional(),
+      hasValidDiscount: zod.boolean().nullable().optional(),
+    }),
+    // The percentage fields come back null whenever the account is on a fixed
+    // PIX fee, which is what the sandbox account uses today.
+    pix: zod.object({
+      fixedFeeValue: zod.number(),
+      percentageFee: zod.number().nullable().optional(),
+    }),
+  }),
+  anticipation: zod
+    .object({
+      creditCard: zod
+        .object({
+          detachedMonthlyFeeValue: zod.number().nullable().optional(),
+          installmentMonthlyFeeValue: zod.number().nullable().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+})
+
+export type AsaasAccountFees = z.infer<typeof accountFees>
+
+export function getAsaasAccountFees(): Promise<AsaasAccountFees> {
+  return asaasRequest("GET", "/myAccount/fees/", accountFees)
+}
+
+export function reaisToCents(reais: number): number {
+  return Math.round(reais * 100)
 }
