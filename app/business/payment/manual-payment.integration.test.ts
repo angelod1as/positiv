@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
   cleanupAfterTest,
@@ -80,6 +81,12 @@ describe("registerManualPayment", () => {
       created_by: adminProfileId,
     })
 
+    // The date the admin typed is a date in São Paulo, not a UTC instant.
+    // Stored as UTC midnight it reads back as the day before, every time.
+    expect(
+      formatInTimeZone(row.paid_at as string, "America/Sao_Paulo", "yyyy-MM-dd"),
+    ).toBe("2026-08-20")
+
     const totals = await kysely
       .selectFrom("event_participant_payments")
       .selectAll()
@@ -124,6 +131,9 @@ describe("registerManualPayment", () => {
     })
 
     expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toBe("Informe um valor de zero ou mais.")
+    }
     expect(await trackPayments()).toHaveLength(0)
   })
 

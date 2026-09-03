@@ -1,4 +1,5 @@
 import { applySchema } from "composable-functions"
+import { fromZonedTime } from "date-fns-tz"
 import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { reaisToCents } from "~/lib/helpers/format-currency"
@@ -32,7 +33,9 @@ export const manualPaymentSchema = zod.object({
  */
 export const registerManualPayment = applySchema(manualPaymentSchema)(
   async (values) => {
-    const paidAt = new Date(values.paidAt).toISOString()
+    // The admin typed a day in São Paulo, not an instant. Read as UTC it lands
+    // at midnight, which every screen then formats back as the day before.
+    const paidAt = fromZonedTime(values.paidAt, "America/Sao_Paulo").toISOString()
 
     // Checking for an open charge and writing the payment are one statement.
     // Apart, a charge opening between the two would be recorded as paid and

@@ -8,6 +8,19 @@ type PaymentIntentResult = {
   errors?: { message: string }[]
 }
 
+type ComposableResult =
+  | { success: true }
+  | { success: false; errors: { message: string }[] }
+
+const toIntentResult = (
+  intent: string,
+  result: ComposableResult,
+): PaymentIntentResult => ({
+  success: result.success,
+  intent,
+  errors: result.success ? undefined : result.errors,
+})
+
 /**
  * The payment intents the modal posts, answered the same way wherever it was
  * opened from. Both admin routes own a page the modal appears on, and their
@@ -24,30 +37,18 @@ export async function handlePaymentIntent(
   const values = Object.fromEntries(formData)
 
   if (intent === "payment-manual") {
-    const result = await registerManualPayment({ ...values, createdBy })
-    return {
-      success: result.success,
+    return toIntentResult(
       intent,
-      errors: result.success ? undefined : result.errors,
-    }
+      await registerManualPayment({ ...values, createdBy }),
+    )
   }
 
   if (intent === "payment-manual-refund") {
-    const result = await markManualRefunded(values)
-    return {
-      success: result.success,
-      intent,
-      errors: result.success ? undefined : result.errors,
-    }
+    return toIntentResult(intent, await markManualRefunded(values))
   }
 
   if (intent === "payment-cancel") {
-    const result = await cancelPayment(values)
-    return {
-      success: result.success,
-      intent,
-      errors: result.success ? undefined : result.errors,
-    }
+    return toIntentResult(intent, await cancelPayment(values))
   }
 
   return null
