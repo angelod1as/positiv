@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
-import { AsaasError, asaasRequest } from "./asaas-client.server"
+import {
+  AsaasError,
+  asaasRequest,
+  createAsaasCustomer,
+  findAsaasCustomerByCpf,
+} from "./asaas-client.server"
 
 const env = vi.hoisted<Record<string, unknown>>(() => ({
   APP_ENV: "test",
@@ -144,5 +149,67 @@ describe("asaasRequest", () => {
       asaasRequest("GET", "/payments/pay_1", zod.object({ id: zod.string() })),
     ).rejects.toThrow(/ASAAS_API_URL/)
     expect(fetchMock).not.toHaveBeenCalled()
+  })
+})
+
+describe("customers", () => {
+  it("creates a customer with notifications off and the profile id as external reference", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "cus_9" }))
+
+    const id = await createAsaasCustomer({
+      name: "Ana Souza",
+      cpf: "529.982.247-25",
+      email: "ana@example.com",
+      mobilePhone: "11999998888",
+      externalReference: "profile-uuid",
+    })
+
+    expect(id).toBe("cus_9")
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api-sandbox.asaas.com/v3/customers")
+    expect(JSON.parse(String(initOf(0).body))).toEqual({
+      name: "Ana Souza",
+      cpfCnpj: "52998224725",
+      email: "ana@example.com",
+      mobilePhone: "11999998888",
+      externalReference: "profile-uuid",
+      notificationDisabled: true,
+    })
+  })
+
+  it("omits the phone when there is none", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "cus_9" }))
+
+    await createAsaasCustomer({
+      name: "Ana Souza",
+      cpf: "52998224725",
+      email: "ana@example.com",
+      externalReference: "profile-uuid",
+    })
+
+    expect(JSON.parse(String(initOf(0).body))).not.toHaveProperty("mobilePhone")
+  })
+
+  it("finds an existing customer by cpf", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ id: "cus_old", deleted: false }] }))
+
+    const id = await findAsaasCustomerByCpf("529.982.247-25")
+
+    expect(id).toBe("cus_old")
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api-sandbox.asaas.com/v3/customers?cpfCnpj=52998224725&limit=1",
+    )
+    expect(initOf(0).method).toBe("GET")
+  })
+
+  it("returns null when no customer matches", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [] }))
+
+    expect(await findAsaasCustomerByCpf("52998224725")).toBeNull()
+  })
+
+  it("ignores a customer Asaas has deleted", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ id: "cus_gone", deleted: true }] }))
+
+    expect(await findAsaasCustomerByCpf("52998224725")).toBeNull()
   })
 })

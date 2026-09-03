@@ -2,6 +2,7 @@ import { ENV } from "varlock/env"
 import type { ZodType } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
+import { normalizeCpf } from "./cpf"
 
 // Asaas rejects a request without a User-Agent. The package is private and
 // carries no version field, so the client names itself and the environment it
@@ -96,4 +97,37 @@ export async function asaasRequest<T>(
   } finally {
     clearTimeout(timer)
   }
+}
+
+const customerId = zod.object({ id: zod.string() })
+
+export async function createAsaasCustomer(input: {
+  name: string
+  cpf: string
+  email: string
+  mobilePhone?: string
+  externalReference: string
+}): Promise<string> {
+  const { id } = await asaasRequest("POST", "/customers", customerId, {
+    name: input.name,
+    cpfCnpj: normalizeCpf(input.cpf),
+    email: input.email,
+    mobilePhone: input.mobilePhone,
+    externalReference: input.externalReference,
+    notificationDisabled: true,
+  })
+  return id
+}
+
+export async function findAsaasCustomerByCpf(cpf: string): Promise<string | null> {
+  const { data } = await asaasRequest(
+    "GET",
+    `/customers?cpfCnpj=${normalizeCpf(cpf)}&limit=1`,
+    zod.object({
+      data: zod.array(
+        zod.object({ id: zod.string(), deleted: zod.boolean().optional() }),
+      ),
+    }),
+  )
+  return data.find((customer) => !customer.deleted)?.id ?? null
 }
