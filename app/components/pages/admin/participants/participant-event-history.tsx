@@ -166,6 +166,10 @@ export const ParticipantEventHistory: FC<ParticipantEventHistoryProps> = ({
       {
         field: "paid_gross",
         headerName: historyCopy.payment,
+        // The same arithmetic the grid, the modal and the summary below this
+        // one report: fees stay in, a refund comes out.
+        valueGetter: (params) =>
+          (params.data?.paid_gross ?? 0) - (params.data?.refunded ?? 0),
         cellRenderer: PaymentRenderer,
         sortable: true,
       },

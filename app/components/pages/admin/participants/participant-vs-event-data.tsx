@@ -55,6 +55,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
     application_status,
     spot_type,
     paid_gross,
+    refunded,
     payment_status,
     was_selected_for_rotation,
     admin_general_notes,
@@ -158,7 +159,7 @@ export const ParticipantVsEventData: FC<ParticipantVsEventDataProps> = ({
                     ? vsEventCopy.noPayment
                     : `${paymentStatusPropMap(payment_status)}${
                         isSettledPayment(payment_status)
-                          ? `${vsEventCopy.paymentSeparator}${formatCurrency(paid_gross)}`
+                          ? `${vsEventCopy.paymentSeparator}${formatCurrency(paid_gross - refunded)}`
                           : ""
                       }`}
                 </p>

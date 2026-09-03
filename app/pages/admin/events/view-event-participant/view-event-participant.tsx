@@ -9,6 +9,8 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
+import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
+import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-event-participant"
@@ -34,7 +36,7 @@ export function shouldRevalidate({
 }
 
 export async function action({ request, params }: Route.ActionArgs) {
-  await getAdminContext(request, params)
+  const context = await getAdminContext(request, params)
 
   const formData = await request.formData()
   const intent = formData.get("intent")
@@ -53,6 +55,13 @@ export async function action({ request, params }: Route.ActionArgs) {
     const result = await updateEventParticipantById(Object.fromEntries(formData))
     return { success: result.success, errors: result.success ? undefined : result.errors }
   }
+
+  const paymentResult = await handlePaymentIntent(
+    String(intent),
+    formData,
+    context.currentProfile?.id,
+  )
+  if (paymentResult) return paymentResult
 }
 
 export async function loader({ params }: Route.LoaderArgs) {
@@ -105,16 +114,27 @@ export async function loader({ params }: Route.LoaderArgs) {
     fullHistory = historyResult.data
   }
 
+  const participantPayments = await getPaymentsForParticipant(
+    eventParticipant.id,
+  )
+
   return {
     profile,
     eventParticipant,
     fullHistory,
     eventId,
+    participantPayments,
   }
 }
 
 const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
-  const { eventParticipant, profile, fullHistory, eventId } = loaderData
+  const {
+    eventParticipant,
+    profile,
+    fullHistory,
+    eventId,
+    participantPayments,
+  } = loaderData
 
   if (!profile) return null
 
@@ -126,6 +146,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
         data: eventParticipant,
         eventId,
       }}
+      payments={participantPayments}
     />
   )
 }

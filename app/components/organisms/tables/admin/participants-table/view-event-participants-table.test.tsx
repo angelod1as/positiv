@@ -287,6 +287,26 @@ describe("AdminViewEventParticipantsTable", () => {
       ).not.toBeInTheDocument()
     })
 
+    it("takes a refund out of the amount it reports", async () => {
+      renderWithRouter([
+        createMockParticipant({
+          payment_status: "partially_refunded",
+          paid_gross: 10000,
+          refunded: 5000,
+          fee: 1000,
+          net: 4000,
+        }),
+      ])
+
+      // What the participant paid and Positiv kept: the fees stay in, because
+      // the participant paid them, and the refund comes out, because it went
+      // back.
+      await waitFor(() => {
+        expect(screen.getByText("R$ 50,00")).toBeInTheDocument()
+      })
+      expect(screen.queryByText("R$ 100,00")).not.toBeInTheDocument()
+    })
+
     it("shows a dash for a participant with no payment", async () => {
       renderWithRouter([
         createMockParticipant({

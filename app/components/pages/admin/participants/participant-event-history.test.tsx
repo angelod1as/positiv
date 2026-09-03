@@ -362,9 +362,12 @@ describe("ParticipantEventHistory", () => {
       <ParticipantEventHistory participantHistory={historyWithRefund} />,
     )
 
+    // The money went back, so the column reports nothing held — the same
+    // arithmetic the participants grid and the modal use.
     await waitFor(() => {
-      expect(screen.getByText("R$ 220,00")).toBeInTheDocument()
+      expect(screen.getByText("R$ 0,00")).toBeInTheDocument()
     })
+    expect(screen.queryByText("R$ 220,00")).not.toBeInTheDocument()
     expect(screen.queryByText("-R$ 200,00")).not.toBeInTheDocument()
   })
 

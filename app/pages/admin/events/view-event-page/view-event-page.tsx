@@ -12,6 +12,9 @@ import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
 } from "~/business/admin/event-listmonk-sync.server"
+import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
+import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
+import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
 import { Buttons } from "~/components/pages/admin/events/buttons"
 import { DatesAndTimes } from "~/components/pages/admin/events/dates-and-times"
@@ -32,10 +35,17 @@ const {
 
 /** ACTION */
 export async function action({ request, params }: Route.ActionArgs) {
-  await getAdminContext(request, params)
+  const context = await getAdminContext(request, params)
 
   const formData = await request.formData()
   const intent = String(formData.get("intent") ?? "")
+
+  const paymentResult = await handlePaymentIntent(
+    intent,
+    formData,
+    context.currentProfile?.id,
+  )
+  if (paymentResult) return paymentResult
 
   if (intent === "sync-listmonk-list") {
     const eventId = params.id
@@ -112,18 +122,21 @@ export async function loader({ params }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
-  const [participants, rejectedParticipants] = await Promise.all([
-    loadParticipants(eventId),
-    getRejectedEventParticipants(eventId).catch((err) => {
-      console.error("Failed to fetch rejected participants", err)
-      return []
-    }),
-  ])
+  const [participants, rejectedParticipants, paymentsByParticipant] =
+    await Promise.all([
+      loadParticipants(eventId),
+      getRejectedEventParticipants(eventId).catch((err) => {
+        console.error("Failed to fetch rejected participants", err)
+        return []
+      }),
+      getPaymentsForEvent(eventId),
+    ])
 
   return {
     event,
     participants,
     rejectedParticipants,
+    paymentsByParticipant,
     demographics: demographics?.success ? demographics.data : undefined,
   }
 }
@@ -131,6 +144,9 @@ export async function loader({ params }: Route.LoaderArgs) {
 const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
   const fetcher = useFetcher<ComposableFetcherData>()
   const [isListStale, setIsListStale] = useState(false)
+  const [managedParticipantId, setManagedParticipantId] = useState<
+    string | null
+  >(null)
 
   useEffect(() => {
     sendToast(fetcher.data)
@@ -142,9 +158,22 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     }
   }, [fetcher.data])
 
-  const { event, participants, rejectedParticipants, demographics } = loaderData
+  const {
+    event,
+    participants,
+    rejectedParticipants,
+    paymentsByParticipant,
+    demographics,
+  } = loaderData
 
   const { title, emoji, time_event_start } = event
+
+  const managedParticipant = participants.find(
+    (participant) => participant.id === managedParticipantId,
+  )
+  const managedPayments = managedParticipantId
+    ? (paymentsByParticipant[managedParticipantId] ?? [])
+    : []
 
   return (
     <>
@@ -175,9 +204,28 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
           participants={participants}
           eventId={event.id}
           onParticipantSaved={() => setIsListStale(true)}
+          onManagePayment={setManagedParticipantId}
         />
         <RejectedParticipantsSection participants={rejectedParticipants} />
       </div>
+
+      {managedParticipant && (
+        <ManagePaymentModal
+          open
+          onOpenChange={(open) => !open && setManagedParticipantId(null)}
+          eventParticipantId={managedParticipant.id}
+          participantName={
+            managedParticipant.social_name || managedParticipant.full_name || ""
+          }
+          payments={managedPayments}
+          totals={managedParticipant}
+          active={
+            managedPayments.find(
+              (payment) => payment.id === managedParticipant.active_payment_id,
+            ) ?? null
+          }
+        />
+      )}
 
       <GeneralData {...event} />
       <DatesAndTimes {...event} />

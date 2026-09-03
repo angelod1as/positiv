@@ -30,7 +30,12 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
     return null
   }
 
-  const totalPaid = paidEvents.reduce((sum, item) => sum + item.paid_gross, 0)
+  // What the participant paid and Positiv still holds, the same arithmetic the
+  // grid and the payment modal report: the fees stay in, the refund comes out.
+  const heldAmount = (item: ParticipantEventHistoryData) =>
+    item.paid_gross - item.refunded
+
+  const totalPaid = paidEvents.reduce((sum, item) => sum + heldAmount(item), 0)
   const totalFees = paidEvents.reduce((sum, item) => sum + item.fee, 0)
   const totalNet = paidEvents.reduce((sum, item) => sum + item.net, 0)
 
@@ -44,7 +49,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
   // staff spot and a participation from before anyone wrote the amount down
   // both read as zero, and calling that a difference of minus the ticket price
   // describes someone who underpaid, which is not what either of them did.
-  const eventsWithAnAmount = paidEvents.filter((item) => item.paid_gross > 0)
+  const eventsWithAnAmount = paidEvents.filter((item) => heldAmount(item) > 0)
 
   const totalSurplus = eventsWithAnAmount.reduce(
     (sum, item) => sum + (item.net - Number(item.ticket_price ?? 0)),
@@ -101,7 +106,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
           <h4 className="text-sm font-medium mb-2">{financialCopy.payments}</h4>
           <ul className="space-y-2">
             {paidEvents.map((item) => {
-              const hasAnAmount = item.paid_gross > 0
+              const hasAnAmount = heldAmount(item) > 0
               const surplus = item.net - Number(item.ticket_price ?? 0)
               const formattedDate = item.time_event_start
                 ? formatDateTime(item.time_event_start).date
@@ -126,7 +131,7 @@ export const FinancialSummary: FC<FinancialSummaryProps> = ({
                     )}
                   </span>
                   <span className="font-medium">
-                    {formatCurrency(item.paid_gross)}{" "}
+                    {formatCurrency(heldAmount(item))}{" "}
                     {hasAnAmount && (
                       <span
                         className={

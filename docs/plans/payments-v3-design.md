@@ -547,7 +547,7 @@ no exception; the design document is the one that stays.
 | 3 | POS-522 | `POS-522-backfill-payments.md` |
 | 4 | POS-523 | `POS-523-readers-on-the-view.md` |
 | 5 | POS-524 | `POS-524-drop-old-columns.md` |
-| 6 | POS-525 | `POS-525-manage-payment-modal.md` |
+| 6 | POS-525 | retired — the PR is open |
 | 7 | POS-526 | `POS-526-asaas-client.md` |
 | 8 | POS-527 | `POS-527-pricing-engine.md` |
 | 9 | POS-528 | `POS-528-payment-offer.md` |

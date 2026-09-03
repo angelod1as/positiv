@@ -61,6 +61,28 @@ describe("FinancialSummary", () => {
   })
 
 
+  it("takes a partial refund out of the total it reports", () => {
+    const history: ParticipantEventHistoryData[] = [
+      createMockHistoryItem({
+        paid_gross: 22000,
+        fee: 1000,
+        net: 16000,
+        refunded: 5000,
+        payment_status: "partially_refunded",
+        ticket_price: 20000,
+      }),
+    ]
+
+    render(<FinancialSummary participantHistory={history} />)
+
+    // gross minus the refund, fees left in: 22000 - 5000. Not net, which is
+    // 16000 here and has its own tile beside this one.
+    expect(
+      screen.getByText("Total pago").closest("div"),
+    ).toHaveTextContent("R$ 170,00")
+    expect(screen.queryByText("R$ 220,00")).not.toBeInTheDocument()
+  })
+
   it("leaves a fully refunded participation out of what Positiv kept", () => {
     const history: ParticipantEventHistoryData[] = [
       createMockHistoryItem({
