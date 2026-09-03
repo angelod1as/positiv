@@ -4,7 +4,11 @@ import {
   AsaasError,
   asaasRequest,
   createAsaasCustomer,
+  createAsaasPayment,
+  deleteAsaasPayment,
   findAsaasCustomerByCpf,
+  refundAsaasInstallment,
+  refundAsaasPayment,
 } from "./asaas-client.server"
 
 const env = vi.hoisted<Record<string, unknown>>(() => ({
@@ -211,5 +215,170 @@ describe("customers", () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ id: "cus_gone", deleted: true }] }))
 
     expect(await findAsaasCustomerByCpf("52998224725")).toBeNull()
+  })
+})
+
+const pixCharge = {
+  customerId: "cus_9",
+  method: "pix",
+  amount: 22199,
+  installmentCount: null,
+  dueDate: new Date("2026-09-01T12:00:00Z"),
+  description: "Positiv — Festa de setembro",
+  externalReference: "payment-uuid",
+  successUrl: "https://www.positivparty.com/pagamento/payment-uuid/obrigado",
+} as const
+
+describe("charges", () => {
+  it("creates a PIX charge in reais, with the payment id as external reference", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        id: "pay_1",
+        status: "PENDING",
+        invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
+        installment: null,
+      }),
+    )
+
+    const payment = await createAsaasPayment(pixCharge)
+
+    expect(payment).toEqual({
+      id: "pay_1",
+      status: "PENDING",
+      invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
+      installmentId: null,
+    })
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api-sandbox.asaas.com/v3/payments")
+    expect(JSON.parse(String(initOf(0).body))).toEqual({
+      customer: "cus_9",
+      billingType: "PIX",
+      value: 221.99,
+      dueDate: "2026-09-01",
+      description: "Positiv — Festa de setembro",
+      externalReference: "payment-uuid",
+      callback: {
+        successUrl: "https://www.positivparty.com/pagamento/payment-uuid/obrigado",
+        autoRedirect: true,
+      },
+    })
+  })
+
+  it("dates the charge by the calendar day in São Paulo, not in UTC", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ id: "pay_1", status: "PENDING", invoiceUrl: null, installment: null }),
+    )
+
+    await createAsaasPayment({ ...pixCharge, dueDate: new Date("2026-09-02T02:00:00Z") })
+
+    expect(JSON.parse(String(initOf(0).body)).dueDate).toBe("2026-09-01")
+  })
+
+  it("creates a card plan with installmentCount and totalValue", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        id: "pay_first",
+        status: "PENDING",
+        invoiceUrl: "https://sandbox.asaas.com/i/pay_first",
+        installment: "inst_1",
+      }),
+    )
+
+    const payment = await createAsaasPayment({
+      ...pixCharge,
+      method: "credit_card",
+      amount: 23454,
+      installmentCount: 3,
+      successUrl: null,
+    })
+
+    expect(payment.installmentId).toBe("inst_1")
+    const body = JSON.parse(String(initOf(0).body))
+    expect(body.billingType).toBe("CREDIT_CARD")
+    expect(body.installmentCount).toBe(3)
+    expect(body.totalValue).toBe(234.54)
+    expect(body.value).toBeUndefined()
+    expect(body.callback).toBeUndefined()
+  })
+
+  it("sends a single-installment card charge as a plain value", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ id: "pay_1", status: "PENDING", invoiceUrl: null, installment: null }),
+    )
+
+    await createAsaasPayment({
+      ...pixCharge,
+      method: "credit_card",
+      installmentCount: 1,
+      successUrl: null,
+    })
+
+    const body = JSON.parse(String(initOf(0).body))
+    expect(body.value).toBe(221.99)
+    expect(body.installmentCount).toBeUndefined()
+    expect(body.totalValue).toBeUndefined()
+  })
+
+  it("gives a charge sixty seconds rather than the default thirty", async () => {
+    vi.useFakeTimers()
+    fetchMock.mockImplementationOnce(
+      (_url: string, init: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init.signal?.addEventListener("abort", () =>
+            reject(new DOMException("aborted", "AbortError")),
+          )
+        }),
+    )
+
+    const pending = createAsaasPayment(pixCharge)
+    const assertion = expect(pending).rejects.toMatchObject({ name: "AbortError" })
+    let settled = false
+    void pending.catch(() => {
+      settled = true
+    })
+
+    await vi.advanceTimersByTimeAsync(30_001)
+    expect(settled).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(30_000)
+    await assertion
+    vi.useRealTimers()
+  })
+
+  it("deletes a charge and reports whether Asaas confirmed it", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ deleted: true, id: "pay_1" }))
+
+    expect(await deleteAsaasPayment("pay_1")).toBe(true)
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api-sandbox.asaas.com/v3/payments/pay_1")
+    expect(initOf(0).method).toBe("DELETE")
+  })
+
+  it("refunds a charge in full, sending only the reason", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "pay_1", status: "REFUND_REQUESTED" }))
+
+    await refundAsaasPayment("pay_1", { amount: null, description: "Cancelou" })
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api-sandbox.asaas.com/v3/payments/pay_1/refund",
+    )
+    expect(JSON.parse(String(initOf(0).body))).toEqual({ description: "Cancelou" })
+  })
+
+  it("refunds a charge in part, sending the amount in reais", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "pay_1", status: "REFUND_REQUESTED" }))
+
+    await refundAsaasPayment("pay_1", { amount: 5000, description: null })
+
+    expect(JSON.parse(String(initOf(0).body))).toEqual({ value: 50 })
+  })
+
+  it("refunds an installment plan", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "inst_1" }))
+
+    await refundAsaasInstallment("inst_1", "Cancelou")
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api-sandbox.asaas.com/v3/installments/inst_1/refund",
+    )
+    expect(JSON.parse(String(initOf(0).body))).toEqual({ description: "Cancelou" })
   })
 })

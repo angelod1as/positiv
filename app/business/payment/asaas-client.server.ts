@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz"
 import { ENV } from "varlock/env"
 import type { ZodType } from "zod"
 import { zod } from "~/lib/helpers/zod"
@@ -9,10 +10,20 @@ import { normalizeCpf } from "./cpf"
 // is calling from, which is what makes an Asaas support ticket answerable.
 const USER_AGENT = `Positiv/1.0 (${ENV.APP_ENV})`
 const DEFAULT_TIMEOUT_MS = 30_000
+// Creating a charge is the one call that regularly takes longer than the
+// default, and a participant who gave up waiting is worse than a slow page.
+const CHARGE_TIMEOUT_MS = 60_000
+// Asaas compares dueDate against the calendar day in Brazil, so a charge
+// created late at night in UTC must not be dated tomorrow.
+const CHARGE_TIME_ZONE = "America/Sao_Paulo"
 
 const errorEnvelope = zod.object({
   errors: zod.array(zod.object({ code: zod.string(), description: zod.string() })),
 })
+
+function centsToReais(cents: number): number {
+  return Number((cents / 100).toFixed(2))
+}
 
 export type AsaasApiError = { code: string; description: string }
 
@@ -130,4 +141,101 @@ export async function findAsaasCustomerByCpf(cpf: string): Promise<string | null
     }),
   )
   return data.find((customer) => !customer.deleted)?.id ?? null
+}
+
+export type AsaasPaymentMethod = "pix" | "credit_card"
+
+export type CreatedAsaasPayment = {
+  id: string
+  status: string
+  invoiceUrl: string | null
+  installmentId: string | null
+}
+
+const paymentResponse = zod.object({
+  id: zod.string(),
+  status: zod.string(),
+  invoiceUrl: zod.string().nullable().optional(),
+  installment: zod.string().nullable().optional(),
+})
+
+export async function createAsaasPayment(input: {
+  customerId: string
+  method: AsaasPaymentMethod
+  amount: number
+  installmentCount: number | null
+  dueDate: Date
+  description: string
+  externalReference: string
+  successUrl: string | null
+}): Promise<CreatedAsaasPayment> {
+  const installments =
+    input.method === "credit_card" ? (input.installmentCount ?? 1) : 1
+
+  const body: Record<string, unknown> = {
+    customer: input.customerId,
+    billingType: input.method === "pix" ? "PIX" : "CREDIT_CARD",
+    dueDate: formatInTimeZone(input.dueDate, CHARGE_TIME_ZONE, "yyyy-MM-dd"),
+    description: input.description,
+    externalReference: input.externalReference,
+  }
+
+  if (installments > 1) {
+    body.installmentCount = installments
+    body.totalValue = centsToReais(input.amount)
+  } else {
+    body.value = centsToReais(input.amount)
+  }
+
+  if (input.successUrl) {
+    body.callback = { successUrl: input.successUrl, autoRedirect: true }
+  }
+
+  const payment = await asaasRequest("POST", "/payments", paymentResponse, body, {
+    timeoutMs: CHARGE_TIMEOUT_MS,
+  })
+
+  return {
+    id: payment.id,
+    status: payment.status,
+    invoiceUrl: payment.invoiceUrl ?? null,
+    installmentId: payment.installment ?? null,
+  }
+}
+
+export async function deleteAsaasPayment(paymentId: string): Promise<boolean> {
+  const { deleted } = await asaasRequest(
+    "DELETE",
+    `/payments/${paymentId}`,
+    zod.object({ deleted: zod.boolean(), id: zod.string() }),
+  )
+  return deleted
+}
+
+export async function refundAsaasPayment(
+  paymentId: string,
+  input: { amount: number | null; description: string | null },
+): Promise<void> {
+  const body: Record<string, unknown> = {}
+  if (input.amount !== null) body.value = centsToReais(input.amount)
+  if (input.description) body.description = input.description
+
+  await asaasRequest(
+    "POST",
+    `/payments/${paymentId}/refund`,
+    zod.object({ id: zod.string(), status: zod.string() }),
+    body,
+  )
+}
+
+export async function refundAsaasInstallment(
+  installmentId: string,
+  description: string | null,
+): Promise<void> {
+  await asaasRequest(
+    "POST",
+    `/installments/${installmentId}/refund`,
+    zod.object({ id: zod.string() }),
+    description ? { description } : {},
+  )
 }
