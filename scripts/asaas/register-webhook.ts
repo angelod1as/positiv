@@ -12,8 +12,9 @@ export const WEBHOOK_NAME = "Positiv"
 
 // Every event the webhook handler acts on, from the payments design §5.3.
 // PAYMENT_CREATED is included so a charge that never reaches the participant
-// still leaves a trace; the chargeback and risk events carry no transition and
-// exist to raise an alert.
+// still leaves a trace. The refund-denied, chargeback and risk events carry no
+// transition and exist to raise an alert: a denied refund means a participant
+// was told their money is coming back and it is not.
 export const WEBHOOK_EVENTS = [
   "PAYMENT_CREATED",
   "PAYMENT_CONFIRMED",
@@ -25,6 +26,7 @@ export const WEBHOOK_EVENTS = [
   "PAYMENT_REFUND_IN_PROGRESS",
   "PAYMENT_REFUNDED",
   "PAYMENT_PARTIALLY_REFUNDED",
+  "PAYMENT_REFUND_DENIED",
   "PAYMENT_CHARGEBACK_REQUESTED",
   "PAYMENT_CHARGEBACK_DISPUTE",
   "PAYMENT_AWAITING_CHARGEBACK_REVERSAL",
