@@ -21,13 +21,20 @@ type EnvSchemaItem = { isSensitive?: boolean; isDynamic?: boolean }
 // guards every Listmonk call. IS_PROD_IN_DEV and LISTMONK_API_URL are read by
 // destructuring today, which the replacement never touched, so neither was
 // actually broken — they are here so that dot access stays a safe refactor.
+// The Asaas items are server-only: PAYMENTS_ENABLED is the kill switch every
+// payment route reads, and inlining it would delete the guard from the build
+// rather than let the running container turn payments off.
 const MUST_RESOLVE_AT_RUNTIME = [
   "APP_ENV",
   "APP_URL",
+  "ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE",
+  "ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE",
+  "ASAAS_API_URL",
   "CI",
   "E2E_MODE",
   "IS_PROD_IN_DEV",
   "LISTMONK_API_URL",
+  "PAYMENTS_ENABLED",
   "TELEGRAM_ALERTS_ENABLED",
   "TELEGRAM_CHAT_ID",
 ]
