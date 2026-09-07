@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
+import { logger } from "~/lib/logger/logger.server"
 import {
   AsaasError,
   asaasRequest,
@@ -38,6 +39,7 @@ function initOf(call: number): RequestInit & { headers: Record<string, string> }
 
 beforeEach(() => {
   fetchMock.mockReset()
+  vi.clearAllMocks()
   vi.stubGlobal("fetch", fetchMock)
   env.ASAAS_API_URL = "https://api-sandbox.asaas.com/v3/"
   env.ASAAS_API_KEY = "aact_test_key"
@@ -95,6 +97,32 @@ describe("asaasRequest", () => {
       status: 400,
       errors: [{ code: "invalid_cpfCnpj", description: "CPF inválido" }],
     })
+  })
+
+  it("keeps the query string's values out of the log and out of the error", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ errors: [{ code: "invalid_cpfCnpj", description: "CPF inválido" }] }, 400),
+    )
+
+    await expect(findAsaasCustomerByCpf("529.982.247-25")).rejects.toMatchObject({
+      path: "/customers?cpfCnpj=***&limit=***",
+    })
+
+    expect(logger.error).toHaveBeenCalledWith(
+      "Asaas request failed",
+      expect.objectContaining({ path: "/customers?cpfCnpj=***&limit=***" }),
+    )
+    // logger.error reaches a Telegram group in production, so the assertion
+    // that matters is that the document itself is nowhere in what was logged.
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("52998224725")
+  })
+
+  it("leaves a path without a query string alone", async () => {
+    fetchMock.mockResolvedValueOnce(new Response("gateway timeout", { status: 504 }))
+
+    await expect(
+      asaasRequest("GET", "/payments/pay_1", zod.object({ id: zod.string() })),
+    ).rejects.toMatchObject({ path: "/payments/pay_1" })
   })
 
   it("throws AsaasError with an empty errors list when the body is not the envelope", async () => {

@@ -54,6 +54,21 @@ function config() {
   return { baseUrl: url.replace(/\/+$/, ""), key }
 }
 
+// A search path carries the participant's CPF in its query string, and
+// logger.error reaches a Telegram group in production. The parameter names say
+// which call failed and are worth keeping; the values are the participant's.
+function redactQuery(path: string): string {
+  const [route, query] = path.split("?")
+  if (!query) return route
+
+  const redacted = query
+    .split("&")
+    .map((pair) => `${pair.split("=")[0]}=***`)
+    .join("&")
+
+  return `${route}?${redacted}`
+}
+
 function safeJson(text: string): unknown {
   try {
     return JSON.parse(text)
@@ -95,13 +110,14 @@ export async function asaasRequest<T>(
     if (!response.ok) {
       const parsed = errorEnvelope.safeParse(json)
       const errors = parsed.success ? parsed.data.errors : []
+      const safePath = redactQuery(path)
       logger.error("Asaas request failed", {
         method,
-        path,
+        path: safePath,
         status: response.status,
         errors,
       })
-      throw new AsaasError(response.status, errors, path)
+      throw new AsaasError(response.status, errors, safePath)
     }
 
     return schema.parse(json)
