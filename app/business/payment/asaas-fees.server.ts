@@ -27,6 +27,18 @@ function percentToFraction(percentage: number | null | undefined): number {
   return Math.round(((percentage ?? 0) / 100) * 1e6) / 1e6
 }
 
+// A rate Asaas reports as 0 is a real 0, not a gap in the payload: falling
+// back to the list rate there would charge the participant for anticipation
+// the account is not being charged for.
+function rateOrFallback(
+  percentage: number | null | undefined,
+  fallback: number,
+): number {
+  return percentage === null || percentage === undefined
+    ? fallback
+    : percentToFraction(percentage)
+}
+
 function configuredRate(value: unknown): number | null {
   return typeof value === "number" && value > 0 ? value : null
 }
@@ -79,12 +91,14 @@ export async function getAsaasFees(): Promise<AsaasFees> {
         ),
       },
       anticipation: {
-        detachedMonthlyRate:
-          percentToFraction(anticipation?.creditCard?.detachedMonthlyFeeValue) ||
+        detachedMonthlyRate: rateOrFallback(
+          anticipation?.creditCard?.detachedMonthlyFeeValue,
           FALLBACK_FEES.anticipation.detachedMonthlyRate,
-        installmentMonthlyRate:
-          percentToFraction(anticipation?.creditCard?.installmentMonthlyFeeValue) ||
+        ),
+        installmentMonthlyRate: rateOrFallback(
+          anticipation?.creditCard?.installmentMonthlyFeeValue,
           FALLBACK_FEES.anticipation.installmentMonthlyRate,
+        ),
       },
     }
 
