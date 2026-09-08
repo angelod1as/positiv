@@ -39,8 +39,12 @@ function rateOrFallback(
     : percentToFraction(percentage)
 }
 
+// Zero is a rate, not an absence — the same distinction rateOrFallback draws
+// on the payload side. An operator who sets the override to 0 means 0.
 function configuredRate(value: unknown): number | null {
-  return typeof value === "number" && value > 0 ? value : null
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? value
+    : null
 }
 
 function withConfiguredAnticipation(fees: AsaasFees): AsaasFees {
@@ -72,7 +76,7 @@ export async function getAsaasFees(): Promise<AsaasFees> {
 
     const fees: AsaasFees = {
       pix: {
-        fixed: reaisToCents(pix.fixedFeeValue),
+        fixed: reaisToCents(pix.fixedFeeValue ?? 0),
         percent: percentToFraction(pix.percentageFee),
       },
       card: {

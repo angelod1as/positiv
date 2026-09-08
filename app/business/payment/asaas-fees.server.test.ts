@@ -133,6 +133,30 @@ describe("getAsaasFees", () => {
     expect((await getAsaasFees()).anticipation).toEqual(FALLBACK_FEES.anticipation)
   })
 
+  it("reads a null fixed PIX fee as zero, the way it reads a null percentage", async () => {
+    fetchMock.mockResolvedValueOnce(
+      feesResponse({
+        ...feesBody,
+        payment: {
+          ...feesBody.payment,
+          pix: { fixedFeeValue: null, percentageFee: 1.2, type: "PERCENTAGE" },
+        },
+      }),
+    )
+
+    expect((await getAsaasFees()).pix).toEqual({ fixed: 0, percent: 0.012 })
+  })
+
+  it("honours a configured anticipation rate of zero", async () => {
+    env.ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE = 0
+    fetchMock.mockResolvedValueOnce(feesResponse())
+
+    expect((await getAsaasFees()).anticipation).toEqual({
+      detachedMonthlyRate: 0,
+      installmentMonthlyRate: 0.016,
+    })
+  })
+
   it("prefers a configured anticipation rate, one side at a time", async () => {
     env.ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE = 0.0125
     fetchMock.mockResolvedValueOnce(feesResponse())

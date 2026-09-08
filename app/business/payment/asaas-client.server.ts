@@ -270,9 +270,13 @@ const accountFees = zod.object({
       hasValidDiscount: zod.boolean().nullable().optional(),
     }),
     // The percentage fields come back null whenever the account is on a fixed
-    // PIX fee, which is what the sandbox account uses today.
+    // PIX fee, which is what the sandbox account uses today. Only that shape
+    // has been seen, so the fixed fee is nullable by symmetry rather than by
+    // observation: if a percentage-fee account reports it the same way, the
+    // alternative is the whole response failing to parse and every price
+    // quietly falling back to the list.
     pix: zod.object({
-      fixedFeeValue: zod.number(),
+      fixedFeeValue: zod.number().nullable().optional(),
       percentageFee: zod.number().nullable().optional(),
     }),
   }),
