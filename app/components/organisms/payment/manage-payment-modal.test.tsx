@@ -105,6 +105,19 @@ describe("ManagePaymentModal", () => {
     expect(formData.get("paidAt")).toBeTruthy()
   })
 
+  it("does not turn the amount field into a stepper", () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    // A spinbutton is what binds the arrow keys to a step of one cent; an admin
+    // reaching for the start of the amount they typed moved the money instead.
+    expect(
+      screen.queryByRole("spinbutton", { name: "Valor recebido" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("textbox", { name: "Valor recebido" }),
+    ).toBeInTheDocument()
+  })
+
   it("only ever records a payment as pix", async () => {
     render(<ManagePaymentModal {...baseProps} />)
 
