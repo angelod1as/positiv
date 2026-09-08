@@ -42,7 +42,36 @@ const webhook = zod.object({
   url: zod.string(),
 })
 
-const webhookList = zod.object({ data: zod.array(webhook) })
+const webhookList = zod.object({
+  data: zod.array(webhook),
+  hasMore: zod.boolean().nullable().optional(),
+})
+
+// Asaas paginates its list endpoints. Reading only the first page would miss
+// an existing webhook on an account that has accumulated a few, and the script
+// would then create a second one — which is the "every event delivered twice"
+// failure the lookup exists to prevent.
+const PAGE_SIZE = 100
+
+async function findWebhookByName(name: string) {
+  let offset = 0
+
+  for (;;) {
+    const page = await asaasRequest(
+      "GET",
+      `/webhooks?limit=${PAGE_SIZE}&offset=${offset}`,
+      webhookList,
+    )
+
+    const found = page.data.find((item) => item.name === name)
+    if (found) return found
+    // An empty page ends the walk whatever hasMore claims, so a server that
+    // always says there is more cannot spin this forever.
+    if (!page.hasMore || page.data.length === 0) return null
+
+    offset += page.data.length
+  }
+}
 
 export async function registerAsaasWebhook(
   origin: string,
@@ -70,8 +99,7 @@ export async function registerAsaasWebhook(
     events: WEBHOOK_EVENTS,
   }
 
-  const { data } = await asaasRequest("GET", "/webhooks", webhookList)
-  const existing = data.find((item) => item.name === WEBHOOK_NAME)
+  const existing = await findWebhookByName(WEBHOOK_NAME)
 
   const saved = existing
     ? await asaasRequest("PUT", `/webhooks/${existing.id}`, webhook, body)

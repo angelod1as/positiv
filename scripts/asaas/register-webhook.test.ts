@@ -74,6 +74,46 @@ describe("registerAsaasWebhook", () => {
     expect(fetchMock.mock.calls[1][1].method).toBe("PUT")
   })
 
+  it("keeps paging until it finds the existing webhook", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: [
+          { id: "hook_a", name: "Outro", url: "https://a" },
+          { id: "hook_b", name: "Mais um", url: "https://b" },
+        ],
+        hasMore: true,
+      }),
+    )
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: [{ id: "hook_positiv", name: "Positiv", url: "https://old.example.com" }],
+        hasMore: false,
+      }),
+    )
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ id: "hook_positiv", name: "Positiv", url: "https://x/api/asaas/webhook" }),
+    )
+
+    const result = await registerAsaasWebhook("https://www.positivparty.com")
+
+    expect(result).toEqual({ created: false, id: "hook_positiv" })
+    expect(fetchMock.mock.calls[0][0]).toContain("offset=0")
+    expect(fetchMock.mock.calls[1][0]).toContain("offset=2")
+    expect(fetchMock.mock.calls[2][1].method).toBe("PUT")
+  })
+
+  it("stops paging rather than looping when a page comes back empty", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [], hasMore: true }))
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ id: "hook_new", name: "Positiv", url: "https://x/api/asaas/webhook" }),
+    )
+
+    const result = await registerAsaasWebhook("https://www.positivparty.com")
+
+    expect(result).toEqual({ created: true, id: "hook_new" })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
   it("subscribes to every event the webhook handler acts on", () => {
     expect(WEBHOOK_EVENTS).toEqual([
       "PAYMENT_CREATED",
