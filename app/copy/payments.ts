@@ -1,4 +1,18 @@
+import type { PaymentOption } from "~/business/payment/pricing"
+import { formatCurrency } from "~/lib/helpers/format-currency"
+
 export const paymentsCopy = {
+  options: {
+    label: (option: PaymentOption) => {
+      if (option.method === "pix") {
+        return `Pix — ${formatCurrency(option.total)}`
+      }
+      if (option.installmentCount === 1) {
+        return `Cartão à vista — ${formatCurrency(option.total)}`
+      }
+      return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)} (total ${formatCurrency(option.total)})`
+    },
+  },
   manage: {
     title: "Pagamentos",
     trigger: "Gerenciar pagamento",
