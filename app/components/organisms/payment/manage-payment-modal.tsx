@@ -325,12 +325,15 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="manual-amount">{manual.amount}</Label>
+              {/* Text, not number: a number input binds the arrow keys and the
+                  scroll wheel to a step of one cent, so an admin moving the
+                  caret through the amount changes it. reaisToCents reads both
+                  "150.55" and "150,55". */}
               <Input
                 id="manual-amount"
                 name="amount"
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                inputMode="decimal"
                 required
               />
             </div>
