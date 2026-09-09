@@ -83,3 +83,55 @@ export function grossForCard(base: number, n: number, fees: AsaasFees): number {
   if (denominator <= 0) throw new Error("card fees leave nothing to receive")
   return Math.ceil((base + fees.card.fixed) / denominator)
 }
+
+// Matches the payment_method enum: POS-528 writes this straight into the row.
+export type PaymentMethod = "pix" | "credit_card"
+
+export type PaymentOption = {
+  id: PaymentOptionId
+  method: PaymentMethod
+  installmentCount: number | null
+  perInstallment: number
+  total: number
+}
+
+export function buildPaymentOptions(
+  base: number,
+  fees: AsaasFees,
+): PaymentOption[] {
+  const pixTotal = grossForPix(base, fees)
+  const options: PaymentOption[] = [
+    {
+      id: "pix",
+      method: "pix",
+      installmentCount: null,
+      perInstallment: pixTotal,
+      total: pixTotal,
+    },
+  ]
+
+  for (let n = 1; n <= MAX_INSTALLMENTS; n++) {
+    const gross = grossForCard(base, n, fees)
+    // Rounded up per installment, so the total can exceed the gross by a few
+    // cents. That direction is deliberate: Positiv is never short.
+    const perInstallment = Math.ceil(gross / n)
+    options.push({
+      id: `card_${n}` as PaymentOptionId,
+      method: "credit_card",
+      installmentCount: n,
+      perInstallment,
+      total: perInstallment * n,
+    })
+  }
+
+  return options
+}
+
+export function findPaymentOption(
+  options: PaymentOption[],
+  id: unknown,
+): PaymentOption | null {
+  const parsed = parsePaymentOptionId(id)
+  if (!parsed) return null
+  return options.find((option) => option.id === parsed) ?? null
+}

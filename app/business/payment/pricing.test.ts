@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 import {
   type AsaasFees,
+  buildPaymentOptions,
+  findPaymentOption,
   grossForCard,
   grossForPix,
   MAX_INSTALLMENTS,
@@ -119,5 +121,62 @@ describe("grossForCard", () => {
       anticipation: { detachedMonthlyRate: 0.0115, installmentMonthlyRate: 0.5 },
     }
     expect(() => grossForCard(22000, 6, greedy)).toThrow()
+  })
+})
+
+describe("buildPaymentOptions", () => {
+  it("returns pix first, then card 1x..6x", () => {
+    const options = buildPaymentOptions(22000, LIST_FEES)
+    expect(options.map((option) => option.id)).toEqual(PAYMENT_OPTION_IDS)
+  })
+
+  it("carries method, installment count and rounded-up installment values", () => {
+    const options = buildPaymentOptions(22000, LIST_FEES)
+    expect(options[0]).toEqual({
+      id: "pix",
+      method: "pix",
+      installmentCount: null,
+      perInstallment: 22199,
+      total: 22199,
+    })
+    expect(options[1]).toEqual({
+      id: "card_1",
+      method: "credit_card",
+      installmentCount: 1,
+      perInstallment: 23002,
+      total: 23002,
+    })
+    expect(options[3]).toEqual({
+      id: "card_3",
+      method: "credit_card",
+      installmentCount: 3,
+      perInstallment: 7877,
+      total: 23631,
+    })
+    expect(options[6]).toEqual({
+      id: "card_6",
+      method: "credit_card",
+      installmentCount: 6,
+      perInstallment: 4043,
+      total: 24258,
+    })
+  })
+
+  it("total is always perInstallment times the count", () => {
+    for (const option of buildPaymentOptions(12345, LIST_FEES)) {
+      if (option.installmentCount) {
+        expect(option.total).toBe(
+          option.perInstallment * option.installmentCount,
+        )
+      }
+    }
+  })
+})
+
+describe("findPaymentOption", () => {
+  it("returns the option for an id and null for an unknown one", () => {
+    const options = buildPaymentOptions(22000, LIST_FEES)
+    expect(findPaymentOption(options, "card_2")?.installmentCount).toBe(2)
+    expect(findPaymentOption(options, "card_9")).toBeNull()
   })
 })
