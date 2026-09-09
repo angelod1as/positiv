@@ -309,7 +309,7 @@ row, so a redelivered webhook never sends a second email.
 | `PAYMENT_REFUND_IN_PROGRESS` | keep `paid`, set `refund_requested_at` if null |
 | `PAYMENT_REFUNDED` | → `refunded`, `refund_amount = amount`, `refunded_at`; refund email |
 | `PAYMENT_PARTIALLY_REFUNDED` | → `partially_refunded`, `refund_amount = Σ refunds[].value`; refund email |
-| `PAYMENT_CHARGEBACK_REQUESTED`, `_DISPUTE`, `_AWAITING_CHARGEBACK_REVERSAL`, `PAYMENT_REPROVED_BY_RISK_ANALYSIS`, `PAYMENT_CREDIT_CARD_CAPTURE_REFUSED` | no transition; `logger.error` → Telegram with participant + event |
+| `PAYMENT_REFUND_DENIED`, `PAYMENT_CHARGEBACK_REQUESTED`, `_DISPUTE`, `_AWAITING_CHARGEBACK_REVERSAL`, `PAYMENT_REPROVED_BY_RISK_ANALYSIS`, `PAYMENT_CREDIT_CARD_CAPTURE_REFUSED` | no transition; `logger.error` → Telegram with participant + event. A denied refund leaves the row `paid` with `refund_requested_at` set, and a participant who was told the money is coming back — it needs a human, not a retry |
 | anything else | recorded, `processed_at`, 200 |
 
 Webhook registration: `sendType: SEQUENTIALLY`, `apiVersion: 3`, the event
@@ -455,8 +455,13 @@ ASAAS_API_KEY=
 # @sensitive
 ASAAS_WEBHOOK_TOKEN=
 # @public @type=number
-ASAAS_ANTICIPATION_MONTHLY_RATE=
+ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE=
+# @public @type=number
+ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE=
 ```
+
+The anticipation rate is two variables because Asaas charges two rates (§6).
+Both are overrides: empty means the value `GET /v3/myAccount/fees/` reports.
 
 `User-Agent` is the constant `Positiv/<package version> (<APP_ENV>)`.
 
@@ -548,7 +553,7 @@ no exception; the design document is the one that stays.
 | 4 | POS-523 | `POS-523-readers-on-the-view.md` |
 | 5 | POS-524 | `POS-524-drop-old-columns.md` |
 | 6 | POS-525 | retired — the PR is open |
-| 7 | POS-526 | `POS-526-asaas-client.md` |
+| 7 | POS-526 | retired — the PR is open |
 | 8 | POS-527 | `POS-527-pricing-engine.md` |
 | 9 | POS-528 | `POS-528-payment-offer.md` |
 | 10 | POS-529 | `POS-529-payment-page.md` |
