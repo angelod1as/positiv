@@ -42,6 +42,7 @@ vi.mock("varlock/env", async (importOriginal) => {
   }
 })
 
+import { paymentsCopy } from "~/copy/payments"
 import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
 
 describe("createPaymentOffer", () => {
@@ -211,9 +212,12 @@ describe("createPaymentOffer", () => {
 
     expect(result.success).toBe(false)
     expect(await paymentsFor(participant.id)).toHaveLength(0)
+    if (!result.success) {
+      expect(result.errors[0]?.message).toBe(paymentsCopy.errors.noAmount)
+    }
   })
 
-  it("refuses a base amount of zero", async () => {
+  it("refuses a base amount of zero, and says why", async () => {
     const result = await createPaymentOffer({
       eventParticipantId: participantId,
       baseAmount: "0",
@@ -221,6 +225,11 @@ describe("createPaymentOffer", () => {
 
     expect(result.success).toBe(false)
     expect(await paymentsFor(participantId)).toHaveLength(0)
+    // The event has a price; telling the admin it does not would be a lie,
+    // and the modal shows this sentence to her verbatim.
+    if (!result.success) {
+      expect(result.errors[0]?.message).toBe(paymentsCopy.errors.amountTooLow)
+    }
   })
 
   it("replaces the open charge instead of adding a second one", async () => {

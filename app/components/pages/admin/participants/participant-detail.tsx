@@ -29,7 +29,7 @@ type ParticipantDetailProps = {
     eventId: string
   }
   payments?: ParticipantPayments
-  asaasFees?: AsaasFees
+  asaasFees?: AsaasFees | null
   paymentsEnabled?: boolean
 }
 

@@ -12,7 +12,7 @@ import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
 } from "~/business/admin/event-listmonk-sync.server"
-import { getAsaasFees } from "~/business/payment/asaas-fees.server"
+import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
@@ -132,7 +132,7 @@ export async function loader({ params }: Route.LoaderArgs) {
         return []
       }),
       getPaymentsForEvent(eventId),
-      getAsaasFees(),
+      getAsaasFeesIfEnabled(),
     ])
 
   return {

@@ -9,7 +9,7 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
-import { getAsaasFees } from "~/business/payment/asaas-fees.server"
+import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { adminEventsCopy } from "~/copy/admin/events"
@@ -118,7 +118,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const [participantPayments, asaasFees] = await Promise.all([
     getPaymentsForParticipant(eventParticipant.id),
-    getAsaasFees(),
+    getAsaasFeesIfEnabled(),
   ])
 
   return {

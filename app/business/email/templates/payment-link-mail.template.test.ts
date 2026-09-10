@@ -64,6 +64,16 @@ describe("paymentLinkMailTemplate", () => {
     expect(html).not.toContain("<script>")
   })
 
+  it("cannot be talked out of its own href", () => {
+    const html = paymentLinkMailTemplate({
+      ...base,
+      paymentUrl: 'https://www.positivparty.com/pagamento/abc" onclick="steal()',
+    })
+
+    expect(html).not.toContain('onclick="steal()"')
+    expect(html).toContain("&quot;")
+  })
+
   it("refuses a payment url that is not http(s)", () => {
     expect(() =>
       paymentLinkMailTemplate({ ...base, paymentUrl: "javascript:alert(1)" }),

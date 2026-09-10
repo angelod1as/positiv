@@ -4,6 +4,7 @@ import { paymentsCopy } from "~/copy/payments"
 import { paymentLinkMailCopy } from "~/copy/emails/payment-link"
 import { POSITIV_URL } from "~/lib/constants/constants"
 import { sanitizeHtml } from "~/lib/email/sanitize-html"
+import { escapeHtml } from "~/lib/helpers/escape-html"
 
 export type PaymentLinkMailInput = {
   displayName: string
@@ -21,12 +22,17 @@ export type PaymentLinkMailInput = {
  * SECURITY: All user-controlled fields are sanitized to prevent XSS attacks
  */
 export const paymentLinkMailTemplate = (input: PaymentLinkMailInput): string => {
-  // The url is the one thing here that becomes an href, and sanitizeHtml only
-  // guards what it wraps in markup. A scheme it does not expect is a bug
-  // upstream, not something to render politely.
+  // The url is the one value here that becomes an attribute rather than text,
+  // and sanitizeHtml only guards what it wraps in markup. The scheme check
+  // catches a javascript: url; the escape catches a quote that would close the
+  // href and open an attribute of somebody else's choosing. Neither is
+  // reachable from today's caller, which builds the url from APP_URL and a
+  // uuid -- but the template should not be the part that depends on that.
   if (!/^https?:\/\//i.test(input.paymentUrl)) {
     throw new Error(`Refusing to email a payment url of ${input.paymentUrl}`)
   }
+
+  const paymentUrl = escapeHtml(input.paymentUrl)
 
   const displayName = sanitizeHtml(input.displayName)
   const sanitizedEmoji = sanitizeHtml(input.eventEmoji ?? "")
@@ -93,7 +99,7 @@ export const paymentLinkMailTemplate = (input: PaymentLinkMailInput): string => 
 
               <!-- CTA -->
               <div style="text-align: center; margin: 0 0 20px 0;">
-                <a href="${input.paymentUrl}" style="display: inline-block; background: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                <a href="${paymentUrl}" style="display: inline-block; background: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                   ${paymentLinkMailCopy.cta}
                 </a>
               </div>

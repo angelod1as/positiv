@@ -90,9 +90,16 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
       return { created: false as const, emailSent: false, reason: "disabled" }
     }
 
+    // Two different failures, and the admin gets to know which. Telling
+    // someone who typed a zero that the event has no price is simply false,
+    // and the modal shows this sentence verbatim.
+    if (values.baseAmount === null && !participant.ticket_price) {
+      throw new Error(paymentsCopy.errors.noAmount)
+    }
+
     const baseAmount = values.baseAmount ?? participant.ticket_price
     if (!baseAmount || !Number.isFinite(baseAmount) || baseAmount <= 0) {
-      throw new Error(paymentsCopy.errors.noAmount)
+      throw new Error(paymentsCopy.errors.amountTooLow)
     }
 
     const dueAt = new Date(
