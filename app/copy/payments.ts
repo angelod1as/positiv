@@ -53,9 +53,11 @@ export const paymentsCopy = {
       kind: "Origem",
       method: "Forma",
       amount: "Valor",
-      date: "Data",
+      sentAt: "Enviada em",
+      date: "Data pagto",
       actions: "Ações",
     },
+    baseWithFees: (amount: string) => `${amount} + taxas`,
     kinds: { asaas: "Asaas", manual: "Manual" },
     methods: {
       pix: "Pix",

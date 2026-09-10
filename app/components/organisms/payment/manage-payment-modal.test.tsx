@@ -29,6 +29,7 @@ const payment = (overrides: Partial<PaymentRow>): PaymentRow =>
     amount: 22000,
     paid_at: "2026-08-20T12:00:00Z",
     due_at: "2026-08-20T12:00:00Z",
+    created_at: "2026-08-20T12:00:00Z",
     refund_amount: null,
     refunded_at: null,
     asaas_net: null,
@@ -480,7 +481,7 @@ describe("ManagePaymentModal - the Cobrança section", () => {
 
     expect(lastSubmission().get("intent")).toBe("payment-offer")
     expect(lastSubmission().get("eventParticipantId")).toBe("ep-1")
-    expect(lastSubmission().get("baseAmount")).toBe("220")
+    expect(lastSubmission().get("baseAmount")).toBe("220,00")
   })
 
   it("sends the amount the admin typed instead", async () => {
@@ -599,5 +600,68 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(
       screen.queryByRole("button", { name: "Copiar mensagem" }),
     ).not.toBeInTheDocument()
+  })
+})
+
+describe("ManagePaymentModal - the table's dates and amounts", () => {
+  const sentOn = payment({
+    id: "sent-1",
+    kind: "asaas",
+    status: "pending",
+    method: null,
+    amount: null,
+    paid_at: null,
+    base_amount: 22000,
+    created_at: "2026-09-01T12:00:00Z",
+    due_at: "2026-09-08T12:00:00Z",
+  })
+
+  it("shows the day the charge was sent, with no time", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[sentOn]} active={sentOn} />,
+    )
+
+    const row = screen.getByRole("row", { name: /Aguardando escolha/ })
+    expect(within(row).getByText("01/09")).toBeInTheDocument()
+  })
+
+  it("names the payment date column for what it is", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[sentOn]} />)
+
+    expect(
+      screen.getByRole("columnheader", { name: "Data pagto" }),
+    ).toBeInTheDocument()
+  })
+
+  it("shows the base amount of a charge nobody has chosen an option for", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[sentOn]} active={sentOn} />,
+    )
+
+    const row = screen.getByRole("row", { name: /Aguardando escolha/ })
+    expect(within(row).getByText("R$ 220,00 + taxas")).toBeInTheDocument()
+  })
+
+  it("shows what was actually paid once there is a number", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    const row = screen.getByRole("row", { name: /Pago/ })
+    expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
+    expect(within(row).queryByText(/taxas/)).not.toBeInTheDocument()
+  })
+
+  it("fills the amount field in Brazilian decimals", () => {
+    render(<ManagePaymentModal {...baseProps} ticketPrice={4180} />)
+
+    expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("41,80")
+  })
+
+  it("sends what the admin sees, commas and all", async () => {
+    render(<ManagePaymentModal {...baseProps} ticketPrice={4180} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect((formData as FormData).get("baseAmount")).toBe("41,80")
   })
 })

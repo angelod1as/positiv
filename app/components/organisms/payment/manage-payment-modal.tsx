@@ -36,7 +36,7 @@ import {
 import { paymentsCopy } from "~/copy/payments"
 import { formatInTimeZone } from "date-fns-tz"
 import {
-  centsToReaisInput,
+  centsToReaisText,
   formatCurrency,
 } from "~/lib/helpers/format-currency"
 import { paymentStatusPropMap } from "~/lib/helpers/propMaps"
@@ -187,7 +187,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   onResend,
 }) => {
   const [amount, setAmount] = useState(
-    centsToReaisInput(active?.base_amount ?? ticketPrice ?? 0),
+    centsToReaisText(active?.base_amount ?? ticketPrice ?? 0),
   )
   const [copied, setCopied] = useState(false)
 
@@ -401,6 +401,13 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           <Table>
             <TableHeader>
               <TableRow>
+                {/* Sem título por escolha: a data de envio abre a linha como
+                    um carimbo, e um cabeçalho para dois caracteres pesaria
+                    mais que a informação. O rótulo fica para quem lê a tabela
+                    com leitor de tela. */}
+                <TableHead>
+                  <span className="sr-only">{manage.columns.sentAt}</span>
+                </TableHead>
                 <TableHead>{manage.columns.status}</TableHead>
                 <TableHead>{manage.columns.kind}</TableHead>
                 <TableHead>{manage.columns.method}</TableHead>
@@ -412,6 +419,13 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             <TableBody>
               {payments.map((payment) => (
                 <TableRow key={payment.id}>
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
+                    {formatInTimeZone(
+                      payment.created_at,
+                      "America/Sao_Paulo",
+                      "dd/MM",
+                    )}
+                  </TableCell>
                   <TableCell>{paymentStatusPropMap(payment.status)}</TableCell>
                   <TableCell>{manage.kinds[payment.kind]}</TableCell>
                   <TableCell>
@@ -419,9 +433,13 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       ? manage.methods[payment.method]
                       : manage.noMethod}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {/* Até a pessoa escolher PIX ou cartão não existe valor
+                        final, mas existe o que a admin mandou cobrar. Mostrar
+                        "—" ali escondia justamente o número que ela quer
+                        conferir. */}
                     {payment.amount === null
-                      ? manage.noAmount
+                      ? manage.baseWithFees(formatCurrency(payment.base_amount))
                       : formatCurrency(payment.amount)}
                   </TableCell>
                   <TableCell>

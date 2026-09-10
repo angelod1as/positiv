@@ -48,6 +48,15 @@ export function reaisToCents(input: string | number): number {
   return Math.round(parsed * 100)
 }
 
+/**
+ * Cents as a person writes them here: `"41,80"`. For a text field an admin
+ * reads and edits, where a period decimal and a dropped trailing zero both
+ * look like a typo. `reaisToCents` reads it straight back.
+ */
+export function centsToReaisText(cents: number | null | undefined): string {
+  return decimalFormatter.format(Number(cents ?? 0) / 100)
+}
+
 /** Cents to the plain decimal string a number input shows (`"220.5"`). */
 export function centsToReaisInput(cents: number | null | undefined): string {
   return String(Number(cents ?? 0) / 100)
