@@ -163,6 +163,25 @@ describe("EventCardFooter", () => {
       expect(closedButton).toBeInTheDocument()
     })
 
+    it("offers the application to somebody holding an invite", () => {
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          event_status="Registration Closed"
+          googleLink=""
+          is_applied={false}
+          is_invited={true}
+          dataTestId="test-footer"
+          isAdmin={false}
+        />,
+      )
+
+      expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
+      expect(
+        screen.queryByText(/Candidaturas encerradas/i),
+      ).not.toBeInTheDocument()
+    })
+
     it("should work without isAdmin prop (backward compatibility)", () => {
       render(
         <EventCardFooter

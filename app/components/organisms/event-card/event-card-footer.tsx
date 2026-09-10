@@ -24,6 +24,8 @@ const {
 
 type EventCardFooterProps = {
   is_applied: boolean | undefined
+  /** Whether this person holds an invite into this event, closed or not. */
+  is_invited?: boolean
   event_status: EventStatus
   googleLink: string | undefined
   eventId: string
@@ -38,6 +40,7 @@ type EventCardFooterProps = {
 }
 export const EventCardFooter: FC<EventCardFooterProps> = ({
   is_applied,
+  is_invited,
   event_status,
   // googleLink,
   eventId,
@@ -155,10 +158,25 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     )
   }
 
-  if (isClosed) {
+  // A closed event still opens for whoever holds an invite to it. What the
+  // server does with the application is decided against the database; this only
+  // spares the invited person a dead button.
+  if (isClosed && !is_invited) {
     return (
       <Button data-testid={dataTestId} disabled={true}>
         {eventCardCopy.closed}
+      </Button>
+    )
+  }
+
+  if (isClosed && is_invited) {
+    return (
+      <Button
+        data-testid={dataTestId}
+        to={EVENT_VIEW(eventId)}
+        linkProps={{ prefetch: prefetchStrategy }}
+      >
+        {eventCardCopy.apply}
       </Button>
     )
   }

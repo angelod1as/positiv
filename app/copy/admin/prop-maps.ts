@@ -47,6 +47,7 @@ export const adminPropMapsCopy = {
     title: "Nome",
     total_spots: "Lotação",
     is_applied: "Candidate",
+    is_invited: "Convidade",
     listmonk_list_id: "ID da lista Listmonk",
     listmonk_list_synced_at: "Última sincronização da lista",
   },
