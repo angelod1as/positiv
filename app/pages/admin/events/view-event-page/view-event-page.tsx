@@ -12,6 +12,7 @@ import {
   listmonkSyncFiltersSchema,
   updateEventListmonkList,
 } from "~/business/admin/event-listmonk-sync.server"
+import { getAsaasFees } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
 import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
@@ -25,6 +26,7 @@ import { RejectedParticipantsSection } from "~/components/pages/admin/events/rej
 import { adminEventsCopy } from "~/copy/admin/events"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
+import { ENV } from "varlock/env"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
 import { sendToast } from "./send-toast"
@@ -122,7 +124,7 @@ export async function loader({ params }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
-  const [participants, rejectedParticipants, paymentsByParticipant] =
+  const [participants, rejectedParticipants, paymentsByParticipant, asaasFees] =
     await Promise.all([
       loadParticipants(eventId),
       getRejectedEventParticipants(eventId).catch((err) => {
@@ -130,6 +132,7 @@ export async function loader({ params }: Route.LoaderArgs) {
         return []
       }),
       getPaymentsForEvent(eventId),
+      getAsaasFees(),
     ])
 
   return {
@@ -137,6 +140,8 @@ export async function loader({ params }: Route.LoaderArgs) {
     participants,
     rejectedParticipants,
     paymentsByParticipant,
+    asaasFees,
+    paymentsEnabled: Boolean(ENV.PAYMENTS_ENABLED),
     demographics: demographics?.success ? demographics.data : undefined,
   }
 }
@@ -163,6 +168,8 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     participants,
     rejectedParticipants,
     paymentsByParticipant,
+    asaasFees,
+    paymentsEnabled,
     demographics,
   } = loaderData
 
@@ -224,6 +231,11 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
               (payment) => payment.id === managedParticipant.active_payment_id,
             ) ?? null
           }
+          paymentsEnabled={paymentsEnabled}
+          spotType={managedParticipant.spot_type}
+          ticketPrice={event.ticket_price}
+          eventTitle={event.title ?? ""}
+          fees={asaasFees}
         />
       )}
 

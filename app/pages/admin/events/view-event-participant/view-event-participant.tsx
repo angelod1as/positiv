@@ -9,10 +9,12 @@ import {
   updateProfileAdminNotes,
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
+import { getAsaasFees } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import paths from "~/lib/paths"
+import { ENV } from "varlock/env"
 import type { Route } from "./+types/view-event-participant"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
@@ -114,9 +116,10 @@ export async function loader({ params }: Route.LoaderArgs) {
     fullHistory = historyResult.data
   }
 
-  const participantPayments = await getPaymentsForParticipant(
-    eventParticipant.id,
-  )
+  const [participantPayments, asaasFees] = await Promise.all([
+    getPaymentsForParticipant(eventParticipant.id),
+    getAsaasFees(),
+  ])
 
   return {
     profile,
@@ -124,6 +127,8 @@ export async function loader({ params }: Route.LoaderArgs) {
     fullHistory,
     eventId,
     participantPayments,
+    asaasFees,
+    paymentsEnabled: Boolean(ENV.PAYMENTS_ENABLED),
   }
 }
 
@@ -134,6 +139,8 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
     fullHistory,
     eventId,
     participantPayments,
+    asaasFees,
+    paymentsEnabled,
   } = loaderData
 
   if (!profile) return null
@@ -147,6 +154,8 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
         eventId,
       }}
       payments={participantPayments}
+      asaasFees={asaasFees}
+      paymentsEnabled={paymentsEnabled}
     />
   )
 }

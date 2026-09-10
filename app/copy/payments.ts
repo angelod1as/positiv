@@ -68,6 +68,22 @@ export const paymentsCopy = {
     noMethod: "—",
     noDate: "—",
   },
+  charge: {
+    title: "Cobrança",
+    amount: "Valor a cobrar",
+    amountHint:
+      "O valor que a Positiv recebe. As taxas do Asaas entram por cima, na conta de quem paga.",
+    send: "Enviar cobrança",
+    resendAmount: "Reenviar com outro valor",
+    resendEmail: "Reenviar email",
+    copyMessage: "Copiar mensagem",
+    copied: "Mensagem copiada.",
+    replaceConfirm: "Substituir a cobrança em aberto?",
+    replaceDescription:
+      "Esta pessoa já escolheu como pagar. A cobrança atual será cancelada no Asaas e ela receberá um novo link.",
+    replaceKeep: "Manter cobrança",
+    replaceSubmit: "Substituir cobrança",
+  },
   manual: {
     title: "Registrar pagamento manual",
     amount: "Valor recebido",

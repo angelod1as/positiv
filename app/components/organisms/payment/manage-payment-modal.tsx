@@ -1,5 +1,7 @@
 import { useEffect, useState, type FC, type FormEvent } from "react"
 import { useFetcher } from "react-router"
+import type { AsaasFees } from "~/business/payment/pricing"
+import { buildPaymentOptions } from "~/business/payment/pricing"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import type { ParticipantPaymentTotals } from "~types/database/entities.types"
 import { Button } from "~/components/atoms/button/button"
@@ -33,11 +35,15 @@ import {
 } from "~/components/ui/table"
 import { paymentsCopy } from "~/copy/payments"
 import { formatInTimeZone } from "date-fns-tz"
-import { formatCurrency } from "~/lib/helpers/format-currency"
+import {
+  centsToReaisInput,
+  formatCurrency,
+} from "~/lib/helpers/format-currency"
 import { paymentStatusPropMap } from "~/lib/helpers/propMaps"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import paths from "~/lib/paths"
 
-const { manage, manual, refund, cancel, errors } = paymentsCopy
+const { manage, manual, refund, cancel, charge, errors } = paymentsCopy
 
 /** Every payment recorded by hand arrived by PIX; nothing else is offered. */
 const MANUAL_METHOD = "pix"
@@ -56,6 +62,11 @@ export type ManagePaymentModalProps = {
   payments: PaymentRow[]
   totals: ParticipantPaymentTotals
   active: PaymentRow | null
+  paymentsEnabled: boolean
+  spotType: string | null
+  ticketPrice: number | null
+  eventTitle: string
+  fees: AsaasFees | null
 }
 
 type RefundDialogProps = {
@@ -148,6 +159,135 @@ const CancelDialog: FC<CancelDialogProps> = ({
   </AlertDialog>
 )
 
+type ChargeSectionProps = {
+  active: PaymentRow | null
+  participantName: string
+  eventTitle: string
+  ticketPrice: number | null
+  fees: AsaasFees
+  isSubmitting: boolean
+  onOffer: (baseAmount: string) => void
+  onResend: (paymentId: string) => void
+}
+
+/**
+ * Opening a charge is its own act, behind its own button. Nothing in the
+ * participant funnel triggers it: a status is a note an admin keeps, and an
+ * absent-minded grid edit should not delete a live Asaas charge and email
+ * somebody a second payment link.
+ */
+const ChargeSection: FC<ChargeSectionProps> = ({
+  active,
+  participantName,
+  eventTitle,
+  ticketPrice,
+  fees,
+  isSubmitting,
+  onOffer,
+  onResend,
+}) => {
+  const [amount, setAmount] = useState(
+    centsToReaisInput(active?.base_amount ?? ticketPrice ?? 0),
+  )
+  const [copied, setCopied] = useState(false)
+
+  // Replacing a charge the participant has already acted on deletes it at
+  // Asaas mid-checkout, so that one asks first. A pending row is nobody's
+  // work in progress.
+  const needsConfirmation = active?.status === "awaiting_payment"
+
+  const copyMessage = () => {
+    if (!active) return
+    // Built here rather than fetched: writeText has to run inside the click
+    // that asked for it, and a round trip first loses that permission.
+    const message = paymentsCopy.whatsappMessage({
+      displayName: participantName,
+      eventTitle,
+      paymentUrl: `${window.location.origin}${paths.payment.PAYMENT(active.id)}`,
+      dueAt: active.due_at,
+      options: buildPaymentOptions(active.base_amount, fees),
+    })
+    void navigator.clipboard.writeText(message)
+    setCopied(true)
+  }
+
+  const sendLabel = active ? charge.resendAmount : charge.send
+
+  return (
+    <section className="flex flex-col gap-4 border-b pb-4">
+      <h3 className="font-bold">{charge.title}</h3>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="charge-amount">{charge.amount}</Label>
+        {/* Text, not number: a number input binds the arrow keys and the
+            scroll wheel to a step of one cent, so an admin moving the caret
+            through the amount changes it. */}
+        <Input
+          id="charge-amount"
+          name="baseAmount"
+          type="text"
+          inputMode="decimal"
+          value={amount}
+          onChange={(event) => setAmount(event.target.value)}
+        />
+        <p className="text-muted-foreground text-sm">{charge.amountHint}</p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {needsConfirmation ? (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button disabled={isSubmitting}>{sendLabel}</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{charge.replaceConfirm}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {charge.replaceDescription}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{charge.replaceKeep}</AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={isSubmitting}
+                  onClick={() => onOffer(amount)}
+                >
+                  {charge.replaceSubmit}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          <Button disabled={isSubmitting} onClick={() => onOffer(amount)}>
+            {sendLabel}
+          </Button>
+        )}
+
+        {active && (
+          <>
+            <Button
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={() => onResend(active.id)}
+            >
+              {charge.resendEmail}
+            </Button>
+            <Button variant="outline" onClick={copyMessage}>
+              {charge.copyMessage}
+            </Button>
+          </>
+        )}
+      </div>
+
+      {copied && (
+        <p role="status" className="text-muted-foreground text-sm">
+          {charge.copied}
+        </p>
+      )}
+    </section>
+  )
+}
+
 export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   open,
   onOpenChange,
@@ -156,6 +296,11 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   payments,
   totals,
   active,
+  paymentsEnabled,
+  spotType,
+  ticketPrice,
+  eventTitle,
+  fees,
 }) => {
   const fetcher = useFetcher<{
     success?: boolean
@@ -315,6 +460,21 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
               ))}
             </TableBody>
           </Table>
+        )}
+
+        {paymentsEnabled && spotType === "regular" && fees && (
+          <ChargeSection
+            active={active}
+            participantName={participantName}
+            eventTitle={eventTitle}
+            ticketPrice={ticketPrice}
+            fees={fees}
+            isSubmitting={isSubmitting}
+            onOffer={(baseAmount) =>
+              post({ intent: "payment-offer", eventParticipantId, baseAmount })
+            }
+            onResend={(paymentId) => post({ intent: "payment-resend", paymentId })}
+          />
         )}
 
         {active ? (

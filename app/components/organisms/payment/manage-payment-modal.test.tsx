@@ -1,5 +1,6 @@
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { FALLBACK_FEES } from "~/business/payment/asaas-fees.server"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import { render, screen, within } from "~/test/test-utils"
 import { ManagePaymentModal } from "./manage-payment-modal"
@@ -50,7 +51,23 @@ const baseProps = {
     active_payment_id: null,
   },
   active: null as PaymentRow | null,
+  paymentsEnabled: true,
+  spotType: "regular" as const,
+  ticketPrice: 22000,
+  eventTitle: "Festa de Setembro",
+  fees: FALLBACK_FEES,
 }
+
+const openCharge = payment({
+  id: "open-1",
+  kind: "asaas",
+  status: "pending",
+  method: null,
+  amount: null,
+  paid_at: null,
+  base_amount: 22000,
+  due_at: "2026-09-01T12:00:00Z",
+})
 
 describe("ManagePaymentModal", () => {
   beforeEach(() => {
@@ -440,5 +457,147 @@ describe("ManagePaymentModal", () => {
     expect(
       screen.getByText(/cancele-a antes de registrar um pagamento manual/i),
     ).toBeInTheDocument()
+  })
+})
+
+describe("ManagePaymentModal - the Cobrança section", () => {
+  beforeEach(() => {
+    submit.mockClear()
+    vi.mocked(navigator.clipboard.writeText).mockClear()
+    fetcherData = undefined
+    fetcherState = "idle"
+  })
+
+  const lastSubmission = () => {
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    return formData as FormData
+  }
+
+  it("sends a charge for the ticket price by default", async () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    expect(lastSubmission().get("intent")).toBe("payment-offer")
+    expect(lastSubmission().get("eventParticipantId")).toBe("ep-1")
+    expect(lastSubmission().get("baseAmount")).toBe("220")
+  })
+
+  it("sends the amount the admin typed instead", async () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    const amount = screen.getByLabelText("Valor a cobrar")
+    await userEvent.clear(amount)
+    await userEvent.type(amount, "150")
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    expect(lastSubmission().get("baseAmount")).toBe("150")
+  })
+
+  it("offers no charge when payments are switched off", () => {
+    render(<ManagePaymentModal {...baseProps} paymentsEnabled={false} />)
+
+    expect(
+      screen.queryByRole("button", { name: "Enviar cobrança" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("offers no charge for a social or staff spot", () => {
+    render(<ManagePaymentModal {...baseProps} spotType="social" />)
+
+    expect(
+      screen.queryByRole("button", { name: "Enviar cobrança" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("re-prices an open charge", async () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[openCharge]}
+        active={openCharge}
+      />,
+    )
+
+    const amount = screen.getByLabelText("Valor a cobrar")
+    await userEvent.clear(amount)
+    await userEvent.type(amount, "150")
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reenviar com outro valor" }),
+    )
+
+    expect(lastSubmission().get("intent")).toBe("payment-offer")
+    expect(lastSubmission().get("baseAmount")).toBe("150")
+  })
+
+  it("confirms before replacing a charge the participant is paying", async () => {
+    const picked = payment({
+      ...openCharge,
+      status: "awaiting_payment",
+      method: "pix",
+      amount: 22199,
+    })
+    render(
+      <ManagePaymentModal {...baseProps} payments={[picked]} active={picked} />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reenviar com outro valor" }),
+    )
+    expect(submit).not.toHaveBeenCalled()
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Substituir cobrança" }),
+    )
+    expect(lastSubmission().get("intent")).toBe("payment-offer")
+  })
+
+  it("resends the email for the open charge", async () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[openCharge]}
+        active={openCharge}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Reenviar email" }))
+
+    expect(lastSubmission().get("intent")).toBe("payment-resend")
+    expect(lastSubmission().get("paymentId")).toBe("open-1")
+  })
+
+  it("copies the WhatsApp message for the open charge", async () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[openCharge]}
+        active={openCharge}
+      />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Copiar mensagem" }),
+    )
+
+    const [copied] = vi.mocked(navigator.clipboard.writeText).mock.calls.at(
+      -1,
+    ) ?? [""]
+    expect(copied).toContain("Ana")
+    expect(copied).toContain("Festa de Setembro")
+    expect(copied).toContain("/pagamento/open-1")
+    expect(copied).toContain("Pix —")
+    expect(copied).toContain("01/09/2026")
+  })
+
+  it("offers neither resend nor copy when nothing is open", () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(
+      screen.queryByRole("button", { name: "Reenviar email" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Copiar mensagem" }),
+    ).not.toBeInTheDocument()
   })
 })

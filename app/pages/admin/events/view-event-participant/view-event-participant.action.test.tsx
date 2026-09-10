@@ -6,6 +6,10 @@ import {
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { cancelPayment } from "~/business/payment/payment-cancel.server"
+import {
+  createPaymentOffer,
+  resendPaymentOffer,
+} from "~/business/payment/payment-offer.server"
 import { markManualRefunded } from "~/business/payment/payment-refund.server"
 import { registerManualPayment } from "~/business/payment/manual-payment.server"
 import { action } from "./view-event-participant"
@@ -30,6 +34,11 @@ vi.mock("~/business/payment/payment-refund.server", () => ({
 
 vi.mock("~/business/payment/payment-cancel.server", () => ({
   cancelPayment: vi.fn(),
+}))
+
+vi.mock("~/business/payment/payment-offer.server", () => ({
+  createPaymentOffer: vi.fn(),
+  resendPaymentOffer: vi.fn(),
 }))
 
 const buildRequest = (fields: Record<string, string>) =>
@@ -82,6 +91,16 @@ const INTENTS = [
     fields: { paymentId: "payment-1" },
     mutation: cancelPayment,
   },
+  {
+    intent: "payment-offer",
+    fields: { eventParticipantId: "participant-1", baseAmount: "220" },
+    mutation: createPaymentOffer,
+  },
+  {
+    intent: "payment-resend",
+    fields: { paymentId: "payment-1" },
+    mutation: resendPaymentOffer,
+  },
 ] as const
 
 describe("ViewEventParticipant action", () => {
@@ -104,6 +123,12 @@ describe("ViewEventParticipant action", () => {
     } as never)
     vi.mocked(markManualRefunded).mockResolvedValue({ success: true } as never)
     vi.mocked(cancelPayment).mockResolvedValue({ success: true } as never)
+    vi.mocked(createPaymentOffer).mockResolvedValue({
+      success: true,
+    } as never)
+    vi.mocked(resendPaymentOffer).mockResolvedValue({
+      success: true,
+    } as never)
   })
 
   describe.each(INTENTS)("$intent", ({ intent, fields, mutation }) => {

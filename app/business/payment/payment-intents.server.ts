@@ -1,4 +1,5 @@
 import { registerManualPayment } from "./manual-payment.server"
+import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
 import { cancelPayment } from "./payment-cancel.server"
 import { markManualRefunded } from "./payment-refund.server"
 
@@ -44,6 +45,17 @@ export async function handlePaymentIntent(
   createdBy: string | undefined,
 ): Promise<PaymentIntentResult | null> {
   const values = Object.fromEntries(formData)
+
+  if (intent === "payment-offer") {
+    return toIntentResult(
+      intent,
+      await createPaymentOffer({ ...values, createdBy }),
+    )
+  }
+
+  if (intent === "payment-resend") {
+    return toIntentResult(intent, await resendPaymentOffer(values))
+  }
 
   if (intent === "payment-manual") {
     return toIntentResult(
