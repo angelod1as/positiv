@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { useFetcher } from "react-router"
 import { redirectWithError } from "remix-toast"
+import { listInvitesForEvent } from "~/business/admin/event-invites.server"
 import {
   getAdminContext,
   getAdminEventById,
@@ -15,6 +16,8 @@ import {
 import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
+import { Button } from "~/components/atoms/button/button"
+import { EventInviteModal } from "~/components/organisms/event-invite-modal/event-invite-modal"
 import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
 import { Buttons } from "~/components/pages/admin/events/buttons"
@@ -24,6 +27,7 @@ import { EventStatusForm } from "~/components/pages/admin/events/event-status-fo
 import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { RejectedParticipantsSection } from "~/components/pages/admin/events/rejected-participants-section"
 import { adminEventsCopy } from "~/copy/admin/events"
+import { adminInvitesCopy } from "~/copy/admin/invites"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import paths from "~/lib/paths"
@@ -125,7 +129,13 @@ export async function loader({ params }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
-  const [participants, rejectedParticipants, paymentsByParticipant, asaasFees] =
+  const [
+    participants,
+    rejectedParticipants,
+    paymentsByParticipant,
+    asaasFees,
+    invites,
+  ] =
     await Promise.all([
       loadParticipants(eventId),
       getRejectedEventParticipants(eventId).catch((err) => {
@@ -134,6 +144,7 @@ export async function loader({ params }: Route.LoaderArgs) {
       }),
       getPaymentsForEvent(eventId),
       getAsaasFeesIfEnabled(),
+      listInvitesForEvent(eventId),
     ])
 
   return {
@@ -146,6 +157,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),
+    invites,
     demographics: demographics?.success ? demographics.data : undefined,
   }
 }
@@ -156,6 +168,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
   const [managedParticipantId, setManagedParticipantId] = useState<
     string | null
   >(null)
+  const [isInviteOpen, setIsInviteOpen] = useState(false)
 
   useEffect(() => {
     sendToast(fetcher.data)
@@ -176,6 +189,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     paymentsEnabled,
     appOrigin: origin,
     demographics,
+    invites,
   } = loaderData
 
   const { title, emoji, time_event_start } = event
@@ -244,6 +258,22 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
           fees={asaasFees}
         />
       )}
+
+      <Button variant="outline" onClick={() => setIsInviteOpen(true)}>
+        {adminInvitesCopy.trigger}
+      </Button>
+
+      <EventInviteModal
+        open={isInviteOpen}
+        onOpenChange={setIsInviteOpen}
+        eventId={event.id}
+        invites={invites}
+        participants={participants.map((participant) => ({
+          id: participant.id,
+          full_name: participant.full_name,
+          social_name: participant.social_name,
+        }))}
+      />
 
       <GeneralData {...event} />
       <DatesAndTimes {...event} />
