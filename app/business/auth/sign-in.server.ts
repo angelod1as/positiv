@@ -1,6 +1,7 @@
 import type { z } from "zod"
 import { errorsCopy } from "~/copy/errors"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
+import { safeRedirect } from "~/lib/helpers/safe-redirect"
 import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import paths from "~/lib/paths"
 import type { CommitError } from "~types/forms/commit.types"
@@ -67,8 +68,15 @@ export async function signIn({
     .rpc("get_profile_with_roles", { user_id_input: data.user.id })
     .single()
 
+  const home = profile?.is_admin ? ADMIN_DASHBOARD : DASHBOARD
+
+  // Read from the raw answers rather than the parsed ones: loginSchema draws
+  // the form, and a destination is not a field anybody fills in.
   return {
     ok: true,
-    redirectTo: profile?.is_admin ? ADMIN_DASHBOARD : DASHBOARD,
+    redirectTo: safeRedirect(
+      typeof answers.redirectTo === "string" ? answers.redirectTo : null,
+      home,
+    ),
   }
 }
