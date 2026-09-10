@@ -176,7 +176,12 @@ describe("EventCardFooter", () => {
         />,
       )
 
-      expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
+      // The rules page, not the event page: the latter cannot see a closed
+      // event through RLS and would send the invited person back.
+      expect(screen.getByText(/Me candidatar/i)).toHaveAttribute(
+        "href",
+        "/dashboard/test-event-id/regras",
+      )
       expect(
         screen.queryByText(/Candidaturas encerradas/i),
       ).not.toBeInTheDocument()

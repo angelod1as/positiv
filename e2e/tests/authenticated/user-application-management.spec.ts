@@ -221,7 +221,11 @@ test.describe('POS-191: Application Management Tests', () => {
       .locator('[data-testid^="event-card"]')
       .filter({ hasText: invitedEvent.title })
     await expect(invitedCard).toBeVisible({ timeout: 30000 })
-    await expect(invitedCard.getByText('Candidaturas encerradas')).toBeVisible()
+    // The card says it twice: once as the status badge, once as the dead
+    // button. The button is the one this is about.
+    await expect(
+      invitedCard.getByRole('button', { name: 'Candidaturas encerradas' }),
+    ).toBeDisabled()
 
     const token = await seedInvite(invitedEvent.id, profileId)
     await page.goto(`/convite/${token}`)
@@ -231,15 +235,24 @@ test.describe('POS-191: Application Management Tests', () => {
       { timeout: 30000 },
     )
 
-    // And the card that refused a moment ago now offers the application.
+    // And the card that refused a moment ago now offers the application. It is
+    // clicked rather than merely looked at: the event page cannot see a closed
+    // event through RLS, so a card pointing there would bounce the invited
+    // person straight back here.
     await page.goto('/dashboard')
     await page.waitForLoadState('networkidle')
-    await expect(
-      page
-        .locator('[data-testid^="event-card"]')
-        .filter({ hasText: invitedEvent.title })
-        .getByRole('link', { name: 'Me candidatar' }),
-    ).toBeVisible({ timeout: 30000 })
+
+    const invitedApply = page
+      .locator('[data-testid^="event-card"]')
+      .filter({ hasText: invitedEvent.title })
+      .getByRole('link', { name: 'Me candidatar' })
+    await expect(invitedApply).toBeVisible({ timeout: 30000 })
+
+    await invitedApply.click()
+    await expect(page).toHaveURL(
+      new RegExp(`/dashboard/${invitedEvent.id}/regras`),
+      { timeout: 30000 },
+    )
   })
 
   test('POS-477: Can cancel application after registrations close', async ({ page: _page }) => {

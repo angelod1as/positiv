@@ -15,7 +15,7 @@ import type { EventStatus } from "~types/database/entities.types"
 const {
   dash: {
     // participant: { DOWNLOAD_CALENDAR },
-    events: { EVENT_VIEW },
+    events: { EVENT_RULES, EVENT_VIEW },
   },
   admin: {
     events: { ADMIN_VIEW_EVENT },
@@ -169,11 +169,17 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     )
   }
 
+  // Straight to the rules rather than through EVENT_VIEW, which every other
+  // card uses. That page looks the event up through the RLS client, and
+  // combined_authenticated_select_events shows a regular user only the open and
+  // scheduled ones -- a closed event is invisible there, so the invited person
+  // would be bounced back to the dashboard by the very link that was meant to
+  // let them in.
   if (isClosed && is_invited) {
     return (
       <Button
         data-testid={dataTestId}
-        to={EVENT_VIEW(eventId)}
+        to={EVENT_RULES(eventId)}
         linkProps={{ prefetch: prefetchStrategy }}
       >
         {eventCardCopy.apply}
