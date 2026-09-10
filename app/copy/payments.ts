@@ -1,4 +1,5 @@
 import type { PaymentOption } from "~/business/payment/pricing"
+import { formatInTimeZone } from "date-fns-tz"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 
 export const paymentsCopy = {
@@ -13,6 +14,28 @@ export const paymentsCopy = {
       return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)} (total ${formatCurrency(option.total)})`
     },
   },
+  // Plain text, not Markdown: this one is pasted into WhatsApp, which renders
+  // none of it. The four-digit year is deliberate — a deadline read on a phone
+  // is the last place to save two characters.
+  whatsappMessage: (input: {
+    displayName: string
+    eventTitle: string
+    paymentUrl: string
+    dueAt: string
+    options: PaymentOption[]
+  }) =>
+    [
+      `Oi, ${input.displayName}! Aqui está o link para o pagamento da ${input.eventTitle}:`,
+      "",
+      input.paymentUrl,
+      "",
+      "Formas de pagamento:",
+      ...input.options.map(
+        (option) => `• ${paymentsCopy.options.label(option)}`,
+      ),
+      "",
+      `O link vale até ${formatInTimeZone(input.dueAt, "America/Sao_Paulo", "dd/MM/yyyy")}.`,
+    ].join("\n"),
   manage: {
     title: "Pagamentos",
     trigger: "Gerenciar pagamento",
