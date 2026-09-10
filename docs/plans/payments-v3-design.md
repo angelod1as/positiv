@@ -38,7 +38,7 @@ the webhook token is compared timing-safe and is mandatory.
 | Manual payments | Only for money that did not go through Asaas (transfer, cash, partial courtesy). Discounts are a custom base amount at send time, not a manual payment. |
 | History | At most one active charge per participant; any number of historical rows. A participant's paid total is a sum, so a second charge after a paid one needs no special code. |
 | Validity | 7 days. Admin can resend (new charge). |
-| Refund | Button in the admin panel (full or partial) calls Asaas; the webhook finalises. Refunds done inside the Asaas dashboard sync the same way. |
+| Refund | Button in the admin panel calls Asaas; the webhook finalises. Refunds done inside the Asaas dashboard sync the same way. **A refund gives back `asaas_net`, never the gross**: the participant absorbs the fees they paid, the same way they paid them in the first place. Refunds are rare and this keeps Positiv whole — see §5.4 for the arithmetic. |
 | Emails | Positiv sends link, confirmation and refund emails. Asaas notifications are disabled per customer (each one is billed). |
 | Accounting | Every paid row records gross (`amount`), Asaas net (`asaas_net`) and therefore fee. Financial summary and dataviz show gross, fee and net. |
 | Admin UI | A single "Gerenciar pagamento" modal, opened from a `$` button on the participants grid and from the participant detail page. |
@@ -341,8 +341,30 @@ queue after 15 failures.
 
 ### 5.4 Refund
 
-1. Admin clicks **Reembolsar** in the modal: full by default, optional partial
-   amount and reason. Confirmation dialog.
+**What is given back is `asaas_net`, not `amount`.** The participant paid the
+fees and keeps paying them; refunds are rare and Positiv does not fund the
+ones that happen.
+
+That is not a preference, it is the only shape that costs Positiv nothing.
+Call the gross the participant paid `G`, the transaction fee `T`, the
+anticipation fee `A`, and what Positiv received `N = G − T − A`:
+
+- Refunding `G` — a *full* refund to Asaas — debits `G` and returns `T`.
+  Positiv ends at `−A`: anticipation is never returned, in any scenario, and
+  this project has anticipation always on.
+- Refunding `N` — a *partial* refund to Asaas — debits `N` and returns
+  nothing. Positiv ends at zero. The participant is out `T + A`.
+
+Asaas' own rules, from the research: the transaction fee comes back on a full
+refund and not on a partial one; compensation and notification fees never come
+back; the anticipation fee never comes back. PIX can be refunded within 90
+days, a card within 365 — both far outside the 30-day registration window, so
+neither deadline is reachable in practice. A PIX refund needs the money to be
+available in the account and answers 400 when it is not. POS-532 confirms all
+of this against the sandbox.
+
+1. Admin clicks **Reembolsar** in the modal: `asaas_net` by default, optional
+   smaller amount and reason. Confirmation dialog.
 2. Guarded UPDATE: `refund_requested_at = now()` where `status = 'paid'` and
    `refund_requested_at IS NULL` → no row = already in progress, toast.
 3. `POST /v3/payments/{id}/refund { value?, description }` — or

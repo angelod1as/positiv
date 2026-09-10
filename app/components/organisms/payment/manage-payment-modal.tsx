@@ -412,6 +412,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                 <TableHead>{manage.columns.kind}</TableHead>
                 <TableHead>{manage.columns.method}</TableHead>
                 <TableHead>{manage.columns.amount}</TableHead>
+                <TableHead>{manage.columns.fees}</TableHead>
                 <TableHead>{manage.columns.date}</TableHead>
                 <TableHead>{manage.columns.actions}</TableHead>
               </TableRow>
@@ -433,14 +434,20 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       ? manage.methods[payment.method]
                       : manage.noMethod}
                   </TableCell>
+                  {/* Two columns because they are two different people's
+                      money. "Valor" is Positiv's: what was agreed while the
+                      charge is open, and what actually landed once Asaas
+                      reports it. "Taxas" is what the participant paid on top,
+                      and it does not exist until they pick a method. */}
                   <TableCell className="whitespace-nowrap">
-                    {/* Até a pessoa escolher PIX ou cartão não existe valor
-                        final, mas existe o que a admin mandou cobrar. Mostrar
-                        "—" ali escondia justamente o número que ela quer
-                        conferir. */}
-                    {payment.amount === null
-                      ? manage.baseWithFees(formatCurrency(payment.base_amount))
-                      : formatCurrency(payment.amount)}
+                    {formatCurrency(
+                      payment.asaas_net ?? payment.amount ?? payment.base_amount,
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground whitespace-nowrap">
+                    {payment.amount !== null && payment.asaas_net !== null
+                      ? formatCurrency(payment.amount - payment.asaas_net)
+                      : manage.noAmount}
                   </TableCell>
                   <TableCell>
                     {formatDateTime(payment.paid_at, "numeric").date ??

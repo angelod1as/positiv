@@ -633,21 +633,59 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
     ).toBeInTheDocument()
   })
 
-  it("shows the base amount of a charge nobody has chosen an option for", () => {
+  it("shows what Positiv is owed on a charge nobody has chosen an option for", () => {
     render(
       <ManagePaymentModal {...baseProps} payments={[sentOn]} active={sentOn} />,
     )
 
     const row = screen.getByRole("row", { name: /Aguardando escolha/ })
-    expect(within(row).getByText("R$ 220,00 + taxas")).toBeInTheDocument()
+    expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
+    // No option picked means no method and so no fee yet.
+    expect(within(row).getAllByText("—").length).toBeGreaterThan(0)
   })
 
-  it("shows what was actually paid once there is a number", () => {
+  it("splits what Positiv kept from what the fees took", () => {
+    const paidByCard = payment({
+      id: "paid-card",
+      kind: "asaas",
+      status: "paid",
+      method: "credit_card",
+      installment_count: 3,
+      base_amount: 22000,
+      amount: 23454,
+      asaas_net: 21900,
+    })
+
+    render(<ManagePaymentModal {...baseProps} payments={[paidByCard]} />)
+
+    const row = screen.getByRole("row", { name: /Pago/ })
+    // What landed in the account, and what the participant paid on top of it.
+    expect(within(row).getByText("R$ 219,00")).toBeInTheDocument()
+    expect(within(row).getByText("R$ 15,54")).toBeInTheDocument()
+  })
+
+  it("charges no fee to a payment that never went through Asaas", () => {
     render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
 
     const row = screen.getByRole("row", { name: /Pago/ })
     expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
-    expect(within(row).queryByText(/taxas/)).not.toBeInTheDocument()
+    expect(within(row).getAllByText("—").length).toBeGreaterThan(0)
+  })
+
+  it("names the fee column", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    expect(
+      screen.getByRole("columnheader", { name: "Taxas" }),
+    ).toBeInTheDocument()
+  })
+
+  it("never writes the fees into the amount column", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[sentOn]} active={sentOn} />,
+    )
+
+    expect(screen.queryByText(/\+ taxas/)).not.toBeInTheDocument()
   })
 
   it("fills the amount field in Brazilian decimals", () => {
