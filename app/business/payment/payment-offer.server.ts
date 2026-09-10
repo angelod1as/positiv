@@ -14,10 +14,12 @@ const OFFER_VALID_DAYS = 7
 
 const SETTLED_PAYMENT_STATUSES = ["paid", "partially_refunded"] as const
 
-// The funnel steps a charge is allowed to advance. Anything further along --
-// sent_rules, finalised -- is left where it is: a charge sent late is not a
-// reason to walk somebody back up the process.
-const ADVANCEABLE_STATUSES = ["pending", "talking"] as const
+// The two funnel steps that come after the money. A charge sent late is not a
+// reason to walk somebody back up the process, so those are left where they
+// are and everything else advances -- including the stalls, "Pensar melhor"
+// and "Nao Respondeu", which happen during the conversation and so before the
+// payment, whatever the order the enum happens to declare them in.
+const POST_PAYMENT_STATUSES = ["sent_rules", "finalised"] as const
 
 export const createPaymentOfferSchema = zod.object({
   eventParticipantId: zod.string().uuid(),
@@ -137,7 +139,7 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
           .updateTable("event_participants")
           .set({ application_status: "sent_payment_data" })
           .where("id", "=", values.eventParticipantId)
-          .where("application_status", "in", [...ADVANCEABLE_STATUSES])
+          .where("application_status", "not in", [...POST_PAYMENT_STATUSES])
           .execute()
 
         return { replaced, payment }

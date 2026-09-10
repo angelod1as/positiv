@@ -33,7 +33,7 @@ the webhook token is compared timing-safe and is mandatory.
 | Methods | PIX and credit card, up to 6 installments. No boleto (payer-side refund form, D+1, auto-cancel). |
 | Fees | The participant pays every fee. `events.ticket_price` is what Positiv nets; the payment page shows the gross for each option. Anticipation is always on and priced in. |
 | Checkout | Positiv page picks the option; Asaas hosted `invoiceUrl` takes the money. No card data touches Positiv. |
-| Trigger | "Enviar cobrança" in the payment modal → a payment row is created and the payment-link email goes out. Nothing in the participant funnel opens a charge; the button moves `application_status` to `sent_payment_data` as a courtesy, never backwards. Admin can copy a WhatsApp message with the link. Participant also sees a "Pagar" call to action on the dashboard. |
+| Trigger | "Enviar cobrança" in the payment modal → a payment row is created and the payment-link email goes out. Nothing in the participant funnel opens a charge; the button moves `application_status` to `sent_payment_data` as a courtesy, never backwards — `sent_rules` and `finalised` come after the money and are left alone. Admin can copy a WhatsApp message with the link. Participant also sees a "Pagar" call to action on the dashboard. |
 | Data | New table `payments` in integer cents is the only truth. `event_participants.has_paid` and `.payment` are backfilled into it and dropped. `events.ticket_price` becomes integer cents. Money columns carry no `_cents` suffix — every money column in the schema is cents. |
 | Manual payments | Only for money that did not go through Asaas (transfer, cash, partial courtesy). Discounts are a custom base amount at send time, not a manual payment. |
 | History | At most one active charge per participant; any number of historical rows. A participant's paid total is a sum, so a second charge after a paid one needs no special code. |
@@ -244,9 +244,12 @@ a payment link. Where the money stands is a separate question, answered by
    - in one transaction: refuse if anything is already paid; cancel any active
      row (`pending`/`awaiting_payment` → `cancelled`); insert `kind='asaas',
      status='pending', base_amount, due_at = now() + 7 days, created_by =
-     admin`; and move `application_status` to `sent_payment_data` **only from
-     `pending` or `talking`**, so a late charge never walks a finalised
-     participant back up the funnel.
+     admin`; and move `application_status` to `sent_payment_data` **unless it
+     is `sent_rules` or `finalised`**, the two steps that come after the
+     money, so a late charge never walks a participant back up the funnel.
+     The stalls — "Pensar melhor" and "Não Respondeu" — happen during the
+     conversation and so before the payment, whatever order the enum happens
+     to declare them in; a charge sent from one of those does move the step.
    - after commit: if the cancelled row had an Asaas charge, `DELETE
      /v3/payments/{id}` (failure → `logger.error`, row stays cancelled; the
      charge is unpaid and will just go overdue on Asaas).

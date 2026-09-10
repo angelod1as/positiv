@@ -153,22 +153,31 @@ describe("createPaymentOffer", () => {
     expect(payment.base_amount).toBe(11000)
   })
 
-  it("moves the funnel forward from talking", async () => {
-    await createPaymentOffer({ eventParticipantId: participantId })
+  it.each(["pending", "talking", "think_better", "no_response"])(
+    "moves the funnel forward from %s",
+    async (from) => {
+      const participant = await makeParticipant({ application_status: from })
 
-    expect(await statusOf(participantId)).toBe("sent_payment_data")
-  })
+      await createPaymentOffer({ eventParticipantId: participant })
 
-  it("leaves a funnel step past it alone", async () => {
-    const finalised = await makeParticipant({
-      application_status: "finalised",
-    })
+      expect(await statusOf(participant)).toBe("sent_payment_data")
+    },
+  )
 
-    await createPaymentOffer({ eventParticipantId: finalised })
+  // sent_rules and finalised are the two steps that come after the money.
+  // Everything else -- including the stalls, "Pensar melhor" and "Nao
+  // Respondeu" -- happens during the conversation, before it.
+  it.each(["sent_rules", "finalised"])(
+    "leaves %s alone, since it comes after the payment",
+    async (from) => {
+      const participant = await makeParticipant({ application_status: from })
 
-    expect(await statusOf(finalised)).toBe("finalised")
-    expect(await paymentsFor(finalised)).toHaveLength(1)
-  })
+      await createPaymentOffer({ eventParticipantId: participant })
+
+      expect(await statusOf(participant)).toBe(from)
+      expect(await paymentsFor(participant)).toHaveLength(1)
+    },
+  )
 
   it("opens nothing for a social or staff spot", async () => {
     const social = await makeParticipant({ spot_type: "social" })
