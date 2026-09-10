@@ -2,6 +2,7 @@ import { applySchema } from "composable-functions"
 import { participantCopy } from "~/copy/participant"
 import { dateToString } from "~/lib/helpers/date-to-string"
 import { applyToEventInputSchema, userContextSchema } from "../common"
+import { findValidInvite, markInviteUsed } from "./event-invite.server"
 import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
 
@@ -29,7 +30,15 @@ export const applyToEvent = applySchema(
     throw new Error(participantCopy.application.eventNotFound)
   }
 
-  if (event.event_status === "Registration Closed") {
+  // A closed event still lets in whoever holds an invite for it. The invite is
+  // read against the signed-in profile, so the link is worthless to anybody
+  // else who is handed it.
+  const invite =
+    event.event_status === "Registration Closed"
+      ? await findValidInvite(eventId, profileId)
+      : undefined
+
+  if (event.event_status === "Registration Closed" && !invite) {
     throw new Error(participantCopy.application.registrationClosed)
   }
 
@@ -52,6 +61,8 @@ export const applyToEvent = applySchema(
   if (error) {
     throw new Error(participantCopy.application.upsertFailed)
   }
+
+  if (invite) await markInviteUsed(eventId, profileId)
 
   let emailSent = false
 
