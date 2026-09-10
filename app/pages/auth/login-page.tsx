@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from "react"
-import { redirect, useNavigate } from "react-router"
+import { redirect, useNavigate, useSearchParams } from "react-router"
 import { toast } from "sonner"
 import { getContext } from "~/business/auth/auth.server"
 import type { SignInResult } from "~/business/auth/sign-in.server"
@@ -21,6 +21,7 @@ import {
 import { loginCopy } from "~/copy/auth"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { safeRedirect } from "~/lib/helpers/safe-redirect"
 import paths from "~/lib/paths"
 import { cn } from "~/lib/utils"
 import type { Route } from "./+types/login-page"
@@ -42,7 +43,11 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   )
 
   if (currentUser) {
-    const targetPath = currentProfile?.is_admin ? ADMIN_DASHBOARD : DASHBOARD
+    const home = currentProfile?.is_admin ? ADMIN_DASHBOARD : DASHBOARD
+    const targetPath = safeRedirect(
+      new URL(request.url).searchParams.get("redirect_to"),
+      home,
+    )
     return redirect(targetPath, {
       headers: supabaseHeaders,
     })
@@ -61,18 +66,27 @@ const LoginPage = ({}: Route.ComponentProps) => {
   // redraw a form nobody is looking at any more.
   const destination = useRef(DASHBOARD)
 
-  const commit = useCallback(async (answers: Answers): Promise<SignInResult> => {
-    const response = await fetch(LOGIN_COMMIT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(answers),
-    })
+  // Where the person was going when the guard turned them away. Carried to the
+  // sign-in, which is the one that decides whether it is a place we will send
+  // anybody.
+  const [searchParams] = useSearchParams()
+  const redirectTo = searchParams.get("redirect_to")
 
-    const result = (await response.json()) as SignInResult
-    if (result.ok) destination.current = result.redirectTo
+  const commit = useCallback(
+    async (answers: Answers): Promise<SignInResult> => {
+      const response = await fetch(LOGIN_COMMIT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(redirectTo ? { ...answers, redirectTo } : answers),
+      })
 
-    return result
-  }, [])
+      const result = (await response.json()) as SignInResult
+      if (result.ok) destination.current = result.redirectTo
+
+      return result
+    },
+    [redirectTo],
+  )
 
   const flow = useMemo(
     () => buildSingleScreenFlow(questions, commit),

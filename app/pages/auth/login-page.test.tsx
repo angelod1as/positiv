@@ -42,9 +42,9 @@ import LoginPage, { loader } from "./login-page"
 
 type PageProps = Parameters<typeof LoginPage>[0]
 
-const renderPage = () =>
+const renderPage = (entry = "/entrar") =>
   render(
-    <MemoryRouter initialEntries={["/entrar"]}>
+    <MemoryRouter initialEntries={[entry]}>
       <LoginPage {...({} as PageProps)} />
     </MemoryRouter>,
   )
@@ -247,6 +247,21 @@ describe("Login Page Component", () => {
     expect(JSON.parse(String(init.body))).toEqual({
       email: "pessoa@exemplo.com",
       password: "segredo123",
+    })
+  })
+
+  it("sends the redirect target it was opened with", async () => {
+    const user = userEvent.setup()
+    const fetch = answers({ ok: true, redirectTo: "/convite/abc" })
+    renderPage("/entrar?redirect_to=%2Fconvite%2Fabc")
+
+    await answer(user)
+    await submit(user)
+
+    await waitFor(() => expect(fetch).toHaveBeenCalled())
+    const [, init] = fetch.mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      redirectTo: "/convite/abc",
     })
   })
 
