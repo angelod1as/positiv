@@ -16,9 +16,35 @@
 
 ---
 
-## What the admin needs to know, and where the copy says it
+## What is given back, and why it is not the gross
 
-Asaas' rules, from the research: a PIX payment can be refunded within 90 days and the fee comes back; a card payment within 365 days, and a *partial* refund does not return the original fee. The modal says so before the confirmation, because the difference is money and the admin is the one deciding.
+**A refund gives back `asaas_net`, never `amount`.** The participant paid the
+fees and keeps paying them. See design §5.4 for the full arithmetic; the short
+version is that this is the only shape that costs Positiv nothing:
+
+- Refunding the gross is a *full* refund to Asaas. Asaas debits the gross and
+  returns the transaction fee, but never the anticipation fee — and this
+  project has anticipation always on. Positiv ends out of pocket by the
+  anticipation on every refund.
+- Refunding `asaas_net` is a *partial* refund to Asaas. It debits `asaas_net`
+  and returns nothing. Positiv ends at zero and the participant absorbs the
+  fees they chose to pay.
+
+Asaas' rules behind that, verified against their docs in POS-528: the
+transaction fee comes back on a full refund and not on a partial one;
+compensation and notification fees never come back; the anticipation fee never
+comes back, in any scenario. PIX can be refunded within 90 days and a card
+within 365 — both far outside the 30-day registration window, so no deadline
+is reachable in practice and the copy does not need to mention them. A PIX
+refund needs the money available in the account and answers 400 when it is
+not.
+
+**Open question this plan must settle before Task 1.** `refundAsaasInstallment`
+refunds a card plan as a whole, which is a *full* refund by definition — so a
+3x plan cannot be given back at `asaas_net` through that endpoint. Either each
+installment is refunded individually through `POST /payments/{id}/refund`, or a
+card plan is accepted as the one case where Positiv eats the anticipation.
+Decide it with Angelo, on the sandbox, before writing the code.
 
 ---
 
@@ -247,8 +273,12 @@ export const requestRefund = applySchema(requestRefundSchema)(async (values) => 
     throw new Error(paymentsCopy.errors.notRefundable)
   }
 
-  const amount = values.amount ?? null
-  if (amount !== null && (!Number.isFinite(amount) || amount <= 0 || amount > payment.amount)) {
+  // What Positiv actually received, which is both the default and the ceiling.
+  // Never `amount`: refunding the gross is a full refund to Asaas and costs
+  // Positiv the anticipation fee.
+  const refundable = payment.asaas_net ?? payment.amount
+  const amount = values.amount ?? refundable
+  if (!Number.isFinite(amount) || amount <= 0 || amount > refundable) {
     throw new Error(paymentsCopy.errors.refundTooLarge)
   }
 
@@ -310,9 +340,10 @@ and under `refund`:
 ```ts
     requested: "Reembolso solicitado.",
     inProgress: "Reembolso solicitado — aguardando o Asaas confirmar.",
-    windowPix: "Pix: o Asaas devolve na hora e a taxa volta para a Positiv.",
-    windowCard:
-      "Cartão: aparece na fatura em até 10 dias úteis. Num reembolso parcial a taxa original não volta.",
+    feesStay:
+      "As taxas não voltam: a pessoa recebe o que a Positiv recebeu, sem as taxas que ela pagou.",
+    windowPix: "Pix: o Asaas devolve na hora.",
+    windowCard: "Cartão: aparece na fatura da pessoa em até 10 dias úteis.",
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -363,7 +394,26 @@ git commit -m "feat(payments): ask Asaas for a refund, once"
     expect(formData.get("amount")).toBe("50")
   })
 
-  it("warns about the card fee on a card payment", async () => {
+  it("says the fees stay with the participant", async () => {
+    render(<ManagePaymentModal {...baseProps} payments={[paidAsaasPayment]} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
+    expect(screen.getByText(/As taxas não voltam/i)).toBeInTheDocument()
+  })
+
+  it("defaults the amount to what Positiv received, not to the gross", async () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[{ ...paidAsaasPayment, amount: 23454, asaas_net: 21900 }]}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
+    expect(screen.getByLabelText("Valor devolvido")).toHaveValue("219,00")
+  })
+
+  it("warns how long a card takes to show the money back", async () => {
     render(
       <ManagePaymentModal
         {...baseProps}
