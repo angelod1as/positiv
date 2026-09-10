@@ -95,6 +95,12 @@ export const paymentsCopy = {
     success: "Cobrança cancelada.",
   },
   errors: {
+    participantNotFound: "Participante não encontrada.",
+    freeSpot: "Vagas sociais e de produção não têm cobrança.",
+    noAmount: "Defina um valor: este evento não tem preço cadastrado.",
+    alreadyPaid:
+      "Esta pessoa já pagou. Cancele ou reembolse antes de cobrar de novo.",
+    notResendable: "Não há cobrança em aberto para reenviar.",
     amountRequired: "Informe um valor de zero ou mais.",
     activeChargeExists:
       "Existe uma cobrança em aberto. Cancele-a antes de registrar um pagamento manual.",
