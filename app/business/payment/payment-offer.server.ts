@@ -6,6 +6,7 @@ import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { deleteAsaasPayment } from "./asaas-client.server"
+import { cancelPayment } from "./payment-cancel.server"
 import { sendPaymentLinkEmail } from "./payment-emails.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
@@ -180,3 +181,27 @@ export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
     return { emailSent: email.success }
   },
 )
+
+/**
+ * Calls off whatever charge a participant has open, if any. Answers with
+ * whether there was one, because the callers -- a withdrawal, for one -- want
+ * to go through either way.
+ */
+export async function cancelActivePayment({
+  eventParticipantId,
+}: {
+  eventParticipantId: string
+}): Promise<{ cancelled: boolean }> {
+  const active = await kyselyDb
+    .selectFrom("payments")
+    .select("id")
+    .where("event_participant_id", "=", eventParticipantId)
+    .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
+    .executeTakeFirst()
+
+  if (!active) return { cancelled: false }
+
+  const result = await cancelPayment({ paymentId: active.id })
+
+  return { cancelled: result.success }
+}
