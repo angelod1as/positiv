@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   cleanupAfterTest,
   setupIntegrationTest,
@@ -9,6 +9,19 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
+const { deleteAsaasPayment, logger } = vi.hoisted(() => ({
+  deleteAsaasPayment: vi.fn(),
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
+vi.mock("./asaas-client.server", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("./asaas-client.server")>()
+  return { ...original, deleteAsaasPayment }
+})
+
+vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+
 import { cancelPayment } from "./payment-cancel.server"
 import { markManualRefunded } from "./payment-refund.server"
 
@@ -241,6 +254,9 @@ describe("cancelPayment", () => {
 
   beforeEach(async () => {
     tracker.clear()
+    deleteAsaasPayment.mockReset()
+    deleteAsaasPayment.mockResolvedValue(true)
+    logger.error.mockClear()
     const testId = Date.now()
     const event = await createTestEvent(tracker, kysely, {
       title: "Cancel Event",
@@ -324,5 +340,74 @@ describe("cancelPayment", () => {
         paid_at: null,
       }),
     ).resolves.toBeDefined()
+  })
+
+  it("deletes the charge on Asaas as well", async () => {
+    const asaasPaymentId = `pay_cancel_${Date.now()}`
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      status: "awaiting_payment",
+      amount: 20000,
+      method: "pix",
+      paid_at: null,
+      asaas_payment_id: asaasPaymentId,
+    })
+
+    await cancelPayment({ paymentId: payment.id })
+
+    expect(deleteAsaasPayment).toHaveBeenCalledWith(asaasPaymentId)
+  })
+
+  it("calls Asaas for nothing when the charge never reached it", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      status: "pending",
+      amount: null,
+      method: null,
+      paid_at: null,
+    })
+
+    await cancelPayment({ paymentId: payment.id })
+
+    expect(deleteAsaasPayment).not.toHaveBeenCalled()
+  })
+
+  it("stays cancelled when Asaas refuses the delete", async () => {
+    deleteAsaasPayment.mockRejectedValue(new Error("asaas is down"))
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      status: "awaiting_payment",
+      amount: 20000,
+      method: "pix",
+      paid_at: null,
+      asaas_payment_id: `pay_cancel_fail_${Date.now()}`,
+    })
+
+    const result = await cancelPayment({ paymentId: payment.id })
+
+    expect(result.success).toBe(true)
+    const after = await kysely
+      .selectFrom("payments")
+      .select("status")
+      .where("id", "=", payment.id)
+      .executeTakeFirstOrThrow()
+    expect(after.status).toBe("cancelled")
+    expect(logger.error).toHaveBeenCalled()
+  })
+
+  it("does not reach Asaas for a charge it refused to cancel", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      amount: 20000,
+      base_amount: 20000,
+      asaas_payment_id: null,
+    })
+
+    await cancelPayment({ paymentId: payment.id })
+
+    expect(deleteAsaasPayment).not.toHaveBeenCalled()
   })
 })
