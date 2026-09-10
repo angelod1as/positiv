@@ -164,7 +164,11 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
                     {modal.inviteLine(displayName(invite), statusOf(invite))}
                   </span>
                   <div className="flex items-center gap-2">
-                    <Input readOnly value={inviteUrl(invite.token)} />
+                    <Input
+                      readOnly
+                      data-testid="invite-link"
+                      value={inviteUrl(invite.token)}
+                    />
                     <Button
                       variant="outline"
                       size="sm"

@@ -9,7 +9,10 @@ test.describe('Authentication Required Routes', () => {
     const protectedRoutes = [
       '/dashboard',
       '/admin',
-      '/conta'
+      '/conta',
+      // An invite arrives by message and is opened signed out more often than
+      // not. Losing it at the door is the failure this guards against.
+      '/convite/whatever-token'
     ]
     
     for (const route of protectedRoutes) {
