@@ -44,7 +44,13 @@ export async function createInvite({
       .selectAll()
       .where("event_id", "=", eventId)
       .where("profile_id", "=", profileId)
-      .executeTakeFirstOrThrow()
+      .executeTakeFirst()
+
+    // The table has a second unique index, on the token. A collision there is
+    // not a thing 24 random bytes do, but if it ever happened there would be no
+    // winning row to read back -- and inventing one here would answer a real
+    // problem with a lie about which constraint fired.
+    if (!winner) throw error
 
     return winner.revoked_at ? await reissue(winner.id) : winner
   }
