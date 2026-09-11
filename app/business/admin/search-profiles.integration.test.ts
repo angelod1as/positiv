@@ -121,6 +121,22 @@ describe("searching for someone to invite", () => {
     expect(results).toHaveLength(5)
   })
 
+  it("reads a wildcard in the term as a literal character", async () => {
+    await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `wild-${marker}@test.com`,
+      full_name: `Wild % Card ${marker}`,
+    })
+
+    // Without escaping, "%" is the wildcard that matches everything between
+    // the two halves, and the admin gets rows that share no such name.
+    const literal = await searchProfilesForInvite(eventId, `Wild % Card ${marker}`)
+    expect(literal).toHaveLength(1)
+
+    const decoy = await searchProfilesForInvite(eventId, `Jo%${marker}`)
+    expect(decoy).toEqual([])
+  })
+
   it("returns nothing for a blank term", async () => {
     const results = await searchProfilesForInvite(eventId, "   ")
 

@@ -15,7 +15,12 @@ export async function searchProfilesForInvite(eventId: string, term: string) {
   const trimmed = term.trim()
   if (!trimmed) return []
 
-  const like = `%${trimmed}%`
+  // `%` and `_` are wildcards to ILIKE, so a name carrying one would quietly
+  // match far more than the admin typed. Backslash is Postgres's default
+  // escape character, and it has to be escaped first or it would escape the
+  // escapes.
+  const literal = trimmed.replace(/[\\%_]/g, (match) => `\\${match}`)
+  const like = `%${literal}%`
   const digits = trimmed.replace(/\D/g, "")
 
   // Only a term that is a phone number searches phone numbers. Sifting the

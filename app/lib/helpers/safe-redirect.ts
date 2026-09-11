@@ -17,7 +17,11 @@ export function safeRedirect(
   if (!trimmed.startsWith("/")) return fallback
   if (trimmed.startsWith("//")) return fallback
   if (trimmed.startsWith("/\\")) return fallback
-  if (/[\n\r\t]/.test(trimmed)) return fallback
+  // Every control character, not only the whitespace a browser would strip: a
+  // NUL or a C1 byte has no business in a path, and a header that carries one
+  // is a header somebody built by hand.
+  // eslint-disable-next-line no-control-regex
+  if (/[\u0000-\u001f\u007f-\u009f]/.test(trimmed)) return fallback
 
   return trimmed
 }
