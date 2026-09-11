@@ -141,7 +141,15 @@ describe("createPaymentOffer", () => {
       method: null,
       created_by: adminId,
     })
-    expect(new Date(payment.due_at).getTime()).toBeGreaterThan(Date.now())
+    // Seven days, per §2 -- not merely "in the future". The expiry cron and
+    // the deadline in the email both read this.
+    const sevenDays = 7 * 24 * 60 * 60 * 1000
+    expect(new Date(payment.due_at).getTime()).toBeGreaterThan(
+      Date.now() + sevenDays - 60_000,
+    )
+    expect(new Date(payment.due_at).getTime()).toBeLessThan(
+      Date.now() + sevenDays + 60_000,
+    )
     expect(sendPaymentLinkEmail).toHaveBeenCalledTimes(1)
   })
 
@@ -387,8 +395,17 @@ describe("createPaymentOffer", () => {
       ["pending", "awaiting_payment"].includes(row.status),
     )
     expect(active).toHaveLength(1)
+
+    // Two rows, both written: they queued. If the lock ever stopped holding
+    // them apart they would race, the loser would die on the partial unique
+    // index, and only one row would exist. `allSettled` alone proves nothing
+    // here -- applySchema turns every throw into a refusal, so both are
+    // always "fulfilled".
+    expect(rows).toHaveLength(2)
     expect(
-      results.every((result) => result.status === "fulfilled"),
+      results.every(
+        (result) => result.status === "fulfilled" && result.value.success,
+      ),
     ).toBe(true)
   })
 

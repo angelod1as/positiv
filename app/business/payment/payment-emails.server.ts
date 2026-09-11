@@ -48,15 +48,21 @@ export async function sendPaymentLinkEmail({
     return { success: false }
   }
 
-  const options = buildPaymentOptions(payment.base_amount, await getAsaasFees())
-
+  // Everything between here and the send is inside the guard, because the
+  // charge is already committed by the time we reach it: a failure has to read
+  // as an email that did not go out, not as the whole operation failing with
+  // an internal sentence in the admin's face. Two things in here can raise.
   // The template refuses a url it cannot vouch for, and APP_URL is not a
   // required variable -- without one appOrigin answers nothing and the url
-  // arrives schemeless. The charge is already committed by the time we get
-  // here, so that has to read as an email that did not go out, not as the
-  // whole operation failing with an internal sentence in the admin's face.
+  // arrives schemeless. And the gross-up refuses a fee table that leaves
+  // nothing to receive, which a mistyped anticipation rate produces.
   let mail: { html: string; text: string }
   try {
+    const options = buildPaymentOptions(
+      payment.base_amount,
+      await getAsaasFees(),
+    )
+
     mail = await formatPaymentLinkMail({
       displayName: payment.social_name || payment.full_name || "",
       eventTitle: payment.event_title ?? "",

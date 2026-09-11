@@ -183,4 +183,33 @@ describe("ViewEventParticipant action", () => {
       errors: [{ message: "Só é possível cancelar uma cobrança em aberto." }],
     })
   })
+
+  // The one thing the modal reads to tell an admin the charge exists but the
+  // participant was not told. Mocked away everywhere else, so without this the
+  // mapping could be wrong and the whole warning silently dead.
+  it("carries emailSent back from the offer", async () => {
+    vi.mocked(createPaymentOffer).mockResolvedValue({
+      success: true,
+      data: { created: true, paymentId: "pay-1", emailSent: false },
+    } as never)
+
+    const result = await runAction({
+      intent: "payment-offer",
+      eventParticipantId: "participant-1",
+      baseAmount: "220",
+    })
+
+    expect(result).toMatchObject({ success: true, emailSent: false })
+  })
+
+  it("says nothing about email for an intent that sends none", async () => {
+    const result = await runAction({
+      intent: "payment-cancel",
+      paymentId: "payment-1",
+    })
+
+    expect(result).toMatchObject({ success: true })
+    expect((result as { emailSent?: boolean }).emailSent).toBeUndefined()
+  })
+
 })

@@ -216,6 +216,14 @@ const ChargeSection: FC<ChargeSectionProps> = ({
     setCopied(true)
   }
 
+  // The copied notice belongs to the charge it was copied from. Opening
+  // another one leaves the message on the clipboard stale, so the notice goes
+  // with it rather than sitting under a link that no longer works.
+  const sendOffer = () => {
+    setCopied(false)
+    onOffer(amount)
+  }
+
   const sendLabel = active ? charge.resendAmount : charge.send
 
   return (
@@ -255,7 +263,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
                 <AlertDialogCancel>{charge.replaceKeep}</AlertDialogCancel>
                 <AlertDialogAction
                   disabled={isSubmitting}
-                  onClick={() => onOffer(amount)}
+                  onClick={() => sendOffer()}
                 >
                   {charge.replaceSubmit}
                 </AlertDialogAction>
@@ -263,7 +271,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
             </AlertDialogContent>
           </AlertDialog>
         ) : (
-          <Button disabled={isSubmitting} onClick={() => onOffer(amount)}>
+          <Button disabled={isSubmitting} onClick={() => sendOffer()}>
             {sendLabel}
           </Button>
         )}
@@ -277,7 +285,11 @@ const ChargeSection: FC<ChargeSectionProps> = ({
             >
               {charge.resendEmail}
             </Button>
-            <Button variant="outline" onClick={copyMessage}>
+            <Button
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={copyMessage}
+            >
               {charge.copyMessage}
             </Button>
           </>

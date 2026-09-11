@@ -94,7 +94,9 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
     }
 
     if (!ENV.PAYMENTS_ENABLED) {
-      return { created: false as const, emailSent: false, reason: "disabled" }
+      // No emailSent here on purpose: nothing was created, so there is no
+      // charge for the modal to warn about not having announced.
+      return { created: false as const, reason: "disabled" }
     }
 
     // Two different failures, and the admin gets to know which. Telling
@@ -197,7 +199,7 @@ export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
     // table. With the switch off nothing may talk to Asaas, so this path is
     // gated like the one that opens a charge.
     if (!ENV.PAYMENTS_ENABLED) {
-      return { emailSent: false, reason: "disabled" }
+      return { reason: "disabled" }
     }
 
     const payment = await kyselyDb
