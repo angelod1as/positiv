@@ -65,6 +65,7 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
   const [results, setResults] = useState<InviteSearchResult[]>([])
   const [currentInvites, setCurrentInvites] = useState(invites)
   const [isBusy, setIsBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => setCurrentInvites(invites), [invites])
 
@@ -76,36 +77,78 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
       return
     }
 
+    // A request already in flight belongs to a term the admin has since edited.
+    // Without this, a slow answer to "ma" lands after the answer to "maria" and
+    // replaces the list being read with an older one.
+    const controller = new AbortController()
+
     const timer = setTimeout(async () => {
-      const response = await fetch(ADMIN_EVENT_INVITE_COMMIT, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ intent: "search", eventId, term }),
-      })
-      const data = (await response.json()) as {
-        ok: boolean
-        results?: InviteSearchResult[]
+      try {
+        const response = await fetch(ADMIN_EVENT_INVITE_COMMIT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ intent: "search", eventId, term }),
+          signal: controller.signal,
+        })
+        const data = (await response.json()) as {
+          ok: boolean
+          results?: InviteSearchResult[]
+        }
+        if (!controller.signal.aborted) setResults(data.results ?? [])
+      } catch {
+        // An aborted search was replaced by a newer one, and a failed search
+        // has nothing to say that the empty list does not.
+        if (!controller.signal.aborted) setResults([])
       }
-      setResults(data.results ?? [])
     }, SEARCH_DEBOUNCE_MS)
 
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      controller.abort()
+    }
   }, [term, eventId])
 
-  const send = useCallback(async (body: Record<string, unknown>) => {
-    setIsBusy(true)
-    const response = await fetch(ADMIN_EVENT_INVITE_COMMIT, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    })
-    const data = (await response.json()) as {
-      ok: boolean
-      invites?: EventInviteRow[]
-    }
-    if (data.invites) setCurrentInvites(data.invites)
-    setIsBusy(false)
-  }, [])
+  const send = useCallback(
+    async (body: Record<string, unknown>, failure: string) => {
+      setIsBusy(true)
+      setError(null)
+
+      try {
+        const response = await fetch(ADMIN_EVENT_INVITE_COMMIT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        })
+
+        // A refusal arrives as a status, not as an exception. Read without
+        // this, a 422 from a stale event id left the admin looking at a list
+        // that simply never changed.
+        if (!response.ok) {
+          setError(failure)
+          return
+        }
+
+        const data = (await response.json()) as {
+          ok: boolean
+          invites?: EventInviteRow[]
+        }
+
+        if (!data.ok) {
+          setError(failure)
+          return
+        }
+
+        if (data.invites) setCurrentInvites(data.invites)
+      } catch {
+        setError(failure)
+      } finally {
+        // In the finally, so a connection that drops mid-request does not leave
+        // every button in the modal disabled until it is closed and reopened.
+        setIsBusy(false)
+      }
+    },
+    [],
+  )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -126,6 +169,12 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
           <p className="text-sm text-muted-foreground">{modal.searchHelp}</p>
         </div>
 
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+
         {term.trim() && results.length === 0 ? (
           <p className="text-sm">{modal.noResults}</p>
         ) : null}
@@ -141,7 +190,10 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
                 size="sm"
                 disabled={Boolean(person.is_participant) || isBusy}
                 onClick={() =>
-                  send({ intent: "create", eventId, profileId: person.id })
+                  send(
+                    { intent: "create", eventId, profileId: person.id },
+                    modal.failed,
+                  )
                 }
               >
                 {person.is_participant
@@ -183,7 +235,14 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
                       size="sm"
                       disabled={Boolean(invite.revoked_at) || isBusy}
                       onClick={() =>
-                        send({ intent: "revoke", eventId, inviteId: invite.id })
+                        send(
+                          {
+                            intent: "revoke",
+                            eventId,
+                            inviteId: invite.id,
+                          },
+                          modal.revokeFailed,
+                        )
                       }
                     >
                       {modal.revoke}

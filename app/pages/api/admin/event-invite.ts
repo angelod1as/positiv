@@ -61,7 +61,7 @@ export async function action({ request, params }: ActionFunctionArgs) {
   }
 
   if (values.intent === "revoke") {
-    await revokeInvite(values.inviteId)
+    await revokeInvite(values.eventId, values.inviteId)
   }
 
   const invites = await listInvitesForEvent(values.eventId)

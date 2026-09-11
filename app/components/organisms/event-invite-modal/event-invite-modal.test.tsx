@@ -164,6 +164,80 @@ describe("the invite modal", () => {
     expect(screen.getByRole("button", { name: modal.revoke })).toBeDisabled()
   })
 
+  it("says so when the invite could not be generated", async () => {
+    const user = userEvent.setup()
+    fetchSpy.mockResolvedValue(found([person()]))
+    renderModal()
+
+    await user.type(screen.getByLabelText(modal.searchLabel), "maria")
+    await screen.findByText("Maria Silva")
+
+    fetchSpy.mockResolvedValue(
+      Response.json({ ok: false }, { status: 422 }) as Response,
+    )
+
+    await user.click(screen.getByRole("button", { name: modal.invite }))
+
+    expect(await screen.findByText(modal.failed)).toBeVisible()
+  })
+
+  it("says so when the revocation could not go through", async () => {
+    const user = userEvent.setup()
+    renderModal({ invites: [invite()] })
+
+    fetchSpy.mockResolvedValue(
+      Response.json({ ok: false }, { status: 500 }) as Response,
+    )
+
+    await user.click(screen.getByRole("button", { name: modal.revoke }))
+
+    expect(await screen.findByText(modal.revokeFailed)).toBeVisible()
+  })
+
+  it("does not leave the buttons disabled when the request never lands", async () => {
+    const user = userEvent.setup()
+    renderModal({ invites: [invite()] })
+
+    fetchSpy.mockRejectedValue(new Error("offline"))
+
+    await user.click(screen.getByRole("button", { name: modal.revoke }))
+
+    expect(await screen.findByText(modal.revokeFailed)).toBeVisible()
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: modal.revoke })).toBeEnabled(),
+    )
+  })
+
+  it("ignores a search answer that arrives after a newer one", async () => {
+    const user = userEvent.setup()
+
+    // The slow answer belongs to the earlier keystrokes; the quick one to what
+    // the admin is actually looking at.
+    let resolveSlow: (value: Response) => void = () => {}
+    const slow = new Promise<Response>((resolve) => {
+      resolveSlow = resolve
+    })
+
+    fetchSpy.mockReturnValueOnce(slow)
+    fetchSpy.mockResolvedValue(found([person({ id: "p2", full_name: "Nova Busca" })]))
+
+    renderModal()
+
+    const field = screen.getByLabelText(modal.searchLabel)
+    await user.type(field, "ma")
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    await user.type(field, "ria")
+
+    expect(await screen.findByText("Nova Busca")).toBeVisible()
+
+    resolveSlow(found([person({ id: "p1", full_name: "Busca Antiga" })]))
+
+    await waitFor(() =>
+      expect(screen.queryByText("Busca Antiga")).not.toBeInTheDocument(),
+    )
+    expect(screen.getByText("Nova Busca")).toBeVisible()
+  })
+
   it("lists who is already registered", () => {
     renderModal({
       participants: [{ id: "p9", full_name: "Já Dentro", social_name: null }],

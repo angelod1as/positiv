@@ -72,7 +72,7 @@ describe("the invite endpoint", () => {
       inviteId: "i1",
     })
 
-    expect(revokeInvite).toHaveBeenCalledWith("i1")
+    expect(revokeInvite).toHaveBeenCalledWith("e1", "i1")
     expect(response.status).toBe(200)
   })
 

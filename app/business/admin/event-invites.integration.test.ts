@@ -62,7 +62,7 @@ describe("event invites, from the admin's side", () => {
 
   it("brings a revoked invite back to life rather than colliding with it", async () => {
     const first = await createInvite({ eventId, profileId })
-    await revokeInvite(first.id)
+    await revokeInvite(eventId, first.id)
 
     const second = await createInvite({ eventId, profileId })
 
@@ -74,10 +74,35 @@ describe("event invites, from the admin's side", () => {
   it("revokes an invite", async () => {
     const invite = await createInvite({ eventId, profileId })
 
-    await revokeInvite(invite.id)
+    await revokeInvite(eventId, invite.id)
 
     const [listed] = await listInvitesForEvent(eventId)
     expect(listed.revoked_at).not.toBeNull()
+  })
+
+  it("refuses to revoke an invite belonging to another event", async () => {
+    const invite = await createInvite({ eventId, profileId })
+
+    const otherEvent = await createTestEvent(tracker, kysely, {
+      title: "Another invite event",
+      event_status: "Registration Closed",
+      time_event_start: new Date(Date.now() + 86400000).toISOString(),
+    })
+
+    await revokeInvite(otherEvent.id, invite.id)
+
+    const [listed] = await listInvitesForEvent(eventId)
+    expect(listed.revoked_at).toBeNull()
+  })
+
+  it("survives two people asking for the same invite at once", async () => {
+    const [first, second] = await Promise.all([
+      createInvite({ eventId, profileId }),
+      createInvite({ eventId, profileId }),
+    ])
+
+    expect(second.id).toBe(first.id)
+    expect(second.token).toBe(first.token)
   })
 
   it("lists the event's invites with the invited person's name", async () => {
