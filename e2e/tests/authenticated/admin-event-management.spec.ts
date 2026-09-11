@@ -120,14 +120,19 @@ test.describe('Admin Event Management', () => {
     await expect(page.getByTestId('invite-link')).toHaveValue(/\/convite\/.+/, {
       timeout: 15000,
     })
-    await expect(page.getByText(modal.status.created, { exact: false })).toBeVisible()
+    // Scoped to the invite row: "Convite gerado" on the search button below
+    // also contains the word, and a bare getByText matches both.
+    await expect(page.getByTestId('invite-status')).toContainText(
+      modal.status.created,
+    )
 
     // And calling it off is what keeps a link that went to the wrong person
     // from staying valid.
     await page.getByRole('button', { name: modal.revoke }).click()
-    await expect(
-      page.getByText(modal.status.revoked, { exact: false }),
-    ).toBeVisible({ timeout: 15000 })
+    await expect(page.getByTestId('invite-status')).toContainText(
+      modal.status.revoked,
+      { timeout: 15000 },
+    )
 
     await page.keyboard.press('Escape')
 
