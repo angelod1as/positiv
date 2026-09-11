@@ -13,6 +13,13 @@ vi.mock("~/lib/supabase/db.server", () => ({
   },
 }))
 
+// A closed event asks the database whether the applicant holds an invite, and
+// these cases are about the applicant who does not.
+vi.mock("./event-invite.server", () => ({
+  findValidInvite: vi.fn().mockResolvedValue(undefined),
+  markInviteUsed: vi.fn(),
+}))
+
 import { sendApplicationMail } from "./send-application-mail.server"
 import { db } from "~/lib/supabase/db.server"
 

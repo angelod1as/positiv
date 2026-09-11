@@ -9,12 +9,19 @@ test.describe('Authentication Required Routes', () => {
     const protectedRoutes = [
       '/dashboard',
       '/admin',
-      '/conta'
+      '/conta',
+      // An invite arrives by message and is opened signed out more often than
+      // not. Losing it at the door is the failure this guards against.
+      '/convite/whatever-token'
     ]
     
     for (const route of protectedRoutes) {
       await page.goto(route)
-      await expect(page).toHaveURL('/entrar')
+      // The login now carries where the visitor was going, so it can put them
+      // back after they sign in.
+      await expect(page).toHaveURL(
+        new RegExp(`/entrar\\?redirect_to=${encodeURIComponent(route)}`),
+      )
     }
   })
 })

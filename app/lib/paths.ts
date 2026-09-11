@@ -10,6 +10,7 @@ const REGISTRATION_ERROR = `${LOGON}/erro`
 const LOGON_CALLBACK = "/auth/confirm"
 const LOGON_CONFIRM = `${LOGON}/confirm`
 const CODE_OF_CONDUCT = `/codigo-de-conduta`
+const INVITE = (token: string) => `/convite/${token}`
 const FEEDBACK = `/feedback`
 const FEEDBACK_COMMIT = "/api/feedback"
 
@@ -64,6 +65,7 @@ const ADMIN_EVENT_COMMIT = "/api/admin/event"
 const ADMIN_EVENT_STATUS_COMMIT = (id: string) =>
   `/api/admin/event-status/${id}`
 const ADMIN_EVENT_PARTICIPANT_COMMIT = "/api/admin/event-participant"
+const ADMIN_EVENT_INVITE_COMMIT = "/api/admin/event-invite"
 const ADMIN_EVENT_DEMOGRAPHICS_COMMIT = (id: string) =>
   `/api/admin/event-demographics/${id}`
 const ADMIN_EVENT_VIEW_PARTICIPANT = (eventId: string, participantId: string) =>
@@ -76,6 +78,7 @@ const paths = {
   root: {
     HOME,
     CODE_OF_CONDUCT,
+    INVITE,
     FEEDBACK,
     FEEDBACK_COMMIT,
   },
@@ -94,6 +97,7 @@ const paths = {
       ADMIN_EVENT_COMMIT,
       ADMIN_EVENT_STATUS_COMMIT,
       ADMIN_EVENT_PARTICIPANT_COMMIT,
+      ADMIN_EVENT_INVITE_COMMIT,
       ADMIN_EVENT_DEMOGRAPHICS_COMMIT,
       ADMIN_EVENT_VIEW_PARTICIPANT,
     },

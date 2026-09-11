@@ -50,12 +50,37 @@ export const getNextEvents: GetNextEvents = composable(
             .end()
             .as("is_applied"),
         )
+        // A closed event this person was invited into still shows them the
+        // application. Read here rather than from a cookie, so the link opened
+        // on a phone and the form filled on a desktop are the same person.
+        .select((eb) =>
+          eb
+            .case()
+            .when(
+              eb.exists(
+                eb
+                  .selectFrom("event_invites")
+                  .select("event_invites.id")
+                  .whereRef("event_invites.event_id", "=", "events.id")
+                  .where("event_invites.profile_id", "=", profileId)
+                  .where("event_invites.revoked_at", "is", null),
+              ),
+            )
+            .then(true)
+            .else(false)
+            .end()
+            .as("is_invited"),
+        )
         .execute()
 
       return data
     }
 
-    const data = await baseQuery.selectAll("events").execute()
+    // Nobody to hold an invite, so the shape is filled in rather than queried.
+    const data = await baseQuery
+      .selectAll("events")
+      .select((eb) => eb.val<boolean>(false).as("is_invited"))
+      .execute()
     return data
   },
 )

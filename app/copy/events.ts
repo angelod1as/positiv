@@ -531,3 +531,19 @@ export const applicationConfirmationCopy = {
   emailOnTheWay: `Enquanto isso, um e-mail com os detalhes do evento está a caminho — ele pode demorar alguns minutos para chegar, e vale olhar a caixa de spam.`,
   backToDashboard: "Voltar para o painel",
 } as const
+
+export const inviteCopy = {
+  invalid: {
+    title: "Convite inválido",
+    body: `Esse convite não existe mais ou foi cancelado.
+
+Se você acha que é engano, fale com a organização.`,
+  },
+  wrongPerson: {
+    title: "Esse convite não é seu",
+    body: `Esse convite foi feito para outra pessoa e só funciona na conta dela.
+
+Se ele era para você, entre com a conta que recebeu o convite.`,
+  },
+  backToDashboard: "Voltar para o painel",
+} as const

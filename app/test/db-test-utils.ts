@@ -59,6 +59,7 @@ export async function cleanupTestData(
   const tableOrder = [
     "payments",
     "event_participants",
+    "event_invites",
     "event_demographics_history",
     "events",
     "user_roles",
@@ -80,6 +81,12 @@ export async function cleanupTestData(
         case "event_participants":
           await kysely
             .deleteFrom("event_participants")
+            .where("id", "in", ids)
+            .execute()
+          break
+        case "event_invites":
+          await kysely
+            .deleteFrom("event_invites")
             .where("id", "in", ids)
             .execute()
           break
@@ -187,6 +194,26 @@ export async function createTestEventParticipant(
   
   tracker.track("event_participants", participant.id)
   return participant
+}
+
+export async function createTestEventInvite(
+  tracker: TestDataTracker,
+  kysely: Kysely<Database>,
+  data: {
+    event_id: string
+    profile_id: string
+    token: string
+    [key: string]: unknown
+  }
+): Promise<Selectable<DatabaseTypes["public"]["Tables"]["event_invites"]["Row"]>> {
+  const invite = await kysely
+    .insertInto("event_invites")
+    .values(data as Insertable<DatabaseTypes["public"]["Tables"]["event_invites"]["Row"]>)
+    .returningAll()
+    .executeTakeFirstOrThrow()
+
+  tracker.track("event_invites", invite.id)
+  return invite
 }
 
 interface TestPaymentData {

@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test'
 import path from 'path'
 import { AdminDashboardPage } from '../../pages/admin/AdminDashboardPage'
 import { EventManagementPage } from '../../pages/admin/EventManagementPage'
+import { adminInvitesCopy } from '../../../app/copy/admin/invites'
 import { runEventTitle } from '../../utils/run-context'
+import { readSetupUser } from '../../utils/setup-user'
 
 test.describe('Admin Event Management', () => {
   test.use({ storageState: path.resolve(import.meta.dirname, '../../.auth/admin.json') })
@@ -101,6 +103,39 @@ test.describe('Admin Event Management', () => {
     await eventManagement.changeStatus('Scheduled')
     await eventManagement.changeStatus('Registration Open')
     await eventManagement.changeStatus('Registration Closed')
+
+    // The event is closed and we are already standing on its page, which is
+    // where an invite is generated. Searched by e-mail: it is the one thing
+    // about the setup user no other suite can be using at the same time.
+    const { modal } = adminInvitesCopy
+    const invitee = await readSetupUser()
+
+    await page.getByRole('button', { name: adminInvitesCopy.trigger }).click()
+    await page.getByLabel(modal.searchLabel).fill(invitee.email)
+
+    const inviteButton = page.getByRole('button', { name: modal.invite, exact: true })
+    await expect(inviteButton).toBeEnabled({ timeout: 15000 })
+    await inviteButton.click()
+
+    await expect(page.getByTestId('invite-link')).toHaveValue(/\/convite\/.+/, {
+      timeout: 15000,
+    })
+    // Scoped to the invite row: "Convite gerado" on the search button below
+    // also contains the word, and a bare getByText matches both.
+    await expect(page.getByTestId('invite-status')).toContainText(
+      modal.status.created,
+    )
+
+    // And calling it off is what keeps a link that went to the wrong person
+    // from staying valid.
+    await page.getByRole('button', { name: modal.revoke }).click()
+    await expect(page.getByTestId('invite-status')).toContainText(
+      modal.status.revoked,
+      { timeout: 15000 },
+    )
+
+    await page.keyboard.press('Escape')
+
     await eventManagement.changeStatus('Completed')
     
     // Verify final status

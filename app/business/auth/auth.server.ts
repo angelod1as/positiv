@@ -153,7 +153,13 @@ export const getUserContext = async (
 ): Promise<z.infer<typeof userContextSchema>> => {
   const { currentUser, ...context } = await getContext(request, params)
   if (!currentUser) {
-    throw await redirectWithError(LOGIN, errorsCopy.auth.loginRequired)
+    // Where they were going, so the login can put them back. A private link
+    // opened while signed out used to end at the dashboard with no explanation.
+    const url = new URL(request.url)
+    const destination = `${url.pathname}${url.search}`
+    const login = `${LOGIN}?redirect_to=${encodeURIComponent(destination)}`
+
+    throw await redirectWithError(login, errorsCopy.auth.loginRequired)
   }
   return { ...context, currentUser }
 }

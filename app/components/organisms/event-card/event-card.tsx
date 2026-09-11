@@ -40,6 +40,7 @@ export const EventCard: FC<EventCardProps> = ({
     ticket_price,
     title,
     is_applied,
+    is_invited,
   } = event
 
   return (
@@ -79,6 +80,7 @@ export const EventCard: FC<EventCardProps> = ({
           event_status={event_status}
           googleLink={googleLink}
           is_applied={is_applied}
+          is_invited={is_invited}
           dataTestId={undefined}
           isAdmin={isAdmin}
           directApply={directApply}

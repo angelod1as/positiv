@@ -12,6 +12,7 @@ import {
   ensureTestUserProfileExists
 } from '../../utils/application-helpers'
 import { ensureMinimumOpenEvents, ensureClosedTestEvent } from '../../utils/test-event-helpers'
+import { createClosedEventSoon, seedInvite } from '../../utils/invite-helpers'
 
 test.describe('POS-191: Application Management Tests', () => {
   let myApplicationsPage: MyApplicationsPage
@@ -203,6 +204,55 @@ test.describe('POS-191: Application Management Tests', () => {
       // Closed events might not be shown on the main events page, which is fine
       expect(true).toBe(true)
     }
+
+    // An invite is the one way past a closed event, and it is worth proving
+    // here rather than in a session of its own: the same person, the same
+    // browser, one event later.
+    //
+    // ensureClosedTestEvent above dates its event in the past, so the dashboard
+    // — which lists the twelve nearest events still to come — never shows it.
+    // This one has to start in the future to be on the page at all.
+    const invitedEvent = await createClosedEventSoon(`Invite ${Date.now()}`)
+
+    await page.goto('/dashboard')
+    await page.waitForLoadState('networkidle')
+
+    const invitedCard = page
+      .locator('[data-testid^="event-card"]')
+      .filter({ hasText: invitedEvent.title })
+    await expect(invitedCard).toBeVisible({ timeout: 30000 })
+    // The card says it twice: once as the status badge, once as the dead
+    // button. The button is the one this is about.
+    await expect(
+      invitedCard.getByRole('button', { name: 'Candidaturas encerradas' }),
+    ).toBeDisabled()
+
+    const token = await seedInvite(invitedEvent.id, profileId)
+    await page.goto(`/convite/${token}`)
+
+    await expect(page).toHaveURL(
+      new RegExp(`/dashboard/${invitedEvent.id}/regras`),
+      { timeout: 30000 },
+    )
+
+    // And the card that refused a moment ago now offers the application. It is
+    // clicked rather than merely looked at: the event page cannot see a closed
+    // event through RLS, so a card pointing there would bounce the invited
+    // person straight back here.
+    await page.goto('/dashboard')
+    await page.waitForLoadState('networkidle')
+
+    const invitedApply = page
+      .locator('[data-testid^="event-card"]')
+      .filter({ hasText: invitedEvent.title })
+      .getByRole('link', { name: 'Me candidatar' })
+    await expect(invitedApply).toBeVisible({ timeout: 30000 })
+
+    await invitedApply.click()
+    await expect(page).toHaveURL(
+      new RegExp(`/dashboard/${invitedEvent.id}/regras`),
+      { timeout: 30000 },
+    )
   })
 
   test('POS-477: Can cancel application after registrations close', async ({ page: _page }) => {

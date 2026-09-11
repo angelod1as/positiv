@@ -46,6 +46,7 @@ export type Event = Omit<
 > & {
   event_status: EventStatus
   is_applied?: boolean
+  is_invited?: boolean
 }
 
 /** Participant information */

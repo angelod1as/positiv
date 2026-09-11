@@ -163,6 +163,30 @@ describe("EventCardFooter", () => {
       expect(closedButton).toBeInTheDocument()
     })
 
+    it("offers the application to somebody holding an invite", () => {
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          event_status="Registration Closed"
+          googleLink=""
+          is_applied={false}
+          is_invited={true}
+          dataTestId="test-footer"
+          isAdmin={false}
+        />,
+      )
+
+      // The rules page, not the event page: the latter cannot see a closed
+      // event through RLS and would send the invited person back.
+      expect(screen.getByText(/Me candidatar/i)).toHaveAttribute(
+        "href",
+        "/dashboard/test-event-id/regras",
+      )
+      expect(
+        screen.queryByText(/Candidaturas encerradas/i),
+      ).not.toBeInTheDocument()
+    })
+
     it("should work without isAdmin prop (backward compatibility)", () => {
       render(
         <EventCardFooter

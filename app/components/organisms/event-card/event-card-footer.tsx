@@ -15,7 +15,7 @@ import type { EventStatus } from "~types/database/entities.types"
 const {
   dash: {
     // participant: { DOWNLOAD_CALENDAR },
-    events: { EVENT_VIEW },
+    events: { EVENT_RULES, EVENT_VIEW },
   },
   admin: {
     events: { ADMIN_VIEW_EVENT },
@@ -24,6 +24,8 @@ const {
 
 type EventCardFooterProps = {
   is_applied: boolean | undefined
+  /** Whether this person holds an invite into this event, closed or not. */
+  is_invited?: boolean
   event_status: EventStatus
   googleLink: string | undefined
   eventId: string
@@ -38,6 +40,7 @@ type EventCardFooterProps = {
 }
 export const EventCardFooter: FC<EventCardFooterProps> = ({
   is_applied,
+  is_invited,
   event_status,
   // googleLink,
   eventId,
@@ -155,10 +158,31 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
     )
   }
 
-  if (isClosed) {
+  // A closed event still opens for whoever holds an invite to it. What the
+  // server does with the application is decided against the database; this only
+  // spares the invited person a dead button.
+  if (isClosed && !is_invited) {
     return (
       <Button data-testid={dataTestId} disabled={true}>
         {eventCardCopy.closed}
+      </Button>
+    )
+  }
+
+  // Straight to the rules rather than through EVENT_VIEW, which every other
+  // card uses. That page looks the event up through the RLS client, and
+  // combined_authenticated_select_events shows a regular user only the open and
+  // scheduled ones -- a closed event is invisible there, so the invited person
+  // would be bounced back to the dashboard by the very link that was meant to
+  // let them in.
+  if (isClosed && is_invited) {
+    return (
+      <Button
+        data-testid={dataTestId}
+        to={EVENT_RULES(eventId)}
+        linkProps={{ prefetch: prefetchStrategy }}
+      >
+        {eventCardCopy.apply}
       </Button>
     )
   }

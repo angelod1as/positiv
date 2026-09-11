@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { logger } from "~/lib/logger/logger.server"
 import type { DBClient } from "~/types/utils/utils.types"
-import { getContext, registerUser } from "./auth.server"
+import { getContext, getUserContext, registerUser } from "./auth.server"
 
 vi.mock("varlock/env", () => ({
   ENV: { IS_PROD_IN_DEV: false },
@@ -861,5 +861,59 @@ describe("registerUser", () => {
     expect(mockWhereUserId).toHaveBeenCalledWith("user_id", "is not", null)
     expect(mockSignUp).toHaveBeenCalled()
     expect(result).toEqual({ ok: true })
+  })
+})
+
+describe("getUserContext", () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+  })
+
+  const signedOutSupabase = () => ({
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: null },
+        error: { message: "Auth session missing!" },
+      }),
+      signOut: vi.fn().mockResolvedValue({ error: null }),
+    },
+  })
+
+  it("names where the signed-out visitor was going", async () => {
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: signedOutSupabase() as unknown as DBClient,
+      headers: new Headers(),
+    })
+
+    const { redirectWithError } = await import("remix-toast")
+
+    await expect(
+      getUserContext(new Request("http://localhost:5173/convite/abc"), {}),
+    ).rejects.toThrow()
+
+    expect(redirectWithError).toHaveBeenCalledWith(
+      "/entrar?redirect_to=%2Fconvite%2Fabc",
+      expect.any(String),
+    )
+  })
+
+  it("keeps the query string of the page it was turned away from", async () => {
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: signedOutSupabase() as unknown as DBClient,
+      headers: new Headers(),
+    })
+
+    const { redirectWithError } = await import("remix-toast")
+
+    await expect(
+      getUserContext(new Request("http://localhost:5173/dashboard/1/regras?q=2"), {}),
+    ).rejects.toThrow()
+
+    expect(redirectWithError).toHaveBeenCalledWith(
+      "/entrar?redirect_to=%2Fdashboard%2F1%2Fregras%3Fq%3D2",
+      expect.any(String),
+    )
   })
 })

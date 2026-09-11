@@ -44,6 +44,7 @@ export default [
     "/api/admin/event-participant",
     "pages/api/admin/event-participant.ts",
   ),
+  route("/api/admin/event-invite", "pages/api/admin/event-invite.ts"),
   route(
     "/api/admin/event-demographics/:id",
     "pages/api/admin/event-demographics.ts",
@@ -59,6 +60,7 @@ export default [
   // PUBLIC
   index("pages/homepage/homepage.tsx"),
   route("/auth/confirm", "pages/auth/confirm.tsx"),
+  route("/convite/:token", "pages/invite/invite-page.tsx"),
   route("/newsletter/unsubscribe", "pages/newsletter/unsubscribe.tsx"),
   layout("pages/public/layout.tsx", [
     route("/codigo-de-conduta", "pages/public/code-of-conduct.tsx"),

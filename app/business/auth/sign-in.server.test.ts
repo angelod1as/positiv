@@ -81,6 +81,28 @@ describe("signIn", () => {
     expect(result).toEqual({ ok: true, redirectTo: ADMIN_DASHBOARD })
   })
 
+  it("sends the person where they were going", async () => {
+    const { supabase } = supabaseThat()
+
+    const result = await signIn({
+      answers: { ...answers, redirectTo: "/convite/abc" },
+      context: contextWith(supabase),
+    })
+
+    expect(result).toEqual({ ok: true, redirectTo: "/convite/abc" })
+  })
+
+  it("ignores a redirect that points off-site", async () => {
+    const { supabase } = supabaseThat()
+
+    const result = await signIn({
+      answers: { ...answers, redirectTo: "https://evil.example" },
+      context: contextWith(supabase),
+    })
+
+    expect(result).toEqual({ ok: true, redirectTo: DASHBOARD })
+  })
+
   it("says the credentials were refused without blaming a field", async () => {
     const { supabase } = supabaseThat({
       signInResult: { data: null, error: { code: "invalid_credentials" } },
