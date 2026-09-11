@@ -226,7 +226,7 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
             <ul className="flex flex-col gap-3">
               {currentInvites.map((invite) => (
                 <li key={invite.id} className="flex flex-col gap-1">
-                  <span>
+                  <span data-testid="invite-status">
                     {modal.inviteLine(displayName(invite), statusOf(invite))}
                   </span>
                   <div className="flex items-center gap-2">
