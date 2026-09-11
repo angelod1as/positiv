@@ -217,6 +217,35 @@ describe("createPaymentOffer", () => {
     }
   })
 
+  // What the modal actually posts for an event with no price: a blank field,
+  // not an absent one.
+  it("reads a blank amount as no amount at all", async () => {
+    const free = await createTestEvent(tracker, kysely, {
+      title: "Free Event",
+      ticket_price: null,
+    })
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `test${Date.now()}-blank@example.com`,
+      full_name: "Blank",
+    })
+    const participant = await createTestEventParticipant(tracker, kysely, {
+      event_id: free.id,
+      profile_id: profile.id,
+      spot_type: "regular",
+    })
+
+    const result = await createPaymentOffer({
+      eventParticipantId: participant.id,
+      baseAmount: "",
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0]?.message).toBe(paymentsCopy.errors.noAmount)
+    }
+  })
+
   it("refuses a base amount of zero, and says why", async () => {
     const result = await createPaymentOffer({
       eventParticipantId: participantId,

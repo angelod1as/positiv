@@ -186,8 +186,13 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   onOffer,
   onResend,
 }) => {
+  // Blank when there is nothing to suggest, rather than "0,00". A zero reaches
+  // the server as a zero and is refused for being one, which tells the admin
+  // her amount is too low when the truth is that the event has no price. An
+  // empty field arrives as no amount at all, which is what happened.
+  const suggested = active?.base_amount ?? ticketPrice
   const [amount, setAmount] = useState(
-    centsToReaisText(active?.base_amount ?? ticketPrice ?? 0),
+    suggested ? centsToReaisText(suggested) : "",
   )
   const [copied, setCopied] = useState(false)
 
@@ -446,7 +451,12 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                   </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">
                     {payment.kind === "asaas" && payment.amount !== null
-                      ? formatCurrency(
+                      ? // Against asaas_net once the webhook reports it, and
+                        // against the base until then: a paid row is allowed
+                        // to exist without asaas_net, and the estimate the
+                        // participant was quoted beats showing no fee at all
+                        // on a charge that certainly had one.
+                        formatCurrency(
                           payment.amount -
                             (payment.asaas_net ?? payment.base_amount),
                         )

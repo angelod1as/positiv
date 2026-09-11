@@ -495,6 +495,40 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(lastSubmission().get("baseAmount")).toBe("150")
   })
 
+  // An event with no price has nothing to suggest, and "0,00" is not a
+  // suggestion -- it reaches the server as a zero and gets refused with the
+  // wrong reason. Blank is the honest default, and blank is what the server
+  // reads as "no amount given".
+  it.each([null, 0])(
+    "leaves the amount blank when the event prices nothing (%s)",
+    (ticketPrice) => {
+      render(<ManagePaymentModal {...baseProps} ticketPrice={ticketPrice} />)
+
+      expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("")
+    },
+  )
+
+  it("sends a blank amount when the admin adds none", async () => {
+    render(<ManagePaymentModal {...baseProps} ticketPrice={null} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    expect(lastSubmission().get("baseAmount")).toBe("")
+  })
+
+  it("still suggests the open charge's amount when the event prices nothing", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        ticketPrice={null}
+        payments={[openCharge]}
+        active={openCharge}
+      />,
+    )
+
+    expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("220,00")
+  })
+
   it("offers no charge when payments are switched off", () => {
     render(<ManagePaymentModal {...baseProps} paymentsEnabled={false} />)
 
