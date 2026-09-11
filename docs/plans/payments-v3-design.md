@@ -33,12 +33,12 @@ the webhook token is compared timing-safe and is mandatory.
 | Methods | PIX and credit card, up to 6 installments. No boleto (payer-side refund form, D+1, auto-cancel). |
 | Fees | The participant pays every fee. `events.ticket_price` is what Positiv nets; the payment page shows the gross for each option. Anticipation is always on and priced in. |
 | Checkout | Positiv page picks the option; Asaas hosted `invoiceUrl` takes the money. No card data touches Positiv. |
-| Trigger | Admin sets `application_status = sent_payment_data` → a payment row is created and the payment-link email goes out. Admin can copy a WhatsApp message with the link. Participant also sees a "Pagar" call to action on the dashboard. |
+| Trigger | "Enviar cobrança" in the payment modal → a payment row is created and the payment-link email goes out. Nothing in the participant funnel opens a charge; the button moves `application_status` to `sent_payment_data` as a courtesy, never backwards — `sent_rules` and `finalised` come after the money and are left alone. Admin can copy a WhatsApp message with the link. Participant also sees a "Pagar" call to action on the dashboard. |
 | Data | New table `payments` in integer cents is the only truth. `event_participants.has_paid` and `.payment` are backfilled into it and dropped. `events.ticket_price` becomes integer cents. Money columns carry no `_cents` suffix — every money column in the schema is cents. |
 | Manual payments | Only for money that did not go through Asaas (transfer, cash, partial courtesy). Discounts are a custom base amount at send time, not a manual payment. |
 | History | At most one active charge per participant; any number of historical rows. A participant's paid total is a sum, so a second charge after a paid one needs no special code. |
 | Validity | 7 days. Admin can resend (new charge). |
-| Refund | Button in the admin panel (full or partial) calls Asaas; the webhook finalises. Refunds done inside the Asaas dashboard sync the same way. |
+| Refund | Button in the admin panel calls Asaas; the webhook finalises. Refunds done inside the Asaas dashboard sync the same way. **A refund gives back `asaas_net`, never the gross**: the participant absorbs the fees they paid, the same way they paid them in the first place. Refunds are rare and this keeps Positiv whole — see §5.4 for the arithmetic. |
 | Emails | Positiv sends link, confirmation and refund emails. Asaas notifications are disabled per customer (each one is billed). |
 | Accounting | Every paid row records gross (`amount`), Asaas net (`asaas_net`) and therefore fee. Financial summary and dataviz show gross, fee and net. |
 | Admin UI | A single "Gerenciar pagamento" modal, opened from a `$` button on the participants grid and from the participant detail page. |
@@ -194,7 +194,7 @@ the cron is the backstop and the only thing that expires `pending`.
 
 | From | To | Where |
 |---|---|---|
-| ∅ | `pending` | `createPaymentOffer` — status change to `sent_payment_data`, "Reenviar", "Reenviar com outro valor" |
+| ∅ | `pending` | `createPaymentOffer` — "Enviar cobrança" and "Reenviar com outro valor", both in the payment modal |
 | `pending`, `awaiting_payment` | `awaiting_payment` | `pickOption` — participant confirms an option; re-pick deletes the old Asaas charge first |
 | `pending`, `awaiting_payment`, `expired` | `paid` | webhook `PAYMENT_CONFIRMED` / `PAYMENT_RECEIVED` (card: first installment) |
 | `pending`, `awaiting_payment` | `expired` | cron; webhook `PAYMENT_OVERDUE` |
@@ -219,27 +219,48 @@ row, so a redelivered webhook never sends a second email.
 
 ## 5. Flows
 
-### 5.1 Admin sends payment data
+### 5.1 Admin sends the charge
 
-1. Admin sets `application_status = sent_payment_data` — from the participant
-   detail page or the grid. In the detail page a "Valor a cobrar" input
-   (default `ticket_price`, in reais, converted to cents on submit) sits next
-   to the status. The grid uses `ticket_price`.
-2. Server (`createPaymentOffer`):
-   - `spot_type <> 'regular'` → status changes, no payment row.
-   - no `ticket_price` and no custom amount → error toast, status unchanged.
-   - in one transaction: cancel any active row (`pending`/`awaiting_payment`
-     → `cancelled`); insert `kind='asaas', status='pending', base_amount,
-     due_at = now() + 7 days, created_by = admin`.
+Opening a charge is its own act, behind its own button. Nothing in the
+participant funnel triggers it: `application_status` is a note admins keep
+about where a conversation stands, and wiring money to it meant an
+absent-minded grid edit could delete a live Asaas charge and email a stranger
+a payment link. Where the money stands is a separate question, answered by
+`event_participant_payments`.
+
+1. Admin opens the "Gerenciar pagamento" modal — from the participant detail
+   page or the `$` column in the grid — and uses its **Cobrança** section.
+   It is rendered only when `PAYMENTS_ENABLED` and the spot is `regular`; a
+   social or staff spot owes nothing and is offered no charge.
+   - Nothing open: an amount field defaulted to the event's `ticket_price` in
+     reais, and **Enviar cobrança**.
+   - Something open: the same field as **Reenviar com outro valor**, beside
+     **Reenviar email** and **Copiar mensagem**. Replacing a row that is
+     already `awaiting_payment` — the participant picked an option and an
+     Asaas charge exists — asks for confirmation first.
+2. Both buttons post `payment-offer`, and the server answers with
+   `createPaymentOffer`:
+   - no `ticket_price` and nothing typed → error in the modal, nothing written.
+   - in one transaction: refuse if anything is already paid; cancel any active
+     row (`pending`/`awaiting_payment` → `cancelled`); insert `kind='asaas',
+     status='pending', base_amount, due_at = now() + 7 days, created_by =
+     admin`; and move `application_status` to `sent_payment_data` **unless it
+     is `sent_rules` or `finalised`**, the two steps that come after the
+     money, so a late charge never walks a participant back up the funnel.
+     The stalls — "Pensar melhor" and "Não Respondeu" — happen during the
+     conversation and so before the payment, whatever order the enum happens
+     to declare them in; a charge sent from one of those does move the step.
    - after commit: if the cancelled row had an Asaas charge, `DELETE
      /v3/payments/{id}` (failure → `logger.error`, row stays cancelled; the
      charge is unpaid and will just go overdue on Asaas).
-   - send the payment-link email (failure is non-fatal, surfaced in the toast).
-   - `PAYMENTS_ENABLED=false` → status changes, no row, no email, toast says so.
-3. The "Gerenciar pagamento" modal shows the row and offers **Copiar
-   mensagem** (WhatsApp text from `app/copy/payments.ts`: link, options with
-   prices, due date), **Reenviar email**, **Reenviar com outro valor**,
-   **Cancelar cobrança**, **Registrar pagamento manual**, **Reembolsar**.
+   - send the payment-link email (failure is non-fatal, reported in the modal).
+3. **Reenviar email** posts `payment-resend`: the same link for the row that is
+   still open, no new row and no new due date.
+4. The rest of the modal is unchanged — **Cancelar cobrança**, **Registrar
+   pagamento manual**, **Reembolsar**.
+
+`PAYMENTS_ENABLED=false` hides the whole Cobrança section, so admins go on
+recording PIX transfers by hand exactly as they do today.
 
 ### 5.2 Participant pays
 
@@ -320,8 +341,30 @@ queue after 15 failures.
 
 ### 5.4 Refund
 
-1. Admin clicks **Reembolsar** in the modal: full by default, optional partial
-   amount and reason. Confirmation dialog.
+**What is given back is `asaas_net`, not `amount`.** The participant paid the
+fees and keeps paying them; refunds are rare and Positiv does not fund the
+ones that happen.
+
+That is not a preference, it is the only shape that costs Positiv nothing.
+Call the gross the participant paid `G`, the transaction fee `T`, the
+anticipation fee `A`, and what Positiv received `N = G − T − A`:
+
+- Refunding `G` — a *full* refund to Asaas — debits `G` and returns `T`.
+  Positiv ends at `−A`: anticipation is never returned, in any scenario, and
+  this project has anticipation always on.
+- Refunding `N` — a *partial* refund to Asaas — debits `N` and returns
+  nothing. Positiv ends at zero. The participant is out `T + A`.
+
+Asaas' own rules, from the research: the transaction fee comes back on a full
+refund and not on a partial one; compensation and notification fees never come
+back; the anticipation fee never comes back. PIX can be refunded within 90
+days, a card within 365 — both far outside the 30-day registration window, so
+neither deadline is reachable in practice. A PIX refund needs the money to be
+available in the account and answers 400 when it is not. POS-532 confirms all
+of this against the sandbox.
+
+1. Admin clicks **Reembolsar** in the modal: `asaas_net` by default, optional
+   smaller amount and reason. Confirmation dialog.
 2. Guarded UPDATE: `refund_requested_at = now()` where `status = 'paid'` and
    `refund_requested_at IS NULL` → no row = already in progress, toast.
 3. `POST /v3/payments/{id}/refund { value?, description }` — or
@@ -397,8 +440,12 @@ G = (base + f) / (1 − p − r·(n+1)/2)
   of known values; the sandbox calibration step compares `asaas_net` from a
   real confirmed charge with `base` and adjusts the anticipation term if
   Asaas applies it differently (e.g. on net rather than gross). The formula
-  lives in one file; the fee snapshot used for a row is stored in `note` as
-  JSON for later audit.
+  lives in one file; the fee snapshot is stored on the row, as JSON in `note`,
+  at the moment the price becomes binding — `pickOption` (PR 10), which is
+  also where `amount` is first written. Not before: while a charge is only
+  `pending` nothing has been quoted that anyone can be held to, the link email
+  prices every option afresh at send time, and a snapshot recorded at that
+  point would name rates that may not be the ones actually charged.
 
 Displayed to the participant: `PIX — R$ 221,99` · `Cartão 1x — R$ 228,50` ·
 `Cartão 3x de R$ 79,10 (total R$ 237,30)` … (illustrative).
@@ -437,10 +484,10 @@ Routes added to `app/routes.ts`: `/pagamento/:paymentId`,
 `/api/asaas/webhook`. Paths in `app/lib/paths.ts`.
 
 Admin intents added to `view-event-participant.tsx` and `view-event-page.tsx`
-actions (all behind `getAdminContext`): `payment-resend`, `payment-resend-amount`,
-`payment-cancel`, `payment-manual`, `payment-manual-refund`, `payment-refund`.
-`update-event-participant` gains `charge_amount` (optional, cents) used only
-when the status becomes `sent_payment_data`.
+actions (all behind `getAdminContext`, answered by `handlePaymentIntent`):
+`payment-offer`, `payment-resend`, `payment-cancel`, `payment-manual`,
+`payment-manual-refund`, `payment-refund`. `update-event-participant` is not
+one of them: no participant form or grid cell opens a charge.
 
 Env (`.env.schema`):
 
@@ -507,8 +554,8 @@ dependency: money in cents, one `payments` table holding the whole history,
 can reach production before the next event on its own — every PR merges to
 `main` and its migration runs there through the production workflow. **Phase
 B (PRs 7–13)** adds Asaas behind `PAYMENTS_ENABLED`; while it is off, the
-status change to `sent_payment_data` is just a status change and admins keep
-registering PIX transfers manually, exactly as today.
+modal offers no charge at all and admins keep registering PIX transfers
+manually, exactly as today.
 
 | # | PR | Contents |
 |---|---|---|
@@ -523,7 +570,7 @@ registering PIX transfers manually, exactly as today.
 | **B** | | |
 | 7 | Asaas client + env | `.env.schema`, client, fees, CPF validator, `scripts/asaas/register-webhook.ts` |
 | 8 | Pricing | `pricing.ts`, option builder, copy for labels |
-| 9 | Payment offer | status → row, link email, WhatsApp message copy, resend, resend with amount, cancel (Asaas delete), withdraw cancels |
+| 9 | Payment offer | "Enviar cobrança" → row, link email, WhatsApp message copy, resend, resend with amount, cancel (Asaas delete), withdraw cancels |
 | 10 | Payment page | `/pagamento`, CPF gate, `pickOption`, dashboard CTA, thank-you page |
 | 11 | Webhook | endpoint, inbox, transitions, confirmation email, Telegram alerts |
 | 12 | Refund | modal action, Asaas call, refund email |

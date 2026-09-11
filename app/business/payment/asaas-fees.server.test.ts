@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   FALLBACK_FEES,
   getAsaasFees,
+  getAsaasFeesIfEnabled,
   resetAsaasFeesCache,
 } from "./asaas-fees.server"
 
@@ -201,5 +202,38 @@ describe("getAsaasFees", () => {
     fetchMock.mockResolvedValueOnce(feesResponse("nope", 500))
 
     expect((await getAsaasFees()).anticipation.detachedMonthlyRate).toBe(0.009)
+  })
+})
+
+describe("getAsaasFeesIfEnabled", () => {
+  beforeEach(() => {
+    resetAsaasFeesCache()
+    fetchMock.mockClear()
+  })
+
+  afterEach(() => {
+    delete env.PAYMENTS_ENABLED
+  })
+
+  it("does not ask Asaas anything while payments are switched off", async () => {
+    env.PAYMENTS_ENABLED = false
+
+    await expect(getAsaasFeesIfEnabled()).resolves.toBeNull()
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it("answers with the snapshot once payments are on", async () => {
+    env.PAYMENTS_ENABLED = true
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify(feesBody), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    )
+
+    await expect(getAsaasFeesIfEnabled()).resolves.toMatchObject({
+      pix: expect.any(Object),
+    })
+    expect(fetchMock).toHaveBeenCalled()
   })
 })

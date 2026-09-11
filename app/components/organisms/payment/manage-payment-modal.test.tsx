@@ -1,5 +1,6 @@
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { FALLBACK_FEES } from "~/business/payment/asaas-fees.server"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import { render, screen, within } from "~/test/test-utils"
 import { ManagePaymentModal } from "./manage-payment-modal"
@@ -28,6 +29,7 @@ const payment = (overrides: Partial<PaymentRow>): PaymentRow =>
     amount: 22000,
     paid_at: "2026-08-20T12:00:00Z",
     due_at: "2026-08-20T12:00:00Z",
+    created_at: "2026-08-20T12:00:00Z",
     refund_amount: null,
     refunded_at: null,
     asaas_net: null,
@@ -50,7 +52,24 @@ const baseProps = {
     active_payment_id: null,
   },
   active: null as PaymentRow | null,
+  paymentsEnabled: true,
+  spotType: "regular" as const,
+  ticketPrice: 22000,
+  eventTitle: "Festa de Setembro",
+  fees: FALLBACK_FEES,
+  appOrigin: "https://www.positivparty.com",
 }
+
+const openCharge = payment({
+  id: "open-1",
+  kind: "asaas",
+  status: "pending",
+  method: null,
+  amount: null,
+  paid_at: null,
+  base_amount: 22000,
+  due_at: "2026-09-01T12:00:00Z",
+})
 
 describe("ManagePaymentModal", () => {
   beforeEach(() => {
@@ -440,5 +459,354 @@ describe("ManagePaymentModal", () => {
     expect(
       screen.getByText(/cancele-a antes de registrar um pagamento manual/i),
     ).toBeInTheDocument()
+  })
+})
+
+describe("ManagePaymentModal - the Cobrança section", () => {
+  beforeEach(() => {
+    submit.mockClear()
+    vi.mocked(navigator.clipboard.writeText).mockClear()
+    fetcherData = undefined
+    fetcherState = "idle"
+  })
+
+  const lastSubmission = () => {
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    return formData as FormData
+  }
+
+  it("sends a charge for the ticket price by default", async () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    expect(lastSubmission().get("intent")).toBe("payment-offer")
+    expect(lastSubmission().get("eventParticipantId")).toBe("ep-1")
+    expect(lastSubmission().get("baseAmount")).toBe("220,00")
+  })
+
+  it("sends the amount the admin typed instead", async () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    const amount = screen.getByLabelText("Valor a cobrar")
+    await userEvent.clear(amount)
+    await userEvent.type(amount, "150")
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    expect(lastSubmission().get("baseAmount")).toBe("150")
+  })
+
+  // An event with no price has nothing to suggest, and "0,00" is not a
+  // suggestion -- it reaches the server as a zero and gets refused with the
+  // wrong reason. Blank is the honest default, and blank is what the server
+  // reads as "no amount given".
+  it.each([null, 0])(
+    "leaves the amount blank when the event prices nothing (%s)",
+    (ticketPrice) => {
+      render(<ManagePaymentModal {...baseProps} ticketPrice={ticketPrice} />)
+
+      expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("")
+    },
+  )
+
+  it("sends a blank amount when the admin adds none", async () => {
+    render(<ManagePaymentModal {...baseProps} ticketPrice={null} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    expect(lastSubmission().get("baseAmount")).toBe("")
+  })
+
+  it("still suggests the open charge's amount when the event prices nothing", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        ticketPrice={null}
+        payments={[openCharge]}
+        active={openCharge}
+      />,
+    )
+
+    expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("220,00")
+  })
+
+  it("offers no charge when payments are switched off", () => {
+    render(<ManagePaymentModal {...baseProps} paymentsEnabled={false} />)
+
+    expect(
+      screen.queryByRole("button", { name: "Enviar cobrança" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("offers no charge for a social or staff spot", () => {
+    render(<ManagePaymentModal {...baseProps} spotType="social" />)
+
+    expect(
+      screen.queryByRole("button", { name: "Enviar cobrança" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("re-prices an open charge", async () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[openCharge]}
+        active={openCharge}
+      />,
+    )
+
+    const amount = screen.getByLabelText("Valor a cobrar")
+    await userEvent.clear(amount)
+    await userEvent.type(amount, "150")
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reenviar com outro valor" }),
+    )
+
+    expect(lastSubmission().get("intent")).toBe("payment-offer")
+    expect(lastSubmission().get("baseAmount")).toBe("150")
+  })
+
+  it("confirms before replacing a charge the participant is paying", async () => {
+    const picked = payment({
+      ...openCharge,
+      status: "awaiting_payment",
+      method: "pix",
+      amount: 22199,
+    })
+    render(
+      <ManagePaymentModal {...baseProps} payments={[picked]} active={picked} />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reenviar com outro valor" }),
+    )
+    expect(submit).not.toHaveBeenCalled()
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Substituir cobrança" }),
+    )
+    expect(lastSubmission().get("intent")).toBe("payment-offer")
+  })
+
+  it("resends the email for the open charge", async () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[openCharge]}
+        active={openCharge}
+      />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Reenviar email" }))
+
+    expect(lastSubmission().get("intent")).toBe("payment-resend")
+    expect(lastSubmission().get("paymentId")).toBe("open-1")
+  })
+
+  it("copies the WhatsApp message for the open charge", async () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[openCharge]}
+        active={openCharge}
+      />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Copiar mensagem" }),
+    )
+
+    const [copied] = vi.mocked(navigator.clipboard.writeText).mock.calls.at(
+      -1,
+    ) ?? [""]
+    expect(copied).toContain("Ana")
+    expect(copied).toContain("Festa de Setembro")
+    expect(copied).toContain(
+      "https://www.positivparty.com/pagamento/open-1",
+    )
+    expect(copied).toContain("Pix —")
+    expect(copied).toContain("01/09/2026")
+  })
+
+  it("says so when the charge opened but the email did not go out", () => {
+    fetcherData = { success: true, intent: "payment-offer", emailSent: false }
+
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/o email não saiu/i)
+  })
+
+  it("stays quiet when the email went out", () => {
+    fetcherData = { success: true, intent: "payment-offer", emailSent: true }
+
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("re-seeds the amount when the charge it was showing is gone", () => {
+    const { rerender } = render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[openCharge]}
+        active={payment({ ...openCharge, base_amount: 15000 })}
+      />,
+    )
+    expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("150,00")
+
+    // What a cancellation looks like once revalidation lands.
+    rerender(<ManagePaymentModal {...baseProps} payments={[openCharge]} active={null} />)
+
+    expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("220,00")
+  })
+
+  it("does not claim a charge was created when a resend fails", () => {
+    fetcherData = { success: true, intent: "payment-resend", emailSent: false }
+
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/a cobrança segue em aberto/i)
+    expect(screen.queryByText(/A cobrança foi criada/i)).not.toBeInTheDocument()
+  })
+
+  it("confirms a resend that went out, since nothing else on screen changes", () => {
+    fetcherData = { success: true, intent: "payment-resend", emailSent: true }
+
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.getByRole("status")).toHaveTextContent("Email reenviado.")
+  })
+
+  it("offers neither resend nor copy when nothing is open", () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(
+      screen.queryByRole("button", { name: "Reenviar email" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Copiar mensagem" }),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe("ManagePaymentModal - the table's dates and amounts", () => {
+  const sentOn = payment({
+    id: "sent-1",
+    kind: "asaas",
+    status: "pending",
+    method: null,
+    amount: null,
+    paid_at: null,
+    base_amount: 22000,
+    created_at: "2026-09-01T12:00:00Z",
+    due_at: "2026-09-08T12:00:00Z",
+  })
+
+  it("shows the day the charge was sent, with no time", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[sentOn]} active={sentOn} />,
+    )
+
+    const row = screen.getByRole("row", { name: /Aguardando escolha/ })
+    expect(within(row).getByText("01/09")).toBeInTheDocument()
+  })
+
+  it("names the payment date column for what it is", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[sentOn]} />)
+
+    expect(
+      screen.getByRole("columnheader", { name: "Data pagto" }),
+    ).toBeInTheDocument()
+  })
+
+  it("shows what Positiv is owed on a charge nobody has chosen an option for", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[sentOn]} active={sentOn} />,
+    )
+
+    const row = screen.getByRole("row", { name: /Aguardando escolha/ })
+    expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
+    // No option picked means no method and so no fee yet.
+    expect(within(row).getAllByText("—").length).toBeGreaterThan(0)
+  })
+
+  // POS-529 writes `amount` the moment the participant picks a method: the
+  // gross they will pay. `asaas_net` stays null until the webhook confirms it,
+  // so neither column may wait on it.
+  it("keeps the gross out of Positiv's column once a method is picked", () => {
+    const picked = payment({
+      ...sentOn,
+      id: "picked-1",
+      status: "awaiting_payment",
+      method: "pix",
+      amount: 22199,
+      asaas_net: null,
+    })
+
+    render(<ManagePaymentModal {...baseProps} payments={[picked]} />)
+
+    const row = screen.getByRole("row", { name: /Aguardando pagamento/ })
+    expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
+    expect(within(row).getByText("R$ 1,99")).toBeInTheDocument()
+    expect(within(row).queryByText("R$ 221,99")).not.toBeInTheDocument()
+  })
+
+  it("splits what Positiv kept from what the fees took", () => {
+    const paidByCard = payment({
+      id: "paid-card",
+      kind: "asaas",
+      status: "paid",
+      method: "credit_card",
+      installment_count: 3,
+      base_amount: 22000,
+      amount: 23454,
+      asaas_net: 21900,
+    })
+
+    render(<ManagePaymentModal {...baseProps} payments={[paidByCard]} />)
+
+    const row = screen.getByRole("row", { name: /Pago/ })
+    // What landed in the account, and what the participant paid on top of it.
+    expect(within(row).getByText("R$ 219,00")).toBeInTheDocument()
+    expect(within(row).getByText("R$ 15,54")).toBeInTheDocument()
+  })
+
+  it("charges no fee to a payment that never went through Asaas", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    const row = screen.getByRole("row", { name: /Pago/ })
+    expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
+    expect(within(row).getAllByText("—").length).toBeGreaterThan(0)
+  })
+
+  it("names the fee column", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    expect(
+      screen.getByRole("columnheader", { name: "Taxas" }),
+    ).toBeInTheDocument()
+  })
+
+  it("never writes the fees into the amount column", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[sentOn]} active={sentOn} />,
+    )
+
+    expect(screen.queryByText(/\+ taxas/)).not.toBeInTheDocument()
+  })
+
+  it("fills the amount field in Brazilian decimals", () => {
+    render(<ManagePaymentModal {...baseProps} ticketPrice={4180} />)
+
+    expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("41,80")
+  })
+
+  it("sends what the admin sees, commas and all", async () => {
+    render(<ManagePaymentModal {...baseProps} ticketPrice={4180} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect((formData as FormData).get("baseAmount")).toBe("41,80")
   })
 })

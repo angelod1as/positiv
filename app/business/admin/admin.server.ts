@@ -819,7 +819,11 @@ export const getEventParticipantBasic = composable(
         "event_participants.id",
       )
       .selectAll("event_participants")
-      .select(["events.title as event_title", "events.emoji as event_emoji"])
+      .select([
+        "events.title as event_title",
+        "events.emoji as event_emoji",
+        "events.ticket_price as event_ticket_price",
+      ])
       .select([
         sql<number>`coalesce(epp.paid_gross, 0)`.as("paid_gross"),
         sql<number>`coalesce(epp.net, 0)`.as("net"),

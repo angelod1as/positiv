@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import {
   centsToReaisInput,
+  centsToReaisText,
   formatCurrency,
   formatSignedCurrency,
   reaisToCents,
@@ -87,5 +88,25 @@ describe("centsToReaisInput", () => {
     expect(centsToReaisInput(22050)).toBe("220.5")
     expect(centsToReaisInput(0)).toBe("0")
     expect(centsToReaisInput(null)).toBe("0")
+  })
+})
+
+describe("centsToReaisText", () => {
+  it("writes cents the way a person types them into a field", () => {
+    expect(centsToReaisText(4180)).toBe("41,80")
+    expect(centsToReaisText(22000)).toBe("220,00")
+  })
+
+  // The thousands separator in pt-BR is a period, and reaisToCents reads a
+  // lone period as a decimal point. Rendering the grouping into a field an
+  // admin edits teaches it back to her, and "1.500" then means one and a half.
+  it("never groups thousands, so the field cannot teach the wrong separator", () => {
+    expect(centsToReaisText(120000)).toBe("1200,00")
+  })
+
+  it("round-trips through reaisToCents", () => {
+    for (const cents of [0, 150, 4180, 22000, 120000, 999999]) {
+      expect(reaisToCents(centsToReaisText(cents))).toBe(cents)
+    }
   })
 })

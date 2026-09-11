@@ -1,4 +1,5 @@
 import type { PaymentOption } from "~/business/payment/pricing"
+import { formatInTimeZone } from "date-fns-tz"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 
 export const paymentsCopy = {
@@ -13,6 +14,28 @@ export const paymentsCopy = {
       return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)} (total ${formatCurrency(option.total)})`
     },
   },
+  // Plain text, not Markdown: this one is pasted into WhatsApp, which renders
+  // none of it. The four-digit year is deliberate — a deadline read on a phone
+  // is the last place to save two characters.
+  whatsappMessage: (input: {
+    displayName: string
+    eventTitle: string
+    paymentUrl: string
+    dueAt: string
+    options: PaymentOption[]
+  }) =>
+    [
+      `Oi, ${input.displayName}! Aqui está o link para o pagamento da ${input.eventTitle}:`,
+      "",
+      input.paymentUrl,
+      "",
+      "Formas de pagamento:",
+      ...input.options.map(
+        (option) => `• ${paymentsCopy.options.label(option)}`,
+      ),
+      "",
+      `O link vale até ${formatInTimeZone(input.dueAt, "America/Sao_Paulo", "dd/MM/yyyy")}.`,
+    ].join("\n"),
   manage: {
     title: "Pagamentos",
     trigger: "Gerenciar pagamento",
@@ -30,7 +53,9 @@ export const paymentsCopy = {
       kind: "Origem",
       method: "Forma",
       amount: "Valor",
-      date: "Data",
+      fees: "Taxas",
+      sentAt: "Enviada em",
+      date: "Data pagto",
       actions: "Ações",
     },
     kinds: { asaas: "Asaas", manual: "Manual" },
@@ -44,6 +69,27 @@ export const paymentsCopy = {
     noAmount: "—",
     noMethod: "—",
     noDate: "—",
+  },
+  charge: {
+    title: "Cobrança",
+    amount: "Valor a cobrar",
+    amountHint:
+      "O valor que a Positiv recebe. As taxas do Asaas entram por cima, na conta de quem paga.",
+    send: "Enviar cobrança",
+    resendAmount: "Reenviar com outro valor",
+    resendEmail: "Reenviar email",
+    copyMessage: "Copiar mensagem",
+    copied: "Mensagem copiada.",
+    emailFailed:
+      "A cobrança foi criada, mas o email não saiu. Copie a mensagem e mande por outro caminho.",
+    resendFailed:
+      "O email não saiu. A cobrança segue em aberto — copie a mensagem e mande por outro caminho.",
+    resendSucceeded: "Email reenviado.",
+    replaceConfirm: "Substituir a cobrança em aberto?",
+    replaceDescription:
+      "Esta pessoa já escolheu como pagar. A cobrança atual será cancelada no Asaas e ela receberá um novo link.",
+    replaceKeep: "Manter cobrança",
+    replaceSubmit: "Substituir cobrança",
   },
   manual: {
     title: "Registrar pagamento manual",
@@ -72,6 +118,15 @@ export const paymentsCopy = {
     success: "Cobrança cancelada.",
   },
   errors: {
+    participantNotFound: "Participante não encontrade.",
+    freeSpot: "Vagas sociais e de produção não têm cobrança.",
+    noAmount: "Defina um valor: este evento não tem preço cadastrado.",
+    amountTooLow: "O valor da cobrança precisa ser maior que zero.",
+    amountUnreadable:
+      "Não consegui ler esse valor. Escreva só números, como 150,00.",
+    alreadyPaid:
+      "Esta pessoa já pagou. Cancele ou reembolse antes de cobrar de novo.",
+    notResendable: "Não há cobrança em aberto para reenviar.",
     amountRequired: "Informe um valor de zero ou mais.",
     activeChargeExists:
       "Existe uma cobrança em aberto. Cancele-a antes de registrar um pagamento manual.",

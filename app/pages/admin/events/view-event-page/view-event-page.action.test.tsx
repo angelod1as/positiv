@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getAdminContext } from "~/business/admin/admin.server"
 import { registerManualPayment } from "~/business/payment/manual-payment.server"
 import { cancelPayment } from "~/business/payment/payment-cancel.server"
+import {
+  createPaymentOffer,
+  resendPaymentOffer,
+} from "~/business/payment/payment-offer.server"
 import { markManualRefunded } from "~/business/payment/payment-refund.server"
 import { action } from "./view-event-page"
 
@@ -28,6 +32,11 @@ vi.mock("~/business/payment/payment-refund.server", () => ({
 
 vi.mock("~/business/payment/payment-cancel.server", () => ({
   cancelPayment: vi.fn(),
+}))
+
+vi.mock("~/business/payment/payment-offer.server", () => ({
+  createPaymentOffer: vi.fn(),
+  resendPaymentOffer: vi.fn(),
 }))
 
 const params = { id: "event-1" }
@@ -63,6 +72,16 @@ const INTENTS = [
     fields: { paymentId: "payment-1" },
     mutation: cancelPayment,
   },
+  {
+    intent: "payment-offer",
+    fields: { eventParticipantId: "participant-1", baseAmount: "220" },
+    mutation: createPaymentOffer,
+  },
+  {
+    intent: "payment-resend",
+    fields: { paymentId: "payment-1" },
+    mutation: resendPaymentOffer,
+  },
 ] as const
 
 describe("AdminViewEventPage action", () => {
@@ -76,6 +95,12 @@ describe("AdminViewEventPage action", () => {
     } as never)
     vi.mocked(markManualRefunded).mockResolvedValue({ success: true } as never)
     vi.mocked(cancelPayment).mockResolvedValue({ success: true } as never)
+    vi.mocked(createPaymentOffer).mockResolvedValue({
+      success: true,
+    } as never)
+    vi.mocked(resendPaymentOffer).mockResolvedValue({
+      success: true,
+    } as never)
   })
 
   describe.each(INTENTS)("$intent", ({ intent, fields, mutation }) => {
@@ -112,4 +137,33 @@ describe("AdminViewEventPage action", () => {
       expect.objectContaining({ amount: "150", createdBy: "admin-1" }),
     )
   })
+
+  // The one thing the modal reads to tell an admin the charge exists but the
+  // participant was not told. Mocked away everywhere else, so without this the
+  // mapping could be wrong and the whole warning silently dead.
+  it("carries emailSent back from the offer", async () => {
+    vi.mocked(createPaymentOffer).mockResolvedValue({
+      success: true,
+      data: { created: true, paymentId: "pay-1", emailSent: false },
+    } as never)
+
+    const result = await runAction({
+      intent: "payment-offer",
+      eventParticipantId: "participant-1",
+      baseAmount: "220",
+    })
+
+    expect(result).toMatchObject({ success: true, emailSent: false })
+  })
+
+  it("says nothing about email for an intent that sends none", async () => {
+    const result = await runAction({
+      intent: "payment-cancel",
+      paymentId: "payment-1",
+    })
+
+    expect(result).toMatchObject({ success: true })
+    expect((result as { emailSent?: boolean }).emailSent).toBeUndefined()
+  })
+
 })

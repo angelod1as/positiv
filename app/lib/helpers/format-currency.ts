@@ -48,6 +48,26 @@ export function reaisToCents(input: string | number): number {
   return Math.round(parsed * 100)
 }
 
+// Same as decimalFormatter but without the thousands separator, which is a
+// period in pt-BR -- and a period is exactly what reaisToCents reads as a
+// decimal point when no comma follows it. Rendering "1.200,00" into a field
+// an admin edits teaches the grouping, and an admin who then types "1.500"
+// for fifteen hundred reais opens a charge of one and a half.
+const plainDecimalFormatter = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+  useGrouping: false,
+})
+
+/**
+ * Cents as a person writes them into a field: `"41,80"`, `"1200,00"`. For a
+ * text input an admin reads and edits, where a period decimal and a dropped
+ * trailing zero both look like a typo. `reaisToCents` reads it straight back.
+ */
+export function centsToReaisText(cents: number | null | undefined): string {
+  return plainDecimalFormatter.format(Number(cents ?? 0) / 100)
+}
+
 /** Cents to the plain decimal string a number input shows (`"220.5"`). */
 export function centsToReaisInput(cents: number | null | undefined): string {
   return String(Number(cents ?? 0) / 100)

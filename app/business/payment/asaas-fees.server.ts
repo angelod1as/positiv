@@ -115,3 +115,13 @@ export async function getAsaasFees(): Promise<AsaasFees> {
     return withConfiguredAnticipation(FALLBACK_FEES)
   }
 }
+
+/**
+ * The snapshot the admin pages need, or nothing at all while payments are
+ * switched off. They render no prices then, and a lookup whose result nobody
+ * reads is an external dependency two hot pages do not need -- the flag is
+ * false everywhere in production today.
+ */
+export function getAsaasFeesIfEnabled(): Promise<AsaasFees | null> {
+  return ENV.PAYMENTS_ENABLED ? getAsaasFees() : Promise.resolve(null)
+}

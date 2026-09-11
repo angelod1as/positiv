@@ -58,6 +58,7 @@ const mockEventParticipant: EventParticipantWithEvent = {
   notes: "Test notes",
   referrals: "Test referrals",
   referred: "Test referred",
+  event_ticket_price: 22000,
   event_title: "Test Event",
   event_emoji: "🎉",
   is_user_applied: true,

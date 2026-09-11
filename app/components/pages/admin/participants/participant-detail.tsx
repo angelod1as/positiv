@@ -1,6 +1,7 @@
 import { useState } from "react"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import type { ParticipantPayments } from "~/business/payment/payment-totals.server"
+import type { AsaasFees } from "~/business/payment/pricing"
 import { ApprovalStatusDropdown } from "~/components/molecules/approval-status-dropdown/approval-status-dropdown"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
@@ -28,6 +29,9 @@ type ParticipantDetailProps = {
     eventId: string
   }
   payments?: ParticipantPayments
+  asaasFees?: AsaasFees | null
+  paymentsEnabled?: boolean
+  appOrigin?: string
 }
 
 export const ParticipantDetail = ({
@@ -35,6 +39,9 @@ export const ParticipantDetail = ({
   fullHistory,
   currentEvent,
   payments,
+  asaasFees,
+  paymentsEnabled = false,
+  appOrigin = "",
 }: ParticipantDetailProps) => {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const name = profile.social_name || profile.full_name
@@ -132,6 +139,12 @@ export const ParticipantDetail = ({
           payments={payments.payments}
           totals={payments.totals}
           active={payments.active}
+          paymentsEnabled={paymentsEnabled}
+          appOrigin={appOrigin}
+          spotType={currentEvent.data.spot_type}
+          ticketPrice={currentEvent.data.event_ticket_price}
+          eventTitle={currentEvent.data.event_title ?? ""}
+          fees={asaasFees ?? null}
         />
       )}
     </>

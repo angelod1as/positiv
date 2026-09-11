@@ -153,6 +153,7 @@ export type EventParticipantWithEvent = EventParticipant &
   ParticipantPaymentTotals & {
     event_title: Event["title"]
     event_emoji: Event["emoji"]
+    event_ticket_price: Event["ticket_price"]
   }
 
 /**

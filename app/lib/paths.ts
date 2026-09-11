@@ -69,6 +69,9 @@ const ADMIN_EVENT_DEMOGRAPHICS_COMMIT = (id: string) =>
 const ADMIN_EVENT_VIEW_PARTICIPANT = (eventId: string, participantId: string) =>
   `${ADMIN_EVENTS}/${eventId}/participantes/${participantId}`
 
+//// PAYMENT
+const PAYMENT = (paymentId: string) => `/pagamento/${paymentId}`
+
 const paths = {
   root: {
     HOME,
@@ -106,6 +109,9 @@ const paths = {
     REGISTER_COMMIT,
     LOGIN_COMMIT,
     FORGOT_PASSWORD_COMMIT,
+  },
+  payment: {
+    PAYMENT,
   },
   dash: {
     DASHBOARD,
