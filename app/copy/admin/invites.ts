@@ -11,6 +11,7 @@ export const adminInvitesCopy = {
     noResults: "Ninguém encontrado com esse termo.",
     invite: "Convidar",
     alreadyParticipant: "Já participante",
+    alreadyInvited: "Convite gerado",
     copy: "Copiar link",
     revoke: "Revogar",
     invitesTitle: "Convites deste evento",

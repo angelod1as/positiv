@@ -127,6 +127,41 @@ describe("the invite modal", () => {
     })
   })
 
+  it("marks a row whose invite it has just generated", async () => {
+    const user = userEvent.setup()
+    fetchSpy.mockResolvedValue(found([person()]))
+    renderModal()
+
+    await user.type(screen.getByLabelText(modal.searchLabel), "maria")
+    await screen.findByText("Maria Silva")
+
+    fetchSpy.mockResolvedValue(
+      Response.json({ ok: true, invites: [invite()] }) as Response,
+    )
+
+    await user.click(screen.getByRole("button", { name: modal.invite }))
+
+    // The search stays on screen -- inviting three people should not mean
+    // typing three times -- so the row itself has to say what happened.
+    expect(
+      await screen.findByRole("button", { name: modal.alreadyInvited }),
+    ).toBeDisabled()
+  })
+
+  it("still offers the invite to somebody whose invite was revoked", async () => {
+    const user = userEvent.setup()
+    fetchSpy.mockResolvedValue(found([person()]))
+    renderModal({
+      invites: [invite({ revoked_at: new Date().toISOString() })],
+    })
+
+    await user.type(screen.getByLabelText(modal.searchLabel), "maria")
+
+    expect(
+      await screen.findByRole("button", { name: modal.invite }),
+    ).toBeEnabled()
+  })
+
   it("shows the link of an invite that already exists", () => {
     renderModal({ invites: [invite()] })
 

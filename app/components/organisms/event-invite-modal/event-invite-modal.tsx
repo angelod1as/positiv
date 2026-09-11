@@ -150,6 +150,14 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
     [],
   )
 
+  // Derived from the invite list the server returns on every write, so a row
+  // that was just invited says so without the admin having to search again.
+  const invitedProfiles = new Set(
+    currentInvites
+      .filter((invite) => !invite.revoked_at)
+      .map((invite) => invite.profile_id),
+  )
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
@@ -188,7 +196,11 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
               <span>{displayName(person)}</span>
               <Button
                 size="sm"
-                disabled={Boolean(person.is_participant) || isBusy}
+                disabled={
+                  Boolean(person.is_participant) ||
+                  invitedProfiles.has(person.id) ||
+                  isBusy
+                }
                 onClick={() =>
                   send(
                     { intent: "create", eventId, profileId: person.id },
@@ -198,7 +210,9 @@ export const EventInviteModal: FC<EventInviteModalProps> = ({
               >
                 {person.is_participant
                   ? modal.alreadyParticipant
-                  : modal.invite}
+                  : invitedProfiles.has(person.id)
+                    ? modal.alreadyInvited
+                    : modal.invite}
               </Button>
             </li>
           ))}
