@@ -65,7 +65,16 @@ jobs:
 
             Use the repository's CLAUDE.md for guidance on style and conventions. Be constructive and helpful in your feedback.
 
-            Use `gh pr comment` with your Bash tool to leave your review as a comment on the PR.
+            Post the review yourself, in this turn, with `gh pr comment`, before
+            you finish. Do not hand the reviewing to background subagents and
+            promise to synthesise their findings afterwards: this run is not
+            interactive, so it ends when you stop, taking any unfinished agent
+            with it. A run of 2026-09-11 did exactly that, spent half a dollar
+            and posted nothing, and the job still went green -- a review that
+            reviewed nothing is indistinguishable from one that found nothing.
+
+            If you genuinely have no findings, say so in the comment. Finishing
+            without commenting is always a bug.
 
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
