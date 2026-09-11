@@ -105,6 +105,26 @@ describe("event invites, from the admin's side", () => {
     expect(second.token).toBe(first.token)
   })
 
+  it("mints an invite for an event that is not closed yet", async () => {
+    const openEvent = await createTestEvent(tracker, kysely, {
+      title: "Still open invite event",
+      event_status: "Registration Open",
+      time_event_start: new Date(Date.now() + 86400000).toISOString(),
+    })
+
+    const invite = await createInvite({ eventId: openEvent.id, profileId })
+
+    // Deliberate: the invite lies dormant and becomes the way in the moment
+    // registrations close. Only the admin page decides when to offer the
+    // button; refusing here would close that door for good.
+    expect(invite.event_id).toBe(openEvent.id)
+
+    await kysely
+      .deleteFrom("event_invites")
+      .where("event_id", "=", openEvent.id)
+      .execute()
+  })
+
   it("lists the event's invites with the invited person's name", async () => {
     await createInvite({ eventId, profileId })
 

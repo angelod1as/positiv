@@ -8,6 +8,12 @@ const newToken = () => randomBytes(24).toString("base64url")
  * rather than a rival the admin might send by mistake -- except after a
  * revocation, where the row is reused with a fresh token so the link that was
  * called off stays dead.
+ *
+ * The event's status is not checked, and deliberately so. `applyToEvent`
+ * consults an invite only while registrations are closed, so one minted
+ * earlier lies dormant and becomes the way in the moment they close.
+ * `InviteParticipantSection` is what decides when the button is offered;
+ * refusing here would close that door for every future caller too.
  */
 export async function createInvite({
   eventId,
