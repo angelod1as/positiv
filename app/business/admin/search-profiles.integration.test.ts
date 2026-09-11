@@ -104,6 +104,26 @@ describe("searching for someone to invite", () => {
     expect(results[0].is_participant).toBe(true)
   })
 
+  it("does not call somebody who cancelled a participant", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `gone-${marker}@test.com`,
+      full_name: `Gave Up ${marker}`,
+    })
+    await createTestEventParticipant(tracker, kysely, {
+      profile_id: profile.id,
+      event_id: eventId,
+      is_user_applied: false,
+      cancellation_date: new Date().toISOString(),
+    })
+
+    // The freed spot is exactly what an admin fills by hand, so the person who
+    // freed it has to stay invitable.
+    const results = await searchProfilesForInvite(eventId, `Gave Up ${marker}`)
+
+    expect(results[0].is_participant).toBe(false)
+  })
+
   it("returns at most five rows", async () => {
     for (let index = 0; index < 7; index += 1) {
       await createTestProfile(tracker, kysely, {

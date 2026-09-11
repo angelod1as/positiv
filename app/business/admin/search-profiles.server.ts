@@ -42,7 +42,12 @@ export async function searchProfilesForInvite(eventId: string, term: string) {
             .selectFrom("event_participants")
             .select("event_participants.id")
             .whereRef("event_participants.profile_id", "=", "profiles.id")
-            .where("event_participants.event_id", "=", eventId),
+            .where("event_participants.event_id", "=", eventId)
+            // Holding a spot, not having once held one. A cancellation leaves
+            // the row behind with is_user_applied false, and the person who
+            // freed that spot is exactly the one an admin invites back into a
+            // closed event.
+            .where("event_participants.is_user_applied", "=", true),
         )
         .as("is_participant"),
     ])

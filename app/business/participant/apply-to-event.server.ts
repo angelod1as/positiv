@@ -33,12 +33,12 @@ export const applyToEvent = applySchema(
   // A closed event still lets in whoever holds an invite for it. The invite is
   // read against the signed-in profile, so the link is worthless to anybody
   // else who is handed it.
-  const invite =
-    event.event_status === "Registration Closed"
-      ? await findValidInvite(eventId, profileId)
-      : undefined
+  const isClosed = event.event_status === "Registration Closed"
+  const invite = isClosed
+    ? await findValidInvite(eventId, profileId)
+    : undefined
 
-  if (event.event_status === "Registration Closed" && !invite) {
+  if (isClosed && !invite) {
     throw new Error(participantCopy.application.registrationClosed)
   }
 
