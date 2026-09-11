@@ -35,6 +35,7 @@ export default [
   route("/api/account/mudar-senha", "pages/api/account/change-password.ts"),
   route("/api/account/termos", "pages/api/account/terms.ts"),
   route("/api/feedback", "pages/api/feedback.ts"),
+  route("/api/payment/cpf", "pages/api/payment/cpf.ts"),
   route("/api/admin/event", "pages/api/admin/event.ts"),
   route(
     "/api/admin/event-status/:id",
@@ -111,6 +112,11 @@ export default [
         "/download-calendar/:eventId",
         "pages/dashboard/download-calendar.route.tsx",
       ),
+    ]),
+
+    ...prefix("pagamento", [
+      route("/:paymentId", "pages/payment/payment-page.tsx"),
+      route("/:paymentId/obrigado", "pages/payment/payment-thanks-page.tsx"),
     ]),
 
     // COMMON
