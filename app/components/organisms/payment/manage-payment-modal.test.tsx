@@ -644,6 +644,27 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
     expect(within(row).getAllByText("—").length).toBeGreaterThan(0)
   })
 
+  // POS-529 writes `amount` the moment the participant picks a method: the
+  // gross they will pay. `asaas_net` stays null until the webhook confirms it,
+  // so neither column may wait on it.
+  it("keeps the gross out of Positiv's column once a method is picked", () => {
+    const picked = payment({
+      ...sentOn,
+      id: "picked-1",
+      status: "awaiting_payment",
+      method: "pix",
+      amount: 22199,
+      asaas_net: null,
+    })
+
+    render(<ManagePaymentModal {...baseProps} payments={[picked]} />)
+
+    const row = screen.getByRole("row", { name: /Aguardando pagamento/ })
+    expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
+    expect(within(row).getByText("R$ 1,99")).toBeInTheDocument()
+    expect(within(row).queryByText("R$ 221,99")).not.toBeInTheDocument()
+  })
+
   it("splits what Positiv kept from what the fees took", () => {
     const paidByCard = payment({
       id: "paid-card",

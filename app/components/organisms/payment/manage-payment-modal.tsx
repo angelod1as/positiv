@@ -437,16 +437,19 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                   {/* Two columns because they are two different people's
                       money. "Valor" is Positiv's: what was agreed while the
                       charge is open, and what actually landed once Asaas
-                      reports it. "Taxas" is what the participant paid on top,
-                      and it does not exist until they pick a method. */}
+                      reports it -- never `amount`, which is the gross the
+                      participant pays and lands on the row as soon as they
+                      pick a method, long before asaas_net exists. "Taxas" is
+                      their share, known from the same moment. */}
                   <TableCell className="whitespace-nowrap">
-                    {formatCurrency(
-                      payment.asaas_net ?? payment.amount ?? payment.base_amount,
-                    )}
+                    {formatCurrency(payment.asaas_net ?? payment.base_amount)}
                   </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">
-                    {payment.amount !== null && payment.asaas_net !== null
-                      ? formatCurrency(payment.amount - payment.asaas_net)
+                    {payment.kind === "asaas" && payment.amount !== null
+                      ? formatCurrency(
+                          payment.amount -
+                            (payment.asaas_net ?? payment.base_amount),
+                        )
                       : manage.noAmount}
                   </TableCell>
                   <TableCell>

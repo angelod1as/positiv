@@ -232,6 +232,23 @@ describe("createPaymentOffer", () => {
     }
   })
 
+  it("says so when the amount cannot be read at all", async () => {
+    const result = await createPaymentOffer({
+      eventParticipantId: participantId,
+      baseAmount: "cento e cinquenta",
+    })
+
+    expect(result.success).toBe(false)
+    expect(await paymentsFor(participantId)).toHaveLength(0)
+    // Not "it must be greater than zero": nothing was read, so nothing was
+    // compared to zero.
+    if (!result.success) {
+      expect(result.errors[0]?.message).toBe(
+        paymentsCopy.errors.amountUnreadable,
+      )
+    }
+  })
+
   it("replaces the open charge instead of adding a second one", async () => {
     await createPaymentOffer({ eventParticipantId: participantId })
     await createPaymentOffer({

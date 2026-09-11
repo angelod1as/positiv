@@ -23,6 +23,10 @@ const POST_PAYMENT_STATUSES = ["sent_rules", "finalised"] as const
 
 export const createPaymentOfferSchema = zod.object({
   eventParticipantId: zod.string().uuid(),
+  // The field is free text, so an admin can paste anything into it.
+  // reaisToCents answers NaN for what it cannot read, and NaN reaching the
+  // guards below would be refused as "must be greater than zero" -- accurate
+  // sounding, and not why it failed.
   baseAmount: zod
     .union([zod.string(), zod.number()])
     .nullish()
@@ -30,7 +34,10 @@ export const createPaymentOfferSchema = zod.object({
       value === null || value === undefined || value === ""
         ? null
         : reaisToCents(value),
-    ),
+    )
+    .refine((cents) => cents === null || Number.isFinite(cents), {
+      error: paymentsCopy.errors.amountUnreadable,
+    }),
   createdBy: zod.string().uuid().nullish(),
 })
 

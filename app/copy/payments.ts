@@ -117,6 +117,8 @@ export const paymentsCopy = {
     freeSpot: "Vagas sociais e de produção não têm cobrança.",
     noAmount: "Defina um valor: este evento não tem preço cadastrado.",
     amountTooLow: "O valor da cobrança precisa ser maior que zero.",
+    amountUnreadable:
+      "Não consegui ler esse valor. Escreva só números, como 150,00.",
     alreadyPaid:
       "Esta pessoa já pagou. Cancele ou reembolse antes de cobrar de novo.",
     notResendable: "Não há cobrança em aberto para reenviar.",
