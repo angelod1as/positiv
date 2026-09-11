@@ -534,6 +534,7 @@ export type Database = {
           created_by: string | null
           due_at: string
           event_participant_id: string
+          fee_snapshot: Json | null
           id: string
           installment_count: number | null
           kind: Database["public"]["Enums"]["payment_kind"]
@@ -558,6 +559,7 @@ export type Database = {
           created_by?: string | null
           due_at: string
           event_participant_id: string
+          fee_snapshot?: Json | null
           id?: string
           installment_count?: number | null
           kind: Database["public"]["Enums"]["payment_kind"]
@@ -582,6 +584,7 @@ export type Database = {
           created_by?: string | null
           due_at?: string
           event_participant_id?: string
+          fee_snapshot?: Json | null
           id?: string
           installment_count?: number | null
           kind?: Database["public"]["Enums"]["payment_kind"]
