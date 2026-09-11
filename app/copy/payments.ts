@@ -80,6 +80,8 @@ export const paymentsCopy = {
     resendEmail: "Reenviar email",
     copyMessage: "Copiar mensagem",
     copied: "Mensagem copiada.",
+    emailFailed:
+      "A cobrança foi criada, mas o email não saiu. Copie a mensagem e mande por outro caminho.",
     replaceConfirm: "Substituir a cobrança em aberto?",
     replaceDescription:
       "Esta pessoa já escolheu como pagar. A cobrança atual será cancelada no Asaas e ela receberá um novo link.",

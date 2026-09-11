@@ -122,7 +122,7 @@ describe("cancelApplicationToEvent", () => {
     expect(await statusOf(payment.id)).toBe("paid")
   })
 
-  it("withdraws the application even when the charge cannot be called off", async () => {
+  it("withdraws the application even when Asaas refuses the delete", async () => {
     deleteAsaasPayment.mockRejectedValue(new Error("asaas is down"))
     await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,

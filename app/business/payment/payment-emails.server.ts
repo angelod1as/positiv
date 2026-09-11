@@ -50,14 +50,30 @@ export async function sendPaymentLinkEmail({
 
   const options = buildPaymentOptions(payment.base_amount, await getAsaasFees())
 
-  const { html, text } = await formatPaymentLinkMail({
-    displayName: payment.social_name || payment.full_name || "",
-    eventTitle: payment.event_title ?? "",
-    eventEmoji: payment.event_emoji,
-    paymentUrl: `${appOrigin(null)}${paths.payment.PAYMENT(payment.id)}`,
-    dueAt: payment.due_at,
-    options,
-  })
+  // The template refuses a url it cannot vouch for, and APP_URL is not a
+  // required variable -- without one appOrigin answers nothing and the url
+  // arrives schemeless. The charge is already committed by the time we get
+  // here, so that has to read as an email that did not go out, not as the
+  // whole operation failing with an internal sentence in the admin's face.
+  let mail: { html: string; text: string }
+  try {
+    mail = await formatPaymentLinkMail({
+      displayName: payment.social_name || payment.full_name || "",
+      eventTitle: payment.event_title ?? "",
+      eventEmoji: payment.event_emoji,
+      paymentUrl: `${appOrigin(null)}${paths.payment.PAYMENT(payment.id)}`,
+      dueAt: payment.due_at,
+      options,
+    })
+  } catch (error) {
+    logger.error("Could not build the payment link email", {
+      paymentId,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return { success: false }
+  }
+
+  const { html, text } = mail
 
   const mailOptions: MailOptions = {
     to: payment.email,

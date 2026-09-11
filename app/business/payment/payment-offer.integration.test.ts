@@ -43,6 +43,7 @@ vi.mock("varlock/env", async (importOriginal) => {
 })
 
 import { paymentsCopy } from "~/copy/payments"
+import { registerManualPayment } from "./manual-payment.server"
 import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
 
 describe("createPaymentOffer", () => {
@@ -370,7 +371,12 @@ describe("createPaymentOffer", () => {
     expect(await paymentsFor(participantId)).toHaveLength(1)
   })
 
-  it("lets only one of two concurrent offers open a charge", async () => {
+  // They queue on the participant's row lock rather than racing, so the second
+  // one replaces the first exactly as a deliberate re-price would -- two
+  // charges opened, one of them cancelled, one left live. What must never
+  // happen is two live at once, which is what the partial unique index would
+  // refuse if the lock ever stopped holding them apart.
+  it("serialises two concurrent offers into one live charge", async () => {
     const results = await Promise.allSettled([
       createPaymentOffer({ eventParticipantId: participantId }),
       createPaymentOffer({ eventParticipantId: participantId }),
@@ -381,7 +387,34 @@ describe("createPaymentOffer", () => {
       ["pending", "awaiting_payment"].includes(row.status),
     )
     expect(active).toHaveLength(1)
-    expect(results).toHaveLength(2)
+    expect(
+      results.every((result) => result.status === "fulfilled"),
+    ).toBe(true)
+  })
+
+  // Not a reproduction -- a race does not reproduce on demand -- but the
+  // invariant it protects: whoever gets the participant's row lock first
+  // wins, and the loser sees what the winner wrote.
+  it("never leaves a participant both paid and holding an open charge", async () => {
+    await Promise.allSettled([
+      createPaymentOffer({ eventParticipantId: participantId }),
+      registerManualPayment({
+        eventParticipantId: participantId,
+        amount: "220",
+        method: "pix",
+        paidAt: "2026-09-01",
+      }),
+    ])
+
+    const rows = await paymentsFor(participantId)
+    const paid = rows.some((row) =>
+      ["paid", "partially_refunded"].includes(row.status),
+    )
+    const active = rows.some((row) =>
+      ["pending", "awaiting_payment"].includes(row.status),
+    )
+
+    expect(paid && active).toBe(false)
   })
 })
 
@@ -461,6 +494,18 @@ describe("resendPaymentOffer", () => {
 
     expect(result.success).toBe(false)
     expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+  })
+
+  it("sends nothing while payments are switched off", async () => {
+    const payment = await chargeWith("pending")
+    paymentsEnabled.value = false
+
+    const result = await resendPaymentOffer({ paymentId: payment.id })
+
+    expect(result.success).toBe(true)
+    expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+
+    paymentsEnabled.value = true
   })
 
   it("refuses a payment that is not there", async () => {

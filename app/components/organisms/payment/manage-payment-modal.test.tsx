@@ -625,6 +625,22 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(copied).toContain("01/09/2026")
   })
 
+  it("says so when the charge opened but the email did not go out", () => {
+    fetcherData = { success: true, intent: "payment-offer", emailSent: false }
+
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/o email não saiu/i)
+  })
+
+  it("stays quiet when the email went out", () => {
+    fetcherData = { success: true, intent: "payment-offer", emailSent: true }
+
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
   it("offers neither resend nor copy when nothing is open", () => {
     render(<ManagePaymentModal {...baseProps} />)
 

@@ -13,13 +13,29 @@ import { FALLBACK_FEES } from "./asaas-fees.server"
 
 // Hoisted: vi.mock factories run before the module body, so a plain const
 // declared here would not exist yet when the factory reads it.
-const { sendEmail, logger } = vi.hoisted(() => ({
+const { sendEmail, logger, appUrl } = vi.hoisted(() => ({
   sendEmail: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  appUrl: { override: undefined as string | undefined },
 }))
 
 vi.mock("~/business/email/send-email", () => ({ sendEmail }))
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+
+// A real Supabase is on the other end, so ENV cannot be replaced wholesale --
+// that would strip the connection settings. Only APP_URL is pinned, and only
+// when a test asks for it.
+vi.mock("varlock/env", async (importOriginal) => {
+  const original = await importOriginal<{ ENV: Record<string, unknown> }>()
+  return {
+    ENV: new Proxy(original.ENV, {
+      get: (target, key: string) =>
+        key === "APP_URL" && appUrl.override !== undefined
+          ? appUrl.override
+          : Reflect.get(target, key),
+    }),
+  }
+})
 
 // getAsaasFees is left real: with no ASAAS_API_KEY configured the lookup fails
 // and it answers with FALLBACK_FEES, which is what the assertions price
@@ -133,6 +149,25 @@ describe("sendPaymentLinkEmail", () => {
 
     expect(result.success).toBe(false)
     expect(sendEmail).not.toHaveBeenCalled()
+  })
+
+  // APP_URL is not a required variable, and without one appOrigin answers
+  // nothing -- the url reaches the template schemeless and it refuses to
+  // vouch for it. The charge is already committed by then, so this has to
+  // read as an email that did not go out.
+  it("answers { success: false } when the link cannot be built", async () => {
+    const payment = await openCharge()
+    appUrl.override = ""
+
+    try {
+      const result = await sendPaymentLinkEmail({ paymentId: payment.id })
+
+      expect(result.success).toBe(false)
+      expect(sendEmail).not.toHaveBeenCalled()
+      expect(logger.error).toHaveBeenCalled()
+    } finally {
+      appUrl.override = undefined
+    }
   })
 
   it("answers { success: false } and logs when the transport refuses", async () => {

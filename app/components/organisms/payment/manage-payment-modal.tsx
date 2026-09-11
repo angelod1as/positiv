@@ -311,6 +311,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
     success?: boolean
     intent?: string
     errors?: { message?: string }[]
+    emailSent?: boolean
   }>()
 
   const failure =
@@ -326,6 +327,12 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
       onOpenChange(false)
     }
   }, [fetcher.data, onOpenChange])
+
+  // The charge exists and the participant does not know. Not an error -- the
+  // row is good and the admin can still reach them by hand -- but she has to
+  // be told, or she walks away believing the link is in their inbox.
+  const chargeWithoutEmail =
+    fetcher.data?.success === true && fetcher.data.emailSent === false
 
   const isSubmitting = fetcher.state !== "idle"
 
@@ -406,10 +413,10 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           <Table>
             <TableHeader>
               <TableRow>
-                {/* Sem título por escolha: a data de envio abre a linha como
-                    um carimbo, e um cabeçalho para dois caracteres pesaria
-                    mais que a informação. O rótulo fica para quem lê a tabela
-                    com leitor de tela. */}
+                {/* Deliberately unlabelled: the date opens the row like a
+                    stamp, and a heading for two characters would weigh more
+                    than what it names. The label is there for screen
+                    readers. */}
                 <TableHead>
                   <span className="sr-only">{manage.columns.sentAt}</span>
                 </TableHead>
@@ -498,6 +505,12 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
               ))}
             </TableBody>
           </Table>
+        )}
+
+        {chargeWithoutEmail && (
+          <p role="alert" className="rounded-md border p-3 text-sm">
+            {charge.emailFailed}
+          </p>
         )}
 
         {paymentsEnabled && spotType === "regular" && fees && (

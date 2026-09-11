@@ -440,8 +440,12 @@ G = (base + f) / (1 − p − r·(n+1)/2)
   of known values; the sandbox calibration step compares `asaas_net` from a
   real confirmed charge with `base` and adjusts the anticipation term if
   Asaas applies it differently (e.g. on net rather than gross). The formula
-  lives in one file; the fee snapshot used for a row is stored in `note` as
-  JSON for later audit.
+  lives in one file; the fee snapshot is stored on the row, as JSON in `note`,
+  at the moment the price becomes binding — `pickOption` (PR 10), which is
+  also where `amount` is first written. Not before: while a charge is only
+  `pending` nothing has been quoted that anyone can be held to, the link email
+  prices every option afresh at send time, and a snapshot recorded at that
+  point would name rates that may not be the ones actually charged.
 
 Displayed to the participant: `PIX — R$ 221,99` · `Cartão 1x — R$ 228,50` ·
 `Cartão 3x de R$ 79,10 (total R$ 237,30)` … (illustrative).

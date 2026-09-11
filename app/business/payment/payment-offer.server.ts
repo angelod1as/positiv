@@ -116,6 +116,18 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
     const { replaced, payment } = await kyselyDb
       .transaction()
       .execute(async (trx) => {
+        // The same lock registerManualPayment takes, for the same reason: a
+        // manual payment landing between the settled check and the insert
+        // would leave a participant who has just paid holding an open charge
+        // and a link in their inbox. Locks only serialise the callers that
+        // ask for them, and the unique index does not cover `paid`.
+        await trx
+          .selectFrom("event_participants")
+          .select("id")
+          .where("id", "=", values.eventParticipantId)
+          .forUpdate()
+          .executeTakeFirst()
+
         const settled = await trx
           .selectFrom("payments")
           .select("id")
@@ -181,6 +193,13 @@ export const resendPaymentOfferSchema = zod.object({
  */
 export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
   async (values) => {
+    // The link email prices every option, which means reading the Asaas fee
+    // table. With the switch off nothing may talk to Asaas, so this path is
+    // gated like the one that opens a charge.
+    if (!ENV.PAYMENTS_ENABLED) {
+      return { emailSent: false, reason: "disabled" }
+    }
+
     const payment = await kyselyDb
       .selectFrom("payments")
       .select(["id", "status"])
@@ -218,6 +237,18 @@ export async function cancelActivePayment({
   if (!active) return { cancelled: false }
 
   const result = await cancelPayment({ paymentId: active.id })
+
+  // A charge that changed status between the select and the cancel comes back
+  // refused, not raised. Nobody upstream acts on it -- a withdrawal goes
+  // through regardless -- but §5.6 exists to guarantee no live charge survives
+  // one, so the times it does are worth knowing about.
+  if (!result.success) {
+    logger.error("A withdrawal left a charge behind", {
+      eventParticipantId,
+      paymentId: active.id,
+      errors: result.errors.map((error) => error.message),
+    })
+  }
 
   return { cancelled: result.success }
 }

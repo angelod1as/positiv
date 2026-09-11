@@ -7,10 +7,16 @@ type PaymentIntentResult = {
   success: boolean
   intent: string
   errors?: { message: string }[]
+  /**
+   * False when the charge is there but the participant was not told about it.
+   * Opening one is two acts -- a row and an email -- and only the first is
+   * undoable, so a failed email is reported rather than raised.
+   */
+  emailSent?: boolean
 }
 
 type ComposableResult =
-  | { success: true }
+  | { success: true; data?: Record<string, unknown> }
   | { success: false; errors: { message: string }[] }
 
 
@@ -29,6 +35,12 @@ const toIntentResult = (
   errors: result.success
     ? undefined
     : result.errors.map((error) => ({ message: error.message })),
+  // Only the two intents that send one carry it; the rest answer nothing and
+  // the modal stays quiet.
+  emailSent:
+    result.success && typeof result.data?.emailSent === "boolean"
+      ? result.data.emailSent
+      : undefined,
 })
 
 /**
