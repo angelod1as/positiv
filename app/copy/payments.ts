@@ -36,6 +36,33 @@ export const paymentsCopy = {
       "",
       `O link vale até ${formatInTimeZone(input.dueAt, "America/Sao_Paulo", "dd/MM/yyyy")}.`,
     ].join("\n"),
+  page: {
+    title: "Pagamento",
+    heading: (eventTitle: string) => `Pagamento — ${eventTitle}`,
+    notYours: "Este link de pagamento não é seu.",
+    chooseOption: "Como você quer pagar?",
+    pay: "Pagar",
+    dueAt: (date: string) => `Este link vale até ${date}.`,
+    paidTitle: "Pagamento confirmado",
+    paidBody: (amount: string, date: string) =>
+      `Recebemos ${amount} em ${date}. Nada mais a fazer.`,
+    closedTitle: "Este link não está mais disponível",
+    closedBody:
+      "A cobrança foi cancelada ou expirou. Fale com a organização para receber um novo link.",
+    cpfTitle: "Precisamos do seu CPF",
+    cpfBody:
+      "O pagamento é processado pelo Asaas, que exige o CPF de quem paga.",
+    cpfLabel: "CPF",
+    cpfSubmit: "Salvar e continuar",
+    cpfSaved: "CPF salvo.",
+    thanksTitle: "Recebemos sua escolha",
+    thanksBody:
+      "Assim que o pagamento for confirmado você recebe um email. Isso é imediato no Pix e pode levar alguns minutos no cartão.",
+    thanksPaidTitle: "Pagamento confirmado",
+    thanksPaidBody: "Está tudo certo. Até lá!",
+    backToDashboard: "Voltar para o painel",
+  },
+  chargeDescription: (eventTitle: string) => `Positiv — ${eventTitle}`,
   manage: {
     title: "Pagamentos",
     trigger: "Gerenciar pagamento",
@@ -134,6 +161,11 @@ export const paymentsCopy = {
     refundTooLarge: "O reembolso não pode ser maior que o valor pago.",
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
+    invalidCpf: "Esse CPF não confere. Confira os números.",
+    chargeClosed: "Esta cobrança não está mais aberta.",
+    unknownOption: "Escolha uma das formas de pagamento oferecidas.",
+    noInvoiceUrl:
+      "O Asaas não devolveu a página de pagamento. Tente de novo.",
     generic: "Não foi possível concluir a operação.",
   },
 } as const
