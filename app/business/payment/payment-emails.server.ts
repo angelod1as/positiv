@@ -7,6 +7,35 @@ import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import { getAsaasFees } from "./asaas-fees.server"
 import { buildPaymentOptions } from "./pricing"
+import type { PaymentOption, PaymentOptionId } from "./pricing"
+
+type CommittedRow = {
+  amount: number | null
+  method: string | null
+  installment_count: number | null
+}
+
+/**
+ * The single option a participant has already chosen, or nothing while the
+ * charge is still an open offer.
+ */
+function committedOption(row: CommittedRow): PaymentOption[] | null {
+  if (row.amount === null || row.method === null) return null
+  if (row.method !== "pix" && row.method !== "credit_card") return null
+
+  const installmentCount = row.installment_count
+  return [
+    {
+      id: installmentCount ? (`card_${installmentCount}` as PaymentOptionId) : "pix",
+      method: row.method,
+      installmentCount,
+      perInstallment: installmentCount
+        ? Math.ceil(row.amount / installmentCount)
+        : row.amount,
+      total: row.amount,
+    },
+  ]
+}
 
 /**
  * The link a participant is emailed when a charge opens, and again whenever an
@@ -28,6 +57,9 @@ export async function sendPaymentLinkEmail({
     .select([
       "p.id",
       "p.base_amount",
+      "p.amount",
+      "p.method",
+      "p.installment_count",
       "p.due_at",
       "e.title as event_title",
       "e.emoji as event_emoji",
@@ -58,10 +90,15 @@ export async function sendPaymentLinkEmail({
   // nothing to receive, which a mistyped anticipation rate produces.
   let mail: { html: string; text: string }
   try {
-    const options = buildPaymentOptions(
-      payment.base_amount,
-      await getAsaasFees(),
-    )
+    // Once the participant has picked, the price is settled and the Asaas
+    // charge exists at that figure -- re-pricing the seven options here would
+    // quote a number the checkout will not honour, because PR 10 sends a
+    // returning payer back to the invoice it already created. So a resend at
+    // that point restates what they owe rather than re-offering the menu.
+    const committed = committedOption(payment)
+    const options =
+      committed ??
+      buildPaymentOptions(payment.base_amount, await getAsaasFees())
 
     mail = await formatPaymentLinkMail({
       displayName: payment.social_name || payment.full_name || "",

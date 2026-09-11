@@ -13,6 +13,7 @@ import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { adminEventsCopy } from "~/copy/admin/events"
+import { appOrigin } from "~/lib/helpers/app-origin"
 import paths from "~/lib/paths"
 import { ENV } from "varlock/env"
 import type { Route } from "./+types/view-event-participant"
@@ -129,6 +130,9 @@ export async function loader({ params }: Route.LoaderArgs) {
     participantPayments,
     asaasFees,
     paymentsEnabled: Boolean(ENV.PAYMENTS_ENABLED),
+    // The same origin the link email builds from, so the two channels cannot
+    // hand the participant different urls for one charge.
+    appOrigin: appOrigin(null),
   }
 }
 
@@ -141,6 +145,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
     participantPayments,
     asaasFees,
     paymentsEnabled,
+    appOrigin: origin,
   } = loaderData
 
   if (!profile) return null
@@ -156,6 +161,7 @@ const ViewEventParticipant = ({ loaderData }: Route.ComponentProps) => {
       payments={participantPayments}
       asaasFees={asaasFees}
       paymentsEnabled={paymentsEnabled}
+      appOrigin={origin}
     />
   )
 }

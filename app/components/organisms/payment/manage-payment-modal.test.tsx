@@ -57,6 +57,7 @@ const baseProps = {
   ticketPrice: 22000,
   eventTitle: "Festa de Setembro",
   fees: FALLBACK_FEES,
+  appOrigin: "https://www.positivparty.com",
 }
 
 const openCharge = payment({
@@ -620,7 +621,9 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     ) ?? [""]
     expect(copied).toContain("Ana")
     expect(copied).toContain("Festa de Setembro")
-    expect(copied).toContain("/pagamento/open-1")
+    expect(copied).toContain(
+      "https://www.positivparty.com/pagamento/open-1",
+    )
     expect(copied).toContain("Pix —")
     expect(copied).toContain("01/09/2026")
   })
@@ -639,6 +642,39 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     render(<ManagePaymentModal {...baseProps} />)
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
+  })
+
+  it("re-seeds the amount when the charge it was showing is gone", () => {
+    const { rerender } = render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[openCharge]}
+        active={payment({ ...openCharge, base_amount: 15000 })}
+      />,
+    )
+    expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("150,00")
+
+    // What a cancellation looks like once revalidation lands.
+    rerender(<ManagePaymentModal {...baseProps} payments={[openCharge]} active={null} />)
+
+    expect(screen.getByLabelText("Valor a cobrar")).toHaveValue("220,00")
+  })
+
+  it("does not claim a charge was created when a resend fails", () => {
+    fetcherData = { success: true, intent: "payment-resend", emailSent: false }
+
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/a cobrança segue em aberto/i)
+    expect(screen.queryByText(/A cobrança foi criada/i)).not.toBeInTheDocument()
+  })
+
+  it("confirms a resend that went out, since nothing else on screen changes", () => {
+    fetcherData = { success: true, intent: "payment-resend", emailSent: true }
+
+    render(<ManagePaymentModal {...baseProps} />)
+
+    expect(screen.getByRole("status")).toHaveTextContent("Email reenviado.")
   })
 
   it("offers neither resend nor copy when nothing is open", () => {

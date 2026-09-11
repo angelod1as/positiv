@@ -51,7 +51,17 @@ async function deleteReplacedCharges(
   for (const old of replaced) {
     if (!old.asaas_payment_id) continue
     try {
-      await deleteAsaasPayment(old.asaas_payment_id)
+      // Asaas answers a refusal with `deleted: false` and a 200, so the return
+      // value is the only place it shows. An undeleted charge stays payable
+      // through the invoice the participant already has, and PR 11 cannot mark
+      // a cancelled row paid -- the money would arrive and go unrecorded.
+      const deleted = await deleteAsaasPayment(old.asaas_payment_id)
+      if (!deleted) {
+        logger.error("Asaas refused to delete the replaced charge", {
+          paymentId: old.id,
+          asaasPaymentId: old.asaas_payment_id,
+        })
+      }
     } catch (error) {
       logger.error("Could not delete the replaced Asaas charge", {
         paymentId: old.id,

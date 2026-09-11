@@ -33,7 +33,14 @@ export const cancelPayment = applySchema(cancelPaymentSchema)(async (values) => 
 
   if (cancelled.asaas_payment_id) {
     try {
-      await deleteAsaasPayment(cancelled.asaas_payment_id)
+      // A refusal comes back as `deleted: false` on a 200, not as an error.
+      const deleted = await deleteAsaasPayment(cancelled.asaas_payment_id)
+      if (!deleted) {
+        logger.error("Asaas refused to delete the cancelled charge", {
+          paymentId: cancelled.id,
+          asaasPaymentId: cancelled.asaas_payment_id,
+        })
+      }
     } catch (error) {
       logger.error("Could not delete the cancelled Asaas charge", {
         paymentId: cancelled.id,

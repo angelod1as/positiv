@@ -124,6 +124,28 @@ describe("sendPaymentLinkEmail", () => {
 
   // profiles.email is NOT NULL, so the reachable version of "no mailbox" is a
   // blank one -- a profile an admin typed in without an address.
+  // PR 10 sends a returning payer back to the invoice it already created, at
+  // the price it was created with. Re-pricing the seven options on a resend
+  // would quote a figure the checkout will not honour.
+  it("restates what was chosen instead of re-offering the menu", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      status: "awaiting_payment",
+      base_amount: 22000,
+      amount: 22199,
+      method: "pix",
+      paid_at: null,
+      due_at: "2026-09-01T12:00:00Z",
+    })
+
+    await sendPaymentLinkEmail({ paymentId: payment.id })
+
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.html).toContain("Pix — R$ 221,99")
+    expect(options.html).not.toContain("Cartão")
+  })
+
   it("answers { success: false } when the profile has no email", async () => {
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,

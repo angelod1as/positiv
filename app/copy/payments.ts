@@ -82,6 +82,9 @@ export const paymentsCopy = {
     copied: "Mensagem copiada.",
     emailFailed:
       "A cobrança foi criada, mas o email não saiu. Copie a mensagem e mande por outro caminho.",
+    resendFailed:
+      "O email não saiu. A cobrança segue em aberto — copie a mensagem e mande por outro caminho.",
+    resendSucceeded: "Email reenviado.",
     replaceConfirm: "Substituir a cobrança em aberto?",
     replaceDescription:
       "Esta pessoa já escolheu como pagar. A cobrança atual será cancelada no Asaas e ela receberá um novo link.",

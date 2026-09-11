@@ -67,6 +67,7 @@ export type ManagePaymentModalProps = {
   ticketPrice: number | null
   eventTitle: string
   fees: AsaasFees | null
+  appOrigin: string
 }
 
 type RefundDialogProps = {
@@ -165,6 +166,7 @@ type ChargeSectionProps = {
   eventTitle: string
   ticketPrice: number | null
   fees: AsaasFees
+  appOrigin: string
   isSubmitting: boolean
   onOffer: (baseAmount: string) => void
   onResend: (paymentId: string) => void
@@ -182,6 +184,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   eventTitle,
   ticketPrice,
   fees,
+  appOrigin,
   isSubmitting,
   onOffer,
   onResend,
@@ -208,7 +211,10 @@ const ChargeSection: FC<ChargeSectionProps> = ({
     const message = paymentsCopy.whatsappMessage({
       displayName: participantName,
       eventTitle,
-      paymentUrl: `${window.location.origin}${paths.payment.PAYMENT(active.id)}`,
+      // The origin the server would use, not the one this browser happens to
+      // be on: appOrigin deliberately ignores the request host, and the two
+      // channels must hand the participant the same link.
+      paymentUrl: `${appOrigin}${paths.payment.PAYMENT(active.id)}`,
       dueAt: active.due_at,
       options: buildPaymentOptions(active.base_amount, fees),
     })
@@ -318,6 +324,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   ticketPrice,
   eventTitle,
   fees,
+  appOrigin,
 }) => {
   const fetcher = useFetcher<{
     success?: boolean
@@ -343,8 +350,15 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   // The charge exists and the participant does not know. Not an error -- the
   // row is good and the admin can still reach them by hand -- but she has to
   // be told, or she walks away believing the link is in their inbox.
-  const chargeWithoutEmail =
+  const emailFailed =
     fetcher.data?.success === true && fetcher.data.emailSent === false
+  const chargeWithoutEmail =
+    emailFailed && fetcher.data?.intent === "payment-offer"
+  const resendFailed = emailFailed && fetcher.data?.intent === "payment-resend"
+  const resendSucceeded =
+    fetcher.data?.success === true &&
+    fetcher.data.intent === "payment-resend" &&
+    fetcher.data.emailSent === true
 
   const isSubmitting = fetcher.state !== "idle"
 
@@ -525,13 +539,33 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </p>
         )}
 
+        {resendFailed && (
+          <p role="alert" className="rounded-md border p-3 text-sm">
+            {charge.resendFailed}
+          </p>
+        )}
+
+        {/* Nothing on screen changes when a resend works -- same row, same
+            deadline -- so without a word the admin cannot tell it from a
+            button that did nothing. */}
+        {resendSucceeded && (
+          <p role="status" className="text-muted-foreground text-sm">
+            {charge.resendSucceeded}
+          </p>
+        )}
+
         {paymentsEnabled && spotType === "regular" && fees && (
           <ChargeSection
+            // Remounts when the charge does, so the amount field re-seeds from
+            // whatever is open now. Cancelling one used to leave its value in
+            // a field that had gone back to offering the ticket price.
+            key={active?.id ?? "none"}
             active={active}
             participantName={participantName}
             eventTitle={eventTitle}
             ticketPrice={ticketPrice}
             fees={fees}
+            appOrigin={appOrigin}
             isSubmitting={isSubmitting}
             onOffer={(baseAmount) =>
               post({ intent: "payment-offer", eventParticipantId, baseAmount })

@@ -25,6 +25,7 @@ import { GeneralData } from "~/components/pages/admin/events/general-data"
 import { RejectedParticipantsSection } from "~/components/pages/admin/events/rejected-participants-section"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
+import { appOrigin } from "~/lib/helpers/app-origin"
 import paths from "~/lib/paths"
 import { ENV } from "varlock/env"
 import type { ComposableFetcherData } from "~types/database/entities.types"
@@ -142,6 +143,9 @@ export async function loader({ params }: Route.LoaderArgs) {
     paymentsByParticipant,
     asaasFees,
     paymentsEnabled: Boolean(ENV.PAYMENTS_ENABLED),
+    // The same origin the link email builds from, so the two channels cannot
+    // hand the participant different urls for one charge.
+    appOrigin: appOrigin(null),
     demographics: demographics?.success ? demographics.data : undefined,
   }
 }
@@ -170,6 +174,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
     paymentsByParticipant,
     asaasFees,
     paymentsEnabled,
+    appOrigin: origin,
     demographics,
   } = loaderData
 
@@ -232,6 +237,7 @@ const AdminViewEventPage = ({ loaderData }: Route.ComponentProps) => {
             ) ?? null
           }
           paymentsEnabled={paymentsEnabled}
+          appOrigin={origin}
           spotType={managedParticipant.spot_type}
           ticketPrice={event.ticket_price}
           eventTitle={event.title ?? ""}
