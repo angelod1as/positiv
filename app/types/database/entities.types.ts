@@ -47,6 +47,10 @@ export type Event = Omit<
   event_status: EventStatus
   is_applied?: boolean
   is_invited?: boolean
+  // Both read from event_participant_payments for the profile being served,
+  // so the dashboard says the same thing about the money as the admin grid.
+  active_payment_id?: string | null
+  has_paid?: boolean
 }
 
 /** Participant information */

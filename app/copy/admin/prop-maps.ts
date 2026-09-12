@@ -48,6 +48,8 @@ export const adminPropMapsCopy = {
     total_spots: "Lotação",
     is_applied: "Candidate",
     is_invited: "Convidade",
+    active_payment_id: "Cobrança em aberto",
+    has_paid: "Pago",
     listmonk_list_id: "ID da lista Listmonk",
     listmonk_list_synced_at: "Última sincronização da lista",
   },

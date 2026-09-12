@@ -20,12 +20,15 @@ const {
   admin: {
     events: { ADMIN_VIEW_EVENT },
   },
+  payment: { PAYMENT },
 } = paths
 
 type EventCardFooterProps = {
   is_applied: boolean | undefined
   /** Whether this person holds an invite into this event, closed or not. */
   is_invited?: boolean
+  /** The charge this person still owes for this event, if there is one. */
+  active_payment_id?: string | null
   event_status: EventStatus
   googleLink: string | undefined
   eventId: string
@@ -41,6 +44,7 @@ type EventCardFooterProps = {
 export const EventCardFooter: FC<EventCardFooterProps> = ({
   is_applied,
   is_invited,
+  active_payment_id,
   event_status,
   // googleLink,
   eventId,
@@ -102,6 +106,12 @@ export const EventCardFooter: FC<EventCardFooterProps> = ({
   if (is_applied) {
     return (
       <div className="flex flex-col sm:flex-row gap-4 w-full">
+        {active_payment_id && (
+          <Button to={PAYMENT(active_payment_id)}>
+            {eventCardCopy.payment.pay}
+          </Button>
+        )}
+
         {/* TODO: Fix dates & times */}
         {/* <Dialog>
           <DialogTrigger asChild>
