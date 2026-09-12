@@ -603,7 +603,7 @@ no exception; the design document is the one that stays.
 | 7 | POS-526 | retired — the PR is open |
 | 8 | POS-527 | retired — the PR is open |
 | 9 | POS-528 | `POS-528-payment-offer.md` |
-| 10 | POS-529 | `POS-529-payment-page.md` |
+| 10 | POS-529 | retired — the PR is open |
 | 11 | POS-530 | `POS-530-asaas-webhook.md` |
 | 12 | POS-531 | `POS-531-refunds.md` |
 | 13 | POS-532 | `POS-532-e2e-and-launch.md` |
