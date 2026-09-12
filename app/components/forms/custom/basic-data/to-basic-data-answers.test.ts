@@ -8,7 +8,7 @@ const profile = {
   where_lives: "São Paulo",
   how_came_to_us: "Uma amiga",
   phone: 11999999999,
-  cpf: "12345678901",
+  cpf: "52998224725",
   rg: "123456789",
   rg_issuer: "SSP/SP",
   gender: ["Travesti"],
@@ -27,7 +27,7 @@ describe("toBasicDataAnswers", () => {
       full_name: "Maria Silva",
       social_name: "Mari",
       where_lives: "São Paulo",
-      cpf: "12345678901",
+      cpf: "52998224725",
       gender: ["Travesti"],
       race_color: ["Preta"],
     })

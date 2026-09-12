@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { basicDataValidation, changePasswordValidation } from "~/copy/account"
+import { isValidCpf } from "~/business/payment/cpf"
 import { registerCopy } from "~/copy/auth"
 import { agreeToTermsValidation } from "~/copy/dashboard"
 import { PHONE_REGEXP } from "~/lib/constants/constants"
@@ -123,7 +124,10 @@ export const basicDataFieldsSchema = zod.object({
   social_name: zod.string().min(2).max(255).transform(normalizeName).nullish(),
   rg: zod.string().min(2),
   rg_issuer: zod.string().min(2),
-  cpf: zod.string().min(2),
+  // The CPF is what Asaas identifies the payer by, and it refuses one whose
+  // digits do not check out. Caught here, the person gets a sentence they can
+  // act on instead of a charge that fails to be created weeks later.
+  cpf: zod.string().refine(isValidCpf, { error: basicDataValidation.invalidCpf }),
   date_of_birth: zod
     .string()
     .pipe(

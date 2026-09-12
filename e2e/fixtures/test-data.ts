@@ -9,7 +9,7 @@ export const TEST_USER_PROFILE_DATA = {
   date_of_birth: '1990-01-01',
   rg: '123456789',
   rg_issuer: 'SSP/SP',
-  cpf: '12345678900',
+  cpf: '52998224725',
   where_lives: 'São Paulo',
   how_came_to_us: 'E2E Tests'
 }
