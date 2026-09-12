@@ -2,6 +2,7 @@ import { applySchema } from "composable-functions"
 import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
+import { isProd } from "~/lib/helpers/is-prod.server"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
@@ -132,10 +133,12 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
     phone: payment.phone,
   })
 
-  // Asaas refuses a callback whose domain does not match the account's
-  // commercial data, so a machine that does not know its own origin sends none
-  // and the participant simply stays on the Asaas page when they are done.
-  const origin = appOrigin(null)
+  // Asaas refuses a callback whose domain does not match the commercial data on
+  // the account, and fails the whole charge with invalid_callback rather than
+  // just dropping the redirect. Only production has a domain that matches, so
+  // everywhere else sends none and the participant stays on the Asaas page
+  // when they are done.
+  const origin = isProd() ? appOrigin(null) : ""
   const successUrl = origin
     ? `${origin}${paths.payment.PAYMENT_THANKS(payment.id)}`
     : null

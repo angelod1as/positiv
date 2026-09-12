@@ -17,6 +17,7 @@ const {
   deleteAsaasPayment,
   logger,
   paymentsEnabled,
+  prod,
 } = vi.hoisted(() => ({
   createAsaasCustomer: vi.fn(),
   findAsaasCustomerByCpf: vi.fn(),
@@ -24,6 +25,12 @@ const {
   deleteAsaasPayment: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
   paymentsEnabled: { value: true },
+  prod: { value: false },
+}))
+
+vi.mock("~/lib/helpers/is-prod.server", () => ({
+  isProd: () => prod.value,
+  isCI: () => false,
 }))
 
 vi.mock("./asaas-client.server", async (importOriginal) => {
@@ -73,6 +80,7 @@ describe("pickOption", () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     paymentsEnabled.value = true
+    prod.value = false
     createAsaasCustomer.mockResolvedValue("cus_new")
     findAsaasCustomerByCpf.mockResolvedValue(null)
     createAsaasPayment.mockResolvedValue({
@@ -285,6 +293,31 @@ describe("pickOption", () => {
     const after = await rowOf(payment.id)
     expect(after.status).toBe("cancelled")
     expect(after.asaas_payment_id).toBeNull()
+  })
+
+  // Asaas refuses a callback whose domain does not match the commercial data on
+  // the account, and fails the whole charge with invalid_callback. A developer
+  // machine's APP_URL never matches, so outside production none is sent.
+  it("sends no callback outside production", async () => {
+    const payment = await openCharge()
+
+    await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+    expect(createAsaasPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ successUrl: null }),
+    )
+  })
+
+  it("sends the thank-you page as the callback in production", async () => {
+    prod.value = true
+    const payment = await openCharge()
+
+    await pickOption({ paymentId: payment.id, profileId, optionId: "pix" })
+
+    const [call] = createAsaasPayment.mock.calls.at(-1) ?? []
+    expect(call.successUrl).toMatch(
+      new RegExp(`/pagamento/${payment.id}/obrigado$`),
+    )
   })
 
   it("refuses an unknown option", async () => {
