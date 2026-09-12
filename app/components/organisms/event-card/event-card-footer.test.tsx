@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import userEvent from "@testing-library/user-event"
 import { render, screen } from "~/test/test-utils"
+import { eventCardCopy } from "~/copy/events"
 import { EventCardFooter } from "./event-card-footer"
 
 const { mockSubmit, mockTrack } = vi.hoisted(() => ({
@@ -277,6 +278,47 @@ describe("EventCardFooter", () => {
       expect(screen.getByText(/Me candidatar/i)).toBeInTheDocument()
       expect(
         screen.queryByText(/Candidatura direta \(admin\)/i),
+      ).not.toBeInTheDocument()
+    })
+  })
+
+  describe("paying", () => {
+    const renderApplied = (
+      props: Partial<React.ComponentProps<typeof EventCardFooter>> = {},
+    ) =>
+      render(
+        <EventCardFooter
+          eventId="test-event-id"
+          event_status="Registration Open"
+          googleLink=""
+          is_applied={true}
+          dataTestId="test-footer"
+          {...props}
+        />,
+      )
+
+    it("offers to pay when a charge is open", () => {
+      renderApplied({ active_payment_id: "pay-1" })
+
+      expect(
+        screen.getByRole("link", { name: eventCardCopy.payment.pay }),
+      ).toHaveAttribute("href", "/pagamento/pay-1")
+    })
+
+    it("offers nothing to pay when no charge is open", () => {
+      renderApplied()
+
+      expect(
+        screen.queryByRole("link", { name: eventCardCopy.payment.pay }),
+      ).not.toBeInTheDocument()
+    })
+
+    // Somebody who has not applied owes nothing, whatever a stale prop says.
+    it("offers nothing to pay before the person has applied", () => {
+      renderApplied({ is_applied: false, active_payment_id: "pay-1" })
+
+      expect(
+        screen.queryByRole("link", { name: eventCardCopy.payment.pay }),
       ).not.toBeInTheDocument()
     })
   })

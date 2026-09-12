@@ -1,6 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach } from "vitest"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
-import { createTestProfile, createTestEvent, createTestEventParticipant } from "~/test/db-test-utils"
+import { createTestProfile, createTestEvent, createTestEventParticipant, createTestPayment } from "~/test/db-test-utils"
 import { getNextEvents } from "./get-next-events"
 import type { EventStatus } from "~types/database/entities.types"
 
@@ -15,6 +15,97 @@ describe("getNextEvents - Query Optimization Integration Tests", () => {
 
   afterEach(async () => {
     await cleanupAfterTest(tracker, kysely)
+  })
+
+  // The dashboard card says what the participant still owes, and it has to
+  // agree with the admin grid. Both read event_participant_payments.
+  describe("money", () => {
+    const futureEvent = async (title: string) => {
+      const start = new Date()
+      start.setDate(start.getDate() + 7)
+      return createTestEvent(tracker, kysely, {
+        title,
+        event_status: "Registration Open" as EventStatus,
+        time_event_start: start.toISOString(),
+        time_event_end: new Date(start.getTime() + 3600000).toISOString(),
+        ticket_price: 22000,
+      })
+    }
+
+    const eventFor = async (profileId: string, eventId: string) => {
+      const result = await getNextEvents(profileId, 10)
+      expect(result.success).toBe(true)
+      if (!result.success) throw new Error("query failed")
+      return result.data.find((event) => event.id === eventId)
+    }
+
+    it("hands the card the open charge to point at", async () => {
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `test-owes-${Date.now()}@example.com`,
+        full_name: "Test User Owes",
+      })
+      const event = await futureEvent("Test Event - Owes")
+      const participant = await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: event.id,
+        is_user_applied: true,
+      })
+      const payment = await createTestPayment(tracker, kysely, {
+        event_participant_id: participant.id,
+        kind: "asaas",
+        status: "pending",
+        amount: null,
+        method: null,
+        paid_at: null,
+      })
+
+      const found = await eventFor(profile.id, event.id)
+
+      expect(found?.active_payment_id).toBe(payment.id)
+      expect(found?.has_paid).toBe(false)
+    })
+
+    it("says the money is in once it is", async () => {
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `test-paid-${Date.now()}@example.com`,
+        full_name: "Test User Paid",
+      })
+      const event = await futureEvent("Test Event - Paid")
+      const participant = await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: event.id,
+        is_user_applied: true,
+      })
+      await createTestPayment(tracker, kysely, {
+        event_participant_id: participant.id,
+      })
+
+      const found = await eventFor(profile.id, event.id)
+
+      expect(found?.has_paid).toBe(true)
+      expect(found?.active_payment_id).toBeNull()
+    })
+
+    it("says nothing about money for somebody who was never charged", async () => {
+      const profile = await createTestProfile(tracker, kysely, {
+        user_id: null,
+        email: `test-nocharge-${Date.now()}@example.com`,
+        full_name: "Test User No Charge",
+      })
+      const event = await futureEvent("Test Event - No Charge")
+      await createTestEventParticipant(tracker, kysely, {
+        profile_id: profile.id,
+        event_id: event.id,
+        is_user_applied: true,
+      })
+
+      const found = await eventFor(profile.id, event.id)
+
+      expect(found?.active_payment_id).toBeNull()
+      expect(found?.has_paid).toBe(false)
+    })
   })
 
   describe("is_applied field behavior", () => {
