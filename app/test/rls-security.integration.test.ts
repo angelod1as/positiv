@@ -98,6 +98,78 @@ describe("RLS Security - Integration Tests", () => {
     })
   })
 
+  describe("SECURITY DEFINER function execute privileges", () => {
+    // Every public SECURITY DEFINER function runs with postgres privileges and
+    // is reachable over PostgREST at /rest/v1/rpc/<name>, so anon and
+    // authenticated must hold EXECUTE only where the client genuinely calls it.
+    const allowedGrantees: Record<string, string[]> = {
+      get_profile_with_roles: ["authenticated"],
+      get_admin_user_ids: ["authenticated"],
+    }
+
+    it("should not grant EXECUTE to anon or authenticated beyond the allowlist", async () => {
+      const { rows } = await sql<{
+        signature: string
+        proname: string
+        anon_can_execute: boolean
+        authed_can_execute: boolean
+      }>`
+        SELECT p.oid::regprocedure::text AS signature,
+               p.proname,
+               has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_can_execute,
+               has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authed_can_execute
+        FROM pg_proc p
+        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+        AND p.prosecdef
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e'
+        )
+        ORDER BY p.proname
+      `.execute(db)
+
+      expect(rows.length).toBeGreaterThan(0)
+
+      const unexpectedGrants = rows.flatMap((row) => {
+        const allowed = allowedGrantees[row.proname] ?? []
+
+        return [
+          ...(row.anon_can_execute && !allowed.includes("anon")
+            ? [`anon can execute ${row.signature}`]
+            : []),
+          ...(row.authed_can_execute && !allowed.includes("authenticated")
+            ? [`authenticated can execute ${row.signature}`]
+            : []),
+        ]
+      })
+
+      expect(unexpectedGrants).toEqual([])
+    })
+
+    it("should keep EXECUTE for the roles the allowlist documents", async () => {
+      const { rows } = await sql<{
+        proname: string
+        anon_can_execute: boolean
+        authed_can_execute: boolean
+      }>`
+        SELECT p.proname,
+               has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_can_execute,
+               has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authed_can_execute
+        FROM pg_proc p
+        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+        AND p.proname IN ('get_profile_with_roles', 'get_admin_user_ids')
+      `.execute(db)
+
+      expect(rows.length).toBe(2)
+
+      rows.forEach((row) => {
+        expect(row.authed_can_execute).toBe(true)
+        expect(row.anon_can_execute).toBe(false)
+      })
+    })
+  })
+
   describe("Extension schema location", () => {
     it("should have pg_net extension in extensions schema", async () => {
       const { rows } = await sql<{ nspname: string }>`
