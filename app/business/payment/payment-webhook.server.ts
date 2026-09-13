@@ -62,3 +62,16 @@ export async function recordWebhookEvent(
 
   return { isNew: false, id: existing.id }
 }
+
+export async function applyWebhookEvent(
+  inboxId: string,
+  _event: AsaasWebhookEvent,
+): Promise<{ applied: boolean }> {
+  await kyselyDb
+    .updateTable("payment_webhook_events")
+    .set({ processed_at: new Date().toISOString() })
+    .where("id", "=", inboxId)
+    .execute()
+
+  return { applied: false }
+}
