@@ -132,6 +132,7 @@ export default defineConfig([
       "app/pages/auth/**/*.tsx",
       "app/pages/account/**/*.tsx",
       "app/pages/dashboard/**/*.tsx",
+      "app/pages/payment/**/*.tsx",
       "app/pages/newsletter/**/*.tsx",
     ],
     ignores: [

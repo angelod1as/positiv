@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest"
 import { render, screen } from "~/test/test-utils"
+import { eventCardCopy } from "~/copy/events"
 import type { Event } from "~types/database/entities.types"
 import { EventCard } from "./event-card"
 
@@ -90,6 +91,47 @@ describe("EventCard", () => {
     render(<EventCard event={mockEvent} data-testid="test-card" />)
 
     expect(screen.getByText("Candidaturas abertas")).toBeInTheDocument()
+  })
+
+  // The ledger, not the card, decides these: has_paid and active_payment_id
+  // both come from event_participant_payments.
+  it("says so once the participant has paid", () => {
+    render(
+      <EventCard
+        event={{ ...mockEvent, is_applied: true, has_paid: true }}
+        data-testid="test-card"
+      />,
+    )
+
+    expect(screen.getByText(eventCardCopy.payment.paid)).toBeInTheDocument()
+    expect(
+      screen.queryByText(eventCardCopy.payment.pending),
+    ).not.toBeInTheDocument()
+  })
+
+  it("says a charge is waiting when one is open", () => {
+    render(
+      <EventCard
+        event={{ ...mockEvent, is_applied: true, active_payment_id: "pay-1" }}
+        data-testid="test-card"
+      />,
+    )
+
+    expect(screen.getByText(eventCardCopy.payment.pending)).toBeInTheDocument()
+    expect(
+      screen.queryByText(eventCardCopy.payment.paid),
+    ).not.toBeInTheDocument()
+  })
+
+  it("says nothing about money when nothing has been charged", () => {
+    render(<EventCard event={mockEvent} data-testid="test-card" />)
+
+    expect(
+      screen.queryByText(eventCardCopy.payment.pending),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(eventCardCopy.payment.paid),
+    ).not.toBeInTheDocument()
   })
 
   it("shows the registration status of a closed event", () => {

@@ -10,6 +10,8 @@ import {
 } from "~/components/ui/card"
 
 import { EventStatusBadge } from "~/components/atoms/badges/badges"
+import { Badge } from "~/components/ui/badge"
+import { eventCardCopy } from "~/copy/events"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { generateGoogleCalendarLink } from "~/lib/helpers/generate-google-calendar-link"
@@ -41,6 +43,8 @@ export const EventCard: FC<EventCardProps> = ({
     title,
     is_applied,
     is_invited,
+    active_payment_id,
+    has_paid,
   } = event
 
   return (
@@ -70,6 +74,12 @@ export const EventCard: FC<EventCardProps> = ({
             {location && <DataPair pair={["Local", location]} />}
             <div className="flex flex-wrap gap-2 mt-2">
               <EventStatusBadge event_status={event_status} />
+              {is_applied && has_paid && (
+                <Badge variant="outline">{eventCardCopy.payment.paid}</Badge>
+              )}
+              {is_applied && !has_paid && active_payment_id && (
+                <Badge variant="outline">{eventCardCopy.payment.pending}</Badge>
+              )}
             </div>
           </div>
         </div>
@@ -81,6 +91,7 @@ export const EventCard: FC<EventCardProps> = ({
           googleLink={googleLink}
           is_applied={is_applied}
           is_invited={is_invited}
+          active_payment_id={active_payment_id}
           dataTestId={undefined}
           isAdmin={isAdmin}
           directApply={directApply}

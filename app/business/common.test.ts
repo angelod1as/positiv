@@ -234,13 +234,30 @@ describe("basicDataFieldsSchema", () => {
     expect(shape.date_of_birth.safeParse("2020-01-01").success).toBe(false)
   })
 
+  // The CPF reaches Asaas, which refuses a customer whose digits do not check
+  // out. Catching it on the form is the difference between a sentence the
+  // person can act on and a charge that cannot be created later.
+  it("refuses a CPF whose check digits do not add up", () => {
+    const { shape } = basicDataFieldsSchema
+
+    expect(shape.cpf.safeParse("529.982.247-25").success).toBe(true)
+    // Stored as digits whichever form wrote it, so profiles.cpf never holds
+    // the same number in two shapes.
+    expect(shape.cpf.parse("529.982.247-25")).toBe("52998224725")
+    expect(shape.cpf.safeParse("52998224725").success).toBe(true)
+    expect(shape.cpf.safeParse("529.982.247-26").success).toBe(false)
+    expect(shape.cpf.safeParse("111.111.111-11").success).toBe(false)
+    expect(shape.cpf.safeParse("12345678900").success).toBe(false)
+    expect(shape.cpf.safeParse("5299822472").success).toBe(false)
+  })
+
   it("does not compare one field with another — that is the whole schema's job", () => {
     const mismatched = {
       full_name: "Maria Silva",
       social_name: null,
       rg: "123456789",
       rg_issuer: "SSP-SP",
-      cpf: "12345678900",
+      cpf: "52998224725",
       date_of_birth: "1990-01-01",
       phone: 11999999999,
       confirm_phone: 11888888888,
@@ -257,7 +274,7 @@ describe("basicDataSchema", () => {
     social_name: null,
     rg: "123456789",
     rg_issuer: "SSP-SP",
-    cpf: "12345678900",
+    cpf: "52998224725",
     date_of_birth: "1990-01-01",
     phone: 11999999999,
     confirm_phone: 11999999999,

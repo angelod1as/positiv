@@ -44,6 +44,12 @@ export const metaCopy = {
   dashboard: {
     title: "Meus Eventos",
   },
+  payment: {
+    title: "Pagamento",
+  },
+  paymentThanks: {
+    title: "Recebemos sua escolha",
+  },
   agreeToTerms: {
     title: "Termos e Condições",
   },

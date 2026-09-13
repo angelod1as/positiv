@@ -63,7 +63,10 @@ SELECT
         WHEN 'user9@example.com' THEN ARRAY['ele/dele']::text[]
     END,
     '000000000',
-    '00000000000',
+    -- A CPF whose check digits add up. basicDataFieldsSchema rejects one that
+    -- does not, and the payment page will not offer its options without one,
+    -- so a seeded profile carrying junk is a profile no local flow can finish.
+    '11144477735',
     11999999999,
     CASE usr.email
         WHEN 'admin@example.com' THEN '1990-05-15'::date
@@ -214,7 +217,7 @@ SELECT
             ]
     END,
     lpad((floor(random() * 999999999)::bigint)::text, 9, '0'),
-    lpad((floor(random() * 99999999999)::bigint)::text, 11, '0'),
+    cpf.value,
     (11900000000 + floor(random() * 99999999)::bigint),
     (current_date - (interval '1 year' * (18 + floor(random() * 42)::int)))::date,
     CASE
@@ -287,6 +290,26 @@ SELECT
             ]
     END
 FROM auth.users AS usr
+-- The nine base digits, then the two Modulo 11 check digits Receita Federal
+-- defines, so every generated CPF is one the app will accept.
+CROSS JOIN LATERAL (
+    SELECT lpad((floor(random() * 999999999)::bigint)::text, 9, '0') AS digits
+) AS base
+CROSS JOIN LATERAL (
+    SELECT (
+        SELECT (SUM(substring(base.digits, i, 1)::int * (11 - i)) * 10) % 11 % 10
+          FROM generate_series(1, 9) AS i
+    )::text AS digit
+) AS first_check
+CROSS JOIN LATERAL (
+    SELECT (
+        SELECT (SUM(substring(base.digits || first_check.digit, i, 1)::int * (12 - i)) * 10) % 11 % 10
+          FROM generate_series(1, 10) AS i
+    )::text AS digit
+) AS second_check
+CROSS JOIN LATERAL (
+    SELECT base.digits || first_check.digit || second_check.digit AS value
+) AS cpf
 WHERE usr.email LIKE 'user%@example.com'
   AND usr.email NOT IN (
     'user1@example.com',
