@@ -6,6 +6,10 @@ describe("PROFILE_REQUIREMENTS", () => {
     expect(PROFILE_REQUIREMENTS.requiredFields).toContain("race_color")
   })
 
+  it("should have cpf in requiredFields array", () => {
+    expect(PROFILE_REQUIREMENTS.requiredFields).toContain("cpf")
+  })
+
   it("should have targetPath set to /conta/dados-basicos", () => {
     expect(PROFILE_REQUIREMENTS.targetPath).toBe("/conta/dados-basicos")
   })
