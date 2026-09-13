@@ -1,7 +1,7 @@
 import { redirectWithError } from "remix-toast"
 import { ENV } from "varlock/env"
 import { getAsaasFees } from "~/business/payment/asaas-fees.server"
-import { isValidCpf } from "~/business/payment/cpf"
+import { isValidCpf } from "~/lib/helpers/cpf"
 import {
   buildPaymentOptions,
   type PaymentOption,

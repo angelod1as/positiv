@@ -2,7 +2,7 @@ import { applySchema } from "composable-functions"
 import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
-import { isValidCpf, normalizeCpf } from "./cpf"
+import { isValidCpf, normalizeCpf } from "~/lib/helpers/cpf"
 
 export const savePaymentCpfSchema = zod.object({
   profileId: zod.string().uuid(),

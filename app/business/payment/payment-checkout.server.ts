@@ -15,7 +15,7 @@ import {
   findAsaasCustomerByCpf,
 } from "./asaas-client.server"
 import { getAsaasFees } from "./asaas-fees.server"
-import { isValidCpf } from "./cpf"
+import { isValidCpf } from "~/lib/helpers/cpf"
 import { buildPaymentOptions, findPaymentOption } from "./pricing"
 
 const OPEN_STATUSES = ["pending", "awaiting_payment"] as const

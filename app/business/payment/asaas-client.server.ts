@@ -3,7 +3,7 @@ import { ENV } from "varlock/env"
 import type { z, ZodType } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
-import { normalizeCpf } from "./cpf"
+import { normalizeCpf } from "~/lib/helpers/cpf"
 
 // Asaas rejects a request without a User-Agent. The package is private and
 // carries no version field, so the client names itself and the environment it

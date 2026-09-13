@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { isValidCpf, normalizeCpf } from "~/business/payment/cpf"
+import { isValidCpf, normalizeCpf } from "~/lib/helpers/cpf"
 import { basicDataValidation, changePasswordValidation } from "~/copy/account"
 import { registerCopy } from "~/copy/auth"
 import { agreeToTermsValidation } from "~/copy/dashboard"
