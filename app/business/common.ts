@@ -127,8 +127,11 @@ export const basicDataFieldsSchema = zod.object({
   // The CPF is what Asaas identifies the payer by, and it refuses one whose
   // digits do not check out. Caught here, the person gets a sentence they can
   // act on instead of a charge that fails to be created weeks later.
+  // min(2) before the rule, so an empty field reads as the missing answer it is
+  // rather than as digits that do not add up.
   cpf: zod
     .string()
+    .min(2)
     .refine(isValidCpf, { error: basicDataValidation.invalidCpf })
     .transform(normalizeCpf),
   date_of_birth: zod

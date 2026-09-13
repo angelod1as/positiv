@@ -127,6 +127,15 @@ describe("loadPaymentPage", () => {
     ).rejects.toBeDefined()
   })
 
+  // payments.id is a uuid column, so a route param that is not one makes
+  // Postgres throw rather than return nothing. Answered like any other charge
+  // that is not yours, not with an error page.
+  it("refuses an id that is not a UUID at all", async () => {
+    await expect(
+      loadPaymentPage({ paymentId: "foo", profileId }),
+    ).rejects.toBeInstanceOf(Response)
+  })
+
   it("asks for the CPF when the profile has none that checks out", async () => {
     await kysely
       .updateTable("profiles")

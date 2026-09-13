@@ -15,10 +15,9 @@ import {
   findAsaasCustomerByCpf,
 } from "./asaas-client.server"
 import { getAsaasFees } from "./asaas-fees.server"
+import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { buildPaymentOptions, findPaymentOption } from "./pricing"
-
-const OPEN_STATUSES = ["pending", "awaiting_payment"] as const
 
 export const pickOptionSchema = zod.object({
   paymentId: zod.string().uuid(),
@@ -120,7 +119,7 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
     throw new Error(paymentsCopy.page.notYours)
   }
 
-  if (!OPEN_STATUSES.some((status) => status === payment.status)) {
+  if (!(ACTIVE_PAYMENT_STATUSES as readonly string[]).includes(payment.status)) {
     throw new Error(paymentsCopy.errors.chargeClosed)
   }
 
@@ -202,7 +201,7 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
       asaas_invoice_url: charge.invoiceUrl,
     })
     .where("id", "=", payment.id)
-    .where("status", "in", [...OPEN_STATUSES])
+    .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
     // Compare-and-swap on the charge this call decided against. Without it two
     // picks racing both match -- awaiting_payment is itself an open status --
     // and the loser's charge stays live at Asaas with the row no longer naming
@@ -254,7 +253,7 @@ function readChargeAfterRace(paymentId: string) {
     .selectFrom("payments")
     .select(["method", "installment_count", "asaas_invoice_url"])
     .where("id", "=", paymentId)
-    .where("status", "in", [...OPEN_STATUSES])
+    .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])
     .executeTakeFirst()
 }
 

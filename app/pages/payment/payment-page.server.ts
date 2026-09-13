@@ -1,6 +1,7 @@
 import { redirectWithError } from "remix-toast"
 import { ENV } from "varlock/env"
 import { getAsaasFees } from "~/business/payment/asaas-fees.server"
+import { ACTIVE_PAYMENT_STATUSES } from "~/business/payment/payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import {
   buildPaymentOptions,
@@ -8,6 +9,7 @@ import {
 } from "~/business/payment/pricing"
 import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
+import { zod } from "~/lib/helpers/zod"
 import paths from "~/lib/paths"
 
 export type PaymentPageData =
@@ -25,7 +27,6 @@ export type PaymentPageData =
   | { state: "paid"; eventTitle: string; amount: number; paidAt: string }
   | { state: "closed"; eventTitle: string }
 
-const OPEN_STATUSES = ["pending", "awaiting_payment"]
 const SETTLED_STATUSES = ["paid", "partially_refunded"]
 
 /**
@@ -39,6 +40,16 @@ export async function loadPaymentPage({
   paymentId: string
   profileId: string
 }): Promise<PaymentPageData> {
+  // payments.id is a uuid column, so an id that is not one makes Postgres throw
+  // rather than answer with no rows. Refused the same way a charge belonging to
+  // somebody else is, so a bad link reads as a bad link and not as a crash.
+  if (!zod.string().uuid().safeParse(paymentId).success) {
+    throw await redirectWithError(
+      paths.dash.DASHBOARD,
+      paymentsCopy.page.notYours,
+    )
+  }
+
   const payment = await kyselyDb
     .selectFrom("payments as p")
     .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
@@ -86,7 +97,7 @@ export async function loadPaymentPage({
   // Pricing an option means reading the Asaas fee table, and with the switch
   // off nothing may talk to Asaas. Quoting from the fallback list instead would
   // name a price no charge could then be created against.
-  if (!OPEN_STATUSES.includes(payment.status) || !ENV.PAYMENTS_ENABLED) {
+  if (!(ACTIVE_PAYMENT_STATUSES as readonly string[]).includes(payment.status) || !ENV.PAYMENTS_ENABLED) {
     return { state: "closed", eventTitle }
   }
 
