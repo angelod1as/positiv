@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isValidCpf } from "~/business/payment/cpf"
+import { isValidCpf } from "~/lib/helpers/cpf"
 import { setupIntegrationTest } from "~/test/integration-setup"
 
 /**

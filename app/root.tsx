@@ -14,7 +14,7 @@ import {
 import { getToast, redirectWithError, redirectWithSuccess } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { ENV } from "varlock/env"
-import { isValidCpf } from "~/business/payment/cpf"
+import { isValidCpf } from "~/lib/helpers/cpf"
 import { Copy } from "~/components/atoms/copy/copy"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
