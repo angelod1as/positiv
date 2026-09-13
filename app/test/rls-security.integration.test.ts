@@ -285,6 +285,34 @@ describe("RLS Security - Integration Tests", () => {
     })
   })
 
+  describe("Row level security coverage", () => {
+    it("should have RLS enabled on every table in public", async () => {
+      const { rows } = await sql<{ relname: string; relrowsecurity: boolean }>`
+        SELECT c.relname, c.relrowsecurity
+        FROM pg_class c
+        INNER JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+        AND c.relkind IN ('r', 'p')
+        -- The integration harness backs every table up for the length of a run
+        -- (app/test/integration-global-setup.ts), so its copies are in pg_class
+        -- while this test reads it.
+        AND c.relname NOT LIKE '\_backup\_%'
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_depend d WHERE d.objid = c.oid AND d.deptype = 'e'
+        )
+        ORDER BY c.relname
+      `.execute(db)
+
+      expect(rows.length).toBeGreaterThan(0)
+
+      const withoutRls = rows
+        .filter((row) => !row.relrowsecurity)
+        .map((row) => row.relname)
+
+      expect(withoutRls).toEqual([])
+    })
+  })
+
   describe("Extension schema location", () => {
     it("should have pg_net extension in extensions schema", async () => {
       const { rows } = await sql<{ nspname: string }>`
