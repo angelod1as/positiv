@@ -233,6 +233,58 @@ describe("RLS Security - Integration Tests", () => {
     })
   })
 
+  describe("search_path is pinned on every public function", () => {
+    // Two separate failures hide behind the same advisor lint. A function with
+    // no search_path at all resolves unqualified names against whatever the
+    // caller set. A function that declares one and then runs
+    // `SET search_path = public` in its body throws the declaration away on the
+    // first statement, which reads as fixed in pg_proc.proconfig and is not.
+    const publicFunctions = async () => {
+      const { rows } = await sql<{
+        signature: string
+        has_fixed_search_path: boolean
+        body_overrides_search_path: boolean
+      }>`
+        SELECT p.oid::regprocedure::text AS signature,
+               EXISTS (
+                 SELECT 1 FROM unnest(COALESCE(p.proconfig, '{}')) AS config
+                 WHERE config LIKE 'search_path=%'
+               ) AS has_fixed_search_path,
+               p.prosrc ILIKE '%SET search_path%' AS body_overrides_search_path
+        FROM pg_proc p
+        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e'
+        )
+        ORDER BY p.proname
+      `.execute(db)
+
+      expect(rows.length).toBeGreaterThan(0)
+      return rows
+    }
+
+    it("should declare a fixed search_path on every function", async () => {
+      const rows = await publicFunctions()
+
+      const mutable = rows
+        .filter((row) => !row.has_fixed_search_path)
+        .map((row) => row.signature)
+
+      expect(mutable).toEqual([])
+    })
+
+    it("should not override the declared search_path inside a body", async () => {
+      const rows = await publicFunctions()
+
+      const overriding = rows
+        .filter((row) => row.body_overrides_search_path)
+        .map((row) => row.signature)
+
+      expect(overriding).toEqual([])
+    })
+  })
+
   describe("Extension schema location", () => {
     it("should have pg_net extension in extensions schema", async () => {
       const { rows } = await sql<{ nspname: string }>`
