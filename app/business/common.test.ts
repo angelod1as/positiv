@@ -241,6 +241,9 @@ describe("basicDataFieldsSchema", () => {
     const { shape } = basicDataFieldsSchema
 
     expect(shape.cpf.safeParse("529.982.247-25").success).toBe(true)
+    // Stored as digits whichever form wrote it, so profiles.cpf never holds
+    // the same number in two shapes.
+    expect(shape.cpf.parse("529.982.247-25")).toBe("52998224725")
     expect(shape.cpf.safeParse("52998224725").success).toBe(true)
     expect(shape.cpf.safeParse("529.982.247-26").success).toBe(false)
     expect(shape.cpf.safeParse("111.111.111-11").success).toBe(false)

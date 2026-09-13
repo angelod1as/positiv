@@ -320,6 +320,33 @@ describe("pickOption", () => {
     )
   })
 
+  // A charge with no invoice is a charge the participant cannot reach. Leaving
+  // it at Asaas and the row at awaiting_payment would mean money that could
+  // still arrive against a link nobody has.
+  it("deletes a charge Asaas gave no invoice for, and leaves the row open", async () => {
+    const payment = await openCharge()
+    createAsaasPayment.mockResolvedValueOnce({
+      id: "pay_no_url",
+      status: "PENDING",
+      invoiceUrl: null,
+      installmentId: null,
+    })
+
+    const result = await pickOption({
+      paymentId: payment.id,
+      profileId,
+      optionId: "pix",
+    })
+
+    expect(result.success).toBe(false)
+    expect(deleteAsaasPayment).toHaveBeenCalledWith("pay_no_url")
+
+    const after = await rowOf(payment.id)
+    expect(after.status).toBe("pending")
+    expect(after.asaas_payment_id).toBeNull()
+    expect(after.asaas_invoice_url).toBeNull()
+  })
+
   it("refuses an unknown option", async () => {
     const payment = await openCharge()
 
