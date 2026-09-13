@@ -12,6 +12,7 @@ import {
 import {
   createTestAuthUser,
   createTestProfile,
+  runAsAuthenticatedUser,
 } from "~/test/db-test-utils"
 import { sql } from "kysely"
 
@@ -41,16 +42,23 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
     await cleanupAfterTest(tracker, kysely)
   })
 
+  // get_profile_with_roles only answers for the caller's own auth.uid(), so every
+  // call here runs as the user whose profile it asks for.
+  const callAsOwner = <T>(userId: string) =>
+    runAsAuthenticatedUser(kysely, userId, (trx) =>
+      sql<T>`SELECT * FROM public.get_profile_with_roles(${userId}::uuid)`.execute(
+        trx,
+      ),
+    )
+
   it("should return profile with is_admin=false and empty roles array when user has no roles", async () => {
-    const result = await sql<{
+    const result = await callAsOwner<{
       id: string
       email: string
       full_name: string | null
       is_admin: boolean
       roles: string[] | null
-    }>`SELECT * FROM get_profile_with_roles(${testUserId}::uuid)`.execute(
-      kysely,
-    )
+    }>(testUserId)
 
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
@@ -68,14 +76,12 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       })
       .execute()
 
-    const result = await sql<{
+    const result = await callAsOwner<{
       is_admin: boolean
       roles: string[] | null
       email: string
       full_name: string | null
-    }>`SELECT * FROM get_profile_with_roles(${testUserId}::uuid)`.execute(
-      kysely,
-    )
+    }>(testUserId)
 
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
@@ -95,12 +101,10 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       })
       .execute()
 
-    const result = await sql<{
+    const result = await callAsOwner<{
       is_admin: boolean
       roles: string[] | null
-    }>`SELECT * FROM get_profile_with_roles(${testUserId}::uuid)`.execute(
-      kysely,
-    )
+    }>(testUserId)
 
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
@@ -130,12 +134,10 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       ])
       .execute()
 
-    const result = await sql<{
+    const result = await callAsOwner<{
       is_admin: boolean
       roles: string[] | null
-    }>`SELECT * FROM get_profile_with_roles(${testUserId}::uuid)`.execute(
-      kysely,
-    )
+    }>(testUserId)
 
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
@@ -144,7 +146,7 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
   })
 
   it("should return all profile columns correctly", async () => {
-    const result = await sql<{
+    const result = await callAsOwner<{
       id: string
       email: string
       full_name: string | null
@@ -164,9 +166,7 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
       created_at: string
       is_admin: boolean
       roles: string[] | null
-    }>`SELECT * FROM get_profile_with_roles(${testUserId}::uuid)`.execute(
-      kysely,
-    )
+    }>(testUserId)
 
     expect(result.rows).toHaveLength(1)
     const data = result.rows[0]
@@ -198,9 +198,7 @@ describe("get_profile_with_roles RPC - Integration Tests", () => {
   it("should return no rows when user_id does not exist", async () => {
     const nonExistentUserId = "99999999-9999-9999-9999-999999999999"
 
-    const result = await sql`SELECT * FROM get_profile_with_roles(${nonExistentUserId}::uuid)`.execute(
-      kysely,
-    )
+    const result = await callAsOwner<Record<string, unknown>>(nonExistentUserId)
 
     expect(result.rows).toHaveLength(0)
   })
