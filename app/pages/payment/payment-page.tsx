@@ -141,6 +141,12 @@ const CpfGate = () => {
   const [cpf, setCpf] = useState("")
   const [error, setError] = useState<string | null>(null)
 
+  // The client refuses a CPF whose digits do not add up, so the server only
+  // says no for a reason the client could not see — an expired session, most of
+  // all. Left unread, the button just goes quiet.
+  const refused =
+    fetcher.data && fetcher.data.ok === false ? fetcher.data.error : null
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
     if (!isValidCpf(cpf)) {
@@ -168,7 +174,9 @@ const CpfGate = () => {
             value={cpf}
             onChange={(event) => setCpf(event.target.value)}
           />
-          {error && <p className="text-destructive text-sm">{error}</p>}
+          {(error || refused) && (
+            <p className="text-destructive text-sm">{error ?? refused}</p>
+          )}
         </div>
       </CardContent>
       <CardFooter>

@@ -10,9 +10,10 @@ import { paymentsCopy } from "~/copy/payments"
 import PaymentPage from "./payment-page"
 import type { PaymentPageData } from "./payment-page.server"
 
-const { submit, navigationState } = vi.hoisted(() => ({
+const { submit, navigationState, fetcherData } = vi.hoisted(() => ({
   submit: vi.fn(),
   navigationState: { value: "idle" },
+  fetcherData: { value: undefined as unknown },
 }))
 
 // Form needs a data router to exist at all, which this page does not otherwise
@@ -22,7 +23,7 @@ vi.mock("react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router")>()
   return {
     ...actual,
-    useFetcher: () => ({ submit, state: "idle", data: undefined }),
+    useFetcher: () => ({ submit, state: "idle", data: fetcherData.value }),
     useNavigation: () => ({ state: navigationState.value }),
     Form: ({
       children,
@@ -165,6 +166,22 @@ describe("PaymentPage", () => {
       await screen.findByText(paymentsCopy.errors.invalidCpf),
     ).toBeInTheDocument()
     expect(submit).not.toHaveBeenCalled()
+  })
+
+  // The client re-validates before posting, so the server only refuses for a
+  // reason the client cannot see — an expired session, most of all. Going quiet
+  // leaves the person clicking a button that appears to do nothing.
+  it("says what went wrong when the server refuses the CPF", () => {
+    fetcherData.value = { ok: false, error: "Sua sessão expirou." }
+    renderPage({
+      state: "needs_cpf",
+      paymentId: "payment-1",
+      eventTitle: "Encontro de Maio",
+    })
+
+    expect(screen.getByText("Sua sessão expirou.")).toBeInTheDocument()
+
+    fetcherData.value = undefined
   })
 
   it("sends a CPF that checks out", async () => {

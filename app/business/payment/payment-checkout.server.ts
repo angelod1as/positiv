@@ -53,13 +53,30 @@ async function ensureAsaasCustomer(profile: {
       externalReference: profile.id,
     }))
 
-  await kyselyDb
+  // Written only while the column is still empty, for the same reason the
+  // charge below is: two picks racing both find nothing and both create a
+  // customer, and an unconditional write would let the row and the profile end
+  // up naming different ones.
+  const written = await kyselyDb
     .updateTable("profiles")
     .set({ asaas_customer_id: customerId })
     .where("id", "=", profile.id)
-    .execute()
+    .where("asaas_customer_id", "is", null)
+    .returning("asaas_customer_id")
+    .executeTakeFirst()
 
-  return customerId
+  if (written?.asaas_customer_id) return written.asaas_customer_id
+
+  // Another pick got there first. Its customer is the one every charge must
+  // name, so the one created here is abandoned at Asaas: it holds no money, is
+  // attached to no charge, and the API offers no delete for it.
+  const winner = await kyselyDb
+    .selectFrom("profiles")
+    .select("asaas_customer_id")
+    .where("id", "=", profile.id)
+    .executeTakeFirst()
+
+  return winner?.asaas_customer_id ?? customerId
 }
 
 /**

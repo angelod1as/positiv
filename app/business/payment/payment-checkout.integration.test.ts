@@ -423,6 +423,52 @@ describe("pickOption", () => {
     expect(createAsaasPayment).not.toHaveBeenCalled()
   })
 
+  // The same race the charge path guards against, one function up: two picks
+  // for a profile with no customer yet both create one, and the loser's is
+  // left at Asaas attached to nobody.
+  it("keeps one Asaas customer when two picks race for the same profile", async () => {
+    const payment = await openCharge()
+    let made = 0
+    let release = () => {}
+    const bothArrived = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    createAsaasCustomer.mockImplementation(async () => {
+      made += 1
+      const mine = made
+      if (made === 2) release()
+      await bothArrived
+      return `cus_race_${mine}`
+    })
+    createAsaasPayment.mockImplementation(async () => ({
+      id: `pay_race_${made}`,
+      status: "PENDING",
+      invoiceUrl: `https://sandbox.asaas.com/i/pay_race_${made}`,
+      installmentId: null,
+    }))
+
+    await Promise.all([
+      pickOption({ paymentId: payment.id, profileId, optionId: "pix" }),
+      pickOption({ paymentId: payment.id, profileId, optionId: "pix" }),
+    ])
+
+    const profile = await kysely
+      .selectFrom("profiles")
+      .select("asaas_customer_id")
+      .where("id", "=", profileId)
+      .executeTakeFirstOrThrow()
+
+    // Both reached Asaas — that much the app cannot prevent — but only one id
+    // is kept, and every charge written names that same one.
+    expect(made).toBe(2)
+    const rows = await kysely
+      .selectFrom("payments")
+      .select("asaas_customer_id")
+      .where("id", "=", payment.id)
+      .execute()
+    expect(rows[0]?.asaas_customer_id).toBe(profile.asaas_customer_id)
+  })
+
   it("refuses an unknown option", async () => {
     const payment = await openCharge()
 
