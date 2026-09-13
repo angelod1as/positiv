@@ -132,4 +132,10 @@ describe("buildBasicDataQuestions", () => {
     expect(find("phone").help).toBe("Só números, com DDD. Ex: 11955552222")
     expect(find("full_name").help).toBeUndefined()
   })
+
+  it("says why the CPF has to be a real one", () => {
+    expect(find("cpf").help).toBe(
+      "Precisamos de um CPF válido para emitir suas cobranças. Só números.",
+    )
+  })
 })

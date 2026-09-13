@@ -94,6 +94,7 @@ export const basicDataCopy = {
       "Nos diga o nome de quem te indicou ou se você nos viu em alguma rede social",
     phone: "Só números, com DDD. Ex: 11955552222",
     confirm_phone: "Só números, com DDD. Ex: 11955552222",
+    cpf: "Precisamos de um CPF válido para emitir suas cobranças. Só números.",
     rg_issuer: "Exemplo: SSP/SP",
   } as const satisfies Partial<
     Record<keyof z.infer<typeof basicDataSchema>, string>

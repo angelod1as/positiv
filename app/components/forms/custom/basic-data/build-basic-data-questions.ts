@@ -98,6 +98,7 @@ export function buildBasicDataQuestions(): Question[] {
     {
       id: "cpf",
       prompt: labels.cpf,
+      help: descriptions.cpf,
       input: { kind: "text" },
       schema: shape.cpf,
     },
