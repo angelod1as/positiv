@@ -1,6 +1,9 @@
 import type { z } from "zod"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
+import { logger } from "~/lib/logger/logger.server"
+import { reaisToCents } from "./asaas-client.server"
+import { sendPaymentConfirmedEmail } from "./payment-emails.server"
 
 /**
  * Deliberately permissive. Asaas adds fields without warning, and the docs say
@@ -63,15 +66,227 @@ export async function recordWebhookEvent(
   return { isNew: false, id: existing.id }
 }
 
+
+const PAID_EVENTS = ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"]
+const ALARM_EVENTS = [
+  "PAYMENT_CHARGEBACK_REQUESTED",
+  "PAYMENT_CHARGEBACK_DISPUTE",
+  "PAYMENT_AWAITING_CHARGEBACK_REVERSAL",
+  "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
+  "PAYMENT_REPROVED_BY_RISK_ANALYSIS",
+  "PAYMENT_REFUND_DENIED",
+]
+
+/** Statuses a charge can still be paid from — including expired: Asaas lets
+ *  someone pay a Pix after the due date, and the money is real. */
+const PAYABLE = ["pending", "awaiting_payment", "expired"] as const
+
+async function findPayment(event: AsaasWebhookEvent) {
+  const payment = event.payment
+  if (!payment) return null
+
+  const byId = await kyselyDb
+    .selectFrom("payments")
+    .selectAll()
+    .where("asaas_payment_id", "=", payment.id)
+    .executeTakeFirst()
+  if (byId) return byId
+
+  if (payment.installment) {
+    const byInstallment = await kyselyDb
+      .selectFrom("payments")
+      .selectAll()
+      .where("asaas_installment_id", "=", payment.installment)
+      .executeTakeFirst()
+    if (byInstallment) return byInstallment
+  }
+
+  if (payment.externalReference) {
+    const byReference = await kyselyDb
+      .selectFrom("payments")
+      .selectAll()
+      .where("id", "=", payment.externalReference)
+      .executeTakeFirst()
+    if (byReference) return byReference
+  }
+
+  return null
+}
+
+function refundedCents(
+  event: AsaasWebhookEvent,
+  fallback: number | null,
+): number | null {
+  const refunds = event.payment?.refunds
+  if (!refunds?.length) return fallback
+  const done = refunds.filter((refund) => refund.status !== "CANCELLED")
+  if (!done.length) return fallback
+  return done.reduce((sum, refund) => sum + reaisToCents(refund.value ?? 0), 0)
+}
+
 export async function applyWebhookEvent(
   inboxId: string,
-  _event: AsaasWebhookEvent,
-): Promise<{ applied: boolean }> {
+  event: AsaasWebhookEvent,
+): Promise<{ applied: boolean; reason?: string }> {
+  try {
+    const payment = await findPayment(event)
+
+    if (!payment) {
+      // A charge created straight in the Asaas dashboard, or one from another
+      // system on the same account. Retrying will not make it ours.
+      logger.warn("Asaas webhook about an unknown charge", {
+        asaasEventId: event.id,
+        event: event.event,
+        asaasPaymentId: event.payment?.id,
+      })
+      await markProcessed(inboxId, null)
+      return { applied: false, reason: "unknown_payment" }
+    }
+
+    const result = await applyToPayment(payment, event)
+    await markProcessed(inboxId, null)
+    return result
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    await markProcessed(inboxId, message)
+    throw error
+  }
+}
+
+async function markProcessed(inboxId: string, error: string | null) {
   await kyselyDb
     .updateTable("payment_webhook_events")
-    .set({ processed_at: new Date().toISOString() })
+    .set({ processed_at: new Date().toISOString(), error })
     .where("id", "=", inboxId)
     .execute()
+}
 
-  return { applied: false }
+async function applyToPayment(
+  payment: { id: string; amount: number | null; status: string },
+  event: AsaasWebhookEvent,
+): Promise<{ applied: boolean; reason?: string }> {
+  const now = new Date().toISOString()
+
+  if (ALARM_EVENTS.includes(event.event)) {
+    logger.error("Asaas raised an alarm on a payment", {
+      paymentId: payment.id,
+      event: event.event,
+      asaasPaymentId: event.payment?.id,
+    })
+    return { applied: false, reason: "alarm_logged" }
+  }
+
+  if (PAID_EVENTS.includes(event.event)) {
+    const amount =
+      payment.amount ??
+      (event.payment?.value ? reaisToCents(event.payment.value) : null)
+    const net =
+      event.payment?.netValue != null
+        ? reaisToCents(event.payment.netValue)
+        : null
+
+    const updated = await kyselyDb
+      .updateTable("payments")
+      .set({ status: "paid", paid_at: now, amount, asaas_net: net })
+      .where("id", "=", payment.id)
+      .where("status", "in", PAYABLE)
+      .returning("id")
+      .executeTakeFirst()
+
+    // No row means it was already paid — a redelivery, or the second event of
+    // the CONFIRMED/RECEIVED pair. The email has been sent once already.
+    if (!updated) return { applied: false, reason: "already_paid" }
+
+    await sendPaymentConfirmedEmail({ paymentId: payment.id })
+    return { applied: true }
+  }
+
+  if (event.event === "PAYMENT_OVERDUE") {
+    const updated = await kyselyDb
+      .updateTable("payments")
+      .set({ status: "expired" })
+      .where("id", "=", payment.id)
+      .where("status", "in", ["pending", "awaiting_payment"])
+      .returning("id")
+      .executeTakeFirst()
+    return { applied: Boolean(updated) }
+  }
+
+  if (event.event === "PAYMENT_DELETED") {
+    const updated = await kyselyDb
+      .updateTable("payments")
+      .set({ status: "cancelled" })
+      .where("id", "=", payment.id)
+      .where("status", "in", ["pending", "awaiting_payment", "expired"])
+      .returning("id")
+      .executeTakeFirst()
+    return { applied: Boolean(updated) }
+  }
+
+  if (event.event === "PAYMENT_RESTORED") {
+    const updated = await kyselyDb
+      .updateTable("payments")
+      .set({ status: "awaiting_payment" })
+      .where("id", "=", payment.id)
+      .where("status", "in", ["cancelled", "expired"])
+      .returning("id")
+      .executeTakeFirst()
+    return { applied: Boolean(updated) }
+  }
+
+  if (
+    event.event === "PAYMENT_REFUNDED" ||
+    event.event === "PAYMENT_PARTIALLY_REFUNDED"
+  ) {
+    const refunded = refundedCents(event, payment.amount)
+    if (!refunded || !payment.amount) {
+      return { applied: false, reason: "no_refund_amount" }
+    }
+
+    const isFull = refunded >= payment.amount
+    const updated = await kyselyDb
+      .updateTable("payments")
+      .set({
+        status: isFull ? "refunded" : "partially_refunded",
+        refund_amount: Math.min(refunded, payment.amount),
+        refunded_at: now,
+      })
+      .where("id", "=", payment.id)
+      .where("status", "in", ["paid", "partially_refunded"])
+      .returning("id")
+      .executeTakeFirst()
+
+    // The refund email belongs to POS-531, which is where the template and the
+    // admin-side refund live; the status is what the ledger needs today.
+    return { applied: Boolean(updated), reason: updated ? undefined : "not_refundable" }
+  }
+
+  if (event.event === "PAYMENT_REFUND_IN_PROGRESS") {
+    await kyselyDb
+      .updateTable("payments")
+      .set({ refund_requested_at: now })
+      .where("id", "=", payment.id)
+      .where("refund_requested_at", "is", null)
+      .execute()
+    return { applied: true }
+  }
+
+  if (event.event === "PAYMENT_UPDATED") {
+    const amount = event.payment?.value
+      ? reaisToCents(event.payment.value)
+      : null
+    if (amount) {
+      await kyselyDb
+        .updateTable("payments")
+        .set({ amount })
+        .where("id", "=", payment.id)
+        .where("status", "in", ["pending", "awaiting_payment"])
+        .execute()
+    }
+    return { applied: true }
+  }
+
+  // PAYMENT_CREATED, PAYMENT_CHECKOUT_VIEWED and everything else: recorded,
+  // nothing to do.
+  return { applied: false, reason: "ignored" }
 }
