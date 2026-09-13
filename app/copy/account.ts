@@ -59,6 +59,7 @@ export const basicDataValidation = {
   invalidPhone: "Número inválido",
   phoneMismatch: "Os números de telefone são diferentes",
   socialNameMustDiffer: "O nome social deve ser diferente do nome completo",
+  invalidCpf: "Esse CPF não confere. Confira os números.",
 } as const
 
 export const basicDataCopy = {
@@ -93,6 +94,7 @@ export const basicDataCopy = {
       "Nos diga o nome de quem te indicou ou se você nos viu em alguma rede social",
     phone: "Só números, com DDD. Ex: 11955552222",
     confirm_phone: "Só números, com DDD. Ex: 11955552222",
+    cpf: "Precisamos de um CPF válido para emitir suas cobranças. Só números.",
     rg_issuer: "Exemplo: SSP/SP",
   } as const satisfies Partial<
     Record<keyof z.infer<typeof basicDataSchema>, string>
@@ -117,6 +119,6 @@ export const profileUpdateCopy = {
   title: "Atualize seu perfil",
   message: `Precisamos que você atualize seus dados básicos.
 
-Estamos solicitando informações sobre raça ou cor para melhorar nossos dados demográficos.`,
+Estamos pedindo informação de raça ou cor para acompanhar nossos dados demográficos, e um CPF válido para emitir suas cobranças.`,
   cta: "Atualizar meu perfil",
 } as const

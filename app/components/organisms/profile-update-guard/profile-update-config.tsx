@@ -38,6 +38,9 @@ import { profileUpdateCopy } from "~/copy/account"
  *    - Ensure form action saves the field to database
  *
  * NOTES:
+ * - A field can be required for being well-formed rather than for being
+ *   present: `cpf` is checked with `isValidCpf`, so a filled-in but impossible
+ *   number counts as missing
  * - The guard only shows for logged-in users
  * - Modal appears on all pages EXCEPT those in `exemptPaths`
  * - Modal is non-dismissable (no ESC, no click-outside, no X button)
@@ -46,7 +49,7 @@ import { profileUpdateCopy } from "~/copy/account"
  */
 
 export const PROFILE_REQUIREMENTS = {
-  requiredFields: ["race_color"] as string[],
+  requiredFields: ["race_color", "cpf"] as string[],
   targetPath: "/conta/dados-basicos",
   message: profileUpdateCopy.message,
   exemptPaths: [

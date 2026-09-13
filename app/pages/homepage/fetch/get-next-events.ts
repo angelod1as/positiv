@@ -41,7 +41,15 @@ export const getNextEvents: GetNextEvents = composable(
             .on("event_participants.profile_id", "=", profileId)
             .on("event_participants.is_user_applied", "=", true),
         )
-        .select((eb) =>
+        // The money the card reports, for this person's own participation.
+        // Joined through event_participants so somebody else's charge for the
+        // same event can never reach it.
+        .leftJoin(
+          "event_participant_payments",
+          "event_participant_payments.event_participant_id",
+          "event_participants.id",
+        )
+        .select((eb) => [
           eb
             .case()
             .when("event_participants.id", "is not", null)
@@ -49,7 +57,16 @@ export const getNextEvents: GetNextEvents = composable(
             .else(false)
             .end()
             .as("is_applied"),
-        )
+          eb.ref("event_participant_payments.active_payment_id").as(
+            "active_payment_id",
+          ),
+          eb.fn
+            .coalesce(
+              eb.ref("event_participant_payments.has_paid"),
+              eb.val(false),
+            )
+            .as("has_paid"),
+        ])
         // A closed event this person was invited into still shows them the
         // application. Read here rather than from a cookie, so the link opened
         // on a phone and the form filled on a desktop are the same person.

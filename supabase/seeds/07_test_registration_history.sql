@@ -45,7 +45,7 @@ BEGIN
         'Test',
         '1990-01-15',
         'test-history@example.com',
-        '12345678915',
+        '87748248800',
         5511987654329,
         ARRAY['Pessoa agênera']::text[],
         ARRAY['elu/delu']::text[],

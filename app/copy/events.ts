@@ -236,6 +236,11 @@ export const eventCardCopy = {
     confirmLabel: "😢 Cancelar",
     cancelLabel: "🎉 Voltar",
   },
+  payment: {
+    pending: "Pagamento pendente",
+    paid: "Pago",
+    pay: "Pagar",
+  },
 } as const
 
 export const eventApplicationCopy = {

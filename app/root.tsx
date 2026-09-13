@@ -14,6 +14,7 @@ import {
 import { getToast, redirectWithError, redirectWithSuccess } from "remix-toast"
 import { toast as notify, Toaster } from "sonner"
 import { ENV } from "varlock/env"
+import { isValidCpf } from "~/lib/helpers/cpf"
 import { Copy } from "~/components/atoms/copy/copy"
 import { GlobalLoading } from "~/components/atoms/global-loading/global-loading"
 import { TooltipProvider } from "~/components/ui/tooltip"
@@ -112,7 +113,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       Number(oldNewsVersion) < Number(NEWS_VERSION) || showNews !== "false"
 
     const needsProfileUpdate = currentProfile
-      ? !currentProfile.race_color || currentProfile.race_color.length === 0
+      ? !currentProfile.race_color ||
+        currentProfile.race_color.length === 0 ||
+        !isValidCpf(currentProfile.cpf)
       : false
 
     let shouldShowNewsletterModal = false

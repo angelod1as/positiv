@@ -548,6 +548,47 @@ describe("payments schema", () => {
     })
   })
 
+  describe("fee_snapshot", () => {
+    it("keeps the fee table the price was built from", async () => {
+      const snapshot = {
+        pix: { fixed: 199, percent: 0 },
+        card: { fixed: 49, percentOneInstallment: 0.0299, percentUpToSix: 0.0349 },
+        anticipation: { detachedMonthlyRate: 0.0115, installmentMonthlyRate: 0.016 },
+      }
+
+      const payment = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        status: "awaiting_payment",
+        kind: "asaas",
+        amount: 22199,
+        paid_at: null,
+        fee_snapshot: snapshot,
+      })
+
+      const row = await kysely
+        .selectFrom("payments")
+        .select("fee_snapshot")
+        .where("id", "=", payment.id)
+        .executeTakeFirstOrThrow()
+
+      expect(row.fee_snapshot).toEqual(snapshot)
+    })
+
+    it("leaves it empty for a row that was never priced", async () => {
+      const payment = await createTestPayment(tracker, kysely, {
+        event_participant_id: otherParticipantId,
+      })
+
+      const row = await kysely
+        .selectFrom("payments")
+        .select("fee_snapshot")
+        .where("id", "=", payment.id)
+        .executeTakeFirstOrThrow()
+
+      expect(row.fee_snapshot).toBeNull()
+    })
+  })
+
   describe("event_participants", () => {
     it("no longer carries the money columns the ledger replaced", async () => {
       const { rows } = await sql<{ column_name: string }>`

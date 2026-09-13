@@ -129,4 +129,69 @@ describe("root loader", () => {
       "sb-access-token=new-token; Path=/; HttpOnly",
     )
   })
+
+  describe("needsProfileUpdate", () => {
+    const loadWithProfile = async (
+      profile: Record<string, unknown> | null,
+    ) => {
+      mockGetContext.mockResolvedValue({
+        currentProfile: profile,
+        currentUser: profile ? { id: "user-1", email: "test@test.com" } : null,
+        isProdInDev: false,
+        supabaseHeaders: new Headers(),
+        supabase: {},
+        host: "localhost",
+      })
+      mockGetToast.mockResolvedValue({ toast: null, headers: new Headers() })
+
+      const { newsCookie, newsletterPreferenceCookie } = await import(
+        "./business/session.server"
+      )
+      vi.mocked(newsCookie.parse).mockResolvedValue({
+        showNews: "false",
+        newsVersion: "1",
+      })
+      vi.mocked(newsletterPreferenceCookie.parse).mockResolvedValue({
+        checked: true,
+        shouldShow: false,
+      })
+
+      const request = new Request("http://localhost:5173/")
+      const result = (await loader({ request, params: {} } as never)) as {
+        data: { needsProfileUpdate: boolean }
+      }
+
+      return result.data.needsProfileUpdate
+    }
+
+    const complete = {
+      id: "profile-1",
+      basic_data_filled: true,
+      race_color: ["Branca"],
+      cpf: "111.444.777-35",
+    }
+
+    it("leaves a profile alone when race and CPF are both good", async () => {
+      expect(await loadWithProfile(complete)).toBe(false)
+    })
+
+    it("asks for an update when the CPF fails the check digits", async () => {
+      expect(await loadWithProfile({ ...complete, cpf: "11144477736" })).toBe(
+        true,
+      )
+    })
+
+    it("asks for an update when there is no CPF at all", async () => {
+      expect(await loadWithProfile({ ...complete, cpf: null })).toBe(true)
+      expect(await loadWithProfile({ ...complete, cpf: "" })).toBe(true)
+    })
+
+    it("still asks for an update when race or colour is missing", async () => {
+      expect(await loadWithProfile({ ...complete, race_color: [] })).toBe(true)
+    })
+
+    it("asks nothing of a visitor with no profile", async () => {
+      expect(await loadWithProfile(null)).toBe(false)
+    })
+  })
 })

@@ -23,7 +23,7 @@ const filledProfile = {
   where_lives: "São Paulo",
   how_came_to_us: "Uma amiga",
   phone: 11999999999,
-  cpf: "12345678901",
+  cpf: "52998224725",
   rg: "123456789",
   rg_issuer: "SSP/SP",
   gender: ["Travesti"],
@@ -86,7 +86,7 @@ describe("BasicDataPage", () => {
       draw({ profile: filledProfile, orphanedProfile: null })
 
       expect(screen.getByLabelText("Nome completo")).toHaveValue("Maria Silva")
-      expect(screen.getByLabelText("CPF")).toHaveValue("12345678901")
+      expect(screen.getByLabelText("CPF")).toHaveValue("52998224725")
     })
 
     it("prefers a profile left behind under the same e-mail", () => {

@@ -17,7 +17,7 @@ const answersFor = (email: string) => ({
   how_came_to_us: "Uma amiga",
   phone: "11999999999",
   confirm_phone: "11999999999",
-  cpf: "12345678901",
+  cpf: "52998224725",
   rg: "123456789",
   rg_issuer: "SSP/SP",
   gender: ["Travesti"],
@@ -108,7 +108,7 @@ describe("saveBasicData - Integration Tests", () => {
       .where("id", "=", profile.id)
       .executeTakeFirstOrThrow()
 
-    expect(saved.cpf).toBe("12345678901")
+    expect(saved.cpf).toBe("52998224725")
     // The driver hands an int8 column back as a string.
     expect(Number(saved.phone)).toBe(11999999999)
     expect(saved.gender).toEqual(["Travesti"])
