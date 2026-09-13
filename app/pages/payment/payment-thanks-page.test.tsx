@@ -47,6 +47,37 @@ describe("PaymentThanksPage", () => {
     expect(screen.getByText(paymentsCopy.page.thanksBody)).toBeInTheDocument()
   })
 
+  // An admin cancelling the charge, or the expiry cron reaching it, between the
+  // Asaas redirect and this page loading. Promising a confirmation email that
+  // will never arrive is worse than saying nothing.
+  it("does not promise a confirmation for a link that has closed", () => {
+    renderPage({ state: "closed", eventTitle: "Encontro de Maio" })
+
+    expect(screen.getByText(paymentsCopy.page.closedTitle)).toBeInTheDocument()
+    expect(screen.getByText(paymentsCopy.page.closedBody)).toBeInTheDocument()
+    expect(
+      screen.queryByText(paymentsCopy.page.thanksBody),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(paymentsCopy.page.thanksPaidTitle),
+    ).not.toBeInTheDocument()
+  })
+
+  // needs_cpf is only ever answered for a row that is still open, so the
+  // payment really may still be in flight and the waiting message is honest.
+  it("still says the confirmation is coming when the profile lost its CPF", () => {
+    renderPage({
+      state: "needs_cpf",
+      paymentId: "payment-1",
+      eventTitle: "Encontro de Maio",
+    })
+
+    expect(screen.getByText(paymentsCopy.page.thanksTitle)).toBeInTheDocument()
+    expect(
+      screen.queryByText(paymentsCopy.page.closedTitle),
+    ).not.toBeInTheDocument()
+  })
+
   // Asaas sends the participant here the moment they finish on its side, which
   // is before the money is confirmed. Only the webhook may mark a row paid.
   it("offers no way to pay and claims nothing about the money", () => {
