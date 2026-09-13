@@ -154,6 +154,14 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
     successUrl,
   })
 
+  // Before the row is touched: a charge with no invoice is one the participant
+  // cannot reach, and recording it would leave money able to arrive against a
+  // link nobody has. Deleted here rather than left for the next pick to tidy.
+  if (!charge.invoiceUrl) {
+    await deleteOrphanCharge(payment.id, charge.id)
+    throw new Error(paymentsCopy.errors.noInvoiceUrl)
+  }
+
   const updated = await kyselyDb
     .updateTable("payments")
     .set({
@@ -184,10 +192,6 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
   // it earlier would leave them with nothing to pay had the new charge failed.
   if (payment.asaas_payment_id && payment.asaas_payment_id !== charge.id) {
     await deleteOrphanCharge(payment.id, payment.asaas_payment_id)
-  }
-
-  if (!charge.invoiceUrl) {
-    throw new Error(paymentsCopy.errors.noInvoiceUrl)
   }
 
   return { invoiceUrl: charge.invoiceUrl }

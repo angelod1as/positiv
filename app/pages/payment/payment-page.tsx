@@ -67,7 +67,7 @@ export async function action({ params, request }: Route.ActionArgs) {
   }
 
   // Asaas hosts the checkout, so this leaves the app on purpose.
-  throw redirect(result.data.invoiceUrl)
+  return redirect(result.data.invoiceUrl)
 }
 
 const PaymentPage = ({ loaderData }: Route.ComponentProps) => {
