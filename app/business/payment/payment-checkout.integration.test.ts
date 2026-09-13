@@ -347,6 +347,82 @@ describe("pickOption", () => {
     expect(after.asaas_invoice_url).toBeNull()
   })
 
+  // Two picks racing: both read the row before either writes, so both reach
+  // Asaas. Only one may end up recorded, and the charge the loser opened must
+  // not survive — the participant could still pay it, against a row that has
+  // stopped naming it.
+  it("leaves no live charge behind when two picks race", async () => {
+    const payment = await openCharge()
+    let created = 0
+    // Both calls are held inside createAsaasPayment until the second arrives,
+    // so neither can write before the other has read. Without the barrier the
+    // two serialise and the second simply finds the first's invoice.
+    let release = () => {}
+    const bothArrived = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    createAsaasPayment.mockImplementation(async () => {
+      created += 1
+      const mine = created
+      if (created === 2) release()
+      await bothArrived
+      return {
+        id: `pay_race_${mine}`,
+        status: "PENDING",
+        invoiceUrl: `https://sandbox.asaas.com/i/pay_race_${mine}`,
+        installmentId: null,
+      }
+    })
+
+    const [first, second] = await Promise.all([
+      pickOption({ paymentId: payment.id, profileId, optionId: "pix" }),
+      pickOption({ paymentId: payment.id, profileId, optionId: "pix" }),
+    ])
+
+    const after = await rowOf(payment.id)
+    const survivor = after.asaas_payment_id
+
+    expect(created).toBe(2)
+    expect(survivor).not.toBeNull()
+
+    // Whichever lost had its charge deleted, and nothing else was.
+    const deleted = deleteAsaasPayment.mock.calls.map(([id]) => id)
+    expect(deleted).toHaveLength(1)
+    expect(deleted[0]).not.toBe(survivor)
+
+    // Both callers still get the invoice the row actually names, so a
+    // double-click does not land anyone on a charge nobody is tracking.
+    expect(first.success).toBe(true)
+    expect(second.success).toBe(true)
+    const urls = [first, second].map((r) => r.success && r.data.invoiceUrl)
+    expect(urls).toEqual([
+      after.asaas_invoice_url,
+      after.asaas_invoice_url,
+    ])
+  })
+
+  // The page gates on the CPF before it offers the options, but the action is
+  // reachable on its own. Refused here with the sentence the gate uses, rather
+  // than by Asaas rejecting the customer.
+  it("refuses to charge a profile whose CPF does not check out", async () => {
+    await kysely
+      .updateTable("profiles")
+      .set({ cpf: "111.111.111-11" })
+      .where("id", "=", profileId)
+      .execute()
+    const payment = await openCharge()
+
+    const result = await pickOption({
+      paymentId: payment.id,
+      profileId,
+      optionId: "pix",
+    })
+
+    expect(result.success).toBe(false)
+    expect(createAsaasCustomer).not.toHaveBeenCalled()
+    expect(createAsaasPayment).not.toHaveBeenCalled()
+  })
+
   it("refuses an unknown option", async () => {
     const payment = await openCharge()
 

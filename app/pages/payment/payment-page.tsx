@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Form, redirect, useFetcher } from "react-router"
+import { Form, redirect, useFetcher, useNavigation } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { getUserContext } from "~/business/auth/auth.server"
 import { pickOption } from "~/business/payment/payment-checkout.server"
@@ -184,30 +184,40 @@ const Options = ({
   data,
 }: {
   data: Extract<PaymentPageData, { state: "ready" }>
-}) => (
-  <Form method="post">
-    <CardContent className="flex flex-col gap-4">
-      <h2 className="font-bold">{page.chooseOption}</h2>
-      <RadioGroup
-        name="optionId"
-        defaultValue={data.chosen?.id ?? "pix"}
-        className="gap-3"
-      >
-        {data.options.map((option: PaymentOption) => (
-          <div key={option.id} className="flex items-center gap-3">
-            <RadioGroupItem value={option.id} id={option.id} />
-            <Label htmlFor={option.id}>
-              {paymentsCopy.options.label(option)}
-            </Label>
-          </div>
-        ))}
-      </RadioGroup>
-      <Copy>{page.dueAt(formatDateTime(data.dueAt).full ?? "")}</Copy>
-    </CardContent>
-    <CardFooter>
-      <Button type="submit">{page.pay}</Button>
-    </CardFooter>
-  </Form>
-)
+}) => {
+  // A second submit opens a second Asaas charge, and only one of them can end
+  // up on the row. The action refuses the loser and deletes it, but the click
+  // is better not taken at all.
+  const navigation = useNavigation()
+  const submitting = navigation.state !== "idle"
+
+  return (
+    <Form method="post">
+      <CardContent className="flex flex-col gap-4">
+        <h2 className="font-bold">{page.chooseOption}</h2>
+        <RadioGroup
+          name="optionId"
+          defaultValue={data.chosen?.id ?? "pix"}
+          className="gap-3"
+        >
+          {data.options.map((option: PaymentOption) => (
+            <div key={option.id} className="flex items-center gap-3">
+              <RadioGroupItem value={option.id} id={option.id} />
+              <Label htmlFor={option.id}>
+                {paymentsCopy.options.label(option)}
+              </Label>
+            </div>
+          ))}
+        </RadioGroup>
+        <Copy>{page.dueAt(formatDateTime(data.dueAt).full ?? "")}</Copy>
+      </CardContent>
+      <CardFooter>
+        <Button type="submit" disabled={submitting}>
+          {page.pay}
+        </Button>
+      </CardFooter>
+    </Form>
+  )
+}
 
 export default PaymentPage

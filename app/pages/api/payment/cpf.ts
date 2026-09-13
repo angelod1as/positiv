@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router"
 import { getUserContext } from "~/business/auth/auth.server"
 import { savePaymentCpf } from "~/business/payment/payment-cpf.server"
+import { errorsCopy } from "~/copy/errors"
 import { paymentsCopy } from "~/copy/payments"
 
 /**
@@ -12,7 +13,10 @@ export async function action({ request, params }: ActionFunctionArgs) {
   const { currentProfile } = await getUserContext(request, params)
 
   if (!currentProfile) {
-    return Response.json({ ok: false, errors: [] }, { status: 403 })
+    return Response.json(
+      { ok: false, error: errorsCopy.auth.loginRequired },
+      { status: 403 },
+    )
   }
 
   const formData = await request.formData()
