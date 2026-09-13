@@ -8,6 +8,7 @@ import {
   createTestAuthUser,
   createTestEvent,
   createTestProfile,
+  runAsAuthenticatedUser,
 } from "~/test/db-test-utils"
 
 describe("RLS Security - Integration Tests", () => {
@@ -178,20 +179,6 @@ describe("RLS Security - Integration Tests", () => {
     // The function is SECURITY DEFINER and takes the user id as an argument, so
     // the grant alone does not stop one signed-in user from reading another
     // user's cpf, rg, phone and date of birth. The guard lives in the body.
-    const runAsAuthenticated = async <T>(
-      userId: string,
-      run: (trx: typeof db) => Promise<T>,
-    ): Promise<T> =>
-      db.transaction().execute(async (trx) => {
-        await sql`SET LOCAL ROLE authenticated`.execute(trx)
-        await sql`SELECT set_config('request.jwt.claims', ${JSON.stringify({
-          sub: userId,
-          role: "authenticated",
-        })}, true)`.execute(trx)
-
-        return run(trx as unknown as typeof db)
-      })
-
     const createUserWithProfile = async (label: string) => {
       const email = `pos539-${label}-${Date.now()}@example.com`
       const userId = await createTestAuthUser(email, "test1234", tracker)
@@ -209,7 +196,7 @@ describe("RLS Security - Integration Tests", () => {
     it("should return the caller's own profile", async () => {
       const caller = await createUserWithProfile("self")
 
-      const { rows } = await runAsAuthenticated(caller.userId, (trx) =>
+      const { rows } = await runAsAuthenticatedUser(db, caller.userId, (trx) =>
         sql<{ email: string }>`
           SELECT email FROM public.get_profile_with_roles(${caller.userId}::uuid)
         `.execute(trx),
@@ -224,7 +211,7 @@ describe("RLS Security - Integration Tests", () => {
       const victim = await createUserWithProfile("victim")
 
       await expect(
-        runAsAuthenticated(caller.userId, (trx) =>
+        runAsAuthenticatedUser(db, caller.userId, (trx) =>
           sql`
             SELECT cpf FROM public.get_profile_with_roles(${victim.userId}::uuid)
           `.execute(trx),

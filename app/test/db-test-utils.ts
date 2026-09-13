@@ -1,4 +1,5 @@
-import type { Kysely, Selectable, Insertable } from "kysely"
+import type { Kysely, Selectable, Insertable, Transaction } from "kysely"
+import { sql } from "kysely"
 import type { Database } from "~/types/database/kysely.types"
 import type { Database as DatabaseTypes } from "~/types/database/database.types"
 import { createClient } from "@supabase/supabase-js"
@@ -134,6 +135,33 @@ interface TestProfileData {
   user_id: string | null
   email: string
   [key: string]: unknown
+}
+
+/**
+ * Runs `run` as if a signed-in user had made the request: the authenticated
+ * role, with `userId` as the JWT subject that `auth.uid()` reads.
+ *
+ * Needed by anything that exercises a SECURITY DEFINER function which guards on
+ * `auth.uid()`. The test connection logs in as postgres, for which `auth.uid()`
+ * is null, so the guard would reject every call.
+ *
+ * Both settings are transaction-scoped, so the pooled connection goes back
+ * unchanged.
+ */
+export async function runAsAuthenticatedUser<T>(
+  kysely: Kysely<Database>,
+  userId: string,
+  run: (trx: Transaction<Database>) => Promise<T>,
+): Promise<T> {
+  return kysely.transaction().execute(async (trx) => {
+    await sql`SET LOCAL ROLE authenticated`.execute(trx)
+    await sql`SELECT set_config('request.jwt.claims', ${JSON.stringify({
+      sub: userId,
+      role: "authenticated",
+    })}, true)`.execute(trx)
+
+    return run(trx)
+  })
 }
 
 export async function createTestProfile(
