@@ -1,3 +1,4 @@
+import { sql } from "kysely"
 import type { z } from "zod"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
@@ -124,6 +125,31 @@ function refundedCents(
   return done.reduce((sum, refund) => sum + reaisToCents(refund.value ?? 0), 0)
 }
 
+/**
+ * What a card plan has actually netted so far, in cents.
+ *
+ * Asaas bills an installment plan as one payment per installment and sends an
+ * event for each, so the plan's net is a sum rather than a single number. It is
+ * recomputed from the inbox rather than added up as events arrive: the same
+ * installment is described by both CONFIRMED and RECEIVED, and counting the
+ * latest net once per Asaas payment id is what keeps either of them, in any
+ * order, from being counted twice.
+ */
+async function installmentNetCents(installmentId: string): Promise<number> {
+  const result = await sql<{ net: string }>`
+    SELECT COALESCE(SUM(net), 0)::text AS net FROM (
+      SELECT DISTINCT ON (payload->'payment'->>'id')
+             (payload->'payment'->>'netValue')::numeric AS net
+        FROM payment_webhook_events
+       WHERE payload->'payment'->>'installment' = ${installmentId}
+         AND event_type IN ('PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED')
+         AND payload->'payment'->>'netValue' IS NOT NULL
+       ORDER BY payload->'payment'->>'id', received_at DESC
+    ) AS per_installment`.execute(kyselyDb)
+
+  return Math.round(Number(result.rows[0]?.net ?? 0) * 100)
+}
+
 export async function applyWebhookEvent(
   inboxId: string,
   event: AsaasWebhookEvent,
@@ -162,7 +188,12 @@ async function markProcessed(inboxId: string, error: string | null) {
 }
 
 async function applyToPayment(
-  payment: { id: string; amount: number | null; status: string },
+  payment: {
+    id: string
+    amount: number | null
+    status: string
+    asaas_installment_id: string | null
+  },
   event: AsaasWebhookEvent,
 ): Promise<{ applied: boolean; reason?: string }> {
   const now = new Date().toISOString()
@@ -180,8 +211,10 @@ async function applyToPayment(
     const amount =
       payment.amount ??
       (event.payment?.value ? reaisToCents(event.payment.value) : null)
-    const net =
-      event.payment?.netValue != null
+    const installmentId = payment.asaas_installment_id
+    const net = installmentId
+      ? await installmentNetCents(installmentId)
+      : event.payment?.netValue != null
         ? reaisToCents(event.payment.netValue)
         : null
 
@@ -193,9 +226,20 @@ async function applyToPayment(
       .returning("id")
       .executeTakeFirst()
 
-    // No row means it was already paid — a redelivery, or the second event of
-    // the CONFIRMED/RECEIVED pair. The email has been sent once already.
-    if (!updated) return { applied: false, reason: "already_paid" }
+    // No row means it was already paid — a redelivery, the second event of the
+    // CONFIRMED/RECEIVED pair, or a later installment of a plan the first one
+    // already settled. The email has been sent once already; the money the
+    // later installments bring in is still ours to record.
+    if (!updated) {
+      if (installmentId) {
+        await kyselyDb
+          .updateTable("payments")
+          .set({ asaas_net: net })
+          .where("id", "=", payment.id)
+          .execute()
+      }
+      return { applied: false, reason: "already_paid" }
+    }
 
     await sendPaymentConfirmedEmail({ paymentId: payment.id })
     return { applied: true }

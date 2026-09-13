@@ -300,6 +300,71 @@ describe("applyWebhookEvent", () => {
     expect((await statusOf(payment.id)).status).toBe("paid")
   })
 
+  it("accumulates the net of every installment of a card plan", async () => {
+    const payment = await awaitingCharge({
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23454,
+      asaas_installment_id: `inst_${counter}`,
+    })
+
+    await deliver({
+      event: "PAYMENT_CONFIRMED",
+      payment: {
+        id: `pay_inst1_${counter}`,
+        installment: `inst_${counter}`,
+        value: 78.18,
+        netValue: 75.3,
+      },
+    })
+
+    expect((await statusOf(payment.id)).asaas_net).toBe(7530)
+
+    await deliver({
+      event: "PAYMENT_CONFIRMED",
+      payment: {
+        id: `pay_inst2_${counter}`,
+        installment: `inst_${counter}`,
+        value: 78.18,
+        netValue: 75.3,
+      },
+    })
+
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("paid")
+    expect(after.asaas_net).toBe(15060)
+  })
+
+  it("counts one installment once, however many events describe it", async () => {
+    const payment = await awaitingCharge({
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23454,
+      asaas_installment_id: `inst_${counter}`,
+    })
+
+    await deliver({
+      event: "PAYMENT_CONFIRMED",
+      payment: {
+        id: `pay_inst1_${counter}`,
+        installment: `inst_${counter}`,
+        value: 78.18,
+        netValue: 75.3,
+      },
+    })
+    await deliver({
+      event: "PAYMENT_RECEIVED",
+      payment: {
+        id: `pay_inst1_${counter}`,
+        installment: `inst_${counter}`,
+        value: 78.18,
+        netValue: 75.3,
+      },
+    })
+
+    expect((await statusOf(payment.id)).asaas_net).toBe(7530)
+  })
+
   it("falls back to externalReference", async () => {
     const payment = await awaitingCharge({ asaas_payment_id: null })
 
