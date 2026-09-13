@@ -10,7 +10,10 @@ import { paymentsCopy } from "~/copy/payments"
 import PaymentPage from "./payment-page"
 import type { PaymentPageData } from "./payment-page.server"
 
-const { submit } = vi.hoisted(() => ({ submit: vi.fn() }))
+const { submit, navigationState } = vi.hoisted(() => ({
+  submit: vi.fn(),
+  navigationState: { value: "idle" },
+}))
 
 // Form needs a data router to exist at all, which this page does not otherwise
 // need; the test is about what the participant sees and submits, not about how
@@ -20,6 +23,7 @@ vi.mock("react-router", async (importOriginal) => {
   return {
     ...actual,
     useFetcher: () => ({ submit, state: "idle", data: undefined }),
+    useNavigation: () => ({ state: navigationState.value }),
     Form: ({
       children,
       ...props
@@ -91,6 +95,19 @@ describe("PaymentPage", () => {
       .closest("form")
     expect(form).toHaveAttribute("method", "post")
     expect(new FormData(form as HTMLFormElement).get("optionId")).toBe("card_3")
+  })
+
+  // A second submit opens a second Asaas charge, and only one of them can end
+  // up on the row.
+  it("stops taking clicks while the charge is being created", () => {
+    navigationState.value = "submitting"
+    renderPage(ready)
+
+    expect(
+      screen.getByRole("button", { name: paymentsCopy.page.pay }),
+    ).toBeDisabled()
+
+    navigationState.value = "idle"
   })
 
   it("shows the receipt when it is already paid", () => {

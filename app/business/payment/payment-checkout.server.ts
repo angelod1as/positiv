@@ -1,4 +1,5 @@
 import { applySchema } from "composable-functions"
+import { sql } from "kysely"
 import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
@@ -14,6 +15,7 @@ import {
   findAsaasCustomerByCpf,
 } from "./asaas-client.server"
 import { getAsaasFees } from "./asaas-fees.server"
+import { isValidCpf } from "./cpf"
 import { buildPaymentOptions, findPaymentOption } from "./pricing"
 
 const OPEN_STATUSES = ["pending", "awaiting_payment"] as const
@@ -105,6 +107,13 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
     throw new Error(paymentsCopy.errors.chargeClosed)
   }
 
+  // The page gates on this before it offers an option, but the action is
+  // reachable on its own. Refused here with the sentence the gate uses, rather
+  // than as whatever Asaas answers to a customer it will not accept.
+  if (!isValidCpf(payment.cpf)) {
+    throw new Error(paymentsCopy.errors.invalidCpf)
+  }
+
   const fees = await getAsaasFees()
   const option = findPaymentOption(
     buildPaymentOptions(payment.base_amount, fees),
@@ -177,14 +186,36 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
     })
     .where("id", "=", payment.id)
     .where("status", "in", [...OPEN_STATUSES])
+    // Compare-and-swap on the charge this call decided against. Without it two
+    // picks racing both match -- awaiting_payment is itself an open status --
+    // and the loser's charge stays live at Asaas with the row no longer naming
+    // it. A row lock would close the race too, but it would be held across the
+    // Asaas call above; see the note in payment-offer.server.ts.
+    .where(
+      sql<boolean>`asaas_payment_id IS NOT DISTINCT FROM ${payment.asaas_payment_id}`,
+    )
     .returning("id")
     .executeTakeFirst()
 
   if (!updated) {
-    // The row closed under us — an admin cancelled it, or the cron expired it.
-    // The charge just created is one nobody can reach through the app and
-    // nothing would ever mark paid, so it must not survive.
+    // Either the row closed under us — an admin cancelled it, the cron expired
+    // it — or another pick got there first. Either way the charge just created
+    // is one nobody can reach through the app and nothing would ever mark paid,
+    // so it must not survive.
     await deleteOrphanCharge(payment.id, charge.id)
+
+    const winner = await readChargeAfterRace(payment.id)
+    // Losing to the same option is a double click, not a decision. The invoice
+    // handed back is the one the row actually names, so both tabs land on the
+    // charge that is being tracked.
+    if (
+      winner?.asaas_invoice_url &&
+      winner.method === option.method &&
+      winner.installment_count === option.installmentCount
+    ) {
+      return { invoiceUrl: winner.asaas_invoice_url }
+    }
+
     throw new Error(paymentsCopy.errors.chargeClosed)
   }
 
@@ -196,6 +227,19 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
 
   return { invoiceUrl: charge.invoiceUrl }
 })
+
+/**
+ * The row as it stands after losing a race, so a double click can be handed the
+ * invoice that won rather than an error about a charge that is in fact open.
+ */
+function readChargeAfterRace(paymentId: string) {
+  return kyselyDb
+    .selectFrom("payments")
+    .select(["method", "installment_count", "asaas_invoice_url"])
+    .where("id", "=", paymentId)
+    .where("status", "in", [...OPEN_STATUSES])
+    .executeTakeFirst()
+}
 
 /**
  * A charge the row no longer points at. Asaas answers a refusal with
