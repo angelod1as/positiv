@@ -119,6 +119,6 @@ export const profileUpdateCopy = {
   title: "Atualize seu perfil",
   message: `Precisamos que você atualize seus dados básicos.
 
-Estamos solicitando informações sobre raça ou cor para melhorar nossos dados demográficos.`,
+Estamos pedindo informação de raça ou cor para acompanhar nossos dados demográficos, e um CPF válido para emitir suas cobranças.`,
   cta: "Atualizar meu perfil",
 } as const
