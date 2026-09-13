@@ -4,7 +4,12 @@ import {
   cleanupAfterTest,
   setupIntegrationTest,
 } from "~/test/integration-setup"
-import { createTestEvent } from "~/test/db-test-utils"
+import {
+  createTestAuthUser,
+  createTestEvent,
+  createTestProfile,
+  runAsAuthenticatedUser,
+} from "~/test/db-test-utils"
 
 describe("RLS Security - Integration Tests", () => {
   const { tracker, kysely: db } = setupIntegrationTest()
@@ -95,6 +100,203 @@ describe("RLS Security - Integration Tests", () => {
         )
         expect(hasEmptySearchPath).toBe(true)
       })
+    })
+  })
+
+  describe("SECURITY DEFINER function execute privileges", () => {
+    // Every public SECURITY DEFINER function runs with postgres privileges and
+    // is reachable over PostgREST at /rest/v1/rpc/<name>, so anon and
+    // authenticated must hold EXECUTE only where the client genuinely calls it.
+    const allowedGrantees: Record<string, string[]> = {
+      get_profile_with_roles: ["authenticated"],
+      get_admin_user_ids: ["authenticated"],
+    }
+
+    it("should not grant EXECUTE to anon or authenticated beyond the allowlist", async () => {
+      const { rows } = await sql<{
+        signature: string
+        proname: string
+        anon_can_execute: boolean
+        authed_can_execute: boolean
+      }>`
+        SELECT p.oid::regprocedure::text AS signature,
+               p.proname,
+               has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_can_execute,
+               has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authed_can_execute
+        FROM pg_proc p
+        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+        AND p.prosecdef
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e'
+        )
+        ORDER BY p.proname
+      `.execute(db)
+
+      expect(rows.length).toBeGreaterThan(0)
+
+      const unexpectedGrants = rows.flatMap((row) => {
+        const allowed = allowedGrantees[row.proname] ?? []
+
+        return [
+          ...(row.anon_can_execute && !allowed.includes("anon")
+            ? [`anon can execute ${row.signature}`]
+            : []),
+          ...(row.authed_can_execute && !allowed.includes("authenticated")
+            ? [`authenticated can execute ${row.signature}`]
+            : []),
+        ]
+      })
+
+      expect(unexpectedGrants).toEqual([])
+    })
+
+    it("should keep EXECUTE for the roles the allowlist documents", async () => {
+      const { rows } = await sql<{
+        proname: string
+        anon_can_execute: boolean
+        authed_can_execute: boolean
+      }>`
+        SELECT p.proname,
+               has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_can_execute,
+               has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authed_can_execute
+        FROM pg_proc p
+        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+        AND p.proname IN ('get_profile_with_roles', 'get_admin_user_ids')
+      `.execute(db)
+
+      expect(rows.length).toBe(2)
+
+      rows.forEach((row) => {
+        expect(row.authed_can_execute).toBe(true)
+        expect(row.anon_can_execute).toBe(false)
+      })
+    })
+  })
+
+  describe("get_profile_with_roles caller scoping", () => {
+    // The function is SECURITY DEFINER and takes the user id as an argument, so
+    // the grant alone does not stop one signed-in user from reading another
+    // user's cpf, rg, phone and date of birth. The guard lives in the body.
+    const createUserWithProfile = async (label: string) => {
+      const email = `pos539-${label}-${Date.now()}@example.com`
+      const userId = await createTestAuthUser(email, "test1234", tracker)
+
+      await createTestProfile(tracker, db, {
+        user_id: userId,
+        email,
+        full_name: `POS-539 ${label}`,
+        cpf: "12345678901",
+      })
+
+      return { userId, email }
+    }
+
+    it("should return the caller's own profile", async () => {
+      const caller = await createUserWithProfile("self")
+
+      const { rows } = await runAsAuthenticatedUser(db, caller.userId, (trx) =>
+        sql<{ email: string }>`
+          SELECT email FROM public.get_profile_with_roles(${caller.userId}::uuid)
+        `.execute(trx),
+      )
+
+      expect(rows).toHaveLength(1)
+      expect(rows[0]?.email).toBe(caller.email)
+    })
+
+    it("should refuse to return another user's profile", async () => {
+      const caller = await createUserWithProfile("caller")
+      const victim = await createUserWithProfile("victim")
+
+      await expect(
+        runAsAuthenticatedUser(db, caller.userId, (trx) =>
+          sql`
+            SELECT cpf FROM public.get_profile_with_roles(${victim.userId}::uuid)
+          `.execute(trx),
+        ),
+      ).rejects.toThrow(/own profile/i)
+    })
+  })
+
+  describe("search_path is pinned on every public function", () => {
+    // Two separate failures hide behind the same advisor lint. A function with
+    // no search_path at all resolves unqualified names against whatever the
+    // caller set. A function that declares one and then runs
+    // `SET search_path = public` in its body throws the declaration away on the
+    // first statement, which reads as fixed in pg_proc.proconfig and is not.
+    const publicFunctions = async () => {
+      const { rows } = await sql<{
+        signature: string
+        has_fixed_search_path: boolean
+        body_overrides_search_path: boolean
+      }>`
+        SELECT p.oid::regprocedure::text AS signature,
+               EXISTS (
+                 SELECT 1 FROM unnest(COALESCE(p.proconfig, '{}')) AS config
+                 WHERE config LIKE 'search_path=%'
+               ) AS has_fixed_search_path,
+               p.prosrc ILIKE '%SET search_path%' AS body_overrides_search_path
+        FROM pg_proc p
+        INNER JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname = 'public'
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_depend d WHERE d.objid = p.oid AND d.deptype = 'e'
+        )
+        ORDER BY p.proname
+      `.execute(db)
+
+      expect(rows.length).toBeGreaterThan(0)
+      return rows
+    }
+
+    it("should declare a fixed search_path on every function", async () => {
+      const rows = await publicFunctions()
+
+      const mutable = rows
+        .filter((row) => !row.has_fixed_search_path)
+        .map((row) => row.signature)
+
+      expect(mutable).toEqual([])
+    })
+
+    it("should not override the declared search_path inside a body", async () => {
+      const rows = await publicFunctions()
+
+      const overriding = rows
+        .filter((row) => row.body_overrides_search_path)
+        .map((row) => row.signature)
+
+      expect(overriding).toEqual([])
+    })
+  })
+
+  describe("Row level security coverage", () => {
+    it("should have RLS enabled on every table in public", async () => {
+      const { rows } = await sql<{ relname: string; relrowsecurity: boolean }>`
+        SELECT c.relname, c.relrowsecurity
+        FROM pg_class c
+        INNER JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE n.nspname = 'public'
+        AND c.relkind IN ('r', 'p')
+        -- The integration harness backs every table up for the length of a run
+        -- (app/test/integration-global-setup.ts), so its copies are in pg_class
+        -- while this test reads it.
+        AND c.relname NOT LIKE '\_backup\_%'
+        AND NOT EXISTS (
+          SELECT 1 FROM pg_depend d WHERE d.objid = c.oid AND d.deptype = 'e'
+        )
+        ORDER BY c.relname
+      `.execute(db)
+
+      expect(rows.length).toBeGreaterThan(0)
+
+      const withoutRls = rows
+        .filter((row) => !row.relrowsecurity)
+        .map((row) => row.relname)
+
+      expect(withoutRls).toEqual([])
     })
   })
 

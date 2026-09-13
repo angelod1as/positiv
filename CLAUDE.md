@@ -114,6 +114,31 @@ pnpm db:types --local    # regenerate types from local Supabase
    - Create NEW migrations for any additional changes needed
    - Never modify the pulled migrations
 
+### After Any DDL Change, Run the Advisors
+
+`get_advisors` with type `security` and type `performance`, through the
+production Supabase MCP. A DDL change is exactly when a missing RLS policy or a
+fresh grant appears, and the advisors are the only thing that notices. POS-539
+started as a clean-looking set of migrations over a production database that
+`anon` could escalate to admin on.
+
+Grants need reading twice. `REVOKE ... FROM anon, authenticated` does **not**
+remove the EXECUTE grant Postgres hands to `PUBLIC` on every new function — a
+function can look locked down in a migration and still be callable over
+PostgREST with the anon key. Verify with `has_function_privilege`, not by eye:
+
+```sql
+SELECT p.proname,
+       has_function_privilege('anon', p.oid, 'EXECUTE') AS anon_can_execute,
+       has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authed_can_execute
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+ WHERE n.nspname = 'public' AND p.prosecdef
+ ORDER BY p.proname;
+```
+
+`app/test/rls-security.integration.test.ts` asserts this for every function and
+every table, so a new grant that nobody meant to give fails the suite.
+
 ### Migration Best Practices
 
 - Make creation idempotent: `CREATE EXTENSION IF NOT EXISTS`, `DROP ... IF
