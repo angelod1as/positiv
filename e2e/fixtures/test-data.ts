@@ -9,6 +9,8 @@ export const TEST_USER_PROFILE_DATA = {
   date_of_birth: '1990-01-01',
   rg: '123456789',
   rg_issuer: 'SSP/SP',
+  // Check digits that add up: the profile update guard blocks every page for
+  // an account whose CPF does not, and onboarding would never finish.
   cpf: '52998224725',
   where_lives: 'São Paulo',
   how_came_to_us: 'E2E Tests'
