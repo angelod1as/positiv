@@ -41,9 +41,17 @@ export const webhookEventSchema = zod.looseObject({
 
 export type AsaasWebhookEvent = z.infer<typeof webhookEventSchema>
 
+/**
+ * Writes the delivery to the inbox and says whether there is work to do.
+ *
+ * A row exists from the first delivery onwards, so its mere presence does not
+ * mean the event was handled: an attempt that threw leaves the row behind with
+ * `error` set and `processed_at` still null, and Asaas retries exactly because
+ * nothing was applied. Only a processed row makes a redelivery a no-op.
+ */
 export async function recordWebhookEvent(
   event: AsaasWebhookEvent,
-): Promise<{ isNew: boolean; id: string }> {
+): Promise<{ isNew: boolean; alreadyProcessed: boolean; id: string }> {
   const inserted = await kyselyDb
     .insertInto("payment_webhook_events")
     .values({
@@ -56,17 +64,20 @@ export async function recordWebhookEvent(
     .returning("id")
     .executeTakeFirst()
 
-  if (inserted) return { isNew: true, id: inserted.id }
+  if (inserted) return { isNew: true, alreadyProcessed: false, id: inserted.id }
 
   const existing = await kyselyDb
     .selectFrom("payment_webhook_events")
-    .select("id")
+    .select(["id", "processed_at"])
     .where("asaas_event_id", "=", event.id)
     .executeTakeFirstOrThrow()
 
-  return { isNew: false, id: existing.id }
+  return {
+    isNew: false,
+    alreadyProcessed: existing.processed_at !== null,
+    id: existing.id,
+  }
 }
-
 
 const PAID_EVENTS = ["PAYMENT_CONFIRMED", "PAYMENT_RECEIVED"]
 const ALARM_EVENTS = [
@@ -81,6 +92,13 @@ const ALARM_EVENTS = [
 /** Statuses a charge can still be paid from — including expired: Asaas lets
  *  someone pay a Pix after the due date, and the money is real. */
 const PAYABLE = ["pending", "awaiting_payment", "expired"] as const
+
+// `payments.id` is a uuid column, and Postgres throws on a value it cannot
+// cast rather than answering no rows. A charge opened by another system on the
+// same Asaas account carries that system's reference, and an event about it
+// has to leave as the 200 it deserves, not as a 500 Asaas keeps retrying.
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 async function findPayment(event: AsaasWebhookEvent) {
   const payment = event.payment
@@ -102,7 +120,7 @@ async function findPayment(event: AsaasWebhookEvent) {
     if (byInstallment) return byInstallment
   }
 
-  if (payment.externalReference) {
+  if (payment.externalReference && UUID.test(payment.externalReference)) {
     const byReference = await kyselyDb
       .selectFrom("payments")
       .selectAll()
@@ -182,7 +200,9 @@ export async function applyWebhookEvent(
 async function markProcessed(inboxId: string, error: string | null) {
   await kyselyDb
     .updateTable("payment_webhook_events")
-    .set({ processed_at: new Date().toISOString(), error })
+    // `processed_at` stays null on a failure, which is what the partial index
+    // on unprocessed rows is for, and what lets the redelivery try again.
+    .set(error ? { error } : { processed_at: new Date().toISOString(), error })
     .where("id", "=", inboxId)
     .execute()
 }
@@ -319,15 +339,17 @@ async function applyToPayment(
     const amount = event.payment?.value
       ? reaisToCents(event.payment.value)
       : null
-    if (amount) {
-      await kyselyDb
-        .updateTable("payments")
-        .set({ amount })
-        .where("id", "=", payment.id)
-        .where("status", "in", ["pending", "awaiting_payment"])
-        .execute()
-    }
-    return { applied: true }
+    if (!amount) return { applied: false, reason: "no_amount" }
+
+    const updated = await kyselyDb
+      .updateTable("payments")
+      .set({ amount })
+      .where("id", "=", payment.id)
+      .where("status", "in", ["pending", "awaiting_payment"])
+      .returning("id")
+      .executeTakeFirst()
+
+    return { applied: Boolean(updated) }
   }
 
   // PAYMENT_CREATED, PAYMENT_CHECKOUT_VIEWED and everything else: recorded,

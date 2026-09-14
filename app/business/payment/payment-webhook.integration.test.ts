@@ -381,6 +381,120 @@ describe("applyWebhookEvent", () => {
     expect((await statusOf(payment.id)).status).toBe("paid")
   })
 
+  it("shrugs at an externalReference that is not a uuid", async () => {
+    // A charge opened by another system on the same Asaas account carries its
+    // own reference. Feeding that to a uuid column throws in Postgres, and the
+    // 200 this path promises would become a 500 that Asaas retries forever.
+    const result = await deliver({
+      event: "PAYMENT_RECEIVED",
+      payment: {
+        id: "pay_from_another_system",
+        externalReference: "ORDER-123",
+        value: 10,
+      },
+    })
+
+    expect(result.applied).toBe(false)
+    expect(result.reason).toBe("unknown_payment")
+  })
+
+  it("leaves a failed delivery open for the redelivery to finish", async () => {
+    const payment = await awaitingCharge()
+    const event = {
+      id: "evt_test_failed_once",
+      event: "PAYMENT_RECEIVED",
+      payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+    }
+
+    const first = await recordWebhookEvent(event as never)
+    // What the catch in applyWebhookEvent leaves behind when a transition
+    // throws: the error recorded, the row still waiting to be processed.
+    await kysely
+      .updateTable("payment_webhook_events")
+      .set({ error: "database is down", processed_at: null })
+      .where("id", "=", first.id)
+      .execute()
+
+    const second = await recordWebhookEvent(event as never)
+    expect(second.isNew).toBe(false)
+    expect(second.alreadyProcessed).toBe(false)
+
+    await applyWebhookEvent(second.id, event as never)
+
+    expect((await statusOf(payment.id)).status).toBe("paid")
+    expect(sendPaymentConfirmedEmail).toHaveBeenCalledTimes(1)
+  })
+
+  it("closes an event that was processed, so a redelivery is a no-op", async () => {
+    await awaitingCharge()
+    const event = {
+      id: "evt_test_processed_once",
+      event: "PAYMENT_RECEIVED",
+      payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+    }
+
+    const first = await recordWebhookEvent(event as never)
+    await applyWebhookEvent(first.id, event as never)
+
+    const second = await recordWebhookEvent(event as never)
+    expect(second.alreadyProcessed).toBe(true)
+  })
+
+  it("keeps the inbox row open when the transition throws", async () => {
+    const payment = await awaitingCharge()
+    const event = {
+      id: "evt_test_throws",
+      event: "PAYMENT_RECEIVED",
+      payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+    }
+    const recorded = await recordWebhookEvent(event as never)
+    sendPaymentConfirmedEmail.mockRejectedValueOnce(new Error("smtp is down"))
+
+    await expect(
+      applyWebhookEvent(recorded.id, event as never),
+    ).rejects.toThrow()
+
+    const row = await kysely
+      .selectFrom("payment_webhook_events")
+      .select(["processed_at", "error"])
+      .where("id", "=", recorded.id)
+      .executeTakeFirstOrThrow()
+
+    expect(row.processed_at).toBeNull()
+    expect(row.error).toContain("smtp is down")
+    expect((await statusOf(payment.id)).status).toBe("paid")
+  })
+
+  it("syncs the amount on PAYMENT_UPDATED while the charge is open", async () => {
+    const payment = await awaitingCharge()
+
+    const result = await deliver({
+      event: "PAYMENT_UPDATED",
+      payment: { id: `pay_${counter}`, value: 250.0 },
+    })
+
+    expect(result.applied).toBe(true)
+    expect((await statusOf(payment.id)).amount).toBe(25000)
+  })
+
+  it("does not resize a charge that is already paid", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "pix",
+      amount: 22199,
+      asaas_payment_id: `pay_${counter}`,
+    })
+
+    const result = await deliver({
+      event: "PAYMENT_UPDATED",
+      payment: { id: `pay_${counter}`, value: 250.0 },
+    })
+
+    expect(result.applied).toBe(false)
+    expect((await statusOf(payment.id)).amount).toBe(22199)
+  })
+
   it("shrugs at an event about a charge that is not ours", async () => {
     const result = await deliver({
       event: "PAYMENT_RECEIVED",

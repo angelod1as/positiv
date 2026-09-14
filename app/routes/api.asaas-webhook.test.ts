@@ -58,7 +58,9 @@ const validEvent = {
 beforeEach(() => {
   env.PAYMENTS_ENABLED = true
   env.ASAAS_WEBHOOK_TOKEN = "whsec_a_token_long_enough_to_be_real_0000"
-  recordWebhookEvent.mockClear().mockResolvedValue({ isNew: true, id: "row-1" })
+  recordWebhookEvent
+    .mockClear()
+    .mockResolvedValue({ isNew: true, alreadyProcessed: false, id: "row-1" })
   applyWebhookEvent.mockClear().mockResolvedValue({ applied: true })
   logger.error.mockClear()
   logger.warn.mockClear()
@@ -103,12 +105,32 @@ describe("POST /api/asaas/webhook", () => {
   })
 
   it("does not apply a redelivery twice", async () => {
-    recordWebhookEvent.mockResolvedValueOnce({ isNew: false, id: "row-1" })
+    recordWebhookEvent.mockResolvedValueOnce({
+      isNew: false,
+      alreadyProcessed: true,
+      id: "row-1",
+    })
 
     const response = await post(validEvent, env.ASAAS_WEBHOOK_TOKEN as string)
 
     expect(response.status).toBe(200)
     expect(applyWebhookEvent).not.toHaveBeenCalled()
+  })
+
+  it("applies a redelivery of an event whose first attempt failed", async () => {
+    // The row is in the inbox from the attempt that threw, and Asaas is
+    // retrying exactly because nothing was applied. Answering "deduped" here
+    // would drop the payment for good.
+    recordWebhookEvent.mockResolvedValueOnce({
+      isNew: false,
+      alreadyProcessed: false,
+      id: "row-1",
+    })
+
+    const response = await post(validEvent, env.ASAAS_WEBHOOK_TOKEN as string)
+
+    expect(response.status).toBe(200)
+    expect(applyWebhookEvent).toHaveBeenCalled()
   })
 
   it("accepts a body with fields it does not know", async () => {

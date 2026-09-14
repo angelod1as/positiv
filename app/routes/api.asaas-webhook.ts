@@ -57,7 +57,10 @@ export async function action({ request }: ActionFunctionArgs) {
 
   try {
     const recorded = await recordWebhookEvent(event)
-    if (!recorded.isNew) {
+    // Only an event that was seen through to the end is a duplicate. One that
+    // failed mid-flight is in the inbox too, and this retry is its second
+    // chance -- answering "deduped" would drop the payment for good.
+    if (recorded.alreadyProcessed) {
       return Response.json({ ok: true, deduped: true })
     }
 
