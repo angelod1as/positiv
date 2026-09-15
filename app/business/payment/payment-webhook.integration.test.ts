@@ -1,3 +1,4 @@
+import { fromZonedTime } from "date-fns-tz"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   cleanupAfterTest,
@@ -535,7 +536,7 @@ describe("applyWebhookEvent", () => {
     expect(after.refund_amount).toBeNull()
   })
 
-  it("ignores a PAYMENT_UPDATED that carries no usable amount", async () => {
+  it("ignores a PAYMENT_UPDATED that carries nothing to sync", async () => {
     const payment = await awaitingCharge()
 
     const result = await deliver({
@@ -544,8 +545,58 @@ describe("applyWebhookEvent", () => {
     })
 
     expect(result.applied).toBe(false)
-    expect(result.reason).toBe("no_amount")
+    expect(result.reason).toBe("nothing_to_sync")
     expect((await statusOf(payment.id)).amount).toBe(22199)
+  })
+
+  it("follows the due date Asaas reports on PAYMENT_UPDATED", async () => {
+    const payment = await awaitingCharge()
+
+    await deliver({
+      event: "PAYMENT_UPDATED",
+      payment: { id: `pay_${counter}`, value: 250.0, dueDate: "2026-12-24" },
+    })
+
+    const after = await statusOf(payment.id)
+    expect(after.amount).toBe(25000)
+    // Asaas dates a charge by the calendar day in Brazil, and it stays payable
+    // through the end of it -- the expiry cron reads this column.
+    expect(new Date(after.due_at).toISOString()).toBe(
+      fromZonedTime("2026-12-24T23:59:59", "America/Sao_Paulo").toISOString(),
+    )
+  })
+
+  it("still follows an update after the charge expired", async () => {
+    const payment = await awaitingCharge({ status: "expired" })
+
+    const result = await deliver({
+      event: "PAYMENT_UPDATED",
+      payment: { id: `pay_${counter}`, value: 250.0, dueDate: "2026-12-24" },
+    })
+
+    expect(result.applied).toBe(true)
+    expect((await statusOf(payment.id)).amount).toBe(25000)
+  })
+
+  it("does not call a partial refund full when Asaas itemises nothing", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "pix",
+      amount: 22199,
+      asaas_payment_id: `pay_${counter}`,
+    })
+
+    const result = await deliver({
+      event: "PAYMENT_PARTIALLY_REFUNDED",
+      payment: { id: `pay_${counter}`, value: 221.99 },
+    })
+
+    expect(result.applied).toBe(false)
+    expect(result.reason).toBe("no_refund_amount")
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("paid")
+    expect(after.refund_amount).toBeNull()
   })
 
   it("syncs the amount on PAYMENT_UPDATED while the charge is open", async () => {

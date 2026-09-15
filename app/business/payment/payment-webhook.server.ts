@@ -1,3 +1,4 @@
+import { fromZonedTime } from "date-fns-tz"
 import { sql, type Kysely } from "kysely"
 import type { z } from "zod"
 import { kyselyDb } from "~/kysely-db"
@@ -93,6 +94,20 @@ const ALARM_EVENTS = [
 /** Statuses a charge can still be paid from — including expired: Asaas lets
  *  someone pay a Pix after the due date, and the money is real. */
 const PAYABLE = ["pending", "awaiting_payment", "expired"] as const
+
+// Asaas dates a charge by the calendar day in Brazil and it stays payable
+// through the end of that day, which is what `due_at` has to mean here: the
+// expiry cron and PAYMENT_OVERDUE both read this column.
+const CHARGE_TIME_ZONE = "America/Sao_Paulo"
+const ASAAS_DATE = /^\d{4}-\d{2}-\d{2}$/
+
+function dueAtFromAsaas(dueDate: string | null | undefined): string | null {
+  if (!dueDate || !ASAAS_DATE.test(dueDate)) return null
+  return fromZonedTime(
+    `${dueDate}T23:59:59`,
+    CHARGE_TIME_ZONE,
+  ).toISOString()
+}
 
 // `payments.id` is a uuid column, and Postgres throws on a value it cannot
 // cast rather than answering no rows. A charge opened by another system on the
@@ -353,7 +368,13 @@ async function applyToPayment(
     event.event === "PAYMENT_REFUNDED" ||
     event.event === "PAYMENT_PARTIALLY_REFUNDED"
   ) {
-    const refunded = refundedCents(event, payment.amount)
+    // The fallback is what a full refund Asaas did not itemise means. A
+    // partial one without a list says nothing about how much moved, and
+    // reading it as the whole amount would close the row as fully refunded.
+    const refunded = refundedCents(
+      event,
+      event.event === "PAYMENT_REFUNDED" ? payment.amount : null,
+    )
     if (!refunded || !payment.amount) {
       return { applied: false, reason: "no_refund_amount" }
     }
@@ -389,18 +410,27 @@ async function applyToPayment(
   if (event.event === "PAYMENT_UPDATED") {
     const value = event.payment?.value
     const amount = value == null ? null : reaisToCents(value)
+    const dueAt = dueAtFromAsaas(event.payment?.dueDate)
+
     // `payments.amount` is CHECK (amount > 0), so a zero or negative figure is
     // refused here rather than thrown back by the database as a 500 Asaas
     // would retry forever.
-    if (amount == null || amount <= 0) {
-      return { applied: false, reason: "no_amount" }
+    const changes = {
+      ...(amount != null && amount > 0 ? { amount } : {}),
+      ...(dueAt ? { due_at: dueAt } : {}),
+    }
+    if (!Object.keys(changes).length) {
+      return { applied: false, reason: "nothing_to_sync" }
     }
 
     const updated = await db
       .updateTable("payments")
-      .set({ amount })
+      .set(changes)
       .where("id", "=", payment.id)
-      .where("status", "in", ["pending", "awaiting_payment"])
+      // Expired belongs here: Asaas can move the due date of a charge that
+      // lapsed, and a charge it still considers payable is one this row has
+      // to keep following.
+      .where("status", "in", ["pending", "awaiting_payment", "expired"])
       .returning("id")
       .executeTakeFirst()
 
