@@ -444,11 +444,11 @@ describe("applyWebhookEvent", () => {
     const payment = await awaitingCharge()
     const event = {
       id: "evt_test_throws",
-      event: "PAYMENT_RECEIVED",
-      payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+      event: "PAYMENT_UPDATED",
+      // More cents than an integer column holds: the update itself fails.
+      payment: { id: `pay_${counter}`, value: 99_999_999_999 },
     }
     const recorded = await recordWebhookEvent(event as never)
-    sendPaymentConfirmedEmail.mockRejectedValueOnce(new Error("smtp is down"))
 
     await expect(
       applyWebhookEvent(recorded.id, event as never),
@@ -461,8 +461,91 @@ describe("applyWebhookEvent", () => {
       .executeTakeFirstOrThrow()
 
     expect(row.processed_at).toBeNull()
-    expect(row.error).toContain("smtp is down")
+    expect(row.error).not.toBeNull()
+    expect((await statusOf(payment.id)).amount).toBe(22199)
+  })
+
+  it("rolls the transition back when the inbox cannot be closed", async () => {
+    const payment = await awaitingCharge()
+    const event = {
+      id: "evt_test_atomic",
+      event: "PAYMENT_RECEIVED",
+      payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+    }
+    await recordWebhookEvent(event as never)
+
+    // The transition and the inbox row move together or not at all. A row
+    // marked paid whose delivery was never closed would be redelivered into
+    // `already_paid`, and the participant would never hear about it.
+    await expect(
+      applyWebhookEvent("not-a-uuid", event as never),
+    ).rejects.toThrow()
+
+    expect((await statusOf(payment.id)).status).toBe("awaiting_payment")
+    expect(sendPaymentConfirmedEmail).not.toHaveBeenCalled()
+  })
+
+  it("keeps a transition that went through when the email fails", async () => {
+    const payment = await awaitingCharge()
+    sendPaymentConfirmedEmail.mockRejectedValueOnce(new Error("smtp is down"))
+
+    const event = {
+      id: "evt_test_email_down",
+      event: "PAYMENT_RECEIVED",
+      payment: { id: `pay_${counter}`, value: 221.99, netValue: 220.0 },
+    }
+    const recorded = await recordWebhookEvent(event as never)
+
+    // The money moved. Asking Asaas to retry would not re-send the email —
+    // the guarded update no longer matches — and would stall its queue.
+    const result = await applyWebhookEvent(recorded.id, event as never)
+
+    expect(result.applied).toBe(true)
     expect((await statusOf(payment.id)).status).toBe("paid")
+    const row = await kysely
+      .selectFrom("payment_webhook_events")
+      .select(["processed_at", "error"])
+      .where("id", "=", recorded.id)
+      .executeTakeFirstOrThrow()
+    expect(row.processed_at).not.toBeNull()
+    expect(logger.error).toHaveBeenCalled()
+  })
+
+  it("records no refund when every entry in the list was cancelled", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "pix",
+      amount: 22199,
+      asaas_payment_id: `pay_${counter}`,
+    })
+
+    const result = await deliver({
+      event: "PAYMENT_PARTIALLY_REFUNDED",
+      payment: {
+        id: `pay_${counter}`,
+        refunds: [{ value: 50, status: "CANCELLED" }],
+      },
+    })
+
+    expect(result.applied).toBe(false)
+    expect(result.reason).toBe("no_refund_amount")
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("paid")
+    expect(after.refund_amount).toBeNull()
+  })
+
+  it("ignores a PAYMENT_UPDATED that carries no usable amount", async () => {
+    const payment = await awaitingCharge()
+
+    const result = await deliver({
+      event: "PAYMENT_UPDATED",
+      payment: { id: `pay_${counter}`, value: 0 },
+    })
+
+    expect(result.applied).toBe(false)
+    expect(result.reason).toBe("no_amount")
+    expect((await statusOf(payment.id)).amount).toBe(22199)
   })
 
   it("syncs the amount on PAYMENT_UPDATED while the charge is open", async () => {

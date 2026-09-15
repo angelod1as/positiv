@@ -1,6 +1,7 @@
-import { sql } from "kysely"
+import { sql, type Kysely } from "kysely"
 import type { z } from "zod"
 import { kyselyDb } from "~/kysely-db"
+import type { Database } from "~types/database/kysely.types"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { reaisToCents } from "./asaas-client.server"
@@ -100,11 +101,11 @@ const PAYABLE = ["pending", "awaiting_payment", "expired"] as const
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-async function findPayment(event: AsaasWebhookEvent) {
+async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
   const payment = event.payment
   if (!payment) return null
 
-  const byId = await kyselyDb
+  const byId = await db
     .selectFrom("payments")
     .selectAll()
     .where("asaas_payment_id", "=", payment.id)
@@ -112,7 +113,7 @@ async function findPayment(event: AsaasWebhookEvent) {
   if (byId) return byId
 
   if (payment.installment) {
-    const byInstallment = await kyselyDb
+    const byInstallment = await db
       .selectFrom("payments")
       .selectAll()
       .where("asaas_installment_id", "=", payment.installment)
@@ -121,7 +122,7 @@ async function findPayment(event: AsaasWebhookEvent) {
   }
 
   if (payment.externalReference && UUID.test(payment.externalReference)) {
-    const byReference = await kyselyDb
+    const byReference = await db
       .selectFrom("payments")
       .selectAll()
       .where("id", "=", payment.externalReference)
@@ -139,7 +140,10 @@ function refundedCents(
   const refunds = event.payment?.refunds
   if (!refunds?.length) return fallback
   const done = refunds.filter((refund) => refund.status !== "CANCELLED")
-  if (!done.length) return fallback
+  // A list that came back with nothing but cancellations is not the same as no
+  // list at all: the fallback means "a full refund Asaas did not itemise", and
+  // reusing it here would report money as returned that never moved.
+  if (!done.length) return null
   return done.reduce((sum, refund) => sum + reaisToCents(refund.value ?? 0), 0)
 }
 
@@ -153,7 +157,10 @@ function refundedCents(
  * latest net once per Asaas payment id is what keeps either of them, in any
  * order, from being counted twice.
  */
-async function installmentNetCents(installmentId: string): Promise<number> {
+async function installmentNetCents(
+  db: Kysely<Database>,
+  installmentId: string,
+): Promise<number> {
   const result = await sql<{ net: string }>`
     SELECT COALESCE(SUM(net), 0)::text AS net FROM (
       SELECT DISTINCT ON (payload->'payment'->>'id')
@@ -163,42 +170,86 @@ async function installmentNetCents(installmentId: string): Promise<number> {
          AND event_type IN ('PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED')
          AND payload->'payment'->>'netValue' IS NOT NULL
        ORDER BY payload->'payment'->>'id', received_at DESC
-    ) AS per_installment`.execute(kyselyDb)
+    ) AS per_installment`.execute(db)
 
   return Math.round(Number(result.rows[0]?.net ?? 0) * 100)
+}
+
+type TransitionResult = {
+  applied: boolean
+  reason?: string
+  /** Set when the guarded update moved the row and the receipt is owed. */
+  confirmPaymentId?: string
 }
 
 export async function applyWebhookEvent(
   inboxId: string,
   event: AsaasWebhookEvent,
 ): Promise<{ applied: boolean; reason?: string }> {
+  let result: TransitionResult
+
   try {
-    const payment = await findPayment(event)
+    // The transition and the delivery that caused it commit together. Half of
+    // that pair is worse than neither: a row marked paid whose delivery was
+    // never closed comes back as a redelivery, lands in `already_paid`, and
+    // the participant is never told.
+    result = await kyselyDb.transaction().execute(async (trx) => {
+      const payment = await findPayment(trx, event)
 
-    if (!payment) {
-      // A charge created straight in the Asaas dashboard, or one from another
-      // system on the same account. Retrying will not make it ours.
-      logger.warn("Asaas webhook about an unknown charge", {
-        asaasEventId: event.id,
-        event: event.event,
-        asaasPaymentId: event.payment?.id,
-      })
-      await markProcessed(inboxId, null)
-      return { applied: false, reason: "unknown_payment" }
-    }
+      if (!payment) {
+        // A charge created straight in the Asaas dashboard, or one from another
+        // system on the same account. Retrying will not make it ours.
+        logger.warn("Asaas webhook about an unknown charge", {
+          asaasEventId: event.id,
+          event: event.event,
+          asaasPaymentId: event.payment?.id,
+        })
+        await markProcessed(trx, inboxId, null)
+        return { applied: false, reason: "unknown_payment" }
+      }
 
-    const result = await applyToPayment(payment, event)
-    await markProcessed(inboxId, null)
-    return result
+      const transition = await applyToPayment(trx, payment, event)
+      await markProcessed(trx, inboxId, null)
+      return transition
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    await markProcessed(inboxId, message)
+    try {
+      // On its own connection: the transaction above is already rolled back.
+      await markProcessed(kyselyDb, inboxId, message)
+    } catch {
+      // The inbox is unreachable too. The throw below is what matters — it is
+      // what makes Asaas retry the whole thing.
+    }
     throw error
   }
+
+  if (result.confirmPaymentId) {
+    // Outside the transaction on purpose: an SMTP round trip has no business
+    // holding a database connection, and by this point the money has moved.
+    // A failure here costs the receipt, not the transition — asking Asaas to
+    // retry would not re-send it anyway, since the guarded update no longer
+    // matches, and it would stall every event queued behind this one.
+    try {
+      await sendPaymentConfirmedEmail({ paymentId: result.confirmPaymentId })
+    } catch (error) {
+      logger.error("Payment confirmed, but the receipt could not be sent", {
+        paymentId: result.confirmPaymentId,
+        asaasEventId: event.id,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
+  return { applied: result.applied, reason: result.reason }
 }
 
-async function markProcessed(inboxId: string, error: string | null) {
-  await kyselyDb
+async function markProcessed(
+  db: Kysely<Database>,
+  inboxId: string,
+  error: string | null,
+) {
+  await db
     .updateTable("payment_webhook_events")
     // `processed_at` stays null on a failure, which is what the partial index
     // on unprocessed rows is for, and what lets the redelivery try again.
@@ -208,6 +259,7 @@ async function markProcessed(inboxId: string, error: string | null) {
 }
 
 async function applyToPayment(
+  db: Kysely<Database>,
   payment: {
     id: string
     amount: number | null
@@ -215,7 +267,7 @@ async function applyToPayment(
     asaas_installment_id: string | null
   },
   event: AsaasWebhookEvent,
-): Promise<{ applied: boolean; reason?: string }> {
+): Promise<TransitionResult> {
   const now = new Date().toISOString()
 
   if (ALARM_EVENTS.includes(event.event)) {
@@ -233,12 +285,12 @@ async function applyToPayment(
       (event.payment?.value ? reaisToCents(event.payment.value) : null)
     const installmentId = payment.asaas_installment_id
     const net = installmentId
-      ? await installmentNetCents(installmentId)
+      ? await installmentNetCents(db, installmentId)
       : event.payment?.netValue != null
         ? reaisToCents(event.payment.netValue)
         : null
 
-    const updated = await kyselyDb
+    const updated = await db
       .updateTable("payments")
       .set({ status: "paid", paid_at: now, amount, asaas_net: net })
       .where("id", "=", payment.id)
@@ -252,7 +304,7 @@ async function applyToPayment(
     // later installments bring in is still ours to record.
     if (!updated) {
       if (installmentId) {
-        await kyselyDb
+        await db
           .updateTable("payments")
           .set({ asaas_net: net })
           .where("id", "=", payment.id)
@@ -261,12 +313,11 @@ async function applyToPayment(
       return { applied: false, reason: "already_paid" }
     }
 
-    await sendPaymentConfirmedEmail({ paymentId: payment.id })
-    return { applied: true }
+    return { applied: true, confirmPaymentId: payment.id }
   }
 
   if (event.event === "PAYMENT_OVERDUE") {
-    const updated = await kyselyDb
+    const updated = await db
       .updateTable("payments")
       .set({ status: "expired" })
       .where("id", "=", payment.id)
@@ -277,7 +328,7 @@ async function applyToPayment(
   }
 
   if (event.event === "PAYMENT_DELETED") {
-    const updated = await kyselyDb
+    const updated = await db
       .updateTable("payments")
       .set({ status: "cancelled" })
       .where("id", "=", payment.id)
@@ -288,7 +339,7 @@ async function applyToPayment(
   }
 
   if (event.event === "PAYMENT_RESTORED") {
-    const updated = await kyselyDb
+    const updated = await db
       .updateTable("payments")
       .set({ status: "awaiting_payment" })
       .where("id", "=", payment.id)
@@ -308,7 +359,7 @@ async function applyToPayment(
     }
 
     const isFull = refunded >= payment.amount
-    const updated = await kyselyDb
+    const updated = await db
       .updateTable("payments")
       .set({
         status: isFull ? "refunded" : "partially_refunded",
@@ -326,7 +377,7 @@ async function applyToPayment(
   }
 
   if (event.event === "PAYMENT_REFUND_IN_PROGRESS") {
-    await kyselyDb
+    await db
       .updateTable("payments")
       .set({ refund_requested_at: now })
       .where("id", "=", payment.id)
@@ -336,12 +387,16 @@ async function applyToPayment(
   }
 
   if (event.event === "PAYMENT_UPDATED") {
-    const amount = event.payment?.value
-      ? reaisToCents(event.payment.value)
-      : null
-    if (!amount) return { applied: false, reason: "no_amount" }
+    const value = event.payment?.value
+    const amount = value == null ? null : reaisToCents(value)
+    // `payments.amount` is CHECK (amount > 0), so a zero or negative figure is
+    // refused here rather than thrown back by the database as a 500 Asaas
+    // would retry forever.
+    if (amount == null || amount <= 0) {
+      return { applied: false, reason: "no_amount" }
+    }
 
-    const updated = await kyselyDb
+    const updated = await db
       .updateTable("payments")
       .set({ amount })
       .where("id", "=", payment.id)
