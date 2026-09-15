@@ -398,13 +398,14 @@ async function applyToPayment(
   }
 
   if (event.event === "PAYMENT_REFUND_IN_PROGRESS") {
-    await db
+    const updated = await db
       .updateTable("payments")
       .set({ refund_requested_at: now })
       .where("id", "=", payment.id)
       .where("refund_requested_at", "is", null)
-      .execute()
-    return { applied: true }
+      .returning("id")
+      .executeTakeFirst()
+    return { applied: Boolean(updated) }
   }
 
   if (event.event === "PAYMENT_UPDATED") {

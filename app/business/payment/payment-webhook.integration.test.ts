@@ -629,6 +629,75 @@ describe("applyWebhookEvent", () => {
     expect((await statusOf(payment.id)).amount).toBe(22199)
   })
 
+  it("reopens a cancelled charge on PAYMENT_RESTORED", async () => {
+    const payment = await awaitingCharge({ status: "cancelled" })
+
+    const result = await deliver({
+      event: "PAYMENT_RESTORED",
+      payment: { id: `pay_${counter}` },
+    })
+
+    expect(result.applied).toBe(true)
+    expect((await statusOf(payment.id)).status).toBe("awaiting_payment")
+  })
+
+  it("does not restore a charge that was paid", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "pix",
+      amount: 22199,
+      asaas_payment_id: `pay_${counter}`,
+    })
+
+    const result = await deliver({
+      event: "PAYMENT_RESTORED",
+      payment: { id: `pay_${counter}` },
+    })
+
+    expect(result.applied).toBe(false)
+    expect((await statusOf(payment.id)).status).toBe("paid")
+  })
+
+  it("records an event it has no transition for and leaves the row alone", async () => {
+    const payment = await awaitingCharge()
+
+    const result = await deliver({
+      event: "PAYMENT_CREATED",
+      payment: { id: `pay_${counter}`, value: 221.99 },
+    })
+
+    expect(result.applied).toBe(false)
+    expect(result.reason).toBe("ignored")
+    expect((await statusOf(payment.id)).status).toBe("awaiting_payment")
+  })
+
+  it("marks a refund in progress only the first time", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "pix",
+      amount: 22199,
+      asaas_payment_id: `pay_${counter}`,
+    })
+
+    const first = await deliver({
+      event: "PAYMENT_REFUND_IN_PROGRESS",
+      payment: { id: `pay_${counter}` },
+    })
+    const requestedAt = (await statusOf(payment.id)).refund_requested_at
+
+    const second = await deliver({
+      event: "PAYMENT_REFUND_IN_PROGRESS",
+      payment: { id: `pay_${counter}` },
+    })
+
+    expect(first.applied).toBe(true)
+    // The second one changed nothing, and says so like every other transition.
+    expect(second.applied).toBe(false)
+    expect((await statusOf(payment.id)).refund_requested_at).toEqual(requestedAt)
+  })
+
   it("shrugs at an event about a charge that is not ours", async () => {
     const result = await deliver({
       event: "PAYMENT_RECEIVED",

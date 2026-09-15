@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs"
+import { dirname, resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 import { sql } from "kysely"
 import { afterAll, afterEach, beforeEach, describe, expect, it } from "vitest"
 import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
@@ -31,9 +33,13 @@ describe("getKpiScores - Extended KPI Data", () => {
   // next inherits an empty table. The auth users survive, so the seed file
   // rebuilds exactly what it built at reset time.
   afterAll(async () => {
-    await sql
-      .raw(readFileSync("supabase/seeds/02_profiles.sql", "utf8"))
-      .execute(kysely)
+    // Resolved from this file rather than the working directory, so the suite
+    // does not depend on where vitest was started.
+    const seed = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../../../supabase/seeds/02_profiles.sql",
+    )
+    await sql.raw(readFileSync(seed, "utf8")).execute(kysely)
   })
 
   it("should return approved profiles count", async () => {
