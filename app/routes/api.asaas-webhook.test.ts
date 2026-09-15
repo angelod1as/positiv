@@ -145,6 +145,24 @@ describe("POST /api/asaas/webhook", () => {
     expect(response.status).toBe(200)
   })
 
+  it("answers 400 for a body that is not json at all", async () => {
+    const response = await action({
+      request: new Request("http://localhost/api/asaas/webhook", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "asaas-access-token": env.ASAAS_WEBHOOK_TOKEN as string,
+        },
+        body: "{not json",
+      }),
+      params: {},
+      context: {} as never,
+    })
+
+    expect(response.status).toBe(400)
+    expect(recordWebhookEvent).not.toHaveBeenCalled()
+  })
+
   it("answers 400 for a body that is not an Asaas event", async () => {
     const response = await post(
       { hello: "world" },

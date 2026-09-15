@@ -366,6 +366,41 @@ describe("applyWebhookEvent", () => {
     expect((await statusOf(payment.id)).asaas_net).toBe(7530)
   })
 
+  it("stops summing a plan once the row has left paid", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      status: "refunded",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23454,
+      // The whole plan had settled: three installments, not the one the late
+      // event on its own would add up to.
+      asaas_net: 22590,
+      refund_amount: 23454,
+      refunded_at: new Date().toISOString(),
+      asaas_installment_id: `inst_${counter}`,
+    })
+
+    // Asaas keeps billing the plan, so a later installment still arrives after
+    // the money went back. The row is settled: its audit trail says refunded,
+    // and a field that keeps moving afterwards contradicts it.
+    const result = await deliver({
+      event: "PAYMENT_CONFIRMED",
+      payment: {
+        id: `pay_late_${counter}`,
+        installment: `inst_${counter}`,
+        value: 78.18,
+        netValue: 75.3,
+      },
+    })
+
+    expect(result.applied).toBe(false)
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("refunded")
+    expect(after.asaas_net).toBe(22590)
+  })
+
   it("falls back to externalReference", async () => {
     const payment = await awaitingCharge({ asaas_payment_id: null })
 

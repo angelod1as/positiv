@@ -323,6 +323,10 @@ async function applyToPayment(
           .updateTable("payments")
           .set({ asaas_net: net })
           .where("id", "=", payment.id)
+          // Guarded like every other write here. A plan keeps billing after a
+          // refund or a cancellation, and a settled row whose net still moves
+          // contradicts the refunded_at beside it.
+          .where("status", "=", "paid")
           .execute()
       }
       return { applied: false, reason: "already_paid" }
