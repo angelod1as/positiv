@@ -116,6 +116,17 @@ describe("requestRefund", () => {
     })
   })
 
+  it("sends no description when the reason field is left blank", async () => {
+    const payment = await paidCharge()
+
+    await requestRefund({ paymentId: payment.id, amount: "", reason: "" })
+
+    expect(refundAsaasPayment).toHaveBeenCalledWith(`pay_${counter}`, {
+      amount: 21900,
+      description: null,
+    })
+  })
+
   it("refunds a card plan one charge at a time", async () => {
     listAsaasInstallmentPayments.mockResolvedValue([
       { id: "pay_a", value: 7877 },

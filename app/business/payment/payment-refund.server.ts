@@ -107,7 +107,12 @@ export const requestRefundSchema = zod.object({
         : reaisToCents(value),
     )
     .nullish(),
-  reason: zod.string().nullish(),
+  // Blank the same way the amount is: a field left empty is no reason, and the
+  // Asaas call should not tell two kinds of nothing apart.
+  reason: zod
+    .string()
+    .transform((value) => (value.trim() === "" ? null : value))
+    .nullish(),
 })
 
 /**
