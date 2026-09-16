@@ -244,16 +244,38 @@ export async function refundAsaasPayment(
   )
 }
 
-export async function refundAsaasInstallment(
+// The two statuses whose money is Positiv's to give back. A PENDING
+// installment has been billed to nobody yet, and asking to refund one
+// answers 400.
+const REFUNDABLE_STATUSES = ["CONFIRMED", "RECEIVED"]
+
+export type AsaasInstallmentPayment = { id: string; value: number }
+
+/**
+ * The individual charges behind a card plan. A plan is refunded one charge at a
+ * time: `/installments/{id}/refund` can only give the whole plan back, which is
+ * a full refund, and a full refund costs Positiv the anticipation fee.
+ */
+export async function listAsaasInstallmentPayments(
   installmentId: string,
-  description: string | null,
-): Promise<void> {
-  await asaasRequest(
-    "POST",
-    `/installments/${installmentId}/refund`,
-    zod.object({ id: zod.string() }),
-    description ? { description } : {},
+): Promise<AsaasInstallmentPayment[]> {
+  const { data } = await asaasRequest(
+    "GET",
+    `/payments?installment=${installmentId}&limit=100`,
+    zod.object({
+      data: zod.array(
+        zod.object({
+          id: zod.string(),
+          value: zod.number(),
+          status: zod.string(),
+        }),
+      ),
+    }),
   )
+
+  return data
+    .filter((payment) => REFUNDABLE_STATUSES.includes(payment.status))
+    .map((payment) => ({ id: payment.id, value: reaisToCents(payment.value) }))
 }
 
 // Only the fields the fee mapper reads are described. Everything Asaas ships
