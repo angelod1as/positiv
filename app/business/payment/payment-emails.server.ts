@@ -1,5 +1,7 @@
+import { formatPaymentConfirmedMail } from "~/business/email/format-payment-confirmed-mail"
 import { formatPaymentLinkMail } from "~/business/email/format-payment-link-mail"
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
+import { paymentConfirmedMailCopy } from "~/copy/emails/payment-confirmed"
 import { paymentLinkMailCopy } from "~/copy/emails/payment-link"
 import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
@@ -131,6 +133,76 @@ export async function sendPaymentLinkEmail({
 
   if (!result.success) {
     logger.error("Could not send the payment link email", { paymentId })
+    return { success: false }
+  }
+
+  return { success: true }
+}
+
+/**
+ * The receipt a participant gets once Asaas says the money arrived. Called from
+ * the webhook, and only when the guarded update actually moved the row — a
+ * failure here is logged and swallowed, because a transition that already
+ * happened must not be retried for the sake of an email.
+ */
+export async function sendPaymentConfirmedEmail({
+  paymentId,
+}: {
+  paymentId: string
+}): Promise<{ success: boolean }> {
+  const payment = await kyselyDb
+    .selectFrom("payments as p")
+    .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
+    .innerJoin("events as e", "e.id", "ep.event_id")
+    .innerJoin("profiles as pr", "pr.id", "ep.profile_id")
+    .select([
+      "p.id",
+      "p.amount",
+      "p.method",
+      "p.installment_count",
+      "p.paid_at",
+      "e.title as event_title",
+      "e.emoji as event_emoji",
+      "pr.email",
+      "pr.full_name",
+      "pr.social_name",
+    ])
+    .where("p.id", "=", paymentId)
+    .executeTakeFirst()
+
+  if (!payment) {
+    logger.error("No payment to confirm", { paymentId })
+    return { success: false }
+  }
+
+  if (!payment.email) {
+    logger.error("No mailbox to send a payment confirmation to", { paymentId })
+    return { success: false }
+  }
+
+  const { html, text } = await formatPaymentConfirmedMail({
+    displayName: payment.social_name || payment.full_name || "",
+    eventTitle: payment.event_title ?? "",
+    eventEmoji: payment.event_emoji,
+    amount: payment.amount ?? 0,
+    method: payment.method,
+    installmentCount: payment.installment_count,
+    paidAt: payment.paid_at ?? new Date().toISOString(),
+  })
+
+  const mailOptions: MailOptions = {
+    to: payment.email,
+    subject: paymentConfirmedMailCopy.subject(
+      [payment.event_emoji, payment.event_title].filter(Boolean).join(" "),
+    ),
+    html,
+    text,
+  }
+
+  const result = await sendEmail(mailOptions)
+
+  if (!result.success) {
+    logger.error("Could not send the payment confirmation email", { paymentId })
     return { success: false }
   }
 
