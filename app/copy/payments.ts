@@ -177,6 +177,8 @@ export const paymentsCopy = {
       "Existe uma cobrança em aberto. Cancele-a antes de registrar um pagamento manual.",
     refundAmountRequired: "Informe um valor de reembolso maior que zero.",
     refundTooLarge: "O reembolso não pode ser maior que o valor pago.",
+    refundAboveReceived:
+      "O reembolso não pode ser maior que o que a Positiv recebeu, sem as taxas.",
     refundNetNotReported:
       "O Asaas ainda não informou quanto caiu na conta desta cobrança. Aguarde alguns instantes e tente de novo.",
     refundNothingToRefund:

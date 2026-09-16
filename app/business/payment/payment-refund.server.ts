@@ -164,7 +164,7 @@ export const requestRefund = applySchema(requestRefundSchema)(
     }
 
     if (amount > refundable) {
-      throw new Error(paymentsCopy.errors.refundTooLarge)
+      throw new Error(paymentsCopy.errors.refundAboveReceived)
     }
 
     const claimed = await kyselyDb

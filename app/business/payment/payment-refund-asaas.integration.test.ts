@@ -221,6 +221,11 @@ describe("requestRefund", () => {
     })
 
     expect(result.success).toBe(false)
+    // The limit is what Positiv received, not what was paid, and the admin
+    // who typed the gross has to be told which one.
+    expect(result.success ? null : result.errors[0].message).toBe(
+      "O reembolso não pode ser maior que o que a Positiv recebeu, sem as taxas.",
+    )
     expect(refundAsaasPayment).not.toHaveBeenCalled()
     expect((await reload(payment.id)).refund_requested_at).toBeNull()
   })
