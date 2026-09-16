@@ -128,6 +128,11 @@ async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
   if (byId) return byId
 
   if (payment.installment) {
+    // One payments row per Asaas installment plan: a resend or a re-pick opens
+    // a new plan rather than joining this one. The column carries a plain
+    // index, not a unique one like asaas_payment_id, so this is an invariant
+    // the code keeps and the schema does not -- two rows sharing a plan would
+    // make the row picked here arbitrary.
     const byInstallment = await db
       .selectFrom("payments")
       .selectAll()
@@ -286,6 +291,11 @@ async function applyToPayment(
   const now = new Date().toISOString()
 
   if (ALARM_EVENTS.includes(event.event)) {
+    // The one branch here that writes nothing, and deliberately: a chargeback,
+    // a denied refund or a capture refused by risk analysis needs a person,
+    // not a status. A denied refund in particular leaves the row paid with
+    // refund_requested_at set and a participant who was told the money was
+    // coming back -- no transition makes that right.
     logger.error("Asaas raised an alarm on a payment", {
       paymentId: payment.id,
       event: event.event,
