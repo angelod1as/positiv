@@ -162,6 +162,11 @@ export const paymentsCopy = {
     refundNothingToRefund:
       "O Asaas não encontrou parcelas reembolsáveis nesta cobrança.",
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
+    notAsaasRefundable:
+      "Este pagamento não passou pelo Asaas. Use 'Marcar como reembolsado'.",
+    refundAlreadyRequested: "O reembolso já foi solicitado.",
+    refundPartiallyApplied:
+      "Parte das parcelas foi reembolsada e uma falhou. Confira no painel do Asaas antes de tentar de novo.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
     invalidCpf: "Esse CPF não confere. Confira os números.",
     chargeClosed: "Esta cobrança não está mais aberta.",
