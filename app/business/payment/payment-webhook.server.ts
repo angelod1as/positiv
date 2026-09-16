@@ -6,7 +6,10 @@ import type { Database } from "~types/database/kysely.types"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { reaisToCents } from "./asaas-client.server"
-import { sendPaymentConfirmedEmail } from "./payment-emails.server"
+import {
+  sendPaymentConfirmedEmail,
+  sendPaymentRefundEmail,
+} from "./payment-emails.server"
 
 /**
  * Deliberately permissive. Asaas adds fields without warning, and the docs say
@@ -200,6 +203,8 @@ type TransitionResult = {
   reason?: string
   /** Set when the guarded update moved the row and the receipt is owed. */
   confirmPaymentId?: string
+  /** Set when money went back and the participant has not been told yet. */
+  refundPaymentId?: string
 }
 
 export async function applyWebhookEvent(
@@ -255,6 +260,20 @@ export async function applyWebhookEvent(
     } catch (error) {
       logger.error("Payment confirmed, but the receipt could not be sent", {
         paymentId: result.confirmPaymentId,
+        asaasEventId: event.id,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }
+
+  if (result.refundPaymentId) {
+    // Outside the transaction for the same reasons as the receipt above, and
+    // swallowed for the same one: the money is already back.
+    try {
+      await sendPaymentRefundEmail({ paymentId: result.refundPaymentId })
+    } catch (error) {
+      logger.error("Money went back, but the notice could not be sent", {
+        paymentId: result.refundPaymentId,
         asaasEventId: event.id,
         error: error instanceof Error ? error.message : String(error),
       })
@@ -406,9 +425,11 @@ async function applyToPayment(
       .returning("id")
       .executeTakeFirst()
 
-    // The refund email belongs to POS-531, which is where the template and the
-    // admin-side refund live; the status is what the ledger needs today.
-    return { applied: Boolean(updated), reason: updated ? undefined : "not_refundable" }
+    return {
+      applied: Boolean(updated),
+      reason: updated ? undefined : "not_refundable",
+      refundPaymentId: updated ? payment.id : undefined,
+    }
   }
 
   if (event.event === "PAYMENT_REFUND_IN_PROGRESS") {

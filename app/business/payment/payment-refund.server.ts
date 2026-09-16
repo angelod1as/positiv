@@ -8,6 +8,7 @@ import {
   listAsaasInstallmentPayments,
   refundAsaasPayment,
 } from "./asaas-client.server"
+import { sendPaymentRefundEmail } from "./payment-emails.server"
 import { splitRefund } from "./refund-split"
 
 export const markManualRefundedSchema = zod.object({
@@ -79,6 +80,17 @@ export const markManualRefunded = applySchema(markManualRefundedSchema)(
 
     if (!updated) {
       throw new Error(paymentsCopy.errors.notRefundable)
+    }
+
+    // The row has already moved. A notice that cannot be sent is worth a log,
+    // never an error in the admin's face over money that is genuinely back.
+    try {
+      await sendPaymentRefundEmail({ paymentId: values.paymentId })
+    } catch (error) {
+      logger.error("Refund recorded, but the notice could not be sent", {
+        paymentId: values.paymentId,
+        error: error instanceof Error ? error.message : String(error),
+      })
     }
 
     return { ok: true as const }

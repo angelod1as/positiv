@@ -9,8 +9,9 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
-const { deleteAsaasPayment, logger } = vi.hoisted(() => ({
+const { deleteAsaasPayment, sendPaymentRefundEmail, logger } = vi.hoisted(() => ({
   deleteAsaasPayment: vi.fn(),
+  sendPaymentRefundEmail: vi.fn(),
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }))
 
@@ -18,6 +19,12 @@ vi.mock("./asaas-client.server", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("./asaas-client.server")>()
   return { ...original, deleteAsaasPayment }
+})
+
+vi.mock("./payment-emails.server", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("./payment-emails.server")>()
+  return { ...original, sendPaymentRefundEmail }
 })
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
@@ -31,6 +38,7 @@ describe("markManualRefunded", () => {
 
   beforeEach(async () => {
     tracker.clear()
+    sendPaymentRefundEmail.mockClear().mockResolvedValue({ success: true })
     const testId = Date.now()
     const event = await createTestEvent(tracker, kysely, {
       title: "Refund Event",
@@ -75,6 +83,9 @@ describe("markManualRefunded", () => {
     expect(after.status).toBe("refunded")
     expect(after.refund_amount).toBe(20000)
     expect(after.refunded_at).not.toBeNull()
+    expect(sendPaymentRefundEmail).toHaveBeenCalledWith({
+      paymentId: payment.id,
+    })
   })
 
   it("marks a full refund when the amount arrives blank", async () => {

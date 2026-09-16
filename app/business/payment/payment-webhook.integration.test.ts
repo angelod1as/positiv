@@ -11,15 +11,17 @@ import {
   createTestProfile,
 } from "~/test/db-test-utils"
 
-const { sendPaymentConfirmedEmail, logger } = vi.hoisted(() => ({
-  sendPaymentConfirmedEmail: vi.fn(),
-  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-}))
+const { sendPaymentConfirmedEmail, sendPaymentRefundEmail, logger } =
+  vi.hoisted(() => ({
+    sendPaymentConfirmedEmail: vi.fn(),
+    sendPaymentRefundEmail: vi.fn(),
+    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  }))
 
 vi.mock("./payment-emails.server", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("./payment-emails.server")>()
-  return { ...original, sendPaymentConfirmedEmail }
+  return { ...original, sendPaymentConfirmedEmail, sendPaymentRefundEmail }
 })
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
@@ -35,6 +37,7 @@ describe("applyWebhookEvent", () => {
     tracker.clear()
     counter += 1
     sendPaymentConfirmedEmail.mockClear().mockResolvedValue({ success: true })
+    sendPaymentRefundEmail.mockClear().mockResolvedValue({ success: true })
     logger.error.mockClear()
     logger.warn.mockClear()
 
@@ -226,6 +229,9 @@ describe("applyWebhookEvent", () => {
     expect(after.status).toBe("refunded")
     expect(after.refund_amount).toBe(22199)
     expect(after.refunded_at).not.toBeNull()
+    expect(sendPaymentRefundEmail).toHaveBeenCalledWith({
+      paymentId: payment.id,
+    })
   })
 
   it("records a partial refund from the refunds list", async () => {
@@ -569,6 +575,8 @@ describe("applyWebhookEvent", () => {
     const after = await statusOf(payment.id)
     expect(after.status).toBe("paid")
     expect(after.refund_amount).toBeNull()
+    // Nothing moved, so there is nothing to tell the participant about.
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
   })
 
   it("ignores a PAYMENT_UPDATED that carries nothing to sync", async () => {
@@ -632,6 +640,8 @@ describe("applyWebhookEvent", () => {
     const after = await statusOf(payment.id)
     expect(after.status).toBe("paid")
     expect(after.refund_amount).toBeNull()
+    // Nothing moved, so there is nothing to tell the participant about.
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
   })
 
   it("syncs the amount on PAYMENT_UPDATED while the charge is open", async () => {
