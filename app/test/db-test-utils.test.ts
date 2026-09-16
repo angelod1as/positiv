@@ -76,11 +76,17 @@ describe("cleanupTestData", () => {
     
     await cleanupTestData(tracker, mockKysely as unknown as Kysely<Database>)
     
-    // Should delete in reverse order
-    expect(mockKysely.deleteFrom).toHaveBeenCalledTimes(3)
-    expect(mockKysely.deleteFrom).toHaveBeenNthCalledWith(1, "event_participants")
-    expect(mockKysely.deleteFrom).toHaveBeenNthCalledWith(2, "events")
-    expect(mockKysely.deleteFrom).toHaveBeenNthCalledWith(3, "profiles")
+    // The participant's payments go first, tracked or not: the code under test
+    // may have inserted them, and they would block the participant's delete.
+    expect(mockKysely.deleteFrom).toHaveBeenCalledTimes(4)
+    expect(mockKysely.deleteFrom).toHaveBeenNthCalledWith(1, "payments")
+    expect(mockKysely.where).toHaveBeenNthCalledWith(1, "event_participant_id", "in", [
+      "participant-id-1",
+    ])
+    // Then the tracked rows, in reverse order of dependency
+    expect(mockKysely.deleteFrom).toHaveBeenNthCalledWith(2, "event_participants")
+    expect(mockKysely.deleteFrom).toHaveBeenNthCalledWith(3, "events")
+    expect(mockKysely.deleteFrom).toHaveBeenNthCalledWith(4, "profiles")
     
     // Should clear tracker after cleanup
     expect(tracker.getTrackedData()).toHaveLength(0)
