@@ -119,6 +119,10 @@ function dueAtFromAsaas(dueDate: string | null | undefined): string | null {
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+// Locked for the rest of the event's transaction. Asaas delivers one event at a
+// time, but a plan's refund is decided from a total several events share, and
+// two of them applied at once would each read the row before the other wrote
+// it -- and each send the email.
 async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
   const payment = event.payment
   if (!payment) return null
@@ -127,6 +131,7 @@ async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
     .selectFrom("payments")
     .selectAll()
     .where("asaas_payment_id", "=", payment.id)
+    .forUpdate()
     .executeTakeFirst()
   if (byId) return byId
 
@@ -140,6 +145,7 @@ async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
       .selectFrom("payments")
       .selectAll()
       .where("asaas_installment_id", "=", payment.installment)
+      .forUpdate()
       .executeTakeFirst()
     if (byInstallment) return byInstallment
   }
@@ -149,6 +155,7 @@ async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
       .selectFrom("payments")
       .selectAll()
       .where("id", "=", payment.externalReference)
+      .forUpdate()
       .executeTakeFirst()
     if (byReference) return byReference
   }
@@ -466,7 +473,9 @@ async function applyToPayment(
     // A plan is one refund spread over an event per charge, so it is told once:
     // on the event that brings the total up to what was asked for -- or to the
     // whole gross, for a refund started in the Asaas dashboard with no request
-    // behind it.
+    // behind it. A partial dashboard refund of a plan is therefore never told:
+    // with no request, one event cannot say whether it is the whole of a
+    // partial refund or the first charge of a full one. The panel tells.
     const target = payment.refund_requested_amount ?? payment.amount
     const completes =
       !installmentId ||
