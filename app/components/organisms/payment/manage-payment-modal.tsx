@@ -142,7 +142,7 @@ const AsaasRefundDialog: FC<AsaasRefundDialogProps> = ({
   isSubmitting,
   onConfirm,
 }) => {
-  const received = payment.asaas_net ?? payment.amount ?? 0
+  const received = payment.asaas_net ?? 0
   const [amount, setAmount] = useState(centsToReaisText(received))
   const [reason, setReason] = useState("")
   const amountId = `asaas-refund-amount-${payment.id}`
@@ -614,6 +614,13 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                         (payment.refund_requested_at ? (
                           <p className="text-muted-foreground text-sm">
                             {refund.asaas.inProgress}
+                          </p>
+                        ) : payment.asaas_net === null ? (
+                          // Without the net there is nothing to offer: the
+                          // gross is a full refund, and Asaas keeps the
+                          // anticipation on one.
+                          <p className="text-muted-foreground text-sm">
+                            {refund.asaas.awaitingNet}
                           </p>
                         ) : (
                           <AsaasRefundDialog

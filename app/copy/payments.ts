@@ -147,6 +147,8 @@ export const paymentsCopy = {
       reason: "Motivo (opcional)",
       windowPix: "Pix: o Asaas devolve na hora.",
       windowCard: "Cartão: aparece na fatura da pessoa em até 10 dias úteis.",
+      awaitingNet:
+        "O Asaas ainda não informou quanto caiu na conta. Aguarde alguns instantes e recarregue.",
       submit: "Solicitar reembolso",
       inProgress: "Reembolso solicitado — aguardando o Asaas confirmar.",
     },
@@ -175,6 +177,8 @@ export const paymentsCopy = {
       "Existe uma cobrança em aberto. Cancele-a antes de registrar um pagamento manual.",
     refundAmountRequired: "Informe um valor de reembolso maior que zero.",
     refundTooLarge: "O reembolso não pode ser maior que o valor pago.",
+    refundNetNotReported:
+      "O Asaas ainda não informou quanto caiu na conta desta cobrança. Aguarde alguns instantes e tente de novo.",
     refundNothingToRefund:
       "O Asaas não encontrou parcelas reembolsáveis nesta cobrança.",
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",

@@ -148,10 +148,15 @@ export const requestRefund = applySchema(requestRefundSchema)(
       throw new Error(paymentsCopy.errors.notRefundable)
     }
 
-    // What Positiv actually received. A row can be paid without a net -- the
-    // webhook reports it a moment later -- and the gross is the only figure
-    // there is until then.
-    const refundable = payment.asaas_net ?? payment.amount
+    // What Positiv actually received, which is what goes back. A row can be
+    // paid before the webhook reports it, and the only other figure available
+    // then is the gross -- refunding which is a full refund, and Asaas keeps
+    // the anticipation on one. Waiting a moment costs nothing.
+    if (payment.asaas_net === null) {
+      throw new Error(paymentsCopy.errors.refundNetNotReported)
+    }
+
+    const refundable = payment.asaas_net
     const amount = values.amount ?? refundable
 
     if (!Number.isFinite(amount) || amount <= 0) {

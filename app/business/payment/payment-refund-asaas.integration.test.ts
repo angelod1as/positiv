@@ -221,6 +221,23 @@ describe("requestRefund", () => {
     expect((await reload(payment.id)).refund_requested_at).toBeNull()
   })
 
+  it("refuses a charge whose net Asaas has not reported yet", async () => {
+    const payment = await paidCharge({ asaas_net: null })
+
+    const result = await requestRefund({
+      paymentId: payment.id,
+      amount: null,
+      reason: null,
+    })
+
+    // Giving back the gross would be a full refund, and Asaas keeps the
+    // anticipation on one. Waiting costs nothing; refunding blind costs the
+    // anticipation on every charge refunded in that window.
+    expect(result.success).toBe(false)
+    expect(refundAsaasPayment).not.toHaveBeenCalled()
+    expect((await reload(payment.id)).refund_requested_at).toBeNull()
+  })
+
   it("refuses a charge that was never paid", async () => {
     const payment = await paidCharge({
       status: "awaiting_payment",

@@ -532,6 +532,22 @@ describe("ManagePaymentModal", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("waits for the net before offering an Asaas refund", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[paidAsaasCharge({ asaas_net: null })]}
+      />,
+    )
+
+    expect(
+      screen.getByText(/ainda não informou quanto caiu/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Reembolsar" }),
+    ).not.toBeInTheDocument()
+  })
+
   it("offers only the manual mark on a manual row", () => {
     render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
 
