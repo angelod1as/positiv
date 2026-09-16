@@ -24,7 +24,7 @@ export function splitRefund(
   }
 
   if (amount > billed) {
-    throw new Error(paymentsCopy.errors.refundTooLarge)
+    throw new Error(paymentsCopy.errors.refundExceedsPlan)
   }
 
   const shares = parts.map((part) => ({

@@ -59,7 +59,11 @@ describe("splitRefund", () => {
   })
 
   it("refuses to give back more than the plan billed", () => {
-    expect(() => splitRefund(20000, [{ id: "pay_1", value: 1000 }])).toThrow()
+    // Only reachable when Asaas bills the plan for less than the net recorded,
+    // so the message names that, not the limit the admin already passed.
+    expect(() => splitRefund(20000, [{ id: "pay_1", value: 1000 }])).toThrow(
+      "O Asaas informa que este plano cobrou menos do que o reembolso pedido. Confira no painel do Asaas.",
+    )
   })
 
   it("refuses a plan with nothing to refund", () => {

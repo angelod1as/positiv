@@ -181,6 +181,8 @@ export const paymentsCopy = {
       "O reembolso não pode ser maior que o que a Positiv recebeu, sem as taxas.",
     refundNetNotReported:
       "O Asaas ainda não informou quanto caiu na conta desta cobrança. Aguarde alguns instantes e tente de novo.",
+    refundExceedsPlan:
+      "O Asaas informa que este plano cobrou menos do que o reembolso pedido. Confira no painel do Asaas.",
     refundNothingToRefund:
       "O Asaas não encontrou parcelas reembolsáveis nesta cobrança.",
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
