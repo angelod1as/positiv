@@ -610,7 +610,7 @@ no exception; the design document is the one that stays.
 | 9 | POS-528 | `POS-528-payment-offer.md` |
 | 10 | POS-529 | retired — the PR is open |
 | 11 | POS-530 | `POS-530-asaas-webhook.md` |
-| 12 | POS-531 | `POS-531-refunds.md` |
+| 12 | POS-531 | retired — the PR is open |
 | 13 | POS-532 | `POS-532-e2e-and-launch.md` |
 
 Two things the plans decided that this document only implied:
