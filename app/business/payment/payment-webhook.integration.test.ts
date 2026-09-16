@@ -234,6 +234,112 @@ describe("applyWebhookEvent", () => {
     })
   })
 
+  it("adds up a card plan refunded one charge at a time, and tells the participant once", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23631,
+      asaas_net: 21900,
+      asaas_payment_id: `pay_a_${counter}`,
+      asaas_installment_id: `inst_${counter}`,
+      refund_requested_at: new Date().toISOString(),
+      refund_requested_amount: 21900,
+    })
+
+    // Asaas reports each charge of the plan in its own event, and each event
+    // lists only that charge's refunds.
+    const refundCharge = (charge: string) =>
+      deliver({
+        event: "PAYMENT_PARTIALLY_REFUNDED",
+        payment: {
+          id: `${charge}_${counter}`,
+          installment: `inst_${counter}`,
+          value: 78.77,
+          refunds: [{ value: 73, status: "DONE" }],
+        },
+      })
+
+    await refundCharge("pay_a")
+    expect((await statusOf(payment.id)).refund_amount).toBe(7300)
+
+    await refundCharge("pay_b")
+    expect((await statusOf(payment.id)).refund_amount).toBe(14600)
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
+
+    await refundCharge("pay_c")
+    const after = await statusOf(payment.id)
+    // The fees stayed behind, so the plan is partially refunded in the ledger
+    // even though everything that was asked for went back.
+    expect(after.status).toBe("partially_refunded")
+    expect(after.refund_amount).toBe(21900)
+    expect(sendPaymentRefundEmail).toHaveBeenCalledTimes(1)
+    expect(sendPaymentRefundEmail).toHaveBeenCalledWith({
+      paymentId: payment.id,
+    })
+  })
+
+  it("counts a plan charge's refund once, however many events describe it", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23631,
+      asaas_net: 21900,
+      asaas_payment_id: `pay_a_${counter}`,
+      asaas_installment_id: `inst_${counter}`,
+      refund_requested_at: new Date().toISOString(),
+      refund_requested_amount: 21900,
+    })
+
+    for (let delivery = 0; delivery < 2; delivery++) {
+      await deliver({
+        event: "PAYMENT_PARTIALLY_REFUNDED",
+        payment: {
+          id: `pay_a_${counter}`,
+          installment: `inst_${counter}`,
+          value: 78.77,
+          refunds: [{ value: 73, status: "DONE" }],
+        },
+      })
+    }
+
+    expect((await statusOf(payment.id)).refund_amount).toBe(7300)
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
+  })
+
+  it("closes a plan refunded in full from the Asaas dashboard, and tells the participant once", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23631,
+      asaas_net: 21900,
+      asaas_payment_id: `pay_a_${counter}`,
+      asaas_installment_id: `inst_${counter}`,
+    })
+
+    for (const charge of ["pay_a", "pay_b", "pay_c"]) {
+      await deliver({
+        event: "PAYMENT_REFUNDED",
+        payment: {
+          id: `${charge}_${counter}`,
+          installment: `inst_${counter}`,
+          value: 78.77,
+          refunds: [{ value: 78.77, status: "DONE" }],
+        },
+      })
+    }
+
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("refunded")
+    expect(after.refund_amount).toBe(23631)
+    expect(sendPaymentRefundEmail).toHaveBeenCalledTimes(1)
+  })
+
   it("records a partial refund from the refunds list", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,

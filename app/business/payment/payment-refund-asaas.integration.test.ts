@@ -98,6 +98,8 @@ describe("requestRefund", () => {
 
     const after = await reload(payment.id)
     expect(after.refund_requested_at).not.toBeNull()
+    // What the webhook needs to know which event completes the refund.
+    expect(after.refund_requested_amount).toBe(21900)
     // The webhook, not this call, moves the status.
     expect(after.status).toBe("paid")
     expect(after.refund_amount).toBeNull()
@@ -170,6 +172,7 @@ describe("requestRefund", () => {
     expect(result.success).toBe(false)
     const after = await reload(payment.id)
     expect(after.refund_requested_at).toBeNull()
+    expect(after.refund_requested_amount).toBeNull()
     expect(after.status).toBe("paid")
     expect(logger.error).toHaveBeenCalled()
   })
@@ -201,6 +204,7 @@ describe("requestRefund", () => {
     // Releasing it would let a second attempt refund pay_a twice.
     const after = await reload(payment.id)
     expect(after.refund_requested_at).not.toBeNull()
+    expect(after.refund_requested_amount).toBe(21900)
     expect(after.status).toBe("paid")
     expect(refundAsaasPayment).toHaveBeenCalledTimes(2)
     expect(logger.error).toHaveBeenCalled()

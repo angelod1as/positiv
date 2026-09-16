@@ -180,6 +180,38 @@ function refundedCents(
  * latest net once per Asaas payment id is what keeps either of them, in any
  * order, from being counted twice.
  */
+/**
+ * What a card plan has given back so far, in cents.
+ *
+ * The same shape as the net above, for the same reason: a plan refunded one
+ * charge at a time arrives as one event per charge, each listing only that
+ * charge's refunds. The latest event per Asaas payment id carries that charge's
+ * whole list, so taking it once per charge and adding them up is what keeps a
+ * redelivery -- or a second refund of the same charge -- from counting twice.
+ */
+async function installmentRefundedCents(
+  db: Kysely<Database>,
+  installmentId: string,
+): Promise<number> {
+  const result = await sql<{ event_type: string; payload: AsaasWebhookEvent }>`
+    SELECT DISTINCT ON (payload->'payment'->>'id') event_type, payload
+      FROM payment_webhook_events
+     WHERE payload->'payment'->>'installment' = ${installmentId}
+       AND event_type IN ('PAYMENT_REFUNDED', 'PAYMENT_PARTIALLY_REFUNDED')
+     ORDER BY payload->'payment'->>'id', received_at DESC`.execute(db)
+
+  return result.rows.reduce((total, row) => {
+    const value = row.payload.payment?.value
+    // A charge-level PAYMENT_REFUNDED without a list gave that charge back
+    // whole, which is its own value -- not the plan's.
+    const fallback =
+      row.event_type === "PAYMENT_REFUNDED" && value != null
+        ? reaisToCents(value)
+        : null
+    return total + (refundedCents(row.payload, fallback) ?? 0)
+  }, 0)
+}
+
 async function installmentNetCents(
   db: Kysely<Database>,
   installmentId: string,
@@ -304,6 +336,8 @@ async function applyToPayment(
     amount: number | null
     status: string
     asaas_installment_id: string | null
+    refund_amount: number | null
+    refund_requested_amount: number | null
   },
   event: AsaasWebhookEvent,
 ): Promise<TransitionResult> {
@@ -404,10 +438,13 @@ async function applyToPayment(
     // The fallback is what a full refund Asaas did not itemise means. A
     // partial one without a list says nothing about how much moved, and
     // reading it as the whole amount would close the row as fully refunded.
-    const refunded = refundedCents(
-      event,
-      event.event === "PAYMENT_REFUNDED" ? payment.amount : null,
-    )
+    const installmentId = payment.asaas_installment_id
+    const refunded = installmentId
+      ? await installmentRefundedCents(db, installmentId)
+      : refundedCents(
+          event,
+          event.event === "PAYMENT_REFUNDED" ? payment.amount : null,
+        )
     if (!refunded || !payment.amount) {
       return { applied: false, reason: "no_refund_amount" }
     }
@@ -425,10 +462,20 @@ async function applyToPayment(
       .returning("id")
       .executeTakeFirst()
 
+    // A single charge is one refund per event, and each one is worth telling.
+    // A plan is one refund spread over an event per charge, so it is told once:
+    // on the event that brings the total up to what was asked for -- or to the
+    // whole gross, for a refund started in the Asaas dashboard with no request
+    // behind it.
+    const target = payment.refund_requested_amount ?? payment.amount
+    const completes =
+      !installmentId ||
+      ((payment.refund_amount ?? 0) < target && refunded >= target)
+
     return {
       applied: Boolean(updated),
       reason: updated ? undefined : "not_refundable",
-      refundPaymentId: updated ? payment.id : undefined,
+      refundPaymentId: updated && completes ? payment.id : undefined,
     }
   }
 

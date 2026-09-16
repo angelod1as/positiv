@@ -169,7 +169,10 @@ export const requestRefund = applySchema(requestRefundSchema)(
 
     const claimed = await kyselyDb
       .updateTable("payments")
-      .set({ refund_requested_at: new Date().toISOString() })
+      .set({
+        refund_requested_at: new Date().toISOString(),
+        refund_requested_amount: amount,
+      })
       .where("id", "=", payment.id)
       .where("status", "=", "paid")
       .where("refund_requested_at", "is", null)
@@ -213,7 +216,7 @@ export const requestRefund = applySchema(requestRefundSchema)(
       if (given === 0) {
         await kyselyDb
           .updateTable("payments")
-          .set({ refund_requested_at: null })
+          .set({ refund_requested_at: null, refund_requested_amount: null })
           .where("id", "=", payment.id)
           .execute()
       }
