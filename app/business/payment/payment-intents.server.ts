@@ -1,7 +1,7 @@
 import { registerManualPayment } from "./manual-payment.server"
 import { createPaymentOffer, resendPaymentOffer } from "./payment-offer.server"
 import { cancelPayment } from "./payment-cancel.server"
-import { markManualRefunded } from "./payment-refund.server"
+import { markManualRefunded, requestRefund } from "./payment-refund.server"
 
 type PaymentIntentResult = {
   success: boolean
@@ -78,6 +78,10 @@ export async function handlePaymentIntent(
 
   if (intent === "payment-manual-refund") {
     return toIntentResult(intent, await markManualRefunded(values))
+  }
+
+  if (intent === "payment-refund") {
+    return toIntentResult(intent, await requestRefund(values))
   }
 
   if (intent === "payment-cancel") {

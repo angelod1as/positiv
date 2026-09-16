@@ -134,6 +134,22 @@ export const paymentsCopy = {
     submit: "Marcar reembolso",
     confirm: "Confirmar reembolso?",
     success: "Reembolso registrado.",
+    asaas: {
+      title: "Reembolsar",
+      confirm: "Reembolsar pelo Asaas?",
+      description:
+        "O Asaas devolve o dinheiro para a pessoa. A situação do pagamento muda quando o Asaas confirmar.",
+      feesStay:
+        "As taxas não voltam: a pessoa recebe o que a Positiv recebeu, sem as taxas que ela pagou.",
+      amount: "Valor devolvido",
+      amountHint: (received: string) =>
+        `A Positiv recebeu ${received}. Não é possível devolver mais que isso.`,
+      reason: "Motivo (opcional)",
+      windowPix: "Pix: o Asaas devolve na hora.",
+      windowCard: "Cartão: aparece na fatura da pessoa em até 10 dias úteis.",
+      submit: "Solicitar reembolso",
+      inProgress: "Reembolso solicitado — aguardando o Asaas confirmar.",
+    },
   },
   cancel: {
     title: "Cancelar cobrança",
