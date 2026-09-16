@@ -171,19 +171,9 @@ function refundedCents(
 }
 
 /**
- * What a card plan has actually netted so far, in cents.
- *
- * Asaas bills an installment plan as one payment per installment and sends an
- * event for each, so the plan's net is a sum rather than a single number. It is
- * recomputed from the inbox rather than added up as events arrive: the same
- * installment is described by both CONFIRMED and RECEIVED, and counting the
- * latest net once per Asaas payment id is what keeps either of them, in any
- * order, from being counted twice.
- */
-/**
  * What a card plan has given back so far, in cents.
  *
- * The same shape as the net above, for the same reason: a plan refunded one
+ * The same shape as the net below, for the same reason: a plan refunded one
  * charge at a time arrives as one event per charge, each listing only that
  * charge's refunds. The latest event per Asaas payment id carries that charge's
  * whole list, so taking it once per charge and adding them up is what keeps a
@@ -212,6 +202,16 @@ async function installmentRefundedCents(
   }, 0)
 }
 
+/**
+ * What a card plan has actually netted so far, in cents.
+ *
+ * Asaas bills an installment plan as one payment per installment and sends an
+ * event for each, so the plan's net is a sum rather than a single number. It is
+ * recomputed from the inbox rather than added up as events arrive: the same
+ * installment is described by both CONFIRMED and RECEIVED, and counting the
+ * latest net once per Asaas payment id is what keeps either of them, in any
+ * order, from being counted twice.
+ */
 async function installmentNetCents(
   db: Kysely<Database>,
   installmentId: string,
