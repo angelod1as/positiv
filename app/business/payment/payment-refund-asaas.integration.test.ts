@@ -218,7 +218,16 @@ describe("requestRefund", () => {
     expect(after.refund_requested_amount).toBe(21900)
     expect(after.status).toBe("paid")
     expect(refundAsaasPayment).toHaveBeenCalledTimes(2)
-    expect(logger.error).toHaveBeenCalled()
+    // The charge Asaas refused, not the plan's first: that is the one someone
+    // has to go and look at in the dashboard.
+    expect(logger.error).toHaveBeenCalledWith(
+      "Asaas refused the refund",
+      expect.objectContaining({
+        asaasPaymentId: "pay_b",
+        asaasInstallmentId: `inst_${counter}`,
+        alreadyRefunded: 7300,
+      }),
+    )
   })
 
   it("refuses to give back more than Positiv received", async () => {

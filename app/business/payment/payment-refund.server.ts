@@ -190,6 +190,9 @@ export const requestRefund = applySchema(requestRefundSchema)(
 
     const description = values.reason ?? null
     let given = 0
+    // The charge being asked for at the moment it fails. On a plan that is one
+    // of several, and the plan's first is rarely the one Asaas refused.
+    let charge = payment.asaas_payment_id
 
     try {
       if (payment.asaas_installment_id) {
@@ -199,6 +202,7 @@ export const requestRefund = applySchema(requestRefundSchema)(
         // Sequentially: Asaas queues them anyway, and an ordered failure is
         // the difference between "two of three went back" and a guess.
         for (const share of splitRefund(amount, parts)) {
+          charge = share.id
           await refundAsaasPayment(share.id, {
             amount: share.amount,
             description,
@@ -228,7 +232,8 @@ export const requestRefund = applySchema(requestRefundSchema)(
 
       logger.error("Asaas refused the refund", {
         paymentId: payment.id,
-        asaasPaymentId: payment.asaas_payment_id,
+        asaasPaymentId: charge,
+        asaasInstallmentId: payment.asaas_installment_id,
         alreadyRefunded: given,
         error: error instanceof Error ? error.message : String(error),
       })
