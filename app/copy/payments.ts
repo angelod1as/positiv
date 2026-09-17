@@ -189,6 +189,8 @@ export const paymentsCopy = {
     notAsaasRefundable:
       "Este pagamento não passou pelo Asaas. Use 'Marcar como reembolsado'.",
     refundAlreadyRequested: "O reembolso já foi solicitado.",
+    refundOutcomeUnknown:
+      "Não deu para confirmar se o Asaas fez o reembolso. Confira no painel do Asaas antes de tentar de novo.",
     refundPartiallyApplied:
       "Parte das parcelas foi reembolsada e uma falhou. Confira no painel do Asaas antes de tentar de novo.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",

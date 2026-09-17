@@ -26,6 +26,7 @@ vi.mock("./asaas-client.server", async (importOriginal) => {
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
+import { AsaasError } from "./asaas-client.server"
 import { requestRefund } from "./payment-refund.server"
 
 describe("requestRefund", () => {
@@ -170,7 +171,11 @@ describe("requestRefund", () => {
 
   it("releases the claim when Asaas refuses and nothing moved", async () => {
     refundAsaasPayment.mockRejectedValueOnce(
-      new Error("Asaas 400 on /payments/pay_1/refund: invalid_value"),
+      new AsaasError(
+        400,
+        [{ code: "invalid_value", description: "Saldo insuficiente" }],
+        "/payments/pay_1/refund",
+      ),
     )
     const payment = await paidCharge()
 
@@ -186,6 +191,54 @@ describe("requestRefund", () => {
     expect(after.refund_requested_amount).toBeNull()
     expect(after.status).toBe("paid")
     expect(logger.error).toHaveBeenCalled()
+  })
+
+  // A timeout, a dropped connection, a 5xx or an answer that does not parse all
+  // leave it unknown whether Asaas refunded. Releasing the claim there would
+  // bring the button back, and a second click would refund the same money again.
+  it.each([
+    ["Asaas does not answer in time", new DOMException("This operation was aborted", "AbortError")],
+    ["the connection drops", new TypeError("fetch failed")],
+    ["Asaas fails on its side", new AsaasError(503, [], "/payments/pay_1/refund")],
+  ])("keeps the claim when %s", async (_, failure) => {
+    refundAsaasPayment.mockRejectedValueOnce(failure)
+    const payment = await paidCharge()
+
+    const result = await requestRefund({
+      paymentId: payment.id,
+      amount: null,
+      reason: null,
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.success ? null : result.errors[0].message).toBe(
+      "Não deu para confirmar se o Asaas fez o reembolso. Confira no painel do Asaas antes de tentar de novo.",
+    )
+    const after = await reload(payment.id)
+    expect(after.refund_requested_at).not.toBeNull()
+    expect(after.refund_requested_amount).toBe(21900)
+  })
+
+  it("releases the claim when the plan's charges cannot be listed", async () => {
+    listAsaasInstallmentPayments.mockRejectedValueOnce(new TypeError("fetch failed"))
+    const payment = await paidCharge({
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23631,
+      asaas_net: 21900,
+      asaas_installment_id: `inst_${counter}`,
+    })
+
+    const result = await requestRefund({
+      paymentId: payment.id,
+      amount: null,
+      reason: null,
+    })
+
+    // Nothing was asked of Asaas to refund, so nothing can have moved.
+    expect(result.success).toBe(false)
+    expect(refundAsaasPayment).not.toHaveBeenCalled()
+    expect((await reload(payment.id)).refund_requested_at).toBeNull()
   })
 
   it("keeps the claim when part of a plan was already given back", async () => {

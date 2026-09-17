@@ -5,6 +5,7 @@ import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import {
+  AsaasError,
   listAsaasInstallmentPayments,
   refundAsaasPayment,
 } from "./asaas-client.server"
@@ -193,6 +194,9 @@ export const requestRefund = applySchema(requestRefundSchema)(
     // The charge being asked for at the moment it fails. On a plan that is one
     // of several, and the plan's first is rarely the one Asaas refused.
     let charge = payment.asaas_payment_id
+    // Whether a refund was ever put to Asaas. Before that, a failure -- the
+    // plan could not be listed, the split refused -- cannot have moved money.
+    let sent = false
 
     try {
       if (payment.asaas_installment_id) {
@@ -203,6 +207,7 @@ export const requestRefund = applySchema(requestRefundSchema)(
         // the difference between "two of three went back" and a guess.
         for (const share of splitRefund(amount, parts)) {
           charge = share.id
+          sent = true
           await refundAsaasPayment(share.id, {
             amount: share.amount,
             description,
@@ -210,6 +215,7 @@ export const requestRefund = applySchema(requestRefundSchema)(
           given += share.amount
         }
       } else if (payment.asaas_payment_id) {
+        sent = true
         await refundAsaasPayment(payment.asaas_payment_id, {
           amount,
           description,
@@ -219,10 +225,17 @@ export const requestRefund = applySchema(requestRefundSchema)(
         throw new Error(paymentsCopy.errors.notAsaasRefundable)
       }
     } catch (error) {
-      // The claim is released only when no money moved. Releasing it after
-      // half a plan went back would let the next attempt refund those charges
-      // a second time, and Asaas would oblige.
-      if (given === 0) {
+      // The claim is released only when no money can have moved: nothing was
+      // put to Asaas, or Asaas answered the first refund with a refusal. A
+      // timeout, a dropped connection, a 5xx or an answer that does not parse
+      // say nothing about whether the refund happened, and neither does half a
+      // plan going back. Releasing the claim on any of those would bring the
+      // button back, and the next click would refund the same money again.
+      const refused =
+        error instanceof AsaasError && error.status >= 400 && error.status < 500
+      const nothingMoved = given === 0 && (!sent || refused)
+
+      if (nothingMoved) {
         await kyselyDb
           .updateTable("payments")
           .set({ refund_requested_at: null, refund_requested_amount: null })
@@ -238,9 +251,12 @@ export const requestRefund = applySchema(requestRefundSchema)(
         error: error instanceof Error ? error.message : String(error),
       })
 
-      throw given === 0
-        ? error
-        : new Error(paymentsCopy.errors.refundPartiallyApplied)
+      if (nothingMoved) throw error
+      throw new Error(
+        given > 0
+          ? paymentsCopy.errors.refundPartiallyApplied
+          : paymentsCopy.errors.refundOutcomeUnknown,
+      )
     }
 
     return { requested: true as const }
