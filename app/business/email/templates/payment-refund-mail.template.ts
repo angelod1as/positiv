@@ -11,6 +11,7 @@ export type PaymentRefundMailInput = {
   refundAmount: number
   amount: number
   method: string | null
+  kind: "asaas" | "manual"
 }
 
 const methodNames: Record<string, string> = paymentsCopy.manage.methods
@@ -32,8 +33,12 @@ export const paymentRefundMailTemplate = (
     input.refundAmount < input.amount
       ? paymentRefundMailCopy.partial(formatCurrency(input.amount))
       : ""
-  const window =
-    input.method === "credit_card"
+  // Both sentences describe money Asaas returns. A manual payment carried no
+  // Asaas fee and may have been cash or a transfer, so neither is true of it.
+  const throughAsaas = input.kind === "asaas"
+  const window = !throughAsaas
+    ? ""
+    : input.method === "credit_card"
       ? paymentRefundMailCopy.windowCard
       : paymentRefundMailCopy.windowPix
 
@@ -99,13 +104,17 @@ export const paymentRefundMailTemplate = (
                 }
               </div>
 
-              <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
+              ${
+                throughAsaas
+                  ? `<p style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0; color: #333;">
                 ${window}
               </p>
 
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; line-height: 1.6; margin: 0 0 20px 0; color: #666;">
                 ${paymentRefundMailCopy.feesStay}
-              </p>
+              </p>`
+                  : ""
+              }
 
               <!-- CTA -->
               <div style="text-align: center; margin: 0;">

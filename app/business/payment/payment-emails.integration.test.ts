@@ -297,6 +297,24 @@ describe("sendPaymentRefundEmail", () => {
     expect(options.text).toContain("R$ 219,00")
   })
 
+  it("promises no Pix timing for a manual refund paid in cash", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "manual",
+      status: "refunded",
+      method: "cash",
+      amount: 22000,
+      refund_amount: 22000,
+      refunded_at: new Date().toISOString(),
+    })
+
+    await sendPaymentRefundEmail({ paymentId: payment.id })
+
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.html).toContain("Dinheiro")
+    expect(options.html).not.toContain("Pix cai")
+  })
+
   it("says it is partial when only part came back", async () => {
     const payment = await refundedCharge({
       status: "partially_refunded",

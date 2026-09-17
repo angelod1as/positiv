@@ -10,6 +10,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 21900,
       amount: 22199,
       method: "pix",
+      kind: "asaas",
     })
 
     expect(html).toContain("Ana")
@@ -26,6 +27,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 23631,
       amount: 23631,
       method: "credit_card",
+      kind: "asaas",
     })
     expect(card).toContain("10 dias úteis")
 
@@ -36,6 +38,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 22199,
       amount: 22199,
       method: "pix",
+      kind: "asaas",
     })
     expect(pix).not.toContain("10 dias úteis")
   })
@@ -48,6 +51,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 5000,
       amount: 22199,
       method: "pix",
+      kind: "asaas",
     })
 
     expect(html).toContain("parcial")
@@ -63,9 +67,30 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 22199,
       amount: 22199,
       method: "pix",
+      kind: "asaas",
     })
 
     expect(html).not.toContain("parcial")
+  })
+
+  it("promises no timing and no fees on money handed back by hand", () => {
+    const html = paymentRefundMailTemplate({
+      displayName: "Ana",
+      eventTitle: "Festa",
+      eventEmoji: null,
+      refundAmount: 22000,
+      amount: 22000,
+      method: "cash",
+      kind: "manual",
+    })
+
+    // A manual payment carried no Asaas fee and did not travel by Pix or card,
+    // so neither sentence is true of it.
+    expect(html).toContain("R$ 220,00")
+    expect(html).toContain("Dinheiro")
+    expect(html).not.toContain("Pix cai")
+    expect(html).not.toContain("10 dias úteis")
+    expect(html).not.toContain("taxas de pagamento")
   })
 
   it("escapes the name", () => {
@@ -76,6 +101,7 @@ describe("paymentRefundMailTemplate", () => {
       refundAmount: 100,
       amount: 100,
       method: "pix",
+      kind: "asaas",
     })
 
     expect(html).not.toContain("onerror")

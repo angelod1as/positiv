@@ -232,6 +232,7 @@ export async function sendPaymentRefundEmail({
       "p.amount",
       "p.refund_amount",
       "p.method",
+      "p.kind",
       "e.title as event_title",
       "e.emoji as event_emoji",
       "pr.email",
@@ -259,6 +260,7 @@ export async function sendPaymentRefundEmail({
     refundAmount: payment.refund_amount ?? amount,
     amount,
     method: payment.method,
+    kind: payment.kind,
   })
 
   const mailOptions: MailOptions = {
