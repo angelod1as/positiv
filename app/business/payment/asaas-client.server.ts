@@ -261,6 +261,8 @@ export async function listAsaasInstallmentPayments(
 ): Promise<AsaasInstallmentPayment[]> {
   const { data } = await asaasRequest(
     "GET",
+    // One page is the whole plan: a plan has at most MAX_INSTALLMENTS (6)
+    // charges, far below the page size.
     `/payments?installment=${installmentId}&limit=100`,
     zod.object({
       data: zod.array(
