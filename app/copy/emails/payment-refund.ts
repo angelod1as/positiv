@@ -1,10 +1,10 @@
 export const paymentRefundMailCopy = {
-  documentTitle: "Reembolso a caminho - Positiv",
+  documentTitle: "Reembolso confirmado - Positiv",
   logoAlt: "Positiv",
-  heading: "Reembolso a caminho",
+  heading: "Reembolso confirmado",
   subject: (eventName: string) => `Reembolso - ${eventName}`,
   intro: (displayName: string, eventName: string) =>
-    `${displayName}, o reembolso do seu pagamento da <strong>${eventName}</strong> foi solicitado.`,
+    `${displayName}, o reembolso do seu pagamento da <strong>${eventName}</strong> foi confirmado.`,
   receiptHeading: "Resumo do reembolso",
   amount: (value: string) => `Valor devolvido: <strong>${value}</strong>`,
   partial: (paid: string) =>

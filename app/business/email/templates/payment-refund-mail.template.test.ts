@@ -93,6 +93,23 @@ describe("paymentRefundMailTemplate", () => {
     expect(html).not.toContain("taxas de pagamento")
   })
 
+  it("says the refund is confirmed, not merely asked for", () => {
+    const html = paymentRefundMailTemplate({
+      displayName: "Ana",
+      eventTitle: "Festa",
+      eventEmoji: null,
+      refundAmount: 21900,
+      amount: 22199,
+      method: "pix",
+      kind: "asaas",
+    })
+
+    // Both senders run after the money is already back: the webhook once Asaas
+    // confirmed it, and the manual mark once the admin handed it over.
+    expect(html).toContain("confirmado")
+    expect(html).not.toContain("solicitado")
+  })
+
   it("escapes the name", () => {
     const html = paymentRefundMailTemplate({
       displayName: "<img src=x onerror=alert(1)>",
