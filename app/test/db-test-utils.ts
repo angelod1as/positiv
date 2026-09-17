@@ -55,6 +55,26 @@ export async function cleanupTestData(
     return acc
   }, {} as Record<string, string[]>)
   
+  // A payment is often inserted by the code under test rather than by a
+  // factory -- createPaymentOffer does -- so the tracker never hears of it, and
+  // payments' ON DELETE RESTRICT then refuses the participant it belongs to,
+  // and the event after that. Every payment of a participant this test created
+  // is this test's own.
+  const participantIds = groupedData["event_participants"] ?? []
+  if (participantIds.length > 0) {
+    try {
+      await kysely
+        .deleteFrom("payments")
+        .where("event_participant_id", "in", participantIds)
+        .execute()
+    } catch (error) {
+      console.error(
+        `Failed to delete the payments of ${participantIds.length} participants:`,
+        error,
+      )
+    }
+  }
+
   // Perform batch deletions for each table
   // Order matters due to foreign key constraints - delete in reverse order of dependencies
   const tableOrder = [
