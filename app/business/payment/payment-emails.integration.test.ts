@@ -40,7 +40,10 @@ vi.mock("varlock/env", async (importOriginal) => {
 // getAsaasFees is left real: with no ASAAS_API_KEY configured the lookup fails
 // and it answers with FALLBACK_FEES, which is what the assertions price
 // against.
-import { sendPaymentLinkEmail } from "./payment-emails.server"
+import {
+  sendPaymentLinkEmail,
+  sendPaymentRefundEmail,
+} from "./payment-emails.server"
 
 describe("sendPaymentLinkEmail", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -225,5 +228,146 @@ describe("sendPaymentLinkEmail", () => {
     expect(options.html).toContain(
       `R$ ${(expectedPix / 100).toFixed(2).replace(".", ",")}`,
     )
+  })
+})
+
+describe("sendPaymentRefundEmail", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+  let participantId: string
+  let counter = 0
+
+  beforeEach(async () => {
+    tracker.clear()
+    counter += 1
+    sendEmail.mockReset()
+    sendEmail.mockResolvedValue({ success: true })
+    logger.error.mockClear()
+
+    const testId = `${Date.now()}-${counter}`
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Refund Event",
+      emoji: "🎉",
+      ticket_price: 22000,
+    })
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `test${testId}-refund-mail@example.com`,
+      full_name: "Refund Tester",
+    })
+    participantId = (
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: event.id,
+        profile_id: profile.id,
+        spot_type: "regular",
+      })
+    ).id
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  // `payments_full_is_full` only lets a row be `refunded` when the whole
+  // amount came back, so a refund of asaas_net is a partial one in the ledger
+  // too -- which is exactly what it is.
+  const refundedCharge = (overrides: Record<string, unknown> = {}) =>
+    createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      status: "refunded",
+      method: "pix",
+      base_amount: 20000,
+      amount: 21900,
+      asaas_net: 21900,
+      refund_amount: 21900,
+      refunded_at: new Date().toISOString(),
+      ...overrides,
+    })
+
+  it("tells the participant what came back", async () => {
+    const payment = await refundedCharge()
+
+    const result = await sendPaymentRefundEmail({ paymentId: payment.id })
+
+    expect(result.success).toBe(true)
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.to).toContain("-refund-mail@example.com")
+    expect(options.subject).toContain("Refund Event")
+    expect(options.html).toContain("R$ 219,00")
+    expect(options.text).toContain("R$ 219,00")
+  })
+
+  it("promises no Pix timing for a manual refund paid in cash", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "manual",
+      status: "refunded",
+      method: "cash",
+      amount: 22000,
+      refund_amount: 22000,
+      refunded_at: new Date().toISOString(),
+    })
+
+    await sendPaymentRefundEmail({ paymentId: payment.id })
+
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.html).toContain("Dinheiro")
+    expect(options.html).not.toContain("Pix cai")
+  })
+
+  it("says it is partial when only part came back", async () => {
+    const payment = await refundedCharge({
+      status: "partially_refunded",
+      amount: 22199,
+      refund_amount: 5000,
+    })
+
+    await sendPaymentRefundEmail({ paymentId: payment.id })
+
+    const [options] = sendEmail.mock.calls[0]
+    expect(options.html).toContain("R$ 50,00")
+    expect(options.html).toContain("parcial")
+  })
+
+  it("answers { success: false } when the profile has no email", async () => {
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: "",
+      full_name: "No Mailbox",
+    })
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Mailless Event",
+    })
+    const mailless = (
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: event.id,
+        profile_id: profile.id,
+        spot_type: "regular",
+      })
+    ).id
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: mailless,
+      kind: "asaas",
+      status: "refunded",
+      method: "pix",
+      amount: 22199,
+      refund_amount: 22199,
+      refunded_at: new Date().toISOString(),
+    })
+
+    const result = await sendPaymentRefundEmail({ paymentId: payment.id })
+
+    expect(result.success).toBe(false)
+    expect(sendEmail).not.toHaveBeenCalled()
+    expect(logger.error).toHaveBeenCalled()
+  })
+
+  it("answers { success: false } for a payment that is not there", async () => {
+    const result = await sendPaymentRefundEmail({
+      paymentId: "00000000-0000-0000-0000-000000000000",
+    })
+
+    expect(result.success).toBe(false)
+    expect(sendEmail).not.toHaveBeenCalled()
   })
 })

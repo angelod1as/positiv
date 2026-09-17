@@ -11,15 +11,17 @@ import {
   createTestProfile,
 } from "~/test/db-test-utils"
 
-const { sendPaymentConfirmedEmail, logger } = vi.hoisted(() => ({
-  sendPaymentConfirmedEmail: vi.fn(),
-  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-}))
+const { sendPaymentConfirmedEmail, sendPaymentRefundEmail, logger } =
+  vi.hoisted(() => ({
+    sendPaymentConfirmedEmail: vi.fn(),
+    sendPaymentRefundEmail: vi.fn(),
+    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  }))
 
 vi.mock("./payment-emails.server", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("./payment-emails.server")>()
-  return { ...original, sendPaymentConfirmedEmail }
+  return { ...original, sendPaymentConfirmedEmail, sendPaymentRefundEmail }
 })
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
@@ -35,6 +37,7 @@ describe("applyWebhookEvent", () => {
     tracker.clear()
     counter += 1
     sendPaymentConfirmedEmail.mockClear().mockResolvedValue({ success: true })
+    sendPaymentRefundEmail.mockClear().mockResolvedValue({ success: true })
     logger.error.mockClear()
     logger.warn.mockClear()
 
@@ -226,6 +229,188 @@ describe("applyWebhookEvent", () => {
     expect(after.status).toBe("refunded")
     expect(after.refund_amount).toBe(22199)
     expect(after.refunded_at).not.toBeNull()
+    expect(sendPaymentRefundEmail).toHaveBeenCalledWith({
+      paymentId: payment.id,
+    })
+  })
+
+  it("adds up a card plan refunded one charge at a time, and tells the participant once", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23631,
+      asaas_net: 21900,
+      asaas_payment_id: `pay_a_${counter}`,
+      asaas_installment_id: `inst_${counter}`,
+      refund_requested_at: new Date().toISOString(),
+      refund_requested_amount: 21900,
+    })
+
+    // Asaas reports each charge of the plan in its own event, and each event
+    // lists only that charge's refunds.
+    const refundCharge = (charge: string) =>
+      deliver({
+        event: "PAYMENT_PARTIALLY_REFUNDED",
+        payment: {
+          id: `${charge}_${counter}`,
+          installment: `inst_${counter}`,
+          value: 78.77,
+          refunds: [{ value: 73, status: "DONE" }],
+        },
+      })
+
+    await refundCharge("pay_a")
+    expect((await statusOf(payment.id)).refund_amount).toBe(7300)
+
+    await refundCharge("pay_b")
+    expect((await statusOf(payment.id)).refund_amount).toBe(14600)
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
+
+    await refundCharge("pay_c")
+    const after = await statusOf(payment.id)
+    // The fees stayed behind, so the plan is partially refunded in the ledger
+    // even though everything that was asked for went back.
+    expect(after.status).toBe("partially_refunded")
+    expect(after.refund_amount).toBe(21900)
+    expect(sendPaymentRefundEmail).toHaveBeenCalledTimes(1)
+    expect(sendPaymentRefundEmail).toHaveBeenCalledWith({
+      paymentId: payment.id,
+    })
+  })
+
+  it("counts a plan charge's refund once, however many events describe it", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23631,
+      asaas_net: 21900,
+      asaas_payment_id: `pay_a_${counter}`,
+      asaas_installment_id: `inst_${counter}`,
+      refund_requested_at: new Date().toISOString(),
+      refund_requested_amount: 21900,
+    })
+
+    for (let delivery = 0; delivery < 2; delivery++) {
+      await deliver({
+        event: "PAYMENT_PARTIALLY_REFUNDED",
+        payment: {
+          id: `pay_a_${counter}`,
+          installment: `inst_${counter}`,
+          value: 78.77,
+          refunds: [{ value: 73, status: "DONE" }],
+        },
+      })
+    }
+
+    expect((await statusOf(payment.id)).refund_amount).toBe(7300)
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
+  })
+
+  it("closes a plan refunded in full from the Asaas dashboard, and tells the participant once", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23631,
+      asaas_net: 21900,
+      asaas_payment_id: `pay_a_${counter}`,
+      asaas_installment_id: `inst_${counter}`,
+    })
+
+    for (const charge of ["pay_a", "pay_b", "pay_c"]) {
+      await deliver({
+        event: "PAYMENT_REFUNDED",
+        payment: {
+          id: `${charge}_${counter}`,
+          installment: `inst_${counter}`,
+          value: 78.77,
+          refunds: [{ value: 78.77, status: "DONE" }],
+        },
+      })
+    }
+
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("refunded")
+    expect(after.refund_amount).toBe(23631)
+    expect(sendPaymentRefundEmail).toHaveBeenCalledTimes(1)
+  })
+
+  it("records a plan partially refunded from the Asaas dashboard without telling the participant", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23631,
+      asaas_net: 21900,
+      asaas_payment_id: `pay_a_${counter}`,
+      asaas_installment_id: `inst_${counter}`,
+    })
+
+    await deliver({
+      event: "PAYMENT_PARTIALLY_REFUNDED",
+      payment: {
+        id: `pay_a_${counter}`,
+        installment: `inst_${counter}`,
+        value: 78.77,
+        refunds: [{ value: 50, status: "DONE" }],
+      },
+    })
+
+    // Deliberate: with no request behind it, one event cannot say whether it
+    // is a partial refund or the first charge of a whole one, so a plan is only
+    // told once the gross is back. The panel is the path that tells.
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("partially_refunded")
+    expect(after.refund_amount).toBe(5000)
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
+  })
+
+  it("tells the participant once even when a plan's last charges are applied at the same time", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23631,
+      asaas_net: 21900,
+      asaas_payment_id: `pay_a_${counter}`,
+      asaas_installment_id: `inst_${counter}`,
+      refund_requested_at: new Date().toISOString(),
+      refund_requested_amount: 21900,
+    })
+
+    const refundEvent = (charge: string) => ({
+      id: `evt_test_${Math.random()}`,
+      event: "PAYMENT_PARTIALLY_REFUNDED",
+      payment: {
+        id: `${charge}_${counter}`,
+        installment: `inst_${counter}`,
+        value: 78.77,
+        refunds: [{ value: 73, status: "DONE" }],
+      },
+    })
+
+    await deliver(refundEvent("pay_a"))
+
+    // Both recorded before either is applied, so each transaction sees the
+    // whole plan in the inbox and would reach the target on its own.
+    const b = refundEvent("pay_b")
+    const c = refundEvent("pay_c")
+    const recordedB = await recordWebhookEvent(b as never)
+    const recordedC = await recordWebhookEvent(c as never)
+    await Promise.all([
+      applyWebhookEvent(recordedB.id, b as never),
+      applyWebhookEvent(recordedC.id, c as never),
+    ])
+
+    expect((await statusOf(payment.id)).refund_amount).toBe(21900)
+    expect(sendPaymentRefundEmail).toHaveBeenCalledTimes(1)
   })
 
   it("records a partial refund from the refunds list", async () => {
@@ -569,6 +754,8 @@ describe("applyWebhookEvent", () => {
     const after = await statusOf(payment.id)
     expect(after.status).toBe("paid")
     expect(after.refund_amount).toBeNull()
+    // Nothing moved, so there is nothing to tell the participant about.
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
   })
 
   it("ignores a PAYMENT_UPDATED that carries nothing to sync", async () => {
@@ -632,6 +819,8 @@ describe("applyWebhookEvent", () => {
     const after = await statusOf(payment.id)
     expect(after.status).toBe("paid")
     expect(after.refund_amount).toBeNull()
+    // Nothing moved, so there is nothing to tell the participant about.
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
   })
 
   it("syncs the amount on PAYMENT_UPDATED while the charge is open", async () => {

@@ -367,9 +367,14 @@ of this against the sandbox.
    smaller amount and reason. Confirmation dialog.
 2. Guarded UPDATE: `refund_requested_at = now()` where `status = 'paid'` and
    `refund_requested_at IS NULL` → no row = already in progress, toast.
-3. `POST /v3/payments/{id}/refund { value?, description }` — or
-   `POST /v3/installments/{id}/refund` for a card plan. On failure clear
-   `refund_requested_at`, `logger.error`, toast with the Asaas description.
+3. `POST /v3/payments/{id}/refund { value?, description }`. A card plan is
+   never refunded through `POST /v3/installments/{id}/refund`: that endpoint
+   gives the whole plan back, which is a full refund, and a full refund costs
+   Positiv the anticipation. The plan's charges are listed with
+   `GET /v3/payments?installment={id}` and refunded one at a time, each for its
+   share. On failure clear `refund_requested_at`, `logger.error`, toast with
+   the Asaas description — unless part of a plan was already given back, in
+   which case the claim stays and a person finishes the job at Asaas.
 4. The webhook finalises the status and sends the email. The modal shows
    "reembolso solicitado" until then.
 5. Manual rows: **Marcar reembolsado** sets `refunded`/`partially_refunded`
@@ -605,7 +610,7 @@ no exception; the design document is the one that stays.
 | 9 | POS-528 | `POS-528-payment-offer.md` |
 | 10 | POS-529 | retired — the PR is open |
 | 11 | POS-530 | `POS-530-asaas-webhook.md` |
-| 12 | POS-531 | `POS-531-refunds.md` |
+| 12 | POS-531 | retired — the PR is open |
 | 13 | POS-532 | `POS-532-e2e-and-launch.md` |
 
 Two things the plans decided that this document only implied:

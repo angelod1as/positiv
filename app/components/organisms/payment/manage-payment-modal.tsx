@@ -125,6 +125,98 @@ const RefundDialog: FC<RefundDialogProps> = ({
   )
 }
 
+type AsaasRefundDialogProps = {
+  payment: PaymentRow
+  isSubmitting: boolean
+  onConfirm: (paymentId: string, amount: string, reason: string) => void
+}
+
+/**
+ * Giving money back through Asaas, as opposed to writing down that it was
+ * given back by hand. The field opens on `asaas_net` — what Positiv actually
+ * received — because that is also the most Asaas will return without charging
+ * Positiv the anticipation fee.
+ */
+const AsaasRefundDialog: FC<AsaasRefundDialogProps> = ({
+  payment,
+  isSubmitting,
+  onConfirm,
+}) => {
+  const received = payment.asaas_net ?? 0
+  const [amount, setAmount] = useState(centsToReaisText(received))
+  const [reason, setReason] = useState("")
+  const amountId = `asaas-refund-amount-${payment.id}`
+  const reasonId = `asaas-refund-reason-${payment.id}`
+
+  return (
+    <AlertDialog
+      onOpenChange={(open) => {
+        if (!open) return
+        setAmount(centsToReaisText(received))
+        setReason("")
+      }}
+    >
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          {refund.asaas.title}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{refund.asaas.confirm}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {refund.asaas.description}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <p className="text-sm">{refund.asaas.feesStay}</p>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={amountId}>{refund.asaas.amount}</Label>
+          <Input
+            id={amountId}
+            name="amount"
+            type="text"
+            inputMode="decimal"
+            value={amount}
+            onChange={(event) => setAmount(event.target.value)}
+          />
+          <p className="text-muted-foreground text-sm">
+            {refund.asaas.amountHint(formatCurrency(received))}
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={reasonId}>{refund.asaas.reason}</Label>
+          <Input
+            id={reasonId}
+            name="reason"
+            type="text"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+          />
+        </div>
+
+        <p className="text-muted-foreground text-sm">
+          {payment.method === "credit_card"
+            ? refund.asaas.windowCard
+            : refund.asaas.windowPix}
+        </p>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel>{manage.close}</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={isSubmitting}
+            onClick={() => onConfirm(payment.id, amount, reason)}
+          >
+            {refund.asaas.submit}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 type CancelDialogProps = {
   payment: PaymentRow
   isSubmitting: boolean
@@ -516,6 +608,34 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                         }
                       />
                     )}
+                      {payment.kind === "asaas" &&
+                        payment.status === "paid" &&
+                        (payment.amount ?? 0) > 0 &&
+                        (payment.refund_requested_at ? (
+                          <p className="text-muted-foreground text-sm">
+                            {refund.asaas.inProgress}
+                          </p>
+                        ) : payment.asaas_net === null ? (
+                          // Without the net there is nothing to offer: the
+                          // gross is a full refund, and Asaas keeps the
+                          // anticipation on one.
+                          <p className="text-muted-foreground text-sm">
+                            {refund.asaas.awaitingNet}
+                          </p>
+                        ) : (
+                          <AsaasRefundDialog
+                            payment={payment}
+                            isSubmitting={isSubmitting}
+                            onConfirm={(paymentId, amount, reason) =>
+                              post({
+                                intent: "payment-refund",
+                                paymentId,
+                                amount,
+                                reason,
+                              })
+                            }
+                          />
+                        ))}
                       {active?.id === payment.id && (
                         <CancelDialog
                           payment={payment}

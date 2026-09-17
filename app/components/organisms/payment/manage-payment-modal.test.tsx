@@ -60,6 +60,20 @@ const baseProps = {
   appOrigin: "https://www.positivparty.com",
 }
 
+const paidAsaasCharge = (overrides: Partial<PaymentRow> = {}): PaymentRow =>
+  payment({
+    id: "asaas-1",
+    kind: "asaas",
+    status: "paid",
+    method: "pix",
+    base_amount: 20000,
+    amount: 22199,
+    asaas_net: 21900,
+    asaas_payment_id: "pay_1",
+    refund_requested_at: null,
+    ...overrides,
+  })
+
 const openCharge = payment({
   id: "open-1",
   kind: "asaas",
@@ -414,6 +428,135 @@ describe("ManagePaymentModal", () => {
     const [formData] = submit.mock.calls.at(-1) ?? []
     expect(formData.get("intent")).toBe("payment-manual-refund")
     expect(formData.get("paymentId")).toBe("p1")
+  })
+
+  it("offers an Asaas refund on a paid Asaas row", async () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
+    await userEvent.click(
+      screen.getByRole("button", { name: "Solicitar reembolso" }),
+    )
+
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect(formData.get("intent")).toBe("payment-refund")
+    expect(formData.get("paymentId")).toBe("asaas-1")
+  })
+
+  it("offers to give back what Positiv received, not the gross", async () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
+
+    // 221,99 was the gross the participant paid; 219,00 is what landed.
+    expect(screen.getByLabelText("Valor devolvido")).toHaveValue("219,00")
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Solicitar reembolso" }),
+    )
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect(formData.get("amount")).toBe("219,00")
+  })
+
+  it("sends a smaller amount and a reason when they are typed", async () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
+    await userEvent.clear(screen.getByLabelText("Valor devolvido"))
+    await userEvent.type(screen.getByLabelText("Valor devolvido"), "50")
+    await userEvent.type(
+      screen.getByLabelText("Motivo (opcional)"),
+      "Desistiu",
+    )
+    await userEvent.click(
+      screen.getByRole("button", { name: "Solicitar reembolso" }),
+    )
+
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect(formData.get("amount")).toBe("50")
+    expect(formData.get("reason")).toBe("Desistiu")
+  })
+
+  it("says the fees stay with the participant", async () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
+
+    expect(screen.getByText(/as taxas não voltam/i)).toBeInTheDocument()
+  })
+
+  it("says how long the money takes to come back, by method", async () => {
+    const { rerender } = render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
+    expect(screen.getByText(/devolve na hora/i)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("button", { name: "Fechar" }))
+
+    rerender(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          paidAsaasCharge({ method: "credit_card", installment_count: 3 }),
+        ]}
+      />,
+    )
+    await userEvent.click(screen.getByRole("button", { name: "Reembolsar" }))
+    expect(screen.getByText(/em até 10 dias úteis/i)).toBeInTheDocument()
+  })
+
+  it("says a refund is under way instead of offering another", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          paidAsaasCharge({ refund_requested_at: "2026-08-24T12:00:00Z" }),
+        ]}
+      />,
+    )
+
+    expect(
+      screen.getByText(/aguardando o Asaas confirmar/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Reembolsar" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("waits for the net before offering an Asaas refund", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[paidAsaasCharge({ asaas_net: null })]}
+      />,
+    )
+
+    expect(
+      screen.getByText(/ainda não informou quanto caiu/i),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Reembolsar" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("offers only the manual mark on a manual row", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    expect(
+      screen.getByRole("button", { name: /marcar como reembolsado/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Reembolsar" }),
+    ).not.toBeInTheDocument()
   })
 
   it("offers to cancel only an open charge", async () => {

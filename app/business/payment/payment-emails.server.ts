@@ -1,8 +1,10 @@
 import { formatPaymentConfirmedMail } from "~/business/email/format-payment-confirmed-mail"
 import { formatPaymentLinkMail } from "~/business/email/format-payment-link-mail"
+import { formatPaymentRefundMail } from "~/business/email/format-payment-refund-mail"
 import { type MailOptions, sendEmail } from "~/business/email/send-email"
 import { paymentConfirmedMailCopy } from "~/copy/emails/payment-confirmed"
 import { paymentLinkMailCopy } from "~/copy/emails/payment-link"
+import { paymentRefundMailCopy } from "~/copy/emails/payment-refund"
 import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
@@ -203,6 +205,77 @@ export async function sendPaymentConfirmedEmail({
 
   if (!result.success) {
     logger.error("Could not send the payment confirmation email", { paymentId })
+    return { success: false }
+  }
+
+  return { success: true }
+}
+
+/**
+ * The note a participant gets when money goes back, whether Asaas returned it
+ * or an admin marked it returned by hand. Called once the refund is a fact, so
+ * a failure here is logged and swallowed for the same reason as the receipt:
+ * the money has moved, and nothing is gained by failing the caller.
+ */
+export async function sendPaymentRefundEmail({
+  paymentId,
+}: {
+  paymentId: string
+}): Promise<{ success: boolean }> {
+  const payment = await kyselyDb
+    .selectFrom("payments as p")
+    .innerJoin("event_participants as ep", "ep.id", "p.event_participant_id")
+    .innerJoin("events as e", "e.id", "ep.event_id")
+    .innerJoin("profiles as pr", "pr.id", "ep.profile_id")
+    .select([
+      "p.id",
+      "p.amount",
+      "p.refund_amount",
+      "p.method",
+      "p.kind",
+      "e.title as event_title",
+      "e.emoji as event_emoji",
+      "pr.email",
+      "pr.full_name",
+      "pr.social_name",
+    ])
+    .where("p.id", "=", paymentId)
+    .executeTakeFirst()
+
+  if (!payment) {
+    logger.error("No payment to report a refund for", { paymentId })
+    return { success: false }
+  }
+
+  if (!payment.email) {
+    logger.error("No mailbox to send a refund notice to", { paymentId })
+    return { success: false }
+  }
+
+  const amount = payment.amount ?? 0
+  const { html, text } = await formatPaymentRefundMail({
+    displayName: payment.social_name || payment.full_name || "",
+    eventTitle: payment.event_title ?? "",
+    eventEmoji: payment.event_emoji,
+    refundAmount: payment.refund_amount ?? amount,
+    amount,
+    method: payment.method,
+    kind: payment.kind,
+  })
+
+  const mailOptions: MailOptions = {
+    to: payment.email,
+    subject: paymentRefundMailCopy.subject(
+      [payment.event_emoji, payment.event_title].filter(Boolean).join(" "),
+    ),
+    html,
+    text,
+  }
+
+  const result = await sendEmail(mailOptions)
+
+  if (!result.success) {
+    logger.error("Could not send the refund email", { paymentId })
     return { success: false }
   }
 
