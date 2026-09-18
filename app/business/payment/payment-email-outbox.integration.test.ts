@@ -48,6 +48,7 @@ describe("payment email outbox", () => {
     logger.error.mockClear()
 
     const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
       email: `outbox-${Date.now()}@example.com`,
     })
     const event = await createTestEvent(tracker, kysely, {

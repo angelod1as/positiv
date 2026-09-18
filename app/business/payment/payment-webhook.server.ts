@@ -7,9 +7,9 @@ import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { reaisToCents } from "./asaas-client.server"
 import {
-  sendPaymentConfirmedEmail,
-  sendPaymentRefundEmail,
-} from "./payment-emails.server"
+  deliverPaymentEmail,
+  queuePaymentEmail,
+} from "./payment-email-outbox.server"
 
 /**
  * Deliberately permissive. Asaas adds fields without warning, and the docs say
@@ -240,10 +240,10 @@ async function installmentNetCents(
 type TransitionResult = {
   applied: boolean
   reason?: string
-  /** Set when the guarded update moved the row and the receipt is owed. */
-  confirmPaymentId?: string
-  /** Set when money went back and the participant has not been told yet. */
-  refundPaymentId?: string
+  /** The outbox row the guarded update queued for the receipt. */
+  confirmEmailId?: string
+  /** The outbox row queued for the notice that money went back. */
+  refundEmailId?: string
 }
 
 export async function applyWebhookEvent(
@@ -288,31 +288,17 @@ export async function applyWebhookEvent(
     throw error
   }
 
-  if (result.confirmPaymentId) {
-    // Outside the transaction on purpose: an SMTP round trip has no business
-    // holding a database connection, and by this point the money has moved.
-    // A failure here costs the receipt, not the transition — asking Asaas to
-    // retry would not re-send it anyway, since the guarded update no longer
-    // matches, and it would stall every event queued behind this one.
+  // Outside the transaction on purpose: an SMTP round trip has no business
+  // holding a database connection, and by this point the money has moved. A
+  // failure here costs nothing but time — the row the transaction queued is
+  // still owed, and the sweep sends it late rather than never.
+  for (const emailId of [result.confirmEmailId, result.refundEmailId]) {
+    if (!emailId) continue
     try {
-      await sendPaymentConfirmedEmail({ paymentId: result.confirmPaymentId })
+      await deliverPaymentEmail(emailId)
     } catch (error) {
-      logger.error("Payment confirmed, but the receipt could not be sent", {
-        paymentId: result.confirmPaymentId,
-        asaasEventId: event.id,
-        error: error instanceof Error ? error.message : String(error),
-      })
-    }
-  }
-
-  if (result.refundPaymentId) {
-    // Outside the transaction for the same reasons as the receipt above, and
-    // swallowed for the same one: the money is already back.
-    try {
-      await sendPaymentRefundEmail({ paymentId: result.refundPaymentId })
-    } catch (error) {
-      logger.error("Money went back, but the notice could not be sent", {
-        paymentId: result.refundPaymentId,
+      logger.error("A payment email could not be delivered", {
+        paymentEmailId: emailId,
         asaasEventId: event.id,
         error: error instanceof Error ? error.message : String(error),
       })
@@ -402,7 +388,14 @@ async function applyToPayment(
       return { applied: false, reason: "already_paid" }
     }
 
-    return { applied: true, confirmPaymentId: payment.id }
+    // Queued inside the transaction, so the receipt is owed the moment the
+    // row says paid. A send that never happens is then a row the sweep finds.
+    const confirmEmailId = await queuePaymentEmail(db, {
+      paymentId: payment.id,
+      kind: "confirmation",
+    })
+
+    return { applied: true, confirmEmailId }
   }
 
   if (event.event === "PAYMENT_OVERDUE") {
@@ -481,10 +474,18 @@ async function applyToPayment(
       !installmentId ||
       ((payment.refund_amount ?? 0) < target && refunded >= target)
 
+    const refundEmailId =
+      updated && completes
+        ? await queuePaymentEmail(db, {
+            paymentId: payment.id,
+            kind: "refund",
+          })
+        : undefined
+
     return {
       applied: Boolean(updated),
       reason: updated ? undefined : "not_refundable",
-      refundPaymentId: updated && completes ? payment.id : undefined,
+      refundEmailId,
     }
   }
 

@@ -24,7 +24,12 @@ vi.mock("./asaas-client.server", async (importOriginal) => {
   return { ...original, deleteAsaasPayment }
 })
 
-vi.mock("./payment-emails.server", () => ({ sendPaymentLinkEmail }))
+// The outbox imports all three senders, so the mock has to carry all three
+// even though this suite only ever sends the link.
+vi.mock("./payment-emails.server", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./payment-emails.server")>()
+  return { ...original, sendPaymentLinkEmail }
+})
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
 // This suite talks to a real Supabase, so ENV cannot be replaced with a blank
@@ -151,6 +156,15 @@ describe("createPaymentOffer", () => {
       Date.now() + sevenDays + 60_000,
     )
     expect(sendPaymentLinkEmail).toHaveBeenCalledTimes(1)
+    // The email is owed by the same transaction that opened the charge, so a
+    // send that never happened stays findable.
+    const queued = await kysely
+      .selectFrom("payment_emails")
+      .selectAll()
+      .where("payment_id", "=", payment.id)
+      .executeTakeFirstOrThrow()
+    expect(queued.kind).toBe("link")
+    expect(queued.sent_at).not.toBeNull()
   })
 
   it("uses a custom amount when the admin gives one", async () => {

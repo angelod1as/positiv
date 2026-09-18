@@ -86,6 +86,13 @@ describe("markManualRefunded", () => {
     expect(sendPaymentRefundEmail).toHaveBeenCalledWith({
       paymentId: payment.id,
     })
+    const queued = await kysely
+      .selectFrom("payment_emails")
+      .selectAll()
+      .where("payment_id", "=", payment.id)
+      .executeTakeFirstOrThrow()
+    expect(queued.kind).toBe("refund")
+    expect(queued.sent_at).not.toBeNull()
   })
 
   it("marks a full refund when the amount arrives blank", async () => {

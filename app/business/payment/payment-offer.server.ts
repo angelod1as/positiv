@@ -7,7 +7,10 @@ import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { deleteAsaasPayment } from "./asaas-client.server"
 import { cancelPayment } from "./payment-cancel.server"
-import { sendPaymentLinkEmail } from "./payment-emails.server"
+import {
+  deliverPaymentEmail,
+  queuePaymentEmail,
+} from "./payment-email-outbox.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
 const OFFER_VALID_DAYS = 7
@@ -125,7 +128,7 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
       Date.now() + OFFER_VALID_DAYS * 24 * 60 * 60 * 1000,
     ).toISOString()
 
-    const { replaced, payment } = await kyselyDb
+    const { replaced, payment, emailId } = await kyselyDb
       .transaction()
       .execute(async (trx) => {
         // The same lock registerManualPayment takes, for the same reason: a
@@ -180,17 +183,24 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
           .where("application_status", "not in", [...POST_PAYMENT_STATUSES])
           .execute()
 
-        return { replaced, payment }
+        // Queued with the charge it belongs to: a link that never leaves is
+        // then a row the sweep can send, not an effect lost with the request.
+        const emailId = await queuePaymentEmail(trx, {
+          paymentId: payment.id,
+          kind: "link",
+        })
+
+        return { replaced, payment, emailId }
       })
 
     await deleteReplacedCharges(replaced)
 
-    const email = await sendPaymentLinkEmail({ paymentId: payment.id })
+    const email = await deliverPaymentEmail(emailId)
 
     return {
       created: true as const,
       paymentId: payment.id,
-      emailSent: email.success,
+      emailSent: email.sent,
     }
   },
 )
@@ -223,9 +233,13 @@ export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
       throw new Error(paymentsCopy.errors.notResendable)
     }
 
-    const email = await sendPaymentLinkEmail({ paymentId: payment.id })
+    const emailId = await queuePaymentEmail(kyselyDb, {
+      paymentId: payment.id,
+      kind: "link",
+    })
+    const email = await deliverPaymentEmail(emailId)
 
-    return { emailSent: email.success }
+    return { emailSent: email.sent }
   },
 )
 
