@@ -62,10 +62,13 @@ export async function queuePaymentEmail(
  * one comes back with it — the other finds the lease taken and leaves. A send
  * that fails leaves `sent_at` null on purpose: the row is still owed, and the
  * sweep will come back for it once the lease expires.
+ *
+ * `claimed` is how a caller tells the two apart: a row somebody else is
+ * sending is not a row whose send failed.
  */
 export async function deliverPaymentEmail(
   id: string,
-): Promise<{ sent: boolean }> {
+): Promise<{ sent: boolean; claimed: boolean }> {
   const claimed = await kyselyDb
     .updateTable("payment_emails")
     .set({
@@ -83,7 +86,7 @@ export async function deliverPaymentEmail(
     .returning(["payment_id", "kind"])
     .executeTakeFirst()
 
-  if (!claimed) return { sent: false }
+  if (!claimed) return { sent: false, claimed: false }
 
   const paymentId = claimed.payment_id
   const kind = claimed.kind as PaymentEmailKind
@@ -111,7 +114,7 @@ export async function deliverPaymentEmail(
       .set({ last_error: error, claimed_at: null })
       .where("id", "=", id)
       .execute()
-    return { sent: false }
+    return { sent: false, claimed: true }
   }
 
   await kyselyDb
@@ -120,7 +123,7 @@ export async function deliverPaymentEmail(
     .where("id", "=", id)
     .execute()
 
-  return { sent: true }
+  return { sent: true, claimed: true }
 }
 
 /**
@@ -135,6 +138,7 @@ export async function sweepPaymentEmails(): Promise<{
   processed: number
   sent: number
   failed: number
+  skipped: number
 }> {
   const candidates = await kyselyDb
     .selectFrom("payment_emails as pe")
@@ -160,12 +164,17 @@ export async function sweepPaymentEmails(): Promise<{
 
   let sent = 0
   let failed = 0
+  let skipped = 0
 
   for (const candidate of candidates) {
+    // A row claimed between the select above and the claim below is somebody
+    // else's to send -- an admin hitting resend as the cron fires. Counting it
+    // as failed would report a failure where nothing failed.
     const result = await deliverPaymentEmail(candidate.id)
     if (result.sent) sent += 1
-    else failed += 1
+    else if (result.claimed) failed += 1
+    else skipped += 1
   }
 
-  return { processed: candidates.length, sent, failed }
+  return { processed: candidates.length, sent, failed, skipped }
 }

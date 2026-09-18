@@ -164,6 +164,7 @@ describe("payment email outbox", () => {
       const result = await deliverPaymentEmail(id)
 
       expect(result.sent).toBe(false)
+      expect(result.claimed).toBe(true)
       const row = await readRow(id)
       expect(row.sent_at).toBeNull()
       expect(row.attempts).toBe(1)
@@ -237,6 +238,9 @@ describe("payment email outbox", () => {
       const result = await deliverPaymentEmail(id)
 
       expect(result.sent).toBe(false)
+      // Not the same as a send that failed: nobody tried, because somebody
+      // else is already trying.
+      expect(result.claimed).toBe(false)
       expect(sendPaymentConfirmedEmail).not.toHaveBeenCalled()
     })
 
@@ -270,9 +274,32 @@ describe("payment email outbox", () => {
       await age(id, 15)
       const stats = await sweepPaymentEmails()
 
-      expect(stats.sent).toBe(1)
+      expect(stats).toEqual({ processed: 1, sent: 1, failed: 0, skipped: 0 })
       expect((await readRow(id)).sent_at).not.toBeNull()
       expect(sendPaymentConfirmedEmail).toHaveBeenCalledTimes(2)
+    })
+
+    it("counts a row somebody else is sending as skipped, not failed", async () => {
+      sendPaymentConfirmedEmail.mockResolvedValueOnce({ success: false })
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await deliverPaymentEmail(id)
+      await age(id, 15)
+      // The window the sweep cannot see: selected as a candidate, then claimed
+      // by an admin hitting resend before the sweep reaches it.
+      await kysely
+        .updateTable("payment_emails")
+        .set({ claimed_at: new Date().toISOString() })
+        .where("id", "=", id)
+        .execute()
+
+      const stats = await sweepPaymentEmails()
+
+      expect(stats.failed).toBe(0)
+      expect((await readRow(id)).sent_at).toBeNull()
     })
 
     it("leaves a row that already went out alone", async () => {
