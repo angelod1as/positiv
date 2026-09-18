@@ -203,6 +203,43 @@ describe("payment email outbox", () => {
       expect((await readRow(id)).attempts).toBe(1)
     })
 
+    it("takes a row back once the claim on it has expired", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      // What a sender killed mid-flight leaves behind: claimed, never sent.
+      await kysely
+        .updateTable("payment_emails")
+        .set({ claimed_at: new Date(Date.now() - 20 * 60 * 1000).toISOString() })
+        .where("id", "=", id)
+        .execute()
+
+      const result = await deliverPaymentEmail(id)
+
+      expect(result.sent).toBe(true)
+      expect(sendPaymentConfirmedEmail).toHaveBeenCalledTimes(1)
+    })
+
+    it("leaves a row a live claim still covers", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await kysely
+        .updateTable("payment_emails")
+        .set({ claimed_at: new Date().toISOString() })
+        .where("id", "=", id)
+        .execute()
+
+      const result = await deliverPaymentEmail(id)
+
+      expect(result.sent).toBe(false)
+      expect(sendPaymentConfirmedEmail).not.toHaveBeenCalled()
+    })
+
     it("does not send a row that already went out", async () => {
       const payment = await paidPayment()
       const id = await queuePaymentEmail(kyselyDb, {
