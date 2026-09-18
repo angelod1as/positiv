@@ -15,6 +15,29 @@ import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
 const OFFER_VALID_DAYS = 7
 
+/**
+ * The delivery, with nothing left for it to throw at the admin.
+ *
+ * Both callers reach this once the charge is committed. A throw here is the
+ * database going away mid-delivery, not a send that failed -- those
+ * deliverPaymentEmail already handles -- and it must not reach the modal as a
+ * failed offer: the admin would open the charge again, which cancels the good
+ * one and bills Asaas for a second. The queued row keeps the email owed either
+ * way, so the sweep sends it regardless of what this answers.
+ */
+async function deliverQueuedLink(emailId: string): Promise<boolean> {
+  try {
+    const { sent } = await deliverPaymentEmail(emailId)
+    return sent
+  } catch (error) {
+    logger.error("The payment link was queued, but could not be delivered", {
+      paymentEmailId: emailId,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return false
+  }
+}
+
 const SETTLED_PAYMENT_STATUSES = ["paid", "partially_refunded"] as const
 
 // The two funnel steps that come after the money. A charge sent late is not a
@@ -195,12 +218,10 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
 
     await deleteReplacedCharges(replaced)
 
-    const email = await deliverPaymentEmail(emailId)
-
     return {
       created: true as const,
       paymentId: payment.id,
-      emailSent: email.sent,
+      emailSent: await deliverQueuedLink(emailId),
     }
   },
 )
@@ -237,9 +258,8 @@ export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
       paymentId: payment.id,
       kind: "link",
     })
-    const email = await deliverPaymentEmail(emailId)
 
-    return { emailSent: email.sent }
+    return { emailSent: await deliverQueuedLink(emailId) }
   },
 )
 

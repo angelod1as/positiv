@@ -10,13 +10,25 @@ import {
   createTestProfile,
 } from "~/test/db-test-utils"
 
-const { deleteAsaasPayment, sendPaymentLinkEmail, logger, paymentsEnabled } =
-  vi.hoisted(() => ({
-    deleteAsaasPayment: vi.fn(),
-    sendPaymentLinkEmail: vi.fn(),
-    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-    paymentsEnabled: { value: true },
-  }))
+const {
+  deleteAsaasPayment,
+  sendPaymentLinkEmail,
+  deliverPaymentEmail,
+  outbox,
+  logger,
+  paymentsEnabled,
+} = vi.hoisted(() => ({
+  deleteAsaasPayment: vi.fn(),
+  sendPaymentLinkEmail: vi.fn(),
+  deliverPaymentEmail: vi.fn(),
+  outbox: {
+    deliver: (async () => ({ sent: false, claimed: false })) as (
+      id: string,
+    ) => Promise<{ sent: boolean; claimed: boolean }>,
+  },
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  paymentsEnabled: { value: true },
+}))
 
 vi.mock("./asaas-client.server", async (importOriginal) => {
   const original =
@@ -29,6 +41,15 @@ vi.mock("./asaas-client.server", async (importOriginal) => {
 vi.mock("./payment-emails.server", async (importOriginal) => {
   const original = await importOriginal<typeof import("./payment-emails.server")>()
   return { ...original, sendPaymentLinkEmail }
+})
+// Real delivery by default -- the assertions below read the row it stamps.
+// The spy is here so one test can make the delivery itself throw, which no
+// amount of mocking the sender can produce: deliverPaymentEmail catches those.
+vi.mock("./payment-email-outbox.server", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("./payment-email-outbox.server")>()
+  outbox.deliver = original.deliverPaymentEmail
+  return { ...original, deliverPaymentEmail }
 })
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
@@ -87,6 +108,8 @@ describe("createPaymentOffer", () => {
     deleteAsaasPayment.mockResolvedValue(true)
     sendPaymentLinkEmail.mockReset()
     sendPaymentLinkEmail.mockResolvedValue({ success: true })
+    deliverPaymentEmail.mockReset()
+    deliverPaymentEmail.mockImplementation((id: string) => outbox.deliver(id))
     logger.error.mockClear()
 
     const event = await createTestEvent(tracker, kysely, {
@@ -393,6 +416,23 @@ describe("createPaymentOffer", () => {
     expect(await paymentsFor(participantId)).toHaveLength(1)
   })
 
+  // A throw here is the database going away mid-delivery, not a send that
+  // failed -- deliverPaymentEmail catches those itself. The charge is already
+  // committed, and an error in the admin's face invites a retry that cancels
+  // the good charge and opens another.
+  it("keeps the charge when the delivery itself throws", async () => {
+    deliverPaymentEmail.mockRejectedValueOnce(new Error("the database went away"))
+
+    const result = await createPaymentOffer({
+      eventParticipantId: participantId,
+    })
+
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.emailSent).toBe(false)
+    expect(await paymentsFor(participantId)).toHaveLength(1)
+    expect(logger.error).toHaveBeenCalled()
+  })
+
   // They queue on the participant's row lock rather than racing, so the second
   // one replaces the first exactly as a deliberate re-price would -- two
   // charges opened, one of them cancelled, one left live. What must never
@@ -459,6 +499,8 @@ describe("resendPaymentOffer", () => {
     counter += 1
     sendPaymentLinkEmail.mockReset()
     sendPaymentLinkEmail.mockResolvedValue({ success: true })
+    deliverPaymentEmail.mockReset()
+    deliverPaymentEmail.mockImplementation((id: string) => outbox.deliver(id))
 
     const event = await createTestEvent(tracker, kysely, {
       title: "Resend Event",
@@ -537,6 +579,16 @@ describe("resendPaymentOffer", () => {
     expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
 
     paymentsEnabled.value = true
+  })
+
+  it("answers instead of throwing when the delivery throws", async () => {
+    const payment = await chargeWith("pending")
+    deliverPaymentEmail.mockRejectedValueOnce(new Error("the database went away"))
+
+    const result = await resendPaymentOffer({ paymentId: payment.id })
+
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.emailSent).toBe(false)
   })
 
   it("refuses a payment that is not there", async () => {
