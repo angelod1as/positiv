@@ -114,6 +114,13 @@ describe("applyWebhookEvent", () => {
     expect(after.asaas_net).toBe(22000)
     expect(after.paid_at).not.toBeNull()
     expect(sendPaymentConfirmedEmail).toHaveBeenCalledTimes(1)
+    const queued = await kysely
+      .selectFrom("payment_emails")
+      .selectAll()
+      .where("payment_id", "=", payment.id)
+      .executeTakeFirstOrThrow()
+    expect(queued.kind).toBe("confirmation")
+    expect(queued.sent_at).not.toBeNull()
   })
 
   it("marks a card charge paid on the first PAYMENT_CONFIRMED", async () => {

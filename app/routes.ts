@@ -23,6 +23,7 @@ export default [
     "/api/process-pre-opening-reminders",
     "routes/api.process-pre-opening-reminders.ts",
   ),
+  route("/api/retry-payment-emails", "routes/api.retry-payment-emails.ts"),
   route("/api/asaas/webhook", "routes/api.asaas-webhook.ts"),
   route("/api/events/:id/rules-quiz", "pages/api/events/verify-rules-quiz.ts"),
   route(

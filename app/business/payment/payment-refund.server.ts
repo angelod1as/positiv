@@ -9,7 +9,10 @@ import {
   listAsaasInstallmentPayments,
   refundAsaasPayment,
 } from "./asaas-client.server"
-import { sendPaymentRefundEmail } from "./payment-emails.server"
+import {
+  deliverPaymentEmail,
+  queuePaymentEmail,
+} from "./payment-email-outbox.server"
 import { splitRefund } from "./refund-split"
 
 export const markManualRefundedSchema = zod.object({
@@ -65,28 +68,37 @@ export const markManualRefunded = applySchema(markManualRefundedSchema)(
       throw new Error(paymentsCopy.errors.refundTooLarge)
     }
 
-    const updated = await kyselyDb
-      .updateTable("payments")
-      .set({
-        status:
-          refundAmount === payment.amount ? "refunded" : "partially_refunded",
-        refund_amount: refundAmount,
-        refunded_at: new Date().toISOString(),
-      })
-      .where("id", "=", values.paymentId)
-      .where("status", "=", "paid")
-      .where("kind", "=", "manual")
-      .returning("id")
-      .executeTakeFirst()
+    // The refund and the notice it owes commit together, so a notice that
+    // never goes out is a row the sweep can find rather than a lost effect.
+    const emailId = await kyselyDb.transaction().execute(async (trx) => {
+      const updated = await trx
+        .updateTable("payments")
+        .set({
+          status:
+            refundAmount === payment.amount ? "refunded" : "partially_refunded",
+          refund_amount: refundAmount,
+          refunded_at: new Date().toISOString(),
+        })
+        .where("id", "=", values.paymentId)
+        .where("status", "=", "paid")
+        .where("kind", "=", "manual")
+        .returning("id")
+        .executeTakeFirst()
 
-    if (!updated) {
-      throw new Error(paymentsCopy.errors.notRefundable)
-    }
+      if (!updated) {
+        throw new Error(paymentsCopy.errors.notRefundable)
+      }
+
+      return queuePaymentEmail(trx, {
+        paymentId: values.paymentId,
+        kind: "refund",
+      })
+    })
 
     // The row has already moved. A notice that cannot be sent is worth a log,
     // never an error in the admin's face over money that is genuinely back.
     try {
-      await sendPaymentRefundEmail({ paymentId: values.paymentId })
+      await deliverPaymentEmail(emailId)
     } catch (error) {
       logger.error("Refund recorded, but the notice could not be sent", {
         paymentId: values.paymentId,
