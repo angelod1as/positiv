@@ -5,6 +5,12 @@
 -- Every five minutes; the sweep itself only takes a row that has been owed for
 -- ten, which leaves the send that follows the webhook time to succeed on its
 -- own.
+--
+-- The URL and the token come from the vault, like process-newsletter-campaigns
+-- and process-pre-opening-reminders. The current_setting('app.settings.*')
+-- shape that 20260129230800 uses reads as null in production, so the guard in
+-- that migration took its local-development branch there and the job it
+-- describes was never created.
 
 DO $$
 BEGIN
@@ -16,9 +22,8 @@ END $$;
 DO $do$
 DECLARE
   app_url text;
-  internal_secret text;
 BEGIN
-  app_url := current_setting('app.settings.app_url', true);
+  app_url := get_vault_secret('app_url');
 
   -- Locally there is no app on a stable URL to call, and the tests drive the
   -- sweep directly.
@@ -28,10 +33,8 @@ BEGIN
     RETURN;
   END IF;
 
-  internal_secret := current_setting('app.settings.internal_job_secret', true);
-
-  IF internal_secret IS NULL THEN
-    RAISE EXCEPTION 'Migration failed: app.settings.internal_job_secret must be configured before running this migration.';
+  IF get_vault_secret('internal_job_secret') IS NULL THEN
+    RAISE EXCEPTION 'Migration failed: the internal_job_secret vault secret must exist before running this migration.';
   END IF;
 
   PERFORM cron.schedule(
@@ -39,10 +42,10 @@ BEGIN
     '*/5 * * * *',
     $job$
     SELECT net.http_post(
-      url := current_setting('app.settings.app_url') || '/api/retry-payment-emails',
+      url := get_vault_secret('app_url') || '/api/retry-payment-emails',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'Authorization', 'Bearer ' || current_setting('app.settings.internal_job_secret')
+        'Authorization', 'Bearer ' || get_vault_secret('internal_job_secret')
       ),
       body := '{}'::jsonb
     ) AS request_id;
