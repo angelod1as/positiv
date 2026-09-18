@@ -244,6 +244,51 @@ describe("payment email outbox", () => {
       expect(sendPaymentConfirmedEmail).not.toHaveBeenCalled()
     })
 
+    // A send that hangs past the lease lets the sweep re-claim the row, and
+    // the slow attempt then finishes on a claim that is no longer its own.
+    // Whatever it writes must not land on the claim that replaced it.
+    it("does not release a claim that replaced its own", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      const stealClaim = async () => {
+        await kysely
+          .updateTable("payment_emails")
+          .set({ claimed_at: new Date().toISOString() })
+          .where("id", "=", id)
+          .execute()
+        throw new Error("smtp timed out")
+      }
+      sendPaymentConfirmedEmail.mockImplementation(stealClaim)
+
+      await deliverPaymentEmail(id)
+
+      // The claim the sweep took is still held, so nothing else may send.
+      expect((await readRow(id)).claimed_at).not.toBeNull()
+    })
+
+    it("does not stamp a claim that replaced its own", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      sendPaymentConfirmedEmail.mockImplementation(async () => {
+        await kysely
+          .updateTable("payment_emails")
+          .set({ claimed_at: new Date().toISOString() })
+          .where("id", "=", id)
+          .execute()
+        return { success: true }
+      })
+
+      await deliverPaymentEmail(id)
+
+      expect((await readRow(id)).sent_at).toBeNull()
+    })
+
     it("does not send a row that already went out", async () => {
       const payment = await paidPayment()
       const id = await queuePaymentEmail(kyselyDb, {

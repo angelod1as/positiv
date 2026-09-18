@@ -2,6 +2,7 @@ import { sql, type Kysely } from "kysely"
 import { kyselyDb } from "~/kysely-db"
 import { logger } from "~/lib/logger/logger.server"
 import type { Database } from "~types/database/kysely.types"
+import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import {
   sendPaymentConfirmedEmail,
   sendPaymentLinkEmail,
@@ -83,13 +84,18 @@ export async function deliverPaymentEmail(
         eb("claimed_at", "<", minutesAgo(LEASE_MINUTES)),
       ]),
     )
-    .returning(["payment_id", "kind"])
+    .returning(["payment_id", "kind", "claimed_at"])
     .executeTakeFirst()
 
   if (!claimed) return { sent: false, claimed: false }
 
   const paymentId = claimed.payment_id
   const kind = claimed.kind as PaymentEmailKind
+  // Every write below is guarded on the claim this call took. A send that
+  // hangs past the lease comes back to a row the sweep has re-claimed, and
+  // what it writes then would release or stamp somebody else's claim -- which
+  // is the double send the lease exists to prevent.
+  const heldClaim = claimed.claimed_at
 
   let error: string | null = null
   try {
@@ -113,15 +119,29 @@ export async function deliverPaymentEmail(
       .updateTable("payment_emails")
       .set({ last_error: error, claimed_at: null })
       .where("id", "=", id)
+      .where("claimed_at", "=", heldClaim)
       .execute()
     return { sent: false, claimed: true }
   }
 
-  await kyselyDb
+  const stamped = await kyselyDb
     .updateTable("payment_emails")
     .set({ sent_at: new Date().toISOString(), last_error: null })
     .where("id", "=", id)
-    .execute()
+    .where("claimed_at", "=", heldClaim)
+    .returning("id")
+    .executeTakeFirst()
+
+  if (!stamped) {
+    // The email went out on a claim that had already been taken over, so the
+    // row still reads as owed and whoever holds it now may send a second one.
+    // Nothing here can undo that; what it can do is say so.
+    logger.error("A payment email was sent on a claim that had expired", {
+      paymentEmailId: id,
+      paymentId,
+      kind,
+    })
+  }
 
   return { sent: true, claimed: true }
 }
@@ -155,7 +175,7 @@ export async function sweepPaymentEmails(): Promise<{
     .where((eb) =>
       eb.or([
         eb("pe.kind", "!=", "link"),
-        eb("p.status", "in", ["pending", "awaiting_payment"]),
+        eb("p.status", "in", [...ACTIVE_PAYMENT_STATUSES]),
       ]),
     )
     .orderBy("pe.created_at")
