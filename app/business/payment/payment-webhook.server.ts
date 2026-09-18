@@ -292,12 +292,17 @@ export async function applyWebhookEvent(
   // holding a database connection, and by this point the money has moved. A
   // failure here costs nothing but time — the row the transaction queued is
   // still owed, and the sweep sends it late rather than never.
-  for (const emailId of [result.confirmEmailId, result.refundEmailId]) {
+  const owed = [
+    [result.confirmEmailId, "Payment confirmed, but the receipt could not be sent"],
+    [result.refundEmailId, "Money went back, but the notice could not be sent"],
+  ] as const
+
+  for (const [emailId, failure] of owed) {
     if (!emailId) continue
     try {
       await deliverPaymentEmail(emailId)
     } catch (error) {
-      logger.error("A payment email could not be delivered", {
+      logger.error(failure, {
         paymentEmailId: emailId,
         asaasEventId: event.id,
         error: error instanceof Error ? error.message : String(error),
