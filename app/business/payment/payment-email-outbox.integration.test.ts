@@ -399,6 +399,28 @@ describe("payment email outbox", () => {
       expect(row.attempts).toBe(0)
     })
 
+    // The webhook's PAYABLE counts a lapsed charge as payable -- Asaas takes a
+    // late Pix -- and the sweep deliberately does not. The two are not
+    // interchangeable: this one decides whether a link is still worth sending.
+    it("leaves the link of a charge that has lapsed", async () => {
+      const payment = await openPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+      await kysely
+        .updateTable("payments")
+        .set({ status: "expired" })
+        .where("id", "=", payment.id)
+        .execute()
+
+      await age(id, 15)
+      const stats = await sweepPaymentEmails()
+
+      expect(stats.processed).toBe(0)
+      expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+    })
+
     it("still sends a link for a charge that is open", async () => {
       const payment = await openPayment()
       const id = await queuePaymentEmail(kyselyDb, {

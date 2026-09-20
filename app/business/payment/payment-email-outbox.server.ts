@@ -153,6 +153,12 @@ export async function deliverPaymentEmail(
  * can cancel the charge and open another, and a link to a dead charge helps
  * nobody. Those rows are left unsent rather than stamped — they are the record
  * of an email that was owed and never went out.
+ *
+ * ACTIVE_PAYMENT_STATUSES here and PAYABLE in the webhook are meant to differ.
+ * PAYABLE counts a lapsed charge, because Asaas takes a late Pix and the money
+ * is real. This one decides whether a link is still worth sending, and a link
+ * swept out after the due date names a deadline already past — the admin's
+ * route at that point is a fresh offer, which queues a fresh link.
  */
 export async function sweepPaymentEmails(): Promise<{
   processed: number
