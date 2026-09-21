@@ -6,6 +6,13 @@ import { logger } from "~/lib/logger/logger.server"
 
 const { AWS_ACCESS_KEY_ID: awsAccessKeyId, AWS_SECRET_ACCESS_KEY: awsSecretAccessKey } = ENV
 
+// A send is what the payment outbox holds a claim for, and that claim is a
+// ten-minute lease. Left unbounded, a hung connection outlives it, the sweep
+// hands the row to a second sender, and the participant can be emailed twice.
+// These keep every send far inside the lease.
+const CONNECT_TIMEOUT_MS = 10_000
+const SEND_TIMEOUT_MS = 30_000
+
 export function getEmailTransport() {
   const prod = isProd()
 
@@ -21,6 +28,10 @@ export function getEmailTransport() {
         accessKeyId: awsAccessKeyId,
         secretAccessKey: awsSecretAccessKey,
       },
+      requestHandler: {
+        connectionTimeout: CONNECT_TIMEOUT_MS,
+        requestTimeout: SEND_TIMEOUT_MS,
+      },
     })
 
     return nodemailer.createTransport({
@@ -34,5 +45,8 @@ export function getEmailTransport() {
     host: "localhost",
     port: 54325,
     ignoreTLS: true,
+    connectionTimeout: CONNECT_TIMEOUT_MS,
+    greetingTimeout: CONNECT_TIMEOUT_MS,
+    socketTimeout: SEND_TIMEOUT_MS,
   })
 }
