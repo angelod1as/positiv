@@ -289,6 +289,30 @@ describe("payment email outbox", () => {
       expect((await readRow(id)).sent_at).toBeNull()
     })
 
+    // The sweep's candidate query already filters these out, but a webhook
+    // landing between that select and this claim would leave a link to a
+    // charge that has just been paid or called off. The claim itself asks.
+    it("does not send a link for a charge that closed since", async () => {
+      const payment = await openPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+      await kysely
+        .updateTable("payments")
+        .set({ status: "cancelled" })
+        .where("id", "=", payment.id)
+        .execute()
+
+      const result = await deliverPaymentEmail(id)
+
+      expect(result.sent).toBe(false)
+      expect(sendPaymentLinkEmail).not.toHaveBeenCalled()
+      const row = await readRow(id)
+      expect(row.attempts).toBe(0)
+      expect(row.claimed_at).toBeNull()
+    })
+
     it("does not send a row that already went out", async () => {
       const payment = await paidPayment()
       const id = await queuePaymentEmail(kyselyDb, {

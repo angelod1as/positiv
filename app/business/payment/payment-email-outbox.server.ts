@@ -84,6 +84,22 @@ export async function deliverPaymentEmail(
         eb("claimed_at", "<", minutesAgo(LEASE_MINUTES)),
       ]),
     )
+    // Whether a link is still worth sending is asked here rather than only in
+    // the sweep's candidate query: a webhook landing between that select and
+    // this claim would otherwise send a link to a charge just paid or called
+    // off. Asking as part of the claim leaves no window at all.
+    .where((eb) =>
+      eb.or([
+        eb("kind", "!=", "link"),
+        eb.exists(
+          eb
+            .selectFrom("payments")
+            .select("payments.id")
+            .whereRef("payments.id", "=", "payment_emails.payment_id")
+            .where("payments.status", "in", [...ACTIVE_PAYMENT_STATUSES]),
+        ),
+      ]),
+    )
     .returning(["payment_id", "kind", "claimed_at"])
     .executeTakeFirst()
 
