@@ -488,6 +488,47 @@ export type Database = {
           },
         ]
       }
+      payment_emails: {
+        Row: {
+          attempts: number
+          claimed_at: string | null
+          created_at: string
+          id: string
+          kind: Database["public"]["Enums"]["payment_email_kind"]
+          last_error: string | null
+          payment_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          kind: Database["public"]["Enums"]["payment_email_kind"]
+          last_error?: string | null
+          payment_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          claimed_at?: string | null
+          created_at?: string
+          id?: string
+          kind?: Database["public"]["Enums"]["payment_email_kind"]
+          last_error?: string | null
+          payment_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_emails_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_webhook_events: {
         Row: {
           asaas_event_id: string
@@ -815,6 +856,7 @@ export type Database = {
       event_type_enum: "regular" | "bdsm"
       feedback_participation_enum: "never" | "once" | "more_than_once"
       feedback_status_enum: "new" | "in_progress" | "resolved"
+      payment_email_kind: "link" | "confirmation" | "refund"
       payment_kind: "asaas" | "manual"
       payment_method: "pix" | "credit_card" | "cash" | "transfer" | "other"
       payment_status:
@@ -989,6 +1031,7 @@ export const Constants = {
       event_type_enum: ["regular", "bdsm"],
       feedback_participation_enum: ["never", "once", "more_than_once"],
       feedback_status_enum: ["new", "in_progress", "resolved"],
+      payment_email_kind: ["link", "confirmation", "refund"],
       payment_kind: ["asaas", "manual"],
       payment_method: ["pix", "credit_card", "cash", "transfer", "other"],
       payment_status: [
