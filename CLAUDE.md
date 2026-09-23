@@ -139,6 +139,31 @@ SELECT p.proname,
 `app/test/rls-security.integration.test.ts` asserts this for every function and
 every table, so a new grant that nobody meant to give fails the suite.
 
+### New Objects in `public` Get No Grants
+
+Since `20260923120000_revoke_public_default_privileges.sql` — and on every
+Supabase project from October 30, 2026 — a new table, sequence or function in
+`public` is reachable by `anon`, `authenticated` and `service_role` only if the
+migration that creates it says so. Kysely connects as `postgres`, the owner, so
+code that goes only through Kysely needs nothing. Anything reached through
+supabase-js does:
+
+- A table read with `.from()` — including by the e2e helpers, which use
+  `service_role` — gets `GRANT`s, `ENABLE ROW LEVEL SECURITY` and its policies
+  in the same migration. A grant without a policy returns no rows; a policy
+  without a grant fails with `42501`.
+- A function called with `.rpc()` gets `GRANT EXECUTE`. So does a function
+  called inside an RLS policy, a column `DEFAULT` or a `CHECK` — they run as the
+  querying role (`get_admin_user_ids` is the precedent). Trigger functions need
+  no grant.
+- A `serial` or `nextval()` default needs `GRANT USAGE ON SEQUENCE`; an
+  `IDENTITY` column does not.
+- `CREATE OR REPLACE` keeps a function's or view's grants; `DROP` and `CREATE`
+  loses them.
+
+The "Default privileges on new objects in public" test in
+`app/test/rls-security.integration.test.ts` fails if the defaults come back.
+
 ### Migration Best Practices
 
 - Make creation idempotent: `CREATE EXTENSION IF NOT EXISTS`, `DROP ... IF
