@@ -125,6 +125,17 @@ export const paymentsCopy = {
     submit: "Registrar pagamento",
     success: "Pagamento registrado.",
   },
+  edit: {
+    title: "Editar",
+    confirm: "Corrigir pagamento manual",
+    description:
+      "Substitui o que foi registrado. Os totais da pessoa passam a usar o novo valor.",
+    amount: "Valor recebido",
+    method: "Forma",
+    paidAt: "Data do pagamento",
+    note: "Observação",
+    submit: "Salvar alterações",
+  },
   refund: {
     title: "Marcar como reembolsado",
     description:
