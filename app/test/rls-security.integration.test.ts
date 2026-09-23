@@ -300,6 +300,66 @@ describe("RLS Security - Integration Tests", () => {
     })
   })
 
+  describe("Default privileges on new objects in public", () => {
+    // Supabase stops auto-granting the Data API roles on new objects in public
+    // from October 30, 2026. Probing a freshly created table, sequence and
+    // function proves that a migration here already gets nothing unless it
+    // grants it explicitly.
+    const rollback = new Error("rollback default privileges probe")
+
+    it("should grant nothing to anon, authenticated or service_role", async () => {
+      let privileges: Record<string, boolean> | undefined
+
+      await db
+        .transaction()
+        .execute(async (trx) => {
+          const { rows: roles } = await sql<{ current_user: string }>`
+            SELECT current_user
+          `.execute(trx)
+          expect(roles[0]?.current_user).toBe("postgres")
+
+          await sql`CREATE TABLE public.zz_default_acl_probe (id int)`.execute(trx)
+          await sql`CREATE SEQUENCE public.zz_default_acl_probe_seq`.execute(trx)
+          await sql`
+            CREATE FUNCTION public.zz_default_acl_probe_fn() RETURNS int
+            LANGUAGE sql SET search_path = '' AS 'SELECT 1'
+          `.execute(trx)
+
+          const { rows } = await sql<{ role: string; granted: boolean }>`
+            SELECT r.role || ' ' || p.kind AS role, p.granted
+            FROM unnest(ARRAY['anon', 'authenticated', 'service_role']) AS r(role)
+            CROSS JOIN LATERAL (VALUES
+              ('table', has_table_privilege(r.role, 'public.zz_default_acl_probe',
+                'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')),
+              ('sequence', has_sequence_privilege(r.role, 'public.zz_default_acl_probe_seq',
+                'USAGE, SELECT, UPDATE')),
+              ('function', has_function_privilege(r.role, 'public.zz_default_acl_probe_fn()',
+                'EXECUTE'))
+            ) AS p(kind, granted)
+          `.execute(trx)
+
+          privileges = Object.fromEntries(rows.map((row) => [row.role, row.granted]))
+
+          throw rollback
+        })
+        .catch((error: unknown) => {
+          if (error !== rollback) throw error
+        })
+
+      expect(privileges).toEqual({
+        "anon table": false,
+        "anon sequence": false,
+        "anon function": false,
+        "authenticated table": false,
+        "authenticated sequence": false,
+        "authenticated function": false,
+        "service_role table": false,
+        "service_role sequence": false,
+        "service_role function": false,
+      })
+    })
+  })
+
   describe("Extension schema location", () => {
     it("should have pg_net extension in extensions schema", async () => {
       const { rows } = await sql<{ nspname: string }>`
