@@ -118,7 +118,7 @@ export const editManualPayment = applySchema(editManualPaymentSchema)(
         amount: values.amount,
         paid_at: paidAt,
         due_at: paidAt,
-        note: values.note ?? null,
+        note: values.note?.trim() ? values.note : null,
       })
       .where("id", "=", values.paymentId)
       .where("status", "=", "paid")

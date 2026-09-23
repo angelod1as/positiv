@@ -346,6 +346,26 @@ describe("editManualPayment", () => {
     expect(totals.net).toBe(22000)
   })
 
+  it("stores a cleared note as no note", async () => {
+    // Recording a payment leaves the note null; a note emptied in the edit
+    // dialog arrives as "" and has to mean the same thing.
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      note: "Pago na porta",
+    })
+
+    const result = await editManualPayment({
+      paymentId: payment.id,
+      amount: "220,00",
+      method: "pix",
+      paidAt: "2026-09-10",
+      note: "  ",
+    })
+
+    expect(result.success).toBe(true)
+    expect((await readPayment(payment.id)).note).toBeNull()
+  })
+
   it("refuses to edit a payment that went through Asaas", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
