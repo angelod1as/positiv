@@ -93,3 +93,43 @@ export const registerManualPayment = applySchema(manualPaymentSchema)(
     return { ok: true as const }
   },
 )
+
+export const editManualPaymentSchema = manualPaymentSchema
+  .omit({ eventParticipantId: true, createdBy: true })
+  .extend({ paymentId: zod.string().uuid() })
+
+/**
+ * Corrects a manual payment the admin recorded wrong. Only a paid one: a
+ * refund's amount was measured against the amount it gave back, and an Asaas
+ * row mirrors what Asaas holds.
+ *
+ * The UPDATE is guarded on the state it expects, so a refund landing first —
+ * or a second click — writes nothing instead of rewriting a closed payment.
+ */
+export const editManualPayment = applySchema(editManualPaymentSchema)(
+  async (values) => {
+    const paidAt = fromZonedTime(values.paidAt, "America/Sao_Paulo").toISOString()
+
+    const updated = await kyselyDb
+      .updateTable("payments")
+      .set({
+        method: values.method,
+        base_amount: values.amount,
+        amount: values.amount,
+        paid_at: paidAt,
+        due_at: paidAt,
+        note: values.note ?? null,
+      })
+      .where("id", "=", values.paymentId)
+      .where("status", "=", "paid")
+      .where("kind", "=", "manual")
+      .returning("id")
+      .executeTakeFirst()
+
+    if (!updated) {
+      throw new Error(paymentsCopy.errors.notEditable)
+    }
+
+    return { ok: true as const }
+  },
+)

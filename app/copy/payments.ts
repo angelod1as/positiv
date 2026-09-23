@@ -193,6 +193,7 @@ export const paymentsCopy = {
       "Não deu para confirmar se o Asaas fez o reembolso. Confira no painel do Asaas antes de tentar de novo.",
     refundPartiallyApplied:
       "Parte das parcelas foi reembolsada e uma falhou. Confira no painel do Asaas antes de tentar de novo.",
+    notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
     invalidCpf: "Esse CPF não confere. Confira os números.",
     chargeClosed: "Esta cobrança não está mais aberta.",
