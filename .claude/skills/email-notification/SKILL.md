@@ -13,4 +13,5 @@ sender in `app/business/admin/`, an endpoint under `app/pages/api/admin/` that
 records the send with `onConflict().doNothing()`, and a database function that
 checks the tracking table before it fires `pg_net.http_post`. Sanitize every
 user-controlled field with `sanitizeHtml()`, and cover the duplicate guard and
-the failure paths with integration tests.
+the failure paths with integration tests. New tables and functions get no
+grants by default — see "New Objects in `public` Get No Grants" in CLAUDE.md.
