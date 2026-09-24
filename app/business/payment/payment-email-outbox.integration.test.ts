@@ -101,6 +101,20 @@ describe("payment email outbox", () => {
       .execute()
   }
 
+  /** Lets the wait a failed send left on a row run out. */
+  async function waitOut(id: string) {
+    await kysely
+      .updateTable("payment_emails")
+      .set({ next_attempt_at: new Date(Date.now() - 1000).toISOString() })
+      .where("id", "=", id)
+      .execute()
+  }
+
+  function minutesUntil(timestamp: string | null) {
+    if (!timestamp) return null
+    return (new Date(timestamp).getTime() - Date.now()) / 60_000
+  }
+
   describe("queuePaymentEmail", () => {
     it("writes a row that still owes its send", async () => {
       const payment = await paidPayment()
@@ -185,6 +199,23 @@ describe("payment email outbox", () => {
       const row = await readRow(id)
       expect(row.sent_at).toBeNull()
       expect(row.last_error).toContain("smtp is down")
+    })
+
+    it("waits longer before each attempt after a failure", async () => {
+      sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+
+      await deliverPaymentEmail(id)
+      const afterFirst = minutesUntil((await readRow(id)).next_attempt_at)
+      await deliverPaymentEmail(id)
+      const afterSecond = minutesUntil((await readRow(id)).next_attempt_at)
+
+      expect(afterFirst).toBeCloseTo(15, 0)
+      expect(afterSecond).toBeCloseTo(30, 0)
     })
 
     it("sends once when two deliveries race for the same row", async () => {
@@ -341,6 +372,7 @@ describe("payment email outbox", () => {
       expect((await readRow(id)).sent_at).toBeNull()
 
       await age(id, 15)
+      await waitOut(id)
       const stats = await sweepPaymentEmails()
 
       expect(stats).toEqual({ processed: 1, sent: 1, failed: 0, skipped: 0 })
@@ -357,6 +389,7 @@ describe("payment email outbox", () => {
       })
       await deliverPaymentEmail(id)
       await age(id, 15)
+      await waitOut(id)
       // The window the sweep cannot see: selected as a candidate, then claimed
       // by an admin hitting resend before the sweep reaches it.
       await kysely
@@ -369,6 +402,24 @@ describe("payment email outbox", () => {
 
       expect(stats.failed).toBe(0)
       expect((await readRow(id)).sent_at).toBeNull()
+    })
+
+    it("waits out the pause a failed send left before trying again", async () => {
+      sendPaymentConfirmedEmail.mockResolvedValueOnce({ success: false })
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await deliverPaymentEmail(id)
+      await age(id, 15)
+
+      const early = await sweepPaymentEmails()
+      await waitOut(id)
+      const late = await sweepPaymentEmails()
+
+      expect(early.processed).toBe(0)
+      expect(late.sent).toBe(1)
     })
 
     it("leaves a row that already went out alone", async () => {

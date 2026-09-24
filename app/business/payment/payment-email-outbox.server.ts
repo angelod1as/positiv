@@ -33,8 +33,16 @@ const LEASE_MINUTES = 10
 /** Rows one sweep will carry, so a backlog cannot stall the request. */
 const SWEEP_LIMIT = 50
 
+/**
+ * The wait after a first failure, doubled with each one after it, so a send
+ * that will eventually go through is not retried on every sweep on its way.
+ */
+const BACKOFF_BASE_MINUTES = 15
+
 const minutesAgo = (minutes: number) =>
   new Date(Date.now() - minutes * 60 * 1000).toISOString()
+
+const minutesFromNow = (minutes: number) => minutesAgo(-minutes)
 
 /**
  * Records that a payment owes an email.
@@ -100,7 +108,7 @@ export async function deliverPaymentEmail(
         ),
       ]),
     )
-    .returning(["payment_id", "kind", "claimed_at"])
+    .returning(["payment_id", "kind", "claimed_at", "attempts"])
     .executeTakeFirst()
 
   if (!claimed) return { sent: false, claimed: false }
@@ -129,11 +137,17 @@ export async function deliverPaymentEmail(
       error,
     })
     // The claim is given back with the error: it covers a send in flight, and
-    // this one is over. Holding it for the rest of the lease would only make
-    // the sweep wait to try again.
+    // this one is over. How long the sweep waits before trying again is
+    // next_attempt_at's to say, not the lease's.
     await kyselyDb
       .updateTable("payment_emails")
-      .set({ last_error: error, claimed_at: null })
+      .set({
+        last_error: error,
+        claimed_at: null,
+        next_attempt_at: minutesFromNow(
+          BACKOFF_BASE_MINUTES * 2 ** (claimed.attempts - 1),
+        ),
+      })
       .where("id", "=", id)
       .where("claimed_at", "=", heldClaim)
       .execute()
@@ -188,6 +202,12 @@ export async function sweepPaymentEmails(): Promise<{
     .select("pe.id")
     .where("pe.sent_at", "is", null)
     .where("pe.created_at", "<", minutesAgo(OVERDUE_MINUTES))
+    .where((eb) =>
+      eb.or([
+        eb("pe.next_attempt_at", "is", null),
+        eb("pe.next_attempt_at", "<=", new Date().toISOString()),
+      ]),
+    )
     .where((eb) =>
       eb.or([
         eb("pe.claimed_at", "is", null),
