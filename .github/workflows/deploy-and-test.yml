@@ -22,7 +22,14 @@ jobs:
         with:
           version: latest
       - name: Start Supabase local development setup
-        run: supabase start
+        run: |
+          for attempt in 1 2 3 4 5; do
+            supabase start -x studio,analytics,vector,edge-runtime,imgproxy && exit 0
+            echo "supabase start failed (attempt $attempt/5), retrying in 30s"
+            supabase stop --no-backup || true
+            sleep 30
+          done
+          exit 1
       - name: Verify generated types match Postgres schema
         run: |
           supabase gen types typescript --local > schema.gen.ts
@@ -79,7 +86,14 @@ jobs:
           version: latest
 
       - name: Start Supabase local instance
-        run: supabase start
+        run: |
+          for attempt in 1 2 3 4 5; do
+            supabase start -x studio,analytics,vector,edge-runtime,imgproxy && exit 0
+            echo "supabase start failed (attempt $attempt/5), retrying in 30s"
+            supabase stop --no-backup || true
+            sleep 30
+          done
+          exit 1
 
       - name: Verify Supabase is running
         run: |
