@@ -74,7 +74,10 @@ export async function queuePaymentEmail(
     .onConflict((oc) =>
       oc
         .column("payment_id")
-        .where("kind", "=", "link")
+        // A literal, not a parameter: Postgres matches this predicate to the
+        // partial index at planning time, and a generic plan cannot see a
+        // parameter's value.
+        .where("kind", "=", sql.lit<PaymentEmailKind>("link"))
         .where("sent_at", "is", null)
         .doUpdateSet({ attempts: 0, given_up_at: null, next_attempt_at: null }),
     )

@@ -1,3 +1,4 @@
+import { sql } from "kysely"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   cleanupAfterTest,
@@ -195,6 +196,21 @@ describe("payment email outbox", () => {
       })
 
       expect(second).not.toBe(first)
+    })
+
+    // Postgres matches ON CONFLICT to the partial index by its predicate. A
+    // predicate carried as a bound parameter matches only while the value is
+    // known at planning time, so a connection that plans generically -- a
+    // pooler, a prepared statement -- would fail every queue, of every kind.
+    it("queues on a connection that plans statements generically", async () => {
+      const payment = await openPayment()
+
+      const id = await kyselyDb.transaction().execute(async (trx) => {
+        await sql`SET LOCAL plan_cache_mode = force_generic_plan`.execute(trx)
+        return queuePaymentEmail(trx, { paymentId: payment.id, kind: "link" })
+      })
+
+      expect((await readRow(id)).kind).toBe("link")
     })
 
     it("still queues a second refund email for the same payment", async () => {
