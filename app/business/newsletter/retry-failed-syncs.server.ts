@@ -4,7 +4,7 @@
  * Automatically retries failed Listmonk newsletter syncs with exponential backoff.
  *
  * Triggered by pg_cron job 'retry-failed-newsletter-syncs' every 30 minutes.
- * See migration: 20260129230800_schedule_newsletter_retry_cron.sql
+ * See migration: 20260924000000_retry_newsletter_syncs_cron.sql
  *
  * Retry schedule:
  * - Attempt 1: Immediate (0 min)
