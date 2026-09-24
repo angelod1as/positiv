@@ -126,6 +126,25 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
       expect(body.error).toBe("Unauthorized")
     })
 
+    it("should reject a wrong token of the same length as the valid one", async () => {
+      const request = new Request("http://localhost:5173/api/process-pre-opening-reminders", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${"x".repeat(VALID_SECRET.length)}`,
+        },
+      })
+
+      const response = await action({
+        request,
+        params: {},
+        context: {},
+      })
+
+      expect(response.status).toBe(401)
+      const body = await response.json()
+      expect(body.error).toBe("Unauthorized")
+    })
+
     it("should return 500 when INTERNAL_JOB_SECRET is not configured", async () => {
       ENV.INTERNAL_JOB_SECRET = undefined
 

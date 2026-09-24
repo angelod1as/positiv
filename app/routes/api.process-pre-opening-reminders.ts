@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto"
 import type { ActionFunctionArgs } from "react-router"
 import { ENV } from "varlock/env"
 import { processCampaignForEvent } from "~/business/newsletter/campaign-automation.server"
@@ -17,9 +18,13 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: "Server misconfigured" }, { status: 500 })
   }
 
-  const expectedToken = `Bearer ${secret}`
+  const providedToken = Buffer.from(authHeader || "")
+  const expectedToken = Buffer.from(`Bearer ${secret}`)
 
-  if (!authHeader || authHeader !== expectedToken) {
+  if (
+    providedToken.length !== expectedToken.length ||
+    !timingSafeEqual(providedToken, expectedToken)
+  ) {
     return Response.json({ error: "Unauthorized" }, { status: 401 })
   }
 
