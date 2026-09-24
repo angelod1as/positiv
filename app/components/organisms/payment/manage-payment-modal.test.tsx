@@ -953,3 +953,145 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
     expect((formData as FormData).get("baseAmount")).toBe("41,80")
   })
 })
+
+describe("ManagePaymentModal - correcting a manual payment", () => {
+  beforeEach(() => {
+    submit.mockClear()
+    fetcherData = undefined
+    fetcherState = "idle"
+  })
+
+  const mistyped = payment({
+    amount: 21985,
+    base_amount: 21985,
+    method: "cash",
+    paid_at: "2026-09-10T19:26:00Z",
+    note: "Pago na porta",
+  })
+
+  const openEdit = async () => {
+    await userEvent.click(screen.getByRole("button", { name: "Editar" }))
+    return within(screen.getByRole("alertdialog"))
+  }
+
+  it("offers to edit a paid manual payment", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    expect(screen.getByRole("button", { name: "Editar" })).toBeInTheDocument()
+  })
+
+  it("offers to edit a courtesy spot settled at zero", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[payment({ amount: 0, base_amount: 0 })]}
+      />,
+    )
+
+    expect(screen.getByRole("button", { name: "Editar" })).toBeInTheDocument()
+  })
+
+  it("does not offer to edit a refunded manual payment", () => {
+    // The refund was measured against the amount; rewriting it would leave
+    // the refund pointing at money that was never there.
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          payment({
+            status: "refunded",
+            refund_amount: 22000,
+            refunded_at: "2026-08-21T12:00:00Z",
+          }),
+        ]}
+      />,
+    )
+
+    expect(
+      screen.queryByRole("button", { name: "Editar" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("does not offer to edit a payment that went through Asaas", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    expect(
+      screen.queryByRole("button", { name: "Editar" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("opens on the payment as it was recorded", async () => {
+    render(<ManagePaymentModal {...baseProps} payments={[mistyped]} />)
+
+    const dialog = await openEdit()
+
+    expect(dialog.getByLabelText("Valor recebido")).toHaveValue("219,85")
+    expect(dialog.getByLabelText("Forma")).toHaveValue("cash")
+    // 19:26 UTC is 16:26 in São Paulo — still the 10th.
+    expect(dialog.getByLabelText("Data do pagamento")).toHaveValue(
+      "2026-09-10",
+    )
+    expect(dialog.getByLabelText("Observação")).toHaveValue("Pago na porta")
+  })
+
+  it("does not turn the amount field into a stepper", async () => {
+    render(<ManagePaymentModal {...baseProps} payments={[mistyped]} />)
+
+    const dialog = await openEdit()
+
+    expect(
+      dialog.queryByRole("spinbutton", { name: "Valor recebido" }),
+    ).not.toBeInTheDocument()
+    expect(
+      dialog.getByRole("textbox", { name: "Valor recebido" }),
+    ).toBeInTheDocument()
+  })
+
+  it("sends the corrected payment", async () => {
+    render(<ManagePaymentModal {...baseProps} payments={[mistyped]} />)
+
+    const dialog = await openEdit()
+    const amount = dialog.getByLabelText("Valor recebido")
+    await userEvent.clear(amount)
+    await userEvent.type(amount, "220,00")
+    await userEvent.selectOptions(dialog.getByLabelText("Forma"), "transfer")
+    const note = dialog.getByLabelText("Observação")
+    await userEvent.clear(note)
+    await userEvent.type(note, "Valor corrigido")
+    await userEvent.click(
+      dialog.getByRole("button", { name: "Salvar alterações" }),
+    )
+
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect(formData.get("intent")).toBe("payment-manual-edit")
+    expect(formData.get("paymentId")).toBe("p1")
+    expect(formData.get("amount")).toBe("220,00")
+    expect(formData.get("method")).toBe("transfer")
+    expect(formData.get("paidAt")).toBe("2026-09-10")
+    expect(formData.get("note")).toBe("Valor corrigido")
+  })
+
+  it("forgets an abandoned edit when the dialog is reopened", async () => {
+    render(<ManagePaymentModal {...baseProps} payments={[mistyped]} />)
+
+    let dialog = await openEdit()
+    await userEvent.type(dialog.getByLabelText("Valor recebido"), "999")
+    await userEvent.click(dialog.getByRole("button", { name: "Fechar" }))
+
+    dialog = await openEdit()
+    expect(dialog.getByLabelText("Valor recebido")).toHaveValue("219,85")
+  })
+
+  it("refuses a second click while an edit is in flight", async () => {
+    fetcherState = "submitting"
+    render(<ManagePaymentModal {...baseProps} payments={[mistyped]} />)
+
+    const dialog = await openEdit()
+
+    expect(
+      dialog.getByRole("button", { name: "Salvar alterações" }),
+    ).toBeDisabled()
+  })
+})

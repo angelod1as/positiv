@@ -23,8 +23,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog"
+import { Select } from "~/components/forms/base/select"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
+import { TextArea } from "~/components/ui/textarea"
 import {
   Table,
   TableBody,
@@ -43,7 +45,7 @@ import { paymentStatusPropMap } from "~/lib/helpers/propMaps"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import paths from "~/lib/paths"
 
-const { manage, manual, refund, cancel, charge, errors } = paymentsCopy
+const { manage, manual, edit, refund, cancel, charge, errors } = paymentsCopy
 
 /** Every payment recorded by hand arrived by PIX; nothing else is offered. */
 const MANUAL_METHOD = "pix"
@@ -68,6 +70,125 @@ export type ManagePaymentModalProps = {
   eventTitle: string
   fees: AsaasFees | null
   appOrigin: string
+}
+
+/** The methods a payment taken by hand can have; card only ever runs through Asaas. */
+const EDITABLE_METHODS = ["pix", "cash", "transfer", "other"] as const
+
+type ManualEdit = {
+  amount: string
+  method: string
+  paidAt: string
+  note: string
+}
+
+const manualEditFrom = (payment: PaymentRow): ManualEdit => ({
+  amount: centsToReaisText(payment.amount),
+  method: payment.method ?? MANUAL_METHOD,
+  // The day in São Paulo, which is how it was typed: the stored instant is
+  // that day's midnight there, already the day before in UTC.
+  paidAt: payment.paid_at
+    ? formatInTimeZone(payment.paid_at, "America/Sao_Paulo", "yyyy-MM-dd")
+    : today(),
+  note: payment.note ?? "",
+})
+
+type EditManualPaymentDialogProps = {
+  payment: PaymentRow
+  isSubmitting: boolean
+  onConfirm: (paymentId: string, values: ManualEdit) => void
+}
+
+const EditManualPaymentDialog: FC<EditManualPaymentDialogProps> = ({
+  payment,
+  isSubmitting,
+  onConfirm,
+}) => {
+  const [values, setValues] = useState(() => manualEditFrom(payment))
+  const set = (field: keyof ManualEdit) => (value: string) =>
+    setValues((current) => ({ ...current, [field]: value }))
+  const fieldId = (field: keyof ManualEdit) => `edit-${field}-${payment.id}`
+
+  // Re-seeded on every open, like the refund: an abandoned correction left in
+  // the fields would read as what is stored.
+  return (
+    <AlertDialog
+      onOpenChange={(open) => open && setValues(manualEditFrom(payment))}
+    >
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          {edit.title}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{edit.confirm}</AlertDialogTitle>
+          <AlertDialogDescription>{edit.description}</AlertDialogDescription>
+        </AlertDialogHeader>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={fieldId("amount")}>{edit.amount}</Label>
+          {/* Text, not number: the number input is how R$ 220,00 was once
+              stored as R$ 219,85. */}
+          <Input
+            id={fieldId("amount")}
+            name="amount"
+            type="text"
+            inputMode="decimal"
+            value={values.amount}
+            onChange={(event) => set("amount")(event.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={fieldId("method")}>{edit.method}</Label>
+          <Select
+            id={fieldId("method")}
+            name="method"
+            value={values.method}
+            onChange={(event) => set("method")(event.target.value)}
+          >
+            {EDITABLE_METHODS.map((method) => (
+              <option key={method} value={method}>
+                {manage.methods[method]}
+              </option>
+            ))}
+          </Select>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={fieldId("paidAt")}>{edit.paidAt}</Label>
+          <Input
+            id={fieldId("paidAt")}
+            name="paidAt"
+            type="date"
+            value={values.paidAt}
+            onChange={(event) => set("paidAt")(event.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor={fieldId("note")}>{edit.note}</Label>
+          <TextArea
+            id={fieldId("note")}
+            name="note"
+            value={values.note}
+            onChange={(event) => set("note")(event.target.value)}
+          />
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel>{manage.close}</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={isSubmitting}
+            onClick={() => onConfirm(payment.id, values)}
+          >
+            {edit.submit}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
 }
 
 type RefundDialogProps = {
@@ -593,6 +714,19 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                    {payment.kind === "manual" && payment.status === "paid" && (
+                      <EditManualPaymentDialog
+                        payment={payment}
+                        isSubmitting={isSubmitting}
+                        onConfirm={(paymentId, values) =>
+                          post({
+                            intent: "payment-manual-edit",
+                            paymentId,
+                            ...values,
+                          })
+                        }
+                      />
+                    )}
                     {payment.kind === "manual" &&
                       payment.status === "paid" &&
                       (payment.amount ?? 0) > 0 && (

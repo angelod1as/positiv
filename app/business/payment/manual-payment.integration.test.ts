@@ -10,7 +10,7 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
-import { registerManualPayment } from "./manual-payment.server"
+import { editManualPayment, registerManualPayment } from "./manual-payment.server"
 
 describe("registerManualPayment", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -265,5 +265,235 @@ describe("registerManualPayment", () => {
     expect(totals.paid_gross).toBe(15000)
 
     await trackPayments()
+  })
+})
+
+describe("editManualPayment", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+  let participantId: string
+
+  beforeEach(async () => {
+    tracker.clear()
+    const testId = Date.now()
+    const event = await createTestEvent(tracker, kysely, {
+      title: "Edit Manual Payment Event",
+      ticket_price: 22000,
+    })
+    const profile = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `test${testId}-edit-manual@example.com`,
+      full_name: "Edit Manual Tester",
+    })
+    participantId = (
+      await createTestEventParticipant(tracker, kysely, {
+        event_id: event.id,
+        profile_id: profile.id,
+      })
+    ).id
+  })
+
+  afterEach(async () => {
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  const readPayment = (id: string) =>
+    kysely
+      .selectFrom("payments")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow()
+
+  it("corrects the amount, method, date and note of a paid manual payment", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      base_amount: 21985,
+      amount: 21985,
+      method: "pix",
+      note: null,
+    })
+
+    const result = await editManualPayment({
+      paymentId: payment.id,
+      amount: "220,00",
+      method: "transfer",
+      paidAt: "2026-09-10",
+      note: "Valor corrigido",
+    })
+
+    expect(result.success).toBe(true)
+
+    const row = await readPayment(payment.id)
+    expect(row).toMatchObject({
+      kind: "manual",
+      status: "paid",
+      method: "transfer",
+      amount: 22000,
+      base_amount: 22000,
+      note: "Valor corrigido",
+    })
+    // Same rule as recording one: the admin typed a day in São Paulo.
+    expect(
+      formatInTimeZone(row.paid_at as string, "America/Sao_Paulo", "yyyy-MM-dd"),
+    ).toBe("2026-09-10")
+    expect(row.due_at).toEqual(row.paid_at)
+
+    const totals = await kysely
+      .selectFrom("event_participant_payments")
+      .selectAll()
+      .where("event_participant_id", "=", participantId)
+      .executeTakeFirstOrThrow()
+    expect(totals.paid_gross).toBe(22000)
+    expect(totals.net).toBe(22000)
+  })
+
+  it("stores a cleared note as no note", async () => {
+    // Recording a payment leaves the note null; a note emptied in the edit
+    // dialog arrives as "" and has to mean the same thing.
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      note: "Pago na porta",
+    })
+
+    const result = await editManualPayment({
+      paymentId: payment.id,
+      amount: "220,00",
+      method: "pix",
+      paidAt: "2026-09-10",
+      note: "  ",
+    })
+
+    expect(result.success).toBe(true)
+    expect((await readPayment(payment.id)).note).toBeNull()
+  })
+
+  it("refuses to edit a payment that went through Asaas", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      amount: 21985,
+      base_amount: 21985,
+    })
+
+    const result = await editManualPayment({
+      paymentId: payment.id,
+      amount: "220,00",
+      method: "pix",
+      paidAt: "2026-09-10",
+      note: null,
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toBe(
+        "Só é possível editar um pagamento manual confirmado.",
+      )
+    }
+    expect((await readPayment(payment.id)).amount).toBe(21985)
+  })
+
+  it("refuses to edit a manual payment already refunded", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      status: "refunded",
+      amount: 21985,
+      base_amount: 21985,
+      refund_amount: 21985,
+      refunded_at: new Date().toISOString(),
+    })
+
+    const result = await editManualPayment({
+      paymentId: payment.id,
+      amount: "220,00",
+      method: "pix",
+      paidAt: "2026-09-10",
+      note: null,
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toBe(
+        "Só é possível editar um pagamento manual confirmado.",
+      )
+    }
+    expect((await readPayment(payment.id)).amount).toBe(21985)
+  })
+
+  it("refuses a payment that does not exist", async () => {
+    const result = await editManualPayment({
+      paymentId: "00000000-0000-0000-0000-000000000000",
+      amount: "220,00",
+      method: "pix",
+      paidAt: "2026-09-10",
+      note: null,
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toBe(
+        "Só é possível editar um pagamento manual confirmado.",
+      )
+    }
+  })
+
+  it("refuses an amount it cannot read and leaves the row alone", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      amount: 21985,
+      base_amount: 21985,
+    })
+
+    const result = await editManualPayment({
+      paymentId: payment.id,
+      amount: "",
+      method: "pix",
+      paidAt: "2026-09-10",
+      note: null,
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toBe("Informe um valor de zero ou mais.")
+    }
+    expect((await readPayment(payment.id)).amount).toBe(21985)
+  })
+
+  it("answers a sentence, not a Postgres error, when the write fails", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+    })
+
+    // Past what an integer column holds, so the database refuses it.
+    const result = await editManualPayment({
+      paymentId: payment.id,
+      amount: "999999999",
+      method: "pix",
+      paidAt: "2026-09-10",
+      note: null,
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toBe(
+        "Não foi possível concluir a operação.",
+      )
+    }
+    expect((await readPayment(payment.id)).amount).toBe(22000)
+  })
+
+  it("refuses a negative amount", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+    })
+
+    const result = await editManualPayment({
+      paymentId: payment.id,
+      amount: "-10",
+      method: "pix",
+      paidAt: "2026-09-10",
+      note: null,
+    })
+
+    expect(result.success).toBe(false)
+    expect((await readPayment(payment.id)).amount).toBe(22000)
   })
 })
