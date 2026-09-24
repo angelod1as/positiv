@@ -125,6 +125,10 @@ export const editManualPayment = applySchema(editManualPaymentSchema)(
       .where("kind", "=", "manual")
       .returning("id")
       .executeTakeFirst()
+      .catch((error) => {
+        console.error("Failed to edit a manual payment", error)
+        throw new Error(paymentsCopy.errors.generic)
+      })
 
     if (!updated) {
       throw new Error(paymentsCopy.errors.notEditable)

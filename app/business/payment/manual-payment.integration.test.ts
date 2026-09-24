@@ -457,6 +457,29 @@ describe("editManualPayment", () => {
     expect((await readPayment(payment.id)).amount).toBe(21985)
   })
 
+  it("answers a sentence, not a Postgres error, when the write fails", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+    })
+
+    // Past what an integer column holds, so the database refuses it.
+    const result = await editManualPayment({
+      paymentId: payment.id,
+      amount: "999999999",
+      method: "pix",
+      paidAt: "2026-09-10",
+      note: null,
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.errors[0].message).toBe(
+        "Não foi possível concluir a operação.",
+      )
+    }
+    expect((await readPayment(payment.id)).amount).toBe(22000)
+  })
+
   it("refuses a negative amount", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
