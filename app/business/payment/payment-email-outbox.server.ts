@@ -58,6 +58,11 @@ const minutesFromNow = (minutes: number) => minutesAgo(-minutes)
  * Takes the connection rather than reaching for one, so the caller can write
  * this inside the transaction that owes the email: the intent to send then
  * commits with the state change, and nothing is lost between the two.
+ *
+ * A payment owes at most one link at a time. Queuing another while one is
+ * still owed -- an admin hitting resend while sends are failing -- answers
+ * with that row instead, restarted: somebody asked for it again, so it gets a
+ * fresh run at being sent rather than what was left of the last one.
  */
 export async function queuePaymentEmail(
   db: Kysely<Database>,
@@ -66,6 +71,13 @@ export async function queuePaymentEmail(
   const row = await db
     .insertInto("payment_emails")
     .values({ payment_id: paymentId, kind })
+    .onConflict((oc) =>
+      oc
+        .column("payment_id")
+        .where("kind", "=", "link")
+        .where("sent_at", "is", null)
+        .doUpdateSet({ attempts: 0, given_up_at: null, next_attempt_at: null }),
+    )
     .returning("id")
     .executeTakeFirstOrThrow()
 

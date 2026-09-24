@@ -131,6 +131,86 @@ describe("payment email outbox", () => {
       expect(row.sent_at).toBeNull()
       expect(row.attempts).toBe(0)
     })
+
+    it("reuses the link a payment still owes rather than queuing a second", async () => {
+      const payment = await openPayment()
+
+      const first = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+      const second = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+
+      expect(second).toBe(first)
+      const rows = await kysely
+        .selectFrom("payment_emails")
+        .select("id")
+        .where("payment_id", "=", payment.id)
+        .execute()
+      expect(rows).toHaveLength(1)
+    })
+
+    // Queuing a link again is a person asking for it, so the row gets a fresh
+    // run at being sent rather than the leftovers of the one that gave up.
+    it("gives a reused link a fresh start", async () => {
+      const payment = await openPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+      await kysely
+        .updateTable("payment_emails")
+        .set({
+          attempts: 5,
+          given_up_at: new Date().toISOString(),
+          next_attempt_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          last_error: "smtp is down",
+        })
+        .where("id", "=", id)
+        .execute()
+
+      await queuePaymentEmail(kyselyDb, { paymentId: payment.id, kind: "link" })
+
+      const row = await readRow(id)
+      expect(row.attempts).toBe(0)
+      expect(row.given_up_at).toBeNull()
+      expect(row.next_attempt_at).toBeNull()
+      expect(row.last_error).toBe("smtp is down")
+    })
+
+    it("queues a new link once the one owed has gone out", async () => {
+      const payment = await openPayment()
+      const first = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+      await deliverPaymentEmail(first)
+
+      const second = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+
+      expect(second).not.toBe(first)
+    })
+
+    it("still queues a second refund email for the same payment", async () => {
+      const payment = await paidPayment()
+
+      const first = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "refund",
+      })
+      const second = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "refund",
+      })
+
+      expect(second).not.toBe(first)
+    })
   })
 
   describe("deliverPaymentEmail", () => {
