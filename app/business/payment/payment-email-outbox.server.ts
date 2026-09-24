@@ -156,15 +156,6 @@ export async function deliverPaymentEmail(
   }
 
   if (error) {
-    // A failure that will be tried again is a warning: the error level goes
-    // to Telegram, and a person only has to act once the row is given up on.
-    logger.warn("A payment email could not be sent", {
-      paymentEmailId: id,
-      paymentId,
-      kind,
-      attempts: claimed.attempts,
-      error,
-    })
     const givingUp = claimed.attempts >= MAX_ATTEMPTS
     // The claim is given back with the error: it covers a send in flight, and
     // this one is over. How long the sweep waits before trying again is
@@ -184,14 +175,22 @@ export async function deliverPaymentEmail(
       .returning("id")
       .executeTakeFirst()
 
+    const context = {
+      paymentEmailId: id,
+      paymentId,
+      kind,
+      attempts: claimed.attempts,
+      error,
+    }
+    // A failure that will be tried again is a warning: the error level goes
+    // to Telegram, and a person only has to act once the row is given up on.
     if (givingUp && released) {
-      logger.error("A payment email was given up on and needs a person", {
-        paymentEmailId: id,
-        paymentId,
-        kind,
-        attempts: claimed.attempts,
-        error,
-      })
+      logger.error(
+        "A payment email was given up on and needs a person",
+        context,
+      )
+    } else {
+      logger.warn("A payment email could not be sent", context)
     }
     return { sent: false, claimed: true }
   }

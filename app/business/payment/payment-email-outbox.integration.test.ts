@@ -334,6 +334,7 @@ describe("payment email outbox", () => {
       expect(row.attempts).toBe(5)
       expect(row.given_up_at).not.toBeNull()
       expect(row.sent_at).toBeNull()
+      expect(logger.warn).not.toHaveBeenCalled()
       expect(logger.error).toHaveBeenCalledTimes(1)
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining("given up"),
