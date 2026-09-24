@@ -39,6 +39,14 @@ const SWEEP_LIMIT = 50
  */
 const BACKOFF_BASE_MINUTES = 15
 
+/**
+ * Attempts before the sweep stops and leaves the row for a person, the send
+ * that follows the queue included. With the backoff above that is about four
+ * hours from the first failure: long enough to ride out an outage, short
+ * enough that a send which will never work is noticed the same day.
+ */
+const MAX_ATTEMPTS = 5
+
 const minutesAgo = (minutes: number) =>
   new Date(Date.now() - minutes * 60 * 1000).toISOString()
 
@@ -70,7 +78,8 @@ export async function queuePaymentEmail(
  * The claim is a guarded UPDATE, so of two senders reaching the same row only
  * one comes back with it — the other finds the lease taken and leaves. A send
  * that fails leaves `sent_at` null on purpose: the row is still owed, and the
- * sweep will come back for it once the lease expires.
+ * sweep will come back for it once its wait is over -- until the attempt that
+ * reaches MAX_ATTEMPTS, which sets `given_up_at` and leaves it for a person.
  *
  * `claimed` is how a caller tells the two apart: a row somebody else is
  * sending is not a row whose send failed.
@@ -86,6 +95,7 @@ export async function deliverPaymentEmail(
     })
     .where("id", "=", id)
     .where("sent_at", "is", null)
+    .where("given_up_at", "is", null)
     .where((eb) =>
       eb.or([
         eb("claimed_at", "is", null),
@@ -130,16 +140,20 @@ export async function deliverPaymentEmail(
   }
 
   if (error) {
-    logger.error("A payment email could not be sent", {
+    // A failure that will be tried again is a warning: the error level goes
+    // to Telegram, and a person only has to act once the row is given up on.
+    logger.warn("A payment email could not be sent", {
       paymentEmailId: id,
       paymentId,
       kind,
+      attempts: claimed.attempts,
       error,
     })
+    const givingUp = claimed.attempts >= MAX_ATTEMPTS
     // The claim is given back with the error: it covers a send in flight, and
     // this one is over. How long the sweep waits before trying again is
     // next_attempt_at's to say, not the lease's.
-    await kyselyDb
+    const released = await kyselyDb
       .updateTable("payment_emails")
       .set({
         last_error: error,
@@ -147,10 +161,22 @@ export async function deliverPaymentEmail(
         next_attempt_at: minutesFromNow(
           BACKOFF_BASE_MINUTES * 2 ** (claimed.attempts - 1),
         ),
+        given_up_at: givingUp ? new Date().toISOString() : null,
       })
       .where("id", "=", id)
       .where("claimed_at", "=", heldClaim)
-      .execute()
+      .returning("id")
+      .executeTakeFirst()
+
+    if (givingUp && released) {
+      logger.error("A payment email was given up on and needs a person", {
+        paymentEmailId: id,
+        paymentId,
+        kind,
+        attempts: claimed.attempts,
+        error,
+      })
+    }
     return { sent: false, claimed: true }
   }
 
@@ -201,6 +227,7 @@ export async function sweepPaymentEmails(): Promise<{
     .innerJoin("payments as p", "p.id", "pe.payment_id")
     .select("pe.id")
     .where("pe.sent_at", "is", null)
+    .where("pe.given_up_at", "is", null)
     .where("pe.created_at", "<", minutesAgo(OVERDUE_MINUTES))
     .where((eb) =>
       eb.or([

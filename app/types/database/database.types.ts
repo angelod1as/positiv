@@ -493,6 +493,7 @@ export type Database = {
           attempts: number
           claimed_at: string | null
           created_at: string
+          given_up_at: string | null
           id: string
           kind: Database["public"]["Enums"]["payment_email_kind"]
           last_error: string | null
@@ -504,6 +505,7 @@ export type Database = {
           attempts?: number
           claimed_at?: string | null
           created_at?: string
+          given_up_at?: string | null
           id?: string
           kind: Database["public"]["Enums"]["payment_email_kind"]
           last_error?: string | null
@@ -515,6 +517,7 @@ export type Database = {
           attempts?: number
           claimed_at?: string | null
           created_at?: string
+          given_up_at?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["payment_email_kind"]
           last_error?: string | null

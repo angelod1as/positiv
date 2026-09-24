@@ -46,6 +46,7 @@ describe("payment email outbox", () => {
     sendPaymentConfirmedEmail.mockClear().mockResolvedValue({ success: true })
     sendPaymentRefundEmail.mockClear().mockResolvedValue({ success: true })
     logger.error.mockClear()
+    logger.warn.mockClear()
 
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,
@@ -216,6 +217,68 @@ describe("payment email outbox", () => {
 
       expect(afterFirst).toBeCloseTo(15, 0)
       expect(afterSecond).toBeCloseTo(30, 0)
+    })
+
+    it("gives a row up after its fifth failed attempt", async () => {
+      sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await kysely
+        .updateTable("payment_emails")
+        .set({ attempts: 4 })
+        .where("id", "=", id)
+        .execute()
+
+      await deliverPaymentEmail(id)
+
+      const row = await readRow(id)
+      expect(row.attempts).toBe(5)
+      expect(row.given_up_at).not.toBeNull()
+      expect(row.sent_at).toBeNull()
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining("given up"),
+        expect.objectContaining({ paymentEmailId: id }),
+      )
+    })
+
+    // Telegram hears every error. A failure that will be tried again is not
+    // yet something a person has to act on, and alerting on each one is the
+    // every-five-minutes noise the cap exists to end.
+    it("only warns about a failure it will try again", async () => {
+      sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+
+      await deliverPaymentEmail(id)
+
+      expect((await readRow(id)).given_up_at).toBeNull()
+      expect(logger.error).not.toHaveBeenCalled()
+      expect(logger.warn).toHaveBeenCalledTimes(1)
+    })
+
+    it("does not claim a row it has given up on", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await kysely
+        .updateTable("payment_emails")
+        .set({ given_up_at: new Date().toISOString() })
+        .where("id", "=", id)
+        .execute()
+
+      const result = await deliverPaymentEmail(id)
+
+      expect(result.claimed).toBe(false)
+      expect(sendPaymentConfirmedEmail).not.toHaveBeenCalled()
     })
 
     it("sends once when two deliveries race for the same row", async () => {
@@ -420,6 +483,25 @@ describe("payment email outbox", () => {
 
       expect(early.processed).toBe(0)
       expect(late.sent).toBe(1)
+    })
+
+    it("leaves a row it has given up on for a person", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await kysely
+        .updateTable("payment_emails")
+        .set({ attempts: 5, given_up_at: new Date().toISOString() })
+        .where("id", "=", id)
+        .execute()
+      await age(id, 15)
+
+      const stats = await sweepPaymentEmails()
+
+      expect(stats.processed).toBe(0)
+      expect(sendPaymentConfirmedEmail).not.toHaveBeenCalled()
     })
 
     it("leaves a row that already went out alone", async () => {
