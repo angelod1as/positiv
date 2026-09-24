@@ -307,7 +307,9 @@ describe("payment email outbox", () => {
       // What a sender killed mid-flight leaves behind: claimed, never sent.
       await kysely
         .updateTable("payment_emails")
-        .set({ claimed_at: new Date(Date.now() - 20 * 60 * 1000).toISOString() })
+        .set({
+          claimed_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+        })
         .where("id", "=", id)
         .execute()
 
@@ -363,7 +365,10 @@ describe("payment email outbox", () => {
       expect((await readRow(id)).claimed_at).not.toBeNull()
     })
 
-    it("does not stamp a claim that replaced its own", async () => {
+    // Once the email has left, the row is no longer owed, whoever holds the
+    // claim now. Leaving sent_at null would let the sweep send it yet again if
+    // the claim that replaced this one then fails.
+    it("records a send on a claim that was taken over, and says it may be a second one", async () => {
       const payment = await paidPayment()
       const id = await queuePaymentEmail(kyselyDb, {
         paymentId: payment.id,
@@ -380,7 +385,39 @@ describe("payment email outbox", () => {
 
       await deliverPaymentEmail(id)
 
-      expect((await readRow(id)).sent_at).toBeNull()
+      expect((await readRow(id)).sent_at).not.toBeNull()
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining("twice"),
+        expect.objectContaining({ paymentEmailId: id }),
+      )
+    })
+
+    it("does not send again an email that went out on a claim taken over", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      sendPaymentConfirmedEmail.mockImplementationOnce(async () => {
+        await kysely
+          .updateTable("payment_emails")
+          .set({ claimed_at: new Date().toISOString() })
+          .where("id", "=", id)
+          .execute()
+        return { success: true }
+      })
+      await deliverPaymentEmail(id)
+      // The claim that replaced it failed and gave the row back.
+      await kysely
+        .updateTable("payment_emails")
+        .set({ claimed_at: null })
+        .where("id", "=", id)
+        .execute()
+      await age(id, 15)
+
+      await sweepPaymentEmails()
+
+      expect(sendPaymentConfirmedEmail).toHaveBeenCalledTimes(1)
     })
 
     // The sweep's candidate query already filters these out, but a webhook

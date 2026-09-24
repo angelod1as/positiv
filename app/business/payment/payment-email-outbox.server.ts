@@ -128,7 +128,8 @@ export async function deliverPaymentEmail(
   // Every write below is guarded on the claim this call took. A send that
   // hangs past the lease comes back to a row the sweep has re-claimed, and
   // what it writes then would release or stamp somebody else's claim -- which
-  // is the double send the lease exists to prevent.
+  // is the double send the lease exists to prevent. The one exception is a
+  // send that has already left, below.
   const heldClaim = claimed.claimed_at
 
   let error: string | null = null
@@ -189,13 +190,22 @@ export async function deliverPaymentEmail(
     .executeTakeFirst()
 
   if (!stamped) {
-    // The email went out on a claim that had already been taken over, so the
-    // row still reads as owed and whoever holds it now may send a second one.
-    // Nothing here can undo that; what it can do is say so.
-    logger.error("A payment email was sent on a claim that had expired", {
+    // The email went out on a claim that had already been taken over, and
+    // whoever holds it now may be sending a second one. Nothing here can undo
+    // that. What this can do is stop a third: the email left, so the row is
+    // no longer owed, whether or not the claim that replaced this one
+    // succeeds. A stamp that one writes afterwards only moves the timestamp.
+    await kyselyDb
+      .updateTable("payment_emails")
+      .set({ sent_at: new Date().toISOString(), last_error: null })
+      .where("id", "=", id)
+      .where("sent_at", "is", null)
+      .execute()
+    logger.error("A payment email may have gone out twice", {
       paymentEmailId: id,
       paymentId,
       kind,
+      reason: "sent on a claim that had expired and been taken over",
     })
   }
 
