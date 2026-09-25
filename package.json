@@ -37,6 +37,7 @@
     "worktree": "./scripts/create-worktree.sh",
     "perf:baseline": "tsx scripts/lighthouse/run-baseline.ts",
     "asaas:register-webhook": "varlock run -- tsx scripts/asaas/register-webhook.ts",
+    "asaas:smoke": "varlock run -- tsx scripts/asaas/smoke.ts",
     "prepare": "husky",
     "adr": "log4brains adr",
     "adr:preview": "log4brains preview",
