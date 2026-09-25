@@ -1,3 +1,4 @@
+import { sql } from "kysely"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   cleanupAfterTest,
@@ -46,6 +47,7 @@ describe("payment email outbox", () => {
     sendPaymentConfirmedEmail.mockClear().mockResolvedValue({ success: true })
     sendPaymentRefundEmail.mockClear().mockResolvedValue({ success: true })
     logger.error.mockClear()
+    logger.warn.mockClear()
 
     const profile = await createTestProfile(tracker, kysely, {
       user_id: null,
@@ -101,6 +103,20 @@ describe("payment email outbox", () => {
       .execute()
   }
 
+  /** Lets the wait a failed send left on a row run out. */
+  async function waitOut(id: string) {
+    await kysely
+      .updateTable("payment_emails")
+      .set({ next_attempt_at: new Date(Date.now() - 1000).toISOString() })
+      .where("id", "=", id)
+      .execute()
+  }
+
+  function minutesUntil(timestamp: string | null) {
+    if (!timestamp) return null
+    return (new Date(timestamp).getTime() - Date.now()) / 60_000
+  }
+
   describe("queuePaymentEmail", () => {
     it("writes a row that still owes its send", async () => {
       const payment = await paidPayment()
@@ -115,6 +131,101 @@ describe("payment email outbox", () => {
       expect(row.kind).toBe("confirmation")
       expect(row.sent_at).toBeNull()
       expect(row.attempts).toBe(0)
+    })
+
+    it("reuses the link a payment still owes rather than queuing a second", async () => {
+      const payment = await openPayment()
+
+      const first = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+      const second = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+
+      expect(second).toBe(first)
+      const rows = await kysely
+        .selectFrom("payment_emails")
+        .select("id")
+        .where("payment_id", "=", payment.id)
+        .execute()
+      expect(rows).toHaveLength(1)
+    })
+
+    // Queuing a link again is a person asking for it, so the row gets a fresh
+    // run at being sent rather than the leftovers of the one that gave up.
+    it("gives a reused link a fresh start", async () => {
+      const payment = await openPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+      await kysely
+        .updateTable("payment_emails")
+        .set({
+          attempts: 5,
+          given_up_at: new Date().toISOString(),
+          next_attempt_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+          last_error: "smtp is down",
+        })
+        .where("id", "=", id)
+        .execute()
+
+      await queuePaymentEmail(kyselyDb, { paymentId: payment.id, kind: "link" })
+
+      const row = await readRow(id)
+      expect(row.attempts).toBe(0)
+      expect(row.given_up_at).toBeNull()
+      expect(row.next_attempt_at).toBeNull()
+      expect(row.last_error).toBe("smtp is down")
+    })
+
+    it("queues a new link once the one owed has gone out", async () => {
+      const payment = await openPayment()
+      const first = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+      await deliverPaymentEmail(first)
+
+      const second = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "link",
+      })
+
+      expect(second).not.toBe(first)
+    })
+
+    // Postgres matches ON CONFLICT to the partial index by its predicate. A
+    // predicate carried as a bound parameter matches only while the value is
+    // known at planning time, so a connection that plans generically -- a
+    // pooler, a prepared statement -- would fail every queue, of every kind.
+    it("queues on a connection that plans statements generically", async () => {
+      const payment = await openPayment()
+
+      const id = await kyselyDb.transaction().execute(async (trx) => {
+        await sql`SET LOCAL plan_cache_mode = force_generic_plan`.execute(trx)
+        return queuePaymentEmail(trx, { paymentId: payment.id, kind: "link" })
+      })
+
+      expect((await readRow(id)).kind).toBe("link")
+    })
+
+    it("still queues a second refund email for the same payment", async () => {
+      const payment = await paidPayment()
+
+      const first = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "refund",
+      })
+      const second = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "refund",
+      })
+
+      expect(second).not.toBe(first)
     })
   })
 
@@ -187,6 +298,88 @@ describe("payment email outbox", () => {
       expect(row.last_error).toContain("smtp is down")
     })
 
+    it("waits longer before each attempt after a failure", async () => {
+      sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+
+      await deliverPaymentEmail(id)
+      const afterFirst = minutesUntil((await readRow(id)).next_attempt_at)
+      await deliverPaymentEmail(id)
+      const afterSecond = minutesUntil((await readRow(id)).next_attempt_at)
+
+      expect(afterFirst).toBeCloseTo(15, 0)
+      expect(afterSecond).toBeCloseTo(30, 0)
+    })
+
+    it("gives a row up after its fifth failed attempt", async () => {
+      sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await kysely
+        .updateTable("payment_emails")
+        .set({ attempts: 4 })
+        .where("id", "=", id)
+        .execute()
+
+      await deliverPaymentEmail(id)
+
+      const row = await readRow(id)
+      expect(row.attempts).toBe(5)
+      expect(row.given_up_at).not.toBeNull()
+      // Nothing will try it again, so no row should say when it will.
+      expect(row.next_attempt_at).toBeNull()
+      expect(row.sent_at).toBeNull()
+      expect(logger.warn).not.toHaveBeenCalled()
+      expect(logger.error).toHaveBeenCalledTimes(1)
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining("given up"),
+        expect.objectContaining({ paymentEmailId: id }),
+      )
+    })
+
+    // Telegram hears every error. A failure that will be tried again is not
+    // yet something a person has to act on, and alerting on each one is the
+    // every-five-minutes noise the cap exists to end.
+    it("only warns about a failure it will try again", async () => {
+      sendPaymentConfirmedEmail.mockResolvedValue({ success: false })
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+
+      await deliverPaymentEmail(id)
+
+      expect((await readRow(id)).given_up_at).toBeNull()
+      expect(logger.error).not.toHaveBeenCalled()
+      expect(logger.warn).toHaveBeenCalledTimes(1)
+    })
+
+    it("does not claim a row it has given up on", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await kysely
+        .updateTable("payment_emails")
+        .set({ given_up_at: new Date().toISOString() })
+        .where("id", "=", id)
+        .execute()
+
+      const result = await deliverPaymentEmail(id)
+
+      expect(result.claimed).toBe(false)
+      expect(sendPaymentConfirmedEmail).not.toHaveBeenCalled()
+    })
+
     it("sends once when two deliveries race for the same row", async () => {
       const payment = await paidPayment()
       const id = await queuePaymentEmail(kyselyDb, {
@@ -213,7 +406,9 @@ describe("payment email outbox", () => {
       // What a sender killed mid-flight leaves behind: claimed, never sent.
       await kysely
         .updateTable("payment_emails")
-        .set({ claimed_at: new Date(Date.now() - 20 * 60 * 1000).toISOString() })
+        .set({
+          claimed_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+        })
         .where("id", "=", id)
         .execute()
 
@@ -269,7 +464,10 @@ describe("payment email outbox", () => {
       expect((await readRow(id)).claimed_at).not.toBeNull()
     })
 
-    it("does not stamp a claim that replaced its own", async () => {
+    // Once the email has left, the row is no longer owed, whoever holds the
+    // claim now. Leaving sent_at null would let the sweep send it yet again if
+    // the claim that replaced this one then fails.
+    it("records a send on a claim that was taken over, and says it may be a second one", async () => {
       const payment = await paidPayment()
       const id = await queuePaymentEmail(kyselyDb, {
         paymentId: payment.id,
@@ -286,7 +484,39 @@ describe("payment email outbox", () => {
 
       await deliverPaymentEmail(id)
 
-      expect((await readRow(id)).sent_at).toBeNull()
+      expect((await readRow(id)).sent_at).not.toBeNull()
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining("twice"),
+        expect.objectContaining({ paymentEmailId: id }),
+      )
+    })
+
+    it("does not send again an email that went out on a claim taken over", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      sendPaymentConfirmedEmail.mockImplementationOnce(async () => {
+        await kysely
+          .updateTable("payment_emails")
+          .set({ claimed_at: new Date().toISOString() })
+          .where("id", "=", id)
+          .execute()
+        return { success: true }
+      })
+      await deliverPaymentEmail(id)
+      // The claim that replaced it failed and gave the row back.
+      await kysely
+        .updateTable("payment_emails")
+        .set({ claimed_at: null })
+        .where("id", "=", id)
+        .execute()
+      await age(id, 15)
+
+      await sweepPaymentEmails()
+
+      expect(sendPaymentConfirmedEmail).toHaveBeenCalledTimes(1)
     })
 
     // The sweep's candidate query already filters these out, but a webhook
@@ -341,6 +571,7 @@ describe("payment email outbox", () => {
       expect((await readRow(id)).sent_at).toBeNull()
 
       await age(id, 15)
+      await waitOut(id)
       const stats = await sweepPaymentEmails()
 
       expect(stats).toEqual({ processed: 1, sent: 1, failed: 0, skipped: 0 })
@@ -357,6 +588,7 @@ describe("payment email outbox", () => {
       })
       await deliverPaymentEmail(id)
       await age(id, 15)
+      await waitOut(id)
       // The window the sweep cannot see: selected as a candidate, then claimed
       // by an admin hitting resend before the sweep reaches it.
       await kysely
@@ -369,6 +601,43 @@ describe("payment email outbox", () => {
 
       expect(stats.failed).toBe(0)
       expect((await readRow(id)).sent_at).toBeNull()
+    })
+
+    it("waits out the pause a failed send left before trying again", async () => {
+      sendPaymentConfirmedEmail.mockResolvedValueOnce({ success: false })
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await deliverPaymentEmail(id)
+      await age(id, 15)
+
+      const early = await sweepPaymentEmails()
+      await waitOut(id)
+      const late = await sweepPaymentEmails()
+
+      expect(early.processed).toBe(0)
+      expect(late.sent).toBe(1)
+    })
+
+    it("leaves a row it has given up on for a person", async () => {
+      const payment = await paidPayment()
+      const id = await queuePaymentEmail(kyselyDb, {
+        paymentId: payment.id,
+        kind: "confirmation",
+      })
+      await kysely
+        .updateTable("payment_emails")
+        .set({ attempts: 5, given_up_at: new Date().toISOString() })
+        .where("id", "=", id)
+        .execute()
+      await age(id, 15)
+
+      const stats = await sweepPaymentEmails()
+
+      expect(stats.processed).toBe(0)
+      expect(sendPaymentConfirmedEmail).not.toHaveBeenCalled()
     })
 
     it("leaves a row that already went out alone", async () => {

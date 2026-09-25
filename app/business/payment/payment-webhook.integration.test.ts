@@ -736,7 +736,7 @@ describe("applyWebhookEvent", () => {
       .where("id", "=", recorded.id)
       .executeTakeFirstOrThrow()
     expect(row.processed_at).not.toBeNull()
-    expect(logger.error).toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalled()
   })
 
   it("records no refund when every entry in the list was cancelled", async () => {

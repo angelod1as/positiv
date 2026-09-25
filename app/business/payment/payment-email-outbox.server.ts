@@ -33,8 +33,24 @@ const LEASE_MINUTES = 10
 /** Rows one sweep will carry, so a backlog cannot stall the request. */
 const SWEEP_LIMIT = 50
 
+/**
+ * The wait after a first failure, doubled with each one after it, so a send
+ * that will eventually go through is not retried on every sweep on its way.
+ */
+const BACKOFF_BASE_MINUTES = 15
+
+/**
+ * Attempts before the sweep stops and leaves the row for a person, the send
+ * that follows the queue included. With the backoff above that is about four
+ * hours from the first failure: long enough to ride out an outage, short
+ * enough that a send which will never work is noticed the same day.
+ */
+const MAX_ATTEMPTS = 5
+
 const minutesAgo = (minutes: number) =>
   new Date(Date.now() - minutes * 60 * 1000).toISOString()
+
+const minutesFromNow = (minutes: number) => minutesAgo(-minutes)
 
 /**
  * Records that a payment owes an email.
@@ -42,6 +58,11 @@ const minutesAgo = (minutes: number) =>
  * Takes the connection rather than reaching for one, so the caller can write
  * this inside the transaction that owes the email: the intent to send then
  * commits with the state change, and nothing is lost between the two.
+ *
+ * A payment owes at most one link at a time. Queuing another while one is
+ * still owed -- an admin hitting resend while sends are failing -- answers
+ * with that row instead, restarted: somebody asked for it again, so it gets a
+ * fresh run at being sent rather than what was left of the last one.
  */
 export async function queuePaymentEmail(
   db: Kysely<Database>,
@@ -50,6 +71,16 @@ export async function queuePaymentEmail(
   const row = await db
     .insertInto("payment_emails")
     .values({ payment_id: paymentId, kind })
+    .onConflict((oc) =>
+      oc
+        .column("payment_id")
+        // A literal, not a parameter: Postgres matches this predicate to the
+        // partial index at planning time, and a generic plan cannot see a
+        // parameter's value.
+        .where("kind", "=", sql.lit<PaymentEmailKind>("link"))
+        .where("sent_at", "is", null)
+        .doUpdateSet({ attempts: 0, given_up_at: null, next_attempt_at: null }),
+    )
     .returning("id")
     .executeTakeFirstOrThrow()
 
@@ -62,7 +93,8 @@ export async function queuePaymentEmail(
  * The claim is a guarded UPDATE, so of two senders reaching the same row only
  * one comes back with it — the other finds the lease taken and leaves. A send
  * that fails leaves `sent_at` null on purpose: the row is still owed, and the
- * sweep will come back for it once the lease expires.
+ * sweep will come back for it once its wait is over -- until the attempt that
+ * reaches MAX_ATTEMPTS, which sets `given_up_at` and leaves it for a person.
  *
  * `claimed` is how a caller tells the two apart: a row somebody else is
  * sending is not a row whose send failed.
@@ -78,6 +110,7 @@ export async function deliverPaymentEmail(
     })
     .where("id", "=", id)
     .where("sent_at", "is", null)
+    .where("given_up_at", "is", null)
     .where((eb) =>
       eb.or([
         eb("claimed_at", "is", null),
@@ -100,7 +133,7 @@ export async function deliverPaymentEmail(
         ),
       ]),
     )
-    .returning(["payment_id", "kind", "claimed_at"])
+    .returning(["payment_id", "kind", "claimed_at", "attempts"])
     .executeTakeFirst()
 
   if (!claimed) return { sent: false, claimed: false }
@@ -110,7 +143,8 @@ export async function deliverPaymentEmail(
   // Every write below is guarded on the claim this call took. A send that
   // hangs past the lease comes back to a row the sweep has re-claimed, and
   // what it writes then would release or stamp somebody else's claim -- which
-  // is the double send the lease exists to prevent.
+  // is the double send the lease exists to prevent. The one exception is a
+  // send that has already left, below.
   const heldClaim = claimed.claimed_at
 
   let error: string | null = null
@@ -122,21 +156,42 @@ export async function deliverPaymentEmail(
   }
 
   if (error) {
-    logger.error("A payment email could not be sent", {
+    const givingUp = claimed.attempts >= MAX_ATTEMPTS
+    // The claim is given back with the error: it covers a send in flight, and
+    // this one is over. How long the sweep waits before trying again is
+    // next_attempt_at's to say, not the lease's.
+    const released = await kyselyDb
+      .updateTable("payment_emails")
+      .set({
+        last_error: error,
+        claimed_at: null,
+        next_attempt_at: givingUp
+          ? null
+          : minutesFromNow(BACKOFF_BASE_MINUTES * 2 ** (claimed.attempts - 1)),
+        given_up_at: givingUp ? new Date().toISOString() : null,
+      })
+      .where("id", "=", id)
+      .where("claimed_at", "=", heldClaim)
+      .returning("id")
+      .executeTakeFirst()
+
+    const context = {
       paymentEmailId: id,
       paymentId,
       kind,
+      attempts: claimed.attempts,
       error,
-    })
-    // The claim is given back with the error: it covers a send in flight, and
-    // this one is over. Holding it for the rest of the lease would only make
-    // the sweep wait to try again.
-    await kyselyDb
-      .updateTable("payment_emails")
-      .set({ last_error: error, claimed_at: null })
-      .where("id", "=", id)
-      .where("claimed_at", "=", heldClaim)
-      .execute()
+    }
+    // A failure that will be tried again is a warning: the error level goes
+    // to Telegram, and a person only has to act once the row is given up on.
+    if (givingUp && released) {
+      logger.error(
+        "A payment email was given up on and needs a person",
+        context,
+      )
+    } else {
+      logger.warn("A payment email could not be sent", context)
+    }
     return { sent: false, claimed: true }
   }
 
@@ -149,13 +204,22 @@ export async function deliverPaymentEmail(
     .executeTakeFirst()
 
   if (!stamped) {
-    // The email went out on a claim that had already been taken over, so the
-    // row still reads as owed and whoever holds it now may send a second one.
-    // Nothing here can undo that; what it can do is say so.
-    logger.error("A payment email was sent on a claim that had expired", {
+    // The email went out on a claim that had already been taken over, and
+    // whoever holds it now may be sending a second one. Nothing here can undo
+    // that. What this can do is stop a third: the email left, so the row is
+    // no longer owed, whether or not the claim that replaced this one
+    // succeeds. A stamp that one writes afterwards only moves the timestamp.
+    await kyselyDb
+      .updateTable("payment_emails")
+      .set({ sent_at: new Date().toISOString(), last_error: null })
+      .where("id", "=", id)
+      .where("sent_at", "is", null)
+      .execute()
+    logger.error("A payment email may have gone out twice", {
       paymentEmailId: id,
       paymentId,
       kind,
+      reason: "sent on a claim that had expired and been taken over",
     })
   }
 
@@ -187,7 +251,14 @@ export async function sweepPaymentEmails(): Promise<{
     .innerJoin("payments as p", "p.id", "pe.payment_id")
     .select("pe.id")
     .where("pe.sent_at", "is", null)
+    .where("pe.given_up_at", "is", null)
     .where("pe.created_at", "<", minutesAgo(OVERDUE_MINUTES))
+    .where((eb) =>
+      eb.or([
+        eb("pe.next_attempt_at", "is", null),
+        eb("pe.next_attempt_at", "<=", new Date().toISOString()),
+      ]),
+    )
     .where((eb) =>
       eb.or([
         eb("pe.claimed_at", "is", null),

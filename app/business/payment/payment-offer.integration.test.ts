@@ -552,6 +552,24 @@ describe("resendPaymentOffer", () => {
     expect(rows[0].due_at).toEqual(payment.due_at)
   })
 
+  it("leaves one owed link when resent twice while sends are failing", async () => {
+    const payment = await chargeWith("pending")
+    sendPaymentLinkEmail.mockResolvedValue({ success: false })
+
+    await resendPaymentOffer({ paymentId: payment.id })
+    await resendPaymentOffer({ paymentId: payment.id })
+
+    const owed = await kysely
+      .selectFrom("payment_emails")
+      .select("id")
+      .where("payment_id", "=", payment.id)
+      .where("kind", "=", "link")
+      .where("sent_at", "is", null)
+      .execute()
+    expect(owed).toHaveLength(1)
+    expect(sendPaymentLinkEmail).toHaveBeenCalledTimes(2)
+  })
+
   it("resends for a charge the participant already picked an option on", async () => {
     const payment = await chargeWith("awaiting_payment")
 

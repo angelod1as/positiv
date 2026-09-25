@@ -24,7 +24,12 @@ describe("api.retry-payment-emails", () => {
   beforeEach(() => {
     vi.clearAllMocks()
     ENV.INTERNAL_JOB_SECRET = SECRET
-    sweepPaymentEmails.mockResolvedValue({ processed: 2, sent: 2, failed: 0 })
+    sweepPaymentEmails.mockResolvedValue({
+      processed: 2,
+      sent: 2,
+      failed: 0,
+      skipped: 0,
+    })
   })
 
   it("refuses a request with no bearer token", async () => {
@@ -75,7 +80,7 @@ describe("api.retry-payment-emails", () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
       success: true,
-      stats: { processed: 2, sent: 2, failed: 0 },
+      stats: { processed: 2, sent: 2, failed: 0, skipped: 0 },
     })
   })
 
