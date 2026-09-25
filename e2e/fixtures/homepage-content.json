@@ -1,0 +1,580 @@
+{
+  "about": {
+    "cards": [
+      {
+        "_key": "notAMess",
+        "body": [
+          {
+            "_key": "b0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b0s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Nossos eventos são tipo um "
+              },
+              {
+                "_key": "b0s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "piquenique"
+              },
+              {
+                "_key": "b0s2",
+                "_type": "span",
+                "marks": [],
+                "text": " ou "
+              },
+              {
+                "_key": "b0s3",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "churras"
+              },
+              {
+                "_key": "b0s4",
+                "_type": "span",
+                "marks": [],
+                "text": " entre amigues. "
+              },
+              {
+                "_key": "b0s5",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "Não somos uma balada"
+              },
+              {
+                "_key": "b0s6",
+                "_type": "span",
+                "marks": [],
+                "text": "."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b1",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b1s0",
+                "_type": "span",
+                "marks": [],
+                "text": "A diferença? Você pode ficar "
+              },
+              {
+                "_key": "b1s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "pelade"
+              },
+              {
+                "_key": "b1s2",
+                "_type": "span",
+                "marks": [],
+                "text": " e fazer "
+              },
+              {
+                "_key": "b1s3",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "sexo"
+              },
+              {
+                "_key": "b1s4",
+                "_type": "span",
+                "marks": [],
+                "text": " na boa, sem se esconder. É um encontro relax, focado em trocar ideia e estar juntes."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "title": "suruba não é bagunça"
+      },
+      {
+        "_key": "affection",
+        "body": [
+          {
+            "_key": "b0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b0s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Somos muito diferentes de sauna ou casa de swing. Priorizamos "
+              },
+              {
+                "_key": "b0s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "segurança"
+              },
+              {
+                "_key": "b0s2",
+                "_type": "span",
+                "marks": [],
+                "text": " e "
+              },
+              {
+                "_key": "b0s3",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "consentimento"
+              },
+              {
+                "_key": "b0s4",
+                "_type": "span",
+                "marks": [],
+                "text": "."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b1",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b1s0",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "Não é sobre putaria, é sobre afeto."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b2s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Incentivamos a "
+              },
+              {
+                "_key": "b2s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "conversa"
+              },
+              {
+                "_key": "b2s2",
+                "_type": "span",
+                "marks": [],
+                "text": ", a "
+              },
+              {
+                "_key": "b2s3",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "troca"
+              },
+              {
+                "_key": "b2s4",
+                "_type": "span",
+                "marks": [],
+                "text": ". Sexo, só com "
+              },
+              {
+                "_key": "b2s5",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "100% de consentimento"
+              },
+              {
+                "_key": "b2s6",
+                "_type": "span",
+                "marks": [],
+                "text": " — "
+              },
+              {
+                "_key": "b2s7",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "ninguém é obrigade a nada"
+              },
+              {
+                "_key": "b2s8",
+                "_type": "span",
+                "marks": [],
+                "text": "."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "title": "afeto vs putaria"
+      },
+      {
+        "_key": "forWhom",
+        "body": [
+          {
+            "_key": "b0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b0s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Nossos encontros são para pessoas "
+              },
+              {
+                "_key": "b0s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "não-monogâmicas"
+              },
+              {
+                "_key": "b0s2",
+                "_type": "span",
+                "marks": [],
+                "text": " e "
+              },
+              {
+                "_key": "b0s3",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "queer"
+              },
+              {
+                "_key": "b0s4",
+                "_type": "span",
+                "marks": [],
+                "text": "."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b1",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b1s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Criamos um espaço de "
+              },
+              {
+                "_key": "b1s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "liberdade"
+              },
+              {
+                "_key": "b1s2",
+                "_type": "span",
+                "marks": [],
+                "text": " e "
+              },
+              {
+                "_key": "b1s3",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "exploração"
+              },
+              {
+                "_key": "b1s4",
+                "_type": "span",
+                "marks": [],
+                "text": ", ideal para quem foge do tradicional."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b2",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b2s0",
+                "_type": "span",
+                "marks": [],
+                "text": "E, claro, nosso evento é para "
+              },
+              {
+                "_key": "b2s1",
+                "_type": "span",
+                "marks": [
+                  "strong"
+                ],
+                "text": "maiores de 18 anos"
+              },
+              {
+                "_key": "b2s2",
+                "_type": "span",
+                "marks": [],
+                "text": "."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "title": "para quem?"
+      }
+    ],
+    "title": "Como assim?"
+  },
+  "ctaBanner": {
+    "body": [
+      {
+        "_key": "b0",
+        "_type": "block",
+        "children": [
+          {
+            "_key": "b0s0",
+            "_type": "span",
+            "marks": [],
+            "text": "Faça login agora, candidate-se ao próximo evento, ou seja lembrade por quando novas candidaturas abrirem"
+          }
+        ],
+        "markDefs": [],
+        "style": "normal"
+      }
+    ],
+    "title": "Não perca nossos próximos eventos"
+  },
+  "feedback": {
+    "body": [
+      {
+        "_key": "b0",
+        "_type": "block",
+        "children": [
+          {
+            "_key": "b0s0",
+            "_type": "span",
+            "marks": [],
+            "text": "Estamos sempre buscando melhorias em nossa comunicação e processo. Nos deixe um feedback anônimo (ou não)."
+          }
+        ],
+        "markDefs": [],
+        "style": "normal"
+      }
+    ],
+    "ctaLabel": "Deixar feedback",
+    "title": "Nos deixe um feedback"
+  },
+  "founders": {
+    "people": [
+      {
+        "_id": "person-julia",
+        "bio": [
+          {
+            "_key": "b0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b0s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Safofa de marca maior, gosta de todas as identidades de gênero e orientações sexuais, mas se identifica como demissexual. Vive a não monogamia desde 2009 e a cada dia gosta mais da sua versão atual, conectada com a Não Monogamia Política."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          },
+          {
+            "_key": "b1",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b1s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Para ela, os eventos são, ao mesmo tempo, sua Pasárgada e a injeção de fé humanidade que a faz querer continuar a criar espaços seguros, de acolhimento e de muito amor."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "instagram": "ju.z.fernandez",
+        "name": "Julia Fernandez",
+        "photo": {
+          "alt": "Foto de Julia Fernandez",
+          "asset": {
+            "_ref": "image-bd2c80be2afff6412d060425ab79204807222a12-1104x1104-jpg",
+            "_type": "reference"
+          },
+          "crop": null,
+          "hotspot": null
+        },
+        "pronouns": "todos os pronomes"
+      },
+      {
+        "_id": "person-angelo",
+        "bio": [
+          {
+            "_key": "b0",
+            "_type": "block",
+            "children": [
+              {
+                "_key": "b0s0",
+                "_type": "span",
+                "marks": [],
+                "text": "Programador, designer e escritor, Angelo vive ativamente a não-monogamia e anarquia relacional desde 2017. Sonha em colocar "
+              },
+              {
+                "_key": "b0s1",
+                "_type": "span",
+                "marks": [
+                  "em"
+                ],
+                "text": "organizador de suruba"
+              },
+              {
+                "_key": "b0s2",
+                "_type": "span",
+                "marks": [],
+                "text": " no Linkedin, é um nerdola que acha Star Trek melhor que Star Wars, e encontrou nesse tipo de evento um modo seguro de explorar sua sexualidade — e se juntou à Julia para provê-lo para outras pessoas."
+              }
+            ],
+            "markDefs": [],
+            "style": "normal"
+          }
+        ],
+        "instagram": "oicronofobico",
+        "name": "Angelo Dias",
+        "photo": {
+          "alt": "Foto de Angelo Dias",
+          "asset": {
+            "_ref": "image-f3da75e8d48ca346fcca68a8849ce6d7ed0f4fc9-960x960-jpg",
+            "_type": "reference"
+          },
+          "crop": null,
+          "hotspot": null
+        },
+        "pronouns": "ele/dele"
+      }
+    ],
+    "title": "Quem faz a Positiv?",
+    "videoTitle": "YouTube video player",
+    "videoUrl": "https://www.youtube.com/watch?v=WIveBynr7Yc"
+  },
+  "hero": {
+    "subtitle": [
+      {
+        "_key": "b0",
+        "_type": "block",
+        "children": [
+          {
+            "_key": "b0s0",
+            "_type": "span",
+            "marks": [],
+            "text": "para amantes de saliências "
+          },
+          {
+            "_key": "b0s1",
+            "_type": "span",
+            "marks": [
+              "strong"
+            ],
+            "text": "não-mono"
+          },
+          {
+            "_key": "b0s2",
+            "_type": "span",
+            "marks": [],
+            "text": ", curioses com o mundo da "
+          },
+          {
+            "_key": "b0s3",
+            "_type": "span",
+            "marks": [
+              "strong"
+            ],
+            "text": "suruba"
+          },
+          {
+            "_key": "b0s4",
+            "_type": "span",
+            "marks": [],
+            "text": ", e quem quer explorar a "
+          },
+          {
+            "_key": "b0s5",
+            "_type": "span",
+            "marks": [
+              "strong"
+            ],
+            "text": "própria sexualidade"
+          }
+        ],
+        "markDefs": [],
+        "style": "normal"
+      }
+    ],
+    "title": "evento de gente pelada"
+  },
+  "nextEvents": {
+    "count": 3,
+    "subtitle": "Confira nossos próximos encontros e garanta sua participação.",
+    "title": "Próximos Eventos"
+  },
+  "testimonials": {
+    "quotes": [
+      {
+        "_key": "quote0",
+        "author": "A., 32",
+        "quote": "\"Participei do meu primeiro evento da Positiv com muita insegurança, mas a organização foi impecável. O ambiente respeitoso e as regras claras me fizeram sentir segura o tempo todo. Foi uma experiência libertadora que me ajudou a redescobrir minha sexualidade.\""
+      },
+      {
+        "_key": "quote1",
+        "author": "C., 40",
+        "quote": "\"Como casal, estávamos buscando novas experiências para apimentar nosso relacionamento. Os eventos da Positiv superaram nossas expectativas. A seleção criteriosa dos participantes e a organização impecável criaram um ambiente perfeito para explorarmos juntos.\""
+      },
+      {
+        "_key": "quote2",
+        "author": "P., 28",
+        "quote": "\"O processo de seleção é rigoroso, mas vale a pena. Nos eventos da Positiv, encontrei pessoas com a mesma mentalidade, abertas a novas experiências e respeitosas. A atmosfera é de liberdade total, mas com limites claros que todos respeitam.\""
+      }
+    ],
+    "subtitle": "Experiências reais de algumas pessoas que participaram dos nossos eventos.",
+    "title": "Quem vai, nunca esquece"
+  }
+}

@@ -11,7 +11,7 @@ export default defineConfig({
   title: "Positiv",
 
   projectId: "8ojkallk",
-  dataset: "production",
+  dataset: process.env.SANITY_STUDIO_DATASET || "production",
 
   plugins: [structureTool({ structure }), visionTool()],
 
