@@ -99,7 +99,7 @@ export const paymentLinkMailTemplate = (input: PaymentLinkMailInput): string => 
 
               <!-- CTA -->
               <div style="text-align: center; margin: 0 0 20px 0;">
-                <a href="${paymentUrl}" style="display: inline-block; background: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
+                <a href="${paymentUrl}" style="display: inline-block; background-color: #bf03c3; color: #ffffff; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px;">
                   ${paymentLinkMailCopy.cta}
                 </a>
               </div>

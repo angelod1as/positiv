@@ -138,6 +138,7 @@ describe("paymentRefundMailTemplate", () => {
     })
 
     expect(html).toContain("background-color: #ffffff")
+    expect(html).not.toMatch(/background: #/)
     expect(html).toMatch(/background-color: #[0-9a-f]{6}; background-image: linear-gradient/)
   })
 

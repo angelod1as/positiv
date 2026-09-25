@@ -65,7 +65,7 @@ describe("eventOpeningMailTemplate", () => {
   it("should include CTA button", () => {
     const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
     expect(result).toContain("Candidate-se agora!")
-    expect(result).toMatch(/background: #bf03c3/)
+    expect(result).toMatch(/background-color: #bf03c3/)
   })
 
   it("should include opening announcement message", () => {
