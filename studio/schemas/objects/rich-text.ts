@@ -14,7 +14,9 @@ function isAllowed(block: PortableTextBlock) {
     return false
   }
 
-  const annotationKeys = (block.markDefs ?? []).map((markDef) => markDef._key)
+  const annotationKeys = (block.markDefs ?? [])
+    .filter((markDef) => markDef._type === "link")
+    .map((markDef) => markDef._key)
 
   return block.children.every(
     (child) =>

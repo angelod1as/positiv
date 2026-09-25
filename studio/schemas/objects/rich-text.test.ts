@@ -69,6 +69,17 @@ describe("richText", () => {
     ).not.toEqual([])
   })
 
+  it("rejects an annotation other than a link", async () => {
+    expect(
+      await validateValueOf("richText", [
+        paragraph(
+          [{ _type: "comment", _key: "c1", href: "https://example.com" }],
+          ["c1"],
+        ),
+      ]),
+    ).not.toEqual([])
+  })
+
   it("rejects an image", async () => {
     expect(
       await validateValueOf("richText", [
