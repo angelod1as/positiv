@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 
+import { pathsOf } from "../../test/errors"
 import { validateDocumentOf } from "../../test/validate"
 
 const bio = [
@@ -26,10 +27,6 @@ const validPerson = {
   bio,
 }
 
-function pathsOfErrors(errors: { path: string }[]) {
-  return errors.map((error) => error.path)
-}
-
 describe("person", () => {
   it("accepts a complete person", async () => {
     expect(await validateDocumentOf("person", validPerson)).toEqual([])
@@ -43,7 +40,7 @@ describe("person", () => {
         [field]: undefined,
       })
 
-      expect(pathsOfErrors(errors)).toContain(field)
+      expect(pathsOf(errors)).toContain(field)
     },
   )
 
@@ -53,7 +50,7 @@ describe("person", () => {
       photo: { _type: "image", alt: "Julia sorrindo" },
     })
 
-    expect(pathsOfErrors(errors)).toContain("photo")
+    expect(pathsOf(errors)).toContain("photo")
   })
 
   it("requires alt text on the photo", async () => {
@@ -62,7 +59,7 @@ describe("person", () => {
       photo: { ...validPerson.photo, alt: undefined },
     })
 
-    expect(pathsOfErrors(errors)).toContain("photo.alt")
+    expect(pathsOf(errors)).toContain("photo.alt")
   })
 
   it.each([
@@ -75,6 +72,6 @@ describe("person", () => {
       instagram,
     })
 
-    expect(pathsOfErrors(errors)).toContain("instagram")
+    expect(pathsOf(errors)).toContain("instagram")
   })
 })
