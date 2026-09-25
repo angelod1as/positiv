@@ -355,6 +355,9 @@ importers:
       eslint:
         specifier: ^10.8.1
         version: 10.11.0(jiti@2.7.0)(supports-color@8.1.1)
+      groq-js:
+        specifier: ^2.0.0
+        version: 2.0.0
       typescript:
         specifier: ^5.8
         version: 5.8.3
