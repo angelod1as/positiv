@@ -144,10 +144,10 @@ border-radius: 10px;       /* Container border radius */
 
 ```html
 <!-- Outer wrapper (Brand Purple or Clean White) -->
-<div style="background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
+<div style="background-color: #853cca; background-image: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
 
   <!-- Inner white container -->
-  <div style="background: #ffffff; max-width: 600px; margin: 0 auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+  <div style="background-color: #ffffff; max-width: 600px; margin: 0 auto; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
 
     <!-- Header -->
     <div style="text-align: center; padding: 30px 24px 20px 24px;">
@@ -160,7 +160,7 @@ border-radius: 10px;       /* Container border radius */
     </div>
 
     <!-- Footer -->
-    <div style="background: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
+    <div style="background-color: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
       <!-- Footer content -->
     </div>
 
@@ -187,7 +187,7 @@ border-radius: 10px;       /* Container border radius */
 **Primary Button (Purple):**
 ```html
 <div style="text-align: center; margin: 30px 0;">
-  <a href="#" style="display: inline-block; background: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
+  <a href="#" style="display: inline-block; background-color: #bf03c3; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif; box-shadow: 0 2px 8px rgba(191,3,195,0.3);">
     Button Text
   </a>
 </div>
@@ -196,7 +196,7 @@ border-radius: 10px;       /* Container border radius */
 **Secondary Button (Blue):**
 ```html
 <div style="text-align: center; margin: 20px 0;">
-  <a href="#" style="display: inline-block; background: #4a75d2; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif;">
+  <a href="#" style="display: inline-block; background-color: #4a75d2; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 16px; font-family: 'Nunito', Arial, sans-serif;">
     Button Text
   </a>
 </div>
@@ -237,7 +237,7 @@ border-radius: 10px;       /* Container border radius */
 ### Blockquote
 
 ```html
-<blockquote style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 20px 0; padding: 16px 20px; background: #f9f5ff; border-left: 4px solid #bf03c3; color: #555; font-style: italic;">
+<blockquote style="font-family: 'Nunito', Arial, sans-serif; font-size: 16px; line-height: 1.6; margin: 20px 0; padding: 16px 20px; background-color: #f9f5ff; border-left: 4px solid #bf03c3; color: #555; font-style: italic;">
   "Quote text here"
 </blockquote>
 ```
@@ -246,12 +246,12 @@ border-radius: 10px;       /* Container border radius */
 
 **Inline Code:**
 ```html
-<code style="background: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 14px; color: #bf03c3;">code</code>
+<code style="background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; font-family: 'Courier New', monospace; font-size: 14px; color: #bf03c3;">code</code>
 ```
 
 **Code Block:**
 ```html
-<pre style="background: #f4f4f4; padding: 16px; border-radius: 5px; overflow-x: auto; margin: 0 0 20px 0; border-left: 3px solid #bf03c3;"><code style="font-family: 'Courier New', monospace; font-size: 14px; color: #333; line-height: 1.5;">function example() {
+<pre style="background-color: #f4f4f4; padding: 16px; border-radius: 5px; overflow-x: auto; margin: 0 0 20px 0; border-left: 3px solid #bf03c3;"><code style="font-family: 'Courier New', monospace; font-size: 14px; color: #333; line-height: 1.5;">function example() {
   return true;
 }</code></pre>
 ```
@@ -265,7 +265,7 @@ border-radius: 10px;       /* Container border radius */
 ### Footer
 
 ```html
-<div style="background: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
+<div style="background-color: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
   <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666; margin: 0 0 8px 0;">
     Você recebeu este e-mail pois se cadastrou no site da
     <a href="https://www.positivparty.com" style="color: #bf03c3; text-decoration: none;">Positiv</a>
@@ -285,7 +285,7 @@ border-radius: 10px;       /* Container border radius */
 
 **Outer wrapper with gradient background:**
 ```html
-<div style="background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
+<div style="background-color: #853cca; background-image: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
 ```
 
 ### Clean White (Alternative)
@@ -293,7 +293,7 @@ border-radius: 10px;       /* Container border radius */
 **To switch to Clean White theme, replace the outer wrapper background:**
 ```html
 <!-- THEME SWITCH: Replace outer div with this for Clean White theme -->
-<div style="background: #f0f0f0; padding: 40px 20px; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
+<div style="background-color: #f0f0f0; padding: 40px 20px; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
 ```
 
 **Note:** Only the outer wrapper background changes. All inner content remains identical.
@@ -334,6 +334,8 @@ All Listmonk templates support markdown in the visual editor and content areas. 
 6. **Test font fallbacks** - Not all email clients load web fonts
 7. **Use `role="presentation"` on layout tables** - For accessibility
 8. **Add alt text to all images** - For accessibility and when images don't load
+9. **Set colors with `background-color`, never the `background` shorthand** - Some clients rewrite the shorthand and drop the color, leaving text on the gradient. A gradient goes in `background-image`, with a solid `background-color` (`#853cca`) underneath for clients that cannot render it
+10. **Never size with viewport units** - No `min-height: 100vh`. Clients render mail in an iframe sized to its content, so `vh` feeds back into the iframe height and the email grows into a huge empty scroll
 
 ### Listmonk-Specific Guidelines
 

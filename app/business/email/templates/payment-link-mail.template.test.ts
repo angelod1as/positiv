@@ -79,4 +79,12 @@ describe("paymentLinkMailTemplate", () => {
       paymentLinkMailTemplate({ ...base, paymentUrl: "javascript:alert(1)" }),
     ).toThrow()
   })
+
+  it("sizes to its content", () => {
+    const html = paymentLinkMailTemplate(base)
+
+    // Clients render mail in an iframe sized to its content, so 100vh feeds
+    // back into the iframe height and leaves a huge empty scroll.
+    expect(html).not.toContain("100vh")
+  })
 })

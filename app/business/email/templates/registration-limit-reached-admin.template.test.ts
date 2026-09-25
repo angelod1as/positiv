@@ -106,4 +106,16 @@ describe("registrationLimitReachedAdminTemplate", () => {
     expect(html).not.toContain("onerror")
     expect(html).not.toContain("alert(1)")
   })
+
+  it("sizes to its content", () => {
+    const html = registrationLimitReachedAdminTemplate(
+      mockEvent,
+      participantCount,
+      timestamp,
+    )
+
+    // Clients render mail in an iframe sized to its content, so 100vh feeds
+    // back into the iframe height and leaves a huge empty scroll.
+    expect(html).not.toContain("100vh")
+  })
 })

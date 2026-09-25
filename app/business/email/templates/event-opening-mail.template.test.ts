@@ -65,7 +65,7 @@ describe("eventOpeningMailTemplate", () => {
   it("should include CTA button", () => {
     const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
     expect(result).toContain("Candidate-se agora!")
-    expect(result).toMatch(/background: #bf03c3/)
+    expect(result).toMatch(/background-color: #bf03c3/)
   })
 
   it("should include opening announcement message", () => {
@@ -145,8 +145,16 @@ describe("eventOpeningMailTemplate", () => {
 
   it("should include details in a styled section", () => {
     const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
-    expect(result).toContain("background: #f9f9f9")
+    expect(result).toContain("background-color: #f9f9f9")
     expect(result).toContain("border-radius: 8px")
+  })
+
+  it("sizes to its content", () => {
+    const html = eventOpeningMailTemplate(mockEvent, mockProfileId)
+
+    // Clients render mail in an iframe sized to its content, so 100vh feeds
+    // back into the iframe height and leaves a huge empty scroll.
+    expect(html).not.toContain("100vh")
   })
 })
 

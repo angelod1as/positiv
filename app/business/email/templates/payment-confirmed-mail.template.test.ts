@@ -62,4 +62,20 @@ describe("paymentConfirmedMailTemplate", () => {
 
     expect(html).toContain("23/08/2026")
   })
+
+  it("sizes to its content", () => {
+    const html = paymentConfirmedMailTemplate({
+      displayName: "Ana",
+      eventTitle: "Festa",
+      eventEmoji: null,
+      amount: 22199,
+      method: "pix",
+      installmentCount: null,
+      paidAt: "2026-08-24T12:00:00Z",
+    })
+
+    // Clients render mail in an iframe sized to its content, so 100vh feeds
+    // back into the iframe height and leaves a huge empty scroll.
+    expect(html).not.toContain("100vh")
+  })
 })
