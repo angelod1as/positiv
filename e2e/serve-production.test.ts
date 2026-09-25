@@ -136,6 +136,15 @@ describe('the Asaas the server under test talks to', () => {
     expect(started).toBe(false)
   })
 
+  it('links emails to itself, since a payment email is built with no request to take a host from', async () => {
+    fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    void startProductionServer()
+
+    expect(spawn.mock.calls[0][2].env.APP_URL).toBe('http://localhost:5301')
+  })
+
   it('stops with the server', async () => {
     const child = fakeServerProcess()
     const { startProductionServer, stopProductionServer } = await import('./serve-production')

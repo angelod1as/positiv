@@ -8,7 +8,7 @@ import {
   startAsaasMockServer,
   stopAsaasMockServer,
 } from "./mocks/asaas-mock-server"
-import { getAsaasMockUrl, getServerPort } from "./utils/run-context"
+import { getAsaasMockUrl, getBaseUrl, getServerPort } from "./utils/run-context"
 
 let serverProcess: ChildProcess | null = null
 
@@ -72,6 +72,10 @@ async function startProductionServer() {
         ...inherited,
         PORT: String(port),
         NODE_ENV: "production",
+        // Payment emails are built with no request to take a host from (the
+        // retry sweep sends them too), so without APP_URL their link comes
+        // out relative and the template refuses it. CI sets none.
+        APP_URL: getBaseUrl(),
         // Set here rather than in .env so the suite always talks to the mock,
         // never to the sandbox key a developer keeps locally.
         PAYMENTS_ENABLED: "true",
