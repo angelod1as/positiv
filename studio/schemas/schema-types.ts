@@ -1,5 +1,6 @@
 import type { SchemaTypeDefinition } from "sanity"
 
+import { homepage } from "./documents/homepage"
 import { person } from "./documents/person"
 import { richText } from "./objects/rich-text"
 import { about } from "./sections/about"
@@ -20,4 +21,5 @@ export const schemaTypes: SchemaTypeDefinition[] = [
   ctaBanner,
   founders,
   feedback,
+  homepage,
 ]
