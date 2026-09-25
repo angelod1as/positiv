@@ -7,7 +7,6 @@ export interface TestParticipant {
   profileId: string
   userId: string
   email: string
-  password: string
   fullName: string
   socialName: string
   phone: number
@@ -113,7 +112,6 @@ export async function createTestEventWithParticipants(
       profileId: profile.id,
       userId: user.id,
       email: email,
-      password,
       fullName: profile.full_name || `Test Participant ${i + 1}`,
       socialName: profile.social_name || `Participant ${i + 1}`,
       phone: profile.phone || 11999999000 + i,
