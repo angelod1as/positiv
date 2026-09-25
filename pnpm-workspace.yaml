@@ -1,3 +1,6 @@
+packages:
+  - studio
+
 allowBuilds:
   '@tailwindcss/oxide': true
   '@vercel/speed-insights': true

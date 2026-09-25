@@ -60,4 +60,16 @@ describe("deploy-and-test workflow", () => {
   it("runs e2e alongside the other checks rather than queued behind them", () => {
     expect(jobBlock("e2e-test")).not.toMatch(/^ {4}needs:/m)
   })
+
+  it("builds the Studio in every pull request, so a broken schema never merges", () => {
+    expect(runCommand("Build the Studio")).toBe("pnpm --filter studio build")
+  })
+
+  it("runs the Studio's tests, which test:coverage does not reach", () => {
+    expect(runCommand("Test the Studio")).toBe("pnpm --filter studio test")
+  })
+
+  it("type-checks and lints the Studio, which sanity build does not", () => {
+    expect(runCommand("Lint the Studio")).toBe("pnpm --filter studio lint")
+  })
 })

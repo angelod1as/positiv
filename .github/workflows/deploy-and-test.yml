@@ -61,6 +61,13 @@ jobs:
           git diff --exit-code env.d.ts
       - name: Run unit tests
         run: pnpm test:coverage
+      # test:coverage runs the app's Vitest only; the Studio has its own.
+      - name: Lint the Studio
+        run: pnpm --filter studio lint
+      - name: Test the Studio
+        run: pnpm --filter studio test
+      - name: Build the Studio
+        run: pnpm --filter studio build
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
