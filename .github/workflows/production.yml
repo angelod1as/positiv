@@ -214,7 +214,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
       - name: Deploy the Studio
-        run: pnpm --filter studio deploy
+        run: pnpm --filter studio run deploy
 
   # Nothing here used to look at the site. A merge that produced an image which
   # could not boot took production down, and the way anyone found out was by

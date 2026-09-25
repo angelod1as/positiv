@@ -83,7 +83,9 @@ describe("production workflow", () => {
   it("deploys the Studio without a prompt, authenticated by the deploy token", () => {
     const deployStudio = jobBlock("deploy-studio")
 
-    expect(runCommand("Deploy the Studio")).toBe("pnpm --filter studio deploy")
+    // `deploy` is a pnpm built-in, so without `run` pnpm copies the package to
+    // a target directory instead of running the Studio's deploy script.
+    expect(runCommand("Deploy the Studio")).toBe("pnpm --filter studio run deploy")
     expect(deployStudio).toContain("SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}")
   })
 })
