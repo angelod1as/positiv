@@ -361,7 +361,8 @@ back; the anticipation fee never comes back. PIX can be refunded within 90
 days, a card within 365 — both far outside the 30-day registration window, so
 neither deadline is reachable in practice. A PIX refund needs the money to be
 available in the account and answers 400 when it is not. POS-532 confirms all
-of this against the sandbox.
+of this against the sandbox, except the anticipation fee, which only a real
+production charge can show (PR 14).
 
 1. Admin clicks **Reembolsar** in the modal: `asaas_net` by default, optional
    smaller amount and reason. Confirmation dialog.
@@ -420,8 +421,13 @@ mirror the public price list):
 
 The percentages above were read from the sandbox account on 2026-08-24, where
 they are the public price list. POS-519 carries the full payload; production
-may have negotiated rates, which is why PR 13 re-runs the lookup and
-re-calibrates before the flag goes on.
+may have negotiated rates, which is why PR 14 re-runs the lookup and
+re-calibrates before the flag goes on. The sandbox cannot calibrate the
+anticipation term at all: Asaas books anticipation as its own object
+(`GET /v3/anticipations?payment=`), not in the charge's `netValue`, and the
+anticipation simulation is unavailable in the sandbox. PR 13 calibrates the
+PIX and card fees; the anticipation term is checked on PR 14's real card
+charge.
 
 Positiv must net `base`. With card fee `p` (percentage) and `f` (fixed), and
 anticipation at the monthly rate `r` that matches `n`, charged per
@@ -565,7 +571,7 @@ manually, exactly as today.
 | # | PR | Contents |
 |---|---|---|
 | **A** | | |
-| 0 | (no code) | Asaas account checklist: sandbox account, its API key and PIX key, the fee snapshot everything is calibrated against, and the address that receives webhook failure alerts. The production account is confirmed to exist and be approved, but is only wired up in PR 13 |
+| 0 | (no code) | Asaas account checklist: sandbox account, its API key and PIX key, the fee snapshot everything is calibrated against, and the address that receives webhook failure alerts. The production account is confirmed to exist and be approved, but is only wired up in PR 14 |
 | 1 | `ticket_price` in cents | migration + event form/card/dashboard/admin readers + `formatCurrency(cents)` helper |
 | 2 | Payments schema | enums, `payments`, `payment_webhook_events`, `profiles.asaas_customer_id`, view, indexes, RLS, `updated_at` trigger, cron; test utils + cleanup lists; regenerated types |
 | 3 | Backfill | migration + integration test on seeded data (columns still present) |
@@ -579,13 +585,15 @@ manually, exactly as today.
 | 10 | Payment page | `/pagamento`, CPF gate, `pickOption`, dashboard CTA, thank-you page |
 | 11 | Webhook | endpoint, inbox, transitions, confirmation email, Telegram alerts |
 | 12 | Refund | modal action, Asaas call, refund email |
-| 13 | E2E + sandbox | mock server, E2E specs, `scripts/asaas/smoke.ts`, runbook `docs/payments-runbook.md`, news item, production cutover, flag on in production |
+| 13 | E2E + sandbox | mock server, E2E specs, `scripts/asaas/smoke.ts`, runbook `docs/payments-runbook.md` — flag still off in production |
+| — | Online payments switch | "Pagamentos online" in the admin: back to manual-only at any moment, with the webhook still recording money in flight |
+| 14 | Production cutover | re-verify the account, production key and webhook, anticipation calibrated on a real charge, news item, beta notice, flag on |
 
-PR 0 blocks only PR 13 and can run in parallel with all of Phase A.
+PR 0 blocks only PRs 13 and 14 and can run in parallel with all of Phase A.
 
 Everything up to PR 12 is built and calibrated against the Asaas **sandbox**,
 and PR 0 is scoped to it. An idle Asaas account is closed after a period of
-inactivity, so the production account is only wired up in PR 13, whose
+inactivity, so the production account is only wired up in PR 14, whose
 cutover step re-verifies the account facts PR 0 recorded — approval and
 anticipation both decay if the account lapses — and re-runs the fee lookup,
 since sandbox returns the public price list and production may not.
@@ -612,6 +620,8 @@ no exception; the design document is the one that stays.
 | 11 | POS-530 | `POS-530-asaas-webhook.md` |
 | 12 | POS-531 | retired — the PR is open |
 | 13 | POS-532 | `POS-532-e2e-and-launch.md` |
+| — | POS-565 | the Linear issue |
+| 14 | POS-560 | no code for the cutover — the checklist is the Linear issue |
 
 Two things the plans decided that this document only implied:
 
@@ -646,7 +656,7 @@ Two things the plans decided that this document only implied:
   installments confirm, so `fee` is exact only after the last one.
 - **`successUrl` domain**: must match the commercial data on the Asaas
   account, otherwise charge creation fails with `invalid_callback` — the
-  cutover checklist in PR 13 covers it; the client falls back to no callback
+  cutover checklist in PR 14 covers it; the client falls back to no callback
   when the env is not production.
 - **Webhook queue interruption** after 15 consecutive failures: alert email
   goes to the address on the webhook config; runbook has the
