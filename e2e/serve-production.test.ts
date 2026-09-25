@@ -123,6 +123,19 @@ describe('the Asaas the server under test talks to', () => {
     delete process.env._VARLOCK_ENV_KEY
   })
 
+  it('is listening before the suite is told the server is up', async () => {
+    asaasMock.startAsaasMockServer.mockImplementationOnce(() => new Promise<string>(() => {}))
+    const child = fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    let started = false
+    void startProductionServer().then(() => (started = true))
+    child.stdout.emit('data', Buffer.from('serving on http://localhost:5301'))
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    expect(started).toBe(false)
+  })
+
   it('stops with the server', async () => {
     const child = fakeServerProcess()
     const { startProductionServer, stopProductionServer } = await import('./serve-production')

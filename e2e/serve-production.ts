@@ -62,7 +62,8 @@ async function startProductionServer() {
   const { __VARLOCK_ENV: _blob, _VARLOCK_ENV_KEY: _blobKey, ...inherited } = process.env
 
   return new Promise<void>((resolve, reject) => {
-    startAsaasMockServer(Number(new URL(asaasUrl).port)).catch(reject)
+    const asaasListening = startAsaasMockServer(Number(new URL(asaasUrl).port))
+    asaasListening.catch(reject)
 
     serverProcess = spawn("pnpm", ["exec", "varlock", "run", "--", "react-router-serve", serverPath], {
       stdio: ["ignore", "pipe", "pipe"],
@@ -103,7 +104,7 @@ async function startProductionServer() {
       if (!serverStarted && message.includes(`localhost:${port}`)) {
         serverStarted = true
         clearTimeout(startupTimeout)
-        resolve()
+        asaasListening.then(() => resolve(), reject)
       }
     })
     
