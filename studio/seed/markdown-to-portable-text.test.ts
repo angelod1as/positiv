@@ -65,6 +65,12 @@ describe("markdownToPortableText", () => {
     ])
   })
 
+  it("leaves underscores between accented letters alone", () => {
+    expect(textOf(markdownToPortableText("pé_de_água"))).toEqual([
+      "pé_de_água",
+    ])
+  })
+
   it("turns a link into a link annotation", () => {
     const [block] = markdownToPortableText(
       "veja os [próximos eventos](/eventos) agora",

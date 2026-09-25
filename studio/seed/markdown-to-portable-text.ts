@@ -8,7 +8,8 @@ type Block = {
   children: Span[]
 }
 
-const inline = /\*\*(.+?)\*\*|(?<!\w)_(.+?)_(?!\w)|\[(.+?)\]\((.+?)\)/g
+const inline =
+  /\*\*(.+?)\*\*|(?<![\p{L}\p{N}_])_(.+?)_(?![\p{L}\p{N}_])|\[(.+?)\]\((.+?)\)/gu
 
 function toBlock(paragraph: string, blockIndex: number): Block {
   const key = `b${blockIndex}`
