@@ -21,6 +21,7 @@ export function createContentCache<T>({
       return value
     } catch (error) {
       if (!cached) throw error
+      cached.loadedAt = Date.now()
       logger.error(`Could not reload the ${name} content, serving it stale`, {
         error: error instanceof Error ? error.message : String(error),
       })

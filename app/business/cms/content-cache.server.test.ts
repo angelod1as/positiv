@@ -55,6 +55,25 @@ describe("createContentCache", () => {
     )
   })
 
+  it("waits a full TTL before retrying after a failed reload", async () => {
+    load
+      .mockResolvedValueOnce("first")
+      .mockRejectedValueOnce(new Error("Sanity is down"))
+      .mockResolvedValueOnce("second")
+
+    await cache.get()
+    vi.advanceTimersByTime(60_000)
+    await cache.get()
+
+    expect(await cache.get()).toBe("first")
+    expect(load).toHaveBeenCalledTimes(2)
+
+    vi.advanceTimersByTime(60_000)
+
+    expect(await cache.get()).toBe("second")
+    expect(load).toHaveBeenCalledTimes(3)
+  })
+
   it("rejects when nothing is cached and the load fails", async () => {
     load.mockRejectedValueOnce(new Error("Sanity is down"))
 
