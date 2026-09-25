@@ -1,3 +1,6 @@
 import type { SchemaTypeDefinition } from "sanity"
 
-export const schemaTypes: SchemaTypeDefinition[] = []
+import { person } from "./documents/person"
+import { richText } from "./objects/rich-text"
+
+export const schemaTypes: SchemaTypeDefinition[] = [richText, person]
