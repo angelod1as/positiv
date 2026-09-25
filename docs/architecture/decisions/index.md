@@ -57,6 +57,14 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 |------|-------|--------|
 | [2026-09-01](./20260901-a-payment-can-be-zero.md) | A payment can be zero | Accepted |
 
+### Public Site
+
+| Date | Title | Status |
+|------|-------|--------|
+| [2026-09-24](./20260924-host-the-sanity-studio-as-its-own-workspace-package.md) | Host the Sanity Studio as its own workspace package | Accepted |
+| [2026-09-24](./20260924-sanity-schema-changes-follow-expand-contract.md) | Sanity schema changes follow expand/contract | Accepted |
+| [2026-09-24](./20260924-no-repository-fallback-for-public-site-content.md) | No repository fallback for Public Site content | Accepted |
+
 ### Testing
 
 | Date | Title | Status |
