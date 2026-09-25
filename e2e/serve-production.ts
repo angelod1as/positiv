@@ -2,7 +2,13 @@ import { spawn } from "node:child_process"
 import type { ChildProcess } from "node:child_process"
 import { existsSync, statSync } from "node:fs"
 import { join, resolve, isAbsolute } from "node:path"
-import { getServerPort } from "./utils/run-context"
+import {
+  E2E_ASAAS_API_KEY,
+  E2E_ASAAS_WEBHOOK_TOKEN,
+  startAsaasMockServer,
+  stopAsaasMockServer,
+} from "./mocks/asaas-mock-server"
+import { getAsaasMockUrl, getServerPort } from "./utils/run-context"
 
 let serverProcess: ChildProcess | null = null
 
@@ -48,7 +54,11 @@ async function startProductionServer() {
   const serverDir = join(process.cwd(), "build", "server")
   const serverPath = validateServerPath(join(serverDir, "index.js"), serverDir)
 
+  const asaasUrl = getAsaasMockUrl()
+
   return new Promise<void>((resolve, reject) => {
+    startAsaasMockServer(Number(new URL(asaasUrl).port)).catch(reject)
+
     serverProcess = spawn("pnpm", ["react-router-serve", serverPath], {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: process.cwd(),
@@ -56,6 +66,14 @@ async function startProductionServer() {
         ...process.env,
         PORT: String(port),
         NODE_ENV: "production",
+        // Set here rather than in .env so the suite always talks to the mock,
+        // never to the sandbox key a developer keeps locally.
+        PAYMENTS_ENABLED: "true",
+        ASAAS_API_URL: `${asaasUrl}/v3`,
+        ASAAS_API_KEY: E2E_ASAAS_API_KEY,
+        ASAAS_WEBHOOK_TOKEN: E2E_ASAAS_WEBHOOK_TOKEN,
+        ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE: "",
+        ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE: "",
       },
       detached: false,
       killSignal: "SIGTERM"
@@ -103,6 +121,10 @@ async function startProductionServer() {
 }
 
 function stopProductionServer(): Promise<void> {
+  return stopAppServer().then(stopAsaasMockServer)
+}
+
+function stopAppServer(): Promise<void> {
   return new Promise((resolve) => {
     if (!serverProcess) {
       resolve()

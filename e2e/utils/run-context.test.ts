@@ -5,6 +5,7 @@ import {
   abandonedBefore,
   DEFAULT_E2E_PORT,
   generateRunId,
+  getAsaasMockUrl,
   getBaseUrl,
   getRunId,
   getServerPort,
@@ -124,6 +125,14 @@ describe('getBaseUrl', () => {
     process.env.E2E_PORT = '5301'
 
     expect(getBaseUrl()).toBe('http://localhost:5301')
+  })
+})
+
+describe('getAsaasMockUrl', () => {
+  it('sits on the port after the server, so the lock that keeps runs apart keeps their mocks apart too', () => {
+    process.env.E2E_PORT = '5301'
+
+    expect(getAsaasMockUrl()).toBe('http://127.0.0.1:5302')
   })
 })
 

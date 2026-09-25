@@ -1,9 +1,18 @@
 import { EventEmitter } from 'node:events'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { spawn } = vi.hoisted(() => ({ spawn: vi.fn() }))
+const { spawn, asaasMock } = vi.hoisted(() => ({
+  spawn: vi.fn(),
+  asaasMock: {
+    E2E_ASAAS_API_KEY: 'e2e-key',
+    E2E_ASAAS_WEBHOOK_TOKEN: 'e2e-webhook-token',
+    startAsaasMockServer: vi.fn(async (port: number) => `http://127.0.0.1:${port}`),
+    stopAsaasMockServer: vi.fn(async () => {}),
+  },
+}))
 
 vi.mock('node:child_process', () => ({ spawn, default: { spawn } }))
+vi.mock('./mocks/asaas-mock-server', () => asaasMock)
 const fsDouble = {
   existsSync: () => true,
   statSync: () => ({ isFile: () => true, isDirectory: () => false, mtime: new Date(0) }),
@@ -33,6 +42,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete process.env.E2E_PORT
+  delete process.env.ASAAS_API_KEY
 })
 
 describe('startProductionServer', () => {
@@ -53,5 +63,55 @@ describe('startProductionServer', () => {
     child.stdout.emit('data', Buffer.from('serving on http://localhost:5301'))
 
     await expect(started).resolves.toBeUndefined()
+  })
+})
+
+describe('the Asaas the server under test talks to', () => {
+  it('is the mock on the port after the server, with payments on', async () => {
+    fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    void startProductionServer()
+
+    expect(asaasMock.startAsaasMockServer).toHaveBeenCalledWith(5302)
+    expect(spawn.mock.calls[0][2].env).toMatchObject({
+      PAYMENTS_ENABLED: 'true',
+      ASAAS_API_URL: 'http://127.0.0.1:5302/v3',
+      ASAAS_API_KEY: 'e2e-key',
+      ASAAS_WEBHOOK_TOKEN: 'e2e-webhook-token',
+    })
+  })
+
+  it("never is the developer's own sandbox, whatever .env holds", async () => {
+    process.env.ASAAS_API_KEY = 'a-real-sandbox-key'
+    fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    void startProductionServer()
+
+    expect(spawn.mock.calls[0][2].env.ASAAS_API_KEY).toBe('e2e-key')
+  })
+
+  it('prices with the fees the mock reports, not a local anticipation override', async () => {
+    fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    void startProductionServer()
+
+    const { env } = spawn.mock.calls[0][2]
+    expect(env.ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE).toBe('')
+    expect(env.ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE).toBe('')
+  })
+
+  it('stops with the server', async () => {
+    const child = fakeServerProcess()
+    const { startProductionServer, stopProductionServer } = await import('./serve-production')
+    void startProductionServer()
+
+    const stopped = stopProductionServer()
+    child.emit('exit', 0)
+    await stopped
+
+    expect(asaasMock.stopAsaasMockServer).toHaveBeenCalled()
   })
 })
