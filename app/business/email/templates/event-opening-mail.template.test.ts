@@ -148,6 +148,14 @@ describe("eventOpeningMailTemplate", () => {
     expect(result).toContain("background: #f9f9f9")
     expect(result).toContain("border-radius: 8px")
   })
+
+  it("sizes to its content", () => {
+    const html = eventOpeningMailTemplate(mockEvent, mockProfileId)
+
+    // Clients render mail in an iframe sized to its content, so 100vh feeds
+    // back into the iframe height and leaves a huge empty scroll.
+    expect(html).not.toContain("100vh")
+  })
 })
 
 describe("eventOpeningMailTemplate - XSS Protection", () => {

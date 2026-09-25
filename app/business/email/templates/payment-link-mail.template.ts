@@ -54,7 +54,7 @@ export const paymentLinkMailTemplate = (input: PaymentLinkMailInput): string => 
 <body style="margin: 0; padding: 0; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
 
   <!-- Outer Wrapper: Brand Purple Gradient -->
-  <div style="background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px; min-height: 100vh;">
+  <div style="background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px;">
 
     <!-- Email Container -->
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto;">

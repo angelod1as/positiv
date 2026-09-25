@@ -129,6 +129,14 @@ describe("applicationMailTemplate", () => {
     const result = applicationMailTemplate(mockProfile, mockEvent)
     expect(result).toContain("conta")
   })
+
+  it("sizes to its content", () => {
+    const html = applicationMailTemplate(mockProfile, mockEvent)
+
+    // Clients render mail in an iframe sized to its content, so 100vh feeds
+    // back into the iframe height and leaves a huge empty scroll.
+    expect(html).not.toContain("100vh")
+  })
 })
 
 describe("applicationMailTemplate - XSS Protection", () => {
