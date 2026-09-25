@@ -193,15 +193,17 @@ Update this section when it lands.
 
 ### Checking the prices against the sandbox
 
-With the tunnel and webhook from above in place:
-
 ```bash
 pnpm asaas:smoke
 ```
 
 It opens a PIX charge and a card 3x charge for R$ 220, confirms them, and prints
-what Asaas kept next to what `pricing.ts` predicted, and whether each webhook
-reached the inbox. It exits non-zero on a gap above R$ 0,50.
+what Asaas kept next to what `pricing.ts` predicted. It exits non-zero on a gap
+above R$ 0,50.
+
+The tunnel and webhook from above are optional. With them in place the script
+also waits for each confirmation to reach `payment_webhook_events`, and fails if
+one does not. Without a registered webhook it says so and skips that check.
 
 The anticipation fee is booked apart from the charge, under `/v3/anticipations`,
 and the sandbox may never book one. When it does not, the script says the

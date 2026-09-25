@@ -20,6 +20,7 @@ import {
 } from "../../app/business/payment/asaas-client.server"
 import { getAsaasFees } from "../../app/business/payment/asaas-fees.server"
 import { buildPaymentOptions, type PaymentOption } from "../../app/business/payment/pricing"
+import { WEBHOOK_NAME } from "./register-webhook"
 import { calibrate, expectedNet } from "./smoke-calibration"
 
 const BASE = 22000
@@ -39,6 +40,10 @@ const charge = zod.object({
 })
 
 const chargeList = zod.object({ data: zod.array(charge) })
+
+const webhookList = zod.object({
+  data: zod.array(zod.object({ name: zod.string(), url: zod.string(), interrupted: zod.boolean().nullable().optional() })),
+})
 
 const anticipationList = zod.object({
   data: zod.array(zod.object({ fee: zod.number(), status: zod.string() })),
@@ -75,7 +80,15 @@ async function confirm(paymentId: string, invoiceUrl: string | null) {
   }
 }
 
+// Without a registered webhook nothing can reach the inbox, and waiting for it
+// only looks like a hang.
+async function registeredWebhook() {
+  const { data } = await asaasRequest("GET", "/webhooks?limit=100", webhookList)
+  return data.find((item) => item.name === WEBHOOK_NAME) ?? null
+}
+
 async function waitUntilConfirmed(paymentId: string, installmentId: string | null) {
+  console.info(`  waiting for Asaas to confirm ${paymentId} (up to ${PAYMENT_WAIT_MS / 60000} min)…`)
   const deadline = Date.now() + PAYMENT_WAIT_MS
   for (;;) {
     const charges = await chargesOf(paymentId, installmentId)
@@ -86,6 +99,7 @@ async function waitUntilConfirmed(paymentId: string, installmentId: string | nul
 }
 
 async function waitForWebhooks(chargeIds: string[]) {
+  console.info(`  waiting for the webhook to reach payment_webhook_events (up to ${WEBHOOK_WAIT_MS / 60000} min)…`)
   const deadline = Date.now() + WEBHOOK_WAIT_MS
   for (;;) {
     const rows = await db
@@ -111,7 +125,12 @@ async function anticipationFee(paymentId: string, installmentId: string | null) 
   return booked.reduce((total, item) => total + reaisToCents(item.fee), 0)
 }
 
-async function run(option: PaymentOption, customerId: string, fees: Awaited<ReturnType<typeof getAsaasFees>>) {
+async function run(
+  option: PaymentOption,
+  customerId: string,
+  fees: Awaited<ReturnType<typeof getAsaasFees>>,
+  checkWebhooks: boolean,
+) {
   const created = await createAsaasPayment({
     customerId,
     method: option.method,
@@ -126,7 +145,7 @@ async function run(option: PaymentOption, customerId: string, fees: Awaited<Retu
 
   await confirm(created.id, created.invoiceUrl)
   const charges = await waitUntilConfirmed(created.id, created.installmentId)
-  const webhooks = await waitForWebhooks(charges.map((item) => item.id))
+  const webhooks = checkWebhooks ? await waitForWebhooks(charges.map((item) => item.id)) : null
 
   const reportedNet = charges.reduce(
     (total, item) => total + reaisToCents(item.netValue ?? 0),
@@ -167,7 +186,16 @@ async function main() {
     }))
 
   const results = []
-  for (const option of options) results.push(await run(option, customerId, fees))
+  const webhook = await registeredWebhook()
+  if (webhook) {
+    console.info(`Webhook "${webhook.name}" → ${webhook.url}${webhook.interrupted ? " (INTERRUPTED — see the runbook)" : ""}`)
+  } else {
+    console.warn(
+      `No "${WEBHOOK_NAME}" webhook is registered on this account, so the inbox check is skipped. See docs/payments-runbook.md §9 to test delivery too.`,
+    )
+  }
+
+  for (const option of options) results.push(await run(option, customerId, fees, webhook !== null))
 
   for (const result of results) {
     console.info(
@@ -180,13 +208,13 @@ async function main() {
         result.anticipation === null
           ? "  anticipation            not measurable in sandbox"
           : `  anticipation            R$ ${reais(result.anticipation)}   diff R$ ${reais(result.anticipationDifference)}`,
-        `  webhook                 ${result.webhooks ? "received" : "NOT received"}`,
+        `  webhook                 ${result.webhooks === null ? "not checked" : result.webhooks ? "received" : "NOT received"}`,
       ].join("\n"),
     )
   }
 
   await db.destroy()
-  if (results.some((result) => !result.ok || !result.webhooks)) process.exit(1)
+  if (results.some((result) => !result.ok || result.webhooks === false)) process.exit(1)
 }
 
 if (process.argv[1]?.endsWith("smoke.ts")) {
