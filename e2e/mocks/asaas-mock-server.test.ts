@@ -145,6 +145,23 @@ describe("asaas mock server", () => {
     expect((await refund.json()).id).toBe(payment.id)
   })
 
+  it("never gives back more than the charge still holds", async () => {
+    const payment = await createPayment({ billingType: "PIX", value: 10 })
+    await call(`/sandbox/payment/${payment.id}/confirm`, { method: "POST", body: {} })
+
+    const first = await call(`/payments/${payment.id}/refund`, { method: "POST", body: { value: 6 } })
+    expect(first.status).toBe(200)
+
+    const second = await call(`/payments/${payment.id}/refund`, { method: "POST", body: { value: 6 } })
+    expect(second.status).toBe(400)
+
+    const rest = await call(`/payments/${payment.id}/refund`, { method: "POST", body: { value: 4 } })
+    expect(rest.status).toBe(200)
+
+    const whole = await call(`/payments/${payment.id}/refund`, { method: "POST", body: {} })
+    expect(whole.status).toBe(400)
+  })
+
   it("reports the sandbox fee snapshot", async () => {
     const fees = await (await call("/myAccount/fees/")).json()
 

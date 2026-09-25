@@ -47,6 +47,7 @@ type Charge = {
   installment: string | null
   externalReference: string | null
   deleted: boolean
+  refunded: number
 }
 
 type State = {
@@ -149,6 +150,7 @@ function createCharge(body: Record<string, unknown>, response: ServerResponse, o
     installment,
     externalReference: typeof body.externalReference === "string" ? body.externalReference : null,
     deleted: false,
+    refunded: 0,
   }))
   state.charges.push(...charges)
 
@@ -223,6 +225,14 @@ async function handleApi(
     if (!["CONFIRMED", "RECEIVED"].includes(charge.status)) {
       return fail(response, 400, "invalid_action", "Esta cobrança não pode ser estornada.")
     }
+    // Without a value Asaas gives back whatever the charge still holds; with
+    // one, never more than that.
+    const remaining = reaisToCents(charge.value) - charge.refunded
+    const requested = body.value === undefined ? remaining : reaisToCents(Number(body.value))
+    if (remaining <= 0 || requested > remaining) {
+      return fail(response, 400, "invalid_value", "O valor do estorno excede o valor disponível.")
+    }
+    charge.refunded += requested
     return send(response, 200, publicCharge(charge, origin))
   }
 
