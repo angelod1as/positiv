@@ -103,6 +103,26 @@ describe('the Asaas the server under test talks to', () => {
     expect(env.ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE).toBe('')
   })
 
+  it('reaches the server, which resolves its own environment instead of inheriting the one resolved before the overrides', async () => {
+    // `pnpm test:e2e` runs under `varlock run`, which hands its children the
+    // environment it resolved as one serialized blob. A server that reads the
+    // blob never sees the variables set above.
+    process.env.__VARLOCK_ENV = '{"config":{}}'
+    process.env._VARLOCK_ENV_KEY = 'blob-key'
+    fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    void startProductionServer()
+
+    const [command, args, { env }] = spawn.mock.calls[0]
+    expect([command, ...args.slice(0, 4)]).toEqual(['pnpm', 'exec', 'varlock', 'run', '--'])
+    expect(env.__VARLOCK_ENV).toBeUndefined()
+    expect(env._VARLOCK_ENV_KEY).toBeUndefined()
+
+    delete process.env.__VARLOCK_ENV
+    delete process.env._VARLOCK_ENV_KEY
+  })
+
   it('stops with the server', async () => {
     const child = fakeServerProcess()
     const { startProductionServer, stopProductionServer } = await import('./serve-production')

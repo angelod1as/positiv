@@ -55,15 +55,20 @@ async function startProductionServer() {
   const serverPath = validateServerPath(join(serverDir, "index.js"), serverDir)
 
   const asaasUrl = getAsaasMockUrl()
+  // The suite runs under `varlock run`, which passes its children the
+  // environment it resolved as one blob, and a server that finds the blob reads
+  // nothing else. Without it, the server's own `varlock run` resolves .env
+  // again with the overrides below on top.
+  const { __VARLOCK_ENV: _blob, _VARLOCK_ENV_KEY: _blobKey, ...inherited } = process.env
 
   return new Promise<void>((resolve, reject) => {
     startAsaasMockServer(Number(new URL(asaasUrl).port)).catch(reject)
 
-    serverProcess = spawn("pnpm", ["react-router-serve", serverPath], {
+    serverProcess = spawn("pnpm", ["exec", "varlock", "run", "--", "react-router-serve", serverPath], {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: process.cwd(),
       env: {
-        ...process.env,
+        ...inherited,
         PORT: String(port),
         NODE_ENV: "production",
         // Set here rather than in .env so the suite always talks to the mock,
