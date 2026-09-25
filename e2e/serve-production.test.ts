@@ -145,6 +145,15 @@ describe('the Asaas the server under test talks to', () => {
     expect(spawn.mock.calls[0][2].env.APP_URL).toBe('http://localhost:5301')
   })
 
+  it('takes the server down with it when the mock cannot start, so nothing is left holding the port', async () => {
+    asaasMock.startAsaasMockServer.mockImplementationOnce(() => Promise.reject(new Error('EADDRINUSE')))
+    const child = fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    await expect(startProductionServer()).rejects.toThrow('EADDRINUSE')
+    expect(child.kill).toHaveBeenCalledWith('SIGTERM')
+  })
+
   it('stops with the server', async () => {
     const child = fakeServerProcess()
     const { startProductionServer, stopProductionServer } = await import('./serve-production')

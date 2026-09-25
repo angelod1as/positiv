@@ -63,7 +63,12 @@ async function startProductionServer() {
 
   return new Promise<void>((resolve, reject) => {
     const asaasListening = startAsaasMockServer(Number(new URL(asaasUrl).port))
-    asaasListening.catch(reject)
+    // Teardown only stops a server whose start succeeded, so one spawned
+    // beside a mock that failed has to be taken down here.
+    asaasListening.catch((error: unknown) => {
+      serverProcess?.kill("SIGTERM")
+      reject(error)
+    })
 
     serverProcess = spawn("pnpm", ["exec", "varlock", "run", "--", "react-router-serve", serverPath], {
       stdio: ["ignore", "pipe", "pipe"],
