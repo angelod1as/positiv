@@ -126,6 +126,21 @@ describe("paymentRefundMailTemplate", () => {
     expect(html).not.toContain("100vh")
   })
 
+  it("keeps its colors in clients that drop the background shorthand", () => {
+    const html = paymentRefundMailTemplate({
+      displayName: "Ana",
+      eventTitle: "Festa",
+      eventEmoji: null,
+      refundAmount: 22000,
+      amount: 22000,
+      method: "pix",
+      kind: "asaas",
+    })
+
+    expect(html).toContain("background-color: #ffffff")
+    expect(html).toMatch(/background-color: #[0-9a-f]{6}; background-image: linear-gradient/)
+  })
+
   it("escapes the name", () => {
     const html = paymentRefundMailTemplate({
       displayName: "<img src=x onerror=alert(1)>",

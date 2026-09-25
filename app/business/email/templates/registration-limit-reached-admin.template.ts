@@ -35,16 +35,16 @@ export const registrationLimitReachedAdminTemplate = (
 <body style="margin: 0; padding: 0; font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;">
 
   <!-- Outer Wrapper: Brand Purple Gradient -->
-  <div style="background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px;">
+  <div style="background-color: #853cca; background-image: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); padding: 40px 20px;">
 
     <!-- Email Container -->
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto;">
       <tr>
         <td>
-          <div style="background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+          <div style="background-color: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
 
             <!-- Header with Logo -->
-            <div style="text-align: center; padding: 30px 24px 20px 24px; background: #ffffff;">
+            <div style="text-align: center; padding: 30px 24px 20px 24px; background-color: #ffffff;">
               <img src="${POSITIV_URL}positiv-logo-colors.png" alt="${registrationLimitAdminCopy.logoAlt}" width="250" style="max-width: 250px; height: auto; margin: 0 auto; display: block;">
             </div>
 
@@ -62,7 +62,7 @@ export const registrationLimitReachedAdminTemplate = (
               </p>
 
               <!-- Event Details Section -->
-              <div style="background: #f9f9f9; border-radius: 8px; padding: 16px; margin: 0 0 20px 0;">
+              <div style="background-color: #f9f9f9; border-radius: 8px; padding: 16px; margin: 0 0 20px 0;">
                 <div style="margin-bottom: 8px; font-size: 14px;">
                   <span style="color: #666;">${registrationLimitAdminCopy.details.event}:</span>
                   <strong style="color: #333;">${eventDisplay}</strong>
@@ -83,7 +83,7 @@ export const registrationLimitReachedAdminTemplate = (
 
               <!-- CTA Button -->
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${eventParticipantsUrl}" style="display: inline-block; background: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; box-shadow: 0 4px 12px rgba(191, 3, 195, 0.3);">
+                <a href="${eventParticipantsUrl}" style="display: inline-block; background-color: #853cca; background-image: linear-gradient(135deg, #4a75d2 0%, #bf03c3 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-family: 'DM Sans', Arial, sans-serif; font-size: 16px; font-weight: 700; box-shadow: 0 4px 12px rgba(191, 3, 195, 0.3);">
                   ${registrationLimitAdminCopy.cta}
                 </a>
               </div>
@@ -96,7 +96,7 @@ export const registrationLimitReachedAdminTemplate = (
             </div>
 
             <!-- Footer -->
-            <div style="background: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
+            <div style="background-color: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #e0e0e0;">
               <p style="font-family: 'Nunito', Arial, sans-serif; font-size: 14px; color: #666666; margin: 0 0 8px 0;">
                 ${registrationLimitAdminCopy.footer.reason}
                 <a href="${POSITIV_URL}" style="color: #bf03c3; text-decoration: none; font-weight: 700;">${registrationLimitAdminCopy.footer.brand}</a>

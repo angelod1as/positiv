@@ -145,7 +145,7 @@ describe("eventOpeningMailTemplate", () => {
 
   it("should include details in a styled section", () => {
     const result = eventOpeningMailTemplate(mockEvent, mockProfileId)
-    expect(result).toContain("background: #f9f9f9")
+    expect(result).toContain("background-color: #f9f9f9")
     expect(result).toContain("border-radius: 8px")
   })
 
