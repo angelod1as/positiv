@@ -7,7 +7,8 @@
   ],
   "exclude": [
     "supabase/functions/**/*",
-    "linear-api/**/*"
+    "linear-api/**/*",
+    "studio/**/*"
   ],
   "compilerOptions": {
     "lib": [
