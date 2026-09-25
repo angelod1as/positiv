@@ -333,6 +333,8 @@ describe("payment email outbox", () => {
       const row = await readRow(id)
       expect(row.attempts).toBe(5)
       expect(row.given_up_at).not.toBeNull()
+      // Nothing will try it again, so no row should say when it will.
+      expect(row.next_attempt_at).toBeNull()
       expect(row.sent_at).toBeNull()
       expect(logger.warn).not.toHaveBeenCalled()
       expect(logger.error).toHaveBeenCalledTimes(1)

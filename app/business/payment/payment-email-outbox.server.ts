@@ -165,9 +165,9 @@ export async function deliverPaymentEmail(
       .set({
         last_error: error,
         claimed_at: null,
-        next_attempt_at: minutesFromNow(
-          BACKOFF_BASE_MINUTES * 2 ** (claimed.attempts - 1),
-        ),
+        next_attempt_at: givingUp
+          ? null
+          : minutesFromNow(BACKOFF_BASE_MINUTES * 2 ** (claimed.attempts - 1)),
         given_up_at: givingUp ? new Date().toISOString() : null,
       })
       .where("id", "=", id)
