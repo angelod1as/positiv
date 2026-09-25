@@ -123,6 +123,14 @@ describe("asaas mock server", () => {
     expect(data.map((charge) => charge.status)).toEqual(["CONFIRMED", "CONFIRMED"])
   })
 
+  it("settles a confirmed PIX charge as received, as the sandbox does", async () => {
+    const payment = await createPayment({ billingType: "PIX", value: 10 })
+
+    const confirmed = await call(`/sandbox/payment/${payment.id}/confirm`, { method: "POST", body: {} })
+
+    expect((await confirmed.json()).status).toBe("RECEIVED")
+  })
+
   it("deletes a pending charge once, and never a confirmed one", async () => {
     const pending = await createPayment({ billingType: "PIX", value: 10 })
     const deleted = await call(`/payments/${pending.id}`, { method: "DELETE" })

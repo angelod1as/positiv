@@ -159,11 +159,12 @@ function createCharge(body: Record<string, unknown>, response: ServerResponse, o
 
 // The sandbox confirm stands in for the participant paying. A card plan is one
 // authorisation on the card, so confirming any charge of it confirms them all.
+// PIX money is in the account at once, and the sandbox reports it RECEIVED.
 function confirmCharge(charge: Charge) {
   const plan = charge.installment
     ? state.charges.filter((item) => item.installment === charge.installment && !item.deleted)
     : [charge]
-  for (const item of plan) item.status = "CONFIRMED"
+  for (const item of plan) item.status = item.billingType === "PIX" ? "RECEIVED" : "CONFIRMED"
 }
 
 async function handleApi(
