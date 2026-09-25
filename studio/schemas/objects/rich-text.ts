@@ -7,7 +7,12 @@ import {
   type PortableTextBlock,
 } from "sanity"
 
-const decorators = ["strong", "em"]
+const decorators = [
+  { title: "Negrito", value: "strong" },
+  { title: "Itálico", value: "em" },
+]
+
+const decoratorValues = decorators.map((decorator) => decorator.value)
 
 function isAllowed(block: PortableTextBlock) {
   if (block._type !== "block" || !isPortableTextTextBlock(block)) {
@@ -22,7 +27,8 @@ function isAllowed(block: PortableTextBlock) {
     (child) =>
       isPortableTextSpan(child) &&
       (child.marks ?? []).every(
-        (mark) => decorators.includes(mark) || annotationKeys.includes(mark),
+        (mark) =>
+          decoratorValues.includes(mark) || annotationKeys.includes(mark),
       ),
   )
 }
@@ -49,10 +55,7 @@ export const richText = defineType({
       styles: [{ title: "Parágrafo", value: "normal" }],
       lists: [],
       marks: {
-        decorators: [
-          { title: "Negrito", value: "strong" },
-          { title: "Itálico", value: "em" },
-        ],
+        decorators,
         annotations: [
           defineField({
             name: "link",
