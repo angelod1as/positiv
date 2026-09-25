@@ -2,7 +2,13 @@ import { spawn } from "node:child_process"
 import type { ChildProcess } from "node:child_process"
 import { existsSync, statSync } from "node:fs"
 import { join, resolve, isAbsolute } from "node:path"
-import { getServerPort } from "./utils/run-context"
+import {
+  E2E_ASAAS_API_KEY,
+  E2E_ASAAS_WEBHOOK_TOKEN,
+  startAsaasMockServer,
+  stopAsaasMockServer,
+} from "./mocks/asaas-mock-server"
+import { getAsaasMockUrl, getBaseUrl, getServerPort } from "./utils/run-context"
 
 let serverProcess: ChildProcess | null = null
 
@@ -48,14 +54,41 @@ async function startProductionServer() {
   const serverDir = join(process.cwd(), "build", "server")
   const serverPath = validateServerPath(join(serverDir, "index.js"), serverDir)
 
+  const asaasUrl = getAsaasMockUrl()
+  // The suite runs under `varlock run`, which passes its children the
+  // environment it resolved as one blob, and a server that finds the blob reads
+  // nothing else. Without it, the server's own `varlock run` resolves .env
+  // again with the overrides below on top.
+  const { __VARLOCK_ENV: _blob, _VARLOCK_ENV_KEY: _blobKey, ...inherited } = process.env
+
   return new Promise<void>((resolve, reject) => {
-    serverProcess = spawn("pnpm", ["react-router-serve", serverPath], {
+    const asaasListening = startAsaasMockServer(Number(new URL(asaasUrl).port))
+    // Teardown only stops a server whose start succeeded, so one spawned
+    // beside a mock that failed has to be taken down here.
+    asaasListening.catch((error: unknown) => {
+      serverProcess?.kill("SIGTERM")
+      reject(error)
+    })
+
+    serverProcess = spawn("pnpm", ["exec", "varlock", "run", "--", "react-router-serve", serverPath], {
       stdio: ["ignore", "pipe", "pipe"],
       cwd: process.cwd(),
       env: {
-        ...process.env,
+        ...inherited,
         PORT: String(port),
         NODE_ENV: "production",
+        // Payment emails are built with no request to take a host from (the
+        // retry sweep sends them too), so without APP_URL their link comes
+        // out relative and the template refuses it. CI sets none.
+        APP_URL: getBaseUrl(),
+        // Set here rather than in .env so the suite always talks to the mock,
+        // never to the sandbox key a developer keeps locally.
+        PAYMENTS_ENABLED: "true",
+        ASAAS_API_URL: `${asaasUrl}/v3`,
+        ASAAS_API_KEY: E2E_ASAAS_API_KEY,
+        ASAAS_WEBHOOK_TOKEN: E2E_ASAAS_WEBHOOK_TOKEN,
+        ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE: "",
+        ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE: "",
       },
       detached: false,
       killSignal: "SIGTERM"
@@ -80,7 +113,7 @@ async function startProductionServer() {
       if (!serverStarted && message.includes(`localhost:${port}`)) {
         serverStarted = true
         clearTimeout(startupTimeout)
-        resolve()
+        asaasListening.then(() => resolve(), reject)
       }
     })
     
@@ -103,6 +136,10 @@ async function startProductionServer() {
 }
 
 function stopProductionServer(): Promise<void> {
+  return stopAppServer().then(stopAsaasMockServer)
+}
+
+function stopAppServer(): Promise<void> {
   return new Promise((resolve) => {
     if (!serverProcess) {
       resolve()

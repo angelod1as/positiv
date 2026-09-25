@@ -88,6 +88,10 @@ export function getBaseUrl(): string {
   return `http://localhost:${getServerPort()}`
 }
 
+export function getAsaasMockUrl(): string {
+  return `http://127.0.0.1:${getServerPort() + 1}`
+}
+
 /**
  * A run takes at most a few minutes and the lock keeps runs from overlapping,
  * so test data older than this belongs to a run that never reached its
