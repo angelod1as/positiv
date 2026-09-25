@@ -25,6 +25,10 @@ To create a new ADR: `pnpm adr:new`
 
 - [CLAUDE.md](../CLAUDE.md) - Claude Code configuration and guidelines
 
+### 💳 Operations
+
+- [Payments runbook](./payments-runbook.md) - Asaas webhook queue, inbox, email outbox, refunds, and trying the flow in dev
+
 ### 📁 Temporary Plans
 
 - [plans/](./plans/) - Temporary implementation plans for Linear tasks (deleted after PR creation)
