@@ -18,6 +18,9 @@ Current ADRs:
 - [ADR: Use Log4brains](./architecture/decisions/20250630-use-log4brains-to-manage-the-adrs.md) - ADR management tool
 - [ADR: Use Markdown ADRs](./architecture/decisions/20250630-use-markdown-architectural-decision-records.md) - Decision to use MADR format
 - [ADR: A payment can be zero](./architecture/decisions/20260901-a-payment-can-be-zero.md) - Why a settled participation may carry no money
+- [ADR: Host the Sanity Studio as its own workspace package](./architecture/decisions/20260924-host-the-sanity-studio-as-its-own-workspace-package.md) - Why the Studio is not embedded in the app
+- [ADR: Sanity schema changes follow expand/contract](./architecture/decisions/20260924-sanity-schema-changes-follow-expand-contract.md) - How to rename or remove a Sanity field safely
+- [ADR: No repository fallback for Public Site content](./architecture/decisions/20260924-no-repository-fallback-for-public-site-content.md) - Why Sanity is the only copy of Public Site content
 
 To create a new ADR: `pnpm adr:new`
 
