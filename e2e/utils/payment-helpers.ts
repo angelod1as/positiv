@@ -94,3 +94,32 @@ export async function getParticipantPayments(profileId: string, eventId: string)
 
   return data
 }
+
+// Enrols an existing account on an event as a regular spot, the only kind a
+// charge can be sent to.
+export async function enrolRegularParticipant(userId: string, eventId: string) {
+  const supabase = createSupabaseAdminClient()
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, social_name, full_name')
+    .eq('user_id', userId)
+    .single()
+
+  if (profileError || !profile) {
+    throw new Error(`No profile for user ${userId}: ${profileError?.message}`)
+  }
+
+  const { error } = await supabase.from('event_participants').insert({
+    profile_id: profile.id,
+    event_id: eventId,
+    is_user_applied: true,
+    application_status: 'talking',
+    attendance_status: 'pending',
+    spot_type: 'regular',
+  })
+
+  if (error) throw new Error(`Failed to enrol ${profile.id}: ${error.message}`)
+
+  return { profileId: profile.id, name: profile.social_name || profile.full_name || '' }
+}
