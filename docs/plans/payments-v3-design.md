@@ -619,7 +619,7 @@ no exception; the design document is the one that stays.
 | 10 | POS-529 | retired — the PR is open |
 | 11 | POS-530 | `POS-530-asaas-webhook.md` |
 | 12 | POS-531 | retired — the PR is open |
-| 13 | POS-532 | `POS-532-e2e-and-launch.md` |
+| 13 | POS-532 | retired — the PR is open |
 | — | POS-565 | the Linear issue |
 | 14 | POS-560 | no code for the cutover — the checklist is the Linear issue |
 
