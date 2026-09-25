@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.117.0
       - name: Start Supabase local development setup
         run: |
           for attempt in 1 2 3 4 5; do
@@ -83,7 +83,7 @@ jobs:
       # Setup Supabase CLI and start local instance
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.117.0
 
       - name: Start Supabase local instance
         run: |

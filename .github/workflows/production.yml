@@ -72,7 +72,7 @@ jobs:
 
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 2.117.0
 
       # The dump below is the only thing standing between a bad migration and
       # permanent data loss: `db push` runs unattended on every merge, and a
