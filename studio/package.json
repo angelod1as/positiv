@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "sanity build",
-    "deploy": "sanity deploy",
+    "deploy": "sanity deploy --yes --schema-required",
     "seed": "sanity exec seed/seed.ts --with-user-token --",
     "dev": "sanity dev",
     "start": "sanity start",

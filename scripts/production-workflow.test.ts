@@ -72,4 +72,18 @@ describe("production workflow", () => {
     // did.
     expect(workflow).toContain("Coolify")
   })
+
+  it("deploys the Studio once the tests pass, beside the database and not before it", () => {
+    const deployStudio = jobBlock("deploy-studio")
+
+    expect(deployStudio).toContain("needs: unit-test")
+    expect(jobBlock("smoke")).not.toContain("deploy-studio")
+  })
+
+  it("deploys the Studio without a prompt, authenticated by the deploy token", () => {
+    const deployStudio = jobBlock("deploy-studio")
+
+    expect(runCommand("Deploy the Studio")).toBe("pnpm --filter studio deploy")
+    expect(deployStudio).toContain("SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}")
+  })
 })
