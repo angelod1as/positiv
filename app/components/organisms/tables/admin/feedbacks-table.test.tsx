@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react"
+import { act, render, screen } from "@testing-library/react"
 import type { ColDef } from "ag-grid-community"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { FeedbacksTable } from "./feedbacks-table"
@@ -154,10 +154,12 @@ describe("FeedbacksTable", () => {
   it("should write the status change to the feedback status route", async () => {
     render(<FeedbacksTable feedbacks={mockFeedbacks} />)
 
-    await capturedOnSave?.({
-      field: "status",
-      newValue: "resolved",
-      rowData: mockFeedbacks[0],
+    await act(async () => {
+      await capturedOnSave?.({
+        field: "status",
+        newValue: "resolved",
+        rowData: mockFeedbacks[0],
+      })
     })
 
     expect(commitJson).toHaveBeenCalledWith(
@@ -171,13 +173,15 @@ describe("FeedbacksTable", () => {
     commitJson.mockRejectedValueOnce(new Error("offline"))
     render(<FeedbacksTable feedbacks={mockFeedbacks} />)
 
-    await expect(
-      capturedOnSave?.({
-        field: "status",
-        newValue: "resolved",
-        rowData: mockFeedbacks[0],
-      }),
-    ).resolves.toBeUndefined()
+    await act(async () => {
+      await expect(
+        capturedOnSave?.({
+          field: "status",
+          newValue: "resolved",
+          rowData: mockFeedbacks[0],
+        }),
+      ).resolves.toBeUndefined()
+    })
   })
 
   it("should not submit changes to a non-editable field", async () => {
