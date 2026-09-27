@@ -4,6 +4,8 @@ import {
   getEventParticipantBasic,
   getProfileById,
 } from "~/business/admin/admin.server"
+import { getContext } from "~/business/auth/auth.server"
+import { defaultSettings } from "~/test/request-context"
 import { loader } from "./view-event-participant"
 
 const { logger } = vi.hoisted(() => ({
@@ -22,6 +24,10 @@ vi.mock("~/business/admin/admin.server", () => ({
   updateProfileApprovalStatus: vi.fn(),
 }))
 
+vi.mock("~/business/auth/auth.server", () => ({
+  getContext: vi.fn(),
+}))
+
 type ProfileResult = Awaited<ReturnType<typeof getProfileById>>
 type ParticipantResult = Awaited<ReturnType<typeof getEventParticipantBasic>>
 
@@ -34,6 +40,9 @@ const runLoader = () =>
 describe("view event participant loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(getContext).mockResolvedValue({
+      settings: defaultSettings,
+    } as Awaited<ReturnType<typeof getContext>>)
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
       data: { id: "profile-1" },

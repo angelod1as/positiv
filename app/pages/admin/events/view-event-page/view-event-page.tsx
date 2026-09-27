@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { getContext } from "~/business/auth/auth.server"
 import { useFetcher } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { listInvitesForEvent } from "~/business/admin/event-invites.server"
@@ -30,7 +31,6 @@ import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
-import { ENV } from "varlock/env"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
 import { sendToast } from "./send-toast"
@@ -106,7 +106,8 @@ async function loadParticipants(eventId: string) {
 }
 
 /** LOADER */
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, request }: Route.LoaderArgs) {
+  const { settings } = await getContext(request, params)
   const eventId = params.id
   if (!eventId) {
     throw await redirectWithError(
@@ -142,7 +143,7 @@ export async function loader({ params }: Route.LoaderArgs) {
         return []
       }),
       getPaymentsForEvent(eventId),
-      getAsaasFeesIfEnabled(),
+      getAsaasFeesIfEnabled(settings.onlinePayments.enabled),
       listInvitesForEvent(eventId),
     ])
 
@@ -152,7 +153,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     rejectedParticipants,
     paymentsByParticipant,
     asaasFees,
-    paymentsEnabled: Boolean(ENV.PAYMENTS_ENABLED),
+    paymentsEnabled: settings.onlinePayments.enabled,
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),

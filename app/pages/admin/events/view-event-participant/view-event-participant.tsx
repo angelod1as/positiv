@@ -1,5 +1,6 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { NoResultError } from "kysely"
+import { getContext } from "~/business/auth/auth.server"
 import { redirectWithError } from "remix-toast"
 import {
   getAdminContext,
@@ -17,7 +18,6 @@ import { adminEventsCopy } from "~/copy/admin/events"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
-import { ENV } from "varlock/env"
 import type { Route } from "./+types/view-event-participant"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
@@ -69,7 +69,8 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (paymentResult) return paymentResult
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, request }: Route.LoaderArgs) {
+  const { settings } = await getContext(request, params)
   const { eventId, profileId } = params
 
   if (!eventId) {
@@ -139,7 +140,7 @@ export async function loader({ params }: Route.LoaderArgs) {
 
   const [participantPayments, asaasFees] = await Promise.all([
     getPaymentsForParticipant(eventParticipant.id),
-    getAsaasFeesIfEnabled(),
+    getAsaasFeesIfEnabled(settings.onlinePayments.enabled),
   ])
 
   return {
@@ -149,7 +150,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     eventId,
     participantPayments,
     asaasFees,
-    paymentsEnabled: Boolean(ENV.PAYMENTS_ENABLED),
+    paymentsEnabled: settings.onlinePayments.enabled,
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),

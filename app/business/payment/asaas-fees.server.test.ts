@@ -211,19 +211,12 @@ describe("getAsaasFeesIfEnabled", () => {
     fetchMock.mockClear()
   })
 
-  afterEach(() => {
-    delete env.PAYMENTS_ENABLED
-  })
-
   it("does not ask Asaas anything while payments are switched off", async () => {
-    env.PAYMENTS_ENABLED = false
-
-    await expect(getAsaasFeesIfEnabled()).resolves.toBeNull()
+    await expect(getAsaasFeesIfEnabled(false)).resolves.toBeNull()
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it("answers with the snapshot once payments are on", async () => {
-    env.PAYMENTS_ENABLED = true
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify(feesBody), {
         status: 200,
@@ -231,7 +224,7 @@ describe("getAsaasFeesIfEnabled", () => {
       }),
     )
 
-    await expect(getAsaasFeesIfEnabled()).resolves.toMatchObject({
+    await expect(getAsaasFeesIfEnabled(true)).resolves.toMatchObject({
       pix: expect.any(Object),
     })
     expect(fetchMock).toHaveBeenCalled()
