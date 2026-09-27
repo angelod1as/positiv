@@ -1,0 +1,58 @@
+import { ENV } from "varlock/env"
+import { kyselyDb } from "~/kysely-db"
+
+/**
+ * The secrets say whether Asaas can be reached at all. The admin switch says
+ * whether it should be. Online payments need both.
+ */
+export const isAsaasConfigured = () =>
+  Boolean(ENV.ASAAS_API_URL && ENV.ASAAS_API_KEY && ENV.ASAAS_WEBHOOK_TOKEN)
+
+export const getOnlinePaymentsSetting = async () => {
+  const row = await kyselyDb
+    .selectFrom("app_settings as s")
+    .leftJoin("profiles as p", "p.id", "s.updated_by")
+    .select([
+      "s.online_payments_enabled",
+      "s.updated_at",
+      "p.social_name",
+      "p.full_name",
+    ])
+    .executeTakeFirst()
+
+  // The row hangs off profiles, so a TRUNCATE ... CASCADE there empties the
+  // table. Every page reads this; a missing row is the default, off.
+  const switchedOn = row?.online_payments_enabled ?? false
+  const asaasConfigured = isAsaasConfigured()
+
+  return {
+    switchedOn,
+    asaasConfigured,
+    enabled: asaasConfigured && switchedOn,
+    updatedAt: row?.updated_at ?? null,
+    updatedByName: row?.social_name || row?.full_name || null,
+  }
+}
+
+export const isOnlinePaymentsEnabled = async () =>
+  (await getOnlinePaymentsSetting()).enabled
+
+export const setOnlinePaymentsEnabled = async ({
+  enabled,
+  profileId,
+}: {
+  enabled: boolean
+  profileId: string
+}) => {
+  const values = {
+    online_payments_enabled: enabled,
+    updated_at: new Date().toISOString(),
+    updated_by: profileId,
+  }
+
+  await kyselyDb
+    .insertInto("app_settings")
+    .values({ id: true, ...values })
+    .onConflict((oc) => oc.column("id").doUpdateSet(values))
+    .execute()
+}
