@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
-import { render } from "@testing-library/react"
+import { renderToStaticMarkup } from "react-dom/server"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -38,21 +38,23 @@ describe("Layout", () => {
       vi.resetModules()
       const { Layout } = await import("./root")
 
-      render(
-        <Layout>
-          <div>Test Content</div>
-        </Layout>,
+      const document = new DOMParser().parseFromString(
+        renderToStaticMarkup(
+          <Layout>
+            <div>Test Content</div>
+          </Layout>,
+        ),
+        "text/html",
       )
 
       const umamiScript = document.querySelector(
         'script[data-website-id="test-website-id-123"]',
       )
-      expect(umamiScript).toBeInTheDocument()
-      expect(umamiScript).toHaveAttribute(
-        "src",
+      expect(umamiScript).not.toBeNull()
+      expect(umamiScript?.getAttribute("src")).toBe(
         "https://umami.example.com/script.js",
       )
-      expect(umamiScript).toHaveAttribute("defer")
+      expect(umamiScript?.hasAttribute("defer")).toBe(true)
     })
 
     it("should not render Umami script when VITE_UMAMI_WEBSITE_ID is not set", { timeout: 15000 }, async () => {
@@ -62,14 +64,17 @@ describe("Layout", () => {
       vi.resetModules()
       const { Layout } = await import("./root")
 
-      render(
-        <Layout>
-          <div>Test Content</div>
-        </Layout>,
+      const document = new DOMParser().parseFromString(
+        renderToStaticMarkup(
+          <Layout>
+            <div>Test Content</div>
+          </Layout>,
+        ),
+        "text/html",
       )
 
       const umamiScript = document.querySelector("script[data-website-id]")
-      expect(umamiScript).not.toBeInTheDocument()
+      expect(umamiScript).toBeNull()
     })
   })
 })
