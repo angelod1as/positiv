@@ -80,4 +80,21 @@ describe("view event page loader", () => {
       { error },
     )
   })
+
+  it.each([true, false])(
+    "hands the fee lookup and the payment modal the switch from the request context (%s)",
+    async (enabled) => {
+      vi.mocked(getContext).mockResolvedValue({
+        settings: {
+          onlinePayments: { ...defaultSettings.onlinePayments, enabled },
+        },
+      } as Awaited<ReturnType<typeof getContext>>)
+      vi.mocked(getRejectedEventParticipants).mockResolvedValue([])
+
+      const result = await runLoader()
+
+      expect(getAsaasFeesIfEnabled).toHaveBeenCalledWith(enabled)
+      expect(result).toMatchObject({ paymentsEnabled: enabled })
+    },
+  )
 })

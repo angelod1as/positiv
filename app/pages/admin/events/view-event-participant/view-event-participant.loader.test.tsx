@@ -2,8 +2,10 @@ import { NoResultError, type QueryNode } from "kysely"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   getEventParticipantBasic,
+  getParticipantFullEventHistory,
   getProfileById,
 } from "~/business/admin/admin.server"
+import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { getContext } from "~/business/auth/auth.server"
 import { defaultSettings } from "~/test/request-context"
 import { loader } from "./view-event-participant"
@@ -26,6 +28,14 @@ vi.mock("~/business/admin/admin.server", () => ({
 
 vi.mock("~/business/auth/auth.server", () => ({
   getContext: vi.fn(),
+}))
+
+vi.mock("~/business/payment/asaas-fees.server", () => ({
+  getAsaasFeesIfEnabled: vi.fn(async () => null),
+}))
+
+vi.mock("~/business/payment/payment-totals.server", () => ({
+  getPaymentsForParticipant: vi.fn(async () => []),
 }))
 
 type ProfileResult = Awaited<ReturnType<typeof getProfileById>>
@@ -112,4 +122,32 @@ describe("view event participant loader", () => {
       { profileId: "profile-1", eventId: "event-1", errors },
     )
   })
+
+  it.each([true, false])(
+    "hands the fee lookup and the payment modal the switch from the request context (%s)",
+    async (enabled) => {
+      vi.mocked(getContext).mockResolvedValue({
+        settings: {
+          onlinePayments: { ...defaultSettings.onlinePayments, enabled },
+        },
+      } as Awaited<ReturnType<typeof getContext>>)
+      vi.mocked(getEventParticipantBasic).mockResolvedValue({
+        success: true,
+        data: { id: "participant-1" },
+        errors: [],
+      } as unknown as ParticipantResult)
+      vi.mocked(getParticipantFullEventHistory).mockResolvedValue({
+        success: true,
+        data: [],
+        errors: [],
+      } as unknown as Awaited<
+        ReturnType<typeof getParticipantFullEventHistory>
+      >)
+
+      const result = await runLoader()
+
+      expect(getAsaasFeesIfEnabled).toHaveBeenCalledWith(enabled)
+      expect(result).toMatchObject({ paymentsEnabled: enabled })
+    },
+  )
 })
