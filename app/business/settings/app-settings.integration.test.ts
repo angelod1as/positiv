@@ -82,6 +82,7 @@ describe("online payments setting", () => {
     expect(await getOnlinePaymentsSetting()).toMatchObject({
       switchedOn: true,
       enabled: true,
+      updatedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/),
       updatedByName: "Admin Souza",
     })
   })

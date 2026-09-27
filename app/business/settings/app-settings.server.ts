@@ -29,7 +29,7 @@ export const getOnlinePaymentsSetting = async () => {
     switchedOn,
     asaasConfigured,
     enabled: asaasConfigured && switchedOn,
-    updatedAt: row?.updated_at ?? null,
+    updatedAt: row ? new Date(row.updated_at).toISOString() : null,
     updatedByName: row?.social_name || row?.full_name || null,
   }
 }
@@ -42,12 +42,12 @@ export const setOnlinePaymentsEnabled = async ({
   profileId,
 }: {
   enabled: boolean
-  profileId: string
+  profileId: string | undefined
 }) => {
   const values = {
     online_payments_enabled: enabled,
     updated_at: new Date().toISOString(),
-    updated_by: profileId,
+    updated_by: profileId ?? null,
   }
 
   await kyselyDb
