@@ -329,20 +329,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       kysely,
     )
 
-    console.info("\n=== BASELINE QUERY PERFORMANCE (BEFORE OPTIMIZATION) ===")
-    console.info(
-      explainResult.rows.map((row) => (row as { "QUERY PLAN": string })["QUERY PLAN"]).join("\n"),
-    )
-    console.info("========================================================\n")
-
-    // Extract execution time from EXPLAIN ANALYZE output
-    const executionTimeLine = explainResult.rows.find((row) =>
-      (row as { "QUERY PLAN": string })["QUERY PLAN"].includes("Execution Time"),
-    )
-    if (executionTimeLine) {
-      console.info(`Baseline: ${(executionTimeLine as { "QUERY PLAN": string })["QUERY PLAN"]}`)
-    }
-
     // Test still passes - we're just measuring performance
     expect(explainResult.rows.length).toBeGreaterThan(0)
   })
@@ -454,20 +440,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
     const explainResult = await sql`EXPLAIN ANALYZE ${explainQuery}`.execute(
       kysely,
     )
-
-    console.info("\n=== OPTIMIZED QUERY PERFORMANCE (AFTER OPTIMIZATION) ===")
-    console.info(
-      explainResult.rows.map((row) => (row as { "QUERY PLAN": string })["QUERY PLAN"]).join("\n"),
-    )
-    console.info("========================================================\n")
-
-    // Extract execution time from EXPLAIN ANALYZE output
-    const executionTimeLine = explainResult.rows.find((row) =>
-      (row as { "QUERY PLAN": string })["QUERY PLAN"].includes("Execution Time"),
-    )
-    if (executionTimeLine) {
-      console.info(`Optimized: ${(executionTimeLine as { "QUERY PLAN": string })["QUERY PLAN"]}`)
-    }
 
     // Test still passes - we're just measuring performance
     expect(explainResult.rows.length).toBeGreaterThan(0)
