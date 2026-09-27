@@ -136,16 +136,33 @@ describe("online payments setting", () => {
   // The E2E suite flips the switch through supabase-js as service_role. No
   // other Data API role may read or write it.
   it("is reachable through the Data API by service_role only", async () => {
-    const { rows } = await sql<{ role: string; granted: boolean }>`
-      SELECT r.role, has_table_privilege(r.role, 'public.app_settings',
-        'SELECT, INSERT, UPDATE') AS granted
+    // One privilege per check: given a list, has_table_privilege answers true
+    // when any one of them is held.
+    const { rows } = await sql<{
+      role: string
+      privilege: string
+      granted: boolean
+    }>`
+      SELECT r.role, p.privilege,
+             has_table_privilege(r.role, 'public.app_settings', p.privilege) AS granted
       FROM unnest(ARRAY['anon', 'authenticated', 'service_role']) AS r(role)
+      CROSS JOIN unnest(ARRAY['SELECT', 'INSERT', 'UPDATE']) AS p(privilege)
     `.execute(kysely)
 
-    expect(Object.fromEntries(rows.map((r) => [r.role, r.granted]))).toEqual({
-      anon: false,
-      authenticated: false,
-      service_role: true,
+    expect(
+      Object.fromEntries(
+        rows.map((r) => [`${r.role} ${r.privilege}`, r.granted]),
+      ),
+    ).toEqual({
+      "anon SELECT": false,
+      "anon INSERT": false,
+      "anon UPDATE": false,
+      "authenticated SELECT": false,
+      "authenticated INSERT": false,
+      "authenticated UPDATE": false,
+      "service_role SELECT": true,
+      "service_role INSERT": true,
+      "service_role UPDATE": true,
     })
   })
 })
