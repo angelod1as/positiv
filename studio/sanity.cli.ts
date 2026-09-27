@@ -7,6 +7,7 @@ export default defineCliConfig({
   },
   studioHost: "positiv",
   deployment: {
+    appId: "l5e0q3ft2d2rlhrtrjk4ilzz",
     autoUpdates: true,
   },
 })
