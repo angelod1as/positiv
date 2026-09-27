@@ -38,9 +38,11 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.resetModules()
   process.env.E2E_PORT = '5301'
+  vi.spyOn(console, 'info').mockImplementation(() => {})
 })
 
 afterEach(() => {
+  vi.mocked(console.info).mockRestore()
   delete process.env.E2E_PORT
   delete process.env.ASAAS_API_KEY
 })

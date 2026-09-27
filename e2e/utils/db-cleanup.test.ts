@@ -26,9 +26,11 @@ beforeEach(() => {
   process.env.VITE_SUPABASE_URL = 'http://localhost:54321'
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key'
   process.env.E2E_RUN_ID = 'thisrun'
+  vi.spyOn(console, 'info').mockImplementation(() => {})
 })
 
 afterEach(() => {
+  vi.mocked(console.info).mockRestore()
   delete process.env.E2E_RUN_ID
 })
 
