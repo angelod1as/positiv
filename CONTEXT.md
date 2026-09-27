@@ -32,7 +32,7 @@ Sections. The **Homepage** is the Page at `/`.
 _Avoid_: Landing, screen
 
 **Section**:
-A self-contained block of a Page — a hero, the about cards, the testimonials.
+A self-contained block of a Page — a hero, the about section, the testimonials.
 Each kind of Section can appear on any Page.
 _Avoid_: Block, module, component, slice
 
