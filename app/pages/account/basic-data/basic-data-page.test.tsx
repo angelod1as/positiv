@@ -5,6 +5,7 @@ import type { Route } from "./+types/basic-data-page"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "~/types/database/database.types"
 import type { Profile } from "~/types/database/entities.types"
+import { defaultSettings } from "~/test/request-context"
 
 vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
@@ -52,6 +53,7 @@ describe("basic-data-page loader", () => {
         supabaseHeaders: new Headers(),
         host: null,
         isProdInDev: false,
+        settings: defaultSettings,
       })
 
       const result = await loader({ request: mockRequest, params: mockParams, context: {} })
@@ -110,6 +112,7 @@ describe("basic-data-page loader", () => {
         supabaseHeaders: new Headers(),
         host: null,
         isProdInDev: false,
+        settings: defaultSettings,
       })
 
       const result = await loader({ request: mockRequest, params: mockParams, context: {} })
@@ -148,6 +151,7 @@ describe("basic-data-page loader", () => {
         supabaseHeaders: new Headers(),
         host: null,
         isProdInDev: false,
+        settings: defaultSettings,
       })
 
       const result = await loader({ request: mockRequest, params: mockParams, context: {} })
@@ -192,6 +196,7 @@ describe("basic-data-page loader", () => {
         supabaseHeaders: new Headers(),
         host: null,
         isProdInDev: false,
+        settings: defaultSettings,
       })
 
       const result = await loader({ request: mockRequest, params: mockParams, context: {} })

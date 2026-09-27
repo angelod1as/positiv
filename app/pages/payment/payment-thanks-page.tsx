@@ -34,9 +34,12 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw await redirectWithError(paths.dash.DASHBOARD, page.notYours)
   }
 
+  // The participant has just paid for a charge that was open. Switching online
+  // payments off stops new charges, not this one.
   return loadPaymentPage({
     paymentId: params.paymentId,
     profileId: currentProfile.id,
+    onlinePaymentsEnabled: true,
   })
 }
 

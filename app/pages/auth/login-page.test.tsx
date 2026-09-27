@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { Database } from "~/types/database/database.types"
+import { defaultSettings } from "~/test/request-context"
 
 const navigate = vi.fn()
 
@@ -62,16 +63,6 @@ const answers = (result: unknown, init?: ResponseInit) =>
     .spyOn(globalThis, "fetch")
     .mockResolvedValue(Response.json(result, init) as Response)
 
-const settings = {
-  onlinePayments: {
-    switchedOn: false,
-    asaasConfigured: false,
-    enabled: false,
-    updatedAt: null,
-    updatedByName: null,
-  },
-}
-
 describe("Login Page Loader", () => {
   const mockRequest = new Request("http://localhost:3000/entrar")
   const mockParams = {} as Route.LoaderArgs["params"]
@@ -89,7 +80,7 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
-      settings,
+      settings: defaultSettings,
     })
 
     const result = await loader({
@@ -128,7 +119,7 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
-      settings,
+      settings: defaultSettings,
     })
 
     await expect(
@@ -167,7 +158,7 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
-      settings,
+      settings: defaultSettings,
     })
 
     await expect(
@@ -187,7 +178,7 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
-      settings,
+      settings: defaultSettings,
     })
 
     await expect(

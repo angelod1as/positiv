@@ -10,31 +10,12 @@ import {
   createTestProfile,
 } from "~/test/db-test-utils"
 
-const { paymentsEnabled } = vi.hoisted(() => ({
-  paymentsEnabled: { value: true },
-}))
-
 // The fee table is pinned so the prices below are the ones the fallback list
 // produces, whatever an account the suite cannot reach would have answered.
 vi.mock("~/business/payment/asaas-fees.server", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("~/business/payment/asaas-fees.server")>()
   return { ...original, getAsaasFees: async () => original.FALLBACK_FEES }
-})
-
-// This suite talks to a real Supabase, so ENV cannot be replaced with a blank
-// object — that would strip the connection settings. Only the switch under
-// test is pinned; everything else falls through to the resolved config.
-vi.mock("varlock/env", async (importOriginal) => {
-  const original = await importOriginal<{ ENV: Record<string, unknown> }>()
-  return {
-    ENV: new Proxy(original.ENV, {
-      get: (target, key: string) =>
-        key === "PAYMENTS_ENABLED"
-          ? paymentsEnabled.value
-          : Reflect.get(target, key),
-    }),
-  }
 })
 
 import { loadPaymentPage } from "./payment-page.server"
@@ -46,7 +27,6 @@ describe("loadPaymentPage", () => {
   let participantId: string
 
   beforeEach(async () => {
-    paymentsEnabled.value = true
     tracker.clear()
     const testId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     const event = await createTestEvent(tracker, kysely, {
@@ -92,7 +72,11 @@ describe("loadPaymentPage", () => {
   it("offers the options to the person the charge belongs to", async () => {
     const payment = await openCharge()
 
-    const result = await loadPaymentPage({ paymentId: payment.id, profileId })
+    const result = await loadPaymentPage({
+      paymentId: payment.id,
+      profileId,
+      onlinePaymentsEnabled: true,
+    })
 
     expect(result.state).toBe("ready")
     if (result.state !== "ready") return
@@ -114,7 +98,11 @@ describe("loadPaymentPage", () => {
     const payment = await openCharge()
 
     await expect(
-      loadPaymentPage({ paymentId: payment.id, profileId: otherProfileId }),
+      loadPaymentPage({
+        paymentId: payment.id,
+        profileId: otherProfileId,
+        onlinePaymentsEnabled: true,
+      }),
     ).rejects.toBeDefined()
   })
 
@@ -123,6 +111,7 @@ describe("loadPaymentPage", () => {
       loadPaymentPage({
         paymentId: "00000000-0000-4000-8000-000000000000",
         profileId,
+        onlinePaymentsEnabled: true,
       }),
     ).rejects.toBeDefined()
   })
@@ -132,7 +121,11 @@ describe("loadPaymentPage", () => {
   // that is not yours, not with an error page.
   it("refuses an id that is not a UUID at all", async () => {
     await expect(
-      loadPaymentPage({ paymentId: "foo", profileId }),
+      loadPaymentPage({
+        paymentId: "foo",
+        profileId,
+        onlinePaymentsEnabled: true,
+      }),
     ).rejects.toBeInstanceOf(Response)
   })
 
@@ -144,7 +137,11 @@ describe("loadPaymentPage", () => {
       .execute()
     const payment = await openCharge()
 
-    const result = await loadPaymentPage({ paymentId: payment.id, profileId })
+    const result = await loadPaymentPage({
+      paymentId: payment.id,
+      profileId,
+      onlinePaymentsEnabled: true,
+    })
 
     expect(result.state).toBe("needs_cpf")
   })
@@ -155,7 +152,11 @@ describe("loadPaymentPage", () => {
       amount: 22199,
     })
 
-    const result = await loadPaymentPage({ paymentId: payment.id, profileId })
+    const result = await loadPaymentPage({
+      paymentId: payment.id,
+      profileId,
+      onlinePaymentsEnabled: true,
+    })
 
     expect(result.state).toBe("paid")
     if (result.state !== "paid") return
@@ -172,7 +173,11 @@ describe("loadPaymentPage", () => {
       paid_at: null,
     })
 
-    const result = await loadPaymentPage({ paymentId: expired.id, profileId })
+    const result = await loadPaymentPage({
+      paymentId: expired.id,
+      profileId,
+      onlinePaymentsEnabled: true,
+    })
 
     expect(result.state).toBe("closed")
   })
@@ -188,7 +193,11 @@ describe("loadPaymentPage", () => {
       asaas_invoice_url: "https://sandbox.asaas.com/i/pay_1",
     })
 
-    const result = await loadPaymentPage({ paymentId: payment.id, profileId })
+    const result = await loadPaymentPage({
+      paymentId: payment.id,
+      profileId,
+      onlinePaymentsEnabled: true,
+    })
 
     expect(result.state).toBe("ready")
     if (result.state !== "ready") return
@@ -208,7 +217,11 @@ describe("loadPaymentPage", () => {
       asaas_invoice_url: "https://sandbox.asaas.com/i/pay_2",
     })
 
-    const result = await loadPaymentPage({ paymentId: payment.id, profileId })
+    const result = await loadPaymentPage({
+      paymentId: payment.id,
+      profileId,
+      onlinePaymentsEnabled: true,
+    })
 
     expect(result.state).toBe("ready")
     if (result.state !== "ready") return
@@ -219,10 +232,13 @@ describe("loadPaymentPage", () => {
   // nothing may talk to Asaas, so the page offers nothing rather than quoting
   // a price from the fallback list that no charge could be created against.
   it("offers nothing while payments are switched off", async () => {
-    paymentsEnabled.value = false
     const payment = await openCharge()
 
-    const result = await loadPaymentPage({ paymentId: payment.id, profileId })
+    const result = await loadPaymentPage({
+      paymentId: payment.id,
+      profileId,
+      onlinePaymentsEnabled: false,
+    })
 
     expect(result.state).toBe("closed")
   })

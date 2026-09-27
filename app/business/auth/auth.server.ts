@@ -161,7 +161,10 @@ export const getContext = async (
 export const getUserContext = async (
   request: Request,
   params: Params,
-): Promise<z.infer<typeof userContextSchema>> => {
+): Promise<
+  z.infer<typeof userContextSchema> &
+    Pick<z.infer<typeof requestContextSchema>, "settings">
+> => {
   const { currentUser, ...context } = await getContext(request, params)
   if (!currentUser) {
     // Where they were going, so the login can put them back. A private link

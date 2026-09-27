@@ -1,5 +1,4 @@
 import { redirectWithError } from "remix-toast"
-import { ENV } from "varlock/env"
 import { getAsaasFees } from "~/business/payment/asaas-fees.server"
 import { ACTIVE_PAYMENT_STATUSES } from "~/business/payment/payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
@@ -36,9 +35,11 @@ const SETTLED_STATUSES = ["paid", "partially_refunded"]
 export async function loadPaymentPage({
   paymentId,
   profileId,
+  onlinePaymentsEnabled,
 }: {
   paymentId: string
   profileId: string
+  onlinePaymentsEnabled: boolean
 }): Promise<PaymentPageData> {
   // payments.id is a uuid column, so an id that is not one makes Postgres throw
   // rather than answer with no rows. Refused the same way a charge belonging to
@@ -97,7 +98,7 @@ export async function loadPaymentPage({
   // Pricing an option means reading the Asaas fee table, and with the switch
   // off nothing may talk to Asaas. Quoting from the fallback list instead would
   // name a price no charge could then be created against.
-  if (!(ACTIVE_PAYMENT_STATUSES as readonly string[]).includes(payment.status) || !ENV.PAYMENTS_ENABLED) {
+  if (!(ACTIVE_PAYMENT_STATUSES as readonly string[]).includes(payment.status) || !onlinePaymentsEnabled) {
     return { state: "closed", eventTitle }
   }
 

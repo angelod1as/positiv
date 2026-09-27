@@ -33,7 +33,7 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const { currentProfile } = await getUserContext(request, params)
+  const { currentProfile, settings } = await getUserContext(request, params)
 
   if (!currentProfile) {
     throw await redirectWithError(paths.dash.DASHBOARD, page.notYours)
@@ -42,6 +42,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   return loadPaymentPage({
     paymentId: params.paymentId,
     profileId: currentProfile.id,
+    onlinePaymentsEnabled: settings.onlinePayments.enabled,
   })
 }
 
