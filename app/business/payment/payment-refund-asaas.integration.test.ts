@@ -10,13 +10,17 @@ import {
   createTestProfile,
 } from "~/test/db-test-utils"
 
-const { listAsaasInstallmentPayments, refundAsaasPayment, logger } = vi.hoisted(
-  () => ({
-    listAsaasInstallmentPayments: vi.fn(),
-    refundAsaasPayment: vi.fn(),
-    logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
-  }),
-)
+const {
+  listAsaasInstallmentPayments,
+  refundAsaasPayment,
+  logger,
+  onlinePayments,
+} = vi.hoisted(() => ({
+  listAsaasInstallmentPayments: vi.fn(),
+  refundAsaasPayment: vi.fn(),
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+  onlinePayments: { enabled: true },
+}))
 
 vi.mock("./asaas-client.server", async (importOriginal) => {
   const original =
@@ -25,6 +29,13 @@ vi.mock("./asaas-client.server", async (importOriginal) => {
 })
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+
+vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("~/business/settings/app-settings.server")
+  >()),
+  isOnlinePaymentsEnabled: async () => onlinePayments.enabled,
+}))
 
 import { AsaasError } from "./asaas-client.server"
 import { requestRefund } from "./payment-refund.server"
@@ -37,6 +48,7 @@ describe("requestRefund", () => {
   beforeEach(async () => {
     tracker.clear()
     counter += 1
+    onlinePayments.enabled = true
     vi.clearAllMocks()
     listAsaasInstallmentPayments.mockResolvedValue([])
     refundAsaasPayment.mockResolvedValue(undefined)
@@ -104,6 +116,25 @@ describe("requestRefund", () => {
     // The webhook, not this call, moves the status.
     expect(after.status).toBe("paid")
     expect(after.refund_amount).toBeNull()
+  })
+
+  // Switching online payments off stops new charges. Money already taken
+  // online can only go back through Asaas, so refunds must keep working.
+  it("refunds a paid charge while online payments are switched off", async () => {
+    onlinePayments.enabled = false
+    const payment = await paidCharge()
+
+    const result = await requestRefund({
+      paymentId: payment.id,
+      amount: null,
+      reason: "Cancelou",
+    })
+
+    expect(result.success).toBe(true)
+    expect(refundAsaasPayment).toHaveBeenCalledWith(`pay_${counter}`, {
+      amount: 21900,
+      description: "Cancelou",
+    })
   })
 
   it("asks for a smaller amount when one is given", async () => {
