@@ -10,6 +10,7 @@ const RUN_ID = process.pid
 // Ordered so that referenced tables come before referencing tables.
 const TABLES = [
   "profiles",                   // seeded; wiped by kpi-scores (no WHERE)
+  "app_settings",               // references profiles, so the TRUNCATE cascade empties it
   "user_roles",                 // seeded; references auth.users, not profiles
   "events",                     // seeded; referenced by event_participants
   "event_participants",         // seeded; wiped by kpi-scores and dataviz (no WHERE)
