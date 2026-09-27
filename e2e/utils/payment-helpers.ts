@@ -44,8 +44,16 @@ export function postWebhook(body: ReturnType<typeof buildWebhookEvent>): Promise
   })
 }
 
+// The mock forgets its customers on reset, so a customer id a profile kept from
+// an earlier journey would point at nothing and every charge for it would be
+// refused as invalid_customer. Real Asaas never forgets one.
 export async function resetAsaasMock(): Promise<void> {
   await fetch(`${getAsaasMockUrl()}/__mock/reset`, { method: 'POST' })
+  const { error } = await createSupabaseAdminClient()
+    .from('profiles')
+    .update({ asaas_customer_id: null })
+    .not('asaas_customer_id', 'is', null)
+  if (error) throw new Error(`Could not forget the mock's customers: ${error.message}`)
 }
 
 export async function getAsaasMockCalls(): Promise<MockCall[]> {
