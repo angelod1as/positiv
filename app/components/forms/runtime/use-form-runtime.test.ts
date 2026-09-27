@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { zod } from "~/lib/helpers/zod"
 import type { Flow } from "./flow.types"
 import type { Question } from "./question.types"
@@ -900,6 +900,7 @@ describe("useFormRuntime going back", () => {
   })
 
   it("drops a failure that belongs to the step being left", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const failingFlow: Flow = {
       start: "a",
       steps: {
@@ -940,6 +941,13 @@ describe("useFormRuntime going back", () => {
 
     expect(result.current.currentStepId).toBe("a")
     expect(result.current.formError).toBeNull()
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[form-runtime]"),
+      expect.anything(),
+    )
+
+    consoleError.mockRestore()
   })
 })
 

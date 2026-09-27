@@ -352,6 +352,7 @@ describe("useFormRuntime commit steps", () => {
   })
 
   it("survives a commit that throws", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const run: CommitFn = () => {
       throw new Error("network down")
     }
@@ -368,6 +369,13 @@ describe("useFormRuntime commit steps", () => {
     expect(result.current.isDone).toBe(false)
     expect(result.current.formError).toBeTruthy()
     expect(result.current.currentStepId).toBe("nome")
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[form-runtime]"),
+      expect.anything(),
+    )
+
+    consoleError.mockRestore()
   })
 
   it("says what the commit threw, which the form error alone hides", async () => {
@@ -394,6 +402,7 @@ describe("useFormRuntime commit steps", () => {
   })
 
   it("survives a commit whose promise rejects", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const run: CommitFn = () => Promise.reject(new Error("timeout"))
 
     const { result } = renderHook(() =>
@@ -407,9 +416,17 @@ describe("useFormRuntime commit steps", () => {
 
     expect(result.current.isDone).toBe(false)
     expect(result.current.formError).toBeTruthy()
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[form-runtime]"),
+      expect.anything(),
+    )
+
+    consoleError.mockRestore()
   })
 
   it("clears the form error on the next successful commit", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const run = vi
       .fn<CommitFn>()
       .mockImplementationOnce(() => {
@@ -433,6 +450,13 @@ describe("useFormRuntime commit steps", () => {
 
     expect(result.current.formError).toBeNull()
     expect(result.current.isDone).toBe(true)
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[form-runtime]"),
+      expect.anything(),
+    )
+
+    consoleError.mockRestore()
   })
 
   it("reports a rejection naming a question no step asks", async () => {
@@ -580,6 +604,7 @@ describe("useFormRuntime a commit's rejections beside the button", () => {
   })
 
   it("leaves the signal alone when the commit failed as a whole", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const run: CommitFn = () => {
       throw new Error("rede caiu")
     }
@@ -594,5 +619,12 @@ describe("useFormRuntime a commit's rejections beside the button", () => {
 
     expect(result.current.formError).not.toBeNull()
     expect(result.current.advanceRejection).toBeNull()
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[form-runtime]"),
+      expect.anything(),
+    )
+
+    consoleError.mockRestore()
   })
 })
