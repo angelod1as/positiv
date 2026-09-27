@@ -1,3 +1,4 @@
+import { sql } from "kysely"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   cleanupAfterTest,
@@ -130,5 +131,21 @@ describe("online payments setting", () => {
     await setOnlinePaymentsEnabled({ enabled: true, profileId: admin.id })
 
     expect(await isOnlinePaymentsEnabled()).toBe(true)
+  })
+
+  // The E2E suite flips the switch through supabase-js as service_role. No
+  // other Data API role may read or write it.
+  it("is reachable through the Data API by service_role only", async () => {
+    const { rows } = await sql<{ role: string; granted: boolean }>`
+      SELECT r.role, has_table_privilege(r.role, 'public.app_settings',
+        'SELECT, INSERT, UPDATE') AS granted
+      FROM unnest(ARRAY['anon', 'authenticated', 'service_role']) AS r(role)
+    `.execute(kysely)
+
+    expect(Object.fromEntries(rows.map((r) => [r.role, r.granted]))).toEqual({
+      anon: false,
+      authenticated: false,
+      service_role: true,
+    })
   })
 })
