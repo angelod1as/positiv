@@ -12,17 +12,15 @@ We use [Log4brains](https://github.com/thomvaill/log4brains) to manage ADRs. Bro
 pnpm adr:preview  # Opens browser with ADR knowledge base
 ```
 
-Current ADRs:
-
-- [ADR-0001: Git Worktree Workflow](./architecture/decisions/0001-git-worktree-workflow.md) - Using git worktrees for parallel development
-- [ADR: Use Log4brains](./architecture/decisions/20250630-use-log4brains-to-manage-the-adrs.md) - ADR management tool
-- [ADR: Use Markdown ADRs](./architecture/decisions/20250630-use-markdown-architectural-decision-records.md) - Decision to use MADR format
-- [ADR: A payment can be zero](./architecture/decisions/20260901-a-payment-can-be-zero.md) - Why a settled participation may carry no money
-- [ADR: Host the Sanity Studio as its own workspace package](./architecture/decisions/20260924-host-the-sanity-studio-as-its-own-workspace-package.md) - Why the Studio is not embedded in the app
-- [ADR: Sanity schema changes follow expand/contract](./architecture/decisions/20260924-sanity-schema-changes-follow-expand-contract.md) - How to rename or remove a Sanity field safely
-- [ADR: No repository fallback for Public Site content](./architecture/decisions/20260924-no-repository-fallback-for-public-site-content.md) - Why Sanity is the only copy of Public Site content
+The full list, grouped by area and with each record's status, lives in
+[`architecture/decisions/index.md`](./architecture/decisions/index.md) — the single
+source of truth. Add every new ADR there, not here.
 
 To create a new ADR: `pnpm adr:new`
+
+### 📖 Domain Glossary
+
+- [CONTEXT.md](../CONTEXT.md) - The project's vocabulary: Public Site vs Platform, Editor, Page, Section, Person, Testimonial
 
 ### 🔧 Development
 
@@ -49,8 +47,8 @@ This documentation follows these principles:
 
 When adding new documentation:
 
-1. **ADRs** - Use `pnpm adr:new` to create interactively
-2. Update this README with links to new documents
+1. **ADRs** - Use `pnpm adr:new` to create interactively, then list it in `architecture/decisions/index.md`
+2. Update this README with links to new documents that are not ADRs
 3. Keep language clear and concise
 4. Include examples where helpful
 

@@ -14,7 +14,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 
 | Date | Title | Status |
 |------|-------|--------|
-| [0001](./0001-git-worktree-workflow.md) | Git Worktree Workflow | Accepted |
+| [2025-01-22](./20250122-git-worktree-workflow.md) | Git Worktree Workflow | Accepted |
 | [2025-06-30](./20250630-use-log4brains-to-manage-the-adrs.md) | Use Log4brains | Accepted |
 | [2025-06-30](./20250630-use-markdown-architectural-decision-records.md) | Use Markdown ADRs | Accepted |
 
