@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
 import type { DashboardEvent } from "~/components/organisms/tables/admin/events-table"
 import { adminDashboardCopy } from "~/copy/admin"
+import paths from "~/lib/paths"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -35,12 +36,6 @@ vi.mock("~/components/organisms/tables/admin/recent-profiles-table", () => ({
 
 vi.mock("~/components/organisms/tables/admin/recent-feedbacks-table", () => ({
   RecentFeedbacksTable: () => <div data-testid="recent-feedbacks-table" />,
-}))
-
-vi.mock("~/components/pages/admin/listmonk-diagnostic-section", () => ({
-  ListmonkDiagnosticSection: () => (
-    <div data-testid="listmonk-diagnostic-section" />
-  ),
 }))
 
 vi.mock("~/components/ui/button", () => ({
@@ -169,5 +164,13 @@ describe("AdminDashboard Component", () => {
       screen.getByText(adminDashboardCopy.activeEventsTitle),
     ).toBeInTheDocument()
     expect(screen.getByTestId("event-card")).toBeInTheDocument()
+  })
+
+  it("should link to the settings page", () => {
+    render(<AdminDashboard {...createMockComponentProps([])} />)
+
+    expect(
+      screen.getByRole("link", { name: adminDashboardCopy.settings.cta }),
+    ).toHaveAttribute("href", paths.admin.ADMIN_SETTINGS)
   })
 })

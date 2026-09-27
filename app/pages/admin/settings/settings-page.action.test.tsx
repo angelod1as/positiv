@@ -1,10 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { getAdminContext } from "~/business/admin/admin.server"
+import {
+  cleanupListmonkTestCampaign,
+  testListmonkConnection,
+} from "~/business/newsletter/test-listmonk-connection.server"
 import { setOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { action } from "./settings-page"
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
+}))
+
+vi.mock("~/business/newsletter/test-listmonk-connection.server", () => ({
+  cleanupListmonkTestCampaign: vi.fn(),
+  testListmonkConnection: vi.fn(),
 }))
 
 vi.mock("~/business/settings/app-settings.server", () => ({
@@ -24,6 +33,12 @@ const runAction = (fields: Record<string, string>) =>
   >[0])
 
 const INTENTS = [
+  { intent: "test-listmonk", fields: {}, mutation: testListmonkConnection },
+  {
+    intent: "cleanup-listmonk",
+    fields: { campaignId: "1" },
+    mutation: cleanupListmonkTestCampaign,
+  },
   {
     intent: "set-online-payments",
     fields: { enabled: "false" },
@@ -37,6 +52,8 @@ describe("SettingsPage action", () => {
     vi.mocked(getAdminContext).mockResolvedValue({
       currentProfile: { id: "admin-1" },
     } as Awaited<ReturnType<typeof getAdminContext>>)
+    vi.mocked(testListmonkConnection).mockResolvedValue({} as never)
+    vi.mocked(cleanupListmonkTestCampaign).mockResolvedValue({} as never)
   })
 
   describe.each(INTENTS)("$intent", ({ intent, fields, mutation }) => {

@@ -1,7 +1,13 @@
 import { getAdminContext } from "~/business/admin/admin.server"
 import { getContext } from "~/business/auth/auth.server"
+import {
+  cleanupListmonkTestCampaign,
+  testListmonkConnection,
+} from "~/business/newsletter/test-listmonk-connection.server"
 import { setOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import { ListmonkDiagnosticSection } from "~/components/pages/admin/listmonk-diagnostic-section"
 import { OnlinePaymentsSection } from "~/components/pages/admin/online-payments-section"
+import { Separator } from "~/components/ui/separator"
 import { adminSettingsCopy } from "~/copy/admin"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
@@ -25,6 +31,17 @@ export async function action({ request, params }: Route.ActionArgs) {
     return { intent }
   }
 
+  if (intent === "test-listmonk") {
+    const diagnosticResult = await testListmonkConnection()
+    return { intent: "test-listmonk", diagnosticResult }
+  }
+
+  if (intent === "cleanup-listmonk") {
+    const campaignId = Number(formData.get("campaignId"))
+    const cleanupResult = await cleanupListmonkTestCampaign(campaignId)
+    return { intent: "cleanup-listmonk", cleanupResult }
+  }
+
   return { intent }
 }
 
@@ -39,6 +56,10 @@ const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
       <h1>{adminSettingsCopy.title}</h1>
 
       <OnlinePaymentsSection setting={loaderData.onlinePayments} />
+
+      <Separator />
+
+      <ListmonkDiagnosticSection />
     </>
   )
 }
