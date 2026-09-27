@@ -189,6 +189,33 @@ jobs:
       # timestamp is merged after a newer migration is already deployed to production.
       - run: supabase db push --include-all --db-url "$SUPABASE_CONNECT_URL"
 
+  # The Studio is hosted by Sanity (positiv.sanity.studio), not by Coolify, so
+  # it deploys from here. It runs beside `deploy`, not after it: the Studio
+  # never reads the Postgres schema, and waiting on the dump would only delay
+  # it. Schema changes that rename or remove a field still have to follow the
+  # expand/contract ADR, because the app and the Studio land at different
+  # moments either way.
+  deploy-studio:
+    runs-on: ubuntu-latest
+    needs: unit-test
+    timeout-minutes: 10
+
+    env:
+      SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Deploy the Studio
+        run: pnpm --filter studio run deploy
+
   # Nothing here used to look at the site. A merge that produced an image which
   # could not boot took production down, and the way anyone found out was by
   # opening the page. This is the detector that was missing.

@@ -72,4 +72,20 @@ describe("production workflow", () => {
     // did.
     expect(workflow).toContain("Coolify")
   })
+
+  it("deploys the Studio once the tests pass, beside the database and not before it", () => {
+    const deployStudio = jobBlock("deploy-studio")
+
+    expect(deployStudio).toContain("needs: unit-test")
+    expect(jobBlock("smoke")).not.toContain("deploy-studio")
+  })
+
+  it("deploys the Studio without a prompt, authenticated by the deploy token", () => {
+    const deployStudio = jobBlock("deploy-studio")
+
+    // `deploy` is a pnpm built-in, so without `run` pnpm copies the package to
+    // a target directory instead of running the Studio's deploy script.
+    expect(runCommand("Deploy the Studio")).toBe("pnpm --filter studio run deploy")
+    expect(deployStudio).toContain("SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}")
+  })
 })
