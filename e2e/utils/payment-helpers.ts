@@ -70,6 +70,16 @@ export async function confirmMockCharge(chargeId: string): Promise<void> {
   if (!response.ok) throw new Error(`The mock refused to confirm ${chargeId}: ${response.status}`)
 }
 
+// The admin switch lives in the database, so every journey that needs online
+// payments turns it on itself rather than trust what the last run left.
+export async function setOnlinePayments(enabled: boolean): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+  const { error } = await supabase
+    .from('app_settings')
+    .upsert({ id: true, online_payments_enabled: enabled })
+  if (error) throw new Error(`Could not switch online payments: ${error.message}`)
+}
+
 export async function getParticipantPayments(profileId: string, eventId: string) {
   const supabase = createSupabaseAdminClient()
 

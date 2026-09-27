@@ -83,7 +83,6 @@ async function startProductionServer() {
         APP_URL: getBaseUrl(),
         // Set here rather than in .env so the suite always talks to the mock,
         // never to the sandbox key a developer keeps locally.
-        PAYMENTS_ENABLED: "true",
         ASAAS_API_URL: `${asaasUrl}/v3`,
         ASAAS_API_KEY: E2E_ASAAS_API_KEY,
         ASAAS_WEBHOOK_TOKEN: E2E_ASAAS_WEBHOOK_TOKEN,

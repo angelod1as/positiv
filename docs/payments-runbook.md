@@ -18,11 +18,11 @@ varlock run -- sh -c 'curl -s "$ASAAS_API_URL/webhooks" -H "access_token: $ASAAS
 ## 1. Environment
 
 Declared in `.env.schema`. In production the values live in Coolify, as
-runtime environment.
+runtime environment. They say whether Asaas is configured; whether online
+payments are on is the admin switch (section 8).
 
 | Variable | What it is | Sandbox vs production |
 |---|---|---|
-| `PAYMENTS_ENABLED` | Master switch. Off: no charge is offered, and the payment page and the webhook answer 404 | on in dev when testing; off in production until POS-560 |
 | `ASAAS_API_URL` | Base URL including `/v3` | differs |
 | `ASAAS_API_KEY` | API key, shown once by Asaas when generated | differs |
 | `ASAAS_WEBHOOK_TOKEN` | At least 32 characters; Asaas echoes it in `asaas-access-token` | use a fresh one per environment |
@@ -46,7 +46,7 @@ one behind it, and after 15 consecutive failures Asaas interrupts the queue and
 emails the address registered on the webhook (at failures 5, 10 and 15).
 
 1. Find out why deliveries fail: the app logs, `/api/asaas/webhook` answering
-   401 (token mismatch), 404 (`PAYMENTS_ENABLED` off) or 5xx.
+   401 (token mismatch), 503 (`ASAAS_WEBHOOK_TOKEN` unset) or 5xx.
 2. Fix that first. Resuming a queue that still fails only burns another 15
    attempts.
 3. Check the state:
@@ -151,20 +151,26 @@ not what the participant paid. The fees stay with the participant.
 
 ## 8. Turning online payments off
 
-Today the switch is `PAYMENTS_ENABLED`: set it to `false` in Coolify and
-redeploy. Open charges stay open on Asaas. While it is off, the webhook answers
-404, so a participant who pays an open charge is not recorded, and the queue
-stops after 15 failures. Turn it back on and resume the queue (section 3) to
-receive them.
+**Admin → Configurações → Pagamentos online** (`/admin/configuracoes`). It
+takes effect on the next request, with no deploy. Off means:
 
-POS-565 replaces this with a "Pagamentos online" switch in the admin that takes
-effect immediately and keeps the webhook working while online payments are off.
-Update this section when it lands.
+- the payment modal hides the Cobrança section: manual payments only;
+- the emailed link shows "fale com a organização", and no new charge can be
+  created at Asaas;
+- no payment-link email or resend goes out.
+
+What keeps working: open charges stay open on Asaas and can still be paid on
+the invoice page, the webhook records them, and refunds of Asaas payments go
+through as usual. Nothing is cancelled. Turning the switch back on needs no
+migration.
+
+The switch cannot be turned on while `ASAAS_API_URL`, `ASAAS_API_KEY` or
+`ASAAS_WEBHOOK_TOKEN` is missing; the page says so.
 
 ## 9. Trying the whole flow by hand in dev, against the sandbox
 
-1. `.env` holds the sandbox key and URL, `PAYMENTS_ENABLED=true`, and a webhook
-   token.
+1. `.env` holds the sandbox key and URL and a webhook token, and online
+   payments are switched on in `/admin/configuracoes`.
 2. Serve the production build, not `pnpm dev`. The dev server listens on
    `[::1]` only, and Vite refuses the tunnel's host name:
 

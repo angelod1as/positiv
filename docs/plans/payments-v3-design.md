@@ -230,8 +230,9 @@ a payment link. Where the money stands is a separate question, answered by
 
 1. Admin opens the "Gerenciar pagamento" modal — from the participant detail
    page or the `$` column in the grid — and uses its **Cobrança** section.
-   It is rendered only when `PAYMENTS_ENABLED` and the spot is `regular`; a
-   social or staff spot owes nothing and is offered no charge.
+   It is rendered only when online payments are on (the admin switch, see
+   POS-565) and the spot is `regular`; a social or staff spot owes nothing
+   and is offered no charge.
    - Nothing open: an amount field defaulted to the event's `ticket_price` in
      reais, and **Enviar cobrança**.
    - Something open: the same field as **Reenviar com outro valor**, beside
@@ -259,7 +260,7 @@ a payment link. Where the money stands is a separate question, answered by
 4. The rest of the modal is unchanged — **Cancelar cobrança**, **Registrar
    pagamento manual**, **Reembolsar**.
 
-`PAYMENTS_ENABLED=false` hides the whole Cobrança section, so admins go on
+Online payments switched off hides the whole Cobrança section, so admins go on
 recording PIX transfers by hand exactly as they do today.
 
 ### 5.2 Participant pays
@@ -305,7 +306,8 @@ recording PIX transfers by hand exactly as they do today.
 
 `POST /api/asaas/webhook` (`app/routes/api.asaas-webhook.ts`).
 
-1. `PAYMENTS_ENABLED=false` → 404. `ASAAS_WEBHOOK_TOKEN` unset → 503 and
+1. No switch is read: the webhook processes whether online payments are on or
+   off, so money in flight is never lost. `ASAAS_WEBHOOK_TOKEN` unset → 503 and
    `logger.error`. Header `asaas-access-token` compared timing-safe → 401.
 2. Body parsed with a permissive Zod schema: `{ id, event, payment: { id,
    status, value, netValue, installment, externalReference, refunds?,
@@ -504,8 +506,6 @@ Env (`.env.schema`):
 
 ```
 # --- Payments (Asaas) ---
-# @public @type=boolean
-PAYMENTS_ENABLED=false
 # @public @type=url @example="https://api-sandbox.asaas.com/v3"
 ASAAS_API_URL=
 # @sensitive
@@ -555,7 +555,7 @@ Both are overrides: empty means the value `GET /v3/myAccount/fees/` reports.
 - **Sandbox (manual, scripted)**: `scripts/asaas/smoke.ts` creates customer +
   PIX charge + card 3x charge, confirms via `POST /v3/sandbox/payment/{id}/confirm`,
   waits for the webhook through a `cloudflared` tunnel, prints `value`,
-  `netValue`, and the computed expectation. Run before `PAYMENTS_ENABLED=true`.
+  `netValue`, and the computed expectation. Run before switching online payments on.
 
 ## 10. Delivery — one PR per line, each green and mergeable on its own
 
