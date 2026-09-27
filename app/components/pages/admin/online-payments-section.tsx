@@ -23,7 +23,7 @@ export function OnlinePaymentsSection({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const isSubmitting = fetcher.state !== "idle"
 
-  const turningOn = !setting.switchedOn
+  const turningOn = !setting.enabled
   const lastChange = formatDateTime(setting.updatedAt, "numeric").full
 
   const handleConfirm = (closeDialog: () => void) => {

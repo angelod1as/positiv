@@ -88,4 +88,18 @@ describe("OnlinePaymentsSection", () => {
       screen.getByRole("button", { name: "Ligar pagamentos online" }),
     ).toBeDisabled()
   })
+
+  // Stored as on, but Asaas lost its keys: the effective state is off, and
+  // offering to switch off what already reads as off would be a contradiction.
+  it("offers nothing but a disabled switch-on while switched on without Asaas", () => {
+    renderSection({ ...configured, asaasConfigured: false, enabled: false })
+
+    expect(screen.getByText("Desligados")).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Desligar pagamentos online" }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole("button", { name: "Ligar pagamentos online" }),
+    ).toBeDisabled()
+  })
 })
