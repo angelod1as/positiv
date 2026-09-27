@@ -2,10 +2,14 @@ import { describe, expect, it, vi, beforeEach } from "vitest"
 import { sendRegistrationLimitAdminMail } from "./send-registration-limit-admin-mail.server"
 import * as getAdminEmailsModule from "./get-admin-emails.server"
 import * as sendEmailModule from "~/business/email/send-email"
+import { logger } from "~/lib/logger/logger.server"
 import type { Event } from "~types/database/entities.types"
 
 vi.mock("./get-admin-emails.server")
 vi.mock("~/business/email/send-email")
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn() },
+}))
 
 describe("sendRegistrationLimitAdminMail", () => {
     const mockEvent: Event = {
@@ -70,6 +74,9 @@ describe("sendRegistrationLimitAdminMail", () => {
 
     expect(result.emailSent).toBe(false)
     expect(sendEmailModule.sendEmail).not.toHaveBeenCalled()
+    expect(logger.warn).toHaveBeenCalledWith(
+      "No admin emails found to send registration limit notification",
+    )
   })
 
   it("should return false when email sending fails", async () => {
@@ -87,6 +94,10 @@ describe("sendRegistrationLimitAdminMail", () => {
     })
 
     expect(result.emailSent).toBe(false)
+    expect(logger.error).toHaveBeenCalledWith(
+      "Registration limit admin email failed:",
+      { errors: [new Error("Email failed")] },
+    )
   })
 
   it("should include all event details in email", async () => {
