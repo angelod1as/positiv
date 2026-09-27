@@ -3,8 +3,12 @@ import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup
 import { createTestEvent, createTestProfile, createTestAdminUser } from "~/test/db-test-utils"
 import { action } from "~/pages/api/admin/send-registration-limit-email"
 import * as sendEmailModule from "~/business/email/send-email"
+import { logger } from "~/lib/logger/logger.server"
 
 vi.mock("~/business/email/send-email")
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
 
 // This suite talks to a real Supabase, so it cannot replace ENV with a blank
 // object the way the suites with mocked databases do — that would strip the
@@ -259,6 +263,11 @@ describe("Registration Limit Email Notification - E2E Integration", () => {
     expect(response.status).toBe(500)
     expect(data.success).toBe(false)
     expect(data.error).toBe("Failed to send email")
+
+    expect(logger.error).toHaveBeenCalledWith(
+      "Registration limit admin email failed:",
+      { errors: [new Error("Email service unavailable")] },
+    )
   })
 
   it("should include participant count in email", async () => {
