@@ -1,5 +1,5 @@
 import { applySchema } from "composable-functions"
-import { ENV } from "varlock/env"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { reaisToCents } from "~/lib/helpers/format-currency"
@@ -129,7 +129,7 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
       throw new Error(paymentsCopy.errors.freeSpot)
     }
 
-    if (!ENV.PAYMENTS_ENABLED) {
+    if (!(await isOnlinePaymentsEnabled())) {
       // No emailSent here on purpose: nothing was created, so there is no
       // charge for the modal to warn about not having announced.
       return { created: false as const, reason: "disabled" }
@@ -239,7 +239,7 @@ export const resendPaymentOffer = applySchema(resendPaymentOfferSchema)(
     // The link email prices every option, which means reading the Asaas fee
     // table. With the switch off nothing may talk to Asaas, so this path is
     // gated like the one that opens a charge.
-    if (!ENV.PAYMENTS_ENABLED) {
+    if (!(await isOnlinePaymentsEnabled())) {
       return { reason: "disabled" }
     }
 

@@ -52,20 +52,13 @@ vi.mock("./asaas-fees.server", async (importOriginal) => {
 
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
-// This suite talks to a real Supabase, so ENV cannot be replaced with a blank
-// object — that would strip the connection settings. Only the switch under
-// test is pinned; everything else falls through to the resolved config.
-vi.mock("varlock/env", async (importOriginal) => {
-  const original = await importOriginal<{ ENV: Record<string, unknown> }>()
-  return {
-    ENV: new Proxy(original.ENV, {
-      get: (target, key: string) =>
-        key === "PAYMENTS_ENABLED"
-          ? paymentsEnabled.value
-          : Reflect.get(target, key),
-    }),
-  }
-})
+// The admin switch, pinned per test. Everything else reads the real settings.
+vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("~/business/settings/app-settings.server")
+  >()),
+  isOnlinePaymentsEnabled: async () => paymentsEnabled.value,
+}))
 
 import { FALLBACK_FEES } from "./asaas-fees.server"
 import { pickOption } from "./payment-checkout.server"
