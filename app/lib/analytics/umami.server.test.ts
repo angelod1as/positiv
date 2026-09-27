@@ -1,8 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { logger } from "~/lib/logger/logger.server"
 import { trackServerEvent } from "./umami.server"
 
 const { ENV } = vi.hoisted(() => ({ ENV: {} as Record<string, unknown> }))
 vi.mock("varlock/env", () => ({ ENV }))
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { warn: vi.fn() },
+}))
 
 describe("trackServerEvent", () => {
   const mockFetch = vi.fn()
@@ -82,9 +86,14 @@ describe("trackServerEvent", () => {
   })
 
   it("should silently handle fetch errors", async () => {
-    mockFetch.mockRejectedValue(new Error("Network error"))
+    const error = new Error("Network error")
+    mockFetch.mockRejectedValue(error)
 
     await expect(trackServerEvent("test_event")).resolves.not.toThrow()
+    expect(logger.warn).toHaveBeenCalledWith(
+      "[Analytics] Failed to track event:",
+      { eventName: "test_event", error },
+    )
   })
 
   it("should send event without data when not provided", async () => {
