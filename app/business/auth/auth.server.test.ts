@@ -23,6 +23,18 @@ vi.mock("~/kysely-db", () => ({
   },
 }))
 
+const onlinePayments = {
+  switchedOn: true,
+  asaasConfigured: true,
+  enabled: true,
+  updatedAt: "2026-09-27T12:00:00Z",
+  updatedByName: "Admin Souza",
+}
+
+vi.mock("~/business/settings/app-settings.server", () => ({
+  getOnlinePaymentsSetting: vi.fn(async () => onlinePayments),
+}))
+
 vi.mock("~/lib/logger/logger.server", () => ({
   logger: {
     error: vi.fn(),
@@ -245,6 +257,21 @@ describe("getContext", () => {
     expect(logger.error).not.toHaveBeenCalled()
   })
 
+  it("carries the settings every page reads, signed in or not", async () => {
+    const { createServerClient } = await import("~/lib/supabase/server")
+    vi.mocked(createServerClient).mockReturnValue({
+      supabase: createMockSupabase(
+        { message: "Auth session missing!" },
+        { user: null },
+      ) as unknown as DBClient,
+      headers: new Headers(),
+    })
+
+    const result = await getContext(new Request("http://localhost:5173/"), {})
+
+    expect(result.settings).toEqual({ onlinePayments })
+  })
+
   it("should handle signOut failure gracefully", async () => {
     const mockRequest = new Request("http://localhost:5173/")
     const mockParams = {}
@@ -326,6 +353,11 @@ describe("getContext", () => {
     // Should only call DB once
     expect(mockGetUser).toHaveBeenCalledTimes(1)
     expect(mockRpc).toHaveBeenCalledTimes(1)
+
+    const { getOnlinePaymentsSetting } = await import(
+      "~/business/settings/app-settings.server"
+    )
+    expect(getOnlinePaymentsSetting).toHaveBeenCalledTimes(1)
 
     // Results should be identical
     expect(result1).toEqual(result2)

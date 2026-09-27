@@ -98,6 +98,19 @@ export const contextSchema = getSupabaseSchema.extend({
   host: zod.string().nullable(),
 })
 
+/** What `getContext` hands every loader: the session plus the admin settings. */
+export const requestContextSchema = contextSchema.extend({
+  settings: zod.object({
+    onlinePayments: zod.object({
+      switchedOn: zod.boolean(),
+      asaasConfigured: zod.boolean(),
+      enabled: zod.boolean(),
+      updatedAt: zod.string().nullable(),
+      updatedByName: zod.string().nullable(),
+    }),
+  }),
+})
+
 export const userContextSchema = contextSchema.extend({
   currentUser: currentUserSchema,
 })

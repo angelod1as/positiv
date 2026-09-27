@@ -3,6 +3,7 @@ import { redirect, type Params } from "react-router"
 import { redirectWithError, redirectWithSuccess } from "remix-toast"
 import type { z } from "zod"
 import { ENV } from "varlock/env"
+import { getOnlinePaymentsSetting } from "~/business/settings/app-settings.server"
 import { logoutCopy } from "~/copy/auth"
 import { errorsCopy } from "~/copy/errors"
 import { trackServerEvent } from "~/lib/analytics/umami.server"
@@ -15,6 +16,7 @@ import {
   contextSchema,
   getSupabaseSchema,
   registerUserSchema,
+  requestContextSchema,
   userContextSchema,
 } from "../common"
 
@@ -28,7 +30,10 @@ const {
 } = paths
 
 // Cache for auth context per request to avoid redundant DB queries
-const authCache = new WeakMap<Request, Promise<z.infer<typeof contextSchema>>>()
+const authCache = new WeakMap<
+  Request,
+  Promise<z.infer<typeof requestContextSchema>>
+>()
 
 export const getSupabase = async (
   request: Request,
@@ -133,7 +138,7 @@ async function _fetchContext(
 export const getContext = async (
   request: Request,
   params: Params,
-): Promise<z.infer<typeof contextSchema>> => {
+): Promise<z.infer<typeof requestContextSchema>> => {
   // Check cache first
   const cached = authCache.get(request)
   if (cached) {
@@ -141,7 +146,13 @@ export const getContext = async (
   }
 
   // Create promise and cache immediately to handle concurrent calls
-  const promise = _fetchContext(request, params)
+  const promise = Promise.all([
+    _fetchContext(request, params),
+    getOnlinePaymentsSetting(),
+  ]).then(([context, onlinePayments]) => ({
+    ...context,
+    settings: { onlinePayments },
+  }))
   authCache.set(request, promise)
 
   return promise

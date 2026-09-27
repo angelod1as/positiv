@@ -62,6 +62,16 @@ const answers = (result: unknown, init?: ResponseInit) =>
     .spyOn(globalThis, "fetch")
     .mockResolvedValue(Response.json(result, init) as Response)
 
+const settings = {
+  onlinePayments: {
+    switchedOn: false,
+    asaasConfigured: false,
+    enabled: false,
+    updatedAt: null,
+    updatedByName: null,
+  },
+}
+
 describe("Login Page Loader", () => {
   const mockRequest = new Request("http://localhost:3000/entrar")
   const mockParams = {} as Route.LoaderArgs["params"]
@@ -79,6 +89,7 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
+      settings,
     })
 
     const result = await loader({
@@ -117,6 +128,7 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
+      settings,
     })
 
     await expect(
@@ -155,6 +167,7 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
+      settings,
     })
 
     await expect(
@@ -174,6 +187,7 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
+      settings,
     })
 
     await expect(
