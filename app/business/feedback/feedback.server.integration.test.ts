@@ -312,7 +312,7 @@ describe("Feedback Server - Integration Tests", () => {
     })
 
     it("should link the profile when the phone matches", async () => {
-      // The seeds give ten profiles 11999999999, so this needs its own number
+      // Seeded profiles carry phones too, so this needs a number of its own
       const profile = await createTestProfile(tracker, kysely, {
         user_id: null,
         email: "user@example.com",
