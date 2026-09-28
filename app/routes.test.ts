@@ -21,6 +21,29 @@ describe("route config", () => {
     expect(await routesFor("development")).toContain("form-runtime")
   })
 
+  it("centres the payment pages like the other participant pages", async () => {
+    vi.resetModules()
+    const routes = (await import("./routes")).default
+
+    type Route = { file: string; children?: Route[] }
+    const parentOf = (file: string, nodes: Route[], parent?: Route): Route | undefined => {
+      for (const node of nodes) {
+        if (node.file === file) return parent
+        const found = parentOf(file, node.children ?? [], node)
+        if (found) return found
+      }
+    }
+
+    for (const page of [
+      "pages/payment/payment-page.tsx",
+      "pages/payment/payment-thanks-page.tsx",
+    ]) {
+      expect(parentOf(page, routes as Route[])?.file).toBe(
+        "pages/payment/layout.tsx",
+      )
+    }
+  })
+
   it("keeps the real routes in both environments", async () => {
     expect(await routesFor("production")).toContain("homepage")
     expect(await routesFor("development")).toContain("homepage")

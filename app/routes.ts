@@ -116,9 +116,11 @@ export default [
       ),
     ]),
 
-    ...prefix("pagamento", [
-      route("/:paymentId", "pages/payment/payment-page.tsx"),
-      route("/:paymentId/obrigado", "pages/payment/payment-thanks-page.tsx"),
+    layout("pages/payment/layout.tsx", [
+      ...prefix("pagamento", [
+        route("/:paymentId", "pages/payment/payment-page.tsx"),
+        route("/:paymentId/obrigado", "pages/payment/payment-thanks-page.tsx"),
+      ]),
     ]),
 
     // COMMON
