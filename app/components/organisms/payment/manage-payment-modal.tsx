@@ -381,6 +381,7 @@ type ChargeSectionProps = {
   fees: AsaasFees
   appOrigin: string
   isSubmitting: boolean
+  justCreated: boolean
   wasRefunded: boolean
   onOffer: (baseAmount: string, confirmAfterRefund: boolean) => void
   onResend: (paymentId: string) => void
@@ -400,6 +401,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   fees,
   appOrigin,
   isSubmitting,
+  justCreated,
   wasRefunded,
   onOffer,
   onResend,
@@ -436,8 +438,12 @@ const ChargeSection: FC<ChargeSectionProps> = ({
           }
         : null
 
+  const paymentUrl = active
+    ? `${appOrigin}${paths.payment.PAYMENT(active.id)}`
+    : null
+
   const copyMessage = () => {
-    if (!active) return
+    if (!active || !paymentUrl) return
     // Built here rather than fetched: writeText has to run inside the click
     // that asked for it, and a round trip first loses that permission.
     const message = paymentsCopy.whatsappMessage({
@@ -446,7 +452,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
       // The origin the server would use, not the one this browser happens to
       // be on: appOrigin deliberately ignores the request host, and the two
       // channels must hand the participant the same link.
-      paymentUrl: `${appOrigin}${paths.payment.PAYMENT(active.id)}`,
+      paymentUrl,
       dueAt: active.due_at,
       options: buildPaymentOptions(active.base_amount, fees),
     })
@@ -467,6 +473,37 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   return (
     <section className="flex flex-col gap-4 border-b pb-4">
       <h3 className="font-bold">{charge.title}</h3>
+
+      {/* Getting the link to the participant is what the admin opened the
+          charge for, so it comes first and on its own, away from the buttons
+          that change the charge. */}
+      {active && paymentUrl && (
+        <div
+          role="group"
+          aria-labelledby="charge-share-title"
+          className="flex flex-col gap-2 rounded-md border p-3"
+        >
+          <p id="charge-share-title" className="text-sm font-medium">
+            {charge.shareTitle}
+          </p>
+          {justCreated && (
+            <p role="status" className="text-sm">
+              {charge.created}
+            </p>
+          )}
+          <p className="text-muted-foreground text-sm break-all">
+            {paymentUrl}
+          </p>
+          <Button className="self-start" onClick={copyMessage}>
+            {charge.copyMessage}
+          </Button>
+          {copied && (
+            <p role="status" className="text-muted-foreground text-sm">
+              {charge.copied}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="charge-amount">{charge.amount}</Label>
@@ -515,30 +552,15 @@ const ChargeSection: FC<ChargeSectionProps> = ({
         )}
 
         {active && (
-          <>
-            <Button
-              variant="outline"
-              disabled={isSubmitting}
-              onClick={() => onResend(active.id)}
-            >
-              {charge.resendEmail}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={isSubmitting}
-              onClick={copyMessage}
-            >
-              {charge.copyMessage}
-            </Button>
-          </>
+          <Button
+            variant="outline"
+            disabled={isSubmitting}
+            onClick={() => onResend(active.id)}
+          >
+            {charge.resendEmail}
+          </Button>
         )}
       </div>
-
-      {copied && (
-        <p role="status" className="text-muted-foreground text-sm">
-          {charge.copied}
-        </p>
-      )}
     </section>
   )
 }
@@ -827,6 +849,12 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </p>
         )}
 
+        {paymentsEnabled && (spotType === "social" || spotType === "staff") && (
+          <p className="text-muted-foreground text-sm">
+            {charge.noChargeForSpot}
+          </p>
+        )}
+
         {paymentsEnabled && spotType === "regular" && fees && (
           <ChargeSection
             // Remounts when the charge does, so the amount field re-seeds from
@@ -840,6 +868,11 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             fees={fees}
             appOrigin={appOrigin}
             isSubmitting={isSubmitting}
+            justCreated={
+              fetcher.data?.success === true &&
+              fetcher.data.intent === "payment-offer" &&
+              fetcher.data.emailSent === true
+            }
             wasRefunded={payments.some((payment) =>
               ["refunded", "partially_refunded"].includes(payment.status),
             )}

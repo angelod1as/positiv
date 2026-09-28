@@ -107,6 +107,10 @@ export const paymentsCopy = {
     resendEmail: "Reenviar email",
     copyMessage: "Copiar mensagem",
     copied: "Mensagem copiada.",
+    shareTitle: "Link de pagamento",
+    created:
+      "Cobrança criada e enviada por email. Copie a mensagem e mande também pelo WhatsApp.",
+    noChargeForSpot: "Vaga social ou staff não paga: não há cobrança.",
     emailFailed:
       "A cobrança foi criada, mas o email não saiu. Copie a mensagem e mande por outro caminho.",
     resendFailed:

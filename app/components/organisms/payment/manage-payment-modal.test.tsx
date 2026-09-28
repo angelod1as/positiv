@@ -689,6 +689,62 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     ).not.toBeInTheDocument()
   })
 
+  it.each(["social", "staff"])(
+    "says why a %s spot has no charge instead of hiding it silently",
+    (spotType) => {
+      render(<ManagePaymentModal {...baseProps} spotType={spotType} />)
+
+      expect(
+        screen.getByText("Vaga social ou staff não paga: não há cobrança."),
+      ).toBeInTheDocument()
+    },
+  )
+
+  it("says nothing about the spot when payments are switched off", () => {
+    render(
+      <ManagePaymentModal {...baseProps} spotType="social" paymentsEnabled={false} />,
+    )
+
+    expect(
+      screen.queryByText("Vaga social ou staff não paga: não há cobrança."),
+    ).not.toBeInTheDocument()
+  })
+
+  it("puts the link and the message to send first, while a charge is open", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[openCharge]} active={openCharge} />,
+    )
+
+    const share = screen.getByRole("group", { name: "Link de pagamento" })
+    expect(
+      within(share).getByText("https://www.positivparty.com/pagamento/open-1"),
+    ).toBeInTheDocument()
+    expect(
+      within(share).getByRole("button", { name: "Copiar mensagem" }),
+    ).toBeInTheDocument()
+    // Copying is the errand; the actions that change the charge live apart.
+    expect(
+      within(share).queryByRole("button", { name: "Reenviar com outro valor" }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(share).queryByRole("button", { name: "Reenviar email" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("tells the admin to send the message as soon as the charge is created", () => {
+    fetcherData = { success: true, intent: "payment-offer", emailSent: true }
+
+    render(
+      <ManagePaymentModal {...baseProps} payments={[openCharge]} active={openCharge} />,
+    )
+
+    expect(
+      screen.getByText(
+        "Cobrança criada e enviada por email. Copie a mensagem e mande também pelo WhatsApp.",
+      ),
+    ).toBeInTheDocument()
+  })
+
   it("re-prices an open charge", async () => {
     render(
       <ManagePaymentModal
