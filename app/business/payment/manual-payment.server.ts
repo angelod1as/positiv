@@ -4,6 +4,7 @@ import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { reaisToCents } from "~/lib/helpers/format-currency"
 import { zod } from "~/lib/helpers/zod"
+import { logger } from "~/lib/logger/logger.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 
 export const manualPaymentSchema = zod.object({
@@ -86,7 +87,7 @@ export const registerManualPayment = applySchema(manualPaymentSchema)(
         throw error
       }
 
-      console.error("Failed to record a manual payment", error)
+      logger.error("Failed to record a manual payment", { error })
       throw new Error(paymentsCopy.errors.generic)
     })
 
@@ -126,7 +127,7 @@ export const editManualPayment = applySchema(editManualPaymentSchema)(
       .returning("id")
       .executeTakeFirst()
       .catch((error) => {
-        console.error("Failed to edit a manual payment", error)
+        logger.error("Failed to edit a manual payment", { error })
         throw new Error(paymentsCopy.errors.generic)
       })
 

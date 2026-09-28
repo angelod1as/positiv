@@ -10,6 +10,13 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
+
+const { logger } = vi.hoisted(() => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
+vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+
 import { editManualPayment, registerManualPayment } from "./manual-payment.server"
 
 describe("registerManualPayment", () => {
@@ -166,7 +173,7 @@ describe("registerManualPayment", () => {
   })
 
   it("answers a sentence, not a Postgres error, when the participant is gone", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+    logger.error.mockClear()
     const result = await registerManualPayment({
       eventParticipantId: "00000000-0000-0000-0000-000000000000",
       amount: "150",
@@ -183,12 +190,10 @@ describe("registerManualPayment", () => {
       )
     }
 
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to record a manual payment"),
-      expect.anything(),
+    expect(logger.error).toHaveBeenCalledWith(
+      "Failed to record a manual payment",
+      { error: expect.any(Error) },
     )
-
-    consoleError.mockRestore()
   })
 
   it("refuses to record one while a charge is still open", async () => {
@@ -466,7 +471,7 @@ describe("editManualPayment", () => {
   })
 
   it("answers a sentence, not a Postgres error, when the write fails", async () => {
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
+    logger.error.mockClear()
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
     })
@@ -488,12 +493,10 @@ describe("editManualPayment", () => {
     }
     expect((await readPayment(payment.id)).amount).toBe(22000)
 
-    expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("Failed to edit a manual payment"),
-      expect.anything(),
+    expect(logger.error).toHaveBeenCalledWith(
+      "Failed to edit a manual payment",
+      { error: expect.any(Error) },
     )
-
-    consoleError.mockRestore()
   })
 
   it("refuses a negative amount", async () => {
