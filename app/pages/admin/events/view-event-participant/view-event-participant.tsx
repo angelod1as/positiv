@@ -1,4 +1,5 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
+import { NoResultError } from "kysely"
 import { redirectWithError } from "remix-toast"
 import {
   getAdminContext,
@@ -14,6 +15,7 @@ import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { appOrigin } from "~/lib/helpers/app-origin"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import { ENV } from "varlock/env"
 import type { Route } from "./+types/view-event-participant"
@@ -87,7 +89,14 @@ export async function loader({ params }: Route.LoaderArgs) {
   ])
 
   if (!profileResult.success) {
-    console.error("Error fetching profile:", profileResult.errors)
+    if (profileResult.errors.every((error) => error instanceof NoResultError)) {
+      logger.warn("Profile not found", { profileId })
+    } else {
+      logger.error("Failed to fetch profile", {
+        profileId,
+        errors: profileResult.errors,
+      })
+    }
     return redirectWithError(
       adminEventsCopy.viewParticipant.profileNotFound,
       ADMIN_VIEW_EVENT(eventId),
@@ -97,7 +106,18 @@ export async function loader({ params }: Route.LoaderArgs) {
   const profile = profileResult.data
 
   if (!eventParticipantResult.success || !eventParticipantResult.data) {
-    console.error("Error fetching event participant:", eventParticipantResult.errors)
+    if (eventParticipantResult.success) {
+      logger.warn("Participant has not applied to this event", {
+        profileId,
+        eventId,
+      })
+    } else {
+      logger.error("Failed to fetch event participant", {
+        profileId,
+        eventId,
+        errors: eventParticipantResult.errors,
+      })
+    }
     return redirectWithError(
       adminEventsCopy.viewParticipant.notAppliedToEvent,
       ADMIN_VIEW_EVENT(eventId),

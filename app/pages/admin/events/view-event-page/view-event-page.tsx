@@ -28,6 +28,7 @@ import { RejectedParticipantsSection } from "~/components/pages/admin/events/rej
 import { adminEventsCopy } from "~/copy/admin/events"
 import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { appOrigin } from "~/lib/helpers/app-origin"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import { ENV } from "varlock/env"
 import type { ComposableFetcherData } from "~types/database/entities.types"
@@ -136,8 +137,8 @@ export async function loader({ params }: Route.LoaderArgs) {
   ] =
     await Promise.all([
       loadParticipants(eventId),
-      getRejectedEventParticipants(eventId).catch((err) => {
-        console.error("Failed to fetch rejected participants", err)
+      getRejectedEventParticipants(eventId).catch((error) => {
+        logger.error("Failed to fetch rejected participants", { error })
         return []
       }),
       getPaymentsForEvent(eventId),

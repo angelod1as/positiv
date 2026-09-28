@@ -1,3 +1,4 @@
+import { NoResultError } from "kysely"
 import { redirectWithError } from "remix-toast"
 import {
   getAdminContext,
@@ -8,6 +9,7 @@ import {
 } from "~/business/admin/admin.server"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
 import { adminParticipantsCopy } from "~/copy/admin/participants"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/view-profile-page"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
@@ -35,7 +37,14 @@ export async function loader({ params }: Route.LoaderArgs) {
   ])
 
   if (!profileResult.success) {
-    console.error("Error fetching profile:", profileResult.errors)
+    if (profileResult.errors.every((error) => error instanceof NoResultError)) {
+      logger.warn("Profile not found", { profileId })
+    } else {
+      logger.error("Failed to fetch profile", {
+        profileId,
+        errors: profileResult.errors,
+      })
+    }
     return redirectWithError(
       ADMIN_PARTICIPANTS,
       adminParticipantsCopy.viewProfile.profileMissing,
@@ -48,7 +57,10 @@ export async function loader({ params }: Route.LoaderArgs) {
   if (historyResult.success) {
     fullHistory = historyResult.data
   } else {
-    console.error("Error fetching history:", historyResult.errors)
+    logger.error("Failed to fetch participant history", {
+      profileId,
+      errors: historyResult.errors,
+    })
   }
 
   return {

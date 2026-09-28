@@ -10,6 +10,12 @@ vi.mock("~/business/auth/auth.server", () => ({
   getUserContext: vi.fn(),
 }))
 
+const { logger } = vi.hoisted(() => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
+vi.mock("~/lib/logger/logger.server", () => ({ logger }))
+
 describe("basic-data-page loader", () => {
   const mockRequest = new Request("http://localhost:3000/account/basic-data")
   const mockParams = {} as Route.LoaderArgs["params"]
@@ -115,7 +121,7 @@ describe("basic-data-page loader", () => {
     })
 
     it("should handle errors when checking for orphaned profiles", async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      logger.error.mockClear()
       
       const mockSupabase = {
         from: vi.fn().mockReturnValue({
@@ -152,16 +158,14 @@ describe("basic-data-page loader", () => {
       })
       
       // Should log the error
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error checking for orphaned profile:', 
-        expect.objectContaining({ code: 'PGRST500', message: 'Database error' })
+      expect(logger.error).toHaveBeenCalledWith(
+        "Error checking for orphaned profile",
+        { error: expect.objectContaining({ code: 'PGRST500', message: 'Database error' }) }
       )
-      
-      consoleErrorSpy.mockRestore()
     })
 
     it("should handle 'no rows' error gracefully", async () => {
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      logger.error.mockClear()
       
       const mockSupabase = {
         from: vi.fn().mockReturnValue({
@@ -198,9 +202,7 @@ describe("basic-data-page loader", () => {
       })
       
       // Should NOT log "no rows" errors
-      expect(consoleErrorSpy).not.toHaveBeenCalled()
-      
-      consoleErrorSpy.mockRestore()
+      expect(logger.error).not.toHaveBeenCalled()
     })
   })
 })
