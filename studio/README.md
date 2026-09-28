@@ -31,11 +31,20 @@ pnpm --filter studio exec sanity login
 Then start the Studio at <http://localhost:3333>:
 
 ```bash
-SANITY_STUDIO_DATASET=development pnpm --filter studio dev
+pnpm --filter studio dev
 ```
 
-Without `SANITY_STUDIO_DATASET` it opens `production`, which is what Editors
-use. Work against `development`.
+It opens `development` unless `SANITY_STUDIO_DATASET` says otherwise, and so
+does every CLI command run without `--dataset`. To open `production`, which is
+what Editors use and where a click publishes or deletes live content, ask for
+it on purpose:
+
+```bash
+SANITY_STUDIO_DATASET=production pnpm --filter studio dev
+```
+
+The variable is inlined at build time: `pnpm --filter studio build` without it
+builds a Studio that opens `development`.
 
 `pnpm lint` and `pnpm test:unit` at the repository root cover the Studio as
 well; inside it, `pnpm --filter studio lint`, `test` and `build` run each on
@@ -66,7 +75,9 @@ Commit the regenerated fixture when it changes.
 
 A merge to `main` deploys the Studio from `.github/workflows/production.yml`
 (the `deploy-studio` job), authenticated by the `SANITY_AUTH_TOKEN` repository
-secret. Nobody needs to deploy by hand.
+secret. The job sets `SANITY_STUDIO_DATASET=production`, so the deployed Studio
+opens `production`; `scripts/production-workflow.test.ts` fails if it goes
+missing. Nobody needs to deploy by hand.
 
 The Studio and the app deploy separately, so the Studio's schema is live
 minutes before or after the app that reads it.

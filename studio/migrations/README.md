@@ -13,7 +13,8 @@ it yet.
   `pnpm --filter studio exec sanity migrations run <id> --dataset <name>`.
   It dry-runs until you add `--no-dry-run`.
 - Always pass `--dataset`. Without it the CLI takes the dataset from
-  `sanity.cli.ts`, which is `production`.
+  `sanity.cli.ts`, which is `development` unless `SANITY_STUDIO_DATASET` is
+  set.
 - Make every migration idempotent: running it twice must leave the content as
   running it once does.
 - Keep the script after it runs. It is the record of how production's content
