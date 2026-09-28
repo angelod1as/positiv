@@ -2,6 +2,7 @@ import { redirectWithError } from "remix-toast"
 import { getContext } from "~/business/auth/auth.server"
 import { formatCalendarEvent } from "~/business/participant/format-calendar-event.server"
 import { dashboardCopy } from "~/copy/dashboard"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/download-calendar.route"
 
@@ -27,7 +28,9 @@ export async function loader({ request, params }: Route.LoaderArgs) {
   })
 
   if (!calendar) {
-    console.error("ERROR??")
+    logger.warn("Event is missing the fields a calendar needs", {
+      eventId: params.eventId,
+    })
     return
   }
 
