@@ -207,6 +207,8 @@ export const paymentsCopy = {
     notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
     invalidCpf: "Esse CPF não confere. Confira os números.",
+    cpfTaken:
+      "Esse CPF já está cadastrado em outra conta. Se ele é seu, fale com a organização.",
     chargeClosed: "Esta cobrança não está mais aberta.",
     unknownOption: "Escolha uma das formas de pagamento oferecidas.",
     noInvoiceUrl:

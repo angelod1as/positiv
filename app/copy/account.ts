@@ -60,6 +60,8 @@ export const basicDataValidation = {
   phoneMismatch: "Os números de telefone são diferentes",
   socialNameMustDiffer: "O nome social deve ser diferente do nome completo",
   invalidCpf: "Esse CPF não confere. Confira os números.",
+  cpfTaken:
+    "Esse CPF já está cadastrado em outra conta. Se ele é seu, fale com a organização.",
 } as const
 
 export const basicDataCopy = {
