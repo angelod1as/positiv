@@ -202,6 +202,9 @@ jobs:
 
     env:
       SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}
+      # Inlined into the build. Without it the deployed Studio would open
+      # development, the local default.
+      SANITY_STUDIO_DATASET: production
 
     steps:
       - uses: actions/checkout@v4

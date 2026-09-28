@@ -2,6 +2,7 @@ import { visionTool } from "@sanity/vision"
 import { defineConfig } from "sanity"
 import { structureTool } from "sanity/structure"
 
+import { dataset } from "./environment"
 import { schemaTypes } from "./schemas/schema-types"
 import { homepageActions, withoutSingletons } from "./singletons"
 import { structure } from "./structure"
@@ -11,7 +12,7 @@ export default defineConfig({
   title: "Positiv",
 
   projectId: "8ojkallk",
-  dataset: process.env.SANITY_STUDIO_DATASET || "production",
+  dataset,
 
   plugins: [structureTool({ structure }), visionTool()],
 

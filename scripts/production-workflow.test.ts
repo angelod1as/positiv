@@ -88,4 +88,11 @@ describe("production workflow", () => {
     expect(runCommand("Deploy the Studio")).toBe("pnpm --filter studio run deploy")
     expect(deployStudio).toContain("SANITY_AUTH_TOKEN: ${{ secrets.SANITY_AUTH_TOKEN }}")
   })
+
+  it("deploys the Studio pointed at production, not at the local default", () => {
+    // Without the variable the Studio opens development, which is right on a
+    // laptop and wrong for positiv.sanity.studio. The value is inlined at build
+    // time, so the job that builds the deployed Studio is where it has to be.
+    expect(jobBlock("deploy-studio")).toContain("SANITY_STUDIO_DATASET: production")
+  })
 })

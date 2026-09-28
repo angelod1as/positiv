@@ -4,7 +4,7 @@ import { datasetArgument } from "./dataset-argument"
 
 export function seedClient(argv: string[]) {
   // getCliClient drops `dataset` unless `projectId` comes with it, and falls
-  // back to sanity.cli.ts — which names production.
+  // back to sanity.cli.ts — development unless SANITY_STUDIO_DATASET is set.
   const dataset = datasetArgument(argv)
   const client = getCliClient({
     apiVersion: "2026-09-24",

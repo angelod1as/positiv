@@ -1,9 +1,11 @@
 import { defineCliConfig } from "sanity/cli"
 
+import { dataset } from "./environment"
+
 export default defineCliConfig({
   api: {
     projectId: "8ojkallk",
-    dataset: "production",
+    dataset,
   },
   studioHost: "positiv",
   deployment: {
