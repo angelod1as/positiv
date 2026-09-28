@@ -64,6 +64,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-router/node": "^7.6.0",
     "@react-router/serve": "^7.6.0",
+    "@sanity/client": "^8.7.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-table": "^8.21.3",
