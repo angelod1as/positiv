@@ -34,8 +34,16 @@ export const getOnlinePaymentsSetting = async () => {
   }
 }
 
-export const isOnlinePaymentsEnabled = async () =>
-  (await getOnlinePaymentsSetting()).enabled
+export const isOnlinePaymentsEnabled = async () => {
+  if (!isAsaasConfigured()) return false
+
+  const row = await kyselyDb
+    .selectFrom("app_settings")
+    .select("online_payments_enabled")
+    .executeTakeFirst()
+
+  return row?.online_payments_enabled ?? false
+}
 
 export const setOnlinePaymentsEnabled = async ({
   enabled,
