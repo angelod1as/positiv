@@ -13,6 +13,15 @@ export const paymentsCopy = {
       }
       return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)} (total ${formatCurrency(option.total)})`
     },
+    // The payment page's cards: the name here, the total beside it, and where
+    // the total comes from on the line below.
+    title: (option: PaymentOption) => {
+      if (option.method === "pix") return "Pix"
+      if (option.installmentCount === 1) return "Cartão à vista"
+      return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}`
+    },
+    breakdown: (baseAmount: number, option: PaymentOption) =>
+      `${formatCurrency(baseAmount)} do evento + ${formatCurrency(option.total - baseAmount)} de taxas`,
   },
   // Plain text, not Markdown: this one is pasted into WhatsApp, which renders
   // none of it. The four-digit year is deliberate — a deadline read on a phone
@@ -41,6 +50,8 @@ export const paymentsCopy = {
     heading: (eventTitle: string) => `Pagamento — ${eventTitle}`,
     notYours: "Este link de pagamento não é seu.",
     chooseOption: "Como você quer pagar?",
+    feesIntro: (baseAmount: number) =>
+      `O valor do evento é ${formatCurrency(baseAmount)}. As taxas do meio de pagamento ficam por sua conta e mudam conforme a forma e o número de parcelas.`,
     pay: "Pagar",
     dueAt: (date: string) => `Este link vale até ${date}.`,
     paidTitle: "Pagamento confirmado",

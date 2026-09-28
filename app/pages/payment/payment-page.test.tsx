@@ -57,17 +57,50 @@ const ready: PaymentPageData = {
   eventTitle: "Encontro de Maio",
   eventEmoji: "🌻",
   dueAt: "2026-09-18T12:00:00Z",
+  baseAmount: 22000,
   options,
   chosen: null,
   invoiceUrl: null,
 }
 
 describe("PaymentPage", () => {
+  it("says what the event costs and that the fees are the participant's", () => {
+    renderPage(ready)
+
+    expect(
+      screen.getByText(/O valor do evento é R\$\s?220,00\./),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/As taxas do meio de pagamento ficam por sua conta/),
+    ).toBeInTheDocument()
+  })
+
+  it("splits each option's total into the event price and the fees", () => {
+    renderPage(ready)
+
+    const pix = screen.getByRole("radio", { name: /^Pix R\$\s?221,99$/ })
+    expect(pix).toHaveAccessibleDescription(
+      /R\$\s?220,00 do evento \+ R\$\s?1,99 de taxas/,
+    )
+
+    const threeTimes = options.find((option) => option.id === "card_3")
+    if (!threeTimes) throw new Error("expected a three-installment option")
+    const card = screen.getByRole("radio", { name: /^Cartão 3x de/ })
+    expect(card).toHaveAccessibleName(
+      new RegExp(`R\\$\\s?${(threeTimes.total / 100).toFixed(2).replace(".", ",")}$`),
+    )
+    expect(card).toHaveAccessibleDescription(
+      new RegExp(
+        `R\\$\\s?220,00 do evento \\+ R\\$\\s?${((threeTimes.total - 22000) / 100).toFixed(2).replace(".", ",")} de taxas`,
+      ),
+    )
+  })
+
   it("lists every option with its price and defaults to Pix", () => {
     renderPage(ready)
 
     expect(
-      screen.getByRole("radio", { name: /Pix — R\$\s?221,99/ }),
+      screen.getByRole("radio", { name: /^Pix R\$\s?221,99$/ }),
     ).toBeChecked()
     expect(
       screen.getByRole("radio", { name: /Cartão 3x de/ }),
@@ -83,7 +116,7 @@ describe("PaymentPage", () => {
     })
 
     expect(screen.getByRole("radio", { name: /Cartão 3x de/ })).toBeChecked()
-    expect(screen.getByRole("radio", { name: /Pix —/ })).not.toBeChecked()
+    expect(screen.getByRole("radio", { name: /^Pix/ })).not.toBeChecked()
   })
 
   it("carries the chosen option to the server", async () => {
