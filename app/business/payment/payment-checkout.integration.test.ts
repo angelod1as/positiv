@@ -9,6 +9,7 @@ import {
   createTestPayment,
   createTestProfile,
 } from "~/test/db-test-utils"
+import { paymentsCopy } from "~/copy/payments"
 
 const {
   createAsaasCustomer,
@@ -163,6 +164,29 @@ describe("pickOption", () => {
     await pickOption({ paymentId: second.id, profileId, optionId: "pix" })
 
     expect(createAsaasCustomer).toHaveBeenCalledTimes(1)
+  })
+
+  it("explains, rather than crashing, when the CPF's customer belongs to another profile", async () => {
+    // A profile that took the customer under a CPF it no longer carries.
+    await kysely
+      .updateTable("profiles")
+      .set({ asaas_customer_id: "cus_existing" })
+      .where("id", "=", otherProfileId)
+      .execute()
+    findAsaasCustomerByCpf.mockResolvedValueOnce("cus_existing")
+    const payment = await openCharge()
+
+    const result = await pickOption({
+      paymentId: payment.id,
+      profileId,
+      optionId: "pix",
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.success === false && result.errors[0]?.message).toBe(
+      paymentsCopy.errors.customerTaken,
+    )
+    expect(createAsaasPayment).not.toHaveBeenCalled()
   })
 
   it("adopts a customer Asaas already has for that CPF", async () => {

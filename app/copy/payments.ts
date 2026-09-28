@@ -209,6 +209,8 @@ export const paymentsCopy = {
     invalidCpf: "Esse CPF não confere. Confira os números.",
     cpfTaken:
       "Esse CPF já está cadastrado em outra conta. Se ele é seu, fale com a organização.",
+    customerTaken:
+      "Não conseguimos gerar a cobrança: o CPF desta conta já está ligado a outra pessoa no sistema de pagamentos. Fale com a organização.",
     chargeClosed: "Esta cobrança não está mais aberta.",
     unknownOption: "Escolha uma das formas de pagamento oferecidas.",
     noInvoiceUrl:

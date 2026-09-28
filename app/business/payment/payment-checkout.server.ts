@@ -17,6 +17,7 @@ import {
 import { getAsaasFees } from "./asaas-fees.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
+import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
 import { buildPaymentOptions, findPaymentOption } from "./pricing"
 
 export const pickOptionSchema = zod.object({
@@ -63,6 +64,15 @@ async function ensureAsaasCustomer(profile: {
     .where("asaas_customer_id", "is", null)
     .returning("asaas_customer_id")
     .executeTakeFirst()
+    .catch((error: unknown) => {
+      // The customer Asaas holds for this CPF is already another profile's --
+      // one that carried the CPF before. Which of them it belongs to is a
+      // question for a person, and charging either on a guess is worse.
+      if (isUniqueViolation(error, "profiles_asaas_customer_id")) {
+        throw new Error(paymentsCopy.errors.customerTaken)
+      }
+      throw error
+    })
 
   if (written?.asaas_customer_id) return written.asaas_customer_id
 
