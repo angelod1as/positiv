@@ -137,6 +137,27 @@ describe("getHomepageContent", () => {
     await expect(getHomepageContent(client)).rejects.toThrow(/hero\.subtitle/)
   })
 
+  it.each([
+    ["about.cards", (content: typeof fixture) => content.about.cards.pop()],
+    [
+      "testimonials.quotes",
+      (content: typeof fixture) => content.testimonials.quotes.splice(0),
+    ],
+    [
+      "founders.people",
+      (content: typeof fixture) => content.founders.people.splice(0),
+    ],
+  ])(
+    "rejects %s with fewer items than the Studio allows",
+    async (path, change) => {
+      respondWith(fixtureWith(change))
+
+      await expect(getHomepageContent(client)).rejects.toThrow(
+        new RegExp(path.replace(".", "\\.")),
+      )
+    },
+  )
+
   it("says so when no homepage is published", async () => {
     respondWith(null)
 

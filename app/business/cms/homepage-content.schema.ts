@@ -61,24 +61,28 @@ const sectionsFields = {
   }),
   about: zod.object({
     title: zod.string(),
-    cards: zod.array(
-      zod.object({
-        _key: zod.string(),
-        title: zod.string(),
-        body: portableTextSchema,
-      }),
-    ),
+    cards: zod
+      .array(
+        zod.object({
+          _key: zod.string(),
+          title: zod.string(),
+          body: portableTextSchema,
+        }),
+      )
+      .length(3),
   }),
   testimonials: zod.object({
     title: zod.string(),
     subtitle: zod.string(),
-    quotes: zod.array(
-      zod.object({
-        _key: zod.string(),
-        author: zod.string(),
-        quote: zod.string(),
-      }),
-    ),
+    quotes: zod
+      .array(
+        zod.object({
+          _key: zod.string(),
+          author: zod.string(),
+          quote: zod.string(),
+        }),
+      )
+      .min(1),
   }),
   ctaBanner: zod.object({
     title: zod.string(),
@@ -101,9 +105,9 @@ export const homepageDocumentSchema = zod.object({
   ...sectionsFields,
   founders: zod.object({
     ...foundersFields,
-    people: zod.array(
-      zod.object({ ...personFields, photo: sanityImageSchema }),
-    ),
+    people: zod
+      .array(zod.object({ ...personFields, photo: sanityImageSchema }))
+      .min(1),
   }),
 })
 
@@ -111,9 +115,9 @@ export const homepageContentSchema = zod.object({
   ...sectionsFields,
   founders: zod.object({
     ...foundersFields,
-    people: zod.array(
-      zod.object({ ...personFields, photo: homepageImageSchema }),
-    ),
+    people: zod
+      .array(zod.object({ ...personFields, photo: homepageImageSchema }))
+      .min(1),
   }),
 })
 
