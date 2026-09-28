@@ -69,15 +69,17 @@ describe('startProductionServer', () => {
 })
 
 describe('the Asaas the server under test talks to', () => {
-  it('is the mock on the port after the server, with payments on', async () => {
+  // Whether online payments are on is the admin switch in the database now;
+  // the server is only told where Asaas is.
+  it('is the mock on the port after the server', async () => {
     fakeServerProcess()
     const { startProductionServer } = await import('./serve-production')
 
     void startProductionServer()
 
     expect(asaasMock.startAsaasMockServer).toHaveBeenCalledWith(5302)
+    expect(spawn.mock.calls[0][2].env).not.toHaveProperty('PAYMENTS_ENABLED')
     expect(spawn.mock.calls[0][2].env).toMatchObject({
-      PAYMENTS_ENABLED: 'true',
       ASAAS_API_URL: 'http://127.0.0.1:5302/v3',
       ASAAS_API_KEY: 'e2e-key',
       ASAAS_WEBHOOK_TOKEN: 'e2e-webhook-token',

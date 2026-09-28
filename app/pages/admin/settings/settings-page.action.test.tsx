@@ -4,12 +4,11 @@ import {
   cleanupListmonkTestCampaign,
   testListmonkConnection,
 } from "~/business/newsletter/test-listmonk-connection.server"
-import { action } from "./dashboard-page"
+import { setOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import { action } from "./settings-page"
 
 vi.mock("~/business/admin/admin.server", () => ({
   getAdminContext: vi.fn(),
-  getEventsForDashboard: vi.fn(),
-  getRecentProfiles: vi.fn(),
 }))
 
 vi.mock("~/business/newsletter/test-listmonk-connection.server", () => ({
@@ -17,8 +16,12 @@ vi.mock("~/business/newsletter/test-listmonk-connection.server", () => ({
   testListmonkConnection: vi.fn(),
 }))
 
+vi.mock("~/business/settings/app-settings.server", () => ({
+  setOnlinePaymentsEnabled: vi.fn(),
+}))
+
 const buildRequest = (fields: Record<string, string>) =>
-  new Request("http://localhost/admin", {
+  new Request("http://localhost/admin/configuracoes", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams(fields).toString(),
@@ -36,14 +39,19 @@ const INTENTS = [
     fields: { campaignId: "1" },
     mutation: cleanupListmonkTestCampaign,
   },
+  {
+    intent: "set-online-payments",
+    fields: { enabled: "false" },
+    mutation: setOnlinePaymentsEnabled,
+  },
 ] as const
 
-describe("DashboardPage action", () => {
+describe("SettingsPage action", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getAdminContext).mockResolvedValue(
-      {} as Awaited<ReturnType<typeof getAdminContext>>,
-    )
+    vi.mocked(getAdminContext).mockResolvedValue({
+      currentProfile: { id: "admin-1" },
+    } as Awaited<ReturnType<typeof getAdminContext>>)
     vi.mocked(testListmonkConnection).mockResolvedValue({} as never)
     vi.mocked(cleanupListmonkTestCampaign).mockResolvedValue({} as never)
   })
@@ -68,4 +76,19 @@ describe("DashboardPage action", () => {
       expect(mutation).toHaveBeenCalledTimes(1)
     })
   })
+
+  it.each([
+    ["true", true],
+    ["false", false],
+  ])(
+    "should switch online payments to %s on behalf of the admin",
+    async (enabled, expected) => {
+      await runAction({ intent: "set-online-payments", enabled })
+
+      expect(setOnlinePaymentsEnabled).toHaveBeenCalledWith({
+        enabled: expected,
+        profileId: "admin-1",
+      })
+    },
+  )
 })

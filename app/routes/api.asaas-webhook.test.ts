@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const env = vi.hoisted<Record<string, unknown>>(() => ({
-  PAYMENTS_ENABLED: true,
   ASAAS_WEBHOOK_TOKEN: "whsec_a_token_long_enough_to_be_real_0000",
   APP_ENV: "test",
 }))
@@ -56,7 +55,6 @@ const validEvent = {
 }
 
 beforeEach(() => {
-  env.PAYMENTS_ENABLED = true
   env.ASAAS_WEBHOOK_TOKEN = "whsec_a_token_long_enough_to_be_real_0000"
   recordWebhookEvent
     .mockClear()
@@ -67,10 +65,15 @@ beforeEach(() => {
 })
 
 describe("POST /api/asaas/webhook", () => {
-  it("answers 404 when payments are switched off", async () => {
-    env.PAYMENTS_ENABLED = false
+  // A participant already on the Asaas invoice page can still pay after an
+  // admin switches online payments off. Refusing the confirmation would lose
+  // the payment, and fifteen refusals interrupt the whole Asaas queue.
+  it("keeps recording money in flight while online payments are switched off", async () => {
     const response = await post(validEvent, env.ASAAS_WEBHOOK_TOKEN as string)
-    expect(response.status).toBe(404)
+
+    expect(response.status).toBe(200)
+    expect(recordWebhookEvent).toHaveBeenCalled()
+    expect(applyWebhookEvent).toHaveBeenCalled()
   })
 
   it("answers 503 and shouts when the token is not configured", async () => {

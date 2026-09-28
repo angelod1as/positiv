@@ -16,6 +16,7 @@ import {
 import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { InviteParticipantSection } from "~/components/organisms/event-invite-modal/invite-participant-section"
 import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
@@ -30,7 +31,6 @@ import { formatDateTime } from "~/lib/helpers/format-date-time"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
-import { ENV } from "varlock/env"
 import type { ComposableFetcherData } from "~types/database/entities.types"
 import type { Route } from "./+types/view-event-page"
 import { sendToast } from "./send-toast"
@@ -128,6 +128,8 @@ export async function loader({ params }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
+  const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
+
   const [
     participants,
     rejectedParticipants,
@@ -142,7 +144,7 @@ export async function loader({ params }: Route.LoaderArgs) {
         return []
       }),
       getPaymentsForEvent(eventId),
-      getAsaasFeesIfEnabled(),
+      getAsaasFeesIfEnabled(onlinePaymentsEnabled),
       listInvitesForEvent(eventId),
     ])
 
@@ -152,7 +154,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     rejectedParticipants,
     paymentsByParticipant,
     asaasFees,
-    paymentsEnabled: Boolean(ENV.PAYMENTS_ENABLED),
+    paymentsEnabled: onlinePaymentsEnabled,
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),

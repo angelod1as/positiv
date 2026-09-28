@@ -119,9 +119,10 @@ export async function getAsaasFees(): Promise<AsaasFees> {
 /**
  * The snapshot the admin pages need, or nothing at all while payments are
  * switched off. They render no prices then, and a lookup whose result nobody
- * reads is an external dependency two hot pages do not need -- the flag is
- * false everywhere in production today.
+ * reads is an external dependency two hot pages do not need.
  */
-export function getAsaasFeesIfEnabled(): Promise<AsaasFees | null> {
-  return ENV.PAYMENTS_ENABLED ? getAsaasFees() : Promise.resolve(null)
+export function getAsaasFeesIfEnabled(
+  onlinePaymentsEnabled: boolean,
+): Promise<AsaasFees | null> {
+  return onlinePaymentsEnabled ? getAsaasFees() : Promise.resolve(null)
 }

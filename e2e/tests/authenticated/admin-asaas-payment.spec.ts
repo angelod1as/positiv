@@ -13,6 +13,7 @@ import {
   getParticipantPayments,
   postWebhook,
   resetAsaasMock,
+  setOnlinePayments,
 } from '../../utils/payment-helpers'
 import { getAsaasMockUrl } from '../../utils/run-context'
 import { readSetupUser } from '../../utils/setup-user'
@@ -34,6 +35,7 @@ test.describe('POS-532: an Asaas payment from the charge to the refund', () => {
 
   test.beforeEach(async () => {
     await resetAsaasMock()
+    await setOnlinePayments(true)
   })
 
   test('the admin charges, the participant pays by card in 3x, Asaas confirms, the admin refunds', async ({

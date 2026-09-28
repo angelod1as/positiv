@@ -7,6 +7,7 @@ import {
 import { listInvitesForEvent } from "~/business/admin/event-invites.server"
 import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { loader } from "./view-event-page"
 
 const { logger } = vi.hoisted(() => ({
@@ -21,6 +22,10 @@ vi.mock("~/business/admin/admin.server", () => ({
   getEventDemographicsById: vi.fn(),
   getProfilesWithExtraDataById: vi.fn(),
   getRejectedEventParticipants: vi.fn(),
+}))
+
+vi.mock("~/business/settings/app-settings.server", () => ({
+  isOnlinePaymentsEnabled: vi.fn(),
 }))
 
 vi.mock("~/business/admin/event-invites.server", () => ({
@@ -44,6 +49,7 @@ const runLoader = () =>
 describe("view event page loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(false)
     vi.mocked(getAdminEventById).mockResolvedValue({
       success: true,
       data: { id: "event-1", event_status: "Open" },
@@ -71,4 +77,17 @@ describe("view event page loader", () => {
       { error },
     )
   })
+
+  it.each([true, false])(
+    "hands the fee lookup and the payment modal the online payments switch (%s)",
+    async (enabled) => {
+      vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(enabled)
+      vi.mocked(getRejectedEventParticipants).mockResolvedValue([])
+
+      const result = await runLoader()
+
+      expect(getAsaasFeesIfEnabled).toHaveBeenCalledWith(enabled)
+      expect(result).toMatchObject({ paymentsEnabled: enabled })
+    },
+  )
 })

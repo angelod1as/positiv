@@ -44,8 +44,16 @@ export function postWebhook(body: ReturnType<typeof buildWebhookEvent>): Promise
   })
 }
 
+// The mock forgets its customers on reset, so a customer id a profile kept from
+// an earlier journey would point at nothing and every charge for it would be
+// refused as invalid_customer. Real Asaas never forgets one.
 export async function resetAsaasMock(): Promise<void> {
   await fetch(`${getAsaasMockUrl()}/__mock/reset`, { method: 'POST' })
+  const { error } = await createSupabaseAdminClient()
+    .from('profiles')
+    .update({ asaas_customer_id: null })
+    .not('asaas_customer_id', 'is', null)
+  if (error) throw new Error(`Could not forget the mock's customers: ${error.message}`)
 }
 
 export async function getAsaasMockCalls(): Promise<MockCall[]> {
@@ -68,6 +76,16 @@ export async function getMockPlanCharges(installmentId: string): Promise<MockCha
 export async function confirmMockCharge(chargeId: string): Promise<void> {
   const response = await asaasMockApi(`/sandbox/payment/${chargeId}/confirm`, 'POST')
   if (!response.ok) throw new Error(`The mock refused to confirm ${chargeId}: ${response.status}`)
+}
+
+// The admin switch lives in the database, so every journey that needs online
+// payments turns it on itself rather than trust what the last run left.
+export async function setOnlinePayments(enabled: boolean): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+  const { error } = await supabase
+    .from('app_settings')
+    .upsert({ id: true, online_payments_enabled: enabled })
+  if (error) throw new Error(`Could not switch online payments: ${error.message}`)
 }
 
 export async function getParticipantPayments(profileId: string, eventId: string) {

@@ -155,6 +155,8 @@ export default [
         route("feedbacks", "pages/admin/feedbacks/feedbacks-page.tsx"),
         // Dataviz
         route("numeros", "pages/admin/dataviz/dataviz-page.tsx"),
+        // Configurações
+        route("configuracoes", "pages/admin/settings/settings-page.tsx"),
       ]),
       ...prefix("eventos", [
         layout("pages/admin/events/layout.tsx", [

@@ -3,6 +3,7 @@ import { Form, redirect, useFetcher, useNavigation } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { getUserContext } from "~/business/auth/auth.server"
 import { pickOption } from "~/business/payment/payment-checkout.server"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { isValidCpf, normalizeCpf } from "~/lib/helpers/cpf"
 import type { PaymentOption } from "~/business/payment/pricing"
 import { Button } from "~/components/atoms/button/button"
@@ -42,6 +43,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   return loadPaymentPage({
     paymentId: params.paymentId,
     profileId: currentProfile.id,
+    onlinePaymentsEnabled: await isOnlinePaymentsEnabled(),
   })
 }
 

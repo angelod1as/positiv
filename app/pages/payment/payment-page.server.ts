@@ -1,5 +1,4 @@
 import { redirectWithError } from "remix-toast"
-import { ENV } from "varlock/env"
 import { getAsaasFees } from "~/business/payment/asaas-fees.server"
 import { ACTIVE_PAYMENT_STATUSES } from "~/business/payment/payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
@@ -30,16 +29,10 @@ export type PaymentPageData =
 const SETTLED_STATUSES = ["paid", "partially_refunded"]
 
 /**
- * What the participant sees when they open the link they were emailed. Four
- * answers, and the page renders exactly one of them.
+ * The charge, if it is this person's. Anything else — an id that is not one,
+ * a charge that does not exist, somebody else's — ends at the dashboard.
  */
-export async function loadPaymentPage({
-  paymentId,
-  profileId,
-}: {
-  paymentId: string
-  profileId: string
-}): Promise<PaymentPageData> {
+async function findOwnPayment(paymentId: string, profileId: string) {
   // payments.id is a uuid column, so an id that is not one makes Postgres throw
   // rather than answer with no rows. Refused the same way a charge belonging to
   // somebody else is, so a bad link reads as a bad link and not as a crash.
@@ -83,6 +76,24 @@ export async function loadPaymentPage({
     )
   }
 
+  return payment
+}
+
+/**
+ * What the participant sees when they open the link they were emailed. Four
+ * answers, and the page renders exactly one of them.
+ */
+export async function loadPaymentPage({
+  paymentId,
+  profileId,
+  onlinePaymentsEnabled,
+}: {
+  paymentId: string
+  profileId: string
+  onlinePaymentsEnabled: boolean
+}): Promise<PaymentPageData> {
+  const payment = await findOwnPayment(paymentId, profileId)
+
   const eventTitle = payment.event_title ?? ""
 
   if (SETTLED_STATUSES.includes(payment.status)) {
@@ -97,7 +108,7 @@ export async function loadPaymentPage({
   // Pricing an option means reading the Asaas fee table, and with the switch
   // off nothing may talk to Asaas. Quoting from the fallback list instead would
   // name a price no charge could then be created against.
-  if (!(ACTIVE_PAYMENT_STATUSES as readonly string[]).includes(payment.status) || !ENV.PAYMENTS_ENABLED) {
+  if (!(ACTIVE_PAYMENT_STATUSES as readonly string[]).includes(payment.status) || !onlinePaymentsEnabled) {
     return { state: "closed", eventTitle }
   }
 
@@ -139,4 +150,40 @@ function findChosen(
     )
   }
   return null
+}
+
+export type PaymentThanksData =
+  | Extract<PaymentPageData, { state: "paid" }>
+  | { state: "closed"; eventTitle: string }
+  | { state: "waiting"; eventTitle: string }
+
+/**
+ * Where Asaas sends the participant after they paid. Only whether the money
+ * landed: nothing is priced, so nothing here talks to Asaas, and switching
+ * online payments off does not turn a charge already paid into a closed one.
+ */
+export async function loadPaymentThanks({
+  paymentId,
+  profileId,
+}: {
+  paymentId: string
+  profileId: string
+}): Promise<PaymentThanksData> {
+  const payment = await findOwnPayment(paymentId, profileId)
+  const eventTitle = payment.event_title ?? ""
+
+  if (SETTLED_STATUSES.includes(payment.status)) {
+    return {
+      state: "paid",
+      eventTitle,
+      amount: payment.amount ?? 0,
+      paidAt: payment.paid_at ?? "",
+    }
+  }
+
+  if (!(ACTIVE_PAYMENT_STATUSES as readonly string[]).includes(payment.status)) {
+    return { state: "closed", eventTitle }
+  }
+
+  return { state: "waiting", eventTitle }
 }

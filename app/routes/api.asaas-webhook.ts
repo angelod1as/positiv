@@ -22,10 +22,6 @@ function tokensMatch(sent: string | null, expected: string): boolean {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  if (!ENV.PAYMENTS_ENABLED) {
-    return new Response(null, { status: 404 })
-  }
-
   const expected = ENV.ASAAS_WEBHOOK_TOKEN
   if (!expected) {
     // Never accept an unauthenticated webhook. A deploy without the token is a

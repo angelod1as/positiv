@@ -13,11 +13,11 @@ import {
 import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
-import { ENV } from "varlock/env"
 import type { Route } from "./+types/view-event-participant"
 import type { ParticipantEventHistoryData } from "~types/database/entities.types"
 import { ParticipantDetail } from "~/components/pages/admin/participants/participant-detail"
@@ -137,9 +137,10 @@ export async function loader({ params }: Route.LoaderArgs) {
     fullHistory = historyResult.data
   }
 
+  const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
   const [participantPayments, asaasFees] = await Promise.all([
     getPaymentsForParticipant(eventParticipant.id),
-    getAsaasFeesIfEnabled(),
+    getAsaasFeesIfEnabled(onlinePaymentsEnabled),
   ])
 
   return {
@@ -149,7 +150,7 @@ export async function loader({ params }: Route.LoaderArgs) {
     eventId,
     participantPayments,
     asaasFees,
-    paymentsEnabled: Boolean(ENV.PAYMENTS_ENABLED),
+    paymentsEnabled: onlinePaymentsEnabled,
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),

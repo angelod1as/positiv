@@ -2,8 +2,11 @@ import { NoResultError, type QueryNode } from "kysely"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import {
   getEventParticipantBasic,
+  getParticipantFullEventHistory,
   getProfileById,
 } from "~/business/admin/admin.server"
+import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { loader } from "./view-event-participant"
 
 const { logger } = vi.hoisted(() => ({
@@ -22,6 +25,18 @@ vi.mock("~/business/admin/admin.server", () => ({
   updateProfileApprovalStatus: vi.fn(),
 }))
 
+vi.mock("~/business/settings/app-settings.server", () => ({
+  isOnlinePaymentsEnabled: vi.fn(),
+}))
+
+vi.mock("~/business/payment/asaas-fees.server", () => ({
+  getAsaasFeesIfEnabled: vi.fn(async () => null),
+}))
+
+vi.mock("~/business/payment/payment-totals.server", () => ({
+  getPaymentsForParticipant: vi.fn(async () => []),
+}))
+
 type ProfileResult = Awaited<ReturnType<typeof getProfileById>>
 type ParticipantResult = Awaited<ReturnType<typeof getEventParticipantBasic>>
 
@@ -34,6 +49,7 @@ const runLoader = () =>
 describe("view event participant loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(false)
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
       data: { id: "profile-1" },
@@ -103,4 +119,28 @@ describe("view event participant loader", () => {
       { profileId: "profile-1", eventId: "event-1", errors },
     )
   })
+
+  it.each([true, false])(
+    "hands the fee lookup and the payment modal the online payments switch (%s)",
+    async (enabled) => {
+      vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(enabled)
+      vi.mocked(getEventParticipantBasic).mockResolvedValue({
+        success: true,
+        data: { id: "participant-1" },
+        errors: [],
+      } as unknown as ParticipantResult)
+      vi.mocked(getParticipantFullEventHistory).mockResolvedValue({
+        success: true,
+        data: [],
+        errors: [],
+      } as unknown as Awaited<
+        ReturnType<typeof getParticipantFullEventHistory>
+      >)
+
+      const result = await runLoader()
+
+      expect(getAsaasFeesIfEnabled).toHaveBeenCalledWith(enabled)
+      expect(result).toMatchObject({ paymentsEnabled: enabled })
+    },
+  )
 })

@@ -3,15 +3,15 @@ import { describe, expect, it } from "vitest"
 import { renderWithRouter } from "~/test/test-utils"
 import { paymentsCopy } from "~/copy/payments"
 import PaymentThanksPage from "./payment-thanks-page"
-import type { PaymentPageData } from "./payment-page.server"
+import type { PaymentThanksData } from "./payment-page.server"
 
 // The page reads one prop of the many a route component is handed, and a test
 // that built the rest would be describing React Router, not this page.
 const Page = PaymentThanksPage as unknown as (props: {
-  loaderData: PaymentPageData
+  loaderData: PaymentThanksData
 }) => React.ReactNode
 
-const renderPage = (loaderData: PaymentPageData) =>
+const renderPage = (loaderData: PaymentThanksData) =>
   renderWithRouter(<Page loaderData={loaderData} />)
 
 describe("PaymentThanksPage", () => {
@@ -32,16 +32,7 @@ describe("PaymentThanksPage", () => {
   })
 
   it("says the confirmation is on its way while the payment is still in flight", () => {
-    renderPage({
-      state: "ready",
-      paymentId: "payment-1",
-      eventTitle: "Encontro de Maio",
-      eventEmoji: "🌻",
-      dueAt: "2026-09-18T12:00:00Z",
-      options: [],
-      chosen: null,
-      invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
-    })
+    renderPage({ state: "waiting", eventTitle: "Encontro de Maio" })
 
     expect(screen.getByText(paymentsCopy.page.thanksTitle)).toBeInTheDocument()
     expect(screen.getByText(paymentsCopy.page.thanksBody)).toBeInTheDocument()
@@ -63,34 +54,10 @@ describe("PaymentThanksPage", () => {
     ).not.toBeInTheDocument()
   })
 
-  // needs_cpf is only ever answered for a row that is still open, so the
-  // payment really may still be in flight and the waiting message is honest.
-  it("still says the confirmation is coming when the profile lost its CPF", () => {
-    renderPage({
-      state: "needs_cpf",
-      paymentId: "payment-1",
-      eventTitle: "Encontro de Maio",
-    })
-
-    expect(screen.getByText(paymentsCopy.page.thanksTitle)).toBeInTheDocument()
-    expect(
-      screen.queryByText(paymentsCopy.page.closedTitle),
-    ).not.toBeInTheDocument()
-  })
-
   // Asaas sends the participant here the moment they finish on its side, which
   // is before the money is confirmed. Only the webhook may mark a row paid.
   it("offers no way to pay and claims nothing about the money", () => {
-    renderPage({
-      state: "ready",
-      paymentId: "payment-1",
-      eventTitle: "Encontro de Maio",
-      eventEmoji: null,
-      dueAt: "2026-09-18T12:00:00Z",
-      options: [],
-      chosen: null,
-      invoiceUrl: null,
-    })
+    renderPage({ state: "waiting", eventTitle: "Encontro de Maio" })
 
     expect(screen.queryByRole("radio")).not.toBeInTheDocument()
     expect(

@@ -7,7 +7,7 @@ import { isProd } from "~/lib/helpers/is-prod.server"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
-import { ENV } from "varlock/env"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import {
   createAsaasCustomer,
   createAsaasPayment,
@@ -85,7 +85,7 @@ async function ensureAsaasCustomer(profile: {
  * opened.
  */
 export const pickOption = applySchema(pickOptionSchema)(async (values) => {
-  if (!ENV.PAYMENTS_ENABLED) {
+  if (!(await isOnlinePaymentsEnabled())) {
     throw new Error(paymentsCopy.errors.chargeClosed)
   }
 

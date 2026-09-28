@@ -56,6 +56,8 @@ const ADMIN_FEEDBACKS = `${ADMIN_DASHBOARD}/feedbacks`
 const ADMIN_FEEDBACK_STATUS_COMMIT = "/api/admin/feedback-status"
 // DATAVIZ
 const ADMIN_DATAVIZ = `${ADMIN_DASHBOARD}/numeros`
+// SETTINGS
+const ADMIN_SETTINGS = `${ADMIN_DASHBOARD}/configuracoes`
 // EVENTS
 const ADMIN_EVENTS = `${ADMIN_DASHBOARD}/eventos`
 const ADMIN_VIEW_EVENT = (id: string) => `${ADMIN_EVENTS}/${id}`
@@ -91,6 +93,7 @@ const paths = {
     ADMIN_FEEDBACKS,
     ADMIN_FEEDBACK_STATUS_COMMIT,
     ADMIN_DATAVIZ,
+    ADMIN_SETTINGS,
     events: {
       ADMIN_EDIT_EVENT,
       ADMIN_VIEW_EVENT,
