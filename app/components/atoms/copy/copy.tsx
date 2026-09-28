@@ -1,16 +1,9 @@
 import type { ReactNode } from "react"
 import Markdown, { type Components } from "react-markdown"
-import { Link } from "~/components/atoms/link/link"
+import { ContentLink } from "~/components/atoms/content-link/content-link"
 
 const BLOCK_COMPONENTS: Components = {
-  a: ({ href, children }) =>
-    href?.startsWith("/") ? (
-      <Link to={href}>{children}</Link>
-    ) : (
-      <Link to={href ?? ""} target="_blank" rel="noreferrer">
-        {children}
-      </Link>
-    ),
+  a: ({ href, children }) => <ContentLink href={href}>{children}</ContentLink>,
 }
 
 const INLINE_COMPONENTS: Components = {

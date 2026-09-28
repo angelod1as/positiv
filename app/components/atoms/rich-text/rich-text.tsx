@@ -4,7 +4,7 @@ import {
   type PortableTextMarkComponent,
 } from "@portabletext/react"
 import type { ReactNode } from "react"
-import { Link } from "~/components/atoms/link/link"
+import { ContentLink } from "~/components/atoms/content-link/content-link"
 import type { PortableText } from "~/business/cms/homepage-content.schema"
 
 type LinkMark = { _type: "link"; href?: string }
@@ -12,14 +12,7 @@ type LinkMark = { _type: "link"; href?: string }
 const LinkMarkComponent: PortableTextMarkComponent<LinkMark> = ({
   value,
   children,
-}) =>
-  value?.href?.startsWith("/") ? (
-    <Link to={value.href}>{children}</Link>
-  ) : (
-    <Link to={value?.href ?? ""} target="_blank" rel="noreferrer">
-      {children}
-    </Link>
-  )
+}) => <ContentLink href={value?.href}>{children}</ContentLink>
 
 const MARKS: PortableTextComponents["marks"] = {
   strong: ({ children }) => <strong>{children}</strong>,
