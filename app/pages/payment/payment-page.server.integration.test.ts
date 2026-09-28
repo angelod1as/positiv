@@ -15,10 +15,14 @@ import {
 vi.mock("~/business/payment/asaas-fees.server", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("~/business/payment/asaas-fees.server")>()
-  return { ...original, getAsaasFees: async () => original.FALLBACK_FEES }
+  return {
+    ...original,
+    getAsaasFees: vi.fn(async () => original.FALLBACK_FEES),
+  }
 })
 
-import { loadPaymentPage } from "./payment-page.server"
+import { getAsaasFees } from "~/business/payment/asaas-fees.server"
+import { loadPaymentPage, loadPaymentThanks } from "./payment-page.server"
 
 describe("loadPaymentPage", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -241,5 +245,63 @@ describe("loadPaymentPage", () => {
     })
 
     expect(result.state).toBe("closed")
+  })
+
+  describe("loadPaymentThanks", () => {
+    // Asaas sends the participant here after they paid a charge that was
+    // open. The page only says whether the money landed, so it never prices
+    // anything: with online payments switched off nothing may talk to Asaas.
+    it("says an open charge is on its way, without pricing it", async () => {
+      const payment = await openCharge()
+      vi.mocked(getAsaasFees).mockClear()
+
+      const result = await loadPaymentThanks({
+        paymentId: payment.id,
+        profileId,
+      })
+
+      expect(result).toEqual({ state: "waiting", eventTitle: expect.any(String) })
+      expect(getAsaasFees).not.toHaveBeenCalled()
+    })
+
+    it("says it is already paid", async () => {
+      const payment = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        amount: 22199,
+      })
+
+      const result = await loadPaymentThanks({
+        paymentId: payment.id,
+        profileId,
+      })
+
+      expect(result).toMatchObject({ state: "paid", amount: 22199 })
+    })
+
+    it("says the link is closed for an expired charge", async () => {
+      const expired = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "asaas",
+        status: "expired",
+        amount: null,
+        method: null,
+        paid_at: null,
+      })
+
+      const result = await loadPaymentThanks({
+        paymentId: expired.id,
+        profileId,
+      })
+
+      expect(result.state).toBe("closed")
+    })
+
+    it("refuses someone else's charge", async () => {
+      const payment = await openCharge()
+
+      await expect(
+        loadPaymentThanks({ paymentId: payment.id, profileId: otherProfileId }),
+      ).rejects.toBeDefined()
+    })
   })
 })

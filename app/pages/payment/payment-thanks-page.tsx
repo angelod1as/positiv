@@ -14,7 +14,10 @@ import { paymentsCopy } from "~/copy/payments"
 import { createMetaArray } from "~/lib/helpers/meta"
 import paths from "~/lib/paths"
 import type { Route } from "./+types/payment-thanks-page"
-import { loadPaymentPage, type PaymentPageData } from "./payment-page.server"
+import {
+  loadPaymentThanks,
+  type PaymentThanksData,
+} from "./payment-page.server"
 
 const { page } = paymentsCopy
 
@@ -34,12 +37,9 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     throw await redirectWithError(paths.dash.DASHBOARD, page.notYours)
   }
 
-  // The participant has just paid for a charge that was open. Switching online
-  // payments off stops new charges, not this one.
-  return loadPaymentPage({
+  return loadPaymentThanks({
     paymentId: params.paymentId,
     profileId: currentProfile.id,
-    onlinePaymentsEnabled: true,
   })
 }
 
@@ -47,11 +47,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
  * Three answers, not two. A charge cancelled or expired between the Asaas
  * redirect and this page loading is closed, and telling that person a
  * confirmation email is on its way promises something nothing will send.
- *
- * `needs_cpf` is only ever answered for a row that is still open, so the
- * payment really may be in flight and the waiting message is the honest one.
  */
-function thanksMessage(data: PaymentPageData) {
+function thanksMessage(data: PaymentThanksData) {
   if (data.state === "paid") {
     return { title: page.thanksPaidTitle, body: page.thanksPaidBody }
   }
@@ -62,7 +59,7 @@ function thanksMessage(data: PaymentPageData) {
 }
 
 const PaymentThanksPage = ({ loaderData }: Route.ComponentProps) => {
-  const { title, body } = thanksMessage(loaderData as PaymentPageData)
+  const { title, body } = thanksMessage(loaderData as PaymentThanksData)
 
   return (
     <Card className="my-12">
