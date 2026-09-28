@@ -194,10 +194,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       eventId: currentEvent.id,
     })
 
-    if (!result.success) {
-      console.error("Query failed:", result.errors)
-    }
-
     expect(result.success).toBe(true)
 
     if (result.success) {
@@ -433,10 +429,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       eventId: currentEvent.id,
     })
 
-    if (!result.success) {
-      console.error("Query failed:", result.errors)
-    }
-
     expect(result.success).toBe(true)
 
     if (result.success) {
@@ -531,10 +523,6 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
     const result = await getProfilesWithExtraDataById({
       eventId: currentEvent.id,
     })
-
-    if (!result.success) {
-      console.error("Query failed:", result.errors)
-    }
 
     expect(result.success).toBe(true)
 
