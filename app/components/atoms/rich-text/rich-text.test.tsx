@@ -96,6 +96,24 @@ describe("RichText", () => {
     expect(link).toHaveAttribute("rel", expect.stringContaining("noreferrer"))
   })
 
+  it("renders bold text inside a link", () => {
+    renderWithRouter(
+      <RichText
+        value={[
+          block(
+            "b1",
+            [{ text: "os eventos", marks: ["strong", "l1"] }],
+            [{ _key: "l1", _type: "link", href: "/eventos" }],
+          ),
+        ]}
+      />,
+    )
+
+    const link = screen.getByRole("link", { name: "os eventos" })
+    expect(link).toHaveAttribute("href", "/eventos")
+    expect(link.querySelector("strong")).toHaveTextContent("os eventos")
+  })
+
   it("renders each block as its own paragraph", () => {
     const { container } = renderWithRouter(
       <RichText
