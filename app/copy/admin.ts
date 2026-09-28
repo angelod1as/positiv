@@ -58,8 +58,7 @@ export const onlinePaymentsSettingCopy = {
   off: "Desligados",
   notConfigured:
     "O Asaas não está configurado neste ambiente. Os pagamentos online ficam desligados até as chaves serem cadastradas.",
-  lastChange: (when: string, name: string | null) =>
-    name ? `Alterado por ${name} em ${when}` : `Alterado em ${when}`,
+  lastChange: (when: string, name: string) => `Alterado por ${name} em ${when}`,
   turnOn: "Ligar pagamentos online",
   turnOff: "Desligar pagamentos online",
   confirmOnTitle: "Ligar pagamentos online?",

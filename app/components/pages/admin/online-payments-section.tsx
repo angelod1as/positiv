@@ -50,7 +50,7 @@ export function OnlinePaymentsSection({
             {copy.notConfigured}
           </p>
         )}
-        {lastChange && (
+        {lastChange && setting.updatedByName && (
           <p className="text-xs text-muted-foreground">
             {copy.lastChange(lastChange, setting.updatedByName)}
           </p>

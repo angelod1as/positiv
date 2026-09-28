@@ -102,4 +102,12 @@ describe("OnlinePaymentsSection", () => {
       screen.getByRole("button", { name: "Ligar pagamentos online" }),
     ).toBeDisabled()
   })
+
+  // The migration creates the row, which stamps updated_at with no one behind
+  // it. "Changed at" with nobody who changed it is the migration talking.
+  it("says nothing about the last change until an admin makes one", () => {
+    renderSection({ ...configured, updatedByName: null })
+
+    expect(screen.queryByText(/Alterado/)).not.toBeInTheDocument()
+  })
 })
