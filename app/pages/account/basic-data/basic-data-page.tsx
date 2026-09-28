@@ -13,6 +13,7 @@ import { buildSingleScreenFlow } from "~/components/forms/runtime/single-screen-
 import { basicDataCopy } from "~/copy/account"
 import { metaCopy } from "~/copy/meta"
 import { createMetaArray } from "~/lib/helpers/meta"
+import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
 import type { CommitResult } from "~types/forms/commit.types"
 import type { Route } from "./+types/basic-data-page"
@@ -55,7 +56,7 @@ export async function loader({ request, params }: Route.LoaderArgs) {
       orphanedProfile = data
     } else if (error && error.code !== "PGRST116") {
       // Log unexpected errors but don't fail the loader
-      console.error("Error checking for orphaned profile:", error)
+      logger.error("Error checking for orphaned profile", { error })
     }
   }
 
