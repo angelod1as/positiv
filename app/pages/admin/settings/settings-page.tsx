@@ -1,10 +1,12 @@
 import { getAdminContext } from "~/business/admin/admin.server"
-import { getContext } from "~/business/auth/auth.server"
 import {
   cleanupListmonkTestCampaign,
   testListmonkConnection,
 } from "~/business/newsletter/test-listmonk-connection.server"
-import { setOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import {
+  getOnlinePaymentsSetting,
+  setOnlinePaymentsEnabled,
+} from "~/business/settings/app-settings.server"
 import { ListmonkDiagnosticSection } from "~/components/pages/admin/listmonk-diagnostic-section"
 import { OnlinePaymentsSection } from "~/components/pages/admin/online-payments-section"
 import { Separator } from "~/components/ui/separator"
@@ -45,9 +47,8 @@ export async function action({ request, params }: Route.ActionArgs) {
   return { intent }
 }
 
-export async function loader({ request, params }: Route.LoaderArgs) {
-  const { settings } = await getContext(request, params)
-  return { onlinePayments: settings.onlinePayments }
+export async function loader() {
+  return { onlinePayments: await getOnlinePaymentsSetting() }
 }
 
 const SettingsPage = ({ loaderData }: Route.ComponentProps) => {

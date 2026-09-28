@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { beforeEach, describe, expect, it, vi } from "vitest"
-import { defaultSettings } from "~/test/request-context"
+import { defaultOnlinePaymentsSetting } from "~/test/online-payments-setting"
 import { OnlinePaymentsSection } from "./online-payments-section"
 
 const submit = vi.hoisted(() => vi.fn())
@@ -11,7 +11,7 @@ vi.mock("react-router", async (importOriginal) => ({
   useFetcher: () => ({ submit, state: "idle" }),
 }))
 
-type Setting = typeof defaultSettings.onlinePayments
+type Setting = typeof defaultOnlinePaymentsSetting
 
 const configured: Setting = {
   switchedOn: true,
@@ -78,7 +78,7 @@ describe("OnlinePaymentsSection", () => {
   })
 
   it("cannot be switched on while Asaas is not configured", () => {
-    renderSection(defaultSettings.onlinePayments)
+    renderSection(defaultOnlinePaymentsSetting)
 
     expect(screen.getByText("Desligados")).toBeInTheDocument()
     expect(

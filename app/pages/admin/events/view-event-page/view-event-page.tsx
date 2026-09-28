@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { getContext } from "~/business/auth/auth.server"
 import { useFetcher } from "react-router"
 import { redirectWithError } from "remix-toast"
 import { listInvitesForEvent } from "~/business/admin/event-invites.server"
@@ -17,6 +16,7 @@ import {
 import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { InviteParticipantSection } from "~/components/organisms/event-invite-modal/invite-participant-section"
 import { ManagePaymentModal } from "~/components/organisms/payment/manage-payment-modal"
 import { AdminViewEventParticipantsTable } from "~/components/organisms/tables/admin/participants-table/view-event-participants-table"
@@ -106,8 +106,7 @@ async function loadParticipants(eventId: string) {
 }
 
 /** LOADER */
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const { settings } = await getContext(request, params)
+export async function loader({ params }: Route.LoaderArgs) {
   const eventId = params.id
   if (!eventId) {
     throw await redirectWithError(
@@ -129,6 +128,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
       ? await getEventDemographicsById({ eventId })
       : undefined
 
+  const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
+
   const [
     participants,
     rejectedParticipants,
@@ -143,7 +144,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
         return []
       }),
       getPaymentsForEvent(eventId),
-      getAsaasFeesIfEnabled(settings.onlinePayments.enabled),
+      getAsaasFeesIfEnabled(onlinePaymentsEnabled),
       listInvitesForEvent(eventId),
     ])
 
@@ -153,7 +154,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     rejectedParticipants,
     paymentsByParticipant,
     asaasFees,
-    paymentsEnabled: settings.onlinePayments.enabled,
+    paymentsEnabled: onlinePaymentsEnabled,
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),

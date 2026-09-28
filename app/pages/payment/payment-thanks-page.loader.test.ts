@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest"
 import * as authServer from "~/business/auth/auth.server"
-import { defaultSettings } from "~/test/request-context"
 import type { Route } from "./+types/payment-thanks-page"
 import { loader } from "./payment-thanks-page"
 import { loadPaymentThanks } from "./payment-page.server"
@@ -21,7 +20,6 @@ describe("payment thanks page loader", () => {
     vi.mocked(authServer.getUserContext).mockResolvedValue({
       currentUser: { id: "user-1", email: "ana@example.com" },
       currentProfile: { id: "profile-1" },
-      settings: defaultSettings,
     } as unknown as Awaited<ReturnType<typeof authServer.getUserContext>>)
 
     await loader({

@@ -1,6 +1,5 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router"
 import { NoResultError } from "kysely"
-import { getContext } from "~/business/auth/auth.server"
 import { redirectWithError } from "remix-toast"
 import {
   getAdminContext,
@@ -14,6 +13,7 @@ import {
 import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { handlePaymentIntent } from "~/business/payment/payment-intents.server"
 import { getPaymentsForParticipant } from "~/business/payment/payment-totals.server"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { adminEventsCopy } from "~/copy/admin/events"
 import { appOrigin } from "~/lib/helpers/app-origin"
 import { logger } from "~/lib/logger/logger.server"
@@ -69,8 +69,7 @@ export async function action({ request, params }: Route.ActionArgs) {
   if (paymentResult) return paymentResult
 }
 
-export async function loader({ params, request }: Route.LoaderArgs) {
-  const { settings } = await getContext(request, params)
+export async function loader({ params }: Route.LoaderArgs) {
   const { eventId, profileId } = params
 
   if (!eventId) {
@@ -138,9 +137,10 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     fullHistory = historyResult.data
   }
 
+  const onlinePaymentsEnabled = await isOnlinePaymentsEnabled()
   const [participantPayments, asaasFees] = await Promise.all([
     getPaymentsForParticipant(eventParticipant.id),
-    getAsaasFeesIfEnabled(settings.onlinePayments.enabled),
+    getAsaasFeesIfEnabled(onlinePaymentsEnabled),
   ])
 
   return {
@@ -150,7 +150,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     eventId,
     participantPayments,
     asaasFees,
-    paymentsEnabled: settings.onlinePayments.enabled,
+    paymentsEnabled: onlinePaymentsEnabled,
     // The same origin the link email builds from, so the two channels cannot
     // hand the participant different urls for one charge.
     appOrigin: appOrigin(null),

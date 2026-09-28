@@ -1,30 +1,23 @@
 import { describe, expect, it, vi } from "vitest"
-import { getContext } from "~/business/auth/auth.server"
-import { defaultSettings } from "~/test/request-context"
-import type { Route } from "./+types/settings-page"
+import { getOnlinePaymentsSetting } from "~/business/settings/app-settings.server"
+import { defaultOnlinePaymentsSetting } from "~/test/online-payments-setting"
 import { loader } from "./settings-page"
 
-vi.mock("~/business/auth/auth.server", () => ({
-  getContext: vi.fn(),
+vi.mock("~/business/settings/app-settings.server", () => ({
+  getOnlinePaymentsSetting: vi.fn(),
 }))
 
 describe("SettingsPage loader", () => {
-  it("hands the page the settings from the request context", async () => {
+  it("hands the page the online payments setting", async () => {
     const onlinePayments = {
-      ...defaultSettings.onlinePayments,
+      ...defaultOnlinePaymentsSetting,
       switchedOn: true,
       asaasConfigured: true,
       enabled: true,
     }
-    vi.mocked(getContext).mockResolvedValue({
-      settings: { onlinePayments },
-    } as Awaited<ReturnType<typeof getContext>>)
+    vi.mocked(getOnlinePaymentsSetting).mockResolvedValue(onlinePayments)
 
-    const result = await loader({
-      request: new Request("http://localhost/admin/configuracoes"),
-      params: {},
-      context: {},
-    } as unknown as Route.LoaderArgs)
+    const result = await loader()
 
     expect(result).toEqual({ onlinePayments })
   })

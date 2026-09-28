@@ -7,8 +7,7 @@ import {
 import { listInvitesForEvent } from "~/business/admin/event-invites.server"
 import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
 import { getPaymentsForEvent } from "~/business/payment/payment-totals.server"
-import { getContext } from "~/business/auth/auth.server"
-import { defaultSettings } from "~/test/request-context"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { loader } from "./view-event-page"
 
 const { logger } = vi.hoisted(() => ({
@@ -25,8 +24,8 @@ vi.mock("~/business/admin/admin.server", () => ({
   getRejectedEventParticipants: vi.fn(),
 }))
 
-vi.mock("~/business/auth/auth.server", () => ({
-  getContext: vi.fn(),
+vi.mock("~/business/settings/app-settings.server", () => ({
+  isOnlinePaymentsEnabled: vi.fn(),
 }))
 
 vi.mock("~/business/admin/event-invites.server", () => ({
@@ -50,9 +49,7 @@ const runLoader = () =>
 describe("view event page loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getContext).mockResolvedValue({
-      settings: defaultSettings,
-    } as Awaited<ReturnType<typeof getContext>>)
+    vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(false)
     vi.mocked(getAdminEventById).mockResolvedValue({
       success: true,
       data: { id: "event-1", event_status: "Open" },
@@ -82,13 +79,9 @@ describe("view event page loader", () => {
   })
 
   it.each([true, false])(
-    "hands the fee lookup and the payment modal the switch from the request context (%s)",
+    "hands the fee lookup and the payment modal the online payments switch (%s)",
     async (enabled) => {
-      vi.mocked(getContext).mockResolvedValue({
-        settings: {
-          onlinePayments: { ...defaultSettings.onlinePayments, enabled },
-        },
-      } as Awaited<ReturnType<typeof getContext>>)
+      vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(enabled)
       vi.mocked(getRejectedEventParticipants).mockResolvedValue([])
 
       const result = await runLoader()

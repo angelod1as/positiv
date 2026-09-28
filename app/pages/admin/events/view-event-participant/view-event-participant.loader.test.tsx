@@ -6,8 +6,7 @@ import {
   getProfileById,
 } from "~/business/admin/admin.server"
 import { getAsaasFeesIfEnabled } from "~/business/payment/asaas-fees.server"
-import { getContext } from "~/business/auth/auth.server"
-import { defaultSettings } from "~/test/request-context"
+import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
 import { loader } from "./view-event-participant"
 
 const { logger } = vi.hoisted(() => ({
@@ -26,8 +25,8 @@ vi.mock("~/business/admin/admin.server", () => ({
   updateProfileApprovalStatus: vi.fn(),
 }))
 
-vi.mock("~/business/auth/auth.server", () => ({
-  getContext: vi.fn(),
+vi.mock("~/business/settings/app-settings.server", () => ({
+  isOnlinePaymentsEnabled: vi.fn(),
 }))
 
 vi.mock("~/business/payment/asaas-fees.server", () => ({
@@ -50,9 +49,7 @@ const runLoader = () =>
 describe("view event participant loader", () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getContext).mockResolvedValue({
-      settings: defaultSettings,
-    } as Awaited<ReturnType<typeof getContext>>)
+    vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(false)
     vi.mocked(getProfileById).mockResolvedValue({
       success: true,
       data: { id: "profile-1" },
@@ -124,13 +121,9 @@ describe("view event participant loader", () => {
   })
 
   it.each([true, false])(
-    "hands the fee lookup and the payment modal the switch from the request context (%s)",
+    "hands the fee lookup and the payment modal the online payments switch (%s)",
     async (enabled) => {
-      vi.mocked(getContext).mockResolvedValue({
-        settings: {
-          onlinePayments: { ...defaultSettings.onlinePayments, enabled },
-        },
-      } as Awaited<ReturnType<typeof getContext>>)
+      vi.mocked(isOnlinePaymentsEnabled).mockResolvedValue(enabled)
       vi.mocked(getEventParticipantBasic).mockResolvedValue({
         success: true,
         data: { id: "participant-1" },
