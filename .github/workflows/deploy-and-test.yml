@@ -80,6 +80,7 @@ jobs:
   # the production dataset, which is public, so it needs no secrets.
   content-contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - name: Install pnpm
