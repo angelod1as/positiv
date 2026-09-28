@@ -316,8 +316,12 @@ SELECT
 FROM auth.users AS usr
 -- The nine base digits, then the two Modulo 11 check digits Receita Federal
 -- defines, so every generated CPF is one the app will accept.
+-- The WHERE ties the subquery to the row. Without it nothing in it refers to
+-- usr, and Postgres is free to draw random() once and hand all ninety
+-- profiles the same CPF, which profiles_cpf_unique refuses.
 CROSS JOIN LATERAL (
     SELECT lpad((floor(random() * 999999999)::bigint)::text, 9, '0') AS digits
+     WHERE usr.id IS NOT NULL
 ) AS base
 CROSS JOIN LATERAL (
     SELECT (
