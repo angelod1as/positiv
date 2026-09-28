@@ -45,7 +45,12 @@ export default defineConfig({
       "scripts/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
       "e2e/**/*.test.{js,mjs,cjs,ts,mts,cts,jsx,tsx}",
     ],
-    exclude: ["node_modules/", "studio/**", "**/*.integration.test.{ts,tsx}"],
+    exclude: [
+      "node_modules/",
+      "studio/**",
+      "**/*.integration.test.{ts,tsx}",
+      "**/*.contract.test.{ts,tsx}",
+    ],
   },
   resolve: {
     alias: {

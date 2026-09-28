@@ -76,6 +76,24 @@ jobs:
           path: coverage/
           retention-days: 30
 
+  # The one place a test talks to Sanity: it reads the published homepage from
+  # the production dataset, which is public, so it needs no secrets.
+  content-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: 'pnpm'
+      - name: Install dependencies
+        run: pnpm install
+      - name: Check production content against the homepage contract
+        run: pnpm test:contract
+
   # Deliberately ungated. Waiting on validate-schema and unit-test saved a
   # runner when they failed, but it cost every green pull request their three
   # and a half minutes in series before e2e could start. All three are required

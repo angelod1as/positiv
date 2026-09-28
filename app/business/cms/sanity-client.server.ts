@@ -1,7 +1,7 @@
 import { createClient } from "@sanity/client"
 import { ENV } from "varlock/env"
 
-const SANITY_API_VERSION = "2026-09-24"
+export const SANITY_API_VERSION = "2026-09-24"
 
 export function createSanityClient() {
   return createClient({
