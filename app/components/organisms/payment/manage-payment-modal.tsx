@@ -381,7 +381,8 @@ type ChargeSectionProps = {
   fees: AsaasFees
   appOrigin: string
   isSubmitting: boolean
-  onOffer: (baseAmount: string) => void
+  wasRefunded: boolean
+  onOffer: (baseAmount: string, confirmAfterRefund: boolean) => void
   onResend: (paymentId: string) => void
 }
 
@@ -399,6 +400,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   fees,
   appOrigin,
   isSubmitting,
+  wasRefunded,
   onOffer,
   onResend,
 }) => {
@@ -415,7 +417,24 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   // Replacing a charge the participant has already acted on deletes it at
   // Asaas mid-checkout, so that one asks first. A pending row is nobody's
   // work in progress.
-  const needsConfirmation = active?.status === "awaiting_payment"
+  // Charging again someone whose money already went back is legitimate, but
+  // rare enough to be a slip, so it asks too.
+  const confirmation =
+    active?.status === "awaiting_payment"
+      ? {
+          title: charge.replaceConfirm,
+          description: charge.replaceDescription,
+          keep: charge.replaceKeep,
+          submit: charge.replaceSubmit,
+        }
+      : !active && wasRefunded
+        ? {
+            title: charge.afterRefundConfirm,
+            description: charge.afterRefundDescription,
+            keep: charge.afterRefundKeep,
+            submit: charge.afterRefundSubmit,
+          }
+        : null
 
   const copyMessage = () => {
     if (!active) return
@@ -440,7 +459,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   // with it rather than sitting under a link that no longer works.
   const sendOffer = () => {
     setCopied(false)
-    onOffer(amount)
+    onOffer(amount, !active && wasRefunded)
   }
 
   const sendLabel = active ? charge.resendAmount : charge.send
@@ -466,25 +485,25 @@ const ChargeSection: FC<ChargeSectionProps> = ({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {needsConfirmation ? (
+        {confirmation ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button disabled={isSubmitting}>{sendLabel}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{charge.replaceConfirm}</AlertDialogTitle>
+                <AlertDialogTitle>{confirmation.title}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  {charge.replaceDescription}
+                  {confirmation.description}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>{charge.replaceKeep}</AlertDialogCancel>
+                <AlertDialogCancel>{confirmation.keep}</AlertDialogCancel>
                 <AlertDialogAction
                   disabled={isSubmitting}
                   onClick={() => sendOffer()}
                 >
-                  {charge.replaceSubmit}
+                  {confirmation.submit}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -821,8 +840,16 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             fees={fees}
             appOrigin={appOrigin}
             isSubmitting={isSubmitting}
-            onOffer={(baseAmount) =>
-              post({ intent: "payment-offer", eventParticipantId, baseAmount })
+            wasRefunded={payments.some((payment) =>
+              ["refunded", "partially_refunded"].includes(payment.status),
+            )}
+            onOffer={(baseAmount, confirmAfterRefund) =>
+              post({
+                intent: "payment-offer",
+                eventParticipantId,
+                baseAmount,
+                ...(confirmAfterRefund && { confirmAfterRefund: "true" }),
+              })
             }
             onResend={(paymentId) => post({ intent: "payment-resend", paymentId })}
           />

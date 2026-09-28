@@ -38,7 +38,13 @@ async function deliverQueuedLink(emailId: string): Promise<boolean> {
   }
 }
 
-const SETTLED_PAYMENT_STATUSES = ["paid", "partially_refunded"] as const
+// Money that has come in. A paid participant is never charged again; one whose
+// money went back, in whole or in part, can be -- once the admin confirms it.
+const SETTLED_PAYMENT_STATUSES = [
+  "paid",
+  "refunded",
+  "partially_refunded",
+] as const
 
 // The two funnel steps that come after the money. A charge sent late is not a
 // reason to walk somebody back up the process, so those are left where they
@@ -65,6 +71,11 @@ export const createPaymentOfferSchema = zod.object({
       error: paymentsCopy.errors.amountUnreadable,
     }),
   createdBy: zod.string().uuid().nullish(),
+  // Form data carries it as the string "true".
+  confirmAfterRefund: zod
+    .union([zod.boolean(), zod.string()])
+    .optional()
+    .transform((value) => value === true || value === "true"),
 })
 
 async function deleteReplacedCharges(
@@ -168,13 +179,17 @@ export const createPaymentOffer = applySchema(createPaymentOfferSchema)(
 
         const settled = await trx
           .selectFrom("payments")
-          .select("id")
+          .select("status")
           .where("event_participant_id", "=", values.eventParticipantId)
           .where("status", "in", [...SETTLED_PAYMENT_STATUSES])
-          .executeTakeFirst()
+          .execute()
 
-        if (settled) {
+        if (settled.some((row) => row.status === "paid")) {
           throw new Error(paymentsCopy.errors.alreadyPaid)
+        }
+
+        if (settled.length && !values.confirmAfterRefund) {
+          throw new Error(paymentsCopy.errors.confirmChargeAfterRefund)
         }
 
         const replaced = await trx

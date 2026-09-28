@@ -117,6 +117,11 @@ export const paymentsCopy = {
       "Esta pessoa já escolheu como pagar. A cobrança atual será cancelada no Asaas e ela receberá um novo link.",
     replaceKeep: "Manter cobrança",
     replaceSubmit: "Substituir cobrança",
+    afterRefundConfirm: "Tem certeza que deseja gerar outra cobrança?",
+    afterRefundDescription:
+      "Esta pessoa já pagou e recebeu um reembolso. Uma nova cobrança manda para ela outro link de pagamento.",
+    afterRefundKeep: "Voltar",
+    afterRefundSubmit: "Gerar cobrança",
   },
   manual: {
     title: "Registrar pagamento manual",
@@ -182,6 +187,8 @@ export const paymentsCopy = {
       "Não consegui ler esse valor. Escreva só números, como 150,00.",
     alreadyPaid:
       "Esta pessoa já pagou. Cancele ou reembolse antes de cobrar de novo.",
+    confirmChargeAfterRefund:
+      "Esta pessoa já recebeu um reembolso. Confirme que deseja gerar outra cobrança.",
     notResendable: "Não há cobrança em aberto para reenviar.",
     amountRequired: "Informe um valor de zero ou mais.",
     activeChargeExists:

@@ -731,6 +731,38 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     expect(lastSubmission().get("intent")).toBe("payment-offer")
   })
 
+  it.each(["refunded", "partially_refunded"] as const)(
+    "asks before charging again someone whose payment was %s",
+    async (status) => {
+      const refunded = paidAsaasCharge({
+        status,
+        refund_amount: status === "refunded" ? 21900 : 5000,
+        refunded_at: "2026-09-02T12:00:00Z",
+      })
+      render(<ManagePaymentModal {...baseProps} payments={[refunded]} />)
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Enviar cobrança" }),
+      )
+      expect(submit).not.toHaveBeenCalled()
+      expect(
+        screen.getByText("Tem certeza que deseja gerar outra cobrança?"),
+      ).toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole("button", { name: "Gerar cobrança" }))
+      expect(lastSubmission().get("intent")).toBe("payment-offer")
+      expect(lastSubmission().get("confirmAfterRefund")).toBe("true")
+    },
+  )
+
+  it("does not ask when nothing was ever refunded", async () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    expect(lastSubmission().get("confirmAfterRefund")).toBeNull()
+  })
+
   it("resends the email for the open charge", async () => {
     render(
       <ManagePaymentModal
