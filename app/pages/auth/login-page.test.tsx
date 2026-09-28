@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { Database } from "~/types/database/database.types"
-import { defaultSettings } from "~/test/request-context"
 
 const navigate = vi.fn()
 
@@ -80,7 +79,6 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
-      settings: defaultSettings,
     })
 
     const result = await loader({
@@ -119,7 +117,6 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
-      settings: defaultSettings,
     })
 
     await expect(
@@ -158,7 +155,6 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
-      settings: defaultSettings,
     })
 
     await expect(
@@ -178,7 +174,6 @@ describe("Login Page Loader", () => {
       supabaseHeaders: mockSupabaseHeaders,
       host: "localhost:3000",
       isProdInDev: false,
-      settings: defaultSettings,
     })
 
     await expect(
