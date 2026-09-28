@@ -8,18 +8,6 @@ vi.mock("varlock/env", () => ({ ENV: env }))
 
 vi.mock("~/kysely-db", () => ({ kyselyDb: {} }))
 
-// Switched off by an admin. The webhook must not care.
-vi.mock("~/business/settings/app-settings.server", () => ({
-  isOnlinePaymentsEnabled: async () => false,
-  getOnlinePaymentsSetting: async () => ({
-    switchedOn: false,
-    asaasConfigured: true,
-    enabled: false,
-    updatedAt: null,
-    updatedByName: null,
-  }),
-}))
-
 const logger = vi.hoisted(() => ({
   error: vi.fn(),
   warn: vi.fn(),
