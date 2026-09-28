@@ -230,13 +230,15 @@ export const getProfileWithExtraDataById = composable(
   },
 )
 
+export const profilesWithExtraDataByIdQuery = (eventId: string) =>
+  profilesWithExtraDataQuery
+    .where("current_ep.event_id", "=", eventId)
+    .where("current_ep.is_user_applied", "=", true)
+    .where("p.approved_to_attend", "!=", "rejected")
+
 export const getProfilesWithExtraDataById = composable(
   async ({ eventId }: { eventId: string }) => {
-    const profiles = await profilesWithExtraDataQuery
-      .where("current_ep.event_id", "=", eventId)
-      .where("current_ep.is_user_applied", "=", true)
-      .where("p.approved_to_attend", "!=", "rejected")
-      .execute()
+    const profiles = await profilesWithExtraDataByIdQuery(eventId).execute()
 
     return profiles
   },
