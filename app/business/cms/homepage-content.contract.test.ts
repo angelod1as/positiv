@@ -13,12 +13,18 @@ describe("published homepage in the production dataset", () => {
   it("points every founder photo at an image the CDN serves", async () => {
     const content = await getHomepageContent(createProductionReadClient())
 
-    for (const { photo } of content.founders.people) {
-      expect(photo.url).toMatch(
+    const urls = content.founders.people.map(({ photo }) => photo.url)
+    for (const url of urls) {
+      expect(url).toMatch(
         /^https:\/\/cdn\.sanity\.io\/images\/8ojkallk\/production\//,
       )
-      const response = await fetch(photo.url, { method: "HEAD" })
-      expect(response.status, photo.url).toBe(200)
     }
+
+    const responses = await Promise.all(
+      urls.map((url) => fetch(url, { method: "HEAD" })),
+    )
+    responses.forEach((response, index) => {
+      expect(response.status, urls[index]).toBe(200)
+    })
   })
 })
