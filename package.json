@@ -22,6 +22,7 @@
     "test": "pnpm test:all",
     "test:all": "pnpm test:unit && pnpm test:integration",
     "test:unit": "pnpm --filter studio test && vitest --run",
+    "test:contract": "vitest --run --config vitest.contract.config.ts",
     "test:integration": "./scripts/with-db-lock.sh sh -c 'NODE_ENV=test varlock run -- vitest --run --config vitest.integration.config.ts'",
     "test:unit:changed": "vitest --run --changed origin/main",
     "test:integration:changed": "./scripts/with-db-lock.sh sh -c 'NODE_ENV=test varlock run -- vitest --run --config vitest.integration.config.ts --changed origin/main'",
