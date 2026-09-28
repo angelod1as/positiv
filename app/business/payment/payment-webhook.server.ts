@@ -342,16 +342,33 @@ async function applyToPayment(
   const now = new Date().toISOString()
 
   if (ALARM_EVENTS.includes(event.event)) {
-    // The one branch here that writes nothing, and deliberately: a chargeback,
-    // a denied refund or a capture refused by risk analysis needs a person,
-    // not a status. A denied refund in particular leaves the row paid with
-    // refund_requested_at set and a participant who was told the money was
-    // coming back -- no transition makes that right.
+    // A chargeback, a denied refund or a capture refused by risk analysis
+    // needs a person, not a status, so none of them moves the row.
     logger.error("Asaas raised an alarm on a payment", {
       paymentId: payment.id,
       event: event.event,
       asaasPaymentId: event.payment?.id,
     })
+
+    // Asaas takes a refund request and can refuse it afterwards -- the sandbox
+    // does whenever there is no balance. On a single charge nothing moved, so
+    // the claim goes back and the admin can ask again. A plan is refunded one
+    // charge at a time, and a denial on one says nothing about the others: its
+    // claim stays until a person has looked.
+    if (
+      event.event === "PAYMENT_REFUND_DENIED" &&
+      !payment.asaas_installment_id
+    ) {
+      const released = await db
+        .updateTable("payments")
+        .set({ refund_requested_at: null, refund_requested_amount: null })
+        .where("id", "=", payment.id)
+        .where("status", "=", "paid")
+        .returning("id")
+        .executeTakeFirst()
+      return { applied: Boolean(released), reason: "alarm_logged" }
+    }
+
     return { applied: false, reason: "alarm_logged" }
   }
 

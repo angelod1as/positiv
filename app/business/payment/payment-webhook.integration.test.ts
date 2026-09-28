@@ -464,6 +464,55 @@ describe("applyWebhookEvent", () => {
     expect(after.refund_requested_at).not.toBeNull()
   })
 
+  it("gives a denied refund its claim back, and still shouts about it", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "pix",
+      amount: 22199,
+      asaas_net: 22000,
+      asaas_payment_id: `pay_${counter}`,
+      refund_requested_at: new Date().toISOString(),
+      refund_requested_amount: 22000,
+    })
+
+    await deliver({
+      event: "PAYMENT_REFUND_DENIED",
+      payment: { id: `pay_${counter}`, status: "RECEIVED" },
+    })
+
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("paid")
+    expect(after.refund_requested_at).toBeNull()
+    expect(after.refund_requested_amount).toBeNull()
+    expect(logger.error).toHaveBeenCalled()
+  })
+
+  it("keeps the claim on a card plan whose refund was denied", async () => {
+    const requestedAt = new Date().toISOString()
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 3,
+      amount: 23430,
+      asaas_net: 22000,
+      asaas_payment_id: `pay_${counter}`,
+      asaas_installment_id: `ins_${counter}`,
+      refund_requested_at: requestedAt,
+      refund_requested_amount: 22000,
+    })
+
+    await deliver({
+      event: "PAYMENT_REFUND_DENIED",
+      payment: { id: `pay_${counter}`, installment: `ins_${counter}` },
+    })
+
+    const after = await statusOf(payment.id)
+    expect(after.refund_requested_at).not.toBeNull()
+    expect(after.refund_requested_amount).toBe(22000)
+  })
+
   it("cancels on PAYMENT_DELETED but leaves a paid charge alone", async () => {
     const open = await awaitingCharge()
     await deliver({
