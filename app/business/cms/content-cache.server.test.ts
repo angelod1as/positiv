@@ -89,3 +89,65 @@ describe("createContentCache", () => {
     expect(load).toHaveBeenCalledTimes(1)
   })
 })
+
+describe("createContentCache reset", () => {
+  function deferred() {
+    let resolve!: (value: string) => void
+    let reject!: (error: Error) => void
+    const promise = new Promise<string>((res, rej) => {
+      resolve = res
+      reject = rej
+    })
+    return { promise, resolve, reject }
+  }
+
+  it("does not cache a load that was in flight when reset ran", async () => {
+    const stale = deferred()
+    load.mockReturnValueOnce(stale.promise).mockResolvedValueOnce("fresh")
+
+    const staleGet = cache.get()
+    cache.reset()
+    stale.resolve("stale")
+    expect(await staleGet).toBe("stale")
+
+    expect(await cache.get()).toBe("fresh")
+    expect(load).toHaveBeenCalledTimes(2)
+  })
+
+  it("keeps sharing a load started after reset once the older load settles", async () => {
+    const stale = deferred()
+    const fresh = deferred()
+    load.mockReturnValueOnce(stale.promise).mockReturnValueOnce(fresh.promise)
+
+    const staleGet = cache.get()
+    cache.reset()
+    const freshGet = cache.get()
+    stale.resolve("stale")
+    expect(await staleGet).toBe("stale")
+
+    expect(cache.get()).toBe(freshGet)
+    expect(load).toHaveBeenCalledTimes(2)
+
+    fresh.resolve("fresh")
+    expect(await freshGet).toBe("fresh")
+  })
+
+  it("does not extend the TTL of newer content when an older load fails", async () => {
+    const stale = deferred()
+    load
+      .mockReturnValueOnce(stale.promise)
+      .mockResolvedValueOnce("fresh")
+      .mockResolvedValueOnce("fresher")
+
+    const staleGet = cache.get()
+    cache.reset()
+    await cache.get()
+    vi.advanceTimersByTime(30_000)
+    stale.reject(new Error("Sanity is down"))
+    await expect(staleGet).rejects.toThrow("Sanity is down")
+    vi.advanceTimersByTime(30_000)
+
+    expect(await cache.get()).toBe("fresher")
+    expect(load).toHaveBeenCalledTimes(3)
+  })
+})

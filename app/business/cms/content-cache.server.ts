@@ -13,14 +13,17 @@ export function createContentCache<T>({
 }: ContentCacheOptions<T>) {
   let cached: { value: T; loadedAt: number } | null = null
   let inFlight: Promise<T> | null = null
+  let generation = 0
 
-  async function reload(): Promise<T> {
+  async function reload(loadGeneration: number): Promise<T> {
     try {
       const value = await load()
-      cached = { value, loadedAt: Date.now() }
+      if (loadGeneration === generation) {
+        cached = { value, loadedAt: Date.now() }
+      }
       return value
     } catch (error) {
-      if (!cached) throw error
+      if (!cached || loadGeneration !== generation) throw error
       cached.loadedAt = Date.now()
       logger.error(`Could not reload the ${name} content, serving it stale`, {
         error: error instanceof Error ? error.message : String(error),
@@ -34,12 +37,16 @@ export function createContentCache<T>({
       if (cached && Date.now() - cached.loadedAt < ttlMs) {
         return Promise.resolve(cached.value)
       }
-      inFlight ??= reload().finally(() => {
-        inFlight = null
-      })
+      if (!inFlight) {
+        const loadGeneration = generation
+        inFlight = reload(loadGeneration).finally(() => {
+          if (loadGeneration === generation) inFlight = null
+        })
+      }
       return inFlight
     },
     reset() {
+      generation += 1
       cached = null
       inFlight = null
     },
