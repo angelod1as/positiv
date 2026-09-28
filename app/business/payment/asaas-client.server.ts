@@ -135,16 +135,42 @@ export async function createAsaasCustomer(input: {
   mobilePhone?: string
   externalReference: string
 }): Promise<string> {
-  const { id } = await asaasRequest("POST", "/customers", customerId, {
+  const body = {
     name: input.name,
     cpfCnpj: normalizeCpf(input.cpf),
     email: input.email,
-    mobilePhone: input.mobilePhone,
     externalReference: input.externalReference,
     notificationDisabled: true,
-  })
-  return id
+  }
+  const mobilePhone =
+    input.mobilePhone && BRAZILIAN_MOBILE.test(input.mobilePhone)
+      ? input.mobilePhone
+      : undefined
+
+  // Asaas needs no phone to charge anyone, and refuses the whole customer over
+  // one it dislikes -- including numbers of the right shape, like 11999999999.
+  // A payment is never worth losing to a phone, so the customer goes without.
+  try {
+    const { id } = await asaasRequest("POST", "/customers", customerId, {
+      ...body,
+      mobilePhone,
+    })
+    return id
+  } catch (error) {
+    const phoneRefused =
+      mobilePhone &&
+      error instanceof AsaasError &&
+      error.errors.some((entry) => entry.code === "invalid_mobilePhone")
+    if (!phoneRefused) throw error
+
+    const { id } = await asaasRequest("POST", "/customers", customerId, body)
+    return id
+  }
 }
+
+// A DDD, then the nine digits of a mobile. Landlines, numbers still missing the
+// ninth digit and foreign numbers are all refused by Asaas.
+const BRAZILIAN_MOBILE = /^[1-9]{2}9\d{8}$/
 
 export async function findAsaasCustomerByCpf(cpf: string): Promise<string | null> {
   const { data } = await asaasRequest(

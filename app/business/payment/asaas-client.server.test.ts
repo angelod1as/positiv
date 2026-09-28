@@ -221,6 +221,82 @@ describe("customers", () => {
     expect(JSON.parse(String(initOf(0).body))).not.toHaveProperty("mobilePhone")
   })
 
+  it.each([
+    ["a landline", "1133334444"],
+    ["a mobile missing its ninth digit", "1196741102"],
+    ["a foreign number", "46707381160"],
+  ])("leaves out %s, which Asaas would refuse", async (_, mobilePhone) => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ id: "cus_9" }))
+
+    await createAsaasCustomer({
+      name: "Ana Souza",
+      cpf: "52998224725",
+      email: "ana@example.com",
+      mobilePhone,
+      externalReference: "profile-uuid",
+    })
+
+    expect(JSON.parse(String(initOf(0).body))).not.toHaveProperty("mobilePhone")
+  })
+
+  it("creates the customer without the phone when Asaas refuses it", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            errors: [
+              {
+                code: "invalid_mobilePhone",
+                description: "O celular informado é inválido.",
+              },
+            ],
+          },
+          400,
+        ),
+      )
+      .mockResolvedValueOnce(jsonResponse({ id: "cus_9" }))
+
+    const id = await createAsaasCustomer({
+      name: "Ana Souza",
+      cpf: "52998224725",
+      email: "ana@example.com",
+      mobilePhone: "11999999999",
+      externalReference: "profile-uuid",
+    })
+
+    expect(id).toBe("cus_9")
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(JSON.parse(String(initOf(0).body))).toHaveProperty(
+      "mobilePhone",
+      "11999999999",
+    )
+    expect(JSON.parse(String(initOf(1).body))).not.toHaveProperty("mobilePhone")
+  })
+
+  it("does not retry a customer Asaas refuses for anything but the phone", async () => {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse(
+        {
+          errors: [
+            { code: "invalid_cpfCnpj", description: "O CPF informado é inválido." },
+          ],
+        },
+        400,
+      ),
+    )
+
+    await expect(
+      createAsaasCustomer({
+        name: "Ana Souza",
+        cpf: "52998224725",
+        email: "ana@example.com",
+        mobilePhone: "11999998888",
+        externalReference: "profile-uuid",
+      }),
+    ).rejects.toBeInstanceOf(AsaasError)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
   it("finds an existing customer by cpf", async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ id: "cus_old", deleted: false }] }))
 
