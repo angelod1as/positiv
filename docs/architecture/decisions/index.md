@@ -14,7 +14,7 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 
 | Date | Title | Status |
 |------|-------|--------|
-| [0001](./0001-git-worktree-workflow.md) | Git Worktree Workflow | Accepted |
+| [2025-01-22](./20250122-git-worktree-workflow.md) | Git Worktree Workflow | Accepted |
 | [2025-06-30](./20250630-use-log4brains-to-manage-the-adrs.md) | Use Log4brains | Accepted |
 | [2025-06-30](./20250630-use-markdown-architectural-decision-records.md) | Use Markdown ADRs | Accepted |
 
@@ -56,6 +56,14 @@ ADRs are immutable once accepted - only their status can change (deprecated or s
 | Date | Title | Status |
 |------|-------|--------|
 | [2026-09-01](./20260901-a-payment-can-be-zero.md) | A payment can be zero | Accepted |
+
+### Public Site
+
+| Date | Title | Status |
+|------|-------|--------|
+| [2026-09-24](./20260924-host-the-sanity-studio-as-its-own-workspace-package.md) | Host the Sanity Studio as its own workspace package | Accepted |
+| [2026-09-24](./20260924-sanity-schema-changes-follow-expand-contract.md) | Sanity schema changes follow expand/contract | Accepted |
+| [2026-09-24](./20260924-no-repository-fallback-for-public-site-content.md) | No repository fallback for Public Site content | Accepted |
 
 ### Testing
 
