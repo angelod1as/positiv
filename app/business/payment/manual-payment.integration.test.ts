@@ -1,5 +1,5 @@
 import { formatInTimeZone } from "date-fns-tz"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import {
   cleanupAfterTest,
   setupIntegrationTest,
@@ -166,6 +166,7 @@ describe("registerManualPayment", () => {
   })
 
   it("answers a sentence, not a Postgres error, when the participant is gone", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const result = await registerManualPayment({
       eventParticipantId: "00000000-0000-0000-0000-000000000000",
       amount: "150",
@@ -181,6 +182,13 @@ describe("registerManualPayment", () => {
         "Não foi possível concluir a operação.",
       )
     }
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to record a manual payment"),
+      expect.anything(),
+    )
+
+    consoleError.mockRestore()
   })
 
   it("refuses to record one while a charge is still open", async () => {
@@ -458,6 +466,7 @@ describe("editManualPayment", () => {
   })
 
   it("answers a sentence, not a Postgres error, when the write fails", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
     })
@@ -478,6 +487,13 @@ describe("editManualPayment", () => {
       )
     }
     expect((await readPayment(payment.id)).amount).toBe(22000)
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("Failed to edit a manual payment"),
+      expect.anything(),
+    )
+
+    consoleError.mockRestore()
   })
 
   it("refuses a negative amount", async () => {

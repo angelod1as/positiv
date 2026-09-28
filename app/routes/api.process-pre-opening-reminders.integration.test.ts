@@ -32,6 +32,10 @@ const createMockCampaign = (
   ...overrides,
 })
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
 // Mock the newsletter functions
 vi.mock("~/business/newsletter/campaign-automation.server", () => ({
   processCampaignForEvent: vi.fn(),
@@ -55,6 +59,7 @@ const { getPendingCampaigns } = await import(
 )
 
 const { action } = await import("./api.process-pre-opening-reminders")
+const { logger } = await import("~/lib/logger/logger.server")
 
 describe("api.process-pre-opening-reminders - Integration Tests", () => {
   const { tracker, kysely: db } = setupIntegrationTest()
@@ -492,6 +497,11 @@ describe("api.process-pre-opening-reminders - Integration Tests", () => {
       const body = await response.json()
       expect(body.success).toBe(false)
       expect(body.error).toBe("Unexpected error")
+
+      expect(logger.error).toHaveBeenCalledWith(
+        "Error processing pre-opening campaigns:",
+        { error: expect.objectContaining({ message: "Unexpected error" }) },
+      )
     })
   })
 })

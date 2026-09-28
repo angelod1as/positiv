@@ -1,17 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import {
-  getFailedSubscriptionsForRetry,
-  shouldRetrySubscription,
-} from "./retry-failed-syncs.server"
-
-describe("getFailedSubscriptionsForRetry", () => {
-  it.skip("should return failed subscriptions that need retry", async () => {
-    // Skip: requires database connection - covered by integration tests
-    const result = await getFailedSubscriptionsForRetry()
-
-    expect(Array.isArray(result)).toBe(true)
-  })
-})
+import { shouldRetrySubscription } from "./retry-failed-syncs.server"
 
 describe("shouldRetrySubscription", () => {
   beforeEach(() => {

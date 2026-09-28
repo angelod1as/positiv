@@ -470,6 +470,7 @@ describe("a commit failure nobody can fix is still shown", () => {
     ["allAtOnce", AllAtOnce],
     ["oneAtATime", OneAtATime],
   ])("surfaces the failure in %s", async (_name, presentation) => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const user = userEvent.setup()
     const onDone = vi.fn()
 
@@ -491,6 +492,13 @@ describe("a commit failure nobody can fix is still shown", () => {
     )
     expect(onDone).not.toHaveBeenCalled()
     expect(screen.getByLabelText("Qual seu nome?")).toBeInTheDocument()
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[form-runtime]"),
+      expect.anything(),
+    )
+
+    consoleError.mockRestore()
   })
 })
 

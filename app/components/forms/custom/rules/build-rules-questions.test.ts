@@ -208,11 +208,18 @@ describe("buildRulesQuestions with a given order", () => {
   // An order written down by an older shape of the quiz cannot be trusted to
   // place today's questions, but no question may go missing over it.
   it("ignores an order that does not name every question", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const order = Object.keys(getRulesFormQuestions()).slice(0, 3)
 
     expect(buildRulesQuestions(deal(order)).map((question) => question.id).sort()).toEqual(
       Object.keys(getRulesFormQuestions()).sort(),
     )
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[rules]"),
+    )
+
+    consoleError.mockRestore()
   })
 
   it("says so when it drops an order, which is otherwise silent", () => {
@@ -238,23 +245,37 @@ describe("buildRulesQuestions with a given order", () => {
   })
 
   it("ignores an order naming a question the quiz no longer has", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const order = [...Object.keys(getRulesFormQuestions()), "long-gone"]
 
     expect(buildRulesQuestions(deal(order)).map((question) => question.id).sort()).toEqual(
       Object.keys(getRulesFormQuestions()).sort(),
     )
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[rules]"),
+    )
+
+    consoleError.mockRestore()
   })
 
   // Reusing the part of a stale order that still fits would keep most of the
   // run in place, which reads as the order having been honoured. It is dealt
   // again instead, whole.
   it("deals the whole quiz again rather than keeping the part that still fits", () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const stale = [...Object.keys(getRulesFormQuestions())].reverse()
     const withGhost = [...stale.slice(0, -1), "long-gone"]
 
     const dealt = buildRulesQuestions(deal(withGhost)).map((question) => question.id)
 
     expect(dealt.slice(0, stale.length - 1)).not.toEqual(stale.slice(0, -1))
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[rules]"),
+    )
+
+    consoleError.mockRestore()
   })
 })
 

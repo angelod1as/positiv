@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { z } from "zod"
+import { participantCopy } from "~/copy/participant"
+import { logger } from "~/lib/logger/logger.server"
 import type { Database } from "~/types/database/database.types"
 import type { userContextSchema } from "../common"
 import { saveBasicData } from "./basic-data.server"
@@ -14,6 +16,10 @@ vi.mock("../newsletter/auto-subscribe.server", () => ({
 
 vi.mock("~/lib/supabase/db.server", () => ({
   db: { selectFrom },
+}))
+
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn() },
 }))
 
 const answers = {
@@ -169,6 +175,9 @@ describe("saveBasicData", () => {
 
     expect(result).toEqual({ ok: false, errors: [] })
     expect(supabase.upsert).not.toHaveBeenCalled()
+    expect(logger.error).toHaveBeenCalledWith(
+      "Error checking for orphaned profile: connection failure",
+    )
   })
 
   it("refuses rather than throws when the write itself failed", async () => {
@@ -184,6 +193,9 @@ describe("saveBasicData", () => {
     })
 
     expect(result).toEqual({ ok: false, errors: [] })
+    expect(logger.error).toHaveBeenCalledWith(
+      participantCopy.basicData.profileUpdateFailed("23505", "duplicate key"),
+    )
   })
 
   it("asks the orphan lookup for the id it is there to find", async () => {

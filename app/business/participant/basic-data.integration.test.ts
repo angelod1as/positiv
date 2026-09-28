@@ -5,9 +5,14 @@ import {
   getTestSupabaseClient,
 } from "~/test/db-test-utils"
 import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
+import { logger } from "~/lib/logger/logger.server"
 import * as listmonkClient from "../newsletter/listmonk-client.server"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { saveBasicData } from "./basic-data.server"
+
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
 
 const answersFor = (email: string) => ({
   full_name: "Maria Silva",
@@ -138,6 +143,10 @@ describe("saveBasicData - Integration Tests", () => {
 
     // Filed under the e-mail, because that is all the profile had.
     expect(addSubscriber.mock.calls[0][0].name).toBe(email)
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining("using email as name"),
+      expect.objectContaining({ profileId: profile.id }),
+    )
     addSubscriber.mockClear()
 
     await saveBasicData({

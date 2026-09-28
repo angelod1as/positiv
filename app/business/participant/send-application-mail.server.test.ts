@@ -10,8 +10,13 @@ vi.mock("~/business/email/format-application-mail", () => ({
   formatApplicationMail: vi.fn(),
 }))
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn() },
+}))
+
 import { sendEmail } from "~/business/email/send-email"
 import { formatApplicationMail } from "~/business/email/format-application-mail"
+import { logger } from "~/lib/logger/logger.server"
 
 describe("sendApplicationMail", () => {
   const mockProfile: NonNullable<ProfileWithRoles> = {
@@ -98,6 +103,9 @@ describe("sendApplicationMail", () => {
     })
 
     expect(result).toEqual({ emailSent: false })
+    expect(logger.error).toHaveBeenCalledWith("Email sending failed:", {
+      errors: [new Error("SMTP error")],
+    })
   })
 
   it("should return { emailSent: false } when profile has no email", async () => {

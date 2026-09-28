@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react"
+import { act, render } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import type { ProfileWithExtraData } from "~/business/admin/admin.server"
 import type { AGDataTableProps } from "~/components/organisms/tables/ag-grid/base/types"
@@ -46,13 +46,18 @@ const renderTable = (onParticipantSaved = vi.fn()) => {
   return onParticipantSaved
 }
 
-const save = (field: string, newValue: unknown) =>
+const edit = (field: string, newValue: unknown) =>
   tableProps.onSave?.({
     field,
     newValue,
     oldValue: null,
     rowData: participant,
     rowId: participant.id,
+  })
+
+const save = (field: string, newValue: unknown) =>
+  act(async () => {
+    await edit(field, newValue)
   })
 
 describe("participants table saving", () => {
@@ -129,11 +134,16 @@ describe("participants table saving", () => {
       .mockResolvedValueOnce({ ok: false, errors: [] })
     renderTable()
 
-    const first = save("notes", "Chegou cedo")
-    await save("notes", "Chegou tarde")
+    let first: Promise<void> | undefined
+    await act(async () => {
+      first = edit("notes", "Chegou cedo")
+      await edit("notes", "Chegou tarde")
+    })
 
-    settleFirst({ ok: true })
-    await first
+    await act(async () => {
+      settleFirst({ ok: true })
+      await first
+    })
 
     await vi.waitFor(() =>
       expect(tableProps.fetcher?.data).toEqual({ success: false }),

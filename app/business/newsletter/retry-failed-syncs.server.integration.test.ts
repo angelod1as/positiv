@@ -4,17 +4,23 @@ import {
   cleanupAfterTest,
 } from "~/test/integration-setup"
 import { createTestProfile } from "~/test/db-test-utils"
+import { logger } from "~/lib/logger/logger.server"
 import {
   getFailedSubscriptionsForRetry,
   processFailedSyncRetries,
 } from "./retry-failed-syncs.server"
 import * as listmonkClient from "./listmonk-client.server"
 
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+
 describe("Newsletter Retry Logic - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
 
   beforeEach(async () => {
     tracker.clear()
+    vi.clearAllMocks()
     // Clear existing test data
     await kysely
       .deleteFrom("newsletter_subscriptions")
@@ -200,6 +206,11 @@ describe("Newsletter Retry Logic - Integration Tests", () => {
       expect(updated?.sync_status).toBe("synced")
       expect(updated?.retry_count).toBe(0)
       expect(updated?.listmonk_subscriber_id).toBe(123)
+
+      expect(logger.info).toHaveBeenCalledWith(
+        expect.stringContaining("Successfully retried newsletter sync"),
+        expect.anything(),
+      )
     })
 
     it("should increment retry_count when sync fails", async () => {
@@ -248,6 +259,11 @@ describe("Newsletter Retry Logic - Integration Tests", () => {
       expect(updated?.retry_count).toBe(3)
       expect(updated?.sync_status).toBe("failed")
       expect(updated?.last_sync_attempt_at).not.toBeNull()
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to retry newsletter sync"),
+        expect.anything(),
+      )
     })
 
     it("should handle thrown errors from addSubscriber", async () => {
@@ -293,6 +309,11 @@ describe("Newsletter Retry Logic - Integration Tests", () => {
 
       expect(updated?.retry_count).toBe(2)
       expect(updated?.sync_status).toBe("failed")
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to retry newsletter sync"),
+        expect.anything(),
+      )
     })
 
     it("should skip subscriptions not ready for retry based on backoff", async () => {
@@ -393,6 +414,11 @@ describe("Newsletter Retry Logic - Integration Tests", () => {
 
       expect(updated?.sync_status).toBe("unsubscribed")
       expect(updated?.retry_count).toBe(0) // Should NOT be incremented
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to retry newsletter sync"),
+        expect.anything(),
+      )
     })
   })
 })

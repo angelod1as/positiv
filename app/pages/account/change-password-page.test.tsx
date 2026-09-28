@@ -142,6 +142,7 @@ describe("ChangePasswordPage", () => {
   })
 
   it("keeps what was typed when the server answers with something else", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {})
     const user = userEvent.setup()
     // A 500 comes back as an HTML error page, which json() rejects on.
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -160,6 +161,11 @@ describe("ChangePasswordPage", () => {
     ).toBeVisible()
     expect(screen.getByLabelText("Nova senha")).toHaveValue("segredo123")
     expect(navigate).not.toHaveBeenCalled()
+
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("[form-runtime]"),
+      expect.anything(),
+    )
   })
 
   it("says why the change was refused, and stays put", async () => {

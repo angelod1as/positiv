@@ -2,8 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { randomUUID } from "crypto"
 import { setupIntegrationTest, cleanupAfterTest } from "~/test/integration-setup"
 import { createTestProfile } from "~/test/db-test-utils"
+import { logger } from "~/lib/logger/logger.server"
 import { subscribeProfileToNewsletter } from "./auto-subscribe.server"
 import * as listmonkClient from "./listmonk-client.server"
+
+vi.mock("~/lib/logger/logger.server", () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
 
 describe("Newsletter Auto-Subscription - Integration Tests", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -164,6 +169,11 @@ describe("Newsletter Auto-Subscription - Integration Tests", () => {
       expect(subscription?.consent_given).toBe(true)
       expect(subscription?.sync_status).toBe("failed")
       expect(subscription?.last_sync_attempt_at).toBeDefined()
+
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to subscribe profile to newsletter"),
+        expect.objectContaining({ profileId: profile.id }),
+      )
     })
 
     it("should return error when profile does not exist", async () => {
