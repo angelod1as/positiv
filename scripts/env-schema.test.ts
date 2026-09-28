@@ -23,7 +23,9 @@ type EnvSchemaItem = { isSensitive?: boolean; isDynamic?: boolean }
 // actually broken — they are here so that dot access stays a safe refactor.
 // The Asaas items are server-only: PAYMENTS_ENABLED is the kill switch every
 // payment route reads, and inlining it would delete the guard from the build
-// rather than let the running container turn payments off.
+// rather than let the running container turn payments off. The Sanity items
+// pick what the homepage reads: inlined, a build run with a laptop's .env would
+// ship the development dataset to production.
 const MUST_RESOLVE_AT_RUNTIME = [
   "APP_ENV",
   "APP_URL",
@@ -35,6 +37,9 @@ const MUST_RESOLVE_AT_RUNTIME = [
   "IS_PROD_IN_DEV",
   "LISTMONK_API_URL",
   "PAYMENTS_ENABLED",
+  "SANITY_API_HOST",
+  "SANITY_DATASET",
+  "SANITY_PROJECT_ID",
   "TELEGRAM_ALERTS_ENABLED",
   "TELEGRAM_CHAT_ID",
 ]
