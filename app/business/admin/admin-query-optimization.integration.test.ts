@@ -6,7 +6,28 @@ import {
   createTestEventParticipant,
   createTestProfile,
 } from "~/test/db-test-utils"
-import { getProfilesWithExtraDataById } from "./admin.server"
+import {
+  getProfilesWithExtraDataById,
+  profilesWithExtraDataByIdQuery,
+} from "./admin.server"
+
+type PlanNode = {
+  "Node Type": string
+  Alias?: string
+  "Index Name"?: string
+  Plans?: PlanNode[]
+}
+
+function flattenPlan(node: PlanNode): PlanNode[] {
+  return [node, ...(node.Plans ?? []).flatMap(flattenPlan)]
+}
+
+function indexesUsedBy(nodes: PlanNode[], alias: string): string[] {
+  return nodes
+    .filter((node) => node.Alias === alias)
+    .flatMap(flattenPlan)
+    .flatMap((node) => (node["Index Name"] ? [node["Index Name"]] : []))
+}
 
 describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275)", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -209,40 +230,36 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
     }
   })
 
-  it("should measure query performance with EXPLAIN ANALYZE", async () => {
-    // Create test data for performance measurement
+  it("should plan the history lookup through the POS-275 index, without a window function", async () => {
     const profiles = []
-    const events = []
-
-    // Create multiple profiles
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 3; i++) {
       profiles.push(
         await createTestProfile(tracker, kysely, {
           user_id: null,
-          email: `test-query-opt-perf-${i}@example.com`,
-          full_name: `Test Profile ${i}`,
+          email: `test-query-opt-plan-${i}@example.com`,
+          full_name: `Test Profile Plan ${i}`,
         }),
       )
     }
 
-    // Create multiple events (past events for history)
-    for (let i = 0; i < 5; i++) {
-      events.push(
+    const pastEvents = []
+    for (let i = 0; i < 2; i++) {
+      pastEvents.push(
         await createTestEvent(tracker, kysely, {
-          title: `Performance Test Event ${i}`,
+          title: `Plan Test Event ${i}`,
           emoji: "🎯",
           location: `Location ${i}`,
           description: `Description ${i}`,
           event_status: "Completed",
           event_type: "regular",
           time_event_start: new Date(
-            Date.now() - (60 - i * 10) * 24 * 60 * 60 * 1000,
+            Date.now() - (60 - i * 30) * 24 * 60 * 60 * 1000,
           ).toISOString(),
           time_event_end: new Date(
-            Date.now() - (60 - i * 10) * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
+            Date.now() - (60 - i * 30) * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
           ).toISOString(),
           time_application_start: new Date(
-            Date.now() - (74 - i * 10) * 24 * 60 * 60 * 1000,
+            Date.now() - (74 - i * 30) * 24 * 60 * 60 * 1000,
           ).toISOString(),
           ticket_price: 10000,
           total_spots: 50,
@@ -250,9 +267,8 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       )
     }
 
-    // Create current event
     const currentEvent = await createTestEvent(tracker, kysely, {
-      title: "Current Performance Test Event",
+      title: "Current Plan Test Event",
       emoji: "🎯",
       location: "Location Current",
       description: "Current Description",
@@ -269,19 +285,18 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       total_spots: 40,
     })
 
-    // Create event participants for all profiles in all events
-    for (const profile of profiles) {
-      for (const event of events) {
+    for (const [profileIndex, profile] of profiles.entries()) {
+      for (const [eventIndex, event] of pastEvents.entries()) {
         await createTestEventParticipant(tracker, kysely, {
           profile_id: profile.id,
           event_id: event.id,
           is_user_applied: true,
           application_status: "finalised",
-          attendance_status: Math.random() > 0.5 ? "attended" : "skipped",
+          attendance_status:
+            (profileIndex + eventIndex) % 2 === 0 ? "attended" : "skipped",
         })
       }
 
-      // Add participation in current event
       await createTestEventParticipant(tracker, kysely, {
         profile_id: profile.id,
         event_id: currentEvent.id,
@@ -291,158 +306,29 @@ describe("getProfilesWithExtraDataById - Query Performance Optimization (POS-275
       })
     }
 
-    // Run EXPLAIN ANALYZE on the query
-    const explainQuery = kysely
-      .selectFrom("event_participants as current_ep")
-      .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
-      .leftJoin(
-        (eb) =>
-          eb
-            .selectFrom("event_participants as ep")
-            .innerJoin("events as e", "ep.event_id", "e.id")
-            .select([
-              "ep.profile_id",
-              "ep.application_status",
-              "ep.attendance_status",
-              sql<number>`row_number() over (
-              partition by ep.profile_id
-              order by e.time_event_start desc
-            )`.as("rn"),
-            ])
-            .where("ep.is_user_applied", "=", true)
-            .as("ranked_events"),
-        (join) =>
-          join
-            .onRef("ranked_events.profile_id", "=", "current_ep.profile_id")
-            .on("ranked_events.rn", "=", 2),
+    const plan = await kysely.transaction().execute(async (trx) => {
+      await sql`SET LOCAL enable_seqscan = off`.execute(trx)
+      const { rows } = await sql<{
+        "QUERY PLAN": [{ Plan: PlanNode }]
+      }>`EXPLAIN (FORMAT JSON) ${profilesWithExtraDataByIdQuery(currentEvent.id)}`.execute(
+        trx,
       )
-      .selectAll(["p", "current_ep"])
-      .select([
-        sql<boolean>`ranked_events.attendance_status = 'skipped'`.as(
-          "was_admin_skipped_last_event",
-        ),
-      ])
-      .where("current_ep.event_id", "=", currentEvent.id)
-      .where("current_ep.is_user_applied", "=", true)
-
-    const explainResult = await sql`EXPLAIN ANALYZE ${explainQuery}`.execute(
-      kysely,
-    )
-
-    // Test still passes - we're just measuring performance
-    expect(explainResult.rows.length).toBeGreaterThan(0)
-  })
-
-  it("should measure optimized query performance with EXPLAIN ANALYZE", async () => {
-    // Create test data for performance measurement
-    const profiles = []
-    const events = []
-
-    // Create multiple profiles
-    for (let i = 0; i < 10; i++) {
-      profiles.push(
-        await createTestProfile(tracker, kysely, {
-          user_id: null,
-          email: `test-query-opt-optimized-${i}@example.com`,
-          full_name: `Test Profile Optimized ${i}`,
-        }),
-      )
-    }
-
-    // Create multiple events (past events for history)
-    for (let i = 0; i < 5; i++) {
-      events.push(
-        await createTestEvent(tracker, kysely, {
-          title: `Optimized Performance Test Event ${i}`,
-          emoji: "⚡",
-          location: `Location ${i}`,
-          description: `Description ${i}`,
-          event_status: "Completed",
-          event_type: "regular",
-          time_event_start: new Date(
-            Date.now() - (60 - i * 10) * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          time_event_end: new Date(
-            Date.now() - (60 - i * 10) * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
-          ).toISOString(),
-          time_application_start: new Date(
-            Date.now() - (74 - i * 10) * 24 * 60 * 60 * 1000,
-          ).toISOString(),
-          ticket_price: 10000,
-          total_spots: 50,
-        }),
-      )
-    }
-
-    // Create current event
-    const currentEvent = await createTestEvent(tracker, kysely, {
-      title: "Current Optimized Performance Test Event",
-      emoji: "⚡",
-      location: "Location Current",
-      description: "Current Description",
-      event_status: "Registration Open",
-      event_type: "regular",
-      time_event_start: new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000,
-      ).toISOString(),
-      time_event_end: new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000,
-      ).toISOString(),
-      time_application_start: new Date().toISOString(),
-      ticket_price: 20000,
-      total_spots: 40,
+      return rows[0]["QUERY PLAN"][0].Plan
     })
 
-    // Create event participants for all profiles in all events
-    for (const profile of profiles) {
-      for (const event of events) {
-        await createTestEventParticipant(tracker, kysely, {
-          profile_id: profile.id,
-          event_id: event.id,
-          is_user_applied: true,
-          application_status: "finalised",
-          attendance_status: Math.random() > 0.5 ? "attended" : "skipped",
-        })
-      }
+    const nodes = flattenPlan(plan)
 
-      // Add participation in current event
-      await createTestEventParticipant(tracker, kysely, {
-        profile_id: profile.id,
-        event_id: currentEvent.id,
-        is_user_applied: true,
-        application_status: "pending",
-        attendance_status: "pending",
-      })
-    }
-
-    // Run EXPLAIN ANALYZE on the OPTIMIZED query (correlated subquery)
-    const explainQuery = kysely
-      .selectFrom("event_participants as current_ep")
-      .innerJoin("profiles as p", "current_ep.profile_id", "p.id")
-      .innerJoin("events as current_event", "current_ep.event_id", "current_event.id")
-      .selectAll(["p", "current_ep"])
-      .select((eb) => [
-        eb
-          .selectFrom("event_participants as ep")
-          .innerJoin("events as e", "ep.event_id", "e.id")
-          .select(sql<boolean>`ep.attendance_status = 'skipped'`.as("is_skipped"))
-          .whereRef("ep.profile_id", "=", "current_ep.profile_id")
-          .where("ep.is_user_applied", "=", true)
-          .where("ep.application_status", "=", "finalised")
-          .whereRef("e.time_event_start", "<", "current_event.time_event_start")
-          .orderBy("e.time_event_start", "desc")
-          .limit(1)
-          .as("was_admin_skipped_last_event"),
-      ])
-      .where("current_ep.event_id", "=", currentEvent.id)
-      .where("current_ep.is_user_applied", "=", true)
-
-    const explainResult = await sql`EXPLAIN ANALYZE ${explainQuery}`.execute(
-      kysely,
+    expect(nodes.map((node) => node["Node Type"])).not.toContain("WindowAgg")
+    // Matched on the whole plan, not the "ep" alias: the joined
+    // event_participant_payments view has its own "ep", so Postgres renames ours
+    expect(nodes.map((node) => node["Index Name"])).toContain(
+      "idx_event_participants_profile_history",
     )
-
-    // Test still passes - we're just measuring performance
-    expect(explainResult.rows.length).toBeGreaterThan(0)
+    expect(indexesUsedBy(nodes, "current_ep")).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/^idx_event_participants_event_id/),
+      ]),
+    )
   })
 
   it("should only consider finalized applications for was_admin_skipped_last_event", async () => {
