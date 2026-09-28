@@ -108,7 +108,7 @@ describe("createContentCache reset", () => {
     const staleGet = cache.get()
     cache.reset()
     stale.resolve("stale")
-    await staleGet
+    expect(await staleGet).toBe("stale")
 
     expect(await cache.get()).toBe("fresh")
     expect(load).toHaveBeenCalledTimes(2)
@@ -123,7 +123,7 @@ describe("createContentCache reset", () => {
     cache.reset()
     const freshGet = cache.get()
     stale.resolve("stale")
-    await staleGet
+    expect(await staleGet).toBe("stale")
 
     expect(cache.get()).toBe(freshGet)
     expect(load).toHaveBeenCalledTimes(2)
@@ -144,7 +144,7 @@ describe("createContentCache reset", () => {
     await cache.get()
     vi.advanceTimersByTime(30_000)
     stale.reject(new Error("Sanity is down"))
-    await staleGet
+    await expect(staleGet).rejects.toThrow("Sanity is down")
     vi.advanceTimersByTime(30_000)
 
     expect(await cache.get()).toBe("fresher")
