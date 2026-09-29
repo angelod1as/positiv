@@ -13,30 +13,6 @@ import type { AddressInfo } from "node:net"
 export const E2E_ASAAS_API_KEY = "e2e-asaas-api-key"
 export const E2E_ASAAS_WEBHOOK_TOKEN = "e2e-asaas-webhook-token-0123456789abcdef"
 
-// The sandbox account's GET /v3/myAccount/fees/, recorded in POS-519.
-const SANDBOX_FEES = {
-  payment: {
-    pix: {
-      fixedFeeValue: 1.99,
-      percentageFee: null,
-      minimumFeeValue: null,
-      maximumFeeValue: null,
-      type: "FIXED",
-    },
-    creditCard: {
-      operationValue: 0.49,
-      oneInstallmentPercentage: 2.99,
-      upToSixInstallmentsPercentage: 3.49,
-      discountOneInstallmentPercentage: 1.99,
-      discountUpToSixInstallmentsPercentage: 2.49,
-      hasValidDiscount: false,
-    },
-  },
-  anticipation: {
-    creditCard: { detachedMonthlyFeeValue: 1.15, installmentMonthlyFeeValue: 1.6 },
-  },
-}
-
 type Call = { method: string; path: string; body: unknown }
 
 type Charge = {
@@ -212,10 +188,6 @@ async function handleApi(
 
   if (method === "POST" && path === "/payments") {
     return createCharge(body, response, origin)
-  }
-
-  if (method === "GET" && path === "/myAccount/fees/") {
-    return send(response, 200, SANDBOX_FEES)
   }
 
   const sandboxConfirm = path.match(/^\/sandbox\/payment\/([^/]+)\/confirm$/)

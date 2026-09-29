@@ -243,22 +243,6 @@ describe("asaas mock server", () => {
     expect(whole.status).toBe(400)
   })
 
-  it("reports the sandbox fee snapshot", async () => {
-    const fees = await (await call("/myAccount/fees/")).json()
-
-    expect(fees.payment.pix).toMatchObject({ fixedFeeValue: 1.99, percentageFee: null })
-    expect(fees.payment.creditCard).toMatchObject({
-      operationValue: 0.49,
-      oneInstallmentPercentage: 2.99,
-      upToSixInstallmentsPercentage: 3.49,
-      hasValidDiscount: false,
-    })
-    expect(fees.anticipation.creditCard).toEqual({
-      detachedMonthlyFeeValue: 1.15,
-      installmentMonthlyFeeValue: 1.6,
-    })
-  })
-
   it("records every api call for a spec to assert on, and forgets them on reset", async () => {
     await createCustomer()
 

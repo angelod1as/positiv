@@ -1,6 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz"
 import { ENV } from "varlock/env"
-import type { z, ZodType } from "zod"
+import type { ZodType } from "zod"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import { normalizeCpf } from "~/lib/helpers/cpf"
@@ -348,48 +348,6 @@ export async function listAsaasAnticipations(
     }),
   )
   return data.map(({ status, fee }) => ({ status, fee: reaisToCents(fee) }))
-}
-
-// Only the fields the fee mapper reads are described. Everything Asaas ships
-// alongside them — the boleto block, PIX credit allowances, the card-present
-// rates — is left out on purpose, so a change there cannot fail the parse.
-const accountFees = zod.object({
-  payment: zod.object({
-    creditCard: zod.object({
-      operationValue: zod.number(),
-      oneInstallmentPercentage: zod.number(),
-      upToSixInstallmentsPercentage: zod.number(),
-      discountOneInstallmentPercentage: zod.number().nullable().optional(),
-      discountUpToSixInstallmentsPercentage: zod.number().nullable().optional(),
-      hasValidDiscount: zod.boolean().nullable().optional(),
-    }),
-    // The percentage fields come back null whenever the account is on a fixed
-    // PIX fee, which is what the sandbox account uses today. Only that shape
-    // has been seen, so the fixed fee is nullable by symmetry rather than by
-    // observation: if a percentage-fee account reports it the same way, the
-    // alternative is the whole response failing to parse and every price
-    // quietly falling back to the list.
-    pix: zod.object({
-      fixedFeeValue: zod.number().nullable().optional(),
-      percentageFee: zod.number().nullable().optional(),
-    }),
-  }),
-  anticipation: zod
-    .object({
-      creditCard: zod
-        .object({
-          detachedMonthlyFeeValue: zod.number().nullable().optional(),
-          installmentMonthlyFeeValue: zod.number().nullable().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
-})
-
-export type AsaasAccountFees = z.infer<typeof accountFees>
-
-export function getAsaasAccountFees(): Promise<AsaasAccountFees> {
-  return asaasRequest("GET", "/myAccount/fees/", accountFees)
 }
 
 export function reaisToCents(reais: number): number {

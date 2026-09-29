@@ -26,7 +26,6 @@ payments are on is the admin switch (section 8).
 | `ASAAS_API_URL` | Base URL including `/v3` | differs |
 | `ASAAS_API_KEY` | API key, shown once by Asaas when generated | differs |
 | `ASAAS_WEBHOOK_TOKEN` | At least 32 characters; Asaas echoes it in `asaas-access-token` | use a fresh one per environment |
-| `ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE`, `ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE` | Optional overrides, as fractions (`0.0115`). Empty: the rates come from `GET /myAccount/fees/` | normally empty in both |
 
 ## 2. Registering the webhook
 
@@ -210,21 +209,17 @@ The switch cannot be turned on while `ASAAS_API_URL`, `ASAAS_API_KEY` or
 8. Try a refund from the modal, and a manual payment on another participant.
 9. Close the tunnel when done. It publishes the whole local app.
 
-### Checking the prices against the sandbox
+### Checking the installments against the sandbox
 
 ```bash
 pnpm asaas:smoke
 ```
 
-It opens a PIX charge and a card 3x charge for R$ 220, confirms them, and prints
-what Asaas kept next to what `pricing.ts` predicted. It exits non-zero on a gap
-above R$ 0,50.
+It opens a PIX charge and a card 6x charge for R$ 250, confirms them, and prints
+each installment Asaas charged next to what the payment page shows. It exits
+non-zero when they differ: R$ 250 in 6x does not divide, so it checks that Asaas
+puts the remainder on the last installment, as `splitInstallments` assumes.
 
 The tunnel and webhook from above are optional. With them in place the script
 also waits for each confirmation to reach `payment_webhook_events`, and fails if
 one does not. Without a registered webhook it says so and skips that check.
-
-The anticipation fee is booked apart from the charge, under `/v3/anticipations`,
-and the sandbox may never book one. When it does not, the script says the
-anticipation was not measurable. That part of the formula is checked on a real
-production charge (POS-560).
