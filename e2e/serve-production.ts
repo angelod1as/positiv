@@ -149,8 +149,9 @@ async function startProductionServer() {
   })
 }
 
-function stopProductionServer(): Promise<void> {
-  return stopAppServer().then(() => Promise.all([stopAsaasMockServer(), stopSanityMockServer()])).then(() => {})
+async function stopProductionServer(): Promise<void> {
+  await stopAppServer()
+  await Promise.all([stopAsaasMockServer(), stopSanityMockServer()])
 }
 
 function stopAppServer(): Promise<void> {

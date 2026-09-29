@@ -195,7 +195,7 @@ describe('the Sanity the server under test talks to', () => {
     })
   })
 
-  it("never is a real dataset, whatever .env holds", async () => {
+  it('never is a real dataset, whatever .env holds', async () => {
     process.env.SANITY_PROJECT_ID = '8ojkallk'
     process.env.SANITY_DATASET = 'production'
     fakeServerProcess()
