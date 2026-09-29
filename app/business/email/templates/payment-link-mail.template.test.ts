@@ -7,15 +7,17 @@ const options: PaymentOption[] = [
     id: "pix",
     method: "pix",
     installmentCount: null,
-    perInstallment: 22199,
-    total: 22199,
+    perInstallment: 19800,
+    lastInstallment: 19800,
+    total: 19800,
   },
   {
     id: "card_3",
     method: "credit_card",
     installmentCount: 3,
-    perInstallment: 7818,
-    total: 23454,
+    perInstallment: 7333,
+    lastInstallment: 7334,
+    total: 22000,
   },
 ]
 
@@ -32,8 +34,8 @@ describe("paymentLinkMailTemplate", () => {
   it("lists every option with its price", () => {
     const html = paymentLinkMailTemplate(base)
 
-    expect(html).toContain("Pix — R$ 221,99")
-    expect(html).toContain("Cartão 3x de R$ 78,18 (total R$ 234,54)")
+    expect(html).toContain("Pix — R$ 198,00")
+    expect(html).toContain("Cartão 3x de R$ 73,33 (total R$ 220,00)")
   })
 
   it("links to the payment page", () => {

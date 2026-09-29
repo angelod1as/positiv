@@ -1,6 +1,5 @@
 import { useEffect, useState, type FC, type FormEvent } from "react"
 import { useFetcher } from "react-router"
-import type { AsaasFees } from "~/business/payment/pricing"
 import { buildPaymentOptions } from "~/business/payment/pricing"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import type { ParticipantPaymentTotals } from "~types/database/entities.types"
@@ -68,7 +67,7 @@ export type ManagePaymentModalProps = {
   spotType: string | null
   ticketPrice: number | null
   eventTitle: string
-  fees: AsaasFees | null
+  cardPaymentsEnabled: boolean
   appOrigin: string
 }
 
@@ -434,7 +433,7 @@ type ChargeSectionProps = {
   participantName: string
   eventTitle: string
   ticketPrice: number | null
-  fees: AsaasFees
+  cardPaymentsEnabled: boolean
   appOrigin: string
   isSubmitting: boolean
   justCreated: boolean
@@ -454,7 +453,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   participantName,
   eventTitle,
   ticketPrice,
-  fees,
+  cardPaymentsEnabled,
   appOrigin,
   isSubmitting,
   justCreated,
@@ -510,7 +509,9 @@ const ChargeSection: FC<ChargeSectionProps> = ({
       // channels must hand the participant the same link.
       paymentUrl,
       dueAt: active.due_at,
-      options: buildPaymentOptions(active.base_amount, fees),
+      options: buildPaymentOptions(active.base_amount, {
+        cardEnabled: cardPaymentsEnabled,
+      }),
     })
     void navigator.clipboard.writeText(message)
     setCopied(true)
@@ -633,7 +634,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
   spotType,
   ticketPrice,
   eventTitle,
-  fees,
+  cardPaymentsEnabled,
   appOrigin,
 }) => {
   const fetcher = useFetcher<{
@@ -937,7 +938,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </p>
         )}
 
-        {paymentsEnabled && spotType === "regular" && fees && (
+        {paymentsEnabled && spotType === "regular" && (
           <ChargeSection
             // Remounts when the charge does, so the amount field re-seeds from
             // whatever is open now. Cancelling one used to leave its value in
@@ -947,7 +948,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             participantName={participantName}
             eventTitle={eventTitle}
             ticketPrice={ticketPrice}
-            fees={fees}
+            cardPaymentsEnabled={cardPaymentsEnabled}
             appOrigin={appOrigin}
             isSubmitting={isSubmitting}
             justCreated={

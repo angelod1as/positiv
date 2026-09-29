@@ -1,5 +1,4 @@
 import { redirectWithError } from "remix-toast"
-import { getAsaasFees } from "~/business/payment/asaas-fees.server"
 import { ACTIVE_PAYMENT_STATUSES } from "~/business/payment/payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import {
@@ -88,10 +87,12 @@ export async function loadPaymentPage({
   paymentId,
   profileId,
   onlinePaymentsEnabled,
+  cardPaymentsEnabled,
 }: {
   paymentId: string
   profileId: string
   onlinePaymentsEnabled: boolean
+  cardPaymentsEnabled: boolean
 }): Promise<PaymentPageData> {
   const payment = await findOwnPayment(paymentId, profileId)
 
@@ -106,9 +107,7 @@ export async function loadPaymentPage({
     }
   }
 
-  // Pricing an option means reading the Asaas fee table, and with the switch
-  // off nothing may talk to Asaas. Quoting from the fallback list instead would
-  // name a price no charge could then be created against.
+  // With the switch off no charge can be created, so no price is quoted.
   if (!(ACTIVE_PAYMENT_STATUSES as readonly string[]).includes(payment.status) || !onlinePaymentsEnabled) {
     return { state: "closed", eventTitle }
   }
@@ -117,7 +116,9 @@ export async function loadPaymentPage({
     return { state: "needs_cpf", paymentId: payment.id, eventTitle }
   }
 
-  const options = buildPaymentOptions(payment.base_amount, await getAsaasFees())
+  const options = buildPaymentOptions(payment.base_amount, {
+    cardEnabled: cardPaymentsEnabled,
+  })
 
   return {
     state: "ready",

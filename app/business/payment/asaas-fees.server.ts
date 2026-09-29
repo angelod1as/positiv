@@ -1,7 +1,19 @@
 import { ENV } from "varlock/env"
 import { logger } from "~/lib/logger/logger.server"
 import { getAsaasAccountFees, reaisToCents } from "./asaas-client.server"
-import type { AsaasFees } from "./pricing"
+
+export type AsaasFees = {
+  pix: { fixed: number; percent: number }
+  card: {
+    fixed: number
+    percentOneInstallment: number
+    percentUpToSix: number
+  }
+  anticipation: {
+    detachedMonthlyRate: number
+    installmentMonthlyRate: number
+  }
+}
 
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000
 

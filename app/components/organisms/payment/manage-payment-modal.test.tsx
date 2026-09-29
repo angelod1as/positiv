@@ -1,6 +1,5 @@
 import userEvent from "@testing-library/user-event"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { FALLBACK_FEES } from "~/business/payment/asaas-fees.server"
 import type { PaymentRow } from "~/business/payment/payment-totals.server"
 import { render, screen, within } from "~/test/test-utils"
 import { ManagePaymentModal } from "./manage-payment-modal"
@@ -56,7 +55,7 @@ const baseProps = {
   spotType: "regular" as const,
   ticketPrice: 22000,
   eventTitle: "Festa de Setembro",
-  fees: FALLBACK_FEES,
+  cardPaymentsEnabled: true,
   appOrigin: "https://www.positivparty.com",
 }
 
@@ -960,6 +959,45 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     )
     expect(copied).toContain("Pix —")
     expect(copied).toContain("01/09/2026")
+  })
+
+  it("prices the WhatsApp message flat, from the charge's event price", async () => {
+    const charge = { ...openCharge, base_amount: 25000 }
+    render(
+      <ManagePaymentModal {...baseProps} payments={[charge]} active={charge} />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Copiar mensagem" }),
+    )
+
+    const [copied] = vi.mocked(navigator.clipboard.writeText).mock.calls.at(
+      -1,
+    ) ?? [""]
+    expect(copied).toContain("Pix — R$ 225,00")
+    expect(copied).toContain("Cartão 6x de R$ 41,66 (total R$ 250,00)")
+  })
+
+  it("offers Pix alone in the WhatsApp message while card payments are off", async () => {
+    const charge = { ...openCharge, base_amount: 25000 }
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        cardPaymentsEnabled={false}
+        payments={[charge]}
+        active={charge}
+      />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Copiar mensagem" }),
+    )
+
+    const [copied] = vi.mocked(navigator.clipboard.writeText).mock.calls.at(
+      -1,
+    ) ?? [""]
+    expect(copied).toContain("Pix — R$ 250,00")
+    expect(copied).not.toContain("Cartão")
   })
 
   it("says so when the charge opened but the email did not go out", () => {

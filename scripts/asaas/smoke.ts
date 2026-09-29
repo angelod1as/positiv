@@ -172,7 +172,7 @@ async function main() {
   }
 
   const fees = await getAsaasFees()
-  const options = buildPaymentOptions(BASE, fees).filter(
+  const options = buildPaymentOptions(BASE, { cardEnabled: true }).filter(
     (option) => option.id === "pix" || option.id === "card_3",
   )
 

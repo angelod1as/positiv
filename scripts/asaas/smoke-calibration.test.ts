@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import type { AsaasFees } from "../../app/business/payment/pricing"
+import type { AsaasFees } from "../../app/business/payment/asaas-fees.server"
 import { calibrate, expectedNet } from "./smoke-calibration"
 
 const fees: AsaasFees = {

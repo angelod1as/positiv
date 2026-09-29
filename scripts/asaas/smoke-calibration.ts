@@ -1,4 +1,5 @@
-import type { AsaasFees, PaymentMethod } from "../../app/business/payment/pricing"
+import type { AsaasFees } from "../../app/business/payment/asaas-fees.server"
+import type { PaymentMethod } from "../../app/business/payment/pricing"
 
 // Fifty cents either way: enough for rounding across a plan's charges, far
 // below a rate applied to the wrong base.

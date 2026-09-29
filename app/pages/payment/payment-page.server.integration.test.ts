@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it } from "vitest"
 import {
   cleanupAfterTest,
   setupIntegrationTest,
@@ -10,18 +10,6 @@ import {
   createTestProfile,
 } from "~/test/db-test-utils"
 
-// The fee table is pinned so the prices below are the ones the fallback list
-// produces, whatever an account the suite cannot reach would have answered.
-vi.mock("~/business/payment/asaas-fees.server", async (importOriginal) => {
-  const original =
-    await importOriginal<typeof import("~/business/payment/asaas-fees.server")>()
-  return {
-    ...original,
-    getAsaasFees: vi.fn(async () => original.FALLBACK_FEES),
-  }
-})
-
-import { getAsaasFees } from "~/business/payment/asaas-fees.server"
 import { loadPaymentPage, loadPaymentThanks } from "./payment-page.server"
 
 describe("loadPaymentPage", () => {
@@ -80,6 +68,7 @@ describe("loadPaymentPage", () => {
       paymentId: payment.id,
       profileId,
       onlinePaymentsEnabled: true,
+      cardPaymentsEnabled: true,
     })
 
     expect(result.state).toBe("ready")
@@ -93,8 +82,9 @@ describe("loadPaymentPage", () => {
       "card_5",
       "card_6",
     ])
-    expect(result.options[0]?.total).toBe(22199)
-    // What Positiv receives, so the page can tell it apart from the fees.
+    expect(result.options[0]?.total).toBe(19800)
+    expect(result.options[1]?.total).toBe(22000)
+    // The event price, so the page can name the Pix discount against it.
     expect(result.baseAmount).toBe(22000)
     expect(result.eventTitle).toBe("Payment Page Event")
     expect(result.chosen).toBeNull()
@@ -108,6 +98,7 @@ describe("loadPaymentPage", () => {
         paymentId: payment.id,
         profileId: otherProfileId,
         onlinePaymentsEnabled: true,
+        cardPaymentsEnabled: true,
       }),
     ).rejects.toBeDefined()
   })
@@ -118,6 +109,7 @@ describe("loadPaymentPage", () => {
         paymentId: "00000000-0000-4000-8000-000000000000",
         profileId,
         onlinePaymentsEnabled: true,
+        cardPaymentsEnabled: true,
       }),
     ).rejects.toBeDefined()
   })
@@ -131,6 +123,7 @@ describe("loadPaymentPage", () => {
         paymentId: "foo",
         profileId,
         onlinePaymentsEnabled: true,
+        cardPaymentsEnabled: true,
       }),
     ).rejects.toBeInstanceOf(Response)
   })
@@ -147,6 +140,7 @@ describe("loadPaymentPage", () => {
       paymentId: payment.id,
       profileId,
       onlinePaymentsEnabled: true,
+      cardPaymentsEnabled: true,
     })
 
     expect(result.state).toBe("needs_cpf")
@@ -162,6 +156,7 @@ describe("loadPaymentPage", () => {
       paymentId: payment.id,
       profileId,
       onlinePaymentsEnabled: true,
+      cardPaymentsEnabled: true,
     })
 
     expect(result.state).toBe("paid")
@@ -183,6 +178,7 @@ describe("loadPaymentPage", () => {
       paymentId: expired.id,
       profileId,
       onlinePaymentsEnabled: true,
+      cardPaymentsEnabled: true,
     })
 
     expect(result.state).toBe("closed")
@@ -203,6 +199,7 @@ describe("loadPaymentPage", () => {
       paymentId: payment.id,
       profileId,
       onlinePaymentsEnabled: true,
+      cardPaymentsEnabled: true,
     })
 
     expect(result.state).toBe("ready")
@@ -227,6 +224,7 @@ describe("loadPaymentPage", () => {
       paymentId: payment.id,
       profileId,
       onlinePaymentsEnabled: true,
+      cardPaymentsEnabled: true,
     })
 
     expect(result.state).toBe("ready")
@@ -234,9 +232,25 @@ describe("loadPaymentPage", () => {
     expect(result.chosen?.id).toBe("card_3")
   })
 
-  // Pricing an option means reading the Asaas fee table. With the switch off
-  // nothing may talk to Asaas, so the page offers nothing rather than quoting
-  // a price from the fallback list that no charge could be created against.
+  it("offers Pix alone, at the full price, while card payments are off", async () => {
+    const payment = await openCharge()
+
+    const result = await loadPaymentPage({
+      paymentId: payment.id,
+      profileId,
+      onlinePaymentsEnabled: true,
+      cardPaymentsEnabled: false,
+    })
+
+    expect(result.state).toBe("ready")
+    if (result.state !== "ready") return
+    expect(result.options).toEqual([
+      expect.objectContaining({ id: "pix", total: 22000 }),
+    ])
+  })
+
+  // With the switch off no charge can be created, so the page offers nothing
+  // rather than a price nobody could pay.
   it("offers nothing while payments are switched off", async () => {
     const payment = await openCharge()
 
@@ -244,6 +258,7 @@ describe("loadPaymentPage", () => {
       paymentId: payment.id,
       profileId,
       onlinePaymentsEnabled: false,
+      cardPaymentsEnabled: true,
     })
 
     expect(result.state).toBe("closed")
@@ -251,11 +266,9 @@ describe("loadPaymentPage", () => {
 
   describe("loadPaymentThanks", () => {
     // Asaas sends the participant here after they paid a charge that was
-    // open. The page only says whether the money landed, so it never prices
-    // anything: with online payments switched off nothing may talk to Asaas.
-    it("says an open charge is on its way, without pricing it", async () => {
+    // open. The page only says whether the money landed.
+    it("says an open charge is on its way", async () => {
       const payment = await openCharge()
-      vi.mocked(getAsaasFees).mockClear()
 
       const result = await loadPaymentThanks({
         paymentId: payment.id,
@@ -263,7 +276,6 @@ describe("loadPaymentPage", () => {
       })
 
       expect(result).toEqual({ state: "waiting", eventTitle: expect.any(String) })
-      expect(getAsaasFees).not.toHaveBeenCalled()
     })
 
     it("says it is already paid", async () => {

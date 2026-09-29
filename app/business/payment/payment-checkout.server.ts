@@ -8,7 +8,10 @@ import { isProd } from "~/lib/helpers/is-prod.server"
 import { zod } from "~/lib/helpers/zod"
 import { logger } from "~/lib/logger/logger.server"
 import paths from "~/lib/paths"
-import { isOnlinePaymentsEnabled } from "~/business/settings/app-settings.server"
+import {
+  isCardPaymentsEnabled,
+  isOnlinePaymentsEnabled,
+} from "~/business/settings/app-settings.server"
 import {
   createAsaasCustomer,
   createAsaasPayment,
@@ -16,7 +19,6 @@ import {
   findAsaasCustomerByCpf,
 } from "./asaas-client.server"
 import { asaasErrorMessage } from "./asaas-error-message"
-import { getAsaasFees } from "./asaas-fees.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
 import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
@@ -92,9 +94,8 @@ async function ensureAsaasCustomer(profile: {
 
 /**
  * The participant picks how to pay, and only then does a charge exist at Asaas.
- * Nothing before this point has quoted a price anybody can be held to, which is
- * also why the fee table is written down here and not when the charge was
- * opened.
+ * The price is frozen on the row here: switching card payments later leaves a
+ * charge already created at the figure it was created at.
  */
 async function pick(values: z.infer<typeof pickOptionSchema>) {
   if (!(await isOnlinePaymentsEnabled())) {
@@ -142,9 +143,10 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
     throw new Error(paymentsCopy.errors.invalidCpf)
   }
 
-  const fees = await getAsaasFees()
   const option = findPaymentOption(
-    buildPaymentOptions(payment.base_amount, fees),
+    buildPaymentOptions(payment.base_amount, {
+      cardEnabled: await isCardPaymentsEnabled(),
+    }),
     values.optionId,
   )
   if (!option) {
@@ -206,7 +208,6 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
       method: option.method,
       installment_count: option.installmentCount,
       amount: option.total,
-      fee_snapshot: fees,
       asaas_customer_id: customerId,
       asaas_payment_id: charge.id,
       asaas_installment_id: charge.installmentId,

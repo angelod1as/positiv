@@ -2,10 +2,7 @@ import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { describe, expect, it, vi } from "vitest"
 import { renderWithRouter } from "~/test/test-utils"
-import {
-  buildPaymentOptions,
-  type AsaasFees,
-} from "~/business/payment/pricing"
+import { buildPaymentOptions } from "~/business/payment/pricing"
 import { paymentsCopy } from "~/copy/payments"
 import PaymentPage from "./payment-page"
 import type { PaymentPageData } from "./payment-page.server"
@@ -32,15 +29,7 @@ vi.mock("react-router", async (importOriginal) => {
   }
 })
 
-// The public price list, the same numbers asaas-fees falls back to. Inline
-// because that module is server-only and this test runs in jsdom.
-const fees: AsaasFees = {
-  pix: { fixed: 199, percent: 0 },
-  card: { fixed: 49, percentOneInstallment: 0.0299, percentUpToSix: 0.0349 },
-  anticipation: { detachedMonthlyRate: 0.0115, installmentMonthlyRate: 0.016 },
-}
-
-const options = buildPaymentOptions(22000, fees)
+const options = buildPaymentOptions(25000, { cardEnabled: true })
 
 // The page reads one prop of the many a route component is handed, and a test
 // that built the rest would be describing React Router, not this page.
@@ -57,50 +46,57 @@ const ready: PaymentPageData = {
   eventTitle: "Encontro de Maio",
   eventEmoji: "🌻",
   dueAt: "2026-09-18T12:00:00Z",
-  baseAmount: 22000,
+  baseAmount: 25000,
   options,
   chosen: null,
   invoiceUrl: null,
 }
 
 describe("PaymentPage", () => {
-  it("says what the event costs and that the fees are the participant's", () => {
+  it("says what the event costs, and nothing about fees", () => {
     renderPage(ready)
 
     expect(
-      screen.getByText(/O valor do evento é R\$\s?220,00\./),
+      screen.getByText(/O valor do evento é R\$\s?250,00\./),
     ).toBeInTheDocument()
-    expect(
-      screen.getByText(/As taxas do meio de pagamento ficam por sua conta/),
-    ).toBeInTheDocument()
+    expect(screen.queryByText(/taxa/i)).not.toBeInTheDocument()
   })
 
-  it("splits each option's total into the event price and the fees", () => {
+  it("names each option by its total and says what sets it apart", () => {
     renderPage(ready)
 
-    const pix = screen.getByRole("radio", { name: /^Pix R\$\s?221,99$/ })
-    expect(pix).toHaveAccessibleDescription(
-      /R\$\s?220,00 do evento \+ R\$\s?1,99 de taxas/,
+    expect(
+      screen.getByRole("radio", { name: /^Pix R\$\s?225,00$/ }),
+    ).toHaveAccessibleDescription(/10% de desconto sobre R\$\s?250,00/)
+
+    expect(
+      screen.getByRole("radio", { name: /^Cartão 6x de R\$\s?41,66 R\$\s?250,00$/ }),
+    ).toHaveAccessibleDescription(
+      /Sem juros\. A última parcela é de R\$\s?41,70\./,
     )
 
-    const threeTimes = options.find((option) => option.id === "card_3")
-    if (!threeTimes) throw new Error("expected a three-installment option")
-    const card = screen.getByRole("radio", { name: /^Cartão 3x de/ })
-    expect(card).toHaveAccessibleName(
-      new RegExp(`R\\$\\s?${(threeTimes.total / 100).toFixed(2).replace(".", ",")}$`),
-    )
-    expect(card).toHaveAccessibleDescription(
-      new RegExp(
-        `R\\$\\s?220,00 do evento \\+ R\\$\\s?${((threeTimes.total - 22000) / 100).toFixed(2).replace(".", ",")} de taxas`,
-      ),
-    )
+    expect(
+      screen.getByRole("radio", { name: /^Cartão à vista R\$\s?250,00$/ }),
+    ).toHaveAccessibleDescription("")
+  })
+
+  it("offers Pix alone while card payments are off", () => {
+    renderPage({
+      ...ready,
+      options: buildPaymentOptions(25000, { cardEnabled: false }),
+    })
+
+    expect(screen.getAllByRole("radio")).toHaveLength(1)
+    expect(
+      screen.getByRole("radio", { name: /^Pix R\$\s?250,00$/ }),
+    ).toHaveAccessibleDescription("")
   })
 
   it("lists every option with its price and defaults to Pix", () => {
     renderPage(ready)
 
     expect(
-      screen.getByRole("radio", { name: /^Pix R\$\s?221,99$/ }),
+      screen.getByRole("radio", { name: /^Pix R\$\s?225,00$/ }),
     ).toBeChecked()
     expect(
       screen.getByRole("radio", { name: /Cartão 3x de/ }),

@@ -1,4 +1,7 @@
-import type { PaymentOption } from "~/business/payment/pricing"
+import {
+  PIX_DISCOUNT_PERCENT,
+  type PaymentOption,
+} from "~/business/payment/pricing"
 import { formatInTimeZone } from "date-fns-tz"
 import { formatCurrency } from "~/lib/helpers/format-currency"
 
@@ -13,15 +16,25 @@ export const paymentsCopy = {
       }
       return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)} (total ${formatCurrency(option.total)})`
     },
-    // The payment page's cards: the name here, the total beside it, and where
-    // the total comes from on the line below.
+    // The payment page's cards: the name here, the total beside it, and what
+    // sets the option apart on the line below, when anything does.
     title: (option: PaymentOption) => {
       if (option.method === "pix") return "Pix"
       if (option.installmentCount === 1) return "Cartão à vista"
       return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}`
     },
-    breakdown: (baseAmount: number, option: PaymentOption) =>
-      `${formatCurrency(baseAmount)} do evento + ${formatCurrency(option.total - baseAmount)} de taxas`,
+    breakdown: (baseAmount: number, option: PaymentOption) => {
+      if (option.method === "pix") {
+        return option.total < baseAmount
+          ? `${PIX_DISCOUNT_PERCENT}% de desconto sobre ${formatCurrency(baseAmount)}`
+          : null
+      }
+      if (option.installmentCount === 1) return null
+      if (option.lastInstallment !== option.perInstallment) {
+        return `Sem juros. A última parcela é de ${formatCurrency(option.lastInstallment)}.`
+      }
+      return "Sem juros."
+    },
   },
   // Plain text, not Markdown: this one is pasted into WhatsApp, which renders
   // none of it. The four-digit year is deliberate — a deadline read on a phone
@@ -50,8 +63,8 @@ export const paymentsCopy = {
     heading: (eventTitle: string) => `Pagamento — ${eventTitle}`,
     notYours: "Este link de pagamento não é seu.",
     chooseOption: "Como você quer pagar?",
-    feesIntro: (baseAmount: number) =>
-      `O valor do evento é ${formatCurrency(baseAmount)}. As taxas do meio de pagamento ficam por sua conta e mudam conforme a forma e o número de parcelas.`,
+    priceIntro: (baseAmount: number) =>
+      `O valor do evento é ${formatCurrency(baseAmount)}.`,
     pay: "Pagar",
     dueAt: (date: string) => `Este link vale até ${date}.`,
     paidTitle: "Pagamento confirmado",
