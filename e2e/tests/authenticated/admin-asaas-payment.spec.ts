@@ -68,7 +68,7 @@ test.describe('POS-532: an Asaas payment from the charge to the refund', () => {
     await paymentPage.fillCpfIfAsked(uniqueValidCpf())
 
     // Every option is priced above the ticket: the fees are the participant's.
-    await expect(participantPage.getByRole('radio', { name: /^Pix — R\$/ })).toBeVisible()
+    await expect(participantPage.getByRole('radio', { name: /^Pix R\$/ })).toBeVisible()
     await paymentPage.chooseOption(/^Cartão 3x de R\$/)
     await paymentPage.pay()
 

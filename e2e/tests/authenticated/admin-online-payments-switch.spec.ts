@@ -63,7 +63,7 @@ test.describe('POS-565: switching online payments off and back on from the admin
     const paymentPage = new PaymentPage(participantPage)
     await paymentPage.navigate(pending.id)
     await paymentPage.fillCpfIfAsked(uniqueValidCpf())
-    await paymentPage.chooseOption(/^Pix — R\$/)
+    await paymentPage.chooseOption(/^Pix R\$/)
     await paymentPage.pay()
     await participantPage.waitForURL(`${getAsaasMockUrl()}/i/**`)
 
