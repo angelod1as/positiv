@@ -45,7 +45,6 @@ const baseProps = {
   totals: {
     paid_gross: 0,
     refunded: 0,
-    fee: 0,
     net: 0,
     payment_status: null,
     active_payment_id: null,
@@ -289,7 +288,7 @@ describe("ManagePaymentModal", () => {
     expect(screen.getByLabelText("Data do pagamento")).toHaveValue("2026-08-20")
   })
 
-  it("counts what was given back out of the total paid", () => {
+  it("shows what was paid, what went back and what is left", () => {
     render(
       <ManagePaymentModal
         {...baseProps}
@@ -306,16 +305,22 @@ describe("ManagePaymentModal", () => {
           ...baseProps.totals,
           paid_gross: 10000,
           refunded: 5000,
-          fee: 1000,
-          net: 4000,
+          net: 5000,
           payment_status: "partially_refunded",
         }}
       />,
     )
 
     expect(screen.getByText("Total pago").closest("div")).toHaveTextContent(
+      "R$ 100,00",
+    )
+    expect(screen.getByText("Reembolsado").closest("div")).toHaveTextContent(
       "R$ 50,00",
     )
+    expect(screen.getByText("Líquido").closest("div")).toHaveTextContent(
+      "R$ 50,00",
+    )
+    expect(screen.queryByText("Taxas")).not.toBeInTheDocument()
   })
 
   it("records a courtesy spot settled at zero", async () => {
@@ -1033,39 +1038,38 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
     ).toBeInTheDocument()
   })
 
-  it("shows what Positiv is owed on a charge nobody has chosen an option for", () => {
+  it("shows the event price on a charge nobody has chosen an option for", () => {
     render(
       <ManagePaymentModal {...baseProps} payments={[sentOn]} active={sentOn} />,
     )
 
     const row = screen.getByRole("row", { name: /Aguardando escolha/ })
     expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
-    // No option picked means no method and so no fee yet.
+    // No option picked means no method yet.
     expect(within(row).getAllByText("—").length).toBeGreaterThan(0)
   })
 
-  // POS-529 writes `amount` the moment the participant picks a method: the
-  // gross they will pay. `asaas_net` stays null until the webhook confirms it,
-  // so neither column may wait on it.
-  it("keeps the gross out of Positiv's column once a method is picked", () => {
+  // `amount` is written the moment the participant picks an option: from
+  // then on it is the price they pay, 10% off on Pix.
+  it("shows the price of the option the participant picked", () => {
     const picked = payment({
       ...sentOn,
       id: "picked-1",
       status: "awaiting_payment",
       method: "pix",
-      amount: 22199,
+      amount: 19800,
       asaas_net: null,
     })
 
     render(<ManagePaymentModal {...baseProps} payments={[picked]} />)
 
     const row = screen.getByRole("row", { name: /Aguardando pagamento/ })
-    expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
-    expect(within(row).getByText("R$ 1,99")).toBeInTheDocument()
-    expect(within(row).queryByText("R$ 221,99")).not.toBeInTheDocument()
+    expect(within(row).getByText("R$ 198,00")).toBeInTheDocument()
+    expect(within(row).queryByText("R$ 220,00")).not.toBeInTheDocument()
   })
 
-  it("splits what Positiv kept from what the fees took", () => {
+  // What Asaas kept is Asaas's to report.
+  it("shows what the participant paid, not what Asaas kept", () => {
     const paidByCard = payment({
       id: "paid-card",
       kind: "asaas",
@@ -1073,32 +1077,24 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
       method: "credit_card",
       installment_count: 3,
       base_amount: 22000,
-      amount: 23454,
-      asaas_net: 21900,
+      amount: 22000,
+      asaas_net: 21000,
+      anticipation_fee: 578,
     })
 
     render(<ManagePaymentModal {...baseProps} payments={[paidByCard]} />)
 
     const row = screen.getByRole("row", { name: /Pago/ })
-    // What landed in the account, and what the participant paid on top of it.
-    expect(within(row).getByText("R$ 219,00")).toBeInTheDocument()
-    expect(within(row).getByText("R$ 15,54")).toBeInTheDocument()
-  })
-
-  it("charges no fee to a payment that never went through Asaas", () => {
-    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
-
-    const row = screen.getByRole("row", { name: /Pago/ })
     expect(within(row).getByText("R$ 220,00")).toBeInTheDocument()
-    expect(within(row).getAllByText("—").length).toBeGreaterThan(0)
+    expect(within(row).queryByText("R$ 210,00")).not.toBeInTheDocument()
   })
 
-  it("names the fee column", () => {
+  it("has no fee column", () => {
     render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
 
     expect(
-      screen.getByRole("columnheader", { name: "Taxas" }),
-    ).toBeInTheDocument()
+      screen.queryByRole("columnheader", { name: "Taxas" }),
+    ).not.toBeInTheDocument()
   })
 
   it("never writes the fees into the amount column", () => {

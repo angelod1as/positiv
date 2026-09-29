@@ -133,7 +133,6 @@ export const adminDatavizCopy = {
     ariaLabel: "Faturamento por evento",
     revenue: "Faturamento líquido",
     grossRevenue: "Faturamento bruto",
-    fees: "Taxas",
     ticketPrice: "Preço do ingresso",
     payers: "Pagantes",
     averageTicket: "Ticket médio",

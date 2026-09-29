@@ -294,16 +294,6 @@ const CancelDialog: FC<CancelDialogProps> = ({
 )
 
 /**
- * What Positiv keeps from a payment. Asaas charges the card anticipation fee
- * outside the charge's netValue, so it comes off asaas_net here; before the
- * webhook reports a net, the agreed base amount stands in for it.
- */
-const receivedBy = (payment: PaymentRow): number =>
-  payment.asaas_net === null
-    ? payment.base_amount
-    : payment.asaas_net - (payment.anticipation_fee ?? 0)
-
-/**
  * Where a payment's refund stands, as Asaas last reported it -- under its status, so the admin does not have to open Asaas to know
  * whether the rest of a refund is still on its way.
  */
@@ -615,20 +605,12 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <dl className="grid grid-cols-3 gap-2">
           <div>
             <dt className="text-muted-foreground text-sm">
               {manage.totals.gross}
             </dt>
-            <dd className="font-bold">
-              {formatCurrency(totals.paid_gross - totals.refunded)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground text-sm">
-              {manage.totals.fee}
-            </dt>
-            <dd className="font-bold">{formatCurrency(totals.fee)}</dd>
+            <dd className="font-bold">{formatCurrency(totals.paid_gross)}</dd>
           </div>
           <div>
             <dt className="text-muted-foreground text-sm">
@@ -674,7 +656,6 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                 <TableHead>{manage.columns.kind}</TableHead>
                 <TableHead>{manage.columns.method}</TableHead>
                 <TableHead>{manage.columns.amount}</TableHead>
-                <TableHead>{manage.columns.fees}</TableHead>
                 <TableHead>{manage.columns.date}</TableHead>
                 <TableHead>{manage.columns.actions}</TableHead>
               </TableRow>
@@ -701,25 +682,11 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       ? manage.methods[payment.method]
                       : manage.noMethod}
                   </TableCell>
-                  {/* Two columns because they are two different people's
-                      money. "Valor" is Positiv's: what was agreed while the
-                      charge is open, and what actually landed once Asaas
-                      reports it -- never `amount`, which is the gross the
-                      participant pays and lands on the row as soon as they
-                      pick a method, long before asaas_net exists. "Taxas" is
-                      their share, known from the same moment. */}
+                  {/* What the participant pays: the event price until they
+                      pick an option, the option's price from then on. What
+                      Asaas kept is Asaas's to report. */}
                   <TableCell className="whitespace-nowrap">
-                    {formatCurrency(receivedBy(payment))}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground whitespace-nowrap">
-                    {payment.kind === "asaas" && payment.amount !== null
-                      ? // Against asaas_net once the webhook reports it, and
-                        // against the base until then: a paid row is allowed
-                        // to exist without asaas_net, and the estimate the
-                        // participant was quoted beats showing no fee at all
-                        // on a charge that certainly had one.
-                        formatCurrency(payment.amount - receivedBy(payment))
-                      : manage.noAmount}
+                    {formatCurrency(payment.amount ?? payment.base_amount)}
                   </TableCell>
                   <TableCell>
                     {formatDateTime(payment.paid_at, "numeric").date ??

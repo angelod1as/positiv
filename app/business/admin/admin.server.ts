@@ -105,7 +105,6 @@ const profilesWithExtraDataQuery = kyselyDb
   .select([
     sql<number>`coalesce(epp.paid_gross, 0)`.as("paid_gross"),
     sql<number>`coalesce(epp.net, 0)`.as("net"),
-    sql<number>`coalesce(epp.fee, 0)`.as("fee"),
     sql<number>`coalesce(epp.refunded, 0)`.as("refunded"),
     "epp.current_status as payment_status",
     "epp.active_payment_id",
@@ -468,7 +467,6 @@ export const getEventParticipantHistoryById = composable(
       .select([
         sql<number>`coalesce(epp.paid_gross, 0)`.as("paid_gross"),
         sql<number>`coalesce(epp.net, 0)`.as("net"),
-        sql<number>`coalesce(epp.fee, 0)`.as("fee"),
         sql<number>`coalesce(epp.refunded, 0)`.as("refunded"),
         "epp.current_status as payment_status",
         "epp.active_payment_id",
@@ -509,7 +507,6 @@ export const getParticipantFullEventHistory = composable(
       .select([
         sql<number>`coalesce(epp.paid_gross, 0)`.as("paid_gross"),
         sql<number>`coalesce(epp.net, 0)`.as("net"),
-        sql<number>`coalesce(epp.fee, 0)`.as("fee"),
         sql<number>`coalesce(epp.refunded, 0)`.as("refunded"),
         "epp.current_status as payment_status",
         "epp.active_payment_id",
@@ -829,7 +826,6 @@ export const getEventParticipantBasic = composable(
       .select([
         sql<number>`coalesce(epp.paid_gross, 0)`.as("paid_gross"),
         sql<number>`coalesce(epp.net, 0)`.as("net"),
-        sql<number>`coalesce(epp.fee, 0)`.as("fee"),
         sql<number>`coalesce(epp.refunded, 0)`.as("refunded"),
         "epp.current_status as payment_status",
         "epp.active_payment_id",

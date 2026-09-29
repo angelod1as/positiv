@@ -456,8 +456,7 @@ describe("ledger totals on the admin queries - Integration Tests", () => {
 
       expect(row).toMatchObject({
         paid_gross: 21000,
-        net: 20050,
-        fee: 950,
+        net: 21000,
         refunded: 0,
         payment_status: "paid",
       })
@@ -485,7 +484,7 @@ describe("ledger totals on the admin queries - Integration Tests", () => {
     if (result.success) {
       const row = result.data.find((r) => r.profile_id === profile.id)
 
-      expect(row).toMatchObject({ paid_gross: 0, net: 0, fee: 0, refunded: 0 })
+      expect(row).toMatchObject({ paid_gross: 0, net: 0, refunded: 0 })
       expect(row?.payment_status).toBeNull()
       expect(row?.active_payment_id).toBeNull()
     }
@@ -520,7 +519,6 @@ describe("ledger totals on the admin queries - Integration Tests", () => {
       expect(result.data).toMatchObject({
         paid_gross: 20000,
         net: 20000,
-        fee: 0,
         payment_status: "paid",
       })
     }

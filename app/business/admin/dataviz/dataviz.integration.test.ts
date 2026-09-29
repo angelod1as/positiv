@@ -669,7 +669,7 @@ describe("DataViz - Integration Tests", () => {
         expect(result[0].num_pagantes).toBe(2)
       })
 
-      it("reports revenue as what Positiv kept, with the gross and the fee beside it", async () => {
+      it("reports revenue as what was paid, whatever Asaas kept", async () => {
         const event = await createTestEvent(tracker, kysely, {
           title: "Asaas Fees Event",
           event_status: "Completed" as EventStatus,
@@ -685,7 +685,7 @@ describe("DataViz - Integration Tests", () => {
           event_id: event.id,
           profile_id: profile.id,
         })
-        // charged 230,00; Asaas kept 10,00
+        // paid 230,00; Asaas reported 220,00 as its net
         await createTestPayment(tracker, kysely, {
           event_participant_id: participant.id,
           kind: "asaas",
@@ -699,11 +699,11 @@ describe("DataViz - Integration Tests", () => {
         const row = result.find((e) => e.title === "Asaas Fees Event")
 
         expect(row).toMatchObject({
-          faturamento_total: 22000,
+          faturamento_total: 23000,
           faturamento_bruto: 23000,
-          taxas: 1000,
           num_pagantes: 1,
         })
+        expect(row).not.toHaveProperty("taxas")
       })
 
       it("drops a refunded participant from the revenue and from the payer count", async () => {

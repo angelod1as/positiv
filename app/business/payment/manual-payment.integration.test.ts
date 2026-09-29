@@ -100,7 +100,6 @@ describe("registerManualPayment", () => {
       .where("event_participant_id", "=", participantId)
       .executeTakeFirstOrThrow()
     expect(totals.net).toBe(15000)
-    expect(totals.fee).toBe(0)
   })
 
   it("records a courtesy spot settled at zero", async () => {

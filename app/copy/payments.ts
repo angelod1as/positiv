@@ -95,7 +95,6 @@ export const paymentsCopy = {
     close: "Fechar",
     totals: {
       gross: "Total pago",
-      fee: "Taxas",
       net: "Líquido",
       refunded: "Reembolsado",
     },
@@ -104,7 +103,6 @@ export const paymentsCopy = {
       kind: "Origem",
       method: "Forma",
       amount: "Valor",
-      fees: "Taxas",
       sentAt: "Enviada em",
       date: "Data pagto",
       actions: "Ações",
@@ -128,7 +126,6 @@ export const paymentsCopy = {
       transfer: "Transferência",
       other: "Outro",
     },
-    noAmount: "—",
     noMethod: "—",
     noDate: "—",
   },

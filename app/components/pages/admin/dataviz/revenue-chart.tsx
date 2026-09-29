@@ -69,10 +69,6 @@ function CustomTooltipContent({ active, payload, label }: CustomTooltipProps) {
           <span className="chart-tooltip-value">{formatCurrency(dataPoint.faturamento_bruto)}</span>
         </div>
         <div className="chart-tooltip-row">
-          <span className="chart-tooltip-label">{revenueCopy.fees}</span>
-          <span className="chart-tooltip-value">{formatCurrency(dataPoint.taxas)}</span>
-        </div>
-        <div className="chart-tooltip-row">
           <span className="chart-tooltip-swatch" style={{ backgroundColor: 'var(--chart-2)' }} />
           <span className="chart-tooltip-label">
             {revenueCopy.ticketPrice}

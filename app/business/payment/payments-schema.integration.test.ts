@@ -323,10 +323,10 @@ describe("payments schema", () => {
         .where("event_participant_id", "=", otherParticipantId)
         .executeTakeFirstOrThrow()
 
+      expect(row).not.toHaveProperty("fee")
       expect(row).toMatchObject({
         paid_gross: 0,
         refunded: 0,
-        fee: 0,
         net: 0,
         has_paid: false,
         current_status: null,
@@ -352,13 +352,13 @@ describe("payments schema", () => {
       expect(row).toMatchObject({
         paid_gross: 0,
         net: 0,
-        fee: 0,
         has_paid: true,
         current_status: "paid",
       })
     })
 
-    it("splits gross, fee and net for an Asaas payment", async () => {
+    // What Asaas kept is Asaas's to report: the site counts what was paid.
+    it("counts what the participant paid through Asaas, not what Asaas kept", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         kind: "asaas",
@@ -376,13 +376,12 @@ describe("payments schema", () => {
         .executeTakeFirstOrThrow()
 
       expect(row.paid_gross).toBe(23454)
-      expect(row.fee).toBe(1444)
-      expect(row.net).toBe(22010)
+      expect(row.net).toBe(23454)
       expect(row.has_paid).toBe(true)
       expect(row.current_status).toBe("paid")
     })
 
-    it("treats a manual payment as fee-free", async () => {
+    it("counts a manual payment at what was paid", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         kind: "manual",
@@ -396,7 +395,6 @@ describe("payments schema", () => {
         .where("event_participant_id", "=", participantId)
         .executeTakeFirstOrThrow()
 
-      expect(row.fee).toBe(0)
       expect(row.net).toBe(22000)
     })
 
@@ -423,7 +421,7 @@ describe("payments schema", () => {
       expect(row.has_paid).toBe(true)
     })
 
-    it("keeps net at the gross when Asaas never reported a net", async () => {
+    it("counts net the same before Asaas reports one", async () => {
       await createTestPayment(tracker, kysely, {
         event_participant_id: participantId,
         kind: "asaas",
@@ -438,7 +436,6 @@ describe("payments schema", () => {
         .where("event_participant_id", "=", participantId)
         .executeTakeFirstOrThrow()
 
-      expect(row.fee).toBe(0)
       expect(row.net).toBe(22000)
     })
 

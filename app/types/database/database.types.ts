@@ -839,7 +839,6 @@ export type Database = {
           active_payment_id: string | null
           current_status: Database["public"]["Enums"]["payment_status"] | null
           event_participant_id: string | null
-          fee: number | null
           has_paid: boolean | null
           net: number | null
           paid_gross: number | null

@@ -127,7 +127,6 @@ export type EventParticipant = Selectable<
 export type ParticipantPaymentTotals = {
   paid_gross: number
   net: number
-  fee: number
   refunded: number
   payment_status: Database["public"]["Enums"]["payment_status"] | null
   active_payment_id: string | null

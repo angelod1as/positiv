@@ -103,13 +103,12 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
       "events.emoji",
       "events.time_event_start as date",
       "events.ticket_price",
-      // Revenue is what Positiv kept. A refund takes the money back and the
-      // payer with it: someone who was refunded is not coming.
+      // Revenue is what was paid, less refunds. A refund takes the money back
+      // and the payer with it: someone who was refunded is not coming.
       sql<number>`coalesce(sum(epp.net), 0)::int`.as("faturamento_total"),
       sql<number>`coalesce(sum(epp.paid_gross), 0)::int`.as(
         "faturamento_bruto"
       ),
-      sql<number>`coalesce(sum(epp.fee), 0)::int`.as("taxas"),
       sql<number>`count(*) filter (where epp.has_paid)::int`.as("num_pagantes"),
     ])
     .execute()
@@ -120,7 +119,6 @@ export async function getEventRevenueData(): Promise<EventRevenueDataPoint[]> {
     date: row.date ? new Date(row.date).toISOString() : "",
     faturamento_total: row.faturamento_total,
     faturamento_bruto: row.faturamento_bruto,
-    taxas: row.taxas,
     ticket_price: Number(row.ticket_price ?? 0),
     num_pagantes: row.num_pagantes,
   }))

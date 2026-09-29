@@ -17,11 +17,10 @@ export type EventRevenueDataPoint = {
   title: string
   emoji: string
   date: string
-  /** What Positiv kept: gross minus fees minus refunds, in cents. */
+  /** What the participants paid, refunds deducted, in cents. */
   faturamento_total: number
-  /** What the participants were charged, fees included, in cents. */
+  /** What the participants paid, in cents. */
   faturamento_bruto: number
-  taxas: number
   ticket_price: number
   num_pagantes: number
 }
