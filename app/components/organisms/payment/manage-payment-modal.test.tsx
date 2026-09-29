@@ -550,7 +550,8 @@ describe("ManagePaymentModal", () => {
     expect(screen.getByText(/Cancelado pelo Asaas: R\$\s?10,00/)).toBeInTheDocument()
   })
 
-  it("counts what anticipation costs out of what Positiv receives", () => {
+  // What anticipating a card costs is Asaas's to report, not the site's.
+  it("says nothing about the card anticipation", () => {
     render(
       <ManagePaymentModal
         {...baseProps}
@@ -566,10 +567,7 @@ describe("ManagePaymentModal", () => {
       />,
     )
 
-    expect(screen.getByText(/R\$\s?219,88/)).toBeInTheDocument()
-    expect(
-      screen.getByText(/Antecipação em análise · taxa R\$\s?5,78/),
-    ).toBeInTheDocument()
+    expect(screen.queryByText(/Antecipação/)).not.toBeInTheDocument()
   })
 
   it("brings an Asaas payment up to date from Asaas", async () => {

@@ -149,13 +149,11 @@ does not ask Asaas for them; it records them when Asaas reports them.
   the webhook, or when the refund sync reads it from Asaas. Only `DONE` refunds
   count as returned. While Asaas reports one in progress the modal says so.
 - Under each payment the modal lists what Asaas last reported: given back
-  (DONE), still on its way (PENDING and the AWAITING_* authorisations),
-  cancelled, and the card anticipation with its fee. "Atualizar do Asaas"
-  reads it on demand.
+  (DONE), still on its way (PENDING and the AWAITING_* authorisations) and
+  cancelled. "Atualizar do Asaas" reads it on demand.
 - The `sync-payment-refunds` cron job reads the payments Asaas may still have
-  news about every 15 minutes: an incomplete refund, a refund on its way, a
-  card whose anticipation is pending (for 30 days) or not yet created (for 3
-  days). To confirm the job exists in production:
+  news about every 15 minutes: an incomplete refund, or a refund on its way.
+  To confirm the job exists in production:
   `select jobname, schedule, active from cron.job where jobname = 'sync-payment-refunds';`
 - Asaas never deletes a charge that was paid. A paid charge can only be
   refunded.

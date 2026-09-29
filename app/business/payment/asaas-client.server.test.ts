@@ -11,7 +11,6 @@ import {
   findAsaasCustomerByCpf,
   getAsaasInstallmentRefunds,
   getAsaasPaymentRefunds,
-  listAsaasAnticipations,
 } from "./asaas-client.server"
 
 const env = vi.hoisted<Record<string, unknown>>(() => ({
@@ -513,37 +512,6 @@ describe("charges", () => {
       { value: 117.15, status: "DONE" },
       { value: 108.51, status: "PENDING" },
     ])
-  })
-
-  it("lists the anticipations of a card plan", async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({
-        data: [
-          { id: "ant_1", status: "PENDING", fee: 6.25, netValue: 110.9 },
-          { id: "ant_2", status: "PENDING", fee: 8.17, netValue: 108.98 },
-        ],
-      }),
-    )
-
-    const anticipations = await listAsaasAnticipations({ installment: "inst_1" })
-
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      "https://api-sandbox.asaas.com/v3/anticipations?installment=inst_1&limit=100",
-    )
-    expect(anticipations).toEqual([
-      { status: "PENDING", fee: 625 },
-      { status: "PENDING", fee: 817 },
-    ])
-  })
-
-  it("lists the anticipations of a single charge", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [] }))
-
-    await listAsaasAnticipations({ payment: "pay_1" })
-
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      "https://api-sandbox.asaas.com/v3/anticipations?payment=pay_1&limit=100",
-    )
   })
 
 })

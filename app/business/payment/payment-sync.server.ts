@@ -7,10 +7,8 @@ import { logger } from "~/lib/logger/logger.server"
 import {
   getAsaasInstallmentRefunds,
   getAsaasPaymentRefunds,
-  listAsaasAnticipations,
 } from "./asaas-client.server"
 import { asaasErrorMessage } from "./asaas-error-message"
-import { summarizeAnticipations } from "./anticipation-state"
 import { deliverPaymentEmail } from "./payment-email-outbox.server"
 import { applyRefundTally } from "./refund-apply.server"
 import { tallyRefunds } from "./refund-state"
@@ -18,8 +16,8 @@ import { tallyRefunds } from "./refund-state"
 export const syncPaymentSchema = zod.object({ paymentId: zod.string().uuid() })
 
 /**
- * Reads a payment's refunds and anticipation straight from Asaas and writes
- * them onto the row the way the webhook would. The webhook only knows what
+ * Reads a payment's refunds straight from Asaas and writes them onto the row
+ * the way the webhook would. The webhook only knows what
  * Asaas chose to send, and when: a refund still "em progresso" is never an
  * event, and a delivery lost while the endpoint was down leaves the row
  * behind. This is how the admin -- and the sync job -- catch up.
@@ -31,7 +29,7 @@ export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
   async (values) => {
     const payment = await kyselyDb
       .selectFrom("payments")
-      .select(["kind", "method", "asaas_payment_id", "asaas_installment_id"])
+      .select(["kind", "asaas_payment_id", "asaas_installment_id"])
       .where("id", "=", values.paymentId)
       .executeTakeFirst()
 
@@ -49,20 +47,10 @@ export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
 
     const plan = payment.asaas_installment_id
     let refunds: Awaited<ReturnType<typeof getAsaasPaymentRefunds>>
-    let anticipations: Awaited<ReturnType<typeof listAsaasAnticipations>>
     try {
       refunds = plan
         ? await getAsaasInstallmentRefunds(plan)
         : await getAsaasPaymentRefunds(payment.asaas_payment_id)
-      // Only a card is ever anticipated.
-      anticipations =
-        payment.method === "credit_card"
-          ? await listAsaasAnticipations(
-              plan
-                ? { installment: plan }
-                : { payment: payment.asaas_payment_id },
-            )
-          : []
     } catch (error) {
       logger.error("Could not read the payment from Asaas", {
         paymentId: values.paymentId,
@@ -72,7 +60,6 @@ export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
     }
 
     const syncedAt = new Date().toISOString()
-    const anticipation = summarizeAnticipations(anticipations)
 
     const refundEmailId = await kyselyDb.transaction().execute(async (trx) => {
       // Locked like the webhook locks it, so the two cannot both decide the
@@ -90,15 +77,9 @@ export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
         tallyRefunds(refunds),
       )
 
-      // Written whatever the status: a payment already refunded in full can
-      // still have an anticipation worth knowing about.
       await trx
         .updateTable("payments")
-        .set({
-          anticipation_fee: anticipation.fee,
-          anticipation_status: anticipation.status,
-          refunds_synced_at: syncedAt,
-        })
+        .set({ refunds_synced_at: syncedAt })
         .where("id", "=", values.paymentId)
         .execute()
 
@@ -124,18 +105,12 @@ export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
 const SYNC_BATCH = 20
 // A row read this recently is left for the next run.
 const SYNC_AGAIN_AFTER_MINUTES = 10
-// How long a card's anticipation is worth following once Asaas has one.
-const ANTICIPATION_WINDOW_DAYS = 30
-// How long to look for an anticipation Asaas has not created yet. It
-// anticipates within two working days of the payment; a card with none after
-// that is not going to get one.
-const ANTICIPATION_APPEARS_WITHIN_DAYS = 3
 
 /**
- * The payments Asaas may still have news about, read one by one. A refund
- * asked for and not yet complete; a refund Asaas lists as still on its way;
- * a card whose anticipation has not been credited. Everything else is
- * settled, and reading it again would only spend the rate limit.
+ * The payments Asaas may still have news about, read one by one: a refund
+ * under way and not yet complete, or one Asaas lists as still on its way.
+ * Everything else is settled, and reading it again would only spend the rate
+ * limit.
  *
  * Called by the sync-payment-refunds job. One payment Asaas cannot answer
  * about is logged and skipped, never the end of the run.
@@ -148,8 +123,6 @@ export async function syncOpenPayments(): Promise<{
   const readBefore = new Date(
     now - SYNC_AGAIN_AFTER_MINUTES * 60 * 1000,
   ).toISOString()
-  const daysAgo = (days: number) =>
-    new Date(now - days * 24 * 60 * 60 * 1000).toISOString()
 
   const candidates = await kyselyDb
     .selectFrom("payments")
@@ -173,16 +146,6 @@ export async function syncOpenPayments(): Promise<{
           ]),
         ]),
         eb("refund_pending_amount", ">", 0),
-        eb.and([
-          eb("method", "=", "credit_card"),
-          eb("paid_at", ">", daysAgo(ANTICIPATION_WINDOW_DAYS)),
-          eb("anticipation_status", "in", ["PENDING", "SCHEDULED"]),
-        ]),
-        eb.and([
-          eb("method", "=", "credit_card"),
-          eb("paid_at", ">", daysAgo(ANTICIPATION_APPEARS_WITHIN_DAYS)),
-          eb("anticipation_status", "is", null),
-        ]),
       ]),
     )
     .orderBy("refunds_sync_attempted_at", sql`asc nulls first`)

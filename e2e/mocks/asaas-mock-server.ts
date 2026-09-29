@@ -269,10 +269,6 @@ async function handleApi(
     return send(response, 200, { id: plan[1], refunds: state.planRefunds[plan[1]] ?? [] })
   }
 
-  if (method === "GET" && path === "/anticipations") {
-    return send(response, 200, { data: [] })
-  }
-
   const single = path.match(/^\/payments\/([^/]+)$/)
   if (method === "GET" && single) {
     const charge = findCharge(single[1])

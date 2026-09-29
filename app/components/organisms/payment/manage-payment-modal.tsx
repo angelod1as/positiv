@@ -304,8 +304,7 @@ const receivedBy = (payment: PaymentRow): number =>
     : payment.asaas_net - (payment.anticipation_fee ?? 0)
 
 /**
- * Where a payment's refund and anticipation stand, as Asaas last reported
- * them -- under its status, so the admin does not have to open Asaas to know
+ * Where a payment's refund stands, as Asaas last reported it -- under its status, so the admin does not have to open Asaas to know
  * whether the rest of a refund is still on its way.
  */
 const PaymentProgress: FC<{ payment: PaymentRow }> = ({ payment }) => {
@@ -319,14 +318,6 @@ const PaymentProgress: FC<{ payment: PaymentRow }> = ({ payment }) => {
     (payment.refund_cancelled_amount ?? 0) > 0 &&
       manage.refundLines.cancelled(
         formatCurrency(payment.refund_cancelled_amount ?? 0),
-      ),
-    payment.anticipation_status &&
-      manage.anticipation.line(
-        manage.anticipation.statuses[payment.anticipation_status] ??
-          payment.anticipation_status,
-        payment.anticipation_fee
-          ? formatCurrency(payment.anticipation_fee)
-          : null,
       ),
     payment.refunds_synced_at &&
       manage.sync.syncedAt(

@@ -230,12 +230,6 @@ describe("asaas mock server", () => {
     expect(charge.refunds).toEqual([{ value: 5, status: "DONE" }])
   })
 
-  it("reports no anticipations", async () => {
-    const response = await call("/anticipations?installment=inst_1&limit=100")
-
-    expect(await response.json()).toEqual({ data: [] })
-  })
-
   it("never gives back more than the charge still holds", async () => {
     const payment = await createPayment({ billingType: "PIX", value: 10 })
     await call(`/sandbox/payment/${payment.id}/confirm`, { method: "POST", body: {} })

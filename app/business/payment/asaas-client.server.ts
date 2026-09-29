@@ -293,29 +293,6 @@ export async function getAsaasInstallmentRefunds(
   return (refunds ?? []).map(({ value, status }) => ({ value, status }))
 }
 
-export type AsaasAnticipation = { status: string; fee: number }
-
-/**
- * The anticipations of a charge or a plan, one per charge. Asaas charges the
- * anticipation fee here and not in the charge's netValue, so it is the only
- * place that says what advancing a card charge cost. One page is the whole
- * plan: a plan has at most MAX_INSTALLMENTS (6) charges.
- */
-export async function listAsaasAnticipations(
-  of: { payment: string } | { installment: string },
-): Promise<AsaasAnticipation[]> {
-  const filter =
-    "payment" in of ? `payment=${of.payment}` : `installment=${of.installment}`
-  const { data } = await asaasRequest(
-    "GET",
-    `/anticipations?${filter}&limit=100`,
-    zod.object({
-      data: zod.array(zod.object({ status: zod.string(), fee: zod.number() })),
-    }),
-  )
-  return data.map(({ status, fee }) => ({ status, fee: reaisToCents(fee) }))
-}
-
 /**
  * The Asaas dashboard matching the API the app talks to, where an admin does
  * what the site no longer does through the API -- refunds, above all.
