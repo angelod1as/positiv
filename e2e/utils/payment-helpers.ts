@@ -94,6 +94,14 @@ export async function setOnlinePayments(enabled: boolean): Promise<void> {
   if (error) throw new Error(`Could not switch online payments: ${error.message}`)
 }
 
+export async function setCardPayments(enabled: boolean): Promise<void> {
+  const supabase = createSupabaseAdminClient()
+  const { error } = await supabase
+    .from('app_settings')
+    .upsert({ id: true, card_payments_enabled: enabled })
+  if (error) throw new Error(`Could not switch card payments: ${error.message}`)
+}
+
 export async function getParticipantPayments(profileId: string, eventId: string) {
   const supabase = createSupabaseAdminClient()
 

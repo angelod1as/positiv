@@ -32,7 +32,9 @@ vi.mock("varlock/env", async (importOriginal) => {
 
 import {
   getOnlinePaymentsSetting,
+  isCardPaymentsEnabled,
   isOnlinePaymentsEnabled,
+  setCardPaymentsEnabled,
   setOnlinePaymentsEnabled,
 } from "./app-settings.server"
 
@@ -164,5 +166,71 @@ describe("online payments setting", () => {
       "service_role INSERT": true,
       "service_role UPDATE": true,
     })
+  })
+})
+
+describe("card payments setting", () => {
+  const { tracker, kysely } = setupIntegrationTest()
+
+  const resetSettings = () =>
+    kysely
+      .insertInto("app_settings")
+      .values({ id: true, card_payments_enabled: false, updated_by: null })
+      .onConflict((oc) =>
+        oc
+          .column("id")
+          .doUpdateSet({ card_payments_enabled: false, updated_by: null }),
+      )
+      .execute()
+
+  beforeEach(async () => {
+    tracker.clear()
+    await resetSettings()
+  })
+
+  afterEach(async () => {
+    await resetSettings()
+    await cleanupAfterTest(tracker, kysely)
+  })
+
+  it("is enabled once an admin switches it on, and off again", async () => {
+    const admin = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: uniqueEmail(),
+    })
+
+    await setCardPaymentsEnabled({ enabled: true, profileId: admin.id })
+    expect(await isCardPaymentsEnabled()).toBe(true)
+
+    await setCardPaymentsEnabled({ enabled: false, profileId: admin.id })
+    expect(await isCardPaymentsEnabled()).toBe(false)
+  })
+
+  it("leaves the online payments switch alone", async () => {
+    const admin = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: uniqueEmail(),
+    })
+    await setOnlinePaymentsEnabled({ enabled: true, profileId: admin.id })
+
+    await setCardPaymentsEnabled({ enabled: true, profileId: admin.id })
+
+    expect(await isOnlinePaymentsEnabled()).toBe(true)
+    await setOnlinePaymentsEnabled({ enabled: false, profileId: admin.id })
+    expect(await isCardPaymentsEnabled()).toBe(true)
+  })
+
+  it("reads a missing row as switched off, and switching brings it back", async () => {
+    const admin = await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: uniqueEmail(),
+    })
+    await kysely.deleteFrom("app_settings").execute()
+
+    expect(await isCardPaymentsEnabled()).toBe(false)
+
+    await setCardPaymentsEnabled({ enabled: true, profileId: admin.id })
+
+    expect(await isCardPaymentsEnabled()).toBe(true)
   })
 })

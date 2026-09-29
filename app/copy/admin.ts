@@ -71,6 +71,26 @@ export const onlinePaymentsSettingCopy = {
   confirmOff: "Desligar",
 } as const
 
+export const cardPaymentsSettingCopy = {
+  title: "Cartão de crédito",
+  description:
+    "Ligado, o link de pagamento oferece cartão em 1x a 6x pelo valor do evento e Pix com 10% de desconto. Desligado, só Pix, pelo valor cheio do evento. Só vale enquanto os pagamentos online estão ligados.",
+  whatStays:
+    "Mudar não altera cobranças já abertas: cada uma mantém o valor e a forma de pagamento com que foi criada.",
+  on: "Ligado",
+  off: "Desligado",
+  turnOn: "Ligar cartão de crédito",
+  turnOff: "Desligar cartão de crédito",
+  confirmOnTitle: "Ligar cartão de crédito?",
+  confirmOnDescription:
+    "Os links de pagamento passam a oferecer cartão em até 6x pelo valor do evento, e o Pix passa a ter 10% de desconto.",
+  confirmOn: "Ligar",
+  confirmOffTitle: "Desligar cartão de crédito?",
+  confirmOffDescription:
+    "Os links de pagamento passam a oferecer só Pix, pelo valor cheio do evento.",
+  confirmOff: "Desligar",
+} as const
+
 export const adminFeedbacksCopy = {
   title: "Feedbacks",
   loadFailed: "Erro ao carregar feedbacks. Tente novamente.",

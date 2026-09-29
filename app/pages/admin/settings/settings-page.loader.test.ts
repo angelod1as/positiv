@@ -1,14 +1,18 @@
 import { describe, expect, it, vi } from "vitest"
-import { getOnlinePaymentsSetting } from "~/business/settings/app-settings.server"
+import {
+  getOnlinePaymentsSetting,
+  isCardPaymentsEnabled,
+} from "~/business/settings/app-settings.server"
 import { defaultOnlinePaymentsSetting } from "~/test/online-payments-setting"
 import { loader } from "./settings-page"
 
 vi.mock("~/business/settings/app-settings.server", () => ({
   getOnlinePaymentsSetting: vi.fn(),
+  isCardPaymentsEnabled: vi.fn(),
 }))
 
 describe("SettingsPage loader", () => {
-  it("hands the page the online payments setting", async () => {
+  it("hands the page the online and card payments settings", async () => {
     const onlinePayments = {
       ...defaultOnlinePaymentsSetting,
       switchedOn: true,
@@ -16,9 +20,10 @@ describe("SettingsPage loader", () => {
       enabled: true,
     }
     vi.mocked(getOnlinePaymentsSetting).mockResolvedValue(onlinePayments)
+    vi.mocked(isCardPaymentsEnabled).mockResolvedValue(true)
 
     const result = await loader()
 
-    expect(result).toEqual({ onlinePayments })
+    expect(result).toEqual({ onlinePayments, cardPayments: true })
   })
 })

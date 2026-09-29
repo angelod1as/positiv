@@ -11,18 +11,21 @@ export type Database = {
     Tables: {
       app_settings: {
         Row: {
+          card_payments_enabled: boolean
           id: boolean
           online_payments_enabled: boolean
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          card_payments_enabled?: boolean
           id?: boolean
           online_payments_enabled?: boolean
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          card_payments_enabled?: boolean
           id?: boolean
           online_payments_enabled?: boolean
           updated_at?: string

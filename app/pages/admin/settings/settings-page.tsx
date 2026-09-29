@@ -5,8 +5,11 @@ import {
 } from "~/business/newsletter/test-listmonk-connection.server"
 import {
   getOnlinePaymentsSetting,
+  isCardPaymentsEnabled,
+  setCardPaymentsEnabled,
   setOnlinePaymentsEnabled,
 } from "~/business/settings/app-settings.server"
+import { CardPaymentsSection } from "~/components/pages/admin/card-payments-section"
 import { ListmonkDiagnosticSection } from "~/components/pages/admin/listmonk-diagnostic-section"
 import { OnlinePaymentsSection } from "~/components/pages/admin/online-payments-section"
 import { Separator } from "~/components/ui/separator"
@@ -33,6 +36,14 @@ export async function action({ request, params }: Route.ActionArgs) {
     return { intent }
   }
 
+  if (intent === "set-card-payments") {
+    await setCardPaymentsEnabled({
+      enabled: formData.get("enabled") === "true",
+      profileId: currentProfile?.id,
+    })
+    return { intent }
+  }
+
   if (intent === "test-listmonk") {
     const diagnosticResult = await testListmonkConnection()
     return { intent: "test-listmonk", diagnosticResult }
@@ -48,7 +59,10 @@ export async function action({ request, params }: Route.ActionArgs) {
 }
 
 export async function loader() {
-  return { onlinePayments: await getOnlinePaymentsSetting() }
+  return {
+    onlinePayments: await getOnlinePaymentsSetting(),
+    cardPayments: await isCardPaymentsEnabled(),
+  }
 }
 
 const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
@@ -57,6 +71,10 @@ const SettingsPage = ({ loaderData }: Route.ComponentProps) => {
       <h1>{adminSettingsCopy.title}</h1>
 
       <OnlinePaymentsSection setting={loaderData.onlinePayments} />
+
+      <Separator />
+
+      <CardPaymentsSection enabled={loaderData.cardPayments} />
 
       <Separator />
 
