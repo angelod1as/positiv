@@ -1,5 +1,6 @@
+import type { HomepageContent } from "~/business/cms/homepage-content.schema"
 import { Button } from "~/components/atoms/button/button"
-import { Copy } from "~/components/atoms/copy/copy"
+import { RichText } from "~/components/atoms/rich-text/rich-text"
 import { homepageCopy } from "~/copy/homepage"
 import routes from "~/lib/paths"
 import { HomePageTitle } from "../home-title/home-title"
@@ -12,15 +13,23 @@ const {
 
 const { ctaBanner } = homepageCopy
 
-export const HomePageCtaBanner = ({ isLoggedIn }: { isLoggedIn: boolean }) => {
+type HomePageCtaBannerProps = {
+  content: HomepageContent["ctaBanner"]
+  isLoggedIn: boolean
+}
+
+export const HomePageCtaBanner = ({
+  content,
+  isLoggedIn,
+}: HomePageCtaBannerProps) => {
   return (
     <Section hasBg>
       <div className="px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
-            <HomePageTitle>{ctaBanner.title}</HomePageTitle>
+            <HomePageTitle>{content.title}</HomePageTitle>
             <p className="mx-auto max-w-[700px] md:text-xl">
-              <Copy inline>{ctaBanner.body}</Copy>
+              <RichText value={content.body} inline />
             </p>
           </div>
           {isLoggedIn ? (
