@@ -600,6 +600,8 @@ export type Database = {
       payments: {
         Row: {
           amount: number | null
+          anticipation_fee: number | null
+          anticipation_status: string | null
           asaas_customer_id: string | null
           asaas_installment_id: string | null
           asaas_invoice_url: string | null
@@ -618,16 +620,21 @@ export type Database = {
           note: string | null
           paid_at: string | null
           refund_amount: number | null
+          refund_cancelled_amount: number | null
           refund_denial_reason: string | null
           refund_denied_at: string | null
+          refund_pending_amount: number | null
           refund_requested_amount: number | null
           refund_requested_at: string | null
           refunded_at: string | null
+          refunds_synced_at: string | null
           status: Database["public"]["Enums"]["payment_status"]
           updated_at: string
         }
         Insert: {
           amount?: number | null
+          anticipation_fee?: number | null
+          anticipation_status?: string | null
           asaas_customer_id?: string | null
           asaas_installment_id?: string | null
           asaas_invoice_url?: string | null
@@ -646,16 +653,21 @@ export type Database = {
           note?: string | null
           paid_at?: string | null
           refund_amount?: number | null
+          refund_cancelled_amount?: number | null
           refund_denial_reason?: string | null
           refund_denied_at?: string | null
+          refund_pending_amount?: number | null
           refund_requested_amount?: number | null
           refund_requested_at?: string | null
           refunded_at?: string | null
+          refunds_synced_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
         }
         Update: {
           amount?: number | null
+          anticipation_fee?: number | null
+          anticipation_status?: string | null
           asaas_customer_id?: string | null
           asaas_installment_id?: string | null
           asaas_invoice_url?: string | null
@@ -674,11 +686,14 @@ export type Database = {
           note?: string | null
           paid_at?: string | null
           refund_amount?: number | null
+          refund_cancelled_amount?: number | null
           refund_denial_reason?: string | null
           refund_denied_at?: string | null
+          refund_pending_amount?: number | null
           refund_requested_amount?: number | null
           refund_requested_at?: string | null
           refunded_at?: string | null
+          refunds_synced_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
         }
