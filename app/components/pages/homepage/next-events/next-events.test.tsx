@@ -4,6 +4,12 @@ import { renderWithRouter, screen } from "~/test/test-utils"
 import type { Event } from "~types/database/entities.types"
 import { HomePageNextEvents } from "./next-events"
 
+const content = {
+  title: "Agenda do editor",
+  subtitle: "Subtítulo do editor.",
+  count: 3,
+}
+
 const asRendered = (markdown: string) => markdown.replaceAll("**", "")
 
 const baseEvent: Event = {
@@ -30,15 +36,26 @@ const baseEvent: Event = {
 }
 
 describe("HomePageNextEvents", () => {
+  it("should render the Editor's section title and subtitle", () => {
+    renderWithRouter(
+      <HomePageNextEvents content={content} events={[baseEvent]} />,
+    )
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Agenda do editor" }),
+    ).toBeInTheDocument()
+    expect(screen.getByText("Subtítulo do editor.")).toBeInTheDocument()
+  })
+
   it("should render event title and description", () => {
-    renderWithRouter(<HomePageNextEvents events={[baseEvent]} />)
+    renderWithRouter(<HomePageNextEvents content={content} events={[baseEvent]} />)
 
     expect(screen.getByText("Test Event")).toBeInTheDocument()
     expect(screen.getByText("A cool event")).toBeInTheDocument()
   })
 
   it("should show open registration message when event is open", () => {
-    renderWithRouter(<HomePageNextEvents events={[baseEvent]} />)
+    renderWithRouter(<HomePageNextEvents content={content} events={[baseEvent]} />)
 
     expect(
       screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpen))
@@ -48,7 +65,7 @@ describe("HomePageNextEvents", () => {
 
   it("should show scheduled message when event is not open", () => {
     const scheduledEvent = { ...baseEvent, event_status: "Scheduled" as const }
-    renderWithRouter(<HomePageNextEvents events={[scheduledEvent]} />)
+    renderWithRouter(<HomePageNextEvents content={content} events={[scheduledEvent]} />)
 
     expect(
       screen.getByText(asRendered(homepageCopy.nextEvents.registrationOpensOn))
@@ -58,7 +75,7 @@ describe("HomePageNextEvents", () => {
 
   it("should not badge a legacy BDSM event", () => {
     const bdsmEvent = { ...baseEvent, event_type: "bdsm" as const }
-    renderWithRouter(<HomePageNextEvents events={[bdsmEvent]} />)
+    renderWithRouter(<HomePageNextEvents content={content} events={[bdsmEvent]} />)
 
     expect(screen.queryByText("Edição BDSM")).not.toBeInTheDocument()
   })
@@ -68,7 +85,7 @@ describe("HomePageNextEvents", () => {
       baseEvent,
       { ...baseEvent, id: "event-2", title: "Second Event" },
     ]
-    renderWithRouter(<HomePageNextEvents events={events} />)
+    renderWithRouter(<HomePageNextEvents content={content} events={events} />)
 
     expect(screen.getByText("Test Event")).toBeInTheDocument()
     expect(screen.getByText("Second Event")).toBeInTheDocument()

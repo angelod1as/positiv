@@ -1,5 +1,6 @@
 import { ArrowRightIcon } from "lucide-react"
 import type { FC } from "react"
+import type { HomepageContent } from "~/business/cms/homepage-content.schema"
 import { Button } from "~/components/atoms/button/button"
 import { Copy } from "~/components/atoms/copy/copy"
 import {
@@ -24,15 +25,19 @@ const {
 const { nextEvents } = homepageCopy
 
 type HomePageNextEventsProps = {
+  content: HomepageContent["nextEvents"]
   events: Array<Event>
 }
-export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({ events }) => {
+export const HomePageNextEvents: FC<HomePageNextEventsProps> = ({
+  content,
+  events,
+}) => {
   return (
     <Section>
       <div className="px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 ">
-          <HomePageTitle subtitle={nextEvents.subtitle}>
-            {nextEvents.title}
+          <HomePageTitle subtitle={content.subtitle}>
+            {content.title}
           </HomePageTitle>
 
           <div className="flex lg:flex-row flex-col gap-8 items-stretch justify-center">

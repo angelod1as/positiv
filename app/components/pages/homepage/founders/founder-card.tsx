@@ -1,19 +1,18 @@
 import Instagram from "~/assets/social/instagram.svg"
+import type { HomepageImage } from "~/business/cms/homepage-content.schema"
 import { Button } from "~/components/atoms/button/button"
 import type { FCC } from "~types/utils/utils.types"
 
 type FounderCardProps = {
   name: string
-  image: string
-  alt: string
+  photo: HomepageImage
   pronounsLabel: string
   instagram: string
   instagramIconAlt: string
 }
 
 export const FounderCard: FCC<FounderCardProps> = ({
-  image,
-  alt,
+  photo,
   name,
   children,
   pronounsLabel,
@@ -23,11 +22,11 @@ export const FounderCard: FCC<FounderCardProps> = ({
   return (
     <div className="flex flex-col items-center space-y-4">
       <img
-        src={image}
-        alt={alt}
-        width={160}
-        height={160}
-        className="object-cover rounded-full"
+        src={photo.url}
+        alt={photo.alt}
+        width={photo.width}
+        height={photo.height}
+        className="size-40 object-cover rounded-full"
       />
       <div className="flex flex-col gap-0">
         <h3 className="text-xl font-bold">{name}</h3>
