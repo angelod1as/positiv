@@ -61,6 +61,7 @@ vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
   isOnlinePaymentsEnabled: async () => paymentsEnabled.value,
 }))
 
+import { AsaasError } from "./asaas-client.server"
 import { FALLBACK_FEES } from "./asaas-fees.server"
 import { pickOption } from "./payment-checkout.server"
 
@@ -187,6 +188,42 @@ describe("pickOption", () => {
       paymentsCopy.errors.customerTaken,
     )
     expect(createAsaasPayment).not.toHaveBeenCalled()
+  })
+
+  it("explains a CPF Asaas refuses in words the participant can act on", async () => {
+    createAsaasCustomer.mockRejectedValueOnce(
+      new AsaasError(
+        400,
+        [{ code: "invalid_cpfCnpj", description: "O CPF/CNPJ informado é inválido." }],
+        "/customers",
+      ),
+    )
+    const payment = await openCharge()
+
+    const result = await pickOption({
+      paymentId: payment.id,
+      profileId,
+      optionId: "pix",
+    })
+
+    expect(result.success === false && result.errors[0]?.message).toBe(
+      paymentsCopy.asaasErrors.checkoutCpf,
+    )
+  })
+
+  it("says the payment system did not answer rather than 'fetch failed'", async () => {
+    createAsaasPayment.mockRejectedValueOnce(new TypeError("fetch failed"))
+    const payment = await openCharge()
+
+    const result = await pickOption({
+      paymentId: payment.id,
+      profileId,
+      optionId: "pix",
+    })
+
+    expect(result.success === false && result.errors[0]?.message).toBe(
+      paymentsCopy.asaasErrors.unavailable,
+    )
   })
 
   it("adopts a customer Asaas already has for that CPF", async () => {

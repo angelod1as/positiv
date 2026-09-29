@@ -9,6 +9,7 @@ import {
   refundAsaasInstallment,
   refundAsaasPayment,
 } from "./asaas-client.server"
+import { asaasErrorMessage } from "./asaas-error-message"
 import {
   deliverPaymentEmail,
   queuePaymentEmail,
@@ -247,7 +248,7 @@ export const requestRefund = applySchema(requestRefundSchema)(
         error: error instanceof Error ? error.message : String(error),
       })
 
-      if (nothingMoved) throw error
+      if (nothingMoved) throw new Error(asaasErrorMessage(error, "refund"))
       throw new Error(paymentsCopy.errors.refundOutcomeUnknown)
     }
 

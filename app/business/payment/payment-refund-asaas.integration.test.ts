@@ -37,6 +37,7 @@ vi.mock("~/business/settings/app-settings.server", async (importOriginal) => ({
   isOnlinePaymentsEnabled: async () => onlinePayments.enabled,
 }))
 
+import { paymentsCopy } from "~/copy/payments"
 import { AsaasError } from "./asaas-client.server"
 import { requestRefund } from "./payment-refund.server"
 
@@ -230,6 +231,33 @@ describe("requestRefund", () => {
 
     expect(result.success).toBe(false)
     expect((await reload(payment.id)).refund_requested_at).toBeNull()
+  })
+
+  it("explains a same-day card refund in words the admin can act on", async () => {
+    refundAsaasInstallment.mockRejectedValueOnce(
+      new AsaasError(
+        400,
+        [
+          {
+            code: "invalid_action",
+            description:
+              "Esta transação só pode ser estornada parcialmente no próximo dia.",
+          },
+        ],
+        `/installments/inst_${counter}/refund`,
+      ),
+    )
+    const payment = await cardPlan()
+
+    const result = await requestRefund({
+      paymentId: payment.id,
+      amount: null,
+      reason: null,
+    })
+
+    expect(result.success ? null : result.errors[0].message).toBe(
+      paymentsCopy.asaasErrors.refundNextDay,
+    )
   })
 
   it("keeps a card plan's claim when Asaas does not answer", async () => {

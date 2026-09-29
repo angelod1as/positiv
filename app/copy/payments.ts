@@ -197,6 +197,24 @@ export const paymentsCopy = {
     submit: "Confirmar cancelamento",
     success: "Cobrança cancelada.",
   },
+  // What an Asaas refusal becomes before a person reads it. The technical
+  // detail -- status, path, code -- stays in the log.
+  asaasErrors: {
+    refundNextDay:
+      "Um pagamento por cartão só pode ser reembolsado em parte a partir do dia seguinte ao pagamento. Tente de novo amanhã.",
+    refundNoBalance:
+      "Não há saldo disponível no Asaas para devolver esse valor agora. Confira o saldo no painel do Asaas e tente de novo.",
+    refundTooMuch:
+      "O valor pedido é maior do que o Asaas ainda pode devolver deste pagamento.",
+    refundRefused: (description: string) =>
+      `O Asaas recusou o reembolso: ${description}`,
+    checkoutCpf:
+      "O sistema de pagamentos não aceitou o CPF da sua conta. Confira o CPF em Dados básicos ou fale com a organização.",
+    checkoutRefused: (description: string) =>
+      `O sistema de pagamentos recusou a cobrança: ${description}`,
+    unavailable:
+      "O sistema de pagamentos não respondeu. Tente de novo em alguns minutos.",
+  },
   errors: {
     participantNotFound: "Participante não encontrade.",
     freeSpot: "Vagas sociais e de produção não têm cobrança.",
