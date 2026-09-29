@@ -66,12 +66,12 @@ const EventsContent: FC<{ events: Event[] | undefined }> = ({ events }) => {
 }
 
 export default function Homepage({ loaderData }: Route.ComponentProps) {
-  const { events, isLoggedIn } = loaderData
+  const { content, events, isLoggedIn } = loaderData
 
   return (
     <>
       <div>
-        <HomePageHero />
+        <HomePageHero content={content.hero} />
         <Suspense fallback={<HomePageNextEventsSkeleton />}>
           <Await resolve={events}>{(resolvedEvents) => <EventsContent events={resolvedEvents} />}</Await>
         </Suspense>
