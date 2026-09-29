@@ -95,7 +95,7 @@ export default function Homepage({ loaderData }: Route.ComponentProps) {
           isLoggedIn={isLoggedIn}
         />
         <HomePageFounders content={content.founders} />
-        <HomePageFeedback />
+        <HomePageFeedback content={content.feedback} />
       </div>
       <FloatingWhatsAppButton />
     </>

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import { describe, expect, it, vi } from "vitest"
-import { homepageCopy } from "~/copy/homepage"
+import type { HomepageContent } from "~/business/cms/homepage-content.schema"
 
 vi.mock("react-router", async () => {
   const actual = await vi.importActual("react-router")
@@ -14,25 +14,45 @@ vi.mock("react-router", async () => {
 
 import { HomePageFeedback } from "./home-page-feedback"
 
+const feedback: HomepageContent["feedback"] = {
+  title: "Conte pra gente",
+  body: [
+    {
+      _type: "block",
+      _key: "b0",
+      style: "normal",
+      markDefs: [],
+      children: [
+        { _type: "span", _key: "s0", text: "Sua opinião ", marks: [] },
+        { _type: "span", _key: "s1", text: "importa", marks: ["em"] },
+      ],
+    },
+  ],
+  ctaLabel: "Mandar opinião",
+}
+
 describe("HomePageFeedback", () => {
   it("should render the section title", () => {
-    render(<HomePageFeedback />)
+    render(<HomePageFeedback content={feedback} />)
 
     expect(
-      screen.getByText(homepageCopy.feedback.title),
+      screen.getByRole("heading", { level: 2, name: "Conte pra gente" }),
     ).toBeInTheDocument()
   })
 
-  it("should render the description text", () => {
-    render(<HomePageFeedback />)
+  it("should render the description text inline", () => {
+    render(<HomePageFeedback content={feedback} />)
 
-    expect(screen.getByText(homepageCopy.feedback.body)).toBeInTheDocument()
+    const emphasis = screen.getByText("importa")
+    expect(emphasis.tagName).toBe("EM")
+    expect(emphasis.parentElement?.tagName).toBe("P")
+    expect(emphasis.parentElement).toHaveTextContent("Sua opinião importa")
   })
 
   it("should render a link button to the feedback page", () => {
-    render(<HomePageFeedback />)
+    render(<HomePageFeedback content={feedback} />)
 
-    const link = screen.getByRole("link", { name: homepageCopy.feedback.cta })
+    const link = screen.getByRole("link", { name: "Mandar opinião" })
     expect(link).toBeInTheDocument()
     expect(link).toHaveAttribute("href", "/feedback")
   })
