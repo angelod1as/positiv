@@ -135,16 +135,42 @@ export async function createAsaasCustomer(input: {
   mobilePhone?: string
   externalReference: string
 }): Promise<string> {
-  const { id } = await asaasRequest("POST", "/customers", customerId, {
+  const body = {
     name: input.name,
     cpfCnpj: normalizeCpf(input.cpf),
     email: input.email,
-    mobilePhone: input.mobilePhone,
     externalReference: input.externalReference,
     notificationDisabled: true,
-  })
-  return id
+  }
+  const mobilePhone =
+    input.mobilePhone && BRAZILIAN_MOBILE.test(input.mobilePhone)
+      ? input.mobilePhone
+      : undefined
+
+  // Asaas needs no phone to charge anyone, and refuses the whole customer over
+  // one it dislikes -- including numbers of the right shape, like 11999999999.
+  // A payment is never worth losing to a phone, so the customer goes without.
+  try {
+    const { id } = await asaasRequest("POST", "/customers", customerId, {
+      ...body,
+      mobilePhone,
+    })
+    return id
+  } catch (error) {
+    const phoneRefused =
+      mobilePhone &&
+      error instanceof AsaasError &&
+      error.errors.some((entry) => entry.code === "invalid_mobilePhone")
+    if (!phoneRefused) throw error
+
+    const { id } = await asaasRequest("POST", "/customers", customerId, body)
+    return id
+  }
 }
+
+// A DDD, then the nine digits of a mobile. Landlines, numbers still missing the
+// ninth digit and foreign numbers are all refused by Asaas.
+const BRAZILIAN_MOBILE = /^[1-9]{2}9\d{8}$/
 
 export async function findAsaasCustomerByCpf(cpf: string): Promise<string | null> {
   const { data } = await asaasRequest(
@@ -244,40 +270,84 @@ export async function refundAsaasPayment(
   )
 }
 
-// The two statuses whose money is Positiv's to give back. A PENDING
-// installment has been billed to nobody yet, and asking to refund one
-// answers 400.
-const REFUNDABLE_STATUSES = ["CONFIRMED", "RECEIVED"]
+/**
+ * Gives back money from a card plan. Asaas refuses a refund on one charge of a
+ * plan ("Não é possível estornar individualmente esta cobrança"), so a plan is
+ * refunded through the plan: `value` is the total to give back, spread by Asaas
+ * over its charges, and no value refunds all of it.
+ */
+export async function refundAsaasInstallment(
+  installmentId: string,
+  input: { amount: number | null },
+): Promise<void> {
+  const body: Record<string, unknown> = {}
+  if (input.amount !== null) body.value = centsToReais(input.amount)
 
-export type AsaasInstallmentPayment = { id: string; value: number }
+  await asaasRequest(
+    "POST",
+    `/installments/${installmentId}/refund`,
+    zod.object({ id: zod.string() }),
+    body,
+  )
+}
+
+// A charge's or a plan's refunds, as Asaas lists them on the resource itself.
+// Only the two fields that say how much and how far along; the rest -- dates,
+// receipts, splits -- is for the dashboard.
+const refundsOf = zod.object({
+  refunds: zod
+    .array(zod.object({ value: zod.number(), status: zod.string() }))
+    .nullable()
+    .optional(),
+})
+
+export type AsaasRefundEntry = { value: number; status: string }
+
+/** Every refund of a single charge, with its status. */
+export async function getAsaasPaymentRefunds(
+  paymentId: string,
+): Promise<AsaasRefundEntry[]> {
+  const { refunds } = await asaasRequest("GET", `/payments/${paymentId}`, refundsOf)
+  return (refunds ?? []).map(({ value, status }) => ({ value, status }))
+}
 
 /**
- * The individual charges behind a card plan. A plan is refunded one charge at a
- * time: `/installments/{id}/refund` can only give the whole plan back, which is
- * a full refund, and a full refund costs Positiv the anticipation fee.
+ * Every refund of a card plan. Read from the plan, not its charges: a plan is
+ * refunded through the plan, and Asaas lists each installment's share there --
+ * including one still "em progresso" that no charge event has reported.
  */
-export async function listAsaasInstallmentPayments(
+export async function getAsaasInstallmentRefunds(
   installmentId: string,
-): Promise<AsaasInstallmentPayment[]> {
+): Promise<AsaasRefundEntry[]> {
+  const { refunds } = await asaasRequest(
+    "GET",
+    `/installments/${installmentId}`,
+    refundsOf,
+  )
+  return (refunds ?? []).map(({ value, status }) => ({ value, status }))
+}
+
+export type AsaasAnticipation = { status: string; fee: number }
+
+/**
+ * The anticipations of a charge or a plan, one per charge. Asaas charges the
+ * anticipation fee here and not in the charge's netValue, so it is the only
+ * place that says what advancing a card charge cost. One page is the whole
+ * plan: a plan has at most MAX_INSTALLMENTS (6) charges.
+ */
+export async function listAsaasAnticipations(
+  of: { payment: string } | { installment: string },
+): Promise<AsaasAnticipation[]> {
+  const filter =
+    "payment" in of ? `payment=${of.payment}` : `installment=${of.installment}`
   const { data } = await asaasRequest(
     "GET",
-    // One page is the whole plan: a plan has at most MAX_INSTALLMENTS (6)
-    // charges, far below the page size.
-    `/payments?installment=${installmentId}&limit=100`,
+    `/anticipations?${filter}&limit=100`,
     zod.object({
-      data: zod.array(
-        zod.object({
-          id: zod.string(),
-          value: zod.number(),
-          status: zod.string(),
-        }),
-      ),
+      data: zod.array(zod.object({ status: zod.string(), fee: zod.number() })),
     }),
   )
-
-  return data
-    .filter((payment) => REFUNDABLE_STATUSES.includes(payment.status))
-    .map((payment) => ({ id: payment.id, value: reaisToCents(payment.value) }))
+  return data.map(({ status, fee }) => ({ status, fee: reaisToCents(fee) }))
 }
 
 // Only the fields the fee mapper reads are described. Everything Asaas ships

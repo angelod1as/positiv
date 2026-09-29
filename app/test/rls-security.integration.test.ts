@@ -179,6 +179,9 @@ describe("RLS Security - Integration Tests", () => {
     // The function is SECURITY DEFINER and takes the user id as an argument, so
     // the grant alone does not stop one signed-in user from reading another
     // user's cpf, rg, phone and date of birth. The guard lives in the body.
+    // One CPF per profile is enforced, and the victim's must differ from the
+    // caller's for the victim to exist at all.
+    let cpfCounter = 0
     const createUserWithProfile = async (label: string) => {
       const email = `pos539-${label}-${Date.now()}@example.com`
       const userId = await createTestAuthUser(email, "test1234", tracker)
@@ -187,7 +190,7 @@ describe("RLS Security - Integration Tests", () => {
         user_id: userId,
         email,
         full_name: `POS-539 ${label}`,
-        cpf: "12345678901",
+        cpf: String(12345678900 + ++cpfCounter),
       })
 
       return { userId, email }

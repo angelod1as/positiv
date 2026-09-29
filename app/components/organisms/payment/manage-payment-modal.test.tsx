@@ -532,6 +532,109 @@ describe("ManagePaymentModal", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("says Asaas denied the last refund, why, and offers it again", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          paidAsaasCharge({
+            refund_denied_at: "2026-09-29T00:25:53Z",
+            refund_denial_reason: "Falha ao processar a transferência.",
+          }),
+        ]}
+      />,
+    )
+
+    expect(
+      screen.getByText(
+        "O Asaas negou o último pedido de reembolso. Motivo: Falha ao processar a transferência. Você pode pedir de novo.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Reembolsar" })).toBeInTheDocument()
+  })
+
+  it("says a refund was denied even when Asaas gave no reason", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[paidAsaasCharge({ refund_denied_at: "2026-09-29T00:25:53Z" })]}
+      />,
+    )
+
+    expect(
+      screen.getByText(
+        "O Asaas negou o último pedido de reembolso. Você pode pedir de novo.",
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it("says what went back, what is still on its way and what Asaas cancelled", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          paidAsaasCharge({
+            status: "partially_refunded",
+            refund_amount: 11715,
+            refunded_at: "2026-09-29T01:09:02Z",
+            refund_pending_amount: 10851,
+            refund_cancelled_amount: 1000,
+          }),
+        ]}
+      />,
+    )
+
+    expect(screen.getByText(/Devolvido R\$\s?117,15/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Em andamento no Asaas: R\$\s?108,51/),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Cancelado pelo Asaas: R\$\s?10,00/)).toBeInTheDocument()
+  })
+
+  it("counts what anticipation costs out of what Positiv receives", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          paidAsaasCharge({
+            method: "credit_card",
+            amount: 23430,
+            asaas_net: 22566,
+            anticipation_fee: 578,
+            anticipation_status: "PENDING",
+          }),
+        ]}
+      />,
+    )
+
+    expect(screen.getByText(/R\$\s?219,88/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Antecipação em análise · taxa R\$\s?5,78/),
+    ).toBeInTheDocument()
+  })
+
+  it("brings an Asaas payment up to date from Asaas", async () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Atualizar do Asaas" }),
+    )
+
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect((formData as FormData).get("intent")).toBe("payment-sync")
+    expect((formData as FormData).get("paymentId")).toBe("asaas-1")
+  })
+
+  it("offers no update from Asaas on a manual payment", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    expect(
+      screen.queryByRole("button", { name: "Atualizar do Asaas" }),
+    ).not.toBeInTheDocument()
+  })
+
   it("waits for the net before offering an Asaas refund", () => {
     render(
       <ManagePaymentModal
@@ -689,6 +792,62 @@ describe("ManagePaymentModal - the Cobrança section", () => {
     ).not.toBeInTheDocument()
   })
 
+  it.each(["social", "staff"])(
+    "says why a %s spot has no charge instead of hiding it silently",
+    (spotType) => {
+      render(<ManagePaymentModal {...baseProps} spotType={spotType} />)
+
+      expect(
+        screen.getByText("Vaga social ou staff não paga: não há cobrança."),
+      ).toBeInTheDocument()
+    },
+  )
+
+  it("says nothing about the spot when payments are switched off", () => {
+    render(
+      <ManagePaymentModal {...baseProps} spotType="social" paymentsEnabled={false} />,
+    )
+
+    expect(
+      screen.queryByText("Vaga social ou staff não paga: não há cobrança."),
+    ).not.toBeInTheDocument()
+  })
+
+  it("puts the link and the message to send first, while a charge is open", () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[openCharge]} active={openCharge} />,
+    )
+
+    const share = screen.getByRole("group", { name: "Link de pagamento" })
+    expect(
+      within(share).getByText("https://www.positivparty.com/pagamento/open-1"),
+    ).toBeInTheDocument()
+    expect(
+      within(share).getByRole("button", { name: "Copiar mensagem" }),
+    ).toBeInTheDocument()
+    // Copying is the errand; the actions that change the charge live apart.
+    expect(
+      within(share).queryByRole("button", { name: "Reenviar com outro valor" }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(share).queryByRole("button", { name: "Reenviar email" }),
+    ).not.toBeInTheDocument()
+  })
+
+  it("tells the admin to send the message as soon as the charge is created", () => {
+    fetcherData = { success: true, intent: "payment-offer", emailSent: true }
+
+    render(
+      <ManagePaymentModal {...baseProps} payments={[openCharge]} active={openCharge} />,
+    )
+
+    expect(
+      screen.getByText(
+        "Cobrança criada e enviada por email. Copie a mensagem e mande também pelo WhatsApp.",
+      ),
+    ).toBeInTheDocument()
+  })
+
   it("re-prices an open charge", async () => {
     render(
       <ManagePaymentModal
@@ -729,6 +888,38 @@ describe("ManagePaymentModal - the Cobrança section", () => {
       screen.getByRole("button", { name: "Substituir cobrança" }),
     )
     expect(lastSubmission().get("intent")).toBe("payment-offer")
+  })
+
+  it.each(["refunded", "partially_refunded"] as const)(
+    "asks before charging again someone whose payment was %s",
+    async (status) => {
+      const refunded = paidAsaasCharge({
+        status,
+        refund_amount: status === "refunded" ? 21900 : 5000,
+        refunded_at: "2026-09-02T12:00:00Z",
+      })
+      render(<ManagePaymentModal {...baseProps} payments={[refunded]} />)
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Enviar cobrança" }),
+      )
+      expect(submit).not.toHaveBeenCalled()
+      expect(
+        screen.getByText("Tem certeza que deseja gerar outra cobrança?"),
+      ).toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole("button", { name: "Gerar cobrança" }))
+      expect(lastSubmission().get("intent")).toBe("payment-offer")
+      expect(lastSubmission().get("confirmAfterRefund")).toBe("true")
+    },
+  )
+
+  it("does not ask when nothing was ever refunded", async () => {
+    render(<ManagePaymentModal {...baseProps} />)
+
+    await userEvent.click(screen.getByRole("button", { name: "Enviar cobrança" }))
+
+    expect(lastSubmission().get("confirmAfterRefund")).toBeNull()
   })
 
   it("resends the email for the open charge", async () => {

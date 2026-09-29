@@ -25,4 +25,36 @@ describe("Seeded profiles", () => {
 
     expect(invalid).toEqual([])
   })
+
+  // Asaas knows a customer by CPF: two seeded profiles sharing one end up
+  // sharing a customer, and the second to pay fails on it.
+  it("gives every seeded profile a CPF of its own", async () => {
+    const shared = await kysely
+      .selectFrom("profiles")
+      .select("cpf")
+      .where("email", "~", "^(admin|user[0-9]+)@example\\.com$")
+      .groupBy("cpf")
+      .having((eb) => eb.fn.countAll(), ">", 1)
+      .execute()
+
+    expect(shared).toEqual([])
+  })
+
+  // A phone Asaas refuses is dropped from the customer, so a local payment
+  // would never exercise the phone at all.
+  it("gives every seeded profile a distinct Brazilian mobile", async () => {
+    const seeded = await kysely
+      .selectFrom("profiles")
+      .select(["email", "phone"])
+      .where("email", "~", "^(admin|user[0-9]+)@example\\.com$")
+      .execute()
+
+    const notMobile = seeded
+      .filter((profile) => !/^[1-9]{2}9\d{8}$/.test(String(profile.phone)))
+      .map((profile) => `${profile.email}: ${profile.phone}`)
+    const phones = seeded.map((profile) => String(profile.phone))
+
+    expect(notMobile).toEqual([])
+    expect(new Set(phones).size).toBe(phones.length)
+  })
 })

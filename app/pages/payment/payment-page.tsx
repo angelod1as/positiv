@@ -205,18 +205,48 @@ const Options = ({
     <Form method="post">
       <CardContent className="flex flex-col gap-4">
         <h2 className="font-bold">{page.chooseOption}</h2>
+        <p className="text-muted-foreground text-sm">
+          {page.feesIntro(data.baseAmount)}
+        </p>
         <RadioGroup
           name="optionId"
           defaultValue={data.chosen?.id ?? "pix"}
           className="gap-3"
         >
+          {/* One card per option, the whole card clickable. Named by the line
+              with its total, described by the one saying where the total
+              comes from -- what the event costs and what the fees add. */}
           {data.options.map((option: PaymentOption) => (
-            <div key={option.id} className="flex items-center gap-3">
-              <RadioGroupItem value={option.id} id={option.id} />
-              <Label htmlFor={option.id}>
-                {paymentsCopy.options.label(option)}
-              </Label>
-            </div>
+            <Label
+              key={option.id}
+              htmlFor={option.id}
+              className="has-[[data-state=checked]]:border-primary flex cursor-pointer items-start gap-3 rounded-md border p-4"
+            >
+              <RadioGroupItem
+                value={option.id}
+                id={option.id}
+                aria-labelledby={`${option.id}-title`}
+                aria-describedby={`${option.id}-breakdown`}
+                className="mt-0.5"
+              />
+              <span className="flex flex-1 flex-col gap-1">
+                <span
+                  id={`${option.id}-title`}
+                  className="flex justify-between gap-4 font-medium"
+                >
+                  <span>{paymentsCopy.options.title(option)}</span>{" "}
+                  <span className="whitespace-nowrap">
+                    {formatCurrency(option.total)}
+                  </span>
+                </span>
+                <span
+                  id={`${option.id}-breakdown`}
+                  className="text-muted-foreground text-sm font-normal"
+                >
+                  {paymentsCopy.options.breakdown(data.baseAmount, option)}
+                </span>
+              </span>
+            </Label>
           ))}
         </RadioGroup>
         <Copy>{page.dueAt(formatDateTime(data.dueAt).full ?? "")}</Copy>

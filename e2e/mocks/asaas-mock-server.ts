@@ -4,7 +4,8 @@
 // so a spec can assert on the request the app made, not only on the screen.
 //
 // The global setup and the Playwright workers are separate processes, so specs
-// reach this state over HTTP — /__mock/calls and /__mock/reset — never through
+// reach this state over HTTP — /__mock/calls, /__mock/reset and
+// /__mock/settle-refunds — never through
 // module variables.
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 import type { AddressInfo } from "node:net"
@@ -48,17 +49,22 @@ type Charge = {
   externalReference: string | null
   deleted: boolean
   refunded: number
+  refunds: Refund[]
 }
+
+// As Asaas lists them: a charge's own, or a plan's on the plan.
+type Refund = { value: number; status: string }
 
 type State = {
   calls: Call[]
   customers: { id: string; cpfCnpj: string }[]
   charges: Charge[]
+  planRefunds: Record<string, Refund[]>
   sequence: number
 }
 
 function emptyState(): State {
-  return { calls: [], customers: [], charges: [], sequence: 0 }
+  return { calls: [], customers: [], charges: [], planRefunds: {}, sequence: 0 }
 }
 
 let state = emptyState()
@@ -151,6 +157,7 @@ function createCharge(body: Record<string, unknown>, response: ServerResponse, o
     externalReference: typeof body.externalReference === "string" ? body.externalReference : null,
     deleted: false,
     refunded: 0,
+    refunds: [],
   }))
   state.charges.push(...charges)
 
@@ -226,6 +233,15 @@ async function handleApi(
     if (!["CONFIRMED", "RECEIVED"].includes(charge.status)) {
       return fail(response, 400, "invalid_action", "Esta cobrança não pode ser estornada.")
     }
+    // A card plan is refunded through the plan, never one charge at a time.
+    if (charge.installment && charge.billingType === "CREDIT_CARD") {
+      return fail(
+        response,
+        400,
+        "invalid_object",
+        "Não é possível estornar individualmente esta cobrança.",
+      )
+    }
     // Without a value Asaas gives back whatever the charge still holds; with
     // one, never more than that.
     const remaining = reaisToCents(charge.value) - charge.refunded
@@ -234,10 +250,62 @@ async function handleApi(
       return fail(response, 400, "invalid_value", "O valor do estorno excede o valor disponível.")
     }
     charge.refunded += requested
+    // A charge's refund is done at once, as a Pix refund is.
+    charge.refunds.push({ value: requested / 100, status: "DONE" })
     return send(response, 200, publicCharge(charge, origin))
   }
 
+  // `value` is the total to give back across the plan; without one, all of it.
+  // Where the money comes from among the charges is Asaas's business, so the
+  // mock simply takes it from the first charges that still hold some.
+  const planRefund = path.match(/^\/installments\/([^/]+)\/refund$/)
+  if (method === "POST" && planRefund) {
+    const plan = state.charges.filter(
+      (charge) => charge.installment === planRefund[1] && !charge.deleted,
+    )
+    if (!plan.length) return fail(response, 404, "not_found", "Parcelamento não encontrado.")
+    if (plan.some((charge) => !["CONFIRMED", "RECEIVED"].includes(charge.status))) {
+      return fail(response, 400, "invalid_action", "Este parcelamento não pode ser estornado.")
+    }
+    const holds = (charge: Charge) => reaisToCents(charge.value) - charge.refunded
+    const remaining = plan.reduce((total, charge) => total + holds(charge), 0)
+    const requested = body.value === undefined ? remaining : reaisToCents(Number(body.value))
+    if (remaining <= 0 || requested > remaining) {
+      return fail(response, 400, "invalid_value", "O valor do estorno excede o valor disponível.")
+    }
+    let left = requested
+    for (const charge of plan) {
+      const share = Math.min(holds(charge), left)
+      charge.refunded += share
+      left -= share
+    }
+    // In progress until a spec settles it, as a card refund is at Asaas.
+    const refunds = (state.planRefunds[planRefund[1]] ??= [])
+    refunds.push({ value: requested / 100, status: "PENDING" })
+    return send(response, 200, {
+      id: planRefund[1],
+      refunds: [{ status: "PENDING", value: requested / 100 }],
+    })
+  }
+
+  const plan = path.match(/^\/installments\/([^/]+)$/)
+  if (method === "GET" && plan) {
+    if (!state.charges.some((charge) => charge.installment === plan[1])) {
+      return fail(response, 404, "not_found", "Parcelamento não encontrado.")
+    }
+    return send(response, 200, { id: plan[1], refunds: state.planRefunds[plan[1]] ?? [] })
+  }
+
+  if (method === "GET" && path === "/anticipations") {
+    return send(response, 200, { data: [] })
+  }
+
   const single = path.match(/^\/payments\/([^/]+)$/)
+  if (method === "GET" && single) {
+    const charge = findCharge(single[1])
+    if (!charge) return fail(response, 404, "not_found", "Cobrança não encontrada.")
+    return send(response, 200, { ...publicCharge(charge, origin), refunds: charge.refunds })
+  }
   if (method === "DELETE" && single) {
     const charge = findCharge(single[1])
     if (!charge) return fail(response, 404, "not_found", "Cobrança não encontrada.")
@@ -260,6 +328,13 @@ async function handle(request: IncomingMessage, response: ServerResponse) {
 
   if (url.pathname === "/__mock/calls" && method === "GET") {
     return send(response, 200, state.calls)
+  }
+  // Stands in for Asaas finishing the card refunds it had in progress.
+  if (url.pathname === "/__mock/settle-refunds" && method === "POST") {
+    for (const refunds of Object.values(state.planRefunds)) {
+      for (const refund of refunds) refund.status = "DONE"
+    }
+    return send(response, 200, { ok: true })
   }
   if (url.pathname === "/__mock/reset" && method === "POST") {
     state = emptyState()

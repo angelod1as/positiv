@@ -94,6 +94,8 @@ describe("loadPaymentPage", () => {
       "card_6",
     ])
     expect(result.options[0]?.total).toBe(22199)
+    // What Positiv receives, so the page can tell it apart from the fees.
+    expect(result.baseAmount).toBe(22000)
     expect(result.eventTitle).toBe("Payment Page Event")
     expect(result.chosen).toBeNull()
   })

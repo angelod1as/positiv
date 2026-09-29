@@ -53,6 +53,22 @@ describe("savePaymentCpf", () => {
     expect(await cpfOf()).toBeNull()
   })
 
+  it("refuses a CPF another profile already holds and leaves the profile alone", async () => {
+    await createTestProfile(tracker, kysely, {
+      user_id: null,
+      email: `test${Date.now()}-cpf-owner@example.com`,
+      cpf: "52998224725",
+    })
+
+    const result = await savePaymentCpf({ profileId, cpf: "529.982.247-25" })
+
+    expect(result.success).toBe(false)
+    expect(result.success === false && result.errors[0]?.message).toBe(
+      paymentsCopy.errors.cpfTaken,
+    )
+    expect(await cpfOf()).toBeNull()
+  })
+
   it("refuses a CPF of the wrong length", async () => {
     const result = await savePaymentCpf({ profileId, cpf: "5299822472" })
 

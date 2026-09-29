@@ -373,6 +373,62 @@ const CancelDialog: FC<CancelDialogProps> = ({
   </AlertDialog>
 )
 
+/**
+ * What Positiv keeps from a payment. Asaas charges the card anticipation fee
+ * outside the charge's netValue, so it comes off asaas_net here; before the
+ * webhook reports a net, the agreed base amount stands in for it.
+ */
+const receivedBy = (payment: PaymentRow): number =>
+  payment.asaas_net === null
+    ? payment.base_amount
+    : payment.asaas_net - (payment.anticipation_fee ?? 0)
+
+/**
+ * Where a payment's refund and anticipation stand, as Asaas last reported
+ * them -- under its status, so the admin does not have to open Asaas to know
+ * whether the rest of a refund is still on its way.
+ */
+const PaymentProgress: FC<{ payment: PaymentRow }> = ({ payment }) => {
+  const lines = [
+    (payment.refund_amount ?? 0) > 0 &&
+      manage.refundLines.refunded(formatCurrency(payment.refund_amount ?? 0)),
+    (payment.refund_pending_amount ?? 0) > 0 &&
+      manage.refundLines.pending(
+        formatCurrency(payment.refund_pending_amount ?? 0),
+      ),
+    (payment.refund_cancelled_amount ?? 0) > 0 &&
+      manage.refundLines.cancelled(
+        formatCurrency(payment.refund_cancelled_amount ?? 0),
+      ),
+    payment.anticipation_status &&
+      manage.anticipation.line(
+        manage.anticipation.statuses[payment.anticipation_status] ??
+          payment.anticipation_status,
+        payment.anticipation_fee
+          ? formatCurrency(payment.anticipation_fee)
+          : null,
+      ),
+    payment.refunds_synced_at &&
+      manage.sync.syncedAt(
+        formatInTimeZone(
+          payment.refunds_synced_at,
+          "America/Sao_Paulo",
+          "dd/MM HH:mm",
+        ),
+      ),
+  ].filter((line): line is string => Boolean(line))
+
+  if (!lines.length) return null
+
+  return (
+    <ul className="text-muted-foreground text-xs">
+      {lines.map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
+  )
+}
+
 type ChargeSectionProps = {
   active: PaymentRow | null
   participantName: string
@@ -381,7 +437,9 @@ type ChargeSectionProps = {
   fees: AsaasFees
   appOrigin: string
   isSubmitting: boolean
-  onOffer: (baseAmount: string) => void
+  justCreated: boolean
+  wasRefunded: boolean
+  onOffer: (baseAmount: string, confirmAfterRefund: boolean) => void
   onResend: (paymentId: string) => void
 }
 
@@ -399,6 +457,8 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   fees,
   appOrigin,
   isSubmitting,
+  justCreated,
+  wasRefunded,
   onOffer,
   onResend,
 }) => {
@@ -415,10 +475,31 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   // Replacing a charge the participant has already acted on deletes it at
   // Asaas mid-checkout, so that one asks first. A pending row is nobody's
   // work in progress.
-  const needsConfirmation = active?.status === "awaiting_payment"
+  // Charging again someone whose money already went back is legitimate, but
+  // rare enough to be a slip, so it asks too.
+  const confirmation =
+    active?.status === "awaiting_payment"
+      ? {
+          title: charge.replaceConfirm,
+          description: charge.replaceDescription,
+          keep: charge.replaceKeep,
+          submit: charge.replaceSubmit,
+        }
+      : !active && wasRefunded
+        ? {
+            title: charge.afterRefundConfirm,
+            description: charge.afterRefundDescription,
+            keep: charge.afterRefundKeep,
+            submit: charge.afterRefundSubmit,
+          }
+        : null
+
+  const paymentUrl = active
+    ? `${appOrigin}${paths.payment.PAYMENT(active.id)}`
+    : null
 
   const copyMessage = () => {
-    if (!active) return
+    if (!active || !paymentUrl) return
     // Built here rather than fetched: writeText has to run inside the click
     // that asked for it, and a round trip first loses that permission.
     const message = paymentsCopy.whatsappMessage({
@@ -427,7 +508,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
       // The origin the server would use, not the one this browser happens to
       // be on: appOrigin deliberately ignores the request host, and the two
       // channels must hand the participant the same link.
-      paymentUrl: `${appOrigin}${paths.payment.PAYMENT(active.id)}`,
+      paymentUrl,
       dueAt: active.due_at,
       options: buildPaymentOptions(active.base_amount, fees),
     })
@@ -440,7 +521,7 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   // with it rather than sitting under a link that no longer works.
   const sendOffer = () => {
     setCopied(false)
-    onOffer(amount)
+    onOffer(amount, !active && wasRefunded)
   }
 
   const sendLabel = active ? charge.resendAmount : charge.send
@@ -448,6 +529,37 @@ const ChargeSection: FC<ChargeSectionProps> = ({
   return (
     <section className="flex flex-col gap-4 border-b pb-4">
       <h3 className="font-bold">{charge.title}</h3>
+
+      {/* Getting the link to the participant is what the admin opened the
+          charge for, so it comes first and on its own, away from the buttons
+          that change the charge. */}
+      {active && paymentUrl && (
+        <div
+          role="group"
+          aria-labelledby="charge-share-title"
+          className="flex flex-col gap-2 rounded-md border p-3"
+        >
+          <p id="charge-share-title" className="text-sm font-medium">
+            {charge.shareTitle}
+          </p>
+          {justCreated && (
+            <p role="status" className="text-sm">
+              {charge.created}
+            </p>
+          )}
+          <p className="text-muted-foreground text-sm break-all">
+            {paymentUrl}
+          </p>
+          <Button className="self-start" onClick={copyMessage}>
+            {charge.copyMessage}
+          </Button>
+          {copied && (
+            <p role="status" className="text-muted-foreground text-sm">
+              {charge.copied}
+            </p>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="charge-amount">{charge.amount}</Label>
@@ -466,25 +578,25 @@ const ChargeSection: FC<ChargeSectionProps> = ({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {needsConfirmation ? (
+        {confirmation ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button disabled={isSubmitting}>{sendLabel}</Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{charge.replaceConfirm}</AlertDialogTitle>
+                <AlertDialogTitle>{confirmation.title}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  {charge.replaceDescription}
+                  {confirmation.description}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>{charge.replaceKeep}</AlertDialogCancel>
+                <AlertDialogCancel>{confirmation.keep}</AlertDialogCancel>
                 <AlertDialogAction
                   disabled={isSubmitting}
                   onClick={() => sendOffer()}
                 >
-                  {charge.replaceSubmit}
+                  {confirmation.submit}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -496,30 +608,15 @@ const ChargeSection: FC<ChargeSectionProps> = ({
         )}
 
         {active && (
-          <>
-            <Button
-              variant="outline"
-              disabled={isSubmitting}
-              onClick={() => onResend(active.id)}
-            >
-              {charge.resendEmail}
-            </Button>
-            <Button
-              variant="outline"
-              disabled={isSubmitting}
-              onClick={copyMessage}
-            >
-              {charge.copyMessage}
-            </Button>
-          </>
+          <Button
+            variant="outline"
+            disabled={isSubmitting}
+            onClick={() => onResend(active.id)}
+          >
+            {charge.resendEmail}
+          </Button>
         )}
       </div>
-
-      {copied && (
-        <p role="status" className="text-muted-foreground text-sm">
-          {charge.copied}
-        </p>
-      )}
     </section>
   )
 }
@@ -678,7 +775,12 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       "dd/MM",
                     )}
                   </TableCell>
-                  <TableCell>{paymentStatusPropMap(payment.status)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {paymentStatusPropMap(payment.status)}
+                      <PaymentProgress payment={payment} />
+                    </div>
+                  </TableCell>
                   <TableCell>{manage.kinds[payment.kind]}</TableCell>
                   <TableCell>
                     {payment.method
@@ -693,7 +795,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       pick a method, long before asaas_net exists. "Taxas" is
                       their share, known from the same moment. */}
                   <TableCell className="whitespace-nowrap">
-                    {formatCurrency(payment.asaas_net ?? payment.base_amount)}
+                    {formatCurrency(receivedBy(payment))}
                   </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">
                     {payment.kind === "asaas" && payment.amount !== null
@@ -702,10 +804,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                         // to exist without asaas_net, and the estimate the
                         // participant was quoted beats showing no fee at all
                         // on a charge that certainly had one.
-                        formatCurrency(
-                          payment.amount -
-                            (payment.asaas_net ?? payment.base_amount),
-                        )
+                        formatCurrency(payment.amount - receivedBy(payment))
                       : manage.noAmount}
                   </TableCell>
                   <TableCell>
@@ -757,19 +856,43 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                             {refund.asaas.awaitingNet}
                           </p>
                         ) : (
-                          <AsaasRefundDialog
-                            payment={payment}
-                            isSubmitting={isSubmitting}
-                            onConfirm={(paymentId, amount, reason) =>
-                              post({
-                                intent: "payment-refund",
-                                paymentId,
-                                amount,
-                                reason,
-                              })
-                            }
-                          />
+                          <div className="flex flex-col gap-2">
+                            {/* Asaas denied the last attempt and the claim
+                                came back. Without this the button reappears
+                                as if nothing had been tried. */}
+                            {payment.refund_denied_at && (
+                              <p className="text-destructive text-sm">
+                                {refund.asaas.denied(
+                                  payment.refund_denial_reason,
+                                )}
+                              </p>
+                            )}
+                            <AsaasRefundDialog
+                              payment={payment}
+                              isSubmitting={isSubmitting}
+                              onConfirm={(paymentId, amount, reason) =>
+                                post({
+                                  intent: "payment-refund",
+                                  paymentId,
+                                  amount,
+                                  reason,
+                                })
+                              }
+                            />
+                          </div>
                         ))}
+                      {payment.kind === "asaas" && payment.asaas_payment_id && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isSubmitting}
+                          onClick={() =>
+                            post({ intent: "payment-sync", paymentId: payment.id })
+                          }
+                        >
+                          {manage.sync.button}
+                        </Button>
+                      )}
                       {active?.id === payment.id && (
                         <CancelDialog
                           payment={payment}
@@ -808,6 +931,12 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
           </p>
         )}
 
+        {paymentsEnabled && (spotType === "social" || spotType === "staff") && (
+          <p className="text-muted-foreground text-sm">
+            {charge.noChargeForSpot}
+          </p>
+        )}
+
         {paymentsEnabled && spotType === "regular" && fees && (
           <ChargeSection
             // Remounts when the charge does, so the amount field re-seeds from
@@ -821,8 +950,21 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
             fees={fees}
             appOrigin={appOrigin}
             isSubmitting={isSubmitting}
-            onOffer={(baseAmount) =>
-              post({ intent: "payment-offer", eventParticipantId, baseAmount })
+            justCreated={
+              fetcher.data?.success === true &&
+              fetcher.data.intent === "payment-offer" &&
+              fetcher.data.emailSent === true
+            }
+            wasRefunded={payments.some((payment) =>
+              ["refunded", "partially_refunded"].includes(payment.status),
+            )}
+            onOffer={(baseAmount, confirmAfterRefund) =>
+              post({
+                intent: "payment-offer",
+                eventParticipantId,
+                baseAmount,
+                ...(confirmAfterRefund && { confirmAfterRefund: "true" }),
+              })
             }
             onResend={(paymentId) => post({ intent: "payment-resend", paymentId })}
           />

@@ -459,6 +459,64 @@ describe("createPaymentOffer", () => {
   // Not a reproduction -- a race does not reproduce on demand -- but the
   // invariant it protects: whoever gets the participant's row lock first
   // wins, and the loser sees what the winner wrote.
+  it("refuses a paid participant even when the admin confirms", async () => {
+    await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      amount: 22000,
+    })
+
+    const result = await createPaymentOffer({
+      eventParticipantId: participantId,
+      confirmAfterRefund: true,
+    })
+
+    expect(result.success === false && result.errors[0]?.message).toBe(
+      paymentsCopy.errors.alreadyPaid,
+    )
+    expect(await paymentsFor(participantId)).toHaveLength(1)
+  })
+
+  const refundedPayment = (status: "refunded" | "partially_refunded") =>
+    createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      status,
+      amount: 22000,
+      refund_amount: status === "refunded" ? 22000 : 5000,
+      refunded_at: new Date().toISOString(),
+    })
+
+  it.each(["refunded", "partially_refunded"] as const)(
+    "asks for confirmation before charging again after a payment was %s",
+    async (status) => {
+      await refundedPayment(status)
+
+      const result = await createPaymentOffer({
+        eventParticipantId: participantId,
+      })
+
+      expect(result.success === false && result.errors[0]?.message).toBe(
+        paymentsCopy.errors.confirmChargeAfterRefund,
+      )
+      expect(await paymentsFor(participantId)).toHaveLength(1)
+    },
+  )
+
+  it.each(["refunded", "partially_refunded"] as const)(
+    "charges again once the admin confirms, after a payment was %s",
+    async (status) => {
+      await refundedPayment(status)
+
+      const result = await createPaymentOffer({
+        eventParticipantId: participantId,
+        confirmAfterRefund: true,
+      })
+
+      expect(result.success).toBe(true)
+      const rows = await paymentsFor(participantId)
+      expect(rows.map((row) => row.status)).toEqual([status, "pending"])
+    },
+  )
+
   it("never leaves a participant both paid and holding an open charge", async () => {
     await Promise.allSettled([
       createPaymentOffer({ eventParticipantId: participantId }),

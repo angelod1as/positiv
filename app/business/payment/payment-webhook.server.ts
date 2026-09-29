@@ -10,6 +10,8 @@ import {
   deliverPaymentEmail,
   queuePaymentEmail,
 } from "./payment-email-outbox.server"
+import { applyRefundTally, type RefundablePayment } from "./refund-apply.server"
+import { tallyRefunds, type AsaasRefund } from "./refund-state"
 
 /**
  * Deliberately permissive. Asaas adds fields without warning, and the docs say
@@ -41,6 +43,12 @@ export const webhookEventSchema = zod.looseObject({
         .nullable()
         .optional(),
     })
+    .optional(),
+  // Not in the documented payload, but sent: PAYMENT_REFUND_DENIED carries the
+  // reason here.
+  additionalInfo: zod
+    .looseObject({ denialReason: zod.string().nullable().optional() })
+    .nullable()
     .optional(),
 })
 
@@ -163,33 +171,37 @@ async function findPayment(db: Kysely<Database>, event: AsaasWebhookEvent) {
   return null
 }
 
-function refundedCents(
+/**
+ * The refunds a charge-level event describes. A PAYMENT_REFUNDED that lists
+ * nothing gave the charge back whole, which is `wholeValue`. A partial one
+ * without a list says nothing about how much moved, and reading it as the
+ * whole amount would close the row as fully refunded -- so it answers null.
+ */
+function eventRefunds(
   event: AsaasWebhookEvent,
-  fallback: number | null,
-): number | null {
-  const refunds = event.payment?.refunds
-  if (!refunds?.length) return fallback
-  const done = refunds.filter((refund) => refund.status !== "CANCELLED")
-  // A list that came back with nothing but cancellations is not the same as no
-  // list at all: the fallback means "a full refund Asaas did not itemise", and
-  // reusing it here would report money as returned that never moved.
-  if (!done.length) return null
-  return done.reduce((sum, refund) => sum + reaisToCents(refund.value ?? 0), 0)
+  wholeValue: number | null,
+): AsaasRefund[] | null {
+  const listed = event.payment?.refunds
+  if (listed?.length) return listed
+  if (event.event === "PAYMENT_REFUNDED" && wholeValue != null) {
+    return [{ value: wholeValue, status: "DONE" }]
+  }
+  return null
 }
 
 /**
- * What a card plan has given back so far, in cents.
+ * Every refund of a card plan the inbox knows about.
  *
- * The same shape as the net below, for the same reason: a plan refunded one
- * charge at a time arrives as one event per charge, each listing only that
- * charge's refunds. The latest event per Asaas payment id carries that charge's
- * whole list, so taking it once per charge and adding them up is what keeps a
- * redelivery -- or a second refund of the same charge -- from counting twice.
+ * The same shape as the net below, for the same reason: Asaas reports a plan's
+ * refund as one event per charge, each listing only that charge's refunds. The
+ * latest event per Asaas payment id carries that charge's whole list, so taking
+ * it once per charge is what keeps a redelivery -- or a second refund of the
+ * same charge -- from counting twice.
  */
-async function installmentRefundedCents(
+async function installmentRefunds(
   db: Kysely<Database>,
   installmentId: string,
-): Promise<number> {
+): Promise<AsaasRefund[]> {
   const result = await sql<{ event_type: string; payload: AsaasWebhookEvent }>`
     SELECT DISTINCT ON (payload->'payment'->>'id') event_type, payload
       FROM payment_webhook_events
@@ -197,16 +209,15 @@ async function installmentRefundedCents(
        AND event_type IN ('PAYMENT_REFUNDED', 'PAYMENT_PARTIALLY_REFUNDED')
      ORDER BY payload->'payment'->>'id', received_at DESC`.execute(db)
 
-  return result.rows.reduce((total, row) => {
-    const value = row.payload.payment?.value
-    // A charge-level PAYMENT_REFUNDED without a list gave that charge back
-    // whole, which is its own value -- not the plan's.
-    const fallback =
-      row.event_type === "PAYMENT_REFUNDED" && value != null
-        ? reaisToCents(value)
-        : null
-    return total + (refundedCents(row.payload, fallback) ?? 0)
-  }, 0)
+  // A charge given back whole without a list is its own value -- not the
+  // plan's.
+  return result.rows.flatMap(
+    (row) =>
+      eventRefunds(
+        { ...row.payload, event: row.event_type },
+        row.payload.payment?.value ?? null,
+      ) ?? [],
+  )
 }
 
 /**
@@ -329,29 +340,43 @@ async function markProcessed(
 
 async function applyToPayment(
   db: Kysely<Database>,
-  payment: {
-    id: string
-    amount: number | null
-    status: string
-    asaas_installment_id: string | null
-    refund_amount: number | null
-    refund_requested_amount: number | null
-  },
+  payment: RefundablePayment,
   event: AsaasWebhookEvent,
 ): Promise<TransitionResult> {
   const now = new Date().toISOString()
 
   if (ALARM_EVENTS.includes(event.event)) {
-    // The one branch here that writes nothing, and deliberately: a chargeback,
-    // a denied refund or a capture refused by risk analysis needs a person,
-    // not a status. A denied refund in particular leaves the row paid with
-    // refund_requested_at set and a participant who was told the money was
-    // coming back -- no transition makes that right.
+    // A chargeback, a denied refund or a capture refused by risk analysis
+    // needs a person, not a status, so none of them moves the row.
     logger.error("Asaas raised an alarm on a payment", {
       paymentId: payment.id,
       event: event.event,
       asaasPaymentId: event.payment?.id,
     })
+
+    // Asaas takes a refund request and can refuse it afterwards -- the sandbox
+    // does when it cannot make the transfer, and it waits for someone to
+    // authorise the refund in the dashboard first. A refund is one request,
+    // on a charge or on a whole plan, so a denial means nothing moved: the
+    // claim goes back and the admin can ask again, told why. Guarded on
+    // paid, so a denial arriving after a refund that did go through is
+    // ignored.
+    if (event.event === "PAYMENT_REFUND_DENIED") {
+      const released = await db
+        .updateTable("payments")
+        .set({
+          refund_requested_at: null,
+          refund_requested_amount: null,
+          refund_denied_at: now,
+          refund_denial_reason: event.additionalInfo?.denialReason ?? null,
+        })
+        .where("id", "=", payment.id)
+        .where("status", "=", "paid")
+        .returning("id")
+        .executeTakeFirst()
+      return { applied: Boolean(released), reason: "alarm_logged" }
+    }
+
     return { applied: false, reason: "alarm_logged" }
   }
 
@@ -440,56 +465,25 @@ async function applyToPayment(
     event.event === "PAYMENT_REFUNDED" ||
     event.event === "PAYMENT_PARTIALLY_REFUNDED"
   ) {
-    // The fallback is what a full refund Asaas did not itemise means. A
-    // partial one without a list says nothing about how much moved, and
-    // reading it as the whole amount would close the row as fully refunded.
-    const installmentId = payment.asaas_installment_id
-    const refunded = installmentId
-      ? await installmentRefundedCents(db, installmentId)
-      : refundedCents(
+    const refunds = payment.asaas_installment_id
+      ? await installmentRefunds(db, payment.asaas_installment_id)
+      : eventRefunds(
           event,
-          event.event === "PAYMENT_REFUNDED" ? payment.amount : null,
+          payment.amount === null ? null : payment.amount / 100,
         )
-    if (!refunded || !payment.amount) {
+    if (!refunds?.length) {
       return { applied: false, reason: "no_refund_amount" }
     }
 
-    const isFull = refunded >= payment.amount
-    const updated = await db
-      .updateTable("payments")
-      .set({
-        status: isFull ? "refunded" : "partially_refunded",
-        refund_amount: Math.min(refunded, payment.amount),
-        refunded_at: now,
-      })
-      .where("id", "=", payment.id)
-      .where("status", "in", ["paid", "partially_refunded"])
-      .returning("id")
-      .executeTakeFirst()
-
-    // A single charge is one refund per event, and each one is worth telling.
-    // A plan is one refund spread over an event per charge, so it is told once:
-    // on the event that brings the total up to what was asked for -- or to the
-    // whole gross, for a refund started in the Asaas dashboard with no request
-    // behind it. A partial dashboard refund of a plan is therefore never told:
-    // with no request, one event cannot say whether it is the whole of a
-    // partial refund or the first charge of a full one. The panel tells.
-    const target = payment.refund_requested_amount ?? payment.amount
-    const completes =
-      !installmentId ||
-      ((payment.refund_amount ?? 0) < target && refunded >= target)
-
-    const refundEmailId =
-      updated && completes
-        ? await queuePaymentEmail(db, {
-            paymentId: payment.id,
-            kind: "refund",
-          })
-        : undefined
+    const { applied, refundEmailId } = await applyRefundTally(
+      db,
+      payment,
+      tallyRefunds(refunds),
+    )
 
     return {
-      applied: Boolean(updated),
-      reason: updated ? undefined : "not_refundable",
+      applied,
+      reason: applied ? undefined : "not_refundable",
       refundEmailId,
     }
   }

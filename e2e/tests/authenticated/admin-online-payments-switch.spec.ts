@@ -16,7 +16,7 @@ import {
 } from '../../utils/payment-helpers'
 import { getAsaasMockUrl } from '../../utils/run-context'
 import { readSetupUser } from '../../utils/setup-user'
-import { TEST_USER_PROFILE_DATA } from '../../fixtures/test-data'
+import { uniqueValidCpf } from '../../utils/unique-cpf'
 
 const PARTICIPANT_STATE = path.resolve(import.meta.dirname, '../../.auth/user.json')
 
@@ -62,8 +62,8 @@ test.describe('POS-565: switching online payments off and back on from the admin
     const participantPage = await participantContext.newPage()
     const paymentPage = new PaymentPage(participantPage)
     await paymentPage.navigate(pending.id)
-    await paymentPage.fillCpfIfAsked(TEST_USER_PROFILE_DATA.cpf)
-    await paymentPage.chooseOption(/^Pix — R\$/)
+    await paymentPage.fillCpfIfAsked(uniqueValidCpf())
+    await paymentPage.chooseOption(/^Pix R\$/)
     await paymentPage.pay()
     await participantPage.waitForURL(`${getAsaasMockUrl()}/i/**`)
 

@@ -332,7 +332,7 @@ recording PIX transfers by hand exactly as they do today.
 | `PAYMENT_REFUND_IN_PROGRESS` | keep `paid`, set `refund_requested_at` if null |
 | `PAYMENT_REFUNDED` | → `refunded`, `refund_amount = amount`, `refunded_at`; refund email |
 | `PAYMENT_PARTIALLY_REFUNDED` | → `partially_refunded`, `refund_amount = Σ refunds[].value`; refund email |
-| `PAYMENT_REFUND_DENIED`, `PAYMENT_CHARGEBACK_REQUESTED`, `_DISPUTE`, `_AWAITING_CHARGEBACK_REVERSAL`, `PAYMENT_REPROVED_BY_RISK_ANALYSIS`, `PAYMENT_CREDIT_CARD_CAPTURE_REFUSED` | no transition; `logger.error` → Telegram with participant + event. A denied refund leaves the row `paid` with `refund_requested_at` set, and a participant who was told the money is coming back — it needs a human, not a retry |
+| `PAYMENT_REFUND_DENIED`, `PAYMENT_CHARGEBACK_REQUESTED`, `_DISPUTE`, `_AWAITING_CHARGEBACK_REVERSAL`, `PAYMENT_REPROVED_BY_RISK_ANALYSIS`, `PAYMENT_CREDIT_CARD_CAPTURE_REFUSED` | no status transition; `logger.error` → Telegram with participant + event. A denied refund releases `refund_requested_at` so the admin can ask again (Asaas accepts a request and refuses it later, e.g. when it cannot make the transfer), and records `refund_denied_at` and `additionalInfo.denialReason` in `refund_denial_reason` for the modal to show; the next request clears them |
 | anything else | recorded, `processed_at`, 200 |
 
 Webhook registration: `sendType: SEQUENTIALLY`, `apiVersion: 3`, the event
@@ -370,14 +370,14 @@ production charge can show (PR 14).
    smaller amount and reason. Confirmation dialog.
 2. Guarded UPDATE: `refund_requested_at = now()` where `status = 'paid'` and
    `refund_requested_at IS NULL` → no row = already in progress, toast.
-3. `POST /v3/payments/{id}/refund { value?, description }`. A card plan is
-   never refunded through `POST /v3/installments/{id}/refund`: that endpoint
-   gives the whole plan back, which is a full refund, and a full refund costs
-   Positiv the anticipation. The plan's charges are listed with
-   `GET /v3/payments?installment={id}` and refunded one at a time, each for its
-   share. On failure clear `refund_requested_at`, `logger.error`, toast with
-   the Asaas description — unless part of a plan was already given back, in
-   which case the claim stays and a person finishes the job at Asaas.
+3. `POST /v3/payments/{id}/refund { value?, description }`. A card plan goes
+   through `POST /v3/installments/{id}/refund { value }` instead: Asaas
+   refuses a refund on one charge of a plan (`invalid_object` — "Não é
+   possível estornar individualmente esta cobrança"), and `value` makes the
+   plan's refund partial, so the anticipation stays out of it. On a refusal
+   clear `refund_requested_at`, `logger.error`, toast with the Asaas
+   description; on an outcome that is unknown (timeout, 5xx) the claim stays
+   and a person checks at Asaas.
 4. The webhook finalises the status and sends the email. The modal shows
    "reembolso solicitado" until then.
 5. Manual rows: **Marcar reembolsado** sets `refunded`/`partially_refunded`

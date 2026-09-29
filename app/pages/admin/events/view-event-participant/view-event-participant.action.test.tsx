@@ -6,6 +6,7 @@ import {
   updateProfileApprovalStatus,
 } from "~/business/admin/admin.server"
 import { cancelPayment } from "~/business/payment/payment-cancel.server"
+import { syncPaymentFromAsaas } from "~/business/payment/payment-sync.server"
 import {
   createPaymentOffer,
   resendPaymentOffer,
@@ -38,6 +39,10 @@ vi.mock("~/business/payment/payment-refund.server", () => ({
 
 vi.mock("~/business/payment/payment-cancel.server", () => ({
   cancelPayment: vi.fn(),
+}))
+
+vi.mock("~/business/payment/payment-sync.server", () => ({
+  syncPaymentFromAsaas: vi.fn(),
 }))
 
 vi.mock("~/business/payment/payment-offer.server", () => ({
@@ -115,6 +120,11 @@ const INTENTS = [
     fields: { paymentId: "payment-1" },
     mutation: resendPaymentOffer,
   },
+  {
+    intent: "payment-sync",
+    fields: { paymentId: "payment-1" },
+    mutation: syncPaymentFromAsaas,
+  },
 ] as const
 
 describe("ViewEventParticipant action", () => {
@@ -138,6 +148,7 @@ describe("ViewEventParticipant action", () => {
     vi.mocked(editManualPayment).mockResolvedValue({ success: true } as never)
     vi.mocked(markManualRefunded).mockResolvedValue({ success: true } as never)
     vi.mocked(cancelPayment).mockResolvedValue({ success: true } as never)
+    vi.mocked(syncPaymentFromAsaas).mockResolvedValue({ success: true } as never)
     vi.mocked(createPaymentOffer).mockResolvedValue({
       success: true,
     } as never)

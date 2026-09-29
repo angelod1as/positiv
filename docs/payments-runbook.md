@@ -141,11 +141,24 @@ not what the participant paid. The fees stay with the participant.
   available in the Asaas account, and Asaas answers 400 when it is not.
 - A card can be refunded up to 365 days after payment. The money shows on the
   participant's statement within about 10 working days.
-- A card plan is refunded one charge at a time, never through the whole-plan
-  endpoint: that would be a full refund, which costs Positiv the anticipation
-  fee.
+- A card plan is refunded through the plan (`POST /v3/installments/{id}/refund`)
+  with the amount as `value`: Asaas refuses a refund on one charge of a plan
+  ("Não é possível estornar individualmente esta cobrança") and spreads the
+  plan's refund over its charges itself.
+- Asaas may hold a refund until someone authorises it in the dashboard (it
+  asks for a code). Until then nothing reaches the webhook.
 - The row turns `refunded` or `partially_refunded` when Asaas confirms through
-  the webhook. Until then the modal says the refund was requested.
+  the webhook, or when the refund sync reads it from Asaas. Until then the
+  modal says the refund was requested.
+- Under each payment the modal lists what Asaas last reported: given back
+  (DONE), still on its way (PENDING and the AWAITING_* authorisations),
+  cancelled, and the card anticipation with its fee. "Atualizar do Asaas"
+  reads it on demand.
+- The `sync-payment-refunds` cron job reads the payments Asaas may still have
+  news about every 15 minutes: an incomplete refund, a refund on its way, a
+  card whose anticipation is pending (for 30 days) or not yet created (for 3
+  days). To confirm the job exists in production:
+  `select jobname, schedule, active from cron.job where jobname = 'sync-payment-refunds';`
 - Asaas never deletes a charge that was paid. A paid charge can only be
   refunded.
 

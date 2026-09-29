@@ -1,5 +1,6 @@
 import { applySchema } from "composable-functions"
 import { sql } from "kysely"
+import type { z } from "zod"
 import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { appOrigin } from "~/lib/helpers/app-origin"
@@ -14,9 +15,11 @@ import {
   deleteAsaasPayment,
   findAsaasCustomerByCpf,
 } from "./asaas-client.server"
+import { asaasErrorMessage } from "./asaas-error-message"
 import { getAsaasFees } from "./asaas-fees.server"
 import { ACTIVE_PAYMENT_STATUSES } from "./payment-totals.server"
 import { isValidCpf } from "~/lib/helpers/cpf"
+import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
 import { buildPaymentOptions, findPaymentOption } from "./pricing"
 
 export const pickOptionSchema = zod.object({
@@ -63,6 +66,15 @@ async function ensureAsaasCustomer(profile: {
     .where("asaas_customer_id", "is", null)
     .returning("asaas_customer_id")
     .executeTakeFirst()
+    .catch((error: unknown) => {
+      // The customer Asaas holds for this CPF is already another profile's --
+      // one that carried the CPF before. Which of them it belongs to is a
+      // question for a person, and charging either on a guess is worse.
+      if (isUniqueViolation(error, "profiles_asaas_customer_id")) {
+        throw new Error(paymentsCopy.errors.customerTaken)
+      }
+      throw error
+    })
 
   if (written?.asaas_customer_id) return written.asaas_customer_id
 
@@ -84,7 +96,7 @@ async function ensureAsaasCustomer(profile: {
  * also why the fee table is written down here and not when the charge was
  * opened.
  */
-export const pickOption = applySchema(pickOptionSchema)(async (values) => {
+async function pick(values: z.infer<typeof pickOptionSchema>) {
   if (!(await isOnlinePaymentsEnabled())) {
     throw new Error(paymentsCopy.errors.chargeClosed)
   }
@@ -242,6 +254,17 @@ export const pickOption = applySchema(pickOptionSchema)(async (values) => {
   }
 
   return { invoiceUrl: charge.invoiceUrl }
+}
+
+// Everything above can fail at Asaas, and what reaches the participant is a
+// sentence, not "Asaas 400 on /customers" or "fetch failed". The detail is in
+// the log already.
+export const pickOption = applySchema(pickOptionSchema)(async (values) => {
+  try {
+    return await pick(values)
+  } catch (error) {
+    throw new Error(asaasErrorMessage(error, "checkout"))
+  }
 })
 
 /**

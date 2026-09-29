@@ -72,6 +72,12 @@ export async function getMockPlanCharges(installmentId: string): Promise<MockCha
   return ((await response.json()) as { data: MockCharge[] }).data
 }
 
+// Stands in for Asaas finishing the card refunds it had in progress.
+export async function settleMockRefunds(): Promise<void> {
+  const response = await fetch(`${getAsaasMockUrl()}/__mock/settle-refunds`, { method: 'POST' })
+  if (!response.ok) throw new Error(`The mock refused to settle refunds: ${response.status}`)
+}
+
 // Stands in for the participant paying on the Asaas invoice page.
 export async function confirmMockCharge(chargeId: string): Promise<void> {
   const response = await asaasMockApi(`/sandbox/payment/${chargeId}/confirm`, 'POST')

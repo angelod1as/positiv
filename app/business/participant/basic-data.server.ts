@@ -6,6 +6,8 @@ import { toCommitErrors } from "~/lib/helpers/to-commit-errors"
 import { logger } from "~/lib/logger/logger.server"
 import { db } from "~/lib/supabase/db.server"
 import { participantCopy } from "~/copy/participant"
+import { basicDataValidation } from "~/copy/account"
+import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
 import { basicDataSchema, ExtraBasicDataSchema, userContextSchema } from "../common"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import type { SubscriptionSource } from "../newsletter/types"
@@ -93,6 +95,15 @@ export async function saveBasicData({
         .upsert(written, { onConflict: "user_id" })
         .select("id")
         .single()
+
+  // One profile per CPF. Said on the field, since it is the person's to
+  // correct -- or, if the CPF is theirs, to take up with the organisation.
+  if (upsertError && isUniqueViolation(upsertError, "profiles_cpf_unique")) {
+    return {
+      ok: false,
+      errors: [{ questionId: "cpf", message: basicDataValidation.cpfTaken }],
+    }
+  }
 
   if (upsertError || !saved) {
     const code = upsertError?.code ?? "UNKNOWN"

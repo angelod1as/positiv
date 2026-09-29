@@ -19,6 +19,7 @@ export type PaymentPageData =
       eventTitle: string
       eventEmoji: string | null
       dueAt: string
+      baseAmount: number
       options: PaymentOption[]
       chosen: PaymentOption | null
       invoiceUrl: string | null
@@ -124,6 +125,7 @@ export async function loadPaymentPage({
     eventTitle,
     eventEmoji: payment.event_emoji,
     dueAt: payment.due_at,
+    baseAmount: payment.base_amount,
     options,
     chosen: findChosen(options, payment.method, payment.installment_count),
     invoiceUrl: payment.asaas_invoice_url,

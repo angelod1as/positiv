@@ -14,10 +14,11 @@ import {
   postWebhook,
   resetAsaasMock,
   setOnlinePayments,
+  settleMockRefunds,
 } from '../../utils/payment-helpers'
 import { getAsaasMockUrl } from '../../utils/run-context'
 import { readSetupUser } from '../../utils/setup-user'
-import { TEST_USER_PROFILE_DATA } from '../../fixtures/test-data'
+import { uniqueValidCpf } from '../../utils/unique-cpf'
 
 const PARTICIPANT_STATE = path.resolve(import.meta.dirname, '../../.auth/user.json')
 
@@ -64,10 +65,10 @@ test.describe('POS-532: an Asaas payment from the charge to the refund', () => {
     const participantPage = await participantContext.newPage()
     const paymentPage = new PaymentPage(participantPage)
     await paymentPage.navigate(pending.id)
-    await paymentPage.fillCpfIfAsked(TEST_USER_PROFILE_DATA.cpf)
+    await paymentPage.fillCpfIfAsked(uniqueValidCpf())
 
     // Every option is priced above the ticket: the fees are the participant's.
-    await expect(participantPage.getByRole('radio', { name: /^Pix — R\$/ })).toBeVisible()
+    await expect(participantPage.getByRole('radio', { name: /^Pix R\$/ })).toBeVisible()
     await paymentPage.chooseOption(/^Cartão 3x de R\$/)
     await paymentPage.pay()
 
@@ -142,26 +143,32 @@ test.describe('POS-532: an Asaas payment from the charge to the refund', () => {
     await page.getByRole('alertdialog').getByRole('button', { name: 'Solicitar reembolso' }).click()
     await expect(page.getByRole('alertdialog')).toBeHidden()
 
-    // A plan goes back one charge at a time, never as one full refund, and the
-    // shares add up to the net: the fees stay with the participant.
+    // A plan goes back through the plan -- Asaas refuses a refund on one of its
+    // charges -- as one call for the net: the fees stay with the participant.
     await expect
       .poll(async () =>
         (await getAsaasMockCalls()).filter((call) => call.path.endsWith('/refund')).length,
       )
-      .toBe(3)
-    const refunds = (await getAsaasMockCalls()).filter((call) => call.path.endsWith('/refund'))
-    const shares = refunds.map((call) => ({
-      id: call.path.split('/')[2],
-      value: Number(call.body?.value),
-    }))
-    expect(shares.reduce((total, share) => total + Math.round(share.value * 100), 0)).toBe(22000)
+      .toBe(1)
+    const [refund] = (await getAsaasMockCalls()).filter((call) => call.path.endsWith('/refund'))
+    expect(refund.path).toBe(`/installments/${installmentId}/refund`)
+    expect(Math.round(Number(refund.body?.value) * 100)).toBe(22000)
 
     const [requested] = await getParticipantPayments(participant.profileId, event.id)
     expect(requested.refund_requested_at).not.toBeNull()
 
-    // 5. Asaas confirms each refund.
+    // Asaas holds a card refund in progress, which no webhook reports: the
+    // admin reads it from Asaas.
+    await modal.getByRole('button', { name: 'Atualizar do Asaas' }).click()
+    await expect(modal.getByText(/Em andamento no Asaas: R\$\s?220,00/)).toBeVisible()
+
+    // 5. Asaas finishes, spreads the refund over the plan's charges and
+    // reports each one.
+    await settleMockRefunds()
+    let left = 22000
     for (const [index, charge] of plan.entries()) {
-      const share = shares.find((item) => item.id === charge.id)
+      const share = Math.min(Math.round(charge.value * 100), left)
+      left -= share
       if (!share) continue
       const refunded = buildWebhookEvent('PAYMENT_PARTIALLY_REFUNDED', {
         id: charge.id,
@@ -169,7 +176,7 @@ test.describe('POS-532: an Asaas payment from the charge to the refund', () => {
         netValue: nets[index],
         installment: installmentId,
         externalReference: pending.id,
-        refunds: [{ value: share.value, status: 'DONE' }],
+        refunds: [{ value: share / 100, status: 'DONE' }],
       })
       expect((await postWebhook(refunded)).status).toBe(200)
     }

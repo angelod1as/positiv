@@ -2,6 +2,7 @@ import { TEST_USER_PROFILE_DATA } from "../fixtures/test-data"
 import { createSupabaseAdminClient } from "./db-cleanup"
 import { createTestUser } from "./user-management"
 import { runEmail } from "./run-context"
+import { uniqueValidCpf } from "./unique-cpf"
 
 export interface TestParticipant {
   profileId: string
@@ -43,7 +44,7 @@ export async function createTestEventWithParticipants(
       date_of_birth: TEST_USER_PROFILE_DATA.date_of_birth,
       rg: TEST_USER_PROFILE_DATA.rg,
       rg_issuer: TEST_USER_PROFILE_DATA.rg_issuer,
-      cpf: TEST_USER_PROFILE_DATA.cpf,
+      cpf: uniqueValidCpf(),
       where_lives: TEST_USER_PROFILE_DATA.where_lives,
       how_came_to_us: TEST_USER_PROFILE_DATA.how_came_to_us,
       is_veteran: i % 2 === 0, // Alternate between veteran and rookie

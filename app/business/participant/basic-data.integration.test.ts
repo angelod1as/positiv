@@ -6,6 +6,7 @@ import {
 } from "~/test/db-test-utils"
 import { cleanupAfterTest, setupIntegrationTest } from "~/test/integration-setup"
 import { logger } from "~/lib/logger/logger.server"
+import { basicDataValidation } from "~/copy/account"
 import * as listmonkClient from "../newsletter/listmonk-client.server"
 import { subscribeProfileToNewsletter } from "../newsletter/auto-subscribe.server"
 import { saveBasicData } from "./basic-data.server"
@@ -119,6 +120,37 @@ describe("saveBasicData - Integration Tests", () => {
     expect(saved.gender).toEqual(["Travesti"])
     expect(saved.race_color).toEqual(["Preta"])
     expect(saved.basic_data_filled).toBe(true)
+  })
+
+  it("refuses a CPF another profile already holds, on the CPF field", async () => {
+    const email = "test-save-basic-data-cpf-taken@example.com"
+    const userId = await createTestAuthUser(email, "test1234", tracker)
+    const profile = await createTestProfile(tracker, kysely, {
+      email,
+      user_id: userId,
+      full_name: null,
+    })
+    await createTestProfile(tracker, kysely, {
+      email: "test-save-basic-data-cpf-owner@example.com",
+      user_id: null,
+      cpf: "529.982.247-25",
+    })
+
+    const result = await saveBasicData({
+      answers: answersFor(email),
+      context: contextFor(email, userId) as never,
+    })
+
+    expect(result).toEqual({
+      ok: false,
+      errors: [{ questionId: "cpf", message: basicDataValidation.cpfTaken }],
+    })
+    const saved = await kysely
+      .selectFrom("profiles")
+      .select("cpf")
+      .where("id", "=", profile.id)
+      .executeTakeFirstOrThrow()
+    expect(saved.cpf).not.toBe("52998224725")
   })
 
   it("re-syncs the newsletter now that there is a real name to file it under", async () => {

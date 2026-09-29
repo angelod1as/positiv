@@ -66,8 +66,32 @@ SELECT
     -- A CPF whose check digits add up. basicDataFieldsSchema rejects one that
     -- does not, and the payment page will not offer its options without one,
     -- so a seeded profile carrying junk is a profile no local flow can finish.
-    '11144477735',
-    11999999999,
+    -- One per profile: Asaas knows a customer by CPF, and a CPF belongs to one
+    -- person. The phones are mobiles Asaas accepts -- it refuses 11999999999.
+    CASE usr.email
+        WHEN 'admin@example.com' THEN '75666521500'
+        WHEN 'user1@example.com' THEN '25851749482'
+        WHEN 'user2@example.com' THEN '64349993134'
+        WHEN 'user3@example.com' THEN '14909219404'
+        WHEN 'user4@example.com' THEN '97520199274'
+        WHEN 'user5@example.com' THEN '57767873862'
+        WHEN 'user6@example.com' THEN '53531157400'
+        WHEN 'user7@example.com' THEN '10429273401'
+        WHEN 'user8@example.com' THEN '83783067120'
+        WHEN 'user9@example.com' THEN '80254477909'
+    END,
+    CASE usr.email
+        WHEN 'admin@example.com' THEN 11998566392
+        WHEN 'user1@example.com' THEN 11951733828
+        WHEN 'user2@example.com' THEN 11930329278
+        WHEN 'user3@example.com' THEN 11941108327
+        WHEN 'user4@example.com' THEN 11930985500
+        WHEN 'user5@example.com' THEN 11912035987
+        WHEN 'user6@example.com' THEN 11960440561
+        WHEN 'user7@example.com' THEN 11969916740
+        WHEN 'user8@example.com' THEN 11917216884
+        WHEN 'user9@example.com' THEN 11920220657
+    END,
     CASE usr.email
         WHEN 'admin@example.com' THEN '1990-05-15'::date
         WHEN 'user1@example.com' THEN '1980-01-01'::date
@@ -292,8 +316,12 @@ SELECT
 FROM auth.users AS usr
 -- The nine base digits, then the two Modulo 11 check digits Receita Federal
 -- defines, so every generated CPF is one the app will accept.
+-- The WHERE ties the subquery to the row. Without it nothing in it refers to
+-- usr, and Postgres is free to draw random() once and hand all ninety
+-- profiles the same CPF, which profiles_cpf_unique refuses.
 CROSS JOIN LATERAL (
     SELECT lpad((floor(random() * 999999999)::bigint)::text, 9, '0') AS digits
+     WHERE usr.id IS NOT NULL
 ) AS base
 CROSS JOIN LATERAL (
     SELECT (

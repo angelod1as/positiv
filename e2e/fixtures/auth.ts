@@ -1,6 +1,7 @@
 import { type Page, expect } from "@playwright/test"
 import { LoginPage } from "../pages/LoginPage"
 import { TEST_USER_PROFILE_DATA } from "./test-data"
+import { uniqueValidCpf } from "../utils/unique-cpf"
 
 const DASHBOARD_URL = "/dashboard"
 const ADMIN_DASHBOARD_URL = "/admin"
@@ -104,7 +105,7 @@ export async function performUILogin(
       .fill(TEST_USER_PROFILE_DATA.rg_issuer)
     await page
       .getByRole("textbox", { name: "CPF" })
-      .fill(TEST_USER_PROFILE_DATA.cpf)
+      .fill(uniqueValidCpf())
     await page
       .getByRole("textbox", { name: "Data de nascimento" })
       .fill(TEST_USER_PROFILE_DATA.date_of_birth)

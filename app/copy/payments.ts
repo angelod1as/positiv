@@ -13,6 +13,15 @@ export const paymentsCopy = {
       }
       return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)} (total ${formatCurrency(option.total)})`
     },
+    // The payment page's cards: the name here, the total beside it, and where
+    // the total comes from on the line below.
+    title: (option: PaymentOption) => {
+      if (option.method === "pix") return "Pix"
+      if (option.installmentCount === 1) return "Cartão à vista"
+      return `Cartão ${option.installmentCount}x de ${formatCurrency(option.perInstallment)}`
+    },
+    breakdown: (baseAmount: number, option: PaymentOption) =>
+      `${formatCurrency(baseAmount)} do evento + ${formatCurrency(option.total - baseAmount)} de taxas`,
   },
   // Plain text, not Markdown: this one is pasted into WhatsApp, which renders
   // none of it. The four-digit year is deliberate — a deadline read on a phone
@@ -41,6 +50,8 @@ export const paymentsCopy = {
     heading: (eventTitle: string) => `Pagamento — ${eventTitle}`,
     notYours: "Este link de pagamento não é seu.",
     chooseOption: "Como você quer pagar?",
+    feesIntro: (baseAmount: number) =>
+      `O valor do evento é ${formatCurrency(baseAmount)}. As taxas do meio de pagamento ficam por sua conta e mudam conforme a forma e o número de parcelas.`,
     pay: "Pagar",
     dueAt: (date: string) => `Este link vale até ${date}.`,
     paidTitle: "Pagamento confirmado",
@@ -86,6 +97,30 @@ export const paymentsCopy = {
       actions: "Ações",
     },
     kinds: { asaas: "Asaas", manual: "Manual" },
+    // The lines under a payment's status: where its refund and its
+    // anticipation stand, as Asaas last reported them.
+    refundLines: {
+      refunded: (amount: string) => `Devolvido ${amount}`,
+      pending: (amount: string) => `Em andamento no Asaas: ${amount}`,
+      cancelled: (amount: string) => `Cancelado pelo Asaas: ${amount}`,
+    },
+    anticipation: {
+      line: (status: string, fee: string | null) =>
+        fee ? `Antecipação ${status} · taxa ${fee}` : `Antecipação ${status}`,
+      statuses: {
+        PENDING: "em análise",
+        SCHEDULED: "agendada",
+        CREDITED: "creditada",
+        DEBITED: "concluída",
+        CANCELLED: "cancelada",
+        DENIED: "negada",
+        OVERDUE: "vencida",
+      } as Record<string, string>,
+    },
+    sync: {
+      button: "Atualizar do Asaas",
+      syncedAt: (date: string) => `Atualizado do Asaas em ${date}`,
+    },
     methods: {
       pix: "Pix",
       credit_card: "Cartão de crédito",
@@ -107,6 +142,10 @@ export const paymentsCopy = {
     resendEmail: "Reenviar email",
     copyMessage: "Copiar mensagem",
     copied: "Mensagem copiada.",
+    shareTitle: "Link de pagamento",
+    created:
+      "Cobrança criada e enviada por email. Copie a mensagem e mande também pelo WhatsApp.",
+    noChargeForSpot: "Vaga social ou staff não paga: não há cobrança.",
     emailFailed:
       "A cobrança foi criada, mas o email não saiu. Copie a mensagem e mande por outro caminho.",
     resendFailed:
@@ -117,6 +156,11 @@ export const paymentsCopy = {
       "Esta pessoa já escolheu como pagar. A cobrança atual será cancelada no Asaas e ela receberá um novo link.",
     replaceKeep: "Manter cobrança",
     replaceSubmit: "Substituir cobrança",
+    afterRefundConfirm: "Tem certeza que deseja gerar outra cobrança?",
+    afterRefundDescription:
+      "Esta pessoa já pagou e recebeu um reembolso. Uma nova cobrança manda para ela outro link de pagamento.",
+    afterRefundKeep: "Voltar",
+    afterRefundSubmit: "Gerar cobrança",
   },
   manual: {
     title: "Registrar pagamento manual",
@@ -162,6 +206,10 @@ export const paymentsCopy = {
         "O Asaas ainda não informou quanto caiu na conta. Aguarde alguns instantes e recarregue.",
       submit: "Solicitar reembolso",
       inProgress: "Reembolso solicitado — aguardando o Asaas confirmar.",
+      denied: (reason: string | null) =>
+        reason
+          ? `O Asaas negou o último pedido de reembolso. Motivo: ${reason.replace(/\.$/, "")}. Você pode pedir de novo.`
+          : "O Asaas negou o último pedido de reembolso. Você pode pedir de novo.",
     },
   },
   cancel: {
@@ -173,6 +221,26 @@ export const paymentsCopy = {
     submit: "Confirmar cancelamento",
     success: "Cobrança cancelada.",
   },
+  // What an Asaas refusal becomes before a person reads it. The technical
+  // detail -- status, path, code -- stays in the log.
+  asaasErrors: {
+    refundNextDay:
+      "Um pagamento por cartão só pode ser reembolsado em parte a partir do dia seguinte ao pagamento. Tente de novo amanhã.",
+    refundNoBalance:
+      "Não há saldo disponível no Asaas para devolver esse valor agora. Confira o saldo no painel do Asaas e tente de novo.",
+    refundTooMuch:
+      "O valor pedido é maior do que o Asaas ainda pode devolver deste pagamento.",
+    refundRefused: (description: string) =>
+      `O Asaas recusou o reembolso: ${description}`,
+    checkoutCpf:
+      "O sistema de pagamentos não aceitou o CPF da sua conta. Confira o CPF em Dados básicos ou fale com a organização.",
+    checkoutRefused: (description: string) =>
+      `O sistema de pagamentos recusou a cobrança: ${description}`,
+    unavailable:
+      "O sistema de pagamentos não respondeu. Tente de novo em alguns minutos.",
+    syncRefused: (description: string) =>
+      `O Asaas não deixou atualizar este pagamento: ${description}`,
+  },
   errors: {
     participantNotFound: "Participante não encontrade.",
     freeSpot: "Vagas sociais e de produção não têm cobrança.",
@@ -182,6 +250,8 @@ export const paymentsCopy = {
       "Não consegui ler esse valor. Escreva só números, como 150,00.",
     alreadyPaid:
       "Esta pessoa já pagou. Cancele ou reembolse antes de cobrar de novo.",
+    confirmChargeAfterRefund:
+      "Esta pessoa já recebeu um reembolso. Confirme que deseja gerar outra cobrança.",
     notResendable: "Não há cobrança em aberto para reenviar.",
     amountRequired: "Informe um valor de zero ou mais.",
     activeChargeExists:
@@ -192,21 +262,20 @@ export const paymentsCopy = {
       "O reembolso não pode ser maior que o que a Positiv recebeu, sem as taxas.",
     refundNetNotReported:
       "O Asaas ainda não informou quanto caiu na conta desta cobrança. Aguarde alguns instantes e tente de novo.",
-    refundExceedsPlan:
-      "O Asaas informa que este plano cobrou menos do que o reembolso pedido. Confira no painel do Asaas.",
-    refundNothingToRefund:
-      "O Asaas não encontrou parcelas reembolsáveis nesta cobrança.",
     notRefundable: "Só é possível reembolsar um pagamento já confirmado.",
     notAsaasRefundable:
       "Este pagamento não passou pelo Asaas. Use 'Marcar como reembolsado'.",
     refundAlreadyRequested: "O reembolso já foi solicitado.",
     refundOutcomeUnknown:
       "Não deu para confirmar se o Asaas fez o reembolso. Confira no painel do Asaas antes de tentar de novo.",
-    refundPartiallyApplied:
-      "Parte das parcelas foi reembolsada e uma falhou. Confira no painel do Asaas antes de tentar de novo.",
     notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
+    notSyncable: "Só um pagamento feito pelo Asaas pode ser atualizado do Asaas.",
     invalidCpf: "Esse CPF não confere. Confira os números.",
+    cpfTaken:
+      "Esse CPF já está cadastrado em outra conta. Se ele é seu, fale com a organização.",
+    customerTaken:
+      "Não conseguimos gerar a cobrança: o CPF desta conta já está ligado a outra pessoa no sistema de pagamentos. Fale com a organização.",
     chargeClosed: "Esta cobrança não está mais aberta.",
     unknownOption: "Escolha uma das formas de pagamento oferecidas.",
     noInvoiceUrl:

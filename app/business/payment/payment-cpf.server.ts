@@ -3,6 +3,7 @@ import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
 import { isValidCpf, normalizeCpf } from "~/lib/helpers/cpf"
+import { isUniqueViolation } from "~/lib/helpers/is-unique-violation"
 
 export const savePaymentCpfSchema = zod.object({
   profileId: zod.string().uuid(),
@@ -19,11 +20,20 @@ export const savePaymentCpfSchema = zod.object({
  */
 export const savePaymentCpf = applySchema(savePaymentCpfSchema)(
   async (values) => {
-    await kyselyDb
-      .updateTable("profiles")
-      .set({ cpf: values.cpf })
-      .where("id", "=", values.profileId)
-      .execute()
+    try {
+      await kyselyDb
+        .updateTable("profiles")
+        .set({ cpf: values.cpf })
+        .where("id", "=", values.profileId)
+        .execute()
+    } catch (error) {
+      // One profile per CPF: a second account for the same person is theirs to
+      // sort out with the organisation, not something to guess at here.
+      if (isUniqueViolation(error, "profiles_cpf_unique")) {
+        throw new Error(paymentsCopy.errors.cpfTaken)
+      }
+      throw error
+    }
 
     return { saved: true }
   },
