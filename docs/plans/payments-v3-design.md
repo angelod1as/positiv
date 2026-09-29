@@ -3,6 +3,15 @@
 Status: design, awaiting approval. Date: 2026-08-24.
 Replaces: `origin/payment` (PRs #571–#583, umbrella #563), Linear POS-463…472.
 
+> **Superseded in part by POS-577 (2026-09-29).** Prices are flat: card is the
+> event price in 1x to 6x, Pix is 10% off (Pix alone at the full price while
+> the "Cartão de crédito" setting is off), and Positiv absorbs every fee. The
+> site no longer reads the Asaas fee table, stores a fee snapshot or tracks
+> anticipation, and shows what was paid and refunded rather than fees and net.
+> Refunds of Asaas payments are done in the Asaas dashboard and only recorded
+> here. The fee, gross-up, anticipation and refund-request sections below
+> describe the design as it was, not the code.
+
 ## 1. Why from scratch
 
 Two earlier attempts exist and neither is on `main`:
