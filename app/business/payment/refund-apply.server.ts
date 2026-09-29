@@ -25,7 +25,6 @@ export async function applyRefundTally(
   db: Kysely<Database>,
   payment: RefundablePayment,
   tally: RefundTally,
-  options: { syncedAt?: string } = {},
 ): Promise<{ applied: boolean; refundEmailId?: string }> {
   if (!payment.amount) return { applied: false }
 
@@ -57,7 +56,6 @@ export async function applyRefundTally(
         refund_requested_at: null,
         refund_requested_amount: null,
       }),
-      ...(options.syncedAt && { refunds_synced_at: options.syncedAt }),
     })
     .where("id", "=", payment.id)
     .where("status", "in", ["paid", "partially_refunded"])

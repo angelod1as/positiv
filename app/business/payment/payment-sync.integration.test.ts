@@ -247,6 +247,7 @@ describe("syncPaymentFromAsaas", () => {
         refund_requested_at: new Date().toISOString(),
         refund_requested_amount: 22000,
         refunds_synced_at: new Date().toISOString(),
+        refunds_sync_attempted_at: new Date().toISOString(),
       })
 
       const stats = await syncOpenPayments()
@@ -291,6 +292,61 @@ describe("syncPaymentFromAsaas", () => {
 
       expect(stats.failed).toBe(1)
       expect(stats.synced).toBeGreaterThanOrEqual(1)
+    })
+
+    // A payment Asaas never answers about would otherwise stay first in line,
+    // unread since forever, and twenty of them would fill every run.
+    it("does not put a payment Asaas failed to answer about first in line again", async () => {
+      getAsaasPaymentRefunds.mockRejectedValue(new TypeError("fetch failed"))
+      const failing = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "asaas",
+        method: "pix",
+        amount: 22199,
+        asaas_net: 22000,
+        asaas_payment_id: `pay_failing_${counter}`,
+        refund_requested_at: new Date().toISOString(),
+        refund_requested_amount: 22000,
+      })
+
+      await syncOpenPayments()
+      getAsaasPaymentRefunds.mockClear()
+      await syncOpenPayments()
+
+      expect(getAsaasPaymentRefunds).not.toHaveBeenCalledWith(
+        failing.asaas_payment_id,
+      )
+      const after = await reload(failing.id)
+      expect(after.refunds_sync_attempted_at).not.toBeNull()
+      // Never read successfully, and the modal must not say otherwise.
+      expect(after.refunds_synced_at).toBeNull()
+    })
+
+    it("stops looking for an anticipation a few days after the payment", async () => {
+      const daysAgo = (days: number) =>
+        new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+      const recent = await cardPlan({
+        asaas_payment_id: `pay_recent_${counter}`,
+        asaas_installment_id: `inst_recent_${counter}`,
+        refund_requested_at: null,
+        refund_requested_amount: null,
+        paid_at: daysAgo(1),
+      })
+      const older = await cardPlan({
+        asaas_payment_id: `pay_older_${counter}`,
+        asaas_installment_id: `inst_older_${counter}`,
+        refund_requested_at: null,
+        refund_requested_amount: null,
+        paid_at: daysAgo(5),
+      })
+
+      await syncOpenPayments()
+
+      const read = getAsaasInstallmentRefunds.mock.calls.map(([id]) => id)
+      // Asaas anticipates within two working days; after that, a card with
+      // no anticipation will not get one.
+      expect(read).toContain(recent.asaas_installment_id)
+      expect(read).not.toContain(older.asaas_installment_id)
     })
   })
 })

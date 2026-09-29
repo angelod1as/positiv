@@ -627,6 +627,7 @@ export type Database = {
           refund_requested_amount: number | null
           refund_requested_at: string | null
           refunded_at: string | null
+          refunds_sync_attempted_at: string | null
           refunds_synced_at: string | null
           status: Database["public"]["Enums"]["payment_status"]
           updated_at: string
@@ -660,6 +661,7 @@ export type Database = {
           refund_requested_amount?: number | null
           refund_requested_at?: string | null
           refunded_at?: string | null
+          refunds_sync_attempted_at?: string | null
           refunds_synced_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string
@@ -693,6 +695,7 @@ export type Database = {
           refund_requested_amount?: number | null
           refund_requested_at?: string | null
           refunded_at?: string | null
+          refunds_sync_attempted_at?: string | null
           refunds_synced_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
           updated_at?: string

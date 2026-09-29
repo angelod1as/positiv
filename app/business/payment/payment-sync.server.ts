@@ -39,6 +39,14 @@ export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
       throw new Error(paymentsCopy.errors.notSyncable)
     }
 
+    // Recorded before Asaas is asked, so a payment Asaas cannot answer about
+    // does not stay first in the sync job's line.
+    await kyselyDb
+      .updateTable("payments")
+      .set({ refunds_sync_attempted_at: new Date().toISOString() })
+      .where("id", "=", values.paymentId)
+      .execute()
+
     const plan = payment.asaas_installment_id
     let refunds: Awaited<ReturnType<typeof getAsaasPaymentRefunds>>
     let anticipations: Awaited<ReturnType<typeof listAsaasAnticipations>>
@@ -116,8 +124,12 @@ export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
 const SYNC_BATCH = 20
 // A row read this recently is left for the next run.
 const SYNC_AGAIN_AFTER_MINUTES = 10
-// How long a card's anticipation is worth following after the payment.
+// How long a card's anticipation is worth following once Asaas has one.
 const ANTICIPATION_WINDOW_DAYS = 30
+// How long to look for an anticipation Asaas has not created yet. It
+// anticipates within two working days of the payment; a card with none after
+// that is not going to get one.
+const ANTICIPATION_APPEARS_WITHIN_DAYS = 3
 
 /**
  * The payments Asaas may still have news about, read one by one. A refund
@@ -136,9 +148,8 @@ export async function syncOpenPayments(): Promise<{
   const readBefore = new Date(
     now - SYNC_AGAIN_AFTER_MINUTES * 60 * 1000,
   ).toISOString()
-  const paidSince = new Date(
-    now - ANTICIPATION_WINDOW_DAYS * 24 * 60 * 60 * 1000,
-  ).toISOString()
+  const daysAgo = (days: number) =>
+    new Date(now - days * 24 * 60 * 60 * 1000).toISOString()
 
   const candidates = await kyselyDb
     .selectFrom("payments")
@@ -148,8 +159,8 @@ export async function syncOpenPayments(): Promise<{
     .where("status", "in", ["paid", "partially_refunded"])
     .where((eb) =>
       eb.or([
-        eb("refunds_synced_at", "is", null),
-        eb("refunds_synced_at", "<", readBefore),
+        eb("refunds_sync_attempted_at", "is", null),
+        eb("refunds_sync_attempted_at", "<", readBefore),
       ]),
     )
     .where((eb) =>
@@ -164,15 +175,17 @@ export async function syncOpenPayments(): Promise<{
         eb("refund_pending_amount", ">", 0),
         eb.and([
           eb("method", "=", "credit_card"),
-          eb("paid_at", ">", paidSince),
-          eb.or([
-            eb("anticipation_status", "is", null),
-            eb("anticipation_status", "in", ["PENDING", "SCHEDULED"]),
-          ]),
+          eb("paid_at", ">", daysAgo(ANTICIPATION_WINDOW_DAYS)),
+          eb("anticipation_status", "in", ["PENDING", "SCHEDULED"]),
+        ]),
+        eb.and([
+          eb("method", "=", "credit_card"),
+          eb("paid_at", ">", daysAgo(ANTICIPATION_APPEARS_WITHIN_DAYS)),
+          eb("anticipation_status", "is", null),
         ]),
       ]),
     )
-    .orderBy("refunds_synced_at", sql`asc nulls first`)
+    .orderBy("refunds_sync_attempted_at", sql`asc nulls first`)
     .limit(SYNC_BATCH)
     .execute()
 
