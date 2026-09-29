@@ -18,6 +18,22 @@ export type AsaasFees = {
 
 export const MAX_INSTALLMENTS = 6
 
+export const PIX_DISCOUNT_PERCENT = 10
+
+export function pixPrice(base: number): number {
+  return Math.floor((base * (100 - PIX_DISCOUNT_PERCENT)) / 100)
+}
+
+/**
+ * Asaas takes a plan's total and an installment count, truncates each
+ * installment to the cent and charges the difference on the last one. This
+ * mirrors it, so the page shows what the card will actually be charged.
+ */
+export function splitInstallments(total: number, n: number): number[] {
+  const each = Math.floor(total / n)
+  return [...Array(n - 1).fill(each), total - each * (n - 1)]
+}
+
 export type PaymentOptionId =
   | "pix"
   | "card_1"

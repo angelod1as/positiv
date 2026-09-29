@@ -8,6 +8,9 @@ import {
   MAX_INSTALLMENTS,
   PAYMENT_OPTION_IDS,
   parsePaymentOptionId,
+  PIX_DISCOUNT_PERCENT,
+  pixPrice,
+  splitInstallments,
 } from "./pricing"
 
 // The list prices, spelled out rather than imported from FALLBACK_FEES: a
@@ -178,5 +181,54 @@ describe("findPaymentOption", () => {
     const options = buildPaymentOptions(22000, LIST_FEES)
     expect(findPaymentOption(options, "card_2")?.installmentCount).toBe(2)
     expect(findPaymentOption(options, "card_9")).toBeNull()
+  })
+})
+
+describe("pixPrice", () => {
+  it("takes 10% off the event price", () => {
+    expect(PIX_DISCOUNT_PERCENT).toBe(10)
+    expect(pixPrice(22000)).toBe(19800)
+  })
+
+  // 4645 × 0.9 = 4180.5: the half cent goes to the participant.
+  it("rounds an odd cent down, in the participant's favour", () => {
+    expect(pixPrice(4645)).toBe(4180)
+    expect(pixPrice(1)).toBe(0)
+  })
+
+  it("keeps a free spot free", () => {
+    expect(pixPrice(0)).toBe(0)
+  })
+})
+
+describe("splitInstallments", () => {
+  it("charges a single installment as the whole total", () => {
+    expect(splitInstallments(22000, 1)).toEqual([22000])
+  })
+
+  it("splits evenly when the total divides", () => {
+    expect(splitInstallments(22000, 4)).toEqual([5500, 5500, 5500, 5500])
+  })
+
+  // Asaas truncates each installment and puts the difference on the last:
+  // R$ 350,00 in 12x is 11 × 29,16 + 29,24 in their own example.
+  it("puts the remainder on the last installment, the way Asaas does", () => {
+    expect(splitInstallments(25000, 6)).toEqual([
+      4166, 4166, 4166, 4166, 4166, 4170,
+    ])
+    expect(splitInstallments(35000, 12)).toEqual([
+      ...Array(11).fill(2916),
+      2924,
+    ])
+  })
+
+  it("always sums to the total", () => {
+    for (const total of [1, 999, 12345, 22000, 4645]) {
+      for (let n = 1; n <= MAX_INSTALLMENTS; n++) {
+        const installments = splitInstallments(total, n)
+        expect(installments).toHaveLength(n)
+        expect(installments.reduce((a, b) => a + b, 0)).toBe(total)
+      }
+    }
   })
 })
