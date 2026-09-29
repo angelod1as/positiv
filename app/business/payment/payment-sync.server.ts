@@ -1,4 +1,5 @@
 import { applySchema } from "composable-functions"
+import { sql } from "kysely"
 import { paymentsCopy } from "~/copy/payments"
 import { kyselyDb } from "~/kysely-db"
 import { zod } from "~/lib/helpers/zod"
@@ -110,3 +111,78 @@ export const syncPaymentFromAsaas = applySchema(syncPaymentSchema)(
     return { ok: true as const }
   },
 )
+
+// A batch small enough to stay well inside Asaas's rate limits every run.
+const SYNC_BATCH = 20
+// A row read this recently is left for the next run.
+const SYNC_AGAIN_AFTER_MINUTES = 10
+// How long a card's anticipation is worth following after the payment.
+const ANTICIPATION_WINDOW_DAYS = 30
+
+/**
+ * The payments Asaas may still have news about, read one by one. A refund
+ * asked for and not yet complete; a refund Asaas lists as still on its way;
+ * a card whose anticipation has not been credited. Everything else is
+ * settled, and reading it again would only spend the rate limit.
+ *
+ * Called by the sync-payment-refunds job. One payment Asaas cannot answer
+ * about is logged and skipped, never the end of the run.
+ */
+export async function syncOpenPayments(): Promise<{
+  synced: number
+  failed: number
+}> {
+  const now = Date.now()
+  const readBefore = new Date(
+    now - SYNC_AGAIN_AFTER_MINUTES * 60 * 1000,
+  ).toISOString()
+  const paidSince = new Date(
+    now - ANTICIPATION_WINDOW_DAYS * 24 * 60 * 60 * 1000,
+  ).toISOString()
+
+  const candidates = await kyselyDb
+    .selectFrom("payments")
+    .select("id")
+    .where("kind", "=", "asaas")
+    .where("asaas_payment_id", "is not", null)
+    .where("status", "in", ["paid", "partially_refunded"])
+    .where((eb) =>
+      eb.or([
+        eb("refunds_synced_at", "is", null),
+        eb("refunds_synced_at", "<", readBefore),
+      ]),
+    )
+    .where((eb) =>
+      eb.or([
+        eb.and([
+          eb("refund_requested_at", "is not", null),
+          eb.or([
+            eb("refund_amount", "is", null),
+            eb("refund_amount", "<", eb.ref("refund_requested_amount")),
+          ]),
+        ]),
+        eb("refund_pending_amount", ">", 0),
+        eb.and([
+          eb("method", "=", "credit_card"),
+          eb("paid_at", ">", paidSince),
+          eb.or([
+            eb("anticipation_status", "is", null),
+            eb("anticipation_status", "in", ["PENDING", "SCHEDULED"]),
+          ]),
+        ]),
+      ]),
+    )
+    .orderBy("refunds_synced_at", sql`asc nulls first`)
+    .limit(SYNC_BATCH)
+    .execute()
+
+  let synced = 0
+  let failed = 0
+  for (const { id } of candidates) {
+    const result = await syncPaymentFromAsaas({ paymentId: id })
+    if (result.success) synced += 1
+    else failed += 1
+  }
+
+  return { synced, failed }
+}

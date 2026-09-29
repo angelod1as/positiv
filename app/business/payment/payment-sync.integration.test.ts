@@ -39,7 +39,7 @@ vi.mock("./payment-emails.server", async (importOriginal) => ({
 vi.mock("~/lib/logger/logger.server", () => ({ logger }))
 
 import { paymentsCopy } from "~/copy/payments"
-import { syncPaymentFromAsaas } from "./payment-sync.server"
+import { syncOpenPayments, syncPaymentFromAsaas } from "./payment-sync.server"
 
 describe("syncPaymentFromAsaas", () => {
   const { tracker, kysely } = setupIntegrationTest()
@@ -208,5 +208,89 @@ describe("syncPaymentFromAsaas", () => {
       paymentsCopy.asaasErrors.unavailable,
     )
     expect((await reload(payment.id)).refunds_synced_at).toBeNull()
+  })
+
+  describe("syncOpenPayments", () => {
+    it("reads only the payments Asaas still has news about", async () => {
+      const refunding = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "asaas",
+        method: "pix",
+        amount: 22199,
+        asaas_net: 22000,
+        asaas_payment_id: `pay_refunding_${counter}`,
+        refund_requested_at: new Date().toISOString(),
+        refund_requested_amount: 22000,
+      })
+      const anticipating = await cardPlan({
+        asaas_payment_id: `pay_anticipating_${counter}`,
+        asaas_installment_id: `inst_anticipating_${counter}`,
+        refund_requested_at: null,
+        refund_requested_amount: null,
+        anticipation_status: "PENDING",
+      })
+      const settled = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "asaas",
+        method: "pix",
+        amount: 22199,
+        asaas_net: 22000,
+        asaas_payment_id: `pay_settled_${counter}`,
+      })
+      const justRead = await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "asaas",
+        method: "pix",
+        amount: 22199,
+        asaas_net: 22000,
+        asaas_payment_id: `pay_read_${counter}`,
+        refund_requested_at: new Date().toISOString(),
+        refund_requested_amount: 22000,
+        refunds_synced_at: new Date().toISOString(),
+      })
+
+      const stats = await syncOpenPayments()
+
+      const read = [
+        ...getAsaasPaymentRefunds.mock.calls.map(([id]) => id),
+        ...getAsaasInstallmentRefunds.mock.calls.map(([id]) => id),
+      ]
+      expect(read).toContain(refunding.asaas_payment_id)
+      expect(read).toContain(anticipating.asaas_installment_id)
+      expect(read).not.toContain(settled.asaas_payment_id)
+      // Read a moment ago: the next run gets it.
+      expect(read).not.toContain(justRead.asaas_payment_id)
+      expect(stats.failed).toBe(0)
+      expect(stats.synced).toBeGreaterThanOrEqual(2)
+    })
+
+    it("keeps going when one payment cannot be read", async () => {
+      getAsaasPaymentRefunds.mockRejectedValueOnce(new TypeError("fetch failed"))
+      await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "asaas",
+        method: "pix",
+        amount: 22199,
+        asaas_net: 22000,
+        asaas_payment_id: `pay_first_${counter}`,
+        refund_requested_at: new Date().toISOString(),
+        refund_requested_amount: 22000,
+      })
+      await createTestPayment(tracker, kysely, {
+        event_participant_id: participantId,
+        kind: "asaas",
+        method: "pix",
+        amount: 22199,
+        asaas_net: 22000,
+        asaas_payment_id: `pay_second_${counter}`,
+        refund_requested_at: new Date().toISOString(),
+        refund_requested_amount: 22000,
+      })
+
+      const stats = await syncOpenPayments()
+
+      expect(stats.failed).toBe(1)
+      expect(stats.synced).toBeGreaterThanOrEqual(1)
+    })
   })
 })
