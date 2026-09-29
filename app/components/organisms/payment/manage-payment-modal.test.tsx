@@ -555,26 +555,6 @@ describe("ManagePaymentModal", () => {
     expect(screen.getByText(/Cancelado pelo Asaas: R\$\s?10,00/)).toBeInTheDocument()
   })
 
-  // What anticipating a card costs is Asaas's to report, not the site's.
-  it("says nothing about the card anticipation", () => {
-    render(
-      <ManagePaymentModal
-        {...baseProps}
-        payments={[
-          paidAsaasCharge({
-            method: "credit_card",
-            amount: 23430,
-            asaas_net: 22566,
-            anticipation_fee: 578,
-            anticipation_status: "PENDING",
-          }),
-        ]}
-      />,
-    )
-
-    expect(screen.queryByText(/Antecipação/)).not.toBeInTheDocument()
-  })
-
   it("brings an Asaas payment up to date from Asaas", async () => {
     render(
       <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
@@ -1079,7 +1059,6 @@ describe("ManagePaymentModal - the table's dates and amounts", () => {
       base_amount: 22000,
       amount: 22000,
       asaas_net: 21000,
-      anticipation_fee: 578,
     })
 
     render(<ManagePaymentModal {...baseProps} payments={[paidByCard]} />)

@@ -603,8 +603,6 @@ export type Database = {
       payments: {
         Row: {
           amount: number | null
-          anticipation_fee: number | null
-          anticipation_status: string | null
           asaas_customer_id: string | null
           asaas_installment_id: string | null
           asaas_invoice_number: string | null
@@ -616,7 +614,6 @@ export type Database = {
           created_by: string | null
           due_at: string
           event_participant_id: string
-          fee_snapshot: Json | null
           id: string
           installment_count: number | null
           kind: Database["public"]["Enums"]["payment_kind"]
@@ -638,8 +635,6 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
-          anticipation_fee?: number | null
-          anticipation_status?: string | null
           asaas_customer_id?: string | null
           asaas_installment_id?: string | null
           asaas_invoice_number?: string | null
@@ -651,7 +646,6 @@ export type Database = {
           created_by?: string | null
           due_at: string
           event_participant_id: string
-          fee_snapshot?: Json | null
           id?: string
           installment_count?: number | null
           kind: Database["public"]["Enums"]["payment_kind"]
@@ -673,8 +667,6 @@ export type Database = {
         }
         Update: {
           amount?: number | null
-          anticipation_fee?: number | null
-          anticipation_status?: string | null
           asaas_customer_id?: string | null
           asaas_installment_id?: string | null
           asaas_invoice_number?: string | null
@@ -686,7 +678,6 @@ export type Database = {
           created_by?: string | null
           due_at?: string
           event_participant_id?: string
-          fee_snapshot?: Json | null
           id?: string
           installment_count?: number | null
           kind?: Database["public"]["Enums"]["payment_kind"]
