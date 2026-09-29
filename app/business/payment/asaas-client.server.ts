@@ -291,6 +291,65 @@ export async function refundAsaasInstallment(
   )
 }
 
+// A charge's or a plan's refunds, as Asaas lists them on the resource itself.
+// Only the two fields that say how much and how far along; the rest -- dates,
+// receipts, splits -- is for the dashboard.
+const refundsOf = zod.object({
+  refunds: zod
+    .array(zod.object({ value: zod.number(), status: zod.string() }))
+    .nullable()
+    .optional(),
+})
+
+export type AsaasRefundEntry = { value: number; status: string }
+
+/** Every refund of a single charge, with its status. */
+export async function getAsaasPaymentRefunds(
+  paymentId: string,
+): Promise<AsaasRefundEntry[]> {
+  const { refunds } = await asaasRequest("GET", `/payments/${paymentId}`, refundsOf)
+  return (refunds ?? []).map(({ value, status }) => ({ value, status }))
+}
+
+/**
+ * Every refund of a card plan. Read from the plan, not its charges: a plan is
+ * refunded through the plan, and Asaas lists each installment's share there --
+ * including one still "em progresso" that no charge event has reported.
+ */
+export async function getAsaasInstallmentRefunds(
+  installmentId: string,
+): Promise<AsaasRefundEntry[]> {
+  const { refunds } = await asaasRequest(
+    "GET",
+    `/installments/${installmentId}`,
+    refundsOf,
+  )
+  return (refunds ?? []).map(({ value, status }) => ({ value, status }))
+}
+
+export type AsaasAnticipation = { status: string; fee: number }
+
+/**
+ * The anticipations of a charge or a plan, one per charge. Asaas charges the
+ * anticipation fee here and not in the charge's netValue, so it is the only
+ * place that says what advancing a card charge cost. One page is the whole
+ * plan: a plan has at most MAX_INSTALLMENTS (6) charges.
+ */
+export async function listAsaasAnticipations(
+  of: { payment: string } | { installment: string },
+): Promise<AsaasAnticipation[]> {
+  const filter =
+    "payment" in of ? `payment=${of.payment}` : `installment=${of.installment}`
+  const { data } = await asaasRequest(
+    "GET",
+    `/anticipations?${filter}&limit=100`,
+    zod.object({
+      data: zod.array(zod.object({ status: zod.string(), fee: zod.number() })),
+    }),
+  )
+  return data.map(({ status, fee }) => ({ status, fee: reaisToCents(fee) }))
+}
+
 // Only the fields the fee mapper reads are described. Everything Asaas ships
 // alongside them — the boleto block, PIX credit allowances, the card-present
 // rates — is left out on purpose, so a change there cannot fail the parse.

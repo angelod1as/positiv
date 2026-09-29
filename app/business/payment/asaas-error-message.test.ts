@@ -51,6 +51,14 @@ describe("asaasErrorMessage", () => {
     expect(message).not.toMatch(/400|\/installments|invalid_billingType/)
   })
 
+  it("says what Asaas said when it refuses to be read", () => {
+    const error = refused("invalid_action", "Cobrança não encontrada.")
+
+    expect(asaasErrorMessage(error, "sync")).toBe(
+      asaasErrors.syncRefused("Cobrança não encontrada."),
+    )
+  })
+
   it("does not blame the person when Asaas fails on its side", () => {
     const error = new AsaasError(503, [], "/payments")
 

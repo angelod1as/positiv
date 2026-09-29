@@ -214,6 +214,8 @@ export const paymentsCopy = {
       `O sistema de pagamentos recusou a cobrança: ${description}`,
     unavailable:
       "O sistema de pagamentos não respondeu. Tente de novo em alguns minutos.",
+    syncRefused: (description: string) =>
+      `O Asaas não deixou atualizar este pagamento: ${description}`,
   },
   errors: {
     participantNotFound: "Participante não encontrade.",
@@ -244,6 +246,7 @@ export const paymentsCopy = {
       "Não deu para confirmar se o Asaas fez o reembolso. Confira no painel do Asaas antes de tentar de novo.",
     notEditable: "Só é possível editar um pagamento manual confirmado.",
     notCancellable: "Só é possível cancelar uma cobrança em aberto.",
+    notSyncable: "Só um pagamento feito pelo Asaas pode ser atualizado do Asaas.",
     invalidCpf: "Esse CPF não confere. Confira os números.",
     cpfTaken:
       "Esse CPF já está cadastrado em outra conta. Se ele é seu, fale com a organização.",

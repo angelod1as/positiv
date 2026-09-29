@@ -3,11 +3,13 @@ import { AsaasError } from "./asaas-client.server"
 
 const { asaasErrors } = paymentsCopy
 
+export type AsaasErrorContext = "refund" | "checkout" | "sync"
+
 // Refusals Asaas words the same way every time, matched on its code and a
 // phrase of its description: the code alone is too broad -- invalid_action
 // covers a dozen different refusals.
 const KNOWN_REFUSALS: {
-  context: "refund" | "checkout"
+  context: AsaasErrorContext
   code: string
   phrase: RegExp
   message: string
@@ -48,7 +50,7 @@ const KNOWN_REFUSALS: {
  */
 export function asaasErrorMessage(
   error: unknown,
-  context: "refund" | "checkout",
+  context: AsaasErrorContext,
 ): string {
   if (error instanceof AsaasError) {
     if (error.status >= 500 || error.status === 401 || error.status === 403) {
@@ -65,9 +67,9 @@ export function asaasErrorMessage(
 
     const [first] = error.errors
     if (!first) return asaasErrors.unavailable
-    return context === "refund"
-      ? asaasErrors.refundRefused(first.description)
-      : asaasErrors.checkoutRefused(first.description)
+    if (context === "refund") return asaasErrors.refundRefused(first.description)
+    if (context === "sync") return asaasErrors.syncRefused(first.description)
+    return asaasErrors.checkoutRefused(first.description)
   }
 
   // fetch rejects with a TypeError when the connection fails, and the timeout
