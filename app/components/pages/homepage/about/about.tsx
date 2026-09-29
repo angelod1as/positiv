@@ -1,33 +1,31 @@
 import { HeartIcon, SparklesIcon, UsersIcon } from "lucide-react"
 import type { ReactElement } from "react"
-import { Copy } from "~/components/atoms/copy/copy"
-import { homepageCopy } from "~/copy/homepage"
+import type { HomepageContent } from "~/business/cms/homepage-content.schema"
+import { RichText } from "~/components/atoms/rich-text/rich-text"
 import { HomePageTitle } from "../home-title/home-title"
 import { Section } from "../section/section"
 import { AboutCard } from "./about-card"
 
-const { about } = homepageCopy
+const ICONS: ReactElement<SVGSVGElement>[] = [
+  <UsersIcon key="users" />,
+  <HeartIcon key="heart" />,
+  <SparklesIcon key="sparkles" />,
+]
 
-const ICONS: Record<keyof typeof about.cards, ReactElement<SVGSVGElement>> = {
-  notAMess: <UsersIcon />,
-  affection: <HeartIcon />,
-  forWhom: <SparklesIcon />,
+type HomePageAboutProps = {
+  content: HomepageContent["about"]
 }
 
-export const HomePageAbout = () => {
+export const HomePageAbout = ({ content }: HomePageAboutProps) => {
   return (
     <Section hasBg>
       <div className="px-4 md:px-6 flex flex-col items-center">
         <div className="flex flex-col items-center justify-center gap-4 text-center max-w-(--breakpoint-xl)">
-          <HomePageTitle>{about.title}</HomePageTitle>
+          <HomePageTitle>{content.title}</HomePageTitle>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:gap-12 pt-8">
-            {Object.entries(about.cards).map(([key, card]) => (
-              <AboutCard
-                key={key}
-                icon={ICONS[key as keyof typeof about.cards]}
-                title={card.title}
-              >
-                <Copy>{card.body}</Copy>
+            {content.cards.map((card, index) => (
+              <AboutCard key={card._key} icon={ICONS[index]} title={card.title}>
+                <RichText value={card.body} />
               </AboutCard>
             ))}
           </div>

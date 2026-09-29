@@ -75,7 +75,7 @@ export default function Homepage({ loaderData }: Route.ComponentProps) {
         <Suspense fallback={<HomePageNextEventsSkeleton />}>
           <Await resolve={events}>{(resolvedEvents) => <EventsContent events={resolvedEvents} />}</Await>
         </Suspense>
-        <HomePageAbout />
+        <HomePageAbout content={content.about} />
         <HomePageTestimonials />
         <HomePageCtaBanner isLoggedIn={isLoggedIn} />
         <HomePageFounders />
