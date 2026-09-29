@@ -89,7 +89,7 @@ export default function Homepage({ loaderData }: Route.ComponentProps) {
           </Await>
         </Suspense>
         <HomePageAbout content={content.about} />
-        <HomePageTestimonials />
+        <HomePageTestimonials content={content.testimonials} />
         <HomePageCtaBanner isLoggedIn={isLoggedIn} />
         <HomePageFounders />
         <HomePageFeedback />
