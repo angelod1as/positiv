@@ -8,6 +8,7 @@ import {
   getAsaasMockUrl,
   getBaseUrl,
   getRunId,
+  getSanityMockUrl,
   getServerPort,
   isRunScopedEmail,
   runEmail,
@@ -133,6 +134,14 @@ describe('getAsaasMockUrl', () => {
     process.env.E2E_PORT = '5301'
 
     expect(getAsaasMockUrl()).toBe('http://127.0.0.1:5302')
+  })
+})
+
+describe('getSanityMockUrl', () => {
+  it("sits on the port after the Asaas mock, so neither mock takes the other's port", () => {
+    process.env.E2E_PORT = '5301'
+
+    expect(getSanityMockUrl()).toBe('http://127.0.0.1:5303')
   })
 })
 

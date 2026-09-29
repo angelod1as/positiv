@@ -8,7 +8,13 @@ import {
   startAsaasMockServer,
   stopAsaasMockServer,
 } from "./mocks/asaas-mock-server"
-import { getAsaasMockUrl, getBaseUrl, getServerPort } from "./utils/run-context"
+import {
+  E2E_SANITY_DATASET,
+  E2E_SANITY_PROJECT_ID,
+  startSanityMockServer,
+  stopSanityMockServer,
+} from "./mocks/sanity-mock-server"
+import { getAsaasMockUrl, getBaseUrl, getSanityMockUrl, getServerPort } from "./utils/run-context"
 
 let serverProcess: ChildProcess | null = null
 
@@ -55,6 +61,7 @@ async function startProductionServer() {
   const serverPath = validateServerPath(join(serverDir, "index.js"), serverDir)
 
   const asaasUrl = getAsaasMockUrl()
+  const sanityUrl = getSanityMockUrl()
   // The suite runs under `varlock run`, which passes its children the
   // environment it resolved as one blob, and a server that finds the blob reads
   // nothing else. Without it, the server's own `varlock run` resolves .env
@@ -62,10 +69,13 @@ async function startProductionServer() {
   const { __VARLOCK_ENV: _blob, _VARLOCK_ENV_KEY: _blobKey, ...inherited } = process.env
 
   return new Promise<void>((resolve, reject) => {
-    const asaasListening = startAsaasMockServer(Number(new URL(asaasUrl).port))
+    const mocksListening = Promise.all([
+      startAsaasMockServer(Number(new URL(asaasUrl).port)),
+      startSanityMockServer(Number(new URL(sanityUrl).port)),
+    ])
     // Teardown only stops a server whose start succeeded, so one spawned
     // beside a mock that failed has to be taken down here.
-    asaasListening.catch((error: unknown) => {
+    mocksListening.catch((error: unknown) => {
       serverProcess?.kill("SIGTERM")
       reject(error)
     })
@@ -88,6 +98,11 @@ async function startProductionServer() {
         ASAAS_WEBHOOK_TOKEN: E2E_ASAAS_WEBHOOK_TOKEN,
         ASAAS_ANTICIPATION_DETACHED_MONTHLY_RATE: "",
         ASAAS_ANTICIPATION_INSTALLMENT_MONTHLY_RATE: "",
+        // Likewise for Sanity: the project and dataset are the mock's, so a
+        // developer's .env can never point the suite at a real dataset.
+        SANITY_API_HOST: sanityUrl,
+        SANITY_PROJECT_ID: E2E_SANITY_PROJECT_ID,
+        SANITY_DATASET: E2E_SANITY_DATASET,
       },
       detached: false,
       killSignal: "SIGTERM"
@@ -112,7 +127,7 @@ async function startProductionServer() {
       if (!serverStarted && message.includes(`localhost:${port}`)) {
         serverStarted = true
         clearTimeout(startupTimeout)
-        asaasListening.then(() => resolve(), reject)
+        mocksListening.then(() => resolve(), reject)
       }
     })
     
@@ -134,8 +149,9 @@ async function startProductionServer() {
   })
 }
 
-function stopProductionServer(): Promise<void> {
-  return stopAppServer().then(stopAsaasMockServer)
+async function stopProductionServer(): Promise<void> {
+  await stopAppServer()
+  await Promise.all([stopAsaasMockServer(), stopSanityMockServer()])
 }
 
 function stopAppServer(): Promise<void> {

@@ -1,8 +1,14 @@
 import { EventEmitter } from 'node:events'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { spawn, asaasMock } = vi.hoisted(() => ({
+const { spawn, asaasMock, sanityMock } = vi.hoisted(() => ({
   spawn: vi.fn(),
+  sanityMock: {
+    E2E_SANITY_PROJECT_ID: 'e2e-project',
+    E2E_SANITY_DATASET: 'e2e-dataset',
+    startSanityMockServer: vi.fn(async (port: number) => `http://127.0.0.1:${port}`),
+    stopSanityMockServer: vi.fn(async () => {}),
+  },
   asaasMock: {
     E2E_ASAAS_API_KEY: 'e2e-key',
     E2E_ASAAS_WEBHOOK_TOKEN: 'e2e-webhook-token',
@@ -13,6 +19,7 @@ const { spawn, asaasMock } = vi.hoisted(() => ({
 
 vi.mock('node:child_process', () => ({ spawn, default: { spawn } }))
 vi.mock('./mocks/asaas-mock-server', () => asaasMock)
+vi.mock('./mocks/sanity-mock-server', () => sanityMock)
 const fsDouble = {
   existsSync: () => true,
   statSync: () => ({ isFile: () => true, isDirectory: () => false, mtime: new Date(0) }),
@@ -45,6 +52,8 @@ afterEach(() => {
   vi.mocked(console.info).mockRestore()
   delete process.env.E2E_PORT
   delete process.env.ASAAS_API_KEY
+  delete process.env.SANITY_DATASET
+  delete process.env.SANITY_PROJECT_ID
 })
 
 describe('startProductionServer', () => {
@@ -168,5 +177,69 @@ describe('the Asaas the server under test talks to', () => {
     await stopped
 
     expect(asaasMock.stopAsaasMockServer).toHaveBeenCalled()
+  })
+})
+
+describe('the Sanity the server under test talks to', () => {
+  it('is the mock on the port after the Asaas one', async () => {
+    fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    void startProductionServer()
+
+    expect(sanityMock.startSanityMockServer).toHaveBeenCalledWith(5303)
+    expect(spawn.mock.calls[0][2].env).toMatchObject({
+      SANITY_API_HOST: 'http://127.0.0.1:5303',
+      SANITY_PROJECT_ID: 'e2e-project',
+      SANITY_DATASET: 'e2e-dataset',
+    })
+  })
+
+  it('never is a real dataset, whatever .env holds', async () => {
+    process.env.SANITY_PROJECT_ID = '8ojkallk'
+    process.env.SANITY_DATASET = 'production'
+    fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    void startProductionServer()
+
+    expect(spawn.mock.calls[0][2].env).toMatchObject({
+      SANITY_PROJECT_ID: 'e2e-project',
+      SANITY_DATASET: 'e2e-dataset',
+    })
+  })
+
+  it('is listening before the suite is told the server is up', async () => {
+    sanityMock.startSanityMockServer.mockImplementationOnce(() => new Promise<string>(() => {}))
+    const child = fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    let started = false
+    void startProductionServer().then(() => (started = true))
+    child.stdout.emit('data', Buffer.from('serving on http://localhost:5301'))
+    await new Promise((resolve) => setTimeout(resolve, 10))
+
+    expect(started).toBe(false)
+  })
+
+  it('takes the server down with it when the mock cannot start, so nothing is left holding the port', async () => {
+    sanityMock.startSanityMockServer.mockImplementationOnce(() => Promise.reject(new Error('EADDRINUSE')))
+    const child = fakeServerProcess()
+    const { startProductionServer } = await import('./serve-production')
+
+    await expect(startProductionServer()).rejects.toThrow('EADDRINUSE')
+    expect(child.kill).toHaveBeenCalledWith('SIGTERM')
+  })
+
+  it('stops with the server', async () => {
+    const child = fakeServerProcess()
+    const { startProductionServer, stopProductionServer } = await import('./serve-production')
+    void startProductionServer()
+
+    const stopped = stopProductionServer()
+    child.emit('exit', 0)
+    await stopped
+
+    expect(sanityMock.stopSanityMockServer).toHaveBeenCalled()
   })
 })
