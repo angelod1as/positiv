@@ -568,6 +568,73 @@ describe("ManagePaymentModal", () => {
     ).toBeInTheDocument()
   })
 
+  it("says what went back, what is still on its way and what Asaas cancelled", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          paidAsaasCharge({
+            status: "partially_refunded",
+            refund_amount: 11715,
+            refunded_at: "2026-09-29T01:09:02Z",
+            refund_pending_amount: 10851,
+            refund_cancelled_amount: 1000,
+          }),
+        ]}
+      />,
+    )
+
+    expect(screen.getByText(/Devolvido R\$\s?117,15/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Em andamento no Asaas: R\$\s?108,51/),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/Cancelado pelo Asaas: R\$\s?10,00/)).toBeInTheDocument()
+  })
+
+  it("counts what anticipation costs out of what Positiv receives", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          paidAsaasCharge({
+            method: "credit_card",
+            amount: 23430,
+            asaas_net: 22566,
+            anticipation_fee: 578,
+            anticipation_status: "PENDING",
+          }),
+        ]}
+      />,
+    )
+
+    expect(screen.getByText(/R\$\s?219,88/)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Antecipação em análise · taxa R\$\s?5,78/),
+    ).toBeInTheDocument()
+  })
+
+  it("brings an Asaas payment up to date from Asaas", async () => {
+    render(
+      <ManagePaymentModal {...baseProps} payments={[paidAsaasCharge()]} />,
+    )
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Atualizar do Asaas" }),
+    )
+
+    const [formData] = submit.mock.calls.at(-1) ?? []
+    expect((formData as FormData).get("intent")).toBe("payment-sync")
+    expect((formData as FormData).get("paymentId")).toBe("asaas-1")
+  })
+
+  it("offers no update from Asaas on a manual payment", () => {
+    render(<ManagePaymentModal {...baseProps} payments={[payment({})]} />)
+
+    expect(
+      screen.queryByRole("button", { name: "Atualizar do Asaas" }),
+    ).not.toBeInTheDocument()
+  })
+
   it("waits for the net before offering an Asaas refund", () => {
     render(
       <ManagePaymentModal

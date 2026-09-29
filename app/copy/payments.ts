@@ -97,6 +97,30 @@ export const paymentsCopy = {
       actions: "Ações",
     },
     kinds: { asaas: "Asaas", manual: "Manual" },
+    // The lines under a payment's status: where its refund and its
+    // anticipation stand, as Asaas last reported them.
+    refundLines: {
+      refunded: (amount: string) => `Devolvido ${amount}`,
+      pending: (amount: string) => `Em andamento no Asaas: ${amount}`,
+      cancelled: (amount: string) => `Cancelado pelo Asaas: ${amount}`,
+    },
+    anticipation: {
+      line: (status: string, fee: string | null) =>
+        fee ? `Antecipação ${status} · taxa ${fee}` : `Antecipação ${status}`,
+      statuses: {
+        PENDING: "em análise",
+        SCHEDULED: "agendada",
+        CREDITED: "creditada",
+        DEBITED: "concluída",
+        CANCELLED: "cancelada",
+        DENIED: "negada",
+        OVERDUE: "vencida",
+      } as Record<string, string>,
+    },
+    sync: {
+      button: "Atualizar do Asaas",
+      syncedAt: (date: string) => `Atualizado do Asaas em ${date}`,
+    },
     methods: {
       pix: "Pix",
       credit_card: "Cartão de crédito",

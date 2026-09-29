@@ -373,6 +373,62 @@ const CancelDialog: FC<CancelDialogProps> = ({
   </AlertDialog>
 )
 
+/**
+ * What Positiv keeps from a payment. Asaas charges the card anticipation fee
+ * outside the charge's netValue, so it comes off asaas_net here; before the
+ * webhook reports a net, the agreed base amount stands in for it.
+ */
+const receivedBy = (payment: PaymentRow): number =>
+  payment.asaas_net === null
+    ? payment.base_amount
+    : payment.asaas_net - (payment.anticipation_fee ?? 0)
+
+/**
+ * Where a payment's refund and anticipation stand, as Asaas last reported
+ * them -- under its status, so the admin does not have to open Asaas to know
+ * whether the rest of a refund is still on its way.
+ */
+const PaymentProgress: FC<{ payment: PaymentRow }> = ({ payment }) => {
+  const lines = [
+    (payment.refund_amount ?? 0) > 0 &&
+      manage.refundLines.refunded(formatCurrency(payment.refund_amount ?? 0)),
+    (payment.refund_pending_amount ?? 0) > 0 &&
+      manage.refundLines.pending(
+        formatCurrency(payment.refund_pending_amount ?? 0),
+      ),
+    (payment.refund_cancelled_amount ?? 0) > 0 &&
+      manage.refundLines.cancelled(
+        formatCurrency(payment.refund_cancelled_amount ?? 0),
+      ),
+    payment.anticipation_status &&
+      manage.anticipation.line(
+        manage.anticipation.statuses[payment.anticipation_status] ??
+          payment.anticipation_status,
+        payment.anticipation_fee
+          ? formatCurrency(payment.anticipation_fee)
+          : null,
+      ),
+    payment.refunds_synced_at &&
+      manage.sync.syncedAt(
+        formatInTimeZone(
+          payment.refunds_synced_at,
+          "America/Sao_Paulo",
+          "dd/MM HH:mm",
+        ),
+      ),
+  ].filter((line): line is string => Boolean(line))
+
+  if (!lines.length) return null
+
+  return (
+    <ul className="text-muted-foreground text-xs">
+      {lines.map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
+  )
+}
+
 type ChargeSectionProps = {
   active: PaymentRow | null
   participantName: string
@@ -719,7 +775,12 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       "dd/MM",
                     )}
                   </TableCell>
-                  <TableCell>{paymentStatusPropMap(payment.status)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      {paymentStatusPropMap(payment.status)}
+                      <PaymentProgress payment={payment} />
+                    </div>
+                  </TableCell>
                   <TableCell>{manage.kinds[payment.kind]}</TableCell>
                   <TableCell>
                     {payment.method
@@ -734,7 +795,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                       pick a method, long before asaas_net exists. "Taxas" is
                       their share, known from the same moment. */}
                   <TableCell className="whitespace-nowrap">
-                    {formatCurrency(payment.asaas_net ?? payment.base_amount)}
+                    {formatCurrency(receivedBy(payment))}
                   </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">
                     {payment.kind === "asaas" && payment.amount !== null
@@ -743,10 +804,7 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                         // to exist without asaas_net, and the estimate the
                         // participant was quoted beats showing no fee at all
                         // on a charge that certainly had one.
-                        formatCurrency(
-                          payment.amount -
-                            (payment.asaas_net ?? payment.base_amount),
-                        )
+                        formatCurrency(payment.amount - receivedBy(payment))
                       : manage.noAmount}
                   </TableCell>
                   <TableCell>
@@ -823,6 +881,18 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                             />
                           </div>
                         ))}
+                      {payment.kind === "asaas" && payment.asaas_payment_id && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={isSubmitting}
+                          onClick={() =>
+                            post({ intent: "payment-sync", paymentId: payment.id })
+                          }
+                        >
+                          {manage.sync.button}
+                        </Button>
+                      )}
                       {active?.id === payment.id && (
                         <CancelDialog
                           payment={payment}
