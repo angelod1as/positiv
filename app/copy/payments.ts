@@ -182,6 +182,10 @@ export const paymentsCopy = {
         "O Asaas ainda não informou quanto caiu na conta. Aguarde alguns instantes e recarregue.",
       submit: "Solicitar reembolso",
       inProgress: "Reembolso solicitado — aguardando o Asaas confirmar.",
+      denied: (reason: string | null) =>
+        reason
+          ? `O Asaas negou o último pedido de reembolso. Motivo: ${reason.replace(/\.$/, "")}. Você pode pedir de novo.`
+          : "O Asaas negou o último pedido de reembolso. Você pode pedir de novo.",
     },
   },
   cancel: {

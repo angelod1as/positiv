@@ -189,6 +189,9 @@ export const requestRefund = applySchema(requestRefundSchema)(
       .set({
         refund_requested_at: new Date().toISOString(),
         refund_requested_amount: amount,
+        // A new attempt: the last denial no longer describes it.
+        refund_denied_at: null,
+        refund_denial_reason: null,
       })
       .where("id", "=", payment.id)
       .where("status", "=", "paid")

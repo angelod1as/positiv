@@ -532,6 +532,42 @@ describe("ManagePaymentModal", () => {
     ).not.toBeInTheDocument()
   })
 
+  it("says Asaas denied the last refund, why, and offers it again", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[
+          paidAsaasCharge({
+            refund_denied_at: "2026-09-29T00:25:53Z",
+            refund_denial_reason: "Falha ao processar a transferência.",
+          }),
+        ]}
+      />,
+    )
+
+    expect(
+      screen.getByText(
+        "O Asaas negou o último pedido de reembolso. Motivo: Falha ao processar a transferência. Você pode pedir de novo.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Reembolsar" })).toBeInTheDocument()
+  })
+
+  it("says a refund was denied even when Asaas gave no reason", () => {
+    render(
+      <ManagePaymentModal
+        {...baseProps}
+        payments={[paidAsaasCharge({ refund_denied_at: "2026-09-29T00:25:53Z" })]}
+      />,
+    )
+
+    expect(
+      screen.getByText(
+        "O Asaas negou o último pedido de reembolso. Você pode pedir de novo.",
+      ),
+    ).toBeInTheDocument()
+  })
+
   it("waits for the net before offering an Asaas refund", () => {
     render(
       <ManagePaymentModal

@@ -332,7 +332,7 @@ recording PIX transfers by hand exactly as they do today.
 | `PAYMENT_REFUND_IN_PROGRESS` | keep `paid`, set `refund_requested_at` if null |
 | `PAYMENT_REFUNDED` | → `refunded`, `refund_amount = amount`, `refunded_at`; refund email |
 | `PAYMENT_PARTIALLY_REFUNDED` | → `partially_refunded`, `refund_amount = Σ refunds[].value`; refund email |
-| `PAYMENT_REFUND_DENIED`, `PAYMENT_CHARGEBACK_REQUESTED`, `_DISPUTE`, `_AWAITING_CHARGEBACK_REVERSAL`, `PAYMENT_REPROVED_BY_RISK_ANALYSIS`, `PAYMENT_CREDIT_CARD_CAPTURE_REFUSED` | no status transition; `logger.error` → Telegram with participant + event. A denied refund on a single charge releases `refund_requested_at` so the admin can ask again (Asaas accepts a request and refuses it later, e.g. with no balance); on a card plan the claim stays until a human has looked |
+| `PAYMENT_REFUND_DENIED`, `PAYMENT_CHARGEBACK_REQUESTED`, `_DISPUTE`, `_AWAITING_CHARGEBACK_REVERSAL`, `PAYMENT_REPROVED_BY_RISK_ANALYSIS`, `PAYMENT_CREDIT_CARD_CAPTURE_REFUSED` | no status transition; `logger.error` → Telegram with participant + event. A denied refund releases `refund_requested_at` so the admin can ask again (Asaas accepts a request and refuses it later, e.g. when it cannot make the transfer), and records `refund_denied_at` and `additionalInfo.denialReason` in `refund_denial_reason` for the modal to show; the next request clears them |
 | anything else | recorded, `processed_at`, 200 |
 
 Webhook registration: `sendType: SEQUENTIALLY`, `apiVersion: 3`, the event

@@ -618,6 +618,8 @@ export type Database = {
           note: string | null
           paid_at: string | null
           refund_amount: number | null
+          refund_denial_reason: string | null
+          refund_denied_at: string | null
           refund_requested_amount: number | null
           refund_requested_at: string | null
           refunded_at: string | null
@@ -644,6 +646,8 @@ export type Database = {
           note?: string | null
           paid_at?: string | null
           refund_amount?: number | null
+          refund_denial_reason?: string | null
+          refund_denied_at?: string | null
           refund_requested_amount?: number | null
           refund_requested_at?: string | null
           refunded_at?: string | null
@@ -670,6 +674,8 @@ export type Database = {
           note?: string | null
           paid_at?: string | null
           refund_amount?: number | null
+          refund_denial_reason?: string | null
+          refund_denied_at?: string | null
           refund_requested_amount?: number | null
           refund_requested_at?: string | null
           refunded_at?: string | null

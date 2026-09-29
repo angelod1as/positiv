@@ -798,18 +798,30 @@ export const ManagePaymentModal: FC<ManagePaymentModalProps> = ({
                             {refund.asaas.awaitingNet}
                           </p>
                         ) : (
-                          <AsaasRefundDialog
-                            payment={payment}
-                            isSubmitting={isSubmitting}
-                            onConfirm={(paymentId, amount, reason) =>
-                              post({
-                                intent: "payment-refund",
-                                paymentId,
-                                amount,
-                                reason,
-                              })
-                            }
-                          />
+                          <div className="flex flex-col gap-2">
+                            {/* Asaas denied the last attempt and the claim
+                                came back. Without this the button reappears
+                                as if nothing had been tried. */}
+                            {payment.refund_denied_at && (
+                              <p className="text-destructive text-sm">
+                                {refund.asaas.denied(
+                                  payment.refund_denial_reason,
+                                )}
+                              </p>
+                            )}
+                            <AsaasRefundDialog
+                              payment={payment}
+                              isSubmitting={isSubmitting}
+                              onConfirm={(paymentId, amount, reason) =>
+                                post({
+                                  intent: "payment-refund",
+                                  paymentId,
+                                  amount,
+                                  reason,
+                                })
+                              }
+                            />
+                          </div>
                         ))}
                       {active?.id === payment.id && (
                         <CancelDialog

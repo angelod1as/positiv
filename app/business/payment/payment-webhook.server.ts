@@ -42,6 +42,12 @@ export const webhookEventSchema = zod.looseObject({
         .optional(),
     })
     .optional(),
+  // Not in the documented payload, but sent: PAYMENT_REFUND_DENIED carries the
+  // reason here.
+  additionalInfo: zod
+    .looseObject({ denialReason: zod.string().nullable().optional() })
+    .nullable()
+    .optional(),
 })
 
 export type AsaasWebhookEvent = z.infer<typeof webhookEventSchema>
@@ -351,17 +357,21 @@ async function applyToPayment(
     })
 
     // Asaas takes a refund request and can refuse it afterwards -- the sandbox
-    // does whenever there is no balance. On a single charge nothing moved, so
-    // the claim goes back and the admin can ask again. A plan is refunded one
-    // charge at a time, and a denial on one says nothing about the others: its
-    // claim stays until a person has looked.
-    if (
-      event.event === "PAYMENT_REFUND_DENIED" &&
-      !payment.asaas_installment_id
-    ) {
+    // does when it cannot make the transfer, and it waits for someone to
+    // authorise the refund in the dashboard first. A refund is one request,
+    // on a charge or on a whole plan, so a denial means nothing moved: the
+    // claim goes back and the admin can ask again, told why. Guarded on
+    // paid, so a denial arriving after a refund that did go through is
+    // ignored.
+    if (event.event === "PAYMENT_REFUND_DENIED") {
       const released = await db
         .updateTable("payments")
-        .set({ refund_requested_at: null, refund_requested_amount: null })
+        .set({
+          refund_requested_at: null,
+          refund_requested_amount: null,
+          refund_denied_at: now,
+          refund_denial_reason: event.additionalInfo?.denialReason ?? null,
+        })
         .where("id", "=", payment.id)
         .where("status", "=", "paid")
         .returning("id")

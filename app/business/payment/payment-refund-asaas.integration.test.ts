@@ -118,6 +118,19 @@ describe("requestRefund", () => {
     expect(after.refund_amount).toBeNull()
   })
 
+  it("clears the last denial once the refund is asked for again", async () => {
+    const payment = await paidCharge({
+      refund_denied_at: new Date().toISOString(),
+      refund_denial_reason: "Falha ao processar a transferência.",
+    })
+
+    await requestRefund({ paymentId: payment.id, amount: null, reason: null })
+
+    const after = await reload(payment.id)
+    expect(after.refund_denied_at).toBeNull()
+    expect(after.refund_denial_reason).toBeNull()
+  })
+
   // Switching online payments off stops new charges. Money already taken
   // online can only go back through Asaas, so refunds must keep working.
   it("refunds a paid charge while online payments are switched off", async () => {
