@@ -212,6 +212,7 @@ async function pick(values: z.infer<typeof pickOptionSchema>) {
       asaas_payment_id: charge.id,
       asaas_installment_id: charge.installmentId,
       asaas_invoice_url: charge.invoiceUrl,
+      asaas_invoice_number: charge.invoiceNumber,
     })
     .where("id", "=", payment.id)
     .where("status", "in", [...ACTIVE_PAYMENT_STATUSES])

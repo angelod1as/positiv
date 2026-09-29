@@ -45,6 +45,7 @@ async function createPayment(body: Record<string, unknown>) {
     id: string
     status: string
     invoiceUrl: string
+    invoiceNumber: string
     installment: string | null
   }
 }
@@ -81,6 +82,15 @@ describe("asaas mock server", () => {
     expect(payment.installment).toBeNull()
     expect(payment.invoiceUrl).toBe(`${origin}/i/${payment.id}`)
     expect((await fetch(payment.invoiceUrl)).status).toBe(200)
+  })
+
+  it("numbers every charge, as the Asaas dashboard does", async () => {
+    const first = await createPayment({ billingType: "PIX", value: 10 })
+    const second = await createPayment({ billingType: "PIX", value: 10 })
+
+    expect(first.invoiceNumber).toMatch(/^\d+$/)
+    expect(second.invoiceNumber).toMatch(/^\d+$/)
+    expect(second.invoiceNumber).not.toBe(first.invoiceNumber)
   })
 
   it("refuses a charge for a customer it does not know", async () => {

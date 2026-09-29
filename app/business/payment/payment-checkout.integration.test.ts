@@ -80,6 +80,7 @@ describe("pickOption", () => {
       id: "pay_1",
       status: "PENDING",
       invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
+      invoiceNumber: "00005101",
       installmentId: null,
     })
     deleteAsaasPayment.mockResolvedValue(true)
@@ -266,6 +267,7 @@ describe("pickOption", () => {
       asaas_customer_id: "cus_new",
       asaas_payment_id: "pay_1",
       asaas_invoice_url: "https://sandbox.asaas.com/i/pay_1",
+      asaas_invoice_number: "00005101",
     })
     expect(after.amount).toBe(22000)
     expect(result.success && result.data.invoiceUrl).toBe(

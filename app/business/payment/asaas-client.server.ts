@@ -191,6 +191,7 @@ export type CreatedAsaasPayment = {
   id: string
   status: string
   invoiceUrl: string | null
+  invoiceNumber: string | null
   installmentId: string | null
 }
 
@@ -198,6 +199,7 @@ const paymentResponse = zod.object({
   id: zod.string(),
   status: zod.string(),
   invoiceUrl: zod.string().nullable().optional(),
+  invoiceNumber: zod.string().nullable().optional(),
   installment: zod.string().nullable().optional(),
 })
 
@@ -241,6 +243,7 @@ export async function createAsaasPayment(input: {
     id: payment.id,
     status: payment.status,
     invoiceUrl: payment.invoiceUrl ?? null,
+    invoiceNumber: payment.invoiceNumber ?? null,
     installmentId: payment.installment ?? null,
   }
 }

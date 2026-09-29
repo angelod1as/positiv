@@ -99,6 +99,7 @@ function publicCharge(charge: Charge, origin: string) {
     installment: charge.installment,
     externalReference: charge.externalReference,
     invoiceUrl: `${origin}/i/${charge.id}`,
+    invoiceNumber: String(state.charges.indexOf(charge) + 1).padStart(8, "0"),
     deleted: charge.deleted,
   }
 }

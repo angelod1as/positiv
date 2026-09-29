@@ -343,6 +343,7 @@ describe("charges", () => {
         id: "pay_1",
         status: "PENDING",
         invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
+        invoiceNumber: "00005101",
         installment: null,
       }),
     )
@@ -353,6 +354,7 @@ describe("charges", () => {
       id: "pay_1",
       status: "PENDING",
       invoiceUrl: "https://sandbox.asaas.com/i/pay_1",
+      invoiceNumber: "00005101",
       installmentId: null,
     })
     expect(fetchMock.mock.calls[0][0]).toBe("https://api-sandbox.asaas.com/v3/payments")
