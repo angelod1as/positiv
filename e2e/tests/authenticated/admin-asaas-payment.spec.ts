@@ -43,10 +43,19 @@ async function chargeAndOpenLink(page: Page, browser: Browser) {
   await modal.getByLabel('Valor a cobrar').fill('220')
   await modal.getByRole('button', { name: 'Enviar cobrança' }).click()
 
-  const linkEmail = await waitForEmail({ to: payer.email, subject: 'Seu pagamento da' })
+  // The payer is the same account in every journey, so an earlier link email
+  // is already in the inbox: wait for the row, then for the email naming it.
+  await expect
+    .poll(async () => (await getParticipantPayments(participant.profileId, event.id)).length)
+    .toBe(1)
   const [pending] = await getParticipantPayments(participant.profileId, event.id)
   expect(pending.status).toBe('pending')
   expect(pending.base_amount).toBe(22000)
+  const linkEmail = await waitForEmail({
+    to: payer.email,
+    subject: 'Seu pagamento da',
+    containing: `/pagamento/${pending.id}`,
+  })
   expect(extractEmailBody(linkEmail)).toContain(`/pagamento/${pending.id}`)
 
   const participantContext = await browser.newContext({ storageState: PARTICIPANT_STATE })
