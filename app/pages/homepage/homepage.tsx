@@ -3,6 +3,7 @@ import { Await } from "react-router"
 import { Suspense } from "react"
 import { getContext } from "~/business/auth/auth.server"
 import { homepageContentCache } from "~/business/cms/homepage-content-cache.server"
+import type { HomepageContent } from "~/business/cms/homepage-content.schema"
 import { FloatingWhatsAppButton } from "~/components/atoms/floating-whatsapp-button/floating-whatsapp-button"
 import { HomePageAbout } from "~/components/pages/homepage/about/about"
 import { HomePageCtaBanner } from "~/components/pages/homepage/cta-banner/home-page-cta-banner"
@@ -57,12 +58,15 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   }
 }
 
-const EventsContent: FC<{ events: Event[] | undefined }> = ({ events }) => {
+const EventsContent: FC<{
+  content: HomepageContent["nextEvents"]
+  events: Event[] | undefined
+}> = ({ content, events }) => {
   if (!events || events.length === 0) {
     return null
   }
 
-  return <HomePageNextEvents events={events} />
+  return <HomePageNextEvents content={content} events={events} />
 }
 
 export default function Homepage({ loaderData }: Route.ComponentProps) {
@@ -72,8 +76,17 @@ export default function Homepage({ loaderData }: Route.ComponentProps) {
     <>
       <div>
         <HomePageHero content={content.hero} />
-        <Suspense fallback={<HomePageNextEventsSkeleton />}>
-          <Await resolve={events}>{(resolvedEvents) => <EventsContent events={resolvedEvents} />}</Await>
+        <Suspense
+          fallback={<HomePageNextEventsSkeleton content={content.nextEvents} />}
+        >
+          <Await resolve={events}>
+            {(resolvedEvents) => (
+              <EventsContent
+                content={content.nextEvents}
+                events={resolvedEvents}
+              />
+            )}
+          </Await>
         </Suspense>
         <HomePageAbout content={content.about} />
         <HomePageTestimonials />
