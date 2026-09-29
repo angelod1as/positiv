@@ -60,16 +60,26 @@ export async function getAsaasMockCalls(): Promise<MockCall[]> {
   return (await fetch(`${getAsaasMockUrl()}/__mock/calls`)).json()
 }
 
-function asaasMockApi(path: string, method = 'GET'): Promise<Response> {
+function asaasMockApi(path: string, method = 'GET', body?: unknown): Promise<Response> {
   return fetch(`${getAsaasMockUrl()}/v3${path}`, {
     method,
-    headers: { access_token: E2E_ASAAS_API_KEY },
+    headers: { access_token: E2E_ASAAS_API_KEY, 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
   })
 }
 
 export async function getMockPlanCharges(installmentId: string): Promise<MockCharge[]> {
   const response = await asaasMockApi(`/payments?installment=${installmentId}&limit=100`)
   return ((await response.json()) as { data: MockCharge[] }).data
+}
+
+// Stands in for the admin refunding a card plan in the Asaas dashboard: the
+// app no longer asks Asaas for refunds, it only records them.
+export async function refundPlanInMockDashboard(installmentId: string, cents: number): Promise<void> {
+  const response = await asaasMockApi(`/installments/${installmentId}/refund`, 'POST', {
+    value: cents / 100,
+  })
+  if (!response.ok) throw new Error(`The mock refused the plan refund: ${response.status}`)
 }
 
 // Stands in for Asaas finishing the card refunds it had in progress.

@@ -228,6 +228,8 @@ async function handleApi(
     return send(response, 200, publicCharge(charge, origin))
   }
 
+  // The app never asks Asaas for a refund -- the admin does it in the Asaas
+  // dashboard -- so specs call these two to stand in for that.
   // `value` is the total to give back across the plan; without one, all of it.
   // Where the money comes from among the charges is Asaas's business, so the
   // mock simply takes it from the first charges that still hold some.
