@@ -45,9 +45,11 @@ async function loadContent() {
 }
 
 export async function loader({ params, request }: Route.LoaderArgs) {
-  const { currentUser, currentProfile } = await getContext(request, params)
+  const [{ currentUser, currentProfile }, content] = await Promise.all([
+    getContext(request, params),
+    loadContent(),
+  ])
   const isLoggedIn = !!currentUser?.id
-  const content = await loadContent()
 
   // Return object with unawaited promise for streaming
   // No defer() wrapper needed in React Router 7

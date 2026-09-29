@@ -33,6 +33,7 @@ function signedInAs(userId: string | undefined) {
 
 describe("Homepage loader", () => {
   beforeEach(() => {
+    vi.clearAllMocks()
     vi.mocked(getNextEvents).mockResolvedValue({
       success: true,
       data: [],
@@ -64,6 +65,25 @@ describe("Homepage loader", () => {
     await loader(loaderArgs)
 
     expect(getNextEvents).toHaveBeenCalledWith(undefined, 5, true)
+  })
+
+  it("starts loading the content without waiting for the session", async () => {
+    type Context = Awaited<ReturnType<typeof authServer.getContext>>
+    let resolveContext: (context: Context) => void = () => {}
+    vi.mocked(authServer.getContext).mockReturnValue(
+      new Promise<Context>((resolve) => {
+        resolveContext = resolve
+      }),
+    )
+
+    const result = loader(loaderArgs)
+
+    expect(homepageContentCache.get).toHaveBeenCalled()
+    resolveContext({
+      currentUser: null,
+      currentProfile: null,
+    } as unknown as Context)
+    await result
   })
 
   it("throws a 503 response when the content cannot be loaded on a cold start", async () => {
