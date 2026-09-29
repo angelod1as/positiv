@@ -10,6 +10,7 @@ import {
   runEventTitlePattern,
 } from './run-context'
 import { deleteList } from '../../app/business/newsletter/listmonk-lists.server'
+import { uniqueValidCpf } from './unique-cpf'
 
 // Custom error class for database cleanup operations
 export class CleanupError extends Error {
@@ -205,7 +206,8 @@ export async function setupUserAsFullyOnboarded(email: string): Promise<void> {
     .from('profiles')
     .update({
       basic_data_filled: true,
-      ...TEST_USER_PROFILE_DATA
+      ...TEST_USER_PROFILE_DATA,
+      cpf: uniqueValidCpf(),
     })
     .eq('id', existingProfile.id)
   

@@ -18,7 +18,7 @@ import {
 } from '../../utils/payment-helpers'
 import { getAsaasMockUrl } from '../../utils/run-context'
 import { readSetupUser } from '../../utils/setup-user'
-import { TEST_USER_PROFILE_DATA } from '../../fixtures/test-data'
+import { uniqueValidCpf } from '../../utils/unique-cpf'
 
 const PARTICIPANT_STATE = path.resolve(import.meta.dirname, '../../.auth/user.json')
 
@@ -65,7 +65,7 @@ test.describe('POS-532: an Asaas payment from the charge to the refund', () => {
     const participantPage = await participantContext.newPage()
     const paymentPage = new PaymentPage(participantPage)
     await paymentPage.navigate(pending.id)
-    await paymentPage.fillCpfIfAsked(TEST_USER_PROFILE_DATA.cpf)
+    await paymentPage.fillCpfIfAsked(uniqueValidCpf())
 
     // Every option is priced above the ticket: the fees are the participant's.
     await expect(participantPage.getByRole('radio', { name: /^Pix — R\$/ })).toBeVisible()
