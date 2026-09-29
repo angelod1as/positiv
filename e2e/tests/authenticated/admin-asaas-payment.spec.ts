@@ -14,6 +14,7 @@ import {
   postWebhook,
   resetAsaasMock,
   setOnlinePayments,
+  settleMockRefunds,
 } from '../../utils/payment-helpers'
 import { getAsaasMockUrl } from '../../utils/run-context'
 import { readSetupUser } from '../../utils/setup-user'
@@ -156,7 +157,14 @@ test.describe('POS-532: an Asaas payment from the charge to the refund', () => {
     const [requested] = await getParticipantPayments(participant.profileId, event.id)
     expect(requested.refund_requested_at).not.toBeNull()
 
-    // 5. Asaas spreads the refund over the plan's charges and reports each one.
+    // Asaas holds a card refund in progress, which no webhook reports: the
+    // admin reads it from Asaas.
+    await modal.getByRole('button', { name: 'Atualizar do Asaas' }).click()
+    await expect(modal.getByText(/Em andamento no Asaas: R\$\s?220,00/)).toBeVisible()
+
+    // 5. Asaas finishes, spreads the refund over the plan's charges and
+    // reports each one.
+    await settleMockRefunds()
     let left = 22000
     for (const [index, charge] of plan.entries()) {
       const share = Math.min(Math.round(charge.value * 100), left)
