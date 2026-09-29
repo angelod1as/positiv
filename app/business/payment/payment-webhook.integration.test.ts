@@ -445,6 +445,102 @@ describe("applyWebhookEvent", () => {
     expect(after.refund_amount).toBe(5000)
   })
 
+  it("records what is given back and what is still on its way", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "pix",
+      amount: 22199,
+      asaas_payment_id: `pay_${counter}`,
+    })
+
+    await deliver({
+      event: "PAYMENT_PARTIALLY_REFUNDED",
+      payment: {
+        id: `pay_${counter}`,
+        refunds: [
+          { value: 50, status: "DONE" },
+          { value: 30, status: "PENDING" },
+        ],
+      },
+    })
+
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("partially_refunded")
+    expect(after.refund_amount).toBe(5000)
+    expect(after.refund_pending_amount).toBe(3000)
+  })
+
+  it("gives the claim back when Asaas cancels what was left of a request", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "pix",
+      amount: 22199,
+      asaas_net: 22000,
+      asaas_payment_id: `pay_${counter}`,
+      refund_requested_at: new Date().toISOString(),
+      refund_requested_amount: 22000,
+    })
+
+    await deliver({
+      event: "PAYMENT_PARTIALLY_REFUNDED",
+      payment: {
+        id: `pay_${counter}`,
+        refunds: [
+          { value: 100, status: "DONE" },
+          { value: 120, status: "CANCELLED" },
+        ],
+      },
+    })
+
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("partially_refunded")
+    expect(after.refund_amount).toBe(10000)
+    expect(after.refund_cancelled_amount).toBe(12000)
+    expect(after.refund_requested_at).toBeNull()
+  })
+
+  it("counts a refund still in progress on a plan as on its way, not as given back", async () => {
+    const payment = await createTestPayment(tracker, kysely, {
+      event_participant_id: participantId,
+      kind: "asaas",
+      method: "credit_card",
+      installment_count: 2,
+      amount: 23430,
+      asaas_net: 22566,
+      asaas_payment_id: `pay_a_${counter}`,
+      asaas_installment_id: `inst_${counter}`,
+      refund_requested_at: new Date().toISOString(),
+      refund_requested_amount: 22566,
+    })
+
+    await deliver({
+      event: "PAYMENT_REFUNDED",
+      payment: {
+        id: `pay_a_${counter}`,
+        installment: `inst_${counter}`,
+        value: 117.15,
+        refunds: [{ value: 117.15, status: "DONE" }],
+      },
+    })
+    await deliver({
+      event: "PAYMENT_PARTIALLY_REFUNDED",
+      payment: {
+        id: `pay_b_${counter}`,
+        installment: `inst_${counter}`,
+        value: 117.15,
+        refunds: [{ value: 108.51, status: "PENDING" }],
+      },
+    })
+
+    const after = await statusOf(payment.id)
+    expect(after.status).toBe("partially_refunded")
+    expect(after.refund_amount).toBe(11715)
+    expect(after.refund_pending_amount).toBe(10851)
+    expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
+  })
+
   it("marks a refund in progress without leaving paid", async () => {
     const payment = await createTestPayment(tracker, kysely, {
       event_participant_id: participantId,
@@ -850,7 +946,7 @@ describe("applyWebhookEvent", () => {
       asaas_payment_id: `pay_${counter}`,
     })
 
-    const result = await deliver({
+    await deliver({
       event: "PAYMENT_PARTIALLY_REFUNDED",
       payment: {
         id: `pay_${counter}`,
@@ -858,11 +954,11 @@ describe("applyWebhookEvent", () => {
       },
     })
 
-    expect(result.applied).toBe(false)
-    expect(result.reason).toBe("no_refund_amount")
     const after = await statusOf(payment.id)
     expect(after.status).toBe("paid")
     expect(after.refund_amount).toBeNull()
+    // Nothing moved, but the admin sees what Asaas dropped.
+    expect(after.refund_cancelled_amount).toBe(5000)
     // Nothing moved, so there is nothing to tell the participant about.
     expect(sendPaymentRefundEmail).not.toHaveBeenCalled()
   })
