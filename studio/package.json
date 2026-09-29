@@ -7,7 +7,6 @@
   "scripts": {
     "build": "sanity build",
     "deploy": "sanity deploy --yes --schema-required",
-    "seed": "sanity exec seed/seed.ts --with-user-token --",
     "dev": "sanity dev",
     "start": "sanity start",
     "lint": "tsc --noEmit && eslint .",
@@ -28,7 +27,6 @@
     "@sanity/validation": "6.16.0",
     "@types/react": "^19.2.18",
     "eslint": "^10.8.1",
-    "groq-js": "^2.0.0",
     "typescript": "^5.8",
     "vitest": "^3.2.4"
   }
