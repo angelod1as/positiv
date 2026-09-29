@@ -77,12 +77,13 @@ Check the dataset name on the import line twice. Never import into
 from `development`. It feeds the e2e Sanity mock and the unit tests. When the
 query or the content changes, regenerate it with a read-only, anonymous query:
 
+From the repository root:
+
 ```bash
-cd studio
-pnpm exec sanity documents query \
-  "$(pnpm --dir .. exec tsx -e 'import { homepageQuery } from "./app/business/cms/homepage-query"; process.stdout.write(homepageQuery)')" \
+pnpm --filter studio exec sanity documents query \
+  "$(pnpm exec tsx -e 'import { homepageQuery } from "./app/business/cms/homepage-query"; process.stdout.write(homepageQuery)')" \
   --dataset development --anonymous --api-version 2026-09-24 \
-  > ../e2e/fixtures/homepage-content.json
+  > e2e/fixtures/homepage-content.json
 ```
 
 Commit the fixture when it changes.
